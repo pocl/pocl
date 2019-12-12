@@ -42,15 +42,6 @@ char2 convert_char2(char2 x)
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(char3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char4 convert_char4(char4 x)
 {
   return (char4)(
@@ -96,6 +87,15 @@ char16 convert_char16(char16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(char3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(char x)
@@ -109,15 +109,6 @@ uchar2 convert_uchar2(char2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(char3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -166,6 +157,15 @@ uchar16 convert_uchar16(char16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(char3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(char x)
@@ -179,15 +179,6 @@ short2 convert_short2(char2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(char3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -236,6 +227,15 @@ short16 convert_short16(char16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(char3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(char x)
@@ -249,15 +249,6 @@ ushort2 convert_ushort2(char2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(char3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -306,6 +297,15 @@ ushort16 convert_ushort16(char16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(char3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(char x)
@@ -319,15 +319,6 @@ int2 convert_int2(char2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(char3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -376,6 +367,15 @@ int16 convert_int16(char16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(char3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(char x)
@@ -389,15 +389,6 @@ uint2 convert_uint2(char2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(char3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -446,6 +437,15 @@ uint16 convert_uint16(char16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(char3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -460,15 +460,6 @@ long2 convert_long2(char2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(char3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -517,6 +508,15 @@ long16 convert_long16(char16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(char3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -532,15 +532,6 @@ ulong2 convert_ulong2(char2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(char3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -589,6 +580,15 @@ ulong16 convert_ulong16(char16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(char3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -604,15 +604,6 @@ half2 convert_half2(char2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(char3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -661,6 +652,15 @@ half16 convert_half16(char16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(char3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -675,15 +675,6 @@ float2 convert_float2(char2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(char3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -732,6 +723,15 @@ float16 convert_float16(char16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(char3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -746,15 +746,6 @@ double2 convert_double2(char2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(char3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -803,6 +794,15 @@ double16 convert_double16(char16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(char3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -817,15 +817,6 @@ char2 convert_char2(uchar2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(uchar3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -874,6 +865,15 @@ char16 convert_char16(uchar16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(uchar3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(uchar x)
@@ -887,15 +887,6 @@ uchar2 convert_uchar2(uchar2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(uchar3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -944,6 +935,15 @@ uchar16 convert_uchar16(uchar16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(uchar3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(uchar x)
@@ -957,15 +957,6 @@ short2 convert_short2(uchar2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(uchar3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1014,6 +1005,15 @@ short16 convert_short16(uchar16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(uchar3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(uchar x)
@@ -1027,15 +1027,6 @@ ushort2 convert_ushort2(uchar2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(uchar3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1084,6 +1075,15 @@ ushort16 convert_ushort16(uchar16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(uchar3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(uchar x)
@@ -1097,15 +1097,6 @@ int2 convert_int2(uchar2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(uchar3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1154,6 +1145,15 @@ int16 convert_int16(uchar16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(uchar3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(uchar x)
@@ -1167,15 +1167,6 @@ uint2 convert_uint2(uchar2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(uchar3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1224,6 +1215,15 @@ uint16 convert_uint16(uchar16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(uchar3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1238,15 +1238,6 @@ long2 convert_long2(uchar2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(uchar3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1295,6 +1286,15 @@ long16 convert_long16(uchar16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(uchar3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -1310,15 +1310,6 @@ ulong2 convert_ulong2(uchar2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(uchar3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1367,6 +1358,15 @@ ulong16 convert_ulong16(uchar16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(uchar3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -1382,15 +1382,6 @@ half2 convert_half2(uchar2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(uchar3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1439,6 +1430,15 @@ half16 convert_half16(uchar16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(uchar3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1453,15 +1453,6 @@ float2 convert_float2(uchar2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(uchar3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1510,6 +1501,15 @@ float16 convert_float16(uchar16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(uchar3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1524,15 +1524,6 @@ double2 convert_double2(uchar2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(uchar3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1581,6 +1572,15 @@ double16 convert_double16(uchar16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(uchar3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1595,15 +1595,6 @@ char2 convert_char2(short2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(short3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1652,6 +1643,15 @@ char16 convert_char16(short16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(short3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(short x)
@@ -1665,15 +1665,6 @@ uchar2 convert_uchar2(short2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(short3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1722,6 +1713,15 @@ uchar16 convert_uchar16(short16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(short3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(short x)
@@ -1735,15 +1735,6 @@ short2 convert_short2(short2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(short3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1792,6 +1783,15 @@ short16 convert_short16(short16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(short3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(short x)
@@ -1805,15 +1805,6 @@ ushort2 convert_ushort2(short2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(short3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1862,6 +1853,15 @@ ushort16 convert_ushort16(short16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(short3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(short x)
@@ -1875,15 +1875,6 @@ int2 convert_int2(short2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(short3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -1932,6 +1923,15 @@ int16 convert_int16(short16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(short3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(short x)
@@ -1945,15 +1945,6 @@ uint2 convert_uint2(short2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(short3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2002,6 +1993,15 @@ uint16 convert_uint16(short16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(short3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2016,15 +2016,6 @@ long2 convert_long2(short2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(short3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2073,6 +2064,15 @@ long16 convert_long16(short16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(short3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -2088,15 +2088,6 @@ ulong2 convert_ulong2(short2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(short3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2145,6 +2136,15 @@ ulong16 convert_ulong16(short16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(short3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -2160,15 +2160,6 @@ half2 convert_half2(short2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(short3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2217,6 +2208,15 @@ half16 convert_half16(short16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(short3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2231,15 +2231,6 @@ float2 convert_float2(short2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(short3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2288,6 +2279,15 @@ float16 convert_float16(short16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(short3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2302,15 +2302,6 @@ double2 convert_double2(short2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(short3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2359,6 +2350,15 @@ double16 convert_double16(short16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(short3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2373,15 +2373,6 @@ char2 convert_char2(ushort2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(ushort3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2430,6 +2421,15 @@ char16 convert_char16(ushort16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(ushort3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(ushort x)
@@ -2443,15 +2443,6 @@ uchar2 convert_uchar2(ushort2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(ushort3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2500,6 +2491,15 @@ uchar16 convert_uchar16(ushort16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(ushort3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(ushort x)
@@ -2513,15 +2513,6 @@ short2 convert_short2(ushort2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(ushort3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2570,6 +2561,15 @@ short16 convert_short16(ushort16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(ushort3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(ushort x)
@@ -2583,15 +2583,6 @@ ushort2 convert_ushort2(ushort2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(ushort3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2640,6 +2631,15 @@ ushort16 convert_ushort16(ushort16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(ushort3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(ushort x)
@@ -2653,15 +2653,6 @@ int2 convert_int2(ushort2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(ushort3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2710,6 +2701,15 @@ int16 convert_int16(ushort16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(ushort3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(ushort x)
@@ -2723,15 +2723,6 @@ uint2 convert_uint2(ushort2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(ushort3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2780,6 +2771,15 @@ uint16 convert_uint16(ushort16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(ushort3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2794,15 +2794,6 @@ long2 convert_long2(ushort2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(ushort3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2851,6 +2842,15 @@ long16 convert_long16(ushort16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(ushort3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -2866,15 +2866,6 @@ ulong2 convert_ulong2(ushort2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(ushort3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2923,6 +2914,15 @@ ulong16 convert_ulong16(ushort16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(ushort3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -2938,15 +2938,6 @@ half2 convert_half2(ushort2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(ushort3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -2995,6 +2986,15 @@ half16 convert_half16(ushort16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(ushort3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3009,15 +3009,6 @@ float2 convert_float2(ushort2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(ushort3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3066,6 +3057,15 @@ float16 convert_float16(ushort16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(ushort3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3080,15 +3080,6 @@ double2 convert_double2(ushort2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(ushort3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3137,6 +3128,15 @@ double16 convert_double16(ushort16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(ushort3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3151,15 +3151,6 @@ char2 convert_char2(int2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(int3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3208,6 +3199,15 @@ char16 convert_char16(int16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(int3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(int x)
@@ -3221,15 +3221,6 @@ uchar2 convert_uchar2(int2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(int3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3278,6 +3269,15 @@ uchar16 convert_uchar16(int16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(int3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(int x)
@@ -3291,15 +3291,6 @@ short2 convert_short2(int2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(int3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3348,6 +3339,15 @@ short16 convert_short16(int16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(int3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(int x)
@@ -3361,15 +3361,6 @@ ushort2 convert_ushort2(int2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(int3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3418,6 +3409,15 @@ ushort16 convert_ushort16(int16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(int3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(int x)
@@ -3431,15 +3431,6 @@ int2 convert_int2(int2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(int3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3488,6 +3479,15 @@ int16 convert_int16(int16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(int3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(int x)
@@ -3501,15 +3501,6 @@ uint2 convert_uint2(int2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(int3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3558,6 +3549,15 @@ uint16 convert_uint16(int16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(int3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3572,15 +3572,6 @@ long2 convert_long2(int2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(int3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3629,6 +3620,15 @@ long16 convert_long16(int16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(int3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -3644,15 +3644,6 @@ ulong2 convert_ulong2(int2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(int3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3701,6 +3692,15 @@ ulong16 convert_ulong16(int16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(int3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -3716,15 +3716,6 @@ half2 convert_half2(int2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(int3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3773,6 +3764,15 @@ half16 convert_half16(int16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(int3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3787,15 +3787,6 @@ float2 convert_float2(int2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(int3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3844,6 +3835,15 @@ float16 convert_float16(int16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(int3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3858,15 +3858,6 @@ double2 convert_double2(int2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(int3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3915,6 +3906,15 @@ double16 convert_double16(int16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(int3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3929,15 +3929,6 @@ char2 convert_char2(uint2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(uint3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -3986,6 +3977,15 @@ char16 convert_char16(uint16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(uint3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(uint x)
@@ -3999,15 +3999,6 @@ uchar2 convert_uchar2(uint2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(uint3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4056,6 +4047,15 @@ uchar16 convert_uchar16(uint16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(uint3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(uint x)
@@ -4069,15 +4069,6 @@ short2 convert_short2(uint2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(uint3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4126,6 +4117,15 @@ short16 convert_short16(uint16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(uint3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(uint x)
@@ -4139,15 +4139,6 @@ ushort2 convert_ushort2(uint2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(uint3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4196,6 +4187,15 @@ ushort16 convert_ushort16(uint16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(uint3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(uint x)
@@ -4209,15 +4209,6 @@ int2 convert_int2(uint2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(uint3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4266,6 +4257,15 @@ int16 convert_int16(uint16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(uint3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(uint x)
@@ -4279,15 +4279,6 @@ uint2 convert_uint2(uint2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(uint3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4336,6 +4327,15 @@ uint16 convert_uint16(uint16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(uint3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4350,15 +4350,6 @@ long2 convert_long2(uint2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(uint3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4407,6 +4398,15 @@ long16 convert_long16(uint16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(uint3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4422,15 +4422,6 @@ ulong2 convert_ulong2(uint2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(uint3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4479,6 +4470,15 @@ ulong16 convert_ulong16(uint16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(uint3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -4494,15 +4494,6 @@ half2 convert_half2(uint2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(uint3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4551,6 +4542,15 @@ half16 convert_half16(uint16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(uint3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4565,15 +4565,6 @@ float2 convert_float2(uint2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(uint3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4622,6 +4613,15 @@ float16 convert_float16(uint16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(uint3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4636,15 +4636,6 @@ double2 convert_double2(uint2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(uint3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4693,6 +4684,15 @@ double16 convert_double16(uint16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(uint3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4708,15 +4708,6 @@ char2 convert_char2(long2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(long3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4765,6 +4756,15 @@ char16 convert_char16(long16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(long3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4780,15 +4780,6 @@ uchar2 convert_uchar2(long2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(long3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4837,6 +4828,15 @@ uchar16 convert_uchar16(long16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(long3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4852,15 +4852,6 @@ short2 convert_short2(long2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(long3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4909,6 +4900,15 @@ short16 convert_short16(long16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(long3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4924,15 +4924,6 @@ ushort2 convert_ushort2(long2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(long3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -4981,6 +4972,15 @@ ushort16 convert_ushort16(long16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(long3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -4996,15 +4996,6 @@ int2 convert_int2(long2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(long3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5053,6 +5044,15 @@ int16 convert_int16(long16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(long3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5068,15 +5068,6 @@ uint2 convert_uint2(long2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(long3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5125,6 +5116,15 @@ uint16 convert_uint16(long16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(long3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5140,15 +5140,6 @@ long2 convert_long2(long2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(long3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5197,6 +5188,15 @@ long16 convert_long16(long16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(long3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5212,15 +5212,6 @@ ulong2 convert_ulong2(long2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(long3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5269,6 +5260,15 @@ ulong16 convert_ulong16(long16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(long3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp16)
@@ -5284,15 +5284,6 @@ half2 convert_half2(long2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(long3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5341,6 +5332,15 @@ half16 convert_half16(long16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(long3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5356,15 +5356,6 @@ float2 convert_float2(long2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(long3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5413,6 +5404,15 @@ float16 convert_float16(long16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(long3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp64)
@@ -5428,15 +5428,6 @@ double2 convert_double2(long2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(long3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5485,6 +5476,15 @@ double16 convert_double16(long16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(long3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5500,15 +5500,6 @@ char2 convert_char2(ulong2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(ulong3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5557,6 +5548,15 @@ char16 convert_char16(ulong16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(ulong3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5572,15 +5572,6 @@ uchar2 convert_uchar2(ulong2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(ulong3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5629,6 +5620,15 @@ uchar16 convert_uchar16(ulong16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(ulong3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5644,15 +5644,6 @@ short2 convert_short2(ulong2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(ulong3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5701,6 +5692,15 @@ short16 convert_short16(ulong16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(ulong3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5716,15 +5716,6 @@ ushort2 convert_ushort2(ulong2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(ulong3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5773,6 +5764,15 @@ ushort16 convert_ushort16(ulong16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(ulong3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5788,15 +5788,6 @@ int2 convert_int2(ulong2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(ulong3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5845,6 +5836,15 @@ int16 convert_int16(ulong16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(ulong3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5860,15 +5860,6 @@ uint2 convert_uint2(ulong2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(ulong3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5917,6 +5908,15 @@ uint16 convert_uint16(ulong16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(ulong3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -5932,15 +5932,6 @@ long2 convert_long2(ulong2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(ulong3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -5989,6 +5980,15 @@ long16 convert_long16(ulong16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(ulong3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -6004,15 +6004,6 @@ ulong2 convert_ulong2(ulong2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(ulong3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6061,6 +6052,15 @@ ulong16 convert_ulong16(ulong16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(ulong3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp16)
@@ -6076,15 +6076,6 @@ half2 convert_half2(ulong2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(ulong3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6133,6 +6124,15 @@ half16 convert_half16(ulong16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(ulong3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -6148,15 +6148,6 @@ float2 convert_float2(ulong2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(ulong3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6205,6 +6196,15 @@ float16 convert_float16(ulong16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(ulong3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp64)
@@ -6220,15 +6220,6 @@ double2 convert_double2(ulong2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(ulong3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6277,6 +6268,15 @@ double16 convert_double16(ulong16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(ulong3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6292,15 +6292,6 @@ char2 convert_char2(half2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(half3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6349,6 +6340,15 @@ char16 convert_char16(half16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(half3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6364,15 +6364,6 @@ uchar2 convert_uchar2(half2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(half3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6421,6 +6412,15 @@ uchar16 convert_uchar16(half16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(half3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6436,15 +6436,6 @@ short2 convert_short2(half2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(half3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6493,6 +6484,15 @@ short16 convert_short16(half16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(half3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6508,15 +6508,6 @@ ushort2 convert_ushort2(half2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(half3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6565,6 +6556,15 @@ ushort16 convert_ushort16(half16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(half3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6580,15 +6580,6 @@ int2 convert_int2(half2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(half3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6637,6 +6628,15 @@ int16 convert_int16(half16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(half3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6652,15 +6652,6 @@ uint2 convert_uint2(half2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(half3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6709,6 +6700,15 @@ uint16 convert_uint16(half16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(half3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp16)
@@ -6724,15 +6724,6 @@ long2 convert_long2(half2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(half3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6781,6 +6772,15 @@ long16 convert_long16(half16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(half3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp16)
@@ -6796,15 +6796,6 @@ ulong2 convert_ulong2(half2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(half3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6853,6 +6844,15 @@ ulong16 convert_ulong16(half16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(half3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6868,15 +6868,6 @@ half2 convert_half2(half2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(half3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6925,6 +6916,15 @@ half16 convert_half16(half16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(half3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -6940,15 +6940,6 @@ float2 convert_float2(half2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(half3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -6997,6 +6988,15 @@ float16 convert_float16(half16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(half3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64) && defined(cl_khr_fp16)
@@ -7012,15 +7012,6 @@ double2 convert_double2(half2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(half3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7069,6 +7060,15 @@ double16 convert_double16(half16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(half3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7083,15 +7083,6 @@ char2 convert_char2(float2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(float3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7140,6 +7131,15 @@ char16 convert_char16(float16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(float3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar(float x)
@@ -7153,15 +7153,6 @@ uchar2 convert_uchar2(float2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(float3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7210,6 +7201,15 @@ uchar16 convert_uchar16(float16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(float3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short(float x)
@@ -7223,15 +7223,6 @@ short2 convert_short2(float2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(float3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7280,6 +7271,15 @@ short16 convert_short16(float16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(float3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort(float x)
@@ -7293,15 +7293,6 @@ ushort2 convert_ushort2(float2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(float3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7350,6 +7341,15 @@ ushort16 convert_ushort16(float16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(float3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int(float x)
@@ -7363,15 +7363,6 @@ int2 convert_int2(float2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(float3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7420,6 +7411,15 @@ int16 convert_int16(float16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(float3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint(float x)
@@ -7433,15 +7433,6 @@ uint2 convert_uint2(float2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(float3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7490,6 +7481,15 @@ uint16 convert_uint16(float16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(float3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7504,15 +7504,6 @@ long2 convert_long2(float2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(float3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7561,6 +7552,15 @@ long16 convert_long16(float16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(float3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -7576,15 +7576,6 @@ ulong2 convert_ulong2(float2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(float3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7633,6 +7624,15 @@ ulong16 convert_ulong16(float16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(float3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp16)
@@ -7648,15 +7648,6 @@ half2 convert_half2(float2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(float3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7705,6 +7696,15 @@ half16 convert_half16(float16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(float3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7719,15 +7719,6 @@ float2 convert_float2(float2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(float3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7776,6 +7767,15 @@ float16 convert_float16(float16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(float3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 
 #if defined(cl_khr_fp64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7790,15 +7790,6 @@ double2 convert_double2(float2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(float3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7847,6 +7838,15 @@ double16 convert_double16(float16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(float3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -7862,15 +7862,6 @@ char2 convert_char2(double2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3(double3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7919,6 +7910,15 @@ char16 convert_char16(double16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3(double3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -7934,15 +7934,6 @@ uchar2 convert_uchar2(double2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3(double3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -7991,6 +7982,15 @@ uchar16 convert_uchar16(double16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3(double3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8006,15 +8006,6 @@ short2 convert_short2(double2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3(double3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8063,6 +8054,15 @@ short16 convert_short16(double16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3(double3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8078,15 +8078,6 @@ ushort2 convert_ushort2(double2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3(double3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8135,6 +8126,15 @@ ushort16 convert_ushort16(double16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3(double3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8150,15 +8150,6 @@ int2 convert_int2(double2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3(double3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8207,6 +8198,15 @@ int16 convert_int16(double16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3(double3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8222,15 +8222,6 @@ uint2 convert_uint2(double2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3(double3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8279,6 +8270,15 @@ uint16 convert_uint16(double16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3(double3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp64)
@@ -8294,15 +8294,6 @@ long2 convert_long2(double2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3(double3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8351,6 +8342,15 @@ long16 convert_long16(double16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3(double3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64) && defined(cl_khr_fp64)
@@ -8366,15 +8366,6 @@ ulong2 convert_ulong2(double2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3(double3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8423,6 +8414,15 @@ ulong16 convert_ulong16(double16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3(double3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64) && defined(cl_khr_fp16)
@@ -8438,15 +8438,6 @@ half2 convert_half2(double2 x)
   return (half2)(
     (half)x.s0,
     (half)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-half3 convert_half3(double3 x)
-{
-  return (half3)(
-    (half)x.s0,
-    (half)x.s1,
-    (half)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8495,6 +8486,15 @@ half16 convert_half16(double16 x)
     (half)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+half3 convert_half3(double3 x)
+{
+  return (half3)(
+    (half)x.s0,
+    (half)x.s1,
+    (half)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8510,15 +8510,6 @@ float2 convert_float2(double2 x)
   return (float2)(
     (float)x.s0,
     (float)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-float3 convert_float3(double3 x)
-{
-  return (float3)(
-    (float)x.s0,
-    (float)x.s1,
-    (float)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8567,6 +8558,15 @@ float16 convert_float16(double16 x)
     (float)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+float3 convert_float3(double3 x)
+{
+  return (float3)(
+    (float)x.s0,
+    (float)x.s1,
+    (float)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_fp64)
@@ -8582,15 +8582,6 @@ double2 convert_double2(double2 x)
   return (double2)(
     (double)x.s0,
     (double)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-double3 convert_double3(double3 x)
-{
-  return (double3)(
-    (double)x.s0,
-    (double)x.s1,
-    (double)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8639,6 +8630,15 @@ double16 convert_double16(double16 x)
     (double)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+double3 convert_double3(double3 x)
+{
+  return (double3)(
+    (double)x.s0,
+    (double)x.s1,
+    (double)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8653,15 +8653,6 @@ char2 convert_char2_rtz(char2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(char3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8710,6 +8701,15 @@ char16 convert_char16_rtz(char16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(char3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(char x)
@@ -8723,15 +8723,6 @@ char2 convert_char2_rte(char2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(char3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8780,6 +8771,15 @@ char16 convert_char16_rte(char16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(char3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(char x)
@@ -8793,15 +8793,6 @@ char2 convert_char2_rtp(char2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(char3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8850,6 +8841,15 @@ char16 convert_char16_rtp(char16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(char3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(char x)
@@ -8863,15 +8863,6 @@ char2 convert_char2_rtn(char2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(char3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8920,6 +8911,15 @@ char16 convert_char16_rtn(char16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(char3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(char x)
@@ -8933,15 +8933,6 @@ uchar2 convert_uchar2_rtz(char2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(char3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -8990,6 +8981,15 @@ uchar16 convert_uchar16_rtz(char16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(char3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(char x)
@@ -9003,15 +9003,6 @@ uchar2 convert_uchar2_rte(char2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(char3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9060,6 +9051,15 @@ uchar16 convert_uchar16_rte(char16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(char3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(char x)
@@ -9073,15 +9073,6 @@ uchar2 convert_uchar2_rtp(char2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(char3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9130,6 +9121,15 @@ uchar16 convert_uchar16_rtp(char16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(char3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(char x)
@@ -9143,15 +9143,6 @@ uchar2 convert_uchar2_rtn(char2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(char3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9200,6 +9191,15 @@ uchar16 convert_uchar16_rtn(char16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(char3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(char x)
@@ -9213,15 +9213,6 @@ short2 convert_short2_rtz(char2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(char3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9270,6 +9261,15 @@ short16 convert_short16_rtz(char16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(char3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(char x)
@@ -9283,15 +9283,6 @@ short2 convert_short2_rte(char2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(char3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9340,6 +9331,15 @@ short16 convert_short16_rte(char16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(char3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(char x)
@@ -9353,15 +9353,6 @@ short2 convert_short2_rtp(char2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(char3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9410,6 +9401,15 @@ short16 convert_short16_rtp(char16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(char3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(char x)
@@ -9423,15 +9423,6 @@ short2 convert_short2_rtn(char2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(char3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9480,6 +9471,15 @@ short16 convert_short16_rtn(char16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(char3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(char x)
@@ -9493,15 +9493,6 @@ ushort2 convert_ushort2_rtz(char2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(char3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9550,6 +9541,15 @@ ushort16 convert_ushort16_rtz(char16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(char3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(char x)
@@ -9563,15 +9563,6 @@ ushort2 convert_ushort2_rte(char2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(char3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9620,6 +9611,15 @@ ushort16 convert_ushort16_rte(char16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(char3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(char x)
@@ -9633,15 +9633,6 @@ ushort2 convert_ushort2_rtp(char2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(char3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9690,6 +9681,15 @@ ushort16 convert_ushort16_rtp(char16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(char3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(char x)
@@ -9703,15 +9703,6 @@ ushort2 convert_ushort2_rtn(char2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(char3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9760,6 +9751,15 @@ ushort16 convert_ushort16_rtn(char16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(char3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(char x)
@@ -9773,15 +9773,6 @@ int2 convert_int2_rtz(char2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(char3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9830,6 +9821,15 @@ int16 convert_int16_rtz(char16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(char3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(char x)
@@ -9843,15 +9843,6 @@ int2 convert_int2_rte(char2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(char3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9900,6 +9891,15 @@ int16 convert_int16_rte(char16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(char3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(char x)
@@ -9913,15 +9913,6 @@ int2 convert_int2_rtp(char2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(char3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -9970,6 +9961,15 @@ int16 convert_int16_rtp(char16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(char3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(char x)
@@ -9983,15 +9983,6 @@ int2 convert_int2_rtn(char2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(char3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10040,6 +10031,15 @@ int16 convert_int16_rtn(char16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(char3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(char x)
@@ -10053,15 +10053,6 @@ uint2 convert_uint2_rtz(char2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(char3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10110,6 +10101,15 @@ uint16 convert_uint16_rtz(char16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(char3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(char x)
@@ -10123,15 +10123,6 @@ uint2 convert_uint2_rte(char2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(char3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10180,6 +10171,15 @@ uint16 convert_uint16_rte(char16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(char3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(char x)
@@ -10193,15 +10193,6 @@ uint2 convert_uint2_rtp(char2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(char3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10250,6 +10241,15 @@ uint16 convert_uint16_rtp(char16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(char3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(char x)
@@ -10263,15 +10263,6 @@ uint2 convert_uint2_rtn(char2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(char3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10320,6 +10311,15 @@ uint16 convert_uint16_rtn(char16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(char3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10334,15 +10334,6 @@ long2 convert_long2_rtz(char2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(char3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10391,6 +10382,15 @@ long16 convert_long16_rtz(char16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(char3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10406,15 +10406,6 @@ long2 convert_long2_rte(char2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(char3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10463,6 +10454,15 @@ long16 convert_long16_rte(char16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(char3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10478,15 +10478,6 @@ long2 convert_long2_rtp(char2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(char3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10535,6 +10526,15 @@ long16 convert_long16_rtp(char16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(char3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10550,15 +10550,6 @@ long2 convert_long2_rtn(char2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(char3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10607,6 +10598,15 @@ long16 convert_long16_rtn(char16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(char3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10622,15 +10622,6 @@ ulong2 convert_ulong2_rtz(char2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(char3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10679,6 +10670,15 @@ ulong16 convert_ulong16_rtz(char16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(char3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10694,15 +10694,6 @@ ulong2 convert_ulong2_rte(char2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(char3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10751,6 +10742,15 @@ ulong16 convert_ulong16_rte(char16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(char3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10766,15 +10766,6 @@ ulong2 convert_ulong2_rtp(char2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(char3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10823,6 +10814,15 @@ ulong16 convert_ulong16_rtp(char16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(char3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -10838,15 +10838,6 @@ ulong2 convert_ulong2_rtn(char2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(char3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10895,6 +10886,15 @@ ulong16 convert_ulong16_rtn(char16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(char3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10909,15 +10909,6 @@ char2 convert_char2_rtz(uchar2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(uchar3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -10966,6 +10957,15 @@ char16 convert_char16_rtz(uchar16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(uchar3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(uchar x)
@@ -10979,15 +10979,6 @@ char2 convert_char2_rte(uchar2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(uchar3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11036,6 +11027,15 @@ char16 convert_char16_rte(uchar16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(uchar3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(uchar x)
@@ -11049,15 +11049,6 @@ char2 convert_char2_rtp(uchar2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(uchar3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11106,6 +11097,15 @@ char16 convert_char16_rtp(uchar16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(uchar3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(uchar x)
@@ -11119,15 +11119,6 @@ char2 convert_char2_rtn(uchar2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(uchar3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11176,6 +11167,15 @@ char16 convert_char16_rtn(uchar16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(uchar3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(uchar x)
@@ -11189,15 +11189,6 @@ uchar2 convert_uchar2_rtz(uchar2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(uchar3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11246,6 +11237,15 @@ uchar16 convert_uchar16_rtz(uchar16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(uchar3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(uchar x)
@@ -11259,15 +11259,6 @@ uchar2 convert_uchar2_rte(uchar2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(uchar3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11316,6 +11307,15 @@ uchar16 convert_uchar16_rte(uchar16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(uchar3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(uchar x)
@@ -11329,15 +11329,6 @@ uchar2 convert_uchar2_rtp(uchar2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(uchar3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11386,6 +11377,15 @@ uchar16 convert_uchar16_rtp(uchar16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(uchar3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(uchar x)
@@ -11399,15 +11399,6 @@ uchar2 convert_uchar2_rtn(uchar2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(uchar3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11456,6 +11447,15 @@ uchar16 convert_uchar16_rtn(uchar16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(uchar3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(uchar x)
@@ -11469,15 +11469,6 @@ short2 convert_short2_rtz(uchar2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(uchar3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11526,6 +11517,15 @@ short16 convert_short16_rtz(uchar16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(uchar3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(uchar x)
@@ -11539,15 +11539,6 @@ short2 convert_short2_rte(uchar2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(uchar3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11596,6 +11587,15 @@ short16 convert_short16_rte(uchar16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(uchar3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(uchar x)
@@ -11609,15 +11609,6 @@ short2 convert_short2_rtp(uchar2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(uchar3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11666,6 +11657,15 @@ short16 convert_short16_rtp(uchar16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(uchar3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(uchar x)
@@ -11679,15 +11679,6 @@ short2 convert_short2_rtn(uchar2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(uchar3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11736,6 +11727,15 @@ short16 convert_short16_rtn(uchar16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(uchar3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(uchar x)
@@ -11749,15 +11749,6 @@ ushort2 convert_ushort2_rtz(uchar2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(uchar3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11806,6 +11797,15 @@ ushort16 convert_ushort16_rtz(uchar16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(uchar3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(uchar x)
@@ -11819,15 +11819,6 @@ ushort2 convert_ushort2_rte(uchar2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(uchar3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11876,6 +11867,15 @@ ushort16 convert_ushort16_rte(uchar16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(uchar3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(uchar x)
@@ -11889,15 +11889,6 @@ ushort2 convert_ushort2_rtp(uchar2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(uchar3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -11946,6 +11937,15 @@ ushort16 convert_ushort16_rtp(uchar16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(uchar3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(uchar x)
@@ -11959,15 +11959,6 @@ ushort2 convert_ushort2_rtn(uchar2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(uchar3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12016,6 +12007,15 @@ ushort16 convert_ushort16_rtn(uchar16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(uchar3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(uchar x)
@@ -12029,15 +12029,6 @@ int2 convert_int2_rtz(uchar2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(uchar3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12086,6 +12077,15 @@ int16 convert_int16_rtz(uchar16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(uchar3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(uchar x)
@@ -12099,15 +12099,6 @@ int2 convert_int2_rte(uchar2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(uchar3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12156,6 +12147,15 @@ int16 convert_int16_rte(uchar16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(uchar3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(uchar x)
@@ -12169,15 +12169,6 @@ int2 convert_int2_rtp(uchar2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(uchar3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12226,6 +12217,15 @@ int16 convert_int16_rtp(uchar16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(uchar3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(uchar x)
@@ -12239,15 +12239,6 @@ int2 convert_int2_rtn(uchar2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(uchar3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12296,6 +12287,15 @@ int16 convert_int16_rtn(uchar16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(uchar3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(uchar x)
@@ -12309,15 +12309,6 @@ uint2 convert_uint2_rtz(uchar2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(uchar3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12366,6 +12357,15 @@ uint16 convert_uint16_rtz(uchar16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(uchar3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(uchar x)
@@ -12379,15 +12379,6 @@ uint2 convert_uint2_rte(uchar2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(uchar3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12436,6 +12427,15 @@ uint16 convert_uint16_rte(uchar16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(uchar3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(uchar x)
@@ -12449,15 +12449,6 @@ uint2 convert_uint2_rtp(uchar2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(uchar3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12506,6 +12497,15 @@ uint16 convert_uint16_rtp(uchar16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(uchar3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(uchar x)
@@ -12519,15 +12519,6 @@ uint2 convert_uint2_rtn(uchar2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(uchar3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12576,6 +12567,15 @@ uint16 convert_uint16_rtn(uchar16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(uchar3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12590,15 +12590,6 @@ long2 convert_long2_rtz(uchar2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(uchar3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12647,6 +12638,15 @@ long16 convert_long16_rtz(uchar16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(uchar3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -12662,15 +12662,6 @@ long2 convert_long2_rte(uchar2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(uchar3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12719,6 +12710,15 @@ long16 convert_long16_rte(uchar16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(uchar3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -12734,15 +12734,6 @@ long2 convert_long2_rtp(uchar2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(uchar3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12791,6 +12782,15 @@ long16 convert_long16_rtp(uchar16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(uchar3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -12806,15 +12806,6 @@ long2 convert_long2_rtn(uchar2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(uchar3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12863,6 +12854,15 @@ long16 convert_long16_rtn(uchar16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(uchar3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -12878,15 +12878,6 @@ ulong2 convert_ulong2_rtz(uchar2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(uchar3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -12935,6 +12926,15 @@ ulong16 convert_ulong16_rtz(uchar16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(uchar3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -12950,15 +12950,6 @@ ulong2 convert_ulong2_rte(uchar2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(uchar3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13007,6 +12998,15 @@ ulong16 convert_ulong16_rte(uchar16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(uchar3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -13022,15 +13022,6 @@ ulong2 convert_ulong2_rtp(uchar2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(uchar3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13079,6 +13070,15 @@ ulong16 convert_ulong16_rtp(uchar16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(uchar3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -13094,15 +13094,6 @@ ulong2 convert_ulong2_rtn(uchar2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(uchar3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13151,6 +13142,15 @@ ulong16 convert_ulong16_rtn(uchar16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(uchar3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13165,15 +13165,6 @@ char2 convert_char2_rtz(short2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(short3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13222,6 +13213,15 @@ char16 convert_char16_rtz(short16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(short3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(short x)
@@ -13235,15 +13235,6 @@ char2 convert_char2_rte(short2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(short3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13292,6 +13283,15 @@ char16 convert_char16_rte(short16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(short3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(short x)
@@ -13305,15 +13305,6 @@ char2 convert_char2_rtp(short2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(short3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13362,6 +13353,15 @@ char16 convert_char16_rtp(short16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(short3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(short x)
@@ -13375,15 +13375,6 @@ char2 convert_char2_rtn(short2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(short3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13432,6 +13423,15 @@ char16 convert_char16_rtn(short16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(short3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(short x)
@@ -13445,15 +13445,6 @@ uchar2 convert_uchar2_rtz(short2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(short3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13502,6 +13493,15 @@ uchar16 convert_uchar16_rtz(short16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(short3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(short x)
@@ -13515,15 +13515,6 @@ uchar2 convert_uchar2_rte(short2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(short3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13572,6 +13563,15 @@ uchar16 convert_uchar16_rte(short16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(short3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(short x)
@@ -13585,15 +13585,6 @@ uchar2 convert_uchar2_rtp(short2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(short3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13642,6 +13633,15 @@ uchar16 convert_uchar16_rtp(short16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(short3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(short x)
@@ -13655,15 +13655,6 @@ uchar2 convert_uchar2_rtn(short2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(short3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13712,6 +13703,15 @@ uchar16 convert_uchar16_rtn(short16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(short3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(short x)
@@ -13725,15 +13725,6 @@ short2 convert_short2_rtz(short2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(short3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13782,6 +13773,15 @@ short16 convert_short16_rtz(short16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(short3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(short x)
@@ -13795,15 +13795,6 @@ short2 convert_short2_rte(short2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(short3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13852,6 +13843,15 @@ short16 convert_short16_rte(short16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(short3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(short x)
@@ -13865,15 +13865,6 @@ short2 convert_short2_rtp(short2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(short3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13922,6 +13913,15 @@ short16 convert_short16_rtp(short16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(short3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(short x)
@@ -13935,15 +13935,6 @@ short2 convert_short2_rtn(short2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(short3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -13992,6 +13983,15 @@ short16 convert_short16_rtn(short16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(short3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(short x)
@@ -14005,15 +14005,6 @@ ushort2 convert_ushort2_rtz(short2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(short3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14062,6 +14053,15 @@ ushort16 convert_ushort16_rtz(short16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(short3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(short x)
@@ -14075,15 +14075,6 @@ ushort2 convert_ushort2_rte(short2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(short3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14132,6 +14123,15 @@ ushort16 convert_ushort16_rte(short16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(short3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(short x)
@@ -14145,15 +14145,6 @@ ushort2 convert_ushort2_rtp(short2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(short3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14202,6 +14193,15 @@ ushort16 convert_ushort16_rtp(short16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(short3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(short x)
@@ -14215,15 +14215,6 @@ ushort2 convert_ushort2_rtn(short2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(short3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14272,6 +14263,15 @@ ushort16 convert_ushort16_rtn(short16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(short3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(short x)
@@ -14285,15 +14285,6 @@ int2 convert_int2_rtz(short2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(short3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14342,6 +14333,15 @@ int16 convert_int16_rtz(short16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(short3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(short x)
@@ -14355,15 +14355,6 @@ int2 convert_int2_rte(short2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(short3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14412,6 +14403,15 @@ int16 convert_int16_rte(short16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(short3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(short x)
@@ -14425,15 +14425,6 @@ int2 convert_int2_rtp(short2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(short3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14482,6 +14473,15 @@ int16 convert_int16_rtp(short16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(short3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(short x)
@@ -14495,15 +14495,6 @@ int2 convert_int2_rtn(short2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(short3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14552,6 +14543,15 @@ int16 convert_int16_rtn(short16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(short3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(short x)
@@ -14565,15 +14565,6 @@ uint2 convert_uint2_rtz(short2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(short3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14622,6 +14613,15 @@ uint16 convert_uint16_rtz(short16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(short3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(short x)
@@ -14635,15 +14635,6 @@ uint2 convert_uint2_rte(short2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(short3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14692,6 +14683,15 @@ uint16 convert_uint16_rte(short16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(short3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(short x)
@@ -14705,15 +14705,6 @@ uint2 convert_uint2_rtp(short2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(short3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14762,6 +14753,15 @@ uint16 convert_uint16_rtp(short16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(short3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(short x)
@@ -14775,15 +14775,6 @@ uint2 convert_uint2_rtn(short2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(short3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14832,6 +14823,15 @@ uint16 convert_uint16_rtn(short16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(short3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14846,15 +14846,6 @@ long2 convert_long2_rtz(short2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(short3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14903,6 +14894,15 @@ long16 convert_long16_rtz(short16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(short3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -14918,15 +14918,6 @@ long2 convert_long2_rte(short2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(short3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -14975,6 +14966,15 @@ long16 convert_long16_rte(short16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(short3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -14990,15 +14990,6 @@ long2 convert_long2_rtp(short2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(short3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15047,6 +15038,15 @@ long16 convert_long16_rtp(short16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(short3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -15062,15 +15062,6 @@ long2 convert_long2_rtn(short2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(short3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15119,6 +15110,15 @@ long16 convert_long16_rtn(short16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(short3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -15134,15 +15134,6 @@ ulong2 convert_ulong2_rtz(short2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(short3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15191,6 +15182,15 @@ ulong16 convert_ulong16_rtz(short16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(short3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -15206,15 +15206,6 @@ ulong2 convert_ulong2_rte(short2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(short3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15263,6 +15254,15 @@ ulong16 convert_ulong16_rte(short16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(short3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -15278,15 +15278,6 @@ ulong2 convert_ulong2_rtp(short2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(short3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15335,6 +15326,15 @@ ulong16 convert_ulong16_rtp(short16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(short3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -15350,15 +15350,6 @@ ulong2 convert_ulong2_rtn(short2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(short3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15407,6 +15398,15 @@ ulong16 convert_ulong16_rtn(short16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(short3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15421,15 +15421,6 @@ char2 convert_char2_rtz(ushort2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(ushort3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15478,6 +15469,15 @@ char16 convert_char16_rtz(ushort16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(ushort3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(ushort x)
@@ -15491,15 +15491,6 @@ char2 convert_char2_rte(ushort2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(ushort3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15548,6 +15539,15 @@ char16 convert_char16_rte(ushort16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(ushort3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(ushort x)
@@ -15561,15 +15561,6 @@ char2 convert_char2_rtp(ushort2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(ushort3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15618,6 +15609,15 @@ char16 convert_char16_rtp(ushort16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(ushort3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(ushort x)
@@ -15631,15 +15631,6 @@ char2 convert_char2_rtn(ushort2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(ushort3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15688,6 +15679,15 @@ char16 convert_char16_rtn(ushort16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(ushort3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(ushort x)
@@ -15701,15 +15701,6 @@ uchar2 convert_uchar2_rtz(ushort2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(ushort3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15758,6 +15749,15 @@ uchar16 convert_uchar16_rtz(ushort16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(ushort3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(ushort x)
@@ -15771,15 +15771,6 @@ uchar2 convert_uchar2_rte(ushort2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(ushort3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15828,6 +15819,15 @@ uchar16 convert_uchar16_rte(ushort16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(ushort3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(ushort x)
@@ -15841,15 +15841,6 @@ uchar2 convert_uchar2_rtp(ushort2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(ushort3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15898,6 +15889,15 @@ uchar16 convert_uchar16_rtp(ushort16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(ushort3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(ushort x)
@@ -15911,15 +15911,6 @@ uchar2 convert_uchar2_rtn(ushort2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(ushort3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -15968,6 +15959,15 @@ uchar16 convert_uchar16_rtn(ushort16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(ushort3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(ushort x)
@@ -15981,15 +15981,6 @@ short2 convert_short2_rtz(ushort2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(ushort3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16038,6 +16029,15 @@ short16 convert_short16_rtz(ushort16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(ushort3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(ushort x)
@@ -16051,15 +16051,6 @@ short2 convert_short2_rte(ushort2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(ushort3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16108,6 +16099,15 @@ short16 convert_short16_rte(ushort16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(ushort3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(ushort x)
@@ -16121,15 +16121,6 @@ short2 convert_short2_rtp(ushort2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(ushort3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16178,6 +16169,15 @@ short16 convert_short16_rtp(ushort16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(ushort3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(ushort x)
@@ -16191,15 +16191,6 @@ short2 convert_short2_rtn(ushort2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(ushort3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16248,6 +16239,15 @@ short16 convert_short16_rtn(ushort16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(ushort3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(ushort x)
@@ -16261,15 +16261,6 @@ ushort2 convert_ushort2_rtz(ushort2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(ushort3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16318,6 +16309,15 @@ ushort16 convert_ushort16_rtz(ushort16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(ushort3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(ushort x)
@@ -16331,15 +16331,6 @@ ushort2 convert_ushort2_rte(ushort2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(ushort3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16388,6 +16379,15 @@ ushort16 convert_ushort16_rte(ushort16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(ushort3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(ushort x)
@@ -16401,15 +16401,6 @@ ushort2 convert_ushort2_rtp(ushort2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(ushort3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16458,6 +16449,15 @@ ushort16 convert_ushort16_rtp(ushort16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(ushort3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(ushort x)
@@ -16471,15 +16471,6 @@ ushort2 convert_ushort2_rtn(ushort2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(ushort3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16528,6 +16519,15 @@ ushort16 convert_ushort16_rtn(ushort16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(ushort3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(ushort x)
@@ -16541,15 +16541,6 @@ int2 convert_int2_rtz(ushort2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(ushort3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16598,6 +16589,15 @@ int16 convert_int16_rtz(ushort16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(ushort3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(ushort x)
@@ -16611,15 +16611,6 @@ int2 convert_int2_rte(ushort2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(ushort3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16668,6 +16659,15 @@ int16 convert_int16_rte(ushort16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(ushort3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(ushort x)
@@ -16681,15 +16681,6 @@ int2 convert_int2_rtp(ushort2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(ushort3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16738,6 +16729,15 @@ int16 convert_int16_rtp(ushort16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(ushort3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(ushort x)
@@ -16751,15 +16751,6 @@ int2 convert_int2_rtn(ushort2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(ushort3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16808,6 +16799,15 @@ int16 convert_int16_rtn(ushort16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(ushort3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(ushort x)
@@ -16821,15 +16821,6 @@ uint2 convert_uint2_rtz(ushort2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(ushort3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16878,6 +16869,15 @@ uint16 convert_uint16_rtz(ushort16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(ushort3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(ushort x)
@@ -16891,15 +16891,6 @@ uint2 convert_uint2_rte(ushort2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(ushort3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -16948,6 +16939,15 @@ uint16 convert_uint16_rte(ushort16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(ushort3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(ushort x)
@@ -16961,15 +16961,6 @@ uint2 convert_uint2_rtp(ushort2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(ushort3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17018,6 +17009,15 @@ uint16 convert_uint16_rtp(ushort16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(ushort3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(ushort x)
@@ -17031,15 +17031,6 @@ uint2 convert_uint2_rtn(ushort2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(ushort3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17088,6 +17079,15 @@ uint16 convert_uint16_rtn(ushort16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(ushort3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17102,15 +17102,6 @@ long2 convert_long2_rtz(ushort2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(ushort3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17159,6 +17150,15 @@ long16 convert_long16_rtz(ushort16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(ushort3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17174,15 +17174,6 @@ long2 convert_long2_rte(ushort2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(ushort3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17231,6 +17222,15 @@ long16 convert_long16_rte(ushort16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(ushort3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17246,15 +17246,6 @@ long2 convert_long2_rtp(ushort2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(ushort3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17303,6 +17294,15 @@ long16 convert_long16_rtp(ushort16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(ushort3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17318,15 +17318,6 @@ long2 convert_long2_rtn(ushort2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(ushort3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17375,6 +17366,15 @@ long16 convert_long16_rtn(ushort16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(ushort3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17390,15 +17390,6 @@ ulong2 convert_ulong2_rtz(ushort2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(ushort3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17447,6 +17438,15 @@ ulong16 convert_ulong16_rtz(ushort16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(ushort3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17462,15 +17462,6 @@ ulong2 convert_ulong2_rte(ushort2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(ushort3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17519,6 +17510,15 @@ ulong16 convert_ulong16_rte(ushort16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(ushort3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17534,15 +17534,6 @@ ulong2 convert_ulong2_rtp(ushort2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(ushort3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17591,6 +17582,15 @@ ulong16 convert_ulong16_rtp(ushort16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(ushort3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -17606,15 +17606,6 @@ ulong2 convert_ulong2_rtn(ushort2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(ushort3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17663,6 +17654,15 @@ ulong16 convert_ulong16_rtn(ushort16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(ushort3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17677,15 +17677,6 @@ char2 convert_char2_rtz(int2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(int3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17734,6 +17725,15 @@ char16 convert_char16_rtz(int16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(int3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(int x)
@@ -17747,15 +17747,6 @@ char2 convert_char2_rte(int2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(int3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17804,6 +17795,15 @@ char16 convert_char16_rte(int16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(int3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(int x)
@@ -17817,15 +17817,6 @@ char2 convert_char2_rtp(int2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(int3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17874,6 +17865,15 @@ char16 convert_char16_rtp(int16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(int3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(int x)
@@ -17887,15 +17887,6 @@ char2 convert_char2_rtn(int2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(int3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -17944,6 +17935,15 @@ char16 convert_char16_rtn(int16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(int3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(int x)
@@ -17957,15 +17957,6 @@ uchar2 convert_uchar2_rtz(int2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(int3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18014,6 +18005,15 @@ uchar16 convert_uchar16_rtz(int16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(int3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(int x)
@@ -18027,15 +18027,6 @@ uchar2 convert_uchar2_rte(int2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(int3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18084,6 +18075,15 @@ uchar16 convert_uchar16_rte(int16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(int3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(int x)
@@ -18097,15 +18097,6 @@ uchar2 convert_uchar2_rtp(int2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(int3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18154,6 +18145,15 @@ uchar16 convert_uchar16_rtp(int16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(int3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(int x)
@@ -18167,15 +18167,6 @@ uchar2 convert_uchar2_rtn(int2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(int3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18224,6 +18215,15 @@ uchar16 convert_uchar16_rtn(int16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(int3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(int x)
@@ -18237,15 +18237,6 @@ short2 convert_short2_rtz(int2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(int3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18294,6 +18285,15 @@ short16 convert_short16_rtz(int16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(int3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(int x)
@@ -18307,15 +18307,6 @@ short2 convert_short2_rte(int2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(int3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18364,6 +18355,15 @@ short16 convert_short16_rte(int16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(int3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(int x)
@@ -18377,15 +18377,6 @@ short2 convert_short2_rtp(int2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(int3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18434,6 +18425,15 @@ short16 convert_short16_rtp(int16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(int3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(int x)
@@ -18447,15 +18447,6 @@ short2 convert_short2_rtn(int2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(int3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18504,6 +18495,15 @@ short16 convert_short16_rtn(int16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(int3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(int x)
@@ -18517,15 +18517,6 @@ ushort2 convert_ushort2_rtz(int2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(int3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18574,6 +18565,15 @@ ushort16 convert_ushort16_rtz(int16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(int3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(int x)
@@ -18587,15 +18587,6 @@ ushort2 convert_ushort2_rte(int2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(int3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18644,6 +18635,15 @@ ushort16 convert_ushort16_rte(int16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(int3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(int x)
@@ -18657,15 +18657,6 @@ ushort2 convert_ushort2_rtp(int2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(int3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18714,6 +18705,15 @@ ushort16 convert_ushort16_rtp(int16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(int3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(int x)
@@ -18727,15 +18727,6 @@ ushort2 convert_ushort2_rtn(int2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(int3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18784,6 +18775,15 @@ ushort16 convert_ushort16_rtn(int16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(int3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(int x)
@@ -18797,15 +18797,6 @@ int2 convert_int2_rtz(int2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(int3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18854,6 +18845,15 @@ int16 convert_int16_rtz(int16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(int3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(int x)
@@ -18867,15 +18867,6 @@ int2 convert_int2_rte(int2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(int3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18924,6 +18915,15 @@ int16 convert_int16_rte(int16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(int3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(int x)
@@ -18937,15 +18937,6 @@ int2 convert_int2_rtp(int2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(int3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -18994,6 +18985,15 @@ int16 convert_int16_rtp(int16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(int3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(int x)
@@ -19007,15 +19007,6 @@ int2 convert_int2_rtn(int2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(int3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19064,6 +19055,15 @@ int16 convert_int16_rtn(int16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(int3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(int x)
@@ -19077,15 +19077,6 @@ uint2 convert_uint2_rtz(int2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(int3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19134,6 +19125,15 @@ uint16 convert_uint16_rtz(int16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(int3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(int x)
@@ -19147,15 +19147,6 @@ uint2 convert_uint2_rte(int2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(int3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19204,6 +19195,15 @@ uint16 convert_uint16_rte(int16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(int3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(int x)
@@ -19217,15 +19217,6 @@ uint2 convert_uint2_rtp(int2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(int3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19274,6 +19265,15 @@ uint16 convert_uint16_rtp(int16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(int3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(int x)
@@ -19287,15 +19287,6 @@ uint2 convert_uint2_rtn(int2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(int3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19344,6 +19335,15 @@ uint16 convert_uint16_rtn(int16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(int3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19358,15 +19358,6 @@ long2 convert_long2_rtz(int2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(int3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19415,6 +19406,15 @@ long16 convert_long16_rtz(int16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(int3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19430,15 +19430,6 @@ long2 convert_long2_rte(int2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(int3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19487,6 +19478,15 @@ long16 convert_long16_rte(int16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(int3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19502,15 +19502,6 @@ long2 convert_long2_rtp(int2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(int3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19559,6 +19550,15 @@ long16 convert_long16_rtp(int16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(int3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19574,15 +19574,6 @@ long2 convert_long2_rtn(int2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(int3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19631,6 +19622,15 @@ long16 convert_long16_rtn(int16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(int3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19646,15 +19646,6 @@ ulong2 convert_ulong2_rtz(int2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(int3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19703,6 +19694,15 @@ ulong16 convert_ulong16_rtz(int16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(int3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19718,15 +19718,6 @@ ulong2 convert_ulong2_rte(int2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(int3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19775,6 +19766,15 @@ ulong16 convert_ulong16_rte(int16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(int3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19790,15 +19790,6 @@ ulong2 convert_ulong2_rtp(int2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(int3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19847,6 +19838,15 @@ ulong16 convert_ulong16_rtp(int16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(int3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -19862,15 +19862,6 @@ ulong2 convert_ulong2_rtn(int2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(int3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19919,6 +19910,15 @@ ulong16 convert_ulong16_rtn(int16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(int3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19933,15 +19933,6 @@ char2 convert_char2_rtz(uint2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(uint3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -19990,6 +19981,15 @@ char16 convert_char16_rtz(uint16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(uint3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rte(uint x)
@@ -20003,15 +20003,6 @@ char2 convert_char2_rte(uint2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(uint3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20060,6 +20051,15 @@ char16 convert_char16_rte(uint16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(uint3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtp(uint x)
@@ -20073,15 +20073,6 @@ char2 convert_char2_rtp(uint2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(uint3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20130,6 +20121,15 @@ char16 convert_char16_rtp(uint16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(uint3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 char convert_char_rtn(uint x)
@@ -20143,15 +20143,6 @@ char2 convert_char2_rtn(uint2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(uint3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20200,6 +20191,15 @@ char16 convert_char16_rtn(uint16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(uint3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtz(uint x)
@@ -20213,15 +20213,6 @@ uchar2 convert_uchar2_rtz(uint2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(uint3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20270,6 +20261,15 @@ uchar16 convert_uchar16_rtz(uint16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(uint3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rte(uint x)
@@ -20283,15 +20283,6 @@ uchar2 convert_uchar2_rte(uint2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(uint3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20340,6 +20331,15 @@ uchar16 convert_uchar16_rte(uint16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(uint3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtp(uint x)
@@ -20353,15 +20353,6 @@ uchar2 convert_uchar2_rtp(uint2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(uint3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20410,6 +20401,15 @@ uchar16 convert_uchar16_rtp(uint16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(uint3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uchar convert_uchar_rtn(uint x)
@@ -20423,15 +20423,6 @@ uchar2 convert_uchar2_rtn(uint2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(uint3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20480,6 +20471,15 @@ uchar16 convert_uchar16_rtn(uint16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(uint3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtz(uint x)
@@ -20493,15 +20493,6 @@ short2 convert_short2_rtz(uint2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(uint3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20550,6 +20541,15 @@ short16 convert_short16_rtz(uint16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(uint3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rte(uint x)
@@ -20563,15 +20563,6 @@ short2 convert_short2_rte(uint2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(uint3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20620,6 +20611,15 @@ short16 convert_short16_rte(uint16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(uint3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtp(uint x)
@@ -20633,15 +20633,6 @@ short2 convert_short2_rtp(uint2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(uint3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20690,6 +20681,15 @@ short16 convert_short16_rtp(uint16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(uint3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 short convert_short_rtn(uint x)
@@ -20703,15 +20703,6 @@ short2 convert_short2_rtn(uint2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(uint3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20760,6 +20751,15 @@ short16 convert_short16_rtn(uint16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(uint3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtz(uint x)
@@ -20773,15 +20773,6 @@ ushort2 convert_ushort2_rtz(uint2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(uint3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20830,6 +20821,15 @@ ushort16 convert_ushort16_rtz(uint16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(uint3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rte(uint x)
@@ -20843,15 +20843,6 @@ ushort2 convert_ushort2_rte(uint2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(uint3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20900,6 +20891,15 @@ ushort16 convert_ushort16_rte(uint16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(uint3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtp(uint x)
@@ -20913,15 +20913,6 @@ ushort2 convert_ushort2_rtp(uint2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(uint3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -20970,6 +20961,15 @@ ushort16 convert_ushort16_rtp(uint16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(uint3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 ushort convert_ushort_rtn(uint x)
@@ -20983,15 +20983,6 @@ ushort2 convert_ushort2_rtn(uint2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(uint3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21040,6 +21031,15 @@ ushort16 convert_ushort16_rtn(uint16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(uint3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtz(uint x)
@@ -21053,15 +21053,6 @@ int2 convert_int2_rtz(uint2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(uint3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21110,6 +21101,15 @@ int16 convert_int16_rtz(uint16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(uint3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rte(uint x)
@@ -21123,15 +21123,6 @@ int2 convert_int2_rte(uint2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(uint3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21180,6 +21171,15 @@ int16 convert_int16_rte(uint16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(uint3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtp(uint x)
@@ -21193,15 +21193,6 @@ int2 convert_int2_rtp(uint2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(uint3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21250,6 +21241,15 @@ int16 convert_int16_rtp(uint16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(uint3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 int convert_int_rtn(uint x)
@@ -21263,15 +21263,6 @@ int2 convert_int2_rtn(uint2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(uint3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21320,6 +21311,15 @@ int16 convert_int16_rtn(uint16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(uint3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtz(uint x)
@@ -21333,15 +21333,6 @@ uint2 convert_uint2_rtz(uint2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(uint3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21390,6 +21381,15 @@ uint16 convert_uint16_rtz(uint16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(uint3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rte(uint x)
@@ -21403,15 +21403,6 @@ uint2 convert_uint2_rte(uint2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(uint3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21460,6 +21451,15 @@ uint16 convert_uint16_rte(uint16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(uint3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtp(uint x)
@@ -21473,15 +21473,6 @@ uint2 convert_uint2_rtp(uint2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(uint3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21530,6 +21521,15 @@ uint16 convert_uint16_rtp(uint16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(uint3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 uint convert_uint_rtn(uint x)
@@ -21543,15 +21543,6 @@ uint2 convert_uint2_rtn(uint2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(uint3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21600,6 +21591,15 @@ uint16 convert_uint16_rtn(uint16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(uint3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 
 #if defined(cl_khr_int64)
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21614,15 +21614,6 @@ long2 convert_long2_rtz(uint2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(uint3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21671,6 +21662,15 @@ long16 convert_long16_rtz(uint16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(uint3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -21686,15 +21686,6 @@ long2 convert_long2_rte(uint2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(uint3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21743,6 +21734,15 @@ long16 convert_long16_rte(uint16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(uint3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -21758,15 +21758,6 @@ long2 convert_long2_rtp(uint2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(uint3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21815,6 +21806,15 @@ long16 convert_long16_rtp(uint16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(uint3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -21830,15 +21830,6 @@ long2 convert_long2_rtn(uint2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(uint3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21887,6 +21878,15 @@ long16 convert_long16_rtn(uint16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(uint3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -21902,15 +21902,6 @@ ulong2 convert_ulong2_rtz(uint2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(uint3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -21959,6 +21950,15 @@ ulong16 convert_ulong16_rtz(uint16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(uint3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -21974,15 +21974,6 @@ ulong2 convert_ulong2_rte(uint2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(uint3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22031,6 +22022,15 @@ ulong16 convert_ulong16_rte(uint16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(uint3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22046,15 +22046,6 @@ ulong2 convert_ulong2_rtp(uint2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(uint3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22103,6 +22094,15 @@ ulong16 convert_ulong16_rtp(uint16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(uint3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22118,15 +22118,6 @@ ulong2 convert_ulong2_rtn(uint2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(uint3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22175,6 +22166,15 @@ ulong16 convert_ulong16_rtn(uint16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(uint3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22190,15 +22190,6 @@ char2 convert_char2_rtz(long2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(long3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22247,6 +22238,15 @@ char16 convert_char16_rtz(long16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(long3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22262,15 +22262,6 @@ char2 convert_char2_rte(long2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(long3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22319,6 +22310,15 @@ char16 convert_char16_rte(long16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(long3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22334,15 +22334,6 @@ char2 convert_char2_rtp(long2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(long3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22391,6 +22382,15 @@ char16 convert_char16_rtp(long16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(long3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22406,15 +22406,6 @@ char2 convert_char2_rtn(long2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(long3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22463,6 +22454,15 @@ char16 convert_char16_rtn(long16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(long3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22478,15 +22478,6 @@ uchar2 convert_uchar2_rtz(long2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(long3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22535,6 +22526,15 @@ uchar16 convert_uchar16_rtz(long16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(long3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22550,15 +22550,6 @@ uchar2 convert_uchar2_rte(long2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(long3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22607,6 +22598,15 @@ uchar16 convert_uchar16_rte(long16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(long3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22622,15 +22622,6 @@ uchar2 convert_uchar2_rtp(long2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(long3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22679,6 +22670,15 @@ uchar16 convert_uchar16_rtp(long16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(long3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22694,15 +22694,6 @@ uchar2 convert_uchar2_rtn(long2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(long3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22751,6 +22742,15 @@ uchar16 convert_uchar16_rtn(long16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(long3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22766,15 +22766,6 @@ short2 convert_short2_rtz(long2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(long3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22823,6 +22814,15 @@ short16 convert_short16_rtz(long16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(long3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22838,15 +22838,6 @@ short2 convert_short2_rte(long2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(long3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22895,6 +22886,15 @@ short16 convert_short16_rte(long16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(long3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22910,15 +22910,6 @@ short2 convert_short2_rtp(long2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(long3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -22967,6 +22958,15 @@ short16 convert_short16_rtp(long16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(long3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -22982,15 +22982,6 @@ short2 convert_short2_rtn(long2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(long3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23039,6 +23030,15 @@ short16 convert_short16_rtn(long16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(long3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23054,15 +23054,6 @@ ushort2 convert_ushort2_rtz(long2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(long3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23111,6 +23102,15 @@ ushort16 convert_ushort16_rtz(long16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(long3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23126,15 +23126,6 @@ ushort2 convert_ushort2_rte(long2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(long3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23183,6 +23174,15 @@ ushort16 convert_ushort16_rte(long16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(long3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23198,15 +23198,6 @@ ushort2 convert_ushort2_rtp(long2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(long3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23255,6 +23246,15 @@ ushort16 convert_ushort16_rtp(long16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(long3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23270,15 +23270,6 @@ ushort2 convert_ushort2_rtn(long2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(long3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23327,6 +23318,15 @@ ushort16 convert_ushort16_rtn(long16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(long3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23342,15 +23342,6 @@ int2 convert_int2_rtz(long2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(long3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23399,6 +23390,15 @@ int16 convert_int16_rtz(long16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(long3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23414,15 +23414,6 @@ int2 convert_int2_rte(long2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(long3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23471,6 +23462,15 @@ int16 convert_int16_rte(long16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(long3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23486,15 +23486,6 @@ int2 convert_int2_rtp(long2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(long3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23543,6 +23534,15 @@ int16 convert_int16_rtp(long16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(long3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23558,15 +23558,6 @@ int2 convert_int2_rtn(long2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(long3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23615,6 +23606,15 @@ int16 convert_int16_rtn(long16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(long3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23630,15 +23630,6 @@ uint2 convert_uint2_rtz(long2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(long3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23687,6 +23678,15 @@ uint16 convert_uint16_rtz(long16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(long3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23702,15 +23702,6 @@ uint2 convert_uint2_rte(long2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(long3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23759,6 +23750,15 @@ uint16 convert_uint16_rte(long16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(long3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23774,15 +23774,6 @@ uint2 convert_uint2_rtp(long2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(long3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23831,6 +23822,15 @@ uint16 convert_uint16_rtp(long16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(long3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23846,15 +23846,6 @@ uint2 convert_uint2_rtn(long2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(long3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23903,6 +23894,15 @@ uint16 convert_uint16_rtn(long16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(long3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23918,15 +23918,6 @@ long2 convert_long2_rtz(long2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(long3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -23975,6 +23966,15 @@ long16 convert_long16_rtz(long16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(long3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -23990,15 +23990,6 @@ long2 convert_long2_rte(long2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(long3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24047,6 +24038,15 @@ long16 convert_long16_rte(long16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(long3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24062,15 +24062,6 @@ long2 convert_long2_rtp(long2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(long3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24119,6 +24110,15 @@ long16 convert_long16_rtp(long16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(long3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24134,15 +24134,6 @@ long2 convert_long2_rtn(long2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(long3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24191,6 +24182,15 @@ long16 convert_long16_rtn(long16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(long3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24206,15 +24206,6 @@ ulong2 convert_ulong2_rtz(long2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(long3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24263,6 +24254,15 @@ ulong16 convert_ulong16_rtz(long16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(long3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24278,15 +24278,6 @@ ulong2 convert_ulong2_rte(long2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(long3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24335,6 +24326,15 @@ ulong16 convert_ulong16_rte(long16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(long3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24350,15 +24350,6 @@ ulong2 convert_ulong2_rtp(long2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(long3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24407,6 +24398,15 @@ ulong16 convert_ulong16_rtp(long16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(long3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24422,15 +24422,6 @@ ulong2 convert_ulong2_rtn(long2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(long3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24479,6 +24470,15 @@ ulong16 convert_ulong16_rtn(long16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(long3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24494,15 +24494,6 @@ char2 convert_char2_rtz(ulong2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtz(ulong3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24551,6 +24542,15 @@ char16 convert_char16_rtz(ulong16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtz(ulong3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24566,15 +24566,6 @@ char2 convert_char2_rte(ulong2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rte(ulong3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24623,6 +24614,15 @@ char16 convert_char16_rte(ulong16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rte(ulong3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24638,15 +24638,6 @@ char2 convert_char2_rtp(ulong2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtp(ulong3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24695,6 +24686,15 @@ char16 convert_char16_rtp(ulong16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtp(ulong3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24710,15 +24710,6 @@ char2 convert_char2_rtn(ulong2 x)
   return (char2)(
     (char)x.s0,
     (char)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-char3 convert_char3_rtn(ulong3 x)
-{
-  return (char3)(
-    (char)x.s0,
-    (char)x.s1,
-    (char)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24767,6 +24758,15 @@ char16 convert_char16_rtn(ulong16 x)
     (char)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+char3 convert_char3_rtn(ulong3 x)
+{
+  return (char3)(
+    (char)x.s0,
+    (char)x.s1,
+    (char)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24782,15 +24782,6 @@ uchar2 convert_uchar2_rtz(ulong2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtz(ulong3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24839,6 +24830,15 @@ uchar16 convert_uchar16_rtz(ulong16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtz(ulong3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24854,15 +24854,6 @@ uchar2 convert_uchar2_rte(ulong2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rte(ulong3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24911,6 +24902,15 @@ uchar16 convert_uchar16_rte(ulong16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rte(ulong3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24926,15 +24926,6 @@ uchar2 convert_uchar2_rtp(ulong2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtp(ulong3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -24983,6 +24974,15 @@ uchar16 convert_uchar16_rtp(ulong16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtp(ulong3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -24998,15 +24998,6 @@ uchar2 convert_uchar2_rtn(ulong2 x)
   return (uchar2)(
     (uchar)x.s0,
     (uchar)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uchar3 convert_uchar3_rtn(ulong3 x)
-{
-  return (uchar3)(
-    (uchar)x.s0,
-    (uchar)x.s1,
-    (uchar)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25055,6 +25046,15 @@ uchar16 convert_uchar16_rtn(ulong16 x)
     (uchar)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uchar3 convert_uchar3_rtn(ulong3 x)
+{
+  return (uchar3)(
+    (uchar)x.s0,
+    (uchar)x.s1,
+    (uchar)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25070,15 +25070,6 @@ short2 convert_short2_rtz(ulong2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtz(ulong3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25127,6 +25118,15 @@ short16 convert_short16_rtz(ulong16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtz(ulong3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25142,15 +25142,6 @@ short2 convert_short2_rte(ulong2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rte(ulong3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25199,6 +25190,15 @@ short16 convert_short16_rte(ulong16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rte(ulong3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25214,15 +25214,6 @@ short2 convert_short2_rtp(ulong2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtp(ulong3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25271,6 +25262,15 @@ short16 convert_short16_rtp(ulong16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtp(ulong3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25286,15 +25286,6 @@ short2 convert_short2_rtn(ulong2 x)
   return (short2)(
     (short)x.s0,
     (short)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-short3 convert_short3_rtn(ulong3 x)
-{
-  return (short3)(
-    (short)x.s0,
-    (short)x.s1,
-    (short)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25343,6 +25334,15 @@ short16 convert_short16_rtn(ulong16 x)
     (short)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+short3 convert_short3_rtn(ulong3 x)
+{
+  return (short3)(
+    (short)x.s0,
+    (short)x.s1,
+    (short)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25358,15 +25358,6 @@ ushort2 convert_ushort2_rtz(ulong2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtz(ulong3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25415,6 +25406,15 @@ ushort16 convert_ushort16_rtz(ulong16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtz(ulong3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25430,15 +25430,6 @@ ushort2 convert_ushort2_rte(ulong2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rte(ulong3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25487,6 +25478,15 @@ ushort16 convert_ushort16_rte(ulong16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rte(ulong3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25502,15 +25502,6 @@ ushort2 convert_ushort2_rtp(ulong2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtp(ulong3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25559,6 +25550,15 @@ ushort16 convert_ushort16_rtp(ulong16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtp(ulong3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25574,15 +25574,6 @@ ushort2 convert_ushort2_rtn(ulong2 x)
   return (ushort2)(
     (ushort)x.s0,
     (ushort)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ushort3 convert_ushort3_rtn(ulong3 x)
-{
-  return (ushort3)(
-    (ushort)x.s0,
-    (ushort)x.s1,
-    (ushort)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25631,6 +25622,15 @@ ushort16 convert_ushort16_rtn(ulong16 x)
     (ushort)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ushort3 convert_ushort3_rtn(ulong3 x)
+{
+  return (ushort3)(
+    (ushort)x.s0,
+    (ushort)x.s1,
+    (ushort)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25646,15 +25646,6 @@ int2 convert_int2_rtz(ulong2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtz(ulong3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25703,6 +25694,15 @@ int16 convert_int16_rtz(ulong16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtz(ulong3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25718,15 +25718,6 @@ int2 convert_int2_rte(ulong2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rte(ulong3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25775,6 +25766,15 @@ int16 convert_int16_rte(ulong16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rte(ulong3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25790,15 +25790,6 @@ int2 convert_int2_rtp(ulong2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtp(ulong3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25847,6 +25838,15 @@ int16 convert_int16_rtp(ulong16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtp(ulong3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25862,15 +25862,6 @@ int2 convert_int2_rtn(ulong2 x)
   return (int2)(
     (int)x.s0,
     (int)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-int3 convert_int3_rtn(ulong3 x)
-{
-  return (int3)(
-    (int)x.s0,
-    (int)x.s1,
-    (int)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25919,6 +25910,15 @@ int16 convert_int16_rtn(ulong16 x)
     (int)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+int3 convert_int3_rtn(ulong3 x)
+{
+  return (int3)(
+    (int)x.s0,
+    (int)x.s1,
+    (int)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -25934,15 +25934,6 @@ uint2 convert_uint2_rtz(ulong2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtz(ulong3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -25991,6 +25982,15 @@ uint16 convert_uint16_rtz(ulong16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtz(ulong3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26006,15 +26006,6 @@ uint2 convert_uint2_rte(ulong2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rte(ulong3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26063,6 +26054,15 @@ uint16 convert_uint16_rte(ulong16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rte(ulong3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26078,15 +26078,6 @@ uint2 convert_uint2_rtp(ulong2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtp(ulong3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26135,6 +26126,15 @@ uint16 convert_uint16_rtp(ulong16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtp(ulong3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26150,15 +26150,6 @@ uint2 convert_uint2_rtn(ulong2 x)
   return (uint2)(
     (uint)x.s0,
     (uint)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-uint3 convert_uint3_rtn(ulong3 x)
-{
-  return (uint3)(
-    (uint)x.s0,
-    (uint)x.s1,
-    (uint)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26207,6 +26198,15 @@ uint16 convert_uint16_rtn(ulong16 x)
     (uint)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+uint3 convert_uint3_rtn(ulong3 x)
+{
+  return (uint3)(
+    (uint)x.s0,
+    (uint)x.s1,
+    (uint)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26222,15 +26222,6 @@ long2 convert_long2_rtz(ulong2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtz(ulong3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26279,6 +26270,15 @@ long16 convert_long16_rtz(ulong16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtz(ulong3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26294,15 +26294,6 @@ long2 convert_long2_rte(ulong2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rte(ulong3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26351,6 +26342,15 @@ long16 convert_long16_rte(ulong16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rte(ulong3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26366,15 +26366,6 @@ long2 convert_long2_rtp(ulong2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtp(ulong3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26423,6 +26414,15 @@ long16 convert_long16_rtp(ulong16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtp(ulong3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26438,15 +26438,6 @@ long2 convert_long2_rtn(ulong2 x)
   return (long2)(
     (long)x.s0,
     (long)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-long3 convert_long3_rtn(ulong3 x)
-{
-  return (long3)(
-    (long)x.s0,
-    (long)x.s1,
-    (long)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26495,6 +26486,15 @@ long16 convert_long16_rtn(ulong16 x)
     (long)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+long3 convert_long3_rtn(ulong3 x)
+{
+  return (long3)(
+    (long)x.s0,
+    (long)x.s1,
+    (long)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26510,15 +26510,6 @@ ulong2 convert_ulong2_rtz(ulong2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtz(ulong3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26567,6 +26558,15 @@ ulong16 convert_ulong16_rtz(ulong16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtz(ulong3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26582,15 +26582,6 @@ ulong2 convert_ulong2_rte(ulong2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rte(ulong3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26639,6 +26630,15 @@ ulong16 convert_ulong16_rte(ulong16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rte(ulong3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26654,15 +26654,6 @@ ulong2 convert_ulong2_rtp(ulong2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtp(ulong3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26711,6 +26702,15 @@ ulong16 convert_ulong16_rtp(ulong16 x)
     (ulong)x.sf);
 }
 
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtp(ulong3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
+}
+
 #endif
 
 #if defined(cl_khr_int64)
@@ -26726,15 +26726,6 @@ ulong2 convert_ulong2_rtn(ulong2 x)
   return (ulong2)(
     (ulong)x.s0,
     (ulong)x.s1);
-}
-
-_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-ulong3 convert_ulong3_rtn(ulong3 x)
-{
-  return (ulong3)(
-    (ulong)x.s0,
-    (ulong)x.s1,
-    (ulong)x.s2);
 }
 
 _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
@@ -26781,6 +26772,15 @@ ulong16 convert_ulong16_rtn(ulong16 x)
     (ulong)x.sd,
     (ulong)x.se,
     (ulong)x.sf);
+}
+
+_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
+ulong3 convert_ulong3_rtn(ulong3 x)
+{
+  return (ulong3)(
+    (ulong)x.s0,
+    (ulong)x.s1,
+    (ulong)x.s2);
 }
 
 #endif

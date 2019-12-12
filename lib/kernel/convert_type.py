@@ -37,7 +37,7 @@ int64_types = ['long', 'ulong']
 float16_types = ['half']
 float64_types = ['double']
 vector_sizes = ['', '2', '3', '4', '8', '16']
-numvec_sizes = [2, 3, 4, 8, 16]
+numvec_sizes = [2, 4, 8, 16, 3]
 vector_lanes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
 saturation = ['','_sat']
