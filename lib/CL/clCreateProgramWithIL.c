@@ -37,6 +37,10 @@ CL_API_SUFFIX__VERSION_2_1
 {
   cl_program program = NULL;
   int errcode = CL_SUCCESS;
+#ifdef ENABLE_SPIRV
+  uint64_t fsize = 0;
+  char *content = NULL;
+#endif
 
   POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
 
@@ -68,8 +72,6 @@ CL_API_SUFFIX__VERSION_2_1
                       "External command (llvm-spirv translator) failed!\n");
 
   /* load LLVM SPIR binary. */
-  uint64_t fsize;
-  char *content;
   pocl_read_file (program_bc_temp, &content, &fsize);
   POCL_GOTO_ERROR_ON ((content == NULL), CL_INVALID_VALUE,
                       "Can't read converted bitcode file\n");
@@ -140,6 +142,9 @@ CL_API_SUFFIX__VERSION_2_1
 ERROR:
   if (errcode_ret)
     *errcode_ret = errcode;
+#ifdef ENABLE_SPIRV
+  POCL_MEM_FREE (content);
+#endif
   return program;
 }
 POsym(clCreateProgramWithIL)
