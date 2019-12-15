@@ -205,6 +205,12 @@ option(ENABLE_HOST_CPU_DEVICE_CL20 "Enable reporting OpenCL 2.0 for the CPU devi
 
 option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
+option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
+
+option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
+
+option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
+
 ####
 
 # currently only works with gcc as host compiler
@@ -1513,17 +1519,24 @@ set(POCLU_LINK_OPTIONS poclu ${OPENCL_LIBS} ${LIBMATH})
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # poclcc bin
-add_subdirectory("bin")
+if(ENABLE_POCLCC)
+    add_subdirectory("bin")
+endif()
+
 
 include(add_test_pocl)
 
-add_subdirectory("tests")
-add_subdirectory("examples")
+if(ENABLE_TESTS)
+    add_subdirectory("tests")
 
-# make check & make check_tier1
+    # make check & make check_tier1
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+endif()
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro|shoc'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+if(ENABLE_EXAMPLES)
+    add_subdirectory("examples")
+endif()
 
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png")
@@ -1543,7 +1556,6 @@ set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_DEB_COMPONENT_INSTALL ON)
 
 include(CPack)
-
 
 ##########################################################
 

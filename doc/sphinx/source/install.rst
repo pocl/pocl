@@ -215,6 +215,13 @@ use ";" as separator (you'll have to escape it for bash).
   with ``-DTESTSUITE_BASEDIR=/home/pocltest-build -DTESTSUITE_SOURCE_BASEDIR=/home/pocltest-src``,
   place the ``AMD-APP-SDK-v2.9-RC-lnx64.tgz`` file into ``/home/pocltest-src/AMDSDK2.9`` directory.
 
+- ``-DENABLE_TESTS=ON/OFF`` enable/disable compilation of internal tests.
+
+- ``-DENABLE_EXAMPLES=ON/OFF`` enable/disable compilation of all examples.
+  Disabling this makes ENABLE_TESTSUITES option unavailable.
+
+- ``-DENABLE_POCLCC=ON/OFF`` enable/disable compilation of poclcc.
+
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   Ensures that certain build options which would result in non-conformant pocl
   build stay disabled. Defaults to ON. Note that this does not quarantee a
