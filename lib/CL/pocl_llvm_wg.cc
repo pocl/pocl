@@ -69,8 +69,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 // each work-group IR function generation. Requires LLVM > 7.
 // #define DUMP_LLVM_PASS_TIMINGS
 
-#ifdef DUMP_LLVM_PASS_TIMINGS
+#ifndef LLVM_OLDER_THAN_10_0
 #include <llvm/IR/PassTimingInfo.h>
+#define CODEGEN_FILE_TYPE_NS llvm
+#else
+#define CODEGEN_FILE_TYPE_NS TargetMachine
 #endif
 
 using namespace llvm;
@@ -605,13 +608,11 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   llvm::raw_svector_ostream SOS(Data);
   bool cannotEmitFile;
 
-#ifdef LLVM_OLDER_THAN_7_0
   cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS,
-                                  TargetMachine::CGFT_ObjectFile);
-#else
-  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-                                  TargetMachine::CGFT_ObjectFile);
+#ifndef LLVM_OLDER_THAN_7_0
+                                  nullptr,
 #endif
+                                  CODEGEN_FILE_TYPE_NS::CGFT_ObjectFile);
 
   LLVMGeneratesObjectFiles = !cannotEmitFile;
 
@@ -641,17 +642,18 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   // The LLVM target does not implement support for emitting object file directly.
   // Have to emit the text first and then call the assembler from the command line
   // to produce the binary.
-#ifdef LLVM_OLDER_THAN_7_0
+
+
   if (Target->addPassesToEmitFile(PMAsm, SOS,
-                                  TargetMachine::CGFT_AssemblyFile)) {
-    POCL_ABORT("The target supports neither obj nor asm emission!");
-  }
-#else
-  if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-                                  TargetMachine::CGFT_AssemblyFile)) {
-    POCL_ABORT("The target supports neither obj nor asm emission!");
-  }
+#ifndef LLVM_OLDER_THAN_7_0
+                                  nullptr,
 #endif
+                                  CODEGEN_FILE_TYPE_NS::CGFT_AssemblyFile)) {
+    POCL_ABORT("The target supports neither obj nor asm emission!");
+  }
+
+
+
 
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::TimePassesIsEnabled = true;
