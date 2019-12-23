@@ -80,7 +80,7 @@ set(MINOR_VERSION 8)
 set(VERSION_SUFFIX_FIXED_TEXT "-pre")
 set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT}")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
-set(POCL_VERSION ${VERSION_STRING})
+set(POCL_VERSION_BASE ${VERSION_STRING})
 
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -119,12 +119,15 @@ find_program(MAKE_PROGRAM NAMES "make")
 find_program(GIT_CMD "git")
 set_expr(HAVE_GIT GIT_CMD)
 
-if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre"))
+if(HAVE_GIT)
   execute_process(COMMAND "${GIT_CMD}" "rev-parse" "HEAD"
                   OUTPUT_VARIABLE GIT_COMMIT
                   RESULT_VARIABLE EXITCODE
                   WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
+endif()
+
+if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre") AND (EXITCODE EQUAL 0))
   message(STATUS "Pocl source Git commit: ${GIT_COMMIT}")
 
   execute_process(COMMAND "${GIT_CMD}" "branch" "--contains" "${GIT_COMMIT}"
@@ -144,9 +147,10 @@ if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre"))
   message(STATUS "Pocl source Git describe: ${GIT_DESCRIBE}")
   set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT} ${GIT_DESCRIBE}")
   set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
-  set(POCL_VERSION ${VERSION_STRING})
+  set(POCL_VERSION_FULL "${VERSION_STRING}")
 else()
   message(STATUS "No git and/or not a prerelease -> not adding git commit to version.")
+  set(POCL_VERSION_FULL "${POCL_VERSION_BASE}")
 endif()
 
 set(CPACK_PACKAGE_NAME pocl)

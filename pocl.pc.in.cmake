@@ -5,7 +5,7 @@ includedir=@POCL_INSTALL_PUBLIC_HEADER_DIR@
 
 Name: Portable Computing Language
 Description: Portable Computing Language
-Version: @POCL_VERSION@
+Version: @POCL_VERSION_FULL@
 Libs: -L${libdir} -lpocl
 Cflags: -I${includedir}
 

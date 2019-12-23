@@ -24,7 +24,7 @@
 #include "pocl_util.h"
 
 static const char *pocl_version
-    = "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION
+    = "OpenCL " POCL_CL_VERSION " pocl " POCL_VERSION_FULL
 
 #if defined(_WIN32)
    #if defined(_WIN64)

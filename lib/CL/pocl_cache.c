@@ -370,7 +370,7 @@ build_program_compute_hash (cl_program program, unsigned device_i,
     unsigned i;
     cl_device_id device = program->devices[device_i];
 
-    static const char *builtin_seed = PACKAGE_VERSION POCL_BUILD_TIMESTAMP
+    static const char *builtin_seed = POCL_VERSION_BASE POCL_BUILD_TIMESTAMP
 #ifdef ENABLE_LLVM
         LLVM_VERSION POCL_KERNELLIB_SHA1
 #endif

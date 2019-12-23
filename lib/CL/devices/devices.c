@@ -565,7 +565,7 @@ pocl_init_devices ()
              a shared global memory. */
           dev->global_mem_id = dev_index;
           POCL_INIT_OBJECT (dev);
-          dev->driver_version = PACKAGE_VERSION;
+          dev->driver_version = POCL_VERSION_FULL;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
           dev->short_name = strdup (dev->ops->device_name);
