@@ -35,7 +35,7 @@
 #  else
 #    include <sys/time.h>
 #  endif
-#  ifdef __MACH__
+#  ifdef __APPLE__
 #    include <mach/clock.h>
 #    include <mach/mach.h>
 #  endif
