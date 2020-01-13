@@ -398,7 +398,7 @@ if (local_##coord > 1) \
       /* Only proceed if splitting wouldn't bring us below the minimum
        * group size */
       while (((splits = ncus / (nwg_x * nwg_y * nwg_z)) > 1) &&
-             (local_x * local_y * local_z > splits * min_group_size))
+             (local_x * local_y * local_z >= splits * min_group_size))
         {
           /* Very simple splitting approach: find a dimension divisible by
            * split, and lacking that divide by something less, if possible.
