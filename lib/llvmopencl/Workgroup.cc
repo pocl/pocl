@@ -243,7 +243,6 @@ Workgroup::runOnModule(Module &M) {
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
-      createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
     } else if (currentPoclDevice->spmd) {
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
@@ -1100,6 +1099,22 @@ static size_t getArgumentSize(llvm::Argument &Arg) {
   return DL.getTypeStoreSize(TypeInBuf);
 }
 
+static uint64_t pocl_size_ceil2_64(uint64_t x) {
+  /* Rounds up to the next highest power of two without branching and
+   * is as fast as a BSR instruction on x86, see:
+   *
+   * http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+   */
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  x |= x >> 32;
+  return ++x;
+}
+
 static void computeArgBufferOffsets(LLVMValueRef F,
                                     uint64_t *ArgBufferOffsets) {
 
@@ -1112,13 +1127,70 @@ static void computeArgBufferOffsets(LLVMValueRef F,
     // TODO: This is a target specific type? We would like to get the
     // natural size or the "packed size" instead...
     uint64_t ByteSize = getArgumentSize(cast<Argument>(*unwrap(Param)));
-    uint64_t Alignment = ByteSize;
+    uint64_t Alignment = pocl_size_ceil2_64(ByteSize);
 
     assert(ByteSize > 0 && "Arg type size is zero?");
     Offset = align64(Offset, Alignment);
+
     ArgBufferOffsets[i] = Offset;
     Offset += ByteSize;
   }
+}
+
+static LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
+                                                LLVMBuilderRef Builder,
+                                                llvm::Argument &Arg,
+                                                LLVMValueRef ArgByteOffset) {
+
+  LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
+  LLVMValueRef MemCpy1 = LLVMGetNamedFunction(M, "_pocl_memcpy_1");
+  LLVMValueRef MemCpy4 = LLVMGetNamedFunction(M, "_pocl_memcpy_4");
+  LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
+  LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
+
+  llvm::Type *TypeInArg = Arg.getType()->getPointerElementType();
+  const DataLayout &DL = Arg.getParent()->getParent()->getDataLayout();
+  unsigned alignment = DL.getABITypeAlignment(TypeInArg);
+  uint64_t StoreSize = DL.getTypeStoreSize(TypeInArg);
+  LLVMValueRef Size =
+      LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), StoreSize, 0);
+
+  LLVMValueRef LocalArgAlloca =
+      LLVMBuildAlloca(Builder, wrap(TypeInArg), "struct_arg");
+
+  if ((alignment % 4 == 0) && (StoreSize % 4 == 0)) {
+    LLVMTypeRef i32PtrAS0 = LLVMPointerType(Int32Type, 0);
+    LLVMTypeRef i32PtrAS1 =
+        LLVMPointerType(Int32Type, currentPoclDevice->args_as_id);
+    LLVMValueRef CARG0 =
+        LLVMBuildPointerCast(Builder, LocalArgAlloca, i32PtrAS0, "cargDst");
+    LLVMValueRef CARG1 =
+        LLVMBuildPointerCast(Builder, ArgByteOffset, i32PtrAS1, "cargSrc");
+
+    LLVMValueRef args[3];
+    args[0] = CARG0;
+    args[1] = CARG1;
+    args[2] = Size;
+
+    LLVMValueRef call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
+  } else {
+    LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
+    LLVMTypeRef i8PtrAS1 =
+        LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+    LLVMValueRef CARG0 =
+        LLVMBuildPointerCast(Builder, LocalArgAlloca, i8PtrAS0, "cargDst");
+    LLVMValueRef CARG1 =
+        LLVMBuildPointerCast(Builder, ArgByteOffset, i8PtrAS1, "cargSrc");
+
+    LLVMValueRef args[3];
+    args[0] = CARG0;
+    args[1] = CARG1;
+    args[2] = Size;
+
+    LLVMValueRef call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
+  }
+
+  return LocalArgAlloca;
 }
 
 static LLVMValueRef
@@ -1138,14 +1210,26 @@ createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
   LLVMValueRef ArgByteOffset =
       LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
 
-  if (isByValPtrArgument(cast<Argument>(*unwrap(Param)))) {
-    // In case of byval arguments (private structs), the struct
-    // is in the arg buffer directly. Just refer to its address.
-    return LLVMBuildPointerCast(Builder, ArgByteOffset, ParamType,
-                                "inval_arg_ptr");
+  llvm::Argument &Arg = cast<Argument>(*unwrap(Param));
+
+  // byval arguments (private structs), passed via pointer
+  if (isByValPtrArgument(Arg)) {
+
+    // the kernel AS for private structs is always zero (private).
+    // if the arg address space is also zero, nothing to do here just cast...
+    if (currentPoclDevice->args_as_id == 0)
+      return LLVMBuildPointerCast(Builder, ArgByteOffset, ParamType,
+                                  "inval_arg_ptr");
+
+    // ... otherwise the arg AS is different, and we need an alloca+memcpy.
+    else
+      return createAllocaMemcpyForStruct(M, Builder, Arg, ArgByteOffset);
+
+    // not by-val argument
   } else {
     LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
-        Builder, ArgByteOffset, LLVMPointerType(ParamType, 0), "arg_ptr");
+        Builder, ArgByteOffset,
+        LLVMPointerType(ParamType, currentPoclDevice->args_as_id), "arg_ptr");
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
   }
 }
@@ -1215,8 +1299,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMValueRef Args[ArgCount];
   LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
   size_t i = 0;
-  for (; i < ArgCount - HiddenArgs + 1; ++i) {
-
+  for (; i < ArgCount - HiddenArgs; ++i) {
     if (currentPoclDevice->device_alloca_locals &&
         isLocalMemFunctionArg(Func, i)) {
 
@@ -1295,7 +1378,15 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
     }
   }
 
-  size_t Arg = 2;
+  size_t Arg = 1;
+  // Pass the context object
+  LLVMValueRef CtxParam = LLVMGetParam(WrapperKernel, Arg++);
+  LLVMTypeRef CtxT = wrap(PoclContextT);
+  LLVMTypeRef CtxPtrTypeActual =
+      LLVMPointerType(CtxT, currentPoclDevice->context_as_id);
+  LLVMValueRef CastContext =
+      LLVMBuildPointerCast(Builder, CtxParam, CtxPtrTypeActual, "ctx_ptr");
+  Args[i++] = CastContext;
   // Pass the group ids.
   Args[i++] = LLVMGetParam(WrapperKernel, Arg++);
   Args[i++] = LLVMGetParam(WrapperKernel, Arg++);
@@ -1303,7 +1394,6 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
 
   assert (i == ArgCount);
 
-  // Pass the context object.
   LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
   LLVMBuildRetVoid(Builder);
 
@@ -1450,27 +1540,30 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
             ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
 
+    Value *value;
+
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         // Assume the pointer is directly in the arg array.
-        arguments.push_back(builder.CreatePointerCast(pointer, t));
+        value = builder.CreatePointerCast(pointer, t);
+        arguments.push_back(value);
         continue;
+      } else {
+        // It's a pass by value pointer argument, use the underlying
+        // element type in subsequent load.
+        t = t->getPointerElementType();
       }
-
-      // It's a pass by value pointer argument, use the underlying
-      // element type in subsequent load.
-      t = t->getPointerElementType();
     }
 
     // If it's a pass by value pointer argument, we just pass the pointer
     // as is to the function, no need to load from it first.
-    Value *value;
 
-    if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
+    if (ii->hasByValAttr() && (((PointerType *)t)->getAddressSpace() != 1)) {
+      value = builder.CreatePointerCast(pointer, t->getPointerTo());
+    } else {
       value = builder.CreatePointerCast
         (pointer, t->getPointerTo(currentPoclDevice->global_as_id));
-    else
-      value = builder.CreatePointerCast(pointer, t->getPointerTo());
+    }
 
     if (!ii->hasByValAttr()) {
       value = builder.CreateLoad(value);
