@@ -134,7 +134,7 @@ int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *se
 #endif
   gmtime_r(&sec_input, &t);
   *year = (t.tm_year + 1900);
-  *mon = t.tm_mon;
+  *mon = t.tm_mon + 1;
   *day = t.tm_mday;
   *hour = t.tm_hour;
   *min = t.tm_min;
