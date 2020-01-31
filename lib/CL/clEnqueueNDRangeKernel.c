@@ -108,14 +108,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   int errcode = 0;
   cl_device_id realdev = NULL;
   _cl_command_node *command_node;
-  /* alloc from stack to avoid malloc. num_args is the absolute max needed */
-  cl_mem mem_list[kernel->meta->num_args + 1];
-  /* reserve space for potential buffer migrate events */
-  cl_event new_event_wait_list[num_events_in_wait_list + kernel->meta->num_args + 1];
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+
+  /* alloc from stack to avoid malloc. num_args is the absolute max needed */
+  cl_mem mem_list[kernel->meta->num_args + 1];
+  /* reserve space for potential buffer migrate events */
+  cl_event new_event_wait_list[num_events_in_wait_list + kernel->meta->num_args + 1];
 
   POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
     CL_INVALID_CONTEXT,
