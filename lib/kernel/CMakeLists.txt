@@ -229,6 +229,7 @@ add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
   DEPENDS ${KERNEL_BC_LIST}
       "${CMAKE_SOURCE_DIR}/include/_kernel.h"
       "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
+      "${CMAKE_SOURCE_DIR}/include/_libclang_versions_checks.h"
       "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
   COMMENT "Generating SHA1 of all kernel libs..."
   VERBATIM)

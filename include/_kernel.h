@@ -143,32 +143,20 @@
 # undef LLVM_10_0
 # define LLVM_10_0
 
+#elif (__clang_major__ == 11)
+
+# undef LLVM_11_0
+# define LLVM_11_0
 #else
 
 #error Unsupported Clang/LLVM version.
 
 #endif
 
-#ifndef LLVM_10_0
-#define LLVM_OLDER_THAN_10_0 1
+#define CLANG_MAJOR __clang_major__
+#include "_libclang_versions_checks.h"
 
-#ifndef LLVM_9_0
-#define LLVM_OLDER_THAN_9_0 1
 
-#ifndef LLVM_8_0
-#define LLVM_OLDER_THAN_8_0 1
-
-#ifndef LLVM_7_0
-#define LLVM_OLDER_THAN_7_0 1
-
-#ifndef LLVM_6_0
-#define LLVM_OLDER_THAN_6_0 1
-
-#endif
-#endif
-#endif
-#endif
-#endif
 
 /****************************************************************************/
 
