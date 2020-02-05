@@ -23,6 +23,11 @@
 #
 #=============================================================================
 
+# this is required, because we're compiling the C++ files of this directory
+# with LLVM-provided flags, which usually contain their own setting of
+# C++ standard, which may be in conflict with pocl's default C++ standard.
+unset(CMAKE_CXX_STANDARD)
+
 if(SANITIZER_OPTIONS)
   add_compile_options(${SANITIZER_OPTIONS})
 endif()

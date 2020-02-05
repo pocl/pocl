@@ -23,6 +23,11 @@
 #
 #=============================================================================
 
+# this is required, because we're compiling these files with LLVM-provided flags, which
+# usually contain their own setting of C++ standard, which may be in conflict
+# with pocl's default C++ standard.
+unset(CMAKE_CXX_STANDARD)
+
 set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "AllocasToEntry.h"
                        "AutomaticLocals.cc"
