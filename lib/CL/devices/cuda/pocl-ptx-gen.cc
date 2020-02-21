@@ -135,7 +135,11 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
 #ifndef LLVM_OLDER_THAN_7_0
                                    nullptr,
 #endif
+#ifdef LLVM_OLDER_THAN_10_0
                                    llvm::TargetMachine::CGFT_AssemblyFile)) {
+#else
+                                   llvm::CGFT_AssemblyFile)) {
+#endif
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
   }
