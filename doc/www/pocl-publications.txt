@@ -5,7 +5,7 @@ International Journal of Parallel Programming, Springer. October 2015, Volume 43
 
 Ville Korhonen
 Portable OpenCL Out-of-Order Execution Framework for Heterogeneous Platforms
-https://dspace.cc.tut.fi/dpub/handle/123456789/22636?locale-attribute=en
+http://urn.fi/URN:NBN:fi:tty-201412051583
 Master's thesis. Tampere University of Technology. December 2014.
 
 Pekka J&auml;&auml;skel&auml;inen, Ville Korhonen, Matias Koskela, Jarmo Takala, Karen Egiazarian, Aram Danielyan, Cristo&#769;va&#771;o Cruz, James Price, Simon McIntosh-Smith
