@@ -27,6 +27,7 @@
 #include <sched.h>
 #endif
 
+#include <math.h>
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
@@ -204,10 +205,11 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
    * If we have enough workgroups, scale up the requests linearly by
    * num_threads, otherwise fallback to smaller workgroups.
    */
+  const unsigned my_wgs = ceil ((float) k->remaining_wgs / (float) num_threads);
   if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
-    max_wgs = min (scaled_min_wgs, (1 + k->remaining_wgs / num_threads));
+    max_wgs = min (scaled_min_wgs, my_wgs);
   else
-    max_wgs = min (scaled_max_wgs, (1 + k->remaining_wgs / num_threads));
+    max_wgs = min (scaled_max_wgs, my_wgs);
 
   max_wgs = min (max_wgs, k->remaining_wgs);
   assert (max_wgs > 0);
