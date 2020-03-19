@@ -190,6 +190,7 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
   const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
 
+  unsigned limit;
   unsigned max_wgs;
   POCL_FAST_LOCK (k->lock);
   if (k->remaining_wgs == 0)
@@ -205,12 +206,13 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
    * If we have enough workgroups, scale up the requests linearly by
    * num_threads, otherwise fallback to smaller workgroups.
    */
-  const unsigned my_wgs = ceil ((float) k->remaining_wgs / (float) num_threads);
   if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
-    max_wgs = min (scaled_min_wgs, my_wgs);
+    limit = scaled_min_wgs;
   else
-    max_wgs = min (scaled_max_wgs, my_wgs);
+    limit = scaled_max_wgs;
 
+  const unsigned wgs_per_thread = ceil ((float) k->remaining_wgs / (float) num_threads);
+  max_wgs = min (limit, wgs_per_thread);
   max_wgs = min (max_wgs, k->remaining_wgs);
   assert (max_wgs > 0);
 
