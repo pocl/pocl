@@ -27,7 +27,6 @@
 #include <sched.h>
 #endif
 
-#include <math.h>
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
@@ -211,7 +210,8 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   else
     limit = scaled_max_wgs;
 
-  const unsigned wgs_per_thread = ceil ((float) k->remaining_wgs / (float) num_threads);
+  // divide two integers rounding up, i.e. ceil(k->remaining_wgs/num_threads)
+  const unsigned wgs_per_thread = (1 + (k->remaining_wgs - 1) / num_threads);
   max_wgs = min (limit, wgs_per_thread);
   max_wgs = min (max_wgs, k->remaining_wgs);
   assert (max_wgs > 0);
