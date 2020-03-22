@@ -168,8 +168,7 @@ int bitcode_is_spirv(const char *bitcode, size_t size, int *is_opencl) {
 int cpu_has_fma() {
   StringMap<bool> features;
   bool res = llvm::sys::getHostCPUFeatures(features);
-  assert(res);
-  return ((features["fma"] || features["fma4"]) ? 1 : 0);
+  return ((res && (features["fma"] || features["fma4"])) ? 1 : 0);
 }
 
 #define VECWIDTH(x)                                                            \
@@ -178,14 +177,15 @@ int cpu_has_fma() {
 void cpu_setup_vector_widths(cl_device_id dev) {
   StringMap<bool> features;
   bool res = llvm::sys::getHostCPUFeatures(features);
-  assert(res);
   unsigned lane_width = 1;
-  if ((features["sse"]) || (features["neon"]))
-    lane_width = 16;
-  if (features["avx"])
-    lane_width = 32;
-  if (features["avx512f"])
-    lane_width = 64;
+  if (res) {
+    if ((features["sse"]) || (features["neon"]))
+      lane_width = 16;
+    if (features["avx"])
+      lane_width = 32;
+    if (features["avx512f"])
+      lane_width = 64;
+  }
 
   dev->native_vector_width_char = dev->preferred_vector_width_char =
       VECWIDTH(cl_char);

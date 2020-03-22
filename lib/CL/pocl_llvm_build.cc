@@ -768,8 +768,14 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
 const char *getX86KernelLibName() {
   StringMap<bool> Features;
-  llvm::sys::getHostCPUFeatures(Features);
   const char *res = NULL;
+
+  if (!llvm::sys::getHostCPUFeatures(Features)) {
+    POCL_MSG_WARN ("getX86KernelLibName(): LLVM can't get host CPU flags!\n");
+    /* getX86KernelLibName should only ever be enabled
+       on x86-64, which always has sse2 */
+    return "sse2";
+  }
 
   if (Features["sse2"])
     res = "sse2";
