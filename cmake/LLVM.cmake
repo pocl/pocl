@@ -707,7 +707,7 @@ endif()
 ####################################################################
 # Some architectures have -march and -mcpu reversed
 
-if(NOT DEFINED ${CLANG_MARCH_FLAG})
+if(NOT DEFINED CLANG_MARCH_FLAG)
   message(STATUS "Checking clang -march vs. -mcpu flag")
   custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${LLC_HOST_CPU})
   if(NOT RES)
