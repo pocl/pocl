@@ -3,6 +3,7 @@
 
 Notable User Facing Changes
 ---------------------------
+- Support for LLVM 10.
 - POCL_TRACE_EVENT, POCL_TRACE_EVENT_OPT and POCL_TRACE_EVENT_FILTER
   environment variables were renamed to
   POCL_TRACING, POCL_TRACING_OPT and POCL_TRACING_FILTER, respectively.
@@ -10,6 +11,7 @@ Notable User Facing Changes
   autovectorization criteria under LLVM, thus utilizing device's SIMD ISA
   capabilities where available; e.g. on an ARM64 Cortex-A72 convert_int8(short8)
   is 5.5x faster now when measured in a tight loop.
+- A lot of fixes.
 
 Usability
 ---------
