@@ -3,12 +3,12 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>April 2020: pocl v1.5 released</h2>
+<h1>April 3, 2020: pocl v1.5 released</h2>
 
 <h2>Release Highlights</h2>
 
 <ul>
-<li>Support for LLVM/Clang 9.0 and 10.0</li>
+<li>Added support for LLVM/Clang 10.0</li>
 </ul>
 
 <p>A more detailed changelog <a href="http://portablecl.org/downloads/CHANGES">here</a>.
@@ -24,8 +24,8 @@ that uses OpenCL to remain regression free in the future pocl releases.</p>
 Most of the code that landed to the pocl code base during this release
 cycle was produced for the needs of research projects funded by various
 sources. <a href="http://tuni.fi/cpc">Customized Parallel Computing</a> research group of
-<a href="http://www.tuni.fi">Tampere University</a>, Finland likes to thank the Academy of Finland (funding
-decision 297548), ECSEL JU project FitOptiVis (project number 783162) and
+<a href="http://www.tuni.fi">Tampere University</a>, Finland likes to thank,
+ECSEL JU project FitOptiVis (project number 783162) and
 HSA Foundation for funding most of the development work in this release.
 Much appreciated!
 </p>

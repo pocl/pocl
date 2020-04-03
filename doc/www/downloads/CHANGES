@@ -1,13 +1,35 @@
-1.4 October 2019
-================
+1.5 April 2020
+==============
+
+Notable User Facing Changes
+---------------------------
+- Support for LLVM 10.
+- POCL_TRACE_EVENT, POCL_TRACE_EVENT_OPT and POCL_TRACE_EVENT_FILTER
+  environment variables were renamed to
+  POCL_TRACING, POCL_TRACING_OPT and POCL_TRACING_FILTER, respectively.
+- Refactored the implementation of convert_T() OpenCL functions to better meet
+  autovectorization criteria under LLVM, thus utilizing device's SIMD ISA
+  capabilities where available; e.g. on an ARM64 Cortex-A72 convert_int8(short8)
+  is 5.5x faster now when measured in a tight loop.
+- A lot of fixes.
+
+Usability
+---------
+- A simple per-kernel execution time statistics atexit() for quick and easy
+  low-impact per-device profiling purposes (relies on event time stamps purely).
+  It can be enabled by setting POCL_TRACING env to 'cq'.
+
+1.4 September 2019
+==================
 
 Highlights
 ----------
-- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
-  Kernel library (for CPU target) support for SPIR-mangling improved
 - pocl-accel: An example driver and support infrastructure for OpenCL 1.2
   CL_DEVICE_TYPE_CUSTOM hardware accelerators which implement a memory
   mapped control interface.
+
+- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
+  Kernel library (for CPU target) support for SPIR-mangling improved
 
 Kernel Compiler
 ---------------
@@ -36,6 +58,7 @@ Notable Internal Changes
   https://github.com/RadeonOpenCompute/ROCm-Device-Libs/tree/master/ocml
   was mirrored in lib/kernel and made it easy to cherry pick
   implementations to targets' kernel libary.
+
 - libltdl is replaced with libdl on UNIX platforms.
 
 Notable Bug Fixes
