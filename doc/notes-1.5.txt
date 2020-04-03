@@ -1,38 +1,40 @@
 Portable Computing Language (pocl) v1.5 released
--------------------------------------------------
+------------------------------------------------
 
-Pocl is a portable open source (MIT-licensed) implementation of the OpenCL
-standard (1.2 with some 2.0 features supported). In addition to being an
-easily portable multi-device open-source OpenCL implementation, another major
-goal of this project is improving performance portability of OpenCL programs
-with the kernel compiler and the task runtime, reducing the need for
-target-dependent manual optimizations.
+PoCL is a portable open source (MIT-licensed) implementation of the
+OpenCL standard (1.2 with some 2.0 features supported). In addition to
+being an easily portable multi-device open-source OpenCL implementation,
+a major goal of this project is improving interoperability of diversity
+of OpenCL-capable devices by integrating them to a single centrally
+orchestrated platform.
 
-Upstream pocl currently supports various CPU devices, NVIDIA GPUs via libcuda,
-HSA-supported GPUs and TCE ASIPs (experimental, see http://openasip.org),
-with various known private adopters as well.
+Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
+HSA-supported GPUs and TCE ASIPs (experimental, see:
+http://openasip.org) It also is known to have multiple (private) ports.
 
 Release Highlights
 ------------------
 
 * Support for Clang/LLVM 10.0
+* An easy to use kernel profiling feature
+* Plenty of fixes and performance improvements
 
-Please note that there's an official pocl "maintenance policy" in place.
-This text describes the policy and how you can get your favourite project
-that uses OpenCL to remain regression free in the future pocl releases:
+Please note that there's an official PoCL "maintenance policy" in place.
+This text describes the policy and how you can get your favourite
+project that uses OpenCL to remain regression free in the future PoCL
+releases:
 
-  http://portablecl.org/docs/html/maintainer-policy.html
+http://portablecl.org/docs/html/maintainer-policy.html
 
 Acknowledgements
 ----------------
 
-Most of the code that landed to the pocl code base during this release
+Most of the code that landed to the PoCL code base during this release
 cycle was produced for the needs of research projects funded by various
 sources. Customized Parallel Computing research group of Tampere
-University, Finland likes to thank the Academy of Finland (funding
-decision 297548), ECSEL JU project FitOptiVis (project number 783162) and
-HSA Foundation for funding most of the development work in this release.
-Much appreciated!
+University, Finland likes to thank the ECSEL JU project FitOptiVis
+(project number 783162) and HSA Foundation for funding most of the
+development work in this release. Much appreciated!
 
 Links
 -----

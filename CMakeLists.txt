@@ -60,12 +60,12 @@ if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>")
+
     check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
-    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
     if (HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
-      set(FORBIT_IMPLICIT_FUNCTIONS ${FORBIT_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
+      add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>")
     endif()
-    add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
