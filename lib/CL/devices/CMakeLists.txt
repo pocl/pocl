@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2018 pocl developers
+#   Copyright (c) 2014-2020 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -81,6 +81,7 @@ set(POCL_DEVICES_SOURCES
   devices.h  devices.c
   bufalloc.c
   common.h common.c
+  pocl_local_size.h pocl_local_size.c
   bufalloc.h  cpuinfo.c cpuinfo.h)
 
 if(MSVC)

@@ -621,6 +621,14 @@ struct pocl_device_ops {
      allocated at the given target. */
   cl_int (*get_builtin_kernel_metadata) (void *data, const char *kernel_name,
                                          pocl_kernel_metadata_t *target);
+
+  /* The device can override this function to perform driver-specific
+   * optimizations to the local size dimensions, whenever the decision
+   * is left to the runtime. */
+  void (*compute_local_size) (cl_device_id dev, size_t global_x,
+                              size_t global_y, size_t global_z,
+                              size_t *local_x, size_t *local_y,
+                              size_t *local_z);
 };
 
 typedef struct pocl_global_mem_t {

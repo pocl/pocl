@@ -1,6 +1,6 @@
 /* pocl-hsa.c - driver for HSA supported devices.
 
-   Copyright (c) 2015-2019 Pekka Jääskeläinen
+   Copyright (c) 2015-2020 Pekka Jääskeläinen
                  2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
                       Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
                  2015-2018 Michal Babej <michal.babej@tut.fi>
@@ -87,6 +87,7 @@
 #include "pocl_mem_management.h"
 #include "pocl_context.h"
 #include "pocl_spir.h"
+#include "pocl_local_size.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -104,20 +105,6 @@
 #endif
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
-
-/* TODO:
-   - fix pocl_llvm_generate_workgroup_function() to
-     generate the entire linked program.bc for HSA, not just a single kernel.
-   - AMD SDK samples. Requires work mainly in these areas:
-      - image support
-      - CL C++
-   - OpenCL printf() support
-   - get_global_offset() and global_work_offset param of clEnqueNDRker -
-     HSA kernel dispatch packet has no offset fields -
-     we must take care of it somewhere
-   - clinfo of Ubuntu crashes
-   - etc. etc.
-*/
 
 /* TODO: The kernel cache is never shrunk. We need a hook that is called back
    when clReleaseKernel is called to get a safe point where to release the
@@ -262,6 +249,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->unmap_mem = pocl_basic_unmap_mem;
   ops->memfill = pocl_basic_memfill;
   ops->copy = pocl_hsa_copy;
+  ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->svm_free = pocl_hsa_svm_free;
   ops->svm_alloc = pocl_hsa_svm_alloc;
@@ -736,6 +724,12 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 
   if (max_wg > 0)
     dev->max_work_group_size = max_wg;
+
+  /* Assume a small maximum work-group size indicates also the desire to
+     maximally utilize it. */
+  if (max_wg <= 256)
+    dev->ops->compute_local_size = pocl_wg_utilization_maximizer;
+
   if (AMD_HSA && dev->vendor_id == AMD_VENDOR_ID)
     {
 #if AMD_HSA == 1

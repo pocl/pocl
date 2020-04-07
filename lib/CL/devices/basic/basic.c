@@ -1,7 +1,7 @@
-/* basic.c - a minimalistic pocl device driver layer implementation
+/* basic.c - a minimalistic single core pocl device driver layer implementation
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2019 Pekka Jääskeläinen
+                 2011-2020 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,15 +22,16 @@
    IN THE SOFTWARE.
 */
 
+#include "basic.h"
+#include "common.h"
 #include "config.h"
 #include "config2.h"
-#include "basic.h"
 #include "cpuinfo.h"
-#include "topology/pocl_topology.h"
-#include "common.h"
-#include "utlist.h"
 #include "devices.h"
+#include "pocl_local_size.h"
 #include "pocl_util.h"
+#include "topology/pocl_topology.h"
+#include "utlist.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -135,6 +136,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
   ops->build_hash = pocl_basic_build_hash;
+  ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
