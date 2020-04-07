@@ -243,8 +243,8 @@ string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 ####################################################################
 
 # llvm-config does not include clang libs
-if((9 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
-  # For Clang 10+, link against a single shared library instead of multiple component shared
+if((8 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
+  # For Clang 9+, link against a single shared library instead of multiple component shared
   # libraries.
   if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
     set(CLANG_LIBNAMES clangTCE-cpp)
@@ -261,7 +261,7 @@ endif()
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  if(UNIX AND (NOT APPLE))
+  if(UNIX AND (NOT APPLE) AND (NOT ((8 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))))
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
   endif()
 endforeach()
