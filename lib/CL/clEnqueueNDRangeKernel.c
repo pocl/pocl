@@ -362,7 +362,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (pocl_cq_profiling_enabled)
     {
       pocl_cq_profiling_register_event (command_node->event);
-      clRetainKernel (kernel);
+      POname(clRetainKernel) (kernel);
       command_node->event->meta_data->kernel = kernel;
     }
 
