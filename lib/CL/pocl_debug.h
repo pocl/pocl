@@ -59,8 +59,10 @@ extern "C" {
 #define POCL_DEBUG_FLAG_HSA 0x100
 #define POCL_DEBUG_FLAG_TCE 0x200
 #define POCL_DEBUG_FLAG_CUDA 0x400
-#define POCL_DEBUG_FLAG_WARNING 0x800
-#define POCL_DEBUG_FLAG_ERROR 0x1000
+#define POCL_DEBUG_FLAG_ACCEL 0x800
+
+#define POCL_DEBUG_FLAG_WARNING  0x8000000000UL
+#define POCL_DEBUG_FLAG_ERROR   0x10000000000UL
 #define POCL_DEBUG_FLAG_ALL (uint64_t)(-1)
 
 #define POCL_FILTER_TYPE_INFO 1
@@ -184,6 +186,8 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_INFO_F(filter, errcode, ...) \
           POCL_MSG_PRINT_F(filter, INFO, errcode, __VA_ARGS__)
 
+    #define POCL_MSG_PRINT_ACCEL2(errcode, ...) POCL_MSG_PRINT_INFO_F(ACCEL, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_ACCEL(...) POCL_MSG_PRINT_INFO_F(ACCEL, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA(...) POCL_MSG_PRINT_INFO_F(CUDA, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_HSA2(errcode, ...) POCL_MSG_PRINT_INFO_F(HSA, errcode, __VA_ARGS__)
@@ -225,6 +229,8 @@ POCL_EXPORT
     #define POCL_MEASURE_FINISH(...)  do {} while (0)
     #define POCL_DEBUG_EVENT_TIME(...)  do {} while (0)
 
+    #define POCL_MSG_PRINT_ACCEL2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ACCEL(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA(...)  do {} while (0)
     #define POCL_MSG_PRINT_HSA2(...)  do {} while (0)
