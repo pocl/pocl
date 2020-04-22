@@ -192,7 +192,7 @@ get_pocl_device_lib_path (char *result, char *device_name)
 }
 
 /**
- * Get the number of specified devices from environnement
+ * Get the number of specified devices from environment
  */
 int pocl_device_get_env_count(const char *dev_type)
 {
