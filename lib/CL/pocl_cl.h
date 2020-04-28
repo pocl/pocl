@@ -577,6 +577,9 @@ struct pocl_device_ops {
       /* 1 = compile & link, 0 = compile only, linked later via clLinkProgram*/
       int link_program, int spir_build);
 
+  /* build a program with builtin kernels. */
+  int (*build_builtin) (cl_program program, cl_uint device_i);
+
   int (*link_program) (cl_program program, cl_uint device_i,
 
                        cl_uint num_input_programs,

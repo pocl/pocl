@@ -91,6 +91,7 @@
   int pocl_##__DRV__##_build_binary (                                         \
       cl_program program, cl_uint device_i, cl_uint num_devices,              \
       const cl_device_id *device_list, int link_program, int spir_build);     \
+  int pocl_##__DRV__##_build_builtin (cl_program program, cl_uint device_i);  \
   int pocl_##__DRV__##_link_program (                                         \
       cl_program program, cl_uint device_i, cl_uint num_input_programs,       \
       const cl_program *input_programs, int create_library);                  \

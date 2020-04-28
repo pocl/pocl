@@ -727,9 +727,19 @@ compile_and_link_program(int compile_program,
       actually_built++;
 
       /* clCreateProgramWithBuiltinKernels */
-      /* No build step supported at the moment for built-in kernels. */
       if (program->builtin_kernel_names)
-        continue;
+        {
+          if (device->ops->build_builtin)
+            {
+              error = device->ops->build_builtin (program, device_i);
+              if (error != CL_SUCCESS)
+                APPEND_TO_BUILD_LOG_GOTO (CL_BUILD_PROGRAM_FAILURE,
+                                          "Device %s failed to build the "
+                                          "program with builtin kernels\n",
+                                          device->long_name);
+            }
+          continue;
+        }
 
       /* only link the program/library */
       if (!compile_program && link_program)
