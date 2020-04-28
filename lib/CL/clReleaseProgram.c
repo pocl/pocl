@@ -119,6 +119,11 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (program->compiler_options);
       POCL_MEM_FREE (program->data);
 
+      for (i = 0; i < program->num_builtin_kernels; ++i)
+        POCL_MEM_FREE (program->builtin_kernel_names[i]);
+      POCL_MEM_FREE (program->builtin_kernel_names);
+      POCL_MEM_FREE (program->concated_builtin_names);
+
       POCL_DESTROY_OBJECT (program);
       POCL_MEM_FREE (program);
 

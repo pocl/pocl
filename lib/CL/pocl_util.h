@@ -147,6 +147,8 @@ void pocl_setup_context(cl_context context);
 
 cl_device_id pocl_real_dev (const cl_device_id);
 cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real);
+int pocl_device_supports_builtin_kernel (cl_device_id dev,
+                                         const char *kernel_name);
 
 #define POCL_CHECK_DEV_IN_CMDQ                                                \
   do                                                                          \

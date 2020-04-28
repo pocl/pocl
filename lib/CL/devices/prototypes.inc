@@ -159,7 +159,4 @@
       cl_device_id dev, void *__restrict__ svm_ptr, size_t size,              \
       void *__restrict__ pattern, size_t pattern_size);                       \
   void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \
-  void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
-  cl_int pocl_##__DRV__##_supports_builtin_kernel (void *data,                \
-                                                   const char *kernel_name);  \
-
+  void pocl_##__DRV__##_notify_event_finished (cl_event event);

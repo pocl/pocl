@@ -39,6 +39,7 @@
 #include <climits>
 #include <iostream>
 #include <set>
+#include <string>
 #include <vector>
 
 // MMAPRegion debug prints get quite spammy
@@ -314,7 +315,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->uninit = pocl_accel_uninit;
   ops->probe = pocl_accel_probe;
   ops->build_hash = pocl_accel_build_hash;
-  ops->supports_builtin_kernel = pocl_accel_supports_builtin_kernel;
   ops->setup_metadata = pocl_accel_setup_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */
@@ -438,6 +438,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   char *paramToken = strtok_r(scanParams, ",", &savePtr);
   D->BaseAddress = strtoull(paramToken, NULL, 0);
 
+  std::string supportedList;
   while (paramToken = strtok_r(NULL, ",", &savePtr)) {
     auto token = strtoul(paramToken, NULL, 0);
     BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
@@ -446,6 +447,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     bool found = false;
     for (size_t i = 0; i < numBIKDs; ++i) {
       if (BIDescriptors[i].KernelId == kernelId) {
+        if (supportedList.size() > 0)
+          supportedList += ";";
+        supportedList += BIDescriptors[i].name;
         D->SupportedKernels.insert(&BIDescriptors[i]);
         found = true;
         break;
@@ -455,6 +459,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       POCL_ABORT("accel: Unknown Kernel ID (%lu) given\n", token);
     }
   }
+
+  dev->builtin_kernel_list = strdup(supportedList.c_str());
 
   POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels\n",
                       D->BaseAddress, D->SupportedKernels.size());
@@ -541,15 +547,6 @@ char *pocl_accel_build_hash(cl_device_id /*device*/) {
   snprintf(res, 1000, "accel-%s", HOST_DEVICE_BUILD_HASH);
 #endif
   return res;
-}
-
-cl_int pocl_accel_supports_builtin_kernel(void *data, const char *kernel_name) {
-  AccelData *D = (AccelData *)data;
-  for (auto supportedKernel : D->SupportedKernels) {
-    if (strcmp(supportedKernel->name, kernel_name) == 0)
-      return 1;
-  }
-  return 0;
 }
 
 static cl_int

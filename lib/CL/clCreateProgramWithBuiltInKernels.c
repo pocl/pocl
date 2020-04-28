@@ -60,9 +60,7 @@ CL_API_SUFFIX__VERSION_1_2
       for (i = 0; i < num_devices; ++i)
         {
           cl_device_id dev = device_list[i];
-          if (dev->ops->supports_builtin_kernel == NULL)
-            continue;
-          if (dev->ops->supports_builtin_kernel (dev->data, token))
+          if (pocl_device_supports_builtin_kernel (dev, token))
             ++num_supported;
         }
       POCL_GOTO_ERROR_ON ((num_supported == 0), CL_INVALID_VALUE,
@@ -93,6 +91,7 @@ CL_API_SUFFIX__VERSION_1_2
 
   program->num_builtin_kernels = num_kernels;
   program->builtin_kernel_names = builtin_names;
+  program->concated_builtin_names = strdup (kernel_names);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

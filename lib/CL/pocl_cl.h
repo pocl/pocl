@@ -713,9 +713,6 @@ struct pocl_device_ops {
 
   /* custom device functionality */
 
-  /* Check if the device supports the builtin kernel with the given name. */
-  cl_int (*supports_builtin_kernel) (void *data, const char *kernel_name);
-
   /* The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
    * is left to the runtime. */
@@ -907,6 +904,9 @@ struct _cl_device_id {
      be retained across the kernel compilation unused code pruning
      process. */
   const char **device_aux_functions;
+
+  /* semicolon separated list of builtin kernels*/
+  char *builtin_kernel_list;
 
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
@@ -1212,6 +1212,7 @@ struct _cl_program {
      names it contains. */
   size_t num_builtin_kernels;
   char **builtin_kernel_names;
+  char *concated_builtin_names;
 
   /* Poclcc binary format.  */
   /* per-device poclbinary-format binaries.  */

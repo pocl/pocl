@@ -30,12 +30,12 @@
 
 #ifndef _MSC_VER
 #include <dirent.h>
+#include <string.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 #include <unistd.h>
 #include <utime.h>
 #else
@@ -914,6 +914,32 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
 
   *real = real_num;
   return out;
+}
+
+int
+pocl_device_supports_builtin_kernel (cl_device_id dev, const char *kernel_name)
+{
+  if (kernel_name == NULL)
+    return 0;
+
+  if (dev->builtin_kernel_list == NULL)
+    return 0;
+
+  char *temp = strdup (dev->builtin_kernel_list);
+  char *token;
+  char *rest = temp;
+
+  while ((token = strtok_r (rest, ";", &rest)))
+    {
+      if (strcmp (token, kernel_name) == 0)
+        {
+          free (temp);
+          return 1;
+        }
+    }
+
+  free (temp);
+  return 0;
 }
 
 static void

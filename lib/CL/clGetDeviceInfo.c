@@ -243,7 +243,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_GETINFO_STR (HOST_CL_VERSION);
   case CL_DEVICE_BUILT_IN_KERNELS                  :
-    POCL_RETURN_GETINFO_STR("");
+    if (device->builtin_kernel_list)
+      POCL_RETURN_GETINFO_STR (device->builtin_kernel_list);
+    else
+      POCL_RETURN_GETINFO_STR ("");
 
   case CL_DEVICE_PARENT_DEVICE                     :
     POCL_RETURN_GETINFO(cl_device_id, device->parent_device);

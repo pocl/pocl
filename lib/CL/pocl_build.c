@@ -451,7 +451,8 @@ clean_program_on_rebuild (cl_program program, int from_error)
       memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
       if (program->source)
         {
-          dev->ops->free_program (dev, program, i);
+          if (dev->ops->free_program)
+            dev->ops->free_program (dev, program, i);
           POCL_MEM_FREE (program->binaries[i]);
           program->binary_sizes[i] = 0;
           POCL_MEM_FREE (program->pocl_binaries[i]);
@@ -502,7 +503,8 @@ setup_kernel_metadata (cl_program program, cl_uint num_devices,
         }
       else
         {
-          assert (program->source || program->binaries[device_i]);
+          assert (program->source || program->binaries[device_i]
+                  || (program->num_builtin_kernels > 0));
           cl_device_id device = program->devices[device_i];
           if (device->ops->setup_metadata
               && device->ops->setup_metadata (device, program, device_i))
