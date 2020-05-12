@@ -148,6 +148,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->free_event_data = pocl_cuda_free_event_data;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
+  ops->init_build = pocl_cuda_init_build;
   // TODO
   ops->map_mem = pocl_cuda_map_mem;
 
@@ -1569,4 +1570,9 @@ pocl_cuda_finalize_thread (void *data)
     }
 
   return NULL;
+}
+
+char* pocl_cuda_init_build(void *data)
+{
+   return strdup("-mllvm --nvptx-short-ptr");
 }
