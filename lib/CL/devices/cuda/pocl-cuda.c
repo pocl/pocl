@@ -191,6 +191,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;
 
+  dev->autolocals_to_args = CL_FALSE;
+
   dev->has_64bit_long = 1;
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
