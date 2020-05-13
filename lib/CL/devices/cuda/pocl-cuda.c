@@ -42,48 +42,6 @@
 
 #include <cuda.h>
 
-typedef struct pocl_cuda_device_data_s
-{
-  CUdevice device;
-  CUcontext context;
-  CUevent epoch_event;
-  cl_ulong epoch;
-  char libdevice[PATH_MAX];
-  pocl_lock_t compile_lock;
-} pocl_cuda_device_data_t;
-
-typedef struct pocl_cuda_queue_data_s
-{
-  CUstream stream;
-  int use_threads;
-  pthread_t submit_thread;
-  pthread_t finalize_thread;
-  pthread_mutex_t lock;
-  pthread_cond_t pending_cond;
-  pthread_cond_t running_cond;
-  _cl_command_node *volatile pending_queue;
-  _cl_command_node *volatile running_queue;
-  cl_command_queue queue;
-} pocl_cuda_queue_data_t;
-
-typedef struct pocl_cuda_kernel_data_s
-{
-  CUmodule module;
-  CUmodule module_offsets;
-  CUfunction kernel;
-  CUfunction kernel_offsets;
-  size_t *alignments;
-} pocl_cuda_kernel_data_t;
-
-typedef struct pocl_cuda_event_data_s
-{
-  CUevent start;
-  CUevent end;
-  volatile int events_ready;
-  cl_int *ext_event_flag;
-  volatile unsigned num_ext_events;
-} pocl_cuda_event_data_t;
-
 extern unsigned int pocl_num_devices;
 
 void *pocl_cuda_submit_thread (void *);
@@ -806,7 +764,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   if (!pocl_exists (ptx_filename))
     {
       /* Generate PTX from LLVM bitcode */
-      if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
+      if (pocl_ptx_gen (bc_filename, ptx_filename, kdata, kernel->name,
                         device->llvm_cpu,
                         ((pocl_cuda_device_data_t *)device->data)->libdevice,
                         has_offsets))
@@ -828,7 +786,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   if (!kdata->alignments)
     {
       kdata->alignments
-          = calloc (meta->num_args + meta->num_locals + 4, sizeof (size_t));
+          = calloc (meta->num_args + 4, sizeof (size_t));
       pocl_cuda_get_ptr_arg_alignment (bc_filename, kernel->name,
                                        kdata->alignments);
     }
@@ -880,8 +838,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   /* Prepare kernel arguments */
   void *null = NULL;
   unsigned sharedMemBytes = 0;
-  void *params[meta->num_args + meta->num_locals + 4];
-  unsigned sharedMemOffsets[meta->num_args + meta->num_locals];
+  void *params[meta->num_args + 4];
+  unsigned sharedMemOffsets[meta->num_args];
   unsigned constantMemBytes = 0;
   unsigned constantMemOffsets[meta->num_args];
   unsigned globalOffsets[3];
@@ -892,8 +850,11 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   cuModuleGetGlobal (&constant_mem_base, &constant_mem_size, module,
                      "_constant_memory_region_");
 
-  CUresult result;
   unsigned i;
+  /* Deal with automatic local allocations */
+  sharedMemBytes = kdata->auto_local_offset;
+
+  CUresult result;
   for (i = 0; i < meta->num_args; i++)
     {
       pocl_argument_type type = meta->arg_info[i].type;
@@ -984,22 +945,6 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 constantMemBytes, constant_mem_size);
 
   unsigned arg_index = meta->num_args;
-
-  /* Deal with automatic local allocations */
-  /* TODO: Would be better to remove arguments and make these static GEPs */
-  for (i = 0; i < meta->num_locals; ++i, ++arg_index)
-    {
-      size_t size = meta->local_sizes[i];
-      size_t align = kdata->alignments[arg_index];
-
-      /* Pad offset to align memory */
-      if (sharedMemBytes % align)
-        sharedMemBytes += align - (sharedMemBytes % align);
-
-      sharedMemOffsets[arg_index] = sharedMemBytes;
-      sharedMemBytes += size;
-      params[arg_index] = sharedMemOffsets + arg_index;
-    }
 
   /* Add global work dimensionality */
   params[arg_index++] = &pc.work_dim;

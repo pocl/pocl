@@ -25,6 +25,7 @@
 #define POCL_PTX_GEN_H
 
 #include "config.h"
+#include "pocl-cuda-types.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -43,6 +44,7 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch);
 /* Returns zero on success, non-zero on failure. */
 int pocl_ptx_gen(const char *BitcodeFilename,
                  const char *PTXFilename,
+		 pocl_cuda_kernel_data_t *KernelData,
                  const char *KernelName,
                  const char *Arch,
                  const char *LibDevicePath,

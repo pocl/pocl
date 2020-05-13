@@ -55,7 +55,7 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixConstantMemArgs(llvm::Module *Module, const char *KernelName);
-static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
+static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName, pocl_cuda_kernel_data_t *KernelData);
 static void fixPrintF(llvm::Module *Module);
 static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
@@ -63,6 +63,7 @@ static void linkLibDevice(llvm::Module *Module, const char *KernelName,
 static void mapLibDeviceCalls(llvm::Module *Module);
 
 int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
+		 pocl_cuda_kernel_data_t *KernelData,
                  const char *KernelName, const char *Arch,
                  const char *LibDevicePath, int HasOffsets) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
@@ -84,7 +85,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module->get());
   fixConstantMemArgs(Module->get(), KernelName);
-  fixLocalMemArgs(Module->get(), KernelName);
+  fixLocalMemArgs(Module->get(), KernelName, KernelData);
   handleGetWorkDim(Module->get(), KernelName);
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
@@ -594,7 +595,8 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 // instructions to calculate the new pointers from the provided base global
 // variable.
 void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
-                             unsigned AddrSpace, llvm::GlobalVariable *Base) {
+                             unsigned AddrSpace, llvm::GlobalVariable *Base,
+			     pocl_cuda_kernel_data_t *KernelData) {
 
   llvm::LLVMContext &Context = Module->getContext();
 
@@ -607,19 +609,70 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   std::vector<llvm::Type *> ArgumentTypes;
 
   llvm::ValueToValueMapTy VV;
-  std::vector<std::pair<llvm::Instruction *, llvm::Instruction *>> ToInsert;
+  std::vector<std::vector<llvm::Instruction *>> ToInsert;
 
-  // Loop over arguments.
+  bool IsLocal = (AddrSpace == 3);
+
+  size_t ConstOffset = 0;
+  llvm::Type *I32ty = llvm::Type::getInt32Ty(Context);
+
   bool NeedsArgOffsets = false;
+  // Loop over arguments.
   for (auto &Arg : Function->args()) {
     // Check for local memory pointer.
     llvm::Type *ArgType = Arg.getType();
     if (ArgType->isPointerTy() &&
         ArgType->getPointerAddressSpace() == AddrSpace) {
       NeedsArgOffsets = true;
+    }
+  }
 
+  if (!NeedsArgOffsets)
+    return;
+
+  if (IsLocal && NeedsArgOffsets) {
+    std::string FuncName = Function->getName().str();
+    for (auto &Arg: Function->getParent()->globals()) {
+      if (pocl::isAutomaticLocal(FuncName, Arg)) {
+        // Fix alignment
+        auto Alignment = Module->getDataLayout().getTypeAllocSize(Arg.getType()->getPointerElementType());
+        if (ConstOffset % Alignment)
+            ConstOffset += Alignment - (ConstOffset % Alignment);
+
+        // Insert GEP to add offset.
+        llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
+        llvm::Value *Offset = llvm::ConstantInt::getSigned(I32ty, ConstOffset);
+        llvm::GetElementPtrInst *GEP =
+            llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
+
+        // Cast pointer to correct type.
+        llvm::Type *ArgType = Arg.getType();
+        llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
+
+        // Save these instructions to insert into new function later.
+        ToInsert.push_back({GEP, Cast});
+
+        // Map the old local memory argument to the result of this cast.
+        VV[&Arg] = Cast;
+
+        // Calculate next offset
+        ConstOffset += Module->getDataLayout().getTypeAllocSize(Arg.getInitializer()->getType());
+      }
+    }
+  }
+
+  if (KernelData != NULL) {
+     KernelData->auto_local_offset = ConstOffset;
+  }
+
+  // Loop over arguments.
+  for (auto &Arg : Function->args()) {
+    // Check for local memory pointer.
+    llvm::Type *ArgType = Arg.getType();
+    if (ArgType->isPointerTy() &&
+        ArgType->getPointerAddressSpace() == AddrSpace) {
+      NeedsArgOffsets = true;
       // Create new argument for offset into shared memory allocation.
-      llvm::Type *I32ty = llvm::Type::getInt32Ty(Context);
       llvm::Argument *Offset =
           new llvm::Argument(I32ty, Arg.getName() + "_offset");
       Arguments.push_back(Offset);
@@ -627,14 +680,17 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
+      llvm::Value *ConstOffsetValue = llvm::ConstantInt::getSigned(I32ty, ConstOffset);
+      llvm::Instruction *FullOffset = llvm::BinaryOperator::CreateAdd(Offset, ConstOffsetValue);
+
       llvm::GetElementPtrInst *GEP =
-          llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
+          llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, FullOffset});
 
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
 
       // Save these instructions to insert into new function later.
-      ToInsert.push_back({GEP, Cast});
+      ToInsert.push_back({FullOffset, GEP, Cast});
 
       // Map the old local memory argument to the result of this cast.
       VV[&Arg] = Cast;
@@ -644,9 +700,6 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
       ArgumentTypes.push_back(ArgType);
     }
   }
-
-  if (!NeedsArgOffsets)
-    return;
 
   // Create new function with offsets instead of local memory pointers.
   llvm::FunctionType *NewFunctionType =
@@ -675,9 +728,11 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
 
   // Insert offset instructions into new function.
-  for (auto Pair : ToInsert) {
-    Pair.first->insertBefore(&*NewFunction->begin()->begin());
-    Pair.second->insertAfter(Pair.first);
+  for (auto Vec : ToInsert) {
+    Vec[0]->insertBefore(&*NewFunction->begin()->begin());
+    for (size_t Idx = 0; Idx + 1 < Vec.size(); Idx++) {
+        Vec[Idx + 1]->insertAfter(Vec[Idx]);
+    }
   }
 
   Function->eraseFromParent();
@@ -705,14 +760,14 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
       llvm::Constant::getNullValue(ByteArrayType), "_constant_memory_region_",
       NULL, llvm::GlobalValue::NotThreadLocal, 4, false);
 
-  convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase);
+  convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase, NULL);
 }
 
 // CUDA doesn't allow multiple local memory arguments or automatic variables, so
 // we have to create a single global variable for local memory allocations, and
 // then manually add offsets to it to get each individual local memory
 // allocation.
-void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
+void fixLocalMemArgs(llvm::Module *Module, const char *KernelName, pocl_cuda_kernel_data_t* KernelData) {
 
   // Create global variable for local memory allocations.
   llvm::Type *ByteArrayType =
@@ -722,7 +777,7 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
       "_shared_memory_region_", NULL, llvm::GlobalValue::NotThreadLocal, 3,
       false);
 
-  convertPtrArgsToOffsets(Module, KernelName, 3, SharedMemBase);
+  convertPtrArgsToOffsets(Module, KernelName, 3, SharedMemBase, KernelData);
 }
 
 // Map kernel math functions onto the corresponding CUDA libdevice functions.
