@@ -73,6 +73,9 @@ POCL_EXPORT
 void pocl_exec_command (_cl_command_node *node);
 
 POCL_EXPORT
+char *pocl_cpu_build_hash (cl_device_id device);
+
+POCL_EXPORT
 void pocl_broadcast (cl_event event);
 
 POCL_EXPORT

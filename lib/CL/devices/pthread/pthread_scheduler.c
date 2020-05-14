@@ -37,7 +37,6 @@
 #include "common_driver.h"
 #include "pocl-pthread.h"
 #include "pocl-pthread_scheduler.h"
-#include "pocl-pthread_utils.h"
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
@@ -69,18 +68,18 @@ struct pool_thread_data
 
 typedef struct scheduler_data_
 {
+  pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  _cl_command_node *work_queue
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
   unsigned num_threads;
   unsigned printf_buf_size;
 
   struct pool_thread_data *thread_pool;
   size_t local_mem_size;
 
-  _cl_command_node *work_queue
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   kernel_run_command *kernel_queue;
-
-  pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   int thread_pool_shutdown_requested;
 
@@ -383,10 +382,6 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   cl_program program = kernel->program;
   cl_uint dev_i = cmd->program_device_i;
 
-  /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
-                                      pocl_cpu_gvar_init_callback);
-
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   if (num_groups == 0)
@@ -398,6 +393,10 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
       return;
     }
+
+  /* initialize the program gvars if required */
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
 
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);

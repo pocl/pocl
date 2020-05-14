@@ -65,6 +65,15 @@ if(BUILD_ALMAIF)
     "$<TARGET_OBJECTS:pocl-devices-almaif>")
 endif()
 
+if(BUILD_TBB)
+  add_subdirectory("tbb")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-tbb>")
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${TBB_IMPORTED_TARGETS})
+  endif()
+endif()
+
 if(BUILD_REMOTE_CLIENT)
   add_subdirectory("remote")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
@@ -86,6 +95,9 @@ if(ENABLE_HOST_CPU_DEVICES)
       else()
         list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
       endif()
+    endif()
+    if(ENABLE_HOST_CPU_DEVICES_OPENMP)
+      list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_CXX)
     endif()
   endif()
 endif()
@@ -158,6 +170,7 @@ set(POCL_DEVICES_SOURCES
   devices.h  devices.c
   bufalloc.c  bufalloc.h
   common.h  common.c
+  common_utils.h common_utils.c
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   builtin_kernels.cc builtin_kernels.hh

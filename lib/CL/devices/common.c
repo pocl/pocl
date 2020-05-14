@@ -735,6 +735,15 @@ pocl_exec_command (_cl_command_node *node)
     }
 }
 
+char *
+pocl_cpu_build_hash (cl_device_id device)
+{
+  char *res = calloc(1000, sizeof(char));
+  snprintf (res, 1000, "cpu-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
+  return res;
+}
+
 /* call with brc_event UNLOCKED. */
 void
 pocl_broadcast (cl_event brc_event)

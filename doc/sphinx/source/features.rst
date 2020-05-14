@@ -11,6 +11,7 @@ TCE devices and fixed-function accelerators.
    opencl_status
    conformance
    extensions
+   tbb
    hsa
    cuda
    almaif

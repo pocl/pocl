@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2021 PoCL developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -24,15 +24,13 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( pocl-pthread.h pthread.c pthread_scheduler.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( tbb.h tbb.cc tbb_scheduler.cc PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-set(SOURCES pocl-pthread.h pthread.c pthread_scheduler.c)
-if(APPLE)
-  list(APPEND SOURCES pthread_barrier.c)
-endif(APPLE)
-add_pocl_device_library(pocl-devices-pthread ${SOURCES})
+add_pocl_device_library(pocl-devices-tbb tbb.h tbb.cc tbb_scheduler.cc)
+set_target_properties(pocl-devices-tbb PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
+target_include_directories(pocl-devices-tbb PRIVATE "${TBB_INCLUDE_DIRS}")
 
 if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-pthread PRIVATE pocl-devices-basic ${PTHREAD_LIBRARY})
+  target_link_libraries(pocl-devices-tbb PRIVATE pocl-devices-pthread ${TBB_IMPORTED_TARGETS})
 endif()

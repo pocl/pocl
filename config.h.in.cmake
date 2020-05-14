@@ -6,6 +6,7 @@
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
+#cmakedefine BUILD_TBB
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
@@ -117,7 +118,9 @@
 
 #endif
 
-#if defined(BUILD_BASIC) || defined(BUILD_PTHREAD)
+#if defined(ENABLE_HOST_CPU_DEVICES)
+
+#cmakedefine ENABLE_HOST_CPU_DEVICES_OPENMP
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
 

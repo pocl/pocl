@@ -188,6 +188,9 @@ pocl.
  *         **cpu**      Execution of OpenCL kernels on the host CPU using
                         (by default) all available CPU threads.
 
+ *         **cpu-tbb**  Uses the Intel Threading Building Blocks library for
+                        for task scheduling on the host CPU.
+
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
 
  *         **hsa**      Uses HSA Runtime API to control HSA-compliant

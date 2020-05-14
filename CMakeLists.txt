@@ -225,6 +225,8 @@ option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan AP
 
 option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
+option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
+
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
@@ -299,6 +301,8 @@ option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requi
 option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" OFF)
 
 OPTION(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
+
+option(ENABLE_HOST_CPU_DEVICES_OPENMP "Enables OpenMP support for some Host CPU devices" OFF)
 
 ##########################################################
 
@@ -462,6 +466,45 @@ setup_cached_var(ENABLE_HWLOC "Using hwloc"
         "Hwloc found, but requested build without it")
 
 include(sanitizers)
+
+######################################################################################
+
+if(ENABLE_TBB_DEVICE)
+  # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
+  find_package(TBB REQUIRED)
+  if(TARGET TBB::tbb)
+    set(TBB_IMPORTED_TARGETS TBB::tbb)
+  elseif(NOT TBB_FOUND AND PKG_CONFIG_FOUND)
+    message(STATUS "searching for TBB with pkg-config")
+    pkg_check_modules(TBB tbb>=2015)
+    if(TBB_FOUND)
+      set(TBB_IMPORTED_TARGETS "${TBB_LIBRARIES}" CACHE STRING "TBB libraries" FORCE)
+    endif()
+  endif()
+
+  if(NOT TBB_INCLUDE_DIRS)
+    get_target_property(TBB_INCLUDE_DIRS TBB::tbb INTERFACE_INCLUDE_DIRECTORIES)
+  endif()
+  if(NOT TBB_LIBRARIES)
+    get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_RELEASE)
+  endif()
+
+  if(NOT TBB_FOUND)
+    message(FATAL_ERROR "Can't find TBB libraries")
+  endif()
+
+  message(STATUS "Found TBB library: ${TBB_LIBRARIES} with include dirs: ${TBB_INCLUDE_DIRS}" )
+
+  # The tbb device depends on the pthread device which depends on the basic device. ENABLE_HOST_CPU_DEVICES enables both.
+  set(ENABLE_HOST_CPU_DEVICES 1)
+endif()
+
+if(ENABLE_HOST_CPU_DEVICES_OPENMP)
+  find_package(OpenMP)
+  if(NOT OpenMP_CXX_FOUND)
+    message(FATAL_ERROR "ENABLE_HOST_CPU_DEVICES_OPENMP specified but OpenMP not found.")
+  endif()
+endif()
 
 ######################################################################################
 
@@ -1398,6 +1441,11 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_KERNEL_TARGET_CPU "${SELECTED_HOST_CPU}") #The kernel target CPU variant.
   set(BUILD_BASIC 1)
   set(BUILD_PTHREAD 1)
+endif()
+
+if(ENABLE_TBB_DEVICE)
+  set(BUILD_TBB 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} tbb")
 endif()
 
 # The almaif device could be built by default, but it's implemented in C++,
