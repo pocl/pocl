@@ -295,7 +295,7 @@ work_group_scheduler (kernel_run_command *k,
 
       for (i = start_index; i <= end_index; ++i)
         {
-	  size_t gids[3];
+          size_t gids[3];
           translate_wg_index_to_3d_index (k, i, gids,
                                           slice_size, row_size);
 
