@@ -33,8 +33,6 @@
 #pragma GCC visibility push(hidden)
 #endif
 
-typedef struct pool_thread_data thread_data;
-
 /* Initializes scheduler. Must be called before any kernel enqueue */
 void tbb_scheduler_init (cl_device_id device);
 

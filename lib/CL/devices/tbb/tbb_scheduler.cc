@@ -33,72 +33,56 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "tbb_scheduler.h"
+#include <tbb/blocked_range3d.h>
+#include <tbb/parallel_for.h>
+#include <tbb/partitioner.h>
+#include <tbb/task_arena.h>
+
+#include "common.h"
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+#include "pocl_util.h"
 #include "tbb.h"
+#include "tbb_scheduler.h"
 #include "tbb_utils.h"
 #include "utlist.h"
-#include "pocl_util.h"
-#include "common.h"
-#include "pocl_mem_management.h"
 
 static void* pocl_tbb_driver_thread (void *p);
 
-struct pool_thread_data
-{
-  pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-
-  unsigned long executed_commands;
-  /* per-CU (= per-thread) local memory */
-  void *local_mem;
-  unsigned current_ftz;
-  unsigned num_threads;
-  /* index of this particular thread
-   * [0, num_threads-1]
-   * used for deciding whether a particular thread should run
-   * commands scheduled on a subdevice. */
-  unsigned index;
-  /* printf buffer*/
-  void *printf_buffer;
-} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+enum partitioner{NONE, AFFINITY, AUTO, SIMPLE, STATIC};
 
 typedef struct scheduler_data_
 {
-  unsigned num_threads;
   unsigned printf_buf_size;
+  uchar *printf_buf_global_ptr;
 
-  struct pool_thread_data *thread_pool;
   size_t local_mem_size;
+  char *local_mem_global_ptr;
 
-  _cl_command_node *work_queue
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  kernel_run_command *kernel_queue;
+  size_t num_tbb_threads;
+  unsigned grain_size;
+  enum partitioner selected_partitioner;
 
-  pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  _cl_command_node *work_queue __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  int thread_pool_shutdown_requested;
+  pthread_t meta_thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_cond_t wake_meta_thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  int meta_thread_shutdown_requested;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
 
+/* External functions declared in tbb_scheduler.h */
+
 void
 tbb_scheduler_init (cl_device_id device)
 {
-  unsigned i;
-  size_t num_worker_threads = device->max_compute_units;
   POCL_FAST_INIT (scheduler.wq_lock_fast);
 
-  pthread_cond_init (&(scheduler.wake_pool), NULL);
+  pthread_cond_init (&(scheduler.wake_meta_thread), NULL);
 
-  scheduler.thread_pool = reinterpret_cast<pool_thread_data*> (pocl_aligned_malloc (
-      HOST_CPU_CACHELINE_SIZE,
-      num_worker_threads * sizeof (struct pool_thread_data)));
-  memset (scheduler.thread_pool, 0,
-          num_worker_threads * sizeof (struct pool_thread_data));
-
-  scheduler.num_threads = num_worker_threads;
-  assert (num_worker_threads > 0);
   scheduler.printf_buf_size = device->printf_buffer_size;
   assert (device->printf_buffer_size > 0);
 
@@ -107,14 +91,53 @@ tbb_scheduler_init (cl_device_id device)
    * TODO fix this */
   scheduler.local_mem_size = device->local_mem_size + device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
 
-  for (i = 0; i < num_worker_threads; ++i)
+  scheduler.num_tbb_threads = device->max_compute_units;
+
+  /* alloc local memory for all threads making sure the memory for each thread is aligned. */
+  scheduler.printf_buf_size = (1 + (scheduler.printf_buf_size - 1) / MAX_EXTENDED_ALIGNMENT) * MAX_EXTENDED_ALIGNMENT;
+  scheduler.local_mem_size = (1 + (scheduler.local_mem_size - 1) / MAX_EXTENDED_ALIGNMENT) * MAX_EXTENDED_ALIGNMENT;
+  scheduler.printf_buf_global_ptr = reinterpret_cast<uchar*> (pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, scheduler.printf_buf_size * scheduler.num_tbb_threads));
+  scheduler.local_mem_global_ptr = reinterpret_cast<char*> (pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, scheduler.local_mem_size * scheduler.num_tbb_threads));
+
+  /* create one meta thread to serve as an async interface thread. */
+  pthread_create (&scheduler.meta_thread, NULL, pocl_tbb_driver_thread, NULL);
+
+  scheduler.grain_size = 0;
+  if (pocl_is_option_set("POCL_TBB_GRAIN_SIZE"))
     {
-      scheduler.thread_pool[i].index = i;
-      pthread_create (&scheduler.thread_pool[i].thread, NULL,
-                      pocl_tbb_driver_thread,
-                      (void*)&scheduler.thread_pool[i]);
+      scheduler.grain_size = pocl_get_int_option("POCL_TBB_GRAIN_SIZE", 1);
+      POCL_MSG_PRINT_GENERAL ("TBB: using a grain size of %u\n", scheduler.grain_size);
     }
 
+  scheduler.selected_partitioner = NONE;
+  const char *ptr = pocl_get_string_option ("POCL_TBB_PARTITIONER", "");
+  if (strlen (ptr) > 0)
+    {
+      if (strncmp (ptr, "affinity", 8) == 0)
+        {
+          scheduler.selected_partitioner = AFFINITY;
+          POCL_MSG_PRINT_GENERAL ("TBB: using affinity partitioner\n");
+        }
+      else if (strncmp (ptr, "auto", 4) == 0)
+        {
+          scheduler.selected_partitioner = AUTO;
+          POCL_MSG_PRINT_GENERAL ("TBB: using auto partitioner\n");
+        }
+      else if (strncmp (ptr, "simple", 6) == 0)
+        {
+          scheduler.selected_partitioner = SIMPLE;
+          POCL_MSG_PRINT_GENERAL ("TBB: using simple partitioner\n");
+        }
+      else if (strncmp (ptr, "static", 6) == 0)
+        {
+          scheduler.selected_partitioner = STATIC;
+          POCL_MSG_PRINT_GENERAL ("TBB: using static partitioner\n");
+        }
+      else
+        {
+          POCL_MSG_WARN ("TBB: Malformed string in POCL_TBB_PARTITIONER env var: %s\n", ptr);
+        }
+    }
 }
 
 void
@@ -123,209 +146,92 @@ tbb_scheduler_uninit ()
   unsigned i;
 
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
-  scheduler.thread_pool_shutdown_requested = 1;
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  scheduler.meta_thread_shutdown_requested = 1;
+  pthread_cond_broadcast (&scheduler.wake_meta_thread);
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
-  for (i = 0; i < scheduler.num_threads; ++i)
-    {
-      pthread_join (scheduler.thread_pool[i].thread, NULL);
-    }
+  pthread_join (scheduler.meta_thread, NULL);
 
-  pocl_aligned_free (scheduler.thread_pool);
   POCL_FAST_DESTROY (scheduler.wq_lock_fast);
-  pthread_cond_destroy (&scheduler.wake_pool);
+  pthread_cond_destroy (&scheduler.wake_meta_thread);
 
-  scheduler.thread_pool_shutdown_requested = 0;
+  scheduler.meta_thread_shutdown_requested = 0;
+
+  pocl_aligned_free (scheduler.printf_buf_global_ptr);
+  pocl_aligned_free (scheduler.local_mem_global_ptr);
 }
 
 /* push_command and push_kernel MUST use broadcast and wake up all threads,
    because commands can be for subdevices (= not all threads) */
-void tbb_scheduler_push_command (_cl_command_node *cmd)
+void
+tbb_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  pthread_cond_broadcast (&scheduler.wake_meta_thread);
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
-static void
-tbb_scheduler_push_kernel (kernel_run_command *run_cmd)
-{
-  POCL_FAST_LOCK (scheduler.wq_lock_fast);
-  DL_APPEND (scheduler.kernel_queue, run_cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
-  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-}
+/* Internal functions */
 
-/* if subd is not a subdevice, returns 1
- * if subd is subdevice, takes a look at the subdevice CUs
- * and if they match the current driver thread, returns 1
- * otherwise returns 0 */
-static int
-shall_we_run_this (thread_data *td, cl_device_id subd)
-{
+class WorkGroupScheduler {
+  kernel_run_command *my_k;
+public:
+  void operator()( const tbb::blocked_range3d<size_t>& r ) const {
+    kernel_run_command *k = my_k;
+    pocl_kernel_metadata_t *meta = k->kernel->meta;
+    const size_t my_thread_id = tbb::this_task_arena::current_thread_index();
+    void *arguments[meta->num_args + meta->num_locals + 1];
+    void *arguments2[meta->num_args + meta->num_locals + 1];
+    char *local_mem = scheduler.local_mem_global_ptr + (scheduler.local_mem_size * my_thread_id);
+    uchar *printf_buffer = scheduler.printf_buf_global_ptr + (scheduler.printf_buf_size * my_thread_id);
+    struct pocl_context pc;
+    /* some random value, doesn't matter as long as it's not a valid bool - to force a first FTZ setup */
+    unsigned current_ftz = 213;
 
-  if (subd && subd->parent_device)
-    {
-      if (!((td->index >= subd->core_start)
-            && (td->index < (subd->core_start + subd->core_count))))
-        {
-          return 0;
-        }
-    }
-  return 1;
-}
+    setup_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2, k, local_mem, scheduler.local_mem_size);
+    memcpy (&pc, &k->pc, sizeof(struct pocl_context));
 
-/* Maximum and minimum chunk sizes for get_wg_index_range().
- * Each tbb driver's thread fetches work from a kernel's WG pool in
- * chunks, this determines the limits (scaled up by # of threads). */
-#define POCL_TBB_MAX_WGS 256
-#define POCL_TBB_MIN_WGS 32
+    // capacity and position already set up
+    pc.printf_buffer = printf_buffer;
+    uint32_t position = 0;
+    pc.printf_buffer_position = &position;
+    assert (pc.printf_buffer != NULL);
+    assert (pc.printf_buffer_capacity > 0);
+    assert (pc.printf_buffer_position != NULL);
 
-static int
-get_wg_index_range (kernel_run_command *k, unsigned *start_index,
-                    unsigned *end_index, int *last_wgs, unsigned num_threads)
-{
-  const unsigned scaled_max_wgs = POCL_TBB_MAX_WGS * num_threads;
-  const unsigned scaled_min_wgs = POCL_TBB_MIN_WGS * num_threads;
-
-  unsigned limit;
-  unsigned max_wgs;
-  POCL_FAST_LOCK (k->lock);
-  if (k->remaining_wgs == 0)
-    {
-      POCL_FAST_UNLOCK (k->lock);
-      return 0;
-    }
-
-  /* If the work is comprised of huge number of WGs of small WIs,
-   * then get_wg_index_range() becomes a problem on manycore CPUs
-   * because lock contention on k->lock.
-   *
-   * If we have enough workgroups, scale up the requests linearly by
-   * num_threads, otherwise fallback to smaller workgroups.
-   */
-  if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
-    limit = scaled_min_wgs;
-  else
-    limit = scaled_max_wgs;
-
-  // divide two integers rounding up, i.e. ceil(k->remaining_wgs/num_threads)
-  const unsigned wgs_per_thread = (1 + (k->remaining_wgs - 1) / num_threads);
-  max_wgs = std::min (limit, wgs_per_thread);
-  max_wgs = std::min (max_wgs, static_cast<unsigned> (k->remaining_wgs));
-  assert (max_wgs > 0);
-
-  *start_index = k->wgs_dealt;
-  *end_index = k->wgs_dealt + max_wgs-1;
-  k->remaining_wgs -= max_wgs;
-  k->wgs_dealt += max_wgs;
-  if (k->remaining_wgs == 0)
-    *last_wgs = 1;
-  POCL_FAST_UNLOCK (k->lock);
-
-  return 1;
-}
-
-inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
-                                                   unsigned index,
-                                                   size_t *index_3d,
-                                                   unsigned xy_slice,
-                                                   unsigned row_size)
-{
-  index_3d[2] = index / xy_slice;
-  index_3d[1] = (index % xy_slice) / row_size;
-  index_3d[0] = (index % xy_slice) % row_size;
-}
-
-static int
-work_group_scheduler (kernel_run_command *k,
-                      struct pool_thread_data *thread_data)
-{
-  pocl_kernel_metadata_t *meta = k->kernel->meta;
-
-  void *arguments[meta->num_args + meta->num_locals + 1];
-  void *arguments2[meta->num_args + meta->num_locals + 1];
-  struct pocl_context pc;
-  unsigned i;
-  unsigned start_index;
-  unsigned end_index;
-  int last_wgs = 0;
-
-  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs, thread_data->num_threads))
-    return 0;
-
-  assert (end_index >= start_index);
-
-  setup_kernel_arg_array_with_locals (
-      (void **)&arguments, (void **)&arguments2, k, reinterpret_cast<char*> (thread_data->local_mem),
-      scheduler.local_mem_size);
-  memcpy (&pc, &k->pc, sizeof (struct pocl_context));
-
-  // capacity and position already set up
-  pc.printf_buffer = reinterpret_cast<uchar*> (thread_data->printf_buffer);
-  uint32_t position = 0;
-  pc.printf_buffer_position = &position;
-  assert (pc.printf_buffer != NULL);
-  assert (pc.printf_buffer_capacity > 0);
-  assert (pc.printf_buffer_position != NULL);
-
-  /* Flush to zero is only set once at start of kernel (because FTZ is
-   * a compilation option), but we need to reset rounding mode after every
-   * iteration (since it can be changed during kernel execution). */
-  unsigned flush = k->kernel->program->flush_denorms;
-  if (thread_data->current_ftz != flush)
-    {
+    /* Flush to zero is only set once at start of kernel (because FTZ is
+     * a compilation option), but we need to reset rounding mode after every
+     * iteration (since it can be changed during kernel execution). */
+    unsigned flush = k->kernel->program->flush_denorms;
+    if (current_ftz != flush) {
       pocl_set_ftz (flush);
-      thread_data->current_ftz = flush;
+      current_ftz = flush;
     }
 
-  unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
-  unsigned row_size = k->pc.num_groups[0];
-
-  do
-    {
-      if (last_wgs)
-        {
-          POCL_FAST_LOCK (scheduler.wq_lock_fast);
-          DL_DELETE (scheduler.kernel_queue, k);
-          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
+    for (size_t x=r.pages().begin(); x!=r.pages().end(); x++) {
+      for (size_t y=r.rows().begin(); y!=r.rows().end(); y++) {
+        for (size_t z=r.cols().begin(); z!=r.cols().end(); z++) {
+          pocl_set_default_rm();
+          k->workgroup((uint8_t*)arguments, (uint8_t*)&pc, x, y, z);
         }
-
-      for (i = start_index; i <= end_index; ++i)
-        {
-          size_t gids[3];
-          translate_wg_index_to_3d_index (k, i, gids, slice_size, row_size);
-
-#ifdef DEBUG_MT
-          printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n", gids[0], gids[1], gids[2]);
-#endif
-          pocl_set_default_rm ();
-          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc, gids[0], gids[1], gids[2]);
-        }
+      }
     }
-  while (get_wg_index_range (k, &start_index, &end_index, &last_wgs, thread_data->num_threads));
 
-  if (position > 0)
-    {
+    if (position > 0) {
       write (STDOUT_FILENO, pc.printf_buffer, position);
     }
 
-  free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
-                                     k);
-
-  return 1;
-}
+    free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2, k);
+  }
+  WorkGroupScheduler( kernel_run_command *k ) :
+      my_k(k)
+  {}
+};
 
 static void
-finalize_kernel_command (struct pool_thread_data *thread_data,
-                         kernel_run_command *k)
+finalize_kernel_command (kernel_run_command *k)
 {
-#ifdef DEBUG_MT
-  printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
-#endif
-
   free_kernel_arg_array (k);
 
   pocl_release_dlhandle_cache (k->cmd);
@@ -335,11 +241,10 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
   POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
 
   pocl_mem_manager_free_command (k->cmd);
-  POCL_FAST_DESTROY (k->lock);
   free_kernel_run_command (k);
 }
 
-static void
+static kernel_run_command *
 pocl_tbb_prepare_kernel (void *data, _cl_command_node *cmd)
 {
   kernel_run_command *run_cmd;
@@ -347,8 +252,6 @@ pocl_tbb_prepare_kernel (void *data, _cl_command_node *cmd)
   struct pocl_context *pc = &cmd->command.run.pc;
 
   pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
-
-  size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   run_cmd = new_kernel_run_command ();
   run_cmd->data = data;
@@ -359,107 +262,137 @@ pocl_tbb_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->pc.printf_buffer = NULL;
   run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
   run_cmd->pc.printf_buffer_position = NULL;
-  run_cmd->remaining_wgs = num_groups;
-  run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = reinterpret_cast<pocl_workgroup_func> (cmd->command.run.wg);
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
-  run_cmd->ref_count = 0;
-  POCL_FAST_INIT (run_cmd->lock);
 
   setup_kernel_arg_array (run_cmd);
 
   pocl_update_event_running (cmd->event);
 
-  tbb_scheduler_push_kernel (run_cmd);
+  return (run_cmd);
 }
 
-/*
-  These two check the entire kernel/cmd queue. This is necessary
-  because of commands for subdevices. The old code only checked
-  the head of each queue; this can lead to a deadlock:
-
-  two driver threads, each assigned two subdevices A, B, one
-  driver queue C
-
-  cmd A1 for A arrives in C, A starts processing
-  cmd B1 for B arrives in C, B starts processing
-  cmds A2, A3, B2 are pushed to C
-  B finishes processing B1, checks queue head, A2 isn't for it, goes to sleep
-  A finishes processing A1, processes A2 + A3 but ignores B2, it's not for it
-  application calls clFinish to wait for queue
-
-  ...now B is sleeping and not possible to wake up
-  (since no new commands can arrive) and there's a B2 command
-  which will never be processed.
-
-  it's possible to workaround but it's cleaner to just check the whole queue.
- */
-
+/* Note: Using a double linked list is probably not necessary any more. */
 static _cl_command_node *
-check_cmd_queue_for_device (thread_data *td)
+check_cmd_queue_for_device ()
 {
   _cl_command_node *cmd;
   DL_FOREACH (scheduler.work_queue, cmd)
   {
-    cl_device_id subd = cmd->device;
-    if (shall_we_run_this (td, subd))
-      {
-        DL_DELETE (scheduler.work_queue, cmd)
-        return cmd;
-      }
+    DL_DELETE (scheduler.work_queue, cmd)
+    return cmd; // return first cmd
   }
 
   return NULL;
 }
 
-static kernel_run_command *
-check_kernel_queue_for_device (thread_data *td)
+static void
+tbb_exec_command (kernel_run_command *run_cmd)
 {
-  kernel_run_command *cmd;
-  DL_FOREACH (scheduler.kernel_queue, cmd)
-  {
-    cl_device_id subd = cmd->device;
-    if (shall_we_run_this (td, subd))
-      return cmd;
-  }
-
-  return NULL;
+  /* Note: Grain size variation could be allowed for each dimension individually. */
+  if (scheduler.grain_size)
+    {
+      if (scheduler.selected_partitioner == NONE)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[1], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[2], scheduler.grain_size),
+                             WorkGroupScheduler (run_cmd));
+        }
+      else if (scheduler.selected_partitioner == AFFINITY)
+        {
+          tbb::affinity_partitioner ap;
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[1], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[2], scheduler.grain_size),
+                             WorkGroupScheduler(run_cmd),
+                             ap);
+        }
+      else if (scheduler.selected_partitioner == AUTO)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[1], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[2], scheduler.grain_size),
+                             WorkGroupScheduler (run_cmd),
+                             tbb::auto_partitioner ());
+        }
+      else if (scheduler.selected_partitioner == SIMPLE)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[1], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[2], scheduler.grain_size),
+                             WorkGroupScheduler (run_cmd),
+                             tbb::simple_partitioner ());
+        }
+      else if (scheduler.selected_partitioner == STATIC)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[1], scheduler.grain_size,
+                                                           0, run_cmd->pc.num_groups[2], scheduler.grain_size),
+                             WorkGroupScheduler(run_cmd),
+                             tbb::static_partitioner ());
+        }
+    }
+  else /* if (scheduler.grain_size) */
+    {
+      if (scheduler.selected_partitioner == NONE)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0],
+                                                           0, run_cmd->pc.num_groups[1],
+                                                           0, run_cmd->pc.num_groups[2]),
+                             WorkGroupScheduler (run_cmd));
+        }
+      else if (scheduler.selected_partitioner == AFFINITY)
+        {
+          tbb::affinity_partitioner ap;
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0],
+                                                           0, run_cmd->pc.num_groups[1],
+                                                           0, run_cmd->pc.num_groups[2]),
+                             WorkGroupScheduler(run_cmd),
+                             ap);
+        }
+      else if (scheduler.selected_partitioner == AUTO)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0],
+                                                           0, run_cmd->pc.num_groups[1],
+                                                           0, run_cmd->pc.num_groups[2]),
+                             WorkGroupScheduler (run_cmd),
+                             tbb::auto_partitioner ());
+        }
+      else if (scheduler.selected_partitioner == SIMPLE)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0],
+                                                           0, run_cmd->pc.num_groups[1],
+                                                           0, run_cmd->pc.num_groups[2]),
+                             WorkGroupScheduler (run_cmd),
+                             tbb::simple_partitioner ());
+        }
+      else if (scheduler.selected_partitioner == STATIC)
+        {
+          tbb::parallel_for (tbb::blocked_range3d<size_t> (0, run_cmd->pc.num_groups[0],
+                                                           0, run_cmd->pc.num_groups[1],
+                                                           0, run_cmd->pc.num_groups[2]),
+                             WorkGroupScheduler(run_cmd),
+                             tbb::static_partitioner ());
+        }
+    }
 }
 
 static int
-tbb_scheduler_get_work (thread_data *td)
+tbb_scheduler_get_work ()
 {
   _cl_command_node *cmd;
   kernel_run_command *run_cmd;
 
-  /* execute kernel if available */
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   int do_exit = 0;
 
 RETRY:
-  do_exit = scheduler.thread_pool_shutdown_requested;
-
-  run_cmd = check_kernel_queue_for_device (td);
-  /* execute kernel if available */
-  if (run_cmd)
-    {
-      ++run_cmd->ref_count;
-      POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-
-      work_group_scheduler (run_cmd, td);
-
-      POCL_FAST_LOCK (scheduler.wq_lock_fast);
-      if ((--run_cmd->ref_count) == 0)
-        {
-          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-          finalize_kernel_command (td, run_cmd);
-          POCL_FAST_LOCK (scheduler.wq_lock_fast);
-        }
-    }
+  do_exit = scheduler.meta_thread_shutdown_requested;
 
   /* execute a command if available */
-  cmd = check_cmd_queue_for_device (td);
+  cmd = check_cmd_queue_for_device ();
   if (cmd)
     {
       POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
@@ -468,7 +401,9 @@ RETRY:
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-          pocl_tbb_prepare_kernel (cmd->device->data, cmd);
+          run_cmd = pocl_tbb_prepare_kernel (cmd->device->data, cmd);
+          tbb_exec_command (run_cmd);
+          finalize_kernel_command (run_cmd);
         }
       else
         {
@@ -476,13 +411,12 @@ RETRY:
         }
 
       POCL_FAST_LOCK (scheduler.wq_lock_fast);
-      ++td->executed_commands;
     }
 
-  /* if neither a command nor a kernel was available, sleep */
-  if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
+  /* if no command was available, sleep */
+  if ((cmd == NULL) && (do_exit == 0))
     {
-      pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
+      pthread_cond_wait (&scheduler.wake_meta_thread, &scheduler.wq_lock_fast);
       goto RETRY;
     }
 
@@ -491,43 +425,16 @@ RETRY:
   return do_exit;
 }
 
-
-static
-void*
+static void*
 pocl_tbb_driver_thread (void *p)
 {
-  struct pool_thread_data *td = (struct pool_thread_data*)p;
   int do_exit = 0;
-  assert (td);
-  /* some random value, doesn't matter as long as it's not a valid bool - to
-   * force a first FTZ setup */
-  td->current_ftz = 213;
-  td->num_threads = scheduler.num_threads;
-  td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                           scheduler.printf_buf_size);
-  assert (td->printf_buffer != NULL);
-
-  assert (scheduler.local_mem_size > 0);
-  td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                       scheduler.local_mem_size);
-  assert (td->local_mem);
-#ifdef __linux__
-  if (pocl_get_bool_option ("POCL_AFFINITY", 0))
-    {
-      cpu_set_t set;
-      CPU_ZERO (&set);
-      CPU_SET (td->index, &set);
-      pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set);
-    }
-#endif
 
   while (1)
     {
-      do_exit = tbb_scheduler_get_work (td);
+      do_exit = tbb_scheduler_get_work ();
       if (do_exit)
         {
-          pocl_aligned_free (td->printf_buffer);
-          pocl_aligned_free (td->local_mem);
           pthread_exit (NULL);
         }
     }

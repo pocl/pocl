@@ -45,16 +45,18 @@ extern "C" {
   #include "topology/pocl_topology.h"
 }
 
-#include "config.h"
-#include "utlist.h"
-#include "tbb.h"
-#include "tbb_utils.h"
-#include "tbb_scheduler.h"
-#include "pocl_runtime_config.h"
+#include <tbb/task_arena.h>
+
 #include "common.h"
+#include "config.h"
 #include "devices.h"
-#include "pocl_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+#include "pocl_util.h"
+#include "tbb.h"
+#include "tbb_scheduler.h"
+#include "tbb_utils.h"
+#include "utlist.h"
 
 #ifndef HAVE_LIBDL
 #error tbb driver requires DL library
@@ -131,11 +133,6 @@ pocl_tbb_probe (struct pocl_device_ops *ops)
   return env_count;
 }
 
-static cl_device_partition_property tbb_partition_properties[2]
-    = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
-
-#define FALLBACK_MAX_THREAD_COUNT 8
-
 char scheduler_initialized = 0;
 
 cl_int
@@ -184,14 +181,12 @@ pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
     ret = CL_INVALID_DEVICE;
 
   /* device->max_compute_units was set up by topology_detect,
-   * but if the user requests, lower it */
-  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
-                                                  : device->max_compute_units;
-  int max_thr = pocl_get_int_option ("POCL_MAX_TBB_COUNT", fallback);
-
-  device->max_compute_units
-      = std::max ((unsigned)max_thr,
-             (unsigned)pocl_get_int_option ("POCL_TBB_MIN_THREADS", 1));
+     but we use the TBB library (result should be the same).
+     task_area initialization is optional and max_concurrency
+     can be retrieved without prior initialization. */
+  tbb::task_arena ta;
+  //ta.initialize();
+  device->max_compute_units = ta.max_concurrency();
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
@@ -204,14 +199,6 @@ pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
       magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
 
   device->vendor_id += j;
-
-<<<<<<< HEAD
-  // tbb has elementary partitioning support
-  device->max_sub_devices = device->max_compute_units;
-  device->num_partition_properties = 2;
-  device->partition_properties = tbb_partition_properties;
-  device->num_partition_types = 0;
-  device->partition_type = NULL;
 
   if (!scheduler_initialized)
     {
