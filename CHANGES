@@ -8,8 +8,8 @@ Notable User Facing Changes
   previous release. Users need to delete their pocl cache.
 
 
-Notable Bug Fixes
------------------
+Optimizations
+-------------
 
 - Improved the PTX code generation for __local blocks. Previously constant
   __local blocks and __local arguments were using one dynamic shared CUDA
@@ -19,28 +19,17 @@ Notable Bug Fixes
   time constants. This improves the performance due to better SASS code
   generation because it avoids what appears to be a pointer aliasing issue.
 
-  Running shoc benchmark GEMM with size class 4 on a NVIDIA Titan X gives
-  the following.
+  Running SHOC benchmark GEMM with size class 4 on a NVIDIA Titan X gives
+  the following performance improvements.
 
-    result for sgemm_n:                        376.0500 GFLOPS
-    result for sgemm_t:                        814.1860 GFLOPS
-    result for sgemm_n_pcie:                   351.6180 GFLOPS
-    result for sgemm_t_pcie:                   708.6310 GFLOPS
-    result for dgemm_n:                        172.8970 GFLOPS
-    result for dgemm_t:                        173.9350 GFLOPS
-    result for dgemm_n_pcie:                   153.0720 GFLOPS
-    result for dgemm_t_pcie:                   154.3020 GFLOPS
-
-  Benchmarking 1.5 gives the following.
-
-    result for sgemm_n:                        288.9410 GFLOPS
-    result for sgemm_t:                        663.3480 GFLOPS
-    result for sgemm_n_pcie:                   269.8090 GFLOPS
-    result for sgemm_t_pcie:                   570.5630 GFLOPS
-    result for dgemm_n:                         84.0000 GFLOPS
-    result for dgemm_t:                        169.0820 GFLOPS
-    result for dgemm_n_pcie:                    74.0927 GFLOPS
-    result for dgemm_t_pcie:                   143.6500 GFLOPS
+    sgemm_n:        23.2%
+    sgemm_t:        18.5%
+    sgemm_n_pcie:   23.3%
+    sgemm_t_pcie:   19.5%
+    dgemm_n:        51.4%
+    dgemm_t:         2.8%
+    dgemm_n_pcie:   51.6%
+    dgemm_t_pcie:    6.9%
 
 
 1.5 April 2020
