@@ -287,9 +287,6 @@ set_property(TEST
   "kernel/test_shuffle_long"
   "kernel/test_shuffle_ulong"
   "kernel/test_shuffle_double"
-  "kernel/test_convert_type_1"
-  "kernel/test_convert_type_2"
-  "kernel/test_convert_type_4"
   "kernel/test_as_type"
   "kernel/test_sizeof_uint"
   APPEND PROPERTY LABELS "cuda")

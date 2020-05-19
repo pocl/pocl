@@ -143,7 +143,6 @@ set_property(TEST
   "runtime/test_event_cycle"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
-  "runtime/test_enqueue_kernel_from_binary"
   APPEND PROPERTY LABELS "cuda")
 
 set_property(TEST

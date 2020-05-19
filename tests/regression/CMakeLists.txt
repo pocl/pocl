@@ -303,7 +303,6 @@ set_property(TEST
   "regression/for-loop_with_computation_after_the_brexit_LOOPS"
   "regression/for-loop_with_a_variable_iteration_count_LOOPS"
   "regression/early_return_before_a_barrier_region_LOOPS"
-  "regression/id-dependent_computation_before_kernel_exit_LOOPS"
   "regression/barrier_just_before_return_LOOPS"
   "regression/undominated_variable_from_conditional_barrier_handling_LOOPS"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
