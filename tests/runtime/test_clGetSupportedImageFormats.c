@@ -23,7 +23,7 @@ main(void)
                         devices, &ndevices);
   CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
-  TEST_ASSERT(ndevices >= 2);
+  TEST_ASSERT(ndevices >= 1);
 
   cl_context context = clCreateContext (NULL, ndevices, devices, NULL, NULL, 
                                         &err);
@@ -32,7 +32,10 @@ main(void)
   err = clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 0,
                               NULL, &num_entries);
   CHECK_OPENCL_ERROR_IN("clGetSupportedImageFormats");
-  
+
+  if (num_entries == 0)
+    return EXIT_SUCCESS;
+
   img_formats = (cl_image_format*)malloc (sizeof(cl_image_format)*num_entries);
 
   err = clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D,
