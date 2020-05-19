@@ -72,7 +72,11 @@
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
+#if defined(BUILD_CUDA)
 
+#define CUDA_DEVICE_EXTENSIONS "@CUDA_DEVICE_EXTENSIONS@"
+
+#endif
 
 #if defined(BUILD_BASIC) || defined(BUILD_PTHREAD)
 
