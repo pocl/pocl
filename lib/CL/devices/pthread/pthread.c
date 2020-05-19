@@ -147,7 +147,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   device->data = d;
 
-  pocl_init_cpu_device_infos (device);
+  pocl_init_default_device_infos (device);
+  device->extensions = HOST_DEVICE_EXTENSIONS;
 
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;

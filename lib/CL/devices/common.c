@@ -29,6 +29,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,6 +52,7 @@
 #include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_timing.h"
 #include "pocl_util.h"
 
 #ifdef HAVE_GETRLIMIT
@@ -1333,4 +1335,244 @@ pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
 
   memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
           sizeof (pocl_kernel_hash_t));
+}
+
+/* default WG size in each dimension & total WG size.
+ * this should be reasonable for CPU */
+#define DEFAULT_WG_SIZE 4096
+
+static const char *final_ld_flags[] =
+  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+
+static cl_device_partition_property basic_partition_properties[1] = { 0 };
+static const cl_image_format supported_image_formats[] = {
+  { CL_A, CL_SNORM_INT8 },
+  { CL_A, CL_SNORM_INT16 },
+  { CL_A, CL_UNORM_INT8 },
+  { CL_A, CL_UNORM_INT16 },
+  { CL_A, CL_SIGNED_INT8 },
+  { CL_A, CL_SIGNED_INT16 },
+  { CL_A, CL_SIGNED_INT32 },
+  { CL_A, CL_UNSIGNED_INT8 },
+  { CL_A, CL_UNSIGNED_INT16 },
+  { CL_A, CL_UNSIGNED_INT32 },
+  { CL_A, CL_FLOAT },
+  { CL_RGBA, CL_SNORM_INT8 },
+  { CL_RGBA, CL_SNORM_INT16 },
+  { CL_RGBA, CL_UNORM_INT8 },
+  { CL_RGBA, CL_UNORM_INT16 },
+  { CL_RGBA, CL_SIGNED_INT8 },
+  { CL_RGBA, CL_SIGNED_INT16 },
+  { CL_RGBA, CL_SIGNED_INT32 },
+  { CL_RGBA, CL_UNSIGNED_INT8 },
+  { CL_RGBA, CL_UNSIGNED_INT16 },
+  { CL_RGBA, CL_UNSIGNED_INT32 },
+  { CL_RGBA, CL_HALF_FLOAT },
+  { CL_RGBA, CL_FLOAT },
+  { CL_ARGB, CL_SNORM_INT8 },
+  { CL_ARGB, CL_UNORM_INT8 },
+  { CL_ARGB, CL_SIGNED_INT8 },
+  { CL_ARGB, CL_UNSIGNED_INT8 },
+  { CL_BGRA, CL_SNORM_INT8 },
+  { CL_BGRA, CL_UNORM_INT8 },
+  { CL_BGRA, CL_SIGNED_INT8 },
+  { CL_BGRA, CL_UNSIGNED_INT8 }
+};
+
+void
+pocl_init_default_device_infos (cl_device_id dev)
+{
+  size_t i;
+
+  dev->type = CL_DEVICE_TYPE_CPU;
+  dev->max_work_item_dimensions = 3;
+  dev->final_linkage_flags = final_ld_flags;
+  dev->extensions = DEFAULT_DEVICE_EXTENSIONS;
+
+  SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
+  /*
+    The hard restriction will be the context data which is
+    stored in stack that can be as small as 8K in Linux.
+    Thus, there should be enough work-items alive to fill up
+    the SIMD lanes times the vector units, but not more than
+    that to avoid stack overflow and cache trashing.
+  */
+  int max_wg
+      = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
+  assert (max_wg > 0);
+  max_wg = min (max_wg, DEFAULT_WG_SIZE);
+  if (max_wg < 0)
+    max_wg = DEFAULT_WG_SIZE;
+
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
+      = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
+
+  dev->preferred_wg_size_multiple = 8;
+#ifdef OCS_AVAILABLE
+  cpu_setup_vector_widths (dev);
+#else
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  /* TODO: figure out what the difference between preferred and native widths are */
+  dev->native_vector_width_char = POCL_DEVICES_NATIVE_VECTOR_WIDTH_CHAR;
+  dev->native_vector_width_short = POCL_DEVICES_NATIVE_VECTOR_WIDTH_SHORT;
+  dev->native_vector_width_int = POCL_DEVICES_NATIVE_VECTOR_WIDTH_INT;
+  dev->native_vector_width_long = POCL_DEVICES_NATIVE_VECTOR_WIDTH_LONG;
+  dev->native_vector_width_float = POCL_DEVICES_NATIVE_VECTOR_WIDTH_FLOAT;
+
+#ifdef _CL_DISABLE_DOUBLE
+  dev->native_vector_width_double = 0;
+  dev->preferred_vector_width_double = 0;
+#else
+  dev->native_vector_width_double = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+#endif
+#ifdef _CL_DISABLE_HALF
+  dev->preferred_vector_width_half = 0;
+  dev->native_vector_width_half = 0;
+#else
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
+#endif
+
+#endif
+
+  dev->grid_width_specialization_limit = USHRT_MAX;
+  dev->address_bits = HOST_DEVICE_ADDRESS_BITS;
+  dev->image_support = CL_TRUE;
+  /* Use the minimum values until we get a more sensible upper limit from
+     somewhere. */
+  dev->max_read_image_args = dev->max_write_image_args
+      = dev->max_read_write_image_args = 128;
+  dev->image2d_max_width = dev->image2d_max_height = 8192;
+  dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
+  dev->max_samplers = 16;
+
+  for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+    {
+      dev->num_image_formats[i]
+          = sizeof (supported_image_formats) / sizeof (cl_image_format);
+      dev->image_formats[i] = supported_image_formats;
+    }
+
+  dev->image_max_buffer_size = 65536;
+  dev->image_max_array_size = 2048;
+  dev->max_constant_args = 8;
+  dev->max_mem_alloc_size = 0;
+  dev->max_parameter_size = 1024;
+  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
+  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  dev->half_fp_config = 0;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+#ifdef __x86_64__
+  dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
+                            | CL_FP_ROUND_TO_ZERO
+                            | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
+#ifdef OCS_AVAILABLE
+  if (cpu_has_fma())
+    dev->single_fp_config |= CL_FP_FMA;
+#endif
+#endif
+
+#ifdef _CL_DISABLE_DOUBLE
+  dev->double_fp_config = 0;
+#else
+  /* TODO: all of these are the minimum mandated, but not all CPUs may actually
+   * support all of them. */
+  dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
+                          | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
+                          | CL_FP_INF_NAN | CL_FP_DENORM;
+  /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
+   * https://github.com/Oblomov/clinfo/issues/28 */
+  dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+#endif
+
+  dev->global_mem_cache_type = CL_NONE;
+  dev->global_mem_cacheline_size = 0;
+  dev->global_mem_cache_size = 0;
+  dev->global_mem_size = 0;
+  dev->max_constant_buffer_size = 0;
+  dev->max_constant_args = 8;
+  dev->local_mem_type = CL_GLOBAL;
+  dev->local_mem_size = 0;
+  dev->error_correction_support = CL_FALSE;
+  dev->host_unified_memory = CL_TRUE;
+
+  dev->profiling_timer_resolution = pocl_timer_resolution;
+
+  dev->endian_little = !(WORDS_BIGENDIAN);
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->spmd = CL_FALSE;
+  dev->arg_buffer_launcher = CL_FALSE;
+  dev->workgroup_pass = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
+  dev->platform = 0;
+
+  dev->parent_device = NULL;
+  /* These two are only used for subdevices.
+   * Each subdevice has these two setup when created.
+   * The subdevice will then use these CUs:
+   *  [start, start+1, ..., start+count-1]
+   * this may not work with more complicated partitioning schemes,
+   * but is good enough for now. */
+  dev->core_start = 0;
+  dev->core_count = 0;
+  /* basic does not support partitioning */
+  dev->max_sub_devices = 1;
+  dev->num_partition_properties = 1;
+  dev->partition_properties = basic_partition_properties;
+  dev->num_partition_types = 0;
+  dev->partition_type = NULL;
+
+  dev->device_side_printf = 1;
+  dev->printf_buffer_size = 16 * 1024 * 1024;
+
+  dev->vendor = "pocl";
+  dev->profile = "FULL_PROFILE";
+  /* Note: The specification describes identifiers being delimited by
+     only a single space character. Some programs that check the device's
+     extension  string assume this rule. Future extension additions should
+     ensure that there is no more than a single space between
+     identifiers. */
+  dev->global_as_id = dev->local_as_id = dev->constant_as_id = 0;
+
+  dev->should_allocate_svm = 0;
+  /* OpenCL 2.0 properties */
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_ATOMICS;
+  /* TODO these are minimums, figure out whats a reasonable value */
+  dev->max_events = 1024;
+  dev->max_queues = 1;
+  dev->max_pipe_args = 16;
+  dev->max_pipe_active_res = 1;
+  dev->max_pipe_packet_size = 1024;
+  dev->dev_queue_pref_size = 16 * 1024;
+  dev->dev_queue_max_size = 256 * 1024;
+  dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+                               | CL_QUEUE_PROFILING_ENABLE;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 1;
+  dev->device_alloca_locals = 0;
+
+#ifdef OCS_AVAILABLE
+
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+#ifdef HOST_CPU_FORCED
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+#else
+  dev->llvm_cpu = get_llvm_cpu_name ();
+#endif
+
+  dev->spirv_version = "SPIR-V_1.2";
+#else /* No compiler, no CPU info */
+  dev->llvm_cpu = NULL;
+  dev->llvm_target_triplet = "";
+#endif
+
 }

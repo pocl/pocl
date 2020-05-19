@@ -170,7 +170,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   if (dev->data)
     return ret;
 
-  pocl_init_cpu_device_infos (dev);
+  pocl_init_default_device_infos (dev);
 
   dev->vendor = "NVIDIA Corporation";
   dev->vendor_id = 0x10de; /* the PCIID for NVIDIA */
