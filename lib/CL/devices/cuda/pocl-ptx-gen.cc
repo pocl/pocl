@@ -55,7 +55,8 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixConstantMemArgs(llvm::Module *Module, const char *KernelName);
-static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName, pocl_cuda_kernel_data_t *KernelData);
+static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName,
+                            pocl_cuda_kernel_data_t *KernelData);
 static void fixPrintF(llvm::Module *Module);
 static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
@@ -63,9 +64,8 @@ static void linkLibDevice(llvm::Module *Module, const char *KernelName,
 static void mapLibDeviceCalls(llvm::Module *Module);
 
 int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
-		 pocl_cuda_kernel_data_t *KernelData,
-                 const char *KernelName, const char *Arch,
-                 const char *LibDevicePath, int HasOffsets) {
+                 pocl_cuda_kernel_data_t *KernelData, const char *KernelName,
+                 const char *Arch, const char *LibDevicePath, int HasOffsets) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
       llvm::MemoryBuffer::getFile(BitcodeFilename);
   if (!Buffer) {
@@ -596,7 +596,7 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 // variable.
 void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
                              unsigned AddrSpace, llvm::GlobalVariable *Base,
-			     pocl_cuda_kernel_data_t *KernelData) {
+                             pocl_cuda_kernel_data_t *KernelData) {
 
   llvm::LLVMContext &Context = Module->getContext();
 
@@ -632,12 +632,13 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
   if (IsLocal && NeedsArgOffsets) {
     std::string FuncName = Function->getName().str();
-    for (auto &Arg: Function->getParent()->globals()) {
+    for (auto &Arg : Function->getParent()->globals()) {
       if (pocl::isAutomaticLocal(FuncName, Arg)) {
         // Fix alignment
-        auto Alignment = Module->getDataLayout().getTypeAllocSize(Arg.getType()->getPointerElementType());
+        auto Alignment = Module->getDataLayout().getTypeAllocSize(
+            Arg.getType()->getPointerElementType());
         if (ConstOffset % Alignment)
-            ConstOffset += Alignment - (ConstOffset % Alignment);
+          ConstOffset += Alignment - (ConstOffset % Alignment);
 
         // Insert GEP to add offset.
         llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
@@ -656,13 +657,14 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
         VV[&Arg] = Cast;
 
         // Calculate next offset
-        ConstOffset += Module->getDataLayout().getTypeAllocSize(Arg.getInitializer()->getType());
+        ConstOffset += Module->getDataLayout().getTypeAllocSize(
+            Arg.getInitializer()->getType());
       }
     }
   }
 
   if (KernelData != NULL) {
-     KernelData->auto_local_offset = ConstOffset;
+    KernelData->auto_local_offset = ConstOffset;
   }
 
   // Loop over arguments.
@@ -680,8 +682,10 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
-      llvm::Value *ConstOffsetValue = llvm::ConstantInt::getSigned(I32ty, ConstOffset);
-      llvm::Instruction *FullOffset = llvm::BinaryOperator::CreateAdd(Offset, ConstOffsetValue);
+      llvm::Value *ConstOffsetValue =
+          llvm::ConstantInt::getSigned(I32ty, ConstOffset);
+      llvm::Instruction *FullOffset =
+          llvm::BinaryOperator::CreateAdd(Offset, ConstOffsetValue);
 
       llvm::GetElementPtrInst *GEP =
           llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, FullOffset});
@@ -731,7 +735,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   for (auto Vec : ToInsert) {
     Vec[0]->insertBefore(&*NewFunction->begin()->begin());
     for (size_t Idx = 0; Idx + 1 < Vec.size(); Idx++) {
-        Vec[Idx + 1]->insertAfter(Vec[Idx]);
+      Vec[Idx + 1]->insertAfter(Vec[Idx]);
     }
   }
 
@@ -767,7 +771,8 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
 // we have to create a single global variable for local memory allocations, and
 // then manually add offsets to it to get each individual local memory
 // allocation.
-void fixLocalMemArgs(llvm::Module *Module, const char *KernelName, pocl_cuda_kernel_data_t* KernelData) {
+void fixLocalMemArgs(llvm::Module *Module, const char *KernelName,
+                     pocl_cuda_kernel_data_t *KernelData) {
 
   // Create global variable for local memory allocations.
   llvm::Type *ByteArrayType =

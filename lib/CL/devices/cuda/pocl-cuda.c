@@ -785,8 +785,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   /* Get pointer aligment */
   if (!kdata->alignments)
     {
-      kdata->alignments
-          = calloc (meta->num_args + 4, sizeof (size_t));
+      kdata->alignments = calloc (meta->num_args + 4, sizeof (size_t));
       pocl_cuda_get_ptr_arg_alignment (bc_filename, kernel->name,
                                        kdata->alignments);
     }

@@ -77,4 +77,3 @@ typedef struct pocl_cuda_event_data_s
   cl_int *ext_event_flag;
   volatile unsigned num_ext_events;
 } pocl_cuda_event_data_t;
-
