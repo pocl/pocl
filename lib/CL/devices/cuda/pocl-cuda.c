@@ -345,7 +345,7 @@ pocl_cuda_init_queue (cl_command_queue queue)
     return CL_OUT_OF_RESOURCES;
 
   queue_data->use_threads
-      = !pocl_get_bool_option ("POCL_CUDA_DISABLE_QUEUE_THREADS", 0);
+      = !pocl_get_bool_option ("POCL_CUDA_DISABLE_QUEUE_THREADS", 1);
 
   if (queue_data->use_threads)
     {
