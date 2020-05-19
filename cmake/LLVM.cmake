@@ -37,6 +37,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES
+      "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
       "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
       "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
@@ -180,8 +181,11 @@ elseif(LLVM_VERSION MATCHES "^9[.]")
 elseif(LLVM_VERSION MATCHES "^10[.]")
   set(LLVM_MAJOR 10)
   set(LLVM_10_0 1)
+elseif(LLVM_VERSION MATCHES "^11[.]")
+  set(LLVM_MAJOR 11)
+  set(LLVM_11_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 10.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 6.0 and 11.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################

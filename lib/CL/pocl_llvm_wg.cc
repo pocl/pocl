@@ -625,8 +625,8 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
 #ifdef DUMP_LLVM_PASS_TIMINGS
     llvm::reportAndResetTimings();
 #endif
-    std::string O = SOS.str(); // flush
-    const char *Cstr = O.c_str();
+    auto O = SOS.str(); // flush
+    const char *Cstr = O.data();
     size_t S = O.size();
     *Output = (char *)malloc(S);
     *OutputSize = S;
