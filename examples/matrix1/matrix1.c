@@ -23,6 +23,7 @@
 
 /* For srandom. */
 #define _DEFAULT_SOURCE
+#define _BSD_SOURCE
 
 #include <CL/opencl.h>
 #include <assert.h>
