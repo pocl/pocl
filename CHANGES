@@ -1,6 +1,36 @@
 1.6 unreleased
 ==============
 
+Notable User Facing Changes
+---------------------------
+
+- CUDA kernels using constant __local blocks are now ABI incompatible with
+  previous release. Users need to delete their pocl cache.
+
+
+Optimizations
+-------------
+
+- Improved the PTX code generation for __local blocks. Previously constant
+  __local blocks and __local arguments were using one dynamic shared CUDA
+  memory block with offsets computed at runtime. Now if there is no __local
+  arguments, separate static shared CUDA memory is used. If there are
+  __local arguments, the constant __local blocks are indexed with compile
+  time constants. This improves the performance due to better SASS code
+  generation because it avoids what appears to be a pointer aliasing issue.
+
+  Running SHOC benchmark GEMM with size class 4 on a NVIDIA Titan X gives
+  the following performance improvements.
+
+    sgemm_n:        23.2%
+    sgemm_t:        18.5%
+    sgemm_n_pcie:   23.3%
+    sgemm_t_pcie:   19.5%
+    dgemm_n:        51.4%
+    dgemm_t:         2.8%
+    dgemm_n_pcie:   51.6%
+    dgemm_t_pcie:    6.9%
+
 
 1.5 April 2020
 ==============

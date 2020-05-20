@@ -63,7 +63,6 @@ extern "C" {
 #define POCL_FILTER_TYPE_WARN 2
 #define POCL_FILTER_TYPE_ERR 3
 
-
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif

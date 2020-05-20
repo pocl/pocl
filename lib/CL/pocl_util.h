@@ -36,7 +36,6 @@
 #error aligned malloc unavailable
 #endif
 
-
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
