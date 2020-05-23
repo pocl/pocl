@@ -53,6 +53,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/Scalar.h>
 
 #include <llvm/PassRegistry.h>
 #include <llvm/PassInfo.h>
@@ -321,6 +322,10 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
       }
       Builder.VerifyInput = true;
       Builder.VerifyOutput = true;
+      if (not device->workgroup_pass) {
+        // Threshold of 300 is the default for O3
+        Passes->add(createLoopUnrollPass(3, false, false, 300));
+      }
       Builder.populateModulePassManager(*Passes);
       continue;
     }
