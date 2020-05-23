@@ -24,6 +24,7 @@ test_kernel (void)
     printf ("horizontal:\n");
   /* This loop should be horizontally vectorized because the iteration count
      does not depend on the gid.*/
+#pragma nounroll
   for (int i = 0; i < get_local_size(0); ++i) {
     if (i < 4)
       printf ("i: %d gid: %d\n", i, gid);

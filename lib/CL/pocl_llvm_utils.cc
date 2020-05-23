@@ -1,7 +1,7 @@
 /* pocl_llvm_utils.cc: various helpers for pocl LLVM API.
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2017 Pekka Jääskeläinen
+                 2013-2020 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -343,10 +343,6 @@ void InitializeLLVM() {
     assert(O && "could not find LLVM option 'debug'");
     O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
   }
-
-  O = opts["unroll-threshold"];
-  assert(O && "could not find LLVM option 'unroll-threshold'");
-  O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
 
   LLVMInitialized = true;
 }
