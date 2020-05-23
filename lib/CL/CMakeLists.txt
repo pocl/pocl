@@ -34,7 +34,33 @@ endif()
 
 include_directories(AFTER "devices" ".")
 
+################################################################################
+if (MSVC)
+  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${LTTNG_UST_LDFLAGS})
+else()
+  set(POCL_PUBLIC_LINK_LIST "${DL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${LTTNG_UST_LDFLAGS} ${LIBMATH})
+endif()
+
+set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+
+if(SANITIZER_OPTIONS)
+  list(INSERT POCL_PUBLIC_LINK_LIST 0 ${SANITIZER_LIBS})
+endif()
+
+if(Hwloc_LDFLAGS)
+  list(INSERT POCL_PUBLIC_LINK_LIST 0 ${Hwloc_LDFLAGS})
+else()
+  list(INSERT POCL_PUBLIC_LINK_LIST 0 ${Hwloc_LIBRARIES})
+endif()
+
+# -lrt is required for glibc < 2.17
+if(HAVE_CLOCK_GETTIME AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+  list(APPEND POCL_PUBLIC_LINK_LIST "rt")
+endif()
+
 add_subdirectory("devices")
+
+###############################################################################
 
 set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clReleaseContext.c"
@@ -189,26 +215,12 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
 #################################################################
 
-if (MSVC)
-  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST} ${LTTNG_UST_LDFLAGS})
-else()
-  set(POCL_PUBLIC_LINK_LIST "${DL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST} ${LTTNG_UST_LDFLAGS} ${LIBMATH})
-endif()
-
-set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
-
-if(SANITIZER_OPTIONS)
-  list(INSERT POCL_PUBLIC_LINK_LIST 0 ${SANITIZER_LIBS})
-endif()
-
+if (POCL_DEVICES_LINK_LIST)
+  list(INSERT POCL_PUBLIC_LINK_LIST 0 ${POCL_DEVICES_LINK_LIST})
+endif ()
 
 # see lib/CMakeLists.txt
 set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
-
-# -lrt is required for glibc < 2.17
-if(HAVE_CLOCK_GETTIME AND CMAKE_SYSTEM_NAME MATCHES "Linux")
-  list(APPEND POCL_PUBLIC_LINK_LIST "rt")
-endif()
 
 #################################################################
 

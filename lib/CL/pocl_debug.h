@@ -15,6 +15,8 @@
 # include <inttypes.h>
 #endif
 
+#include "config.h"
+
 // size_t print spec
 #ifndef PRIuS
 # define PRIuS "zu"
@@ -62,10 +64,6 @@ extern "C" {
 #define POCL_FILTER_TYPE_INFO 1
 #define POCL_FILTER_TYPE_WARN 2
 #define POCL_FILTER_TYPE_ERR 3
-
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
 
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
@@ -228,6 +226,8 @@ extern "C" {
     #define POCL_MEASURE_FINISH(...)  do {} while (0)
     #define POCL_DEBUG_EVENT_TIME(...)  do {} while (0)
 
+    #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_CUDA(...)  do {} while (0)
     #define POCL_MSG_PRINT_HSA2(...)  do {} while (0)
     #define POCL_MSG_PRINT_HSA(...)  do {} while (0)
     #define POCL_MSG_PRINT_TCE2(...)  do {} while (0)
@@ -319,10 +319,6 @@ extern "C" {
         }                                                                     \
     }                                                                         \
   while (0)
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #ifdef __cplusplus
 }

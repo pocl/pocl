@@ -31,10 +31,6 @@
 extern "C" {
 #endif
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 /* Remove a directory, recursively */
 int pocl_rm_rf(const char* path);
 
@@ -70,10 +66,6 @@ int pocl_mk_tempdir (char *output, const char *prefix);
 
 int pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                       int *ret_fd);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #ifdef __cplusplus
 }

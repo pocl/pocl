@@ -32,14 +32,6 @@
 
 #include "pocl_cl.h"
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 void pocl_cpuinfo_detect_device_info(cl_device_id device);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #endif /* POCL_TOPOLOGY_H */

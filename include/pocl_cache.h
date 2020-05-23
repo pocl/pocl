@@ -36,10 +36,6 @@ extern "C" {
 
 #include <CL/cl.h>
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 int pocl_cache_init_topdir ();
 
 int
@@ -123,10 +119,6 @@ void pocl_cache_work_group_function_path (char *parallel_bc_path,
 void pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                                    unsigned device_i, cl_kernel kernel,
                                    _cl_command_node *command, int specialize);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 
 #ifdef __cplusplus
