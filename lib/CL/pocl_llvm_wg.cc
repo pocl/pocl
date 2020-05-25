@@ -229,7 +229,9 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     passes.push_back("automatic-locals");
 
   if (SPMDDevice) {
-    passes.push_back("flatten-inline-all");
+    if (device->autolocals_to_args) {
+      passes.push_back("flatten-inline-all");
+    }
     passes.push_back("always-inline");
   } else {
     passes.push_back("flatten-globals");
