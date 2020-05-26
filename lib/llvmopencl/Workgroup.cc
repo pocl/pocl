@@ -408,6 +408,8 @@ static bool callsPrintf(Function *F) {
       if (!llvm::isa<CallInst>(Instr))
         continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      if (CallInstr->isInlineAsm())
+        continue;
       Function *callee = CallInstr->getCalledFunction();
 
       if (callee->getName().startswith("llvm."))
@@ -503,6 +505,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (!llvm::isa<CallInst>(Instr))
         continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      if (CallInstr->isInlineAsm())
+        continue;
       Function *oldF = CallInstr->getCalledFunction();
 
       // Skip inline asm blocks.
@@ -704,6 +708,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
       Instruction *Instr = dyn_cast<Instruction>(BI);
       if (!llvm::isa<CallInst>(Instr)) continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      if (CallInstr->isInlineAsm()) continue;
       Function *Callee = CallInstr->getCalledFunction();
       // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
       // llvm::InlineFunction explodes in case of kernels with restrict
