@@ -60,10 +60,6 @@
 extern "C" {
 #endif
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, _cl_command_node *command,
                   int specialize);
@@ -118,10 +114,6 @@ void pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
                                  unsigned device_i);
 
 void pocl_init_default_device_infos (cl_device_id dev);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #ifdef __cplusplus
 }

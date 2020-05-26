@@ -42,14 +42,13 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "devices.h"
 #include "common.h"
-#include "pocl_runtime_config.h"
-#include "basic/basic.h"
-#include "pthread/pocl-pthread.h"
-#include "pocl_debug.h"
-#include "pocl_tracing.h"
+#include "config.h"
+#include "devices.h"
 #include "pocl_cache.h"
+#include "pocl_debug.h"
+#include "pocl_runtime_config.h"
+#include "pocl_tracing.h"
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
@@ -61,19 +60,27 @@
 
 #include "hsa/pocl-hsa.h"
 
-#if defined(BUILD_CUDA)
-#include "cuda/pocl-cuda.h"
-#endif
-
 #if defined(BUILD_ACCEL)
 #include "accel/accel.h"
 #endif
 
 #define MAX_DEV_NAME_LEN 64
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
+#ifdef HAVE_LIBDL
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#include <dlfcn.h>
+#endif
+
 /* the enabled devices */
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
+unsigned int pocl_num_device_types = 0;
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -81,10 +88,10 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_BASIC
-  pocl_basic_init_device_ops,
+  NULL,
 #endif
 #ifdef BUILD_PTHREAD
-  pocl_pthread_init_device_ops,
+  NULL,
 #endif
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
@@ -93,7 +100,7 @@ static init_device_ops pocl_devices_init_ops[] = {
   pocl_hsa_init_device_ops,
 #endif
 #if defined(BUILD_CUDA)
-  pocl_cuda_init_device_ops,
+  NULL,
 #endif
 #if defined(BUILD_ACCEL)
   pocl_accel_init_device_ops,
@@ -101,6 +108,27 @@ static init_device_ops pocl_devices_init_ops[] = {
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
+
+char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
+#ifdef BUILD_BASIC
+  "basic",
+#endif
+#ifdef BUILD_PTHREAD
+  "pthread",
+#endif
+#if defined(TCE_AVAILABLE)
+  "ttasim",
+#endif
+#if defined(BUILD_HSA)
+  "hsa",
+#endif
+#if defined(BUILD_CUDA)
+  "cuda",
+#endif
+#if defined(BUILD_ACCEL)
+  "accel",
+#endif
+};
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 
@@ -113,6 +141,48 @@ static unsigned device_count[POCL_NUM_DEVICE_TYPES];
 static unsigned devices_active = 0;
 
 static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+
+static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
+
+#ifndef _MSC_VER
+#define POCL_PATH_SEPARATOR "/"
+#else
+#define POCL_PATH_SEPARATOR "\\"
+#endif
+
+static void
+get_pocl_device_lib_path (char *result, char *device_name)
+{
+  Dl_info info;
+  if (dladdr ((void *)get_pocl_device_lib_path, &info))
+    {
+      char const *soname = info.dli_fname;
+      strcpy (result, soname);
+      char *last_slash = strrchr (result, POCL_PATH_SEPARATOR[0]);
+      *(++last_slash) = '\0';
+      if (strlen (result) > 0)
+        {
+#ifdef ENABLE_POCL_BUILDING
+          if (pocl_get_bool_option ("POCL_BUILDING", 0))
+            {
+              strcat (result, "devices");
+              strcat (result, POCL_PATH_SEPARATOR);
+              strcat (result, device_name);
+              strcat (result, POCL_PATH_SEPARATOR);
+            }
+          else
+#endif
+            {
+              strcat (result, POCL_INSTALL_PRIVATE_LIBDIR_REL);
+            }
+          strcat (result, POCL_PATH_SEPARATOR);
+          strcat (result, "libpocl-devices-");
+          strcat (result, device_name);
+          strcat (result, ".so");
+          return;
+        }
+    }
+}
 
 /**
  * Get the number of specified devices from environnement
@@ -339,6 +409,8 @@ pocl_uninit_devices ()
   cl_device_id d;
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+      if (pocl_devices_init_ops[i] == NULL)
+        continue;
       assert (pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
@@ -353,7 +425,10 @@ pocl_uninit_devices ()
               retval = ret;
               goto FINISH;
             }
-
+          if (pocl_device_handles[i] != NULL)
+            {
+              dlclose (pocl_device_handles[i]);
+            }
           ++dev_index;
         }
     }
@@ -500,6 +575,32 @@ pocl_init_devices ()
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+      if (pocl_devices_init_ops[i] == NULL)
+        {
+          char device_library[PATH_MAX] = "";
+          get_pocl_device_lib_path (device_library, pocl_device_types[i]);
+          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+          char init_device_ops_name[MAX_DEV_NAME_LEN + 21] = "";
+          strcat (init_device_ops_name, "pocl_");
+          strcat (init_device_ops_name, pocl_device_types[i]);
+          strcat (init_device_ops_name, "_init_device_ops");
+          if (pocl_device_handles[i] != NULL)
+            {
+              pocl_devices_init_ops[i] = (init_device_ops)dlsym (
+                  pocl_device_handles[i], init_device_ops_name);
+              pocl_devices_init_ops[i](&pocl_device_ops[i]);
+            }
+          else
+            {
+              POCL_MSG_WARN ("Loading %s failed.\n", device_library);
+              device_count[i] = 0;
+              continue;
+            }
+        }
+      else
+        {
+          pocl_device_handles[i] = NULL;
+        }
       pocl_devices_init_ops[i](&pocl_device_ops[i]);
       assert(pocl_device_ops[i].device_name != NULL);
 
@@ -521,6 +622,8 @@ pocl_init_devices ()
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+      if (pocl_devices_init_ops[i] == NULL)
+        continue;
       str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)

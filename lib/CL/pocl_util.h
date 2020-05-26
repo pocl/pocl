@@ -36,10 +36,6 @@
 #error aligned malloc unavailable
 #endif
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -218,10 +214,6 @@ float half_to_float (uint16_t value);
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
 #endif
 
 /* Common macro for cleaning up "*GetInfo" API call implementations.

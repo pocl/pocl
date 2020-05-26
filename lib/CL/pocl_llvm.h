@@ -29,10 +29,6 @@
 extern "C" {
 #endif
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 /* Returns the cpu name as reported by LLVM. */
 char *get_llvm_cpu_name ();
 /* Returns if the cpu supports FMA instruction (uses LLVM). */
@@ -125,10 +121,6 @@ int pocl_llvm_link_program(cl_program program,
                            void **cur_llvm_irs, int create_library, int spir);
 
 int pocl_invoke_clang(cl_device_id Device, const char** Args);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 
 #ifdef __cplusplus

@@ -626,6 +626,7 @@ if(ENABLE_RELOCATION)
           DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include" COMPONENT "dev")
 endif()
 
+file(RELATIVE_PATH POCL_INSTALL_PRIVATE_LIBDIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_LIBDIR})
 
 ######################################################################################
 

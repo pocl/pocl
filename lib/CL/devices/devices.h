@@ -26,10 +26,7 @@
 #define POCL_DEVICES_H
 
 #include "../pocl_cl.h"
-
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
+#include "config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,10 +76,6 @@ int pocl_device_get_env_count(const char *dev_type);
  * \return Unique global mem id, id > 0. Zero is reserved for shared system memory
  */
 int pocl_get_unique_global_mem_id();
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"
