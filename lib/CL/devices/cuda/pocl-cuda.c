@@ -524,6 +524,41 @@ pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
 }
 
 void
+pocl_cuda_submit_memfill (CUstream stream, void *mem_ptr, size_t size_in_bytes,
+                          size_t offset, const void *pattern,
+                          size_t pattern_size)
+{
+  CUresult result;
+  switch (pattern_size)
+    {
+    case 1:
+      result
+          = cuMemsetD8Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+                             *(unsigned char *)pattern, size_in_bytes, stream);
+      break;
+    case 2:
+      result = cuMemsetD16Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+                                 *(unsigned short *)pattern, size_in_bytes / 2,
+                                 stream);
+      break;
+    case 4:
+      result = cuMemsetD32Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+                                 *(unsigned int *)pattern, size_in_bytes / 4,
+                                 stream);
+      break;
+    case 8:
+    case 16:
+    case 32:
+    case 64:
+    case 128:
+      POCL_ABORT_UNIMPLEMENTED ("fill_kernel with pattern_size >=8");
+    default:
+      POCL_ABORT ("unrecognized pattern_size");
+    }
+  CUDA_CHECK (result, "cuMemset*Async");
+}
+
+void
 pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
                         void *device_ptr, size_t offset, size_t cb)
 {
@@ -1164,6 +1199,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
+      pocl_cuda_submit_memfill (stream, cmd->memfill.dst_mem_id->mem_ptr,
+                                cmd->memfill.size, cmd->memfill.offset,
+                                cmd->memfill.pattern,
+                                cmd->memfill.pattern_size);
+      break;
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_COPY_IMAGE:
