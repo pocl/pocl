@@ -655,11 +655,11 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-    AttributeList func_printf_PAL;
-    {
-      func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
-      func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);
-    }
+    AttributeList func_printf_PAL =
+      AttributeList()
+      .addAttribute(M->getContext(), 1U, Attribute::NoCapture)
+      .addAttribute(M->getContext(), 4294967295U, Attribute::NoUnwind);
+
     printfFunc->setAttributes(func_printf_PAL);
   }
 
