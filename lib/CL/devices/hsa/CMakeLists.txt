@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2015 pocl developers
+#   Copyright (c) 2015-2020 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -26,5 +26,5 @@
 if(MSVC)
   set_source_files_properties( pocl-hsa.c pocl-hsa.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-hsa" OBJECT pocl-hsa.c pocl-hsa.h)
-set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-hsa>" PARENT_SCOPE)
+add_pocl_device_library(pocl-devices-hsa pocl-hsa.c pocl-hsa.h)
+target_link_libraries(pocl-devices-hsa PRIVATE pocl-devices-basic ${HSALIB})

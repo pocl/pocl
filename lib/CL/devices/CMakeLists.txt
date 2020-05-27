@@ -47,21 +47,14 @@ add_subdirectory("topology")
 set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
   "$<TARGET_OBJECTS:pocl-devices-topology>")
 
-if(BUILD_ACCEL)
-  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-    "$<TARGET_OBJECTS:pocl-devices-accel>")
-endif()
-
 if(ENABLE_TCE)
   include_directories(AFTER "tce")
   add_subdirectory("tce")
-  list(APPEND POCL_DEVICES_LINK_LIST ${TCE_LIBS})
 endif()
 
 if(ENABLE_HSA)
   include_directories(AFTER "${HSA_INCLUDES}")
   add_subdirectory("hsa")
-  list(APPEND POCL_DEVICES_LINK_LIST ${HSALIB})
 endif()
 
 if(ENABLE_CUDA)

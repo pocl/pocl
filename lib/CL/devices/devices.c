@@ -94,16 +94,16 @@ static init_device_ops pocl_devices_init_ops[] = {
   NULL,
 #endif
 #if defined(TCE_AVAILABLE)
-  pocl_ttasim_init_device_ops,
+  NULL,
 #endif
 #if defined(BUILD_HSA)
-  pocl_hsa_init_device_ops,
+  NULL,
 #endif
 #if defined(BUILD_CUDA)
   NULL,
 #endif
 #if defined(BUILD_ACCEL)
-  pocl_accel_init_device_ops,
+  NULL,
 #endif
 };
 
@@ -167,7 +167,14 @@ get_pocl_device_lib_path (char *result, char *device_name)
             {
               strcat (result, "devices");
               strcat (result, POCL_PATH_SEPARATOR);
-              strcat (result, device_name);
+              if (strncmp(device_name, "ttasim", 6) == 0)
+                {
+                  strcat (result, "tce");
+                }
+              else
+                {
+                  strcat (result, device_name);
+                }
               strcat (result, POCL_PATH_SEPARATOR);
             }
           else

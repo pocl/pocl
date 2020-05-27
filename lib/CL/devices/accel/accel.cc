@@ -1,7 +1,7 @@
 /* accel.cc - generic/example driver for hardware accelerators with memory
    mapped control.
 
-   Copyright (c) 2019 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2019-2020 Pekka Jääskeläinen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

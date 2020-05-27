@@ -146,10 +146,6 @@ struct memory_region
   ba_lock_t lock;
 };
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 chunk_info_t *alloc_buffer_from_region(memory_region_t *region, size_t size);
 chunk_info_t *alloc_buffer(memory_region_t *regions, size_t size);
 
@@ -166,10 +162,6 @@ print_chunk (chunk_info_t *chunk);
 
 void
 print_chunks (chunk_info_t *first);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #ifdef __cplusplus
 }

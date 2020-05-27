@@ -28,5 +28,5 @@ add_compile_options("-std=c++11")
 if(MSVC)
   set_source_files_properties( accel.cc accel.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-accel" OBJECT accel.cc accel.h)
-set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-accel>" PARENT_SCOPE)
+
+add_pocl_device_library(pocl-devices-accel accel.cc accel.h)
