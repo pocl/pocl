@@ -856,9 +856,13 @@ void mapLibDeviceCalls(llvm::Module *Module) {
 
     {"ldexp", "__nv_ldexp"},
     {"ldexpf", "__nv_ldexpf"},
+
+    {"modf", "__nv_modf"},
+    {"modff", "__nv_modff"},
+
+    {"remquo", "__nv_remquo"},
+    {"remquof", "__nv_remquof"},
     // TODO: lgamma_r
-    // TODO: modf
-    // TODO: remquo
     // TODO: rootn
   };
   // clang-format on

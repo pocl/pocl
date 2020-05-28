@@ -1,4 +1,4 @@
-/* OpenCL built-in library: frexp
+/* OpenCL built-in library: modf
 
    Copyright (c) 2020 Isuru Fernando
 
@@ -21,14 +21,6 @@
    IN THE SOFTWARE.
 */
 
-#include "../templates.h"
+#include "templates.h"
 
-double __attribute__ ((overloadable)) frexp (double a, int *b)
-{
-  return __builtin_frexp (a, b);
-}
-
-float __attribute__ ((overloadable)) frexp (float a, int *b)
-{
-  return __builtin_frexpf (a, b);
-}
+DEFINE_BUILTIN_V_VPV (modf)

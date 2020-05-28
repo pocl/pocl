@@ -39,7 +39,7 @@ foreach(FILE
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
   get_global_offset.c
-  printf.c frexp.cl
+  printf.c
   wait_group_events.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
