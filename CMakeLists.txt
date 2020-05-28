@@ -1477,7 +1477,7 @@ add_subdirectory("examples")
 # make check & make check_tier1
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro|shoc'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png")
