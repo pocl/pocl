@@ -272,8 +272,10 @@ set_tests_properties("kernel/test_shuffle_char"
 if(ENABLE_CUDA)
 set_property(TEST
   "kernel/test_min_max"
+  "kernel/test_ldexp"
   "kernel/test_length_distance"
   "kernel/test_fmin_fmax_fma"
+  "kernel/test_frexp_modf"
   "kernel/test_convert_sat_regression"
   "kernel/test_rotate"
   "kernel/test_short16"
