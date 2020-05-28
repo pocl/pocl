@@ -30,7 +30,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
   test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
-  test_enqueue_kernel_from_binary test_user_event
+  test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback)
 
 add_compile_options(${OPENCL_CFLAGS})
@@ -70,6 +70,8 @@ add_test_pocl(NAME "runtime/test_link_error" COMMAND "test_link_error")
 
 add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy-write-buffer")
 
+add_test_pocl(NAME "runtime/test_fill-buffer" COMMAND "test_fill-buffer")
+
 add_test_pocl(NAME "runtime/test_buffer-image-copy" COMMAND "test_buffer-image-copy")
 
 add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel")
@@ -101,6 +103,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
   "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
+  "runtime/test_fill-buffer"
   "runtime/test_event_free" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
@@ -138,6 +141,7 @@ set_property(TEST
   "runtime/test_kernel_cache_includes"
   "runtime/clFinish"
   "runtime/test_read-copy-write-buffer"
+  "runtime/test_fill-buffer"
   "runtime/test_buffer-image-copy"
   "runtime/clSetEventCallback"
   "runtime/clGetSupportedImageFormats"
