@@ -23,11 +23,12 @@
    THE SOFTWARE.
 */
 
+#include "../llvmopencl/AutomaticLocals.h"
 #include "config.h"
 #include "pocl.h"
 #include "pocl_cache.h"
-#include "pocl_llvm_api.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm_api.h"
 
 #include <string>
 #include <map>
@@ -225,8 +226,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
-  if (device->autolocals_to_args)
-    passes.push_back("automatic-locals");
+  passes.push_back("automatic-locals");
 
   if (SPMDDevice) {
     passes.push_back("flatten-inline-all");
@@ -322,6 +322,10 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
       Builder.VerifyInput = true;
       Builder.VerifyOutput = true;
       Builder.populateModulePassManager(*Passes);
+      continue;
+    }
+    if (passes[i] == "automatic-locals") {
+      Passes->add(pocl::createAutomaticLocalsPass(device->autolocals_to_args));
       continue;
     }
 

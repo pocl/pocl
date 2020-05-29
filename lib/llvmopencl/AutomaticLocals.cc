@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 
+#include "AutomaticLocals.h"
 #include "LLVMUtils.h"
 #include "Workgroup.h"
 
@@ -54,7 +55,9 @@ namespace {
 
   public:
     static char ID;
-    AutomaticLocals() : ModulePass(ID) {}
+    int autolocals_to_args;
+    AutomaticLocals(int autolocals_to_args = 1)
+        : ModulePass(ID), autolocals_to_args(autolocals_to_args) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnModule(Module &M);
@@ -62,6 +65,10 @@ namespace {
   private:
     Function *processAutomaticLocals(Function *F);
   };
+}
+
+llvm::ModulePass *pocl::createAutomaticLocalsPass(int autolocals_to_args) {
+  return new AutomaticLocals(autolocals_to_args);
 }
 
 char AutomaticLocals::ID = 0;
@@ -75,6 +82,9 @@ AutomaticLocals::getAnalysisUsage(AnalysisUsage &) const {
 bool
 AutomaticLocals::runOnModule(Module &M)
 {
+  if (autolocals_to_args == 0) {
+    return false;
+  }
   bool changed = false;
 
   // store the new and old kernel pairs in order to regenerate
@@ -167,6 +177,21 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
   if (Locals.empty()) {
     // This kernel fingerprint has not changed.
     return F;
+  }
+
+  if (autolocals_to_args == 2) {
+    bool NeedsArgOffsets = false;
+    // Loop over arguments.
+    for (auto &Arg : F->args()) {
+      // Check for local memory pointer.
+      llvm::Type *ArgType = Arg.getType();
+      if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() == 3) {
+        NeedsArgOffsets = true;
+        break;
+      }
+    }
+    if (!NeedsArgOffsets)
+      return F;
   }
 
   // Create the new function.

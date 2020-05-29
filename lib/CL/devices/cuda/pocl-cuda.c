@@ -193,6 +193,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;
 
+  dev->autolocals_to_args = 2;
+
   dev->has_64bit_long = 1;
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
@@ -1020,20 +1022,25 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
   unsigned arg_index = meta->num_args;
 
-  /* Deal with automatic local allocations */
-  /* TODO: Would be better to remove arguments and make these static GEPs */
-  for (i = 0; i < meta->num_locals; ++i, ++arg_index)
+  if (sharedMemBytes != 0)
     {
-      size_t size = meta->local_sizes[i];
-      size_t align = kdata->alignments[arg_index];
+      /* Deal with automatic local allocations if there are local function args
+       */
+      /* TODO: Would be better to remove arguments and make these static GEPs
+       */
+      for (i = 0; i < meta->num_locals; ++i, ++arg_index)
+        {
+          size_t size = meta->local_sizes[i];
+          size_t align = kdata->alignments[arg_index];
 
-      /* Pad offset to align memory */
-      if (sharedMemBytes % align)
-        sharedMemBytes += align - (sharedMemBytes % align);
+          /* Pad offset to align memory */
+          if (sharedMemBytes % align)
+            sharedMemBytes += align - (sharedMemBytes % align);
 
-      sharedMemOffsets[arg_index] = sharedMemBytes;
-      sharedMemBytes += size;
-      params[arg_index] = sharedMemOffsets + arg_index;
+          sharedMemOffsets[arg_index] = sharedMemBytes;
+          sharedMemBytes += size;
+          params[arg_index] = sharedMemOffsets + arg_index;
+        }
     }
 
   /* Add global work dimensionality */
