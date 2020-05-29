@@ -52,9 +52,10 @@
                           no sense in binary, and whether argument is local
                           is already in cl_kernel_arg_address_qualifier);
                           add has_arg_metadata & kernel attributes */
+/* changes for version 8: added local_alignments after local_sizes */
 
 #define FIRST_SUPPORTED_POCLCC_VERSION 6
-#define POCLCC_VERSION 7
+#define POCLCC_VERSION 8
 
 /* pocl binary structures */
 
@@ -101,6 +102,7 @@ typedef struct pocl_binary_kernel_s
   /* arguments and argument metadata. Note that not everything is stored
    * in the serialized binary */
   size_t *local_sizes;
+  size_t *local_alignments;
 } pocl_binary_kernel;
 
 typedef struct pocl_binary_s
@@ -384,6 +386,8 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
     {
       uint64_t temp = meta->local_sizes[i];
       BUFFER_STORE (temp, uint64_t);
+      temp = meta->local_alignments[i];
+      BUFFER_STORE (temp, uint64_t);
     }
 
   uint32_t attrlen = meta->attributes ? strlen (meta->attributes) : 0;
@@ -530,11 +534,20 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
         }
 
       kernel->local_sizes = calloc (kernel->num_locals, sizeof (size_t));
+      if (b->version >=8)
+        {
+          kernel->local_alignments = calloc (kernel->num_locals, sizeof (size_t));
+        }
       for (i = 0; i < kernel->num_locals; i++)
         {
           uint64_t temp;
           BUFFER_READ (temp, uint64_t);
           kernel->local_sizes[i] = temp;
+          if (b->version >=8)
+            {
+              BUFFER_READ (temp, uint64_t);
+              kernel->local_alignments[i] = temp;
+            }
         }
 
       if (b->version >= 7)
@@ -755,6 +768,7 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       km->num_args = k.num_args;
       km->num_locals = k.num_locals;
       km->local_sizes = k.local_sizes;
+      km->local_alignments = k.local_alignments;
       km->attributes = k.attributes;
       km->has_arg_metadata = k.has_arg_metadata;
       km->name = k.kernel_name;

@@ -1047,6 +1047,7 @@ typedef struct pocl_kernel_metadata_s
   cl_uint num_args;
   cl_uint num_locals;
   size_t *local_sizes;
+  size_t *local_alignments;
   char *name;
   char *attributes;
   struct pocl_argument_info *arg_info;

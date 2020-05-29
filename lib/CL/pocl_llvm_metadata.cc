@@ -530,12 +530,16 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     meta->num_locals = locals.size();
     meta->local_sizes = (size_t*)calloc(locals.size(), sizeof(size_t));
+    meta->local_alignments = (size_t*)calloc(locals.size(), sizeof(size_t));
 
     /* Fill up automatic local arguments. */
     for (unsigned i = 0; i < meta->num_locals; ++i) {
       unsigned auto_local_size =
           TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
+      unsigned auto_local_alignment = TD->getTypeAllocSize(
+            locals[i]->getType()->getPointerElementType());
       meta->local_sizes[i] = auto_local_size;
+      meta->local_alignments[i] = auto_local_alignment;
 
       #ifdef DEBUG_POCL_LLVM_API
           printf("### automatic local %d size %u\n", i, auto_local_size);
