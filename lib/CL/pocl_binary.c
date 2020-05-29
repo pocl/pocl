@@ -54,8 +54,8 @@
                           add has_arg_metadata & kernel attributes */
 /* changes for version 8: added local_alignments after local_sizes */
 
-#define FIRST_SUPPORTED_POCLCC_VERSION 6
-#define POCLCC_VERSION 8
+#define FIRST_SUPPORTED_POCL_BINARY_VERSION 6
+#define POCL_BINARY_VERSION 8
 
 /* pocl binary structures */
 
@@ -243,11 +243,11 @@ check_binary(cl_device_id device, const unsigned char *binary)
       POCL_MSG_WARN ("File is not a pocl binary\n");
       return NULL;
     }
-  if (b.version < FIRST_SUPPORTED_POCLCC_VERSION)
+  if (b.version < FIRST_SUPPORTED_POCL_BINARY_VERSION)
     {
       POCL_MSG_WARN ("PoclBinary version %i is not supported by "
                      "this pocl (the minimal is: %i)\n",
-                     b.version, FIRST_SUPPORTED_POCLCC_VERSION);
+                     b.version, FIRST_SUPPORTED_POCL_BINARY_VERSION);
       return NULL;
     }
   if (pocl_binary_get_device_id(device) != b.device_id)
@@ -620,7 +620,7 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
   memcpy(buffer, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
   buffer += POCLCC_STRING_ID_LENGTH;
   BUFFER_STORE(pocl_binary_get_device_id(program->devices[device_i]), uint64_t);
-  BUFFER_STORE(POCLCC_VERSION, uint32_t);
+  BUFFER_STORE(POCL_BINARY_VERSION, uint32_t);
   BUFFER_STORE(num_kernels, uint32_t);
   uint64_t flags = 0;
   if (program->flush_denorms)
