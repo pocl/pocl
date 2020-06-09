@@ -77,6 +77,7 @@ fmax.cl
 fmin.cl
 fmod.cl
 fract.cl
+frexp.cl
 get_global_id.c
 get_global_offset.c
 get_global_size.c
@@ -116,6 +117,7 @@ mad_sat.cl
 max.cl
 max_i.cl
 maxmag.cl
+modf.cl
 min.cl
 min_i.cl
 minmag.cl
@@ -151,6 +153,7 @@ printf_base.c
 radians.cl
 recip.cl
 remainder.cl
+remquo.cl
 rhadd.cl
 rint.cl
 rootn.cl
