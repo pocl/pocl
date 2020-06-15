@@ -31,6 +31,10 @@ Optimizations
     dgemm_n_pcie:   51.6%
     dgemm_t_pcie:    6.9%
 
+Notable Bug Fixes
+-----------------
+- Fix poclcc to emit LLVM loop vectorizing remarks when POCL_VECTORIZER_REMARKS
+  environment variable is set.
 
 1.5 April 2020
 ==============

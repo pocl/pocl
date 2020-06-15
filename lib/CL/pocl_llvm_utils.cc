@@ -235,6 +235,7 @@ static DiagnosticPrinterRawOStream poclDiagPrinter(poclDiagStream);
 
 static void diagHandler(const DiagnosticInfo &DI, void *Context) {
   DI.print(poclDiagPrinter);
+  poclDiagPrinter << "\n";
 }
 
 std::string getDiagString() {

@@ -441,6 +441,11 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   llvm::reportAndResetTimings();
 #endif
 
+  // Print loop vectorizer remarks if enabled.
+  if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+    std::cout << getDiagString();
+  }
+
   assert(Output != NULL);
   *Output = (void *)ParallelBC;
   ++numberOfIRs;
