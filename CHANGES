@@ -33,8 +33,7 @@ Optimizations
 
 Notable Bug Fixes
 -----------------
-- Fix poclcc to emit LLVM loop vectorizing remarks when POCL_VECTORIZER_REMARKS
-  environment variable is set.
+- Fix LLVM loop vectorizing remarks printing (POCL_VECTORIZER_REMARKS=1).
 
 1.5 April 2020
 ==============
