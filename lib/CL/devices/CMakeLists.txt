@@ -27,7 +27,7 @@ function(add_pocl_device_library name)
   add_library(${name} SHARED ${ARGN})
   target_link_libraries(${name} PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_LIBRARY_NAME} ${POCL_PRIVATE_LINK_LIST})
   set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so")
-  install(TARGETS ${name} LIBRARY DESTINATION "${POCL_INSTALL_PRIVATE_LIBDIR}")
+  install(TARGETS ${name} LIBRARY DESTINATION "${POCL_INSTALL_PRIVATE_LIBDIR}" COMPONENT "lib")
 endfunction()
 
 if(BUILD_BASIC)
