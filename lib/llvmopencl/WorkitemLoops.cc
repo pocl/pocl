@@ -990,7 +990,11 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
      size. */
     Alloca->setAlignment(
 #ifndef LLVM_OLDER_THAN_10_0
+#ifndef LLVM_OLDER_THAN_11_0
+        llvm::Align(
+#else
         llvm::MaybeAlign(
+#endif
 #endif
             CONTEXT_ARRAY_ALIGN
 #ifndef LLVM_OLDER_THAN_10_0

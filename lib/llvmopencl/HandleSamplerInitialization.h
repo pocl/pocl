@@ -27,7 +27,6 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/IR/Function.h>
-#include <llvm/PassAnalysisSupport.h>
 #include <llvm/Pass.h>
 
 POP_COMPILER_DIAGS
