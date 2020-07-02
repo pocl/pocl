@@ -559,7 +559,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->extensions = TCE_DEVICE_EXTENSIONS;
 
   dev->has_64bit_long = 1;
-  dev->autolocals_to_args = 1;
+  dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
 
   dev->global_as_id = TTA_ASID_GLOBAL;
   dev->local_as_id = TTA_ASID_LOCAL;

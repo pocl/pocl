@@ -25,6 +25,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl_spir.h"
+#include "pocl_cl.h"
 
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
@@ -55,8 +56,8 @@ namespace {
 
   public:
     static char ID;
-    int autolocals_to_args;
-    AutomaticLocals(int autolocals_to_args = 1)
+    pocl_autolocals_to_args_type autolocals_to_args;
+    AutomaticLocals(pocl_autolocals_to_args_type autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS)
         : ModulePass(ID), autolocals_to_args(autolocals_to_args) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -67,7 +68,7 @@ namespace {
   };
 }
 
-llvm::ModulePass *pocl::createAutomaticLocalsPass(int autolocals_to_args) {
+llvm::ModulePass *pocl::createAutomaticLocalsPass(pocl_autolocals_to_args_type autolocals_to_args) {
   return new AutomaticLocals(autolocals_to_args);
 }
 
@@ -82,7 +83,7 @@ AutomaticLocals::getAnalysisUsage(AnalysisUsage &) const {
 bool
 AutomaticLocals::runOnModule(Module &M)
 {
-  if (autolocals_to_args == 0) {
+  if (autolocals_to_args == POCL_AUTOLOCALS_TO_ARGS_NEVER) {
     return false;
   }
   bool changed = false;
@@ -179,9 +180,8 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
     return F;
   }
 
-  if (autolocals_to_args == 2) {
+  if (autolocals_to_args == POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT) {
     bool NeedsArgOffsets = false;
-    // Loop over arguments.
     for (auto &Arg : F->args()) {
       // Check for local memory pointer.
       llvm::Type *ArgType = Arg.getType();

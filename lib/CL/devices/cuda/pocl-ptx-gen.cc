@@ -609,7 +609,6 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   llvm::ValueToValueMapTy VV;
   std::vector<std::pair<llvm::Instruction *, llvm::Instruction *>> ToInsert;
 
-  // Loop over arguments.
   bool NeedsArgOffsets = false;
   for (auto &Arg : Function->args()) {
     // Check for local memory pointer.

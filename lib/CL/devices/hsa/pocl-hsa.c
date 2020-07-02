@@ -367,7 +367,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .llvm_target_triplet
                 = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
                 .spmd = CL_TRUE,
-                .autolocals_to_args = CL_FALSE,
+                .autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER,
                 .device_alloca_locals = CL_FALSE,
                 .context_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
                 .args_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
@@ -397,7 +397,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .llvm_cpu = NULL,
                 .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
                 .spmd = CL_FALSE,
-                .autolocals_to_args = !HSAIL_ENABLED,
+                .autolocals_to_args = (HSAIL_ENABLED ? POCL_AUTOLOCALS_TO_ARGS_NEVER : POCL_AUTOLOCALS_TO_ARGS_ALWAYS),
                 .device_alloca_locals = CL_TRUE,
                 .context_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
                 .args_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
@@ -664,7 +664,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->spmd = CL_TRUE;
   dev->arg_buffer_launcher = CL_FALSE;
-  dev->autolocals_to_args = CL_FALSE;
+  dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER;
   dev->device_alloca_locals = CL_FALSE;
 
   dev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;

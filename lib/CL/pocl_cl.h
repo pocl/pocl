@@ -638,6 +638,17 @@ typedef struct pocl_global_mem_t {
   cl_ulong total_alloc_limit;
 } pocl_global_mem_t;
 
+/**
+ * Enumeration for different modes of converting automatic locals
+ */
+typedef enum {
+  POCL_AUTOLOCALS_TO_ARGS_NEVER = 0,
+  POCL_AUTOLOCALS_TO_ARGS_ALWAYS = 1,
+  // convert autolocals to args only if there are dynamic local memory function
+  // arguments in the kernel.
+  POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
+} pocl_autolocals_to_args_type;
+
 #define NUM_OPENCL_IMAGE_TYPES 6
 
 struct _cl_device_id {
@@ -762,7 +773,7 @@ struct _cl_device_id {
    * the host's system time (pocl_gettimemono_ns). */
   int has_own_timer;
   /* Convert automatic local variables to kernel arguments? */
-  int autolocals_to_args;
+  pocl_autolocals_to_args_type autolocals_to_args;
   /* Allocate local buffers device side in the work-group launcher instead of
      having a disjoint physical local memory per work-group or having the
      runtime/driver allocate the local space. */

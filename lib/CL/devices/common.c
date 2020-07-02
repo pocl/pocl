@@ -1557,7 +1557,7 @@ pocl_init_default_device_infos (cl_device_id dev)
                                | CL_QUEUE_PROFILING_ENABLE;
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
   dev->has_64bit_long = 1;
-  dev->autolocals_to_args = 1;
+  dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
   dev->device_alloca_locals = 0;
 
 #ifdef OCS_AVAILABLE

@@ -32,7 +32,7 @@ if(SANITIZER_OPTIONS)
   add_compile_options(${SANITIZER_OPTIONS})
 endif()
 
-include_directories(AFTER "devices" ".")
+include_directories(AFTER "devices" "." "../llvmopencl")
 
 ################################################################################
 if (MSVC)

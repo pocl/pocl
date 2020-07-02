@@ -74,7 +74,7 @@ TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   pthread_mutex_init (&cq_lock, NULL);
   POCL_INIT_LOCK(tce_compile_lock);
   dev->address_bits = 32;
-  dev->autolocals_to_args = 1;
+  dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
   /* This assumes TCE is always Little-endian;
    * needsByteSwap is set up again in TTASimDevice
    * after we know whether ADF is big- or little-endian. */

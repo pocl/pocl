@@ -1,4 +1,4 @@
-// Create a AutomaticLocals pass for converting automatic locals to args
+// Create an AutomaticLocals pass for converting automatic locals to args
 //
 // Copyright (c) 2020 Isuru Fernando
 //
@@ -20,12 +20,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#include "llvm/Pass.h"
+#include <llvm/Pass.h>
+#include "pocl_cl.h"
 
 namespace pocl {
-// autolocals_to_args can have the following values
-//  0: do not convert autolocals to args
-//  1: convert autolocals to args
-//  2: convert autolocals to args only if there are local function arguments
-llvm::ModulePass *createAutomaticLocalsPass(int autolocals_to_args);
+
+llvm::ModulePass *createAutomaticLocalsPass(pocl_autolocals_to_args_type autolocals_to_args);
 } // namespace pocl
