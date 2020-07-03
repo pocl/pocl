@@ -23,12 +23,12 @@
    THE SOFTWARE.
 */
 
+#include "AutomaticLocals.h"
 #include "config.h"
 #include "pocl.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm_api.h"
-#include "AutomaticLocals.h"
 
 #include <string>
 #include <map>

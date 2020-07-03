@@ -41,12 +41,9 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch);
 
 /* Generate a PTX file from an LLVM bitcode file. */
 /* Returns zero on success, non-zero on failure. */
-int pocl_ptx_gen(const char *BitcodeFilename,
-                 const char *PTXFilename,
-                 const char *KernelName,
-                 const char *Arch,
-                 const char *LibDevicePath,
-                 int HasOffsets);
+int pocl_ptx_gen (const char *BitcodeFilename, const char *PTXFilename,
+                  const char *KernelName, const char *Arch,
+                  const char *LibDevicePath, int HasOffsets);
 
 /* Populate the Alignments array with the required pointer alignments for */
 /* each kernel argument. */

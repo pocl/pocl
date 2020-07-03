@@ -397,7 +397,9 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .llvm_cpu = NULL,
                 .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
                 .spmd = CL_FALSE,
-                .autolocals_to_args = (HSAIL_ENABLED ? POCL_AUTOLOCALS_TO_ARGS_NEVER : POCL_AUTOLOCALS_TO_ARGS_ALWAYS),
+                .autolocals_to_args
+                = (HSAIL_ENABLED ? POCL_AUTOLOCALS_TO_ARGS_NEVER
+                                 : POCL_AUTOLOCALS_TO_ARGS_ALWAYS),
                 .device_alloca_locals = CL_TRUE,
                 .context_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
                 .args_as_id = SPIR_ADDRESS_SPACE_GLOBAL,

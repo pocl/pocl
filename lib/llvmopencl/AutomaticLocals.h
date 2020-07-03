@@ -20,8 +20,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#include <llvm/Pass.h>
 #include "pocl_cl.h"
+#include <llvm/Pass.h>
 
 namespace pocl {
 

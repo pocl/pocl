@@ -193,7 +193,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;
 
-  dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT;
+  dev->autolocals_to_args
+      = POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT;
 
   dev->has_64bit_long = 1;
 

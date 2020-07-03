@@ -1390,9 +1390,9 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   InlineFunctionInfo IFI;
 #ifndef LLVM_OLDER_THAN_11_0
-      InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
+  InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
 #else
-      InlineFunction(dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
+  InlineFunction(dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
 #endif
 }
 
