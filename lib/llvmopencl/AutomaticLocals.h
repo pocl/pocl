@@ -25,5 +25,6 @@
 
 namespace pocl {
 
-llvm::ModulePass *createAutomaticLocalsPass(pocl_autolocals_to_args_type autolocals_to_args);
+llvm::ModulePass *
+createAutomaticLocalsPass(pocl_autolocals_to_args_strategy autolocals_to_args);
 } // namespace pocl

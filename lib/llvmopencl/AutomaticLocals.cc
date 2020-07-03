@@ -56,8 +56,9 @@ namespace {
 
   public:
     static char ID;
-    pocl_autolocals_to_args_type autolocals_to_args;
-    AutomaticLocals(pocl_autolocals_to_args_type autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS)
+    pocl_autolocals_to_args_strategy autolocals_to_args;
+    AutomaticLocals(pocl_autolocals_to_args_strategy autolocals_to_args =
+                        POCL_AUTOLOCALS_TO_ARGS_ALWAYS)
         : ModulePass(ID), autolocals_to_args(autolocals_to_args) {}
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -68,7 +69,8 @@ namespace {
   };
 }
 
-llvm::ModulePass *pocl::createAutomaticLocalsPass(pocl_autolocals_to_args_type autolocals_to_args) {
+llvm::ModulePass *pocl::createAutomaticLocalsPass(
+    pocl_autolocals_to_args_strategy autolocals_to_args) {
   return new AutomaticLocals(autolocals_to_args);
 }
 
