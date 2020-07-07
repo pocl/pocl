@@ -24,6 +24,7 @@
 #=============================================================================
 
 add_executable(poclcc poclcc.c "${CMAKE_SOURCE_DIR}/lib/poclu/misc.c")
+harden(poclcc)
 
 target_link_libraries(poclcc ${OPENCL_LIBS})
 

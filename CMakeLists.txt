@@ -355,6 +355,13 @@ endif()
 ######################################################################################
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+option(HARDENING_ENABLE "Enable hardening against various attacks. May worsen performance" OFF)
+if(HARDENING_ENABLE)
+  include(Hardening)
+else()
+  function(harden target)
+  endfunction()
+endif()
 
 if(UNIX AND (NOT CMAKE_CROSSCOMPILING))
   find_package(PkgConfig MODULE REQUIRED)

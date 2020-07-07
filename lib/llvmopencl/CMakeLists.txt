@@ -99,11 +99,13 @@ endif(MSVC)
 # to call the kernel compiler passes directly from the host library.
 #noinst_LTLIBRARIES = libllvmpasses.la
 add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
+harden("llvmpasses")
 
 # This creates a separate llvmopencl.so that is loaded to 'opt'
 # for the pocl-workgroup version.
 #pkglib_LTLIBRARIES = llvmopencl.la
 add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
+harden("llvmopencl")
 
 # not sure where other platforms get their library linkage list, probably there is
 # way to make this more consistent on different platforms

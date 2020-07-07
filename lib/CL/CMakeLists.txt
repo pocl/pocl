@@ -180,6 +180,7 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  ${POCL_DEVICES_OBJS})
 
 add_library("pocl_cache" OBJECT "pocl_cache.c")
+harden("pocl_cache")
 
 if (OCS_AVAILABLE)
   include_directories(${LLVM_INCLUDE_DIRS})
@@ -187,6 +188,7 @@ if (OCS_AVAILABLE)
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
+  harden("lib_cl_llvm")
 
 
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
@@ -212,6 +214,7 @@ endif(MSVC)
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
+harden("libpocl_unlinked_objs")
 
 #################################################################
 
@@ -229,6 +232,7 @@ if(ANDROID)
 else()
   add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
 endif()
+harden("${POCL_LIBRARY_NAME}")
 
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
   VERSION "${LIB_BUILD_VERSION}" 

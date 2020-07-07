@@ -25,6 +25,7 @@
 
 function(add_pocl_device_library name)
   add_library(${name} SHARED ${ARGN})
+  harden("${name}")
   target_link_libraries(${name} PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_LIBRARY_NAME} ${POCL_PRIVATE_LINK_LIST})
   set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so")
   install(TARGETS ${name} LIBRARY DESTINATION "${POCL_INSTALL_PRIVATE_LIBDIR}" COMPONENT "lib")
@@ -72,6 +73,7 @@ if(MSVC)
   set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
+harden("pocl-devices")
 
 set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
 set(POCL_DEVICES_OBJS ${POCL_DEVICES_OBJS} PARENT_SCOPE)
