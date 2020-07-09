@@ -24,6 +24,7 @@
 #ifndef _POCL_PARALLEL_REGION_H
 #define _POCL_PARALLEL_REGION_H
 
+#include <functional>
 #include <vector>
 #include <sstream>
 
@@ -79,7 +80,9 @@ class Kernel;
                        std::size_t y = 0, 
                        std::size_t z = 0);
 
-    void AddParallelLoopMetadata(llvm::MDNode *Identifier);
+    void AddParallelLoopMetadata
+        (llvm::MDNode *Identifier,
+         std::function<bool(llvm::Instruction *)> IsLoadUnconditionallySafe);
 
     bool HasBlock(llvm::BasicBlock *bb);
 

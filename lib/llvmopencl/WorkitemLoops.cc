@@ -212,6 +212,16 @@ WorkitemLoops::CreateLoopAround
 
   DTP->runOnFunction(*F);
 
+  /* Collect the basic blocks in the parallel region that dominate the
+     exit. These are used in determining whether load instructions may
+     be executed unconditionally in the parallel loop (see below). */
+  llvm::SmallPtrSet<llvm::BasicBlock *, 8> dominatesExitBB;
+  for (auto bb: region) {
+    if (DT->dominates(bb, exitBB)) {
+      dominatesExitBB.insert(bb);
+    }
+  }
+
   //  F->viewCFG();
   /* Fix the old edges jumping to the region to jump to the basic block
      that starts the created loop. Back edges should still point to the
@@ -308,10 +318,17 @@ WorkitemLoops::CreateLoopAround
   //   !1 = metadata !{metadata !1} <- self-referential root
   loopBranch->setMetadata("llvm.loop", Root);
 
+  auto IsLoadUnconditionallySafe =
+    [&dominatesExitBB](llvm::Instruction *insn) -> bool {
+      assert(insn->mayReadFromMemory());
+      // Checks that the instruction isn't in a conditional block.
+      return dominatesExitBB.count(insn->getParent());
+    };
+
 #ifdef LLVM_OLDER_THAN_8_0
-  region.AddParallelLoopMetadata(Root);
+  region.AddParallelLoopMetadata(Root, IsLoadUnconditionallySafe);
 #else
-  region.AddParallelLoopMetadata(AccessGroupMD);
+  region.AddParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
 #endif
 
   builder.SetInsertPoint(loopEndBB);

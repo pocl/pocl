@@ -441,6 +441,12 @@ ParallelRegion::Verify()
   return true;
 }
 
+#ifdef LLVM_OLDER_THAN_8_0
+#define PARALLEL_MD_NAME "llvm.mem.parallel_loop_access"
+#else
+#define PARALLEL_MD_NAME "llvm.access.group"
+#endif
+
 /**
  * Adds metadata to all the memory instructions to denote
  * they originate from a parallel loop.
@@ -448,40 +454,48 @@ ParallelRegion::Verify()
  * Due to nested parallel loops, there can be multiple loop
  * references.
  *
- * Format:
- * llvm.mem.parallel_loop_access !0
+ * Format (LLVM 8+):
  *
- * !0 { metadata !0 }
+ *     !llvm.access.group !0
+ *
+ *     !0 distinct !{}
  *
  * In a 2-nested loop:
  *
- * llvm.mem.parallel_loop_access !0
+ *     !llvm.access.group !0
  *
- * !0 { metadata !1, metadata !2}
- * !1 { metadata !1 }
- * !2 { metadata !2 }
+ *     !0 { !1, !2 }
+ *     !1 distinct !{}
+ *     !2 distinct !{}
+ *
+ * Parallel loop metadata on memory reads also implies that
+ * if-conversion (i.e., speculative execution within a loop iteration)
+ * is safe. Given an instruction reading from memory,
+ * IsLoadUnconditionallySafe should return whether it is safe under
+ * (unconditional, unpredicated) speculative execution.
  */
-
-#ifdef LLVM_OLDER_THAN_8_0
-#define PARALLEL_MD_NAME "llvm.mem.parallel_loop_access"
-#else
-#define PARALLEL_MD_NAME "llvm.access.group"
-#endif
-
-void ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *Identifier) {
+void
+ParallelRegion::AddParallelLoopMetadata(
+    llvm::MDNode *Identifier,
+    std::function<bool(llvm::Instruction *)> IsLoadUnconditionallySafe) {
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock* bb = *i;      
     for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
          ii != ee; ii++) {
-
-      if (ii->mayReadOrWriteMemory()) {
-        MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
-        MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
-        if (OldMD != nullptr) {
-          NewMD = llvm::MDNode::concatenate(OldMD, NewMD);
-        }
-        ii->setMetadata(PARALLEL_MD_NAME, NewMD);
+      if (!ii->mayReadOrWriteMemory()) {
+        continue;
       }
+
+      if (ii->mayReadFromMemory() && !IsLoadUnconditionallySafe(&*ii)) {
+        continue;
+      }
+
+      MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
+      MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
+      if (OldMD != nullptr) {
+        NewMD = llvm::MDNode::concatenate(OldMD, NewMD);
+      }
+      ii->setMetadata(PARALLEL_MD_NAME, NewMD);
     }
   }
 }
