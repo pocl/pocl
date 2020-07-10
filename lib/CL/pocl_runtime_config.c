@@ -28,9 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* TODO: cache the options and to avoid calling getenv more than once 
-   per option. */
-
 typedef struct env_data env_data;
 struct env_data
 {
@@ -88,7 +85,7 @@ int pocl_get_int_option(const char *key, int default_value)
 int pocl_get_bool_option(const char *key, int default_value) 
 {
   env_data *ed;
-  if ((ed = find_env(env_cache, key))) 
+  if ((ed = find_env(env_cache, key)))
     return (strncmp(ed->value, "1", 1) == 0);
   return default_value;
 }
