@@ -473,6 +473,7 @@ ParallelRegion::Verify()
  * is safe. Given an instruction reading from memory,
  * IsLoadUnconditionallySafe should return whether it is safe under
  * (unconditional, unpredicated) speculative execution.
+ * See https://bugs.llvm.org/show_bug.cgi?id=46666
  */
 void
 ParallelRegion::AddParallelLoopMetadata(
