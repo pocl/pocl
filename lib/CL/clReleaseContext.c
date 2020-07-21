@@ -67,7 +67,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 
       /* see below on why we don't call uninit_devices here anymore */
       --cl_context_count;
-      POCL_ATOMIC_DEC (cl_context_count);
     }
 
   POCL_UNLOCK (pocl_context_handling_lock);
