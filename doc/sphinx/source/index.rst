@@ -17,6 +17,7 @@ Contents:
    faq
    development
    design
+   debug
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 
