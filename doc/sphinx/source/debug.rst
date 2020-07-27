@@ -5,6 +5,14 @@ Debugging OpenCL applications with Pocl
 There are several ways to debug applications with Pocl,
 differing in debugging coverage and impact on speed.
 
+"Offline" debugging
+--------------------
+
+Is done by setting POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES env var to 1.
+
+If set to 1, the kernel compiler cache/temporary directory that
+contains all the intermediate compiler files are left as it is. This
+will be handy for debugging.
 
 Simple debugging with Pocl's debug messages
 --------------------------------------------
