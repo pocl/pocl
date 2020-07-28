@@ -121,6 +121,7 @@ bool FlattenGlobals::runOnModule(Module &M) {
                                             e = functions_to_inline.end();
        i != e; ++i) {
     (*i)->removeFnAttr(Attribute::NoInline);
+    (*i)->removeFnAttr(Attribute::OptimizeNone);
     (*i)->addFnAttr(Attribute::AlwaysInline);
   }
 
@@ -131,6 +132,7 @@ bool FlattenGlobals::runOnModule(Module &M) {
       continue;
     if (f->getName().equals(barrier)) {
       f->removeFnAttr(Attribute::NoInline);
+      f->removeFnAttr(Attribute::OptimizeNone);
       f->addFnAttr(Attribute::AlwaysInline);
     }
   }
