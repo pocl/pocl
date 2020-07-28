@@ -111,6 +111,12 @@ bool FlattenGlobals::runOnModule(Module &M) {
         if (functions_to_inline.count(f))
           continue;
 
+        // if it's an OpenCL kernel with OptNone attribute, assume we're debugging,
+        // and don't inline the kernel into the workgroup launcher.
+        // this makes it possible to debug kernel code with GDB.
+        if (pocl::Workgroup::isKernelToProcess(*f) && f->hasOptNone())
+          continue;
+
         functions_to_inline.insert(f);
         pending.push_back(f);
       }
