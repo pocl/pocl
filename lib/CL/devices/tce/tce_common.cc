@@ -848,8 +848,8 @@ pocl_tce_copy_rect (void *data,
   chunk_info_t *src_chunk = (chunk_info_t*)src_mem_id->mem_ptr;
   chunk_info_t *dst_chunk = (chunk_info_t*)dst_mem_id->mem_ptr;
 
-  size_t src_offset = src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
-  size_t dst_offset = dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
+  size_t src_offset = src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
+  size_t dst_offset = dst_origin[0] + dst_row_pitch * dst_origin[1] + dst_slice_pitch * dst_origin[2];
 
   size_t j, k;
 
