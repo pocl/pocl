@@ -20,10 +20,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#include <llvm/Pass.h>
 #include "pocl_cl.h"
+#include <llvm/Pass.h>
 
 namespace pocl {
 
-llvm::ModulePass *createAutomaticLocalsPass(pocl_autolocals_to_args_type autolocals_to_args);
+llvm::ModulePass *
+createAutomaticLocalsPass(pocl_autolocals_to_args_strategy autolocals_to_args);
 } // namespace pocl
