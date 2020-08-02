@@ -265,80 +265,41 @@ The program crashes since it tries to access memory beyond buffer boundaries::
 
 Example 2:
 
-Lets say we want to step the kernel from previous example. Launch gdb::
+Lets say we want to step the "dot_product" kernel from previous example. Launch gdb::
 
     POCL_MAX_PTHREAD_COUNT=1 gdb ./example
 
-We can't set a breakpoint inside a kernel before running the program,
-because PoCL writes the source it receives at runtime
-(by ``clCreateProgramWithSource``) to a temporary file.
+Make a breakpoint on the kernel name::
 
-First we need to find some place in the pthread driver sources
-where the kernel is fully compiled but not yet executed.
-A good place is where the pthread driver launches the
-workgroup function. In the pthread driver, this is a call to
-``(struct kernel_run_command)->workgroup``, looking like this::
-
-	  k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
-		gids[0], gids[1], gids[2]);
-
-Lets say it's at ``lib/CL/devices/pthread/pthread_scheduler.c:307``, set the breakpoint::
-
-    (gdb) break /tmp/pocl_source/lib/CL/devices/pthread/pthread_scheduler.c:307
-	No source file named /tmp/pocl_source/lib/CL/devices/pthread/pthread_scheduler.c.
+	(gdb) break dot_product
+	Function "dot_product" not defined.
 	Make breakpoint pending on future shared library load? (y or [n]) y
-	Breakpoint 1 (/tmp/pocl_source/lib/CL/devices/pthread/pthread_scheduler.c:307) pending.
+	Breakpoint 1 (dot_product) pending.
 
 Run the program::
 
 	(gdb) r
-	Starting program: /tmp/pocl_build/example
+	Starting program: /tmp/example
 	[Thread debugging using libthread_db enabled]
 	Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-	[New Thread 0x7fffedf36700 (LWP 11851)]
-	[Switching to Thread 0x7fffedf36700 (LWP 11851)]
+	[New Thread 0x7fffedf36700 (LWP 18595)]
+	[Switching to Thread 0x7fffedf36700 (LWP 18595)]
 
-	Thread 2 "example" hit Breakpoint 1, work_group_scheduler (k=0x7fffe9001640, thread_data=0x5555557ad500)
-		at /tmp/pocl_source/lib/CL/devices/pthread/pthread_scheduler.c:307
-	307	          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
-
-
-Now it's about to launch the ``dot_product`` kernel for a single workgroup, so let's find the kernel source file::
-
-	(gdb) info functions dot_product
-	All functions matching regular expression "dot_product":
-
-	File /tmp/POCL_CACHE/tempfile-1c-aa-cd-3e-5e.cl:
-	void dot_product(const float4 *, const float4 *, float4 *);
-
-	Non-debugging symbols:
-	0x00007fffed534300  _pocl_kernel_dot_product@plt
-	0x00007fffed5344a0  _pocl_kernel_dot_product_workgroup
-	0x00007fffed5344d0  _pocl_kernel_dot_product_workgroup_fast
-
-The kernel is in ``/tmp/POCL_CACHE/tempfile-1c-aa-cd-3e-5e.cl``.
-
-Let's set a breakpoint on line 9 where gid is modified::
-
-	(gdb) break /tmp/POCL_CACHE/tempfile-1c-aa-cd-3e-5e.cl:9
-	Breakpoint 2 at 0x7fffed534395: file /tmp/POCL_CACHE/tempfile-1c-aa-cd-3e-5e.cl, line 9.
-
-Continue the program::
-
-	(gdb) c
-	Continuing.
-	Thread 2 "example" hit Breakpoint 2, dot_product (a=0x55555575b300, b=0x5555557be480, c=0x5555557df080) at /tmp/POCL_CACHE/tempfile-1c-aa-cd-3e-5e.cl:9
-	9	  gid += 18298392UL;
+	Thread 2 "example" hit Breakpoint 1, dot_product (a=0x5555557bc080, b=0x5555557e5380, c=0x5555557baf00) at /tmp/POCL_CACHE/tempfile-db-70-03-45-d6.cl:7
+	7	  size_t gid = get_global_id(0);
 
 We can now step through the kernel::
 
 	(gdb) print gid
-	$1 = 0
-	(gdb) s
+	$1 = 140737103657472
+	(gdb) next
+	9	  gid += 18298392UL;
+	(gdb) print gid
+	$2 = 0
+	(gdb) next
 	10	  c[gid] = a[gid] * b[gid] + (float4)(1.0f, 6.0f, 9.0f, 4.0f);
 	(gdb) print gid
-	$2 = 18298392
-
+	$3 = 18298392
 
 Handling LLVM and driver-allocated memory
 -----------------------------------------------
