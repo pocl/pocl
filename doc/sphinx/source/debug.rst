@@ -63,133 +63,6 @@ Output::
 "Release X" is printed when the refcount is lowered by 1;
 "Free X" is printed when the refcount becomes 0 and the object is actually freed.
 
-
-Debugging with Thread/Address sanitizers
------------------------------------------------
-
-Currently PoCL recognizes four sanitizers:
-Address, Leak, Undefined behaviour and Thread.
-
-Corresponding PoCL CMake options to enable them are:
-``ENABLE_ASAN, ENABLE_LSAN, ENABLE_UBSAN, ENABLE_TSAN.``
-
-See also "handling LLVM" below.
-
-Upsides:
-  * much faster than Valgrind
-  * minimal false positives
-  * can check undefined behaviour (most other tools can't)
-
-Downsides:
-  * requires rebuilding both the application and PoCL;
-  * the application and PoCL's runtime code are compiled with sanitizer,
-    but at the moment, the kernels are not compiled with sanitizer
-
-Setup:
-  * for e.g. Address sanitizer, build PoCL with these flags::
-
-       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug
-
-  * this will result in ``lib/CL/libOpenCL.so``; rebuild your application
-    with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``
-
-Example:
-
-  building an "example.c" with Address sanitizer::
-
-        gcc -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
-        gcc -fsanitize=address -o example example.o -lasan -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
-
-Output:
-
-  if there's an OpenCL object remaining, ASan will print a backtrace with an OpenCL call name in it::
-
-      Indirect leak of 8 byte(s) in 1 object(s) allocated from:
-        #0 0x7fa8f7b0a198 in calloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xee198)
-        #1 0x7fa8f7607bc0 in pocl_unique_device_list /tmp/lib/CL/pocl_util.c:866
-        #2 0x7fa8f75d37ca in POclCreateContext /tmp/lib/CL/clCreateContext.c:172
-        #3 0x55d50f21e428 in poclu_get_any_device2 /tmp/lib/poclu/misc.c:84
-        #4 0x55d50f21c165 in main /tmp/examples/example1/example1.c:59
-        #5 0x7fa8f707bb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
-
-  if there's any memory leak in the user's program, AddrSanitizer will print something like::
-
-      Direct leak of 64 byte(s) in 1 object(s) allocated from:
-        #0 0x7f738e999f90 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xedf90)
-        #1 0x562f6f33e493 in main /tmp/examples/example1/example1.c:74
-        #2 0x7f738df0bb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
-
-
-
-Debugging with Valgrind
------------------------------------------------
-
-Upsides:
-  * the entire application including kernels can be debugged
-  * does not strictly require recompilation (though for usable
-    backtraces, requires debuginfo)
-
-Downsides:
-  * can be very slow, especially with computationally intensive kernels
-  * may report some false positives
-
-Setup:
-  * build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
-  * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
-    or add these flags to the ``clBuildProgram`` call.
-    (this will cause all kernels to compile with debuginfo)
-  * run your application with valgrind
-
-See also "handling LLVM" below.
-
-Example 1:
-
-Uninitializing both LLVM (calling clUnloadPlatformCompiler) and drivers::
-
-      POCL_ENABLE_UNINIT=1 valgrind ./examples/example1/example1
-
-Output 1::
-
-    ==18291== LEAK SUMMARY:
-    ==18291==    definitely lost: 40 bytes in 1 blocks
-    ==18291==    indirectly lost: 0 bytes in 0 blocks
-    ==18291==      possibly lost: 0 bytes in 0 blocks
-    ==18291==    still reachable: 545,683 bytes in 2,705 blocks
-    ==18291==         suppressed: 0 bytes in 0 blocks
-    ==18291== Rerun with --leak-check=full to see details of leaked memory
-
-Example 2:
-
-Uninitializing LLVM (calling clUnloadPlatformCompiler) but not drivers::
-
-     valgrind ./examples/example1/example1
-
-Output 2::
-
-    ==18301== LEAK SUMMARY:
-    ==18301==    definitely lost: 0 bytes in 0 blocks
-    ==18301==    indirectly lost: 0 bytes in 0 blocks
-    ==18301==      possibly lost: 2,816 bytes in 8 blocks
-    ==18301==    still reachable: 403,199,350 bytes in 2,720 blocks
-    ==18301==         suppressed: 0 bytes in 0 blocks
-    ==18301== Rerun with --leak-check=full to see details of leaked memory
-
-Example 3:
-
-Both LLVM and drivers left (not calling clUnloadPlatformCompiler)::
-
-     valgrind ./examples/example1/example1
-
-Output 3::
-
-    ==18726== LEAK SUMMARY:
-    ==18726==    definitely lost: 536 bytes in 2 blocks
-    ==18726==    indirectly lost: 1,299,332 bytes in 3,433 blocks
-    ==18726==      possibly lost: 53,773,316 bytes in 524,329 blocks
-    ==18726==    still reachable: 411,350,622 bytes in 73,488 blocks
-    ==18726==         suppressed: 0 bytes in 0 blocks
-
-
 Debugging with GDB
 -----------------------------------------------
 
@@ -197,7 +70,7 @@ Upsides:
   * very fast
   * the entire application including kernels can be debugged
   * does not strictly require recompilation (but it is highly recommended if PoCL wasn't compiled with debuginfo)
-  * stepping inside kernels posible (but a little tricky)
+  * stepping inside kernels posible
 
 Downsides:
   * limited scope (not the best tool for memory leaks & race conditions)
@@ -300,6 +173,130 @@ We can now step through the kernel::
 	10	  c[gid] = a[gid] * b[gid] + (float4)(1.0f, 6.0f, 9.0f, 4.0f);
 	(gdb) print gid
 	$3 = 18298392
+
+
+Debugging with Valgrind
+-----------------------------------------------
+
+Upsides:
+  * the entire application including kernels can be debugged
+  * does not strictly require recompilation (though for usable
+    backtraces, requires debuginfo)
+
+Downsides:
+  * can be very slow, especially with computationally intensive kernels
+  * may report some false positives
+
+Setup:
+  * build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
+  * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
+    or add these flags to the ``clBuildProgram`` call.
+    (this will cause all kernels to compile with debuginfo)
+  * run your application with valgrind
+
+See also "handling LLVM" below.
+
+Example 1:
+
+Uninitializing both LLVM (calling clUnloadPlatformCompiler) and drivers::
+
+      POCL_ENABLE_UNINIT=1 valgrind ./examples/example1/example1
+
+Output 1::
+
+    ==18291== LEAK SUMMARY:
+    ==18291==    definitely lost: 40 bytes in 1 blocks
+    ==18291==    indirectly lost: 0 bytes in 0 blocks
+    ==18291==      possibly lost: 0 bytes in 0 blocks
+    ==18291==    still reachable: 545,683 bytes in 2,705 blocks
+    ==18291==         suppressed: 0 bytes in 0 blocks
+    ==18291== Rerun with --leak-check=full to see details of leaked memory
+
+Example 2:
+
+Uninitializing LLVM (calling clUnloadPlatformCompiler) but not drivers::
+
+     valgrind ./examples/example1/example1
+
+Output 2::
+
+    ==18301== LEAK SUMMARY:
+    ==18301==    definitely lost: 0 bytes in 0 blocks
+    ==18301==    indirectly lost: 0 bytes in 0 blocks
+    ==18301==      possibly lost: 2,816 bytes in 8 blocks
+    ==18301==    still reachable: 403,199,350 bytes in 2,720 blocks
+    ==18301==         suppressed: 0 bytes in 0 blocks
+    ==18301== Rerun with --leak-check=full to see details of leaked memory
+
+Example 3:
+
+Both LLVM and drivers left (not calling clUnloadPlatformCompiler)::
+
+     valgrind ./examples/example1/example1
+
+Output 3::
+
+    ==18726== LEAK SUMMARY:
+    ==18726==    definitely lost: 536 bytes in 2 blocks
+    ==18726==    indirectly lost: 1,299,332 bytes in 3,433 blocks
+    ==18726==      possibly lost: 53,773,316 bytes in 524,329 blocks
+    ==18726==    still reachable: 411,350,622 bytes in 73,488 blocks
+    ==18726==         suppressed: 0 bytes in 0 blocks
+
+Debugging with Thread/Address sanitizers
+-----------------------------------------------
+
+Currently PoCL recognizes four sanitizers:
+Address, Leak, Undefined behaviour and Thread.
+
+Corresponding PoCL CMake options to enable them are:
+``ENABLE_ASAN, ENABLE_LSAN, ENABLE_UBSAN, ENABLE_TSAN.``
+
+See also "handling LLVM" below.
+
+Upsides:
+  * much faster than Valgrind
+  * minimal false positives
+  * can check undefined behaviour (most other tools can't)
+
+Downsides:
+  * requires rebuilding both the application and PoCL;
+  * the application and PoCL's runtime code are compiled with sanitizer,
+    but at the moment, the kernels are not compiled with sanitizer
+
+Setup:
+  * for e.g. Address sanitizer, build PoCL with these flags::
+
+       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug
+
+  * this will result in ``lib/CL/libOpenCL.so``; rebuild your application
+    with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``
+
+Example:
+
+  building an "example.c" with Address sanitizer::
+
+        gcc -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
+        gcc -fsanitize=address -o example example.o -lasan -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
+
+Output:
+
+  if there's an OpenCL object remaining, ASan will print a backtrace with an OpenCL call name in it::
+
+      Indirect leak of 8 byte(s) in 1 object(s) allocated from:
+        #0 0x7fa8f7b0a198 in calloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xee198)
+        #1 0x7fa8f7607bc0 in pocl_unique_device_list /tmp/lib/CL/pocl_util.c:866
+        #2 0x7fa8f75d37ca in POclCreateContext /tmp/lib/CL/clCreateContext.c:172
+        #3 0x55d50f21e428 in poclu_get_any_device2 /tmp/lib/poclu/misc.c:84
+        #4 0x55d50f21c165 in main /tmp/examples/example1/example1.c:59
+        #5 0x7fa8f707bb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
+
+  if there's any memory leak in the user's program, AddrSanitizer will print something like::
+
+      Direct leak of 64 byte(s) in 1 object(s) allocated from:
+        #0 0x7f738e999f90 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xedf90)
+        #1 0x562f6f33e493 in main /tmp/examples/example1/example1.c:74
+        #2 0x7f738df0bb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
 
 Handling LLVM and driver-allocated memory
 -----------------------------------------------
