@@ -14,6 +14,7 @@ Contents:
    install
    using
    features
+   debug
    faq
    development
    design

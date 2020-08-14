@@ -111,6 +111,12 @@ bool FlattenGlobals::runOnModule(Module &M) {
         if (functions_to_inline.count(f))
           continue;
 
+        // if it's an OpenCL kernel with OptNone attribute, assume we're debugging,
+        // and don't inline the kernel into the workgroup launcher.
+        // this makes it possible to debug kernel code with GDB.
+        if (pocl::Workgroup::isKernelToProcess(*f) && f->hasFnAttribute(Attribute::OptimizeNone))
+          continue;
+
         functions_to_inline.insert(f);
         pending.push_back(f);
       }
@@ -121,6 +127,7 @@ bool FlattenGlobals::runOnModule(Module &M) {
                                             e = functions_to_inline.end();
        i != e; ++i) {
     (*i)->removeFnAttr(Attribute::NoInline);
+    (*i)->removeFnAttr(Attribute::OptimizeNone);
     (*i)->addFnAttr(Attribute::AlwaysInline);
   }
 
@@ -131,6 +138,7 @@ bool FlattenGlobals::runOnModule(Module &M) {
       continue;
     if (f->getName().equals(barrier)) {
       f->removeFnAttr(Attribute::NoInline);
+      f->removeFnAttr(Attribute::OptimizeNone);
       f->addFnAttr(Attribute::AlwaysInline);
     }
   }
