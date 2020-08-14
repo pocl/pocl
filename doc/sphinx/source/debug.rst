@@ -5,23 +5,23 @@ Debugging OpenCL applications with PoCL
 There are several ways to debug applications with PoCL,
 differing in debugging coverage and impact on speed.
 
-This document assumes debugging OpenCL kernel code by using
-the CPU pthread driver, since that is currently
-the most mature driver in PoCL.
+This document chapter describes means for debugging OpenCL kernel code by using
+the CPU drivers of PoCL.
 
 "Offline" debugging
 --------------------
 
-Is done by setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env var to 1.
+Offline debugging ca be done by setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env
+var to 1. This causes the intermediate output files from the kernel
+compilation process to be left in PoCL's disk cache for inspection.
+By default these files are deleted, and only the final executable output is left
+in the cache.
 
-If set to 1, the intermediate output files from the kernel
-compilation process are left in PoCL's cache. Be default
-they are deleted and only the final output is left in the cache.
+This is useful for manually inspecting the LLVM IR of the compilation stages,
+but it's also useful for GDB and Valgrind debugging as described
+later.
 
-This is useful for manually inspecting compilation stages,
-but it's also useful for GDB and Valgrind debugging (see below).
-
-Simple debugging with PoCL's debug messages
+Simple debugging with PoCL's debug log
 --------------------------------------------
 
 Upsides:
@@ -32,16 +32,16 @@ Downsides:
 
 Setup:
 
-The only thing required is to set "POCL_DEBUG" environment variable
-to some value. The most useful values are:
+Just set the "POCL_DEBUG" environment variable to some value.
+The most useful values are:
 
  * ``POCL_DEBUG=err,warn`` - this will limit the output to errors and
-   warnings. This might help spot some OpenCL API calls which return
-   an error value. Also helps if a call can return CL_INVALID_VALUE for
-   multiple reasons, since PoCL prints the reason.
+   warnings. These messages might help spot some OpenCL API calls which return
+   an error value. Also it helps if a call can return CL_INVALID_VALUE for
+   multiple reasons, since PoCL prints a more specific reason in that case.
 
  * ``POCL_DEBUG=refcount`` - this will limit the output to refcount increases
-   and decreases. Might help spot some memory leaks
+   and decreases. Might help spot CL object leaks
 
 Example::
 
@@ -60,31 +60,30 @@ Output::
     [2020-07-20 12:37:18.472228759]POCL: in fn POclReleaseCommandQueue at line 55:
       | REFCOUNTS |  Free Command Queue 0x5566430d85f0
 
-"Release X" is printed when the refcount is lowered by 1;
+"Release X" is printed when the refcount is lowered by 1.
 "Free X" is printed when the refcount becomes 0 and the object is actually freed.
 
 Debugging with GDB
 -----------------------------------------------
 
 Upsides:
-  * very fast
-  * the entire application including kernels can be debugged
-  * does not strictly require recompilation (but it is highly recommended if PoCL wasn't compiled with debuginfo)
-  * stepping inside kernels posible
+  * the entire OpenCL application, including the launched kernels can be debugged
+  * does not require PoCL recompilation (but it is recommended, if PoCL wasn't compiled with debuginfo)
+  * single stepping kernels
 
 Downsides:
-  * limited scope (not the best tool for memory leaks & race conditions)
+  * limited scope (not the best tool for tracking memory leaks & race conditions)
 
 Setup:
-  * build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
+  * Optional: build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
   * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
     or add these flags to the ``clBuildProgram`` call.
-    (this will cause all kernels to compile with debuginfo)
+    This will cause all kernels to compile with debuginfo.
   * ``export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1``
-    (this will leave the source files in PoCL's cache)
-  * (optional) ``export POCL_MAX_PTHREAD_COUNT=1``
-    (this limits the pthread driver to a single worker thread)
-  * run your application with gdb
+    This will leave the source files in PoCL's cache.
+  * Optional: ``export POCL_MAX_PTHREAD_COUNT=1``
+    This limits the pthread driver to a single worker thread.
+  * Run your application with gdb, as usual.
 
 Example 1:
 
@@ -138,7 +137,7 @@ The program crashes since it tries to access memory beyond buffer boundaries::
 
 Example 2:
 
-Lets say we want to step the "dot_product" kernel from previous example. Launch gdb::
+Lets say we want to step the "dot_product" kernel from the previous example. Launch gdb::
 
     POCL_MAX_PTHREAD_COUNT=1 gdb ./example
 
@@ -179,22 +178,20 @@ Debugging with Valgrind
 -----------------------------------------------
 
 Upsides:
-  * the entire application including kernels can be debugged
-  * does not strictly require recompilation (though for usable
-    backtraces, requires debuginfo)
+  * The entire application including kernels can be debugged.
+  * Does not strictly require recompilation (though for usable
+    backtraces, requires debuginfo).
 
 Downsides:
-  * can be very slow, especially with computationally intensive kernels
-  * may report some false positives
+  * Can be very slow, especially with computationally intensive kernels.
+  * May report some leaks which are not ones (see below).
 
 Setup:
-  * build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
+  * Optional: build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
   * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
     or add these flags to the ``clBuildProgram`` call.
-    (this will cause all kernels to compile with debuginfo)
-  * run your application with valgrind
-
-See also "handling LLVM" below.
+    This will cause all kernels to compile with debuginfo.
+  * Run your application with valgrind as normally.
 
 Example 1:
 
@@ -252,36 +249,34 @@ Address, Leak, Undefined behaviour and Thread.
 Corresponding PoCL CMake options to enable them are:
 ``ENABLE_ASAN, ENABLE_LSAN, ENABLE_UBSAN, ENABLE_TSAN.``
 
-See also "handling LLVM" below.
-
 Upsides:
-  * much faster than Valgrind
-  * minimal false positives
-  * can check undefined behaviour (most other tools can't)
+  * Much faster than Valgrind.
+  * Less false detections.
+  * Can check undefined behaviour (most other tools can't).
 
 Downsides:
-  * requires rebuilding both the application and PoCL;
-  * the application and PoCL's runtime code are compiled with sanitizer,
-    but at the moment, the kernels are not compiled with sanitizer
+  * Requires rebuilding both the application and PoCL.
+  * The application and PoCL's runtime code are compiled with sanitizer,
+    but at the moment, the kernels cannot be compiled with the sanitizer.
 
 Setup:
-  * for e.g. Address sanitizer, build PoCL with these flags::
+  * For example, to use the Address Sanitizer (ASan), build PoCL with these flags::
 
        -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug
 
-  * this will result in ``lib/CL/libOpenCL.so``; rebuild your application
-    with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``
+  * This will result in ``lib/CL/libOpenCL.so``. Rebuild your application
+    with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``.
 
 Example:
 
-  building an "example.c" with Address sanitizer::
+  Building an "example.c" with the ASan::
 
         gcc -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer -pthread -o example.o -c example.c
         gcc -fsanitize=address -o example example.o -lasan -Wl,-rpath,<pocl-build-dir>/lib/CL <pocl-build-dir>/lib/CL/libOpenCL.so
 
 Output:
 
-  if there's an OpenCL object remaining, ASan will print a backtrace with an OpenCL call name in it::
+  If there's an OpenCL object remaining, ASan will print a backtrace with an OpenCL call name in it::
 
       Indirect leak of 8 byte(s) in 1 object(s) allocated from:
         #0 0x7fa8f7b0a198 in calloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xee198)
@@ -291,7 +286,7 @@ Output:
         #4 0x55d50f21c165 in main /tmp/examples/example1/example1.c:59
         #5 0x7fa8f707bb96 in __libc_start_main (/lib/x86_64-linux-gnu/libc.so.6+0x21b96)
 
-  if there's any memory leak in the user's program, AddrSanitizer will print something like::
+  If there's any memory leak in the user's program, ASan will print something like::
 
       Direct leak of 64 byte(s) in 1 object(s) allocated from:
         #0 0x7f738e999f90 in __interceptor_malloc (/usr/lib/x86_64-linux-gnu/libasan.so.5+0xedf90)
@@ -302,24 +297,26 @@ Handling LLVM and driver-allocated memory
 -----------------------------------------------
 
 Both valgrind and sanitizers might report a huge amount of memory leaks
-coming from PoCL; this is caused mainly by two factors,
+coming from PoCL; this is caused mainly by two factors;
 LLVM and driver-held static data.
 
-The OpenCL API unfortunately doesn't provide any API entry to uninitialize
+The problem is that the OpenCL API unfortunately doesn't provide any API entry to uninitialize
 the entire implementation (e.g. all driver data). It does provide API
-entries to unload compiler: ``clUnloadPlatformCompiler()`` and ``clUnloadCompiler()``.
+entries to unload compiler though: ``clUnloadPlatformCompiler()`` and ``clUnloadCompiler()``.
 
-User can use these to ask PoCL to unload all LLVM data; note that with
-PoCL, this only works if all cl_programs and cl_kernels have been released.
+User can use these to ask PoCL to unload all LLVM data, but it should be noted
+that with PoCL, the LLVM data is freed only if all cl_programs and cl_kernels
+have been released before calling it.
 
-Usage is simple: call ``clUnloadPlatformCompiler()`` once, after
-all other opencl objects have been released, right before program exit.
+Usage is simple: call ``clUnloadPlatformCompiler()`` once after
+all other OpenCL objects have been released, right before the
+program exit.
 
 If the user sets ``POCL_ENABLE_UNINIT`` env var to 1, PoCL will also try to
-unload driver data. This feature might not work reliably so it's
-not official yet.
+unload driver data. This feature might not work reliably so it's currently
+considered experimental.
 
-Example: running a program compiled with AddrSanitizer, which calls
+Example: Running a program compiled with AddrSanitizer, which calls
 ``clUnloadPlatformCompiler()``, with ``POCL_DEBUG=all POCL_ENABLE_UNINIT=1``
 env variables will result in (if the program has no memleaks)::
 
@@ -337,7 +334,7 @@ env variables will result in (if the program has no memleaks)::
       |   GENERAL |  UNINIT all devices
 
 Running the same program with empty PoCL cache and removed
-``clUnloadPlatformCompiler()`` call (therefore with LLVM context
+``clUnloadPlatformCompiler()`` call (therefore, with LLVM context
 alive at program exit), ASan will print a lot of memory leaks::
 
     Indirect leak of 8 byte(s) in 1 object(s) allocated from:
