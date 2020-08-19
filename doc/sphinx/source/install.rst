@@ -193,6 +193,10 @@ use ";" as separator (you'll have to escape it for bash).
   will find the suitable compiled library based on detected CPU features,
   so it cannot fail (at worst it'll degrade to SSE2 library).
 
+- ``-DLLC_TRIPLE=<something>`` Controls what target triple pocl is built for.
+  You can set this manually in case the autodetection fails.
+  Example value: ``x86_64-pc-linux-gnu``
+
 - ``-DENABLE_TESTSUITES`` Which external (source outside pocl) testsuites to enable.
   For the list of testsuites, see examples/CMakeLists.txt or the ``examples``
   directory. Set to ``all`` and pocl will try to autodetect & enable everything
