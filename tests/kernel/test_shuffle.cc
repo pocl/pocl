@@ -235,7 +235,7 @@ private:
         std::cout << ");" << std::endl;
         rv=false;
       }
-    clReleaseKernel(krn2);
+    CHECK_CL_ERROR (clReleaseKernel(krn2));
     return rv;
   }
 
@@ -311,12 +311,12 @@ public:
       }
     }
 
-    clReleaseMemObject(mem_in1);
-    clReleaseMemObject(mem_in2);
-    clReleaseMemObject(mem_mask1);
-    clReleaseMemObject(mem_mask2);
-    clReleaseMemObject(mem_out);
-    clReleaseProgram(prog);
+    CHECK_CL_ERROR (clReleaseMemObject(mem_in1));
+    CHECK_CL_ERROR (clReleaseMemObject(mem_in2));
+    CHECK_CL_ERROR (clReleaseMemObject(mem_mask1));
+    CHECK_CL_ERROR (clReleaseMemObject(mem_mask2));
+    CHECK_CL_ERROR (clReleaseMemObject(mem_out));
+    CHECK_CL_ERROR (clReleaseProgram(prog));
 
     return errors;
   }
@@ -405,9 +405,9 @@ int main( int argc, char *argv[])
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic pop
 #endif
-	clReleaseCommandQueue(queue);
-	clUnloadCompiler();
-	clReleaseContext(ctx);
+	CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+	CHECK_CL_ERROR (clReleaseContext (ctx));
+	CHECK_CL_ERROR (clUnloadCompiler());
 
 	if( num_errors == 0)
 		std::cout << "OK" << std::endl;

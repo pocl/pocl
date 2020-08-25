@@ -109,7 +109,6 @@ error:
     clReleaseCommandQueue(queue);
   }
   if (context) {
-    clUnloadCompiler ();
     clReleaseContext (context);
   }
   if (source) {
@@ -158,7 +157,9 @@ int main(int argc, char **argv)
     fflush(stdout);
     fflush(stderr);
   }
-  
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   if (retval)
     printf("FAIL\n");
   else
