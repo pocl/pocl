@@ -84,11 +84,12 @@ main (void)
                                  &err);
           CHECK_OPENCL_ERROR_IN ("clCreateBuffer");
 
+          queue = clCreateCommandQueue (context, devices[j], 0, &err);
+          CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
+
           for (int pattern_size = 1; pattern_size <= max_pattern_size;
                pattern_size *= 2)
             {
-              queue = clCreateCommandQueue (context, devices[j], 0, &err);
-              CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
 
               memset (host_buf1, 1, buf_size);
 
