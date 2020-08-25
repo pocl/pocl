@@ -263,10 +263,20 @@ process_options (const char *options, char *modded_options, char *link_options,
                   *requires_correctly_rounded_sqrt_div = 1;
                 }
             }
+
           if (strstr (cl_parameters, token))
             {
               /* the LLVM API call pushes the parameters directly to the
                  frontend without using -Xclang */
+
+#ifndef LLVM_OLDER_THAN_11_0
+            // LLVM 11 has removed "-cl-denorms-are-zero" option
+            // https://reviews.llvm.org/D69878
+            if (strncmp(token, "-cl-denorms-are-zero", 20) == 0) {
+                token = "-fdenormal-fp-math=positive-zero";
+            }
+#endif
+
             }
           else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
             {
