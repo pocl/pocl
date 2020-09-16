@@ -510,18 +510,6 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   (*cmd)->device = command_queue->device;
   (*cmd)->event->command = (*cmd);
 
-  /* in case of in-order queue, synchronize to previously enqueued command
-     if available */
-  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
-    {
-      POCL_LOCK_OBJ (command_queue);
-      if (command_queue->last_event.event)
-        {
-          pocl_create_event_sync ((*cmd)->event,
-                                  command_queue->last_event.event);
-        }
-      POCL_UNLOCK_OBJ (command_queue);
-    }
   /* Form event synchronizations based on the given wait list */
   for (i = 0; i < num_events; ++i)
     {
@@ -546,8 +534,22 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
   POCL_LOCK_OBJ (command_queue);
   ++command_queue->command_count;
-  if ((node->type == CL_COMMAND_BARRIER || node->type == CL_COMMAND_MARKER) &&
-      node->command.barrier.has_wait_list == 0)
+  /* in case of in-order queue, synchronize to previously enqueued command
+     if available */
+  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
+    {
+      if (command_queue->last_event.event)
+        {
+          pocl_create_event_sync (node->event,
+                                  command_queue->last_event.event);
+        }
+    }
+  /* Command queue is out-of-order queue. If commend type is a barrier, then
+     synchronize to all previously enqueued commands to make sure they are
+     executed before the barrier. */
+  else if ((node->type == CL_COMMAND_BARRIER
+            || node->type == CL_COMMAND_MARKER)
+           && node->command.barrier.has_wait_list == 0)
     {
       DL_FOREACH (command_queue->events, event)
         {
