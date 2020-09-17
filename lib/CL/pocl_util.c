@@ -544,7 +544,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
                                   command_queue->last_event.event);
         }
     }
-  /* Command queue is out-of-order queue. If commend type is a barrier, then
+  /* Command queue is out-of-order queue. If command type is a barrier, then
      synchronize to all previously enqueued commands to make sure they are
      executed before the barrier. */
   else if ((node->type == CL_COMMAND_BARRIER
