@@ -295,8 +295,13 @@ process_options (const char *options, char *modded_options, char *link_options,
         }
       else if (strncmp (token, "-g", 2) == 0)
         {
+#ifdef LLVM_OLDER_THAN_11_0
           token = "-dwarf-column-info -debug-info-kind=limited " \
 	    "-dwarf-version=4 -debugger-tuning=gdb";
+#else
+          token = "-debug-info-kind=limited " \
+	    "-dwarf-version=4 -debugger-tuning=gdb";
+#endif
         }
       else if (strncmp (token, "-D", 2) == 0 || strncmp (token, "-I", 2) == 0)
         {
