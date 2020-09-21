@@ -40,8 +40,9 @@ Notable Bug Fixes
 Security
 --------
 
-Added a build parameter HARDENING_ENABLE that applies hardening flags present in some modern compilers to produce a more secure libpocl.so with the trade-off in performance.
-
+- Added a build parameter HARDENING_ENABLE that applies hardening flags
+  present in some modern compilers to produce a more secure libpocl.so
+  with the trade-off in performance.
 
 1.5 April 2020
 ==============
