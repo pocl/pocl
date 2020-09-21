@@ -30,6 +30,12 @@ Optimizations
     dgemm_t:         2.8%
     dgemm_n_pcie:   51.6%
     dgemm_t_pcie:    6.9%
+- Improved pocl's inner even handling related to consuming commands from
+  in-order and out-of-order queues. Measured with PolyBench OpenCL Gramschmidt
+  kernel, execution time went down from 44 seconds to around 0.5 seconds. Better
+  event handling also removed a little bit of overhead and improved pocl
+  execution time in general. Measured with PolyBench OpenCL fdtd2-2d kernel,
+  execution time came down from 4.13 seconds to 3.99 seconds.
 
 Notable Bug Fixes
 -----------------
