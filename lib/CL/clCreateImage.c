@@ -186,6 +186,7 @@ CL_API_SUFFIX__VERSION_1_2
         mem->context = context;
         assert (mem->context == b->context);
 
+        mem->parent = b;
         pocl_cl_mem_inherit_flags (mem, b, flags);
 
         /* Retain the buffer we're referencing */
