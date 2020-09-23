@@ -2,7 +2,7 @@
 #=============================================================================
 #   CMake build system files for detecting Clang and LLVM
 #
-#   Copyright (c) 2014-2018 pocl developers
+#   Copyright (c) 2014-2020 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES
+      "llvm-config"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
@@ -44,7 +45,6 @@ else()
       "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
       "llvm-config-mp-7.0" "llvm-config-7" "llvm-config70"
       "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
-      "llvm-config"
     DOC "llvm-config executable")
 endif()
 
