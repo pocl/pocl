@@ -480,7 +480,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     AssemblyFileName += "/parallel.tpef";
 
     if (access(AssemblyFileName.c_str(), F_OK) != 0) {
-      Error = snprintf(ByteCode, POCL_FILENAME_LENGTH, "%s%s", CacheDir,
+      Error = snprintf(ByteCode, POCL_FILENAME_LENGTH + 13, "%s%s", CacheDir,
                        POCL_PARALLEL_BC_FILENAME);
       TCEString BuildCmd = Dev->tceccCommandLine(RunCommand, TempDir, ByteCode,
                                                  AssemblyFileName);

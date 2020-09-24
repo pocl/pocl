@@ -160,7 +160,6 @@ error:
     }
   if (context) 
     {
-      clUnloadCompiler ();
       clReleaseContext (context);
     }
   if (source) 
@@ -176,6 +175,7 @@ error:
       free(imageData);
     }
 
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   if (retval) 
     {

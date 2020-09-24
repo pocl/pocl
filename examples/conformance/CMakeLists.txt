@@ -483,8 +483,6 @@ add_test(NAME "${TS_NAME}_images_cl_copy_images_max"
          COMMAND "${TS_BUILDDIR}/images/clCopyImage/test_cl_copy_images" max_images)
 add_test(NAME "${TS_NAME}_images_cl_copy_images_min"
          COMMAND "${TS_BUILDDIR}/images/clCopyImage/test_cl_copy_images" small_images)
-add_test(NAME "${TS_NAME}_images_cl_copy_images_rounding"
-         COMMAND "${TS_BUILDDIR}/images/clCopyImage/test_cl_copy_images" rounding)
 
 add_test(NAME "${TS_NAME}_images_cl_fill_images"
          COMMAND "${TS_BUILDDIR}/images/clFillImage/test_cl_fill_images" )
@@ -510,8 +508,6 @@ add_test(NAME "${TS_NAME}_images_cl_read_write_images_min"
          COMMAND "${TS_BUILDDIR}/images/clReadWriteImage/test_cl_read_write_images" small_images)
 add_test(NAME "${TS_NAME}_images_cl_read_write_images_max"
          COMMAND "${TS_BUILDDIR}/images/clReadWriteImage/test_cl_read_write_images" max_images)
-add_test(NAME "${TS_NAME}_images_cl_read_write_images_round"
-         COMMAND "${TS_BUILDDIR}/images/clReadWriteImage/test_cl_read_write_images" rounding)
 add_test(NAME "${TS_NAME}_images_cl_read_write_images_pitch"
          COMMAND "${TS_BUILDDIR}/images/clReadWriteImage/test_cl_read_write_images" use_pitches)
 
@@ -1030,7 +1026,6 @@ set_tests_properties(
     "${TS_NAME}_images_cl_copy_images"
     "${TS_NAME}_images_cl_copy_images_max"
     "${TS_NAME}_images_cl_copy_images_min"
-    "${TS_NAME}_images_cl_copy_images_rounding"
     "${TS_NAME}_images_cl_fill_images"
     "${TS_NAME}_images_cl_fill_images_min"
     "${TS_NAME}_images_cl_fill_images_max"
@@ -1042,7 +1037,6 @@ set_tests_properties(
     "${TS_NAME}_images_cl_read_write_images"
     "${TS_NAME}_images_cl_read_write_images_min"
     "${TS_NAME}_images_cl_read_write_images_max"
-    "${TS_NAME}_images_cl_read_write_images_round"
     "${TS_NAME}_images_cl_read_write_images_pitch"
     "${TS_NAME}_images_kernel_image_methods_1D"
     "${TS_NAME}_images_kernel_image_methods_2D"

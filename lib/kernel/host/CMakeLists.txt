@@ -300,6 +300,12 @@ set(KERNEL_CL_FLAGS
       "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}"
       ${KERNEL_CL_FLAGS})
 
+# https://bugzilla.mozilla.org/show_bug.cgi?id=1657502
+# this *likely* shouldn't be a problem for PoCL, but needs testing
+if(LLVM_VERSION_MAJOR GREATER 10)
+  list(APPEND KERNEL_CL_FLAGS "-Wno-psabi")
+endif()
+
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 set(DEVICE_C_FLAGS "-DPOCL_DEVICE_ADDRESS_BITS=${HOST_DEVICE_ADDRESS_BITS}")

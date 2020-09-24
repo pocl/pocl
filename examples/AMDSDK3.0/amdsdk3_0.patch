@@ -89,10 +89,31 @@
  
  
  __kernel 
-@@ -162,4 +162,4 @@
- 	
+--- a/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SobelFilter/SobelFilter.cpp	2020-09-23 14:19:55.137508386 +0300
++++ b/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SobelFilter/SobelFilter.cpp	2020-09-23 14:22:33.230012800 +0300
+@@ -550,8 +550,9 @@
+             float gx2 = pow((float)gx, 2);
+             float gy2 = pow((float)gy, 2);
+ 
+-
+-            *(verificationOutput + i) = (cl_uchar)(sqrt(gx2 + gy2) / 2.0);
++            float tmp = sqrt(gx2 + gy2) / 2.0;
++            if (tmp > 255.0f) tmp = 255.0f;
++            *(verificationOutput + i) = (cl_uchar)(tmp);
+         }
+ 
+         // if reached at the end of its row then incr k
+--- a/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SobelFilter/SobelFilter_Kernels.cl	2015-10-28 05:15:19.000000000 +0200
++++ b/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SobelFilter/SobelFilter_Kernels.cl	2020-09-23 14:20:31.365623958 +0300
+@@ -56,10 +56,8 @@
+ 		Gy =   i00 - i20  + (float4)(2)*i01 - (float4)(2)*i21 + i02  -  i22;
+ 
+ 		/* taking root of sums of squares of Gx and Gy */
+-		outputImage[c] = convert_uchar4(hypot(Gx, Gy)/(float4)(2));
+-
++		outputImage[c] = convert_uchar4_sat(hypot(Gx, Gy)/(float4)(2));
+ 	}
+-			
+ }
  
  	
--	
-\ No newline at end of file
-+	

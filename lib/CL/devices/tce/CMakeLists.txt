@@ -30,7 +30,7 @@ install(FILES "tta_device_main.c"
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
 
 add_pocl_device_library(pocl-devices-ttasim tce_common.h tce_common.cc ttasim/ttasim.h ttasim/ttasim.cc)
-target_link_libraries(pocl-devices-ttasim PRIVATE pocl-devices-basic ${TCE_LIBS})
+target_link_libraries(pocl-devices-ttasim PRIVATE ${TCE_LIBS})
 
 if(MSVC)
   set_source_files_properties(tce_common.h tce_common.cc ttasim/ttasim.h ttasim/ttasim.cc PROPERTIES LANGUAGE CXX)

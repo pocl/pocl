@@ -52,6 +52,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 
+#ifndef LLVM_OLDER_THAN_11_0
+#include "llvm/Support/Host.h"
+#endif
+
 #ifdef ENABLE_RELOCATION
 
 #if defined(__APPLE__)

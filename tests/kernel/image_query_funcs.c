@@ -120,14 +120,14 @@ int main(int argc, char **argv)
   err = clFinish (queue);
   CHECK_OPENCL_ERROR_IN ("clFinish");
 
-  clReleaseMemObject (image2);
-  clReleaseMemObject (image3);
-  clReleaseKernel (kernel);
-  clReleaseProgram (program);
-  clReleaseCommandQueue (queue);
-  clReleaseSampler (external_sampler);
-  clUnloadCompiler ();
-  clReleaseContext (context);
+  CHECK_CL_ERROR (clReleaseMemObject (image2));
+  CHECK_CL_ERROR (clReleaseMemObject (image3));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseSampler (external_sampler));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
   free (source);
   free (filename);
   free (imageData);

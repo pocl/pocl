@@ -113,12 +113,6 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     DEPENDS "pocl_version_check"
     LABELS "internal;runtime")
 
-if(ENABLE_HOST_CPU_DEVICES)
-set_tests_properties("runtime/clGetSupportedImageFormats"
-  PROPERTIES
-    ENVIRONMENT "POCL_DEVICES=pthread\ pthread")
-endif()
-
 if(NOT ENABLE_ANYSAN)
   set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
