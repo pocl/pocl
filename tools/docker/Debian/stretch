@@ -7,6 +7,7 @@ RUN echo 'deb http://ftp.debian.org/debian stretch-backports main' >/etc/apt/sou
 RUN apt update
 RUN apt upgrade -y
 RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc5 pkg-config libclang-${LLVM_VERSION}-dev  clang-${LLVM_VERSION} llvm-${LLVM_VERSION}-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
+RUN if [ "$LLVM_VERSION" -gt "9" ]; then apt install -y libclang-cpp${LLVM_VERSION} libclang-cpp${LLVM_VERSION}-dev ; fi
 
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..

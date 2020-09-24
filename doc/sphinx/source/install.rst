@@ -23,6 +23,10 @@ Installing requirements for Ubuntu::
 
     apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
 
+If you're using LLVM 10 or newer, additionally you must::
+
+    apt install -y libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION}
+
 Installing requirements for Arch Linux::
 
     pacman -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
