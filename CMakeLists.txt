@@ -745,11 +745,7 @@ if (OCS_AVAILABLE)
       set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
       set(SINGLE_LLVM_LIB OFF CACHE BOOL "single big libLLVM")
     endif()
-    string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")
-    list(GET LLVM_VERSION_PARSED 0 LLVM_VERSION_MAJOR)
-    list(GET LLVM_VERSION_PARSED 1 LLVM_VERSION_MINOR)
   endif()
-
 endif()
 
 ######################################################################################
