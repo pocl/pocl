@@ -47,8 +47,8 @@ Tesla V100 on Lawrence Livermore National Laboratory's Lassen supercomputer.
 
 In previous pocl releases, distributing a pocl binary built with various devices support
 required that the build machine and the host machine have the same support for the devices.
-With pocl v1.6, pocl can be compiled with as all targets enabled at build time,
-and it will then check these targets for availability at run time.
+With pocl v1.6, pocl can be compiled with as all devices enabled at build time,
+and it will then check these devices for availability at run time.
 This has enabled the conda package manager to distribute pocl binary packages with CUDA
 support to be distributed for Linux-x86_64 and Linux-ppc64le. Pre-built packages of pocl are
 available via the <a href="https://github.com/conda-forge/pocl-feedstock">conda-forge community package repository</a>
@@ -60,11 +60,11 @@ via the <a href="https://docs.conda.io/en/latest/">Conda user-level pacakge mana
 <h2>Acknowledgments</h2>
 
 <p>
-The improvements described in this post were made by Isuru Fernando, with assistance from
-Matt Wala, Nick Christensen, and Andreas Klöckner, all part of the Department of Computer
-Science at the University of Illinois at Urbana-Champaign. The work was partially supported
-through awards OAC-1931577 and SHF-1911019 from the US National Science Foundation,
-as well as award DE-NA0003963 from the US Department of Energy.
+CUDA improvements, PowerPC support and packaging support described in this post were made by
+Isuru Fernando and Matt Wala with assistance from Nick Christensen, and Andreas Klöckner,
+all part of the Department of Computer Science at the University of Illinois at Urbana-Champaign.
+The work was partially supported through awards OAC-1931577 and SHF-1911019 from the
+US National Science Foundation, as well as award DE-NA0003963 from the US Department of Energy.
 </p>
 
 <p><a href="download.html">Download</a>.</p>
