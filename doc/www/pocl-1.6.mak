@@ -9,31 +9,34 @@
 
 <h3>Improved CUDA performance and features</h3>
 
-In pocl v1.6, CUDA backend gained several performance improvements.
-One optimization was the use of static CUDA memory blocks for OpenCL's constant __local
-blocks. Previous version of pocl one dynamic shared CUDA memory block for
-OpenCL's constant __local blocks and __local function arguments which resulted in
-poor SASS code generation due to a pointer aliasing issue. pocl 1.6 fixes this to use
-static CUDA memory blocks when there's no __local function arguments in the OpenCL
-kernel. Changing the inlining thresholds in LLVM, also resuted in better PTX code
-generation. Another improvement was to use 32 bit addresses when accessing CUDA shared
-memory as 32-bit addresses are more than enough to address the CUDA shared memory space.
-
-<a href="https://github.com/vetter/shoc/wiki">SHOC</a> benchmarks shows that these optimizations
-resulted in much better performance for FFT and GEMM benchmarks compared to last benchmark
-run given <a href="http://portablecl.org/cuda-backend.html">here</a>. There are still a few
-more SHOC benchmarks where pocl does not reach the same level of performance as the
-NVIDIA OpenCL driver we welcome any contributions to improve them.
+In pocl v1.6, the CUDA backend gained several performance improvements.
+Benchmarks using <a href="https://github.com/vetter/shoc/wiki">SHOC</a> benchmarks
+(now [continually tested](https://github.com/pocl/pocl/pull/847)) show that these optimizations
+resulted in much better performance, particularly for benchmarks involving local
+memory such as FFT and GEMM, when compared to a
+<a href="http://portablecl.org/cuda-backend.html">prior benchmark run</a>. 
+Pocl now often attains performance competitive with Nvidia's
+proprietary OpenCL driver. We welcome contributions to identifying
+and removing the root causes for any remaining problem areas.
 
 <img src="img/pocl-nvidia-SHOC-October20.png" border="0" style="vertical-align: middle;" />
 
-Additional features added in this release include support for more special functions
-including frexp, tgamma, ldexp, modf and remquo. clEnqueueFillBuffer functionality for
-CUDA backend was also partially implemented for this release.
+In particular, the following optimizations and improvements landed in the CUDA backend:
+
+- Use 32-bit pointer arithmetic for local memory [#822](https://github.com/pocl/pocl/pull/822)
+- Use static CUDA memory blocks for OpenCL's constant <tt>__local</tt>
+blocks. Previous version of pocl one dynamic shared CUDA memory block for
+OpenCL's constant <tt>__local</tt> blocks and <tt>__local</tt> function arguments.
+This resulted in poor SASS code generation due to a pointer aliasing.
+[#838](https://github.com/pocl/pocl/pull/838), [#846](https://github.com/pocl/pocl/pull/846),
+[#824](https://github.com/pocl/pocl/pull/824)
+- Use a higher unroll threshold in LLVM [#826](https://github.com/pocl/pocl/pull/826)
+- Implement more special functions [#836](https://github.com/pocl/pocl/pull/836)
+- Improve clEnqueueFillBufer [#834](https://github.com/pocl/pocl/pull/834)
 
 <h3>PowerPC support</h3>
 
-Pocl v1.6 brings back support for PowerPC 8/9 with test suite passing fully on the pthread
+Pocl v1.6 brings back support for PowerPC 8/9 with the test suite passing fully on the pthread
 device and the CUDA device test suite pass rate is the same as the pass rate for CUDA
 on an x86_64 machine. Pocl fills the gap of running OpenCL codes on PowerPC machines
 as NVIDIA does not provide an OpenCL backend for PowerPC machines and IBM's OpenCL CPU
@@ -44,23 +47,24 @@ Tesla V100 on Lawrence Livermore National Laboratory's Lassen supercomputer.
 
 In previous pocl releases, distributing a pocl binary built with various devices support
 required that the build machine and the host machine have the same support for the devices.
-With pocl v1.6, pocl can be built with as many device support as possible on the build machine
-and when transferred to the host machine pocl will check for device support at runtime.
+With pocl v1.6, pocl can be compiled with as all targets enabled at build time,
+and it will then check these targets for availability at run time.
 This has enabled the conda package manager to distribute pocl binary packages with CUDA
 support to be distributed for Linux-x86_64 and Linux-ppc64le. Pre-built packages of pocl are
-available via <a href="https://github.com/conda-forge/pocl-feedstock">conda package manager</a>
-for Linux-x86_64, Linux-ppc64le, Linux-aarch64 and Darwin-x86_64.
+available via the <a href="https://github.com/conda-forge/pocl-feedstock">conda-forge community package repository</a>
+for Linux-x86_64, Linux-ppc64le, Linux-aarch64 and Darwin-x86_64
+via the <a href="https://docs.conda.io/en/latest/">Conda user-level pacakge manager</a>.
 
-<p>A more detailed changelog <a href="http://portablecl.org/downloads/CHANGES">here</a>.
+<p>A more detailed changelog can be found <a href="http://portablecl.org/downloads/CHANGES">here</a>.
 
-<h2>Acknowledgements</h2>
+<h2>Acknowledgments</h2>
 
 <p>
-Part of Isuru Fernando's work on CUDA enhancements was supported by a grant from the
-National Science Foundation and Isuru would like to thank Matt Wala, Nick Christensen,
-and, Andreas Klöckner from the Scientific Computing group at University of Illinois
-at Urbana-Champaign for their assistance.
-
+The improvements described in this post were made by Isuru Fernando, with assistance from
+Matt Wala, Nick Christensen, and Andreas Klöckner, all part of the Department of Computer
+Science at the University of Illinois at Urbana-Champaign. The work was partially supported
+through awards OAC-1931577 and SHF-1911019 from the US National Science Foundation,
+as well as award DE-NA0003963 from the US Department of Energy.
 </p>
 
 <p><a href="download.html">Download</a>.</p>
