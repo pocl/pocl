@@ -11,10 +11,10 @@
 
 In pocl v1.6, the CUDA backend gained several performance improvements.
 Benchmarks using <a href="https://github.com/vetter/shoc/wiki">SHOC</a> benchmarks
-(now [continually tested](https://github.com/pocl/pocl/pull/847)) show that these optimizations
-resulted in much better performance, particularly for benchmarks involving local
-memory such as FFT and GEMM, when compared to a
-<a href="http://portablecl.org/cuda-backend.html">prior benchmark run</a>. 
+(now <a href="https://github.com/pocl/pocl/pull/847">continually tested</a>
+show that these optimizations resulted in much better performance,
+particularly for benchmarks involving local memory such as FFT and GEMM, when compared
+to a <a href="http://portablecl.org/cuda-backend.html">prior benchmark run</a>.
 Pocl now often attains performance competitive with Nvidia's
 proprietary OpenCL driver. We welcome contributions to identifying
 and removing the root causes for any remaining problem areas.
@@ -23,16 +23,18 @@ and removing the root causes for any remaining problem areas.
 
 In particular, the following optimizations and improvements landed in the CUDA backend:
 
-- Use 32-bit pointer arithmetic for local memory [#822](https://github.com/pocl/pocl/pull/822)
+- Use 32-bit pointer arithmetic for local memory
+  <a href="https://github.com/pocl/pocl/pull/822">#822</a>
 - Use static CUDA memory blocks for OpenCL's constant <tt>__local</tt>
-blocks. Previous version of pocl one dynamic shared CUDA memory block for
-OpenCL's constant <tt>__local</tt> blocks and <tt>__local</tt> function arguments.
-This resulted in poor SASS code generation due to a pointer aliasing.
-[#838](https://github.com/pocl/pocl/pull/838), [#846](https://github.com/pocl/pocl/pull/846),
-[#824](https://github.com/pocl/pocl/pull/824)
-- Use a higher unroll threshold in LLVM [#826](https://github.com/pocl/pocl/pull/826)
-- Implement more special functions [#836](https://github.com/pocl/pocl/pull/836)
-- Improve clEnqueueFillBufer [#834](https://github.com/pocl/pocl/pull/834)
+  blocks. Previous version of pocl one dynamic shared CUDA memory block for
+  OpenCL's constant <tt>__local</tt> blocks and <tt>__local</tt> function arguments.
+  This resulted in poor SASS code generation due to a pointer aliasing issue.
+  <a href="https://github.com/pocl/pocl/pull/838">#838</a>,
+  <a href="https://github.com/pocl/pocl/pull/846">#846</a>,
+  <a href="https://github.com/pocl/pocl/pull/824">#824</a>
+- Use a higher unroll threshold in LLVM <a href="https://github.com/pocl/pocl/pull/826">#826</a>
+- Implement more special functions <a href="https://github.com/pocl/pocl/pull/836">#836</a>
+- Improve clEnqueueFillBufer <a href="https://github.com/pocl/pocl/pull/834">#834</a>
 
 <h3>PowerPC support</h3>
 
