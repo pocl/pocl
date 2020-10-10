@@ -1082,6 +1082,8 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
 
+  // reset possibly existing error from calls from an ICD loader
+  (void)dlerror();
   ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
   dl_error = dlerror ();
 
