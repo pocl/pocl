@@ -44,6 +44,8 @@ Notable Bug Fixes
 - Fix an issue in which the loop vectorizer produced code with invalid
   memory reads (issue #757).
 - Fix compilation error when CMake option SINGLE_LLVM_LIB is set to OFF.
+- Fix wrongly output dlerror (Undefined symbol) after dlopen, 
+  caused by a previous libdl call in an ICD loader (issue #877).
 
 Security
 --------
