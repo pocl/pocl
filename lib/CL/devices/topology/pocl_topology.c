@@ -49,6 +49,8 @@
  *  global_mem_cache_type
  *  global_mem_cacheline_size
  *  global_mem_cache_size
+ *  local_mem_size
+ *  max_constant_buffer_size
  */
 
 #ifdef ENABLE_HWLOC
@@ -129,46 +131,70 @@ pocl_topology_detect_device_info(cl_device_id device)
 
   /* Find information about global memory cache by looking at the first
    * cache covering the first PU */
-  do {
-      size_t cache_size = 0, cacheline_size = 0;
+  size_t shared_cache_size = 0, nonshared_cache_size = 0, cacheline_size = 0;
+  hwloc_obj_t cache = NULL;
 
-      hwloc_obj_t core
-          = hwloc_get_next_obj_by_type (pocl_topology, HWLOC_OBJ_CORE, NULL);
-      if (core)
+  hwloc_obj_t core
+      = hwloc_get_next_obj_by_type (pocl_topology, HWLOC_OBJ_CORE, NULL);
+  if (core)
+    {
+      cache = hwloc_get_shared_cache_covering_obj (pocl_topology, core);
+      if ((cache) && (cache->attr))
         {
-          hwloc_obj_t cache
-              = hwloc_get_shared_cache_covering_obj (pocl_topology, core);
-          if ((cache) && (cache->attr))
-            {
-              cacheline_size = cache->attr->cache.linesize;
-              cache_size = cache->attr->cache.size;
-            }
-          else
-            core = NULL; /* fallback to L1 cache size */
+          cacheline_size = cache->attr->cache.linesize;
+          shared_cache_size = cache->attr->cache.size;
         }
+      else
+        core = NULL; /* fallback to L1 cache size */
+    }
 
-      hwloc_obj_t pu
-          = hwloc_get_next_obj_by_type (pocl_topology, HWLOC_OBJ_PU, NULL);
-      if (!core && pu)
+  hwloc_obj_t pu
+      = hwloc_get_next_obj_by_type (pocl_topology, HWLOC_OBJ_PU, NULL);
+  if (!core && pu)
+    {
+      cache = hwloc_get_shared_cache_covering_obj (pocl_topology, pu);
+      if ((cache) && (cache->attr))
         {
-          hwloc_obj_t cache
-              = hwloc_get_shared_cache_covering_obj (pocl_topology, pu);
-          if ((cache) && (cache->attr))
+          cacheline_size = cache->attr->cache.linesize;
+          shared_cache_size = cache->attr->cache.size;
+        }
+    }
+
+  if (cache)
+    {
+      /* cache should now contain the first shared cache.
+       * get the first cache with depth one larger, which
+       * should be the last non-shared cache. */
+      unsigned shared_depth = cache->depth;
+      unsigned nonshared_depth = shared_depth + 1;
+      unsigned nonshared_cachenum
+          = hwloc_get_nbobjs_by_depth (pocl_topology, nonshared_depth);
+      if (nonshared_cachenum > 0)
+        {
+          cache = hwloc_get_obj_by_depth (pocl_topology, nonshared_depth, 0);
+#ifdef HWLOC_API_2
+          if (hwloc_obj_type_is_cache(cache->type) || hwloc_obj_type_is_dcache(cache->type))
+#else
+          if (cache->type == HWLOC_OBJ_CACHE)
+#endif
             {
-              cacheline_size = cache->attr->cache.linesize;
-              cache_size = cache->attr->cache.size;
+              nonshared_cache_size = cache->attr->cache.size;
             }
         }
+    }
 
-      if (!cache_size || !cacheline_size)
-        break;
-
+  if (shared_cache_size > 0 && cacheline_size > 0)
+    {
       device->global_mem_cache_type
           = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
       device->global_mem_cacheline_size = cacheline_size;
-      device->global_mem_cache_size = cache_size;
-  } while (0);
-
+      device->global_mem_cache_size = shared_cache_size;
+    }
+  if (nonshared_cache_size > 0)
+    {
+      device->local_mem_size = nonshared_cache_size;
+      device->max_constant_buffer_size = nonshared_cache_size;
+    }
   // Destroy topology object and return
 exit_destroy:
   hwloc_topology_destroy (pocl_topology);
