@@ -174,6 +174,9 @@
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
 
+#define PRINTF_BUFFER_SIZE @PRINTF_BUFFER_SIZE@
+
+
 /* used in lib/CL/devices/basic */
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
 #define OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"

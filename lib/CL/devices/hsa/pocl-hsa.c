@@ -379,7 +379,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .endian_little = CL_TRUE,
                 .extensions = HSA_DEVICE_EXTENSIONS,
                 .device_side_printf = !HSAIL_ENABLED,
-                .printf_buffer_size = 16 * 1024 * 1024,
+                .printf_buffer_size = PRINTF_BUFFER_SIZE * 1024,
                 .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
                 .preferred_vector_width_char = 4,
                 .preferred_vector_width_short = 2,
@@ -411,7 +411,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .endian_little = !(WORDS_BIGENDIAN),
                 .extensions = HSA_DEVICE_EXTENSIONS,
                 .device_side_printf = !HSAIL_ENABLED,
-                .printf_buffer_size = 16 * 1024 * 1024,
+                .printf_buffer_size = PRINTF_BUFFER_SIZE * 1024,
                 .preferred_wg_size_multiple = 1,
                 /* We want to exploit the widest vector types in HSAIL
                    for the CPUs assuming they have some sort of SIMD ISE

@@ -237,6 +237,11 @@ else()
   message(FATAL_ERROR "Cannot figure out HOST_DEVICE_ADDRESS_BITS")
 endif()
 
+# printf buffer size, in KB
+if(NOT DEFINED PRINTF_BUFFER_SIZE)
+  set(PRINTF_BUFFER_SIZE 16384 CACHE STRING "printf buffer size, in KB")
+endif()
+
 ##################################################################################
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le")

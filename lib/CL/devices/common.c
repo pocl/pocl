@@ -1529,7 +1529,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->partition_type = NULL;
 
   dev->device_side_printf = 1;
-  dev->printf_buffer_size = 16 * 1024 * 1024;
+  dev->printf_buffer_size = PRINTF_BUFFER_SIZE * 1024;
 
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
