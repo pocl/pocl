@@ -104,7 +104,7 @@ pthread_scheduler_init (cl_device_id device)
   /* safety margin - aligning pointers later (in kernel arg setup)
    * may require more local memory than actual local mem size.
    * TODO fix this */
-  scheduler.local_mem_size = device->local_mem_size << 4;
+  scheduler.local_mem_size = device->local_mem_size + device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
 
   for (i = 0; i < num_worker_threads; ++i)
     {
