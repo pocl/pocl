@@ -12,16 +12,42 @@ steps:
     POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    OCL_ICD_VENDORS: /drone/src/build/ocl-vendors/pocl-tests.icd
   commands:
   - pacman --noconfirm -Sy
   - pacman --noconfirm -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
   - mkdir build
   - cd build
-  - cmake -DDEVELOPER_MODE=ON -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+  - cmake -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+  - ninja
+  - clinfo
+  - ctest -j24 --output-on-failure -L internal
+
+----
+kind: pipeline
+name: amd64_arch_distro
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build_and_test
+  image: archlinux/base
+  environment:
+    POCL_CACHE_DIR: /tmp/cache
+    POCL_MAX_PTHREAD_COUNT: 2
+  commands:
+  - pacman --noconfirm -Sy
+  - pacman --noconfirm -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
+  - mkdir build
+  - cd build
+  - cmake -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
   - ninja
   - ninja install
   - clinfo
-  - ctest -j12 --output-on-failure -L internal
+  - rm CTestCustom.cmake
+  - ctest -j24 --output-on-failure -L internal
 
 ---
 kind: pipeline
@@ -35,9 +61,9 @@ steps:
 - name: build_and_test
   image: arm64v8/ubuntu:18.04
   environment:
-    POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
   commands:
   - apt update
   - apt upgrade -y
@@ -65,10 +91,39 @@ steps:
     POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
   commands:
   - apt update
   - apt upgrade -y
   - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-9-dev clang-9 llvm-9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - mkdir build
+  - cd build
+  - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+  - ninja
+  - ninja install
+  - clinfo
+  - ctest -j32 --output-on-failure -L internal
+
+---
+kind: pipeline
+name: arm64_ub2004_llvm10
+
+platform:
+  os: linux
+  arch: arm64
+
+steps:
+- name: build_and_test
+  image: arm64v8/ubuntu:20.04
+  environment:
+    POCL_BUILDING: 1
+    POCL_CACHE_DIR: /tmp/cache
+    POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
+  commands:
+  - apt update
+  - apt upgrade -y
+  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-10-dev libclang-cpp10-dev clang-10 llvm-10-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -93,6 +148,7 @@ steps:
     POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
   commands:
   - apt update
   - apt upgrade -y
@@ -120,10 +176,39 @@ steps:
     POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
   commands:
   - apt update
   - apt upgrade -y
   - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-9-dev clang-9 llvm-9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - mkdir build
+  - cd build
+  - cmake -DENABLE_FP64=OFF -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=cortex-a15 -DLLC_TRIPLE=armv7l-unknown-linux-gnueabihf -DEXTRA_KERNEL_FLAGS="-mfloat-abi=hard -mfpu=neon" -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+  - ninja
+  - ninja install
+  - clinfo
+  - ctest -j32 --output-on-failure -L internal
+
+---
+kind: pipeline
+name: arm32_ub2004_llvm10
+
+platform:
+  os: linux
+  arch: arm
+
+steps:
+- name: build_and_test
+  image: arm32v7/ubuntu:20.04
+  environment:
+    POCL_BUILDING: 1
+    POCL_CACHE_DIR: /tmp/cache
+    POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
+  commands:
+  - apt update
+  - apt upgrade -y
+  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-10-dev libclang-cpp10-dev clang-10 llvm-10-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DENABLE_FP64=OFF -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=cortex-a15 -DLLC_TRIPLE=armv7l-unknown-linux-gnueabihf -DEXTRA_KERNEL_FLAGS="-mfloat-abi=hard -mfpu=neon" -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
