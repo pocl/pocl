@@ -56,9 +56,9 @@ unsigned int pocl_get_device_type_count(cl_device_type device_type);
 /**
  * \brief Get a certain amount of devices for a specific type
  * \param type Type of devices wanted
- * \param devcies Array of pointer to devices
+ * \param devices Array of pointer to devices
  * \param num_devices Number of devices queried
- * \return The real number of devices added to devcies array which match the specified type
+ * \return The real number of devices added to devices array which match the specified type
  */
 unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices);
 
@@ -66,7 +66,7 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
  * \brief Return the count of a specific device in the env var POCL_DEVICES
  * \param dev_type a string describing the device ("basic" for instance)
  * \return If the env var was not set, return -1, if the env var is specified, return 0
- * or the number of occurence of dev_type in the env var
+ * or the number of occurrence of dev_type in the env var
  */
 int pocl_device_get_env_count(const char *dev_type);
 

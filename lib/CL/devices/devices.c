@@ -192,7 +192,7 @@ get_pocl_device_lib_path (char *result, char *device_name)
 }
 
 /**
- * Get the number of specified devices from environnement
+ * Get the number of specified devices from environment
  */
 int pocl_device_get_env_count(const char *dev_type)
 {
@@ -617,9 +617,9 @@ pocl_init_devices ()
       pocl_num_devices += device_count[i];
     }
 
-  const char *dev_env = pocl_get_string_option ("POCL_DEVICES", NULL);
+  const char *dev_env = pocl_get_string_option (POCL_DEVICES_ENV, NULL);
   POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
-                      "no devices found. POCL_DEVICES=%s\n", dev_env);
+                      "no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
 
   pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   POCL_GOTO_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,

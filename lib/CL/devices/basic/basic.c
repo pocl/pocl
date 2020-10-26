@@ -277,7 +277,7 @@ pocl_basic_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
 
-  /* aloocation owner executes freeing */
+  /* allocation owner executes freeing */
   if (flags & CL_MEM_USE_HOST_PTR ||
       memobj->shared_mem_allocation_owner != device)
     return;
