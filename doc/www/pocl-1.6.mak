@@ -17,7 +17,8 @@ particularly for benchmarks involving local memory such as FFT and GEMM, when co
 to a <a href="http://portablecl.org/cuda-backend.html">prior benchmark run</a>.
 Pocl now often attains performance competitive with Nvidia's
 proprietary OpenCL driver. We welcome contributions to identifying
-and removing the root causes for any remaining problem areas.
+and removing the root causes for any remaining problem areas. We also welcome
+contributions to improve the feature coverage for OpenCL 1.2/3.0 standards.
 
 <img src="img/pocl-nvidia-SHOC-October20.png" border="0" style="vertical-align: middle;" />
 
