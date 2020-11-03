@@ -26,7 +26,7 @@ In particular, the following optimizations and improvements landed in the CUDA b
 - Use 32-bit pointer arithmetic for local memory
   <a href="https://github.com/pocl/pocl/pull/822">#822</a>
 - Use static CUDA memory blocks for OpenCL's constant <tt>__local</tt>
-  blocks. Previous version of pocl one dynamic shared CUDA memory block for
+  blocks. Previous version of pocl used one dynamic shared CUDA memory block for
   OpenCL's constant <tt>__local</tt> blocks and <tt>__local</tt> function arguments.
   This resulted in poor SASS code generation due to a pointer aliasing issue.
   <a href="https://github.com/pocl/pocl/pull/838">#838</a>,
