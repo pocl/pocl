@@ -38,8 +38,8 @@ In particular, the following optimizations and improvements landed in the CUDA b
 
 <h3>PowerPC support</h3>
 
-Pocl v1.6 brings back support for PowerPC 8/9 with the test suite passing fully on the pthread
-device and the CUDA device test suite pass rate is the same as the pass rate for CUDA
+Pocl v1.6 brings back support for PowerPC 8/9 with the internal test suite passing fully on the
+pthread device and the CUDA device test suite pass rate is the same as the pass rate for CUDA
 on an x86_64 machine. Pocl fills the gap of running OpenCL codes on PowerPC machines
 as IBM's OpenCL CPU implementation is deprecated. This was tested on a PowerPC node with a
 Tesla V100 on Lawrence Livermore National Laboratory's Lassen supercomputer.
