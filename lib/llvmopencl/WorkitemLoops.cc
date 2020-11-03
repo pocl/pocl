@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -892,6 +893,30 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
 
   BasicBlock &bb = instruction->getParent()->getParent()->getEntryBlock();
   IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
+  Function *FF = instruction->getParent()->getParent();
+  Module *M = instruction->getParent()->getParent()->getParent();
+  const llvm::DataLayout &Layout = M->getDataLayout();
+
+  // find the debug metadata corresponding to this variable
+  Value *DebugVal = nullptr;
+  IntrinsicInst *DebugCall = nullptr;
+  for (BasicBlock &BB : (*FF)) {
+    for (Instruction &I : BB) {
+      IntrinsicInst *CI = dyn_cast<IntrinsicInst>(&I);
+      if (CI && (CI->getIntrinsicID() == llvm::Intrinsic::dbg_declare)) {
+        Metadata *Meta =
+            cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
+        if (isa<ValueAsMetadata>(Meta)) {
+          Value *V = cast<ValueAsMetadata>(Meta)->getValue();
+          if (instruction == V) {
+            DebugVal = V;
+            DebugCall = CI;
+            break;
+          }
+        }
+      }
+    }
+  }
 
   llvm::Type *elementType;
   if (isa<AllocaInst>(instruction))
@@ -911,9 +936,6 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
     {
       elementType = instruction->getType();
     }
-
-  Module* M = instruction->getParent()->getParent()->getParent();
-  const llvm::DataLayout &Layout = M->getDataLayout();
 
   /* 3D context array. In case the elementType itself is an array or struct,
    * we must take into account it could be alloca-ed with alignment and loads
@@ -1018,6 +1040,13 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
             )
 #endif
     );
+
+    if (DebugVal && DebugCall) {
+      Metadata *NewMeta = ValueAsMetadata::get(Alloca);
+      DebugCall->setOperand(0, MetadataAsValue::get(M->getContext(), NewMeta));
+      DebugCall->removeFromParent();
+      DebugCall->insertAfter(Alloca);
+    }
 
     contextArrays[varName] = Alloca;
     return Alloca;
