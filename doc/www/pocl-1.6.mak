@@ -41,8 +41,7 @@ In particular, the following optimizations and improvements landed in the CUDA b
 Pocl v1.6 brings back support for PowerPC 8/9 with the test suite passing fully on the pthread
 device and the CUDA device test suite pass rate is the same as the pass rate for CUDA
 on an x86_64 machine. Pocl fills the gap of running OpenCL codes on PowerPC machines
-as NVIDIA does not provide an OpenCL backend for PowerPC machines and IBM's OpenCL CPU
-implementation is deprecated in favour of pocl. This was tested on a PowerPC node with a
+as IBM's OpenCL CPU implementation is deprecated. This was tested on a PowerPC node with a
 Tesla V100 on Lawrence Livermore National Laboratory's Lassen supercomputer.
 
 <h3>Improved packaging support</h3>
