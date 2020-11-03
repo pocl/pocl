@@ -248,6 +248,8 @@ option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device drive
 
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
+option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
+
 option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
 
 option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
@@ -414,6 +416,11 @@ find_package(Hwloc)
 
 
 include(sanitizers)
+
+if(ENABLE_TBB_DEVICE)
+  # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
+  find_package(TBB REQUIRED tbb)
+endif()
 
 ######################################################################################
 
@@ -1170,10 +1177,18 @@ if(ENABLE_ACCEL_DEVICE)
   set(OCL_DRIVERS "${OCL_DRIVERS} accel")
 endif()
 
+# The tbb device is implemented in C++ and requires the Intel TBB library.
+if(ENABLE_TBB_DEVICE)
+  set(BUILD_BASIC 1)
+  set(BUILD_TBB 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} tbb")
+endif()
+
 if(DEFINED EXTRA_OCL_TARGETS)
   set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
 endif()
 
+<<<<<<< HEAD
 
 if(ENABLE_PROXY_DEVICE)
   # see doc/sphinx/source/proxy.rst
@@ -1206,6 +1221,8 @@ if(ENABLE_PROXY_DEVICE)
 endif()
 
 
+=======
+>>>>>>> 9138584d... Enable tbb device
 ####################################################################
 
 # Determine which device drivers to build.

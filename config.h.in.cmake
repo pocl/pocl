@@ -2,6 +2,7 @@
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
+#cmakedefine BUILD_TBB
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
 #cmakedefine BUILD_VULKAN

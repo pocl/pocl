@@ -54,6 +54,10 @@ if(BUILD_PTHREAD)
     "$<TARGET_OBJECTS:pocl-devices-pthread>")
 endif()
 
+if(BUILD_TBB)
+  add_subdirectory("tbb")
+endif()
+
 if(BUILD_ACCEL)
   add_subdirectory("accel")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
@@ -74,6 +78,8 @@ if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
     endif()
   endif()
 endif()
+
+set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>" "$<TARGET_OBJECTS:pocl-devices-topology>")
 
 if(ENABLE_TCE)
   include_directories(AFTER "tce")
