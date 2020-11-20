@@ -194,12 +194,11 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   /* in case hwloc doesn't provide a PCI ID, let's generate
      a vendor id that hopefully is unique across vendors. */
-  const char *magic = "pocl";
+  /* TODO this should be replaced with the appropriate
+   * CL_KHRONOS_VENDOR_ID_POCL when it's registered */
+#define POCL_OPENCL_VENDOR_ID 0x6c636f70 /* pocl */
   if (device->vendor_id == 0)
-    device->vendor_id =
-      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
-
-  device->vendor_id += j;
+    device->vendor_id = POCL_OPENCL_VENDOR_ID;
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
