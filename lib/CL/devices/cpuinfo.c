@@ -248,16 +248,19 @@ enum
 
 static const struct
 {
-  unsigned id; /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
+  /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
+  unsigned id;
+  /* PCI vendor ID, to fill the device->vendor_id field */
+  unsigned pci_vendor_id;
   char const *name;
 }
 vendor_list[] =
 {
-  { JEP106_ARM,    "ARM" },
-  { JEP106_BRDCOM, "Broadcom" },
-  { JEP106_CAVIUM, "Cavium" },
-  { JEP106_APM,    "Applied Micro" },
-  { JEP106_QCOM,   "Qualcomm" }
+  { JEP106_ARM,    0x13b5, "ARM" },
+  { JEP106_BRDCOM, 0x14e4, "Broadcom" },
+  { JEP106_CAVIUM, 0x177d, "Cavium" },
+  { JEP106_APM,    0x10e8, "Applied Micro" },
+  { JEP106_QCOM,   0x5143, "Qualcomm" }
 };
 
 typedef struct
@@ -338,6 +341,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
           {
             if (vendor_id == vendor_list[i].id)
               {
+                device->vendor_id = vendor_list[i].pci_vendor_id;
                 start = vendor_list[i].name;
                 end = start + strlen (vendor_list[i].name);
                 break;
