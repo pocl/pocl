@@ -140,12 +140,12 @@ use ";" as separator (you'll have to escape it for bash).
   If not specified, pocl will try to find and link against
   llvm-config in PATH env var (usually means your system LLVM).
 
-- ``-DSTATIC_LLVM`` this option is deprecated and currently has no effect. See
-  the SINGLE_LLVM_LIB option.
+- ``-DSINGLE_LLVM_LIB`` this is deprecated and has no effect (pocl now uses
+  llvm-config exclusively to get the LLVM library list)
 
-- ``-DSINGLE_LLVM_LIB`` when this option is enabled (default), pocl tries to
-  link to a single big LLVM library (libLLVM-<VERSION>.suffix). If this fails,
-  it fallbacks to linking LLVM libraries provided by ``llvm-config --libfiles``.
+- ``-DSTATIC_LLVM`` pocl uses ``llvm-config --libs`` to get list of LLVM libraries
+  it should link to. With this flag enabled, it additionally passes ``--link-static``
+  to ``llvm-config``; otherwise it passes ``--link-shared``. Default is OFF (=shared).
 
 - ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
   and build pocl as a dynamic library named "libpocl". This option is useful
