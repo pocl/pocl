@@ -35,15 +35,17 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/MDBuilder.h"
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Analysis/PostDominators.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "WorkitemLoops.h"
@@ -895,28 +897,46 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
   IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
   Function *FF = instruction->getParent()->getParent();
   Module *M = instruction->getParent()->getParent()->getParent();
+  LLVMContext &C = M->getContext();
   const llvm::DataLayout &Layout = M->getDataLayout();
+  DICompileUnit *CU = nullptr;
+  std::unique_ptr<DIBuilder> DB;
+  if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
+    CU = *M->debug_compile_units_begin();
+    DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
+  }
 
   // find the debug metadata corresponding to this variable
   Value *DebugVal = nullptr;
   IntrinsicInst *DebugCall = nullptr;
-  for (BasicBlock &BB : (*FF)) {
-    for (Instruction &I : BB) {
-      IntrinsicInst *CI = dyn_cast<IntrinsicInst>(&I);
-      if (CI && (CI->getIntrinsicID() == llvm::Intrinsic::dbg_declare)) {
-        Metadata *Meta =
-            cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
-        if (isa<ValueAsMetadata>(Meta)) {
-          Value *V = cast<ValueAsMetadata>(Meta)->getValue();
-          if (instruction == V) {
-            DebugVal = V;
-            DebugCall = CI;
-            break;
+  if (CU) {
+    for (BasicBlock &BB : (*FF)) {
+      for (Instruction &I : BB) {
+        IntrinsicInst *CI = dyn_cast<IntrinsicInst>(&I);
+        if (CI && (CI->getIntrinsicID() == llvm::Intrinsic::dbg_declare)) {
+          Metadata *Meta =
+              cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
+          if (isa<ValueAsMetadata>(Meta)) {
+            Value *V = cast<ValueAsMetadata>(Meta)->getValue();
+            if (instruction == V) {
+              DebugVal = V;
+              DebugCall = CI;
+              break;
+            }
           }
         }
       }
     }
   }
+
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  if (DebugVal && DebugCall) {
+    std::cerr << "### DI INTRIN: \n";
+    DebugCall->dump();
+    std::cerr << "### DI VALUE:  \n";
+    DebugVal->dump();
+  }
+#endif
 
   llvm::Type *elementType;
   if (isa<AllocaInst>(instruction))
@@ -1041,11 +1061,55 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
 #endif
     );
 
-    if (DebugVal && DebugCall) {
-      Metadata *NewMeta = ValueAsMetadata::get(Alloca);
-      DebugCall->setOperand(0, MetadataAsValue::get(M->getContext(), NewMeta));
-      DebugCall->removeFromParent();
-      DebugCall->insertAfter(Alloca);
+    if (DebugVal && DebugCall && !WGDynamicLocalSize) {
+
+      llvm::SmallVector<llvm::Metadata *, 4> Subscripts;
+      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeZ));
+      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeY));
+      Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeX));
+      llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
+
+      size_t sizeBits =
+          Alloca->getAllocationSizeInBits(M->getDataLayout()).getValueOr(0);
+      assert(sizeBits != 0);
+      // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
+      // Alloca->getAllocatedType()->getScalarSizeInBits();
+      size_t alignBits = Alloca->getAlignment() * 8;
+
+      Metadata *VariableDebugMeta =
+          cast<MetadataAsValue>(DebugCall->getOperand(1))->getMetadata();
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### VariableDebugMeta :  ";
+      VariableDebugMeta->dump();
+      std::cerr << "### sizeBits :  " << sizeBits
+                << "  alignBits: " << alignBits << "\n";
+#endif
+
+      DILocalVariable *LocalVar = dyn_cast<DILocalVariable>(VariableDebugMeta);
+      assert(LocalVar);
+      if (LocalVar) {
+
+        DICompositeType *CT = DB->createArrayType(
+            sizeBits, alignBits, LocalVar->getType(), SubscriptArray);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        std::cerr << "### DICompositeType:\n";
+        CT->dump();
+#endif
+        DILocalVariable *NewLocalVar = DB->createAutoVariable(
+            LocalVar->getScope(), LocalVar->getName(), LocalVar->getFile(),
+            LocalVar->getLine(), CT, false, LocalVar->getFlags());
+
+        Metadata *NewMeta = ValueAsMetadata::get(Alloca);
+        DebugCall->setOperand(0,
+                              MetadataAsValue::get(M->getContext(), NewMeta));
+
+        MetadataAsValue *NewLV =
+            MetadataAsValue::get(M->getContext(), NewLocalVar);
+        DebugCall->setOperand(1, NewLV);
+
+        DebugCall->removeFromParent();
+        DebugCall->insertAfter(Alloca);
+      }
     }
 
     contextArrays[varName] = Alloca;
