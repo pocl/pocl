@@ -901,14 +901,17 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
   const llvm::DataLayout &Layout = M->getDataLayout();
   DICompileUnit *CU = nullptr;
   std::unique_ptr<DIBuilder> DB;
+#ifndef LLVM_OLDER_THAN_7_0
   if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
     CU = *M->debug_compile_units_begin();
     DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
   }
+#endif
 
   // find the debug metadata corresponding to this variable
   Value *DebugVal = nullptr;
   IntrinsicInst *DebugCall = nullptr;
+#ifndef LLVM_OLDER_THAN_7_0
   if (CU) {
     for (BasicBlock &BB : (*FF)) {
       for (Instruction &I : BB) {
@@ -928,6 +931,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       }
     }
   }
+#endif
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
   if (DebugVal && DebugCall) {
@@ -1069,9 +1073,11 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       Subscripts.push_back(DB->getOrCreateSubrange(0, WGLocalSizeX));
       llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
 
-      size_t sizeBits =
-          Alloca->getAllocationSizeInBits(M->getDataLayout()).getValueOr(0);
+      size_t sizeBits;
+#ifndef LLVM_OLDER_THAN_7_0
+      sizeBits = Alloca->getAllocationSizeInBits(M->getDataLayout()).getValueOr(0);
       assert(sizeBits != 0);
+#endif
       // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
       // Alloca->getAllocatedType()->getScalarSizeInBits();
       size_t alignBits = Alloca->getAlignment() * 8;
@@ -1089,8 +1095,14 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       assert(LocalVar);
       if (LocalVar) {
 
+#ifdef LLVM_OLDER_THAN_9_0
+        DICompositeType *CT = DB->createArrayType(
+            sizeBits, alignBits, LocalVar->getType().resolve(), SubscriptArray);
+#else
         DICompositeType *CT = DB->createArrayType(
             sizeBits, alignBits, LocalVar->getType(), SubscriptArray);
+#endif
+
 #ifdef DEBUG_WORK_ITEM_LOOPS
         std::cerr << "### DICompositeType:\n";
         CT->dump();
