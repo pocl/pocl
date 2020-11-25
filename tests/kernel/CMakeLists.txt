@@ -277,7 +277,6 @@ set_property(TEST
   "kernel/test_fmin_fmax_fma"
   "kernel/test_frexp_modf"
   "kernel/test_convert_sat_regression"
-  "kernel/test_rotate"
   "kernel/test_short16"
   "kernel/test_local_struct_array"
   "kernel/test_shuffle_char"
@@ -292,6 +291,11 @@ set_property(TEST
   "kernel/test_as_type"
   "kernel/test_sizeof_uint"
   APPEND PROPERTY LABELS "cuda")
+
+if(LLVM_VERSION_MAJOR LESS 11)
+  set_property(TEST "kernel/test_rotate"
+               APPEND PROPERTY LABELS "cuda")
+endif()
 endif()
 
 set_property(TEST
