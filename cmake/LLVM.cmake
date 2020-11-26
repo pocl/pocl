@@ -220,12 +220,6 @@ run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
 
-# workaround for a bug in current HSAIL LLVM
-# it forgets to report one HSAIL library in llvm-config
-if(ENABLE_HSA)
-  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
-endif()
-
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
 # we extract the pure names (LLVMLTO, LLVMMipsDesc etc) and let find_library do its job
 foreach(LIBFLAG ${LLVM_LIBS})
