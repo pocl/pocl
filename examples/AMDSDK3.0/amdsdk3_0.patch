@@ -117,3 +117,43 @@
  }
  
  	
+--- a/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SimpleMultiDevice/SimpleMultiDevice.cpp	2020-09-28 15:43:52.310211779 +0300
++++ b/AMD-APP-SDK-3.0/samples/opencl/cl/1.x/SimpleMultiDevice/SimpleMultiDevice.cpp	2020-09-28 15:44:37.878321556 +0300
+@@ -1471,15 +1471,6 @@
+     return a * b + c;
+ }
+ 
+-// OpenCL HYPOT definition for CPU
+-#if (_MSC_VER != 1800)
+-float hypot(float a, float b)
+-{
+-    return sqrt(a * a + b * b);
+-}
+-#endif
+-
+-
+ int
+ CPUKernel()
+ {
+--- a/AMD-APP-SDK-3.0/samples/opencl/cl/2.0/BinarySearchDeviceSideEnqueue/BinarySearchDeviceSideEnqueue.cpp	2020-09-28 17:21:15.609109066 +0300
++++ b/AMD-APP-SDK-3.0/samples/opencl/cl/2.0/BinarySearchDeviceSideEnqueue/BinarySearchDeviceSideEnqueue.cpp	2020-09-28 17:21:31.497172793 +0300
+@@ -273,7 +273,7 @@
+         commandQueue = clCreateCommandQueueWithProperties(
+                            context,
+                            devices[sampleArgs->deviceId],
+-                           prop,
++                           &prop,
+                            &status);
+         CHECK_OPENCL_ERROR( status, "clCreateCommandQueueWithProperties failed.");
+     }
+--- a/AMD-APP-SDK-3.0/samples/opencl/cl/2.0/RecursiveGaussian_ProgramScope/RecursiveGaussian_ProgramScope.cpp.orig	2020-09-28 17:39:33.521349498 +0300
++++ b/AMD-APP-SDK-3.0/samples/opencl/cl/2.0/RecursiveGaussian_ProgramScope/RecursiveGaussian_ProgramScope.cpp	2020-09-28 17:39:44.301390304 +0300
+@@ -255,7 +255,7 @@
+         commandQueue = clCreateCommandQueueWithProperties(
+                            context,
+                            devices[sampleArgs->deviceId],
+-                           prop,
++                           &prop,
+                            &status);
+         CHECK_OPENCL_ERROR( status, "clCreateCommandQueue failed.");
+     }

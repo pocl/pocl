@@ -309,10 +309,15 @@ set_property(TEST
   "regression/test_program_from_binary_with_local_1_1_1_LOOPS"
   "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
-  "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   "regression/vector_kernel_arguments"
   "regression/autolocals_in_constexprs"
   APPEND PROPERTY LABELS "cuda")
+
+if(LLVM_VERSION_MAJOR GREATER 7)
+ set_property(TEST
+   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
+  APPEND PROPERTY LABELS "cuda")
+endif()
 
 # Label tests that work with HSA runtime with native kernel compilation
 set_property(TEST

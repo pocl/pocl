@@ -7,14 +7,9 @@ How to build:
   on the distro where they were compiled. Ubuntu LTS these days ships multiple llvm
   versions even quite recent ones; get the clang+llvm from your distro's packages.
 
-* read the pocl build instructions in docs
+* read the pocl install/build instructions in docs
 
 * LLVM will likely not recognize your cpu, and running cmake will give you a warning.
   run cmake with -DLLC_HOST_CPU=<yourcpu>. "yourcpu" must be something LLVM recognizes,
   usually it's simply "cortex-aXX" like cortex-a15 etc. You can get the full list by
   running `llc -mcpu=help`.
-
-* example for building pocl on Ubuntu 16.04 + ARM:
-
-  apt install ocl-icd-libopencl1 ocl-icd-opencl-dev cmake libltdl-dev libhwloc-dev pkg-config
-  build-essential llvm-4.0-dev llvm-4.0 clang-4.0 libclang-4.0-dev

@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 
 project(pocl)
 set(CMAKE_PROJECT_DESCRIPTION "pocl is a portable OpenCl runtime.")
@@ -161,6 +161,8 @@ endif()
 
 option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
 
+option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." OFF)
+
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
 option(POCL_DEBUG_MESSAGES
@@ -235,6 +237,11 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(HOST_DEVICE_ADDRESS_BITS 32)
 else()
   message(FATAL_ERROR "Cannot figure out HOST_DEVICE_ADDRESS_BITS")
+endif()
+
+# printf buffer size, in KB
+if(NOT DEFINED PRINTF_BUFFER_SIZE)
+  set(PRINTF_BUFFER_SIZE 16384 CACHE STRING "printf buffer size, in KB")
 endif()
 
 ##################################################################################
@@ -723,33 +730,6 @@ endif()
 
 ######################################################################################
 
-if (OCS_AVAILABLE)
-
-  option(SINGLE_LLVM_LIB "When on, tries to link pocl to the single big libLLVM before falling back to LLVM_LIBFILES)." ON)
-
-  if (DEFINED STATIC_LLVM)
-    message(AUTHOR_WARNING "STATIC_LLVM option was renamed, it wasn't really ensuring anything was static. Please see the SINGLE_LLVM_LIB option")
-  endif()
-
-  if(NOT SINGLE_LLVM_LIB)
-    message(STATUS "Linking LLVM to LLVM_LIBFILES")
-    set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
-  else()
-    message(STATUS "Trying to link LLVM to the single big libLLVM")
-    find_library(LLVM_SHARED_LIB_FILE NAMES "LLVM-${LLVM_VERSION}" "LLVM" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
-    if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
-      message(STATUS " .. OK, using ${LLVM_SHARED_LIB_FILE}")
-      set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
-    else()
-      message(STATUS "single big libLLVM library not found (Probably because LLVM is built with cmake). Falling back to linking libpocl to LLVM_LIBFILES")
-      set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
-      set(SINGLE_LLVM_LIB OFF CACHE BOOL "single big libLLVM")
-    endif()
-  endif()
-endif()
-
-######################################################################################
-
 set(SPIRV OFF)
 
 if(OCS_AVAILABLE AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
@@ -1148,13 +1128,19 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     get_filename_component(TCE_BASEDIR "${TCE_CONFIG}" DIRECTORY)
     find_library(TCE_LIBS "tce" HINTS "${TCE_BASEDIR}/../lib" ENV PATH)
     if(NOT TCE_LIBS)
-      execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+      execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1 OUTPUT_STRIP_TRAILING_WHITESPACE)
     endif()
-    execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV2)
-    execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV3)
-    execute_process(COMMAND "${TCE_CONFIG}" --cxxflags OUTPUT_VARIABLE TCE_CXXFLAGS RESULT_VARIABLE RESV4)
-    execute_process(COMMAND "${TCE_CONFIG}" --prefix OUTPUT_VARIABLE TCE_PREFIX RESULT_VARIABLE RESV5)
+    execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV2 OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV3 OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND "${TCE_CONFIG}" --cxxflags OUTPUT_VARIABLE TCE_CXXFLAGS RESULT_VARIABLE RESV4 OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND "${TCE_CONFIG}" --prefix OUTPUT_VARIABLE TCE_PREFIX RESULT_VARIABLE RESV5 OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND "${TCE_CONFIG}" --llvm-config OUTPUT_VARIABLE TCE_LLVM_CONFIG RESULT_VARIABLE RESV6 OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND "${TTASIM}" --help OUTPUT_VARIABLE TTASIM_HELP RESULT_VARIABLE RESV9)
+
+
+    if(NOT (LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG))
+      message(FATAL_ERROR "tce-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
+    endif()
 
     if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
       message(WARNING "tce-config: Nonzero exit status, disabling TCE")
@@ -1661,7 +1647,6 @@ MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
 MESSAGE(STATUS "POCL_ICD_ABSOLUTE_PATH: ${POCL_ICD_ABSOLUTE_PATH}")
 MESSAGE(STATUS "POCL_ASSERTS_BUILD: ${POCL_ASSERTS_BUILD}")
-MESSAGE(STATUS "SINGLE_LLVM_LIB: ${SINGLE_LLVM_LIB}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")

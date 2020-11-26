@@ -113,14 +113,7 @@ run_llvm_config(LLVM_LIBDIR --libdir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LIBDIR "${LLVM_LIBDIR}")
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}")
-run_llvm_config(LLVM_LIBS --libs)
-# Convert LLVM_LIBS from string -> list format to make handling them easier
-separate_arguments(LLVM_LIBS)
-# workaround for a bug in current HSAIL LLVM
-# it forgets to report one HSAIL library in llvm-config
-if(ENABLE_HSA)
-  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
-endif()
+
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
@@ -141,6 +134,18 @@ if(LLVM_BUILD_MODE MATCHES "Debug")
 else()
   set(LLVM_BUILD_MODE_DEBUG 0)
 endif()
+
+# A few work-arounds for llvm-config issues
+
+# - pocl doesn't compile with '-pedantic'
+#LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
+string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
+
+#llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
+#(They are not needed - we want to use -Wall anyways)
+#This is a problem if LLVM was built with a different compiler than we use here,
+#and our compiler chokes on unrecognized command-line options.
+string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
 # `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
@@ -200,12 +205,14 @@ endif()
 
 run_llvm_config(LLVM_HAS_RTTI --has-rtti)
 
-run_llvm_config(LLVM_LIB_IS_SHARED --shared-mode)
+if(DEFINED SINGLE_LLVM_LIB)
+   message(AUTHOR_WARNING "SINGLE_LLVM_LIB option was removed; pocl now uses only llvm-config to get the libraries. Use STATIC_LLVM=ON/OFF to affect which libraries pocl requests from llvm-config")
+endif()
 
-if(LLVM_LIB_IS_SHARED MATCHES "shared")
-  set(LLVM_LIB_MODE --link-shared)
-else()
+if(STATIC_LLVM)
   set(LLVM_LIB_MODE --link-static)
+else()
+  set(LLVM_LIB_MODE --link-shared)
 endif()
 
 unset(LLVM_LIBS)
@@ -213,28 +220,42 @@ run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
 
+# workaround for a bug in current HSAIL LLVM
+# it forgets to report one HSAIL library in llvm-config
+if(ENABLE_HSA)
+  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
+endif()
+
+# With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
+# we extract the pure names (LLVMLTO, LLVMMipsDesc etc) and let find_library do its job
+foreach(LIBFLAG ${LLVM_LIBS})
+  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
+  list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
+endforeach()
+
+foreach(LIBNAME ${LLVM_LIBNAMES})
+  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
+endforeach()
+
+set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
+
+####################################################################
+
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 ####################################################################
 
-# A few work-arounds for llvm-config issues
-
-# - pocl doesn't compile with '-pedantic'
-#LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
-string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
-
-#llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
-#(They are not needed - we want to use -Wall anyways)
-#This is a problem if LLVM was built with a different compiler than we use here,
-#and our compiler chokes on unrecognized command-line options.
-string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
-
-# Llvm-config does not include clang libs
-if((9 LESS LLVM_MAJOR) AND (LLVM_LIB_IS_SHARED MATCHES "shared"))
-  # Link against a single shared library instead of multiple component shared
+# llvm-config does not include clang libs
+if((9 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
+  # For Clang 10+, link against a single shared library instead of multiple component shared
   # libraries.
-  set(CLANG_LIBNAMES clang-cpp)
+  if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
+    set(CLANG_LIBNAMES clangTCE-cpp)
+  else()
+    set(CLANG_LIBNAMES clang-cpp)
+  endif()
 else()
   set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
       clangParse clangSema clangRewrite clangRewriteFrontend
@@ -249,19 +270,6 @@ foreach(LIBNAME ${CLANG_LIBNAMES})
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
   endif()
 endforeach()
-
-# With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
-# we extract the pure names (LLVMLTO, LLVMMipsDesc etc) and let find_library do its job
-foreach(LIBFLAG ${LLVM_LIBS})
-  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
-  list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
-endforeach()
-
-foreach(LIBNAME ${LLVM_LIBNAMES})
-  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
-  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
-endforeach()
-
 
 ####################################################################
 

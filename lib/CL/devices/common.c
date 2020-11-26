@@ -1213,20 +1213,21 @@ void
 pocl_set_buffer_image_limits(cl_device_id device)
 {
   pocl_setup_device_for_system_memory(device);
-  /* these aren't set up in pocl_setup_device_for_system_memory,
-   * because some devices (HSA) set them up themselves
-   *
-   * it's max mem alloc / 4 because some programs (conformance test)
-   * try to allocate max size constant objects and run out of memory
-   * while trying to fill them. */
 
-  cl_ulong s;
-  if (device->global_mem_cache_size > 0)
-    s = pocl_size_ceil2_64 (device->global_mem_cache_size / 2);
-  else
-    s = pocl_size_ceil2_64 (device->global_mem_size / 256);
+  assert (device->global_mem_size > 0);
+  assert (device->max_compute_units > 0);
+  assert (device->max_mem_alloc_size > 0);
 
-  device->local_mem_size = device->max_constant_buffer_size = s;
+  /* these should be ideally setup by hwloc or proc/cpuinfo;
+   * if not, set them to some reasonable values
+   */
+  if (device->local_mem_size == 0)
+    {
+      cl_ulong s = pocl_size_ceil2_64 (device->global_mem_size / 1024);
+      s = min (s, 512UL * 1024);
+      device->local_mem_size = s;
+      device->max_constant_buffer_size = s;
+    }
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
@@ -1531,7 +1532,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->partition_type = NULL;
 
   dev->device_side_printf = 1;
-  dev->printf_buffer_size = 16 * 1024 * 1024;
+  dev->printf_buffer_size = PRINTF_BUFFER_SIZE * 1024;
 
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
