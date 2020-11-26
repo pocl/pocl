@@ -1139,7 +1139,7 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
 
     if(NOT (LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG))
-      message(FATAL_ERROR "tce-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
+      message(WARNING "tce-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
     endif()
 
     if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
