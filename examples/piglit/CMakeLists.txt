@@ -66,7 +66,7 @@ endif()
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
-  GIT_REPOSITORY "git://anongit.freedesktop.org/piglit"
+  GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit"
   GIT_TAG 7a92b02210d
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
