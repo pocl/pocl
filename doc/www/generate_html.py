@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # 
 # Copyright (c) 2012 Pekka Jääskeläinen
@@ -30,13 +30,13 @@ try:
     from mako.template import Template
     from mako.lookup import TemplateLookup
 except:
-    print "Install Mako templates (e.g. easy_install \"Mako>=0.7.4\")"
+    print("Install Mako templates (e.g. easy_install \"Mako>=0.7.4\")")
     sys.exit(1)
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print "Usage: generate_html.py source_template.mak destination.html"
+        print("Usage: generate_html.py source_template.mak destination.html")
 
     mylookup = TemplateLookup(directories=['.'], input_encoding='utf-8')
     template = Template(filename=sys.argv[1], lookup=mylookup, strict_undefined=False, input_encoding='utf-8')

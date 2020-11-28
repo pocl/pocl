@@ -1,12 +1,12 @@
-1.6 unreleased
-==============
+1.6 December 2020
+=================
 
 Notable User Facing Changes
 ---------------------------
 
+- Support for LLVM 11.
 - CUDA kernels using constant __local blocks are now ABI incompatible with
   previous release. Users need to delete their pocl cache.
-
 
 Optimizations
 -------------
@@ -36,7 +36,7 @@ Optimizations
   queues, causing slowdown with applications that have a lot of commands.
   Now additional events are omitted in in-order queues. Measured with the
   PolyBench OpenCL Gramschmidt kernel, execution time went down from 44
-  seconds to around 0.5 seconds. 
+  seconds to around 0.5 seconds.
 
 Notable Bug Fixes
 -----------------
@@ -44,7 +44,7 @@ Notable Bug Fixes
 - Fix an issue in which the loop vectorizer produced code with invalid
   memory reads (issue #757).
 - Fix compilation error when CMake option SINGLE_LLVM_LIB is set to OFF.
-- Fix wrongly output dlerror (Undefined symbol) after dlopen, 
+- Fix wrongly output dlerror (Undefined symbol) after dlopen,
   caused by a previous libdl call in an ICD loader (issue #877).
 
 Security
