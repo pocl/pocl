@@ -41,6 +41,9 @@ static const char* cpuinfo = "/proc/cpuinfo";
 //Linux' cpufrec interface
 static const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
 
+// Vendor of PCI root bus
+static const char *pci_bus_root_vendor_file = "/sys/bus/pci/devices/0000:00:00.0/vendor";
+
 /* Strings to parse in /proc/cpuinfo. Else branch is for x86, x86_64 */
 #if   defined  __powerpc__
  #define FREQSTRING "clock"
@@ -245,16 +248,19 @@ enum
 
 static const struct
 {
-  unsigned id; /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
+  /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
+  unsigned id;
+  /* PCI vendor ID, to fill the device->vendor_id field */
+  unsigned pci_vendor_id;
   char const *name;
 }
 vendor_list[] =
 {
-  { JEP106_ARM,    "ARM" },
-  { JEP106_BRDCOM, "Broadcom" },
-  { JEP106_CAVIUM, "Cavium" },
-  { JEP106_APM,    "Applied Micro" },
-  { JEP106_QCOM,   "Qualcomm" }
+  { JEP106_ARM,    0x13b5, "ARM" },
+  { JEP106_BRDCOM, 0x14e4, "Broadcom" },
+  { JEP106_CAVIUM, 0x177d, "Cavium" },
+  { JEP106_APM,    0x10e8, "Applied Micro" },
+  { JEP106_QCOM,   0x5143, "Qualcomm" }
 };
 
 typedef struct
@@ -335,6 +341,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
           {
             if (vendor_id == vendor_list[i].id)
               {
+                device->vendor_id = vendor_list[i].pci_vendor_id;
                 start = vendor_list[i].name;
                 end = start + strlen (vendor_list[i].name);
                 break;
@@ -397,6 +404,22 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   char *new_name = (char*)malloc (len);
   snprintf (new_name, len, "%s-%s", device->short_name, start);
   device->long_name = new_name;
+
+  /* If the vendor_id field is still empty, we should get the PCI ID associated
+   * with the CPU vendor (if there is one), to be ready for the (currently
+   * provisional) OpenCL 3.0 specification that has finally clarified the
+   * meaning of this field. To do this, we look at the vendor advertised by the
+   * PCI root device. At least for Intel and AMD, this does indeed gives us the
+   * expected value. (The alternative would be a look-up table for the vendor
+   * string to the associated PCI ID.)
+   */
+  if (!device->vendor_id)
+    {
+      f = fopen (pci_bus_root_vendor_file, "r");
+      num_read = fscanf (f, "%x", &device->vendor_id);
+      fclose (f);
+      /* no error checking, if it failed we just won't have the info */
+    }
 }
 
 /*
