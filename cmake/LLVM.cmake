@@ -75,13 +75,14 @@ get_filename_component(LLVM_CONFIG_LOCATION "${LLVM_CONFIG}" DIRECTORY)
 macro(run_llvm_config VARIABLE_NAME)
   execute_process(
     COMMAND "${LLVM_CONFIG}" ${ARGN}
-    OUTPUT_VARIABLE ${VARIABLE_NAME}
+    OUTPUT_VARIABLE LLVM_CONFIG_VALUE
     RESULT_VARIABLE LLVM_CONFIG_RETVAL
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   if(LLVM_CONFIG_RETVAL)
     message(SEND_ERROR "Error running llvm-config with arguments: ${ARGN}")
   else()
+    set(${VARIABLE_NAME} ${LLVM_CONFIG_VALUE} CACHE STRING "llvm-config's ${VARIABLE_NAME} value")
     message(STATUS "llvm-config's ${VARIABLE_NAME} is: ${${VARIABLE_NAME}}")
   endif()
 endmacro(run_llvm_config)
@@ -273,7 +274,13 @@ endforeach()
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
-  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" DOC "${DOCSTRING}")
+  find_program(${OUTPUT_VAR}
+    NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}"
+    HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}"
+    DOC "${DOCSTRING}"
+    NO_CMAKE_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+  )
   if(${OUTPUT_VAR})
     message(STATUS "Found ${PROG_NAME}: ${${OUTPUT_VAR}}")
   else()

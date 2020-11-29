@@ -378,7 +378,7 @@ else()
   endfunction()
 endif()
 
-if(UNIX AND (NOT CMAKE_CROSSCOMPILING))
+if(UNIX)
   find_package(PkgConfig MODULE REQUIRED)
   find_package(Hwloc)
 
@@ -785,10 +785,6 @@ if(WIN32)
 
 elseif(UNIX)
 
-  if (CMAKE_CROSSCOMPILING AND (NOT ENABLE_HOST_CPU_DEVICES) AND (NOT ENABLE_HSA))
-    message(STATUS "Cross-compiling without CPU/HSA devices -> skipping LIBDL search")
-  else()
-
     find_library(DL_LIB "dl")
     find_file(DL_H "dlfcn.h")
     if(DL_LIB AND DL_H)
@@ -805,7 +801,6 @@ elseif(UNIX)
     else()
       message(FATAL_ERROR "Could not find DL library!")
     endif()
-  endif()
 
 else()
   message(STATUS "Unknown OS, don't know how to load a dynamic library")
@@ -846,11 +841,9 @@ if (MSVC)
 else()
 
   # pkg-config doesn't work with cross-compiling
-  if (NOT CMAKE_CROSSCOMPILING)
-    pkg_check_modules(OCL_ICD ocl-icd>=1.3)
-  endif()
+  pkg_check_modules(OCL_ICD ocl-icd>=1.3)
 
-  if (CMAKE_CROSSCOMPILING OR (NOT OCL_ICD_FOUND))
+  if (NOT OCL_ICD_FOUND)
     find_path(OCL_ICD_INCLUDE_DIR
       NAMES
         ocl_icd.h
@@ -870,21 +863,16 @@ else()
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
     # duh, why doesn't ocl-icd set this in its .pc file ??
-    if (CMAKE_CROSSCOMPILING)
-      set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl ICD/library link flags")
-    else()
-      separate_arguments(OCL_LDFLAGS UNIX_COMMAND "${OCL_ICD_LDFLAGS}")
-      list(APPEND OCL_LDFLAGS "OpenCL")
-      set(OPENCL_LIBRARIES "${OCL_LDFLAGS}" CACHE INTERNAL "opencl ICD/library link flags")
-    endif()
+    separate_arguments(OCL_LDFLAGS UNIX_COMMAND "${OCL_ICD_LDFLAGS}")
+    list(APPEND OCL_LDFLAGS "OpenCL")
+    set(OPENCL_LIBRARIES "${OCL_LDFLAGS}" CACHE INTERNAL "opencl ICD/library link flags")
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
 
   else()
 
-    set(HAVE_OCL_ICD 0 CACHE INTERNAL "ICL library is ocl-icd")
+    set(HAVE_OCL_ICD 0 CACHE INTERNAL "OCL library is ocl-icd")
     unset (OPENCL_FOUND CACHE)
 
-    if (NOT CMAKE_CROSSCOMPILING)
       # fallback to other ICD loaders
       message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
       pkg_check_modules(OPENCL OpenCL>=1.2)
@@ -898,7 +886,6 @@ else()
           CHECK_FUNCTION_EXISTS("clEnqueueFillImage" OPENCL_FOUND)
         endif()
       endif()
-    endif()
 
     if(OPENCL_FOUND)
       # no ocl-icd, but libopencl
@@ -1065,6 +1052,8 @@ if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
     set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2 avx512)
   elseif(POWERPC64LE)
     set(KERNELLIB_HOST_CPU_VARIANTS pwr8 pwr9)
+  elseif(APPLE AND ARM64)
+    set(KERNELLIB_HOST_CPU_VARIANTS cyclone)
   else()
     message(FATAL_ERROR "Don't know what CPU variants to use for kernel library on this platform.")
   endif()
@@ -1285,7 +1274,7 @@ endif()
 
 ##########################################################
 
-if (OCS_AVAILABLE)
+if (OCS_AVAILABLE AND NOT CMAKE_CROSSCOMPILING)
   CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16)
 else()
   set(ALIGNOF_DOUBLE16 128)
