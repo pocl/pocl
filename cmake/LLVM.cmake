@@ -39,6 +39,7 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
       "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
@@ -194,8 +195,11 @@ elseif(LLVM_VERSION MATCHES "^10[.]")
 elseif(LLVM_VERSION MATCHES "^11[.]")
   set(LLVM_MAJOR 11)
   set(LLVM_11_0 1)
+elseif(LLVM_VERSION MATCHES "^12[.]")
+  set(LLVM_MAJOR 12)
+  set(LLVM_12_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 11.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 6.0 and 12.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
