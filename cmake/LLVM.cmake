@@ -37,6 +37,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES
+      "llvmtce-config"
       "llvm-config"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
