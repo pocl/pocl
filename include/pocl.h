@@ -47,6 +47,11 @@
 
 #define POCL_FILENAME_LENGTH 1024
 
+/* official Khronos ID */
+#ifndef CL_KHRONOS_VENDOR_ID_POCL
+#define CL_KHRONOS_VENDOR_ID_POCL 0x10006
+#endif
+
 typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */
 struct _mem_mapping {
