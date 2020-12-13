@@ -144,6 +144,7 @@ set_property(TEST
   "runtime/clGetSupportedImageFormats"
   "runtime/clCreateKernelsInProgram"
   "runtime/test_event_cycle"
+  "runtime/test_event_free"
   "runtime/test_event_double_wait"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
