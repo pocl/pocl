@@ -30,6 +30,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
   test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
+  test_event_double_wait
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback)
 
@@ -90,6 +91,8 @@ add_test_pocl(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevice
 
 add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free")
 
+add_test_pocl(NAME "runtime/test_event_double_wait" COMMAND  "test_event_double_wait")
+
 add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary")
 
 add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event")
@@ -104,7 +107,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
   "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
   "runtime/test_fill-buffer"
-  "runtime/test_event_free" "runtime/clCreateSubDevices"
+  "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   PROPERTIES
@@ -141,6 +144,7 @@ set_property(TEST
   "runtime/clGetSupportedImageFormats"
   "runtime/clCreateKernelsInProgram"
   "runtime/test_event_cycle"
+  "runtime/test_event_double_wait"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   APPEND PROPERTY LABELS "cuda")
