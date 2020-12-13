@@ -33,35 +33,45 @@ int main(int argc, char **argv)
   cl_context ctx;
   cl_command_queue queue;
   cl_device_id did;
+  cl_bool has_img = CL_FALSE;
+
+  const size_t buf_size = sizeof(cl_int);
+
+  cl_mem buf, img;
+
+
 
   poclu_get_any_device(&ctx, &did, &queue);
   TEST_ASSERT(ctx);
   TEST_ASSERT(did);
   TEST_ASSERT(queue);
 
-  const size_t buf_size = sizeof(cl_int);
-  cl_mem buf = clCreateBuffer(ctx, CL_MEM_READ_WRITE, buf_size, NULL, &err);
+  CHECK_CL_ERROR (clGetDeviceInfo (did, CL_DEVICE_IMAGE_SUPPORT, sizeof(has_img), &has_img, NULL));
+
+  buf = clCreateBuffer(ctx, CL_MEM_READ_WRITE, buf_size, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
 
-  cl_image_format img_fmt = {
-    .image_channel_order = CL_RGBA,
-    .image_channel_data_type = CL_UNSIGNED_INT32 };
-  cl_image_desc img_dsc = {
-    .image_type = CL_MEM_OBJECT_IMAGE2D,
-    .image_width = 1,
-    .image_height = 1,
-    .image_depth = 1,
-    .image_array_size = 1,
-    .image_row_pitch = 0,
-    .image_slice_pitch = 0,
-    .num_mip_levels = 0,
-    .num_samples = 0,
-    .buffer = NULL,
-  };
+  if (has_img) {
+    cl_image_format img_fmt = {
+      .image_channel_order = CL_RGBA,
+      .image_channel_data_type = CL_UNSIGNED_INT32 };
+    cl_image_desc img_dsc = {
+      .image_type = CL_MEM_OBJECT_IMAGE2D,
+      .image_width = 1,
+      .image_height = 1,
+      .image_depth = 1,
+      .image_array_size = 1,
+      .image_row_pitch = 0,
+      .image_slice_pitch = 0,
+      .num_mip_levels = 0,
+      .num_samples = 0,
+      .buffer = NULL,
+    };
 
-  cl_mem img = clCreateImage(ctx, CL_MEM_READ_WRITE,
-    &img_fmt, &img_dsc, NULL, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateImage");
+    img = clCreateImage(ctx, CL_MEM_READ_WRITE,
+      &img_fmt, &img_dsc, NULL, &err);
+    CHECK_OPENCL_ERROR_IN("clCreateImage");
+  }
 
   /* An invalid waiting list (e.g. a null event in it) should make
    * associated commands fail without segfaults and without touching any associated
@@ -133,69 +143,71 @@ int main(int argc, char **argv)
    * Test image commands
    */
 
-  cl_int color = 0;
-  const size_t origin[] = {0, 0, 0};
-  const size_t region[] = {1, 1, 1};
+  if (has_img) {
+    cl_int color = 0;
+    const size_t origin[] = {0, 0, 0};
+    const size_t region[] = {1, 1, 1};
 
-  /* First, no associated event */
-  err = clEnqueueFillImage(queue, img, &color, origin, region,
-	  1, &no_event, NULL);
-  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-  err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
-	  0, 0, &color,
-	  1, &no_event, NULL);
-  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-  err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
-	  0, 0, &color,
-	  1, &no_event, NULL);
-  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-  err = clEnqueueReadImage(queue, img, CL_TRUE, origin, region,
-	  0, 0, &color,
-	  1, &no_event, NULL);
-  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-
-  size_t img_pitch = 0;
-  host_ptr = clEnqueueMapImage(queue, img, CL_TRUE, CL_MAP_READ,
-    origin, region, &img_pitch, NULL,
-    1, &no_event, NULL, &err);
-  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-  TEST_ASSERT(host_ptr == NULL);
-
-  /* No need to test Unmap, it's the same API call as for buffers */
-
-  /* Next, associated event with initial NULL value and with initial
-   * invalid value */
-
-  for (i = 0; i < 2; ++i) {
-    cl_event initial_value = initial_values[i];
-    map_event = initial_value;
-
+    /* First, no associated event */
     err = clEnqueueFillImage(queue, img, &color, origin, region,
-      1, &no_event, &map_event);
+      1, &no_event, NULL);
     TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-    TEST_ASSERT(map_event == initial_value);
     err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
       0, 0, &color,
-      1, &no_event, &map_event);
+      1, &no_event, NULL);
     TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-    TEST_ASSERT(map_event == initial_value);
     err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
       0, 0, &color,
-      1, &no_event, &map_event);
+      1, &no_event, NULL);
     TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-    TEST_ASSERT(map_event == initial_value);
     err = clEnqueueReadImage(queue, img, CL_TRUE, origin, region,
       0, 0, &color,
-      1, &no_event, &map_event);
+      1, &no_event, NULL);
     TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
-    TEST_ASSERT(map_event == initial_value);
+
+    size_t img_pitch = 0;
     host_ptr = clEnqueueMapImage(queue, img, CL_TRUE, CL_MAP_READ,
       origin, region, &img_pitch, NULL,
-      1, &no_event, &map_event, &err);
+      1, &no_event, NULL, &err);
     TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
     TEST_ASSERT(host_ptr == NULL);
-    TEST_ASSERT(map_event == initial_value);
 
+    /* No need to test Unmap, it's the same API call as for buffers */
+
+    /* Next, associated event with initial NULL value and with initial
+     * invalid value */
+
+    for (i = 0; i < 2; ++i) {
+      cl_event initial_value = initial_values[i];
+      map_event = initial_value;
+
+      err = clEnqueueFillImage(queue, img, &color, origin, region,
+        1, &no_event, &map_event);
+      TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+      TEST_ASSERT(map_event == initial_value);
+      err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
+        0, 0, &color,
+        1, &no_event, &map_event);
+      TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+      TEST_ASSERT(map_event == initial_value);
+      err = clEnqueueWriteImage(queue, img, CL_TRUE, origin, region,
+        0, 0, &color,
+        1, &no_event, &map_event);
+      TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+      TEST_ASSERT(map_event == initial_value);
+      err = clEnqueueReadImage(queue, img, CL_TRUE, origin, region,
+        0, 0, &color,
+        1, &no_event, &map_event);
+      TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+      TEST_ASSERT(map_event == initial_value);
+      host_ptr = clEnqueueMapImage(queue, img, CL_TRUE, CL_MAP_READ,
+        origin, region, &img_pitch, NULL,
+        1, &no_event, &map_event, &err);
+      TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+      TEST_ASSERT(host_ptr == NULL);
+      TEST_ASSERT(map_event == initial_value);
+
+    }
   }
 
   err = clEnqueueMarkerWithWaitList(queue, 1, &no_event, NULL);
@@ -209,7 +221,8 @@ int main(int argc, char **argv)
   }
 
   clFinish (queue);
-  clReleaseMemObject (img);
+  if (has_img)
+    clReleaseMemObject (img);
   clReleaseMemObject (buf);
 
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
