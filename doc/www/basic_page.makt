@@ -12,17 +12,16 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <meta name="robots" content="index, follow" /> 
-    <meta name="keywords" content="OpenCL portable OpenCL pocl Portable Computing Langauge" /> 
-    <meta name="description" content="pocl - Portable Computing Language" /> 
+    <meta name="keywords" content="OpenCL portable OpenCL PoCL pocl Portable Computing Langauge" /> 
+    <meta name="description" content="PoCL - Portable Computing Language" /> 
 
-    <meta property="og:title" content="pocl home page"/> 
-    <meta property="og:site_name" content="pocl"/> 
+    <meta property="og:title" content="PoCL home page"/> 
+    <meta property="og:site_name" content="PoCL"/> 
     <meta property="og:type" content="website"/>
-    <meta property="og:description" content="pocl: a performance portable open source OpenCL implementation"/>
+    <meta property="og:description" content="PoCL: a performance portable open source OpenCL implementation"/>
     <meta property="og:url" content="http://portablecl.org"/>
-    <meta property="fb:admins" content="pekka.jaaskelainen"/>
 
-    <title>pocl - Portable Computing Language${sub_page}</title>
+    <title>PoCL - Portable Computing Language${sub_page}</title>
     <link rel="stylesheet" type="text/css" href="pocl-style.css" />
   </head>
 
@@ -53,7 +52,7 @@
     <div id="footer">
       <span style="height: 100%; vertical-align: middle;"></span>
                     <a href="http://portablecl.org"><img src="img/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
-                    <span style="height: 100%; vertical-align: middle;">Portable Computing Language &copy; 2010-2020 pocl developers 
+                    <span style="height: 100%; vertical-align: middle;">Portable Computing Language &copy; 2010-2020 PoCL developers 
                     </span>
     </div>
 
