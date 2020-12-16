@@ -13,12 +13,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if (defined(__GNUC__) || defined(__CLANG__)) && !defined(__INTEL_COMPILER)
-#define CONST const
-#else
-#define CONST
-#endif
-
 #if (defined(__GNUC__) || defined(__CLANG__))                                 \
     && (defined(__i386__) || defined(__x86_64__))
 #include <x86intrin.h>
