@@ -21,7 +21,7 @@ should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
 
-<h2>2020-12-16: <a href="pocl-1.6.html">Portable Computing Language (pocl) v1.6 released</a></h2>
+<h2>2020-12-16: <a href="pocl-1.6.html">Portable Computing Language (PoCL) v1.6 released</a></h2>
 
 <h2>2020-08-14: <a href="http://portablecl.org/docs/html/debug.html">Debugging OpenCL applications with PoCL</a></h2>
 
