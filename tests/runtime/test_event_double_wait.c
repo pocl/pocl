@@ -59,6 +59,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clFinish (queue));
 
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseContext (ctx));
   CHECK_CL_ERROR (clUnloadCompiler ());
