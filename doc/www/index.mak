@@ -1,25 +1,27 @@
 <%inherit file="basic_page.makt" />
-<p>Pocl is a portable open source (MIT-licensed) implementation of the OpenCL
-standard (1.2 with some 2.0 features supported). In addition to producing an
-easily portable open-source OpenCL implementation, another major goal of this
-project is improving performance portability of OpenCL programs with the
-kernel compiler and the task runtime, reducing the need for target-dependent
-manual optimizations.</p>
+<p>PoCL is a portable open source (MIT-licensed) implementation of the
+OpenCL standard (1.2 with some 2.0 features supported). In addition to
+being an easily portable multi-device (truely heterogeneous)
+open-source OpenCL implementation, a major goal of this project is
+improving interoperability of diversity of OpenCL-capable devices by
+integrating them to a single centrally orchestrated platform. Also
+one of the key goals longer term is to enhance performance portability
+of OpenCL programs across device types utilizing runtime and compiler
+techniques.</p>
 
-<p>pocl uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
+<p>Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
+HSA-supported GPUs and TCE ASIPs (experimental, see: <a href="http://openasip.org">OpenASIP</a>).
+It is also known to have multiple (private) adaptations in active production
+use.</p>
+
+<p>PoCL uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
 <a href="http://llvm.org">LLVM</a> for kernel compiler implementation,
 and as a portability layer. Thus, if your desired target has an LLVM backend, it
-should be able to get OpenCL support easily by using pocl.</p>
-
-<p>pocl currently has backends supporting many CPUs, ASIPs (TCE/TTA),
-NVIDIA GPUs (via CUDA), HSA-supported GPUs and multiple private off-tree
-targets.</p>
-
-<p>In addition to providing an open source implementation of OpenCL for
-various platforms, an additional purpose of the project is to serve as a research
-platform for issues in parallel programming of heterogeneous platforms.</p>
+should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
+
+<h2>2020-12-16: <a href="pocl-1.6.html">Portable Computing Language (pocl) v1.6 released</a></h2>
 
 <h2>2020-08-14: <a href="http://portablecl.org/docs/html/debug.html">Debugging OpenCL applications with PoCL</a></h2>
 
@@ -29,7 +31,7 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h2>2019-07-15: Hardware Accelerators in POCL</h2>
 
-<p>POCL received support for CL_DEVICE_TYPE_CUSTOM via addition of a hardware accelerator framework.
+<p>PoCL received support for CL_DEVICE_TYPE_CUSTOM via addition of a hardware accelerator framework.
 It consists of an example driver (pocl-accel) that relies on a "pocl standard" control interface and
 an enumeration of "pocl-known" built-in kernels.
 The example accelerator is generated using the <a href="http://openasip.org">TCE tools</a>.
@@ -74,7 +76,7 @@ University of Bristol. Read more about it <a href="cuda-backend.html">here</a>.
 <h1>Current Status</h1>
 
 <p>Passes most of the tests in the Khronos OpenCL 1.2 conformance suite. Development towards
-2.x compliance started.</p>
+3.0 compliance with some 2.x features started.</p>
 
 <h1>Feature Examples</h1>
 <ul>

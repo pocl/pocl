@@ -1471,7 +1471,8 @@ pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
   while (event->wait_list)
     pocl_cuda_wait_event_recurse (device, event->wait_list->event);
 
-  pocl_cuda_finalize_command (device, event);
+  if (event->status > CL_COMPLETE)
+    pocl_cuda_finalize_command (device, event);
 }
 
 void
