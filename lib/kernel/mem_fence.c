@@ -38,3 +38,28 @@ void _CL_OVERLOADABLE
 mem_fence (cl_mem_fence_flags flags)
 {
 }
+
+typedef enum memory_scope
+{
+  memory_scope_work_item = __OPENCL_MEMORY_SCOPE_WORK_ITEM,
+  memory_scope_work_group = __OPENCL_MEMORY_SCOPE_WORK_GROUP,
+  memory_scope_device = __OPENCL_MEMORY_SCOPE_DEVICE,
+  memory_scope_all_svm_devices = __OPENCL_MEMORY_SCOPE_ALL_SVM_DEVICES,
+#if defined(cl_intel_subgroups) || defined(cl_khr_subgroups)
+  memory_scope_sub_group = __OPENCL_MEMORY_SCOPE_SUB_GROUP
+#endif
+} memory_scope;
+
+void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
+
+void _CL_OVERLOADABLE
+work_group_barrier (cl_mem_fence_flags flags)
+{
+  barrier (flags);
+}
+
+void _CL_OVERLOADABLE
+work_group_barrier (cl_mem_fence_flags flags, memory_scope scope)
+{
+  barrier (flags);
+}
