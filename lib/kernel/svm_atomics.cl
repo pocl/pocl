@@ -49,9 +49,11 @@
 
 #elif !defined(ATOMIC_TYPE)
 
-bool _CL_OVERLOADABLE atomic_flag_test_and_set ( volatile Q atomic_flag  *object )
+bool _CL_OVERLOADABLE
+atomic_flag_test_and_set_explicit (volatile Q atomic_flag *object,
+                                   memory_order order, memory_scope scope)
 {
-  return atomic_flag_test_and_set_explicit(object, memory_order_seq_cst);
+  return QUAL (pocl_atomic_flag_test_and_set) (object, order, scope);
 }
 
 bool _CL_OVERLOADABLE atomic_flag_test_and_set_explicit ( volatile Q atomic_flag  *object ,
@@ -60,18 +62,17 @@ bool _CL_OVERLOADABLE atomic_flag_test_and_set_explicit ( volatile Q atomic_flag
   return atomic_flag_test_and_set_explicit(object, order, memory_scope_device);
 }
 
-bool _CL_OVERLOADABLE atomic_flag_test_and_set_explicit ( volatile Q atomic_flag  *object ,
-  memory_order order,
-  memory_scope scope)
+bool _CL_OVERLOADABLE
+atomic_flag_test_and_set (volatile Q atomic_flag *object)
 {
-  return QUAL(pocl_atomic_flag_test_and_set)(object, order, scope);
+  return atomic_flag_test_and_set_explicit (object, memory_order_seq_cst);
 }
 
-
-
-void _CL_OVERLOADABLE atomic_flag_clear ( volatile Q atomic_flag  *object )
+void _CL_OVERLOADABLE
+atomic_flag_clear_explicit (volatile Q atomic_flag *object, memory_order order,
+                            memory_scope scope)
 {
-  atomic_flag_clear_explicit(object, memory_order_seq_cst);
+  return QUAL (pocl_atomic_flag_clear) (object, order, scope);
 }
 
 void _CL_OVERLOADABLE atomic_flag_clear_explicit ( volatile Q atomic_flag  *object ,
@@ -80,14 +81,11 @@ void _CL_OVERLOADABLE atomic_flag_clear_explicit ( volatile Q atomic_flag  *obje
   atomic_flag_clear_explicit(object, order, memory_scope_device);
 }
 
-void _CL_OVERLOADABLE atomic_flag_clear_explicit ( volatile Q atomic_flag  *object ,
-  memory_order order,
-  memory_scope scope)
+void _CL_OVERLOADABLE
+atomic_flag_clear (volatile Q atomic_flag *object)
 {
-  return QUAL(pocl_atomic_flag_clear)(object, order, scope);
+  atomic_flag_clear_explicit (object, memory_order_seq_cst);
 }
-
-
 
 #  define ATOMIC_TYPE atomic_int
 #  define NONATOMIC_TYPE int
@@ -139,10 +137,11 @@ void _CL_OVERLOADABLE atomic_flag_clear_explicit ( volatile Q atomic_flag  *obje
 
 #else
 
-void _CL_OVERLOADABLE atomic_store ( volatile Q ATOMIC_TYPE  *object,
-                    NONATOMIC_TYPE  desired)
+void _CL_OVERLOADABLE
+atomic_store_explicit (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE desired,
+                       memory_order order, memory_scope scope)
 {
-  atomic_store_explicit(object, desired, memory_order_seq_cst);
+  QUAL (pocl_atomic_store) (object, desired, order, scope);
 }
 
 void _CL_OVERLOADABLE atomic_store_explicit (  volatile Q ATOMIC_TYPE  *object,
@@ -152,12 +151,10 @@ void _CL_OVERLOADABLE atomic_store_explicit (  volatile Q ATOMIC_TYPE  *object,
   atomic_store_explicit(object, desired, order, memory_scope_device);
 }
 
-void _CL_OVERLOADABLE atomic_store_explicit (  volatile Q ATOMIC_TYPE  *object,
-                              NONATOMIC_TYPE  desired,
-                              memory_order order,
-                              memory_scope scope)
+void _CL_OVERLOADABLE
+atomic_store (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE desired)
 {
-  QUAL(pocl_atomic_store)(object, desired, order, scope);
+  atomic_store_explicit (object, desired, memory_order_seq_cst);
 }
 
 void _CL_OVERLOADABLE atomic_init (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE value)
@@ -165,9 +162,11 @@ void _CL_OVERLOADABLE atomic_init (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYP
   atomic_store_explicit(object, value, memory_order_seq_cst);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_load (  volatile Q ATOMIC_TYPE  *object)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_load_explicit (volatile Q ATOMIC_TYPE *object, memory_order order,
+                      memory_scope scope)
 {
-  return atomic_load_explicit(object, memory_order_seq_cst);
+  return QUAL (pocl_atomic_load) (object, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_load_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -176,19 +175,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_load_explicit ( volatile Q ATOMIC_TYPE  *
   return atomic_load_explicit(object, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_load_explicit ( volatile Q ATOMIC_TYPE  *object,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_load (volatile Q ATOMIC_TYPE *object)
 {
-  return QUAL(pocl_atomic_load)(object, order, scope);
+  return atomic_load_explicit (object, memory_order_seq_cst);
 }
 
-
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_exchange ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  desired)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_exchange_explicit (volatile Q ATOMIC_TYPE *object,
+                          NONATOMIC_TYPE desired, memory_order order,
+                          memory_scope scope)
 {
-  return atomic_exchange_explicit(object, desired, memory_order_seq_cst);
+  return QUAL (pocl_atomic_exchange) (object, desired, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_exchange_explicit (volatile Q ATOMIC_TYPE  *object,
@@ -198,21 +196,22 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_exchange_explicit (volatile Q ATOMIC_TYPE
   return atomic_exchange_explicit(object, desired, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_exchange_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  desired,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_exchange (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE desired)
 {
-  return QUAL(pocl_atomic_exchange)(object, desired, order, scope);
+  return atomic_exchange_explicit (object, desired, memory_order_seq_cst);
 }
 
-
-bool _CL_OVERLOADABLE atomic_compare_exchange_strong ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
-  NONATOMIC_TYPE  desired)
+bool _CL_OVERLOADABLE
+atomic_compare_exchange_strong_explicit (volatile Q ATOMIC_TYPE *object,
+                                         private NONATOMIC_TYPE *expected,
+                                         NONATOMIC_TYPE desired,
+                                         memory_order success,
+                                         memory_order failure,
+                                         memory_scope scope)
 {
-  return atomic_compare_exchange_strong_explicit(
-        object, expected, desired, memory_order_seq_cst, memory_order_seq_cst);
+  return QUAL (pocl_atomic_compare_exchange_strong) (object, expected, desired,
+                                                     success, failure, scope);
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -225,22 +224,25 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMI
         object, expected, desired, success, failure, memory_scope_device);
 }
 
-bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
-  NONATOMIC_TYPE  desired,
-  memory_order success,
-  memory_order failure,
-  memory_scope scope)
+bool _CL_OVERLOADABLE
+atomic_compare_exchange_strong (volatile Q ATOMIC_TYPE *object,
+                                private NONATOMIC_TYPE *expected,
+                                NONATOMIC_TYPE desired)
 {
-  return QUAL(pocl_atomic_compare_exchange_strong)(object, expected, desired, success, failure, scope);
+  return atomic_compare_exchange_strong_explicit (
+      object, expected, desired, memory_order_seq_cst, memory_order_seq_cst);
 }
 
-bool _CL_OVERLOADABLE atomic_compare_exchange_weak ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
-  NONATOMIC_TYPE  desired)
+bool _CL_OVERLOADABLE
+atomic_compare_exchange_weak_explicit (volatile Q ATOMIC_TYPE *object,
+                                       private NONATOMIC_TYPE *expected,
+                                       NONATOMIC_TYPE desired,
+                                       memory_order success,
+                                       memory_order failure,
+                                       memory_scope scope)
 {
-  return atomic_compare_exchange_weak_explicit(
-        object, expected, desired, memory_order_seq_cst, memory_order_seq_cst);
+  return QUAL (pocl_atomic_compare_exchange_weak) (object, expected, desired,
+                                                   success, failure, scope);
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -253,23 +255,23 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_
         object, expected, desired, success, failure, memory_scope_device);
 }
 
-bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
-  NONATOMIC_TYPE  desired,
-  memory_order success,
-  memory_order failure,
-  memory_scope scope)
+bool _CL_OVERLOADABLE
+atomic_compare_exchange_weak (volatile Q ATOMIC_TYPE *object,
+                              private NONATOMIC_TYPE *expected,
+                              NONATOMIC_TYPE desired)
 {
-  return QUAL(pocl_atomic_compare_exchange_weak)(object, expected, desired, success, failure, scope);
+  return atomic_compare_exchange_weak_explicit (
+      object, expected, desired, memory_order_seq_cst, memory_order_seq_cst);
 }
-
 
 #ifndef NON_INTEGER
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_add ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_add_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_add_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_add) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_add_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -279,19 +281,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_add_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_add_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_add_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_add (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_add)(object, operand, order, scope);
+  return atomic_fetch_add_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_sub ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_sub_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_sub_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_sub) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_sub_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -301,19 +302,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_sub_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_sub_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_sub_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_sub (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_sub)(object, operand, order, scope);
+  return atomic_fetch_sub_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_or ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_or_explicit (volatile Q ATOMIC_TYPE *object,
+                          NONATOMIC_TYPE operand, memory_order order,
+                          memory_scope scope)
 {
-  return atomic_fetch_or_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_or) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_or_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -323,19 +323,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_or_explicit ( volatile Q ATOMIC_TYP
   return atomic_fetch_or_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_or_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_or (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_or)(object, operand, order, scope);
+  return atomic_fetch_or_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_xor ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_xor_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_xor_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_xor) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_xor_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -345,19 +344,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_xor_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_xor_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_xor_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_xor (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_xor)(object, operand, order, scope);
+  return atomic_fetch_xor_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_and ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_and_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_and_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_and) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_and_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -367,19 +365,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_and_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_and_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_and_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_and (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_and)(object, operand, order, scope);
+  return atomic_fetch_and_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_min ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_min_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_min_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_min) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_min_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -389,19 +386,18 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_min_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_min_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_min_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_min (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_min)(object, operand, order, scope);
+  return atomic_fetch_min_explicit (object, operand, memory_order_seq_cst);
 }
 
-
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_max ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_max_explicit (volatile Q ATOMIC_TYPE *object,
+                           NONATOMIC_TYPE operand, memory_order order,
+                           memory_scope scope)
 {
-  return atomic_fetch_max_explicit(object, operand, memory_order_seq_cst);
+  return QUAL (pocl_atomic_fetch_max) (object, operand, order, scope);
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_max_explicit ( volatile Q ATOMIC_TYPE  *object,
@@ -411,12 +407,10 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_max_explicit ( volatile Q ATOMIC_TY
   return atomic_fetch_max_explicit(object, operand, order, memory_scope_device);
 }
 
-NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_max_explicit ( volatile Q ATOMIC_TYPE  *object,
-  NONATOMIC_TYPE  operand,
-  memory_order order,
-  memory_scope scope)
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_max (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
-  return QUAL(pocl_atomic_fetch_max)(object, operand, order, scope);
+  return atomic_fetch_max_explicit (object, operand, memory_order_seq_cst);
 }
 
 #endif
