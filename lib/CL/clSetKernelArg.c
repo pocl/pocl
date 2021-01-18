@@ -57,20 +57,27 @@ POname(clSetKernelArg)(cl_kernel kernel,
   if (POCL_DEBUGGING_ON)
     {
       const void *ptr_value = NULL;
+      uint32_t uint32_value = 0;
+      uint64_t uint64_value = 0;
       if (((pi->type == POCL_ARG_TYPE_POINTER)
            || (pi->type == POCL_ARG_TYPE_IMAGE))
           && arg_value)
-        ptr_value = *(const void **)arg_value;
-
-      uint32_t uint32_value = 0;
-      if (arg_value && (arg_size == 4))
-        uint32_value = *(uint32_t *)arg_value;
-
-      POCL_MSG_PRINT_GENERAL ("Kernel %15s || SetArg idx %3u || %8s || "
-                              "Local %1i || Size %6zu || Value %p || "
-                              "*Value %p || *(uint32*)Value: %8u \n",
-                              kernel->name, arg_index, pi->type_name, is_local,
-                              arg_size, arg_value, ptr_value, uint32_value);
+        {
+          ptr_value = *(const void **)arg_value;
+        }
+      else
+        {
+          if (arg_value && (arg_size == 4))
+            uint32_value = *(uint32_t *)arg_value;
+          if (arg_value && (arg_size == 8))
+            uint64_value = *(uint64_t *)arg_value;
+        }
+      POCL_MSG_PRINT_GENERAL (
+          "Kernel %15s || SetArg idx %3u || %8s || "
+          "Local %1i || Size %6zu || Value %p || "
+          "*Value %p || *(uint32*)Value: %8u || *(uint64*)Value: %8lu ||\n",
+          kernel->name, arg_index, pi->type_name, is_local, arg_size,
+          arg_value, ptr_value, uint32_value, uint64_value);
     }
 
   POCL_RETURN_ERROR_ON (
