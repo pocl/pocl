@@ -33,6 +33,7 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
+addrspace_operators.ll
 barrier.ll
 bitselect.cl
 clamp.cl
