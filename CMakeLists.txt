@@ -189,6 +189,8 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
+option(ENABLE_HOST_CPU_DEVICE_CL20 "Enable reporting OpenCL 2.0 for the CPU device" OFF)
+
 option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 ####
@@ -987,8 +989,17 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
-set(HOST_DEVICE_CL_VERSION "120")
-set(HOST_DEVICE_CL_STD "1.2")
+if(ENABLE_HOST_CPU_DEVICE_CL20)
+  set(HOST_DEVICE_CL_VERSION "200")
+  set(HOST_DEVICE_CL_STD "2.0")
+  set(HOST_DEVICE_CL_VERSION_MAJOR 2)
+  set(HOST_DEVICE_CL_VERSION_MINOR 0)
+else()
+  set(HOST_DEVICE_CL_VERSION "120")
+  set(HOST_DEVICE_CL_STD "1.2")
+  set(HOST_DEVICE_CL_VERSION_MAJOR 1)
+  set(HOST_DEVICE_CL_VERSION_MINOR 2)
+endif()
 
 # define it here, b/c we'll need these both at runtime and buildtime
 if(X86 OR ARM)
