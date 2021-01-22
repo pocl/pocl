@@ -57,6 +57,8 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
     POCL_RETURN_GETINFO (cl_context, memobj->context);
   case CL_MEM_ASSOCIATED_MEMOBJECT:
     POCL_RETURN_GETINFO (cl_mem, memobj->parent);
+  case CL_MEM_USES_SVM_POINTER:
+    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
   case CL_MEM_OFFSET:
     if (memobj->parent == NULL)
       POCL_RETURN_GETINFO (size_t, 0);
