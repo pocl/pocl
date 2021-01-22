@@ -50,16 +50,18 @@ typedef enum memory_scope
 #endif
 } memory_scope;
 
-void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags)
+    __attribute__ ((noduplicate));
 
 void _CL_OVERLOADABLE
-work_group_barrier (cl_mem_fence_flags flags)
+work_group_barrier (cl_mem_fence_flags flags) __attribute__ ((noduplicate))
 {
   barrier (flags);
 }
 
 void _CL_OVERLOADABLE
 work_group_barrier (cl_mem_fence_flags flags, memory_scope scope)
+    __attribute__ ((noduplicate))
 {
   barrier (flags);
 }
