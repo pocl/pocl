@@ -52,6 +52,8 @@
   "OpenCL C " HOST_DEVICE_CL_VERSION_MAJOR_STR                                \
   "." HOST_DEVICE_CL_VERSION_MINOR_STR " pocl"
 
+int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id device, int param_name);
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
                 cl_device_info param_name, 
