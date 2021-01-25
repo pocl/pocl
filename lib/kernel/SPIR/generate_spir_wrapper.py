@@ -212,10 +212,7 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 	:param multiAS: True = generate for all three SPIR AddrSpaces
 	:param args: function arguments as mangled type names (i,j,m,f,d etc), not LLVM types
 	"""
-	if name.startswith("atomic"): # TODO
-		ocl_func_name = name
-	else:
-		ocl_func_name = POCL_LIB_PREFIX + name
+	ocl_func_name = POCL_LIB_PREFIX + name
 	spir_func_name = name
 
 	if not multiAS:

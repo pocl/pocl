@@ -2620,3422 +2620,3422 @@ define spir_func i64 @_Z7mad_satmmm(i64 %a, i64 %b, i64 %c) local_unnamed_addr #
 }
 
 
-declare i32 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_subPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_subPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z15atomic_fetch_orPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z15atomic_fetch_orPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_xorPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_xorPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_andPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_andPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_minPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_minPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_maxPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_maxPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_subPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_subPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z15atomic_fetch_orPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z15atomic_fetch_orPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_xorPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_xorPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_andPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_andPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_minPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_minPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_maxPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_maxPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_addPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_addPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_subPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_subPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z15atomic_fetch_orPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z15atomic_fetch_orPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_xorPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_xorPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_andPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_andPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_minPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_minPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_maxPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_maxPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_addPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_addPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_addPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_addPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_addPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_add_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_add_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_subPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_subPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_subPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_subPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_subPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_subPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_sub_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_sub_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z15atomic_fetch_orPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_fetch_orPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_fetch_orPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z15atomic_fetch_orPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_fetch_orPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_fetch_orPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z24atomic_fetch_or_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_fetch_or_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_xorPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_xorPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_xorPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_xorPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_xorPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_xorPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_xor_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_xor_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_andPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_andPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_andPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_andPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_andPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_andPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_and_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_and_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_minPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_minPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_minPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_minPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_minPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_minPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_min_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_min_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_maxPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_maxPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_maxPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z16atomic_fetch_maxPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16atomic_fetch_maxPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z20_cl_atomic_fetch_maxPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z29_cl_atomic_fetch_max_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret void
 }
 
 
-declare i32 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomiciPU3AS1ii(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomiciPU3AS3ii(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z11atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z11atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z11atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z11atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_exchangePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_exchangePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15atomic_exchangePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_exchangePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomiciPU3AS1ii(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomiciPU3AS3ii(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z12atomic_storePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z12atomic_storePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z12atomic_storePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z12atomic_storePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret void
 }
 
 
-declare i32 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomicjPU3AS1jj(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomicjPU3AS3jj(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicjPU3AS1jj12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicjPU3AS3jj12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicjPU3AS1jj12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicjPU3AS3jj12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z11atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
+declare i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
 
 define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomicj(i32 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z11atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z11atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
 
 define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomicj(i32 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z11atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z15atomic_exchangePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_exchangePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15atomic_exchangePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15atomic_exchangePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomicjPU3AS1jj(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicjPU8CLglobaljj(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 *, i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomicjPU3AS3jj(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicjPU7CLlocaljj(i32 * %1, i32 * %2, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicjPU3AS1jj12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicjPU3AS3jj12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicjPU3AS1jj12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
   %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicjPU8CLglobaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicjPU3AS3jj12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
 
-declare i32 @_Z12atomic_storePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z12atomic_storePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z12atomic_storePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z12atomic_storePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret void
 }
 
 
-declare i64 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomiclPU3AS1ll(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomiclPU3AS3ll(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiclPU3AS1ll12memory_order12memory_order(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiclPU3AS3ll12memory_order12memory_order(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiclPU3AS1ll12memory_order12memory_order12memory_scope(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiclPU3AS3ll12memory_order12memory_order12memory_scope(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z11atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
+declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
 
 define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicl(i64 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z11atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
   ret i64 %call
 }
 
 
-declare i64 @_Z11atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
 
 define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicl(i64 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z11atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_exchangePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_exchangePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15atomic_exchangePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_exchangePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomiclPU3AS1ll(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomiclPU8CLgloballl(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomiclPU3AS3ll(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomiclPU7CLlocalll(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomiclPU3AS1ll12memory_order12memory_order(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomiclPU3AS3ll12memory_order12memory_order(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomiclPU3AS1ll12memory_order12memory_order12memory_scope(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomiclPU8CLgloballl12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomiclPU3AS3ll12memory_order12memory_order12memory_scope(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z12atomic_storePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
-define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z12atomic_storePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z12atomic_storePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
-define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z12atomic_storePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret void
 }
 
 
-declare i64 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomicmPU3AS1mm(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomicmPU3AS3mm(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicmPU3AS1mm12memory_order12memory_order(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicmPU3AS3mm12memory_order12memory_order(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicmPU3AS1mm12memory_order12memory_order12memory_scope(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicmPU3AS3mm12memory_order12memory_order12memory_scope(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z11atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
+declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
 
 define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicm(i64 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z11atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
   ret i64 %call
 }
 
 
-declare i64 @_Z11atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
 
 define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicm(i64 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z11atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z15atomic_exchangePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_exchangePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15atomic_exchangePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15atomic_exchangePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomicmPU3AS1mm(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicmPU8CLglobalmm(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 *, i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 *, i64 *, i64) local_unnamed_addr #0
 
 define spir_func i64 @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomicmPU3AS3mm(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 * %1, i64 * %2, i64 %c)
+  %call = tail call  i64 @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicmPU7CLlocalmm(i64 * %1, i64 * %2, i64 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicmPU3AS1mm12memory_order12memory_order(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 *, i64 *, i64, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicmPU3AS3mm12memory_order12memory_order(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicmPU3AS1mm12memory_order12memory_order12memory_scope(i64 addrspace(1)* %a, i64 addrspace(1)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
   %2 = addrspacecast i64 addrspace(1)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicmPU8CLglobalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
+declare i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 *, i64 *, i64, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicmPU3AS3mm12memory_order12memory_order12memory_scope(i64 addrspace(3)* %a, i64 addrspace(3)* %b, i64 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
-  %call = tail call  i64 @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i64 @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
   ret i64 %call
 }
 
 
-declare i64 @_Z12atomic_storePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
-define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z12atomic_storePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z12atomic_storePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
-define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z12atomic_storePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
 
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
   ret i64 %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicff(float * %1, float %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicff(float * %1, float %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicff(float * %1, float %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicff(float * %1, float %b)
   ret void
 }
 
 
-declare float @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicfPU8CLglobalff(float *, float *, float) local_unnamed_addr #0
+declare float @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicfPU8CLglobalff(float *, float *, float) local_unnamed_addr #0
 
 define spir_func float @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomicfPU3AS1ff(float addrspace(1)* %a, float addrspace(1)* %b, float %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicfPU8CLglobalff(float * %1, float * %2, float %c)
+  %call = tail call  float @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicfPU8CLglobalff(float * %1, float * %2, float %c)
   ret float %call
 }
 
 
-declare float @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicfPU7CLlocalff(float *, float *, float) local_unnamed_addr #0
+declare float @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicfPU7CLlocalff(float *, float *, float) local_unnamed_addr #0
 
 define spir_func float @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomicfPU3AS3ff(float addrspace(3)* %a, float addrspace(3)* %b, float %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicfPU7CLlocalff(float * %1, float * %2, float %c)
+  %call = tail call  float @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicfPU7CLlocalff(float * %1, float * %2, float %c)
   ret float %call
 }
 
 
-declare float @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicfPU3AS1ff12memory_order12memory_order(float addrspace(1)* %a, float addrspace(1)* %b, float %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
+  %call = tail call  float @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
   ret float %call
 }
 
 
-declare float @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicfPU3AS3ff12memory_order12memory_order(float addrspace(3)* %a, float addrspace(3)* %b, float %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
+  %call = tail call  float @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
   ret float %call
 }
 
 
-declare float @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
+declare float @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicfPU3AS1ff12memory_order12memory_order12memory_scope(float addrspace(1)* %a, float addrspace(1)* %b, float %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  float @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
   ret float %call
 }
 
 
-declare float @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
+declare float @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicfPU3AS3ff12memory_order12memory_order12memory_scope(float addrspace(3)* %a, float addrspace(3)* %b, float %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  float @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
   ret float %call
 }
 
 
-declare float @_Z11atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
+declare float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z12atomic_storePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z12atomic_storePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
+}
+
+
+declare float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
 
 define spir_func float @_Z11atomic_loadPU3AS1VU7_Atomicf(float addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z11atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
+  %call = tail call  float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
   ret float %call
 }
 
 
-declare float @_Z11atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
+declare float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
 
 define spir_func float @_Z11atomic_loadPU3AS3VU7_Atomicf(float addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z11atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
+  %call = tail call  float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
   ret float %call
 }
 
 
-declare float @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
 
 define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order(float addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
   ret float %call
 }
 
 
-declare float @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
 
 define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order(float addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
   ret float %call
 }
 
 
-declare float @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order12memory_scope(float addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
   ret float %call
 }
 
 
-declare float @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order12memory_scope(float addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
   ret float %call
 }
 
 
-declare float @_Z15atomic_exchangePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z15atomic_exchangePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z15atomic_exchangePU8CLglobalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z15atomic_exchangePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z15atomic_exchangePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z15atomic_exchangePU7CLlocalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
-declare float @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
-declare float @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicfPU8CLglobalff(float *, float *, float) local_unnamed_addr #0
+declare float @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicfPU8CLglobalff(float *, float *, float) local_unnamed_addr #0
 
 define spir_func float @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomicfPU3AS1ff(float addrspace(1)* %a, float addrspace(1)* %b, float %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicfPU8CLglobalff(float * %1, float * %2, float %c)
+  %call = tail call  float @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicfPU8CLglobalff(float * %1, float * %2, float %c)
   ret float %call
 }
 
 
-declare float @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicfPU7CLlocalff(float *, float *, float) local_unnamed_addr #0
+declare float @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicfPU7CLlocalff(float *, float *, float) local_unnamed_addr #0
 
 define spir_func float @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomicfPU3AS3ff(float addrspace(3)* %a, float addrspace(3)* %b, float %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicfPU7CLlocalff(float * %1, float * %2, float %c)
+  %call = tail call  float @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicfPU7CLlocalff(float * %1, float * %2, float %c)
   ret float %call
 }
 
 
-declare float @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicfPU3AS1ff12memory_order12memory_order(float addrspace(1)* %a, float addrspace(1)* %b, float %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
+  %call = tail call  float @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
   ret float %call
 }
 
 
-declare float @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float *, float *, float, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicfPU3AS3ff12memory_order12memory_order(float addrspace(3)* %a, float addrspace(3)* %b, float %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
+  %call = tail call  float @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order(float * %1, float * %2, float %c, i32 %d, i32 %e)
   ret float %call
 }
 
 
-declare float @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
+declare float @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicfPU3AS1ff12memory_order12memory_order12memory_scope(float addrspace(1)* %a, float addrspace(1)* %b, float %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
   %2 = addrspacecast float addrspace(1)* %b to float *
-  %call = tail call  float @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  float @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicfPU8CLglobalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
   ret float %call
 }
 
 
-declare float @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
+declare float @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float *, float *, float, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicfPU3AS3ff12memory_order12memory_order12memory_scope(float addrspace(3)* %a, float addrspace(3)* %b, float %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
-  %call = tail call  float @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  float @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
   ret float %call
 }
 
 
-declare float @_Z12atomic_storePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
+declare float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
-define spir_func float @_Z12atomic_storePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
+define spir_func float @_Z15atomic_exchangePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z12atomic_storePU8CLglobalVU7_Atomicff(float * %1, float %b)
+  %call = tail call  float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float * %1, float %b)
   ret float %call
 }
 
 
-declare float @_Z12atomic_storePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
+declare float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
-define spir_func float @_Z12atomic_storePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
+define spir_func float @_Z15atomic_exchangePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z12atomic_storePU7CLlocalVU7_Atomicff(float * %1, float %b)
+  %call = tail call  float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float * %1, float %b)
   ret float %call
 }
 
 
-declare float @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
 
-define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
   ret float %call
 }
 
 
-declare float @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
 
-define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
   ret float %call
 }
 
 
-declare float @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
 
-define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
   ret float %call
 }
 
 
-declare float @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
 
-define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
   ret float %call
 }
 
 
-declare void @_Z11atomic_initPU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  tail call void @_Z11atomic_initPU8CLglobalVU7_Atomicdd(double * %1, double %b)
+  tail call void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicdd(double * %1, double %b)
   ret void
 }
 
 
-declare void @_Z11atomic_initPU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+declare void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  tail call void @_Z11atomic_initPU7CLlocalVU7_Atomicdd(double * %1, double %b)
+  tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicdd(double * %1, double %b)
   ret void
 }
 
 
-declare double @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicdPU8CLglobaldd(double *, double *, double) local_unnamed_addr #0
+declare double @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicdPU8CLglobaldd(double *, double *, double) local_unnamed_addr #0
 
 define spir_func double @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomicdPU3AS1dd(double addrspace(1)* %a, double addrspace(1)* %b, double %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z30atomic_compare_exchange_strongPU8CLglobalVU7_AtomicdPU8CLglobaldd(double * %1, double * %2, double %c)
+  %call = tail call  double @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomicdPU8CLglobaldd(double * %1, double * %2, double %c)
   ret double %call
 }
 
 
-declare double @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicdPU7CLlocaldd(double *, double *, double) local_unnamed_addr #0
+declare double @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicdPU7CLlocaldd(double *, double *, double) local_unnamed_addr #0
 
 define spir_func double @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomicdPU3AS3dd(double addrspace(3)* %a, double addrspace(3)* %b, double %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z30atomic_compare_exchange_strongPU7CLlocalVU7_AtomicdPU7CLlocaldd(double * %1, double * %2, double %c)
+  %call = tail call  double @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomicdPU7CLlocaldd(double * %1, double * %2, double %c)
   ret double %call
 }
 
 
-declare double @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicdPU3AS1dd12memory_order12memory_order(double addrspace(1)* %a, double addrspace(1)* %b, double %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
+  %call = tail call  double @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
   ret double %call
 }
 
 
-declare double @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicdPU3AS3dd12memory_order12memory_order(double addrspace(3)* %a, double addrspace(3)* %b, double %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
+  %call = tail call  double @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
   ret double %call
 }
 
 
-declare double @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
+declare double @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomicdPU3AS1dd12memory_order12memory_order12memory_scope(double addrspace(1)* %a, double addrspace(1)* %b, double %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z39atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  double @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
   ret double %call
 }
 
 
-declare double @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
+declare double @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomicdPU3AS3dd12memory_order12memory_order12memory_scope(double addrspace(3)* %a, double addrspace(3)* %b, double %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z39atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  double @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
   ret double %call
 }
 
 
-declare double @_Z11atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
+declare double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z12atomic_storePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z12atomic_storePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
+}
+
+
+declare double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
 
 define spir_func double @_Z11atomic_loadPU3AS1VU7_Atomicd(double addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z11atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
+  %call = tail call  double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
   ret double %call
 }
 
 
-declare double @_Z11atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
+declare double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
 
 define spir_func double @_Z11atomic_loadPU3AS3VU7_Atomicd(double addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z11atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
+  %call = tail call  double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
   ret double %call
 }
 
 
-declare double @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
 
 define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order(double addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
   ret double %call
 }
 
 
-declare double @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
 
 define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order(double addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
   ret double %call
 }
 
 
-declare double @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order12memory_scope(double addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z20atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
   ret double %call
 }
 
 
-declare double @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order12memory_scope(double addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z20atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
   ret double %call
 }
 
 
-declare double @_Z15atomic_exchangePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z15atomic_exchangePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z15atomic_exchangePU8CLglobalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z15atomic_exchangePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z15atomic_exchangePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z15atomic_exchangePU7CLlocalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z24atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
-  ret double %call
-}
-
-
-declare double @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z24atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
-  ret double %call
-}
-
-
-declare double @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicdPU8CLglobaldd(double *, double *, double) local_unnamed_addr #0
+declare double @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicdPU8CLglobaldd(double *, double *, double) local_unnamed_addr #0
 
 define spir_func double @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomicdPU3AS1dd(double addrspace(1)* %a, double addrspace(1)* %b, double %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z28atomic_compare_exchange_weakPU8CLglobalVU7_AtomicdPU8CLglobaldd(double * %1, double * %2, double %c)
+  %call = tail call  double @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicdPU8CLglobaldd(double * %1, double * %2, double %c)
   ret double %call
 }
 
 
-declare double @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicdPU7CLlocaldd(double *, double *, double) local_unnamed_addr #0
+declare double @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicdPU7CLlocaldd(double *, double *, double) local_unnamed_addr #0
 
 define spir_func double @_Z28atomic_compare_exchange_weakPU3AS3VU7_AtomicdPU3AS3dd(double addrspace(3)* %a, double addrspace(3)* %b, double %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z28atomic_compare_exchange_weakPU7CLlocalVU7_AtomicdPU7CLlocaldd(double * %1, double * %2, double %c)
+  %call = tail call  double @_Z32_cl_atomic_compare_exchange_weakPU7CLlocalVU7_AtomicdPU7CLlocaldd(double * %1, double * %2, double %c)
   ret double %call
 }
 
 
-declare double @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicdPU3AS1dd12memory_order12memory_order(double addrspace(1)* %a, double addrspace(1)* %b, double %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
+  %call = tail call  double @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
   ret double %call
 }
 
 
-declare double @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double *, double *, double, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicdPU3AS3dd12memory_order12memory_order(double addrspace(3)* %a, double addrspace(3)* %b, double %c, i32 %d, i32 %e) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
+  %call = tail call  double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order(double * %1, double * %2, double %c, i32 %d, i32 %e)
   ret double %call
 }
 
 
-declare double @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
+declare double @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS1VU7_AtomicdPU3AS1dd12memory_order12memory_order12memory_scope(double addrspace(1)* %a, double addrspace(1)* %b, double %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
   %2 = addrspacecast double addrspace(1)* %b to double *
-  %call = tail call  double @_Z37atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  double @_Z41_cl_atomic_compare_exchange_weak_explicitPU8CLglobalVU7_AtomicdPU8CLglobaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
   ret double %call
 }
 
 
-declare double @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
+declare double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double *, double *, double, i32, i32, i32) local_unnamed_addr #0
 
 define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_AtomicdPU3AS3dd12memory_order12memory_order12memory_scope(double addrspace(3)* %a, double addrspace(3)* %b, double %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
-  %call = tail call  double @_Z37atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
   ret double %call
 }
 
 
-declare double @_Z12atomic_storePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+declare double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
-define spir_func double @_Z12atomic_storePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
+define spir_func double @_Z15atomic_exchangePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z12atomic_storePU8CLglobalVU7_Atomicdd(double * %1, double %b)
+  %call = tail call  double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double * %1, double %b)
   ret double %call
 }
 
 
-declare double @_Z12atomic_storePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+declare double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
-define spir_func double @_Z12atomic_storePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
+define spir_func double @_Z15atomic_exchangePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z12atomic_storePU7CLlocalVU7_Atomicdd(double * %1, double %b)
+  %call = tail call  double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double * %1, double %b)
   ret double %call
 }
 
 
-declare double @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
 
-define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
   ret double %call
 }
 
 
-declare double @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
 
-define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
   ret double %call
 }
 
 
-declare double @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
 
-define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z21atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
   ret double %call
 }
 
 
-declare double @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
 
-define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z21atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
   ret double %call
 }
 
 
-declare  zeroext i1 @_Z24atomic_flag_test_and_setPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare  zeroext i1 @_Z28_cl_atomic_flag_test_and_setPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z24atomic_flag_test_and_setPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z24atomic_flag_test_and_setPU8CLglobalVU7_Atomici(i32 * %1)
+  %call = tail call  zeroext  i1 @_Z28_cl_atomic_flag_test_and_setPU8CLglobalVU7_Atomici(i32 * %1)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z24atomic_flag_test_and_setPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare  zeroext i1 @_Z28_cl_atomic_flag_test_and_setPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z24atomic_flag_test_and_setPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z24atomic_flag_test_and_setPU7CLlocalVU7_Atomici(i32 * %1)
+  %call = tail call  zeroext  i1 @_Z28_cl_atomic_flag_test_and_setPU7CLlocalVU7_Atomici(i32 * %1)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z33atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  zeroext  i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z33atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  zeroext  i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z33atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  zeroext  i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z33atomic_flag_test_and_set_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z33atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  zeroext  i1 @_Z37_cl_atomic_flag_test_and_set_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z17atomic_flag_clearPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare  zeroext i1 @_Z21_cl_atomic_flag_clearPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z17atomic_flag_clearPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z17atomic_flag_clearPU8CLglobalVU7_Atomici(i32 * %1)
+  %call = tail call  zeroext  i1 @_Z21_cl_atomic_flag_clearPU8CLglobalVU7_Atomici(i32 * %1)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z17atomic_flag_clearPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare  zeroext i1 @_Z21_cl_atomic_flag_clearPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z17atomic_flag_clearPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z17atomic_flag_clearPU7CLlocalVU7_Atomici(i32 * %1)
+  %call = tail call  zeroext  i1 @_Z21_cl_atomic_flag_clearPU7CLlocalVU7_Atomici(i32 * %1)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z26atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z30_cl_atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z26atomic_flag_clear_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z26atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  zeroext  i1 @_Z30_cl_atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z26atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z30_cl_atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z26atomic_flag_clear_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z26atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  zeroext  i1 @_Z30_cl_atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z26atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z30_cl_atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z26atomic_flag_clear_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z26atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  zeroext  i1 @_Z30_cl_atomic_flag_clear_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i1 %call
 }
 
 
-declare  zeroext i1 @_Z26atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare  zeroext i1 @_Z30_cl_atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
 define spir_func  zeroext i1 @_Z26atomic_flag_clear_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  zeroext  i1 @_Z26atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  zeroext  i1 @_Z30_cl_atomic_flag_clear_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i1 %call
 }
 
