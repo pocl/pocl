@@ -135,6 +135,17 @@ The program crashes since it tries to access memory beyond buffer boundaries::
     #5  0x00007fffee90e6db in start_thread (arg=0x7fffddffe700) at pthread_create.c:463
     #6  0x00007ffff78faa3f in clone () at ../sysdeps/unix/sysv/linux/x86_64/clone.S:95
 
+Note: printing variables (e.g. gid) could instead result in this:
+
+    (gdb) print gid
+    $1 = {{{18298392, 9223372036854775822, 0, 0}}}
+
+This happens when PoCL uses the "loops" workgroup method. The high-level overview of "loops"
+is that PoCL it creates a 3D for-loop (for each dimension of workgroup-size) around the kernel
+code, and the LLVM optimizer then tries to vectorize that loop. For this to work, PoCL must
+create a copy of variables in private address space, one copy for each workitem in the
+workgroup; that's why the variable printed is an array.
+
 Example 2:
 
 Lets say we want to step the "dot_product" kernel from the previous example. Launch gdb::
