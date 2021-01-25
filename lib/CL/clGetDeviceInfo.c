@@ -194,7 +194,29 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
-   
+
+  case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV       :
+  case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV       :
+  case CL_DEVICE_REGISTERS_PER_BLOCK_NV            :
+  case CL_DEVICE_WARP_SIZE_NV                      :
+  case CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV   :
+  case CL_DEVICE_PCI_BUS_ID_NV                     :
+  case CL_DEVICE_PCI_SLOT_ID_NV                    :
+  case CL_DEVICE_PCI_DOMAIN_ID_NV                  :
+    {
+      int res;
+      res = pocl_cuda_handle_cl_nv_device_attribute_query(device, param_name);
+      POCL_RETURN_GETINFO(cl_uint, res);
+    }
+  case CL_DEVICE_GPU_OVERLAP_NV                    :
+  case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV            :
+  case CL_DEVICE_INTEGRATED_MEMORY_NV              :
+    {
+      int res;
+      res = pocl_cuda_handle_cl_nv_device_attribute_query(device, param_name);
+      POCL_RETURN_GETINFO(cl_bool, res);
+    }
+
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    

@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -125,6 +126,52 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
+
+
+int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id dev, int param_name)
+{
+  int cudaDev = ((pocl_cuda_device_data_t *)dev->data)->device;
+  int res;
+
+  switch(param_name) {
+    case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cudaDev);
+      return res;
+    case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cudaDev);
+      return res;
+    case CL_DEVICE_REGISTERS_PER_BLOCK_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK, cudaDev);
+      return res;
+    case CL_DEVICE_WARP_SIZE_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_WARP_SIZE, cudaDev);
+      return res;
+    case CL_DEVICE_GPU_OVERLAP_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_GPU_OVERLAP, cudaDev);
+      return res;
+    case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT, cudaDev);
+      return res;
+    case CL_DEVICE_INTEGRATED_MEMORY_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_INTEGRATED, cudaDev);
+      return res;
+    case CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT, cudaDev);
+      return res;
+    case CL_DEVICE_PCI_BUS_ID_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, cudaDev);
+      return res;
+    case CL_DEVICE_PCI_SLOT_ID_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, cudaDev);
+      return res;
+    case CL_DEVICE_PCI_DOMAIN_ID_NV:
+      cuDeviceGetAttribute(&res, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, cudaDev);
+      return res;
+    default:
+      return CL_INVALID_VALUE;
+  }
+
+}
 
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
