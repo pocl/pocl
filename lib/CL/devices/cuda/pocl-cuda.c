@@ -130,7 +130,7 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 
 int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id dev, int param_name)
 {
-  int cudaDev = ((pocl_cuda_device_data_t *)dev->data)->device;
+  CUdevice cudaDev = ((pocl_cuda_device_data_t *)dev->data)->device;
   int res;
 
   switch(param_name) {
