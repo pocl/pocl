@@ -1,3 +1,12 @@
+1.7 unreleased
+==============
+
+Notable User Facing Changes
+---------------------------
+
+- Added support for the cl_nv_device_attribute_query extension on CUDA devices.
+
+
 1.6 December 2020
 =================
 
