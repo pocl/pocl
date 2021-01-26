@@ -25,7 +25,7 @@ Installing requirements for Ubuntu::
 
 If you're using LLVM 10 or newer, additionally you must::
 
-    apt install -y libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION}
+    apt install -y libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
 Installing requirements for Arch Linux::
 
