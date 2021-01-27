@@ -343,6 +343,11 @@ void InitializeLLVM() {
       assert(O && "could not find LLVM option 'debug'");
       O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
     }
+#if LLVM_MAJOR == 9
+    O = opts["unroll-threshold"];
+    assert(O && "could not find LLVM option 'unroll-threshold'");
+    O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
+#endif
   }
 }
 
