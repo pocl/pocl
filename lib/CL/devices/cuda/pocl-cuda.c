@@ -50,6 +50,7 @@ typedef struct pocl_cuda_device_data_s
   cl_ulong epoch;
   char libdevice[PATH_MAX];
   pocl_lock_t compile_lock;
+  int supports_cu_mem_host_register;
 } pocl_cuda_device_data_t;
 
 typedef struct pocl_cuda_queue_data_s
@@ -243,6 +244,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
+      GET_CU_PROP (READ_ONLY_HOST_REGISTER_SUPPORTED, data->support_cu_mem_host_register);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
@@ -467,21 +469,21 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
 
       if (flags & CL_MEM_USE_HOST_PTR)
         {
-#if defined __arm__ || __aarch64__
-          /* cuMemHostRegister is not supported on ARM.
-           * Allocate device memory and perform explicit copies
-           * before and after running a kernel */
-          result = cuMemAlloc ((CUdeviceptr *)&b, mem_obj->size);
-          CUDA_CHECK (result, "cuMemAlloc");
-#else
-          result = cuMemHostRegister (host_ptr, mem_obj->size,
-                                      CU_MEMHOSTREGISTER_DEVICEMAP);
-          if (result != CUDA_SUCCESS
-              && result != CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
-            CUDA_CHECK (result, "cuMemHostRegister");
-          result = cuMemHostGetDevicePointer ((CUdeviceptr *)&b, host_ptr, 0);
-          CUDA_CHECK (result, "cuMemHostGetDevicePointer");
-#endif
+          if (!(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device) {
+            /* cuMemHostRegister is not supported.
+             * Allocate device memory and perform explicit copies
+             * before and after running a kernel */
+            result = cuMemAlloc ((CUdeviceptr *)&b, mem_obj->size);
+            CUDA_CHECK (result, "cuMemAlloc");
+          } else {
+            result = cuMemHostRegister (host_ptr, mem_obj->size,
+                                        CU_MEMHOSTREGISTER_DEVICEMAP);
+            if (result != CUDA_SUCCESS
+                && result != CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
+              CUDA_CHECK (result, "cuMemHostRegister");
+            result = cuMemHostGetDevicePointer ((CUdeviceptr *)&b, host_ptr, 0);
+            CUDA_CHECK (result, "cuMemHostGetDevicePointer");
+          }
         }
       else if (flags & CL_MEM_ALLOC_HOST_PTR)
         {
@@ -992,16 +994,15 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                     params[i] = &mem->device_ptrs[device->dev_id].mem_ptr
                                 + arguments[i].offset;
 
-#if defined __arm__ || __aarch64__
                     /* On ARM with USE_HOST_PTR, perform explicit copy to
                      * device */
-                    if (mem->flags & CL_MEM_USE_HOST_PTR)
+                    if ((mem->flags & CL_MEM_USE_HOST_PTR) &&
+                        !(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device)
                       {
                         cuMemcpyHtoD (*(CUdeviceptr *)(params[i]),
                                       mem->mem_host_ptr, mem->size);
                         cuStreamSynchronize (0);
                       }
-#endif
                   }
                 else
                   {
@@ -1384,31 +1385,31 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
       || event->command_type == CL_COMMAND_TASK)
     {
-#if defined __arm__ || __aarch64__
-      /* On ARM with USE_HOST_PTR, perform explict copies back from device */
-      cl_kernel kernel = event->command->command.run.kernel;
-      pocl_argument *arguments = event->command->command.run.arguments;
-      unsigned i;
-      pocl_kernel_metadata_t *meta = kernel->meta;
-      for (i = 0; i < meta->num_args; i++)
-        {
-          if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-            {
-              if (!ARG_IS_LOCAL (meta->arg_info[i]) && arguments[i].value)
-                {
-                  cl_mem mem = *(void **)arguments[i].value;
-                  if (mem->flags & CL_MEM_USE_HOST_PTR)
-                    {
-                      CUdeviceptr ptr
-                          = (CUdeviceptr)mem->device_ptrs[device->dev_id]
-                                .mem_ptr;
-                      cuMemcpyDtoH (mem->mem_host_ptr, ptr, mem->size);
-                      cuStreamSynchronize (0);
-                    }
-                }
-            }
-        }
-#endif
+      if (!(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device) {
+        /* On ARM with USE_HOST_PTR, perform explict copies back from device */
+        cl_kernel kernel = event->command->command.run.kernel;
+        pocl_argument *arguments = event->command->command.run.arguments;
+        unsigned i;
+        pocl_kernel_metadata_t *meta = kernel->meta;
+        for (i = 0; i < meta->num_args; i++)
+          {
+            if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+              {
+                if (!ARG_IS_LOCAL (meta->arg_info[i]) && arguments[i].value)
+                  {
+                    cl_mem mem = *(void **)arguments[i].value;
+                    if (mem->flags & CL_MEM_USE_HOST_PTR)
+                      {
+                        CUdeviceptr ptr
+                            = (CUdeviceptr)mem->device_ptrs[device->dev_id]
+                                  .mem_ptr;
+                        cuMemcpyDtoH (mem->mem_host_ptr, ptr, mem->size);
+                        cuStreamSynchronize (0);
+                      }
+                  }
+              }
+          }
+      }
 
       pocl_ndrange_node_cleanup (event->command);
     }
