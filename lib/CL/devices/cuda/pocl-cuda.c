@@ -244,7 +244,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
-      GET_CU_PROP (READ_ONLY_HOST_REGISTER_SUPPORTED, data->support_cu_mem_host_register);
+      GET_CU_PROP (READ_ONLY_HOST_REGISTER_SUPPORTED, data->supports_cu_mem_host_register);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
@@ -469,7 +469,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
 
       if (flags & CL_MEM_USE_HOST_PTR)
         {
-          if (!(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device) {
+          if (!((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register) {
             /* cuMemHostRegister is not supported.
              * Allocate device memory and perform explicit copies
              * before and after running a kernel */
@@ -997,7 +997,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                     /* On ARM with USE_HOST_PTR, perform explicit copy to
                      * device */
                     if ((mem->flags & CL_MEM_USE_HOST_PTR) &&
-                        !(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device)
+                        !((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register)
                       {
                         cuMemcpyHtoD (*(CUdeviceptr *)(params[i]),
                                       mem->mem_host_ptr, mem->size);
@@ -1385,7 +1385,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
       || event->command_type == CL_COMMAND_TASK)
     {
-      if (!(pocl_cuda_device_data_t *)device->supports_cu_mem_host_device) {
+      if (!((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register) {
         /* On ARM with USE_HOST_PTR, perform explict copies back from device */
         cl_kernel kernel = event->command->command.run.kernel;
         pocl_argument *arguments = event->command->command.run.arguments;
