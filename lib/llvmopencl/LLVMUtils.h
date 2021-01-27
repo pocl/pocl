@@ -27,6 +27,7 @@
 #include <string>
 
 #include "pocl.h"
+#include "pocl_spir.h"
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
@@ -65,7 +66,7 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
 
   // handle SPIR local AS (3)
   if (Var.getParent() && Var.getParent()->getNamedMetadata("spirv.Source") &&
-      (Var.getType()->getAddressSpace() == 3))
+      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL))
     return true;
 
   return false;
