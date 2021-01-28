@@ -52,7 +52,9 @@
   "OpenCL C " HOST_DEVICE_CL_VERSION_MAJOR_STR                                \
   "." HOST_DEVICE_CL_VERSION_MINOR_STR " pocl"
 
+#ifdef BUILD_CUDA
 int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id device, int param_name);
+#endif
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
@@ -197,6 +199,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
 
+#ifdef BUILD_CUDA
   case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV       :
   case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV       :
   case CL_DEVICE_REGISTERS_PER_BLOCK_NV            :
@@ -218,6 +221,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       res = pocl_cuda_handle_cl_nv_device_attribute_query(device, param_name);
       POCL_RETURN_GETINFO(cl_bool, res);
     }
+#endif
 
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
