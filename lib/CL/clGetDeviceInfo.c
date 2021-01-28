@@ -52,10 +52,6 @@
   "OpenCL C " HOST_DEVICE_CL_VERSION_MAJOR_STR                                \
   "." HOST_DEVICE_CL_VERSION_MINOR_STR " pocl"
 
-#ifdef BUILD_CUDA
-int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id device, int param_name);
-#endif
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
                 cl_device_info param_name, 
@@ -199,30 +195,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
 
-#ifdef BUILD_CUDA
-  case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV       :
-  case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV       :
-  case CL_DEVICE_REGISTERS_PER_BLOCK_NV            :
-  case CL_DEVICE_WARP_SIZE_NV                      :
-  case CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV   :
-  case CL_DEVICE_PCI_BUS_ID_NV                     :
-  case CL_DEVICE_PCI_SLOT_ID_NV                    :
-  case CL_DEVICE_PCI_DOMAIN_ID_NV                  :
-    {
-      int res;
-      res = pocl_cuda_handle_cl_nv_device_attribute_query(device, param_name);
-      POCL_RETURN_GETINFO(cl_uint, res);
-    }
-  case CL_DEVICE_GPU_OVERLAP_NV                    :
-  case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV            :
-  case CL_DEVICE_INTEGRATED_MEMORY_NV              :
-    {
-      int res;
-      res = pocl_cuda_handle_cl_nv_device_attribute_query(device, param_name);
-      POCL_RETURN_GETINFO(cl_bool, res);
-    }
-#endif
-
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    
@@ -352,6 +324,12 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_IL_VERSION:
     POCL_RETURN_GETINFO_STR (device->spirv_version);
   }
+
+  if(device->ops->get_device_info_ext != NULL) {
+    return device->ops->get_device_info_ext(device, param_name, param_value_size,
+                                            param_value, param_value_size_ret);
+  }
+
   return CL_INVALID_VALUE;
 }
 POsym(clGetDeviceInfo)
