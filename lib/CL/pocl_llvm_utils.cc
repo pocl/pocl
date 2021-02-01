@@ -323,6 +323,21 @@ void InitializeLLVM() {
     O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"),
                      false);
 
+    // Disable jump threading optimization with following two options from
+    // duplicating blocks. Using jump threading will mess up parallel region
+    // construction especially when kernel contains barriers.
+    // TODO: If enabled then parallel region construction code needs
+    // improvements and make sure it doesn't disallow other optimizations like
+    // vectorization.
+    O = opts["jump-threading-threshold"];
+    assert(O && "could not find LLVM option 'jump-threading-threshold'");
+    O->addOccurrence(1, StringRef("jump-threading-threshold"), StringRef("0"),
+                     false);
+    O = opts["jump-threading-implication-search-threshold"];
+    assert(O && "could not find LLVM option 'jump-threading-implication-search-threshold'");
+    O->addOccurrence(1, StringRef("jump-threading-implication-search-threshold"), StringRef("0"),
+                     false);
+
     if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
       // Enable diagnostics from the loop vectorizer.
       O = opts["pass-remarks-missed"];
