@@ -99,6 +99,8 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_hash = pocl_basic_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
+  ops->get_device_info_ext = NULL;
+
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
   /* no need to implement these two as they're noop

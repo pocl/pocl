@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -126,6 +127,67 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
 
+cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
+                                                     cl_device_info param_name,
+                                                     size_t         param_value_size,
+                                                     void *         param_value,
+                                                     size_t *       param_value_size_ret)
+{
+  CUdevice cudaDev = ((pocl_cuda_device_data_t *)device->data)->device;
+  unsigned int value;
+  CUresult res;
+
+  switch(param_name) {
+    case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_REGISTERS_PER_BLOCK_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_WARP_SIZE_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_WARP_SIZE, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_GPU_OVERLAP_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_GPU_OVERLAP, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_bool, value);
+    case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_bool, value);
+    case CL_DEVICE_INTEGRATED_MEMORY_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_INTEGRATED, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_bool, value);
+    case CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_PCI_BUS_ID_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_PCI_SLOT_ID_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    case CL_DEVICE_PCI_DOMAIN_ID_NV:
+      res = cuDeviceGetAttribute(&value, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID, cudaDev);
+      CUDA_CHECK(res, "cuDeviceGetAttribute");
+      POCL_RETURN_GETINFO(cl_uint, value);
+    default:
+      return CL_INVALID_VALUE;
+  }
+
+}
+
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 {
@@ -151,6 +213,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->init_build = pocl_cuda_init_build;
   // TODO
   ops->map_mem = pocl_cuda_map_mem;
+
+  ops->get_device_info_ext = pocl_cuda_handle_cl_nv_device_attribute_query;
 
   ops->read = NULL;
   ops->read_rect = NULL;

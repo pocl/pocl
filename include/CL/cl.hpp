@@ -1501,6 +1501,15 @@ __CL_DECLARE_PARAM_TRAITS(cl_device_info, CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV, cl_b
 #ifdef CL_DEVICE_INTEGRATED_MEMORY_NV
 __CL_DECLARE_PARAM_TRAITS(cl_device_info, CL_DEVICE_INTEGRATED_MEMORY_NV, cl_bool)
 #endif
+#ifdef CL_DEVICE_PCI_BUS_ID_NV
+__CL_DECLARE_PARAM_TRAITS(cl_device_info, CL_DEVICE_PCI_BUS_ID_NV, cl_uint)
+#endif
+#ifdef CL_DEVICE_PCI_SLOT_ID_NV
+__CL_DECLARE_PARAM_TRAITS(cl_device_info, CL_DEVICE_PCI_SLOT_ID_NV, cl_uint)
+#endif
+#ifdef CL_DEVICE_PCI_DOMAIN_ID_NV
+__CL_DECLARE_PARAM_TRAITS(cl_device_info, CL_DEVICE_PCI_DOMAIN_ID_NV, cl_uint)
+#endif
 
 // Convenience functions
 
