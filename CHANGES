@@ -1,3 +1,15 @@
+1.7 unreleased
+==============
+
+Notable User Facing Changes
+---------------------------
+
+- Added support for the cl_nv_device_attribute_query extension on CUDA devices.
+- improved support for SPIR-V binaries when using CPU device:
+  - improved local variables support
+  - OpenCL 2.0 atomics are now supported
+  - work_group_barrier, to_local/to_global are implemented
+
 1.6 December 2020
 =================
 
@@ -7,9 +19,11 @@ Notable User Facing Changes
 - Support for LLVM 11.
 - CUDA kernels using constant __local blocks are now ABI incompatible with
   previous release. Users need to delete their pocl cache.
-- SINGLE_LLVM_LIB CMake option removed. Instead reintroduce STATIC_LLVM and PoCL
-  now relies on llvm-config to provide correct shared/static libraries for linkage.
-- improved debugging of OpenCL code with CPU driver. See doc/sphinx/source/debug.rst
+- SINGLE_LLVM_LIB CMake option removed. Instead reintroduce STATIC_LLVM and
+  PoCL now relies on llvm-config to provide correct shared/static libraries
+  for linkage.
+- improved debugging of OpenCL code with CPU driver.
+  See doc/sphinx/source/debug.rst
 
 Optimizations
 -------------
@@ -34,7 +48,7 @@ Optimizations
     dgemm_n_pcie:   51.6%
     dgemm_t_pcie:    6.9%
 
-- Improved handling of command queue barriers: previously an internal
+- Improved handling of command queue barriers: Previously an internal
   event was added from all previous commands to it, even with in-order
   queues, causing slowdown with applications that have a lot of commands.
   Now additional events are omitted in in-order queues. Measured with the
@@ -51,9 +65,10 @@ Notable Bug Fixes
   caused by a previous libdl call in an ICD loader (issue #877).
 - [CPU] safety margin of pocl's CPU driver local memory allocation
   has been reduced to a much more reasonable value
-- [CPU] buffer size for OpenCL printf is now configurable with PRINTF_BUFFER_SIZE CMake variable
-- [CPU] local memory size reported is now the size of last level of non-shared data cache
-  (usually L1 or L2 depending on CPU), if hwloc can determine it.
+- [CPU] buffer size for OpenCL printf is now configurable with
+  PRINTF_BUFFER_SIZE CMake variable
+- [CPU] local memory size reported is now the size of last level of non-shared
+  data cache (usually L1 or L2 depending on CPU), if hwloc can determine it.
 
 Security
 --------

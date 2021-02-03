@@ -99,6 +99,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_tce_notify;
   ops->build_hash = pocl_tce_build_hash;
+  ops->get_device_info_ext = NULL;
 }
 
 

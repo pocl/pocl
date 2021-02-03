@@ -79,9 +79,35 @@ TRIPLE_ARG_I = [
 	"clamp", "mad_hi", "mad_sat"
 ]
 
+SVM_ATOMICS_INT_ONLY = [
+        "atomic_fetch_add",
+        "atomic_fetch_sub",
+        "atomic_fetch_or",
+        "atomic_fetch_xor",
+        "atomic_fetch_and",
+        "atomic_fetch_min",
+	"atomic_fetch_max"
+]
+
+SVM_ATOMICS_FLAGS = [
+	"atomic_flag_test_and_set",
+	"atomic_flag_clear"
+]
+
+SVM_ATOMICS_ALL = {
+	"atomic_store",
+	"atomic_load",
+	"atomic_exchange",
+	"atomic_compare_exchange_strong",
+	"atomic_compare_exchange_weak",
+}
+
 SIG_TO_LLVM_TYPE_MAP = {
 	"f": "float",
 	"d": "double",
+
+	"b": "i1",
+	"v": "void",
 
 	"c": "i8",
 	"h": "i8",
@@ -97,9 +123,15 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv4_f": "<4 x float>",
 	"Dv4_d": "<4 x double>",
+
+	"12memory_order": "i32",
+	"12memory_scope": "i32",
 }
 
 LLVM_TYPE_EXT_MAP = {
+        "b": " zeroext ",
+	"v": "",
+
 	"f": "",
 	"d": "",
 
@@ -116,13 +148,17 @@ LLVM_TYPE_EXT_MAP = {
 	"m": "",
 
 	"Dv4_f": "",
-	"Dv4_d": ""
+	"Dv4_d": "",
+
+	"12memory_order": "",
+	"12memory_scope": "",
 }
 
 
 MANGLING_AS_SPIR = {
 	"global": "PU3AS1",
 	"local": "PU3AS3",
+        "generic": "PU3AS4",
 	"private": "P",
 	"none": ""
 }
@@ -131,27 +167,38 @@ MANGLING_AS_OCL = {
 	"global": "PU8CLglobal",
 	"local": "PU7CLlocal",
 	"private": "PU9CLprivate",
+	"generic": "PU9CLgeneric",
 	"none": ""
 }
 
 LLVM_SPIR_AS = {
 	"global": " addrspace(1)",
 	"local": " addrspace(3)",
+	"generic": " addrspace(4)",
 	"private": " ",
 	"none": " "
 }
 
+#		if argtype[1] == 'V':
+#			return "volatile " +SIG_TO_LLVM_TYPE_MAP[argtype[2]] + AS + "*"
+#		else:
 
 def llvm_arg_type(argtype, AS):
 	if argtype[0] == 'P':
-		return SIG_TO_LLVM_TYPE_MAP[argtype[1]] + AS + "*"
+		if argtype[1] == 'V':
+			return SIG_TO_LLVM_TYPE_MAP[argtype[2]] + AS + "*"
+		else:
+			return SIG_TO_LLVM_TYPE_MAP[argtype[1]] + AS + "*"
 	else:
 		return SIG_TO_LLVM_TYPE_MAP[argtype]
 
 
 def mang_suffix(argtype, AS_prefix):
 	if argtype[0] == 'P':
-		return AS_prefix + argtype[1]
+		if argtype[1] == 'V':
+			return AS_prefix + "VU7_Atomic" + argtype[2]
+		else:
+			return AS_prefix + argtype[1]
 	else:
 		return argtype
 
@@ -160,7 +207,7 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 	"""
 
 	:param name: function name
-	:param arg_type: LLVM argument type ("i32", "float" etc) of retval
+	:param arg_type: LLVM type ("i32", "float" etc) of retval
 	:param arg_type_ext: retval's attributes ("signext" where required etc)
 	:param multiAS: True = generate for all three SPIR AddrSpaces
 	:param args: function arguments as mangled type names (i,j,m,f,d etc), not LLVM types
@@ -171,7 +218,10 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 	if not multiAS:
 		addr_spaces = ["none"]
 	else:
-		addr_spaces = ["global", "local", "private"]
+		if name.startswith("atomic"): # TODO
+			addr_spaces = ["global", "local"]  # , "generic"]
+		else:
+			addr_spaces = ["global", "local", "private"]
 
 	for AS in addr_spaces:
 
@@ -190,15 +240,16 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 			ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_OCL[AS]))
 			spir_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS[AS])
 			ocl_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS["none"])
-			caller_arg = spir_mangled_type + arg_type_ext + " %" + chr(120+arg_i)
-			caller_args.append(caller_arg)
-			decl_args.append(ocl_mangled_type + arg_type_ext)
+			# caller_arg = spir_mangled_type + arg_type_ext + " %" + chr(97+arg_i)
+			noext_caller_arg = spir_mangled_type + " %" + chr(97+arg_i)
+			caller_args.append(noext_caller_arg)
+			decl_args.append(ocl_mangled_type)
 			if spir_mangled_type != ocl_mangled_type:
-				addrspace_casts.append("  %%%u = addrspacecast %s to %s" % (llvm_i, caller_arg, ocl_mangled_type))
+				addrspace_casts.append("  %%%u = addrspacecast %s to %s" % (llvm_i, noext_caller_arg, ocl_mangled_type))
 				callee_args.append(ocl_mangled_type + " %" + chr(48+llvm_i))
 				llvm_i += 1
 			else:
-				callee_args.append(ocl_mangled_type + " %" + chr(120+arg_i))
+				callee_args.append(ocl_mangled_type + " %" + chr(97+arg_i))
 			arg_i += 1
 
 		spir_mangled_func_suffix = "".join(spir_mangled_func_suffix)
@@ -216,8 +267,12 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 		if addrspace_casts:
 			for cast in addrspace_casts:
 				print(cast)
-		print("  %%call = tail call %s %s(%s)" % (arg_type, ocl_mangled_name, callee_args))
-		print("  ret %s %%call" % arg_type)
+		if arg_type == 'void':
+			print("  tail call %s %s(%s)" % (arg_type, ocl_mangled_name, callee_args))
+			print("  ret void" )
+		else:
+			print("  %%call = tail call %s %s %s(%s)" % (arg_type_ext, arg_type, ocl_mangled_name, callee_args))
+			print("  ret %s %%call" % arg_type)
 		print("}\n\n")
 
 
@@ -302,6 +357,44 @@ for mang_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type)
 	for f in TRIPLE_ARG_I:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type, mang_type)
+
+for mang_type in ['i', 'j', "l", "m"]:
+	for f in SVM_ATOMICS_INT_ONLY:
+		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, "12memory_order")
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, "12memory_order", "12memory_scope")
+
+
+for mang_type in ['i', 'j', "l", "m", "f", "d"]:
+	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PV'+mang_type, mang_type)
+	for f in SVM_ATOMICS_ALL:
+		args = None
+		cmpxchg = False
+		orders = ["12memory_order"]
+		if f == "atomic_store":
+			args = ['PV'+mang_type, mang_type]
+			ret = "v"
+		if f == "atomic_load":
+			args = ['PV'+mang_type]
+			ret = mang_type
+		if f == "atomic_exchange":
+			args = ['PV'+mang_type, mang_type]
+			ret = mang_type
+		if f == "atomic_compare_exchange_strong" or f == "atomic_compare_exchange_weak":
+			args = ['PV'+mang_type, 'P'+mang_type, mang_type]
+			ret = "b"
+			orders = ["12memory_order", "12memory_order"]
+
+		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args)
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args, *orders)
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args, *orders, "12memory_scope")
+
+for f in SVM_ATOMICS_FLAGS:
+	generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi')
+	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi', "12memory_order")
+	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi', "12memory_order", "12memory_scope")
+
+
 
 # "mul24", "mad24" only take an i32
 generate_function("mul24", SIG_TO_LLVM_TYPE_MAP['i'], LLVM_TYPE_EXT_MAP['i'], False, 'i', 'i')

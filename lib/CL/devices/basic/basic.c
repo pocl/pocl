@@ -99,6 +99,8 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_hash = pocl_basic_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
+  ops->get_device_info_ext = NULL;
+
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
   /* no need to implement these two as they're noop
@@ -192,13 +194,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
-  /* in case hwloc doesn't provide a PCI ID, let's generate
-     a vendor id that hopefully is unique across vendors. */
-  /* TODO this should be replaced with the appropriate
-   * CL_KHRONOS_VENDOR_ID_POCL when it's registered */
-#define POCL_OPENCL_VENDOR_ID 0x6c636f70 /* pocl */
   if (device->vendor_id == 0)
-    device->vendor_id = POCL_OPENCL_VENDOR_ID;
+    device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple

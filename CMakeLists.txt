@@ -189,6 +189,8 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
+option(ENABLE_HOST_CPU_DEVICE_CL20 "Enable reporting OpenCL 2.0 for the CPU device" OFF)
+
 option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 ####
@@ -987,8 +989,17 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
-set(HOST_DEVICE_CL_VERSION "120")
-set(HOST_DEVICE_CL_STD "1.2")
+if(ENABLE_HOST_CPU_DEVICE_CL20)
+  set(HOST_DEVICE_CL_VERSION "200")
+  set(HOST_DEVICE_CL_STD "2.0")
+  set(HOST_DEVICE_CL_VERSION_MAJOR 2)
+  set(HOST_DEVICE_CL_VERSION_MINOR 0)
+else()
+  set(HOST_DEVICE_CL_VERSION "120")
+  set(HOST_DEVICE_CL_STD "1.2")
+  set(HOST_DEVICE_CL_VERSION_MAJOR 1)
+  set(HOST_DEVICE_CL_VERSION_MINOR 2)
+endif()
 
 # define it here, b/c we'll need these both at runtime and buildtime
 if(X86 OR ARM)
@@ -1238,7 +1249,7 @@ if(ENABLE_CUDA)
   # TODO unify with autotools
   set(BUILD_CUDA 1)
 
-  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
   if(ENABLE_SPIR)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_spir")
   endif()
@@ -1414,7 +1425,7 @@ if(ENABLE_ICD)
   # write icd file for pocl testing
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
-  
+
   cpack_add_component("icd")
   set("CPACK_DEBIAN_ICD_PACKAGE_NAME" "pocl-opencl-icd")
   list(APPEND CPACK_DEBIAN_ICD_PACKAGE_DEPENDS "libpocl2 (>= ${CPACK_PACKAGE_VERSION}~)")

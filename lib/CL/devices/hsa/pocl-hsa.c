@@ -251,6 +251,8 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_hsa_copy;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
+  ops->get_device_info_ext = NULL;
+
   ops->svm_free = pocl_hsa_svm_free;
   ops->svm_alloc = pocl_hsa_svm_alloc;
   ops->svm_copy = pocl_hsa_svm_copy;

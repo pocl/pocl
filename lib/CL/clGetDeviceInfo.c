@@ -194,7 +194,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
-   
+
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    
@@ -324,6 +324,12 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_IL_VERSION:
     POCL_RETURN_GETINFO_STR (device->spirv_version);
   }
+
+  if(device->ops->get_device_info_ext != NULL) {
+    return device->ops->get_device_info_ext(device, param_name, param_value_size,
+                                            param_value, param_value_size_ret);
+  }
+
   return CL_INVALID_VALUE;
 }
 POsym(clGetDeviceInfo)

@@ -27,6 +27,7 @@
 #include <string>
 
 #include "pocl.h"
+#include "pocl_spir.h"
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
@@ -58,8 +59,17 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
   // them look like local arrays (see Github Issue 445). This should be properly
   // fixed in Clang side with e.g. a naming convention for the local arrays to
   // detect them robstly without having logical address space info in the IR.
-  return Var.getName().startswith(FuncName + ".") &&
-    llvm::isa<llvm::PointerType>(Var.getType()) && !Var.isConstant();
+  if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
+    return false;
+  if (Var.getName().startswith(FuncName + "."))
+    return true;
+
+  // handle SPIR local AS (3)
+  if (Var.getParent() && Var.getParent()->getNamedMetadata("spirv.Source") &&
+      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL))
+    return true;
+
+  return false;
 }
 
 inline bool

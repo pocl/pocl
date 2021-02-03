@@ -409,7 +409,7 @@ check_cmd_queue_for_device (thread_data *td)
     cl_device_id subd = cmd->device;
     if (shall_we_run_this (td, subd))
       {
-        DL_DELETE (scheduler.work_queue, cmd)
+        DL_DELETE (scheduler.work_queue, cmd);
         return cmd;
       }
   }
