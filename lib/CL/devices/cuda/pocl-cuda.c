@@ -525,8 +525,10 @@ pocl_cuda_uninit (unsigned j, cl_device_id device)
 {
   pocl_cuda_device_data_t *data = device->data;
 
-  if (device->available)
+  if (device->available) {
+      cuEventDestroy (data->epoch_event);
       cuCtxDestroy (data->context);
+  }
 
   POCL_MEM_FREE (data);
   device->data = NULL;
