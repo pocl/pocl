@@ -58,6 +58,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clWaitForEvents (1, &kern_evt));
   CHECK_CL_ERROR (clFinish (queue));
 
+  CHECK_CL_ERROR (clReleaseEvent (kern_evt));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseKernel (kernel));
   CHECK_CL_ERROR (clReleaseProgram (program));

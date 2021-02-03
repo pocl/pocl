@@ -5,7 +5,10 @@ Notable User Facing Changes
 ---------------------------
 
 - Added support for the cl_nv_device_attribute_query extension on CUDA devices.
-
+- improved support for SPIR-V binaries when using CPU device:
+  - improved local variables support
+  - OpenCL 2.0 atomics are now supported
+  - work_group_barrier, to_local/to_global are implemented
 
 1.6 December 2020
 =================

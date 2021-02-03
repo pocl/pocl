@@ -33,6 +33,7 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
+addrspace_operators.ll
 barrier.ll
 bitselect.cl
 clamp.cl
@@ -284,12 +285,10 @@ endif()
 list(APPEND KERNEL_SOURCES "mem_fence.c")
 
 if(HOST_DEVICE_CL_VERSION GREATER 199)
-if(X86_64 OR I386)
-  list(APPEND KERNEL_SOURCES svm_atomics_x86_64_no_fake_asids.ll svm_atomics.cl)
-elseif(MIPS)
+if(MIPS)
   message(STATUS "OpenCL 2.0 atomics are currently broken on MIPS")
 else()
-  message(STATUS "Using generic OpenCL 2.0 atomics. Might or might not break your build.")
+  message(STATUS "Using generic OpenCL 2.0 atomics")
   list(APPEND KERNEL_SOURCES svm_atomics_host.cl svm_atomics.cl)
 endif()
 endif()

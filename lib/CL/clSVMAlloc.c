@@ -33,8 +33,6 @@ POname(clSVMAlloc)(cl_context context,
   unsigned i;
   int p;
 
-  POCL_MSG_PRINT_INFO("clSVMAlloc\n");
-
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
   POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
@@ -94,6 +92,7 @@ POname(clSVMAlloc)(cl_context context,
                          "aligment (%u) \n", alignment);
 
   void *ptr = dev->ops->svm_alloc (dev, flags, size);
+  POCL_MSG_PRINT_INFO ("clSVMAlloc: allocated %zu bytes @ %p\n", size, ptr);
   return ptr;
 }
 POsym(clSVMAlloc)
