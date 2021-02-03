@@ -110,7 +110,7 @@ extern "C" {
 #ifdef POCL_DEBUG_MESSAGES
 
     extern uint64_t pocl_debug_messages_filter;
-    extern int stderr_is_a_tty;
+    extern int pocl_stderr_is_a_tty;
 
     #define POCL_DEBUGGING_ON (pocl_debug_messages_filter)
 
@@ -148,7 +148,7 @@ extern "C" {
           if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {    \
             pocl_debug_output_lock ();                                      \
                 POCL_DEBUG_HEADER(FILTER, POCL_FILTER_TYPE_ ## TYPE)        \
-                if (stderr_is_a_tty)                                        \
+                if (pocl_stderr_is_a_tty)                                   \
                   fprintf (stderr, "%s", POCL_COLOR_BOLDRED                 \
                                     ERRCODE " "  POCL_COLOR_RESET);         \
                 else                                                        \

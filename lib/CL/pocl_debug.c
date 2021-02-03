@@ -11,7 +11,7 @@
 #ifdef POCL_DEBUG_MESSAGES
 
 uint64_t pocl_debug_messages_filter; /* Bitfield */
-int stderr_is_a_tty;
+int pocl_stderr_is_a_tty;
 
 static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -100,15 +100,15 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
         const char *formatstring;
 
         if (filter_type == POCL_FILTER_TYPE_ERR)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_RED : " *** ERROR *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_RED : " *** ERROR *** ");
         else if (filter_type == POCL_FILTER_TYPE_WARN)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_YELLOW : " *** WARNING *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_YELLOW : " *** WARNING *** ");
         else if (filter_type == POCL_FILTER_TYPE_INFO)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_GREEN : " *** INFO *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_GREEN : " *** INFO *** ");
         else
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_GREEN : " *** UNKNOWN *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_GREEN : " *** UNKNOWN *** ");
 
-        if (stderr_is_a_tty)
+        if (pocl_stderr_is_a_tty)
           formatstring = POCL_COLOR_BLUE
               "[%04i-%02i-%02i %02i:%02i:%02i.%09li]"
               POCL_COLOR_RESET "POCL: in fn %s "
@@ -143,7 +143,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       if (!(pocl_debug_messages_filter & POCL_DEBUG_FLAG_TIMING))
         return;
       const char* formatstring;
-      if (stderr_is_a_tty)
+      if (pocl_stderr_is_a_tty)
         formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
                        ".%03" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
       else
@@ -157,7 +157,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       if ((sec == 0) && (nsec < 1000))
         {
           b = nsec % 1000;
-          if (stderr_is_a_tty)
+          if (pocl_stderr_is_a_tty)
             formatstring = "      >>>      " POCL_COLOR_MAGENTA
                     "     %3" PRIu64 " " POCL_COLOR_RESET " ns    %s\n";
           else
@@ -178,7 +178,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
         }
       else
         {
-          if (stderr_is_a_tty)
+          if (pocl_stderr_is_a_tty)
             formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
                            ".%09" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
           else
