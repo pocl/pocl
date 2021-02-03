@@ -261,8 +261,8 @@ FINISH:
  * from given kernel image argument
  */
 void
-fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
-                  cl_device_id device)
+pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
+                       cl_device_id device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
   di->_width = mem->image_width;
@@ -791,7 +791,7 @@ pocl_broadcast (cl_event brc_event)
  * from given kernel sampler argument
  */
 void
-fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
+pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 {
   cl_sampler sampler = *(cl_sampler *)parg->value;
 

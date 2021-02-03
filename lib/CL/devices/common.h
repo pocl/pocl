@@ -64,10 +64,10 @@ int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, _cl_command_node *command,
                   int specialize);
 
-void fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
-                       cl_device_id device);
+void pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
+                            cl_device_id device);
 
-void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
+void pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
 void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
                            size_t dest_offset,

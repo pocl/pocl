@@ -377,7 +377,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
-          fill_dev_image_t (&di, al, cmd->device);
+          pocl_fill_dev_image_t (&di, al, cmd->device);
 
           void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                               sizeof (dev_image_t));
@@ -388,7 +388,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
-          fill_dev_sampler_t(&ds, al);
+          pocl_fill_dev_sampler_t (&ds, al);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = (void *)ds;
         }
