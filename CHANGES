@@ -10,6 +10,12 @@ Notable User Facing Changes
   - OpenCL 2.0 atomics are now supported
   - work_group_barrier, to_local/to_global are implemented
 
+Notable Bug Fixes
+-----------------
+
+- Added support for arm CUDA platforms without cuMemHostRegister
+  support.
+
 1.6 December 2020
 =================
 
