@@ -133,20 +133,10 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
  * Adds a dummy node after the given basic block.
  */
 void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
-
-  std::vector< llvm::BasicBlock* > regionSuccs;
-
-  for (llvm::succ_iterator i = succ_begin(bb), e = succ_end(bb);
-       i != e; ++i) {
-    llvm::BasicBlock* succ = *i;
-    if (R->contains(succ))
-      regionSuccs.push_back(succ);
-  }
   llvm::BasicBlock* newEntry = 
     SplitBlock(bb, bb->getTerminator());
   newEntry->setName(bb->getName() + ".r_entry");
   R->replaceEntry(newEntry);
-
 }
 
 /**
