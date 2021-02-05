@@ -103,10 +103,6 @@ extern "C" {
                               *errcode_ret = CL_SUCCESS;                \
                             } } while (0)
 
-
-
-#include "config.h"
-
 #ifdef POCL_DEBUG_MESSAGES
 
     extern uint64_t pocl_debug_messages_filter;
