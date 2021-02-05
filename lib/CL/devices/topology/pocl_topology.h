@@ -33,6 +33,7 @@
 
 #include "pocl_cl.h"
 
+POCL_EXPORT
 int pocl_topology_detect_device_info(cl_device_id device);
 
 #endif /* POCL_TOPOLOGY_H */

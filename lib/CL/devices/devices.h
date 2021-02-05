@@ -68,6 +68,7 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
  * \return If the env var was not set, return -1, if the env var is specified, return 0
  * or the number of occurrence of dev_type in the env var
  */
+POCL_EXPORT
 int pocl_device_get_env_count(const char *dev_type);
 
 /**

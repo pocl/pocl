@@ -27,6 +27,7 @@
 #include "pocl_cl.h"
 /* The generic local size optimizer used by default, in case there's no target
  * specific one defined in the device driver. */
+POCL_EXPORT
 void pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
                                         size_t global_y, size_t global_z,
                                         size_t *local_x, size_t *local_y,

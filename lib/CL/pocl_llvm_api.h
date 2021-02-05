@@ -65,6 +65,7 @@ public:
 };
 
 
+POCL_EXPORT
 extern cl_device_id currentPoclDevice;
 
 void InitializeLLVM();

@@ -57,17 +57,23 @@ uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
 /* set rounding mode */
+POCL_EXPORT
 void pocl_restore_rm (unsigned rm);
 /* get current rounding mode */
+POCL_EXPORT
 unsigned pocl_save_rm ();
 /* set OpenCL's default (round to nearest) rounding mode */
+POCL_EXPORT
 void pocl_set_default_rm ();
 
 /* sets the flush-denorms-to-zero flag on the CPU, if supported */
+POCL_EXPORT
 void pocl_set_ftz (unsigned ftz);
 
 /* saves / restores cpu flags*/
+POCL_EXPORT
 unsigned pocl_save_ftz ();
+POCL_EXPORT
 void pocl_restore_ftz (unsigned ftz);
 
 /* Finds the next highest power of two of the given value. */
@@ -83,6 +89,7 @@ uint64_t pocl_size_ceil2_64 (uint64_t x);
  * must be a non-zero power of 2.
  */
 
+POCL_EXPORT
 void *pocl_aligned_malloc(size_t alignment, size_t size);
 #define pocl_aligned_free(x) POCL_MEM_FREE(x)
 
@@ -131,6 +138,7 @@ check_copy_overlap(const size_t src_offset[3],
  * Push a command into ready list if all previous events are completed or
  * in pending_list if the command still has pending dependencies
  */
+POCL_EXPORT
 void
 pocl_command_push (_cl_command_node *node, 
                    _cl_command_node * volatile * ready_list, 
@@ -182,12 +190,15 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 
 void pocl_update_event_queued (cl_event event);
 
+POCL_EXPORT
 void pocl_update_event_submitted (cl_event event);
 
 void pocl_update_event_running_unlocked (cl_event event);
 
+POCL_EXPORT
 void pocl_update_event_running (cl_event event);
 
+POCL_EXPORT
 void pocl_update_event_complete_msg (const char *func, unsigned line,
                                      cl_event event, const char *msg);
 
@@ -197,6 +208,7 @@ void pocl_update_event_complete_msg (const char *func, unsigned line,
 #define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
   pocl_update_event_complete_msg (__func__, __LINE__, (__event), NULL);
 
+POCL_EXPORT
 void pocl_update_event_failed (cl_event event);
 
 const char*

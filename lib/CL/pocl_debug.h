@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#include "pocl_export.h"
+
 // size_t print spec
 #ifndef PRIuS
 # define PRIuS "zu"
@@ -105,7 +107,9 @@ extern "C" {
 
 #ifdef POCL_DEBUG_MESSAGES
 
+POCL_EXPORT
     extern uint64_t pocl_debug_messages_filter;
+POCL_EXPORT
     extern int pocl_stderr_is_a_tty;
 
     #define POCL_DEBUGGING_ON (pocl_debug_messages_filter)
@@ -118,9 +122,12 @@ extern "C" {
 
         #define POCL_DEBUG_HEADER(FILTER, FILTER_TYPE) \
             pocl_debug_print_header (__func__, __LINE__, #FILTER, FILTER_TYPE);
+POCL_EXPORT
         extern void pocl_debug_output_lock ();
+POCL_EXPORT
         extern void pocl_debug_output_unlock ();
         extern void pocl_debug_messages_setup (const char *debug);
+POCL_EXPORT
         extern void pocl_debug_print_header (const char * func, unsigned line,
                                              const char* filter, int filter_type);
         extern void pocl_debug_measure_start (uint64_t* start);

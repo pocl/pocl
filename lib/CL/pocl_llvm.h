@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 /* Returns the cpu name as reported by LLVM. */
+POCL_EXPORT
 char *get_llvm_cpu_name ();
 /* Returns if the cpu supports FMA instruction (uses LLVM). */
 int cpu_has_fma();

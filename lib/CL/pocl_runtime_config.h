@@ -25,12 +25,16 @@
 #ifndef _POCL_RUNTIME_CONFIG_H
 #define _POCL_RUNTIME_CONFIG_H
 
+#include "pocl_export.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int pocl_is_option_set(const char *key);
+POCL_EXPORT
 int pocl_get_int_option(const char *key, int default_value);
+POCL_EXPORT
 int pocl_get_bool_option(const char *key, int default_value);
 const char* pocl_get_string_option(const char *key, const char *default_value);
 

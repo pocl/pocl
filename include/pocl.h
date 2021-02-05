@@ -40,6 +40,8 @@
 
 #include "config.h"
 
+#include "pocl_export.h"
+
 #include "pocl_context.h"
 
 /* detects restrict, variadic macros etc */

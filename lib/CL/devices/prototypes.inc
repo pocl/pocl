@@ -31,6 +31,7 @@
   void pocl_##__DRV__##_wait_event (cl_device_id device, cl_event event);     \
   void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event);   \
   void pocl_##__DRV__##_free_event_data (cl_event event);                     \
+  POCL_EXPORT                                                                 \
   void pocl_##__DRV__##_init_device_ops (struct pocl_device_ops *ops);        \
   cl_int pocl_##__DRV__##_uninit (unsigned j, cl_device_id device);           \
   cl_int pocl_##__DRV__##_reinit (unsigned j, cl_device_id device);           \
