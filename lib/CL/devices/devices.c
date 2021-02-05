@@ -595,11 +595,23 @@ pocl_init_devices ()
             {
               pocl_devices_init_ops[i] = (init_device_ops)dlsym (
                   pocl_device_handles[i], init_device_ops_name);
-              pocl_devices_init_ops[i](&pocl_device_ops[i]);
+              if (pocl_devices_init_ops[i] != NULL)
+                {
+                  pocl_devices_init_ops[i](&pocl_device_ops[i]);
+                }
+              else
+                {
+                  POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
+                                init_device_ops_name, device_library,
+                                dlerror ());
+                  device_count[i] = 0;
+                  continue;
+                }
             }
           else
             {
-              POCL_MSG_WARN ("Loading %s failed.\n", device_library);
+              POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+                             dlerror ());
               device_count[i] = 0;
               continue;
             }
