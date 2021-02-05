@@ -80,7 +80,6 @@
 /* the enabled devices */
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
-unsigned int pocl_num_device_types = 0;
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
