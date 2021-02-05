@@ -517,7 +517,7 @@ pocl_cache_init_topdir ()
             "library. \nThis is not a bug in pocl and there's nothing we "
             "can do to fix it - you need both pocl and your program to be"
             " compiled for your system. This is known to happen with "
-            "Luxmark benchmark binaries dowloaded from website; Luxmark "
+            "Luxmark benchmark binaries downloaded from website; Luxmark "
             "installed from your linux distribution's packages should "
             "work.\n",
             cache_topdir);

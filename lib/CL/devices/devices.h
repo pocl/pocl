@@ -70,7 +70,6 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
  */
 int pocl_device_get_env_count(const char *dev_type);
 
-
 /**
  * \brief Unique global memory id for devices with distinct memory from the system memory
  * \return Unique global mem id, id > 0. Zero is reserved for shared system memory

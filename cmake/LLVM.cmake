@@ -735,6 +735,7 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
       message(FATAL_ERROR "Could not determine whether to use -march or -mcpu with clang")
     endif()
   endif()
+  message(STATUS "  Using ${CLANG_MARCH_FLAG}")
 
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
 endif()
