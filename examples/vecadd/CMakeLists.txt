@@ -42,7 +42,9 @@ if(NOT ENABLE_ANYSAN)
     PASS_REGULAR_EXPRESSION "OK")
 endif()
 
-set_tests_properties( "examples/vecadd"
+set_tests_properties(
+  "examples/vecadd"
+  "examples/vecadd_large_grid"
   PROPERTIES
     COST 3.0
     ${PROPS}
