@@ -420,6 +420,8 @@ include(sanitizers)
 if(ENABLE_TBB_DEVICE)
   # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
   find_package(TBB REQUIRED tbb)
+  # The tbb device depends on the pthread device which depends on the basic device. ENABLE_HOST_CPU_DEVICES enables both.
+  set(ENABLE_HOST_CPU_DEVICES 1)
 endif()
 
 ######################################################################################
@@ -1170,18 +1172,16 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(BUILD_PTHREAD 1)
 endif()
 
+if(ENABLE_TBB_DEVICE)
+  set(BUILD_TBB 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} tbb")
+endif()
+
 # The accel device could be built by default, but it's implemented in C++,
 # thus requires a C++ compiler, so let's not.
 if(ENABLE_ACCEL_DEVICE)
   set(BUILD_ACCEL 1)
   set(OCL_DRIVERS "${OCL_DRIVERS} accel")
-endif()
-
-# The tbb device is implemented in C++ and requires the Intel TBB library.
-if(ENABLE_TBB_DEVICE)
-  set(BUILD_BASIC 1)
-  set(BUILD_TBB 1)
-  set(OCL_DRIVERS "${OCL_DRIVERS} tbb")
 endif()
 
 if(DEFINED EXTRA_OCL_TARGETS)
