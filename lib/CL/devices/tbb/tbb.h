@@ -38,7 +38,7 @@ extern "C"
 GEN_PROTOTYPES (tbb)
 
 #include "prototypes.inc"
-GEN_PROTOTYPES (basic)
+GEN_PROTOTYPES (pthread)
 
 #ifdef __cplusplus
 }

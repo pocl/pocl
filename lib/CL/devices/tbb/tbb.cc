@@ -66,13 +66,6 @@ extern "C" {
 #include "pocl_llvm.h"
 #endif
 
-/**
- * Per event data.
- */
-struct event_data {
-  pthread_cond_t event_cond;
-};
-
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
@@ -82,30 +75,17 @@ struct data {
 void
 pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
 {
-  pocl_basic_init_device_ops(ops);
+  pocl_pthread_init_device_ops(ops);
 
   ops->device_name = "tbb";
 
-  /* implementation that differs from basic */
-  ops->probe = pocl_tbb_probe;
+  /* implementation that differs from pthread */
   ops->uninit = pocl_tbb_uninit;
   ops->reinit = pocl_tbb_reinit;
   ops->init = pocl_tbb_init;
-  ops->run = pocl_tbb_run;
-  ops->join = pocl_tbb_join;
   ops->submit = pocl_tbb_submit;
   ops->notify = pocl_tbb_notify;
-  ops->broadcast = pocl_broadcast;
-  ops->flush = pocl_tbb_flush;
-  ops->wait_event = pocl_tbb_wait_event;
-  ops->notify_event_finished = pocl_tbb_notify_event_finished;
-  ops->notify_cmdq_finished = pocl_tbb_notify_cmdq_finished;
-  ops->update_event = pocl_tbb_update_event;
-  ops->free_event_data = pocl_tbb_free_event_data;
   ops->build_hash = pocl_tbb_build_hash;
-
-  ops->init_queue = pocl_tbb_init_queue;
-  ops->free_queue = pocl_tbb_free_queue;
 }
 
 char*
@@ -120,17 +100,6 @@ pocl_tbb_build_hash (cl_device_id device)
   snprintf (res, 1000, "tbb-%s", HOST_DEVICE_BUILD_HASH);
 #endif
   return res;
-}
-
-unsigned int
-pocl_tbb_probe (struct pocl_device_ops *ops)
-{
-  int env_count = pocl_device_get_env_count(ops->device_name);
-  /* Env was not specified, default behavior was to use 1 tbb device */
-  if (env_count < 0)
-    return 1;
-
-  return env_count;
 }
 
 char scheduler_initialized = 0;
@@ -250,12 +219,6 @@ pocl_tbb_reinit (unsigned j, cl_device_id device)
 }
 
 void
-pocl_tbb_run (void *data, _cl_command_node *cmd)
-{
-  /* not used: this device will not be told when or what to run */
-}
-
-void
 pocl_tbb_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->ready = 1;
@@ -265,33 +228,6 @@ pocl_tbb_submit (_cl_command_node *node, cl_command_queue cq)
       tbb_scheduler_push_command (node);
     }
   POCL_UNLOCK_OBJ (node->event);
-  return;
-}
-
-void
-pocl_tbb_flush(cl_device_id device, cl_command_queue cq)
-{
-
-}
-
-void
-pocl_tbb_join(cl_device_id device, cl_command_queue cq)
-{
-  POCL_LOCK_OBJ (cq);
-  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  while (1)
-    {
-      if (cq->command_count == 0)
-        {
-          POCL_UNLOCK_OBJ (cq);
-          return;
-        }
-      else
-        {
-          int r = pthread_cond_wait (cq_cond, &cq->pocl_lock);
-          assert (r == 0);
-        }
-    }
   return;
 }
 
@@ -323,77 +259,4 @@ pocl_tbb_notify (cl_device_id device, cl_event event, cl_event finished)
       tbb_scheduler_push_command (node);
     }
   return;
-}
-
-void
-pocl_tbb_notify_cmdq_finished (cl_command_queue cq)
-{
-  /* must be called with CQ already locked.
-   * this must be a broadcast since there could be multiple
-   * user threads waiting on the same command queue
-   * in tbb_scheduler_wait_cq(). */
-  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  int r = pthread_cond_broadcast (cq_cond);
-  assert (r == 0);
-}
-
-void
-pocl_tbb_notify_event_finished (cl_event event)
-{
-  struct event_data* e_d = reinterpret_cast<event_data*> (event->data);
-  pthread_cond_broadcast (&e_d->event_cond);
-}
-
-void
-pocl_tbb_update_event (cl_device_id device, cl_event event)
-{
-  struct event_data* e_d = NULL;
-  if (event->data == NULL && event->status == CL_QUEUED)
-    {
-      e_d = reinterpret_cast<event_data*> (malloc(sizeof(struct event_data)));
-      assert(e_d);
-
-      pthread_cond_init(&e_d->event_cond, NULL);
-      event->data = (void *) e_d;
-    }
-}
-
-void pocl_tbb_wait_event (cl_device_id device, cl_event event)
-{
-  struct event_data *e_d = reinterpret_cast<event_data*> (event->data);
-
-  POCL_LOCK_OBJ (event);
-  while (event->status > CL_COMPLETE)
-    {
-      pthread_cond_wait(&e_d->event_cond, &event->pocl_lock);
-    }
-  POCL_UNLOCK_OBJ (event);
-}
-
-
-void pocl_tbb_free_event_data (cl_event event)
-{
-  assert(event->data != NULL);
-  free(event->data);
-  event->data = NULL;
-}
-
-cl_int
-pocl_tbb_init_queue (cl_command_queue queue)
-{
-  queue->data
-      = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
-  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_init (cond, NULL);
-  assert (r == 0);
-  return CL_BUILD_SUCCESS;
-}
-
-void
-pocl_tbb_free_queue (cl_command_queue queue)
-{
-  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_destroy (cond);
-  assert (r == 0);
-  POCL_MEM_FREE (queue->data);
 }

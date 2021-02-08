@@ -28,5 +28,5 @@ if(MSVC)
 endif(MSVC)
 
 add_pocl_device_library(pocl-devices-tbb tbb.h tbb.cc tbb_scheduler.cc tbb_utils.cc)
-target_link_libraries(pocl-devices-tbb PRIVATE pocl-devices-basic ${TBB_IMPORTED_TARGETS})
+target_link_libraries(pocl-devices-tbb PRIVATE pocl-devices-pthread ${TBB_IMPORTED_TARGETS})
 set_target_properties(pocl-devices-tbb PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
