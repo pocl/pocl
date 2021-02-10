@@ -42,6 +42,7 @@ int pocl_remove(const char* path);
 
 int pocl_rename(const char *oldpath, const char *newpath);
 
+POCL_EXPORT
 int pocl_exists(const char* path);
 
 /* Touch file to change last modified time. For portability, this
@@ -49,6 +50,7 @@ int pocl_exists(const char* path);
 int pocl_touch_file(const char* path);
 
 /* Writes or appends data to a file.  */
+POCL_EXPORT
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append, int dont_rewrite);
 

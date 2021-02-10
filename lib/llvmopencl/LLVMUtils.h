@@ -49,6 +49,7 @@ void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 // Remove a function from a module, along with all callsites.
+POCL_EXPORT
 void eraseFunctionAndCallers(llvm::Function *Function);
 
 inline bool

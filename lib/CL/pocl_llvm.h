@@ -68,6 +68,7 @@ extern "C" {
    * WG function that might be specialized according to the properties of
    * the given Command.
    */
+  POCL_EXPORT
   int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
                                              cl_device_id Device,
                                              cl_kernel Kernel,

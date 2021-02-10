@@ -210,6 +210,7 @@ void pocl_update_event_failed (cl_event event);
 const char*
 pocl_status_to_str (int status);
 
+POCL_EXPORT
 const char *
 pocl_command_to_str (cl_command_type cmd);
 

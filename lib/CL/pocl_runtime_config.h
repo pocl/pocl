@@ -36,6 +36,7 @@ POCL_EXPORT
 int pocl_get_int_option(const char *key, int default_value);
 POCL_EXPORT
 int pocl_get_bool_option(const char *key, int default_value);
+POCL_EXPORT
 const char* pocl_get_string_option(const char *key, const char *default_value);
 
 #ifdef __cplusplus
