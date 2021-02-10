@@ -152,6 +152,11 @@
 
 # undef LLVM_12_0
 # define LLVM_12_0
+
+#elif (__clang_major__ == 13)
+
+# undef LLVM_13_0
+# define LLVM_13_0
 #else
 
 #error Unsupported Clang/LLVM version.
