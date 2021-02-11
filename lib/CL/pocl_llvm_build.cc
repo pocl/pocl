@@ -419,7 +419,13 @@ int pocl_llvm_build_program(cl_program program,
 #else
                              clang::InputKind::OpenCL,
 #endif
-                             triple, po, clang::LangStandard::lang_opencl12);
+                             triple,
+#ifndef LLVM_OLDER_THAN_12_0
+                             po.Includes,
+#else
+                             po,
+#endif
+                             clang::LangStandard::lang_opencl12);
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
