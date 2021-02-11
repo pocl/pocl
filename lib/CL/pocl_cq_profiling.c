@@ -103,8 +103,9 @@ pocl_atexit ()
   printf ("     %-30s %10s %15s %3s %10s\n", "",
           "==========", "==========", "====", "==========");
 
+  /* Add !total_commands to avoid a division by 0 if total_commands is 0 */
   printf ("     %-30s %10lu %15lu %4s %10lu\n", "", total_commands, total_time,
-          "100%", total_time / total_commands);
+          "100%", total_time / (total_commands + !total_commands) );
 
   /* TODO: Critical path information of the task graph. */
 }
