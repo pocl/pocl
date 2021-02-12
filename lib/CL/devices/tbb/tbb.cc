@@ -85,21 +85,6 @@ pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_tbb_init;
   ops->submit = pocl_tbb_submit;
   ops->notify = pocl_tbb_notify;
-  ops->build_hash = pocl_tbb_build_hash;
-}
-
-char*
-pocl_tbb_build_hash (cl_device_id device)
-{
-  char* res = reinterpret_cast<char*>(calloc(1000, sizeof(char)));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name ();
-  snprintf (res, 1000, "tbb-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "tbb-%s", HOST_DEVICE_BUILD_HASH);
-#endif
-  return res;
 }
 
 char scheduler_initialized = 0;

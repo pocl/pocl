@@ -91,24 +91,9 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->notify_cmdq_finished = pocl_pthread_notify_cmdq_finished;
   ops->update_event = pocl_pthread_update_event;
   ops->free_event_data = pocl_pthread_free_event_data;
-  ops->build_hash = pocl_pthread_build_hash;
 
   ops->init_queue = pocl_pthread_init_queue;
   ops->free_queue = pocl_pthread_free_queue;
-}
-
-char *
-pocl_pthread_build_hash (cl_device_id device)
-{
-  char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
-#endif
-  return res;
 }
 
 unsigned int

@@ -691,6 +691,20 @@ pocl_exec_command (_cl_command_node *node)
     }
 }
 
+char *
+pocl_build_hash (cl_device_id device)
+{
+  char *res = calloc(1000, sizeof(char));
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  char *name = get_llvm_cpu_name ();
+  snprintf (res, 1000, "%s-%s-%s", device->ops->device_name, HOST_DEVICE_BUILD_HASH, name);
+  POCL_MEM_FREE (name);
+#else
+  snprintf (res, 1000, "%s-%s", device->ops->device_name, HOST_DEVICE_BUILD_HASH);
+#endif
+  return res;
+}
+
 /* call with brc_event UNLOCKED. */
 void
 pocl_broadcast (cl_event brc_event)

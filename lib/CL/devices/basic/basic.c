@@ -113,7 +113,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
-  ops->build_hash = pocl_basic_build_hash;
+  ops->build_hash = pocl_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = NULL;
@@ -137,20 +137,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->map_image = pocl_basic_map_image;
   ops->unmap_image = pocl_basic_unmap_image;
   ops->fill_image = pocl_basic_fill_image;
-}
-
-char *
-pocl_basic_build_hash (cl_device_id device)
-{
-  char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
-#endif
-  return res;
 }
 
 unsigned int
