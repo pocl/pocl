@@ -157,7 +157,7 @@ pocl.
 
 - **POCL_IMPLICIT_FINISH**
 
- Add an implicit call to clFinish afer every clEnqueue* call. Useful mostly for
+ Add an implicit call to clFinish after every clEnqueue* call. Useful mostly for
  pocl internal development, and is enabled only if pocl is configured with
  ``--enable-debug``.
 
