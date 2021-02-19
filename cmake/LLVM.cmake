@@ -39,6 +39,7 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-13.0" "llvm-config-13" "llvm-config130"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
