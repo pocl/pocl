@@ -6,7 +6,7 @@ implementation of OpenCL.
 
 .. _khronos : https://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/clCreateProgramWithBinary.html
 
-As mentionned in the khronos_ documentation, the parameter ``binaries`` of  
+As mentioned in the khronos_ documentation, the parameter ``binaries`` of
 ``clCreateProgramWithBinary`` can consist of either or both of device-specific
 code and/or implementation-specific intermediate representation.
 

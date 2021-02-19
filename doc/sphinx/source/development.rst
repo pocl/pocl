@@ -19,7 +19,7 @@ with -DENABLE_TESTSUITES (you can specify a list of test suites
 if you do not want to enabled all of them, see configure help for the
 available list).  Note that these additional test suites require
 additional software (tools and libraries). The configure script checks
-some of them but the check is not exhautive. Test suites are disabled if
+some of them but the check is not exhaustive. Test suites are disabled if
 their requirement files are not available.
 
 You can run the tests or built examples using "ctest" directly;
@@ -34,7 +34,7 @@ need to run the following build command once::
 IMPORTANT: using the ICD for in tree 'make check' requires an icd
 loader that allows overriding the icd search path. Other ICD loaders
 wont be able to work in tree (they require the ICD config file to be
-installed in the system).  There are now two options for such a loder:
+installed in the system).  There are now two options for such a loader:
 the open source ocl-icd loader and the Khronos supplied loader with a
 patch applied.
 
@@ -231,7 +231,7 @@ Currently (2017-03-16) the following are included in the tier-1 test suites:
 * HSA test suite (uses the LLVM 3.7 with an HSAIL backend and targets an AMD Kaveri GPU)
 * TCE short smoke test suite (against the latest TCE open source release)
 
-Please note that not neccessarily all the tests currently pass in the suites,
+Please note that not necessarily all the tests currently pass in the suites,
 we just ensure the currently passing ones do not regress with new
 commits (expected failing ones are marked as XFAILs or skipped).
 The primary test platform is x86-64.
@@ -251,7 +251,7 @@ test suite, please update its status so that 'make check' passes with the curren
 HEAD of pocl and let us know, and we do our best to add it.
 
 Naturally this policy/support promise concerns only the lead developers
-(the CPC group). Any community involvement to provide a wider support/maintance
+(the CPC group). Any community involvement to provide a wider support/maintenance
 level will be heartily welcomed.
 
 .. _releasing:
@@ -291,7 +291,7 @@ A checklist and hints for testing and making a release successfully:
 * The previous two steps ensure that merge-base of release & master is
   the start of release branch, which ensures that merging release
   to the master will not screw up the version numbers in the master.
-  Bugs which need to be fixed in both branches, should be comitted to
+  Bugs which need to be fixed in both branches, should be committed to
   the release branch, then release branch merged to master.
 
 * Create a new release on Github. Mark it as pre-release. This should
