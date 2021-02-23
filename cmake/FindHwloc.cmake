@@ -134,34 +134,10 @@ if(WIN32)
 
 else()
 
-  if(CMAKE_CROSSCOMPILING)
-
-  find_path(Hwloc_INCLUDE_DIRS
-    NAMES
-      hwloc.h
-    PATHS
-      ENV HWLOC_ROOT
-  )
-
-  find_library(Hwloc_LIBRARIES
-    NAMES
-      hwloc
-    PATHS
-      ENV HWLOC_ROOT
-  )
-
-  if(Hwloc_INCLUDE_DIRS AND Hwloc_LIBRARIES)
-    message(WARNING "HWLOC library found using find_library() - cannot determine version. Assuming 1.7.0")
-    set(Hwloc_FOUND 1)
-    set(Hwloc_VERSION "1.7.0")
-  endif()
-
-  else() # Find with pkgconfig for non-crosscompile builds
-
   find_package(PkgConfig)
 
   if(HWLOC_ROOT)
-    set(ENV{PKG_CONFIG_PATH} "${HWLOC_ROOT}/lib/pkgconfig")
+    set(ENV{PKG_CONFIG_PATH} "${HWLOC_ROOT}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
   else()
     foreach(PREFIX ${CMAKE_PREFIX_PATH})
       set(PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${PREFIX}/lib/pkgconfig")
@@ -208,7 +184,5 @@ else()
     endif()
   endif()
 
-  endif() # cross-compile else
 
 endif()
-

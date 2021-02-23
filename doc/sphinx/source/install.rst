@@ -272,10 +272,10 @@ The string after "HSTR:" is the device build hash.
   pocl needs to know which binaries it can load.
 
 
-Cross-compile pocl LLVM-less build
------------------------------------
+Cross-compile pocl
+------------------
 It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
-but only the LLVM-less build. There is a ToolchainExample.cmake file;
+There is a ToolchainExample.cmake file;
 copy it under different name, then follow the instructions in the file.
 
 
