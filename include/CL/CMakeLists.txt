@@ -27,7 +27,6 @@
 
 if(INSTALL_OPENCL_HEADERS)
   install(FILES cl.h
-                cl.hpp
                 cl2.hpp
                 cl_d3d10.h
                 cl_d3d11.h
@@ -38,6 +37,8 @@ if(INSTALL_OPENCL_HEADERS)
                 cl_ext_intel.h
                 cl_gl.h
                 cl_gl_ext.h
+                cl_half.h
+                cl_icd.h
                 cl_platform.h
                 cl_va_api_media_sharing_intel.h
                 cl_version.h
