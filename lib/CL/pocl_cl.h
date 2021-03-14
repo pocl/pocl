@@ -841,6 +841,10 @@ struct _cl_device_id {
 
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
+
+  /* OpenCL 3.0 properties */
+  cl_device_atomic_capabilities atomic_memory_capabilities;
+  cl_device_atomic_capabilities atomic_fence_capabilities;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \

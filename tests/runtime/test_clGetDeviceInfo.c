@@ -47,6 +47,31 @@ main(void)
         min_max_mem_alloc_size = global_memsize/4;
 
       TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
+
+      /* OpenCl 3.0 queries */ 
+      cl_device_atomic_capabilities atomic_memory_capability;
+      err = clGetDeviceInfo(devices[j], CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES,
+                            sizeof(cl_device_atomic_capabilities),
+                            &atomic_memory_capability, NULL);
+      CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
+
+      cl_device_atomic_capabilities mask = 
+                   (CL_DEVICE_ATOMIC_ORDER_RELAXED
+                  | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP);
+      /* atleast minimum mandated capability is reported */
+      TEST_ASSERT(( mask & atomic_memory_capability) == mask);
+
+      cl_device_atomic_capabilities atomic_fence_capability;
+      err = clGetDeviceInfo(devices[j], CL_DEVICE_ATOMIC_FENCE_CAPABILITIES,
+                            sizeof(cl_device_atomic_capabilities),
+                            &atomic_fence_capability, NULL);
+      CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
+
+      mask = (CL_DEVICE_ATOMIC_ORDER_RELAXED 
+            | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+            | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP);
+      /* atleast minimum mandated capability is reported */
+      TEST_ASSERT(( mask & atomic_fence_capability) == mask);
     }
   }
 

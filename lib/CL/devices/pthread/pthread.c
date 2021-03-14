@@ -152,6 +152,21 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+  
+  /* full memory consistency model for atomic memory and fence operations
+  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
+  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
+  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
