@@ -225,7 +225,12 @@ typedef CL_API_ENTRY cl_command_queue
 #define CL_DEVICE_GPU_OVERLAP_NV                    0x4004
 #define CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV            0x4005
 #define CL_DEVICE_INTEGRATED_MEMORY_NV              0x4006
+#define CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV   0x4007
+#define CL_DEVICE_PCI_BUS_ID_NV                     0x4008
+#define CL_DEVICE_PCI_SLOT_ID_NV                    0x4009
 
+/* extension to cl_nv_device_attribute_query */
+#define CL_DEVICE_PCI_DOMAIN_ID_NV                  0x4010
 
 /*********************************
 * cl_amd_device_attribute_query *
