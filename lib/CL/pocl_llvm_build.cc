@@ -506,12 +506,14 @@ int pocl_llvm_build_program(cl_program program,
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
   cg.StackRealignment = true;
-  // Let the vectorizer or another optimization pass unroll the loops,
-  // in case it sees beneficial.
-  cg.UnrollLoops = false;
-  // Lets leave vectorization to later compilation phase
-  cg.VectorizeLoop = false;
-  cg.VectorizeSLP = false;
+  if (!device->spmd) {
+    // Let the vectorizer or another optimization pass unroll the loops,
+    // in case it sees beneficial.
+    cg.UnrollLoops = false;
+    // Lets leave vectorization to later compilation phase
+    cg.VectorizeLoop = false;
+    cg.VectorizeSLP = false;
+  }
   cg.VerifyModule = true;
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
