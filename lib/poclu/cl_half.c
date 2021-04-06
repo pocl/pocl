@@ -51,7 +51,7 @@ poclu_float_to_cl_half_fast(float value)
 }
 
 // The idea behind these float to half functions is from:
-// http://gamedev.stackexchange.com/a/17410
+// https://gamedev.stackexchange.com/a/17410
 cl_half 
 poclu_float_to_cl_half(float value) 
 {

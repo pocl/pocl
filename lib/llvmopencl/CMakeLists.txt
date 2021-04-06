@@ -123,8 +123,8 @@ else()
 endif()
 
 # TODO ENABLE_EXPORTS -> Wl,export_dynamic
-# http://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
-# http://www.cmake.org/pipermail/cmake/2011-November/047708.html
+# https://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
+# https://www.cmake.org/pipermail/cmake/2011-November/047708.html
 set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} ${ADD_LD_FLAGS}")
 if(NOT APPLE)
   set_target_properties("llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "${KERNEL_COMPILER_LIB_VERSION}")
