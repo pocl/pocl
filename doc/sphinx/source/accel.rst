@@ -167,6 +167,11 @@ The environment variables define an accelerator with base physical address of
 example, verify that the address given in the parameter matches the base address
 of the accelerator.
 
+There's an alternative way to emulate the accelerator in software by
+setting the base physical address to 0xE. This directs the driver to instead
+use a software emulating function from accel.cc. No changes to accel_example.cpp
+are needed to run the emulation.
+
 Note that as the driver requires write access to ``/dev/mem`` for memory
 mapping, you may need to execute the application with elevated privileges. In
 this case, note that ``sudo`` by default overrides your environment variables.
