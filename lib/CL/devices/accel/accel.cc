@@ -792,7 +792,8 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
   data->DataMemory.Write16(packet_loc,
                            AQL_PACKET_KERNEL_DISPATCH | AQL_PACKET_BARRIER);
 
-  POCL_MSG_PRINT_INFO("accel: Handed off a packet for execution\n");
+  POCL_MSG_PRINT_INFO(
+      "accel: Handed off a packet for execution, write iter=%u\n", write_iter);
   // Increment queue index
   data->ControlMemory.Write32(ACCEL_AQL_WRITE_LOW, write_iter + 1);
 
@@ -910,15 +911,29 @@ void *emulate_accel(void *base_address) {
   Control[ACCEL_INFO_IF_TYPE / 4] = 1;
   Control[ACCEL_INFO_CORE_COUNT / 4] = 1;
   Control[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
+
+  // The accelerator can choose the size of the queue (must be a power-of-two)
+  // Can be even 1, to make the packet handling easiest with static offsets
+  // The maximum size for this emulation to work is
+  // segment_size/AQL_PACKET_LENGTH
+  const uint32_t queue_length = 2;
+  // const uint32_t queue_length = segment_size / AQL_PACKET_LENGTH;
+
   // Here we set the actual hardware memory region size. Even though the
   // address spaces are equally sized, the actual memory region sizes
   // don't have to be that big.The driver will adjust to these values.
-  // For emulation purposes might as well fill it up.
-  Control[ACCEL_INFO_DMEM_SIZE / 4] = segment_size;
-  Control[ACCEL_INFO_IMEM_SIZE / 4] = segment_size;
+
+  // In almaif V1 the dmem_size sets the AQL queue size
+  Control[ACCEL_INFO_DMEM_SIZE / 4] = AQL_PACKET_LENGTH * queue_length;
+  // The emulation doesn't use Instruction/Configuration memory. This memory
+  // space is a place to write accelerator specific configuration values
+  // that are written BEFORE hw reset is deasserted.
+  // E.g. program binaries of a processor-based accelerator
+  Control[ACCEL_INFO_IMEM_SIZE / 4] = 0;
+  // This is used as a common data memory between accelerator and driver
+  // that is used to pass arguments, signals, buffers etc.
   Control[ACCEL_INFO_PMEM_SIZE / 4] = segment_size;
 
-  const uint32_t queue_length = segment_size / AQL_PACKET_LENGTH;
 
   // Signal the driver that the initial values are set
   // (in hardware this signal is probably not needed, since the values are
@@ -927,7 +942,7 @@ void *emulate_accel(void *base_address) {
   POCL_MSG_PRINT_INFO("accel emulate: Emulator initialized");
 
   int read_iter = 0;
-
+  Control[ACCEL_AQL_READ_LOW / 4] = read_iter;
   // Accelerator is in infinite loop to process the commands
   // For emulating purposes we include the exit signal that the driver can
   // use to terminate the emulating thread. In hw this could be
@@ -953,8 +968,9 @@ void *emulate_accel(void *base_address) {
       continue;
     }
 
-    POCL_MSG_PRINT_INFO(
-        "accel emulate: Found valid AQL_packet, starting parsing:");
+    POCL_MSG_PRINT_INFO("accel emulate: Found valid AQL_packet from location "
+                        "%u, starting parsing:",
+                        packet_loc);
     POCL_MSG_PRINT_INFO(
         "accel emulate: kernargs are at %lu\n",
         packet->kernarg_address);
@@ -1009,9 +1025,12 @@ void *emulate_accel(void *base_address) {
     }
 
     POCL_MSG_PRINT_INFO("accel emulate: Kernel done");
+
     //Completion signal is given as absolute address
     *(uint32_t*) packet->completion_signal = 1;
+    packet->header = AQL_PACKET_INVALID;
 
     read_iter++; // move on to the next AQL packet
+    Control[ACCEL_AQL_READ_LOW / 4] = read_iter;
   }
 }
