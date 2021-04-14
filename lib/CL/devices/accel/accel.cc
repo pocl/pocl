@@ -96,7 +96,7 @@ enum BuiltinKernelId : uint16_t {
 
 struct AQLDispatchPacket {
   uint16_t header;
-  uint16_t setup;
+  uint16_t dimensions;
 
   uint16_t workgroup_size_x;
   uint16_t workgroup_size_y;
@@ -111,10 +111,9 @@ struct AQLDispatchPacket {
   uint32_t private_segment_size;
   uint32_t group_segment_size;
   uint64_t kernel_object;
-  uint32_t kernarg_address;
+  uint64_t kernarg_address;
 
-  uint32_t reserved1;
-  uint64_t reserved2;
+  uint64_t reserved;
 
   uint64_t completion_signal;
 };
@@ -763,7 +762,7 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
   struct AQLDispatchPacket packet = {};
 
   packet.header = AQL_PACKET_INVALID;
-  packet.setup = run->pc.work_dim; // number of dimensions
+  packet.dimensions = run->pc.work_dim; // number of dimensions
 
   packet.workgroup_size_x = run->pc.local_size[0];
   packet.workgroup_size_y = run->pc.local_size[1];
@@ -775,17 +774,7 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
 
   packet.kernel_object = kernelID;
 
-  // Had to change the offset to relative, since the packet->kernarg_address is
-  // only 32 bits! The size of this should be increased to 64, but I didn't want
-  // to do it to not break the backwards compatibility to accel_example rtl.
-  // TODO: Easily fixable, but would need to update the accel_example rtl's
-  // firmware
-  if (Emulating) {
-    packet.kernarg_address = argsAddress - data->ParameterMemory.PhysAddress;
-  } else {
-    packet.kernarg_address = argsAddress;
-  }
-
+  packet.kernarg_address = argsAddress;
   packet.completion_signal = signalAddress;
 
   POCL_LOCK(data->AQLQueueLock);
@@ -964,7 +953,7 @@ void *emulate_accel(void *base_address) {
     POCL_MSG_PRINT_INFO(
         "accel emulate: Found valid AQL_packet, starting parsing:");
     POCL_MSG_PRINT_INFO(
-        "accel emulate: kernargs are at relative pmem offset %u\n",
+        "accel emulate: kernargs are at %lu\n",
         packet->kernarg_address);
     // Find the 3 pointers
     // Pointer size can be different on different systems
@@ -976,14 +965,8 @@ void *emulate_accel(void *base_address) {
     } args;
     for (int i = 0; i < 3; i++) {
       for (int k = 0; k < PTR_SIZE; k++) {
-        // !!!! HACK !!!!
-        // Kernarg_address is RELATIVE in emulation but ABSOLUTE in
-        // hardware. This is due to it being just 32-bits in the AQL
-        // packet struct. Didn't want to change the AQL struct yet
-        // because it would break the accel_example rtl's firmware.
-        // TODO: This should be fixed asap
-        args.values[PTR_SIZE * i + k] =
-            Parameter[packet->kernarg_address + PTR_SIZE * i + k];
+       args.values[PTR_SIZE * i + k] =
+            *(uint8_t*)(packet->kernarg_address + PTR_SIZE * i + k);
       }
     }
     uint32_t *arg0 = args.ptrs[0];
@@ -995,8 +978,8 @@ void *emulate_accel(void *base_address) {
 
     // Check how many dimensions are in use, and set the unused ones to 1.
     int dim_x = packet->grid_size_x;
-    int dim_y = (packet->setup >= 2) ? (packet->grid_size_y) : 1;
-    int dim_z = (packet->setup == 3) ? (packet->grid_size_z) : 1;
+    int dim_y = (packet->dimensions >= 2) ? (packet->grid_size_y) : 1;
+    int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
 
     POCL_MSG_PRINT_INFO(
         "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)",
