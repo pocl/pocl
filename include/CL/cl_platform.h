@@ -356,6 +356,8 @@ typedef unsigned int cl_GLenum;
 /* Define basic vector types */
 #if defined( __VEC__ )
    #include <altivec.h>   /* may be omitted depending on compiler. AltiVec spec provides no way to detect whether the header is required. */
+   #undef bool
+   #undef vector
    typedef __vector unsigned char     __cl_uchar16;
    typedef __vector signed char       __cl_char16;
    typedef __vector unsigned short    __cl_ushort8;
