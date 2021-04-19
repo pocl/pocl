@@ -1,0 +1,74 @@
+Portable Computing Language (PoCL) v1.7 released
+------------------------------------------------
+
+PoCL is a portable open source (MIT-licensed) implementation of the
+OpenCL standard (1.2 with some 2.0 features supported). In addition to
+being an easily portable multi-device (truely heterogeneous)
+open-source OpenCL implementation, a major goal of this project is
+improving interoperability of diversity of OpenCL-capable devices by
+integrating them to a single centrally orchestrated platform. Also
+one of the key goals longer term is to enhance performance portability
+of OpenCL programs across device types utilizing runtime and compiler
+techniques.
+
+Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
+HSA-supported GPUs and TCE ASIPs (experimental, see: http://openasip.org).
+It is also known to have multiple (private) adaptations in active production
+use.
+
+Release Highlights
+------------------
+
+* Support for Clang/LLVM 12.0
+* Improved support for cross-compiling
+* Improved support for SPIR-V binaries when using CPU device
+* Changed default target OpenCL version to 3.0
+
+Misc. Notes
+-----------
+
+* Please note that there's an official PoCL "maintenance policy" in place.
+This text describes the policy and how you can get your favourite
+project that uses OpenCL to remain regression free in the future PoCL
+releases: http://portablecl.org/docs/html/maintainer-policy.html
+
+* We are still looking for an ARM CPU maintainer, if you are interested
+putting in a bit of effort to make PoCL great(er) for ARM CPU devices,
+please let us know!
+
+* Same goes for the RISC-V CPU device support.
+
+* After a long while we have settled on the writing format of the
+project name abbreviation: The preferred one is PoCL, but the lower
+case 'pocl' remains as the secondary "old school" spelling form ;-)
+
+Acknowledgements
+----------------
+
+The CUDA improvements, PowerPC support and packaging support
+described in this post were made by Isuru Fernando and Matt Wala
+with assistance from Nick Christensen, and Andreas Klöckner,
+all part of the Department of Computer Science at the University
+of Illinois at Urbana-Champaign. The work was partially supported
+through awards OAC-1931577 and SHF-1911019 from the US National
+Science Foundation, as well as award DE-NA0003963 from the US Department of
+Energy.
+
+Customized Parallel Computing (CPC) research group of Tampere University,
+Finland leads the development of PoCL on the side and for the needs of
+their research projects. This project has received funding from the ECSEL
+Joint Undertaking (JU) under grant agreement No 783162 (FitOptiVis).
+The JU receives support from the European Union’s Horizon 2020 research and
+innovation programme and Netherlands, Czech Republic, Finland, Spain, Italy.
+It was also supported by European Union's Horizon 2020 research and innovation
+programme under Grant Agreement No 871738 (CPSoSaware) and HSA Foundation.
+
+The financial support is very much appreciated -- it keeps the open source
+project going!
+
+Links
+-----
+Release web page:  http://portablecl.org/pocl-1.7.html
+This announcement: http://portablecl.org/downloads/ANNOUNCEMENT
+Change log:        http://portablecl.org/downloads/CHANGES
+Download:          http://portablecl.org/download.html

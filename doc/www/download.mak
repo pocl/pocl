@@ -17,6 +17,11 @@ the version control system:</p>
 
 <ul>
 
+<li><b>Version 1.7:</b> Supports LLVM versions 6.0 to 12.0.
+            <a href="downloads/pocl-1.7.tar.gz">pocl-1.7.tar.gz (1.6M)</a>,
+            <a href="downloads/CHANGES">change log</a>,
+            <a href="pocl-1.7.html">release notes</a></li>
+
 <li><b>Version 1.6:</b> Supports LLVM versions 6.0 to 11.0.
             <a href="downloads/pocl-1.6.tar.gz">pocl-1.6.tar.gz (1.6M)</a>,
             <a href="downloads/CHANGES">change log</a>,
