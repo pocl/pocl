@@ -75,8 +75,8 @@ endif()
 
 
 set(MAJOR_VERSION 1)
-set(MINOR_VERSION 7)
-set(VERSION_SUFFIX_FIXED_TEXT "")
+set(MINOR_VERSION 8)
+set(VERSION_SUFFIX_FIXED_TEXT "-pre")
 set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT}")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
@@ -1347,10 +1347,11 @@ endif()
 # 7:0:5 == 1.5 (the libpocl.so will be named libpocl.so.2.5.X )
 # 8:0:6 == 1.6 (the libpocl.so will be named libpocl.so.2.6.X )
 # 9:0:7 == 1.7 (the libpocl.so will be named libpocl.so.2.7.X )
+# 10:0:8 == 1.8 (the libpocl.so will be named libpocl.so.2.8.X )
 
-set(LIB_CURRENT_VERSION 9)
+set(LIB_CURRENT_VERSION 10)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 7)
+set(LIB_AGE_VERSION 8)
 
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
 
