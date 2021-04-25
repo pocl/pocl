@@ -1,7 +1,8 @@
-/* pthread_utils.c - utilities for the pthread driver
+/* common_utils.c - common utilities for pthread and tbb devices
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2019 Pekka Jääskeläinen
+                 2011-2019 Pekka Jääskeläinen and
+                 2021 Tobias Baumann / Zuse Institute Berlin
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,12 +24,13 @@
 */
 
 #include <string.h>
-#include "pocl-pthread_utils.h"
-#include "utlist.h"
-#include "common.h"
-#include "pocl-pthread.h"
-#include "pocl_mem_management.h"
 
+#include "common.h"
+#include "common_utils.h"
+#include "pocl_mem_management.h"
+#include "utlist.h"
+
+/* NOTE: k->lock is probably unnecessary for the tbb device */
 #ifdef USE_POCL_MEMMANAGER
 
 static kernel_run_command *volatile kernel_pool = 0;
@@ -36,7 +38,7 @@ static int kernel_pool_initialized = 0;
 static pocl_lock_t kernel_pool_lock;
 
 
-void pocl_init_kernel_run_command_manager (void)
+void pocl_init_kernel_run_command_manager ()
 {
   if (!kernel_pool_initialized)
     {
@@ -45,7 +47,7 @@ void pocl_init_kernel_run_command_manager (void)
     }
 }
 
-void pocl_init_thread_argument_manager (void)
+void pocl_init_thread_argument_manager ()
 {
   if (!kernel_pool_initialized)
     {

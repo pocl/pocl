@@ -1,7 +1,8 @@
-/* OpenCL pthreaded CPU device implementation: utils.
+/* common_utils.h - common utilities for pthread and tbb devices
 
    Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
-                 2012-2018 Pekka Jääskeläinen / Tampere Univ. of Technology
+                 2012-2018 Pekka Jääskeläinen / Tampere Univ. of Technology and
+                 2021 Tobias Baumann / Zuse Institute Berlin
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +31,9 @@
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
+/* NOTE: Some entries in this struct are only required by the pthread device and
+ * not by the tbb device. However, they have been kept for the tbb device to
+ * simplify the code structure and the maintenance effort. */
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
@@ -45,7 +45,7 @@ struct kernel_run_command
   struct pocl_argument *kernel_args;
   kernel_run_command *prev;
   kernel_run_command *next;
-  unsigned long ref_count;
+  unsigned long ref_count; /* pthread device only */
 
   /* actual kernel arguments. these are setup once at the kernel setup
    * phase, then each thread sets up the local arguments for itself. */
@@ -53,8 +53,10 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
+  /* pthread device only */
   POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
+  /* both only used by the pthread device */
   size_t remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   size_t wgs_dealt;
 
@@ -62,8 +64,12 @@ struct kernel_run_command
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef USE_POCL_MEMMANAGER
-void pocl_init_kernel_run_command_manager (void);
+void pocl_init_kernel_run_command_manager ();
 void pocl_init_thread_argument_manager ();
 kernel_run_command* new_kernel_run_command ();
 void free_kernel_run_command (kernel_run_command *k);
@@ -76,17 +82,24 @@ void free_kernel_run_command (kernel_run_command *k);
 #define free_kernel_run_command(k) free (k)
 #endif
 
+POCL_EXPORT
 void setup_kernel_arg_array (kernel_run_command *k);
+
+POCL_EXPORT
 void setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                          kernel_run_command *k,
                                          char *local_mem,
                                          size_t local_mem_size);
+
+POCL_EXPORT
 void free_kernel_arg_array (kernel_run_command *k);
+
+POCL_EXPORT
 void free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                         kernel_run_command *k);
 
-#ifdef __GNUC__
-#pragma GCC visibility pop
+#ifdef __cplusplus
+}
 #endif
 
-#endif
+#endif /* COMMON_UTILS_H */

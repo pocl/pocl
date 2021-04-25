@@ -24,13 +24,13 @@
 
 #define _GNU_SOURCE
 #define __USE_GNU
-#include <sched.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #ifndef _WIN32
 #  include <unistd.h>
@@ -38,18 +38,17 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "config.h"
-#include "utlist.h"
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "pocl-pthread_scheduler.h"
-#include "pocl_runtime_config.h"
-#include "cpuinfo.h"
-#include "topology/pocl_topology.h"
 #include "common.h"
+#include "common_utils.h"
+#include "config.h"
+#include "cpuinfo.h"
 #include "devices.h"
-#include "pocl_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+#include "pocl_util.h"
+#include "pocl-pthread.h"
+#include "pocl-pthread_scheduler.h"
+#include "topology/pocl_topology.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"

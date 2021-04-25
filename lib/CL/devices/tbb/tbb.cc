@@ -25,14 +25,11 @@
 
 #define _GNU_SOURCE
 #define __USE_GNU
-#include <sched.h>
 
-#include <algorithm>
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -40,23 +37,17 @@
 #  include "vccompat.hpp"
 #endif
 
-extern "C" {
-  #include "cpuinfo.h"
-  #include "topology/pocl_topology.h"
-}
-
 #include <tbb/task_arena.h>
 
 #include "common.h"
+#include "common_utils.h"
 #include "config.h"
-#include "devices.h"
+#include "cpuinfo.h"
 #include "pocl_mem_management.h"
-#include "pocl_runtime_config.h"
 #include "pocl_util.h"
 #include "tbb.h"
 #include "tbb_scheduler.h"
-#include "tbb_utils.h"
-#include "utlist.h"
+#include "topology/pocl_topology.h"
 
 #ifndef HAVE_LIBDL
 #error tbb driver requires DL library

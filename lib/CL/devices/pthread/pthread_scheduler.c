@@ -32,14 +32,13 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "pocl-pthread_scheduler.h"
-#include "pocl_cl.h"
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "utlist.h"
-#include "pocl_util.h"
 #include "common.h"
+#include "common_utils.h"
+#include "pocl_cl.h"
 #include "pocl_mem_management.h"
+#include "pocl-pthread_scheduler.h"
+#include "pocl_util.h"
+#include "utlist.h"
 
 static void* pocl_pthread_driver_thread (void *p);
 

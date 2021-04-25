@@ -23,14 +23,9 @@
 
 #define _GNU_SOURCE
 
-#ifdef __linux__
-#include <sched.h>
-#endif
-
 #include <algorithm>
 #include <pthread.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <tbb/blocked_range3d.h>
@@ -39,13 +34,12 @@
 #include <tbb/task_arena.h>
 
 #include "common.h"
+#include "common_utils.h"
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
-#include "tbb.h"
 #include "tbb_scheduler.h"
-#include "tbb_utils.h"
 #include "utlist.h"
 
 static void* pocl_tbb_driver_thread (void *p);

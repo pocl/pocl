@@ -22,12 +22,11 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-
 #ifndef POCL_TBB_SCHEDULER_H
 #define POCL_TBB_SCHEDULER_H
 
-#include "tbb_utils.h"
+#include "common_utils.h"
+#include "pocl_cl.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

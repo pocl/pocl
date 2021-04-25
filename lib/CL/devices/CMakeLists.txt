@@ -132,6 +132,7 @@ set(POCL_DEVICES_SOURCES
   devices.h  devices.c
   bufalloc.c  bufalloc.h
   common.h  common.c
+  common_utils.h common_utils.c
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   cpuinfo.c  cpuinfo.h)
