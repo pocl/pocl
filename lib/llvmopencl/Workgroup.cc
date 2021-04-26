@@ -59,11 +59,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
 
-#include "CanonicalizeBarriers.h"
-#include "BarrierTailReplication.h"
-#include "WorkitemReplication.h"
 #include "Barrier.h"
+#include "BarrierTailReplication.h"
+#include "CanonicalizeBarriers.h"
+#include "LLVMUtils.h"
 #include "Workgroup.h"
+#include "WorkitemReplication.h"
 
 #include <cstdio>
 #include <map>
@@ -466,7 +467,7 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
   // otherwise there will be an assertion. The changes are likely
   // additional debug info nodes added when cloning the function into
   // the other.  For some reason it doesn't want to reuse the old ones.
-  CloneFunctionInto(NewF, F, VV, true, RI);
+  CloneFunctionIntoAbs(NewF, F, VV, RI);
 
   return NewF;
 }
