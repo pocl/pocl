@@ -71,10 +71,22 @@ POP_COMPILER_DIAGS
 
 #define RETURN_IF_EC if (ec) return ec.default_error_condition().value()
 #define OPEN_FOR_READ ec = sys::fs::openFileForRead(p, fd)
-#define CREATE_UNIQUE_FILE(S)                                                  \
-  ec = sys::fs::createUniqueFile((p + S), fd, TmpPath,                         \
-                                 sys::fs::perms::owner_read |                  \
-                                     sys::fs::perms::owner_write);
+
+template <typename SmallStringOrVectorT>
+std::error_code CreateUniqueFileImpl(llvm::Twine p, llvm::Twine S, int fd,
+                                     SmallStringOrVectorT TmpPath) {
+#if LLVM_OLDER_THAN_13_0
+  return llvm::sys::fs::createUniqueFile((p + S), fd, TmpPath,
+                                         llvm::sys::fs::perms::owner_read |
+                                             llvm::sys::fs::perms::owner_write);
+#else
+  return llvm::sys::fs::createUniqueFile(
+      (p + S), fd, TmpPath, llvm::sys::fs::OpenFlags::OF_None,
+      llvm::sys::fs::perms::owner_read | llvm::sys::fs::perms::owner_write);
+#endif
+}
+
+#define CREATE_UNIQUE_FILE(S) ec = CreateUniqueFileImpl(p, S, fd, TmpPath);
 
 #ifdef LLVM_OLDER_THAN_7_0
 #define OPEN_CREATE ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW)
@@ -218,6 +230,7 @@ int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
   std::error_code ec;
 
   CREATE_UNIQUE_FILE(random_pattern + suf);
+
   RETURN_IF_EC;
 
   if (ret_fd)

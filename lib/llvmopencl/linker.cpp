@@ -45,7 +45,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "pocl_cl.h"
 
+#include "LLVMUtils.h"
 #include "linker.h"
+
 
 using namespace llvm;
 
@@ -149,7 +151,7 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
     DstFunc->copyAttributesFrom(F);
 
     SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
-    CloneFunctionInto(DstFunc, F, VVMap, true, RI);
+    CloneFunctionIntoAbs(DstFunc, F, VVMap, RI);
     delete F;
 
     return DstFunc;
@@ -236,7 +238,7 @@ CopyFunc(const llvm::StringRef Name,
     if (!SrcFunc->isDeclaration()) {
         SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
         DB_PRINT("  cloning %s\n", Name.data());
-        CloneFunctionInto(DstFunc, SrcFunc, VVMap, true, RI);
+        CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI);
         fixOpenCLimageArguments(DstFunc, AS);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",

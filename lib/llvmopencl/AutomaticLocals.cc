@@ -223,7 +223,7 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
   // otherwise there will be an assertion. The changes are likely
   // additional debug info nodes added when cloning the function into
   // the other.  For some reason it doesn't want to reuse the old ones.
-  CloneFunctionInto(NewKernel, F, VV, true, RI);
+  CloneFunctionIntoAbs(NewKernel, F, VV, RI);
 
   for (size_t i = 0; i < Locals.size(); ++i) {
     setFuncArgAddressSpaceMD(NewKernel, F->arg_size() + i,
