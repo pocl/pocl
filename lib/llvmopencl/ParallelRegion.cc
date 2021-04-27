@@ -55,8 +55,7 @@ using namespace pocl;
 
 int ParallelRegion::idGen = 0;
 
-ParallelRegion::ParallelRegion(int forcedRegionId) : 
-  std::vector<llvm::BasicBlock *>(), 
+ParallelRegion::ParallelRegion(int forcedRegionId) :
   LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
   exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId)
 {
