@@ -27,7 +27,10 @@
 
 #include "common.h"
 #include "common_utils.h"
+#include "cpuinfo.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+#include "topology/pocl_topology.h"
 #include "utlist.h"
 
 /* NOTE: k->lock is probably unnecessary for the tbb device */
@@ -97,6 +100,71 @@ align_ptr (char *p)
       r += MAX_EXTENDED_ALIGNMENT;
     }
   return (char *)r;
+}
+
+#define FALLBACK_MAX_THREAD_COUNT 8
+
+cl_int
+pocl_device_init_common (cl_device_id device)
+{
+  struct data *d;
+  cl_int ret = CL_SUCCESS;
+  int err;
+
+  d = (struct data *) calloc (1, sizeof (struct data));
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  d->current_kernel = NULL;
+  device->data = d;
+
+  pocl_init_default_device_infos (device);
+  device->extensions = HOST_DEVICE_EXTENSIONS;
+
+  device->on_host_queue_props
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+
+  /* full memory consistency model for atomic memory and fence operations
+  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see
+  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
+  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                      | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                      | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
+                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
+                                      | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+
+  /* hwloc probes OpenCL device info at its initialization in case
+     the OpenCL extension is enabled. This causes to printout
+     an unimplemented property error because hwloc is used to
+     initialize global_mem_size which it is not yet. Just put
+     a nonzero there for now. */
+  device->global_mem_size = 1;
+  err = pocl_topology_detect_device_info (device);
+  if (err)
+    ret = CL_INVALID_DEVICE;
+
+  /* device->max_compute_units was set up by topology_detect,
+   * but if the user requests, lower it */
+  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
+                                                  : device->max_compute_units;
+  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+
+  device->max_compute_units
+      = max ((unsigned)max_thr,
+             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
+
+  pocl_cpuinfo_detect_device_info (device);
+  pocl_set_buffer_image_limits (device);
+  device->vendor = "PoCL";
+  device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
+
+  return ret;
 }
 
 /* called from kernel setup code.

@@ -64,6 +64,12 @@ struct kernel_run_command
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
+struct data {
+    /* Currently loaded kernel. */
+    cl_kernel current_kernel;
+    volatile uint64_t total_cmd_exec_time;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,6 +87,9 @@ void free_kernel_run_command (kernel_run_command *k);
                                              sizeof (kernel_run_command))
 #define free_kernel_run_command(k) free (k)
 #endif
+
+POCL_EXPORT
+cl_int pocl_device_init_common (cl_device_id device);
 
 POCL_EXPORT
 void setup_kernel_arg_array (kernel_run_command *k);

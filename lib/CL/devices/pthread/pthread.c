@@ -41,14 +41,11 @@
 #include "common.h"
 #include "common_utils.h"
 #include "config.h"
-#include "cpuinfo.h"
 #include "devices.h"
 #include "pocl_mem_management.h"
-#include "pocl_runtime_config.h"
 #include "pocl_util.h"
 #include "pocl-pthread.h"
 #include "pocl-pthread_scheduler.h"
-#include "topology/pocl_topology.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -59,12 +56,6 @@
  */
 struct event_data {
   pthread_cond_t event_cond;
-};
-
-struct data {
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-  volatile uint64_t total_cmd_exec_time;
 };
 
 void
@@ -109,81 +100,12 @@ pocl_pthread_probe (struct pocl_device_ops *ops)
 static cl_device_partition_property pthread_partition_properties[2]
     = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
 
-#define FALLBACK_MAX_THREAD_COUNT 8
-
 static int scheduler_initialized = 0;
 
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
-  struct data *d;
-  int err;
-
-  d = (struct data *) calloc (1, sizeof (struct data));
-  if (d == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  d->current_kernel = NULL;
-  device->data = d;
-
-  pocl_init_default_device_infos (device);
-  /* 0 is the host memory shared with all drivers that use it */
-  device->global_mem_id = 0;
-  device->extensions = HOST_DEVICE_EXTENSIONS;
-
-  device->on_host_queue_props
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
-  
-  /* full memory consistency model for atomic memory and fence operations
-  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
-  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
-  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-
-  device->svm_allocation_priority = 1;
-  /* OpenCL 2.0 properties */
-  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-
-  /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout 
-     an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put 
-     a nonzero there for now. */
-  err = pocl_topology_detect_device_info (device);
-  if (err)
-    return CL_INVALID_DEVICE;
-
-  /* device->max_compute_units was set up by topology_detect,
-   * but if the user requests, lower it */
-  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
-                                                  : device->max_compute_units;
-  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
-
-  device->max_compute_units
-      = max ((unsigned)max_thr,
-             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
-
-  pocl_cpuinfo_detect_device_info(device);
-  pocl_set_buffer_image_limits(device);
-
-  /* in case hwloc doesn't provide a PCI ID, let's generate
-     a vendor id that hopefully is unique across vendors. */
-  const char *magic = "pocl";
-  if (device->vendor_id == 0)
-    device->vendor_id =
-      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
-
-  device->vendor_id += j;
+  cl_int ret = pocl_device_init_common (device);
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;
