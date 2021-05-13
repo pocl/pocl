@@ -164,8 +164,8 @@ pocl.
  *         **pthread**  Native kernel execution on the host CPU with
                         threaded execution of work groups using pthreads.
 
- *         **tbb**      Similar to pthread but uses the Intel Threading Building
-                        Blocks library for scheduling.
+ *         **tbb**      Uses the Intel Threading Building Blocks library for
+                        for task scheduling on the host CPU.
 
  *         **ttasim**   Device that simulates a TTA device using the
                         TCE's ttasim library. Enabled only if TCE libraries

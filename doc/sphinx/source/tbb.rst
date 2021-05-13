@@ -3,12 +3,12 @@ TBB device
 ==========
 
 The TBB device uses the Intel Threading Building Blocks open source (Apache 2.0)
-library for scheduling and presents an alternative to the pthread device.
+library for work-group and kernel-level task scheduling.
 
-Contrary to the pthread device, the TBB device scheduling characteristics can be
-fine tuned with environment variables (see below).
+The TBB device scheduling characteristics can be fine tuned with environment
+variables (see below) to achieve a higher performance.
 
-Building pocl with TBB
+Building PoCL with TBB
 ----------------------
 
 1) Install prerequisites
@@ -18,7 +18,7 @@ The Intel Threading Building Blocks library must be available on your system.
 The location of ``TBBConfig.cmake`` (shipped with TBB since TBB 2017 U7) is
 available via ``TBB_DIR`` or ``CMAKE_PREFIX_PATH`` contains path to TBB root.
 
-2) Build pocl
+2) Build PoCL
 ~~~~~~~~~~~~~
 
 To enable the TBB device, add ``-DENABLE_TBB_DEVICE=1`` to your CMake
