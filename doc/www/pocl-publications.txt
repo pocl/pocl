@@ -13,3 +13,8 @@ Exploiting Task Parallelism with OpenCL: A Case Study
 https://link.springer.com/article/10.1007%2Fs11265-018-1416-1
 Journal of Signal Processing Systems, Springer. January 2019, Volume 91, Issue 1.
 
+Tobias Baumann, Matthias Noack, Thomas Steinke
+Performance Evaluation and Improvements of the PoCL Open-Source OpenCL Implementation on Intel CPUs
+https://dl.acm.org/doi/10.1145/3456669.3456698
+IWOCL'21: International Workshop on OpenCL. April 2021.
+
