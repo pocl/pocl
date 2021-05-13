@@ -122,6 +122,10 @@ Notable User Facing Changes
   - clGetDeviceInfo queries
     - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)
     - CL_DEVICE_ATOMIC_FENCE_CAPABILITIES (Minimal implementation)
+- A new device for CPUs that uses the Threading Building Blocks library for
+  work-group and kernel-level task scheduling. The scheduling characteristics
+  can be fine tuned with environment variables to achieve a higher performance.
+  See /doc/sphinx/source/tbb.rst
 
 Notable Bug Fixes
 -----------------
