@@ -31,9 +31,8 @@
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
 
-/* NOTE: Some entries in this struct are only required by the pthread device and
- * not by the tbb device. However, they have been kept for the tbb device to
- * simplify the code structure and the maintenance effort. */
+/* Generic struct for CPU device drivers.
+ * Not all fields of this struct are used by all drivers. */
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
@@ -45,7 +44,7 @@ struct kernel_run_command
   struct pocl_argument *kernel_args;
   kernel_run_command *prev;
   kernel_run_command *next;
-  unsigned long ref_count; /* pthread device only */
+  unsigned long ref_count;
 
   /* actual kernel arguments. these are setup once at the kernel setup
    * phase, then each thread sets up the local arguments for itself. */
@@ -53,10 +52,8 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
-  /* pthread device only */
   POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  /* both only used by the pthread device */
   size_t remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   size_t wgs_dealt;
 
