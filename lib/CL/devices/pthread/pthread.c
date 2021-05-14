@@ -90,9 +90,14 @@ unsigned int
 pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
-  /* Env was not specified, default behavior was to use 1 pthread device */
+  /* Env was not specified, default behavior was to use 1 pthread device
+   * unless tbb device is being built. */
   if (env_count < 0)
+#ifdef BUILD_TBB
+    return 0;
+#else
     return 1;
+#endif
 
   return env_count;
 }

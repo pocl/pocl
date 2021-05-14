@@ -34,9 +34,9 @@ Examples::
 3) Configuration
 ~~~~~~~~~~~~~~~~
 
-Use the ``POCL_DEVICES`` environment variable to select the TBB device, i. e.
-``POCL_DEVICES=tbb``. It is strongly recommended to create only one TBB device
-as the TBB device has no subdevice support and always uses all cores.
+When building the tbb device, it will be set as the default device for PoCL. It
+is strongly recommended to **NOT** create more TBB devices as the TBB device
+always uses all cores and has no subdevice support.
 
 Optionally, set the ``POCL_TBB_PARTITIONER`` environment variable to one of
 ``affinity``,``auto``,``simple``,``static`` to select a partitioner. If no

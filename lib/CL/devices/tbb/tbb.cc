@@ -42,6 +42,7 @@
 #include "common.h"
 #include "common_utils.h"
 #include "config.h"
+#include "devices.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
 #include "tbb.h"
@@ -63,11 +64,27 @@ pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
   ops->device_name = "tbb";
 
   /* implementation that differs from pthread */
+  ops->probe = pocl_tbb_probe;
   ops->uninit = pocl_tbb_uninit;
   ops->reinit = pocl_tbb_reinit;
   ops->init = pocl_tbb_init;
   ops->submit = pocl_tbb_submit;
   ops->notify = pocl_tbb_notify;
+}
+
+unsigned int
+pocl_tbb_probe (struct pocl_device_ops *ops)
+{
+  int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* Env was not specified, default behavior was to use 1 tbb device */
+  if (env_count < 0)
+    return 1;
+
+  if (env_count > 1)
+    POCL_MSG_WARN ("Using more than one tbb device which is strongly discouraged.");
+
+  return env_count;
 }
 
 char scheduler_initialized = 0;
