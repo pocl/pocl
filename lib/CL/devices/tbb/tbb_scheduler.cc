@@ -167,6 +167,9 @@ void tbb_scheduler_push_command(_cl_command_node *cmd) {
 
 /* Internal functions */
 
+/* The sole purpose of this embedded class is to provide a function object that
+ * can be executed on a blocked_range by TBB's parallel_for() according to
+ * https://www.threadingbuildingblocks.org/docs/help/tbb_userguide/parallel_for.html */
 class WorkGroupScheduler {
   kernel_run_command *my_k;
 
@@ -199,9 +202,8 @@ public:
     assert(pc.printf_buffer_capacity > 0);
     assert(pc.printf_buffer_position != NULL);
 
-    /* Flush to zero is only set once at start of kernel (because FTZ is
-     * a compilation option), but we need to reset rounding mode after every
-     * iteration (since it can be changed during kernel execution). */
+    /* Flush to zero is only set once at the start of the kernel execution
+     * because FTZ is a compilation option. */
     unsigned flush = k->kernel->program->flush_denorms;
     if (current_ftz != flush) {
       pocl_set_ftz(flush);
@@ -211,6 +213,8 @@ public:
     for (size_t x = r.pages().begin(); x != r.pages().end(); x++) {
       for (size_t y = r.rows().begin(); y != r.rows().end(); y++) {
         for (size_t z = r.cols().begin(); z != r.cols().end(); z++) {
+          /* Rounding mode must be reset after every iteration
+           * since it can be changed during kernel execution. */
           pocl_set_default_rm();
           k->workgroup((uint8_t *)arguments, (uint8_t *)&pc, x, y, z);
         }
