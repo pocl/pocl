@@ -9,6 +9,7 @@ NVidia GPUs via CUDA backend, HSA devices, TCE devices and fixed-function accele
 
    opencl_status
    conformance
+   tbb
    hsa
    cuda
    accel

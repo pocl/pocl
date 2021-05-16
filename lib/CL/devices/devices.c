@@ -92,6 +92,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_PTHREAD
   NULL,
 #endif
+#ifdef BUILD_TBB
+  NULL,
+#endif
 #if defined(TCE_AVAILABLE)
   NULL,
 #endif
@@ -108,12 +111,15 @@ static init_device_ops pocl_devices_init_ops[] = {
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
 
-char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
+char pocl_device_types[POCL_NUM_DEVICE_TYPES][33] = {
 #ifdef BUILD_BASIC
   "basic",
 #endif
 #ifdef BUILD_PTHREAD
   "pthread",
+#endif
+#ifdef BUILD_TBB
+  "tbb",
 #endif
 #if defined(TCE_AVAILABLE)
   "ttasim",

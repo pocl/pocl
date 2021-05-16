@@ -24,13 +24,13 @@
 
 #define _GNU_SOURCE
 #define __USE_GNU
-#include <sched.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -38,18 +38,14 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "config.h"
-#include "utlist.h"
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "pocl-pthread_scheduler.h"
-#include "pocl_runtime_config.h"
-#include "cpuinfo.h"
-#include "topology/pocl_topology.h"
 #include "common.h"
+#include "common_utils.h"
+#include "config.h"
 #include "devices.h"
-#include "pocl_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_util.h"
+#include "pocl-pthread.h"
+#include "pocl-pthread_scheduler.h"
 
 #ifndef HAVE_LIBDL
 #error Pthread driver requires DL library
@@ -64,12 +60,6 @@
  */
 struct event_data {
   pthread_cond_t event_cond;
-};
-
-struct data {
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-  volatile uint64_t total_cmd_exec_time;
 };
 
 void
@@ -95,33 +85,23 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->notify_cmdq_finished = pocl_pthread_notify_cmdq_finished;
   ops->update_event = pocl_pthread_update_event;
   ops->free_event_data = pocl_pthread_free_event_data;
-  ops->build_hash = pocl_pthread_build_hash;
 
   ops->init_queue = pocl_pthread_init_queue;
   ops->free_queue = pocl_pthread_free_queue;
-}
-
-char *
-pocl_pthread_build_hash (cl_device_id device)
-{
-  char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name ();
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
-#endif
-  return res;
 }
 
 unsigned int
 pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
-  /* Env was not specified, default behavior was to use 1 pthread device */
+  /* Env was not specified, default behavior was to use 1 pthread device
+   * unless tbb device is being built. */
   if (env_count < 0)
+#ifdef BUILD_TBB
+    return 0;
+#else
     return 1;
+#endif
 
   return env_count;
 }
@@ -129,76 +109,12 @@ pocl_pthread_probe (struct pocl_device_ops *ops)
 static cl_device_partition_property pthread_partition_properties[2]
     = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
 
-#define FALLBACK_MAX_THREAD_COUNT 8
-
 char scheduler_initialized = 0;
 
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
-  struct data *d;
-  cl_int ret = CL_SUCCESS;
-  int err;
-
-  d = (struct data *) calloc (1, sizeof (struct data));
-  if (d == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  d->current_kernel = NULL;
-  device->data = d;
-
-  pocl_init_default_device_infos (device);
-  device->extensions = HOST_DEVICE_EXTENSIONS;
-
-  device->on_host_queue_props
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
-  
-  /* full memory consistency model for atomic memory and fence operations
-  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
-  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
-  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-
-  /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout 
-     an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put 
-     a nonzero there for now. */
-  device->global_mem_size = 1;
-  err = pocl_topology_detect_device_info (device);
-  if (err)
-    ret = CL_INVALID_DEVICE;
-
-  /* device->max_compute_units was set up by topology_detect,
-   * but if the user requests, lower it */
-  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
-                                                  : device->max_compute_units;
-  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
-
-  device->max_compute_units
-      = max ((unsigned)max_thr,
-             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
-
-  pocl_cpuinfo_detect_device_info(device);
-  pocl_set_buffer_image_limits(device);
-
-  /* in case hwloc doesn't provide a PCI ID, let's generate
-     a vendor id that hopefully is unique across vendors. */
-  const char *magic = "pocl";
-  if (device->vendor_id == 0)
-    device->vendor_id =
-      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
-
-  device->vendor_id += j;
+  cl_int ret = pocl_device_init_common (device);
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;
@@ -210,8 +126,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (!scheduler_initialized)
     {
       scheduler_initialized = 1;
-      pocl_init_dlhandle_cache();
-      pocl_init_kernel_run_command_manager();
+      pocl_init_dlhandle_cache ();
+      pocl_init_kernel_run_command_manager ();
       pthread_scheduler_init (device);
     }
   /* system mem as global memory */

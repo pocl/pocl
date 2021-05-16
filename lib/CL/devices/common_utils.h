@@ -1,7 +1,8 @@
-/* OpenCL pthreaded CPU device implementation: utils.
+/* common_utils.h - common utilities for pthread and tbb devices
 
    Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
-                 2012-2018 Pekka Jääskeläinen / Tampere Univ. of Technology
+                 2012-2018 Pekka Jääskeläinen / Tampere Univ. of Technology and
+                 2021 Tobias Baumann / Zuse Institute Berlin
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +31,8 @@
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
+/* Generic struct for CPU device drivers.
+ * Not all fields of this struct are used by all drivers. */
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
@@ -62,8 +61,18 @@ struct kernel_run_command
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
+struct data {
+    /* Currently loaded kernel. */
+    cl_kernel current_kernel;
+    volatile uint64_t total_cmd_exec_time;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef USE_POCL_MEMMANAGER
-void pocl_init_kernel_run_command_manager (void);
+void pocl_init_kernel_run_command_manager ();
 void pocl_init_thread_argument_manager ();
 kernel_run_command* new_kernel_run_command ();
 void free_kernel_run_command (kernel_run_command *k);
@@ -76,17 +85,27 @@ void free_kernel_run_command (kernel_run_command *k);
 #define free_kernel_run_command(k) free (k)
 #endif
 
+POCL_EXPORT
+cl_int pocl_device_init_common (cl_device_id device);
+
+POCL_EXPORT
 void setup_kernel_arg_array (kernel_run_command *k);
+
+POCL_EXPORT
 void setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                          kernel_run_command *k,
                                          char *local_mem,
                                          size_t local_mem_size);
+
+POCL_EXPORT
 void free_kernel_arg_array (kernel_run_command *k);
+
+POCL_EXPORT
 void free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                         kernel_run_command *k);
 
-#ifdef __GNUC__
-#pragma GCC visibility pop
+#ifdef __cplusplus
+}
 #endif
 
-#endif
+#endif /* COMMON_UTILS_H */

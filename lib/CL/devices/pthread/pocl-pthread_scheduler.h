@@ -22,12 +22,11 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-
 #ifndef POCL_PTHREAD_SCHEDULER_H
 #define POCL_PTHREAD_SCHEDULER_H
 
-#include "pocl-pthread_utils.h"
+#include "common_utils.h"
+#include "pocl_cl.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

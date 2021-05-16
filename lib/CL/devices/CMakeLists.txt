@@ -39,14 +39,17 @@ if(BUILD_PTHREAD)
   add_subdirectory("pthread")
 endif()
 
+if(BUILD_TBB)
+  add_subdirectory("tbb")
+endif()
+
 if(BUILD_ACCEL)
   add_subdirectory("accel")
 endif()
 
 add_subdirectory("topology")
 
-set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
-  "$<TARGET_OBJECTS:pocl-devices-topology>")
+set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>" "$<TARGET_OBJECTS:pocl-devices-topology>")
 
 if(ENABLE_TCE)
   include_directories(AFTER "tce")
@@ -63,11 +66,12 @@ if(ENABLE_CUDA)
 endif()
 
 set(POCL_DEVICES_SOURCES
-  devices.h  devices.c
-  bufalloc.c
+  devices.h devices.c
+  bufalloc.h bufalloc.c
   common.h common.c
+  common_utils.h common_utils.c
   pocl_local_size.h pocl_local_size.c
-  bufalloc.h  cpuinfo.c cpuinfo.h)
+  cpuinfo.c cpuinfo.h)
 
 if(MSVC)
   set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )

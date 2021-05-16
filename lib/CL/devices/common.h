@@ -86,7 +86,10 @@ void pocl_exec_command (_cl_command_node * volatile node);
 
 POCL_EXPORT
 void pocl_ndrange_node_cleanup(_cl_command_node *node);
+
 void pocl_mem_objs_cleanup (cl_event event);
+
+char *pocl_build_hash (cl_device_id device);
 
 POCL_EXPORT
 void pocl_broadcast (cl_event event);
