@@ -42,11 +42,6 @@ extern "C"
 #define EMULATING_ADDRESS 0xE
 #define EMULATING_MAX_SIZE 4 * 4096
 
-void *emulate_accel (void *base_address);
-
-int Emulating = 0;
-pthread_t emulate_thread;
-volatile int emulate_exit_called = 0;
-volatile int emulate_init_done = 0;
+void *emulate_accel (void *E_void);
 
 #endif /* POCL_ACCEL_H */
