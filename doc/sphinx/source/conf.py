@@ -37,8 +37,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Portable Computing Language (pocl)'
-copyright = u'2010-2020 pocl developers'
+project = u'Portable Computing Language (PoCL)'
+copyright = u'2010-2021 PoCL developers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -172,8 +172,8 @@ htmlhelp_basename = 'PortableComputingLanguagepocldoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PortableComputingLanguagepocl.tex', u'Portable Computing Language (pocl) Documentation',
-   u'pocl developers', 'manual'),
+  ('index', 'PortableComputingLanguagepocl.tex', u'Portable Computing Language (PoCL) Documentation',
+   u'PoCL developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
