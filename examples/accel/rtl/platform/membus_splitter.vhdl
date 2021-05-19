@@ -90,9 +90,7 @@ end entity membus_splitter;
 
 architecture rtl of membus_splitter is
   constant CTRL_HIGH : integer := 0;
-  constant IMEM_HIGH : integer := 1;
-  constant DMEM_HIGH : integer := 2;
-  constant PMEM_HIGH : integer := 3;
+  constant CQ_HIGH : integer := 1;
 
   -- Calculate the AXI address width to sanity check toplevel generics
   constant mem_widths_c : integer_array := (ctrl_addr_width_g
@@ -139,14 +137,8 @@ begin
         rdata_out     <= ctrl_rdata_in((core_sel_int+1)*axi_data_width_g-1
                                       downto core_sel_int*axi_data_width_g);
         ctrl_core_sel_out <= core_sel;
-      when IMEM_HIGH =>
-        imem_avalid_out <= avalid_in;
-        aready_out      <= imem_aready_in;
-        rvalid_out      <= imem_rvalid_in;
-        imem_rready_out <= rready_in;
-        rdata_out       <= imem_rdata_in;
 
-      when DMEM_HIGH =>
+      when CQ_HIGH =>
         dmem_avalid_out <= avalid_in;
         aready_out      <= dmem_aready_in;
         rvalid_out      <= dmem_rvalid_in;

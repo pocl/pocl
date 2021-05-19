@@ -23,13 +23,13 @@
 library IEEE;
 use IEEE.Std_Logic_1164.all;
 use IEEE.numeric_std.all;
-use work.ffaccel_globals.all;
-use work.ffaccel_gcu_opcodes.all;
-use work.ffaccel_imem_mau.all;
+use work.tta_core_globals.all;
+use work.tta_core_gcu_opcodes.all;
+use work.tta_core_imem_mau.all;
 
 use work.tce_util.all;
 
-entity ffaccel_ifetch is
+entity tta_core_ifetch is
 
   generic (
     no_glock_loopback_g        : std_logic := '0';
@@ -81,9 +81,9 @@ entity ffaccel_ifetch is
 
     clk  : in std_logic;
     rstx : in std_logic);
-end ffaccel_ifetch;
+end tta_core_ifetch;
 
-architecture rtl_andor of ffaccel_ifetch is
+architecture rtl_andor of tta_core_ifetch is
 
   -- signals for program counter.
   signal pc_reg      : std_logic_vector(IMEMADDRWIDTH-1 downto 0);
@@ -149,7 +149,7 @@ begin
 
 
   pc_update_generate_0  :  if not enable_irf_g generate
-    pc_update_proc : process (clk)
+    pc_update_proc : process (clk, rstx)
     begin
       if not sync_reset_g and rstx = '0' then
         pc_reg      <= pc_init_g;
@@ -194,7 +194,7 @@ begin
       ra_source <= pc_prev_reg;
     end generate ra_source_select_generate_2;
 
-    ra_update_proc : process (clk)
+    ra_update_proc : process (clk, rstx)
     begin  -- process ra_update_proc
       if not sync_reset_g and rstx = '0' then -- asynchronous reset (active low)
         return_addr_reg <= (others => '0');
@@ -218,7 +218,7 @@ begin
 
   -----------------------------------------------------------------------------
   -- Keeps memory enable inactive during reset
-  imem_lock_proc : process (clk)
+  imem_lock_proc : process (clk, rstx)
   begin
     if not sync_reset_g and rstx = '0' then
       mem_en_lock_r <= '1';
@@ -240,7 +240,7 @@ begin
                                                 (extra_fetch_cycles+1)-1 downto 0);
     begin  -- block fetch_block
 
-      fetch_block_proc : process (clk)
+      fetch_block_proc : process (clk, rstx)
       begin  -- process fetch_block_proc
         if not sync_reset_g and rstx = '0' then   -- asynchronous reset (active low)
           instruction_reg <= (others => '0');
@@ -277,7 +277,7 @@ begin
     not (not bypass_fetchblock_register) generate
     fetch_block : block
     begin  -- block fetch_block
-      fetch_block_proc : process (clk)
+      fetch_block_proc : process (clk, rstx)
       begin  -- process fetch_block_proc
         if not sync_reset_g and rstx = '0' then -- asynchronous reset (active low)
           reset_lock <= '1';
@@ -320,7 +320,7 @@ begin
                        loop_iter_temp_reg;
     loop_length <= pc_in(bit_width(LBUFMAXDEPTH+1)-1 downto 0);
 
-    process (clk)
+    process (clk, rstx)
     begin
       if not sync_reset_g and rstx = '0' then
         start_looping_r    <= (others => '0');
@@ -375,7 +375,7 @@ begin
                      '0';
     loop_length <= pc_in(bit_width(LBUFMAXDEPTH+1)-1 downto 0);
 
-    process (clk)
+    process (clk, rstx)
     begin
       if not sync_reset_g and rstx = '0' then
         start_looping_r    <= (others => '0');
@@ -463,7 +463,7 @@ begin
   -----------------------------------------------------------------------------
   -- Debugger processes and signal assignments
   -----------------------------------------------------------------------------
-    db_counters : process(clk)
+    db_counters : process(clk, rstx)
     begin
       if not sync_reset_g and rstx = '0' then -- async reset (active low)
         lockcnt_r  <= (others => '0');

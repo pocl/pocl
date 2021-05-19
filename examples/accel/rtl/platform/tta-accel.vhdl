@@ -25,7 +25,7 @@
 -- Author     : Viitanen Timo (Tampere University)  <timo.2.viitanen@tut.fi>
 -- Company    : 
 -- Created    : 2016-01-27
--- Last update: 2017-03-27
+-- Last update: 2020-07-09
 -- Platform   : 
 -- Standard   : VHDL'93
 -------------------------------------------------------------------------------
@@ -49,20 +49,29 @@ use work.tce_util.all;
 
 entity tta_accel is
   generic (
-    core_count_g       : integer;
-    axi_addr_width_g   : integer;
-    axi_id_width_g     : integer;
-    imem_data_width_g  : integer;
-    imem_addr_width_g  : integer;
-    dmem_data_width_g  : integer;
-    dmem_addr_width_g  : integer;
-    pmem_data_width_g  : integer;
-    pmem_addr_width_g  : integer;
-    bus_count_g        : integer;
-    local_mem_addrw_g  : integer;
-    axi_offset_g       : integer := 0;
-    full_debugger_g    : integer;
-    sync_reset_g       : integer
+    core_count_g             : integer;
+    axi_addr_width_g         : integer;
+    axi_id_width_g           : integer;
+    imem_data_width_g        : integer;
+    imem_addr_width_g        : integer;
+    dmem_data_width_g        : integer;
+    dmem_addr_width_g        : integer;
+    pmem_data_width_g        : integer;
+    pmem_addr_width_g        : integer;
+    imem_axi_addr_width_g    : integer;
+    bus_count_g              : integer;
+    local_mem_addrw_g        : integer;
+    axi_offset_low_g             : integer := 0;
+    axi_offset_high_g             : integer := 0;
+    full_debugger_g          : integer;
+    sync_reset_g             : integer;
+    second_dmem_data_width_g : integer;
+    second_dmem_addr_width_g : integer;
+    second_pmem_data_width_g : integer;
+    second_pmem_addr_width_g : integer;
+    enable_second_dmem_g     : integer;
+    enable_second_pmem_g     : integer;
+    broadcast_pmem_g         : integer
   ); port (
     clk            : in std_logic;
     rstx           : in std_logic;
@@ -150,13 +159,14 @@ entity tta_accel is
     
     data_b_avalid_out : out std_logic_vector(1-1 downto 0);
     data_b_aready_in  : in std_logic_vector(1-1 downto 0);
-    data_b_aaddr_out  : out std_logic_vector(dmem_addr_width_g-1 downto 0);
+    data_b_aaddr_out  : out std_logic_vector(second_dmem_addr_width_g-1 downto 0);
     data_b_awren_out  : out std_logic_vector(1-1 downto 0);
-    data_b_astrb_out  : out std_logic_vector((dmem_data_width_g+7)/8-1 downto 0);
-    data_b_adata_out  : out std_logic_vector(dmem_data_width_g-1 downto 0);
+    data_b_astrb_out  : out std_logic_vector((second_dmem_data_width_g+7)/8-1 downto 0);
+    data_b_adata_out  : out std_logic_vector(second_dmem_data_width_g-1 downto 0);
     data_b_rvalid_in  : in std_logic_vector(1-1 downto 0);
     data_b_rready_out : out std_logic_vector(1-1 downto 0);
-    data_b_rdata_in   : in std_logic_vector(dmem_data_width_g-1 downto 0);
+    data_b_rdata_in   : in std_logic_vector(second_dmem_data_width_g-1 downto 0);
+    
     core_pmem_avalid_in  : in std_logic_vector(core_count_g-1 downto 0);
     core_pmem_aready_out : out std_logic_vector(core_count_g-1 downto 0);
     core_pmem_aaddr_in   : in std_logic_vector(core_count_g*pmem_addr_width_g-1
@@ -183,22 +193,25 @@ entity tta_accel is
     
     param_b_avalid_out : out std_logic_vector(1-1 downto 0);
     param_b_aready_in  : in std_logic_vector(1-1 downto 0);
-    param_b_aaddr_out  : out std_logic_vector(local_mem_addrw_g-1 downto 0);
+    param_b_aaddr_out  : out std_logic_vector(second_pmem_addr_width_g-1 downto 0);
     param_b_awren_out  : out std_logic_vector(1-1 downto 0);
-    param_b_astrb_out  : out std_logic_vector((pmem_data_width_g+7)/8-1 downto 0);
-    param_b_adata_out  : out std_logic_vector(pmem_data_width_g-1 downto 0);
+    param_b_astrb_out  : out std_logic_vector((second_pmem_data_width_g+7)/8-1 downto 0);
+    param_b_adata_out  : out std_logic_vector(second_pmem_data_width_g-1 downto 0);
     param_b_rvalid_in  : in std_logic_vector(1-1 downto 0);
     param_b_rready_out : out std_logic_vector(1-1 downto 0);
-    param_b_rdata_in   : in std_logic_vector(pmem_data_width_g-1 downto 0);
+    param_b_rdata_in   : in std_logic_vector(second_pmem_data_width_g-1 downto 0);
     
+    
+
 
     -- Debug ports
     core_db_tta_nreset : out std_logic_vector(core_count_g-1 downto 0);
     core_db_lockrq     : out std_logic_vector(core_count_g-1 downto 0);
     core_db_pc         : in std_logic_vector(core_count_g*imem_addr_width_g-1
                                              downto 0);
-    core_db_lockcnt    : in std_logic_vector(core_count_g*64-1 downto 0);
-    core_db_cyclecnt   : in std_logic_vector(core_count_g*64-1 downto 0)
+    
+    core_db_lockcnt     : in std_logic_vector(core_count_g*64-1 downto 0);
+    core_db_cyclecnt    : in std_logic_vector(core_count_g*64-1 downto 0)
     );
 end entity tta_accel;
 
@@ -211,10 +224,24 @@ architecture rtl of tta_accel is
   constant dmem_byte_sel_width_c : integer := bit_width(dmem_data_width_g/8);
   constant pmem_byte_sel_width_c : integer := bit_width(pmem_data_width_g/8);
 
-  constant pmem_offset_c : integer := axi_offset_g + 2**(axi_addr_width_g-2)*3;
+  constant pmem_offset_c : integer := axi_offset_low_g + 2**(axi_addr_width_g-2)*3;
 
   constant enable_dmem : boolean := dmem_data_width_g > 0;
   constant enable_pmem : boolean := pmem_data_width_g > 0;
+  constant enable_second_dmem : boolean := enable_second_dmem_g > 0;
+  constant enable_second_pmem : boolean := enable_second_pmem_g > 0;
+
+  constant broadcast_pmem_c : boolean := broadcast_pmem_g > 0;
+  constant second_pmem_strb_width : integer := (second_pmem_data_width_g+7)/8;
+  constant imem_strb_width_c : integer := (imem_data_width_g+7)/8;
+
+  -- ceil(core_count_g/2)
+  constant core_count_half_c : integer := (core_count_g+1)/2;
+  constant core_count_half_ones_c : std_logic_vector(core_count_half_c-1 downto 0) := (others => '1');
+  constant core_count_zeroes_c : std_logic_vector(core_count_g-1 downto 0) := (others => '0');
+  -- Equal two ranges, except the lower range contains the possible remainder bit
+  subtype imem_ctrl_range_upper is Integer range core_count_g-1 downto core_count_half_c;
+  subtype imem_ctrl_range_lower is Integer range core_count_half_c-1 downto 0;
 
   -- AXI slave memory bus
   signal axi_avalid : std_logic;
@@ -245,14 +272,27 @@ architecture rtl of tta_accel is
   signal pmem_rready   : std_logic;
   signal pmem_rdata    : std_logic_vector(dataw_c-1 downto 0);
 
+  signal imem_d_avalid, dmem_d_avalid,  pmem_d_avalid   : std_logic;
+  signal imem_d_aready, dmem_d_aready,  pmem_d_aready   : std_logic;
+  signal imem_d_aaddr,  dmem_d_aaddr,   pmem_d_aaddr    : std_logic_vector(axi_addr_width_g-2-1 downto 0);
+  signal imem_d_awren,  dmem_d_awren,   pmem_d_awren    : std_logic;
+  signal imem_d_astrb,  dmem_d_astrb,   pmem_d_astrb    : std_logic_vector(dataw_c/8-1 downto 0);
+  signal imem_d_adata,  dmem_d_adata,   pmem_d_adata    : std_logic_vector(dataw_c-1 downto 0);
+  signal imem_d_rvalid, dmem_d_rvalid,  pmem_d_rvalid   : std_logic;
+  signal imem_d_rready, dmem_d_rready,  pmem_d_rready   : std_logic;
+  signal imem_d_rdata,  dmem_d_rdata,   pmem_d_rdata    : std_logic_vector(dataw_c-1 downto 0);
+
   signal imem_avalid   : std_logic;
   signal imem_aready   : std_logic;
   signal imem_rvalid   : std_logic;
   signal imem_rready   : std_logic;
   signal imem_rdata    : std_logic_vector(dataw_c-1 downto 0);
 
+--  signal imem_broadcast_aaddr_b : std_logic_vector(INSTR_b_aaddr_out'RANGE);
+--  signal imem_broadcast_avalid_b : std_logic_vector(INSTR_b_avalid_out'RANGE);
+
   signal core_busy       : std_logic_vector(core_count_g-1 downto 0);
-  signal tta_sync_nreset : std_logic_vector(core_count_g-1 downto 0);
+  signal tta_nreset      : std_logic_vector(core_count_g-1 downto 0);
 
   signal ctrl_en       : std_logic;
   signal ctrl_data     : std_logic_vector(dataw_c-1 downto 0);
@@ -270,28 +310,66 @@ architecture rtl of tta_accel is
 
   signal axi_imem_avalid_out : std_logic;
   signal axi_imem_aready_in  : std_logic;
-  signal axi_imem_aaddr_out  : std_logic_vector(imem_addr_width_g-1 downto 0);
+  signal axi_imem_aaddr_out  : std_logic_vector(imem_axi_addr_width_g-1 downto 0);
   signal axi_imem_awren_out  : std_logic;
-  signal axi_imem_astrb_out  : std_logic_vector((imem_data_width_g+7)/8-1 downto 0);
-  signal axi_imem_adata_out  : std_logic_vector(imem_data_width_g-1 downto 0);
+  signal axi_imem_astrb_out  : std_logic_vector(4-1 downto 0);
+  signal axi_imem_adata_out  : std_logic_vector(dataw_c-1 downto 0);
   signal axi_imem_rvalid_in  : std_logic;
   signal axi_imem_rready_out : std_logic;
-  signal axi_imem_rdata_in   : std_logic_vector(imem_data_width_g-1 downto 0);
+  signal axi_imem_rdata_in   : std_logic_vector(dataw_c-1 downto 0);
+
+  signal axi_imem_adata_wide : std_logic_vector(imem_data_width_g-1 downto 0);
+  signal axi_imem_astrb_wide : std_logic_vector(imem_strb_width_c-1 downto 0);
 
   signal tta_aready      : std_logic_vector(core_count_g-1 downto 0);
   signal tta_rvalid      : std_logic_vector(core_count_g-1 downto 0);
+  signal all_nreset      : std_logic;
 
   signal aql_read_idx, aql_write_idx : std_logic_vector(64-1 downto 0);
   signal aql_read_idx_clear : std_logic_vector(0 downto 0);
 
+
+  signal axi_dmem_wide_avalid, axi_pmem_wide_avalid : std_logic;
+  signal axi_dmem_wide_aready, axi_pmem_wide_aready : std_logic;
+  signal axi_dmem_wide_awren, axi_pmem_wide_awren : std_logic;
+  signal axi_dmem_wide_rvalid, axi_pmem_wide_rvalid : std_logic;
+  signal axi_dmem_wide_rready, axi_pmem_wide_rready : std_logic;
+  signal axi_dmem_wide_aaddr : std_logic_vector(second_dmem_addr_width_g-1 downto 0);
+  signal axi_dmem_wide_astrb : std_logic_vector((second_dmem_data_width_g+7)/8-1 downto 0);
+  signal axi_dmem_wide_adata : std_logic_vector(second_dmem_data_width_g-1 downto 0);
+  signal axi_dmem_wide_rdata : std_logic_vector(second_dmem_data_width_g-1 downto 0);
+
+  signal axi_pmem_wide_aaddr : std_logic_vector(second_pmem_addr_width_g-1 downto 0);
+  signal axi_pmem_wide_astrb : std_logic_vector((second_pmem_data_width_g+7)/8-1 downto 0);
+  signal axi_pmem_wide_adata : std_logic_vector(second_pmem_data_width_g-1 downto 0);
+  signal axi_pmem_wide_rdata : std_logic_vector(second_pmem_data_width_g-1 downto 0);
+
   
   
+  signal core_dmem_2nd_avalid_in  : std_logic_vector(core_count_g-1 downto 0);
+  signal core_dmem_2nd_aready_out : std_logic_vector(core_count_g-1 downto 0);
+  signal core_dmem_2nd_aaddr_in   : std_logic_vector(core_count_g*second_dmem_addr_width_g-1 downto 0);
+  signal core_dmem_2nd_awren_in   : std_logic_vector(core_count_g-1 downto 0);
+  signal core_dmem_2nd_astrb_in   : std_logic_vector(core_count_g*(second_dmem_data_width_g+7)/8-1 downto 0);
+  signal core_dmem_2nd_adata_in   : std_logic_vector(core_count_g*second_dmem_data_width_g-1 downto 0);
+  signal core_dmem_2nd_rvalid_out : std_logic_vector(core_count_g-1 downto 0);
+  signal core_dmem_2nd_rready_in  : std_logic_vector(core_count_g-1 downto 0);
+  signal core_dmem_2nd_rdata_out  : std_logic_vector(core_count_g*second_dmem_data_width_g-1 downto 0);
   
+  signal core_pmem_2nd_avalid_in  : std_logic_vector(core_count_g-1 downto 0);
+  signal core_pmem_2nd_aready_out : std_logic_vector(core_count_g-1 downto 0);
+  signal core_pmem_2nd_aaddr_in   : std_logic_vector(core_count_g*second_pmem_addr_width_g-1 downto 0);
+  signal core_pmem_2nd_awren_in   : std_logic_vector(core_count_g-1 downto 0);
+  signal core_pmem_2nd_astrb_in   : std_logic_vector(core_count_g*(second_pmem_data_width_g+7)/8-1 downto 0);
+  signal core_pmem_2nd_adata_in   : std_logic_vector(core_count_g*second_pmem_data_width_g-1 downto 0);
+  signal core_pmem_2nd_rvalid_out : std_logic_vector(core_count_g-1 downto 0);
+  signal core_pmem_2nd_rready_in  : std_logic_vector(core_count_g-1 downto 0);
+  signal core_pmem_2nd_rdata_out  : std_logic_vector(core_count_g*second_pmem_data_width_g-1 downto 0);
   signal core_db_pc_start   : std_logic_vector(core_count_g*imem_addr_width_g-1 downto 0);
-  signal core_db_instr      : std_logic_vector(core_count_g*imem_data_width_g-1 downto 0);
   signal core_db_pc_next    : std_logic_vector(core_count_g*imem_addr_width_g-1 downto 0);
   signal core_db_bustraces  : std_logic_vector(core_count_g*32*bus_count_g-1 downto 0);
   
+  signal core_db_dram_offset : std_logic_vector(32-1 downto 0);
 begin
 
   -----------------------------------------------------------------------------
@@ -406,7 +484,9 @@ begin
       dmem_data_width_g    => dmem_data_width_g,
       dmem_addr_width_g    => dmem_addr_width_g,
       pmem_data_width_g    => pmem_data_width_g,
-      pmem_addr_width_g    => local_mem_addrw_g
+      pmem_addr_width_g    => local_mem_addrw_g,
+      axi_offset_low_g     => axi_offset_low_g,
+      axi_offset_high_g    => axi_offset_high_g
     ) port map (
       clk               => clk,
       rstx              => rstx,
@@ -424,7 +504,7 @@ begin
   
       tta_locked_in     => core_busy,
       tta_lockrq_out    => core_db_lockrq,
-      tta_nreset_out    => core_db_tta_nreset,
+      tta_nreset_out    => tta_nreset,
       tta_pc_in         => core_db_pc,
       tta_lockcnt_in    => core_db_lockcnt,
       tta_cyclecnt_in   => core_db_cyclecnt,
@@ -433,6 +513,7 @@ begin
       tta_write_idx_out => aql_write_idx
     );
   
+  core_db_tta_nreset <= tta_nreset;
   rdata_broadcast : for I in 1 to core_count_g-1 generate
     ctrl_rdata((I+1)*dataw_c-1 downto I*dataw_c)
         <= ctrl_rdata(dataw_c-1 downto 0);
@@ -458,7 +539,7 @@ begin
       ) port map (
         clk                => clk,
         rstx               => rstx,
-        tta_sync_nreset_in => tta_sync_nreset,
+        tta_sync_nreset_in => tta_nreset,
         -- Buses to cores
         tta_avalid_in      => core_dmem_avalid_in,
         tta_aready_out     => core_dmem_aready_out,
@@ -482,7 +563,7 @@ begin
       );
     end generate;
 
-    gen_pmem_arbiter : if enable_pmem generate
+    gen_pmem_arbiter : if (enable_pmem and (not broadcast_pmem_c)) generate
       mc_arbiter_pmem : entity work.almaif_mc_arbiter
       generic map (
         mem_dataw_g  => pmem_data_width_g,
@@ -492,7 +573,7 @@ begin
       ) port map (
         clk                => clk,
         rstx               => rstx,
-        tta_sync_nreset_in => tta_sync_nreset,
+        tta_sync_nreset_in => tta_nreset,
         -- Buses to cores
         tta_avalid_in      => core_pmem_avalid_in,
         tta_aready_out     => core_pmem_aready_out,
@@ -539,7 +620,7 @@ begin
     core_pmem_rdata_out     <= mc_arb_pmem_rdata;
   end generate;
 
-  gen_decoder : if axi_offset_g /= 0 generate
+  gen_decoder : if axi_offset_low_g /= 0 generate
     decoder_pmem : entity work.almaif_decoder
     generic map (
       mem_dataw_g  => pmem_data_width_g,
@@ -597,7 +678,7 @@ begin
     );
   end generate;
 
-  no_decoder : if axi_offset_g = 0 generate
+  no_decoder : if (axi_offset_low_g = 0 and (not broadcast_pmem_c)) generate
     param_a_avalid_out(0)  <= mc_arb_pmem_avalid;
     mc_arb_pmem_aready     <= param_a_aready_in(0);
     param_a_aaddr_out      <= mc_arb_pmem_aaddr;
@@ -609,38 +690,130 @@ begin
     mc_arb_pmem_rdata      <= param_a_rdata_in;
   end generate;
 
+  connect_bcast_pmem : if axi_offset_low_g = 0 and broadcast_pmem_c generate
+    param_a_avalid_out     <= core_pmem_avalid_in;
+    core_pmem_aready_out   <= param_a_aready_in;
+    param_a_aaddr_out      <= core_pmem_aaddr_in;
+    param_a_awren_out   <= core_pmem_awren_in;
+    param_a_astrb_out      <= core_pmem_astrb_in;
+    param_a_adata_out      <= core_pmem_adata_in;
+    core_pmem_rvalid_out   <= param_a_rvalid_in;
+    param_a_rready_out  <= core_pmem_rready_in;
+    core_pmem_rdata_out    <= param_a_rdata_in;
+  end generate;
+
 
   gen_dmem_expander : if enable_dmem generate
+    dmem_delay : entity work.almaif_membus_delay
+    generic map (
+      mem_dataw_g  => dataw_c,
+      mem_addrw_g  => axi_addr_width_g-2
+    ) port map (
+      clk => clk, rstx => rstx,
+      -- Bus from upstream
+      s_avalid_in  => dmem_avalid,
+      s_aready_out => dmem_aready,
+      s_aaddr_in   => axi_aaddr,
+      s_awren_in   => axi_awren,
+      s_astrb_in   => axi_astrb,
+      s_adata_in   => axi_adata,
+      s_rvalid_out => dmem_rvalid,
+      s_rready_in  => dmem_rready,
+      s_rdata_out  => dmem_rdata,
+      -- Bus to downstream
+      m_avalid_out => dmem_d_avalid,
+      m_aready_in  => dmem_d_aready,
+      m_aaddr_out  => dmem_d_aaddr,
+      m_awren_out  => dmem_d_awren,
+      m_astrb_out  => dmem_d_astrb,
+      m_adata_out  => dmem_d_adata,
+      m_rvalid_in  => dmem_d_rvalid,
+      m_rready_out => dmem_d_rready,
+      m_rdata_in   => dmem_d_rdata
+    );
+
     dmem_expander : entity work.almaif_axi_expander
     generic map (
-      mem_dataw_g  => dmem_data_width_g,
-      mem_addrw_g  => dmem_addr_width_g,
+      mem_dataw_g  => second_dmem_data_width_g,
+      mem_addrw_g  => second_dmem_addr_width_g,
       axi_dataw_g  => dataw_c,
       axi_addrw_g  => axi_addr_width_g,
       sync_reset_g => sync_reset_g
     ) port map (
       clk => clk, rstx => rstx,
       -- Bus to AXI if
-      axi_avalid_in  => dmem_avalid,
-      axi_aready_out => dmem_aready,
-      axi_aaddr_in   => axi_aaddr,
-      axi_awren_in   => axi_awren,
-      axi_astrb_in   => axi_astrb,
-      axi_adata_in   => axi_adata,
-      axi_rvalid_out => dmem_rvalid,
-      axi_rready_in  => dmem_rready,
-      axi_rdata_out  => dmem_rdata,
+      axi_avalid_in  => dmem_d_avalid,
+      axi_aready_out => dmem_d_aready,
+      axi_aaddr_in   => dmem_d_aaddr,
+      axi_awren_in   => dmem_d_awren,
+      axi_astrb_in   => dmem_d_astrb,
+      axi_adata_in   => dmem_d_adata,
+      axi_rvalid_out => dmem_d_rvalid,
+      axi_rready_in  => dmem_d_rready,
+      axi_rdata_out  => dmem_d_rdata,
       -- Bus to memory
-      mem_avalid_out => data_b_avalid_out(0),
-      mem_aready_in  => data_b_aready_in(0),
-      mem_aaddr_out  => data_b_aaddr_out,
-      mem_awren_out  => data_b_awren_out(0),
-      mem_astrb_out  => data_b_astrb_out,
-      mem_adata_out  => data_b_adata_out,
-      mem_rvalid_in  => data_b_rvalid_in(0),
-      mem_rready_out => data_b_rready_out(0),
-      mem_rdata_in   => data_b_rdata_in
+      mem_avalid_out => axi_dmem_wide_avalid,
+      mem_aready_in  => axi_dmem_wide_aready,
+      mem_aaddr_out  => axi_dmem_wide_aaddr,
+      mem_awren_out  => axi_dmem_wide_awren,
+      mem_astrb_out  => axi_dmem_wide_astrb,
+      mem_adata_out  => axi_dmem_wide_adata,
+      mem_rvalid_in  => axi_dmem_wide_rvalid,
+      mem_rready_out => axi_dmem_wide_rready,
+      mem_rdata_in   => axi_dmem_wide_rdata
     );
+
+    gen_dmem_axi_arbiter: if enable_second_dmem generate
+      dmem_axi_arbiter : entity work.almaif_axi_arbiter
+      generic map (
+        mem_dataw_g  => second_dmem_data_width_g,
+        mem_addrw_g  => second_dmem_addr_width_g
+      ) port map (
+        clk => clk, rstx => rstx,
+        -- Bus to TTA
+        tta_avalid_in  => core_dmem_2nd_avalid_in(0),
+        tta_aready_out => core_dmem_2nd_aready_out(0),
+        tta_aaddr_in   => core_dmem_2nd_aaddr_in,
+        tta_awren_in   => core_dmem_2nd_awren_in(0),
+        tta_astrb_in   => core_dmem_2nd_astrb_in,
+        tta_adata_in   => core_dmem_2nd_adata_in,
+        tta_rvalid_out => core_dmem_2nd_rvalid_out(0),
+        tta_rready_in  => core_dmem_2nd_rready_in(0),
+        tta_rdata_out  => core_dmem_2nd_rdata_out,
+        -- Bus to AXI if
+        axi_avalid_in  => axi_dmem_wide_avalid,
+        axi_aready_out => axi_dmem_wide_aready,
+        axi_aaddr_in   => axi_dmem_wide_aaddr,
+        axi_awren_in   => axi_dmem_wide_awren,
+        axi_astrb_in   => axi_dmem_wide_astrb,
+        axi_adata_in   => axi_dmem_wide_adata,
+        axi_rvalid_out => axi_dmem_wide_rvalid,
+        axi_rready_in  => axi_dmem_wide_rready,
+        axi_rdata_out  => axi_dmem_wide_rdata,
+        -- Bus to memory
+        mem_avalid_out => data_b_avalid_out(0),
+        mem_aready_in  => data_b_aready_in(0),
+        mem_aaddr_out  => data_b_aaddr_out,
+        mem_awren_out  => data_b_awren_out(0),
+        mem_astrb_out  => data_b_astrb_out,
+        mem_adata_out  => data_b_adata_out,
+        mem_rvalid_in  => data_b_rvalid_in(0),
+        mem_rready_out => data_b_rready_out(0),
+        mem_rdata_in   => data_b_rdata_in
+      );
+    end generate;
+
+    no_dmem_axi_arbiter : if not enable_second_dmem generate
+      data_b_avalid_out(0) <= axi_dmem_wide_avalid;
+      axi_dmem_wide_aready <= data_b_aready_in(0);
+      data_b_aaddr_out     <= axi_dmem_wide_aaddr;
+      data_b_awren_out(0)  <= axi_dmem_wide_awren;
+      data_b_astrb_out     <= axi_dmem_wide_astrb;
+      data_b_adata_out     <= axi_dmem_wide_adata;
+      axi_dmem_wide_rvalid <= data_b_rvalid_in(0);
+      data_b_rready_out(0) <= axi_dmem_wide_rready;
+      axi_dmem_wide_rdata  <= data_b_rdata_in;
+    end generate;
   end generate;
 
   no_dmem_expander : if not enable_dmem generate
@@ -650,36 +823,117 @@ begin
   end generate;
 
   gen_pmem_expander : if enable_pmem generate
+
+    pmem_delay : entity work.almaif_membus_delay
+    generic map (
+      mem_dataw_g  => dataw_c,
+      mem_addrw_g  => axi_addr_width_g-2
+    ) port map (
+      clk => clk, rstx => rstx,
+      -- Bus from upstream
+      s_avalid_in  => pmem_avalid,
+      s_aready_out => pmem_aready,
+      s_aaddr_in   => axi_aaddr,
+      s_awren_in   => axi_awren,
+      s_astrb_in   => axi_astrb,
+      s_adata_in   => axi_adata,
+      s_rvalid_out => pmem_rvalid,
+      s_rready_in  => pmem_rready,
+      s_rdata_out  => pmem_rdata,
+      -- Bus to downstream
+      m_avalid_out => pmem_d_avalid,
+      m_aready_in  => pmem_d_aready,
+      m_aaddr_out  => pmem_d_aaddr,
+      m_awren_out  => pmem_d_awren,
+      m_astrb_out  => pmem_d_astrb,
+      m_adata_out  => pmem_d_adata,
+      m_rvalid_in  => pmem_d_rvalid,
+      m_rready_out => pmem_d_rready,
+      m_rdata_in   => pmem_d_rdata
+    );
+
     pmem_epander : entity work.almaif_axi_expander
     generic map (
-      mem_dataw_g  => pmem_data_width_g,
-      mem_addrw_g  => local_mem_addrw_g,
+      mem_dataw_g  => second_pmem_data_width_g,
+      mem_addrw_g  => second_pmem_addr_width_g,
       axi_dataw_g  => dataw_c,
       axi_addrw_g  => axi_addr_width_g,
       sync_reset_g => sync_reset_g
     ) port map (
       clk => clk, rstx => rstx,
       -- Bus to AXI if
-      axi_avalid_in  => pmem_avalid,
-      axi_aready_out => pmem_aready,
-      axi_aaddr_in   => axi_aaddr,
-      axi_awren_in   => axi_awren,
-      axi_astrb_in   => axi_astrb,
-      axi_adata_in   => axi_adata,
-      axi_rvalid_out => pmem_rvalid,
-      axi_rready_in  => pmem_rready,
-      axi_rdata_out  => pmem_rdata,
+      axi_avalid_in  => pmem_d_avalid,
+      axi_aready_out => pmem_d_aready,
+      axi_aaddr_in   => pmem_d_aaddr,
+      axi_awren_in   => pmem_d_awren,
+      axi_astrb_in   => pmem_d_astrb,
+      axi_adata_in   => pmem_d_adata,
+      axi_rvalid_out => pmem_d_rvalid,
+      axi_rready_in  => pmem_d_rready,
+      axi_rdata_out  => pmem_d_rdata,
       -- Bus to memory
-      mem_avalid_out => param_b_avalid_out(0),
-      mem_aready_in  => param_b_aready_in(0),
-      mem_aaddr_out  => param_b_aaddr_out,
-      mem_awren_out  => param_b_awren_out(0),
-      mem_astrb_out  => param_b_astrb_out,
-      mem_adata_out  => param_b_adata_out,
-      mem_rvalid_in  => param_b_rvalid_in(0),
-      mem_rready_out => param_b_rready_out(0),
-      mem_rdata_in   => param_b_rdata_in
+      mem_avalid_out => axi_pmem_wide_avalid,
+      mem_aready_in  => axi_pmem_wide_aready,
+      mem_aaddr_out  => axi_pmem_wide_aaddr,
+      mem_awren_out  => axi_pmem_wide_awren,
+      mem_astrb_out  => axi_pmem_wide_astrb,
+      mem_adata_out  => axi_pmem_wide_adata,
+      mem_rvalid_in  => axi_pmem_wide_rvalid,
+      mem_rready_out => axi_pmem_wide_rready,
+      mem_rdata_in   => axi_pmem_wide_rdata
     );
+
+    gen_pmem_axi_arbiter: if enable_second_pmem generate
+      pmem_axi_arbiter : entity work.almaif_axi_arbiter
+      generic map (
+        mem_dataw_g  => second_pmem_data_width_g,
+        mem_addrw_g  => second_pmem_addr_width_g
+      ) port map (
+        clk => clk, rstx => rstx,
+        -- Bus to TTA
+        tta_avalid_in  => core_pmem_2nd_avalid_in(0),
+        tta_aready_out => core_pmem_2nd_aready_out(0),
+        tta_aaddr_in   => core_pmem_2nd_aaddr_in,
+        tta_awren_in   => core_pmem_2nd_awren_in(0),
+        tta_astrb_in   => core_pmem_2nd_astrb_in,
+        tta_adata_in   => core_pmem_2nd_adata_in,
+        tta_rvalid_out => core_pmem_2nd_rvalid_out(0),
+        tta_rready_in  => core_pmem_2nd_rready_in(0),
+        tta_rdata_out  => core_pmem_2nd_rdata_out,
+        -- Bus to AXI if
+        axi_avalid_in  => axi_pmem_wide_avalid,
+        axi_aready_out => axi_pmem_wide_aready,
+        axi_aaddr_in   => axi_pmem_wide_aaddr,
+        axi_awren_in   => axi_pmem_wide_awren,
+        axi_astrb_in   => axi_pmem_wide_astrb,
+        axi_adata_in   => axi_pmem_wide_adata,
+        axi_rvalid_out => axi_pmem_wide_rvalid,
+        axi_rready_in  => axi_pmem_wide_rready,
+        axi_rdata_out  => axi_pmem_wide_rdata,
+        -- Bus to memory
+        mem_avalid_out => param_b_avalid_out(0),
+        mem_aready_in  => param_b_aready_in(0),
+        mem_aaddr_out  => param_b_aaddr_out,
+        mem_awren_out  => param_b_awren_out(0),
+        mem_astrb_out  => param_b_astrb_out,
+        mem_adata_out  => param_b_adata_out,
+        mem_rvalid_in  => param_b_rvalid_in(0),
+        mem_rready_out => param_b_rready_out(0),
+        mem_rdata_in   => param_b_rdata_in
+      );
+    end generate;
+
+    no_pmem_axi_arbiter : if not enable_second_pmem and not broadcast_pmem_c generate
+      param_b_avalid_out(0) <= axi_pmem_wide_avalid;
+      axi_pmem_wide_aready  <= param_b_aready_in(0);
+      param_b_aaddr_out     <= axi_pmem_wide_aaddr;
+      param_b_awren_out(0)  <= axi_pmem_wide_awren;
+      param_b_astrb_out     <= axi_pmem_wide_astrb;
+      param_b_adata_out     <= axi_pmem_wide_adata;
+      axi_pmem_wide_rvalid  <= param_b_rvalid_in(0);
+      param_b_rready_out(0) <= axi_pmem_wide_rready;
+      axi_pmem_wide_rdata   <= param_b_rdata_in;
+    end generate;
   end generate;
 
   no_pmem_expander : if not enable_pmem generate
@@ -687,6 +941,9 @@ begin
     pmem_rvalid <= '1';
     pmem_rdata  <= (others => '0');
   end generate;
+
+  
+  
 
   
 end architecture rtl;
