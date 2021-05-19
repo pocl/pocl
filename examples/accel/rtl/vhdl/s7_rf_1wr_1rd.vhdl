@@ -27,7 +27,7 @@
 -- Author     : Lasse Lehtonen <lasse.lehtonen@phnet.fi>
 -- Company    : Tampere University
 -- Created    : 2017
--- Last update: 2018-06-09
+-- Last update: 2020-06-05
 -- Platform   : Xilinx Series 7
 -------------------------------------------------------------------------------
 -- Description: Register file with one read and one write port.
@@ -36,6 +36,7 @@
 -- Date        Version  Author   Description
 -- 2017        1.0      lasse    Initial version
 -- 2018-06-09  1.1      tervoa   Cleanup for HDB
+-- 2020-06-05  1.2      leppanen Add sensitivity to glock
 -------------------------------------------------------------------------------
 
 
@@ -75,8 +76,10 @@ begin
   main_sp : process (clk)
   begin
     if clk'event and clk = '1' then
-      if load_wr_in = '1' then
-        reg_r(to_integer(unsigned(addr_wr_in))) <= data_wr_in;
+      if glock_in = '0' then
+        if load_wr_in = '1' then
+          reg_r(to_integer(unsigned(addr_wr_in))) <= data_wr_in;
+        end if;
       end if;
     end if;
   end process main_sp;

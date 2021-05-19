@@ -22,10 +22,10 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.std_logic_arith.all;
-use work.ffaccel_globals.all;
-use work.ffaccel_imem_mau.all;
+use work.tta_core_globals.all;
+use work.tta_core_imem_mau.all;
 
-entity ffaccel_decompressor is
+entity tta_core_decompressor is
 
   port (
     fetch_en        : out std_logic;
@@ -37,9 +37,9 @@ entity ffaccel_decompressor is
     clk             : in  std_logic;
     rstx            : in  std_logic);
   
-end ffaccel_decompressor;
+end tta_core_decompressor;
 
-architecture structural of ffaccel_decompressor is
+architecture structural of tta_core_decompressor is
   
 begin  -- structural
 
