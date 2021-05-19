@@ -38,7 +38,7 @@ main (int argc, char **argv)
   char libdevice[4096] = "";
   if (argc > 1)
     snprintf (libdevice, sizeof (libdevice),
-              "$ORIGIN/../../lib/CL/devices/%s/libpocl-devices-%s." SHLIB_EXT, argv[1],
+              "$ORIGIN/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
               argv[1]);
 
   void *handle_libpocl = dlopen (libpocl, RTLD_NOW | RTLD_GLOBAL);
