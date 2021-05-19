@@ -22,7 +22,6 @@ Release Highlights
 * Support for Clang/LLVM 12.0
 * Improved support for cross-compiling
 * Improved support for SPIR-V binaries when using CPU device
-* Changed default target OpenCL version to 3.0
 
 Misc. Notes
 -----------
