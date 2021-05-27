@@ -1,3 +1,21 @@
+1.7 May 2021
+============
+
+Notable User Facing Changes
+---------------------------
+
+- Support for LLVM 12.
+- support for cross-compiling PoCL
+- Added support for the cl_nv_device_attribute_query extension on CUDA devices.
+- improved support for SPIR-V binaries when using CPU device:
+  - improved local variables support
+  - OpenCL 2.0 atomics are now supported
+  - work_group_barrier, to_local/to_global are implemented
+- Implemented OpenCL 3.0 features
+  - clGetDeviceInfo queries
+    - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)
+    - CL_DEVICE_ATOMIC_FENCE_CAPABILITIES (Minimal implementation)
+
 1.6 December 2020
 =================
 
