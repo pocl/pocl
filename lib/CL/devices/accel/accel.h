@@ -40,7 +40,8 @@ extern "C"
 #endif
 
 #define EMULATING_ADDRESS 0xE
-#define EMULATING_MAX_SIZE 4 * 4096
+#define EMULATING_MAX_SIZE 4194304
+//#define EMULATING_MAX_SIZE 4 * 4096
 
 void *emulate_accel (void *E_void);
 

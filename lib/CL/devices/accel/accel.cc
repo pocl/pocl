@@ -110,6 +110,8 @@ enum BuiltinKernelId : uint16_t {
   POCL_CDBI_COPY = 0,
   POCL_CDBI_ADD32 = 1,
   POCL_CDBI_MUL32 = 2,
+  POCL_CDBI_LEDBLINK = 3,
+  POCL_CDBI_COUNTRED = 4,
 };
 
 struct AQLDispatchPacket {
@@ -197,6 +199,12 @@ BIKD BIDescriptors[] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
                         BIKD(POCL_CDBI_MUL32, "pocl.mul32",
                              {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
                               BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)}),
+                        BIKD(POCL_CDBI_LEDBLINK, "pocl.ledblink",
+                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS)}),
+                        BIKD(POCL_CDBI_COUNTRED, "pocl.countred",
+                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
                               BIArg("int*", "output", PTR_ARG, GLOBAL_AS)})};
 
 class MMAPRegion {
@@ -655,7 +663,11 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   POCL_INIT_LOCK(D->CommandListLock);
   POCL_INIT_LOCK(D->AQLQueueLock);
 
-  std::cout << "Custom device " << j << " initialized" << std::endl;
+  if (E->Emulating) {
+    std::cout << "Custom emulation device " << j << " initialized" << std::endl;
+  } else {
+    std::cout << "Custom device " << j << " initialized" << std::endl;
+  }
   return CL_SUCCESS;
 }
 
@@ -975,7 +987,7 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
  * AlmaIF v1 based accel emulator
  * Base_address is a preallocated emulation array that corresponds to the
  * memory map of the accelerator
- * Does operations 0,1,2
+ * Does operations 0,1,2,3,4
  * */
 void *emulate_accel(void *E_void) {
 
@@ -984,7 +996,7 @@ void *emulate_accel(void *E_void) {
 
   uint32_t ctrl_size = 1024;
   uint32_t imem_size = 0;
-  uint32_t dmem_size = 8192;
+  uint32_t dmem_size = 2097152;
   // The accelerator can choose the size of the queue (must be a power-of-two)
   // Can be even 1, to make the packet handling easiest with static offsets
   uint32_t queue_length = 2;
@@ -1092,6 +1104,7 @@ void *emulate_accel(void *E_void) {
     int dim_y = (packet->dimensions >= 2) ? (packet->grid_size_y) : 1;
     int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
 
+    int red_count = 0;
     POCL_MSG_PRINT_INFO(
         "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)",
         dim_x, dim_y, dim_z);
@@ -1111,9 +1124,22 @@ void *emulate_accel(void *E_void) {
           case (POCL_CDBI_MUL32):
             arg2[idx] = arg0[idx] * arg1[idx];
             break;
+          case (POCL_CDBI_COUNTRED):
+            uint32_t pixel = arg0[idx];
+            uint8_t pixel_r = pixel & 0xFF;
+            if (pixel_r > 100) {
+              red_count++;
+            }
           }
         }
       }
+    }
+    if (packet->kernel_object == POCL_CDBI_LEDBLINK) {
+      std::cout << "Emulation blinking " << dim_x << " led(s) at interval "
+                << arg0[0] << " us " << arg1[0] << " times" << std::endl;
+    }
+    if (packet->kernel_object == POCL_CDBI_COUNTRED) {
+      arg1[0] = red_count;
     }
 
     POCL_MSG_PRINT_INFO("accel emulate: Kernel done");
