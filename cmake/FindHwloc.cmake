@@ -3,7 +3,7 @@
 # ----------
 #
 # Try to find Portable Hardware Locality (hwloc) libraries.
-# http://www.open-mpi.org/software/hwloc
+# https://www.open-mpi.org/software/hwloc
 #
 # You may declare HWLOC_ROOT environment variable to tell where
 # your hwloc library is installed. 

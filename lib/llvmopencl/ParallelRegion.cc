@@ -649,7 +649,7 @@ ParallelRegion::InjectPrintF
   llvm::Value *stringArg = 
     builder.CreateGlobalString(formatStr);
     
-  /* generated with help from http://llvm.org/demo/index.cgi */
+  /* generated with help from https://llvm.org/demo/index.cgi */
   Function* printfFunc = M->getFunction("printf");
   if (printfFunc == NULL) {
     PointerType* PointerTy_4 = PointerType::get(IntegerType::get(M->getContext(), 8), 0);

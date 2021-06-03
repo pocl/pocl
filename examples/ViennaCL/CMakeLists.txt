@@ -33,7 +33,7 @@ set(ViennaCL_TGZ "${TS_SRCDIR}/${VIENNA}.tar.gz")
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/viennacl/viennacl-dev.git")
 else()
-  set(FETCH_SOURCE URL "http://sourceforge.net/projects/viennacl/files/1.7.x/ViennaCL-1.7.1.tar.gz/download")
+  set(FETCH_SOURCE URL "https://sourceforge.net/projects/viennacl/files/1.7.x/ViennaCL-1.7.1.tar.gz/download")
 endif()
 
 if(EXISTS "${ViennaCL_TGZ}")

@@ -207,7 +207,7 @@ pocl_size_ceil2(size_t x) {
   /* Rounds up to the next highest power of two without branching and
    * is as fast as a BSR instruction on x86, see:
    *
-   * http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+   * https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
    */
   --x;
   x |= x >> 1;
@@ -227,7 +227,7 @@ pocl_size_ceil2_64 (uint64_t x)
   /* Rounds up to the next highest power of two without branching and
    * is as fast as a BSR instruction on x86, see:
    *
-   * http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+   * https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
    */
   --x;
   x |= x >> 1;

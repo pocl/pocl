@@ -476,7 +476,7 @@ pocl_cache_init_topdir ()
 #else
         // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
         // $HOME/.cache should be used."
-        // http://standards.freedesktop.org/basedir-spec/latest/
+        // https://standards.freedesktop.org/basedir-spec/latest/
         tmp_path = getenv("XDG_CACHE_HOME");
         const char *p;
         if (use_kernel_cache)
