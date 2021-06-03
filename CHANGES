@@ -1,5 +1,5 @@
-1.7 unreleased
-==============
+1.7 May 2021
+============
 
 Notable User Facing Changes
 ---------------------------
@@ -11,9 +11,6 @@ Notable User Facing Changes
   - improved local variables support
   - OpenCL 2.0 atomics are now supported
   - work_group_barrier, to_local/to_global are implemented
-- Changed default target OpenCL version to 3.0. Note: PoCL still lacks support 
-  for most new features in OpenCL 3.0 and calling such features might result in
-  undefined behaviour.
 - Implemented OpenCL 3.0 features
   - clGetDeviceInfo queries
     - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)

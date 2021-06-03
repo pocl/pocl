@@ -47,10 +47,12 @@ if(SANITIZER_OPTIONS)
   list(INSERT POCL_PUBLIC_LINK_LIST 0 ${SANITIZER_LIBS})
 endif()
 
+if(Hwloc_FOUND)
 if(Hwloc_LDFLAGS)
   list(INSERT POCL_PUBLIC_LINK_LIST 0 ${Hwloc_LDFLAGS})
 else()
   list(INSERT POCL_PUBLIC_LINK_LIST 0 ${Hwloc_LIBRARIES})
+endif()
 endif()
 
 # -lrt is required for glibc < 2.17

@@ -21,11 +21,13 @@ tools:
 
 Installing requirements for Ubuntu::
 
-    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev
+Note: The binary packages from https://apt.llvm.org/ are recommended
+(and tested for each release) instead of the binary tar balls or
+the packages included in the distribution. The following assumes
+apt.llvm.org is added to your apt repos (LLVM_VERSION=12 recommended
+for PoCL 1.7)::
 
-If you're using LLVM 10 or newer, additionally you must::
-
-    apt install -y libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
+    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
 Installing requirements for Arch Linux::
 
