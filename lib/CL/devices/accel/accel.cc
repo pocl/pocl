@@ -954,8 +954,9 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
         auto chunk =
             (chunk_info_t *)m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
         size_t buffer = (size_t)chunk->start_address;
-        if (!(D->RelativeAddressing)) {
-          buffer += al->offset;
+        buffer += al->offset;
+        if (D->RelativeAddressing) {
+          buffer -= D->DataMemory.PhysAddress;
         }
         *(size_t *)current_arg = buffer;
       }
