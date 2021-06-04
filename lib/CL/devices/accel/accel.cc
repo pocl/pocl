@@ -188,6 +188,9 @@ public:
   void Map(size_t Address, size_t RegionSize, int mem_fd) {
     PhysAddress = Address;
     Size = RegionSize;
+    if (Size == 0) {
+        return;
+    }
 #ifdef ACCEL_MMAP_DEBUG
     POCL_MSG_PRINT_INFO("accel: mmap'ing from address 0x%zx with size %zu\n",
                         Address, RegionSize);
