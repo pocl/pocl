@@ -24,11 +24,17 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
+#ifdef __APPLE__
+#define SHLIB_EXT "dylib"
+#else
+#define SHLIB_EXT "so"
+#endif
+
 int
 main (int argc, char **argv)
 {
   int ret = 0;
-  const char *libpocl = "$ORIGIN/../../lib/CL/libpocl.so";
+  const char *libpocl = "$ORIGIN/../../lib/CL/libpocl." SHLIB_EXT;
   char libdevice[4096] = "";
   if (argc > 1)
     snprintf (libdevice, sizeof (libdevice),
