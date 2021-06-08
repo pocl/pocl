@@ -93,11 +93,14 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  cl_mem buffers[2] = { src_buffer, dst_buffer };
+  cl_mem buffers[3] = { src_buffer, dst_buffer, NULL };
+  if (src_buffer->size_buffer != NULL)
+    buffers[2] = src_buffer->size_buffer;
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list, 2, buffers);
+  errcode
+      = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER,
+                             event, num_events_in_wait_list, event_wait_list,
+                             (buffers[2] == NULL ? 2 : 3), buffers);
   if (errcode != CL_SUCCESS)
     return errcode;
 
@@ -110,6 +113,14 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.copy.dst = dst_buffer;
 
   cmd->command.copy.size = size;
+  if (src_buffer->size_buffer != NULL)
+    {
+      cmd->command.copy.src_content_size = src_buffer->size_buffer;
+      cmd->command.copy.src_content_size_mem_id
+          = &src_buffer->size_buffer->device_ptrs[device->dev_id];
+      src_buffer->size_buffer->owning_device = command_queue->device;
+      POname (clRetainMemObject) (src_buffer->size_buffer);
+    }
 
   POname(clRetainMemObject)(src_buffer);
   src_buffer->owning_device = command_queue->device;

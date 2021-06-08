@@ -156,7 +156,9 @@ typedef struct
 {
   pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *dst_mem_id;
+  pocl_mem_identifier *src_content_size_mem_id;
   cl_mem src;
+  cl_mem src_content_size;
   cl_mem dst;
   size_t src_offset;
   size_t dst_offset;

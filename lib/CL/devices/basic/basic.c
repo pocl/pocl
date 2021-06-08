@@ -84,6 +84,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->write = pocl_driver_write;
   ops->write_rect = pocl_driver_write_rect;
   ops->copy = pocl_driver_copy;
+  ops->copy_with_size = pocl_driver_copy_with_size;
   ops->copy_rect = pocl_driver_copy_rect;
   ops->memfill = pocl_driver_memfill;
   ops->map_mem = pocl_driver_map_mem;

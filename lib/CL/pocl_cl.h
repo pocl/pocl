@@ -542,6 +542,18 @@ struct pocl_device_ops {
                      size_t src_row_pitch,
                      size_t src_slice_pitch);
 
+  /* clEnqCopyBuffer with the cl_pocl_content_size extension. This callback is optional */
+  void (*copy_with_size) (void *data,
+                          pocl_mem_identifier *dst_mem_id,
+                          cl_mem dst_buf,
+                          pocl_mem_identifier *src_mem_id,
+                          cl_mem src_buf,
+                          pocl_mem_identifier *content_size_buf_mem_id,
+                          cl_mem content_size_buf,
+                          size_t dst_offset,
+                          size_t src_offset,
+                          size_t size);
+
   /* clEnqFillBuffer */
   void (*memfill) (void *data,
                    pocl_mem_identifier * dst_mem_id,
@@ -1147,6 +1159,14 @@ struct _cl_mem {
   cl_mem_t *parent;
   /* A linked list of destructor callbacks */
   mem_destructor_callback_t *destructor_callbacks;
+
+  /* These two are for cl_pocl_content_size extension.
+   * They link two buffers together, like this:
+   * mem->size_buffer->content_buffer = mem
+   * mem->content_buffer->size_buffer = mem
+   */
+  cl_mem size_buffer;
+  cl_mem content_buffer;
 
   /* for images, a flag for each device in context,
    * whether that device supports this */

@@ -127,6 +127,24 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       if (memobj->is_image)
         POCL_MEM_FREE (memobj->device_supports_this_image);
 
+      if (memobj->content_buffer)
+        {
+          POCL_LOCK_OBJ (memobj->content_buffer);
+          assert (memobj->content_buffer->size_buffer == memobj);
+          memobj->content_buffer->size_buffer = NULL;
+          POCL_UNLOCK_OBJ (memobj->content_buffer);
+          memobj->content_buffer = NULL;
+        }
+
+      if (memobj->size_buffer)
+        {
+          POCL_LOCK_OBJ (memobj->size_buffer);
+          assert (memobj->size_buffer->content_buffer == memobj);
+          memobj->size_buffer->content_buffer = NULL;
+          POCL_UNLOCK_OBJ (memobj->size_buffer);
+          memobj->size_buffer = NULL;
+        }
+
       POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);
 

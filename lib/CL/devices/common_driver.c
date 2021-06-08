@@ -71,6 +71,33 @@ pocl_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
 }
 
 void
+pocl_driver_copy_with_size (void *data, pocl_mem_identifier *dst_mem_id,
+                            cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
+                            cl_mem src_buf,
+                            pocl_mem_identifier *content_size_buf_mem_id,
+                            cl_mem content_size_buf, size_t dst_offset,
+                            size_t src_offset, size_t size)
+{
+  char *__restrict__ src_ptr = (char *)src_mem_id->mem_ptr;
+  char *__restrict__ dst_ptr = (char *)dst_mem_id->mem_ptr;
+  if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
+    return;
+
+  uint64_t *content_size = (uint64_t *)content_size_buf_mem_id->mem_ptr;
+  if (*content_size < (src_offset + size))
+    {
+      if (*content_size > src_offset)
+        {
+          size_t real_bytes = *content_size - src_offset;
+          size_t to_copy = real_bytes < size ? real_bytes : size;
+          memcpy (dst_ptr + dst_offset, src_ptr + src_offset, to_copy);
+        }
+    }
+  else
+    memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
+}
+
+void
 pocl_driver_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
                        cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
                        cl_mem src_buf,

@@ -139,5 +139,6 @@ POdeclsym(clGetGLTextureInfo)
 POdeclsym(clEnqueueAcquireGLObjects)
 POdeclsym(clEnqueueReleaseGLObjects)
 POdeclsym(clGetGLContextInfoKHR)
+POdeclsym(clSetContentSizeBufferPoCL)
 
 #endif

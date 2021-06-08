@@ -1,0 +1,80 @@
+XXX - Not complete yet!!!
+
+
+Name Strings
+
+    cl_pocl_content_size
+
+Contributors
+
+    Michal Babej, Tampere University
+    Pekka Jääskeläinen, Tampere University
+    Jan Solanti, Tampere University
+
+Contact
+
+    Pekka Jääskeläinen, pekka dot jaaskelainen at tuni dot fi
+    TODO maybe some CPC group mail ?
+
+IP Status
+
+    No known IP claims
+
+Version
+
+    Version 1, 15th of July 2021
+
+Number
+
+    TBD
+
+Status
+
+    Incomplete - DO NOT SHIP
+
+Extension Type
+
+    OpenCL platform extension
+
+Dependencies
+
+    OpenCL 1.2
+
+Overview
+
+    This extension provides a way to to indicate
+    a buffer which will hold the meaningful
+    bytes of another buffer, after kernel execution.
+
+    The implementation can use this as an optimization hint,
+    to internally optimize buffer transfers in scenarios with kernels
+    producing dynamic data sizes, by not transferring
+    the bytes that were not written to.
+
+    The user is responsible for maintaining the correct meaningful byte count.
+    The buffer holding the byte count must be at least 64bits large.
+    The meaningful byte count is stored as 64bit unsigned integer, little endian.
+
+Header File
+
+    cl_ext_pocl.h
+
+New Procedures and Functions
+
+    The extension adds a single new API entry:
+
+    extern CL_API_ENTRY cl_int CL_API_CALL
+    clSetContentSizeBufferPoCL (cl_mem  buffer,
+                                cl_mem  content_size_buffer);
+
+    This call sets the buffer in 2nd argument ("content_size_buffer")
+    to hold the meaningful byte count for the content of the
+    buffer in 1st argument ("buffer").
+
+New Tokens
+
+    None
+
+Revision History
+
+    Version 1 - Initial Revision

@@ -149,13 +149,11 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR("The pocl project");
 
     case CL_PLATFORM_EXTENSIONS:
-      // TODO: do we want to list all supported extensions *here*, or in some header?.
-      // TODO: yes, it is better here: available through ICD Loader and headers can be the ones from Khronos Group
+      POCL_RETURN_GETINFO_STR (
 #ifdef BUILD_ICD
-      POCL_RETURN_GETINFO_STR("cl_khr_icd");
-#else
-      POCL_RETURN_GETINFO_STR("");
+          "cl_khr_icd"
 #endif
+          " cl_pocl_content_size");
 
     case CL_PLATFORM_ICD_SUFFIX_KHR:
       POCL_RETURN_GETINFO_STR("POCL");

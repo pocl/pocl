@@ -402,15 +402,28 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_COPY_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->copy);
-      dev->ops->copy
-        (dev->data,
-         cmd->copy.dst_mem_id,
-         event->mem_objs[1],
-         cmd->copy.src_mem_id,
-         event->mem_objs[0],
-         cmd->copy.dst_offset,
-         cmd->copy.src_offset,
-         cmd->copy.size);
+      if (dev->ops->copy_with_size && cmd->copy.src_content_size != NULL)
+          dev->ops->copy_with_size
+            (dev->data,
+             cmd->copy.dst_mem_id,
+             cmd->copy.dst,
+             cmd->copy.src_mem_id,
+             cmd->copy.src,
+             cmd->copy.src_content_size_mem_id,
+             cmd->copy.src_content_size,
+             cmd->copy.dst_offset,
+             cmd->copy.src_offset,
+             cmd->copy.size);
+      else
+          dev->ops->copy
+            (dev->data,
+             cmd->copy.dst_mem_id,
+             cmd->copy.dst,
+             cmd->copy.src_mem_id,
+             cmd->copy.src,
+             cmd->copy.dst_offset,
+             cmd->copy.src_offset,
+             cmd->copy.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer           ");
       break;
 

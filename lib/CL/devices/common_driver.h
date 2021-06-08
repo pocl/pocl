@@ -38,6 +38,15 @@ POCL_EXPORT
                          cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
                          cl_mem src_buf, size_t dst_offset, size_t src_offset,
                          size_t size);
+
+POCL_EXPORT
+  void pocl_driver_copy_with_size (void *data,
+                                   pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                                   pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                                   pocl_mem_identifier *content_size_buf_mem_id,
+                                   cl_mem content_size_buf,
+                                   size_t dst_offset, size_t src_offset, size_t size);
+
 POCL_EXPORT
   void pocl_driver_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
                               cl_mem dst_buf, pocl_mem_identifier *src_mem_id,

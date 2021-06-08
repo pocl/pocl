@@ -51,6 +51,10 @@ CL_EXT_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clIcdGetPlatformIDsKHR") == 0)
     return (void *)&POname(clIcdGetPlatformIDsKHR);
 #endif
+
+  if (strcmp (func_name, "clSetContentSizeBufferPoCL") == 0)
+    return (void *)&POname (clSetContentSizeBufferPoCL);
+
   if (strcmp (func_name, "clGetPlatformInfo") == 0)
     return (void *)&POname(clGetPlatformInfo);
 
