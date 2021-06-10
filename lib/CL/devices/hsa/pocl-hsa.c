@@ -73,10 +73,6 @@
 
 #endif
 
-#ifndef HAVE_LIBDL
-#error HSA driver requires DL library
-#endif
-
 #include "pocl-hsa.h"
 #include "common.h"
 #include "devices.h"
