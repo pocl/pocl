@@ -67,16 +67,13 @@ uint64_t pocl_gettimemono_ns() {
 
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec timespec;
-# ifdef __linux__
-#  ifdef CLOCK_MONOTONIC_RAW 
+# ifdef CLOCK_MONOTONIC_RAW /* Linux */
   clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
-#  else
-#   warning Using clock_gettime with CLOCK_MONOTONIC for monotonic clocks
-  clock_gettime(CLOCK_MONOTONIC, &timespec);
-#  endif
-# elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
+# elif defined(CLOCK_UPTIME_FAST) /* FreeBSD, DragonFlyBSD, etc */
   clock_gettime(CLOCK_UPTIME_FAST, &timespec);
-# else
+# elif defined(CLOCK_MONOTONIC) /* POSIX 2008, NetBSD, etc */
+  clock_gettime(CLOCK_MONOTONIC, &timespec);
+# else /* older POSIX didn't define CLOCK_MONOTONIC */
 # warning Using clock_gettime with CLOCK_REALTIME for monotonic clocks
   clock_gettime(CLOCK_REALTIME, &timespec);
 # endif
