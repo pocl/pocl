@@ -51,10 +51,6 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
-#ifndef HAVE_LIBDL
-#error Pthread driver requires DL library
-#endif
-
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
 #endif

@@ -50,10 +50,6 @@
 #include "pocl_llvm.h"
 #endif
 
-#ifndef HAVE_LIBDL
-#error Basic driver requires DL library
-#endif
-
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;

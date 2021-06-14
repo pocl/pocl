@@ -35,6 +35,8 @@
 
 #cmakedefine ENABLE_SPIRV
 
+#cmakedefine HAVE_DLFCN_H
+
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
@@ -56,8 +58,6 @@
 #cmakedefine HAVE_FUTIMENS
 
 #cmakedefine HAVE_LTTNG_UST
-
-#cmakedefine HAVE_LIBDL
 
 #cmakedefine HAVE_OCL_ICD
 
