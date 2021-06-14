@@ -416,9 +416,12 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   if (!device->vendor_id)
     {
       f = fopen (pci_bus_root_vendor_file, "r");
-      num_read = fscanf (f, "%x", &device->vendor_id);
-      fclose (f);
-      /* no error checking, if it failed we just won't have the info */
+      if (f)
+        {
+          /* no error checking, if it failed we just won't have the info */
+          num_read = fscanf (f, "%x", &device->vendor_id);
+          fclose (f);
+        }
     }
 }
 
