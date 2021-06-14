@@ -1,3 +1,18 @@
+1.8 unreleased
+==============
+
+Notable User Facing Changes
+---------------------------
+
+- Support for NetBSD.
+- Support for Unix systems without libdl.
+
+Notable Bug Fixes
+-----------------
+
+- Fixed a potential crash on Unix systems without sysfs mounted.
+
+
 1.7 May 2021
 ============
 
