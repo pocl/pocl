@@ -1,18 +1,18 @@
 // Class definition for parallel regions, a group of BasicBlocks that
 // each kernel should run in parallel.
-// 
+//
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -45,14 +45,43 @@ namespace pocl {
 
 class Kernel;
 
-  // TODO Cleanup: this should not inherit vector but contain it.
-  // It now exposes too much to the clients and leads to hard
-  // to track errors when the API is changed.
-  class ParallelRegion : public std::vector<llvm::BasicBlock *> {    
+  class ParallelRegion {
+  private:
+    using BBContainer = std::vector<llvm::BasicBlock *>;
+
   public:
     typedef llvm::SmallVector<ParallelRegion *, 8> ParallelRegionVector;
 
+    using iterator = BBContainer::iterator;
+    using const_iterator = BBContainer::const_iterator;
+
     ParallelRegion(int forcedRegionId=-1);
+
+    iterator begin() { return BBs_.begin(); }
+    iterator end() { return BBs_.end(); }
+
+    const_iterator begin() const { return BBs_.begin(); }
+    const_iterator end() const { return BBs_.end(); }
+
+    llvm::BasicBlock *front() { return BBs_.front(); }
+    llvm::BasicBlock *back() { return BBs_.back(); }
+
+    llvm::BasicBlock *at(size_t index) { return BBs_.at(index); }
+    llvm::BasicBlock *operator[](size_t index) { return BBs_[index]; }
+
+    std::size_t size() const { return BBs_.size(); }
+    bool empty() const { return BBs_.empty(); }
+
+    void push_back(llvm::BasicBlock *BB) { BBs_.push_back(BB); }
+
+    void insert(const_iterator pos, llvm::BasicBlock *BB) {
+      BBs_.insert(pos, BB);
+    }
+
+    template <typename InIteratorT>
+    void insert(const_iterator pos, InIteratorT first, InIteratorT last) {
+      BBs_.insert(pos, first, last);
+    }
 
     /* BarrierBlock *getEntryBarrier(); */
     ParallelRegion *replicate(llvm::ValueToValueMapTy &map,
@@ -75,9 +104,9 @@ class Kernel;
 
     llvm::BasicBlock* exitBB() { return at(exitIndex_); }
     llvm::BasicBlock* entryBB() { return at(entryIndex_); }
-    void AddIDMetadata(llvm::LLVMContext& context, 
-                       std::size_t x = 0, 
-                       std::size_t y = 0, 
+    void AddIDMetadata(llvm::LLVMContext& context,
+                       std::size_t x = 0,
+                       std::size_t y = 0,
                        std::size_t z = 0);
 
     void AddParallelLoopMetadata
@@ -94,7 +123,7 @@ class Kernel;
          std::vector<llvm::Value*>& params);
 
     static ParallelRegion *
-      Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs, 
+      Create(const llvm::SmallPtrSet<llvm::BasicBlock *, 8>& bbs,
              llvm::BasicBlock *entry, llvm::BasicBlock *exit);
 
     static void GenerateTempNames(llvm::BasicBlock *bb);
@@ -108,6 +137,8 @@ class Kernel;
     int GetID() const { return pRegionId; }
 
   private:
+    BBContainer BBs_;
+
     llvm::Instruction* LocalIDXLoadInstr;
     llvm::Instruction* LocalIDYLoadInstr;
     llvm::Instruction* LocalIDZLoadInstr;
@@ -123,7 +154,7 @@ class Kernel;
     static int idGen;
 
   };
-    
+
 }
-                              
+
 #endif
