@@ -815,7 +815,7 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
   }
 }
 
-size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
+chunk_info_t* scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
                        void *arguments) {
   int32_t kernelID = -1;
   for (auto supportedKernel : data->SupportedKernels) {
@@ -894,14 +894,14 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
 
   POCL_UNLOCK(data->AQLQueueLock);
 
-  return chunk->start_address;
+  return chunk;
 }
 
 int waitOnEvent(AccelData *data, size_t event) {
   size_t offset = event - data->DataMemory.PhysAddress;
   uint32_t status;
   do {
-    usleep(20000);
+    usleep(20);
     status = data->DataMemory.Read32(offset);
   } while (status == 0);
   return status - 1;
@@ -969,9 +969,11 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
     }
   }
 
-  size_t event = scheduleNDRange(D, &cmd->command.run, arg_size, arguments);
+  chunk_info_t* chunk = scheduleNDRange(D, &cmd->command.run, arg_size, arguments);
+  size_t event = chunk->start_address;
   free(arguments);
   int fail = waitOnEvent(D, event);
+  free_chunk(chunk);
   if (fail) {
     POCL_MSG_ERR("accel: command execution returned failure with kernel %s\n",
                  kernel->name);
