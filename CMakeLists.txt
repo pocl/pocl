@@ -419,7 +419,18 @@ include(sanitizers)
 
 if(ENABLE_TBB_DEVICE)
   # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
-  find_package(TBB REQUIRED tbb)
+  find_package(TBB)
+  if(NOT TBB AND PKG_CONFIG_FOUND)
+    pkg_check_modules(TBB tbb>=2015)
+    if(TBB_FOUND)
+      set(TBB_IMPORTED_TARGETS "${TBB_LIBRARIES}" CACHE STRING "TBB libraries" FORCE)
+    endif()
+  endif()
+
+  if(NOT TBB_IMPORTED_TARGETS)
+    message(FATAL_ERROR "Can't find TBB libraries")
+  endif()
+
   # The tbb device depends on the pthread device which depends on the basic device. ENABLE_HOST_CPU_DEVICES enables both.
   set(ENABLE_HOST_CPU_DEVICES 1)
 endif()
