@@ -31,8 +31,8 @@
   void _CL_OVERLOADABLE                                 \
   vstore2(TYPE##2 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
-    p[offset*2] = data.lo;                              \
-    p[offset*2+1] = data.hi;                            \
+    MOD TYPE##2 *pp = (MOD TYPE##2 *)(p + offset*2);    \
+    pp[0] = data;                                       \
   }                                                     \
                                                         \
   void _CL_OVERLOADABLE                                 \
@@ -45,22 +45,22 @@
   void _CL_OVERLOADABLE                                 \
   vstore4(TYPE##4 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
-    vstore2(data.lo, 0, &p[offset*4]);                  \
-    vstore2(data.hi, 0, &p[offset*4+2]);                \
+    MOD TYPE##4 *pp = (MOD TYPE##4 *)(p + offset*4);    \
+    pp[0] = data;                                       \
   }                                                     \
                                                         \
   void _CL_OVERLOADABLE                                 \
   vstore8(TYPE##8 data, size_t offset, MOD TYPE *p)     \
   {                                                     \
-    vstore4(data.lo, 0, &p[offset*8]);                  \
-    vstore4(data.hi, 0, &p[offset*8+4]);                \
+    MOD TYPE##8 *pp = (MOD TYPE##8 *)(p + offset*8);    \
+    pp[0] = data;                                       \
   }                                                     \
                                                         \
   void _CL_OVERLOADABLE                                 \
   vstore16(TYPE##16 data, size_t offset, MOD TYPE *p)   \
   {                                                     \
-    vstore8(data.lo, 0, &p[offset*16]);                 \
-    vstore8(data.hi, 0, &p[offset*16+8]);               \
+    MOD TYPE##16 *pp = (MOD TYPE##16 *)(p + offset*16); \
+    pp[0] = data;                                       \
   }
 
 

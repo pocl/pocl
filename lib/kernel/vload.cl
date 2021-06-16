@@ -31,7 +31,8 @@
   TYPE##2 _CL_OVERLOADABLE                                              \
   vload2(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
-    return (TYPE##2)(p[offset*2], p[offset*2+1]);                       \
+    const MOD TYPE##2 *pp = (const MOD TYPE##2 *)(p + offset*2);        \
+    return pp[0];                                                       \
   }                                                                     \
                                                                         \
   TYPE##3 _CL_OVERLOADABLE                                              \
@@ -43,19 +44,22 @@
   TYPE##4 _CL_OVERLOADABLE                                              \
   vload4(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
-    return (TYPE##4)(vload2(0, &p[offset*4]), vload2(0, &p[offset*4+2])); \
+    const MOD TYPE##4 *pp = (const MOD TYPE##4 *)(p + offset*4);        \
+    return pp[0];                                                       \
   }                                                                     \
                                                                         \
   TYPE##8 _CL_OVERLOADABLE                                              \
   vload8(size_t offset, const MOD TYPE *p)                              \
   {                                                                     \
-    return (TYPE##8)(vload4(0, &p[offset*8]), vload4(0, &p[offset*8+4])); \
+    const MOD TYPE##8 *pp = (const MOD TYPE##8 *)(p + offset*8);        \
+    return pp[0];                                                       \
   }                                                                     \
                                                                         \
   TYPE##16 _CL_OVERLOADABLE                                             \
   vload16(size_t offset, const MOD TYPE *p)                             \
   {                                                                     \
-    return (TYPE##16)(vload8(0, &p[offset*16]), vload8(0, &p[offset*16+8])); \
+    const MOD TYPE##16 *pp = (const MOD TYPE##16 *)(p + offset*16);     \
+    return pp[0];                                                       \
   }
 
 
