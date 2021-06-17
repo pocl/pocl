@@ -148,6 +148,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
+                   "clSetDefaultDeviceCommandQueue.c"
                    "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c")
 
 if(ANDROID)

@@ -41,7 +41,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_event_double_wait test_buffer_migration test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback
-  test_cl_pocl_content_size)
+  test_cl_pocl_content_size test_deviceside_enqueue)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -114,6 +114,8 @@ add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clS
 
 add_test_pocl(NAME "runtime/test_cl_pocl_content_size" COMMAND "test_cl_pocl_content_size")
 
+add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_enqueue")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -125,8 +127,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
-  "runtime/test_cl_pocl_content_size"
-
+  "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -165,6 +166,7 @@ set_property(TEST
   "runtime/test_event_double_wait"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  "runtime/test_deviceside_enqueue"
   APPEND PROPERTY LABELS "cuda")
 
 set_property(TEST
@@ -185,6 +187,7 @@ set_property(TEST
   "runtime/test_enqueue_kernel_from_binary"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  "runtime/test_deviceside_enqueue"
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST

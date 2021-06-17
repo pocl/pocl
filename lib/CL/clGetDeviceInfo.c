@@ -316,11 +316,14 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       POCL_RETURN_GETINFO_STR ("1.2");
     else
       POCL_RETURN_GETINFO_STR ("");
+
+  /* NOTE: This will be renamed to CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES */
+  case CL_DEVICE_DEVICE_ENQUEUE_SUPPORT:
+    POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);
   case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_host_queue_props);
-
   case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:
     POCL_RETURN_GETINFO(size_t, device->global_var_pref_size);
   case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:

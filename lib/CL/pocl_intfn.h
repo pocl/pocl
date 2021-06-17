@@ -142,5 +142,6 @@ POdeclsym(clGetGLContextInfoKHR)
 POdeclsym(clSetContentSizeBufferPoCL)
 POdeclsym(clCreatePipe)
 POdeclsym(clGetPipeInfo)
+POdeclsym(clSetDefaultDeviceCommandQueue)
 
 #endif

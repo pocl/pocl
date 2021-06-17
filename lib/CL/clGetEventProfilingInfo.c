@@ -62,6 +62,10 @@ POname(clGetEventProfilingInfo)(cl_event event,
     case CL_PROFILING_COMMAND_END:
       *(cl_ulong*)param_value = event->time_end;
       break;
+    case CL_PROFILING_COMMAND_COMPLETE:
+      /* Child commands not supported */
+      *(cl_ulong *)param_value = event->time_end;
+      break;
     default:
       return CL_INVALID_VALUE;
     }

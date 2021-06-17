@@ -181,7 +181,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown140 */
   NULL, /* &clUnknown141 */
   NULL, /* &clUnknown142 */
-  NULL, /* &clUnknown143 */
+  &POname(clSetDefaultDeviceCommandQueue),
   NULL, /* &clUnknown144 */
   NULL, /* &clUnknown145 */
   NULL, /* &clUnknown146 */

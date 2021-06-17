@@ -813,16 +813,15 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
                   | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
                   | CL_DEVICE_SVM_ATOMICS;
   /* This is from clinfo output ran on AMD Catalyst drivers */
-  dev->max_events = 1024;
-  dev->max_queues = 1;
   dev->pipe_support = CL_FALSE;
+  dev->max_events = 0;
+  dev->max_queues = 0;
   dev->max_pipe_args = 16;
   dev->max_pipe_active_res = 16;
   dev->max_pipe_packet_size = 1024 * 1024;
-  dev->dev_queue_pref_size = 256 * 1024;
-  dev->dev_queue_max_size = 512 * 1024;
-  dev->on_dev_queue_props
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+  dev->dev_queue_pref_size = 0;
+  dev->dev_queue_max_size = 0;
+  dev->on_dev_queue_props = 0;
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
   pocl_hsa_device_data_t *d = init_dev_data (dev, j);
