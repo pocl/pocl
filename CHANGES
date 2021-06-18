@@ -4,6 +4,14 @@
 Notable User Facing Changes
 ---------------------------
 
+- CMake: Inter-Procedural Optimization is enabled on code of runtime library
+  (libpocl.so is compiled with -flto on systems that support it).
+- LTTng tracing improved - more command types are traced, and also
+  some synchronous API calls (like clCreateBuffer) are traced.
+- poclcc, tests and examples can be disabled with CMake options
+- Valgrind support improved by making Valgrind aware of pocl's
+  reference counting of cl_* objects
+- kernels which are called by kernels are now force-inlined
 - Support for NetBSD.
 - Support for Unix systems without libdl.
 
