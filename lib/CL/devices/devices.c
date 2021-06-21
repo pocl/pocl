@@ -95,28 +95,34 @@
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
 
+#ifdef ENABLE_LOADABLE_DRIVERS
+#define INIT_DEV(ARG) NULL
+#else
+#define INIT_DEV(ARG) pocl_##ARG##_init_device_ops
+#endif
+
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
 
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_BASIC
-  NULL,
+  INIT_DEV (basic),
 #endif
 #ifdef BUILD_PTHREAD
-  NULL,
+  INIT_DEV (pthread),
 #endif
 #ifdef TCE_AVAILABLE
-  NULL,
+  INIT_DEV (ttasim),
 #endif
 #ifdef BUILD_HSA
-  NULL,
+  INIT_DEV (hsa),
 #endif
 #ifdef BUILD_CUDA
-  NULL,
+  INIT_DEV (cuda),
 #endif
 #ifdef BUILD_ACCEL
-  NULL,
+  INIT_DEV (accel),
 #endif
 };
 
@@ -129,16 +135,16 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #ifdef BUILD_PTHREAD
   "pthread",
 #endif
-#if defined(TCE_AVAILABLE)
+#ifdef TCE_AVAILABLE
   "ttasim",
 #endif
-#if defined(BUILD_HSA)
+#ifdef BUILD_HSA
   "hsa",
 #endif
-#if defined(BUILD_CUDA)
+#ifdef BUILD_CUDA
   "cuda",
 #endif
-#if defined(BUILD_ACCEL)
+#ifdef BUILD_ACCEL
   "accel",
 #endif
 };
@@ -159,6 +165,8 @@ static unsigned device_count[POCL_NUM_DEVICE_TYPES];
 static unsigned devices_active = 0;
 
 static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+
+#ifdef ENABLE_LOADABLE_DRIVERS
 
 static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 
@@ -213,6 +221,7 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
       strcat (result, ".so");
     }
 }
+#endif
 
 /**
  * Get the number of specified devices from environment
@@ -339,10 +348,12 @@ pocl_uninit_devices ()
               retval = ret;
               goto FINISH;
             }
+#ifdef ENABLE_LOADABLE_DRIVERS
           if (pocl_device_handles[i] != NULL)
             {
               dlclose (pocl_device_handles[i]);
             }
+#endif
           ++dev_index;
         }
     }
@@ -478,6 +489,7 @@ pocl_init_devices ()
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+#ifdef ENABLE_LOADABLE_DRIVERS
       if (pocl_devices_init_ops[i] == NULL)
         {
           char device_library[PATH_MAX] = "";
@@ -529,6 +541,9 @@ pocl_init_devices ()
         {
           pocl_device_handles[i] = NULL;
         }
+#else
+      assert (pocl_devices_init_ops[i] != NULL);
+#endif
       pocl_devices_init_ops[i](&pocl_device_ops[i]);
       assert(pocl_device_ops[i].device_name != NULL);
 

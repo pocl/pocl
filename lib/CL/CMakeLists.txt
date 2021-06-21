@@ -149,12 +149,21 @@ if(ANDROID)
 endif()
 
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
-                 "$<TARGET_OBJECTS:pocl_cache>"
-                 "$<TARGET_OBJECTS:pocl-devices>"
-                 "$<TARGET_OBJECTS:pocl-devices-topology>")
+                 "$<TARGET_OBJECTS:pocl_cache>")
+
+if(ENABLE_LOADABLE_DRIVERS)
+  list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices>")
+  if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
+    list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices-topology>")
+  endif()
+else()
+  # link drivers into libpocl
+  list(APPEND LIBPOCL_OBJS ${POCL_DEVICES_OBJS})
+endif()
 
 add_library("pocl_cache" OBJECT "pocl_cache.c")
 harden("pocl_cache")
+
 
 if (ENABLE_LLVM)
   include_directories(${LLVM_INCLUDE_DIRS})
@@ -214,14 +223,6 @@ endif()
 # -lrt is required for glibc < 2.17
 if(HAVE_CLOCK_GETTIME AND CMAKE_SYSTEM_NAME MATCHES "Linux")
   list(APPEND POCL_PRIVATE_LINK_LIST "rt")
-endif()
-
-if(Hwloc_FOUND)
-if(Hwloc_LDFLAGS)
-  list(APPEND POCL_PRIVATE_LINK_LIST ${Hwloc_LDFLAGS})
-else()
-  list(APPEND POCL_PRIVATE_LINK_LIST ${Hwloc_LIBRARIES})
-endif()
 endif()
 
 list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})

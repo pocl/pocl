@@ -73,6 +73,8 @@
 
 #cmakedefine ENABLE_LLVM
 
+#cmakedefine ENABLE_LOADABLE_DRIVERS
+
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
