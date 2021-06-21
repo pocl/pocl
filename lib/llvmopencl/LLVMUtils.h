@@ -28,10 +28,12 @@
 
 #include "pocl.h"
 #include "pocl_spir.h"
+//#include "_libclang_versions_checks.h"
 
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Metadata.h>
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/Cloning.h> // for CloneFunctionIntoAbs
 
 namespace llvm {
     class Module;
@@ -106,6 +108,26 @@ void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
                               unsigned AS);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
+}
+
+template <typename VectorT>
+void CloneFunctionIntoAbs(llvm::Function *NewFunc,
+                          const llvm::Function *OldFunc,
+                          llvm::ValueToValueMapTy &VMap, VectorT &Returns,
+                          const char *NameSuffix = "",
+                          llvm::ClonedCodeInfo *CodeInfo = nullptr,
+                          llvm::ValueMapTypeRemapper *TypeMapper = nullptr,
+                          llvm::ValueMaterializer *Materializer = nullptr) {
+  CloneFunctionInto(NewFunc, OldFunc, VMap,
+#ifdef LLVM_OLDER_THAN_13_0
+                    true
+#else
+                    // ClonedModule DifferentModule LocalChangesOnly
+                    // GlobalChanges
+                    llvm::CloneFunctionChangeType::GlobalChanges
+#endif
+                    ,
+                    Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
 }
 
 #endif
