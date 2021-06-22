@@ -92,9 +92,9 @@ pocl_atexit ()
   qsort (kernel_statistics, different_kernels, sizeof (struct kernel_stats),
          order_by_time);
 
-  for (int i = 0; i < different_kernels; ++i)
+  for (unsigned long i = 0; i < different_kernels; ++i)
     {
-      printf ("%3d) %-30s %10lu %15lu %3lu%% %10lu\n", i + 1,
+      printf ("%3lu) %-30s %10lu %15lu %3lu%% %10lu\n", i + 1,
               kernel_statistics[i].kernel->name, kernel_statistics[i].launches,
               kernel_statistics[i].time,
               kernel_statistics[i].time * 100 / total_time,
