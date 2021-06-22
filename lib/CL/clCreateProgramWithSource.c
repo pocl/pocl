@@ -96,31 +96,34 @@ POname(clCreateProgramWithSource)(cl_context context,
   *source = '\0';
 
   program->context = context;
-  program->num_devices = context->num_devices;
-  program->devices = context->devices;
+  program->associated_num_devices = context->num_devices;
+  program->associated_devices = context->devices;
+  program->num_devices = 0;
+  program->devices = 0;
+
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   if ((program->binary_sizes
-       = (size_t *)calloc (program->num_devices, sizeof (size_t)))
+       = (size_t *)calloc (program->associated_num_devices, sizeof (size_t)))
           == NULL
       || (program->binaries = (unsigned char **)calloc (
-              program->num_devices, sizeof (unsigned char *)))
+              program->associated_num_devices, sizeof (unsigned char *)))
              == NULL
       || (program->pocl_binaries = (unsigned char **)calloc (
-              program->num_devices, sizeof (unsigned char *)))
+              program->associated_num_devices, sizeof (unsigned char *)))
              == NULL
       || (program->pocl_binary_sizes
-          = (size_t *)calloc (program->num_devices, sizeof (size_t)))
+          = (size_t *)calloc (program->associated_num_devices, sizeof (size_t)))
              == NULL
       || (program->build_log
-          = (char **)calloc (program->num_devices, sizeof (char *)))
+          = (char **)calloc (program->associated_num_devices, sizeof (char *)))
              == NULL
       || ((program->data
-           = (void **)calloc (program->num_devices, sizeof (void *)))
+           = (void **)calloc (program->associated_num_devices, sizeof (void *)))
           == NULL)
       || ((program->build_hash = (SHA1_digest_t *)calloc (
-               program->num_devices, sizeof (SHA1_digest_t)))
+               program->associated_num_devices, sizeof (SHA1_digest_t)))
           == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;

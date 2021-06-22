@@ -556,10 +556,6 @@ struct pocl_device_ops {
   int (*build_source) (
       cl_program program, cl_uint device_i,
 
-      /* this is for optimization, driver may ignore it. It's the full list of
-         devices (sanitized) given to clCompile/BuildProgram(). */
-      cl_uint num_devices, const cl_device_id *device_list,
-
       /* these are filled by clCompileProgram(), otherwise NULLs */
       cl_uint num_input_headers, const cl_program *input_headers,
       const char **header_include_names,
@@ -569,10 +565,6 @@ struct pocl_device_ops {
 
   int (*build_binary) (
       cl_program program, cl_uint device_i,
-
-      /* this is for optimization, driver may ignore it. It's the full list of
-         devices (sanitized) given to clCompile/BuildProgram(). */
-      cl_uint num_devices, const cl_device_id *device_list,
 
       /* 1 = compile & link, 0 = compile only, linked later via clLinkProgram*/
       int link_program, int spir_build);
@@ -1198,10 +1190,20 @@ struct _cl_program {
   POCL_OBJECT;
   /* queries */
   cl_context context;
-  cl_uint num_devices;
   /* -cl-denorms-are-zero build option */
   unsigned flush_denorms;
+
+  /* list of devices "associated with the program" (quote from Specs)
+   * ... IOW for which we *can* build the program.
+   * this is setup once, at clCreateProgramWith{Source,Binaries,...} time */
+  cl_device_id *associated_devices;
+  cl_uint associated_num_devices;
+  /* list of devices for which we actually did build the program.
+   * this changes on every rebuild to device arguments given to clBuildProgram
+   */
+  cl_uint num_devices;
   cl_device_id *devices;
+
   /* all the program sources appended together, terminated with a zero */
   char *source;
   /* The options in the last clBuildProgram call for this Program. */

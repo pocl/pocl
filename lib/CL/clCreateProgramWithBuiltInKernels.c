@@ -28,6 +28,8 @@
 
 #include <string.h>
 
+#define MAX_KERNELS 1024
+
 CL_API_ENTRY cl_program CL_API_CALL
 POname (clCreateProgramWithBuiltInKernels) (cl_context context,
                                             cl_uint num_devices,
@@ -40,7 +42,8 @@ CL_API_SUFFIX__VERSION_1_2
   char *kernel_names_copy = NULL;
   cl_program program = NULL;
   char **builtin_names = NULL;
-  size_t num_kernels = 0;
+  unsigned num_kernels = 0;
+  unsigned i, j, supported_devices = 0;
   char *save_ptr;
   char *token;
 
@@ -51,38 +54,34 @@ CL_API_SUFFIX__VERSION_1_2
 
   POCL_GOTO_ERROR_COND ((kernel_names == NULL), CL_INVALID_VALUE);
 
-  kernel_names_copy = strdup (kernel_names);
-  token = strtok_r (kernel_names_copy, ";", &save_ptr);
-  while (token != NULL)
-    {
-      unsigned num_supported = 0;
-      cl_uint i;
-      for (i = 0; i < num_devices; ++i)
-        {
-          cl_device_id dev = device_list[i];
-          if (pocl_device_supports_builtin_kernel (dev, token))
-            ++num_supported;
-        }
-      POCL_GOTO_ERROR_ON ((num_supported == 0), CL_INVALID_VALUE,
-                          "None of the devices in context supports this"
-                          " builtin kernel!\n");
-      ++num_kernels;
-      token = strtok_r (NULL, ";", &save_ptr);
-    }
-  POCL_MEM_FREE (kernel_names_copy);
-
-  builtin_names = (char **)calloc (num_kernels, sizeof (char *));
+  builtin_names = (char **)calloc (MAX_KERNELS, sizeof (char *));
   POCL_GOTO_ERROR_COND ((builtin_names == NULL), CL_OUT_OF_HOST_MEMORY);
-
   kernel_names_copy = strdup (kernel_names);
   token = strtok_r (kernel_names_copy, ";", &save_ptr);
-  unsigned i;
-  for (i = 0; token != NULL; ++i)
+  for (i = 0; ((i < MAX_KERNELS) && (token != NULL)); ++i)
     {
       builtin_names[i] = strdup (token);
       token = strtok_r (NULL, ";", &save_ptr);
+      ++num_kernels;
     }
   POCL_MEM_FREE (kernel_names_copy);
+
+  for (i = 0; i < num_devices; ++i)
+    {
+      unsigned num_supported_kernels = 0;
+      cl_device_id dev = device_list[i];
+      for (j = 0; j < num_kernels; ++j)
+        {
+          if (pocl_device_supports_builtin_kernel (dev, builtin_names[j]))
+            ++num_supported_kernels;
+        }
+      if (num_supported_kernels == num_kernels)
+        ++supported_devices;
+    }
+
+  POCL_GOTO_ERROR_ON ((supported_devices == 0), CL_INVALID_VALUE,
+                      "None of the devices in context supports all "
+                      "requested builtin kernels!\n");
 
   program = create_program_skeleton (context, num_devices, device_list, NULL,
                                      NULL, NULL, &errcode, 1);

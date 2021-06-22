@@ -84,13 +84,11 @@
   int pocl_##__DRV__##_free_kernel (cl_device_id device, cl_program p,        \
                                     cl_kernel k, unsigned device_i);          \
   int pocl_##__DRV__##_build_source (                                         \
-      cl_program program, cl_uint device_i, cl_uint num_devices,              \
-      const cl_device_id *device_list, cl_uint num_input_headers,             \
+      cl_program program, cl_uint device_i, cl_uint num_input_headers,        \
       const cl_program *input_headers, const char **header_include_names,     \
       int link_program);                                                      \
-  int pocl_##__DRV__##_build_binary (                                         \
-      cl_program program, cl_uint device_i, cl_uint num_devices,              \
-      const cl_device_id *device_list, int link_program, int spir_build);     \
+  int pocl_##__DRV__##_build_binary ( cl_program program,                     \
+      cl_uint device_i, int link_program, int spir_build);                    \
   int pocl_##__DRV__##_build_builtin (cl_program program, cl_uint device_i);  \
   int pocl_##__DRV__##_link_program (                                         \
       cl_program program, cl_uint device_i, cl_uint num_input_programs,       \

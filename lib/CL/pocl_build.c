@@ -443,7 +443,8 @@ clean_program_on_rebuild (cl_program program, int from_error)
   program->num_kernels = 0;
   program->build_status = CL_BUILD_NONE;
 
-  for (i = 0; i < program->num_devices; ++i)
+  for (i = 0; i < program->num_devices;
+       ++i) // TODO associated_num_devices or not ???
     {
       cl_device_id dev = program->devices[i];
       if (!from_error)
@@ -459,13 +460,21 @@ clean_program_on_rebuild (cl_program program, int from_error)
           program->pocl_binary_sizes[i] = 0;
         }
     }
+
   if (!from_error)
-    program->main_build_log[0] = 0;
+    {
+      if (program->devices != program->context->devices
+          && program->devices != program->associated_devices)
+        {
+          POCL_MEM_FREE (program->devices);
+        }
+      program->num_devices = 0;
+      program->main_build_log[0] = 0;
+    }
 }
 
 static int
-setup_kernel_metadata (cl_program program, cl_uint num_devices,
-                       const cl_device_id *device_list)
+setup_kernel_metadata (cl_program program)
 {
   size_t i, j;
   cl_uint device_i;
@@ -477,17 +486,6 @@ setup_kernel_metadata (cl_program program, cl_uint num_devices,
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
       cl_device_id device = program->devices[device_i];
-
-      /* find the device in the supplied devices-to-build-for list */
-      int found = 0;
-      for (i = 0; i < num_devices; ++i)
-        {
-          if (device_list[i] == device)
-            found = 1;
-        }
-      if (!found)
-        continue;
-
       if (program->pocl_binaries[device_i])
         {
           program->num_kernels
@@ -505,7 +503,6 @@ setup_kernel_metadata (cl_program program, cl_uint num_devices,
         {
           assert (program->source || program->binaries[device_i]
                   || (program->num_builtin_kernels > 0));
-          cl_device_id device = program->devices[device_i];
           if (device->ops->setup_metadata
               && device->ops->setup_metadata (device, program, device_i))
             {
@@ -545,13 +542,12 @@ setup_kernel_metadata (cl_program program, cl_uint num_devices,
 }
 
 static void
-setup_device_hashes (cl_program program, cl_uint num_devices,
-                     const cl_device_id *device_list)
+setup_device_kernel_hashes (cl_program program)
 {
   cl_uint i, device_i;
 
   if ((program->builtin_kernel_names != NULL) || (program->num_kernels == 0)
-      || (num_devices == 0))
+      || (program->num_devices == 0))
     return;
 
   assert (program->kernel_meta);
@@ -563,18 +559,6 @@ setup_device_hashes (cl_program program, cl_uint num_devices,
 
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
-      cl_device_id device = program->devices[device_i];
-
-      /* find the device in the supplied devices-to-build-for list */
-      int found = 0;
-      for (i = 0; i < num_devices; ++i)
-        {
-          if (device_list[i] == device)
-            found = 1;
-        }
-      if (!found)
-        continue;
-
       for (i = 0; i < program->num_kernels; ++i)
         {
           /* calculate device-specific kernel hashes. */
@@ -688,11 +672,11 @@ compile_and_link_program(int compile_program,
   program->flush_denorms = flush_denorms;
   clean_program_on_rebuild (program, 0);
 
-  /* DEVICE LIST */
+  /* adjust device list to what we're building for */
   if (num_devices == 0)
     {
-      num_devices = program->num_devices;
-      device_list = program->devices;
+      program->num_devices = program->associated_num_devices;
+      program->devices = program->associated_devices;
     }
   else
     {
@@ -700,31 +684,42 @@ compile_and_link_program(int compile_program,
       cl_uint real_num_devices = 0;
       unique_devlist = pocl_unique_device_list (device_list, num_devices,
                                                 &real_num_devices);
-      num_devices = real_num_devices;
-      device_list = unique_devlist;
+      program->num_devices = real_num_devices;
+      program->devices = unique_devlist;
     }
 
   POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
                        num_devices, program->compiler_options);
 
-  /* Build the fully linked non-parallel bitcode for all
-         devices. */
+  for (device_i = 0; device_i < program->num_devices; ++device_i)
+    POCL_MSG_PRINT_LLVM ("   BUILDING for device: %s\n",
+                         program->devices[device_i]->short_name);
+
+  /* check the devices in the supplied devices-to-build-for list */
+  cl_uint num_found = 0;
+  for (i = 0; i < program->num_devices; ++i)
+    {
+      cl_device_id dev = program->devices[i];
+      for (cl_uint j = 0; j < program->associated_num_devices; ++j)
+        if (program->associated_devices[j] == dev)
+          ++num_found;
+    }
+  POCL_GOTO_ERROR_ON (
+      (num_found < program->num_devices), build_error_code,
+      "Some of the devices on the argument-supplied list are "
+      "not available for the program, or do not exist: %u < %u\n",
+      actually_built, program->num_devices);
+
+  /* Build the program for all requested devices. */
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       cl_device_id device = program->devices[device_i];
-
-      /* find the device in the supplied devices-to-build-for list */
-      int found = 0;
-      for (i = 0; i < num_devices; ++i)
-          if (device_list[i] == device) found = 1;
-      if (!found) continue;
 
       if (requires_cr_sqrt_div
           && !(device->single_fp_config & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT))
         APPEND_TO_BUILD_LOG_GOTO (build_error_code,
                                   REQUIRES_CR_SQRT_DIV_ERR " %s\n",
                                   device->short_name);
-      actually_built++;
 
       /* clCreateProgramWithBuiltinKernels */
       if (program->builtin_kernel_names)
@@ -738,11 +733,10 @@ compile_and_link_program(int compile_program,
                                           "program with builtin kernels\n",
                                           device->long_name);
             }
-          continue;
         }
-
-      /* only link the program/library */
-      if (!compile_program && link_program)
+      else
+          /* only link the program/library */
+          if (!compile_program && link_program)
         {
           assert (num_input_programs > 0);
 
@@ -771,9 +765,8 @@ compile_and_link_program(int compile_program,
                 device->long_name);
 
           error = device->ops->build_source (
-              program, device_i, num_devices, device_list, num_input_headers,
-              input_headers, header_include_names,
-              (create_library ? 0 : link_program));
+              program, device_i, num_input_headers, input_headers,
+              header_include_names, (create_library ? 0 : link_program));
 
           if (error != CL_SUCCESS)
             {
@@ -802,8 +795,8 @@ compile_and_link_program(int compile_program,
                                       device->short_name);
 
           error = device->ops->build_binary (
-              program, device_i, num_devices, device_list,
-              (create_library ? 0 : link_program), spir_build);
+              program, device_i, (create_library ? 0 : link_program),
+              spir_build);
 
           if (error != CL_SUCCESS)
             {
@@ -818,12 +811,12 @@ compile_and_link_program(int compile_program,
       /* Maintain a 'last_accessed' file in every program's
        * cache directory. Will be useful for cache pruning script
        * that flushes old directories based on LRU */
-      pocl_cache_update_program_last_access (program, device_i);
-    }
+      if (!program->builtin_kernel_names)
+        pocl_cache_update_program_last_access (program, device_i);
 
-  POCL_GOTO_ERROR_ON ((actually_built < num_devices), build_error_code,
-                      "Some of the devices on the argument-supplied list are"
-                      "not available for the program, or do not exist\n");
+      ++actually_built;
+    }
+  assert (actually_built == program->num_devices);
 
   program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   /* if program will be compiled using clCompileProgram its binary_type
@@ -847,7 +840,7 @@ compile_and_link_program(int compile_program,
       goto FINISH;
     }
 
-  errcode = setup_kernel_metadata (program, num_devices, device_list);
+  errcode = setup_kernel_metadata (program);
   if (errcode != CL_SUCCESS)
     {
       POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
@@ -855,19 +848,11 @@ compile_and_link_program(int compile_program,
     }
 
   if (program->builtin_kernel_names == NULL)
-    setup_device_hashes (program, num_devices, device_list);
+    setup_device_kernel_hashes (program);
 
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
       cl_device_id device = program->devices[device_i];
-
-      /* find the device in the supplied devices-to-build-for list */
-      int found = 0;
-      for (i = 0; i < num_devices; ++i)
-        if (device_list[i] == device)
-          found = 1;
-      if (!found)
-        continue;
 
       if (device->ops->post_build_program)
         device->ops->post_build_program (program, device_i);
@@ -890,7 +875,6 @@ ERROR_CLEAN_OPTIONS:
 
 FINISH:
   POCL_UNLOCK_OBJ (program);
-  POCL_MEM_FREE (unique_devlist);
 
 PFN_NOTIFY:
   if (pfn_notify)

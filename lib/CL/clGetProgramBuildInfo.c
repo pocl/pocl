@@ -42,10 +42,6 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
-  int device_i = pocl_cl_device_to_index(program, device);
-  POCL_RETURN_ERROR_ON((device_i < 0), CL_INVALID_DEVICE, "Program does not have "
-    "this device in it's device list\n");
-
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
@@ -71,17 +67,23 @@ POname(clGetProgramBuildInfo)(cl_program            program,
         {
           POCL_RETURN_GETINFO_STR (program->main_build_log);
         }
-      else if (program->build_log[device_i])
-        {
-          POCL_RETURN_GETINFO_STR (program->build_log[device_i]);
-        }
       else
         {
-          char *build_log = pocl_cache_read_buildlog (program, device_i);
-          if (build_log)
-            POCL_RETURN_GETINFO_STR_FREE (build_log);
+          int device_i = pocl_cl_device_to_index (program, device);
+          POCL_RETURN_ERROR_ON ((device_i < 0), CL_INVALID_DEVICE,
+                                "Program does not have "
+                                "this device in its device list\n");
+          if (program->build_log[device_i])
+            {
+              POCL_RETURN_GETINFO_STR (program->build_log[device_i]);
+            }
+          else
+            {
+              char *build_log = pocl_cache_read_buildlog (program, device_i);
+              if (build_log)
+                POCL_RETURN_GETINFO_STR_FREE (build_log);
+            }
         }
-
       POCL_RETURN_GETINFO_STR ("");
     }
   case CL_PROGRAM_BINARY_TYPE:

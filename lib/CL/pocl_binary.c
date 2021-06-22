@@ -761,7 +761,8 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       km->attributes = k.attributes;
       km->has_arg_metadata = k.has_arg_metadata;
       km->name = k.kernel_name;
-      km->data = (void **)calloc (program->num_devices, sizeof (void *));
+      km->data
+          = (void **)calloc (program->associated_num_devices, sizeof (void *));
       assert (km->name);
 
       unsigned l;

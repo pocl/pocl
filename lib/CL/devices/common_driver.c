@@ -452,9 +452,6 @@ pocl_llvm_link_and_convert_spir (cl_program program, cl_uint device_i,
 
 int
 pocl_driver_build_source (cl_program program, cl_uint device_i,
-
-                          cl_uint num_devices, const cl_device_id *device_list,
-
                           cl_uint num_input_headers,
                           const cl_program *input_headers,
                           const char **header_include_names, int link_program)
@@ -478,7 +475,6 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
 int
 pocl_driver_build_binary (cl_program program, cl_uint device_i,
-                          cl_uint num_devices, const cl_device_id *device_list,
                           int link_program, int spir_build)
 {
 

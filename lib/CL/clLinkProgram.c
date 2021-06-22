@@ -87,7 +87,7 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     goto PFN_NOTIFY;
 
-  assert (num_devices == program->num_devices);
+  assert (num_devices == program->associated_num_devices);
 
   /* link the program */
   errcode = compile_and_link_program (0, 1, program,

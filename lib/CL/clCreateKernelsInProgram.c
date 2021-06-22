@@ -19,15 +19,14 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
-  POCL_RETURN_ERROR_ON((program->num_devices == 0),
-    CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
-
   POCL_RETURN_ERROR_ON((program->build_status == CL_BUILD_NONE),
     CL_INVALID_PROGRAM_EXECUTABLE, "You must call clBuildProgram first!"
       " (even for programs created with binaries)\n");
 
   POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
+
+  assert (program->num_devices != 0);
 
   POCL_RETURN_ERROR_ON(((kernels != NULL && num_kernels == 0)
                        || (kernels == NULL && num_kernels != 0)),

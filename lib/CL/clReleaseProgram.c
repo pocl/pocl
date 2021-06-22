@@ -60,13 +60,14 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         {
           cl_device_id device = program->devices[i];
           if (device->ops->free_program)
-            {
-              device->ops->free_program (device, program, i);
-            }
+            device->ops->free_program (device, program, i);
         }
 
-      if (program->devices != program->context->devices)
+      if (program->devices != program->context->devices
+          && program->devices != program->associated_devices)
         POCL_MEM_FREE(program->devices);
+      if (program->associated_devices != program->context->devices)
+        POCL_MEM_FREE (program->associated_devices);
 
       POCL_MEM_FREE(program->source);
 
@@ -74,20 +75,20 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MEM_FREE(program->binary_sizes);
       if (program->binaries)
-        for (i = 0; i < program->num_devices; ++i)
+        for (i = 0; i < program->associated_num_devices; ++i)
           POCL_MEM_FREE(program->binaries[i]);
       POCL_MEM_FREE(program->binaries);
 
       POCL_MEM_FREE(program->pocl_binary_sizes);
       if (program->pocl_binaries)
-        for (i = 0; i < program->num_devices; ++i)
+        for (i = 0; i < program->associated_num_devices; ++i)
           POCL_MEM_FREE(program->pocl_binaries[i]);
       POCL_MEM_FREE(program->pocl_binaries);
 
       pocl_cache_cleanup_cachedir(program);
 
       if (program->build_log)
-        for (i = 0; i < program->num_devices; ++i)
+        for (i = 0; i < program->associated_num_devices; ++i)
           POCL_MEM_FREE(program->build_log[i]);
       POCL_MEM_FREE(program->build_log);
 

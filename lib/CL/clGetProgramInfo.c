@@ -127,12 +127,13 @@ POname(clGetProgramInfo)(cl_program program,
     }
 
   case CL_PROGRAM_NUM_DEVICES:
-    POCL_RETURN_GETINFO(cl_uint, program->num_devices);
+    POCL_RETURN_GETINFO (cl_uint, program->associated_num_devices);
 
   case CL_PROGRAM_DEVICES:
     {
-      size_t const value_size = sizeof(cl_device_id) * program->num_devices;
-      POCL_RETURN_GETINFO_SIZE(value_size, program->devices);
+      size_t const value_size
+          = sizeof (cl_device_id) * program->associated_num_devices;
+      POCL_RETURN_GETINFO_SIZE (value_size, program->associated_devices);
     }
 
   case CL_PROGRAM_NUM_KERNELS:

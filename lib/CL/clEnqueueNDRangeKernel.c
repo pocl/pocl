@@ -318,10 +318,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   command_node->command.run.pc.global_offset[1] = offset_y;
   command_node->command.run.pc.global_offset[2] = offset_z;
 
-  int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
-  assert (realdev_i >= 0);
-  command_node->device_i = (unsigned)realdev_i;
-  command_node->command.run.hash = kernel->meta->build_hash[realdev_i];
+  cl_uint program_dev_i = CL_UINT_MAX;
+  for (i = 0; i < kernel->program->num_devices; ++i)
+    {
+      if (kernel->program->devices[i] == realdev)
+        program_dev_i = i;
+    }
+  assert (program_dev_i < CL_UINT_MAX);
+  command_node->device_i = program_dev_i;
+  command_node->command.run.hash = kernel->meta->build_hash[program_dev_i];
 
   /* Copy the currently set kernel arguments because the same kernel
      object can be reused for new launches with different arguments. */

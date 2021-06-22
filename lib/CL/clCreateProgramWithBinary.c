@@ -127,6 +127,8 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
     }
 
   program->context = context;
+  program->associated_num_devices = num_devices;
+  program->associated_devices = unique_devlist;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
   program->build_status = CL_BUILD_NONE;
@@ -172,7 +174,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       /* check if the driver supports that binary */
       else
         {
-          cl_device_id device = program->devices[i];
+          cl_device_id device = program->associated_devices[i];
           if (device->ops->supports_binary
               && device->ops->supports_binary (device, lengths[i],
                                                (const char *)binaries[i]))

@@ -49,15 +49,14 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
-  POCL_GOTO_ERROR_ON((program->num_devices == 0),
-    CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
-
   POCL_GOTO_ERROR_ON((program->build_status == CL_BUILD_NONE),
     CL_INVALID_PROGRAM_EXECUTABLE, "You must call clBuildProgram first!"
       " (even for programs created with binaries)\n");
 
   POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
+
+  assert (program->num_devices != 0);
 
   kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
   POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
@@ -108,8 +107,6 @@ POname(clCreateKernel)(cl_program program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
-      if (device->available != CL_TRUE)
-        continue;
       if (device->ops->create_kernel)
         device->ops->create_kernel (device, program, kernel, i);
     }
