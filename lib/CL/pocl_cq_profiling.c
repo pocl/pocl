@@ -26,6 +26,9 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+/* for bzero */
+#include <strings.h>
+
 /* Maximum number of events collected. */
 #define POCL_CQ_PROFILING_MAX_EVENTS 1000000
 #define POCL_CQ_PROFILING_MAX_KERNELS 1000
