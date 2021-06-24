@@ -1536,8 +1536,15 @@ pocl_setup_context (cl_context context)
   for(i=0; i<context->num_devices; i++)
     {
       cl_device_id dev = context->devices[i];
-      if (dev->should_allocate_svm)
-        context->svm_allocdev = dev;
+      if (dev->svm_allocation_priority > 0)
+        {
+          if (context->svm_allocdev == NULL
+              || context->svm_allocdev->svm_allocation_priority
+                     < dev->svm_allocation_priority)
+            {
+              context->svm_allocdev = dev;
+            }
+        }
 
       if (dev->mem_base_addr_align < alignment)
         alignment = dev->mem_base_addr_align;
@@ -1564,14 +1571,6 @@ pocl_setup_context (cl_context context)
       assert (err == CL_SUCCESS);
       assert (context->default_queues[i]);
     }
-
-  if (context->svm_allocdev == NULL)
-    for(i=0; i<context->num_devices; i++)
-      if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
-        {
-          context->svm_allocdev = context->devices[i];
-          break;
-        }
 
   assert (alignment > 0);
   context->min_buffer_alignment = alignment;

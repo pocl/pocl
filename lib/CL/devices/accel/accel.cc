@@ -805,6 +805,8 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
       if (al->value == NULL) {
         *(size_t *)current_arg = 0;
       } else {
+        // accel doesn't support SVM pointers
+        assert(al->is_svm == 0);
         cl_mem m = (*(cl_mem *)(al->value));
         auto chunk =
             (chunk_info_t *)m->device_ptrs[cmd->device->global_mem_id].mem_ptr;

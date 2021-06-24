@@ -1472,11 +1472,9 @@ pocl_init_default_device_infos (cl_device_id dev)
      identifiers. */
   dev->global_as_id = dev->local_as_id = dev->constant_as_id = 0;
 
-  dev->should_allocate_svm = 0;
+  dev->svm_allocation_priority = 0;
   /* OpenCL 2.0 properties */
-  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
-                  | CL_DEVICE_SVM_ATOMICS;
+  dev->svm_caps = 0;
   /* TODO these are minimums, figure out whats a reasonable value */
   dev->max_events = 1024;
   dev->max_queues = 1;

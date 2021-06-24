@@ -804,7 +804,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
           agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
     }
 
-  dev->should_allocate_svm = 1;
+  dev->svm_allocation_priority = 2;
   /* OpenCL 2.0 properties */
   dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
                   | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
@@ -1070,10 +1070,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
             }
           else
             {
-              cl_mem m = *(cl_mem *)al->value;
               uint64_t dev_ptr = 0;
-              if (m->device_ptrs)
+              if (al->is_svm)
+                dev_ptr = (uint64_t) (*(void **)al->value);
+              else
                 {
+                  cl_mem m = *(cl_mem *)al->value;
                   dev_ptr
                       = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
                   if (m->flags & CL_MEM_USE_HOST_PTR
@@ -1088,8 +1090,6 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
                                        m->size);
                     }
                 }
-              else
-                dev_ptr = (uint64_t)m->mem_host_ptr;
 
               dev_ptr += al->offset;
               memcpy (write_pos, &dev_ptr, sizeof (uint64_t));

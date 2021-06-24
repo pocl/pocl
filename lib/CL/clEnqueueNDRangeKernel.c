@@ -237,7 +237,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
       if (a->type == POCL_ARG_TYPE_IMAGE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
-              && al->value != NULL))
+              && al->value != NULL && al->is_svm == 0))
         {
           cl_mem buf = *(cl_mem *) (al->value);
 
@@ -326,6 +326,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       if (arg->value != NULL)
         {
           size_t arg_alloc_size = arg->size;
+          assert (arg_alloc_size > 0);
           /* FIXME: this is a cludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */

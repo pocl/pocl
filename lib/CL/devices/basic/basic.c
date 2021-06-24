@@ -205,6 +205,11 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
+  device->svm_allocation_priority = 1;
+  /* OpenCL 2.0 properties */
+  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to
@@ -323,8 +328,16 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
             }
           else
             {
-              cl_mem m = (*(cl_mem *)(al->value));
-              void *ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+              void *ptr = NULL;
+              if (al->is_svm)
+                {
+                  ptr = *(void **)al->value;
+                }
+              else
+                {
+                  cl_mem m = (*(cl_mem *)(al->value));
+                  ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+                }
               *(void **)arguments[i] = (char *)ptr + al->offset;
             }
         }

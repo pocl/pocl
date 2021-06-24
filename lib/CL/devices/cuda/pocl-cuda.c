@@ -1048,6 +1048,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
                 assert (constant_mem_base);
+                assert (arguments[i].is_svm == 0);
 
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
@@ -1074,6 +1075,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               }
             else
               {
+                assert (arguments[i].is_svm == 0);
                 if (arguments[i].value)
                   {
                     cl_mem mem = *(void **)arguments[i].value;

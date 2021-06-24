@@ -573,14 +573,14 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
              pointers stored in the cl_mem. */
           if (al->value == NULL)
             dev_cmd.args[i] = 0;
-          else
-            {
-              cl_mem m = (*(cl_mem *)(al->value));
-              chunk_info_t *p = (chunk_info_t*)m->device_ptrs[d->parent->dev_id].mem_ptr;
-              dev_cmd.args[i] = byteswap_uint32_t (
-                  p->start_address + al->offset,
-                  d->needsByteSwap);
-            }
+          else {
+            assert(al->is_svm == 0);
+            cl_mem m = (*(cl_mem *)(al->value));
+            chunk_info_t *p =
+                (chunk_info_t *)m->device_ptrs[d->parent->dev_id].mem_ptr;
+            dev_cmd.args[i] = byteswap_uint32_t(p->start_address + al->offset,
+                                                d->needsByteSwap);
+          }
         }
       else /* The scalar values should be byteswapped by the user. */
         {

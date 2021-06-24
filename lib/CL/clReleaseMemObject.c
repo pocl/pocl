@@ -78,18 +78,12 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         {
           assert (memobj->mappings == NULL);
           assert (memobj->map_count == 0);
-          cl_device_id shared_mem_owner_dev =
-              memobj->shared_mem_allocation_owner;
 
           POCL_MSG_PRINT_REFCOUNTS ("Free mem obj %p FLAGS %" PRIu64 "\n",
                                     memobj, memobj->flags);
 
           for (i = 0; i < context->num_devices; ++i)
             {
-              /* owner is called last */
-              if (shared_mem_owner_dev == context->devices[i])
-                 continue;
-
               dev = context->devices[i];
               if (dev->available != CL_TRUE)
                 continue;
@@ -100,9 +94,6 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
               memobj->device_ptrs[dev->global_mem_id].mem_ptr = NULL;
             }
-
-          if (shared_mem_owner_dev)
-            shared_mem_owner_dev->ops->free (shared_mem_owner_dev, memobj);
 
           /* Free host mem allocated by the runtime */
           if (memobj->mem_host_ptr != NULL)

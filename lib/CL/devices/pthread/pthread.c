@@ -163,6 +163,11 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
                                        | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
                                        | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
+  device->svm_allocation_priority = 1;
+  /* OpenCL 2.0 properties */
+  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to

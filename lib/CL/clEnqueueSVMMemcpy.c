@@ -57,23 +57,19 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
   for(i=0; i<num_events_in_wait_list; i++)
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
-  _cl_command_node *cmd = NULL;
-
-  if (blocking_copy)
-    POCL_ABORT_UNIMPLEMENTED("Blocking memcpy");
-
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MEMCPY,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 0, NULL, NULL);
-
   const char *s = (const char *)src_ptr;
   char *d = (char *)dst_ptr;
   if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
     POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
 
+  _cl_command_node *cmd = NULL;
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MEMCPY,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 0, NULL, NULL);
+
   if (errcode != CL_SUCCESS)
     {
-      POCL_MEM_FREE(cmd);
+      POCL_MEM_FREE (cmd);
       return errcode;
     }
 
@@ -83,8 +79,10 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
 
   pocl_command_enqueue(command_queue, cmd);
 
-  return CL_SUCCESS;
-
+  if (blocking_copy == CL_TRUE)
+    return POname (clFinish) (command_queue);
+  else
+    return CL_SUCCESS;
 }
 POsym(clEnqueueSVMMemcpy)
 

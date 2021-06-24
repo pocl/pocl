@@ -45,7 +45,6 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
     flags = CL_MEM_READ_WRITE;
 
   /* validate flags */
-
   POCL_GOTO_ERROR_ON ((flags > (1 << 10) - 1), CL_INVALID_VALUE,
                       "Flags must "
                       "be < 1024 (there are only 10 flags)\n");

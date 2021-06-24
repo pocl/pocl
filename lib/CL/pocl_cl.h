@@ -347,10 +347,12 @@ typedef struct pocl_argument {
   uint64_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
-  int is_set;
+  char is_set;
   /* 1 if the argument is read-only according to kernel metadata. So either
    * a buffer with "const" qualifier, or an image with read_only qualifier  */
-  int is_readonly;
+  char is_readonly;
+  /* 1 if the argument pointer is SVM direct pointer, not a cl_mem */
+  char is_svm;
 } pocl_argument;
 
 typedef struct event_node event_node;
@@ -969,10 +971,13 @@ struct _cl_device_id {
   /* The address space where the grid context data is passed. */
   unsigned context_as_id;
 
-
-  /* True if the device supports SVM. Then it has the responsibility of
-     allocating shared buffers residing in Shared Virtual Memory areas. */
-  cl_bool should_allocate_svm;
+  /* Set to >0 if the device supports SVM.
+   * When creating context with multiple devices, the device with
+   * largest priority will have the responsibility of allocating
+   * shared buffers residing in Shared Virtual Memory areas.
+   * This allows using both CPU and HSA for SVM allocations,
+   * with HSA having priority in multi-device context */
+  cl_uint svm_allocation_priority;
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -1002,8 +1007,6 @@ struct _cl_device_id {
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
-
-#define DEVICE_IS_SVM_CAPABLE(dev) (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
 
 #define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
@@ -1182,9 +1185,6 @@ struct _cl_mem {
      The location of some device's struct is determined by
      the device's global_mem_id. */
   pocl_mem_identifier *device_ptrs;
-  /* device that allocated, and is going to free,
-     the shared system mem allocation */
-  cl_device_id shared_mem_allocation_owner;
 
   /* for content tracking;
    *
@@ -1220,6 +1220,11 @@ struct _cl_mem {
    * whether that device supports this */
   int *device_supports_this_image;
 
+  /* if the memory backing mem_host_ptr is "permanent" =
+   * valid through the entire lifetime of the buffer,
+   * we can make some assumptions and optimizations */
+  cl_bool mem_host_ptr_is_permanent;
+
   /* Image flags */
   cl_bool                 is_image;
   cl_channel_order        image_channel_order;
@@ -1240,6 +1245,9 @@ struct _cl_mem {
   cl_bool                 is_pipe;
   size_t                  pipe_packet_size;
   size_t                  pipe_max_packets;
+
+  /* list of SVM buffers */
+  struct _cl_mem *prev, *next;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
