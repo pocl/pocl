@@ -327,6 +327,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(size_t, device->global_var_max_size);
   case CL_DEVICE_IL_VERSION:
     POCL_RETURN_GETINFO_STR (device->spirv_version);
+  /* NOTE: This will be renamed to CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES */
+  case CL_DEVICE_DEVICE_ENQUEUE_SUPPORT:
+    POCL_RETURN_GETINFO (cl_uint, 0);
   }
 
   if(device->ops->get_device_info_ext != NULL) {
