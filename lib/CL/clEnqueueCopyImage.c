@@ -51,7 +51,9 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
     return err;
 
   cmd->command.copy_image.src_mem_id = &src_image->device_ptrs[device->dev_id];
+  cmd->command.copy_image.src = src_image;
   cmd->command.copy_image.dst_mem_id = &dst_image->device_ptrs[device->dev_id];
+  cmd->command.copy_image.dst = dst_image;
 
   cmd->command.copy_image.src_origin[0] = src_origin[0];
   cmd->command.copy_image.src_origin[1] = src_origin[1];

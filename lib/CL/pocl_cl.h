@@ -1407,4 +1407,63 @@ struct _cl_sampler {
   #endif
 #endif
 
+#ifdef HAVE_LTTNG_UST
+
+#include "pocl_lttng.h"
+
+#define TP_CREATE_QUEUE(context_id, queue_id)                                 \
+  tracepoint (pocl_trace, create_queue, context_id, queue_id);
+#define TP_FREE_QUEUE(context_id, queue_id)                                   \
+  tracepoint (pocl_trace, free_queue, context_id, queue_id);
+
+#define TP_CREATE_BUFFER(context_id, buffer_id)                               \
+  tracepoint (pocl_trace, create_buffer, context_id, buffer_id);
+#define TP_FREE_BUFFER(context_id, buffer_id)                                 \
+  tracepoint (pocl_trace, free_buffer, context_id, buffer_id);
+
+#define TP_CREATE_PROGRAM(context_id, program_id)                             \
+  tracepoint (pocl_trace, create_program, context_id, program_id);
+#define TP_BUILD_PROGRAM(context_id, program_id)                              \
+  tracepoint (pocl_trace, build_program, context_id, program_id);
+#define TP_FREE_PROGRAM(context_id, program_id)                               \
+  tracepoint (pocl_trace, free_program, context_id, program_id);
+
+#define TP_CREATE_KERNEL(context_id, kernel_id, kernel_name)                  \
+  tracepoint (pocl_trace, create_kernel, context_id, kernel_id, kernel_name);
+#define TP_FREE_KERNEL(context_id, kernel_id, kernel_name)                    \
+  tracepoint (pocl_trace, free_kernel, context_id, kernel_id, kernel_name);
+
+#define TP_CREATE_IMAGE(context_id, image_id)                                 \
+  tracepoint (pocl_trace, create_image, context_id, image_id);
+#define TP_FREE_IMAGE(context_id, image_id)                                   \
+  tracepoint (pocl_trace, free_image, context_id, image_id);
+
+#define TP_CREATE_SAMPLER(context_id, sampler_id)                             \
+  tracepoint (pocl_trace, create_sampler, context_id, sampler_id);
+#define TP_FREE_SAMPLER(context_id, sampler_id)                               \
+  tracepoint (pocl_trace, free_sampler, context_id, sampler_id);
+
+#else
+
+#define TP_CREATE_QUEUE(context_id, queue_id)
+#define TP_FREE_QUEUE(context_id, queue_id)
+
+#define TP_CREATE_BUFFER(context_id, buffer_id)
+#define TP_FREE_BUFFER(context_id, buffer_id)
+
+#define TP_CREATE_PROGRAM(context_id, program_id)
+#define TP_BUILD_PROGRAM(context_id, program_id)
+#define TP_FREE_PROGRAM(context_id, program_id)
+
+#define TP_CREATE_KERNEL(context_id, kernel_id, kernel_name)
+#define TP_FREE_KERNEL(context_id, kernel_id, kernel_name)
+
+#define TP_CREATE_IMAGE(context_id, image_id)
+#define TP_FREE_IMAGE(context_id, image_id)
+
+#define TP_CREATE_SAMPLER(context_id, sampler_id)
+#define TP_FREE_SAMPLER(context_id, sampler_id)
+
+#endif
+
 #endif /* POCL_CL_H */

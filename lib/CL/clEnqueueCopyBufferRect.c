@@ -77,8 +77,9 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 
   cl_device_id dev = command_queue->device;
   cmd->command.copy_rect.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
+  cmd->command.copy_rect.src = src_buffer;
   cmd->command.copy_rect.dst_mem_id = &dst_buffer->device_ptrs[dev->dev_id];
-
+  cmd->command.copy_rect.dst = dst_buffer;
   cmd->command.copy_rect.src_origin[0] = src_offset + src_origin[0];
   cmd->command.copy_rect.src_origin[1] = src_origin[1];
   cmd->command.copy_rect.src_origin[2] = src_origin[2];

@@ -235,6 +235,8 @@ CL_API_SUFFIX__VERSION_1_2
     mem->image_channels = channels;
     mem->image_elem_size = elem_size;
 
+    TP_CREATE_IMAGE (context->id, mem->id);
+
     POCL_RETAIN_OBJECT (context);
 
     POCL_MSG_PRINT_MEMORY ("Created Image %p, HOST_PTR: %p, SIZE %zu \n", mem,

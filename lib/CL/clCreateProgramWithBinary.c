@@ -132,6 +132,8 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
+  TP_CREATE_PROGRAM (context->id, program->id);
+
   char program_bc_path[POCL_FILENAME_LENGTH];
 
   if (allow_empty_binaries && (lengths == NULL) && (binaries == NULL))

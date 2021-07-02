@@ -646,6 +646,8 @@ compile_and_link_program(int compile_program,
 
   program->main_build_log[0] = 0;
 
+  TP_BUILD_PROGRAM (program->context->id, program->id);
+
   /* TODO this should be somehow utilized at linking */
   POCL_MEM_FREE (program->compiler_options);
 
@@ -870,6 +872,8 @@ compile_and_link_program(int compile_program,
       if (device->ops->post_build_program)
         device->ops->post_build_program (program, device_i);
     }
+
+  TP_BUILD_PROGRAM (program->context->id, program->id);
 
   program->build_status = CL_BUILD_SUCCESS;
   errcode = CL_SUCCESS;

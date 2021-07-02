@@ -156,6 +156,8 @@ typedef struct
 {
   pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *dst_mem_id;
+  cl_mem src;
+  cl_mem dst;
   size_t src_offset;
   size_t dst_offset;
   size_t size;
@@ -194,6 +196,8 @@ typedef struct
 {
   pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *dst_mem_id;
+  cl_mem src;
+  cl_mem dst;
   size_t dst_origin[3];
   size_t src_origin[3];
   size_t region[3];
@@ -233,6 +237,8 @@ typedef struct
   pocl_mem_identifier *src_mem_id;
   void *__restrict__ dst_host_ptr;
   pocl_mem_identifier *dst_mem_id;
+  cl_mem src;
+  cl_mem dst;
   size_t dst_offset;
   size_t origin[3];
   size_t region[3];
@@ -245,6 +251,8 @@ typedef struct
   pocl_mem_identifier *dst_mem_id;
   const void *__restrict__ src_host_ptr;
   pocl_mem_identifier *src_mem_id;
+  cl_mem src;
+  cl_mem dst;
   size_t src_offset;
   size_t origin[3];
   size_t region[3];
@@ -256,6 +264,8 @@ typedef struct
 {
   pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *dst_mem_id;
+  cl_mem src;
+  cl_mem dst;
   size_t dst_origin[3];
   size_t src_origin[3];
   size_t region[3];

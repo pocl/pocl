@@ -129,6 +129,8 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   POCL_RETAIN_OBJECT(context);
 
+  TP_CREATE_PROGRAM (context->id, program->id);
+
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return program;

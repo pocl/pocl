@@ -241,6 +241,8 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
   if (mem == NULL)
     return NULL;
 
+  TP_CREATE_BUFFER (context->id, mem->id);
+
   POCL_RETAIN_OBJECT(context);
 
   POCL_MSG_PRINT_MEMORY ("Created Buffer ID %" PRIu64 " / %p, MEM_HOST_PTR: %p, "

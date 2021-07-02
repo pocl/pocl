@@ -36,21 +36,6 @@ static const struct pocl_event_tracer lttng_tracer;
 static int tracing_initialized = 0;
 static uint8_t event_trace_filter = 0xF;
 
-static const struct pocl_event_tracer text_logger;
-static const struct pocl_event_tracer cq_profiler;
-
-/* List of tracers
- */
-static const struct pocl_event_tracer *pocl_event_tracers[] = {
-  &text_logger,
-#ifdef HAVE_LTTNG_UST
-  &lttng_tracer,
-#endif
-  &cq_profiler
-};
-
-#define POCL_TRACER_COUNT (sizeof(pocl_event_tracers) / sizeof((pocl_event_tracers)[0]))
-
 static const struct pocl_event_tracer *event_tracer = NULL;
 
 /* Called with event locked, and must also return with a locked event. */
@@ -113,49 +98,16 @@ PARSE_OUT:
   free (tmp_str);
 }
 
-void
-pocl_tracing_init ()
-{
-  const char *trace_env;
-  unsigned i;
-
-  if (tracing_initialized)
-    return;
-
-  trace_env = pocl_get_string_option ("POCL_TRACING", NULL);
-  if (trace_env == NULL)
-    goto EVENT_INIT_OUT;
-
-  /* Check if a tracer has a name matching the supplied one */
-  for (i = 0; i < POCL_TRACER_COUNT; i++)
-    {
-      if (strcmp (trace_env, pocl_event_tracers[i]->name) == 0)
-       {
-         event_tracer = pocl_event_tracers[i];
-         break;
-       }
-    }
-  if (event_tracer == NULL)
-    goto EVENT_INIT_OUT;
-
-  pocl_parse_event_filter ();
-
-  event_tracer->init ();
-
-EVENT_INIT_OUT:
-  tracing_initialized = 1;
-}
-
-
 /* Basic text logger, useful for grep/cut/sed operations
  */
 static FILE *text_tracer_file = NULL;
-static pocl_lock_t text_tracer_lock = POCL_LOCK_INITIALIZER;
+static pocl_lock_t text_tracer_lock;
 
 static void
 text_tracer_init ()
 {
   const char *text_tracer_output;
+  POCL_INIT_LOCK (text_tracer_lock);
 
   text_tracer_output = pocl_get_string_option ("POCL_TRACING_OPT",
                                           "pocl_trace_events.log");
@@ -193,9 +145,9 @@ text_tracer_event_updated (cl_event event, int status)
   if (node == NULL)
     return;
 
-  text_size = sprintf (cur_buf, "%"PRIu64" %s %s ", ts,
+  text_size = sprintf (cur_buf, "%" PRIu64 " %s %s ", ts,
                        pocl_command_to_str (event->command_type),
-                       pocl_status_to_str(event->status));
+                       pocl_status_to_str (event->status));
   cur_buf += text_size;
   /* Print more informations for some commonly used commands */
   switch (event->command_type)
@@ -219,7 +171,7 @@ text_tracer_event_updated (cl_event event, int status)
                             node->command.run.kernel->name);
       break;
     case CL_COMMAND_FILL_BUFFER:
-      text_size += sprintf (cur_buf, "size=%"PRIuS"\n", 
+      text_size += sprintf (cur_buf, "size=%" PRIuS "\n",
                             node->command.memfill.size);
       break;
     default:
@@ -267,6 +219,8 @@ static void
 lttng_tracer_event_updated (cl_event event, int status)
 {
   _cl_command_node *node = event->command;
+  cl_command_queue cq = event->queue;
+  cl_device_id dev = cq->device;
 
   if (node == NULL)
     return;
@@ -274,31 +228,134 @@ lttng_tracer_event_updated (cl_event event, int status)
   switch (event->command_type)
     {
     case CL_COMMAND_NDRANGE_KERNEL:
-      tracepoint (pocl_trace, ndrange_kernel, event->id, status,
+      tracepoint (pocl_trace, ndrange_kernel,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  node->command.run.kernel->id,
                   node->command.run.kernel->name);
       break;
+
     case CL_COMMAND_READ_BUFFER:
-      tracepoint (pocl_trace, read_buffer, event->id, status,
-                  node->command.read.dst_host_ptr, node->command.read.size);
+      tracepoint (pocl_trace, read_buffer,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
       break;
+
     case CL_COMMAND_WRITE_BUFFER:
-      tracepoint (pocl_trace, write_buffer, event->id, status,
-                  node->command.write.src_host_ptr, node->command.write.size);
+      tracepoint (pocl_trace, write_buffer,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
       break;
+
     case CL_COMMAND_COPY_BUFFER:
-      tracepoint (pocl_trace, copy_buffer, event->id, status, node->command.copy.size);
+      tracepoint (pocl_trace, copy_buffer,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  node->command.copy.src->id,
+                  node->command.copy.dst->id);
       break;
+
     case CL_COMMAND_FILL_BUFFER:
-      tracepoint (pocl_trace, fill_buffer, event->id, status, node->command.copy.size);
+      tracepoint (pocl_trace, fill_buffer,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
       break;
+
+    case CL_COMMAND_READ_BUFFER_RECT:
+      tracepoint (pocl_trace, read_buffer_rect,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
+      break;
+
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      tracepoint (pocl_trace, write_buffer_rect,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
+      break;
+
+    case CL_COMMAND_COPY_BUFFER_RECT:
+      tracepoint (pocl_trace, copy_buffer_rect,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  node->command.copy_rect.src->id,
+                  node->command.copy_rect.dst->id);
+      break;
+
+    case CL_COMMAND_READ_IMAGE:
+      tracepoint (pocl_trace, read_image_rect,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  event->mem_objs[0]->id);
+      break;
+    case CL_COMMAND_WRITE_IMAGE:
+      tracepoint (pocl_trace, write_image_rect,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  event->mem_objs[0]->id);
+      break;
+    case CL_COMMAND_COPY_IMAGE:
+      tracepoint (pocl_trace, copy_image_rect,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  node->command.copy_image.src->id,
+                  node->command.copy_image.dst->id);
+      break;
+
+    case CL_COMMAND_FILL_IMAGE:
+      tracepoint (pocl_trace, fill_image,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
+      break;
+
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+      tracepoint (pocl_trace, copy_image2buf,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  node->command.read_image.src->id,
+                  node->command.read_image.dst->id);
+      break;
+
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+      tracepoint (pocl_trace, copy_buf2image,
+                  event->id, status,
+                  dev->dev_id,
+                  cq->id,
+                  node->command.write_image.src->id,
+                  node->command.write_image.dst->id);
+      break;
+
     case CL_COMMAND_MAP_BUFFER:
+      tracepoint (pocl_trace, map_buffer,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
+      break;
+
     case CL_COMMAND_MAP_IMAGE:
-      tracepoint (pocl_trace, map, event->id, status, node->command.map.mapping->size);
+      tracepoint (pocl_trace, map_image,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
       break;
-    default:
-      tracepoint (pocl_trace, command, event->id, status,
-                  pocl_command_to_str (event->command_type));
+
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      tracepoint (pocl_trace, unmap_memobj,
+                  event->id, status,
+                  dev->dev_id, cq->id,
+                  event->mem_objs[0]->id);
       break;
+
     }
 }
 
@@ -310,3 +367,49 @@ static const struct pocl_event_tracer lttng_tracer = {
 
 
 #endif
+
+/* List of tracers
+ */
+static const struct pocl_event_tracer *pocl_event_tracers[] = {
+  &text_logger,
+#ifdef HAVE_LTTNG_UST
+  &lttng_tracer,
+#endif
+  &cq_profiler
+};
+
+#define POCL_TRACER_COUNT                                                     \
+  (sizeof (pocl_event_tracers) / sizeof ((pocl_event_tracers)[0]))
+
+void
+pocl_event_tracing_init ()
+{
+  const char *trace_env;
+  unsigned i;
+
+  if (tracing_initialized)
+    return;
+
+  trace_env = pocl_get_string_option ("POCL_TRACE_EVENT", NULL);
+  if (trace_env == NULL)
+    goto EVENT_INIT_OUT;
+
+  /* Check if a tracer has a name matching the supplied one */
+  for (i = 0; i < POCL_TRACER_COUNT; i++)
+    {
+      if (strcmp (trace_env, pocl_event_tracers[i]->name) == 0)
+        {
+          event_tracer = pocl_event_tracers[i];
+          break;
+        }
+    }
+  if (event_tracer == NULL)
+    goto EVENT_INIT_OUT;
+
+  pocl_parse_event_filter ();
+
+  event_tracer->init ();
+
+EVENT_INIT_OUT:
+  tracing_initialized = 1;
+}

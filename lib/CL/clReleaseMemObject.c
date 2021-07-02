@@ -53,6 +53,15 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      if (memobj->is_image)
+        {
+          TP_FREE_IMAGE (context->id, memobj->id)
+        }
+      else
+        {
+          TP_FREE_BUFFER (context->id, memobj->id);
+        }
+
       if (memobj->is_image && (memobj->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
         {
           cl_mem b = memobj->buffer;

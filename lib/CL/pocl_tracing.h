@@ -41,7 +41,7 @@ extern "C"
 void pocl_event_updated (cl_event event, int new_status);
 
 /* Initializes the event tracing system selected with POCL_TRACING. */
-void pocl_tracing_init ();
+void pocl_event_tracing_init ();
 
 /* Struct of trace handlers. */
 struct pocl_event_tracer

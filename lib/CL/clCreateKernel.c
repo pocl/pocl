@@ -103,6 +103,8 @@ POname(clCreateKernel)(cl_program program,
       assert (offset == kernel->meta->total_argument_storage_size);
     }
 
+  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
+
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];

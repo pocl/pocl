@@ -40,6 +40,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   if (new_refcount == 0)
     {
+      TP_FREE_QUEUE (context->id, command_queue->id);
+
       assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %p\n", command_queue);
       if (command_queue->device->ops->free_queue)

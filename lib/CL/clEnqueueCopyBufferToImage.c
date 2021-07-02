@@ -64,8 +64,10 @@ CL_API_SUFFIX__VERSION_1_0
   cl_device_id dev = command_queue->device;
 
   cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst = dst_image;
   cmd->command.write_image.src_host_ptr = NULL;
   cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
+  cmd->command.write_image.src = src_buffer;
 
   // TODO
   cmd->command.write_image.src_row_pitch = 0;   // dst_image->image_row_pitch;

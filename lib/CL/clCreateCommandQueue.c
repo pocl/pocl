@@ -73,6 +73,8 @@ POname(clCreateCommandQueue)(cl_context context,
 
   POname(clRetainContext) (context);
 
+  TP_CREATE_QUEUE (context->id, command_queue->id);
+
   errcode = CL_SUCCESS;
   if (device->ops->init_queue)
     errcode = device->ops->init_queue (device, command_queue);

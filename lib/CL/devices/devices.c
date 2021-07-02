@@ -557,7 +557,7 @@ pocl_init_devices ()
   POCL_GOTO_ERROR_ON ((pocl_cache_init_topdir ()), CL_DEVICE_NOT_FOUND,
                       "Cache directory initialization failed");
 
-  pocl_tracing_init ();
+  pocl_event_tracing_init ();
 
 #ifdef HAVE_SLEEP
   int delay = pocl_get_int_option ("POCL_STARTUP_DELAY", 0);

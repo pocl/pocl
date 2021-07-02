@@ -67,6 +67,9 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
   sampler->device_data = (void **)calloc (pocl_num_devices, sizeof (void *));
+
+  TP_CREATE_SAMPLER (context->id, sampler->id);
+
   for (i = 0; i < context->num_devices; ++i)
     {
       cl_device_id dev = context->devices[i];
