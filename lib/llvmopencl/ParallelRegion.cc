@@ -468,23 +468,25 @@ ParallelRegion::Verify()
  *     !1 distinct !{}
  *     !2 distinct !{}
  *
- * Parallel loop metadata prior to LLVM 13 on memory reads also implies that
+ * Parallel loop metadata prior to LLVM 12 on memory reads also implies that
  * if-conversion (i.e., speculative execution within a loop iteration)
  * is safe. Given an instruction reading from memory,
  * IsLoadUnconditionallySafe should return whether it is safe under
  * (unconditional, unpredicated) speculative execution.
- * See https://bugs.llvm.org/show_bug.cgi?id=46666.
+ * See https://bugs.llvm.org/show_bug.cgi?id=46666 and
+ * https://github.com/pocl/pocl/issues/757.
  *
- * From LLVM 13 onward parallel loop metadata does not imply if-conversion
+ * From LLVM 12 onward parallel loop metadata does not imply if-conversion
  * safety anymore. This got fixed by this change:
- * https://reviews.llvm.org/D103907. In other words this means that before the
- * fix, the loop vectorizer was not able to vectorize some kernels because they
- * would required a huge runtime memory check code insertion. Leading to
- * vectorizer to give up. With above fix, we can add metadata to every load.
- * This will cause vectorizer to skip runtime memory check code insertion part
- * because it indicates that iterations do not depend on each other. Which in
- * turn makes vectorization easier. In this case using of
- * IsLoadUnconditionallySafe parameter will be skipped.
+ * https://reviews.llvm.org/D103907 for LLVM 13 which also got backported to
+ * LLVM 12. In other words this means that before the fix, the loop vectorizer
+ * was not able to vectorize some kernels because they would required a huge
+ * runtime memory check code insertion. Leading to vectorizer to give up. With
+ * above fix, we can add metadata to every load.  This will cause vectorizer to
+ * skip runtime memory check code insertion part because it indicates that
+ * iterations do not depend on each other. Which in turn makes vectorization
+ * easier. In this case using of IsLoadUnconditionallySafe parameter will be
+ * skipped.
  */
 void
 ParallelRegion::AddParallelLoopMetadata(
@@ -498,9 +500,9 @@ ParallelRegion::AddParallelLoopMetadata(
         continue;
       }
 
-#ifdef LLVM_OLDER_THAN_13_0
+#ifdef LLVM_OLDER_THAN_12_0
       // This check will skip insertion of metadata on loads inside conditions
-      // before LLVM 13.
+      // before LLVM 12.
       if (ii->mayReadFromMemory() && !IsLoadUnconditionallySafe(&*ii)) {
         continue;
       }
