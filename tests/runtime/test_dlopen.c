@@ -26,19 +26,21 @@
 
 #ifdef __APPLE__
 #define SHLIB_EXT "dylib"
+#define SHLIB_ORIGIN "@loader_path"
 #else
 #define SHLIB_EXT "so"
+#define SHLIB_ORIGIN "$ORIGIN"
 #endif
 
 int
 main (int argc, char **argv)
 {
   int ret = 0;
-  const char *libpocl = "$ORIGIN/../../lib/CL/libpocl." SHLIB_EXT;
+  const char *libpocl = SHLIB_ORIGIN "/../../lib/CL/libpocl." SHLIB_EXT;
   char libdevice[4096] = "";
   if (argc > 1)
     snprintf (libdevice, sizeof (libdevice),
-              "$ORIGIN/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
+              SHLIB_ORIGIN "/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
               argv[1]);
 
   void *handle_libpocl = dlopen (libpocl, RTLD_NOW | RTLD_GLOBAL);
