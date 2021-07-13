@@ -243,6 +243,7 @@ Workgroup::runOnModule(Module &M) {
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
+      createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
     } else if (currentPoclDevice->spmd) {
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
