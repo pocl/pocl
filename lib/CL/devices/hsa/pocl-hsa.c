@@ -248,6 +248,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->unmap_mem = pocl_driver_unmap_mem;
   ops->memfill = pocl_driver_memfill;
   ops->copy = pocl_hsa_copy;
+  ops->copy_rect = pocl_driver_copy_rect;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = NULL;

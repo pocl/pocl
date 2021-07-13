@@ -89,6 +89,7 @@ void pocl_broadcast (cl_event event);
 POCL_EXPORT
 void pocl_init_dlhandle_cache ();
 
+POCL_EXPORT
 char *pocl_check_kernel_disk_cache (_cl_command_node *cmd, int specialized);
 
 size_t pocl_cmd_max_grid_dim_width (_cl_command_run *cmd);
