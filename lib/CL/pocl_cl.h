@@ -176,18 +176,32 @@ typedef pthread_t pocl_thread_t;
 
 //############################################################################
 
+#ifdef ENABLE_EXTRA_VALIDITY_CHECKS
 #define POCL_MAGIC_1 0xBE8906A1A83D8D23ULL
 #define POCL_MAGIC_2 0x071AC830215FD807ULL
-
 #define IS_CL_OBJECT_VALID(__OBJ__)                                           \
   (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
    && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
+#define CHECK_VALIDITY_MARKERS                                                \
+      assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
+      assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);
+#define SET_VALIDITY_MARKERS                                                  \
+      (__OBJ__)->magic_1 = POCL_MAGIC_1;                                      \
+      (__OBJ__)->magic_2 = POCL_MAGIC_2;
+#define UNSET_VALIDITY_MARKERS                                               \
+      (__OBJ__)->magic_1 = 0;                                                 \
+      (__OBJ__)->magic_2 = 0;
+#else
+#define IS_CL_OBJECT_VALID(__OBJ__)   ((__OBJ__) != NULL)
+#define CHECK_VALIDITY_MARKERS
+#define SET_VALIDITY_MARKERS
+#define UNSET_VALIDITY_MARKERS
+#endif
 
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
   do                                                                          \
     {                                                                         \
-      assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
-      assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);                            \
+      CHECK_VALIDITY_MARKERS;                                                 \
       POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
       assert ((__OBJ__)->pocl_refcount > 0);                                  \
     }                                                                         \
@@ -195,8 +209,7 @@ typedef pthread_t pocl_thread_t;
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
-      assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
-      assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);                            \
+      CHECK_VALIDITY_MARKERS;                                                 \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
@@ -236,8 +249,7 @@ extern uint64_t last_object_id;
 #define POCL_INIT_OBJECT_NO_ICD(__OBJ__)                                      \
   do                                                                          \
     {                                                                         \
-      (__OBJ__)->magic_1 = POCL_MAGIC_1;                                      \
-      (__OBJ__)->magic_2 = POCL_MAGIC_2;                                      \
+      SET_VALIDITY_MARKERS;                                                   \
       (__OBJ__)->pocl_refcount = 1;                                           \
       POCL_INIT_LOCK ((__OBJ__)->pocl_lock);                                  \
       (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id);                       \
@@ -265,8 +277,7 @@ extern uint64_t last_object_id;
 #define POCL_DESTROY_OBJECT(__OBJ__)                                          \
   do                                                                          \
     {                                                                         \
-      (__OBJ__)->magic_1 = 0;                                                 \
-      (__OBJ__)->magic_2 = 0;                                                 \
+      UNSET_VALIDITY_MARKERS;                                                \
       POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock);                               \
     }                                                                         \
   while (0)

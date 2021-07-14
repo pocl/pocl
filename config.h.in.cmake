@@ -17,6 +17,8 @@
 #cmakedefine ENABLE_TSAN
 #cmakedefine ENABLE_UBSAN
 
+#cmakedefine ENABLE_EXTRA_VALIDITY_CHECKS
+
 #cmakedefine ENABLE_CONFORMANCE
 
 #cmakedefine ENABLE_HWLOC
