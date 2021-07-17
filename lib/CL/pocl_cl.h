@@ -156,7 +156,7 @@ typedef pthread_t pocl_thread_t;
       pthread_mutexattr_destroy(&attrs);\
     } while (0)
 #else
-#define POCL_FAST_INIT(l) POCL_INIT_LOCK (&l, NULL)
+#define POCL_FAST_INIT(l) POCL_INIT_LOCK (l)
 #endif
 
 #define POCL_FAST_DESTROY(l) POCL_DESTROY_LOCK(l)
