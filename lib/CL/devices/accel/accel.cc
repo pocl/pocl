@@ -567,13 +567,7 @@ unsigned int pocl_accel_probe(struct pocl_device_ops *ops) {
 
 char *pocl_accel_build_hash(cl_device_id /*device*/) {
   char *res = (char *)calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name();
-  snprintf(res, 1000, "accel-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE(name);
-#else
   snprintf(res, 1000, "accel-%s", HOST_DEVICE_BUILD_HASH);
-#endif
   return res;
 }
 
