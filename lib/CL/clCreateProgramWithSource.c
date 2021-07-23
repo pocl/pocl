@@ -132,7 +132,7 @@ POname(clCreateProgramWithSource)(cl_context context,
       goto ERROR;
     }
 
-  POCL_RETAIN_OBJECT(context);
+  POname(clRetainContext)(context);
 
   TP_CREATE_PROGRAM (context->id, program->id);
 

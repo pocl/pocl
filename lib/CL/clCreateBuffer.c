@@ -240,7 +240,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 
   TP_CREATE_BUFFER (context->id, mem->id);
 
-  POCL_RETAIN_OBJECT(context);
+  POname(clRetainContext)(context);
 
   POCL_MSG_PRINT_MEMORY ("Created Buffer ID %" PRIu64 " / %p, MEM_HOST_PTR: %p, "
                          "device_ptrs[0]: %p, SIZE %zu, FLAGS %" PRIu64 " \n",

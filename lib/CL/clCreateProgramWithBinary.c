@@ -199,7 +199,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
     }
 
 SUCCESS:
-  POCL_RETAIN_OBJECT(context);
+  POname(clRetainContext)(context);
 
   POCL_ATOMIC_INC (program_c);
 
