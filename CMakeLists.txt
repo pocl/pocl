@@ -191,6 +191,30 @@ if(VISIBILITY_HIDDEN)
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
 endif()
 
+
+# Ninja Job Pool support
+set(PARALLEL_COMPILE_JOBS "" CACHE STRING
+  "Define the maximum number of concurrent compilation jobs (Ninja only).")
+if(PARALLEL_COMPILE_JOBS)
+  if(CMAKE_GENERATOR STREQUAL "Ninja")
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${PARALLEL_COMPILE_JOBS})
+    set(CMAKE_JOB_POOL_COMPILE compile_job_pool)
+  endif()
+endif()
+
+set(PARALLEL_LINK_JOBS "" CACHE STRING
+  "Define the maximum number of concurrent link jobs (Ninja only).")
+if(CMAKE_GENERATOR STREQUAL "Ninja")
+  if(PARALLEL_LINK_JOBS)
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${PARALLEL_LINK_JOBS})
+    set(CMAKE_JOB_POOL_LINK link_job_pool)
+  endif()
+endif()
+
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja" AND (PARALLEL_COMPILE_JOBS OR PARALLEL_LINK_JOBS))
+  message(WARNING "Job pooling is only available with Ninja generators.")
+endif()
+
 #### these are mostly useful for pocl developers
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
@@ -1709,6 +1733,12 @@ MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_H
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "ENABLE_LLVM: ${ENABLE_LLVM}")
+if(PARALLEL_COMPILE_JOBS AND CMAKE_GENERATOR STREQUAL "Ninja")
+  MESSAGE(STATUS "PARALLEL_COMPILE_JOBS: ${PARALLEL_COMPILE_JOBS}")
+endif()
+if(PARALLEL_LINK_JOBS AND CMAKE_GENERATOR STREQUAL "Ninja")
+  MESSAGE(STATUS "PARALLEL_LINK_JOBS: ${PARALLEL_LINK_JOBS}")
+endif()
 MESSAGE(STATUS "POCL_ICD_ABSOLUTE_PATH: ${POCL_ICD_ABSOLUTE_PATH}")
 MESSAGE(STATUS "POCL_ASSERTS_BUILD: ${POCL_ASSERTS_BUILD}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")

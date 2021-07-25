@@ -24,6 +24,10 @@ Notable Bug Fixes
     This is done by adding ${POCL_LIBRARY_NAME} to target_link_libraries() in CMake.
   - Fixed POCL_FAST_INIT macro; POCL_INIT_LOCK must be invoked with only one argument.
 
+Other
+-----
+- Add cmake options PARALLEL_COMPILE_JOBS, PARALLEL_LINK_JOBS to
+  use ninja's seperate compile and link job pools.
 
 1.7 May 2021
 ============
