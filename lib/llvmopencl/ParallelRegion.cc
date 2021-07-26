@@ -499,7 +499,9 @@ ParallelRegion::AddParallelLoopMetadata(
         continue;
       }
 
-#if LLVM_VERSION_MAJOR < 13 && !(LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR >= 0 && LLVM_VERSION_PATCH >= 1)
+#if LLVM_VERSION_MAJOR < 13 &&                                                 \
+    !(LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR >= 0 &&                   \
+      LLVM_VERSION_PATCH >= 1)
       // This check will skip insertion of metadata on loads inside conditions
       // before LLVM 12.0.1.
       if (ii->mayReadFromMemory() && !IsLoadUnconditionallySafe(&*ii)) {
