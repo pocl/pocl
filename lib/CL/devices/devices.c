@@ -168,10 +168,10 @@ static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 #endif
 
 static void
-get_pocl_device_lib_path (char *result, char *device_name)
+get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 {
   Dl_info info;
-  if (dladdr ((void *)get_pocl_device_lib_path, &info))
+  if (absolute_path && dladdr ((void *)get_pocl_device_lib_path, &info))
     {
       char const *soname = info.dli_fname;
       strcpy (result, soname);
@@ -203,8 +203,13 @@ get_pocl_device_lib_path (char *result, char *device_name)
           strcat (result, "libpocl-devices-");
           strcat (result, device_name);
           strcat (result, ".so");
-          return;
         }
+    }
+  else
+    {
+      strcat (result, "libpocl-devices-");
+      strcat (result, device_name);
+      strcat (result, ".so");
     }
 }
 
@@ -605,32 +610,45 @@ pocl_init_devices ()
       if (pocl_devices_init_ops[i] == NULL)
         {
           char device_library[PATH_MAX] = "";
-          get_pocl_device_lib_path (device_library, pocl_device_types[i]);
-          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
           char init_device_ops_name[MAX_DEV_NAME_LEN + 21] = "";
-          strcat (init_device_ops_name, "pocl_");
-          strcat (init_device_ops_name, pocl_device_types[i]);
-          strcat (init_device_ops_name, "_init_device_ops");
-          if (pocl_device_handles[i] != NULL)
+          get_pocl_device_lib_path (device_library, pocl_device_types[i], 1);
+          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+          if (pocl_device_handles[i] == NULL)
             {
-              pocl_devices_init_ops[i] = (init_device_ops)dlsym (
-                  pocl_device_handles[i], init_device_ops_name);
-              if (pocl_devices_init_ops[i] != NULL)
+              POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+                             dlerror ());
+
+              /* Try again with just the *.so filename */
+              device_library[0] = 0;
+              get_pocl_device_lib_path (device_library,
+                                        pocl_device_types[i], 0);
+              pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+              if (pocl_device_handles[i] == NULL)
                 {
-                  pocl_devices_init_ops[i](&pocl_device_ops[i]);
-                }
-              else
-                {
-                  POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
-                                init_device_ops_name, device_library,
-                                dlerror ());
+                  POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+                                 dlerror ());
                   device_count[i] = 0;
                   continue;
                 }
+              else
+                {
+                  POCL_MSG_WARN ("Fallback loading %s succeeded\n",
+                                 device_library);
+                }
+            }
+          strcat (init_device_ops_name, "pocl_");
+          strcat (init_device_ops_name, pocl_device_types[i]);
+          strcat (init_device_ops_name, "_init_device_ops");
+          pocl_devices_init_ops[i] = (init_device_ops)dlsym (
+          pocl_device_handles[i], init_device_ops_name);
+          if (pocl_devices_init_ops[i] != NULL)
+            {
+              pocl_devices_init_ops[i](&pocl_device_ops[i]);
             }
           else
             {
-              POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+              POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
+                             init_device_ops_name, device_library,
                              dlerror ());
               device_count[i] = 0;
               continue;
