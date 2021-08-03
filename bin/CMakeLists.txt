@@ -26,7 +26,7 @@
 add_executable(poclcc poclcc.c "${CMAKE_SOURCE_DIR}/lib/poclu/misc.c")
 harden(poclcc)
 
-target_link_libraries(poclcc ${OPENCL_LIBS})
+target_link_libraries(poclcc ${OPENCL_LIBS} ${POCL_LIBRARY_NAME})
 
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")

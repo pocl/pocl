@@ -19,6 +19,10 @@ Notable Bug Fixes
 -----------------
 
 - Fixed a potential crash on Unix systems without sysfs mounted.
+- Fixed compilation errors when building on macOS.
+  - clCreateProgramWithIL() must be compiled before and linked with poclcc and poclu.
+    This is done by adding ${POCL_LIBRARY_NAME} to target_link_libraries() in CMake.
+  - Fixed POCL_FAST_INIT macro; POCL_INIT_LOCK must be invoked with only one argument.
 
 
 1.7 May 2021
