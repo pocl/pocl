@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <utlist.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include "vccompat.hpp"
 #endif
 

@@ -40,7 +40,7 @@ int context_set_properties(cl_context                    ctx,
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContextFromType)(const cl_context_properties *properties,
                         cl_device_type device_type,
-                        void (*pfn_notify)(const char *, const void *, size_t, void *),
+                        void (CL_CALLBACK *pfn_notify)(const char *, const void *, size_t, void *),
                         void *user_data,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {

@@ -33,7 +33,7 @@
 #include "pocl_util.h"
 #include "utlist.h"
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"

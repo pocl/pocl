@@ -445,7 +445,7 @@ pocl_cache_init_topdir ()
 #ifdef __ANDROID__
         POCL_ABORT ("Please set the POCL_CACHE_DIR env var to your app's cache directory (Context.getCacheDir())\n");
 
-#elif defined(_MSC_VER) || defined(__MINGW32__)
+#elif defined(_WIN32)
         tmp_path = getenv("LOCALAPPDATA");
         if (!tmp_path)
             tmp_path = getenv("TEMP");

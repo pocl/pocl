@@ -26,7 +26,7 @@
 
 #include <CL/opencl.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define POCLU_CALL __cdecl
 #define POCLU_API __declspec(dllexport)
 #else

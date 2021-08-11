@@ -28,7 +28,7 @@
 
 #include <time.h>
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #include <dirent.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -239,7 +239,7 @@ pocl_size_ceil2_64 (uint64_t x)
   return ++x;
 }
 
-#if defined(WIN32) || defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__)    \
+#if defined(_WIN32) || defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__)    \
     || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
 #define HAVE_ALIGNED_ALLOC
 #else
@@ -258,6 +258,10 @@ pocl_memalign_alloc(size_t align_width, size_t size)
 #elif defined(HAVE_POSIX_MEMALIGN)
   status = posix_memalign (&ptr, align_width, size);
   return ((status == 0) ? ptr : NULL);
+#elif defined(_MSC_VER)
+  return _aligned_malloc(size, align_width);
+#elif defined(__MINGW32__)
+  return __mingw_aligned_malloc(size, align_width);
 #elif (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
   return aligned_alloc (align_width, size);
 #else
@@ -1182,6 +1186,25 @@ pocl_run_command (char *const *args)
   pid_t p = vfork ();
 #elif defined(HAVE_FORK)
   pid_t p = fork ();
+#elif _WIN32
+  STARTUPINFO si;
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  PROCESS_INFORMATION pi;
+  ZeroMemory(&pi, sizeof(pi));
+  DWORD dwProcessFlags = 0;
+  char * cmd = strdup(args[0]);
+  int p = CreateProcess(NULL, cmd, NULL, NULL, 1, dwProcessFlags, NULL, NULL, &si, &pi) != 0;
+  if (!p)
+    return EXIT_FAILURE;
+  DWORD waitRc = WaitForSingleObject(pi.hProcess, INFINITE);
+  if (waitRc == WAIT_FAILED)
+    return EXIT_FAILURE;
+  DWORD exit_code = 0;
+  p = GetExitCodeProcess(pi.hProcess, &exit_code) != 0;
+  if (!p)
+    return EXIT_FAILURE;
+  return exit_code;
 #else
 #error Must have fork() or vfork() system calls for HSA
 #endif

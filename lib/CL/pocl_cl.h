@@ -34,7 +34,7 @@
 #include <valgrind/helgrind.h>
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #  include "vccompat.hpp"
 #endif
 /* To get adaptive mutex type */
@@ -287,7 +287,7 @@ extern uint64_t last_object_id;
 #  define POsym(name)
 #  define POsymAlways(name)
 
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
 /* Visual Studio does not support this magic either */
 #  define POname(name) name
 #  define POdeclsym(name)
@@ -1424,6 +1424,25 @@ struct _cl_sampler {
   #define le64toh(x) OSSwapLittleToHostInt64(x)
 #elif defined(__FreeBSD__)
   #include <sys/endian.h>
+#elif defined (_WIN32)
+    #ifndef htole64
+      #define htole64(x) (x)
+    #endif
+    #ifndef htole32
+      #define htole32(x) (x)
+    #endif
+    #ifndef htole16
+      #define htole16(x) (x)
+    #endif
+    #ifndef le64toh
+      #define le64toh(x) (x)
+    #endif
+    #ifndef le32toh
+      #define le32toh(x) (x)
+    #endif
+    #ifndef le16toh
+      #define le16toh(x) (x)
+    #endif
 #else
   #include <endian.h>
   #if defined(__GLIBC__) && __GLIBC__ == 2 && \

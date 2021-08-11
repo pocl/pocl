@@ -1,16 +1,21 @@
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#ifndef _WIN32
 #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #else
-#include <io.h>
+#include "vccompat.hpp"
+#ifdef __MINGW32__
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -255,8 +260,10 @@ int
 pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                   int *ret_fd)
 {
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#error "making temporary files on Windows not implemented"
+#if defined(_WIN32)
+  char buf[256];
+  int ok = GetTempFileName(getenv("TEMP"), prefix, 0, buf);
+  return ok ? 0 : 1;
 #elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS) || defined(__ANDROID__)
   /* using mkstemp() instead of tmpnam() has no real benefit
    * here, as we have to pass the filename to llvm,
@@ -310,7 +317,7 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
 int
 pocl_mk_tempdir (char *output, const char *prefix)
 {
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_WIN32)
   assert (0);
 #elif defined(HAVE_MKDTEMP)
   /* TODO mkdtemp() might not be portable outside Linux */

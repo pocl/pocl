@@ -23,10 +23,11 @@
 #
 #=============================================================================
 
-
-# do not link test_dlopen with -lOpenCL
-add_executable("test_dlopen" "test_dlopen.c")
-target_link_libraries("test_dlopen" ${DL_LIB})
+if (UNIX)
+  # do not link test_dlopen with -lOpenCL
+  add_executable("test_dlopen" "test_dlopen.c")
+  target_link_libraries("test_dlopen" ${DL_LIB})
+endif ()
 
 set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
