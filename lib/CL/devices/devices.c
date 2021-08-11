@@ -36,7 +36,7 @@
 #include <ucontext.h>
 #endif
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -161,7 +161,7 @@ static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
 static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #define POCL_PATH_SEPARATOR "/"
 #else
 #define POCL_PATH_SEPARATOR "\\"

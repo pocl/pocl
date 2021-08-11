@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  define _DEFAULT_SOURCE
 #  define __POSIX_VISIBLE 200112L
 #  ifndef _POSIX_C_SOURCE

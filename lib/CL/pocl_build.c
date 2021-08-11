@@ -31,7 +31,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"

@@ -26,8 +26,8 @@
 static const char *pocl_version
     = "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION
 
-#if defined(_WIN32) || defined(__MINGW32__)
-   #if defined(_WIN64) || defined(__MINGW64__)
+#if defined(_WIN32)
+   #if defined(_WIN64)
       "  Windows x86-64"
    #else
       "  Windows x86"

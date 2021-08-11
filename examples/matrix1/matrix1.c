@@ -35,7 +35,13 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _WIN32
+#  include "vccompat.hpp"
+#endif
+
+#ifndef min
 #define min(X, Y) X < Y ? X : Y
+#endif
 
 int
 exec_matrix_kernel (cl_context context, cl_device_id device,

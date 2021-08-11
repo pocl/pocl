@@ -28,6 +28,10 @@
 #include <numeric>
 #include <CL/cl2.hpp>
 
+#ifdef _WIN32
+#  include "vccompat.hpp"
+#endif
+
 std::string read_text_file(const std::string& path)
 {
     FILE* f = fopen(path.c_str(), "rb");

@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <sys/stat.h>
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
