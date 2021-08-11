@@ -95,7 +95,7 @@ uint64_t pocl_gettimemono_ns() {
   res |= ft.dwHighDateTime;
   res <<= 32;
   res |= ft.dwLowDateTime;
-  res -= 11644473600000000Ui64;
+  res -= 11644473600000000ULL;
   res /= 10;
   return res;
 
