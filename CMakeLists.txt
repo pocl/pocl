@@ -414,34 +414,23 @@ else()
   endfunction()
 endif()
 
-if(UNIX AND (NOT CMAKE_CROSSCOMPILING))
-  find_package(PkgConfig MODULE REQUIRED)
-  find_package(Hwloc)
+find_package(PkgConfig MODULE)
+find_package(Hwloc)
 
   if(NOT Hwloc_FOUND)
-    message(WARNING "hwloc package not found")
+    message(STATUS "hwloc package not found")
+    set(ENABLE_HWLOC OFF CACHE BOOL "Hwloc" FORCE)
   else()
       if("${Hwloc_VERSION}" VERSION_LESS "1.0")
         message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
       endif()
 
       message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
-      message(STATUS "Hwloc_LDFLAGS ${Hwloc_LDFLAGS}")
-      message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
+      message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
+      message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
 
       set(ENABLE_HWLOC ON CACHE BOOL "Hwloc" FORCE)
   endif()
-
-else()
-
-  message(STATUS "Not on UNIX or cross-compiling -> building without HWLOC")
-  set(ENABLE_HWLOC OFF CACHE BOOL "Hwloc" FORCE)
-
-endif()
-
-
-
-
 
 ######################################################################################
 
