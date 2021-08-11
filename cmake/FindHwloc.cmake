@@ -40,8 +40,8 @@ if(WIN32)
   )
 
   find_library(Hwloc_LIBRARY
-    NAMES 
-      libhwloc.lib
+    NAMES
+      hwloc
     PATHS
       ENV "PROGRAMFILES(X86)"
       ENV HWLOC_ROOT
@@ -119,7 +119,7 @@ if(WIN32)
   find_package_handle_standard_args(
     Hwloc
     FOUND_VAR Hwloc_FOUND
-    REQUIRED_VARS Hwloc_LIBRARY Hwloc_INCLUDE_DIR Hwloc_VERSION_PARSED Hwloc_VERSION_MAJOR Hwloc_VERSION_MINOR
+    REQUIRED_VARS Hwloc_LIBRARIES Hwloc_INCLUDE_DIRS
     VERSION_VAR Hwloc_VERSION)
 
   mark_as_advanced(
