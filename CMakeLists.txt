@@ -833,39 +833,13 @@ include_directories("include")
 
 ######################################################################################
 
-set(HAVE_DLFCN_H OFF CACHE BOOL "dlopen" FORCE)
-
-if(WIN32)
-  message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
-
-elseif(UNIX)
-
-    find_library(DL_LIB "dl")
-    find_file(DL_H "dlfcn.h")
-
-    if(DL_LIB AND DL_H)
-      message(STATUS "libdl found")
-    else()
-      message(STATUS "libdl not found, assuming dlopen() is in libc")
-      set(DL_LIB "")
-    endif()
-
-    if(DL_H)
-      get_filename_component(DL_H_INCLUDE_DIR "${DL_H}" DIRECTORY)
-      string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${DL_H_INCLUDE_DIR}" LTPOSITION)
-      # include the directory of dlfcn.h, if its not in the default system include dirs
-      # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
-      if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
-        include_directories("${DL_H_INCLUDE_DIR}")
-      endif()
-      set(HAVE_DLFCN_H ON CACHE BOOL "dlfcn.h" FORCE)
-    else()
-      message(FATAL_ERROR "Could not find dlfcn.h!")
-    endif()
-
-else()
-  message(STATUS "Unknown OS, don't know how to load a dynamic library")
-endif()
+find_path(DL_H_INCLUDE_DIR dlfcn.h)
+if (DL_H_INCLUDE_DIR)
+  set(HAVE_DLFCN_H TRUE)
+endif ()
+find_library(DL_LIB dl)
+message(STATUS "dlfcn.h: ${DL_H_INCLUDE_DIR}")
+message(STATUS "libdl: ${DL_LIB}")
 
 ######################################################################################
 
