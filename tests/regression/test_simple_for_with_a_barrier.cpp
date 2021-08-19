@@ -151,14 +151,14 @@ main(void)
             cBuffer,
             (void *) output);
 
-        if (ok) 
+        queue.finish();
+        platformList[0].unloadCompiler();
+
+        if (ok)
           return EXIT_SUCCESS;
         else
           return EXIT_FAILURE;
  
-        // There is no need to perform a finish on the final unmap
-        // or release any objects as this all happens implicitly with
-        // the C++ Wrapper API.
     } 
     catch (cl::Error &err) {
          std::cerr

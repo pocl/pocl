@@ -95,6 +95,8 @@ main(void)
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1));
     queue.finish();
 
+    platformList[0].unloadCompiler();
+
     // We don't actually care about the result.
   }
   catch (cl::Error &err) {

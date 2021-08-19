@@ -131,9 +131,8 @@ main(void)
             outBuffer,
             (void *) output);
 
-        // There is no need to perform a finish on the final unmap
-        // or release any objects as this all happens implicitly with
-        // the C++ Wrapper API.
+        queue.finish();
+        platformList[0].unloadCompiler();
 
         if (ok)
           return EXIT_SUCCESS;

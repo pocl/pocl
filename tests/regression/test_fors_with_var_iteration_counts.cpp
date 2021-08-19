@@ -135,6 +135,9 @@ main(void)
             0,
             WORK_ITEMS * sizeof(int));
 
+        queue.finish();
+        platformList[0].unloadCompiler();
+
         // If the kernel compiler succeeds, we are happy for now.
         return EXIT_SUCCESS;
     } 

@@ -52,6 +52,8 @@ int main(int, char **)
 		  << std::endl;
     }
     queue.enqueueUnmapMemObject(buffer, output);
+    queue.finish();
+    cl::Platform::getDefault().unloadCompiler();
   }
   catch (cl::Error& err) {
     std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;

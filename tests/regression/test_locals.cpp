@@ -136,7 +136,7 @@ main(void)
         queue.enqueueUnmapMemObject(
             aBuffer, (void *) res);
         queue.finish();
-
+        platformList[0].unloadCompiler();
     }
     catch (cl::Error &err) {
          std::cerr

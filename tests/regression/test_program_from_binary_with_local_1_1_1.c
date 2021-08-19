@@ -53,7 +53,7 @@ const char *kernelSource =
 
 int main ()
 {
-	cl_platform_id platform;
+  cl_platform_id platform;
   cl_device_id device;
   cl_context context;
   cl_command_queue queue;
@@ -144,6 +144,6 @@ int main ()
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
   clReleaseDevice(device);
-
+  clUnloadPlatformCompiler(platform);
   return 0;
 }

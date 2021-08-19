@@ -31,6 +31,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  cl::Platform::getDefault().unloadCompiler();
+
   if (error_count == 2) {
     std::cout << "OK\n";
     return 0;

@@ -115,6 +115,7 @@ main(void)
             2 * sizeof(int));
 
         queue.finish();
+        platformList[0].unloadCompiler();
 
         if (!(res[0] == 1 && res[1] == 2)) {
             std::cerr << res[0] << res[1] << std::endl;
