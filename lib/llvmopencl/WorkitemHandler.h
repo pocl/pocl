@@ -68,22 +68,22 @@ namespace pocl {
     // The Module global variables that hold the place of the current local
     // id until privatized.
     llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
+
+    // Copies of compilation parameters
+    std::string KernelName;
+    unsigned long address_bits;
+    bool WGAssumeZeroGlobalOffset;
+    bool WGDynamicLocalSize;
+    bool DeviceUsingArgBufferLauncher;
+    bool DeviceIsSPMD;
+    unsigned long WGLocalSizeX;
+    unsigned long WGLocalSizeY;
+    unsigned long WGLocalSizeZ;
+    unsigned long WGMaxGridDimWidth;
   };
 
   extern llvm::cl::opt<bool> AddWIMetadata;
   extern llvm::cl::opt<int> LockStepSIMDWidth;
-
-  // If set to true, the next 3 parameters define the local size to specialize
-  // for.
-  extern bool WGDynamicLocalSize;
-  extern size_t WGLocalSizeX;
-  extern size_t WGLocalSizeY;
-  extern size_t WGLocalSizeZ;
-  // If set to non-zero, assume each grid dimension is at most this
-  // work-items wide.
-  extern size_t WGMaxGridDimWidth;
-  // Set to true to generate a global offset 0 specialized WG function.
-  extern bool WGAssumeZeroGlobalOffset;
 }
 
 #endif

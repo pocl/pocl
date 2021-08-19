@@ -107,8 +107,8 @@ extern "C" {
   /** Compile the kernel in infile from LLVM bitcode to native object file for
    * device, into outfile.
    */
-  int pocl_llvm_codegen (cl_device_id device, void *modp, char **output,
-                         uint64_t *output_size);
+  int pocl_llvm_codegen (cl_device_id device, cl_program program, void *modp,
+                         char **output, uint64_t *output_size);
 
   /* Parse program file and populate program's llvm_irs */
   int pocl_llvm_read_program_llvm_irs (cl_program program, unsigned device_i,

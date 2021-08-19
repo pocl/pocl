@@ -85,8 +85,6 @@ using namespace llvm;
 
 POP_COMPILER_DIAGS
 
-/* Global pocl device to be used by passes if needed */
-cl_device_id currentPoclDevice = NULL;
 
 
 //#define DEBUG_POCL_LLVM_API
@@ -159,7 +157,8 @@ static void get_build_log(cl_program program,
   appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *getKernelLibrary(cl_device_id device, cl_context ctx);
+static llvm::Module *getKernelLibrary(cl_device_id device,
+                                      PoclLLVMContextData *llvm_ctx);
 
 static std::string getPoclPrivateDataDir() {
 #ifdef ENABLE_RELOCATION
@@ -196,8 +195,8 @@ int pocl_llvm_build_program(cl_program program,
   size_t n = 0;
   int error;
   cl_context ctx = program->context;
-
-  PoclCompilerMutexGuard lockHolder(nullptr);
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   if (num_input_headers > 0) {
     error = pocl_cache_create_tempdir(temp_include_dir);
@@ -557,8 +556,6 @@ int pocl_llvm_build_program(cl_program program,
 
   unlink_source(fe);
 
-  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-
   if (pocl_exists(program_bc_path)) {
     char *binary = nullptr;
     uint64_t fsize;
@@ -624,11 +621,11 @@ int pocl_llvm_build_program(cl_program program,
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
   if (linking_program) {
-    currentPoclDevice = device;
-    llvm::Module *libmodule = getKernelLibrary(device, ctx);
+    llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
-    if (link(mod, libmodule, log)) {
+    if (link(mod, libmodule, log, device->global_as_id,
+             device->device_aux_functions)) {
       appendToProgramBuildLog(program, device_i, log);
       std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
@@ -680,13 +677,11 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   int error;
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
-  currentPoclDevice = device;
-  llvm::Module *libmodule =
-      getKernelLibrary(device, llvm_ctx->Context, llvm_ctx->kernelLibraryMap);
+  llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
   assert(libmodule != NULL);
 
-  PoclCompilerMutexGuard lockHolder(NULL);
 
   if (spir) {
 #ifdef ENABLE_SPIR
@@ -698,8 +693,9 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     concated_binaries.append((char *)cur_device_binaries[0],
                              cur_device_binary_sizes[0]);
 
-    linked_module = parseModuleIRMem((char *)cur_device_binaries[0],
-                                     cur_device_binary_sizes[0], ctx);
+    linked_module =
+        parseModuleIRMem((char *)cur_device_binaries[0],
+                         cur_device_binary_sizes[0], llvm_ctx->Context);
 
     const std::string &spir_triple = linked_module->getTargetTriple();
     size_t spir_addrbits = Triple(spir_triple).isArch64Bit() ? 64 : 32;
@@ -733,7 +729,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   } else {
 
     std::unique_ptr<llvm::Module> mod(
-        new llvm::Module(StringRef("linked_program"), *c));
+        new llvm::Module(StringRef("linked_program"), *llvm_ctx->Context));
 
     for (i = 0; i < num_input_programs; i++) {
       assert(cur_device_binaries[i]);
@@ -770,7 +766,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   if (link_program) {
     // linked all the programs together, now link in the kernel library
     std::string log("Error(s) while linking: \n");
-    if (link(linked_module, libmodule, log)) {
+    if (link(linked_module, libmodule, log, device->global_as_id,
+             device->device_aux_functions)) {
       appendToProgramBuildLog(program, device_i, log);
       std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
@@ -864,9 +861,10 @@ const char *getX86KernelLibName() {
  * for the given device.
  */
 static llvm::Module *getKernelLibrary(cl_device_id device,
-                                      llvm::Context *llvmContext,
-                                      kernelLibraryMapTy *kernelLibraryMap) {
+                                      PoclLLVMContextData *llvm_ctx) {
   Triple triple(device->llvm_target_triplet);
+  llvm::LLVMContext *llvmContext = llvm_ctx->Context;
+  kernelLibraryMapTy *kernelLibraryMap = llvm_ctx->kernelLibraryMap;
 
   if (kernelLibraryMap->find(device) != kernelLibraryMap->end())
     return kernelLibraryMap->at(device);

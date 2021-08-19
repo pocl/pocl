@@ -90,9 +90,6 @@ using namespace llvm;
 static std::map<cl_device_id, llvm::TargetMachine *> targetMachines;
 static std::map<cl_device_id, PassManager *> kernelPasses;
 
-// This is used to control the kernel we process in the kernel compilation.
-extern cl::opt<std::string> KernelName;
-
 /* FIXME: these options should come from the cl_device, and
  * cl_program's options. */
 static llvm::TargetOptions GetTargetOptions() {
@@ -346,8 +343,8 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
 
 void pocl_destroy_llvm_module(void *modp, cl_context ctx) {
 
-  PoclCompilerMutexGuard lockHolder(NULL);
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   llvm::Module *mod = (llvm::Module *)modp;
   if (mod) {
@@ -359,12 +356,6 @@ void pocl_destroy_llvm_module(void *modp, cl_context ctx) {
 // The global variables used to control the WG function generation's
 // specialization parameteres. Defined in lib/llvmopencl/WorkitemHandler.cc.
 namespace pocl {
-extern size_t WGLocalSizeX;
-extern size_t WGLocalSizeY;
-extern size_t WGLocalSizeZ;
-extern bool WGDynamicLocalSize;
-extern size_t WGMaxGridDimWidth;
-extern bool WGAssumeZeroGlobalOffset;
 }
 
 int pocl_llvm_generate_workgroup_function_nowrite(
@@ -375,10 +366,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   cl_program Program = Kernel->program;
   cl_context ctx = Program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-
-  currentPoclDevice = Device;
-
-  PoclCompilerMutexGuard LockHolder(NULL);
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
 #ifdef DEBUG_POCL_LLVM_API
   printf("### calling the kernel compiler for kernel %s local_x %zu "
@@ -397,36 +385,94 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
   ParallelBC->setDataLayout(ProgramBC->getDataLayout());
 
-  copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC);
+  copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC,
+                        Device->global_as_id, Device->device_aux_functions);
+
+  // Set to true to generate a global offset 0 specialized WG function.
+  bool WGAssumeZeroGlobalOffset;
+  // If set to true, the next 3 parameters define the local size to specialize
+  // for.
+  bool WGDynamicLocalSize;
+  size_t WGLocalSizeX;
+  size_t WGLocalSizeY;
+  size_t WGLocalSizeZ;
+  // If set to non-zero, assume each grid dimension is at most this
+  // work-items wide.
+  size_t WGMaxGridDimWidth;
 
   // Set the specialization properties.
   if (Specialize) {
-    pocl::WGLocalSizeX = RunCommand->pc.local_size[0];
-    pocl::WGLocalSizeY = RunCommand->pc.local_size[1];
-    pocl::WGLocalSizeZ = RunCommand->pc.local_size[2];
-    pocl::WGDynamicLocalSize = pocl::WGLocalSizeX == 0 &&
-                               pocl::WGLocalSizeY == 0 &&
-                               pocl::WGLocalSizeZ == 0;
-    pocl::WGAssumeZeroGlobalOffset = RunCommand->pc.global_offset[0] == 0 &&
-                                     RunCommand->pc.global_offset[1] == 0 &&
-                                     RunCommand->pc.global_offset[2] == 0;
+    WGLocalSizeX = RunCommand->pc.local_size[0];
+    WGLocalSizeY = RunCommand->pc.local_size[1];
+    WGLocalSizeZ = RunCommand->pc.local_size[2];
+    WGDynamicLocalSize =
+        WGLocalSizeX == 0 && WGLocalSizeY == 0 && WGLocalSizeZ == 0;
+    WGAssumeZeroGlobalOffset = RunCommand->pc.global_offset[0] == 0 &&
+                               RunCommand->pc.global_offset[1] == 0 &&
+                               RunCommand->pc.global_offset[2] == 0;
     // Compile a smallgrid version or a generic one?
     if (RunCommand->force_large_grid_wg_func ||
         pocl_cmd_max_grid_dim_width(RunCommand) >=
             Device->grid_width_specialization_limit) {
-      pocl::WGMaxGridDimWidth = 0; // The generic / large / unlimited size one.
+      WGMaxGridDimWidth = 0; // The generic / large / unlimited size one.
     } else {
       // Limited grid dimension width by the device specific limit.
-      pocl::WGMaxGridDimWidth = Device->grid_width_specialization_limit;
+      WGMaxGridDimWidth = Device->grid_width_specialization_limit;
     }
   } else {
-    pocl::WGDynamicLocalSize = true;
-    pocl::WGLocalSizeX = pocl::WGLocalSizeY = pocl::WGLocalSizeZ = 0;
-    pocl::WGAssumeZeroGlobalOffset = false;
-    pocl::WGMaxGridDimWidth = 0;
+    WGDynamicLocalSize = true;
+    WGLocalSizeX = WGLocalSizeY = WGLocalSizeZ = 0;
+    WGAssumeZeroGlobalOffset = false;
+    WGMaxGridDimWidth = 0;
   }
 
-  KernelName = Kernel->name;
+  if (Device->device_aux_functions) {
+    std::string concat;
+    const char **tmp = Device->device_aux_functions;
+    while (*tmp != nullptr) {
+      concat.append(*tmp);
+      ++tmp;
+      if (*tmp)
+        concat.append(";");
+    }
+    setModuleStringMetadata(ParallelBC, "device_aux_functions", concat.c_str());
+  }
+
+  setModuleIntMetadata(ParallelBC, "device_address_bits", Device->address_bits);
+  setModuleBoolMetadata(ParallelBC, "device_arg_buffer_launcher",
+                        Device->arg_buffer_launcher);
+  setModuleBoolMetadata(ParallelBC, "device_is_spmd", Device->spmd);
+
+  setModuleStringMetadata(ParallelBC, "KernelName", Kernel->name);
+  setModuleIntMetadata(ParallelBC, "WGMaxGridDimWidth", WGMaxGridDimWidth);
+  setModuleIntMetadata(ParallelBC, "WGLocalSizeX", WGLocalSizeX);
+  setModuleIntMetadata(ParallelBC, "WGLocalSizeY", WGLocalSizeY);
+  setModuleIntMetadata(ParallelBC, "WGLocalSizeZ", WGLocalSizeZ);
+  setModuleBoolMetadata(ParallelBC, "WGDynamicLocalSize", WGDynamicLocalSize);
+  setModuleBoolMetadata(ParallelBC, "WGAssumeZeroGlobalOffset",
+                        WGAssumeZeroGlobalOffset);
+
+  setModuleIntMetadata(ParallelBC, "device_global_as_id", Device->global_as_id);
+  setModuleIntMetadata(ParallelBC, "device_local_as_id", Device->local_as_id);
+  setModuleIntMetadata(ParallelBC, "device_constant_as_id",
+                       Device->constant_as_id);
+  setModuleIntMetadata(ParallelBC, "device_args_as_id", Device->args_as_id);
+  setModuleIntMetadata(ParallelBC, "device_context_as_id",
+                       Device->context_as_id);
+
+  setModuleBoolMetadata(ParallelBC, "device_side_printf",
+                        Device->device_side_printf);
+  setModuleBoolMetadata(ParallelBC, "device_alloca_locals",
+                        Device->device_alloca_locals);
+
+  setModuleIntMetadata(ParallelBC, "device_max_witem_dim",
+                       Device->max_work_item_dimensions);
+  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_0",
+                       Device->max_work_item_sizes[0]);
+  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_1",
+                       Device->max_work_item_sizes[1]);
+  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_2",
+                       Device->max_work_item_sizes[2]);
 
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::TimePassesIsEnabled = true;
@@ -492,9 +538,9 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
  * NULL */
 int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
                                     const char *program_bc_path) {
-  PoclCompilerMutexGuard lockHolder(nullptr);
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   if (program->data[device_i] != nullptr)
     return CL_SUCCESS;
@@ -502,7 +548,7 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
   if (program->binaries[device_i])
     program->data[device_i] =
         parseModuleIRMem((char *)program->binaries[device_i],
-                         program->binary_sizes[device_i], ctx);
+                         program->binary_sizes[device_i], llvm_ctx->Context);
   else {
     // TODO
     assert(program_bc_path);
@@ -516,8 +562,8 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
 void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
   if (program->data[device_i]) {
-    PoclCompilerMutexGuard lockHolder(nullptr);
     llvm::Module *mod = (llvm::Module *)program->data[device_i];
     delete mod;
     --llvm_ctx->number_of_IRs;
@@ -528,7 +574,9 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
 /* writes fresh program.bc and program->binaries[i] from LLVM IR module. */
 int pocl_llvm_update_binaries(cl_program program, cl_uint device_i) {
 
-  PoclCompilerMutexGuard lockHolder(NULL);
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   char program_bc_path[POCL_FILENAME_LENGTH];
   int error;
@@ -583,10 +631,12 @@ static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
-                      uint64_t *OutputSize) {
+int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
+                      char **Output, uint64_t *OutputSize) {
 
-  PoclCompilerMutexGuard LockHolder(nullptr);
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);

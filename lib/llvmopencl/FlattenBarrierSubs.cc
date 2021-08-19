@@ -29,6 +29,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Module.h"
@@ -56,8 +57,6 @@ public:
 } // namespace
 
 //#define DEBUG_FLATTEN_SUBS
-
-extern cl::opt<std::string> KernelName;
 
 char FlattenBarrierSubs::ID = 0;
 static RegisterPass<FlattenBarrierSubs>
@@ -110,12 +109,17 @@ static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
 
 bool FlattenBarrierSubs::runOnModule(Module &M) {
   bool Changed = false;
+
+  std::string KernelName;
+  getModuleStringMetadata(M, "KernelName", KernelName);
+
   for (llvm::Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     llvm::Function *F = &*I;
     if (F->isDeclaration())
       continue;
 
-    if (KernelName == F->getName() || pocl::Workgroup::isKernelToProcess(*F)) {
+    if (KernelName == F->getName().str() ||
+        pocl::Workgroup::isKernelToProcess(*F)) {
 
 #ifdef DEBUG_FLATTEN_SUBS
       std::cerr << "### FlattenBarrierSubs Pass running on " << KernelName

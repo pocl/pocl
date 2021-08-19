@@ -27,9 +27,6 @@
 #ifndef POCL_LLVM_API_H
 #define POCL_LLVM_API_H
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING ("-Wunused-parameter")
-
 #include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/IR/Module.h>
 #include <llvm/Support/raw_os_ostream.h>
@@ -47,8 +44,10 @@ IGNORE_COMPILER_WARNING ("-Wunused-parameter")
  * Pocl used a llvm::sys::Mutex class variable before, unfortunately,
  * using llvm::sys::Mutex is not safe. Reason:
  *
- * if pocl is dlopened from a C++ program, pocl's C++ object destructors
- * are called before the program's dtors. This causes the Mutex to be destroyed,
+ * if pocl is dlopened from a C++ program, pocl dlopens libLLVM. At exit time,
+ * LLVM is unloaded before pocl, and its destructors are called.
+ *
+ * This causes the Mutex to be destroyed,
  * and if the program's dtors call clReleaseProgram()
  * -> pocl_free_llvm_irs() -> llvm::PoclMutexGuard guard_variable(Mutex)
  * ... the program will freeze/segfault.
@@ -61,21 +60,31 @@ IGNORE_COMPILER_WARNING ("-Wunused-parameter")
 class PoclCompilerMutexGuard {
   PoclCompilerMutexGuard(const PoclCompilerMutexGuard &) = delete;
   void operator=(const PoclCompilerMutexGuard &) = delete;
+  pocl_lock_t *lock;
 
 public:
-  // an unused argument is required, otherwise compiler optimizes out the object
-  PoclCompilerMutexGuard(void *unused);
+  PoclCompilerMutexGuard (pocl_lock_t *ptr);
   ~PoclCompilerMutexGuard();
 };
 
-POCL_EXPORT
-extern cl_device_id currentPoclDevice;
-
-llvm::Module *parseModuleIR (const char *path, LLVMContext *c);
+llvm::Module *parseModuleIR (const char *path, llvm::LLVMContext *c);
 void writeModuleIR(const llvm::Module *mod, std::string &str);
 llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
-                                LLVMContext *c);
+                                llvm::LLVMContext *c);
 std::string getDiagString (cl_context ctx);
+
+void setModuleIntMetadata (llvm::Module *mod, const char *key,
+                           unsigned long data);
+void setModuleStringMetadata (llvm::Module *mod, const char *key,
+                              const char *data);
+void setModuleBoolMetadata (llvm::Module *mod, const char *key, bool data);
+
+POCL_EXPORT bool getModuleIntMetadata (const llvm::Module &mod,
+                                       const char *key, unsigned long &data);
+POCL_EXPORT bool getModuleStringMetadata (const llvm::Module &mod,
+                                          const char *key, std::string &data);
+POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
+                                        const char *key, bool &data);
 
 void clearKernelPasses();
 void clearTargetMachines();
@@ -85,6 +94,7 @@ extern std::string currentWgMethod;
 typedef std::map<cl_device_id, llvm::Module *> kernelLibraryMapTy;
 struct PoclLLVMContextData
 {
+  pocl_lock_t Lock;
   llvm::LLVMContext *Context;
   unsigned number_of_IRs;
   std::string *poclDiagString;

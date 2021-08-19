@@ -39,10 +39,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/Signals.h>
 
-#include <llvm/IR/Module.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/DiagnosticPrinter.h>
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/DiagnosticInfo.h>
+#include <llvm/IR/DiagnosticPrinter.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
 
 #include <llvm/Target/TargetMachine.h>
 
@@ -68,7 +69,7 @@ using namespace llvm;
 #include <string>
 #include <map>
 
-llvm::Module *parseModuleIR(const char *path, LLVMContext *c) {
+llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   SMDiagnostic Err;
   return parseIRFile(path, Err, *c).release();
 }
@@ -85,7 +86,7 @@ void writeModuleIR(const Module *mod, std::string &str) {
 }
 
 llvm::Module *parseModuleIRMem(const char *input_stream, size_t size,
-                               LLVMContext *c) {
+                               llvm::LLVMContext *c) {
   StringRef input_stream_ref(input_stream, size);
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
@@ -224,20 +225,12 @@ std::string getDiagString(cl_context ctx) {
 /* The LLVM API interface functions are not at the moment not thread safe,
  * Pocl needs to ensure only one thread is using this layer at the time.
  */
-static pocl_lock_t kernelCompilerLock;
-static int kernelCompilerLockInitialized = 0;
-
-PoclCompilerMutexGuard::PoclCompilerMutexGuard(void *unused) {
-  if (kernelCompilerLockInitialized == 0) {
-    POCL_INIT_LOCK(kernelCompilerLock);
-    kernelCompilerLockInitialized = 1;
-  }
-  POCL_LOCK(kernelCompilerLock);
+PoclCompilerMutexGuard::PoclCompilerMutexGuard(pocl_lock_t *ptr) {
+  lock = ptr;
+  POCL_LOCK(*lock);
 }
 
-PoclCompilerMutexGuard::~PoclCompilerMutexGuard() {
-  POCL_UNLOCK(kernelCompilerLock);
-}
+PoclCompilerMutexGuard::~PoclCompilerMutexGuard() { POCL_UNLOCK(*lock); }
 
 std::string currentWgMethod;
 
@@ -357,7 +350,6 @@ void UnInitializeLLVM() {
 }
 
 void pocl_llvm_create_context(cl_context ctx) {
-  PoclCompilerMutexGuard lockHolder(NULL);
 
   POCL_MSG_PRINT_LLVM("creating LLVM context\n");
 
@@ -374,6 +366,7 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->kernelLibraryMap = new kernelLibraryMapTy;
   assert(data->kernelLibraryMap);
+  POCL_INIT_LOCK(data->Lock);
 
   LLVMContextSetDiagnosticHandler(wrap(data->Context),
                                   (LLVMDiagnosticHandler)diagHandler,
@@ -384,12 +377,10 @@ void pocl_llvm_create_context(cl_context ctx) {
 
 void pocl_llvm_release_context(cl_context ctx) {
 
-  PoclCompilerMutexGuard lockHolder(NULL);
+  POCL_MSG_PRINT_LLVM("releasing LLVM context\n");
 
   PoclLLVMContextData *data = (PoclLLVMContextData *)ctx->llvm_context_data;
   assert(data);
-
-  POCL_MSG_PRINT_LLVM("releasing LLVM context\n");
 
   if (data->number_of_IRs > 0) {
     POCL_ABORT("still have references to IRs - can't release LLVM context !\n");
@@ -408,8 +399,107 @@ void pocl_llvm_release_context(cl_context ctx) {
   }
   data->kernelLibraryMap->clear();
   delete data->kernelLibraryMap;
+  POCL_DESTROY_LOCK(data->Lock);
 
   delete data->Context;
   delete data;
   ctx->llvm_context_data = nullptr;
+}
+
+#define POCL_METADATA_ROOT "pocl_meta"
+
+void setModuleIntMetadata(llvm::Module *mod, const char *key,
+                          unsigned long data) {
+
+  llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
+                            llvm::ConstantAsMetadata::get(ConstantInt::get(
+                                Type::getInt64Ty(mod->getContext()), data))};
+
+  MDNode *MD = MDNode::get(mod->getContext(), meta);
+
+  NamedMDNode *Root = mod->getOrInsertNamedMetadata(POCL_METADATA_ROOT);
+  Root->addOperand(MD);
+}
+
+void setModuleStringMetadata(llvm::Module *mod, const char *key,
+                             const char *data) {
+  llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
+                            MDString::get(mod->getContext(), data)};
+
+  MDNode *MD = MDNode::get(mod->getContext(), meta);
+
+  NamedMDNode *Root = mod->getOrInsertNamedMetadata(POCL_METADATA_ROOT);
+  Root->addOperand(MD);
+}
+
+void setModuleBoolMetadata(llvm::Module *mod, const char *key, bool data) {
+  llvm::Metadata *meta[] = {
+      MDString::get(mod->getContext(), key),
+      llvm::ConstantAsMetadata::get(
+          ConstantInt::get(Type::getInt8Ty(mod->getContext()), data ? 1 : 0))};
+
+  MDNode *MD = MDNode::get(mod->getContext(), meta);
+
+  NamedMDNode *Root = mod->getOrInsertNamedMetadata(POCL_METADATA_ROOT);
+  Root->addOperand(MD);
+}
+
+bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
+                          unsigned long &data) {
+  NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
+  assert(Root);
+  bool found = false;
+
+  for (size_t i = 0; i < Root->getNumOperands(); ++i) {
+    MDNode *MD = Root->getOperand(i);
+
+    Metadata *KeyMD = MD->getOperand(0);
+    assert(KeyMD);
+    MDString *Key = dyn_cast<MDString>(KeyMD);
+    assert(Key);
+    if (Key->getString().compare(key) != 0)
+      continue;
+
+    Metadata *ValueMD = MD->getOperand(1);
+    assert(ValueMD);
+    ConstantInt *CI = mdconst::extract<ConstantInt>(ValueMD);
+    data = CI->getZExtValue();
+    found = true;
+  }
+  return found;
+}
+
+bool getModuleStringMetadata(const llvm::Module &mod, const char *key,
+                             std::string &data) {
+  NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
+  assert(Root);
+  bool found = false;
+
+  for (size_t i = 0; i < Root->getNumOperands(); ++i) {
+    MDNode *MD = Root->getOperand(i);
+
+    Metadata *KeyMD = MD->getOperand(0);
+    assert(KeyMD);
+    MDString *Key = dyn_cast<MDString>(KeyMD);
+    assert(Key);
+    if (Key->getString().compare(key) != 0)
+      continue;
+
+    Metadata *ValueMD = MD->getOperand(1);
+    assert(ValueMD);
+    MDString *StringValue = dyn_cast<MDString>(ValueMD);
+    data = StringValue->getString().str();
+    found = true;
+  }
+  return found;
+}
+
+bool getModuleBoolMetadata(const llvm::Module &mod, const char *key,
+                           bool &data) {
+  unsigned long temporary;
+  bool found = getModuleIntMetadata(mod, key, temporary);
+  if (found) {
+    data = temporary > 0;
+  }
+  return found;
 }

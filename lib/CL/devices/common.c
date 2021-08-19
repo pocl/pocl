@@ -156,7 +156,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
+  error = pocl_llvm_codegen (device, program, llvm_module, &objfile,
+                             &objfile_size);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",

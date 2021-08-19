@@ -28,7 +28,7 @@
 #include <algorithm>
 
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -54,8 +54,6 @@ using namespace pocl;
 #include <iostream>
 
 int ParallelRegion::idGen = 0;
-
-extern cl_device_id currentPoclDevice;
 
 ParallelRegion::ParallelRegion(int forcedRegionId) : 
   std::vector<llvm::BasicBlock *>(), 
@@ -289,8 +287,10 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* Entry,
 
   Module *M = Entry->getParent()->getParent();
 
-  llvm::Type *SizeT =
-    IntegerType::get(M->getContext(), currentPoclDevice->address_bits);
+  unsigned long address_bits;
+  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+
+  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
 
   GlobalVariable *GVX = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
   if (GVX != NULL)

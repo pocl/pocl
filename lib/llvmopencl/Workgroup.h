@@ -77,6 +77,19 @@ namespace pocl {
     void addGEPs(llvm::IRBuilder<> &Builder, int StructFieldIndex,
                  const char* FormatStr);
 
+    void addRangeMetadataForPCField(llvm::Instruction *Instr,
+                                    int StructFieldIndex, int FieldIndex = -1);
+
+    LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
+                                             LLVMBuilderRef Builder,
+                                             llvm::Argument &Arg,
+                                             LLVMValueRef ArgByteOffset);
+
+    LLVMValueRef createArgBufferLoad(LLVMBuilderRef Builder,
+                                     LLVMValueRef ArgBufferPtr,
+                                     uint64_t *ArgBufferOffsets, LLVMValueRef F,
+                                     unsigned ParamIndex);
+
     llvm::Module *M;
     llvm::LLVMContext *C;
 
@@ -95,6 +108,27 @@ namespace pocl {
     llvm::Type *PoclContextT = nullptr;
     llvm::FunctionType *LauncherFuncT = nullptr;
 
+    // Copies of compilation parameters
+    std::string KernelName;
+    unsigned long address_bits;
+    bool WGAssumeZeroGlobalOffset;
+    bool WGDynamicLocalSize;
+    bool DeviceUsingArgBufferLauncher;
+    bool DeviceIsSPMD;
+    unsigned long WGLocalSizeX;
+    unsigned long WGLocalSizeY;
+    unsigned long WGLocalSizeZ;
+    unsigned long WGMaxGridDimWidth;
+
+    unsigned long DeviceGlobalASid;
+    unsigned long DeviceLocalASid;
+    unsigned long DeviceConstantASid;
+    unsigned long DeviceContextASid;
+    unsigned long DeviceArgsASid;
+    bool DeviceSidePrintf;
+    bool DeviceAllocaLocals;
+    unsigned long DeviceMaxWItemDim;
+    unsigned long DeviceMaxWItemSizes[3];
   };
 }
 

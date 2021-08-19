@@ -124,8 +124,6 @@ WorkitemReplication::ProcessFunction(Function &F)
   // not need it.
   unsigned workitem_count = WGLocalSizeZ * WGLocalSizeY * WGLocalSizeX;
 
-  assert (workitem_count > 0);
-
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
       if (!Barrier::hasBarrier(&*i))

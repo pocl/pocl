@@ -31,7 +31,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -56,9 +56,6 @@ namespace {
 
 }
 
-extern cl::opt<std::string> KernelName;
-extern cl_device_id currentPoclDevice;
-
 char Flatten::ID = 0;
 static RegisterPass<Flatten>
     X("flatten-inline-all",
@@ -71,11 +68,19 @@ Flatten::runOnModule(Module &M)
 {
   bool changed = false;
 
+  std::string DevAuxFunctionsList;
+  getModuleStringMetadata(M, "device_aux_functions", DevAuxFunctionsList);
+  std::string KernelName;
+  getModuleStringMetadata(M, "KernelName", KernelName);
+
   std::set<std::string> AuxFuncs;
-  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
-    const char **Func = DevAuxFuncs;
-    while (*Func != nullptr) {
-      AuxFuncs.insert(*Func++);
+  if (DevAuxFunctionsList.size() > 0) {
+    size_t pos = 0;
+    std::string token;
+    while ((pos = DevAuxFunctionsList.find(";")) != std::string::npos) {
+      token = DevAuxFunctionsList.substr(0, pos);
+      AuxFuncs.insert(token);
+      DevAuxFunctionsList.erase(0, pos + 1);
     }
   }
 
@@ -84,7 +89,8 @@ Flatten::runOnModule(Module &M)
     if (f->isDeclaration() || f->getName().startswith("__pocl_print") ||
         AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
       continue;
-    if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
+    if (KernelName == f->getName().str() &&
+        pocl::Workgroup::isKernelToProcess(*f)) {
       AttributeSet Attrs;
       f->removeAttributes(AttributeList::FunctionIndex,
                           Attrs.addAttribute(M.getContext(),

@@ -34,6 +34,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include "config.h"
+#include "pocl_llvm_api.h"
 #define CLANG_MAJOR LLVM_MAJOR
 #include "_libclang_versions_checks.h"
 
@@ -51,8 +52,6 @@ public:
   virtual bool runOnFunction(Function &F);
 };
 } // namespace
-
-extern cl::opt<std::string> KernelName;
 
 char InlineKernels::ID = 0;
 static RegisterPass<InlineKernels> X("inline-kernels",
@@ -143,7 +142,10 @@ bool InlineKernels::runOnFunction(Function &F) {
   SmallPtrSet<Function *, 8> functions_to_inline;
   SmallVector<Value *, 8> pending;
 
-  if (F.getName() != KernelName)
+  std::string KernelName;
+  getModuleStringMetadata(*F.getParent(), "KernelName", KernelName);
+
+  if (F.getName().str() != KernelName)
     return false;
 
   if (F.isDeclaration())

@@ -31,7 +31,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include <llvm/Analysis/ConstantFolding.h>
 #include <llvm/IR/BasicBlock.h>
@@ -78,15 +78,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
-extern cl_device_id currentPoclDevice;
-
 using namespace std;
 using namespace llvm;
 using namespace pocl;
-
-/* The kernel to process in this kernel compiler launch. */
-cl::opt<string> KernelName("kernel", cl::desc("Kernel function name"),
-                           cl::value_desc("kernel"), cl::init(""));
 
 #ifdef LLVM_OLDER_THAN_7_0
 namespace llvm {
@@ -170,8 +164,36 @@ Workgroup::runOnModule(Module &M) {
   this->M = &M;
   this->C = &M.getContext();
 
+  getModuleIntMetadata(M, "device_address_bits", address_bits);
+  getModuleBoolMetadata(M, "device_arg_buffer_launcher",
+                        DeviceUsingArgBufferLauncher);
+  getModuleBoolMetadata(M, "device_is_spmd", DeviceIsSPMD);
+
+  getModuleStringMetadata(M, "KernelName", KernelName);
+  getModuleIntMetadata(M, "WGMaxGridDimWidth", WGMaxGridDimWidth);
+  getModuleIntMetadata(M, "WGLocalSizeX", WGLocalSizeX);
+  getModuleIntMetadata(M, "WGLocalSizeY", WGLocalSizeY);
+  getModuleIntMetadata(M, "WGLocalSizeZ", WGLocalSizeZ);
+  getModuleBoolMetadata(M, "WGDynamicLocalSize", WGDynamicLocalSize);
+  getModuleBoolMetadata(M, "WGAssumeZeroGlobalOffset",
+                        WGAssumeZeroGlobalOffset);
+
+  getModuleIntMetadata(M, "device_global_as_id", DeviceGlobalASid);
+  getModuleIntMetadata(M, "device_local_as_id", DeviceLocalASid);
+  getModuleIntMetadata(M, "device_constant_as_id", DeviceConstantASid);
+  getModuleIntMetadata(M, "device_args_as_id", DeviceArgsASid);
+  getModuleIntMetadata(M, "device_context_as_id", DeviceContextASid);
+
+  getModuleBoolMetadata(M, "device_side_printf", DeviceSidePrintf);
+  getModuleBoolMetadata(M, "device_alloca_locals", DeviceAllocaLocals);
+
+  getModuleIntMetadata(M, "device_max_witem_dim", DeviceMaxWItemDim);
+  getModuleIntMetadata(M, "device_max_witem_sizes_0", DeviceMaxWItemSizes[0]);
+  getModuleIntMetadata(M, "device_max_witem_sizes_1", DeviceMaxWItemSizes[1]);
+  getModuleIntMetadata(M, "device_max_witem_sizes_2", DeviceMaxWItemSizes[2]);
+
   HiddenArgs = 0;
-  SizeTWidth = currentPoclDevice->address_bits;
+  SizeTWidth = address_bits;
   SizeT = IntegerType::get(*C, SizeTWidth);
 
 #ifdef LLVM_OLDER_THAN_7_0
@@ -203,9 +225,8 @@ Workgroup::runOnModule(Module &M) {
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
       {PointerType::get(PointerType::get(Type::getInt8Ty(*C), 0),
-                        currentPoclDevice->args_as_id),
-       PointerType::get(PoclContextT, currentPoclDevice->context_as_id), SizeT,
-       SizeT, SizeT},
+                        DeviceArgsASid),
+       PointerType::get(PoclContextT, DeviceContextASid), SizeT, SizeT, SizeT},
       false);
 #endif
 
@@ -237,14 +258,14 @@ Workgroup::runOnModule(Module &M) {
 
     privatizeContext(L);
 
-    if (currentPoclDevice->arg_buffer_launcher) {
+    if (DeviceUsingArgBufferLauncher) {
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(L, OrigKernel.getName().str());
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
       createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
-    } else if (currentPoclDevice->spmd) {
+    } else if (DeviceIsSPMD) {
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
       kernels[&OrigKernel] = L;
@@ -256,7 +277,7 @@ Workgroup::runOnModule(Module &M) {
     }
   }
 
-  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
+  if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
     regenerate_kernel_metadata(M, kernels);
 
     // Delete the old kernels.
@@ -297,16 +318,16 @@ static void addRangeMetadata(llvm::Instruction *Instr, size_t Min, size_t Max) {
   Instr->setMetadata(LLVMContext::MD_range, Range);
 }
 
-static void addRangeMetadataForPCField(llvm::Instruction *Instr,
-                                       int StructFieldIndex,
-                                       int FieldIndex = -1) {
+void Workgroup::addRangeMetadataForPCField(llvm::Instruction *Instr,
+                                           int StructFieldIndex,
+                                           int FieldIndex) {
   uint64_t Min = 0;
   uint64_t Max = 0;
   uint64_t LocalSizes[] = {WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ};
   switch (StructFieldIndex) {
   case PC_WORK_DIM:
     Min = 1;
-    Max = currentPoclDevice->max_work_item_dimensions;
+    Max = DeviceMaxWItemDim;
     break;
   case PC_NUM_GROUPS:
     Min = 1;
@@ -348,8 +369,7 @@ static void addRangeMetadataForPCField(llvm::Instruction *Instr,
       if (WGDynamicLocalSize) {
         Max = (WGMaxGridDimWidth > 0
                    ? WGMaxGridDimWidth
-                   : min(currentPoclDevice->max_work_item_sizes[FieldIndex],
-                         WGMaxGridDimWidth));
+                   : min(DeviceMaxWItemSizes[FieldIndex], WGMaxGridDimWidth));
       } else {
         // The local size is converted to constant with static WGs, so this is
         // actually useless.
@@ -619,14 +639,12 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
        i != e; ++i)
     sv.push_back(i->getType());
 
-  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
-    sv.push_back(
-      PointerType::get(PoclContextT, currentPoclDevice->context_as_id));
+  if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
+    sv.push_back(PointerType::get(PoclContextT, DeviceContextASid));
     HiddenArgs = 1;
   } else {
     // pocl_context
-    sv.push_back(
-      PointerType::get(PoclContextT, currentPoclDevice->context_as_id));
+    sv.push_back(PointerType::get(PoclContextT, DeviceContextASid));
     // group_x
     sv.push_back(SizeT);
     // group_y
@@ -646,7 +664,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   std::string funcName = "";
   funcName = F->getName().str();
   Function *L = NULL;
-  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
+  if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
     Function *F = M->getFunction(funcName);
     F->setName(funcName + "_original");
     L = Function::Create(ft, Function::ExternalLinkage, funcName, M);
@@ -683,7 +701,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   IRBuilder<> Builder(BasicBlock::Create(C, "", L));
 
   Value *pb, *pbp, *pbc;
-  if (currentPoclDevice->device_side_printf) {
+  if (DeviceSidePrintf) {
     pb = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
     pbp = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
     pbc = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
@@ -737,7 +755,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   InlineFunction(*c, IFI);
 #endif
 
-  if (currentPoclDevice->device_side_printf) {
+  if (DeviceSidePrintf) {
     Function *poclPrintf = M->getFunction("__pocl_printf");
     replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, *M, L, printfCache);
   }
@@ -748,7 +766,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   // kernels that should be executed in SPMD fashion. For MIMD/CPU,
   // we want to use the default calling convention for the work group
   // function.
-  if (currentPoclDevice->spmd)
+  if (DeviceIsSPMD)
     L->setCallingConv(F->getCallingConv());
 
   return L;
@@ -934,7 +952,7 @@ Workgroup::privatizeContext(Function *F)
       Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
       PC_NUM_GROUPS));
 
-  if (currentPoclDevice->device_side_printf) {
+  if (DeviceSidePrintf) {
     // Privatize _printf_buffer
     privatizeGlobals(
       F, Builder, {"_printf_buffer"}, {
@@ -994,8 +1012,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
     Value *Pointer = Builder.CreateLoad(GEP);
 
     Value *Arg;
-    if (currentPoclDevice->device_alloca_locals &&
-        isLocalMemFunctionArg(F, i)) {
+    if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
       // Generate allocas for the local buffer arguments.
       PointerType *ParamType = dyn_cast<PointerType>(ArgType);
       Type *ArgElementType = ParamType->getElementType();
@@ -1138,10 +1155,10 @@ static void computeArgBufferOffsets(LLVMValueRef F,
   }
 }
 
-static LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
-                                                LLVMBuilderRef Builder,
-                                                llvm::Argument &Arg,
-                                                LLVMValueRef ArgByteOffset) {
+LLVMValueRef
+Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
+                                       llvm::Argument &Arg,
+                                       LLVMValueRef ArgByteOffset) {
 
   LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
   LLVMValueRef MemCpy1 = LLVMGetNamedFunction(M, "_pocl_memcpy_1");
@@ -1161,8 +1178,7 @@ static LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
 
   if ((alignment % 4 == 0) && (StoreSize % 4 == 0)) {
     LLVMTypeRef i32PtrAS0 = LLVMPointerType(Int32Type, 0);
-    LLVMTypeRef i32PtrAS1 =
-        LLVMPointerType(Int32Type, currentPoclDevice->args_as_id);
+    LLVMTypeRef i32PtrAS1 = LLVMPointerType(Int32Type, DeviceArgsASid);
     LLVMValueRef CARG0 =
         LLVMBuildPointerCast(Builder, LocalArgAlloca, i32PtrAS0, "cargDst");
     LLVMValueRef CARG1 =
@@ -1176,8 +1192,7 @@ static LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
     LLVMValueRef call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
-    LLVMTypeRef i8PtrAS1 =
-        LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+    LLVMTypeRef i8PtrAS1 = LLVMPointerType(Int8Type, DeviceArgsASid);
     LLVMValueRef CARG0 =
         LLVMBuildPointerCast(Builder, LocalArgAlloca, i8PtrAS0, "cargDst");
     LLVMValueRef CARG1 =
@@ -1194,10 +1209,11 @@ static LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
   return LocalArgAlloca;
 }
 
-static LLVMValueRef
-createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
-                    uint64_t *ArgBufferOffsets, LLVMValueRef F,
-                    unsigned ParamIndex) {
+LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
+                                            LLVMValueRef ArgBufferPtr,
+                                            uint64_t *ArgBufferOffsets,
+                                            LLVMValueRef F,
+                                            unsigned ParamIndex) {
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
   LLVMTypeRef ParamType = LLVMTypeOf(Param);
@@ -1218,7 +1234,7 @@ createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
 
     // the kernel AS for private structs is always zero (private).
     // if the arg address space is also zero, nothing to do here just cast...
-    if (currentPoclDevice->args_as_id == 0)
+    if (DeviceArgsASid == 0)
       return LLVMBuildPointerCast(Builder, ArgByteOffset, ParamType,
                                   "inval_arg_ptr");
 
@@ -1229,8 +1245,8 @@ createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
     // not by-val argument
   } else {
     LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
-        Builder, ArgByteOffset,
-        LLVMPointerType(ParamType, currentPoclDevice->args_as_id), "arg_ptr");
+        Builder, ArgByteOffset, LLVMPointerType(ParamType, DeviceArgsASid),
+        "arg_ptr");
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
   }
 }
@@ -1261,11 +1277,9 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
   LLVMTypeRef Int64Type = LLVMInt64TypeInContext(LLVMContext);
 
-  LLVMTypeRef ArgsPtrType =
-    LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+  LLVMTypeRef ArgsPtrType = LLVMPointerType(Int8Type, DeviceArgsASid);
 
-  LLVMTypeRef CtxPtrType =
-    LLVMPointerType(Int8Type, currentPoclDevice->context_as_id);
+  LLVMTypeRef CtxPtrType = LLVMPointerType(Int8Type, DeviceContextASid);
 
   std::ostringstream StrStr;
   StrStr << KernName;
@@ -1301,8 +1315,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
   size_t i = 0;
   for (; i < ArgCount - HiddenArgs; ++i) {
-    if (currentPoclDevice->device_alloca_locals &&
-        isLocalMemFunctionArg(Func, i)) {
+    if (DeviceAllocaLocals && isLocalMemFunctionArg(Func, i)) {
 
       // Generate allocas for the local buffer arguments.
 
@@ -1383,8 +1396,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   // Pass the context object
   LLVMValueRef CtxParam = LLVMGetParam(WrapperKernel, Arg++);
   LLVMTypeRef CtxT = wrap(PoclContextT);
-  LLVMTypeRef CtxPtrTypeActual =
-      LLVMPointerType(CtxT, currentPoclDevice->context_as_id);
+  LLVMTypeRef CtxPtrTypeActual = LLVMPointerType(CtxT, DeviceContextASid);
   LLVMValueRef CastContext =
       LLVMBuildPointerCast(Builder, CtxParam, CtxPtrTypeActual, "ctx_ptr");
   Args[i++] = CastContext;
@@ -1424,8 +1436,7 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
   LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
-  LLVMTypeRef ArgsPtrType =
-      LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+  LLVMTypeRef ArgsPtrType = LLVMPointerType(Int8Type, DeviceArgsASid);
 
   std::ostringstream StrStr("phsa_kernel.", std::ios::ate);
   StrStr << KernName;
@@ -1563,8 +1574,8 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
     if (ii->hasByValAttr() && (((PointerType *)t)->getAddressSpace() != 1)) {
       value = builder.CreatePointerCast(pointer, t->getPointerTo());
     } else {
-      value = builder.CreatePointerCast
-        (pointer, t->getPointerTo(currentPoclDevice->global_as_id));
+      value =
+          builder.CreatePointerCast(pointer, t->getPointerTo(DeviceGlobalASid));
     }
 
     if (!ii->hasByValAttr()) {
@@ -1599,9 +1610,13 @@ bool Workgroup::isKernelToProcess(const Function &F) {
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
   if (kernels == NULL) {
+
+    std::string KernelName;
+    getModuleStringMetadata(*m, "KernelName", KernelName);
+
     if (KernelName == "")
       return true;
-    if (F.getName() == KernelName)
+    if (F.getName().str() == KernelName)
       return true;
 
     return false;
