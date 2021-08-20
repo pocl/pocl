@@ -63,6 +63,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
     return false;
+  bool changed = false;
 
   BasicBlock *entry = &F.getEntryBlock();
   if (!Barrier::hasOnlyBarrier(entry)) {
@@ -72,6 +73,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     effective_entry->takeName(entry);
     entry->setName("entry.barrier");
     Barrier::Create(entry->getTerminator());
+    changed |= true;
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
@@ -100,14 +102,14 @@ CanonicalizeBarriers::runOnFunction(Function &F)
         exit = SplitBlock(b, t);
       exit->setName("exit.barrier");
       Barrier::Create(t);
+      changed |= true;
     }
   }
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  return ProcessFunction(F);
+  return ProcessFunction(F) || changed;
 }
 
-
 // Canonicalize barriers: ensure all barriers are in a separate BB
 // containing only the barrier and the terminator, with just one
 // predecessor. This allows us to use those BBs as markers only, 

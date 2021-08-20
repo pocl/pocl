@@ -186,6 +186,10 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
     BasicBlock *exit = exit_blocks.back();
     exit_blocks.pop_back();
 
+    // already handled
+    if (found_barriers.count(exit) != 0)
+      continue;
+
     while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
       assert(PR != NULL && !PR->empty() && 
              "Empty parallel region in kernel (contiguous barriers)!");
