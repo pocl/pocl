@@ -52,9 +52,11 @@
                           no sense in binary, and whether argument is local
                           is already in cl_kernel_arg_address_qualifier);
                           add has_arg_metadata & kernel attributes */
+/* changes for version 8: compilation parameters are stored in module metadata
+                          */
 
-#define FIRST_SUPPORTED_POCLCC_VERSION 6
-#define POCLCC_VERSION 7
+#define FIRST_SUPPORTED_POCLCC_VERSION 8
+#define POCLCC_VERSION 8
 
 /* pocl binary structures */
 
