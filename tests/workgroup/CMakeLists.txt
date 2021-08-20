@@ -58,6 +58,10 @@ add_test_pocl(NAME "workgroup/for_with_divergent_return"
               EXPECTED_OUTPUT "for_with_divergent_return_1_6_1_1.stdout"
               COMMAND "run_kernel" "for_with_divergent_return.cl" 1 6 1 1)
 
+add_test_pocl(NAME "workgroup/cond_barriers_in_for"
+              EXPECTED_OUTPUT "cond_barriers_in_for_2_4_1_1.stdout"
+              COMMAND "run_kernel" "cond_barriers_in_for.cl" 2 4 1 1)
+
 # Cases which are not dependent on the work-group or work-item
 # execution (printout) order or the method (use the default method
 # for the device).
