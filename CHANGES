@@ -23,6 +23,7 @@ Notable Bug Fixes
   - clCreateProgramWithIL() must be compiled before and linked with poclcc and poclu.
     This is done by adding ${POCL_LIBRARY_NAME} to target_link_libraries() in CMake.
   - Fixed POCL_FAST_INIT macro; POCL_INIT_LOCK must be invoked with only one argument.
+- Fixed miscompilation in kernel loops with multiple conditionals with barriers in them.
 
 Other
 -----
