@@ -89,33 +89,37 @@ Flatten::runOnModule(Module &M)
     if (f->isDeclaration() || f->getName().startswith("__pocl_print") ||
         AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
       continue;
-    if (KernelName == f->getName().str() &&
-        pocl::Workgroup::isKernelToProcess(*f)) {
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeList::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             Attribute::AlwaysInline));
 
-      f->addFnAttr(Attribute::NoInline);
-
-      f->setLinkage(llvm::GlobalValue::ExternalLinkage);
-      changed = true;
+    AttributeSet Attrs;
+    changed = true;
+    decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
+    decltype(llvm::GlobalValue::ExternalLinkage) linkage;
+    if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
+      replaceThisAttr = Attribute::AlwaysInline;
+      replacementAttr = Attribute::NoInline;
+      linkage = llvm::GlobalValue::ExternalLinkage;
 #ifdef DEBUG_FLATTEN
       std::cerr << "### NoInline for " << f->getName().str() << std::endl;
 #endif
     } else {
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeList::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             Attribute::NoInline));
-      f->addFnAttr(Attribute::AlwaysInline);
-
-      f->setLinkage(llvm::GlobalValue::InternalLinkage);
-      changed = true;
+      replaceThisAttr = Attribute::NoInline;
+      replacementAttr = Attribute::AlwaysInline;
+      linkage = llvm::GlobalValue::InternalLinkage;
 #ifdef DEBUG_FLATTEN
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
     }
+#ifdef LLVM_OLDER_THAN_14_0
+    f->removeAttributes(AttributeList::FunctionIndex,
+                        Attrs.addAttribute(M.getContext(), replaceThisAttr));
+    f->addFnAttr(replacementAttr);
+#else
+    f->setAttributes(f->getAttributes()
+                         .removeFnAttribute(M.getContext(), replaceThisAttr)
+                         .addFnAttribute(f->getContext(), replacementAttr));
+#endif
+
+    f->setLinkage(linkage);
   }
   return changed;
 }
