@@ -394,6 +394,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
     }
   else if (spirv)
     {
+#ifndef DISABLE_OPENCL_20
       TEST_ASSERT (device != NULL);
       binary = poclu_read_binfile (path, &binary_size);
       TEST_ASSERT (binary != NULL);
@@ -405,6 +406,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (binary);
+#endif
     }
   else
     {
