@@ -14,6 +14,8 @@ Notable User Facing Changes
 - kernels which are called by kernels are now force-inlined
 - Support for NetBSD.
 - Support for Unix systems without libdl.
+- PoCL can now (optionally) respond to SIGUSR2 by printing
+  some live debug information.
 
 Notable Bug Fixes
 -----------------
@@ -28,6 +30,23 @@ Other
 -----
 - Add cmake options PARALLEL_COMPILE_JOBS, PARALLEL_LINK_JOBS to
   use ninja's seperate compile and link job pools.
+
+- Improve memory architecture, buffer migration and allocation.
+  Buffers are now allocated on a device when first used
+  (previously each buffer was allocated on every device in context).
+
+- the single global LLVMContext was replaced with
+  multiple LLVMContexts, one per OpenCL cl_context.
+  OpenCL code can now be compiled in parallel
+  when using separate cl_contexts, however programs that
+  don't reuse contexts might experience slower
+  compilation. This should be solved by separating
+  LLVM compilation in their own threads in the future.
+
+- a new OpenCL extension was added to PoCL: cl_pocl_content_size.
+  The extension allows the user to give optimization hint to PoCL,
+  which will be used internally by PoCL to optimize buffer transfers
+  between multiple devices.
 
 1.7 May 2021
 ============
