@@ -349,9 +349,24 @@ void UnInitializeLLVM() {
   LLVMInitialized = false;
 }
 
+#define GLOBAL_LLVM_CONTEXT
+
+#ifdef GLOBAL_LLVM_CONTEXT
+static PoclLLVMContextData *GlobalLLVMContext = nullptr;
+static unsigned GlobalLLVMContextRefcount = 0;
+#endif
+
 void pocl_llvm_create_context(cl_context ctx) {
 
   POCL_MSG_PRINT_LLVM("creating LLVM context\n");
+
+#ifdef GLOBAL_LLVM_CONTEXT
+  if (GlobalLLVMContext != nullptr) {
+    ctx->llvm_context_data = GlobalLLVMContext;
+    ++GlobalLLVMContextRefcount;
+    return;
+  }
+#endif
 
   PoclLLVMContextData *data = new PoclLLVMContextData;
   assert(data);
@@ -373,11 +388,21 @@ void pocl_llvm_create_context(cl_context ctx) {
                                   (void *)data->poclDiagPrinter);
   assert(ctx->llvm_context_data == nullptr);
   ctx->llvm_context_data = data;
+#ifdef GLOBAL_LLVM_CONTEXT
+  GlobalLLVMContext = data;
+  ++GlobalLLVMContextRefcount;
+#endif
 }
 
 void pocl_llvm_release_context(cl_context ctx) {
 
   POCL_MSG_PRINT_LLVM("releasing LLVM context\n");
+
+#ifdef GLOBAL_LLVM_CONTEXT
+  --GlobalLLVMContextRefcount;
+  if (GlobalLLVMContextRefcount > 0)
+    return;
+#endif
 
   PoclLLVMContextData *data = (PoclLLVMContextData *)ctx->llvm_context_data;
   assert(data);
@@ -404,6 +429,9 @@ void pocl_llvm_release_context(cl_context ctx) {
   delete data->Context;
   delete data;
   ctx->llvm_context_data = nullptr;
+#ifdef GLOBAL_LLVM_CONTEXT
+  GlobalLLVMContext = nullptr;
+#endif
 }
 
 #define POCL_METADATA_ROOT "pocl_meta"
