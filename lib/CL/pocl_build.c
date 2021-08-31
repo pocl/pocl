@@ -611,11 +611,13 @@ compile_and_link_program(int compile_program,
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (pfn_notify == NULL && user_data != NULL),
                         CL_INVALID_VALUE);
 
-  POCL_GOTO_LABEL_ON (PFN_NOTIFY, program->kernels, CL_INVALID_OPERATION,
+  POCL_LOCK_OBJ (program);
+
+  POCL_GOTO_LABEL_ON (FINISH, program->kernels, CL_INVALID_OPERATION,
                       "Program already has kernels\n");
 
   POCL_GOTO_LABEL_ON (
-      PFN_NOTIFY,
+      FINISH,
       (program->source == NULL && program->binaries == NULL
        && program->builtin_kernel_names == NULL),
       CL_INVALID_PROGRAM,
@@ -623,12 +625,10 @@ compile_and_link_program(int compile_program,
       "need "
       "to call clCreateProgramWith{Binary|Source|BuiltinKernels} first\n");
 
-  POCL_GOTO_LABEL_ON (PFN_NOTIFY,
+  POCL_GOTO_LABEL_ON (FINISH,
                       ((program->source == NULL) && (link_program == 0)),
                       CL_INVALID_OPERATION,
                       "Cannot clCompileProgram when program has no source\n");
-
-  POCL_LOCK_OBJ (program);
 
   program->main_build_log[0] = 0;
 
