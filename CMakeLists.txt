@@ -437,7 +437,7 @@ find_package(Hwloc)
 if(NOT HOST_CPU_CACHELINE_SIZE)
 
   set(CL_SIZE 0)
-  if(UNIX)
+  if(UNIX OR CMAKE_HOST_SYSTEM_NAME MATCHES "Linux|Darwin")
     find_program(GETCONF "getconf")
     if(GETCONF)
       execute_process(COMMAND "getconf" "LEVEL1_DCACHE_LINESIZE"
