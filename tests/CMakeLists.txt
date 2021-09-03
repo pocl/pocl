@@ -37,6 +37,7 @@ if(ENABLE_HOST_CPU_DEVICES)
 endif()
 
 #######################################################################
+if (UNIX)
 
 add_test(NAME pocl_test_dlopen_libpocl COMMAND test_dlopen)
 set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_libpocl")
@@ -71,6 +72,7 @@ if(ENABLE_CUDA)
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_cuda")
 endif()
 
+endif ()
 #######################################################################
 
 add_subdirectory("kernel")
