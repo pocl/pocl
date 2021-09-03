@@ -468,12 +468,12 @@ endif()
 #
 
 find_program(PATCH_EXEC
-  NAMES patch${CMAKE_EXECUTABLE_SUFFIX}
+  NAMES patch
   HINTS ENV PATH
 )
 
 find_program(XARGS_EXEC
-  NAMES xargs${CMAKE_EXECUTABLE_SUFFIX}
+  NAMES xargs
   HINTS ENV PATH
 )
 
