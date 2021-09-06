@@ -143,6 +143,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+  /* 0 is the host memory shared with all drivers that use it */
+  device->global_mem_id = 0;
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
   device->on_host_queue_props

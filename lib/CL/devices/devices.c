@@ -608,9 +608,3 @@ ERROR:
   POCL_UNLOCK (pocl_init_lock);
   return errcode;
 }
-
-int pocl_get_unique_global_mem_id ()
-{
-  static int global_id_counter = 1;
-  return global_id_counter++;
-}

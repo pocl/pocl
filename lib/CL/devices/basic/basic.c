@@ -188,6 +188,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+  /* 0 is the host memory shared with all drivers that use it */
+  device->global_mem_id = 0;
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
   /* full memory consistency model for atomic memory and fence operations
@@ -254,6 +256,14 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 
   /* malloc mem_host_ptr then increase refcount */
   pocl_alloc_or_retain_mem_host_ptr (mem);
+
+  cl_device_id svm_dev = mem->context->svm_allocdev;
+  /* if we have a device which shares global memory with host,
+   * and it needs to do anything to make allocations accessible
+   * to itself, do it here */
+  if (svm_dev && svm_dev->global_mem_id == 0 && svm_dev->ops->svm_register)
+    svm_dev->ops->svm_register (svm_dev, mem->mem_host_ptr, mem->size);
+
   p->version = mem->mem_host_ptr_version;
   p->mem_ptr = mem->mem_host_ptr;
 
@@ -267,6 +277,10 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 void
 pocl_basic_free (cl_device_id device, cl_mem mem)
 {
+  cl_device_id svm_dev = mem->context->svm_allocdev;
+  if (svm_dev && svm_dev->global_mem_id == 0 && svm_dev->ops->svm_unregister)
+    svm_dev->ops->svm_unregister (svm_dev, mem->mem_host_ptr, mem->size);
+
   pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
   pocl_release_mem_host_ptr (mem);
   p->mem_ptr = NULL;

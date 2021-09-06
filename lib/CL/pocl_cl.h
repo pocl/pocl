@@ -500,6 +500,13 @@ struct pocl_device_ops {
   void *(*svm_alloc) (cl_device_id dev, cl_svm_mem_flags flags, size_t size);
   void (*svm_map) (cl_device_id dev, void *svm_ptr);
   void (*svm_unmap) (cl_device_id dev, void *svm_ptr);
+  /* these are optional. If the driver needs to do anything to be able
+   * to use host memory, it should do it (and undo it) in these callbacks.
+   * Currently used by HSA.
+   * See pocl_basic_alloc and pocl_basic_free for details. */
+  void (*svm_register) (cl_device_id dev, void *host_ptr, size_t size);
+  void (*svm_unregister) (cl_device_id dev, void *host_ptr, size_t size);
+
   /* we can use restrict here, because Spec says overlapping copy should return
    * with CL_MEM_COPY_OVERLAP error. */
   void (*svm_copy) (cl_device_id dev, void *__restrict__ dst,
