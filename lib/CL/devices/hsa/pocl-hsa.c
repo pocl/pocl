@@ -1520,7 +1520,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   else
     PN_ADD(d->wait_list, node->event);
 
-  POCL_MSG_PRINT_INFO("After Event %u submit: WL : %li, RL: %li\n",
+  POCL_MSG_PRINT_INFO("After Event %" PRIu64 " submit: WL : %li, RL: %li\n",
                       node->event->id, d->wait_list_size, d->ready_list_size);
 
   POCL_UNLOCK_OBJ (node->event);
@@ -1548,11 +1548,11 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
   POCL_RETAIN_OBJECT_UNLOCKED (event);
   POCL_UNLOCK_OBJ (cq);
 
-  POCL_MSG_PRINT_HSA ("device->join on event %u\n", event->id);
+  POCL_MSG_PRINT_HSA ("device->join on event %" PRIu64 "\n", event->id);
 
   if (event->status <= CL_COMPLETE)
     {
-      POCL_MSG_PRINT_HSA ("device->join: last event (%u) in queue"
+      POCL_MSG_PRINT_HSA ("device->join: last event (%" PRIu64 ") in queue"
                           " exists, but is complete\n", event->id);
       goto RETURN;
     }
@@ -1562,7 +1562,7 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
       pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
       PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
     }
-  POCL_MSG_PRINT_HSA ("device->join on event %u finished"
+  POCL_MSG_PRINT_HSA ("device->join on event %" PRIu64 " finished"
                       " with status: %i\n", event->id, event->status);
 
 RETURN:
@@ -1585,7 +1585,7 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
   pocl_hsa_device_data_t *d = device->data;
   _cl_command_node *node = event->command;
   int added_to_readylist = 0;
-  POCL_MSG_PRINT_HSA ("notify on event %u \n", event->id);
+  POCL_MSG_PRINT_HSA ("notify on event %" PRIu64 " \n", event->id);
 
   if (finished->status < CL_COMPLETE)
     {
@@ -1609,19 +1609,19 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
               break;
           if (i < d->wait_list_size)
             {
-              POCL_MSG_PRINT_INFO("event %u wait_list -> ready_list\n", 
+              POCL_MSG_PRINT_INFO("event %" PRIu64 " wait_list -> ready_list\n",
                                   event->id);
               PN_ADD(d->ready_list, event);
               PN_REMOVE(d->wait_list, i);
             }
           else
-            POCL_ABORT("cant move event %u from waitlist to"
+            POCL_ABORT("cant move event %" PRIu64 " from waitlist to"
                        " readylist - not found in waitlist\n", event->id);
           added_to_readylist = 1;
           PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
         }
       else
-        POCL_MSG_WARN ("node->ready was 1 but event %u is"
+        POCL_MSG_WARN ("node->ready was 1 but event %" PRIu64 " is"
                        " not queued: status %i!\n",
                        event->id, event->status);
     }
@@ -1640,12 +1640,12 @@ pocl_hsa_broadcast (cl_event event)
 void
 pocl_hsa_wait_event(cl_device_id device, cl_event event)
 {
-  POCL_MSG_PRINT_HSA ("device->wait_event on event %u\n", event->id);
+  POCL_MSG_PRINT_HSA ("device->wait_event on event %" PRIu64 "\n", event->id);
   POCL_LOCK_OBJ (event);
   if (event->status <= CL_COMPLETE)
     {
       POCL_MSG_PRINT_HSA ("device->wain_event: last event"
-                          " (%u) in queue exists, but is complete\n", 
+                          " (%" PRIu64 ") in queue exists, but is complete\n",
                           event->id);
       POCL_UNLOCK_OBJ(event);
       return;
@@ -1828,7 +1828,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   POCL_LOCK_OBJ (event);
   pocl_hsa_event_data_t *event_data = (pocl_hsa_event_data_t *)event->data;
 
-  POCL_MSG_PRINT_INFO("event %u finished, removing from running_list\n",
+  POCL_MSG_PRINT_INFO("event %" PRIu64 " finished, removing from running_list\n",
                       event->id);
   dd->running_events[i] = dd->running_events[--dd->running_list_size];
 
@@ -1894,12 +1894,12 @@ pocl_hsa_run_ready_commands (pocl_hsa_device_data_t *d)
               e->command, e->command->command.run.kernel, e->queue->device, 1);
           pocl_hsa_launch (d, e);
           enqueued_ndrange = 1;
-          POCL_MSG_PRINT_INFO ("NDrange event %u launched, remove"
+          POCL_MSG_PRINT_INFO ("NDrange event %" PRIu64 " launched, remove"
                                " from readylist\n", e->id);
         }
       else
         {
-          POCL_MSG_PRINT_INFO ("running non-NDrange event %u,"
+          POCL_MSG_PRINT_INFO ("running non-NDrange event %" PRIu64 ","
                                " remove from readylist\n", e->id);
           pocl_exec_command (e->command);
         }
