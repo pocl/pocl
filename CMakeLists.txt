@@ -411,7 +411,7 @@ include(sanitizers)
 if(NOT HOST_CPU_CACHELINE_SIZE)
 
   set(CL_SIZE 0)
-  if(UNIX)
+  if(UNIX OR CMAKE_HOST_SYSTEM_NAME MATCHES "Linux|Darwin")
     find_program(GETCONF "getconf")
     if(GETCONF)
       execute_process(COMMAND "getconf" "LEVEL1_DCACHE_LINESIZE"
@@ -442,12 +442,12 @@ endif()
 #
 
 find_program(PATCH_EXEC
-  NAMES patch${CMAKE_EXECUTABLE_SUFFIX}
+  NAMES patch
   HINTS ENV PATH
 )
 
 find_program(XARGS_EXEC
-  NAMES xargs${CMAKE_EXECUTABLE_SUFFIX}
+  NAMES xargs
   HINTS ENV PATH
 )
 

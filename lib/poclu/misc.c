@@ -267,6 +267,7 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
         OPENCL_ERROR_CASE (CL_INVALID_COMPILER_OPTIONS)
         OPENCL_ERROR_CASE (CL_INVALID_LINKER_OPTIONS)
         OPENCL_ERROR_CASE (CL_INVALID_DEVICE_PARTITION_COUNT)
+        OPENCL_ERROR_CASE (CL_PLATFORM_NOT_FOUND_KHR)
 
     default:
       printf ("Unknown OpenCL error %i in %s on line %i\n", cl_err, func_name,
