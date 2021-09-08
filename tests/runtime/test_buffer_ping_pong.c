@@ -107,8 +107,7 @@ main (int argc, char **argv)
   if (num_devices < 2)
     {
       printf ("NOT ENOUGH DEVICES! (need 2)\n");
-      printf ("FAIL");
-      goto ERROR;
+      exit(0);
     }
 
   err = clSetKernelArg (kernel_a, 0, sizeof (cl_mem), &buf);

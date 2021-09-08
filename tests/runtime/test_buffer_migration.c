@@ -59,6 +59,12 @@ main (int argc, char **argv)
 
   printf ("NUM DEVICES: %u \n", num_devices);
 
+  if (num_devices < 2)
+    {
+      printf ("NOT ENOUGH DEVICES! (need 2)\n");
+      exit(0);
+    }
+
   const char *basename = "migration_test";
   err = poclu_load_program_multidev (context, devices, num_devices, basename,
                                      0, 0, 0, NULL, NULL, &program);
