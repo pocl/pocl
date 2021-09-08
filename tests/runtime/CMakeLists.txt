@@ -24,7 +24,7 @@
 #=============================================================================
 
 # do not link test_dlopen with -lOpenCL
-if (UNIX)
+if (UNIX AND HAVE_DLFCN_H)
   add_executable("test_dlopen" "test_dlopen.c")
   if(SANITIZER_OPTIONS)
     target_link_libraries("test_dlopen" ${SANITIZER_LIBS})
