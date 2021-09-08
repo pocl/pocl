@@ -639,7 +639,7 @@ init_dev_data (cl_device_id dev, int count)
 
   HSA_CHECK (hsa_region_get_info (
       d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg));
-  dev->mem_base_addr_align = sizearg;
+  dev->mem_base_addr_align = max (sizearg, MAX_EXTENDED_ALIGNMENT);
 
   HSA_CHECK (hsa_agent_get_info (d->agent, HSA_AGENT_INFO_PROFILE,
                                  &d->agent_profile));
