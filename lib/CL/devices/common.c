@@ -769,6 +769,17 @@ pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
   }
 }
 
+/* Returns the width of the widest dimension in the grid of the given
+   run command. */
+size_t
+pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
+{
+  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
+                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
+              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
+}
+
+
 /* CPU driver stuff */
 
 #ifdef HAVE_DLFCN_H
@@ -947,15 +958,6 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   return module_fn;
 }
 
-/* Returns the width of the widest dimension in the grid of the given
-   run command. */
-size_t
-pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
-{
-  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
-                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
-              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
-}
 
 /* Look for a dlhandle in the dlhandle cache for the given kernel command.
    If found, push the handle up in the cache to improve cache hit speed,
@@ -1074,6 +1076,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 }
 
 #endif
+
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
