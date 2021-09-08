@@ -22,8 +22,8 @@ extern "C"
     cl_int err = CL_SUCCESS;
     int i;
 
-    poclu_bswap_cl_int_array (device, (cl_uint *)srcA, n);
-    poclu_bswap_cl_int_array (device, (cl_uint *)srcB, n);
+    poclu_bswap_cl_int_array (device, (cl_int *)srcA, n);
+    poclu_bswap_cl_int_array (device, (cl_int *)srcB, n);
 
     memobjs[0] = clCreateBuffer (context, CL_MEM_READ_ONLY,
                                  sizeof (cl_uint) * n, NULL, &err);
@@ -68,9 +68,9 @@ extern "C"
                                n * sizeof (cl_uint), dst, 0, NULL, NULL);
     CHECK_CL_ERROR2 (err);
 
-    poclu_bswap_cl_int_array (device, (cl_uint *)dst, n);
-    poclu_bswap_cl_int_array (device, (cl_uint *)srcA, n);
-    poclu_bswap_cl_int_array (device, (cl_uint *)srcB, n);
+    poclu_bswap_cl_int_array (device, (cl_int *)dst, n);
+    poclu_bswap_cl_int_array (device, (cl_int *)srcA, n);
+    poclu_bswap_cl_int_array (device, (cl_int *)srcB, n);
 
   ERROR:
     clReleaseMemObject (memobjs[0]);
