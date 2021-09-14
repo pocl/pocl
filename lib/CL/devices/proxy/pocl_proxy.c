@@ -2419,28 +2419,7 @@ FINISH_COMMAND:
   char msg[128] = "Event ";
   strncat (msg, cstr, 127);
 
-  int node_needs_kernel_cleanup = 0;
-  switch (node->type)
-    {
-    case CL_COMMAND_NDRANGE_KERNEL:
-    case CL_COMMAND_TASK:
-      node_needs_kernel_cleanup = 1;
-      break;
-
-    case CL_COMMAND_FILL_BUFFER:
-      pocl_aligned_free (node->command.memfill.pattern);
-      break;
-
-    case CL_COMMAND_UNMAP_MEM_OBJECT:
-      pocl_unmap_command_finished2 (event, &node->command);
-      break;
-    }
-
   POCL_UPDATE_EVENT_COMPLETE_MSG (event, msg);
-
-  if (node_needs_kernel_cleanup)
-    pocl_ndrange_node_cleanup (node);
-  pocl_mem_manager_free_command (node);
 }
 
 static void *

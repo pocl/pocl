@@ -292,18 +292,6 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-void
-pocl_ndrange_node_cleanup(_cl_command_node *node)
-{
-  cl_uint i;
-  for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
-    {
-      pocl_aligned_free (node->command.run.arguments[i].value);
-    }
-  POCL_MEM_FREE (node->command.run.arguments);
-  POname(clReleaseKernel)(node->command.run.kernel);
-}
-
 
 /**
  * executes given command. Call with node->event UNLOCKED.
@@ -388,7 +376,6 @@ pocl_exec_command (_cl_command_node *node)
          cmd->memfill.pattern,
          cmd->memfill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Buffer           ");
-      pocl_aligned_free (cmd->memfill.pattern);
       break;
 
     case CL_COMMAND_READ_BUFFER_RECT:
@@ -611,7 +598,6 @@ pocl_exec_command (_cl_command_node *node)
           dev->ops->unmap_image (dev->data, cmd->unmap.mem_id, mem,
                                  cmd->unmap.mapping);
         }
-      pocl_unmap_command_finished (dev, mem_id, mem, cmd->unmap.mapping);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
       break;
 
@@ -620,14 +606,12 @@ pocl_exec_command (_cl_command_node *node)
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
-      pocl_ndrange_node_cleanup(node);
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:
       pocl_update_event_running (event);
       assert (dev->ops->run_native);
       dev->ops->run_native (dev->data, node);
-      POCL_MEM_FREE (node->command.native.args);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
@@ -698,15 +682,12 @@ pocl_exec_command (_cl_command_node *node)
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
-      pocl_aligned_free (cmd->svm_fill.pattern);
       break;
 
     default:
       POCL_ABORT_UNIMPLEMENTED("");
       break;
     }
-
-  pocl_mem_manager_free_command (node);
 }
 
 /* call with brc_event UNLOCKED. */
@@ -737,6 +718,16 @@ pocl_broadcast (cl_event brc_event)
                 target->event->command->device, target->event, brc_event);
           }
 
+        if (pocl_is_tracing_enabled() && target->event->meta_data)
+          {
+            pocl_event_md *md = target->event->meta_data;
+            for (size_t i = 0; i < md->num_deps; ++i)
+              if (md->dep_ids[i] == brc_event->id)
+                {
+                  md->dep_ts[i] = brc_event->time_end;
+                  break;
+                }
+          }
         LL_DELETE (brc_event->notify_list, target);
         pocl_unlock_events_inorder (brc_event, target->event);
         pocl_mem_manager_free_event_node (target);

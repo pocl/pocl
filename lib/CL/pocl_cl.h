@@ -1461,13 +1461,22 @@ struct event_node
   event_node *next;
 };
 
+#define MAX_EVENT_DEPS 60
+
 /* Optional metadata for events for improved profile data readability etc. */
 typedef struct _pocl_event_md
 {
   /* The kernel executed by the NDRange command associated with the event,
      if any. */
   cl_kernel kernel;
+
+  size_t num_deps;
+  // event IDs on which this event depends
+  uint64_t dep_ids[MAX_EVENT_DEPS];
+  // the finish time of those ^^^ event IDs
+  cl_ulong dep_ts[MAX_EVENT_DEPS];
 } pocl_event_md;
+
 
 typedef struct _cl_event _cl_event;
 struct _cl_event {
@@ -1508,6 +1517,7 @@ struct _cl_event {
   /* if set, at the completion of event, the mem_host_ptr_refcount should be
    * lowered and memory freed if it's 0 */
   short release_mem_host_ptr_after;
+
 
   _cl_event *next;
   _cl_event *prev;

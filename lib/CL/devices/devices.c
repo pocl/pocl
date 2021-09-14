@@ -105,6 +105,15 @@ unsigned int pocl_num_devices = 0;
 #define INIT_DEV(ARG) pocl_##ARG##_init_device_ops
 #endif
 
+const char *
+pocl_get_device_name (unsigned index)
+{
+  if (index < pocl_num_devices)
+    return pocl_devices[index].long_name;
+  else
+    return NULL;
+}
+
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
 

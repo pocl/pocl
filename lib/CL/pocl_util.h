@@ -59,6 +59,8 @@ void pocl_restore_ftz (unsigned ftz);
 void pocl_install_sigfpe_handler ();
 void pocl_install_sigusr2_handler ();
 
+void bzero_s (void *v, size_t n);
+
 /* Finds the next highest power of two of the given value. */
 size_t pocl_size_ceil2 (size_t x);
 uint64_t pocl_size_ceil2_64 (uint64_t x);
@@ -140,12 +142,6 @@ pocl_command_push (_cl_command_node *node,
                    _cl_command_node **ready_list,
                    _cl_command_node **pending_list);
 
-void pocl_unmap_command_finished (cl_device_id dev,
-                                  pocl_mem_identifier *mem_id, cl_mem mem,
-                                  mem_mapping_t *map);
-
-void pocl_unmap_command_finished2 (cl_event event, _cl_command_t *cmd);
-
 /**
  * Return true if a command is ready to execute (no more event in wait list
  * or false if not
@@ -203,14 +199,14 @@ POCL_EXPORT
 void pocl_update_event_running (cl_event event);
 
 POCL_EXPORT
-void pocl_update_event_complete_msg (const char *func, unsigned line,
-                                     cl_event event, const char *msg);
+void pocl_update_event_complete (const char *func, unsigned line,
+                                 cl_event event, const char *msg);
 
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
-  pocl_update_event_complete_msg (__func__, __LINE__, (__event), msg);
+  pocl_update_event_complete (__func__, __LINE__, (__event), msg);
 
 #define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
-  pocl_update_event_complete_msg (__func__, __LINE__, (__event), NULL);
+  pocl_update_event_complete (__func__, __LINE__, (__event), NULL);
 
 POCL_EXPORT
 void pocl_update_event_failed (cl_event event);

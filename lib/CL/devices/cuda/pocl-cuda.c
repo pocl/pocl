@@ -1466,12 +1466,6 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   result = cuEventSynchronize (event_data->end);
   CUDA_CHECK (result, "cuEventSynchronize");
 
-  /* Clean up mapped memory allocations */
-  if (event->command_type == CL_COMMAND_UNMAP_MEM_OBJECT)
-    {
-      pocl_unmap_command_finished2 (event, &event->command->command);
-    }
-
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
       || event->command_type == CL_COMMAND_TASK)
     {
@@ -1500,15 +1494,9 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
         }
 #endif
 
-      pocl_ndrange_node_cleanup (event->command);
-    }
-  else
-    {
-      pocl_mem_manager_free_command (event->command);
     }
 
   /* Handle failed events */
-
 
   pocl_update_event_running (event);
   if (event->status < 0)

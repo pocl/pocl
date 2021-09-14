@@ -1859,9 +1859,6 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
     }
 
   POCL_UPDATE_EVENT_COMPLETE (event);
-
-  pocl_ndrange_node_cleanup (node);
-  pocl_mem_manager_free_command (node);
 }
 
 static void

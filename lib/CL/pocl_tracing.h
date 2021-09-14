@@ -38,10 +38,14 @@ extern "C"
 {
 #endif
 
+int pocl_is_tracing_enabled ();
+
 void pocl_event_updated (cl_event event, int new_status);
 
 /* Initializes the event tracing system selected with POCL_TRACING. */
 void pocl_event_tracing_init ();
+/* Stops event tracing system */
+void pocl_event_tracing_finish ();
 
 /* Struct of trace handlers. */
 struct pocl_event_tracer
@@ -50,6 +54,8 @@ struct pocl_event_tracer
   const char *name;
   /* Init function called when the tracer is matched */
   void (*init) ();
+  /* Destroy function called when the tracer is matched */
+  void (*destroy) ();
   /* Callback called when an event has been updated */
   void (*event_updated) (cl_event /* event */ , int /* status */ );
 };

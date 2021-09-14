@@ -202,6 +202,21 @@ byteswap_float (float word, char should_swap)
     return neww.full_word;
 }
 
+void
+bzero_s (void *v, size_t n)
+{
+  if (v == NULL)
+    return;
+
+  volatile unsigned char *p = v;
+  while (n--)
+    {
+      *p++ = 0;
+    }
+
+  return;
+}
+
 size_t
 pocl_size_ceil2(size_t x) {
   /* Rounds up to the next highest power of two without branching and
@@ -528,6 +543,15 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   wait_list_item->event = notifier_event;
   LL_PREPEND (notifier_event->notify_list, notify_target);
   LL_PREPEND (waiting_event->wait_list, wait_list_item);
+
+  if (pocl_is_tracing_enabled ())
+    {
+      if (waiting_event->meta_data == NULL)
+        waiting_event->meta_data = (pocl_event_md *) calloc (1, sizeof (pocl_event_md));
+      pocl_event_md *md = waiting_event->meta_data;
+      if (md->num_deps < MAX_EVENT_DEPS)
+        md->dep_ids[md->num_deps++] = notifier_event->id;
+    }
 
 FINISH:
   pocl_unlock_events_inorder (waiting_event, notifier_event);
@@ -1137,29 +1161,38 @@ pocl_command_push (_cl_command_node *node,
     }
 }
 
-void
-pocl_unmap_command_finished (cl_device_id dev, pocl_mem_identifier *mem_id,
-                             cl_mem mem, mem_mapping_t *map)
-{
-  POCL_LOCK_OBJ (mem);
-  assert (map->unmap_requested > 0);
-  dev->ops->free_mapping_ptr (dev->data, mem_id, mem, map);
-  DL_DELETE (mem->mappings, map);
-  mem->map_count--;
-  POCL_MEM_FREE (map);
-  POCL_UNLOCK_OBJ (mem);
-}
-
-void
-pocl_unmap_command_finished2 (cl_event event, _cl_command_t *cmd)
+static void
+pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
 {
   cl_device_id dev = event->queue->device;
   pocl_mem_identifier *mem_id = NULL;
   cl_mem mem = NULL;
   mem = event->mem_objs[0];
   mem_id = &mem->device_ptrs[dev->global_mem_id];
-  pocl_unmap_command_finished (dev, mem_id, mem, cmd->unmap.mapping);
+
+  mem_mapping_t *map = cmd->unmap.mapping;
+  POCL_LOCK_OBJ (mem);
+  assert (map->unmap_requested > 0);
+  if (dev->ops->free_mapping_ptr)
+    dev->ops->free_mapping_ptr (dev->data, mem_id, mem, map);
+  DL_DELETE (mem->mappings, map);
+  mem->map_count--;
+  POCL_MEM_FREE (map);
+  POCL_UNLOCK_OBJ (mem);
 }
+
+static void
+pocl_ndrange_node_cleanup (_cl_command_node *node)
+{
+  cl_uint i;
+  for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
+    {
+      pocl_aligned_free (node->command.run.arguments[i].value);
+    }
+  POCL_MEM_FREE (node->command.run.arguments);
+  POname(clReleaseKernel)(node->command.run.kernel);
+}
+
 
 void
 pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer, cl_mem_flags flags)
@@ -1840,10 +1873,57 @@ pocl_update_event_running (cl_event event)
   POCL_UNLOCK_OBJ (event);
 }
 
+static void pocl_free_event_node (cl_event event)
+{
+  _cl_command_node *node = event->command;
+  switch (node->type)
+    {
+    case CL_COMMAND_NDRANGE_KERNEL:
+    case CL_COMMAND_TASK:
+      pocl_ndrange_node_cleanup (node);
+      break;
+
+    case CL_COMMAND_FILL_BUFFER:
+      pocl_aligned_free (node->command.memfill.pattern);
+      break;
+
+    case CL_COMMAND_SVM_MEMFILL:
+      pocl_aligned_free (node->command.svm_fill.pattern);
+      break;
+
+    case CL_COMMAND_NATIVE_KERNEL:
+      POCL_MEM_FREE (node->command.native.args);
+      break;
+
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      pocl_unmap_command_finished (event, &node->command);
+      break;
+    }
+  pocl_mem_manager_free_command (node);
+  event->command = NULL;
+}
+
+static void pocl_free_event_memobjs (cl_event event)
+{
+  size_t i;
+  for (i = 0; i < event->num_buffers; ++i)
+    {
+      cl_mem mem = event->mem_objs[i];
+      if (event->release_mem_host_ptr_after)
+        {
+          POCL_LOCK_OBJ (mem);
+          pocl_release_mem_host_ptr (mem);
+          POCL_UNLOCK_OBJ (mem);
+        }
+      POname (clReleaseMemObject) (mem);
+    }
+  POCL_MEM_FREE (event->mem_objs);
+}
+
 // status can be complete or failed (<0)
 void
-pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
-                                cl_event event, const char *msg)
+pocl_update_event_finished (cl_int status, const char *func, unsigned line,
+                            cl_event event, const char *msg)
 {
   assert (event != NULL);
   assert (event->queue != NULL);
@@ -1876,12 +1956,6 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
     cq->last_event.event = NULL;
   DL_DELETE (cq->events, event);
 
-  if (ops->notify_cmdq_finished && (cq->command_count == 0))
-    ops->notify_cmdq_finished (cq);
-
-  if (ops->notify_event_finished)
-    ops->notify_event_finished (event);
-
   POCL_UNLOCK_OBJ (cq);
   /* note that we must unlock the CmqQ before calling pocl_event_updated,
    * because it calls event callbacks, which can have calls to
@@ -1898,36 +1972,35 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
     }
 #endif
 
-  size_t i;
-  for (i = 0; i < event->num_buffers; ++i)
-    {
-      cl_mem mem = event->mem_objs[i];
-      if (event->release_mem_host_ptr_after)
-        {
-          POCL_LOCK_OBJ (mem);
-          pocl_release_mem_host_ptr (mem);
-          POCL_UNLOCK_OBJ (mem);
-        }
-      POname (clReleaseMemObject) (mem);
-    }
-  POCL_MEM_FREE (event->mem_objs);
+  pocl_free_event_node (event);
+  pocl_free_event_memobjs (event);
+
+  POCL_LOCK_OBJ (cq);
+  if (ops->notify_cmdq_finished && (cq->command_count == 0))
+    ops->notify_cmdq_finished (cq);
+  POCL_UNLOCK_OBJ (cq);
+  POCL_LOCK_OBJ (event);
+  if (ops->notify_event_finished)
+    ops->notify_event_finished (event);
+  POCL_UNLOCK_OBJ (event);
 
   POname (clReleaseEvent) (event);
 }
+
 
 void
 pocl_update_event_failed (cl_event event)
 {
   POCL_UNLOCK_OBJ (event);
-  pocl_update_event_finished_msg (CL_FAILED, NULL, 0, event, NULL);
+  pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);
   POCL_LOCK_OBJ (event);
 }
 
 void
-pocl_update_event_complete_msg (const char *func, unsigned line,
-                                cl_event event, const char *msg)
+pocl_update_event_complete (const char *func, unsigned line,
+                            cl_event event, const char *msg)
 {
-  pocl_update_event_finished_msg (CL_COMPLETE, func, line, event, msg);
+  pocl_update_event_finished (CL_COMPLETE, func, line, event, msg);
 }
 
 /*
