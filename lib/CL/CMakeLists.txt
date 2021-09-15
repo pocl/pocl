@@ -136,7 +136,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_tracing.h" "pocl_tracing.c"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
-                   "pocl_hash.c"
+                   "pocl_hash.c" "pocl_file_util.c"
                    "pocl_debug.h" "pocl_debug.c" "pocl_timing.c"
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
@@ -178,8 +178,6 @@ if (ENABLE_LLVM)
 
   # pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
   add_dependencies("pocl_cache" "kernellib_hash")
-else()
-  list(APPEND POCL_LIB_SOURCES "pocl_file_util.c")
 endif()
 
 if(ENABLE_ICD)

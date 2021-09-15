@@ -180,17 +180,16 @@ ERROR:
   return -1;
 }
 
-
-
-int 
-pocl_write_file(const char *path, const char* content,
-                uint64_t    count,
-                int         append,
-                int         dont_rewrite) 
+/* Atomic write - with rename() */
+int
+pocl_write_file (const char *path, const char *content, uint64_t count,
+                 int append, int dont_rewrite)
 {
   assert(path);
   assert(content);
-  
+  char path2[POCL_FILENAME_LENGTH];
+  int err, fd = -1;
+
   if (pocl_exists(path)) 
     {
       if (dont_rewrite) 
@@ -209,45 +208,50 @@ pocl_write_file(const char *path, const char* content,
         }
     }
   
-  FILE *f;
   if (append)
-    f = fopen(path, "a");
+    {
+      fd = open (path, O_RDWR | O_APPEND);
+      err = fd < 0;
+    }
   else
-    f = fopen(path, "w");
-
-  if (f == NULL)
     {
-      POCL_MSG_ERR ("fopen(%s) failed\n", path);
+      err = pocl_mk_tempname (path2, path, ".temp", &fd);
+    }
+
+  if (err)
+    {
+      POCL_MSG_ERR ("open(%s) failed\n", path);
       return -1;
     }
 
-  if (fwrite (content, 1, (size_t)count, f) < (size_t)count)
+  ssize_t res = write (fd, content, (size_t)count);
+  if (res < 0 || (size_t)res < (size_t)count)
     {
-      POCL_MSG_ERR ("fwrite(%s) failed\n", path);
+      POCL_MSG_ERR ("write(%s) failed\n", path);
       return -1;
-    }
-
-  if (fflush (f))
-    {
-      POCL_MSG_ERR ("fflush() failed\n");
-      return errno;
     }
 
 #ifdef HAVE_FDATASYNC
-  if (fdatasync (fileno (f)))
+  if (fdatasync (fd))
     {
       POCL_MSG_ERR ("fdatasync() failed\n");
       return errno;
     }
 #elif defined(HAVE_FSYNC)
-  if (fsync (fileno (f)))
+  if (fsync (fd))
     {
       POCL_MSG_ERR ("fsync() failed\n");
       return errno;
     }
 #endif
 
-  return fclose(f);
+  if (close (fd) < 0)
+    return errno;
+
+  if (append)
+    return 0;
+  else
+    return pocl_rename (path2, path);
 }
 
 /****************************************************************************/
