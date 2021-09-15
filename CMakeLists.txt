@@ -446,6 +446,10 @@ if(NOT HOST_CPU_CACHELINE_SIZE)
         message(WARNING "getconf exited with nonzero status!")
         set(CL_SIZE 0)
       else()
+        # getconf may in rare conditions return "undefined" value
+        if (CL_SIZE STREQUAL "undefined\n")
+          set(CL_SIZE 0)
+        endif()
         # getconf sometimes just returns zero
         if(NOT (CL_SIZE EQUAL 0))
           string(STRIP "${CL_SIZE}" CL_SIZE)
