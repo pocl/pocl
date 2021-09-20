@@ -54,7 +54,7 @@ int pocl_write_file(const char* path, const char* content,
 
 int pocl_write_tempfile (char *output_path, const char *prefix,
                          const char *suffix, const char *content,
-                         uint64_t count, int *ret_fd);
+                         unsigned long count, int *ret_fd);
 
 /* Allocates memory and places file contents in it.
  * Returns negative errno on error, zero otherwise. */

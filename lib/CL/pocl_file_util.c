@@ -49,29 +49,36 @@ pocl_rm_rf(const char* path)
         {
           char *buf;
           if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-            continue;
-          
+            {
+              p = readdir (d);
+              continue;
+            }
+
           size_t len = path_len + strlen(p->d_name) + 2;
           buf = malloc(len);
-          buf[len] = '\0';
           if (buf)
             {
               struct stat statbuf;
               snprintf(buf, len, "%s/%s", path, p->d_name);
-              
-              if (!stat(buf, &statbuf))
-                error = pocl_rm_rf(buf);
-              else 
-                error = remove(buf);
-              
+
+              if (stat (buf, &statbuf) < 0)
+                POCL_ABORT ("Can't get stat() on %s\n", buf);
+              if (S_ISDIR (statbuf.st_mode))
+                error = pocl_rm_rf (buf);
+              if (S_ISREG (statbuf.st_mode) || S_ISLNK (statbuf.st_mode))
+                error = remove (buf);
+
               free(buf);
             }
+          else
+            POCL_ABORT ("out of memory");
+
           p = readdir(d);
         }
       closedir(d);
       
       if (!error)
-        remove(path);
+        error = remove (path);
     }
   return error;
 }
@@ -210,7 +217,7 @@ pocl_write_file (const char *path, const char *content, uint64_t count,
   
   if (append)
     {
-      fd = open (path, O_RDWR | O_APPEND);
+      fd = open (path, O_RDWR | O_APPEND | O_CREAT, 0660);
       err = fd < 0;
     }
   else
@@ -338,15 +345,14 @@ pocl_mk_tempdir (char *output, const char *prefix)
  * output_path */
 int
 pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
-                     const char *content, uint64_t count, int *ret_fd)
+                     const char *content, unsigned long count, int *ret_fd)
 {
   assert (output_path);
   assert (prefix);
   assert (suffix);
   assert (content);
-  assert (count > 0);
 
-  int fd, err;
+  int fd = -1, err = 0;
 
   err = pocl_mk_tempname (output_path, prefix, suffix, &fd);
   if (err)
@@ -354,9 +360,10 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
       POCL_MSG_ERR ("pocl_mk_tempname() failed\n");
       return err;
     }
-  size_t bytes = (size_t)count;
+
+  size_t bytes = count;
   ssize_t res;
-  do
+  while (bytes > 0)
     {
       res = write (fd, content, bytes);
       if (res < 0)
@@ -370,7 +377,6 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
           content += res;
         }
     }
-  while (bytes > 0);
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fd))
