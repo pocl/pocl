@@ -491,7 +491,7 @@ void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
 
   // Clone function.
   llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
+  CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
 
   Function->eraseFromParent();
 
@@ -724,7 +724,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
   // Clone function.
   llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
+  CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
 
   // Insert offset instructions into new function.
   for (auto Pair : ToInsert) {

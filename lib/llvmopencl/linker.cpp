@@ -129,15 +129,14 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
     if (!changed)
       return F;
 
-    F->removeFromParent();
-
     FunctionType *NewFT = FunctionType::get(F->getReturnType(),
                                          ArrayRef<Type *> (sv),
                                          false);
     assert(NewFT);
     llvm::Function *DstFunc = nullptr;
 
-    DstFunc = Function::Create(NewFT, F->getLinkage(), F->getName(), Mod);
+    DstFunc = Function::Create(NewFT, F->getLinkage(), "temporary", Mod);
+    DstFunc->takeName(F);
 
     Function::arg_iterator j = DstFunc->arg_begin();
     for (Function::const_arg_iterator i = F->arg_begin(),
@@ -152,6 +151,9 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
 
     SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
     CloneFunctionIntoAbs(DstFunc, F, VVMap, RI);
+
+    F->removeFromParent();
+
     delete F;
 
     return DstFunc;
@@ -238,7 +240,7 @@ CopyFunc(const llvm::StringRef Name,
     if (!SrcFunc->isDeclaration()) {
         SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
         DB_PRINT("  cloning %s\n", Name.data());
-        CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI);
+        CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
         fixOpenCLimageArguments(DstFunc, AS);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",

@@ -114,20 +114,24 @@ template <typename VectorT>
 void CloneFunctionIntoAbs(llvm::Function *NewFunc,
                           const llvm::Function *OldFunc,
                           llvm::ValueToValueMapTy &VMap, VectorT &Returns,
+                          bool sameModule = true,
                           const char *NameSuffix = "",
                           llvm::ClonedCodeInfo *CodeInfo = nullptr,
                           llvm::ValueMapTypeRemapper *TypeMapper = nullptr,
                           llvm::ValueMaterializer *Materializer = nullptr) {
-  CloneFunctionInto(NewFunc, OldFunc, VMap,
+
+
 #ifdef LLVM_OLDER_THAN_13_0
-                    true
+  CloneFunctionInto(NewFunc, OldFunc, VMap, true,
+                    Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
 #else
                     // ClonedModule DifferentModule LocalChangesOnly
                     // GlobalChanges
-                    llvm::CloneFunctionChangeType::GlobalChanges
-#endif
-                    ,
+  CloneFunctionInto(NewFunc, OldFunc, VMap,
+                    (sameModule ? llvm::CloneFunctionChangeType::GlobalChanges
+                                : llvm::CloneFunctionChangeType::DifferentModule),
                     Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
+#endif
 }
 
 #endif
