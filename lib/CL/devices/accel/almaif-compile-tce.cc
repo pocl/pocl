@@ -1,0 +1,441 @@
+#include "stdint.h"
+#include "unistd.h"
+
+#include "common.h"
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+
+#include "pocl_llvm.h"
+
+#include <iostream>
+#include <string>
+
+/*#include <Machine.hh>
+#include <CodeLabel.hh>
+#include <DataLabel.hh>
+#include <Environment.hh>
+#include <GlobalScope.hh>
+#include <Program.hh>
+*/
+
+#include "accel-shared.h"
+#include "almaif-compile-tce.h"
+#include "almaif-compile.h"
+
+int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
+  AccelData *d = (AccelData *)(device->data);
+
+  tce_backend_data_t *bd = (tce_backend_data_t *)pocl_aligned_malloc(
+      HOST_CPU_CACHELINE_SIZE, sizeof(tce_backend_data_t));
+  if (bd == NULL) {
+    POCL_MSG_WARN("couldn't allocate tce_backend_data\n");
+    return CL_OUT_OF_HOST_MEMORY;
+  }
+
+  POCL_INIT_LOCK(bd->tce_compile_lock);
+
+  if (1) // pocl_offline_compile
+  {
+    assert(parameters);
+    /* Convert the filename from env variable to absolute filename.
+     * This is required, since generatebits must be run in
+     * destination (output) directory with ADF argument */
+    bd->machine_file = realpath(parameters, NULL);
+    if ((bd->machine_file == NULL) || (!pocl_exists(bd->machine_file)))
+      POCL_ABORT("Can't find ADF file: %s\n", bd->machine_file);
+
+    size_t len = strlen(bd->machine_file);
+    assert(len > 0);
+    // char* dev_name = malloc (len+20);
+    // snprintf (dev_name, 1024, "ALMAIF TCE: %s", bd->machine_file);
+
+    /* grep the ADF file for endiannes flag */
+    char *content = NULL;
+    uint64_t size = 0;
+    pocl_read_file(bd->machine_file, &content, &size);
+    if ((size == 0) || (content == NULL))
+      POCL_ABORT("Can't read ADF file: %s\n", bd->machine_file);
+
+    device->endian_little = (strstr(content, "<little-endian") != NULL);
+    unsigned cores = 0;
+    if (sscanf(content, "<adf core-count=\"%u\"", &cores)) {
+      assert(cores > 0);
+      bd->core_count = cores;
+      device->max_compute_units = cores;
+    } else
+      bd->core_count = 1;
+    POCL_MSG_PRINT_INFO("Multicore: %u Cores: %u \n", bd->core_count > 1,
+                        bd->core_count);
+    POCL_MEM_FREE(content);
+  } else {
+    bd->machine_file = NULL;
+    device->max_compute_units = d->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
+  }
+
+  device->long_name = device->short_name = "ALMAIF TCE";
+  device->vendor = "pocl";
+  device->extensions = "";
+  if (device->endian_little)
+    device->llvm_target_triplet = "tcele-tut-llvm";
+  else
+    device->llvm_target_triplet = "tce-tut-llvm";
+  device->llvm_cpu = NULL;
+  d->compilationData->backend_data = (void *)bd;
+
+  return 0;
+}
+
+int pocl_almaif_tce_cleanup(cl_device_id device) {
+  void *data = device->data;
+  AccelData *d = (AccelData *)data;
+
+  tce_backend_data_t *bd =
+      (tce_backend_data_t *)d->compilationData->backend_data;
+
+  POCL_DESTROY_LOCK(bd->tce_compile_lock);
+
+  POCL_MEM_FREE(bd->machine_file);
+
+  pocl_aligned_free(bd);
+
+  return 0;
+}
+
+#define SUBST(x) "  -DKERNEL_EXE_CMD_OFFSET=" #x
+#define OFFSET_ARG(c) SUBST(c)
+
+void tceccCommandLine(char *commandline, size_t max_cmdline_len,
+                      _cl_command_run *run_cmd, const char *tempDir,
+                      const char *inputSrc, const char *outputTpef,
+                      const char *machine_file, int is_multicore,
+                      int little_endian, const char *extraParams) {
+
+  const char *mainC;
+  if (is_multicore)
+    mainC = "tta_device_main_dthread.c";
+  else
+    mainC = "tta_device_main.c";
+
+  char deviceMainSrc[POCL_FILENAME_LENGTH];
+  const char *poclIncludePathSwitch;
+  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
+    snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s", SRCDIR,
+             "/lib/CL/devices/tce/", mainC);
+    assert(access(deviceMainSrc, R_OK) == 0);
+    poclIncludePathSwitch = " -I " SRCDIR "/include";
+  } else {
+    snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s",
+             POCL_INSTALL_PRIVATE_DATADIR, "/", mainC);
+    assert(access(deviceMainSrc, R_OK) == 0);
+    poclIncludePathSwitch = " -I " POCL_INSTALL_PRIVATE_DATADIR "/include";
+  }
+
+  char extraFlags[POCL_FILENAME_LENGTH * 8];
+  if (extraParams == NULL)
+    extraParams = "";
+  const char *multicoreFlags = "";
+  if (is_multicore)
+    multicoreFlags = " -ldthread -lsync-lu -llockunit";
+
+  const int mem_size = 2048;
+  const int aql_queue_len = 2;
+
+  const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
+  const char *endianFlags = little_endian ? "--little-endian" : "";
+  snprintf(extraFlags, (POCL_FILENAME_LENGTH * 8),
+           "%s %s %s %s -k dummy_argbuffer -DMEM_SIZE=%i -DQUEUE_LENGTH=%i "
+           "--init-sp=%i",
+           extraParams, multicoreFlags, userFlags, endianFlags, mem_size,
+           aql_queue_len, mem_size - AQL_PACKET_LENGTH * aql_queue_len);
+
+  char kernelObjSrc[POCL_FILENAME_LENGTH];
+  snprintf(kernelObjSrc, POCL_FILENAME_LENGTH, "%s%s", tempDir,
+           "/../descriptor.so.kernel_obj.c");
+
+  char kernelMdSymbolName[POCL_FILENAME_LENGTH];
+  snprintf(kernelMdSymbolName, POCL_FILENAME_LENGTH, "_%s_md",
+           run_cmd->kernel->name);
+
+  char programBcFile[POCL_FILENAME_LENGTH];
+  snprintf(programBcFile, POCL_FILENAME_LENGTH, "%s%s", tempDir, "/program.bc");
+
+  /* Compile in steps to save the program.bc for automated exploration
+     use case when producing the kernel capture scripts. */
+
+  snprintf(commandline, max_cmdline_len,
+           "tcecc -llwpr %s %s %s %s -k %s -g -O3 --emit-llvm -o %s %s;"
+           "tcecc -a %s %s -O3 -o %s %s\n",
+           poclIncludePathSwitch, deviceMainSrc, kernelObjSrc, inputSrc,
+           kernelMdSymbolName, programBcFile, extraFlags,
+
+           machine_file, programBcFile, outputTpef, extraFlags);
+}
+
+void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
+                                      _cl_command_node *command,
+                                      cl_kernel kernel, cl_device_id device,
+                                      int specialize) {
+  // Generate the kernel_obj.c file. This should be optional
+  // and generated only for the heterogeneous standalone devices which
+  // need the definitions to accompany the kernels, for the launcher
+  // code.
+  // TODO: the scripts use a generated kernel.h header file that
+  // gets added to this file. No checks seem to fail if that file
+  // is missing though, so it is left out from there for now
+
+  char *orig_content = content;
+
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  snprintf(content, content_size,
+           "\n#include <pocl_device.h>\n"
+           "void _pocl_kernel_%s"
+           "_workgroup(uint8_t* args, uint8_t*, "
+           "uint32_t, uint32_t, uint32_t);\n"
+           "void _pocl_kernel_%s"
+           "_workgroup_fast(uint8_t* args, uint8_t*, "
+           "uint32_t, uint32_t, uint32_t);\n"
+
+           "void %s"
+           "_workgroup_argbuffer("
+           "uint8_t "
+           "__attribute__((address_space(%u)))"
+           "* args, "
+           "uint8_t "
+           "__attribute__((address_space(%u)))"
+           "* ctx, "
+           "uint32_t, uint32_t, uint32_t);\n",
+           meta->name, meta->name, meta->name, device->global_as_id,
+           device->global_as_id);
+  /*
+    size_t content_len = strlen(content);
+    assert (content_len < content_size);
+    content += content_len;
+    content_size -= content_len;
+
+    if (device->global_as_id != 0)
+      snprintf(content, content_size, "__attribute__((address_space(%u)))\n",
+      device->global_as_id);
+
+    content_len = strlen(content);
+    assert (content_len < content_size);
+    content += content_len;
+    content_size -= content_len;
+
+    snprintf(content, content_size,
+             "__kernel_metadata _%s_md = {\n"
+            "     \"%s\",\n"
+            "     %u,\n"
+            "     %u,\n"
+            "     %s_workgroup_argbuffer\n"
+            " };\n",
+            meta->name,
+            meta->name,
+            meta->num_args,
+            meta->num_locals,
+            meta->name);
+  */
+  size_t content_len = strlen(content);
+  assert(content_len < content_size);
+  content += content_len;
+  content_size -= content_len;
+  snprintf(content, content_size,
+           "void* dummy_argbuffer = %s_workgroup_argbuffer;\n", meta->name);
+
+  content_len = strlen(orig_content);
+  pocl_cache_write_descriptor(command, kernel, specialize, orig_content,
+                              content_len);
+}
+
+#define MAX_CMDLINE_LEN (32 * POCL_FILENAME_LENGTH)
+
+int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
+                            cl_device_id device, int specialize) {
+
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    return -1;
+
+  void *data = cmd->device->data;
+  AccelData *d = (AccelData *)data;
+  tce_backend_data_t *bd =
+      (tce_backend_data_t *)d->compilationData->backend_data;
+
+  if (!kernel)
+    kernel = cmd->command.run.kernel;
+  if (!device)
+    device = cmd->device;
+  assert(kernel);
+  assert(device);
+  POCL_MSG_PRINT_INFO("COMPILATION BEFORE WG FUNC\n");
+  POCL_LOCK(bd->tce_compile_lock);
+  int error = pocl_llvm_generate_workgroup_function(cmd->device_i, device,
+                                                    kernel, cmd, specialize);
+
+  POCL_MSG_PRINT_INFO("COMPILATION AFTER WG FUNC\n");
+  if (error) {
+    POCL_UNLOCK(bd->tce_compile_lock);
+    POCL_MSG_ERR("TCE: pocl_llvm_generate_workgroup_function()"
+                 " failed for kernel %s\n",
+                 kernel->name);
+    return -1;
+  }
+
+  // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
+  char inputBytecode[POCL_FILENAME_LENGTH + 13];
+
+  assert(d != NULL);
+  assert(cmd->command.run.kernel);
+
+  char cachedir[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
+                                  kernel, "", cmd, specialize);
+
+  // output TPEF
+  char assemblyFileName[POCL_FILENAME_LENGTH];
+  snprintf(assemblyFileName, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+           "/parallel.tpef");
+
+  char tempDir[POCL_FILENAME_LENGTH];
+  strncpy(tempDir, cachedir, POCL_FILENAME_LENGTH);
+
+  if (!pocl_exists(assemblyFileName)) {
+    char descriptor_content[64 * 1024];
+    pocl_tce_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
+                                     kernel, device, specialize);
+
+    error = snprintf(inputBytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+                     POCL_PARALLEL_BC_FILENAME);
+
+    char commandLine[MAX_CMDLINE_LEN];
+
+    tceccCommandLine(commandLine, MAX_CMDLINE_LEN, &cmd->command.run, tempDir,
+                     inputBytecode, // inputSrc
+                     assemblyFileName, bd->machine_file, bd->core_count > 1,
+                     device->endian_little, NULL);
+
+    POCL_MSG_PRINT_INFO("build command: \n%s", commandLine);
+
+    error = system(commandLine);
+    if (error != 0)
+      POCL_ABORT("Error while running tcecc.\n");
+  }
+  /*
+    TTAMachine::Machine* mach = NULL;
+    try {
+      mach = TTAMachine::Machine::loadFromADF(bd->machine_file);
+    } catch (Exception &e) {
+      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
+      POCL_ABORT("Couldn't open mach\n");
+    }
+
+    TTAProgram::Program* prog = NULL;
+    try{
+      prog = TTAProgram::Program::loadFromTPEF(assemblyFileName, *mach);
+    } catch (Exception &e) {
+      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
+      POCL_ABORT("Couldn't open tpef after compilation\n");
+    }
+
+    const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
+    POCL_MSG_PRINT_INFO("globalcodelabelcount=%i\n",globalScope.globalCodeLabelCount());
+  // POCL_MSG_PRINT_INFO("codelabelcount=%i\n",globalScope.codeLabelCount(184));
+  // POCL_MSG_PRINT_INFO("codelabelcount=%i\n",globalScope.codeLabelCount(183));
+    for (int k = 0; k < globalScope.globalCodeLabelCount(); k++){
+      POCL_MSG_PRINT_INFO("globalCodeLabel %i:
+  %s\n",k,globalScope.globalCodeLabel(k).name().c_str());
+    }*/
+  /*
+    CodeLabelList cll = globalScope.codeLabelList
+    for (int k = 0; k < globalScope.codeLabelCount(); k++){
+      POCL_MSG_PRINT_INFO("CodeLabel %i:
+    %s\n",k,globalScope.codeLabel(k).name().c_str());
+    }
+  */
+  /* uint32_t kernel_address = 0;
+   std::string func_name = "add_workgroup_argbuffer";
+   try {
+     kernel_address = globalScope.codeLabel(func_name).address().location();
+   } catch (Exception &e) {
+     POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
+     POCL_ABORT("Couldn't find the code label for
+   {kernel}_workgroup_argbuffer\n");
+   }
+   POCL_MSG_PRINT_INFO("Found kernel address=%u\n", kernel_address);
+
+ */
+  char imem_file[POCL_FILENAME_LENGTH];
+  snprintf(imem_file, POCL_FILENAME_LENGTH, "%s%s", cachedir, "/parallel.img");
+
+  if (!pocl_exists(imem_file)) {
+    char genbits_command[POCL_FILENAME_LENGTH * 8];
+    // --dmemwidthinmaus 4
+    snprintf(genbits_command, (POCL_FILENAME_LENGTH * 8),
+             "SAVEDIR=$PWD; cd %s; generatebits --dmemwidthinmaus 4 "
+             "--dataimages --piformat=bin2n --diformat=bin2n --program "
+             "parallel.tpef %s ; cd $SAVEDIR",
+             cachedir, bd->machine_file);
+    POCL_MSG_PRINT_INFO("running genbits: \n %s \n", genbits_command);
+    error = system(genbits_command);
+    if (error != 0)
+      POCL_ABORT("Error while running generatebits.\n");
+  }
+
+  // with TCEMC, "data" is empty, "param" contains the kernel_cmd struct
+  char data_img[POCL_FILENAME_LENGTH];
+  snprintf(data_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+           "/parallel_data.img");
+  char param_img[POCL_FILENAME_LENGTH];
+  snprintf(param_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+           "/parallel_param.img");
+
+  error = pocl_exists(imem_file);
+  assert(error != 0 && "parallel.img does not exist!");
+
+  error = pocl_exists(data_img);
+  assert(error != 0 && "parallel_data.img does not exist!");
+
+  error = pocl_exists(param_img);
+  assert(error != 0 && "parallel_param.img does not exist!");
+
+  POCL_UNLOCK(bd->tce_compile_lock);
+  return 0;
+}
+
+/* This is a version number that is supposed to increase when there is
+ * a change in TCE or ALMAIF drivers that makes previous pocl-binaries
+ * incompatible (e.g. a change in generated device image file names, etc) */
+#define POCL_TCE_ALMAIF_BINARY_VERSION "2"
+
+int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
+                                char *output) {
+
+  SHA1_CTX ctx;
+  uint8_t bin_dig[SHA1_DIGEST_SIZE];
+
+  char *content;
+  uint64_t size;
+  int err = pocl_read_file(adf_file, &content, &size);
+  if (err || (content == NULL) || (size == 0))
+    POCL_ABORT("Can't find ADF file %s \n", adf_file);
+
+  pocl_SHA1_Init(&ctx);
+  pocl_SHA1_Update(&ctx, (const uint8_t *)POCL_TCE_ALMAIF_BINARY_VERSION, 1);
+  pocl_SHA1_Update(&ctx, (const uint8_t *)llvm_triplet, strlen(llvm_triplet));
+  pocl_SHA1_Update(&ctx, (uint8_t *)content, size);
+
+  if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS")) {
+    const char *extra_flags =
+        pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
+    pocl_SHA1_Update(&ctx, (uint8_t *)extra_flags, strlen(extra_flags));
+  }
+
+  pocl_SHA1_Final(&ctx, bin_dig);
+
+  unsigned i;
+  for (i = 0; i < SHA1_DIGEST_SIZE; i++) {
+    *output++ = (bin_dig[i] & 0x0F) + 65;
+    *output++ = ((bin_dig[i] & 0xF0) >> 4) + 65;
+  }
+  *output = 0;
+  return 0;
+}

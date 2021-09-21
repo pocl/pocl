@@ -1,7 +1,6 @@
-/* accel.h - generic/example driver for hardware accelerators with memory
-   mapped control.
+/* EmulateMMAPRegion.cc - accessing accelerator memory as memory mapped region.
 
-   Copyright (c) 2019 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,21 +21,12 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_ACCEL_H
-#define POCL_ACCEL_H
+#include "EmulateMMAPRegion.h"
 
-#include "pocl_cl.h"
-#include "prototypes.inc"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-  GEN_PROTOTYPES (accel)
-
-#ifdef __cplusplus
+// Used in emulator to hack the MMAP to work with just virtually contiguous
+// memory
+EmulateMMAPRegion::EmulateMMAPRegion(void *Address, size_t RegionSize) {
+  PhysAddress = (size_t)Address;
+  Data = Address;
+  Size = RegionSize;
 }
-#endif
-
-#endif /* POCL_ACCEL_H */

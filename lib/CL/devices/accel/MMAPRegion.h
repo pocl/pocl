@@ -1,7 +1,7 @@
-/* accel.h - generic/example driver for hardware accelerators with memory
-   mapped control.
+/* MMAPRegion.hh - basic way of accessing accelerator memory.
+ *                 as a memory mapped region
 
-   Copyright (c) 2019 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,21 +22,39 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_ACCEL_H
-#define POCL_ACCEL_H
+#ifndef MMAPREGION_H
+#define MMAPREGION_H
 
-#include "pocl_cl.h"
-#include "prototypes.inc"
+#include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C"
+#include "pocl_types.h"
+
+// MMAPRegion debug prints get quite spammy
+// #define ACCEL_MMAP_DEBUG
+
+class MMAPRegion
 {
+public:
+  MMAPRegion ();
+  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
+  virtual ~MMAPRegion ();
+
+  virtual uint32_t Read32 (size_t offset);
+  virtual void Write32 (size_t offset, uint32_t value);
+  virtual void Write16 (size_t offset, uint16_t value);
+  virtual uint64_t Read64 (size_t offset);
+
+  virtual size_t VirtualToPhysical (void *ptr);
+
+  virtual void CopyToMMAP (size_t destination, const void *source,
+                           size_t bytes);
+  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes);
+
+  size_t PhysAddress;
+  size_t Size;
+
+protected:
+  void *Data;
+};
+
 #endif
-
-  GEN_PROTOTYPES (accel)
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* POCL_ACCEL_H */

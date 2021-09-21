@@ -244,7 +244,7 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   if (isMultiCoreMachine())
     extraFlags += " -ldthread -lsync-lu -llockunit";
 
-  extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
+  // extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
 
   std::string kernelObjSrc = "";
   kernelObjSrc += tempDir;
@@ -257,7 +257,13 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
     extraFlags += " --little-endian";
   }
 
-  //  extraFlags += " --swfp";
+  const int mem_size = 2048;
+  const int aql_queue_len = 2;
+  const int aql_packet_size = 64;
+  extraFlags += " -DMEM_SIZE=" + std::to_string(mem_size);
+  extraFlags += " -DQUEUE_LENGTH=" + std::to_string(aql_queue_len);
+  extraFlags += " --init-sp=" +
+                std::to_string(mem_size - aql_packet_size * aql_queue_len);
 
   std::string kernelMdSymbolName = "_";
   kernelMdSymbolName += run_cmd->kernel->name;
