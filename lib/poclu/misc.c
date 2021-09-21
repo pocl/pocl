@@ -365,11 +365,13 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   else
     {
       snprintf (path, 1024, "%s%s", basename, ext);
-
       if (access (path, F_OK))
         {
-          snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
-                    basename, ext);
+          if (from_source)
+            snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
+                      basename, ext);
+          else
+            snprintf (path, 1024, "%s/%s%s", BUILDDIR, basename, ext);
           if (access (path, F_OK))
             {
               fprintf (stderr, "Can't find %s%s SPIR / POCLBIN file anywhere\n",

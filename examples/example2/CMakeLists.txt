@@ -35,7 +35,13 @@ target_link_libraries("example2" ${POCLU_LINK_OPTIONS})
 add_test("examples/example2" "example2")
 
 if (ENABLE_SPIR)
-  add_test("examples/example2_spir" "example2" "s")
+  add_test(NAME "examples/example2_spir"
+           COMMAND ${CMAKE_COMMAND}
+           "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example2.spir32####-c####${CMAKE_CURRENT_SOURCE_DIR}/example2.cl"
+           "-DCMD2=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example2.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/example2.cl"
+           "-DCMD3=${CMAKE_BINARY_DIR}/examples/example2/example2####s"
+           "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2.spir32####${CMAKE_BINARY_DIR}/example2.spir64"
+            -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
   set(SPIREX "examples/example2_spir")
 endif()
 
