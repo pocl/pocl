@@ -84,6 +84,7 @@ namespace pocl {
                                       llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore(llvm::Value *val,
                                          llvm::Instruction *alloca,
+                                         llvm::Type *InstType,
                                          bool PoclWrapperStructAdded,
                                          llvm::Instruction *before = NULL,
                                          bool isAlloca = false);

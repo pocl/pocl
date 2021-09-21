@@ -83,6 +83,8 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
+
+
 #ifdef LLVM_OLDER_THAN_7_0
 namespace llvm {
 
@@ -401,21 +403,35 @@ Workgroup::createLoadFromContext(
   IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex=-1) {
 
   Value *GEP;
-  GEP = Builder.CreateStructGEP(ContextArg->getType()->getPointerElementType(),
-                                ContextArg, StructFieldIndex);
+  Type *ContextType = ContextArg->getType()->getPointerElementType();
+  GEP = Builder.CreateStructGEP(ContextType, ContextArg, StructFieldIndex);
+  Type *GEPType = GEP->getType()->getPointerElementType();
 
   llvm::LoadInst *Load = nullptr;
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
-      Load = Builder.CreateLoad(Builder.CreateConstGEP1_64(GEP, 0));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP1_64(
+#ifndef LLVM_OLDER_THAN_13_0
+          GEPType,
+#endif
+          GEP, 0));
     else
-      Load = Builder.CreateLoad(Builder.CreateConstGEP2_64(GEP, 0, FieldIndex));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP2_64(
+#ifndef LLVM_OLDER_THAN_13_0
+          GEPType,
+#endif
+          GEP, 0, FieldIndex));
   } else {
     if (FieldIndex == -1)
-      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(
+#ifndef LLVM_OLDER_THAN_13_0
+          GEPType,
+#endif
+          GEP, 0));
     else
       Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(
-          GEP->getType()->getPointerElementType(), GEP, 0, FieldIndex));
+          GEPType,
+          GEP, 0, FieldIndex));
   }
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
@@ -1007,10 +1023,11 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
       break;
 
     Type *ArgType = ii->getType();
-
-    Value *GEP = Builder.CreateGEP(
-        &*ai, ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
-    Value *Pointer = Builder.CreateLoad(GEP);
+    Type* I32Ty = Type::getInt32Ty(M->getContext());
+    Value *AI = &*ai;
+    Value *GEP = Builder.CreateGEP(AI->getType()->getPointerElementType(),
+        AI, ConstantInt::get(I32Ty, i));
+    Value *Pointer = Builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
 
     Value *Arg;
     if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
@@ -1070,7 +1087,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
         Arg = Builder.CreatePointerCast(Pointer, ArgType);
       } else {
         Arg = Builder.CreatePointerCast(Pointer, ArgType->getPointerTo());
-        Arg = Builder.CreateLoad(Arg);
+        Arg = Builder.CreateLoad(ArgType, Arg);
       }
     }
 
@@ -1549,41 +1566,42 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
     if (i == F->arg_size() - 4)
       break;
 
-    Type *t = ii->getType();
-    Value *gep = builder.CreateGEP(&*ai,
-            ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
-    Value *pointer = builder.CreateLoad(gep);
+    Type *T = ii->getType();
+    Type* I32Ty = Type::getInt32Ty(M->getContext());
+    Value *AI = &*ai;
+    Value *GEP = builder.CreateGEP(AI->getType()->getPointerElementType(),
+        AI, ConstantInt::get(I32Ty, i));
+    Value *Pointer = builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
+    Value *V;
 
-    Value *value;
-
-    if (t->isPointerTy()) {
+    if (T->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         // Assume the pointer is directly in the arg array.
-        value = builder.CreatePointerCast(pointer, t);
-        arguments.push_back(value);
+        V = builder.CreatePointerCast(Pointer, T);
+        arguments.push_back(V);
         continue;
       } else {
         // It's a pass by value pointer argument, use the underlying
         // element type in subsequent load.
-        t = t->getPointerElementType();
+        T = T->getPointerElementType();
       }
     }
 
     // If it's a pass by value pointer argument, we just pass the pointer
     // as is to the function, no need to load from it first.
 
-    if (ii->hasByValAttr() && (((PointerType *)t)->getAddressSpace() != 1)) {
-      value = builder.CreatePointerCast(pointer, t->getPointerTo());
+    if (ii->hasByValAttr() && (((PointerType *)T)->getAddressSpace() != DeviceGlobalASid)) {
+      V = builder.CreatePointerCast(Pointer, T->getPointerTo());
     } else {
-      value =
-          builder.CreatePointerCast(pointer, t->getPointerTo(DeviceGlobalASid));
+      V =
+          builder.CreatePointerCast(Pointer, T->getPointerTo(DeviceGlobalASid));
     }
 
     if (!ii->hasByValAttr()) {
-      value = builder.CreateLoad(value);
+      V = builder.CreateLoad(T, V);
     }
 
-    arguments.push_back(value);
+    arguments.push_back(V);
   }
 
   ++ai;

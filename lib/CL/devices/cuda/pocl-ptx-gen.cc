@@ -680,7 +680,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
       llvm::GetElementPtrInst *GEP =
-          llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
+          llvm::GetElementPtrInst::Create(Base->getType()->getPointerElementType(), Base, {Zero, Offset});
 
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
