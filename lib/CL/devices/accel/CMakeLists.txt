@@ -23,10 +23,43 @@
 #
 #=============================================================================
 
-add_compile_options("-std=c++11")
+add_compile_options("-std=c++14")
+
+
+set(ACCEL_SOURCES "accel-shared.h"
+                  "accel.cc"
+                  "accel.h"
+                  "MMAPRegion.cc"
+                  "MMAPRegion.h"
+                  "EmulateMMAPRegion.cc"
+                  "EmulateMMAPRegion.h"
+                  "XrtMMAPRegion.h"
+                  "accel-emulate.cc"
+                  "accel-emulate.h"
+                  "almaif-compile.cc"
+                  "almaif-compile.h"
+                  "almaif-compile-tce.cc"
+                  "almaif-compile-tce.h"
+                  )
+
+if(DEFINED ENV{XILINX_XRT})
+    set(XRT $ENV{XILINX_XRT})
+    add_compile_options(-I${XRT}/include)
+    set(ACCEL_SOURCES ${ACCEL_SOURCES}
+                      "XrtMMAPRegion.cc"
+                      )
+endif()
+
 
 if(MSVC)
-  set_source_files_properties( accel.cc accel.h PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( ${ACCEL_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library(pocl-devices-accel accel.cc accel.h)
+add_pocl_device_library(pocl-devices-accel ${ACCEL_SOURCES})
+
+if(DEFINED ENV{XILINX_XRT})
+    target_link_libraries(pocl-devices-accel PRIVATE "${XRT}/lib/libxrt_coreutil.so")
+endif()
+
+
+target_link_libraries(pocl-devices-accel PRIVATE "${TCE_LIBS}")
