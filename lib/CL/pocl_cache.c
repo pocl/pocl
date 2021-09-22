@@ -67,17 +67,6 @@ static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
   return sum;
 }
 
-int pocl_cl_device_to_index(cl_program   program,
-                            cl_device_id device) {
-    unsigned i;
-    assert(program);
-    for (i = 0; i < program->num_devices; i++)
-        if (program->devices[i] == device ||
-            program->devices[i] == device->parent_device)
-            return i;
-    return -1;
-}
-
 static void program_device_dir(char *path,
                                cl_program program,
                                unsigned device_i,

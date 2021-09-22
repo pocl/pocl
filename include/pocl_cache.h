@@ -45,9 +45,6 @@ pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
-int pocl_cl_device_to_index(cl_program   program,
-                            cl_device_id device);
-
 int pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
 
 int pocl_cache_create_tempdir(char* path);
