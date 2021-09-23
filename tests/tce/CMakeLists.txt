@@ -37,7 +37,9 @@ add_compile_options("-Wno-pedantic")
 
 add_subdirectory("ttasim")
 add_subdirectory("fp16")
-add_subdirectory("multi_AS_copy")
+if(ENABLE_HOST_CPU_DEVICES)
+  add_subdirectory("multi_AS_copy")
+endif()
 
 if(ENABLE_TCEMC)
   add_subdirectory("tcemc")
