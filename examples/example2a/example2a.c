@@ -70,12 +70,13 @@ main (int argc, char **argv)
   output = (cl_float *) malloc (WIDTH * (HEIGHT + PADDING) * sizeof (cl_float));
 
   srand48(0);
-  for (i = 0; i < HEIGHT; ++i)
+  for (i = 0; i < WIDTH; ++i)
     {
-      for (j = 0; j < WIDTH; ++j)
-      input[i * WIDTH + j] = (cl_float)drand48();
+      for (j = 0; j < HEIGHT; ++j)
+      input[i * HEIGHT + j] = (cl_float)drand48();
+      for (j = 0; j < (HEIGHT + PADDING); ++j)
+      output[i * (HEIGHT + PADDING) + j] = 0.0f;
     }
-  
 
   memobjs[0] = clCreateBuffer(context,
 			      CL_MEM_READ_WRITE,
