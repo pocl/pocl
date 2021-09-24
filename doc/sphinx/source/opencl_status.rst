@@ -74,7 +74,7 @@ Compiling source to SPIR/SPIR-V
 
 PoCL's own binary format doesn't use SPIR or SPIR-V, but it's possible
 to compile OpenCL sources directly to SPIR (LLVM IR with SPIR target),
-using Clang (fix paths to headers to match your system)::
+using Clang::
 
     clang -Xclang -cl-std=CL1.2 -D__OPENCL_C_VERSION__=120  -D__OPENCL_VERSION__=120 \
      -Dcl_khr_int64 -Dcl_khr_byte_addressable_store -Dcl_khr_int64_extended_atomics \
@@ -82,8 +82,7 @@ using Clang (fix paths to headers to match your system)::
      -Dcl_khr_local_int32_base_atomics -Dcl_khr_local_int32_extended_atomics \
      -Dcl_khr_3d_image_writes -Dcl_khr_fp64 -Dcl_khr_int64_base_atomics \
      -emit-llvm -target spir64-unknown-unknown \
-     -include /usr/lib/llvm-VERSION/lib/clang/VERSION/include/opencl-c-base.h \
-     -include /usr/lib/llvm-VERSION/lib/clang/VERSION/include/opencl-c.h \
+     -Xclang -finclude-default-header \
      -o SPIR_OUTPUT.bc -x cl -c SOURCE.cl
 
 The SPIR binary from previous command can be further compiled to SPIR-V with::
