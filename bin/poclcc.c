@@ -98,7 +98,7 @@ process_kernel_file(int arg, char **argv, int argc)
     ERRNO_EXIT(filename);
   if (output_file == NULL)
     {
-      output_file = malloc(strlen(filename)+strlen(ext));
+      output_file = malloc (strlen (filename) + strlen (ext) + 2);
       strcpy(output_file, filename);
       strcat(output_file, ext);
     }
