@@ -11,7 +11,7 @@
 #
 # Usage: python3 generate_spir_wrapper.py >POCL_DIR/lib/kernel/spir_wrapper.ll
 #
-# Notes:
+# Notes for CPU SPIR wrapper:
 # 1) this expects the target kernel library to have a single AS (the default);
 #    it inserts addrspace casts.
 # 2) almost all vector variants of OpenCL functions are ignored
@@ -20,10 +20,21 @@
 #    even if the mangled names are the same, because the calling conv
 #    is different for SPIR and some LLVM pass will remove the calls
 #    with mismatched calling conv.
+#
+# Notes for CUDA SPIR wrapper:
+# 1) mangling is not required for CUDA
+# 2) address space casting is not required for CUDA
+# 3) prefixing and SPIR calling convention are still required
+# ... set the two variables below to False before running to get CUDA wrapper
 
 import sys
 
 POCL_LIB_PREFIX = "_cl_"
+
+# set to False for CUDA wrapper, True for CPU wrapper
+MANGLE_OCL = True
+# set to False for CUDA wrapper, True for CPU wrapper
+AS_CASTS_REQUIRED = True
 
 SINGLE_ARG = [
 	"acos", "acosh", "acospi",
@@ -237,9 +248,15 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 		llvm_i = 1
 		for cast in args:
 			spir_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_SPIR[AS]))
-			ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_OCL[AS]))
+			if MANGLE_OCL:
+				ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_OCL[AS]))
+			else:
+				ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_SPIR[AS]))
+
 			spir_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS[AS])
-			ocl_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS["none"])
+			ocl_mangled_type = spir_mangled_type
+			if AS_CASTS_REQUIRED:
+				ocl_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS["none"])
 			# caller_arg = spir_mangled_type + arg_type_ext + " %" + chr(97+arg_i)
 			noext_caller_arg = spir_mangled_type + " %" + chr(97+arg_i)
 			caller_args.append(noext_caller_arg)
