@@ -656,10 +656,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   llvm::raw_svector_ostream SOS(Data);
   bool cannotEmitFile;
 
-  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS,
-#ifndef LLVM_OLDER_THAN_7_0
-                                  nullptr,
-#endif
+  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
                                   CODEGEN_FILE_TYPE_NS::CGFT_ObjectFile);
 
   LLVMGeneratesObjectFiles = !cannotEmitFile;
@@ -691,11 +688,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   // Have to emit the text first and then call the assembler from the command line
   // to produce the binary.
 
-
-  if (Target->addPassesToEmitFile(PMAsm, SOS,
-#ifndef LLVM_OLDER_THAN_7_0
-                                  nullptr,
-#endif
+  if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
                                   CODEGEN_FILE_TYPE_NS::CGFT_AssemblyFile)) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }

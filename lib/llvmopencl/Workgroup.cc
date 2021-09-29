@@ -41,9 +41,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/IRBuilder.h>
-#ifdef LLVM_OLDER_THAN_7_0
-#include <llvm/IR/TypeBuilder.h>
-#endif
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstrTypes.h>
@@ -52,9 +49,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#ifdef LLVM_OLDER_THAN_7_0
-#include <llvm/Transforms/Utils/Local.h>
-#endif
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
@@ -85,68 +79,6 @@ using namespace pocl;
 
 
 
-#ifdef LLVM_OLDER_THAN_7_0
-namespace llvm {
-
-  typedef struct _pocl_context PoclContext;
-
-  template<bool xcompile> class TypeBuilder<PoclContext, xcompile> {
-  public:
-    static StructType *get(LLVMContext &Context) {
-      if (size_t_width == 64)
-        {
-        SmallVector<Type *, 10> Elements;
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<8> *, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32> *, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-        return StructType::get(Context, Elements);
-        }
-      else if (size_t_width == 32)
-        {
-          SmallVector<Type *, 10> Elements;
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-              TypeBuilder<types::i<8> *, xcompile>::get(Context));
-          Elements.push_back(
-              TypeBuilder<types::i<32> *, xcompile>::get(Context));
-          Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>, xcompile>::get(Context));
-
-          return StructType::get(Context, Elements);
-        }
-      else
-        {
-          assert (false && "Unsupported size_t width.");
-          return NULL;
-        }
-    }
-
-    static void setSizeTWidth(int width) {
-      size_t_width = width;
-    }
-
-  private:
-    static int size_t_width;
-  };
-
-  template<bool xcompile>
-  int TypeBuilder<PoclContext, xcompile>::size_t_width = 0;
-}  // namespace llvm
-
-#endif
 
 enum PoclContextStructFields {
   PC_NUM_GROUPS,
@@ -201,18 +133,6 @@ Workgroup::runOnModule(Module &M) {
   SizeTWidth = address_bits;
   SizeT = IntegerType::get(*C, SizeTWidth);
 
-#ifdef LLVM_OLDER_THAN_7_0
-  TypeBuilder<PoclContext, true>::setSizeTWidth(SizeTWidth);
-  PoclContextT = TypeBuilder<PoclContext, true>::get(*C);
-  LauncherFuncT =
-      SizeTWidth == 32
-          ? TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<32>,
-                             types::i<32>, types::i<32>),
-                        true>::get(M.getContext())
-          : TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<64>,
-                             types::i<64>, types::i<64>),
-                        true>::get(M.getContext());
-#else
   // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
   // anyways as it builds the context type using the SizeT directly.
   llvm::Type *Int32T = Type::getInt32Ty(*C);
@@ -233,7 +153,6 @@ Workgroup::runOnModule(Module &M) {
                         DeviceArgsASid),
        PointerType::get(PoclContextT, DeviceContextASid), SizeT, SizeT, SizeT},
       false);
-#endif
 
   assert ((SizeTWidth == 64 || SizeTWidth == 32) &&
           "Target has an unsupported pointer width.");

@@ -167,20 +167,15 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-/* "Using LLVM 6.0" */
-#cmakedefine LLVM_6_0
-
-/* "Using LLVM 7.0" */
-#cmakedefine LLVM_7_0
-
-/* "Using LLVM 8.0" */
-#cmakedefine LLVM_8_0
-
-#cmakedefine LLVM_9_0
-
 #cmakedefine LLVM_10_0
 
 #cmakedefine LLVM_11_0
+
+#cmakedefine LLVM_12_0
+
+#cmakedefine LLVM_13_0
+
+#cmakedefine LLVM_14_0
 
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 

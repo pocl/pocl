@@ -792,11 +792,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
     if (cur_llvm_irs && cur_llvm_irs[i]) {
       llvm::Module *Ptr = (llvm::Module *)cur_llvm_irs[i];
-#ifdef LLVM_OLDER_THAN_7_0
-      TempModule = llvm::CloneModule(Ptr);
-#else
       TempModule = llvm::CloneModule(*Ptr);
-#endif
     } else {
       llvm::Module *Ptr =
           parseModuleIRMem((char *)cur_device_binaries[0],

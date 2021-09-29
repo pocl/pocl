@@ -84,12 +84,6 @@ BarrierTailReplication::runOnFunction(Function &F)
 
   bool changed = ProcessFunction(F);
 
-
-  // In LLVM 7+, it is replaced by some assert(verify()) in LLVM itself
-#ifdef LLVM_OLDER_THAN_7_0
-  DT->verifyDomTree();
-#endif
-
   LI->verifyAnalysis();
   /* The created tails might contain PHI nodes with operands 
      referring to the non-predecessor (split point) BB. 

@@ -114,11 +114,7 @@ void eraseFunctionAndCallers(llvm::Function *Function) {
 }
 
 int getConstantIntMDValue(Metadata *MD) {
-#ifdef LLVM_OLDER_THAN_7_0
-  ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(MD);
-#else
   ConstantInt *CI = mdconst::extract<ConstantInt>(MD);
-#endif
   return CI->getLimitedValue();
 }
 

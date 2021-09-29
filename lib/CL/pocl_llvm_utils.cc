@@ -78,11 +78,7 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
 
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
   llvm::raw_string_ostream sos(dest);
-#ifdef LLVM_OLDER_THAN_7_0
-  WriteBitcodeToFile(mod, sos);
-#else
   WriteBitcodeToFile(*mod, sos);
-#endif
   sos.str(); // flush
 }
 

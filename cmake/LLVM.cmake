@@ -46,10 +46,7 @@ else()
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
-      "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
-      "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
-      "llvm-config-mp-7.0" "llvm-config-7" "llvm-config70"
-      "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
+      "llvm-config"
     DOC "llvm-config executable")
 endif()
 
@@ -172,29 +169,7 @@ if(WIN32)
 endif(WIN32)
 
 # required for sources..
-if(LLVM_VERSION MATCHES "^6[.]0")
-  set(LLVM_MAJOR 6)
-  set(LLVM_6_0 1)
-  set(LLVM_OLDER_THAN_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^7[.]")
-  set(LLVM_MAJOR 7)
-  set(LLVM_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^8[.]")
-  set(LLVM_MAJOR 8)
-  set(LLVM_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^9[.]")
-  set(LLVM_MAJOR 9)
-  set(LLVM_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^10[.]")
+if(LLVM_VERSION MATCHES "^10[.]")
   set(LLVM_MAJOR 10)
   set(LLVM_10_0 1)
 elseif(LLVM_VERSION MATCHES "^11[.]")
@@ -216,7 +191,7 @@ elseif(LLVM_VERSION MATCHES "^16[.]")
   set(LLVM_MAJOR 16)
   set(LLVM_16_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 16.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 10.0 and 16.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
@@ -256,22 +231,19 @@ string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 ####################################################################
 
-# llvm-config does not include clang libs
-if((9 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
-  # For Clang 10+, link against a single shared library instead of multiple component shared
-  # libraries.
-  if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
-    set(CLANG_LIBNAMES clangTCE-cpp)
-  else()
-    set(CLANG_LIBNAMES clang-cpp)
-  endif()
-else()
+if(STATIC_LLVM)
   set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
       clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
       clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
   if(LLVM_MAJOR GREATER 14)
      list(APPEND CLANG_LIBNAMES clangSupport)
+  endif()
+else()
+  if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
+    set(CLANG_LIBNAMES clangTCE-cpp)
+  else()
+    set(CLANG_LIBNAMES clang-cpp)
   endif()
 endif()
 
