@@ -40,9 +40,9 @@ Other
 - the single global LLVMContext was replaced with
   multiple LLVMContexts, one per OpenCL cl_context.
   OpenCL code can now be compiled in parallel
-  when using separate cl_contexts, however programs that
-  don't reuse contexts might experience slower
-  compilation. This should be solved by separating
+  when using separate cl_contexts. This feature
+  is disabled by default since it significantly slowed
+  down PyOpenCL. This should be resolved by separating
   LLVM compilation in their own threads in the future.
 
 - a new OpenCL extension was added to PoCL: cl_pocl_content_size.
