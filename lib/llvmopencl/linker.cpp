@@ -487,6 +487,11 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   std::string log;
   shared_copy(parallel_bc, program, log, vvm);
 
+  /* LLVM 13 complains about this being an invalid MDnode. */
+  llvm::NamedMDNode *DebugCU = parallel_bc->getNamedMetadata("llvm.dbg.cu");
+  if (DebugCU && DebugCU->getNumOperands()==0)
+    parallel_bc->eraseNamedMetadata(DebugCU);
+
   return 0;
 }
 
