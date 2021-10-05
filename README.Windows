@@ -1,3 +1,11 @@
+
+# WARNING: this document is seriously outdated
+#
+# considering we haven't had anyone maintaining
+# the Windows build since about 2016, getting the
+# current PoCL code to build on Windows will likely
+# require much more effort than this howto describes.
+
 # Compiling pocl on Windows
 
 ## Dependencies:
@@ -26,7 +34,7 @@ library dependencies and builds them to `/c/pocl-playground`.
 
 To download and build everything without first fetching pocl repository one can do simply:
 
-    curl https://raw.githubusercontent.com/pocl/master/windows/setup_and_build_win64.sh | sh
+    curl https://github.com/pocl/pocl/raw/master/windows/setup_and_build_win64.sh | sh
 
 Script requires following software installed on Windows 7 or later (64bit only):
 
