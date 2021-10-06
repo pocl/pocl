@@ -139,6 +139,23 @@ SIG_TO_LLVM_TYPE_MAP = {
 	"12memory_scope": "i32",
 }
 
+SIG_TO_TYPE_NAME_MAP = {
+	"f": "float",
+	"d": "double",
+
+	"c": "char",
+	"h": "uchar",
+
+	"s": "short",
+	"t": "ushort",
+
+	"i": "int",
+	"j": "uint",
+
+	"l": "long",
+	"m": "ulong",
+}
+
 LLVM_TYPE_EXT_MAP = {
         "b": " zeroext ",
 	"v": "",
@@ -374,6 +391,13 @@ for mang_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type)
 	for f in TRIPLE_ARG_I:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type, mang_type)
+
+# convert
+for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+	for src_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+		for sat in ['', '_sat']:
+			for rounding in ['','_rtp','_rtn','_rte','_rtz']:
+				generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_type]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_type], LLVM_TYPE_EXT_MAP[dst_type], False, src_type)
 
 for mang_type in ['i', 'j', "l", "m"]:
 	for f in SVM_ATOMICS_INT_ONLY:

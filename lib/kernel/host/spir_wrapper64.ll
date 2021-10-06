@@ -2620,6 +2620,8006 @@ define spir_func i64 @_Z7mad_satmmm(i64 %a, i64 %b, i64 %c) local_unnamed_addr #
 }
 
 
+declare  signext i8 @_Z16_cl_convert_charc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtec(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtec(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtec(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_charh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtph(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtph(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rteh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rteh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_sath(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_sath(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtph(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rteh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_chars(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_chars(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_chars(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtps(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtps(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtns(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtns(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtes(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtes(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzs(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_sats(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_sats(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtps(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtns(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtes(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzs(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_chart(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_chart(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_chart(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtet(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtet(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtet(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_chari(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_chari(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_chari(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtni(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtni(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtei(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtei(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_sati(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_sati(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtni(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtei(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_charj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtej(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtej(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtej(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_charl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtel(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtel(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtel(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_charm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtem(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtem(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtem(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_charf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_charf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_charf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtef(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtef(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtef(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzf(float %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z16_cl_convert_chard(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z12convert_chard(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z16_cl_convert_chard(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtpd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtpd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtnd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtnd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rted(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rted(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_rtzd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_rtzd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z20_cl_convert_char_satd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z16convert_char_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z20_cl_convert_char_satd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtpd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtnd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rted(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rted(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i8 @_Z24_cl_convert_char_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func  signext i8 @_Z20convert_char_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i8 @_Z24_cl_convert_char_sat_rtzd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtec(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtec(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtec(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzc(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtph(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtph(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rteh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rteh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_sath(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_sath(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtph(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rteh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzh(i8 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_uchars(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_uchars(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_uchars(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtps(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtps(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtns(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtns(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtes(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtes(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzs(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_sats(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_sats(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtps(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtns(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtes(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzs(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_uchart(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_uchart(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_uchart(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtet(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtet(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtet(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzt(i16 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_uchari(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_uchari(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_uchari(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtni(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtni(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtei(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtei(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_sati(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_sati(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtni(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtei(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzi(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtej(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtej(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtej(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzj(i32 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtel(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtel(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtel(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzl(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtem(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtem(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtem(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzm(i64 %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_ucharf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_ucharf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_ucharf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtef(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtef(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtef(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzf(float %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z17_cl_convert_uchard(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z13convert_uchard(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z17_cl_convert_uchard(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtpd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtpd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtnd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtnd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rted(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rted(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_rtzd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_rtzd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z21_cl_convert_uchar_satd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z17convert_uchar_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z21_cl_convert_uchar_satd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtpd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtnd(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rted(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rted(double %a)
+  ret i8 %call
+}
+
+
+declare  zeroext i8 @_Z25_cl_convert_uchar_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i8 @_Z21convert_uchar_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i8 @_Z25_cl_convert_uchar_sat_rtzd(double %a)
+  ret i8 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtec(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtec(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtec(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shorth(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shorth(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shorth(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtph(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtph(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rteh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rteh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_sath(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_sath(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtph(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rteh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shorts(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shorts(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shorts(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtps(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtps(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtns(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtns(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtes(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtes(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzs(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_sats(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_sats(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtps(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtns(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtes(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzs(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtet(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtet(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtet(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shorti(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shorti(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shorti(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtni(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtni(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtei(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtei(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_sati(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_sati(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtni(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtei(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtej(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtej(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtej(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtel(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtel(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtel(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtem(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtem(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtem(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtef(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtef(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtef(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzf(float %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z17_cl_convert_shortd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z13convert_shortd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z17_cl_convert_shortd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtpd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtpd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtnd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtnd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rted(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rted(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_rtzd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_rtzd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z21_cl_convert_short_satd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z17convert_short_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z21_cl_convert_short_satd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtpd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtnd(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rted(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rted(double %a)
+  ret i16 %call
+}
+
+
+declare  signext i16 @_Z25_cl_convert_short_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func  signext i16 @_Z21convert_short_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  signext  i16 @_Z25_cl_convert_short_sat_rtzd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtec(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtec(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtec(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzc(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushorth(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushorth(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushorth(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtph(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtph(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rteh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rteh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_sath(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_sath(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtph(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rteh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzh(i8 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushorts(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushorts(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushorts(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtps(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtps(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtns(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtns(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtes(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtes(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzs(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_sats(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_sats(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtps(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtns(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtes(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzs(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtet(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtet(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtet(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzt(i16 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushorti(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushorti(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushorti(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtni(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtni(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtei(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtei(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_sati(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_sati(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtni(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtei(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzi(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtej(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtej(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtej(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzj(i32 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtel(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtel(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtel(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzl(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtem(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtem(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtem(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzm(i64 %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtef(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtef(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtef(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzf(float %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z18_cl_convert_ushortd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z14convert_ushortd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z18_cl_convert_ushortd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtpd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtpd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtnd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtnd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rted(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rted(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_rtzd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_rtzd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z22_cl_convert_ushort_satd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z18convert_ushort_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z22_cl_convert_ushort_satd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtpd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtnd(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rted(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rted(double %a)
+  ret i16 %call
+}
+
+
+declare  zeroext i16 @_Z26_cl_convert_ushort_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func  zeroext i16 @_Z22convert_ushort_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  zeroext  i16 @_Z26_cl_convert_ushort_sat_rtzd(double %a)
+  ret i16 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtec(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtec(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtec(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_inth(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_inth(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_inth(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtph(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtph(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rteh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rteh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_sath(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_sath(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtph(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rteh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_ints(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_ints(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_ints(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtps(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtps(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtns(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtns(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtes(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtes(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzs(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_sats(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_sats(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtps(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtns(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtes(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzs(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtet(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtet(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtet(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_inti(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_inti(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_inti(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtni(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtni(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtei(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtei(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_sati(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_sati(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtni(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtei(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtej(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtej(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtej(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtel(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtel(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtel(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtem(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtem(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtem(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtef(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtef(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtef(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_convert_intd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z11convert_intd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z15_cl_convert_intd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtpd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtpd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtnd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtnd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rted(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rted(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_rtzd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_rtzd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_convert_int_satd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z15convert_int_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z19_cl_convert_int_satd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtpd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtnd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rted(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rted(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z23_cl_convert_int_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z19convert_int_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z23_cl_convert_int_sat_rtzd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtec(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtec(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtec(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzc(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uinth(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uinth(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uinth(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtph(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtph(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rteh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rteh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_sath(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_sath(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtph(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rteh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzh(i8 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uints(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uints(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uints(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtps(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtps(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtns(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtns(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtes(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtes(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzs(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_sats(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_sats(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtps(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtns(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtes(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzs(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtet(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtet(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtet(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzt(i16 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uinti(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uinti(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uinti(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtni(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtni(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtei(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtei(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_sati(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_sati(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtni(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtei(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzi(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtej(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtej(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtej(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzj(i32 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtel(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtel(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtel(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzl(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtem(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtem(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtem(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzm(i64 %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtef(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtef(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtef(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzf(float %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_convert_uintd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z12convert_uintd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z16_cl_convert_uintd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtpd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtpd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtnd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtnd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rted(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rted(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_rtzd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_rtzd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_convert_uint_satd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z16convert_uint_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z20_cl_convert_uint_satd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtpd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtnd(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rted(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rted(double %a)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_convert_uint_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func i32 @_Z20convert_uint_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i32 @_Z24_cl_convert_uint_sat_rtzd(double %a)
+  ret i32 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtec(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtec(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtec(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtph(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtph(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rteh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rteh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_sath(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_sath(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtph(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rteh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtps(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtps(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtns(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtns(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtes(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtes(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_sats(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_sats(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtps(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtns(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtes(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtet(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtet(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtet(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtni(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtni(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtei(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtei(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_sati(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_sati(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtni(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtei(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtej(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtej(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtej(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtel(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtel(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtel(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtem(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtem(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtem(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtef(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtef(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtef(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_convert_longd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z12convert_longd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z16_cl_convert_longd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtpd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtpd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtnd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtnd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rted(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rted(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_rtzd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_rtzd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z20_cl_convert_long_satd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z16convert_long_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z20_cl_convert_long_satd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtpd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtnd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rted(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rted(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_convert_long_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z20convert_long_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z24_cl_convert_long_sat_rtzd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtec(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtec(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtec(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzc(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtph(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtph(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rteh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rteh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_sath(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_sath(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtph(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rteh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzh(i8 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtps(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtps(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtns(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtns(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtes(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtes(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_sats(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_sats(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtps(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtns(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtes(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzs(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtet(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtet(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtet(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzt(i16 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtni(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtni(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtei(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtei(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_sati(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_sati(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtni(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtei(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzi(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtej(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtej(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtej(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzj(i32 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtel(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtel(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtel(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzl(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtem(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtem(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtem(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzm(i64 %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtef(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtef(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtef(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzf(float %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z17_cl_convert_ulongd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z13convert_ulongd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z17_cl_convert_ulongd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtpd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtpd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtnd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtnd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rted(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rted(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_rtzd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_rtzd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z21_cl_convert_ulong_satd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z17convert_ulong_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z21_cl_convert_ulong_satd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtpd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtnd(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rted(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rted(double %a)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_convert_ulong_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func i64 @_Z21convert_ulong_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  i64 @_Z25_cl_convert_ulong_sat_rtzd(double %a)
+  ret i64 %call
+}
+
+
+declare float @_Z17_cl_convert_floatc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtec(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtec(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtec(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzc(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floath(i8) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floath(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtph(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtph(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rteh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rteh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_sath(i8) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_sath(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtph(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rteh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzh(i8 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floats(i16) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floats(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtps(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtps(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtns(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtns(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtes(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtes(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzs(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzs(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_sats(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_sats(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtps(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtns(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtes(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzs(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtet(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtet(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtet(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzt(i16 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floati(i32) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floati(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpi(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpi(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtni(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtni(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtei(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtei(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzi(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzi(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_sati(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_sati(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpi(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtni(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtei(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzi(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtej(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtej(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtej(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzj(i32 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtel(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtel(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtel(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzl(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtem(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtem(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtem(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzm(i64 %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatf(float) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpf(float) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnf(float) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtef(float) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtef(float %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzf(float) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satf(float) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtef(float %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzf(float %a)
+  ret float %call
+}
+
+
+declare float @_Z17_cl_convert_floatd(double) local_unnamed_addr #0
+
+define spir_func float @_Z13convert_floatd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z17_cl_convert_floatd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtpd(double) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtpd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtnd(double) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtnd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rted(double) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rted(double %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_rtzd(double) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_rtzd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z21_cl_convert_float_satd(double) local_unnamed_addr #0
+
+define spir_func float @_Z17convert_float_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z21_cl_convert_float_satd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtpd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtnd(double %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rted(double) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rted(double %a)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_convert_float_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func float @_Z21convert_float_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  float @_Z25_cl_convert_float_sat_rtzd(double %a)
+  ret float %call
+}
+
+
+declare double @_Z18_cl_convert_doublec(i8) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublec(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtec(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtec(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtec(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtec(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtec(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzc(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzc(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzc(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doubleh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doubleh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doubleh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtph(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtph(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rteh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rteh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_sath(i8) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_sath(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_sath(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtph(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtph(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtph(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rteh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rteh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rteh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzh(i8) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzh(i8 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzh(i8 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doubles(i16) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doubles(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doubles(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtps(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtps(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtns(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtns(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtes(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtes(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzs(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzs(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_sats(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_sats(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_sats(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtps(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtps(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtps(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtns(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtns(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtns(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtes(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtes(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtes(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzs(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzs(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzs(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublet(i16) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublet(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtet(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtet(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtet(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtet(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtet(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzt(i16) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzt(i16 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzt(i16 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublei(i32) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublei(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpi(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpi(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtni(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtni(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtei(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtei(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzi(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzi(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_sati(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_sati(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_sati(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpi(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpi(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtni(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtni(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtni(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtei(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtei(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtei(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzi(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzi(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzi(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublej(i32) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublej(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtej(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtej(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtej(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtej(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtej(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzj(i32) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzj(i32 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzj(i32 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublel(i64) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublel(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtel(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtel(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtel(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtel(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtel(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzl(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzl(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzl(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublem(i64) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublem(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtem(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtem(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtem(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtem(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtem(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzm(i64) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzm(i64 %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzm(i64 %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doublef(float) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doublef(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doublef(float %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpf(float) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnf(float) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtef(float) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtef(float %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzf(float) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satf(float) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpf(float) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnf(float) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtef(float) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtef(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtef(float %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzf(float) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzf(float %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzf(float %a)
+  ret double %call
+}
+
+
+declare double @_Z18_cl_convert_doubled(double) local_unnamed_addr #0
+
+define spir_func double @_Z14convert_doubled(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z18_cl_convert_doubled(double %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtpd(double) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtpd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtnd(double) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtnd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rted(double) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rted(double %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_rtzd(double) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_rtzd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z22_cl_convert_double_satd(double) local_unnamed_addr #0
+
+define spir_func double @_Z18convert_double_satd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z22_cl_convert_double_satd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtpd(double) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtpd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtpd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtnd(double) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtnd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtnd(double %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rted(double) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rted(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rted(double %a)
+  ret double %call
+}
+
+
+declare double @_Z26_cl_convert_double_sat_rtzd(double) local_unnamed_addr #0
+
+define spir_func double @_Z22convert_double_sat_rtzd(double %a) local_unnamed_addr #0 {
+  %call = tail call  double @_Z26_cl_convert_double_sat_rtzd(double %a)
+  ret double %call
+}
+
+
 declare i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
@@ -4150,62 +12150,56 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i
 }
 
 
-declare i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
 
-define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomiciPU3AS1ii(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
 
-define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomiciPU3AS3ii(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
   ret i32 %call
 }
 
 
-declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
-  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
-  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
@@ -4264,56 +12258,116 @@ define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicii12memory_order1
 }
 
 
-declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
+declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
+define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
   ret i32 %call
 }
 
 
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
 
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
   ret i32 %call
 }
 
 
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
 
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 *, i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS1VU7_AtomiciPU3AS1ii(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU8CLglobalVU7_AtomiciPU8CLglobalii(i32 * %1, i32 * %2, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 *, i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z30atomic_compare_exchange_strongPU3AS3VU7_AtomiciPU3AS3ii(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
+  %call = tail call  i32 @_Z34_cl_atomic_compare_exchange_strongPU7CLlocalVU7_AtomiciPU7CLlocalii(i32 * %1, i32 * %2, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  ret i32 %call
+}
+
+
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 *, i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e)
+  ret i32 %call
+}
+
+
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS1VU7_AtomiciPU3AS1ii12memory_order12memory_order12memory_scope(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(1)* %b to i32 *
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU8CLglobalVU7_AtomiciPU8CLglobalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
+  ret i32 %call
+}
+
+
+declare i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 *, i32 *, i32, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_AtomiciPU3AS3ii12memory_order12memory_order12memory_scope(i32 addrspace(3)* %a, i32 addrspace(3)* %b, i32 %c, i32 %d, i32 %e, i32 %f) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %2 = addrspacecast i32 addrspace(3)* %b to i32 *
+  %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiciPU7CLlocalii12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
   ret i32 %call
 }
 
@@ -4378,60 +12432,6 @@ define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomici
 }
 
 
-declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicii(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicii(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicii12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicii12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicii12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
@@ -4447,6 +12447,168 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret void
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomicj(i32 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomicj(i32 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
+}
+
+
+declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
+  ret i32 %call
 }
 
 
@@ -4506,114 +12668,6 @@ define spir_func i32 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_Atomi
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   %2 = addrspacecast i32 addrspace(3)* %b to i32 *
   %call = tail call  i32 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicjPU7CLlocaljj12memory_order12memory_order12memory_scope(i32 * %1, i32 * %2, i32 %c, i32 %d, i32 %e, i32 %f)
-  ret i32 %call
-}
-
-
-declare i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z12atomic_storePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z21atomic_store_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z21atomic_store_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomicj(i32 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomicj(i32 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
   ret i32 %call
 }
 
@@ -4678,60 +12732,6 @@ define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicj
 }
 
 
-declare i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z15atomic_exchangePU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
-declare i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 *, i32, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicjj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call  i32 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicjj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c, i32 %d)
-  ret i32 %call
-}
-
-
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
@@ -4747,6 +12747,168 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret void
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicl(i64 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicl(i64 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
 }
 
 
@@ -4806,114 +12968,6 @@ define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_Atomi
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
   %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomiclPU7CLlocalll12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
-  ret i64 %call
-}
-
-
-declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicl(i64 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicl(i64 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
@@ -4978,60 +13032,6 @@ define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicl
 }
 
 
-declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicll12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicll12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicll12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
@@ -5047,6 +13047,168 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret void
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicm(i64 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicm(i64 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
+}
+
+
+declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
+  ret i64 %call
 }
 
 
@@ -5106,114 +13268,6 @@ define spir_func i64 @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_Atomi
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   %2 = addrspacecast i64 addrspace(3)* %b to i64 *
   %call = tail call  i64 @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicmPU7CLlocalmm12memory_order12memory_order12memory_scope(i64 * %1, i64 * %2, i64 %c, i32 %d, i32 %e, i32 %f)
-  ret i64 %call
-}
-
-
-declare i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z12atomic_storePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z12atomic_storePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z21atomic_store_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicm(i64 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicm(i64 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
   ret i64 %call
 }
 
@@ -5278,60 +13332,6 @@ define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicm
 }
 
 
-declare i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
-
-define spir_func i64 @_Z15atomic_exchangePU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order(i64 addrspace(1)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 *, i64, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order(i64 addrspace(3)* %a, i64 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order(i64 * %1, i64 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(1)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
-declare i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 *, i64, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicmm12memory_order12memory_scope(i64 addrspace(3)* %a, i64 %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call  i64 @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicmm12memory_order12memory_scope(i64 * %1, i64 %b, i32 %c, i32 %d)
-  ret i64 %call
-}
-
-
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
@@ -5347,6 +13347,168 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicff(float addrspace(3)* %a,
   %1 = addrspacecast float addrspace(3)* %a to float *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicff(float * %1, float %b)
   ret void
+}
+
+
+declare float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
+
+define spir_func float @_Z11atomic_loadPU3AS1VU7_Atomicf(float addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
+  ret float %call
+}
+
+
+declare float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
+
+define spir_func float @_Z11atomic_loadPU3AS3VU7_Atomicf(float addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order(float addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order(float addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order12memory_scope(float addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order12memory_scope(float addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z12atomic_storePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z12atomic_storePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
+}
+
+
+declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
+}
+
+
+declare float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z15atomic_exchangePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
+
+define spir_func float @_Z15atomic_exchangePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float * %1, float %b)
+  ret float %call
+}
+
+
+declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
+
+define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
+}
+
+
+declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
+  ret float %call
 }
 
 
@@ -5406,114 +13568,6 @@ define spir_func float @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_Ato
   %1 = addrspacecast float addrspace(3)* %a to float *
   %2 = addrspacecast float addrspace(3)* %b to float *
   %call = tail call  float @_Z43_cl_atomic_compare_exchange_strong_explicitPU7CLlocalVU7_AtomicfPU7CLlocalff12memory_order12memory_order12memory_scope(float * %1, float * %2, float %c, i32 %d, i32 %e, i32 %f)
-  ret float %call
-}
-
-
-declare float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z12atomic_storePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z12atomic_storePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z21atomic_store_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
-declare float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z21atomic_store_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
-declare float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
-
-define spir_func float @_Z11atomic_loadPU3AS1VU7_Atomicf(float addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
-  ret float %call
-}
-
-
-declare float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
-
-define spir_func float @_Z11atomic_loadPU3AS3VU7_Atomicf(float addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order(float addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order(float addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order12memory_scope(float addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order12memory_scope(float addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
   ret float %call
 }
 
@@ -5578,60 +13632,6 @@ define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomi
 }
 
 
-declare float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z15atomic_exchangePU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float *, float) local_unnamed_addr #0
-
-define spir_func float @_Z15atomic_exchangePU3AS3VU7_Atomicff(float addrspace(3)* %a, float %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicff(float * %1, float %b)
-  ret float %call
-}
-
-
-declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order(float addrspace(1)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float *, float, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order(float addrspace(3)* %a, float %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order(float * %1, float %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
-declare float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float *, float, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* %a, float %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call  float @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicff12memory_order12memory_scope(float * %1, float %b, i32 %c, i32 %d)
-  ret float %call
-}
-
-
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
@@ -5647,6 +13647,168 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicdd(double addrspace(3)* %a
   %1 = addrspacecast double addrspace(3)* %a to double *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicdd(double * %1, double %b)
   ret void
+}
+
+
+declare double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
+
+define spir_func double @_Z11atomic_loadPU3AS1VU7_Atomicd(double addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
+  ret double %call
+}
+
+
+declare double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
+
+define spir_func double @_Z11atomic_loadPU3AS3VU7_Atomicd(double addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order(double addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order(double addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order12memory_scope(double addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order12memory_scope(double addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z12atomic_storePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z12atomic_storePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
+}
+
+
+declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
+}
+
+
+declare double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z15atomic_exchangePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
+
+define spir_func double @_Z15atomic_exchangePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double * %1, double %b)
+  ret double %call
+}
+
+
+declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
+
+define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
+}
+
+
+declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
+  ret double %call
 }
 
 
@@ -5710,114 +13872,6 @@ define spir_func double @_Z39atomic_compare_exchange_strong_explicitPU3AS3VU7_At
 }
 
 
-declare double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z12atomic_storePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z12atomic_storePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z16_cl_atomic_storePU7CLlocalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z21atomic_store_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z25_cl_atomic_store_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
-  ret double %call
-}
-
-
-declare double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z21atomic_store_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z25_cl_atomic_store_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
-  ret double %call
-}
-
-
-declare double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
-
-define spir_func double @_Z11atomic_loadPU3AS1VU7_Atomicd(double addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
-  ret double %call
-}
-
-
-declare double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
-
-define spir_func double @_Z11atomic_loadPU3AS3VU7_Atomicd(double addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order(double addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order(double addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order12memory_scope(double addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order12memory_scope(double addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
-  ret double %call
-}
-
-
 declare double @_Z32_cl_atomic_compare_exchange_weakPU8CLglobalVU7_AtomicdPU8CLglobaldd(double *, double *, double) local_unnamed_addr #0
 
 define spir_func double @_Z28atomic_compare_exchange_weakPU3AS1VU7_AtomicdPU3AS1dd(double addrspace(1)* %a, double addrspace(1)* %b, double %c) local_unnamed_addr #0 {
@@ -5874,60 +13928,6 @@ define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atom
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
   %call = tail call  double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
-  ret double %call
-}
-
-
-declare double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z15atomic_exchangePU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z19_cl_atomic_exchangePU8CLglobalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double *, double) local_unnamed_addr #0
-
-define spir_func double @_Z15atomic_exchangePU3AS3VU7_Atomicdd(double addrspace(3)* %a, double %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z19_cl_atomic_exchangePU7CLlocalVU7_Atomicdd(double * %1, double %b)
-  ret double %call
-}
-
-
-declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order(double addrspace(1)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double *, double, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order(double addrspace(3)* %a, double %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order(double * %1, double %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS1VU7_Atomicdd12memory_order12memory_scope(double addrspace(1)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU8CLglobalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
-  ret double %call
-}
-
-
-declare double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double *, double, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z24atomic_exchange_explicitPU3AS3VU7_Atomicdd12memory_order12memory_scope(double addrspace(3)* %a, double %b, i32 %c, i32 %d) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call  double @_Z28_cl_atomic_exchange_explicitPU7CLlocalVU7_Atomicdd12memory_order12memory_scope(double * %1, double %b, i32 %c, i32 %d)
   ret double %call
 }
 

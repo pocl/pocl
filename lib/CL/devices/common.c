@@ -781,6 +781,7 @@ struct pocl_dlhandle_cache_item
   size_t local_wgs[3];
   /* If global offset must be zero for this WG function version. */
   int goffs_zero;
+  int specialize;
   /* Maximum grid dimension this WG function works with. */
   size_t max_grid_dim_width;
 
@@ -959,7 +960,7 @@ pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
    and return it. Otherwise return NULL. The caller should hold
    pocl_dlhandle_lock. */
 static pocl_dlhandle_cache_item *
-fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
+fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
 {
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
@@ -970,8 +971,8 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
         && (ci->local_wgs[1] == run_cmd->pc.local_size[1])
         && (ci->local_wgs[2] == run_cmd->pc.local_size[2])
         && (max_grid_width <= ci->max_grid_dim_width)
-        && (!ci->goffs_zero
-            || (run_cmd->pc.global_offset[0] == 0
+        && (ci->specialize == specialize)
+        && (ci->goffs_zero == (run_cmd->pc.global_offset[0] == 0
                 && run_cmd->pc.global_offset[1] == 0
                 && run_cmd->pc.global_offset[2] == 0)))
       {
@@ -1007,7 +1008,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   _cl_command_run *run_cmd = &command->command.run;
 
   POCL_LOCK (pocl_dlhandle_lock);
-  ci = fetch_dlhandle_cache_item (run_cmd);
+  ci = fetch_dlhandle_cache_item (run_cmd, specialize);
   if (ci != NULL)
     {
       POCL_UNLOCK (pocl_dlhandle_lock);
@@ -1021,7 +1022,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->local_wgs[1] = run_cmd->pc.local_size[1];
   ci->local_wgs[2] = run_cmd->pc.local_size[2];
   ci->ref_count = initial_refcount;
-
+  ci->specialize = specialize;
   ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
                    && run_cmd->pc.global_offset[1] == 0
                    && run_cmd->pc.global_offset[2] == 0;

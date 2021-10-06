@@ -1,5 +1,5 @@
 kind: pipeline
-name: amd64_arch
+name: amd64_ub2004_distro
 
 platform:
   os: linux
@@ -7,39 +7,15 @@ platform:
 
 steps:
 - name: build_and_test
-  image: archlinux/base
-  environment:
-    POCL_BUILDING: 1
-    POCL_CACHE_DIR: /tmp/cache
-    POCL_MAX_PTHREAD_COUNT: 2
-    OCL_ICD_VENDORS: /drone/src/build/ocl-vendors/pocl-tests.icd
-  commands:
-  - pacman --noconfirm -Sy
-  - pacman --noconfirm -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
-  - ninja
-  - clinfo
-  - ctest -j24 --output-on-failure -L internal
-
-----
-kind: pipeline
-name: amd64_arch_distro
-
-platform:
-  os: linux
-  arch: amd64
-
-steps:
-- name: build_and_test
-  image: archlinux/base
+  image: amd64/ubuntu:20.04
   environment:
     POCL_CACHE_DIR: /tmp/cache
     POCL_MAX_PTHREAD_COUNT: 2
+    DEBIAN_FRONTEND: noninteractive
   commands:
-  - pacman --noconfirm -Sy
-  - pacman --noconfirm -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
+  - apt update
+  - apt upgrade -y
+  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -47,7 +23,7 @@ steps:
   - ninja install
   - clinfo
   - rm CTestCustom.cmake
-  - ctest -j24 --output-on-failure -L internal
+  - ctest -j32 --output-on-failure -L internal
 
 ---
 kind: pipeline
@@ -132,18 +108,17 @@ steps:
   - clinfo
   - ctest -j32 --output-on-failure -L internal
 
-
 ---
 kind: pipeline
-name: arm32_ub1804_llvm6
+name: arm64_ub2004_llvm12
 
 platform:
   os: linux
-  arch: arm
+  arch: arm64
 
 steps:
 - name: build_and_test
-  image: arm32v7/ubuntu:18.04
+  image: arm64v8/ubuntu:20.04
   environment:
     POCL_BUILDING: 1
     POCL_CACHE_DIR: /tmp/cache
@@ -152,10 +127,10 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-6.0-dev clang-6.0 llvm-6.0 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
-  - cmake -DENABLE_FP64=OFF -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=cortex-a15 -DLLC_TRIPLE=armv7l-unknown-linux-gnueabihf -DEXTRA_KERNEL_FLAGS="-mfloat-abi=hard -mfpu=neon" -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+  - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
   - ninja
   - ninja install
   - clinfo
@@ -187,32 +162,4 @@ steps:
   - ninja
   - ninja install
   - clinfo
-  - ctest -j32 --output-on-failure -L internal
-
----
-kind: pipeline
-name: arm32_ub2004_llvm10
-
-platform:
-  os: linux
-  arch: arm
-
-steps:
-- name: build_and_test
-  image: arm32v7/ubuntu:20.04
-  environment:
-    POCL_BUILDING: 1
-    POCL_CACHE_DIR: /tmp/cache
-    POCL_MAX_PTHREAD_COUNT: 2
-    DEBIAN_FRONTEND: noninteractive
-  commands:
-  - apt update
-  - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-10-dev libclang-cpp10-dev clang-10 llvm-10-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
-  - mkdir build
-  - cd build
-  - cmake -DENABLE_FP64=OFF -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=cortex-a15 -DLLC_TRIPLE=armv7l-unknown-linux-gnueabihf -DEXTRA_KERNEL_FLAGS="-mfloat-abi=hard -mfpu=neon" -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
-  - ninja
-  - ninja install
-  - clinfo
-  - ctest -j32 --output-on-failure -L internal
+  - ctest -j32 --output-on-failure -L internal -E test_issue_757
