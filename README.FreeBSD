@@ -1,6 +1,0 @@
-It should just work if you beware some known issues:
-
-* https://github.com/pocl/pocl/issues/263
-
-In short, you should build pocl with Clang 3.6 or newer even though the
-default Clang of FreeBSD can be older.

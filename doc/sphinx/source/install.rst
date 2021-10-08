@@ -61,7 +61,7 @@ Supported LLVM versions
 Configure & Build
 -----------------
 
-CMake version 2.8.12 or higher is required.
+CMake version 3.3 or higher is required.
 
 The build+install is the usual CMake way::
 
@@ -293,12 +293,6 @@ Known build-time issues
 
 There are unsolved issues and bugs in pocl. See the bug listing
 for a complete listing at https://github.com/pocl/pocl/issues
-
-Known issues not related to pocl are listed below.
-
-- Using Clang compiled with gcc 4.7 causes indeterminism in the
-  kernel compilation results. See LLVM bug report:
-  http://llvm.org/bugs/show_bug.cgi?id=12945
 
 building / running in Docker
 --------------------------------
