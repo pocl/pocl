@@ -131,6 +131,8 @@ main (void)
                                                     queue);
 
               TEST_ASSERT (err == CL_INVALID_OPERATION);
+              CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+              CHECK_CL_ERROR (clReleaseContext (context));
             }
         }
     }
