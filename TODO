@@ -1,13 +1,3 @@
-Version roadmap
----------------
-
-High priority (1.0 blockers):
-    * make NVIDIA OpenCL SDK examples to work 
-    * make Intel OpenCL SDK examples to work
-
-Medium priority:
-    * device supporting AMD GPU cards.
-
 Known ambiguous OpenCL 1.2 features
 -----------------------------------
 
