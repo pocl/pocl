@@ -3,17 +3,17 @@
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
                       Timo Viitanen / Tampere University of Technology
    Copyright (c) 2015 Matias Koskela / Tampere University of Technology
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,14 +31,14 @@
 
 #include "pocl_opencl.h"
 
-typedef union 
+typedef union
 {
   int32_t i;
   float f;
 } FloatConvUnion;
 
 cl_half
-poclu_float_to_cl_half_fast(float value) 
+poclu_float_to_cl_half_fast(float value)
 {
   FloatConvUnion u;
   u.f = value;
@@ -51,15 +51,15 @@ poclu_float_to_cl_half_fast(float value)
 
 // The idea behind these float to half functions is from:
 // https://gamedev.stackexchange.com/a/17410
-cl_half 
-poclu_float_to_cl_half(float value) 
+cl_half
+poclu_float_to_cl_half(float value)
 {
   FloatConvUnion u;
   u.f = value;
   cl_half half = (u.i >> 16) & 0x8000; // sign
   cl_half fraction = (u.i >> 12) & 0x007ff; // fraction with extra bit for rounding
   cl_half exponent = (u.i >> 23)  & 0xff; // exponent
-  
+
   if(exponent < 0x0067) // Return signed zero if zero or value is too small for denormal half
     return half;
 
@@ -83,7 +83,7 @@ poclu_float_to_cl_half(float value)
 }
 
 cl_half
-poclu_float_to_cl_half_ceil(float value) 
+poclu_float_to_cl_half_ceil(float value)
 {
   FloatConvUnion u;
   u.f = value;
@@ -92,7 +92,7 @@ poclu_float_to_cl_half_ceil(float value)
   cl_half fraction = (u.i >> 13) & 0x003ff;
   int32_t fractionLeftOver =  u.i & 0x00001fff;
   cl_half exponent = (u.i >> 23)  & 0xff; // exponent
-  
+
   if(exponent < 0x0067) // Return signed zero if zero or too small denormal for half
     return half;
 
@@ -120,7 +120,7 @@ poclu_float_to_cl_half_ceil(float value)
 }
 
 cl_half
-poclu_float_to_cl_half_floor(float value) 
+poclu_float_to_cl_half_floor(float value)
 {
   FloatConvUnion u;
   u.f = value;
@@ -129,7 +129,7 @@ poclu_float_to_cl_half_floor(float value)
   cl_half fraction = (u.i >> 13) & 0x003ff;
   int32_t fractionLeftOver =  u.i & 0x00001fff;
   cl_half exponent = (u.i >> 23)  & 0xff; // exponent
-  
+
   if(exponent < 0x0067) // Return signed zero if zero or too small denormal for half
     return half;
 
@@ -164,7 +164,7 @@ poclu_float_to_cl_half_floor(float value)
 #endif
 
 float
-poclu_cl_half_to_float(cl_half value) 
+poclu_cl_half_to_float(cl_half value)
 {
   if (value == 0xFC00) {
     return -INFINITY;
