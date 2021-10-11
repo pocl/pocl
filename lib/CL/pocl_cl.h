@@ -53,15 +53,15 @@ typedef pthread_cond_t pocl_cond_t;
 typedef pthread_t pocl_thread_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
-#ifdef BUILD_ICD
-#  include "pocl_icd.h"
-#endif
 #include "pocl.h"
 #include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
 #include "common.h"
+#ifdef BUILD_ICD
+#  include "pocl_icd.h"
+#endif
 
 #include <CL/cl_gl.h>
 #include <CL/cl_egl.h>

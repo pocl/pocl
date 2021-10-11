@@ -32,6 +32,8 @@ if (UNIX AND HAVE_DLFCN_H)
   target_link_libraries("test_dlopen" ${DL_LIB})
 endif ()
 
+include_directories(${CMAKE_SOURCE_DIR})
+
 set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram

@@ -26,6 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* must be sourced from PoCL */
+#include "include/CL/cl_ext_pocl.h"
+
 #define SRC_CHAR 1
 #define DST_CHAR 2
 

@@ -48,6 +48,7 @@ main(void)
 
       TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
 
+#if CL_VERSION_3_0
       /* OpenCl 3.0 queries */ 
       cl_device_atomic_capabilities atomic_memory_capability;
       err = clGetDeviceInfo(devices[j], CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES,
@@ -72,6 +73,8 @@ main(void)
             | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP);
       /* atleast minimum mandated capability is reported */
       TEST_ASSERT(( mask & atomic_fence_capability) == mask);
+#endif
+
     }
   }
 

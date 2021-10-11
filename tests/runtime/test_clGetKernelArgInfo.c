@@ -27,7 +27,6 @@
 
 #include "poclu.h"
 #include "config.h"
-// #include "pocl.h"
 
 char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
