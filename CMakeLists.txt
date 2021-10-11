@@ -814,20 +814,6 @@ endif()
 
 set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 
-
-
-######################################################################################
-
-add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
-                -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
-                -DCL_USE_DEPRECATED_OPENCL_2_1_APIS )
-
-add_definitions(-DCL_TARGET_OPENCL_VERSION=300)
-
-cpack_add_component("dev")
-
-include_directories("include")
-
 ######################################################################################
 
 set(HAVE_DLFCN_H OFF CACHE BOOL "dlopen" FORCE)
@@ -994,21 +980,68 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 
 ######################################################################################
 
-if(INSTALL_OPENCL_HEADERS)
-  message(STATUS "Install POCL's OpenCL headers: ${INSTALL_OPENCL_HEADERS}")
-elseif(DEFINED INSTALL_OPENCL_HEADERS AND NOT INSTALL_OPENCL_HEADERS)
-  message(STATUS "Not installing OpenCL headers.")
-else() # Undefined = auto -> check
-  find_file(OPENCL_H opencl.h PATH_SUFFIXES CL OpenCL)
-  if(OPENCL_H)
-    message(STATUS "OpenCL.h found, NOT installing our headers")
-    set(IOH 0)
-  else()
-    message(STATUS "OpenCL.h not found, installing our headers")
-    set(IOH 1)
-  endif()
-  set(INSTALL_OPENCL_HEADERS ${IOH} CACHE BOOL "Install POCL's OpenCL headers. (Ones from Khronos should be installed instead)")
+if(APPLE)
+  find_file(OPENCL_H opencl.h PATH_SUFFIXES OpenCL CL)
+  find_file(CL2_HPP cl2.hpp PATH_SUFFIXES OpenCL CL)
+else()
+  find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
+  find_file(CL2_HPP cl2.hpp PATH_SUFFIXES CL)
 endif()
+
+# if ICD is disabled, we might as well compile with our own headers
+if(OPENCL_H AND ENABLE_ICD)
+  message(STATUS "OpenCL.h found (${OPENCL_H}) and ICD enabled, NOT installing our headers")
+  set(HAVE_OPENCL_H ON)
+  set(IOH OFF)
+else()
+  message(STATUS "OpenCL.h not found or ICD disabled, installing our headers")
+  set(HAVE_OPENCL_H OFF)
+  set(IOH ON)
+endif()
+
+if(NOT DEFINED INSTALL_OPENCL_HEADERS)
+  option(INSTALL_OPENCL_HEADERS "Install POCL's OpenCL headers. (Ones from Khronos should be installed instead)" ${IOH})
+endif()
+
+add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
+                -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
+                -DCL_USE_DEPRECATED_OPENCL_2_1_APIS -DCL_USE_DEPRECATED_OPENCL_2_2_APIS)
+
+if(HAVE_OPENCL_H)
+  include(CheckSymbolExists)
+  check_symbol_exists(CL_VERSION_3_0 ${OPENCL_H} HAVE_OPECL_3_0)
+  check_symbol_exists(CL_VERSION_2_2 ${OPENCL_H} HAVE_OPECL_2_2)
+  check_symbol_exists(CL_VERSION_2_1 ${OPENCL_H} HAVE_OPECL_2_1)
+  check_symbol_exists(CL_VERSION_2_0 ${OPENCL_H} HAVE_OPECL_2_0)
+  check_symbol_exists(CL_VERSION_1_2 ${OPENCL_H} HAVE_OPECL_1_2)
+  if(HAVE_OPECL_3_0)
+    set(OPENCL_HEADER_VERSION 300)
+  elseif(HAVE_OPECL_2_2)
+    set(OPENCL_HEADER_VERSION 220)
+  elseif(HAVE_OPECL_2_1)
+    set(OPENCL_HEADER_VERSION 210)
+  elseif(HAVE_OPECL_2_0)
+    set(OPENCL_HEADER_VERSION 200)
+  elseif(HAVE_OPECL_1_2)
+    set(OPENCL_HEADER_VERSION 120)
+  else()
+    message(FATAL_ERROR "Couldn't find OpenCL header with version at least 1.2")
+  endif()
+else()
+  set(OPENCL_HEADER_VERSION 300)
+endif()
+
+macro(set_opencl_header_includes)
+  add_definitions(-DCL_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION}
+                  -DCL_HPP_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION})
+  if(NOT HAVE_OPENCL_H)
+    include_directories("${CMAKE_SOURCE_DIR}/include")
+  endif()
+  if(NOT OPENCL_CL2_HPP)
+    include_directories("${CMAKE_SOURCE_DIR}/include/hpp")
+  endif()
+  include_directories("${CMAKE_SOURCE_DIR}/poclu")
+endmacro()
 
 ######################################################################################
 
@@ -1604,6 +1637,8 @@ set(OCML_SOURCE_DIR "${CMAKE_SOURCE_DIR}/lib/kernel/ocml")
 add_subdirectory("include")
 
 add_subdirectory("lib")
+
+add_subdirectory("poclu")
 
 # these are set in lib/cmakelists.txt
 message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")

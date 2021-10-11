@@ -23,13 +23,17 @@
 #
 #=============================================================================
 
-add_subdirectory("CL")
+if(INSTALL_OPENCL_HEADERS)
+  add_subdirectory("CL")
+endif()
 
 set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
                     _kernel.h _clang_opencl.h
                     _kernel_c.h _kernel_constants.h _libclang_versions_checks.h
                     pocl_types.h pocl_device.h pocl.h pocl_spir.h
                     pocl_image_types.h)
+
+cpack_add_component("dev")
 
 install(FILES ${PRIVATE_HEADERS}
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")

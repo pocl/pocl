@@ -23,6 +23,8 @@
 #
 #=============================================================================
 
+set_opencl_header_includes()
+
 add_test(NAME pocl_version_check COMMAND test_version)
 
 if(ENABLE_HOST_CPU_DEVICES)

@@ -23,12 +23,12 @@
 #
 #=============================================================================
 
-add_executable(poclcc poclcc.c "${CMAKE_SOURCE_DIR}/lib/poclu/misc.c")
+set_opencl_header_includes()
+
+add_executable(poclcc poclcc.c)
 harden(poclcc)
 
-target_link_libraries(poclcc ${OPENCL_LIBS})
-
-target_compile_definitions(poclcc PRIVATE DISABLE_OPENCL_20)
+target_link_libraries(poclcc poclu ${OPENCL_LIBS})
 
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")

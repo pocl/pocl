@@ -23,6 +23,8 @@
 #
 #=============================================================================
 
+set_opencl_header_includes()
+
 if(MSVC)
   set_source_files_properties( bswap.c misc.c cl_half.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)

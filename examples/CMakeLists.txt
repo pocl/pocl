@@ -32,6 +32,8 @@
 #    apt-get install libblas-dev liblapack-dev  liblapacke-dev  libatlas-base-dev libopenmpi-dev   subversion python-numpy python-mako
 #
 
+set_opencl_header_includes()
+
 # clang flags for SPIR compilation
 # -Xclang -finclude-default-header is required for LLVM < 13 to include opencl-c-base.h and opencl-c.h
 set(SPIR_COMMON_FLAGS "-x####cl####-D_CL_DISABLE_HALF####-Xclang####-cl-std=CL1.2####-D__OPENCL_C_VERSION__=120####-D__OPENCL_VERSION__=120####-Dcl_khr_byte_addressable_store####-Dcl_khr_global_int32_base_atomics####-Dcl_khr_global_int32_extended_atomics####-Dcl_khr_local_int32_base_atomics####-Dcl_khr_local_int32_extended_atomics####-Dcl_khr_int64####-Dcl_khr_spir####-Xclang####-cl-ext=-all,+cl_khr_byte_addressable_store,+cl_khr_global_int32_base_atomics,+cl_khr_global_int32_extended_atomics,+cl_khr_local_int32_base_atomics,+cl_khr_local_int32_extended_atomics,+cl_khr_spir####-D__ENDIAN_LITTLE__=1####-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=0####-emit-llvm####-Xclang####-finclude-default-header")

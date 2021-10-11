@@ -26,6 +26,10 @@
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 
+# these are hardcoded here b/c we want to build the library with latest OpenCL
+add_definitions(-DCL_TARGET_OPENCL_VERSION=300 -DCL_HPP_TARGET_OPENCL_VERSION=300)
+include_directories("${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}/include/hpp")
+
 cpack_add_component("lib")
 
 set("CPACK_DEBIAN_LIB_PACKAGE_NAME" "libpocl2")
@@ -87,7 +91,5 @@ separate_arguments(OPENCL_CFLAGS)
 set(OPENCL_LIBS "${OPENCL_LIBS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS_STR "${OPENCL_CFLAGS_STR}" PARENT_SCOPE)
-
-add_subdirectory("poclu")
 
 pass_through_cpack_vars()
