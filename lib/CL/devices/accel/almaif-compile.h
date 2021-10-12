@@ -66,6 +66,9 @@ extern "C"
                                cl_kernel kernel, unsigned device_i);
 }
 
+
+int pocl_almaif_build_binary(cl_program program, cl_uint device_i, int link_program, int spir_build);
+
 void preread_images (const char *kernel_cachedir, void *d_void,
                      almaif_kernel_data_t *kd);
 char *pocl_almaif_build_hash (cl_device_id device);

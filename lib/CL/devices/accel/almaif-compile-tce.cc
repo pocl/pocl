@@ -10,8 +10,9 @@
 #include <iostream>
 #include <string>
 
-/*#include <Machine.hh>
-#include <CodeLabel.hh>
+#include <Machine.hh>
+
+/*#include <CodeLabel.hh>
 #include <DataLabel.hh>
 #include <Environment.hh>
 #include <GlobalScope.hh>
@@ -69,7 +70,7 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
     POCL_MEM_FREE(content);
   } else {
     bd->machine_file = NULL;
-    device->max_compute_units = d->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
+    device->max_compute_units = d->Dev->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
   }
 
   device->long_name = device->short_name = "ALMAIF TCE";
@@ -137,16 +138,14 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   if (is_multicore)
     multicoreFlags = " -ldthread -lsync-lu -llockunit";
 
-  const int mem_size = 2048;
-  const int aql_queue_len = 2;
+  int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
 
   const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
   const char *endianFlags = little_endian ? "--little-endian" : "";
   snprintf(extraFlags, (POCL_FILENAME_LENGTH * 8),
-           "%s %s %s %s -k dummy_argbuffer -DMEM_SIZE=%i -DQUEUE_LENGTH=%i "
-           "--init-sp=%i",
-           extraParams, multicoreFlags, userFlags, endianFlags, mem_size,
-           aql_queue_len, mem_size - AQL_PACKET_LENGTH * aql_queue_len);
+           "%s %s %s %s -k dummy_argbuffer -DQUEUE_LENGTH=%i ",
+           extraParams, multicoreFlags, userFlags, endianFlags,
+           AQL_queue_length);
 
   char kernelObjSrc[POCL_FILENAME_LENGTH];
   snprintf(kernelObjSrc, POCL_FILENAME_LENGTH, "%s%s", tempDir,
@@ -383,7 +382,7 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   // with TCEMC, "data" is empty, "param" contains the kernel_cmd struct
   char data_img[POCL_FILENAME_LENGTH];
   snprintf(data_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
-           "/parallel_data.img");
+           "/parallel_local.img");
   char param_img[POCL_FILENAME_LENGTH];
   snprintf(param_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
            "/parallel_param.img");
@@ -392,7 +391,7 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(error != 0 && "parallel.img does not exist!");
 
   error = pocl_exists(data_img);
-  assert(error != 0 && "parallel_data.img does not exist!");
+  assert(error != 0 && "parallel_local.img does not exist!");
 
   error = pocl_exists(param_img);
   assert(error != 0 && "parallel_param.img does not exist!");

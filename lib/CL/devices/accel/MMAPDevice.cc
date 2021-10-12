@@ -1,7 +1,6 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* MMAPDevice.cc - accessing accelerator memory as memory mapped region.
 
-   Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2021 Pekka Jääskeläinen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,37 +21,35 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
 
-#include <stdlib.h>
+#include "MMAPDevice.h"
 
-#include "pocl_types.h"
+#include "MMAPRegion.h"
+#include "accel-shared.h"
 
-#include "Region.h"
+#include <unistd.h>
+//#include <sys/stat.h>
+#include <fcntl.h>
 
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
 
-class MMAPRegion : public Region
-{
-public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
 
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+MMAPDevice::MMAPDevice(size_t base_address) {
+    int mem_fd = -1;  
+    mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+    if (mem_fd == -1) {
+      POCL_ABORT("Could not open /dev/mem\n");
+    }
+    ControlMemory =
+        new MMAPRegion(base_address, ACCEL_DEFAULT_CTRL_SIZE, mem_fd);
 
-protected:
-  MMAPRegion();
+    discoverDeviceParameters();
 
-  void *Data;
-};
+    InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
+    CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
+    DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
+ 
+    close(mem_fd);
+}
 
-#endif
+

@@ -1,9 +1,70 @@
+/* EmulationDevice.cc - accessing accelerator memory as memory mapped region.
+
+   Copyright (c) 2021 Pekka Jääskeläinen / Tampere University
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
+#include "EmulationDevice.h"
+
+#include "EmulationRegion.h"
+#include "accel-shared.h"
 
 #include <iostream>
 
-#include "accel-emulate.h"
-#include "accel-shared.h"
-#include "accel.h"
+EmulationDevice::EmulationDevice() {
+
+    // The principle of the emulator is that instead of mmapping a real
+    // accelerator, we just allocate a regular array, which corresponds
+    // to the mmap. The accel_emulate function is working in another thread
+    // and will fill that array and respond to the driver asynchronously.
+    // The driver doesn't really need to know about emulating except
+    // in the initial mapping of the accelerator
+    E.emulating_address = calloc(1, EMULATING_MAX_SIZE);
+    assert(E.emulating_address != NULL && "Emulating calloc failed\n");
+
+
+    // Create emulator thread
+    E.emulate_exit_called = 0;
+    E.emulate_init_done = 0;
+    pthread_create(&emulate_thread, NULL, emulate_accel, &E);
+    while (!E.emulate_init_done)
+      ; // Wait for the thread to initialize
+    POCL_MSG_PRINT_INFO("accel: started emulating\n");
+
+    ControlMemory =
+        new EmulationRegion((size_t)E.emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
+
+    discoverDeviceParameters();
+
+    InstructionMemory = new EmulationRegion(imem_start, imem_size);
+    CQMemory = new EmulationRegion(cq_start, cq_size);
+    DataMemory = new EmulationRegion(dmem_start, dmem_size);
+}
+
+EmulationDevice::~EmulationDevice() {
+    POCL_MSG_PRINT_INFO("accel: freeing emulated accel");
+    E.emulate_exit_called = 1; // signal for the emulator to stop
+    pthread_join(emulate_thread, NULL);
+    free((void *)E.emulating_address); // from
+                                        // calloc(emulating_address)
+}
 
 /*
  * AlmaIF v1 based accel emulator
@@ -22,7 +83,7 @@ void *emulate_accel(void *E_void) {
   // The accelerator can choose the size of the queue (must be a power-of-two)
   // Can be even 1, to make the packet handling easiest with static offsets
   uint32_t queue_length = 2;
-  uint32_t cqmem_size = queue_length * AQL_PACKET_LENGTH;
+  uint32_t cqmem_size = (queue_length + 1) * AQL_PACKET_LENGTH;
 
   // The accelerator can set the starting addresses
   // Even the order can be changed if the accelerator wants to
@@ -33,7 +94,7 @@ void *emulate_accel(void *E_void) {
 
   volatile uint32_t *Control = (uint32_t *)base_address;
   volatile uint8_t *Instruction = (uint8_t *)imem_start;
-  volatile uint8_t *CQ = (uint8_t *)cqmem_start;
+  volatile uint32_t *CQ = (uint32_t *)cqmem_start;
   volatile uint8_t *Data = (uint8_t *)dmem_start;
 
   // Set initial values for info registers:
@@ -42,6 +103,9 @@ void *emulate_accel(void *E_void) {
   Control[ACCEL_INFO_IF_TYPE / 4] = 1;
   Control[ACCEL_INFO_CORE_COUNT / 4] = 1;
   Control[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
+
+#define PTR_SIZE sizeof(uint32_t *)
+  Control[ACCEL_INFO_PTR_SIZE / 4] = PTR_SIZE;
 
   // The emulation doesn't use Instruction/Configuration memory. This memory
   // space is a place to write accelerator specific configuration values
@@ -69,7 +133,9 @@ void *emulate_accel(void *E_void) {
   POCL_MSG_PRINT_INFO("accel emulate: Emulator initialized");
 
   int read_iter = 0;
-  Control[ACCEL_AQL_READ_LOW / 4] = read_iter;
+  CQ[ACCEL_CQ_READ / 4] = read_iter;
+  CQ[ACCEL_CQ_LENGTH / 4] = queue_length;
+
   // Accelerator is in infinite loop to process the commands
   // For emulating purposes we include the exit signal that the driver can
   // use to terminate the emulating thread. In hw this could be
@@ -86,7 +152,7 @@ void *emulate_accel(void *E_void) {
     // Compute packet location
     uint32_t packet_loc = (read_iter & (queue_length - 1)) * AQL_PACKET_LENGTH;
     struct AQLDispatchPacket *packet =
-        (struct AQLDispatchPacket *)(CQ + packet_loc);
+        (struct AQLDispatchPacket *)(CQ + AQL_PACKET_LENGTH/4 + packet_loc/4);
 
     // The driver will mark the packet as not INVALID when it wants us to
     // compute it
@@ -102,7 +168,6 @@ void *emulate_accel(void *E_void) {
     // Find the 3 pointers
     // Pointer size can be different on different systems
     // Also the endianness might need some attention in the real case.
-#define PTR_SIZE sizeof(uint32_t *)
     union args_u {
       uint32_t *ptrs[3];
       uint8_t values[3 * PTR_SIZE];
@@ -170,6 +235,6 @@ void *emulate_accel(void *E_void) {
     packet->header = AQL_PACKET_INVALID;
 
     read_iter++; // move on to the next AQL packet
-    Control[ACCEL_AQL_READ_LOW / 4] = read_iter;
+    CQ[ACCEL_CQ_READ / 4] = read_iter;
   }
 }

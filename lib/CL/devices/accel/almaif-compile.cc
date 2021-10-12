@@ -8,7 +8,12 @@
 #include "almaif-compile.h"
 
 // TODO TCE SPECIFIC
+//#define ENABLE_COMPILER
+#ifdef ENABLE_COMPILER
 #include "almaif-compile-tce.h"
+#endif
+
+extern int pocl_offline_compile;
 
 int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   AccelData *d = (AccelData *)dev->data;
@@ -20,10 +25,12 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   if (d->compilationData == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
+  if(!pocl_offline_compile){
   d->compilationData->pocl_context =
-      alloc_buffer(&d->AllocRegion, sizeof(pocl_context32));
+     alloc_buffer(&d->Dev->AllocRegion, sizeof(pocl_context32));
   assert(d->compilationData->pocl_context &&
          "Failed to allocate pocl context on device\n");
+  } 
 
   /**********************************************************/
 
@@ -69,15 +76,15 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   SETUP_DEVICE_CL_VERSION(1, 2);
 
-  dev->available = CL_TRUE;
-  // dev->available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
+  //dev->available = CL_TRUE;
+  dev->available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
 
   dev->compiler_available = true;
   dev->linker_available = true;
 
-  POCL_MSG_PRINT_INFO("ASDF\n");
   compilation_data_t *adi = (compilation_data_t *)d->compilationData;
 
+#ifdef ENABLE_COMPILER
   // TODO tce specific
   adi->initialize_device = pocl_almaif_tce_initialize;
   adi->cleanup_device = pocl_almaif_tce_cleanup;
@@ -89,20 +96,23 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   POCL_MSG_PRINT_INFO("Device specific initializion done\n");
 
-  if (1) {
-    SHA1_digest_t digest;
-    pocl_almaif_tce_device_hash(parameters, dev->llvm_target_triplet,
-                                (char *)digest);
-    adi->build_hash = strdup((char *)digest);
-  } else {
-    char option_str[256];
-    snprintf(option_str, 256, "POCL_ALMAIF%u_HASH", j);
-    if (pocl_is_option_set(option_str)) {
-      adi->build_hash = (char *)pocl_get_string_option(option_str, NULL);
-      assert(adi->build_hash);
-    } else
-      adi->build_hash = DEFAULT_BUILD_HASH;
+  SHA1_digest_t digest;
+  pocl_almaif_tce_device_hash(parameters, dev->llvm_target_triplet,
+                              (char *)digest);
+  POCL_MSG_PRINT_INFO("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
+  adi->build_hash = strdup((char *)digest);
+
+#else
+  char option_str[256];
+  snprintf(option_str, 256, "POCL_ACCEL%u_HASH", j);
+  if (pocl_is_option_set(option_str))
+  {
+    adi->build_hash = (char *)pocl_get_string_option(option_str, NULL);
+    assert(adi->build_hash);
   }
+  else
+    adi->build_hash = DEFAULT_BUILD_HASH;
+#endif
 
   /*
     // must be run AFTER initialize, since it changes little_endian
@@ -121,7 +131,9 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 cl_int pocl_almaif_uninit(unsigned j, cl_device_id dev) {
   AccelData *d = (AccelData *)dev->data;
 
+#ifdef ENABLE_COMPILER
   d->compilationData->cleanup_device(dev);
+#endif
 
   free_chunk(d->compilationData->pocl_context);
   pocl_aligned_free(d->compilationData);
@@ -131,8 +143,9 @@ cl_int pocl_almaif_uninit(unsigned j, cl_device_id dev) {
 
 void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
                                 cl_device_id device, int specialize) {
-  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
     return;
+  }
 
   if (kernel == NULL)
     kernel = cmd->command.run.kernel;
@@ -151,165 +164,30 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
     return;
   }
 
+#ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
-    /*      if (!pocl_offline_compile)
-            POCL_ABORT ("Compiler not available for this device.\n");
-    */
     POCL_MSG_PRINT_INFO("Compiling kernel to poclbinary\n");
 
     if (d->compilationData->compile_kernel(cmd, kernel, device, specialize))
       POCL_ABORT("Kernel compilation failed\n");
   }
+#endif
 
-  //  if (pocl_offline_compile)
-  //    return;
-
+  if (pocl_offline_compile) {
+    return;
+  }
   almaif_kernel_data_t *kd =
       (almaif_kernel_data_t *)kernel->data[cmd->device_i];
-  assert(kd);
 
-  if (kd->imem_img_size == 0) {
-    char img_file[POCL_FILENAME_LENGTH];
-    char cachedir[POCL_FILENAME_LENGTH];
-    // first try specialized
-    pocl_cache_kernel_cachedir_path(img_file, kernel->program, cmd->device_i,
-                                    kernel, "/parallel.img", cmd, 1);
-    if (pocl_exists(img_file)) {
-      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
-                                      kernel, "", cmd, 1);
-      preread_images(cachedir, d, kd);
-    } else {
-      // if it doesn't exist, try specialized with local sizes 0-0-0
-      // should pick either 0-0-0 or 0-0-0-goffs0
-      _cl_command_node cmd_copy;
-      memcpy(&cmd_copy, cmd, sizeof(_cl_command_node));
-      cmd_copy.command.run.pc.local_size[0] = 0;
-      cmd_copy.command.run.pc.local_size[1] = 0;
-      cmd_copy.command.run.pc.local_size[2] = 0;
-      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
-                                      kernel, "", &cmd_copy, 1);
-      POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
-      preread_images(cachedir, d, kd);
-    }
-  }
+  POCL_MSG_PRINT_INFO("Loading program to device\n");
+  d->Dev->loadProgramToDevice(kd, kernel, cmd);
 
-  assert(kd->imem_img_size > 0);
 
-  d->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
-
-  d->InstructionMemory->CopyToMMAP(d->InstructionMemory->PhysAddress,
-                                   kd->imem_img, kd->imem_img_size);
-  POCL_MSG_PRINT_INFO("IMEM image written: %p / %zu B\n",
-                      d->InstructionMemory->PhysAddress, kd->imem_img_size);
-
-  d->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
-  /*
-  if (kd->dmem_img_size > 0)
-    {
-      POCL_MSG_PRINT_INFO ("Scratchpad image written: %p / %zu B\n",
-  d->ScratchpadMemory->PhysAddress, kd->dmem_img_size);
-    }
-
-  if (kd->pmem_img_size > 0)
-    {
-      d->DataMemory->CopyToMMAP(d->DataMemory->PhysAddress, kd->pmem_img,
-  kd->pmem_img_size); POCL_MSG_PRINT_INFO ("Data image written: %p / %zu B\n",
-  d->DataMemory->PhysAddress, kd->pmem_img_size);
-    }
-*/
+  POCL_MSG_PRINT_INFO("Loaded program to device\n");
   d->compilationData->current_kernel = kernel;
 }
 
-void preread_images(const char *kernel_cachedir, void *d_void,
-                    almaif_kernel_data_t *kd) {
-  AccelData *d = (AccelData *)d_void;
-  POCL_MSG_PRINT_INFO("Reading image files\n");
-  uint64_t temp = 0;
-  size_t size = 0;
-  char *content = NULL;
 
-  char module_fn[POCL_FILENAME_LENGTH];
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel.img", kernel_cachedir);
-
-  if (pocl_exists(module_fn)) {
-    int res = pocl_read_file(module_fn, &content, &temp);
-    size = (size_t)temp;
-    assert(res == 0);
-    assert(size > 0);
-    assert(size < d->InstructionMemory->Size);
-    kd->imem_img = content;
-    kd->imem_img_size = size;
-    content = NULL;
-  } else
-    POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
-
-  /* dmem/pmem images which contains also struct kernel_metadata;
-   * should be already byteswapped for the device */
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_data.img",
-           kernel_cachedir);
-  if (pocl_exists(module_fn)) {
-    int res = pocl_read_file(module_fn, &content, &temp);
-    assert(res == 0);
-    size = (size_t)temp;
-    if (size == 0)
-      POCL_MEM_FREE(content);
-    kd->dmem_img = content;
-    kd->dmem_img_size = size;
-
-    /* There seems to be a bug in TCE, where the actual kernel address is
-        not byteswappped. This is a workaround. */
-    uint32_t kernel_addr = 0;
-    if (size) {
-      void *p = content + size - 4;
-      uint32_t *up = (uint32_t *)p;
-      kernel_addr = *up;
-      if (kernel_addr > d->InstructionMemory->Size) {
-        POCL_MSG_PRINT_INFO(
-            "Incorrect kernel address (%0x) detected, byteswapping\n",
-            kernel_addr);
-        *up = byteswap_uint32_t((*up), 1);
-        kernel_addr = *up;
-      }
-    }
-    POCL_MSG_PRINT_INFO("Kernel address (%0x) found\n", kernel_addr);
-    kd->kernel_address = kernel_addr;
-    content = NULL;
-  } else
-    POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
-
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_param.img",
-           kernel_cachedir);
-  if (pocl_exists(module_fn)) {
-    int res = pocl_read_file(module_fn, &content, &temp);
-    assert(res == 0);
-    size = (size_t)temp;
-    if (size == 0)
-      POCL_MEM_FREE(content);
-    kd->pmem_img = content;
-    kd->pmem_img_size = size;
-    content = NULL;
-  } else
-    POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
-  /*
-    snprintf(module_fn, POCL_FILENAME_LENGTH,
-             "%s/kernel_metadata.txt", kernel_cachedir);
-    if (pocl_exists(module_fn))
-      {
-        int res = pocl_read_file(module_fn, &content, &temp);
-        assert(res == 0);
-        size = (size_t)temp;
-        assert(size > 0);
-
-        uint32_t metadata_offset = 0;
-        sscanf(content, "kernel_md address = %d", &metadata_offset);
-        assert(metadata_offset != 0);
-        kd->kernel_md_offset = metadata_offset;
-        content = NULL;
-      }
-    else
-      POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
-  */
-}
 
 int pocl_almaif_create_kernel(cl_device_id device, cl_program program,
                               cl_kernel kernel, unsigned device_i) {
@@ -337,6 +215,17 @@ int pocl_almaif_free_kernel(cl_device_id device, cl_program program,
 
   return CL_SUCCESS;
 }
+
+int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
+                             int link_program, int spir_build)
+{
+  assert (program->pocl_binaries[device_i] != NULL);
+  assert (program->pocl_binary_sizes[device_i] > 0);
+  assert (link_program != 0);
+  assert (spir_build == 0);
+  return CL_SUCCESS;
+}
+
 
 char *pocl_almaif_build_hash(cl_device_id device) {
   AccelData *d = (AccelData *)device->data;

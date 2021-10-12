@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* TTASimDevice.h - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,37 +22,34 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
+#ifndef TTASIMDEVICE_H
+#define TTASIMDEVICE_H
 
-#include <stdlib.h>
 
-#include "pocl_types.h"
+#include "Device.h"
 
-#include "Region.h"
+class SimpleSimulatorFrontend;
+class SimulatorCLI;
 
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
-
-class MMAPRegion : public Region
+class TTASimDevice : public Device
 {
 public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
+  TTASimDevice (char *adf_name);
+  ~TTASimDevice() override;
 
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
+  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_command_node *cmd) override;
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+  pocl_thread_t ttasim_thread;
+  pocl_cond_t simulation_start_cond;
+  pocl_lock_t lock;
+  bool shutdownRequested = false;
+  bool debuggerRequested = false;
 
-protected:
-  MMAPRegion();
+  SimpleSimulatorFrontend* simulator_;
+  SimulatorCLI* simulatorCLI_;
 
-  void *Data;
+  void restartProgram();
 };
+
 
 #endif

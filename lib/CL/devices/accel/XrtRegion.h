@@ -1,4 +1,5 @@
-/* EmulateMMAPRegion.cc - accessing accelerator memory as emulated mmap.
+/* MMAPRegion.hh - basic way of accessing accelerator memory.
+ *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
@@ -20,19 +21,35 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-#ifndef EMULATEMMAPREGION_H
-#define EMULATEMMAPREGION_H
+
+#ifndef XRTREGION_H
+#define XRTREGION_H
 
 #include <stdlib.h>
 
-#include "MMAPRegion.h"
+#include "pocl_types.h"
 
-// class MMAPRegion;
+#include "Region.h"
 
-class EmulateMMAPRegion : public MMAPRegion
+class XrtRegion : public Region
 {
 public:
-  EmulateMMAPRegion (void *Address, size_t RegionSize);
+  XrtRegion (size_t Address, size_t RegionSize, void *kernel);
+  XrtRegion (size_t Address, size_t RegionSize, void *kernel,
+                 char *init_file);
+
+  uint32_t Read32 (size_t offset) override;
+  void Write32 (size_t offset, uint32_t value) override;
+  void Write16 (size_t offset, uint16_t value) override;
+  uint64_t Read64 (size_t offset) override;
+
+  void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
+  void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+
+
+private:
+  void *Kernel;
+  void *DeviceHandle;
 };
 
 #endif

@@ -404,7 +404,7 @@ build_program_compute_hash (cl_program program, unsigned device_i,
       {
         char *dev_hash = device->ops->build_hash(device);
         pocl_SHA1_Update(&hash_ctx, (const uint8_t *)dev_hash, strlen(dev_hash));
-        free(dev_hash);
+        //free(dev_hash);
       }
 
     uint8_t digest[SHA1_DIGEST_SIZE];

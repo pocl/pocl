@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* EmulationDevice.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,37 +22,44 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
+#ifndef EMULATIONDEVICE_H
+#define EMULATIONDEVICE_H
 
-#include <stdlib.h>
+#include <pthread.h>
 
-#include "pocl_types.h"
+#include "Device.h"
 
-#include "Region.h"
+#define EMULATING_ADDRESS 0xE
+#define EMULATING_MAX_SIZE 4194304
+//#define EMULATING_MAX_SIZE 4 * 4096
 
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
+struct emulation_data_t
+{
+  void *emulating_address;
+  volatile int emulate_exit_called;
+  volatile int emulate_init_done;
+};
 
-class MMAPRegion : public Region
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+  void *emulate_accel (void *E_void);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+class EmulationDevice : public Device
 {
 public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
-
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
-
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
-
-protected:
-  MMAPRegion();
-
-  void *Data;
+  EmulationDevice ();
+  ~EmulationDevice ();
+private:
+  struct emulation_data_t E;
+  pthread_t emulate_thread;
 };
 
 #endif
