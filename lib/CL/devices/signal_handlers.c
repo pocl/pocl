@@ -21,16 +21,16 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 
-unsigned long buffer_c;
-unsigned long svm_buffer_c;
-unsigned long queue_c;
-unsigned long context_c;
-unsigned long image_c;
-unsigned long kernel_c;
-unsigned long program_c;
-unsigned long sampler_c;
-unsigned long uevent_c;
-unsigned long event_c;
+extern unsigned long buffer_c;
+extern unsigned long svm_buffer_c;
+extern unsigned long queue_c;
+extern unsigned long context_c;
+extern unsigned long image_c;
+extern unsigned long kernel_c;
+extern unsigned long program_c;
+extern unsigned long sampler_c;
+extern unsigned long uevent_c;
+extern unsigned long event_c;
 
 static struct sigaction sigusr2_action, old_sigusr2_action;
 
