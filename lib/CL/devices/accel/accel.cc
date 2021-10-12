@@ -23,10 +23,11 @@
 */
 
 #include "accel.h"
-#include "EmulateMMAPRegion.h"
-#include "MMAPRegion.h"
-#include "XrtMMAPRegion.h"
-#include "accel-emulate.h"
+#include "Region.h"
+#include "MMAPDevice.h"
+#include "XrtDevice.h"
+#include "EmulationDevice.h"
+#include "TTASimDevice.h"
 #include "accel-shared.h"
 #include "almaif-compile-tce.h"
 #include "almaif-compile.h"
@@ -50,6 +51,22 @@
 #include <string>
 #include <vector>
 
+extern int pocl_offline_compile;
+
+class SimpleSimulatorFrontend;
+
+//#define ACCEL_DUMP_MEMORY
+pocl_lock_t globalMemIDLock = POCL_LOCK_INITIALIZER;
+bool isGlobalMemIDSet = false;
+int GlobalMemID;
+
+pocl_lock_t runningLock = POCL_LOCK_INITIALIZER;
+pocl_lock_t runningDeviceLock = POCL_LOCK_INITIALIZER;
+int runningDeviceCount = 0;
+pocl_thread_t runningThread;
+void* runningThreadFunc(void*);
+_cl_command_node *runningList;
+bool runningJoinRequested = false;
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
            const std::vector<pocl_argument_info> &ArgInfos)
@@ -110,7 +127,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
 
   ops->submit = pocl_accel_submit;
-  ops->flush = ops->join = pocl_accel_join;
+  ops->join = pocl_accel_join;
 
   ops->write = pocl_accel_write;
   ops->read = pocl_accel_read;
@@ -119,6 +136,12 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
 
   ops->broadcast = pocl_broadcast;
   ops->run = pocl_accel_run;
+
+//  ops->update_event = pocl_accel_update_event;
+  ops->free_event_data = pocl_accel_free_event_data;
+  ops->wait_event = pocl_accel_wait_event;
+
+
 
 #if 0
     ops->read_rect = pocl_accel_read_rect;
@@ -142,7 +165,7 @@ void pocl_accel_write(void *data, const void *__restrict__ src_host_ptr,
   size_t dst = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
   POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to 0x%zu\n", size, dst);
-  d->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
+  d->Dev->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
 }
 
 void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
@@ -152,7 +175,7 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
   size_t src = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
   POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from 0x%zu\n", size, src);
-  d->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
+  d->Dev->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
 }
 
 cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
@@ -167,19 +190,12 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
   if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  chunk = pocl_alloc_buffer_from_region(&data->AllocRegion, mem_obj->size);
+  chunk = pocl_alloc_buffer_from_region(&data->Dev->AllocRegion, mem_obj->size);
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
   POCL_MSG_PRINT_MEMORY ("accel: allocated 0x%zu bytes from 0x%zu\n",
                           mem_obj->size, chunk->start_address);
-  if ((mem_obj->flags & CL_MEM_COPY_HOST_PTR) ||
-      ((mem_obj->flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)) {
-    /* TODO:
-       CL_MEM_USE_HOST_PTR must synch the buffer after execution
-       back to the host's memory in case it's used as an output (?). */
-    data->DataMemory->CopyToMMAP(chunk->start_address, host_ptr, mem_obj->size);
-  }
 
   p->mem_ptr = chunk;
   p->version = 0;
@@ -259,7 +275,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   std::string supportedList;
   char xrt_kernel_name[100];
-  if (D->BaseAddress == 0xA) {
+  if (D->BaseAddress == 0xA || D->BaseAddress == 0xB) {
     paramToken = strtok_r(NULL, ",", &savePtr);
     strcpy(xrt_kernel_name, paramToken);
     POCL_MSG_PRINT_INFO("accel: enabling xrt with kernel name %s",
@@ -298,7 +314,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     dev->ops->free_kernel = pocl_almaif_free_kernel;
     dev->ops->compile_kernel = pocl_almaif_compile_kernel;
     dev->ops->build_hash = pocl_almaif_build_hash;
-    // dev->ops->build_binary = pocl_almaif_build_binary;
+    dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
+    dev->ops->build_binary = pocl_almaif_build_binary;
 
     dev->ops->build_source = pocl_driver_build_source;
     dev->ops->link_program = pocl_driver_link_program;
@@ -310,128 +327,71 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     D->compilationData = NULL;
   }
 
-  POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels\n",
-                      D->BaseAddress, D->SupportedKernels.size());
-  emulation_data_t *E = &(D->EmulationData);
-  E->emulating_address = NULL;
-  int mem_fd = -1;
-  // Recognize whether we are emulating or not
-  if (D->BaseAddress == EMULATING_ADDRESS) {
-    E->Emulating = 1;
-    // The principle of the emulator is that instead of mmapping a real
-    // accelerator, we just allocate a regular array, which corresponds
-    // to the mmap. The accel_emulate function is working in another thread
-    // and will fill that array and respond to the driver asynchronously.
-    // The driver doesn't really need to know about emulating except
-    // in the initial mapping of the accelerator
-    E->emulating_address = calloc(1, EMULATING_MAX_SIZE);
-    assert(E->emulating_address != NULL && "Emulating calloc failed\n");
+  if(!pocl_offline_compile){
 
-
-    // Create emulator thread
-    E->emulate_exit_called = 0;
-    E->emulate_init_done = 0;
-    pthread_create(&(E->emulate_thread), NULL, emulate_accel, E);
-    while (!E->emulate_init_done)
-      ; // Wait for the thread to initialize
-    POCL_MSG_PRINT_INFO("accel: started emulating\n");
-
-    D->ControlMemory =
-        new EmulateMMAPRegion(E->emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
-
-  } else if (D->BaseAddress == 0xA) {
-    D->ControlMemory =
-        new XrtMMAPRegion(0, ACCEL_DEFAULT_CTRL_SIZE, xrt_kernel_name);
-  } else {
-    E->Emulating = 0;
-    mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
-    if (mem_fd == -1) {
-      POCL_ABORT("Could not open /dev/mem\n");
+    POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels\n",
+        D->BaseAddress, D->SupportedKernels.size());
+    // Recognize whether we are emulating or not
+    if (D->BaseAddress == EMULATING_ADDRESS) {
+      D->Dev = new EmulationDevice();
+    } else if (D->BaseAddress == 0xA) {
+      D->Dev = new XrtDevice(xrt_kernel_name);
+    } else if (D->BaseAddress == 0xB) {
+      D->Dev = new TTASimDevice(xrt_kernel_name);
+    } else {
+      D->Dev = new MMAPDevice(D->BaseAddress);
     }
-    D->ControlMemory =
-        new MMAPRegion(D->BaseAddress, ACCEL_DEFAULT_CTRL_SIZE, mem_fd);
-  }
 
-  if (D->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT) != 1) {
-    POCL_ABORT_UNIMPLEMENTED("Multicore accelerators");
-  }
-
-  uint64_t feature_flags =
-      D->ControlMemory->Read64(ACCEL_INFO_FEATURE_FLAGS_LOW);
-
-  // Turn on the relative addressing if the target has no axi master.
-  D->RelativeAddressing = (feature_flags & ACCEL_FF_BIT_AXI_MASTER) ? (0) : (1);
-  // Reset accelerator
-  D->ControlMemory->Write32(ACCEL_AQL_WRITE_LOW,
-                            -D->ControlMemory->Read32(ACCEL_AQL_WRITE_LOW));
-  D->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
-
-  // uint32_t ctrl_size = D->ControlMemory->Read32(ACCEL_INFO_CTRL_SIZE);
-  uint32_t imem_size = D->ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE);
-  uint32_t cq_size = D->ControlMemory->Read32(ACCEL_INFO_CQMEM_SIZE_LOW);
-  uint32_t dmem_size = D->ControlMemory->Read32(ACCEL_INFO_DMEM_SIZE_LOW);
-
-  uintptr_t imem_start = D->ControlMemory->Read64(ACCEL_INFO_IMEM_START_LOW);
-  uintptr_t cq_start = D->ControlMemory->Read64(ACCEL_INFO_CQMEM_START_LOW);
-  uintptr_t dmem_start = D->ControlMemory->Read64(ACCEL_INFO_DMEM_START_LOW);
-
-  if (D->RelativeAddressing) {
-    POCL_MSG_PRINT_INFO("Accel: Enabled relative addressing\n");
-    cq_start += D->ControlMemory->PhysAddress;
-    imem_start += D->ControlMemory->PhysAddress;
-    dmem_start += D->ControlMemory->PhysAddress;
-  }
-
-  //  POCL_MSG_PRINT_INFO("cq_start=%p imem_start=%p
-  //  dmem_start=%p\n",(void*)cq_start,(void*)imem_start,(void*)dmem_start);
-  //  POCL_MSG_PRINT_INFO("cq_size=%u imem_size=%u dmem_size=%u\n",cq_size,
-  //  imem_size, dmem_size);
-  //  POCL_MSG_PRINT_INFO("D->ControlMemory->PhysAddress=%zu",D->ControlMemory->PhysAddress);
-
-  if (E->Emulating) {
-    D->InstructionMemory = new EmulateMMAPRegion((void *)imem_start, imem_size);
-    D->CQMemory = new EmulateMMAPRegion((void *)cq_start, cq_size);
-    D->DataMemory = new EmulateMMAPRegion((void *)dmem_start, dmem_size);
-  } else if (D->BaseAddress == 0xA) {
-    void *xrt_kernel_handle =
-        ((XrtMMAPRegion *)D->ControlMemory)->GetKernelHandle();
-    char imem_init_file[200];
-    snprintf(imem_init_file, 200, "%s.img", xrt_kernel_name);
-    D->InstructionMemory = new XrtMMAPRegion(imem_start, imem_size,
-                                             xrt_kernel_handle, imem_init_file);
-    D->CQMemory = new XrtMMAPRegion(cq_start, cq_size, xrt_kernel_handle);
-    D->DataMemory = new XrtMMAPRegion(dmem_start, dmem_size, xrt_kernel_handle);
+    if (!(D->Dev->RelativeAddressing))
+    {
+      POCL_LOCK(globalMemIDLock);
+      if (isGlobalMemIDSet)
+      {
+        dev->global_mem_id = GlobalMemID;
+      }
+      else
+      {
+        GlobalMemID = dev->dev_id;
+        isGlobalMemIDSet = true;
+      }
+      POCL_UNLOCK(globalMemIDLock);
+    }
   } else {
-    D->InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
-    D->CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
-    D->DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
+    POCL_MSG_PRINT_INFO("Starting offline compilation device initialization\n");
   }
-  pocl_init_mem_region(&D->AllocRegion, dmem_start, dmem_size);
-
-  // memory mapping done
-  close(mem_fd);
-
   if (enable_compilation) {
     char adf_file[200];
     snprintf(adf_file, 200, "%s.adf", xrt_kernel_name);
     pocl_almaif_init(j, dev, adf_file);
   }
 
-  POCL_MSG_PRINT_INFO("accel: mmap done\n");
 
-  for (int i = 0; i < (D->DataMemory->Size >> 2); i++) {
-    D->DataMemory->Write32(4 * i, 0);
+
+  POCL_MSG_PRINT_INFO("accel: mmap done\n");
+  if (pocl_offline_compile){
+    std::cout <<"Offline compilation device initialized"<<std::endl;
+    return CL_SUCCESS;
   }
-  for (int i = 0; i < (D->CQMemory->Size >> 2); i++) {
-    D->CQMemory->Write32(4 * i, 0);
+  for (int i = 0; i < (D->Dev->DataMemory->Size >> 2); i++) {
+    D->Dev->DataMemory->Write32(4 * i, 0);
+  }
+  for (int i = 0; i < (D->Dev->CQMemory->Size >> 2); i++) {
+    D->Dev->CQMemory->Write32(4 * i, 0);
   }
   // Initialize AQL queue by setting all headers to invalid
-  for (uint32_t i = 0; i < cq_size; i += AQL_PACKET_LENGTH) {
-    D->CQMemory->Write16(i, AQL_PACKET_INVALID);
+  for (uint32_t i = AQL_PACKET_LENGTH; i < D->Dev->CQMemory->Size; i += AQL_PACKET_LENGTH) {
+    POCL_MSG_PRINT_INFO("Initializing AQL Packet cqmemory size=%i\n",D->Dev->CQMemory->Size);
+    D->Dev->CQMemory->Write16(i, AQL_PACKET_INVALID);
   }
 
+
+#ifdef ACCEL_DUMP_MEMORY
+  POCL_MSG_PRINT_INFO("INIT MEMORY DUMP\n");
+  D->Dev->printMemoryDump();
+#endif
+
   // Lift accelerator reset
-  D->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
+  D->Dev->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
 
   // This would be more logical as a per builtin kernel value?
   // Either way, the minimum is 3 for a device
@@ -444,7 +404,16 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   POCL_INIT_LOCK(D->CommandListLock);
   POCL_INIT_LOCK(D->AQLQueueLock);
 
-  if (E->Emulating) {
+  POCL_LOCK(runningDeviceLock);
+  if(runningDeviceCount == 0) {
+    runningJoinRequested = false;
+    POCL_CREATE_THREAD(runningThread, &runningThreadFunc, NULL);
+  }
+  runningDeviceCount++;
+  POCL_UNLOCK(runningDeviceLock);
+
+
+  if (D->BaseAddress == EMULATING_ADDRESS) {
     std::cout << "Custom emulation device " << j << " initialized" << std::endl;
   } else {
     std::cout << "Custom device " << j << " initialized" << std::endl;
@@ -454,24 +423,23 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
 cl_int pocl_accel_uninit(unsigned j, cl_device_id device) {
   POCL_MSG_PRINT_INFO("accel: uninit\n");
-  AccelData *D = (AccelData *)device->data;
-  emulation_data_t *E = &(D->EmulationData);
-  if (E->Emulating) {
-    POCL_MSG_PRINT_INFO("accel: freeing emulated accel");
-    E->emulate_exit_called = 1; // signal for the emulator to stop
-    pthread_join(E->emulate_thread, NULL);
-    free((void *)E->emulating_address); // from
-                                        // calloc(emulating_address)
+
+  POCL_LOCK(runningDeviceLock);
+  runningDeviceCount--;
+  if(runningDeviceCount == 0) {
+    runningJoinRequested = true;
+    POCL_JOIN_THREAD(runningThread);
   }
+  POCL_UNLOCK(runningDeviceLock);
+
+
+  AccelData *D = (AccelData *)device->data;
   if (D->compilationData != NULL) {
     pocl_almaif_uninit(j, device);
     D->compilationData = NULL;
   }
 
-  delete D->ControlMemory;
-  delete D->InstructionMemory;
-  delete D->DataMemory;
-  delete D->CQMemory;
+  delete D->Dev;
   delete D;
   return CL_SUCCESS;
 }
@@ -543,10 +511,13 @@ static void scheduleCommands(AccelData &D) {
     assert(pocl_command_is_ready(Node->event));
     assert(Node->event->status == CL_SUBMITTED);
     CDL_DELETE(D.ReadyList, Node);
-    POCL_UNLOCK(D.CommandListLock);
-    pocl_exec_command(Node);
-    POCL_LOCK(D.CommandListLock);
+    if (Node->type != CL_COMMAND_NDRANGE_KERNEL) {
+      POCL_UNLOCK(D.CommandListLock);
+      pocl_exec_command(Node);
+      POCL_LOCK(D.CommandListLock);
+    }
   }
+
   return;
 }
 
@@ -555,12 +526,29 @@ void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
   Node->ready = 1;
 
   struct AccelData *D = (AccelData *)Node->device->data;
-  POCL_LOCK(D->CommandListLock);
-  pocl_command_push(Node, &D->ReadyList, &D->CommandList);
+  
+  if (Node->type == CL_COMMAND_NDRANGE_KERNEL) {
+    pocl_update_event_submitted(Node->event);
 
-  POCL_UNLOCK_OBJ(Node->event);
-  scheduleCommands(*D);
-  POCL_UNLOCK(D->CommandListLock);
+    POCL_UNLOCK_OBJ(Node->event);
+    pocl_update_event_running(Node->event);
+
+    submit_and_barrier((AccelData*)Node->device->data, Node);
+    submit_kernel_packet((AccelData*)Node->device->data, Node);
+
+    POCL_LOCK(runningLock);
+    DL_PREPEND(runningList, Node);
+    POCL_UNLOCK(runningLock);
+  }
+  else {
+    POCL_LOCK(D->CommandListLock);
+    pocl_command_push(Node, &D->ReadyList, &D->CommandList);
+
+    POCL_UNLOCK_OBJ(Node->event);
+    scheduleCommands(*D);
+    POCL_UNLOCK(D->CommandListLock);
+  }
+
   return;
 }
 
@@ -570,6 +558,26 @@ void pocl_accel_join(cl_device_id Device, cl_command_queue /*CQ*/) {
   POCL_LOCK(D->CommandListLock);
   scheduleCommands(*D);
   POCL_UNLOCK(D->CommandListLock);
+
+  _cl_command_node* Node;
+  bool stillRunning = true;
+  while (stillRunning) {
+    stillRunning = false;
+    POCL_LOCK(runningLock);
+    if(runningList) {
+      DL_FOREACH(runningList, Node)
+      {
+        if (Node->device == Device) {
+          stillRunning = true;
+          break;
+        }
+      }
+    }
+    POCL_UNLOCK(runningLock);
+    if(stillRunning) {
+      usleep(1000);
+    }
+  }
   return;
 }
 
@@ -587,6 +595,7 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
   if (!Node->ready)
     return;
 
+  if (Event->command->type != CL_COMMAND_NDRANGE_KERNEL) {
   if (pocl_command_is_ready(Event)) {
     if (Event->status == CL_QUEUED) {
       pocl_update_event_submitted(Event);
@@ -598,9 +607,10 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
     }
     return;
   }
+  }
 }
 
-chunk_info_t *scheduleNDRange(AccelData *data, _cl_command_node *cmd,
+void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
                               size_t arg_size, void *arguments) {
   _cl_command_run *run = &cmd->command.run;
   int32_t kernelID = -1;
@@ -622,18 +632,21 @@ chunk_info_t *scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   // Additional space for a signal
   size_t extraAlloc = sizeof(uint32_t);
   chunk_info_t *chunk =
-      pocl_alloc_buffer_from_region(&data->AllocRegion, arg_size + extraAlloc);
+     pocl_alloc_buffer_from_region(&data->Dev->AllocRegion, arg_size + extraAlloc);
   assert(chunk && "Failed to allocate signal/argument buffer");
 
   POCL_MSG_PRINT_INFO("accel: allocated 0x%zx bytes for signal/arguments "
                       "from 0x%zx\n",
                       arg_size + extraAlloc, chunk->start_address);
+  cmd->event->data = (void *) chunk;
+
   size_t signalAddress = chunk->start_address;
-  size_t argsAddress = signalAddress + extraAlloc;
+  size_t argsAddress = chunk->start_address + sizeof(uint32_t);
+  POCL_MSG_PRINT_INFO("Signal address=0x%zx\n", signalAddress);
   // Set initial signal value
-  data->DataMemory->Write32(signalAddress - data->DataMemory->PhysAddress, 0);
+  data->Dev->DataMemory->Write32(signalAddress - data->Dev->DataMemory->PhysAddress, 0);
   // Set arguments
-  data->DataMemory->CopyToMMAP(argsAddress, arguments, arg_size);
+  data->Dev->DataMemory->CopyToMMAP(argsAddress, arguments, arg_size);
 
   struct AQLDispatchPacket packet = {};
 
@@ -652,6 +665,7 @@ chunk_info_t *scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     packet.grid_size_z = run->pc.local_size[2] * run->pc.num_groups[2];
     packet.kernel_object = kernelID;
   } else {
+
     // Compilation needs pocl_context struct, create it, copy it to device and
     // pass the pointer to it in the 'reserved' slot of AQL kernel dispatch
     // packet.
@@ -666,20 +680,23 @@ chunk_info_t *scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     pc.global_offset[1] = run->pc.global_offset[1];
     pc.global_offset[2] = run->pc.global_offset[2];
     size_t pc_start_addr = data->compilationData->pocl_context->start_address;
-    data->DataMemory->CopyToMMAP(pc_start_addr, &pc, sizeof(pocl_context32));
-    if (data->RelativeAddressing) {
-      pc_start_addr -= data->DataMemory->PhysAddress;
+    data->Dev->DataMemory->CopyToMMAP(pc_start_addr, &pc, sizeof(pocl_context32));
+
+    if (data->Dev->RelativeAddressing) {
+      pc_start_addr -= data->Dev->DataMemory->PhysAddress;
     }
+
     packet.reserved = pc_start_addr;
 
-    almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[0];
+    almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->device_i];
     packet.kernel_object = kd->kernel_address;
+
     POCL_MSG_PRINT_INFO("Kernel addresss=%zu\n", kd->kernel_address);
   }
 
-  if (data->RelativeAddressing) {
-    packet.kernarg_address = argsAddress - data->DataMemory->PhysAddress;
-    packet.completion_signal = signalAddress - data->DataMemory->PhysAddress;
+  if (data->Dev->RelativeAddressing) {
+    packet.kernarg_address = argsAddress - data->Dev->DataMemory->PhysAddress;
+    packet.completion_signal = signalAddress - data->Dev->DataMemory->PhysAddress;
   } else {
     packet.kernarg_address = argsAddress;
     packet.completion_signal = signalAddress;
@@ -689,76 +706,131 @@ chunk_info_t *scheduleNDRange(AccelData *data, _cl_command_node *cmd,
                       packet.kernarg_address, packet.completion_signal);
 
   POCL_LOCK(data->AQLQueueLock);
-  uint32_t queue_length = data->CQMemory->Size / AQL_PACKET_LENGTH;
-  uint32_t write_iter = data->ControlMemory->Read32(ACCEL_AQL_WRITE_LOW);
-  uint32_t read_iter = data->ControlMemory->Read32(ACCEL_AQL_READ_LOW);
+  uint32_t queue_length = data->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
+
+  uint32_t write_iter = data->Dev->CQMemory->Read32(ACCEL_CQ_WRITE);
+  uint32_t read_iter = data->Dev->CQMemory->Read32(ACCEL_CQ_READ);
   while (write_iter >= read_iter + queue_length) {
-    read_iter = data->ControlMemory->Read32(ACCEL_AQL_READ_LOW);
+    //POCL_MSG_PRINT_INFO("write_iter=%u, read_iter=%u length=%u", write_iter, read_iter, queue_length);
+    read_iter = data->Dev->CQMemory->Read32(ACCEL_CQ_READ);
   }
-  uint32_t packet_loc = (write_iter & (queue_length - 1)) * AQL_PACKET_LENGTH;
-  data->CQMemory->CopyToMMAP(packet_loc + data->CQMemory->PhysAddress, &packet,
-                             64);
+  uint32_t packet_loc = (write_iter & (queue_length - 1)) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
+  data->Dev->CQMemory->CopyToMMAP(packet_loc + data->Dev->CQMemory->PhysAddress,
+                                   &packet, 64);
+
+
+#ifdef ACCEL_DUMP_MEMORY
+  POCL_MSG_PRINT_INFO("PRELAUNCH MEMORY DUMP\n");
+  data->Dev->printMemoryDump();
+#endif
 
   // finally, set header as not-invalid
-  data->CQMemory->Write16(packet_loc,
-                          AQL_PACKET_KERNEL_DISPATCH | AQL_PACKET_BARRIER);
+  data->Dev->CQMemory->Write16(packet_loc,
+                          (1<<AQL_PACKET_KERNEL_DISPATCH) | AQL_PACKET_BARRIER);
 
   POCL_MSG_PRINT_INFO(
       "accel: Handed off a packet for execution, write iter=%u\n", write_iter);
   // Increment queue index
-  if (data->EmulationData.Emulating) {
-    // The difference between emulation and actual accelerators is that the
-    // actual accelerator automagically increments the write_iter with the
-    // value that is written to it. The emulation can't do that.
-    data->ControlMemory->Write32(ACCEL_AQL_WRITE_LOW, write_iter + 1);
-  } else {
-    data->ControlMemory->Write32(ACCEL_AQL_WRITE_LOW, 1);
-  }
+  data->Dev->CQMemory->Write32(ACCEL_CQ_WRITE, write_iter + 1);
 
   POCL_UNLOCK(data->AQLQueueLock);
-
-  return chunk;
 }
 
-int waitOnEvent(AccelData *data, size_t event) {
-  size_t offset = event - data->DataMemory->PhysAddress;
+bool isEventDone(AccelData* data, cl_event event) {
+
+  size_t offset = ((chunk_info_t*)event->data)->start_address - data->Dev->DataMemory->PhysAddress;
+
+  uint32_t status = data->Dev->DataMemory->Read32(offset);
+
+  return (status != 0);
+}
+
+void pocl_accel_wait_event(cl_device_id device, cl_event event)
+{
+  AccelData *D = (AccelData *)(device->data);
+  size_t offset = ((chunk_info_t *)event->data)->start_address - D->Dev->DataMemory->PhysAddress;
+
+  POCL_MSG_PRINT_INFO("accel wait on event: ADDRESS=%d, PHYSDDRESS=%d, OFFSET=%d\n", ((chunk_info_t *)event->data)->start_address, D->Dev->DataMemory->PhysAddress, offset);
+
   uint32_t status;
   int counter = 1;
-  do {
-    usleep(20);
-    status = data->DataMemory->Read32(offset);
+  do
+  {
+    usleep(200);
+    status = D->Dev->DataMemory->Read32(offset);
 
 #ifdef ACCEL_DUMP_MEMORY
-    uint64_t cyclecount = data->ControlMemory->Read64(ACCEL_STATUS_REG_CC_LOW);
-    uint64_t stallcount = data->ControlMemory->Read64(ACCEL_STATUS_REG_SC_LOW);
-    uint32_t programcounter = data->ControlMemory->Read32(ACCEL_STATUS_REG_PC);
+    uint64_t cyclecount = D->Dev->ControlMemory->Read64(ACCEL_STATUS_REG_CC_LOW);
+    uint64_t stallcount = D->Dev->ControlMemory->Read64(ACCEL_STATUS_REG_SC_LOW);
+    uint32_t programcounter = D->Dev->ControlMemory->Read32(ACCEL_STATUS_REG_PC);
     POCL_MSG_PRINT_INFO(
         "Accel: RUNNING Cyclecount=%lu Stallcount=%lu Current PC=%u\n",
         cyclecount, stallcount, programcounter);
 
-    if (counter % 2000 == 0) {
-      POCL_MSG_PRINT_INFO("CQ MEM DUMP\n");
-      for (int k = 0; k < data->CQMemory->Size; k += 4) {
-        uint32_t value = data->CQMemory->Read32(k);
-        std::cerr << "CQ at " << k << "=" << value << "\n";
-      }
-      POCL_MSG_PRINT_INFO("DATA MEM DUMP\n");
-      for (int k = 0; k < data->DataMemory->Size; k += 4) {
-        uint32_t value = data->DataMemory->Read32(k);
-        std::cerr << "Data at " << k << "=" << value << "\n";
-      }
-      std::cerr << std::endl;
+    if (counter % 2000 == 0)
+    {
+      D->Dev->printMemoryDump();
     }
     counter++;
 
 #endif
 
   } while (status == 0);
-  return status - 1;
 }
 
-void pocl_accel_run(void *data, _cl_command_node *cmd) {
-  struct AccelData *D = (AccelData *)data;
+void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
+
+  event_node* dep_event = cmd->event->wait_list;
+  if (dep_event == NULL){
+    POCL_MSG_PRINT_INFO("Accel: no events to wait for\n");
+    return;
+  }
+
+  bool all_done = false;
+  while(!all_done) {
+    struct AQLAndPacket packet = {};
+    memset(&packet, 0, sizeof(AQLAndPacket));
+    packet.header = AQL_PACKET_INVALID;
+    int i;
+    for (i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
+      packet.dep_signals[i] = ((chunk_info_t*)(dep_event->event->data))->start_address;
+      POCL_MSG_PRINT_INFO("Creating AND barrier depending on signal id=%d at address %llx\n", dep_event->event->id, packet.dep_signals[i]);
+      dep_event = dep_event->next;
+      if (dep_event == NULL) {
+        all_done = true;
+        break;
+      }
+    }
+    packet.signal_count = i + 1;
+
+    POCL_LOCK(D->AQLQueueLock);
+    uint32_t queue_length = D->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
+
+    uint32_t write_iter = D->Dev->CQMemory->Read32(ACCEL_CQ_WRITE);
+    uint32_t read_iter = D->Dev->CQMemory->Read32(ACCEL_CQ_READ);
+    while (write_iter >= read_iter + queue_length) {
+      //POCL_MSG_PRINT_INFO("write_iter=%u, read_iter=%u length=%u", write_iter, read_iter, queue_length);
+      read_iter = D->Dev->CQMemory->Read32(ACCEL_CQ_READ);
+    }
+    uint32_t packet_loc = (write_iter & (queue_length - 1)) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
+    D->Dev->CQMemory->CopyToMMAP(packet_loc + D->Dev->CQMemory->PhysAddress,
+                                   &packet, 64);
+
+    D->Dev->CQMemory->Write16(packet_loc,
+                          (1<<AQL_PACKET_BARRIER_AND) | AQL_PACKET_BARRIER);
+
+    POCL_MSG_PRINT_INFO(
+      "accel: Handed off and barrier, write iter=%u\n", write_iter);
+    // Increment queue index
+    D->Dev->CQMemory->Write32(ACCEL_CQ_WRITE, write_iter + 1);
+
+    POCL_UNLOCK(D->AQLQueueLock);
+  }
+}
+
+void pocl_accel_run(void *data, _cl_command_node *cmd) {}
+
+void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
   struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;
@@ -804,14 +876,12 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
             (chunk_info_t *)m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
         size_t buffer = (size_t)chunk->start_address;
         buffer += al->offset;
-        if (D->RelativeAddressing) {
-          buffer -= D->DataMemory->PhysAddress;
+        if (D->Dev->RelativeAddressing) {
+          buffer -= D->Dev->DataMemory->PhysAddress;
         }
         *(size_t *)current_arg = buffer;
       }
-      // TODO Depends on the device ptr size
-      current_arg += sizeof(size_t);
-      // current_arg += 4;
+      current_arg += D->Dev->PointerSize;
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
       POCL_ABORT_UNIMPLEMENTED("accel: image arguments");
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
@@ -823,40 +893,35 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
     }
   }
 
-  chunk_info_t *chunk = scheduleNDRange(D, cmd, arg_size, arguments);
-  size_t event = chunk->start_address;
-  int fail = waitOnEvent(D, event);
-
-  uint64_t cyclecount = D->ControlMemory->Read64(ACCEL_STATUS_REG_CC_LOW);
-  uint64_t stallcount = D->ControlMemory->Read64(ACCEL_STATUS_REG_SC_LOW);
-  uint32_t programcounter = D->ControlMemory->Read32(ACCEL_STATUS_REG_PC);
-  POCL_MSG_PRINT_INFO(
-      "Accel: FINAL Cyclecount=%lu Stallcount=%lu Current PC=%u\n", cyclecount,
-      stallcount, programcounter);
-
-#ifdef ACCEL_DUMP_MEMORY
-  POCL_MSG_PRINT_INFO("FINAL MEM DUMP\n");
-  for (int k = 0; k < D->CQMemory->Size; k += 4) {
-    uint32_t value = D->CQMemory->Read32(k);
-    std::cerr << "CQ at " << k << "=" << value << "\n";
-  }
-
-  for (int k = 0; k < D->DataMemory->Size; k += 4) {
-    uint32_t value = D->DataMemory->Read32(k);
-    std::cerr << "Data at " << k << "=" << value << "\n";
-  }
-  std::cerr << std::endl;
-#endif
-
+  scheduleNDRange(D, cmd, arg_size, arguments);
   free(arguments);
-  free_chunk(chunk);
-  if (fail) {
-    POCL_MSG_ERR("accel: command execution returned failure with kernel %s\n",
-                 kernel->name);
-  } else {
-    POCL_MSG_PRINT_INFO("accel: successfully executed kernel %s\n",
-                        kernel->name);
+}
+
+void pocl_accel_free_event_data (cl_event event)
+{
+  if(event->data != NULL){
+    free_chunk((chunk_info_t*)event->data);
+    event->data = NULL;
   }
 }
 
-
+void* runningThreadFunc(void*)
+{
+  while (!runningJoinRequested)
+  {
+    POCL_LOCK(runningLock);
+    if (runningList) {
+      _cl_command_node *Node = NULL;
+      _cl_command_node *tmp = NULL;
+      DL_FOREACH_SAFE(runningList, Node, tmp)
+      {
+        if (isEventDone((AccelData*)Node->device->data, Node->event)) {
+          POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
+          DL_DELETE(runningList, Node);
+        }
+      }
+    }
+    POCL_UNLOCK(runningLock);
+    usleep(1000);
+  }
+}

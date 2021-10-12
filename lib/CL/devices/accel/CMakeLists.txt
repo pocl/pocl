@@ -25,20 +25,26 @@
 
 add_compile_options("-std=c++14")
 
+add_compile_options(${TCE_INCLUDES})
 
 set(ACCEL_SOURCES "accel-shared.h"
                   "accel.cc"
                   "accel.h"
+                  "Region.h"
+                  "Device.cc"
+                  "Device.h"
                   "MMAPRegion.cc"
                   "MMAPRegion.h"
-                  "EmulateMMAPRegion.cc"
-                  "EmulateMMAPRegion.h"
-                  "XrtMMAPRegion.h"
-                  "accel-emulate.cc"
-                  "accel-emulate.h"
+                  "MMAPDevice.cc"
+                  "MMAPDevice.h"
+                  "EmulationRegion.cc"
+                  "EmulationRegion.h"
+                  "EmulationDevice.cc"
+                  "EmulationDevice.h"
+                  "TTASimDevice.h"
+                  "XrtDevice.h"
                   "almaif-compile.cc"
                   "almaif-compile.h"
-                  "almaif-compile-tce.cc"
                   "almaif-compile-tce.h"
                   )
 
@@ -46,7 +52,20 @@ if(DEFINED ENV{XILINX_XRT})
     set(XRT $ENV{XILINX_XRT})
     add_compile_options(-I${XRT}/include)
     set(ACCEL_SOURCES ${ACCEL_SOURCES}
-                      "XrtMMAPRegion.cc"
+                      "XrtDevice.cc"
+                      "XrtRegion.cc"
+                      "XrtRegion.h"
+                      )
+endif()
+
+if(ENABLE_TCE)
+    set(ACCEL_SOURCES ${ACCEL_SOURCES}
+                      "TTASimDevice.cc"
+                      "TTASimRegion.cc"
+                      "TTASimRegion.h"
+                      "TTASimControlRegion.cc"
+                      "TTASimControlRegion.h"
+                      "almaif-compile-tce.cc"
                       )
 endif()
 
@@ -61,5 +80,6 @@ if(DEFINED ENV{XILINX_XRT})
     target_link_libraries(pocl-devices-accel PRIVATE "${XRT}/lib/libxrt_coreutil.so")
 endif()
 
-
-target_link_libraries(pocl-devices-accel PRIVATE "${TCE_LIBS}")
+if(ENABLE_TCE)
+    target_link_libraries(pocl-devices-accel PRIVATE ${TCE_LIBS})
+endif()

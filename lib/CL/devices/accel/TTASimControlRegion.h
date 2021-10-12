@@ -1,4 +1,5 @@
-/* EmulateMMAPRegion.cc - accessing accelerator memory as memory mapped region.
+/* MMAPRegion.hh - basic way of accessing accelerator memory.
+ *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
@@ -21,12 +22,36 @@
    IN THE SOFTWARE.
 */
 
-#include "EmulateMMAPRegion.h"
+#ifndef TTASIMCONTROLREGION_H
+#define TTASIMCONTROLREGION_H
 
-// Used in emulator to hack the MMAP to work with just virtually contiguous
-// memory
-EmulateMMAPRegion::EmulateMMAPRegion(void *Address, size_t RegionSize) {
-  PhysAddress = (size_t)Address;
-  Data = Address;
-  Size = RegionSize;
+
+#include "Region.h"
+
+#include "accel-shared.h"
+
+class TTASimDevice;
+namespace TTAMachine{
+  class Machine;
 }
+
+class TTASimControlRegion : public Region
+{
+public:
+  TTASimControlRegion (const TTAMachine::Machine& mach, TTASimDevice* parent);
+
+  uint32_t Read32 (size_t offset) override;
+  void Write32 (size_t offset, uint32_t value) override;
+  void Write16 (size_t offset, uint16_t value) override;
+  uint64_t Read64 (size_t offset) override;
+
+  void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
+  void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+
+private:
+  uint32_t ControlRegisters_[ACCEL_DEFAULT_CTRL_SIZE / 4];
+  void setupControlRegisters(const TTAMachine::Machine& mach);
+  TTASimDevice* parent_;
+};
+
+#endif

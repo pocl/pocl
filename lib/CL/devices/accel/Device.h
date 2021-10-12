@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* Device.h - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,37 +22,49 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
+#ifndef Device_H
+#define Device_H
+
+
+#include "Region.h"
+#include "almaif-compile.h"
+
+
+#include "bufalloc.h"
+#include "pocl_types.h"
 
 #include <stdlib.h>
 
-#include "pocl_types.h"
-
-#include "Region.h"
-
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
-
-class MMAPRegion : public Region
+class Device
 {
 public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
+  Device ();
+  virtual ~Device ();
 
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
+  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_command_node *cmd);
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+  Region* ControlMemory;
+  Region* InstructionMemory;
+  Region* CQMemory;
+  Region* DataMemory;
+  memory_region_t AllocRegion;
+  
+  bool RelativeAddressing;
+  int PointerSize = 0;
+
+  void printMemoryDump();
 
 protected:
-  MMAPRegion();
+  virtual void discoverDeviceParameters();
+  uintptr_t imem_start;
+  uint32_t imem_size;
+  uintptr_t cq_start;
+  uint32_t cq_size;
+  uintptr_t dmem_start;
+  uint32_t dmem_size;
+private:
 
-  void *Data;
+  void preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd);
 };
 
 #endif

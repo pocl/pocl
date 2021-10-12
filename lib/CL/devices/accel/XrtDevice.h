@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* XrtDevice.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,42 +22,20 @@
    IN THE SOFTWARE.
 */
 
-#ifndef XRTMMAPREGION_H
-#define XRTMMAPREGION_H
+#ifndef XrtDevice_H
+#define XrtDevice_H
 
-#include <stdlib.h>
 
-#include "pocl_types.h"
+#include "Device.h"
 
-#include "MMAPRegion.h"
-
-class XrtMMAPRegion : public MMAPRegion
+class XrtDevice : public Device
 {
 public:
-  XrtMMAPRegion ();
-  XrtMMAPRegion (size_t Address, size_t RegionSize, char *xrt_kernel_name);
-  XrtMMAPRegion (size_t Address, size_t RegionSize, void *kernel);
-  XrtMMAPRegion (size_t Address, size_t RegionSize, void *kernel,
-                 char *init_file);
-
-  ~XrtMMAPRegion ();
-
-  uint32_t Read32 (size_t offset);
-  void Write32 (size_t offset, uint32_t value);
-  void Write16 (size_t offset, uint16_t value);
-  uint64_t Read64 (size_t offset);
-
-  size_t VirtualToPhysical (void *ptr);
-
-  void CopyToMMAP (size_t destination, const void *source, size_t bytes);
-  void CopyFromMMAP (void *destination, size_t source, size_t bytes);
-
-  void *GetKernelHandle ();
-
+  XrtDevice (char *xrt_kernel_name);
+  ~XrtDevice () override;
 private:
-  void *Kernel;
-  void *DeviceHandle;
-  bool OpenedDevice = false;
+  void* Kernel;
+  void* DeviceHandle;
 };
 
 #endif

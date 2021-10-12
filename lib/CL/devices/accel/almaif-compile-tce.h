@@ -23,7 +23,8 @@ void tceccCommandLine (char *commandline, size_t max_cmdline_len,
                        _cl_command_run *run_cmd, const char *tempDir,
                        const char *inputSrc, const char *outputTpef,
                        const char *machine_file, int is_multicore,
-                       int little_endian, const char *extraParams);
+                       int little_endian, const char *extraParams,
+		                   int AQL_start_relative, int AQL_queue_length);
 void pocl_tce_write_kernel_descriptor (char *content, size_t content_size,
                                        _cl_command_node *command,
                                        cl_kernel kernel, cl_device_id device,

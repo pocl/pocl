@@ -22,37 +22,38 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
+#ifndef TTASIMREGION_H
+#define TTASIMREGION_H
 
-#include <stdlib.h>
-
-#include "pocl_types.h"
 
 #include "Region.h"
 
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
+#include <MemorySystem.hh>
+#include <Memory.hh>
 
-class MMAPRegion : public Region
+#include <stdlib.h>
+
+class Memory;
+
+//namespace MemorySystem{
+//class MemoryPtr;
+//}
+
+class TTASimRegion : public Region
 {
 public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
+  TTASimRegion (size_t Address, size_t RegionSize, MemorySystem::MemoryPtr mem);
 
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
+  uint32_t Read32 (size_t offset) override;
+  void Write32 (size_t offset, uint32_t value) override;
+  void Write16 (size_t offset, uint16_t value) override;
+  uint64_t Read64 (size_t offset) override;
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+  void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
+  void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
 
-protected:
-  MMAPRegion();
-
-  void *Data;
+private:
+  MemorySystem::MemoryPtr mem_;
 };
 
 #endif

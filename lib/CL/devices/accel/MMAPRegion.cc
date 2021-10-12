@@ -31,7 +31,7 @@
 // MMAPRegion debug prints get quite spammy
 // #define ACCEL_MMAP_DEBUG
 
-MMAPRegion::MMAPRegion() {}
+MMAPRegion::MMAPRegion(){}
 
 MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   PhysAddress = Address;
@@ -120,11 +120,6 @@ uint64_t MMAPRegion::Read64(size_t offset) {
   return value;
 }
 
-size_t MMAPRegion::VirtualToPhysical(void *ptr) {
-  size_t offset = ((size_t)ptr) - (size_t)Data;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
-  return offset + PhysAddress;
-}
 
 void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
                             size_t bytes) {

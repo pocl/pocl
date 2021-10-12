@@ -1,4 +1,4 @@
-/* XrtMMAPRegion.cc - accessing accelerator memory as memory mapped region.
+/* XrtRegion.cc - accessing accelerator memory as memory mapped region.
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
@@ -29,48 +29,16 @@
 
 #include "experimental/xrt_kernel.h"
 
-#include "XrtMMAPRegion.h"
+#include "XrtRegion.h"
 #include "pocl_util.h"
 
-// XrtMMAPRegion debug prints get quite spammy
-//#define ACCEL_XRTMMAP_DEBUG
+// XrtRegion debug prints get quite spammy
+//#define ACCEL_XRT_DEBUG
 
-XrtMMAPRegion::XrtMMAPRegion(size_t Address, size_t RegionSize,
-                             char *xrt_kernel_name) {
+XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {
 
-#ifdef ACCEL_XRTMMAP_DEBUG
-  POCL_MSG_PRINT_INFO(
-      "XRTMMAP: Initializing XrtMMAPregion with Address %zu and Size %zu\n",
-      Address, RegionSize);
-#endif
-  char xclbin_char[120];
-  snprintf(xclbin_char, sizeof(xclbin_char), "%s.xclbin", xrt_kernel_name);
-
-  char kernel_char[120];
-  snprintf(kernel_char, sizeof(kernel_char), "%s:{%s_1}", xrt_kernel_name,
-           xrt_kernel_name);
-
-  auto devicehandle = new xrt::device(0);
-  assert(devicehandle != NULL && "devicehandle null\n");
-
-  auto uuid = devicehandle->load_xclbin(xclbin_char);
-  auto kernel = new xrt::kernel(*devicehandle, uuid, kernel_char,
-                                xrt::kernel::cu_access_mode::exclusive);
-  Kernel = (void *)kernel;
-  DeviceHandle = (void *)devicehandle;
-
-  PhysAddress = Address;
-  Size = RegionSize;
-  assert(kernel != XRT_NULL_HANDLE &&
-         "xrtKernelHandle NULL, is the kernel opened properly?");
-
-  OpenedDevice = true;
-}
-
-XrtMMAPRegion::XrtMMAPRegion(size_t Address, size_t RegionSize, void *kernel) {
-
-#ifdef ACCEL_XRTMMAP_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtMMAPregion with Address %zu "
+#ifdef ACCEL_XRT_DEBUG
+  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtRegion with Address %zu "
                       "and Size %zu and kernel %p\n",
                       Address, RegionSize, kernel);
 #endif
@@ -81,15 +49,15 @@ XrtMMAPRegion::XrtMMAPRegion(size_t Address, size_t RegionSize, void *kernel) {
          "xrtKernelHandle NULL, is the kernel opened properly?");
 }
 
-XrtMMAPRegion::XrtMMAPRegion(size_t Address, size_t RegionSize, void *kernel,
+XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
                              char *init_file)
-    : XrtMMAPRegion(Address, RegionSize, kernel) {
+    : XrtRegion(Address, RegionSize, kernel) {
 
   if (RegionSize == 0) {
     return; // don't try to write to empty region
   }
-#ifdef ACCEL_XRTMMAP_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtMMAPregion with file %s\n",
+#ifdef ACCEL_XRT_DEBUG
+  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtRegion with file %s\n",
                       init_file);
 #endif
   std::ifstream inFile;
@@ -103,20 +71,14 @@ XrtMMAPRegion::XrtMMAPRegion(size_t Address, size_t RegionSize, void *kernel,
     i += 4;
   }
 
-#ifdef ACCEL_XRTMMAP_DEBUG
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Initialized region with %i bytes \n", i - 4);
 #endif
 }
 
-XrtMMAPRegion::~XrtMMAPRegion() {
-  if (OpenedDevice) {
-    delete ((xrt::kernel *)Kernel);
-    delete ((xrt::device *)DeviceHandle);
-  }
-}
 
-uint32_t XrtMMAPRegion::Read32(size_t offset) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+uint32_t XrtRegion::Read32(size_t offset) {
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
@@ -127,10 +89,8 @@ uint32_t XrtMMAPRegion::Read32(size_t offset) {
   return value;
 }
 
-void *XrtMMAPRegion::GetKernelHandle() { return Kernel; }
-
-void XrtMMAPRegion::Write32(size_t offset, uint32_t value) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+void XrtRegion::Write32(size_t offset, uint32_t value) {
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
@@ -141,8 +101,8 @@ void XrtMMAPRegion::Write32(size_t offset, uint32_t value) {
   ((xrt::kernel *)Kernel)->write_register(PhysAddress + offset, value);
 }
 
-void XrtMMAPRegion::Write16(size_t offset, uint16_t value) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+void XrtRegion::Write16(size_t offset, uint16_t value) {
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
@@ -164,8 +124,8 @@ void XrtMMAPRegion::Write16(size_t offset, uint16_t value) {
       ->write_register(PhysAddress + (offset & 0xFFFFFFFC), new_value);
 }
 
-uint64_t XrtMMAPRegion::Read64(size_t offset) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+uint64_t XrtRegion::Read64(size_t offset) {
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
@@ -181,15 +141,10 @@ uint64_t XrtMMAPRegion::Read64(size_t offset) {
   return value;
 }
 
-size_t XrtMMAPRegion::VirtualToPhysical(void *ptr) {
-  size_t offset = ((size_t)ptr) - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
-  return offset + PhysAddress;
-}
 
-void XrtMMAPRegion::CopyToMMAP(size_t destination, const void *source,
+void XrtRegion::CopyToMMAP(size_t destination, const void *source,
                                size_t bytes) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
                       "address 0x%zx\n",
                       bytes, PhysAddress, destination);
@@ -209,9 +164,9 @@ void XrtMMAPRegion::CopyToMMAP(size_t destination, const void *source,
   }
 }
 
-void XrtMMAPRegion::CopyFromMMAP(void *destination, size_t source,
+void XrtRegion::CopyFromMMAP(void *destination, size_t source,
                                  size_t bytes) {
-#ifdef ACCEL_XRTMMAP_DEBUG
+#ifdef ACCEL_XRT_DEBUG
   POCL_MSG_PRINT_INFO("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
                       "with address 0x%zx\n",
                       bytes, PhysAddress, source);
