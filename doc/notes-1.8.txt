@@ -4,17 +4,17 @@ Portable Computing Language (PoCL) v1.8 released
 PoCL is a portable open source (MIT-licensed) implementation of the
 OpenCL standard (1.2 with some 2.0 and 3.0 features supported).
 
-In addition to being an easily portable multi-device (truely heterogeneous)
-open-source OpenCL implementation, a major goal of this project is
-improving interoperability for diversity of OpenCL-capable devices by
-integrating them to a single centrally orchestrated platform. Another
-key goal is to enhance performance portability of OpenCL programs
-across device types utilizing runtime and compiler techniques.
+In addition to being an easily portable multi-device (truly
+heterogeneous) open-source OpenCL implementation, a major goal of this
+project is improving interoperability for diversity of OpenCL-capable
+devices by integrating them to a single centrally orchestrated platform.
+Another key goal is to enhance performance portability of OpenCL
+programs across device types utilizing runtime and compiler techniques.
 
 Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
-HSA-supported GPUs and TCE ASIPs (experimental, see: http://openasip.org).
-It is also known to have multiple (private) adaptations in active production
-use.
+HSA-supported GPUs and ASIPs (experimental, see:
+http://openasip.org). It is also known to have multiple (private)
+adaptations in active production use.
 
 Release Highlights
 ------------------
@@ -27,8 +27,8 @@ Release Highlights
 Misc. Notes
 -----------
 
-* Please note that there's an official PoCL "maintenance policy" in place.
-This text describes the policy and how you can get your favourite
+* Please note that there's an official PoCL "maintenance policy" in
+place. This text describes the policy and how you can get your favourite
 project that uses OpenCL to remain regression free in the future PoCL
 releases: http://portablecl.org/docs/html/maintainer-policy.html
 
@@ -39,17 +39,18 @@ architectures, please let us know!
 Acknowledgements
 ----------------
 
-Customized Parallel Computing (CPC) research group of Tampere University,
-Finland leads the development of PoCL on the side and for the needs of
-their research projects. This project has received funding from the ECSEL
-Joint Undertaking (JU) under grant agreement No 783162 (FitOptiVis).
-The JU receives support from the European Union’s Horizon 2020 research and
-innovation programme and Netherlands, Czech Republic, Finland, Spain, Italy.
-It was also supported by European Union's Horizon 2020 research and innovation
-programme under Grant Agreement No 871738 (CPSoSaware).
+Customized Parallel Computing (CPC) research group of Tampere
+University, Finland leads the development of PoCL on the side and for
+the needs of their research projects. This project has received funding
+from the ECSEL Joint Undertaking (JU) under grant agreement No 783162
+(FitOptiVis). The JU receives support from the European Union’s Horizon
+2020 research and innovation programme and Netherlands, Czech Republic,
+Finland, Spain, Italy. It was also supported by European Union's Horizon
+2020 research and innovation programme under Grant Agreement No 871738
+(CPSoSaware).
 
-The financial support is very much appreciated -- it keeps the open source
-project going!
+The financial support is very much appreciated -- it keeps the open
+source project going!
 
 Links
 -----
