@@ -79,6 +79,17 @@
 
 uint64_t last_object_id = 0;
 
+unsigned long buffer_c;
+unsigned long svm_buffer_c;
+unsigned long queue_c;
+unsigned long context_c;
+unsigned long image_c;
+unsigned long kernel_c;
+unsigned long program_c;
+unsigned long sampler_c;
+unsigned long uevent_c;
+unsigned long event_c;
+
 /**
  * Generate code from the final bitcode using the LLVM
  * tools.
