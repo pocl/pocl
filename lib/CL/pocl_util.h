@@ -110,8 +110,10 @@ cl_int pocl_create_command_migrate (_cl_command_node **cmd,
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
+POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
 
+POCL_EXPORT
 int pocl_release_mem_host_ptr (cl_mem mem);
 
 /* does several sanity checks on buffer & given memory region */
