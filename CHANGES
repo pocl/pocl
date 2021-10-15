@@ -4,11 +4,37 @@
 Notable User Facing Changes
 ---------------------------
 
+- Text tracing improved - a few new command types traced,
+  event dependencies are now also recorded
+- There are now two scripts, which let the user parse & convert the
+  outputs of LTTNG and Text tracer into a JSON format, suitable
+  for loading into Chromium's trace visualizer (chrome://tracing)
+
 Notable Bug Fixes
 -----------------
+- Fixed a race condidion in clBuildProgram
+- Fixed uninitialized variables and other issues in tests
+- Fixed the post-event-finish-cleanup process in the drivers,
+  this should improve reliability
+- Few more fixes for Android
 
 Other
 -----
+
+- lib/kernel/libclc has received a number of new math library function
+  implementations. These are useful for some drivers which can't
+  use SLEEF and want to avoid libm calls or simple expression
+  implementations.
+
+- TCE driver significantly improved, it now uses argbuffer launcher,
+  handles multithreaded user programs properly, uses the new libclc
+  math library functions, and has fixed some filesystem race conditions.
+  Should be able to run the TCE testsuite in parallel without random errors.
+
+- a new proxy driver that lets PoCL proxy to another OpenCL implementation.
+  if a user creates a cl_context with multiple devices including one via
+  the proxy driver, PoCL will automatically manage buffer memory within
+  the context.
 
 
 1.8 October 2021
