@@ -293,6 +293,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_uint, device->max_events);
   case CL_DEVICE_MAX_ON_DEVICE_QUEUES:
     POCL_RETURN_GETINFO(cl_uint, device->max_queues);
+  case CL_DEVICE_PIPE_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->pipe_support);
   case CL_DEVICE_MAX_PIPE_ARGS:
     POCL_RETURN_GETINFO(cl_uint, device->max_pipe_args);
   case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:

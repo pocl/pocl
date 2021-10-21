@@ -140,5 +140,7 @@ POdeclsym(clEnqueueAcquireGLObjects)
 POdeclsym(clEnqueueReleaseGLObjects)
 POdeclsym(clGetGLContextInfoKHR)
 POdeclsym(clSetContentSizeBufferPoCL)
+POdeclsym(clCreatePipe)
+POdeclsym(clGetPipeInfo)
 
 #endif

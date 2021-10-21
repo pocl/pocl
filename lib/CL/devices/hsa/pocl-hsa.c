@@ -815,6 +815,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   /* This is from clinfo output ran on AMD Catalyst drivers */
   dev->max_events = 1024;
   dev->max_queues = 1;
+  dev->pipe_support = CL_FALSE;
   dev->max_pipe_args = 16;
   dev->max_pipe_active_res = 16;
   dev->max_pipe_packet_size = 1024 * 1024;

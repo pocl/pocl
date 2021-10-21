@@ -36,6 +36,8 @@ Other
   the proxy driver, PoCL will automatically manage buffer memory within
   the context.
 
+- Pipe related API calls conform to OpenCL 3.0 specification, reporting no pipe support
+
 
 1.8 October 2021
 ================

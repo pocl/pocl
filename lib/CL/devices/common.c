@@ -1485,9 +1485,15 @@ pocl_init_default_device_infos (cl_device_id dev)
   /* TODO these are minimums, figure out whats a reasonable value */
   dev->max_events = 1024;
   dev->max_queues = 1;
-  dev->max_pipe_args = 16;
-  dev->max_pipe_active_res = 1;
-  dev->max_pipe_packet_size = 1024;
+
+  /* Default pipe support for PoCL devices */
+  dev->pipe_support = CL_FALSE;
+  /* Specification requires pipe values to be 0, when pipes are not supported
+   */
+  dev->max_pipe_args = 0;
+  dev->max_pipe_active_res = 0;
+  dev->max_pipe_packet_size = 0;
+
   dev->dev_queue_pref_size = 16 * 1024;
   dev->dev_queue_max_size = 256 * 1024;
   dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
