@@ -100,6 +100,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       typedef struct { size_t size[3]; } size_t_3;
       POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }
+  case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->non_uniform_work_group_support);
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
                                              device->max_mem_alloc_size);

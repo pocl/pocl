@@ -1510,6 +1510,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->device_alloca_locals = 0;
   dev->global_var_max_size = 0;
   dev->global_var_pref_size = 0;
+  dev->non_uniform_work_group_support = CL_FALSE;
 
 #ifdef ENABLE_LLVM
 
