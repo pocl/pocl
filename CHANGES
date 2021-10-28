@@ -4,6 +4,10 @@
 Notable User Facing Changes
 ---------------------------
 
+- Updated API calls towards (minimal) conformance to OpenCL 3.0
+  specification:
+  - Pipes, reporting no pipe support.
+  - Device-side Enqueue, reporting no support for device-side enqueue.
 - Text tracing improved - a few new command types traced,
   event dependencies are now also recorded
 - There are now two scripts, which let the user parse & convert the
@@ -35,11 +39,6 @@ Other
   if a user creates a cl_context with multiple devices including one via
   the proxy driver, PoCL will automatically manage buffer memory within
   the context.
-
-- Updated API calls in conformance to OpenCL 3.0 specification:
-  - Pipes, reporting no pipe support.
-  - Device-side Enqueue, reporting no support for device-side enqueue.
-
 
 1.8 October 2021
 ================
