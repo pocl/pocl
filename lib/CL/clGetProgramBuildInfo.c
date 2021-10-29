@@ -121,6 +121,10 @@ POname(clGetProgramBuildInfo)(cl_program            program,
     {
       POCL_RETURN_GETINFO(cl_program_binary_type, program->binary_type);
     }
+  case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE:
+    {
+      POCL_RETURN_GETINFO (size_t, device->global_var_pref_size);
+    }
   }
   
   return CL_INVALID_VALUE;

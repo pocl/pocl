@@ -1508,6 +1508,8 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
   dev->device_alloca_locals = 0;
+  dev->global_var_max_size = 0;
+  dev->global_var_pref_size = 0;
 
 #ifdef ENABLE_LLVM
 
