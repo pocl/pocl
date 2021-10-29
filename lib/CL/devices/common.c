@@ -943,12 +943,12 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
       /* First try to find a specialized WG binary, if allowed by the
          command. */
       if (!run_cmd->force_generic_wg_func)
-        pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
+        pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
 
       if (run_cmd->force_generic_wg_func || !pocl_exists (module_fn))
         {
           /* Then check for a dynamic (non-specialized) kernel. */
-          pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
+          pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
           if (!pocl_exists (module_fn))
             POCL_ABORT ("Generic WG function binary does not exist.\n");
           POCL_MSG_PRINT_INFO ("Using a cached generic WG function: %s\n",
