@@ -75,9 +75,8 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   return parseIRFile(path, Err, *c).release();
 }
 
-
-void writeModuleIR(const Module *mod, std::string &str) {
-  llvm::raw_string_ostream sos(str);
+void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
+  llvm::raw_string_ostream sos(dest);
 #ifdef LLVM_OLDER_THAN_7_0
   WriteBitcodeToFile(mod, sos);
 #else
@@ -91,7 +90,7 @@ int pocl_write_module(void *module, const char *path, int dont_rewrite) {
   assert(path);
 
   std::string binary;
-  writeModuleIR((const Module *)module, binary);
+  writeModuleIRtoString((const Module *)module, binary);
 
   return pocl_write_file(path, binary.data(), (uint64_t)binary.size(), 0,
                          dont_rewrite);

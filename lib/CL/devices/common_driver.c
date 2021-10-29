@@ -1,3 +1,27 @@
+/* common_driver.c - common code that can be reused between device driver
+   implementations
+
+   Copyright (c) 2011-2021 pocl developers
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
 #include "config.h"
 
 #include <assert.h>
@@ -724,11 +748,12 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
       cmd.command.run.pc.global_offset[0] = cmd.command.run.pc.global_offset[1]
           = cmd.command.run.pc.global_offset[2] = 0;
 
-      /* Force generate a generic WG function to ensure generality. */
+      /* Force generate a generic WG function to ensure all local sizes
+         can be executed using the binary. */
       device->ops->compile_kernel (&cmd, kernel, device, 0);
       /* Then generate a specialized one with goffset 0 since it's a very
-         common case. */
-      device->ops->compile_kernel (&cmd, kernel, device, 1);
+         common case - global offset is very rarely used and it complicates
+         index computation. */
     }
 
   POCL_UNLOCK_OBJ (program);

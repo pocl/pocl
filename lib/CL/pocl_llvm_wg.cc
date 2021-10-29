@@ -605,7 +605,7 @@ int pocl_llvm_update_binaries(cl_program program, cl_uint device_i) {
   }
 
   std::string content;
-  writeModuleIR((llvm::Module *)program->data[i], content);
+  writeModuleIRtoString((llvm::Module *)program->data[i], content);
 
   size_t n = content.size();
   if (n < program->binary_sizes[i])

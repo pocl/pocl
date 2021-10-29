@@ -652,7 +652,7 @@ int pocl_llvm_build_program(cl_program program,
    * save program->binaries[i]
    */
   std::string content;
-  writeModuleIR(mod, content);
+  writeModuleIRtoString(mod, content);
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);
@@ -806,7 +806,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
    * save program->binaries[i]
    */
   std::string content;
-  writeModuleIR(linked_module, content);
+  writeModuleIRtoString(linked_module, content);
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);

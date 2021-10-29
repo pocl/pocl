@@ -1,6 +1,7 @@
-/* Pocl tool: poclcc
+/* poclcc: A tool for building OpenCL clBuildProgram() compatible binaries of
+   kernels from the command line.
 
-   Copyright (c) 2016 pocl developers
+   Copyright (c) 2016-2021 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +21,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +71,7 @@ poclcc_option *options_help;
 static int
 print_help()
 {
-  printf("USAGE: poclcc [OPTION]... [FILE]\n");
+  printf("USAGE: poclcc [OPTION]... [kernel program file]\n");
   printf("\n");
   printf("OPTIONS:\n");
   int i;
@@ -201,7 +203,7 @@ static poclcc_option options[NUM_OPTIONS] =
    2},
   {process_list_devices, "-l",
    "\t-l\n"
-   "\t\tList the opencl device found (that match the <device_type>\n",
+   "\t\tList the OpenCL device found (that match the <device_type>)\n",
    1},
   {process_device_id, "-i",
    "\t-i <device_id>\n"

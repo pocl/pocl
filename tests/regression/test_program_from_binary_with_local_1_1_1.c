@@ -1,7 +1,7 @@
 /* Tests a case where a program created from binary (with a loop) is run with
    a local size of (1, 1, 1).
 
-   Copyright (c) 2017 pocl developers
+   Copyright (c) 2017-2021 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

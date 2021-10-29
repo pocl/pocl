@@ -1138,6 +1138,7 @@ static size_t getArgumentSize(llvm::Argument &Arg) {
   return DL.getTypeStoreSize(TypeInBuf);
 }
 
+// Tofix: Why this is duplicated here? pocl_utils.c should be used?
 static uint64_t pocl_size_ceil2_64(uint64_t x) {
   /* Rounds up to the next highest power of two without branching and
    * is as fast as a BSR instruction on x86, see:

@@ -925,7 +925,9 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       if (error)
         POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
-      POCL_MSG_PRINT_INFO ("Built a WG function: %s\n", module_fn);
+      POCL_MSG_PRINT_INFO ("Built a %sWG function: %s\n",
+                           specialized ? "specialized " : "generic ",
+                           module_fn);
       return module_fn;
 #else
       /* TODO: This should be caught earlier. */

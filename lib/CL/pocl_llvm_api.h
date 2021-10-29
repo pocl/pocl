@@ -68,7 +68,7 @@ public:
 };
 
 llvm::Module *parseModuleIR (const char *path, llvm::LLVMContext *c);
-void writeModuleIR(const llvm::Module *mod, std::string &str);
+void writeModuleIRtoString(const llvm::Module *mod, std::string& dest);
 llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
                                 llvm::LLVMContext *c);
 std::string getDiagString (cl_context ctx);
