@@ -82,6 +82,10 @@ int main ()
         }
     }
 
+  /* Test executing from the generic binary only to avoid the
+     online compiler creating a specialized one that is ran. */
+  setenv("POCL_WORK_GROUP_SPECIALIZATION", "0", 1);
+
   err = clGetPlatformIDs(1, &platform, NULL);
   CHECK_CL_ERROR (err);
   err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_DEFAULT, 1, &device, NULL);

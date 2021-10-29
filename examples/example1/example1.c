@@ -72,6 +72,14 @@ main (int argc, char **argv)
   poclbin = (argc > 1 && argv[1][0] == 'b');
   const char *explicit_binary_path = (poclbin && (argc > 2)) ? argv[2] : NULL;
 
+  if (poclbin)
+    {
+      /* Force disable the WG specialization to test executing from the generic
+         binary only. This is to avoid the online compiler creating
+         a specialized WG function that is ran instead of the binary we
+         want to test here. */
+      setenv("POCL_WORK_GROUP_SPECIALIZATION", "0", 1);
+    }
   const char *basename = "example1";
   err = poclu_load_program_multidev (context, devices, num_devices, basename,
                                      spir, spirv, poclbin,

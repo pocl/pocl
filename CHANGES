@@ -16,6 +16,9 @@ Notable User Facing Changes
 
 Notable Bug Fixes
 -----------------
+- Fixed poclbin for non-SPMD targets. The generic size WG function generation
+  was completely broken and the breakage was hidden by the WG specialization
+  recompilation, if online compiler was available.
 - Fixed a race condidion in clBuildProgram
 - Fixed uninitialized variables and other issues in tests
 - Fixed the post-event-finish-cleanup process in the drivers,

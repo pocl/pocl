@@ -86,5 +86,6 @@ set_tests_properties( "examples/example1_poclbin"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
+    ENVIRONMENT "POCL_CACHE_DIR=./Testing/Temporary"
     LABELS "poclbin;internal"
     DEPENDS "pocl_version_check")

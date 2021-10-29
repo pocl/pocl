@@ -1013,6 +1013,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
+  /* Brute force mechanism to test relying on generic work-group functions
+     only. */
+  if (!pocl_get_bool_option("POCL_WORK_GROUP_SPECIALIZATION", 1))
+    specialize = 0;
+
   POCL_LOCK (pocl_dlhandle_lock);
   ci = fetch_dlhandle_cache_item (run_cmd, specialize);
   if (ci != NULL)

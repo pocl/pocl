@@ -378,7 +378,7 @@ WorkitemLoops::ProcessFunction(Function &F)
   Initialize(K);
   unsigned workItemCount = WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ;
 
-  if (workItemCount == 1)
+  if (workItemCount == 1 && !WGDynamicLocalSize)
     {
       K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
       ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
