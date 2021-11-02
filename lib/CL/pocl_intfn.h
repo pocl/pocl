@@ -143,5 +143,7 @@ POdeclsym(clSetContentSizeBufferPoCL)
 POdeclsym(clCreatePipe)
 POdeclsym(clGetPipeInfo)
 POdeclsym(clSetDefaultDeviceCommandQueue)
+POdeclsym(clGetDeviceAndHostTimer)
+POdeclsym(clGetHostTimer)
 
 #endif

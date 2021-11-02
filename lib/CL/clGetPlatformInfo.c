@@ -162,6 +162,9 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
     case CL_PLATFORM_ICD_SUFFIX_KHR:
       POCL_RETURN_GETINFO_STR("POCL");
 
+    case CL_PLATFORM_HOST_TIMER_RESOLUTION:
+      POCL_RETURN_GETINFO(cl_ulong, 0);
+
     default:
       return CL_INVALID_VALUE;
   }
