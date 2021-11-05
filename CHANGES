@@ -13,6 +13,8 @@ Notable User Facing Changes
 - There are now two scripts, which let the user parse & convert the
   outputs of LTTNG and Text tracer into a JSON format, suitable
   for loading into Chromium's trace visualizer (chrome://tracing)
+- Support for generating specialized work-group functions to the PoCL
+  kernel program binaries.
 
 Notable Bug Fixes
 -----------------

@@ -86,6 +86,27 @@ pocl.
  (lets any idle cores enter deeper sleep). Defaults to 0 (most
  people don't need this).
 
+- **POCL_BINARY_SPECIALIZE_WG**
+
+  By default the PoCL program binaries store generic kernel binaries which
+  can be executed across any grid dimensions. This configuration variable
+  can be used to also include specialized work-group functions in the binaries, by
+  defining a comma separated list of strings that describe the specialized
+  versions. The strings adhere to the directory names in the PoCL cache
+  from which the binaries are captured.
+
+  Example::
+
+    POCL_BINARY_SPECIALIZE_WG=2-1-1,0-0-0-goffs0,13-1-1-smallgrid,128-2-1-goffs0-smallgrid poclcc [...]
+
+  This makes poclcc generate a binary which contains the generic work-group
+  function binary, a work-group function that is specialized for local size
+  of 2x1x1, another with generic local size but specialized for the global
+  offset at origo, one with local size of 13x1x1, but which is specialized
+  for a "small grid" (size defined by the device driver), and finally one
+  that is specialized for local size 128x2x1, an origo global offset and
+  a small grid.
+
 - **POCL_BUILDING**
 
  If  set, the pocl helper scripts, kernel library and headers are

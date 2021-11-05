@@ -751,9 +751,62 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
       /* Force generate a generic WG function to ensure all local sizes
          can be executed using the binary. */
       device->ops->compile_kernel (&cmd, kernel, device, 0);
-      /* Then generate a specialized one with goffset 0 since it's a very
-         common case - global offset is very rarely used and it complicates
-         index computation. */
+      /* Then generate specialized ones as requested via the
+         POCL_BINARY_SPECIALIZE_WG configuration option. */
+      char *temp
+          = strdup (pocl_get_string_option ("POCL_BINARY_SPECIALIZE_WG", ""));
+      char *token;
+      char *rest = temp;
+
+      while ((token = strtok_r (rest, ",", &rest)))
+        {
+          /* By default don't specialize for the origo global offset. */
+          cmd.command.run.pc.global_offset[0]
+              = cmd.command.run.pc.global_offset[1]
+              = cmd.command.run.pc.global_offset[2] = 1;
+
+          /* By default don't specialize for the local size. */
+          cmd.command.run.pc.local_size[0] = cmd.command.run.pc.local_size[1]
+              = cmd.command.run.pc.local_size[2] = 0;
+
+          /* By default don't specialize for a small grid size. */
+          cmd.command.run.force_large_grid_wg_func = 1;
+
+          /* The format of the specialization follows the format of the
+             cache directory. E.g. 128-1-1-goffs0, 13-1-1-goffs0-smallgrid
+             or 0-0-0-goffs0. We thus assume the local size is always given
+             first. */
+
+          char *param1 = NULL, *param2 = NULL;
+          int params_found
+              = sscanf (token, "%lu-%lu-%lu-%m[^-]-%m[^-]",
+                        &cmd.command.run.pc.local_size[0],
+                        &cmd.command.run.pc.local_size[1],
+                        &cmd.command.run.pc.local_size[2], &param1, &param2);
+          if (param1 != NULL)
+            {
+              if (strncmp (param1, "goffs0", 6) == 0)
+                {
+                  cmd.command.run.pc.global_offset[0]
+                      = cmd.command.run.pc.global_offset[1]
+                      = cmd.command.run.pc.global_offset[2] = 0;
+
+                  if (param2 != NULL && strncmp (param2, "smallgrid", 8) == 0)
+                    {
+                      cmd.command.run.force_large_grid_wg_func = 0;
+                    }
+                }
+              else if (strncmp (param1, "smallgrid", 8) == 0)
+                {
+                  cmd.command.run.force_large_grid_wg_func = 0;
+                }
+            }
+          free (param1);
+          free (param2);
+
+          device->ops->compile_kernel (&cmd, kernel, device, 1);
+        }
+      free (temp);
     }
 
   POCL_UNLOCK_OBJ (program);
