@@ -64,6 +64,10 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
     LABELS "matrix"
     DEPENDS "pocl_version_check")
 
+# devices which don't support SPIR
+set_property(TEST "examples/matrix1" "examples/matrix1_local"
+  APPEND PROPERTY LABELS "vulkan")
+
 add_test(NAME "examples/matrix1_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/matrix1.bin####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"

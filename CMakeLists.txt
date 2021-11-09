@@ -187,6 +187,8 @@ option(ENABLE_HSA "Enable the HSA base profile runtime device driver" OFF)
 
 option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
+option(ENABLE_VULKAN "Enable the experimental driver for Vulkan API" OFF)
+
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
@@ -196,6 +198,8 @@ option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disa
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
+
+option(ENABLE_EXPERIMENTAL_DRIVERS "Enable compilation of experimental drivers. Required for Vulkan driver" OFF)
 
 option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" OFF)
 if(VISIBILITY_HIDDEN)
@@ -1318,34 +1322,43 @@ endif()
 
 ##########################################################
 
-# Use FindVulkan module added with CMAKE 3.7
-if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
-  message(STATUS "Using CMake module to find Vulkan")
-  find_package(Vulkan)
-endif()
+if (ENABLE_EXPERIMENTAL_DRIVERS AND ENABLE_VULKAN)
 
-if (NOT Vulkan_FOUND)
-  find_library(Vulkan_LIBRARY NAMES vulkan HINTS "$ENV{VULKAN_SDK}/lib" REQUIRED)
-  if (Vulkan_LIBRARY)
-    set(Vulkan_FOUND ON)
-    message("Using Vulkan library ${Vulkan_LIBRARY}")
+  # Use FindVulkan module added with CMAKE 3.7
+  if (NOT Vulkan_FOUND)
+    if (NOT CMAKE_VERSION VERSION_LESS 3.7.0)
+      find_package(Vulkan)
+    endif()
+    if (NOT Vulkan_FOUND)
+      find_library(Vulkan_LIBRARY NAMES vulkan HINTS "$ENV{VULKAN_SDK}/lib" REQUIRED)
+      find_path(Vulkan_INCLUDE_DIR NAMES vulkan.h PATH_SUFFIXES vulkan)
+    endif()
+    if (Vulkan_LIBRARY AND Vulkan_INCLUDE_DIR)
+      set(Vulkan_FOUND ON CACHE INTERNAL "Vulkan found")
+    endif()
+  endif()
+
+  if(NOT Vulkan_FOUND)
+    message(STATUS "Vulkan NOT found, disabling")
+    set(ENABLE_VULKAN OFF CACHE INTERNAL "Vulkan")
+  else()
+    if (NOT CLSPV)
+      find_program(CLSPV NAMES clspv)
+    endif()
+    if (CLSPV)
+      message(STATUS "using clspv")
+      set(ENABLE_CLSPV ON CACHE INTERNAL "grnpw")
+    else()
+      message(STATUS "please provide a path to clspv compiler with -DCLSPV=...")
+      set(ENABLE_CLSPV OFF CACHE INTERNAL "ntos")
+    endif()
+    message(STATUS "Using Vulkan library ${Vulkan_LIBRARY} Vulkan headers in ${Vulkan_INCLUDE_DIR}")
+    message(WARNING "Note: Vulkan backend is highly experimental and very incomplete. You'll also need CLSPV OpenCL-to-SPIRV compiler to use it." )
+    set(ENABLE_VULKAN ON CACHE INTERNAL "Vulkan")
+    set(OCL_DRIVERS "${OCL_DRIVERS} vulkan")
+    set(OCL_TARGETS "${OCL_TARGETS} vulkan")
   endif()
 endif()
-
-if (Vulkan_FOUND)
-  message(STATUS "Vulkan found, enabling")
-  message(WARNING "Vulkan is highly experimental and very incomplete. You'll also need CLSPV OpenCL-to-SPIRV compiler to use it." )
-  if (NOT CLSPV)
-    message(FATAL_ERROR "please provide a path to clspv compiler with -DCLSPV=...")
-  endif()
-  set(ENABLE_VULKAN ON CACHE INTERNAL "Vulkan")
-  set(OCL_DRIVERS "${OCL_DRIVERS} vulkan")
-  set(OCL_TARGETS "${OCL_TARGETS} vulkan")
-else()
-  message(STATUS "Vulkan NOT found")
-  set(ENABLE_VULKAN OFF CACHE INTERNAL "Vulkan")
-endif()
-
 
 ##########################################################
 

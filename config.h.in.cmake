@@ -15,6 +15,8 @@
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
+#cmakedefine ENABLE_CLSPV
+
 #define CLSPV "@CLSPV@"
 
 #cmakedefine ENABLE_ASAN

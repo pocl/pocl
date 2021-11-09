@@ -963,7 +963,8 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
       POCL_MSG_ERR ("pocl-vulkan requires a device to support: "
                     "VK_KHR_variable_pointers + "
                     "VK_KHR_storage_buffer_storage_class + "
-                    "VK_KHR_shader_non_semantic_info\n");
+                    "VK_KHR_shader_non_semantic_info;\n"
+                    "disabling device %s\n", dev->short_name);
       dev->available = CL_FALSE;
       return CL_SUCCESS;
     }
@@ -997,7 +998,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     }
 #else
   {
-    POCL_MSG_WARN ("Unknown Core count on device %u \n", j);
     vkGetPhysicalDeviceProperties (pd, &d->dev_props);
     dev->max_compute_units = 1;
   }
@@ -1095,8 +1095,19 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   // TODO addr bits
   dev->address_bits = 64;
 
+#ifdef ENABLE_CLSPV
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
+  dev->consumes_il_directly = CL_TRUE;
+#else
+  dev->compiler_available = CL_FALSE;
+  dev->linker_available = CL_FALSE;
+  /* TODO enable the following once the build callbacks
+   * are fixed to extract kernel metadata from SPIR-V
+   * directly instead of using clspv-reflection
+   */
+  dev->consumes_il_directly = CL_FALSE;
+#endif
 
   dev->short_name = dev->long_name = d->dev_props.deviceName;
 
@@ -1273,6 +1284,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                           const cl_program *input_headers,
                           const char **header_include_names, int link_program)
 {
+#ifdef ENABLE_CLSPV
   assert (program->devices[device_i]->compiler_available == CL_TRUE);
   assert (program->devices[device_i]->linker_available == CL_TRUE);
   assert (program->source);
@@ -1319,7 +1331,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
       for (i = 0; i < 1024; ++i)
         if (COMPILATION[i] == NULL)
           break;
-      // TODO ignores -D "bla bla bla"
+      // TODO mishandles quoted strings with spaces
       char *token = NULL;
       char delim[] = { ' ', 0 };
       token = strtok (program->compiler_options, delim);
@@ -1353,14 +1365,24 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   program->binary_sizes[device_i] = bin_size;
   program->data[device_i] = strdup (program_map_path);
   return CL_SUCCESS;
+#else
+  return CL_BUILD_PROGRAM_FAILURE;
+#endif
 }
 
 int
 pocl_vulkan_supports_binary (cl_device_id device, const size_t length,
                              const char *binary)
 {
-  // TODO bitcode_is_spirv_kernel (const char *bitcode, size_t size)
+/* TODO remove ifdef once the build callbacks
+* are fixed to extract kernel metadata from SPIR-V directly
+* instead of using clspv-reflection
+*/
+#ifdef ENABLE_CLSPV
   return bitcode_is_vulkan_spirv (binary, length);
+#else
+  return 0;
+#endif
 }
 
 int
@@ -1397,15 +1419,57 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
       return CL_SUCCESS;
     }
 
-  /* else: we have program->binaries[] which is SPIR-V */
+#ifdef ENABLE_CLSPV
+  /* we have program->binaries[] which is SPIR-V */
   assert (program->binaries[device_i]);
-  // TODO
+  int is_spirv = bitcode_is_vulkan_spirv(program->binaries[device_i], program->binary_sizes[device_i]);
+  assert (is_spirv != 0);
+
+  char program_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_create_program_cachedir (program, device_i,
+                                      program->binaries[device_i],
+                                      program->binary_sizes[device_i],
+                                      program_bc_path);
+  size_t len = strlen (program_bc_path);
+  assert (len > 3);
+  len -= 2;
+  program_bc_path[len] = 0;
+  char program_cl_path[POCL_FILENAME_LENGTH];
+  strncpy (program_cl_path, program_bc_path, POCL_FILENAME_LENGTH);
+  strcat (program_cl_path, "cl");
+  char program_spv_path[POCL_FILENAME_LENGTH];
+  strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
+  strcat (program_spv_path, "spv");
+  char program_map_path[POCL_FILENAME_LENGTH];
+  strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
+  strcat (program_map_path, "map");
+
+  if (!pocl_exists(program_spv_path))
+    {
+    pocl_write_file (program_spv_path, program->binaries[device_i], program->binary_sizes[device_i], 0, 1);
+    POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path),
+                          CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
+    }
+
+  if (!pocl_exists(program_map_path))
+    {
+      char *REFLECTION[] = { CLSPV "-reflection", program_spv_path, "-o",
+                             program_map_path, NULL };
+
+      pocl_run_command (REFLECTION);
+
+      POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path),
+                            CL_BUILD_PROGRAM_FAILURE,
+                            "clspv-reflection compilation error");
+    }
+  program->data[device_i] = strdup (program_map_path);
+
   return CL_SUCCESS;
 
-  POCL_RETURN_ERROR_ON ((program->pocl_binaries[device_i] == NULL),
-                        CL_BUILD_PROGRAM_FAILURE,
-                        "This device requires LLVM to "
-                        "build from SPIR/LLVM bitcode\n");
+
+#else
+  return CL_BUILD_PROGRAM_FAILURE;
+#endif
 }
 
 /*
@@ -1864,7 +1928,7 @@ pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
       copy.dstOffset = offset;
       copy.size = size;
 
-      POCL_MSG_ERR ("DEV2HOST : %zu / %zu \n", offset, size);
+      //POCL_MSG_ERR ("DEV2HOST : %zu / %zu \n", offset, size);
       vkCmdCopyBuffer (cb, memdata->device_buf, memdata->staging_buf, 1,
                        &copy);
       VULKAN_CHECK (vkEndCommandBuffer (cb));
@@ -1883,11 +1947,11 @@ pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
 
   if (mapped_ptr != host_ptr)
     {
-      POCL_MSG_ERR ("DEV2HOST : memcpy HOST_PTR %p <- MAPPED_PTR %p\n",
-                    host_ptr, mapped_ptr);
+      //POCL_MSG_ERR ("DEV2HOST : memcpy HOST_PTR %p <- MAPPED_PTR %p\n",
+      //              host_ptr, mapped_ptr);
       memcpy (host_ptr, mapped_ptr, size);
-      POCL_MSG_ERR ("DEV2HOST : SRC[7]:  %20lxu  DST[7]: %20lxu \n",
-                    ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
+      //POCL_MSG_ERR ("DEV2HOST : SRC[7]:  %20lxu  DST[7]: %20lxu \n",
+      //              ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
     }
 }
 
@@ -1903,16 +1967,16 @@ pocl_vulkan_host2dev (pocl_vulkan_device_data_t *d,
 
   if (mapped_ptr != host_ptr)
     {
-      POCL_MSG_ERR ("HOST2DEV : memcpy MAPPED_PTR %p <- HOST_PTR %p\n",
-                    mapped_ptr, host_ptr);
+      //POCL_MSG_ERR ("HOST2DEV : memcpy MAPPED_PTR %p <- HOST_PTR %p\n",
+      //              mapped_ptr, host_ptr);
       memcpy (mapped_ptr, host_ptr, size);
-      POCL_MSG_ERR ("HOST2DEV : DST[7]:  %20lxu  SRC[7]: %20lxu \n",
-                    ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
+      //POCL_MSG_ERR ("HOST2DEV : DST[7]:  %20lxu  SRC[7]: %20lxu \n",
+      //              ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
     }
 
   if (d->needs_staging_mem)
     {
-      POCL_MSG_ERR ("HOST2DEV : %zu / %zu\n", offset, size);
+      //POCL_MSG_ERR ("HOST2DEV : %zu / %zu\n", offset, size);
       VkMappedMemoryRange mem_range
           = { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, NULL,
               memdata->staging_mem, offset, size };
@@ -2275,8 +2339,8 @@ pocl_vulkan_setup_kernel_arguments (
   cl_uint i;
   for (i = 0; i < kernel->meta->num_args; ++i)
     {
-      POCL_MSG_ERR ("ARGUMENT: %u | SIZE %lu | VAL %p \n", i, pa[i].size,
-                    pa[i].value);
+      //POCL_MSG_ERR ("ARGUMENT: %u | SIZE %lu | VAL %p \n", i, pa[i].size,
+      //              pa[i].value);
       if (ARG_IS_LOCAL (kernel->meta->arg_info[i]))
         {
           /* If the argument to the kernel is a pointer to type T in __local
