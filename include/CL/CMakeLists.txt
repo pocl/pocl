@@ -35,6 +35,7 @@ if(INSTALL_OPENCL_HEADERS)
                 cl_ext.h
                 cl_egl.h
                 cl_ext_intel.h
+                cl_ext_pocl.h
                 cl_gl.h
                 cl_gl_ext.h
                 cl_half.h
