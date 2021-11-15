@@ -180,7 +180,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown139 */
   &POname(clGetDeviceAndHostTimer),
   &POname(clGetHostTimer),
-  NULL, /* &clUnknown142 */
+  &POname(clGetKernelSubGroupInfo),
   &POname(clSetDefaultDeviceCommandQueue),
   NULL, /* &clUnknown144 */
   NULL, /* &clUnknown145 */

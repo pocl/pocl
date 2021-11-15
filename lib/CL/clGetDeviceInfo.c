@@ -335,6 +335,11 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       POCL_RETURN_GETINFO_STR (device->spirv_version);
     else
       POCL_RETURN_GETINFO_STR ("");
+  case CL_DEVICE_MAX_NUM_SUB_GROUPS:
+    POCL_RETURN_GETINFO (cl_uint, device->max_num_sub_groups);
+  case CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS:
+    POCL_RETURN_GETINFO (cl_bool,
+                         device->sub_group_independent_forward_progress);
   }
 
   if(device->ops->get_device_info_ext != NULL) {
