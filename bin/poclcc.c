@@ -329,7 +329,21 @@ main(int argc, char **argv)
   program = clCreateProgramWithSource(context, 1, (const char **)&kernel_source, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  CHECK_CL_ERROR(clBuildProgram(program, 0, NULL, build_options, NULL, NULL));
+  err = clBuildProgram (program, 0, NULL, build_options, NULL, NULL);
+  if (err != CL_SUCCESS)
+    {
+      printf ("Compilation failed\n");
+      char build_log[4096];
+      size_t actual_size = 0;
+      err = clGetProgramBuildInfo (program, device_ids[opencl_device_id],
+                                   CL_PROGRAM_BUILD_LOG, 4095, build_log,
+                                   &actual_size);
+      if (err == CL_SUCCESS)
+        {
+          build_log[actual_size] = 0;
+          printf ("Error log: \n\n%s\n", build_log);
+        }
+    }
 
   size_t binary_sizes;
   char *binary;
