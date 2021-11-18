@@ -28,7 +28,7 @@
 CL_API_ENTRY void * CL_API_CALL
 POname (clGetExtensionFunctionAddressForPlatform) (cl_platform_id  platform,
                                                    const char *func_name)
-CL_EXT_SUFFIX__VERSION_1_2
+CL_API_SUFFIX__VERSION_1_2
 {
   cl_platform_id pocl_platform;
   cl_uint actual_num = 0;

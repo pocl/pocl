@@ -319,8 +319,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     else
       POCL_RETURN_GETINFO_STR ("");
 
-  /* NOTE: This will be renamed to CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES */
-  case CL_DEVICE_DEVICE_ENQUEUE_SUPPORT:
+  case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
     POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);

@@ -7,7 +7,7 @@
  */ 
 CL_API_ENTRY void * CL_API_CALL 
 POname(clGetExtensionFunctionAddress)(const char * func_name ) 
-CL_EXT_SUFFIX__VERSION_1_0
+CL_API_SUFFIX__VERSION_1_0
 {
 
 #ifdef BUILD_ICD

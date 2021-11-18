@@ -53,6 +53,7 @@ main (void)
   if (!nplatforms)
     return EXIT_FAILURE;
 
+#ifdef CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES
   for (i = 0; i < nplatforms; i++)
     {
       err = clGetDeviceIDs (platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
@@ -62,7 +63,7 @@ main (void)
       for (j = 0; j < ndevices; j++)
         {
           cl_uint device_queue_support;
-          err = clGetDeviceInfo (devices[j], CL_DEVICE_DEVICE_ENQUEUE_SUPPORT,
+          err = clGetDeviceInfo (devices[j], CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES,
                                  sizeof (cl_uint), &device_queue_support,
                                  NULL);
           CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
@@ -136,6 +137,7 @@ main (void)
             }
         }
     }
+#endif
 
   CHECK_CL_ERROR (clUnloadCompiler ());
 
