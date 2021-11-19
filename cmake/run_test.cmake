@@ -62,6 +62,16 @@ if(output_blessed)
     )
 
   if( test_not_successful )
+    find_program(DIFF "diff")
+    if(DIFF)
+      execute_process(
+        COMMAND "${DIFF}" "-d" "-u" "${output_blessed}" "${RANDOM_FILE}"
+        RESULT_VARIABLE test_not_successful
+        OUTPUT_VARIABLE stdout
+        ERROR_VARIABLE stderr
+        )
+      message("${stdout}\n${stderr}")
+    endif()
     message(SEND_ERROR "FAIL: Test output does not match the expected output; output stored in ${RANDOM_FILE}" )
   else()
     file(REMOVE "${RANDOM_FILE}")
