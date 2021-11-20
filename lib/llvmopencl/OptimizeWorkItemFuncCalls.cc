@@ -104,7 +104,7 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
 
       bool Unsupported = false;
       // Check that the argument list is something we can handle.
-      for (unsigned I = 0; I < Call->getNumArgOperands(); ++I) {
+      for (unsigned I = 0; I < Call->arg_size(); ++I) {
         llvm::ConstantInt *CallOperand =
           dyn_cast<llvm::ConstantInt>(Call->getArgOperand(I));
         if (CallOperand == nullptr)
@@ -134,7 +134,7 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
                 CallInst->getNumArgOperands());
 
         bool IsApplicable = true;
-        for (unsigned I = 0; I < MovedCall->getNumArgOperands(); ++I) {
+        for (unsigned I = 0; I < MovedCall->arg_size(); ++I) {
           llvm::ConstantInt *CallOperand =
             dyn_cast<llvm::ConstantInt>(CallInst->getArgOperand(I));
           llvm::ConstantInt *PrevCallOperand =
