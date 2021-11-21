@@ -1,6 +1,6 @@
 /* pocl-vulkan.h - Vulkan driver callback prototypes
 
-   Copyright (c) 2018 Michal Babej <michal.babej@tut.fi>
+   Copyright (c) 2018-2021 Michal Babej / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

@@ -254,6 +254,17 @@ pocl_size_ceil2_64 (uint64_t x)
   return ++x;
 }
 
+/* Rounds up to the (power of two) alignment */
+size_t pocl_align_value (size_t value, size_t alignment)
+{
+  if (value & (alignment-1))
+    {
+      value |= (alignment-1);
+      ++value;
+    }
+  return value;
+}
+
 #if defined(_WIN32) || defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__)    \
     || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
 #define HAVE_ALIGNED_ALLOC
@@ -2095,7 +2106,7 @@ float_to_half (float value)
 #define ShaderExecModel 0x1
 
 int
-bitcode_is_spirv_kernel (const char *bitcode, size_t size)
+bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
 {
   const uint32_t *bc32 = (const uint32_t *)bitcode;
   unsigned location = 0;
@@ -2117,18 +2128,11 @@ bitcode_is_spirv_kernel (const char *bitcode, size_t size)
     }
   while (instruction == OpCapab);
 
-  /* SPIR-V but not OpenCL-type. */
-  if (!is_opencl)
-    {
-      POCL_MSG_ERR ("SPIR-V binary provided, but is not using Kernel mode."
-                    "Pocl can't process this binary.\n");
-    }
-
   return is_opencl;
 }
 
 int
-bitcode_is_vulkan_spirv (const char *bitcode, size_t size)
+bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
 {
   const uint32_t *bc32 = (const uint32_t *)bitcode;
   unsigned location = 0;
@@ -2149,13 +2153,6 @@ bitcode_is_vulkan_spirv (const char *bitcode, size_t size)
         is_shader = 1;
     }
   while (instruction == OpCapab);
-
-  /* SPIR-V but not OpenCL-type. */
-  if (!is_shader)
-    {
-      POCL_MSG_ERR ("SPIR-V binary provided, but is not using Shader mode."
-                    "Pocl-vulkan can't process this binary.\n");
-    }
 
   return is_shader;
 }

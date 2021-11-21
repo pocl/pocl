@@ -103,9 +103,14 @@ typedef struct pocl_mem_identifier
   /* Extra pointer for drivers to use for anything
    *
    * Currently CUDA uses it to track ALLOC_HOST_PTR allocations.
+   * Vulkan uses it to store host-mapped staging memory
    */
   void *extra_ptr;
 
+  /* Extra integer for drivers to use for anything
+   *
+   * Currently Vulkan uses it to track vulkan memory requirements
+   */
   uint64_t extra;
 
 } pocl_mem_identifier;

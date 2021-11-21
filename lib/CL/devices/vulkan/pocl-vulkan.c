@@ -111,8 +111,6 @@
 
 static void *pocl_vulkan_driver_pthread (void *cldev);
 
-#define MAX_STATUSES 984
-
 typedef struct local_data
 {
   uint32_t ord;
@@ -156,14 +154,13 @@ typedef struct pocl_vulkan_kernel_data_s
   uint32_t constant_dset, constant_binding;
   uint32_t *constant_data;
 
-  /* kernarg buffer, for POD arguments.
-   * TODO this should be per-invocation not per-kernel cache entry */
+  /* kernarg buffer, for POD arguments */
   VkBuffer kernarg_buf;
   VkDeviceSize kernarg_buf_offset;
   VkDeviceSize kernarg_buf_size;
   chunk_info_t *kernarg_chunk;
 
-  // compiled shader binary
+  /* compiled shader binary */
   VkShaderModule shader;
 
   /* buffer for holding Constant data per kernel
@@ -174,9 +171,6 @@ typedef struct pocl_vulkan_kernel_data_s
   chunk_info_t *constant_chunk;
 } pocl_vulkan_kernel_data_t;
 
-typedef struct pocl_vulkan_kernel_cache_entry_s
-{
-} pocl_vulkan_kernel_cache_entry_t;
 
 typedef struct pocl_vulkan_event_data_s
 {
@@ -217,12 +211,12 @@ typedef struct pocl_vulkan_device_data_s
   size_t constant_size;
   memory_region_t constant_region;
 
-  /* staging area, for devices which have memory shared with host */
+  /* staging area, for copying kernarg_mem & constant_mem to device-local
+   * memory, if we can't do it more efficiently (kernarg_is_mappable == 0) */
   VkDeviceMemory staging_mem;
   VkBuffer staging_buf;
   size_t staging_size;
   void *staging_mapped;
-  // memory_region_t staging_region;
 
   VkPhysicalDeviceProperties dev_props;
   VkPhysicalDeviceMemoryProperties mem_props;
@@ -242,21 +236,19 @@ typedef struct pocl_vulkan_device_data_s
   VkCommandBuffer command_buffer;
   VkCommandBuffer tmp_command_buffer;
 
+  /* integrated GPUs have different Vulkan memory layout */
   int device_is_iGPU;
   /* device needs staging buffers for memory transfers
    * TODO this might be equal to "device_is_iGPU" */
   int needs_staging_mem;
-  /* kernarg memory is equal to device-local memory
-   * true for intel+nvidia, false for AMD (GART memory) */
+  /* 1 if kernarg memory is equal to device-local memory */
   int kernarg_is_device_mem;
-  /* kernarg memory is directly mappable to host AS
-   * true for intel+amd, false for nvidia */
+  /* 1 if kernarg memory is directly mappable to host AS */
   int kernarg_is_mappable;
 
-  // work_queue
   _cl_command_node *work_queue;
 
-  // driver wake + lock
+  /* driver wake + lock */
   pthread_cond_t wakeup_cond
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   POCL_FAST_LOCK_T wq_lock_fast
@@ -276,8 +268,7 @@ pocl_vulkan_abort_on_vk_error (VkResult status, unsigned line,
   const char *str = code;
   if (status != VK_SUCCESS)
     {
-      // TODO convert vulkan errors to strings
-      //(status, &str);
+      /* TODO convert vulkan errors to strings */
       POCL_MSG_PRINT2 (VULKAN, func, line,
                        "Error from Vulkan Runtime call:\n");
       POCL_ABORT ("%s\n", str);
@@ -286,17 +277,7 @@ pocl_vulkan_abort_on_vk_error (VkResult status, unsigned line,
 
 #define VULKAN_CHECK(code)                                                    \
   pocl_vulkan_abort_on_vk_error (code, __LINE__, __FUNCTION__, #code)
-static size_t
-page_size_align (size_t val)
-{
-  size_t tmp = val;
-  if (tmp % PAGE_SIZE)
-    {
-      tmp |= (PAGE_SIZE - 1);
-      ++tmp;
-    }
-  return tmp;
-}
+
 
 static VkResult
 pocl_vulkan_get_best_compute_queue (VkPhysicalDevice dev,
@@ -361,7 +342,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
 
   if (d->device_is_iGPU)
     {
-      // integrated GPU
+      /* integrated GPU */
       heap_i = UINT32_MAX;
       for (i = 0; i < d->mem_props.memoryHeapCount; ++i)
         {
@@ -418,8 +399,9 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
               && (d->device_mem_type == UINT32_MAX))
             d->device_mem_type = i;
 
-          // AMD has this, Nvidia doesn't. A small buffer accessible by both
-          // CPU and GPU, useful for kernel args and constant mem
+          /* older Vulkan implementation on Nvidia don't expose this.
+ *           A small memory heap accessible by both CPU and GPU,
+*            useful for kernel args and constant mem */
           if ((f & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
               && (f & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
               && (f & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
@@ -463,16 +445,19 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
         {
           gart_i = d->mem_props.memoryTypes[gart_mem_type].heapIndex;
           gart_mem_size = d->mem_props.memoryHeaps[gart_i].size;
+          assert (gart_mem_size > KERNARG_BUFFER_SIZE);
         }
+      else
+        gart_i = heap_i;
 
-      // if we have separate heap for GART memory, use it for kernel arguments
+      /* if we have separate heap for GART memory, use it for kernel arguments */
       if (gart_i != heap_i && gart_i != staging_i)
         {
           d->kernarg_is_device_mem = 0;
           d->kernarg_is_mappable = 1;
 
           d->kernarg_mem_type = gart_mem_type;
-          d->kernarg_size = gart_mem_size;
+          d->kernarg_size = KERNARG_BUFFER_SIZE;
 
           d->constant_mem_type = d->device_mem_type;
           d->constant_size = CONSTANT_BUFFER_SIZE;
@@ -501,7 +486,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
                          (size_t) (d->kernarg_size >> 20),
                          (size_t) (d->constant_size >> 20));
 
-  // preallocate kernarg memory
+  /* preallocate kernarg memory */
 
   VkMemoryAllocateInfo allocate_info
       = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, NULL, d->kernarg_size,
@@ -516,7 +501,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
   POCL_MSG_PRINT_VULKAN ("Allocated %zu memory for kernel arguments\n",
                          d->kernarg_size);
 
-  // preallocate constant memory
+  /* preallocate constant memory */
 
   allocate_info.allocationSize = d->constant_size;
   allocate_info.memoryTypeIndex = d->constant_mem_type;
@@ -531,7 +516,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
   POCL_MSG_PRINT_VULKAN ("Allocated %zu memory for constant memory\n",
                          d->constant_size);
 
-  // create staging buf, if needed
+  /* create staging buf, if needed */
 
   if ((!d->kernarg_is_mappable) && (d->kernarg_is_device_mem))
     {
@@ -540,7 +525,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
       VkBufferCreateInfo buffer_info
           = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
               NULL,
-              0, // TODO flags
+              0, /* TODO flags */
               d->staging_size,
               VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
                   | VK_BUFFER_USAGE_TRANSFER_DST_BIT
@@ -570,9 +555,6 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
 
   dev->max_constant_buffer_size = d->constant_size;
 
-  // TODO
-  //(cl_uint)d->dev_props.limits.minStorageBufferOffsetAlignment * 8;
-  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
 }
 
 static void
@@ -580,13 +562,13 @@ pocl_vulkan_enqueue_staging_buffer_copy (pocl_vulkan_device_data_t *d,
                                          VkBuffer dest_buf,
                                          VkDeviceSize dest_size)
 {
-
+  dest_size = pocl_align_value(dest_size, d->dev_props.limits.nonCoherentAtomSize);
   VkMappedMemoryRange mem_range = { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,
                                     NULL, d->staging_mem, 0, dest_size };
-  // TODO only if non-coherent
+  /* TODO only if non-coherent */
   VULKAN_CHECK (vkFlushMappedMemoryRanges (d->device, 1, &mem_range));
 
-  // copy staging mem -> dev mem
+  /* copy staging mem -> dev mem */
   VkCommandBuffer cb = d->tmp_command_buffer;
   VULKAN_CHECK (vkResetCommandBuffer (cb, 0));
   VULKAN_CHECK (vkBeginCommandBuffer (cb, &d->cmd_buf_begin_info));
@@ -620,16 +602,16 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
 
   ops->probe = pocl_vulkan_probe;
   ops->init = pocl_vulkan_init;
-  //  ops->uninit = pocl_vulkan_uninit;
-  //  ops->reinit = pocl_vulkan_reinit;
+  /*  ops->uninit = pocl_vulkan_uninit; */
+  /*  ops->reinit = pocl_vulkan_reinit; */
 
   ops->read = pocl_vulkan_read;
-  //  ops->read_rect = pocl_vulkan_read_rect;
+  ops->read_rect = pocl_vulkan_read_rect;
   ops->write = pocl_vulkan_write;
-  //  ops->write_rect = pocl_vulkan_write_rect;
+  ops->write_rect = pocl_vulkan_write_rect;
   ops->copy = pocl_vulkan_copy;
-  //  ops->copy_rect = pocl_vulkan_copy_rect;
-  //  ops->memfill = pocl_vulkan_memfill;
+  ops->copy_rect = pocl_vulkan_copy_rect;
+  ops->memfill = pocl_vulkan_memfill;
   ops->map_mem = pocl_vulkan_map_mem;
   ops->unmap_mem = pocl_vulkan_unmap_mem;
   ops->can_migrate_d2d = NULL;
@@ -657,8 +639,8 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
   ops->flush = pocl_vulkan_flush;
   ops->build_hash = pocl_vulkan_build_hash;
 
-  // TODO timing
-  // ops->get_timer_value = pocl_vulkan_get_timer_value;
+  /* TODO get timing data from Vulkan API */
+  /* ops->get_timer_value = pocl_vulkan_get_timer_value; */
 
   ops->wait_event = pocl_vulkan_wait_event;
   ops->notify_event_finished = pocl_vulkan_notify_event_finished;
@@ -670,18 +652,19 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
   ops->init_queue = pocl_vulkan_init_queue;
   ops->free_queue = pocl_vulkan_free_queue;
 
-  // ########### IMAGES ############
-
-  //  ops->create_image = NULL;
-  //  ops->free_image = NULL;
-  //  ops->create_sampler = NULL;
-  //  ops->free_sampler = NULL;
-  //  ops->copy_image_rect = pocl_vulkan_copy_image_rect;
-  //  ops->write_image_rect = pocl_vulkan_write_image_rect;
-  //  ops->read_image_rect = pocl_vulkan_read_image_rect;
-  //  ops->map_image = pocl_vulkan_map_image;
-  //  ops->unmap_image = pocl_vulkan_unmap_image;
-  //  ops->fill_image = pocl_vulkan_fill_image;
+  /* ########### IMAGES ############ */
+  /*
+  ops->create_image = NULL;
+  ops->free_image = NULL;
+  ops->create_sampler = NULL;
+  ops->free_sampler = NULL;
+  ops->copy_image_rect = pocl_vulkan_copy_image_rect;
+  ops->write_image_rect = pocl_vulkan_write_image_rect;
+  ops->read_image_rect = pocl_vulkan_read_image_rect;
+  ops->map_image = pocl_vulkan_map_image;
+  ops->unmap_image = pocl_vulkan_unmap_image;
+  ops->fill_image = pocl_vulkan_fill_image;
+  */
 }
 
 /* The binary format version that this driver code can read. */
@@ -698,15 +681,15 @@ pocl_vulkan_build_hash (cl_device_id device)
 static const VkApplicationInfo pocl_vulkan_application_info
     = { VK_STRUCTURE_TYPE_APPLICATION_INFO,
         NULL,
-        "Pocl OpenCL application",
+        "PoCL OpenCL application",
         0,
-        "Pocl " POCL_VERSION_BASE,
+        "PoCL " POCL_VERSION_BASE,
         VK_MAKE_VERSION (1, 2, 0),
         VK_API_VERSION_1_1 };
 
 #define MAX_VULKAN_DEVICES 32
 
-// TODO replace with dynamic arrays
+/* TODO replace with dynamic arrays */
 static VkInstance pocl_vulkan_instance;
 static unsigned pocl_vulkan_device_count;
 static VkPhysicalDevice pocl_vulkan_devices[MAX_VULKAN_DEVICES];
@@ -717,7 +700,7 @@ static int pocl_vulkan_debug_utils_available;
 
 static VkDebugReportCallbackEXT debug_report_callback_ext;
 
-// Vulkan debug callback
+/* Vulkan debug callback */
 static VKAPI_ATTR VkBool32 VKAPI_CALL
 debug_callback (VkDebugReportFlagsEXT flags,
                 VkDebugReportObjectTypeEXT objType, uint64_t obj,
@@ -746,10 +729,12 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
   cinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   cinfo.pApplicationInfo = &pocl_vulkan_application_info;
 
+#ifdef ENABLE_CLSPV
   if (!pocl_exists (CLSPV))
     POCL_ABORT ("Can't find CLSPV compiler\n");
+#endif
 
-  // extensions
+  /* extensions */
   uint32_t ext_prop_count = 128;
   VkExtensionProperties properties[128];
   VULKAN_CHECK (vkEnumerateInstanceExtensionProperties (NULL, &ext_prop_count,
@@ -783,7 +768,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
         }
     }
 
-  // layers
+  /* layers */
   uint32_t layer_count = 128;
   VkLayerProperties layers[128];
   VULKAN_CHECK (vkEnumerateInstanceLayerProperties (&layer_count, layers));
@@ -852,7 +837,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
         }
     }
 
-  // TODO ignore llvmpipe -type devices
+  /* TODO ignore llvmpipe -type devices */
   VULKAN_CHECK (vkEnumeratePhysicalDevices (pocl_vulkan_instance,
                                             &pocl_vulkan_device_count, 0));
   assert (pocl_vulkan_device_count < MAX_VULKAN_DEVICES);
@@ -948,6 +933,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
           requested_exts[requested_ext_count++]
               = "VK_KHR_storage_buffer_storage_class";
         }
+/* TODO this will be required once we get rid of clspv-reflection
       if (strncmp ("VK_KHR_shader_non_semantic_info",
                    dev_exts[i].extensionName, VK_MAX_EXTENSION_NAME_SIZE)
           == 0)
@@ -956,9 +942,10 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
           requested_exts[requested_ext_count++]
               = "VK_KHR_shader_non_semantic_info";
         }
+*/
     }
 
-  if (have_needed_extensions < 3)
+  if (have_needed_extensions < 2)
     {
       POCL_MSG_ERR ("pocl-vulkan requires a device to support: "
                     "VK_KHR_variable_pointers + "
@@ -985,7 +972,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
       general_props.pNext = &shader_core_properties;
       general_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 
-      // After this call, shader_core_properties has been populated
       vkGetPhysicalDeviceProperties2 (pocl_vulkan_devices[j], &general_props);
 
       memcpy (&d->dev_props, &general_props.properties,
@@ -1006,13 +992,13 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO get this from Vulkan API */
   dev->max_clock_frequency = 1000;
 
-  // clspv:
-  //  If the short/ushort types are used in the OpenCL C:
-  //  The shaderInt16 field of VkPhysicalDeviceFeatures must be set to true.
-  //        shaderFloat64                           = 1
-  //        shaderInt64                             = 1
-  //        shaderInt16                             = 0
-
+  /* clspv:
+    If the short/ushort types are used in the OpenCL C:
+    The shaderInt16 field of VkPhysicalDeviceFeatures must be set to true.
+          shaderFloat64                           = 1
+          shaderInt64                             = 1
+          shaderInt16                             = 0
+  */
   VkPhysicalDeviceFeatures dev_features = { 0 };
   if (dev_features.shaderFloat64)
     {
@@ -1028,10 +1014,12 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     }
   dev->has_64bit_long = (dev_features.shaderInt64 > 0);
 
-  // If images are used in the OpenCL C:
-  // The shaderStorageImageReadWithoutFormat field of VkPhysicalDeviceFeatures
-  // must be set to true. The shaderStorageImageWriteWithoutFormat field of
-  // VkPhysicalDeviceFeatures must be set to true.
+  /*
+   If images are used in the OpenCL C:
+   The shaderStorageImageReadWithoutFormat field of VkPhysicalDeviceFeatures
+   must be set to true. The shaderStorageImageWriteWithoutFormat field of
+   VkPhysicalDeviceFeatures must be set to true.
+  */
 
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;
@@ -1041,8 +1029,8 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
                                    0,
                                    1,
                                    &queue_fam_cinfo,
-                                   0, // deprecated
-                                   0, // deprecated
+                                   0, /* deprecated */
+                                   0, /* deprecated */
                                    requested_ext_count,
                                    requested_exts,
                                    &dev_features };
@@ -1070,30 +1058,36 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     {
       dev->vendor = "Unknown";
     }
-  // TODO
+  /* TODO get from API */
   dev->preferred_wg_size_multiple = 64;
 
   VkPhysicalDeviceType dtype = d->dev_props.deviceType;
+  dev->short_name = dev->long_name = d->dev_props.deviceName;
+
   if (dtype == VK_PHYSICAL_DEVICE_TYPE_CPU)
     dev->type = CL_DEVICE_TYPE_CPU;
-  else if (dtype == VK_PHYSICAL_DEVICE_TYPE_OTHER)
-    dev->type = CL_DEVICE_TYPE_CUSTOM;
+  else if (dtype == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+    {
+      dev->type = CL_DEVICE_TYPE_GPU;
+      d->device_is_iGPU = 0;
+    }
+  else if (dtype == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
+    {
+      dev->type = CL_DEVICE_TYPE_GPU;
+      d->device_is_iGPU = 1;
+    }
   else
     {
-      d->device_is_iGPU = (dtype == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU);
-      dev->type = CL_DEVICE_TYPE_GPU;
+      dev->type = CL_DEVICE_TYPE_CUSTOM;
+      POCL_MSG_ERR ("ignoring Vulkan device %s because of unsupported device type", dev->short_name);
+      dev->available = CL_FALSE;
+      return CL_SUCCESS;
     }
 
-  dev->llvm_target_triplet = NULL;
-  dev->llvm_cpu = NULL;
-
-  dev->spmd = CL_TRUE;
-  dev->workgroup_pass = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
-
-  dev->autolocals_to_args = 0;
-  // TODO addr bits
   dev->address_bits = 64;
+  /* TODO: (cl_uint)d->dev_props.limits.minStorageBufferOffsetAlignment * 8; */
+  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
 
 #ifdef ENABLE_CLSPV
   dev->compiler_available = CL_TRUE;
@@ -1108,8 +1102,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
    */
   dev->consumes_il_directly = CL_FALSE;
 #endif
-
-  dev->short_name = dev->long_name = d->dev_props.deviceName;
 
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
@@ -1186,7 +1178,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->global_mem_cache_size = 32768; /* TODO we should detect somehow.. */
   dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
 
-  // TODO VkPhysicalDeviceVulkan11Properties . maxMemoryAllocationSize
+  /* TODO VkPhysicalDeviceVulkan11Properties . maxMemoryAllocationSize */
   dev->max_mem_alloc_size = max (dev->global_mem_size / 2, 128 * 1024 * 1024);
 
   VkCommandPoolCreateInfo pool_cinfo;
@@ -1250,7 +1242,8 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   return CL_SUCCESS;
 }
 
-/*
+#if 0
+/* TODO finish implementation */
 cl_int
 pocl_vulkan_uninit (unsigned j, cl_device_id device)
 {
@@ -1260,22 +1253,21 @@ pocl_vulkan_uninit (unsigned j, cl_device_id device)
 
   vkDestroyDescriptorPool (d->device, d->buf_descriptor_pool, NULL);
 
-  // destroy logical device
+  /* destroy logical device */
   vkDestroyDevice (d->device, NULL);
 
   return CL_SUCCESS;
 
-  // TODO this must be called after all devices !!
-  //vkDestroyInstance(pocl_vulkan_instance, NULL);
+  /* TODO this must be called after all devices !! */
+  vkDestroyInstance(pocl_vulkan_instance, NULL);
 }
 
-// TODO FIXME
 cl_ulong
 pocl_vulkan_get_timer_value(void *data)
 {
   return pocl_gettimemono_ns();
 }
-*/
+#endif
 
 
 int
@@ -1321,7 +1313,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   char *COMPILATION[1024]
       = { CLSPV, "-x=cl", "--spv-version=1.0", "-cl-kernel-arg-info",
           "--keep-unused-arguments", "--uniform-workgroup-size",
-          //"--pod-pushconstant",  // TODO push constants should be faster
+          /* "--pod-pushconstant",*/  /* TODO push constants should be faster */
           "--pod-ubo", "--cluster-pod-kernel-args", "-o", program_spv_path,
           program_cl_path, NULL };
 
@@ -1331,7 +1323,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
       for (i = 0; i < 1024; ++i)
         if (COMPILATION[i] == NULL)
           break;
-      // TODO mishandles quoted strings with spaces
+      /* TODO mishandles quoted strings with spaces */
       char *token = NULL;
       char delim[] = { ' ', 0 };
       token = strtok (program->compiler_options, delim);
@@ -1379,7 +1371,7 @@ pocl_vulkan_supports_binary (cl_device_id device, const size_t length,
 * instead of using clspv-reflection
 */
 #ifdef ENABLE_CLSPV
-  return bitcode_is_vulkan_spirv (binary, length);
+  return bitcode_is_spirv_execmodel_shader (binary, length);
 #else
   return 0;
 #endif
@@ -1392,8 +1384,8 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
 
   if (program->pocl_binaries[device_i])
     {
-      // clCreateProgramWithBinary has unpacked the poclbin,
-      // but it didn't read the binary yet, b/c it's not called program.bc
+      /* clCreateProgramWithBinary has unpacked the poclbin,
+         but it didn't read the binary yet, b/c it's not called program.bc */
       assert (program->binaries[device_i] == NULL);
 
       char program_bc_path[POCL_FILENAME_LENGTH];
@@ -1422,7 +1414,7 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
 #ifdef ENABLE_CLSPV
   /* we have program->binaries[] which is SPIR-V */
   assert (program->binaries[device_i]);
-  int is_spirv = bitcode_is_vulkan_spirv(program->binaries[device_i], program->binary_sizes[device_i]);
+  int is_spirv = bitcode_is_spirv_execmodel_shader(program->binaries[device_i], program->binary_sizes[device_i]);
   assert (is_spirv != 0);
 
   char program_bc_path[POCL_FILENAME_LENGTH];
@@ -1472,13 +1464,14 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
 #endif
 }
 
-/*
+#if 0
+/* TODO implement */
 int
 pocl_vulkan_link_program (cl_program program, cl_uint device_i,
                           cl_uint num_input_programs,
                           const cl_program *input_programs, int
 create_library);
-*/
+#endif
 
 int
 pocl_vulkan_free_program (cl_device_id device, cl_program program,
@@ -1494,9 +1487,9 @@ static int
 parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
 {
   char delim[2] = { ',', 0x0 };
-  // kernel_decl
+  /* kernel_decl */
   char *token = strtok (line, delim);
-  // name
+  /* name */
   token = strtok (NULL, delim);
 
   p->name = strdup (token);
@@ -1508,9 +1501,8 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
   p->has_arg_metadata
       = POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
   p->arg_info = calloc (MAX_ARGS, sizeof (pocl_argument_info));
-  // TODO
   p->total_argument_storage_size = 0;
-  // TODO
+  /* TODO */
   p->build_hash = NULL;
   p->builtin_kernel = 0;
 }
@@ -1539,13 +1531,13 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
     {
       if (strcmp (tokens[j], "kernel") == 0)
         {
-          // skip
+          /* skip */
         }
-      if (strcmp (tokens[j], "arg") == 0) // name
+      if (strcmp (tokens[j], "arg") == 0) /* name */
         {
           arg_name = strdup (tokens[j + 1]);
         }
-      if (strcmp (tokens[j], "argOrdinal") == 0) // poradove
+      if (strcmp (tokens[j], "argOrdinal") == 0)
         {
           errno = 0;
           ord = strtol (tokens[j + 1], NULL, 10);
@@ -1571,17 +1563,17 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
         }
       if (strcmp (tokens[j], "argKind") == 0)
         {
-          // kernel,matrix_transpose,arg,output,argOrdinal,0,descriptorSet,0,binding,0,offset,0,argKind,buffer
+          /* kernel,matrix_transpose,arg,output,argOrdinal,0,descriptorSet,0,binding,0,offset,0,argKind,buffer */
           if (strcmp (tokens[j + 1], "buffer") == 0)
             {
               kind = POCL_ARG_TYPE_POINTER;
             }
-          // kernel,boxadd,arg,SZ,argOrdinal,5,descriptorSet,0,binding,3,offset,8,argKind,pod_ubo,argSize,4
+          /* kernel,boxadd,arg,SZ,argOrdinal,5,descriptorSet,0,binding,3,offset,8,argKind,pod_ubo,argSize,4 */
           else if (strcmp (tokens[j + 1], "pod_ubo") == 0)
             {
               kind = POCL_ARG_TYPE_NONE;
             }
-          // kernel,matrix_transpose,arg,tile,argOrdinal,2,argKind,local,arrayElemSize,4,arrayNumElemSpecId,3
+          /* kernel,matrix_transpose,arg,tile,argOrdinal,2,argKind,local,arrayElemSize,4,arrayNumElemSpecId,3 */
           else if (strcmp (tokens[j + 1], "local") == 0)
             {
               kind = POCL_ARG_TYPE_POINTER;
@@ -1613,26 +1605,26 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
     free (tokens[i]);
 
   assert (arg_name != NULL);
-  p->arg_info[p->num_args].name = arg_name;
-  p->arg_info[p->num_args].type = kind;
+  p->arg_info[ord].name = arg_name;
+  p->arg_info[ord].type = kind;
 
-  // local
+  /* local */
   if (kind == POCL_ARG_TYPE_POINTER && specID != UINT32_MAX)
     {
-      p->arg_info[p->num_args].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL;
-      p->arg_info[p->num_args].type_size = sizeof (cl_mem);
+      p->arg_info[ord].address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL;
+      p->arg_info[ord].type_size = sizeof (cl_mem);
       pp->locals[pp->num_locals].elem_size = elemSize;
       pp->locals[pp->num_locals].spec_id = specID;
       pp->locals[pp->num_locals].ord = ord;
       ++pp->num_locals;
     }
 
-  // buffer
+  /* buffer */
   if (kind == POCL_ARG_TYPE_POINTER && specID == UINT32_MAX)
     {
-      p->arg_info[p->num_args].address_qualifier
+      p->arg_info[ord].address_qualifier
           = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-      p->arg_info[p->num_args].type_size = sizeof (cl_mem);
+      p->arg_info[ord].type_size = sizeof (cl_mem);
       pp->bufs[pp->num_bufs].binding = binding;
       pp->bufs[pp->num_bufs].dset = dSet;
       pp->bufs[pp->num_bufs].offset = offset;
@@ -1640,13 +1632,13 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
       ++pp->num_bufs;
     }
 
-  // POD
+  /* POD */
   if (kind == POCL_ARG_TYPE_NONE)
     {
-      p->arg_info[p->num_args].address_qualifier
+      p->arg_info[ord].address_qualifier
           = CL_KERNEL_ARG_ADDRESS_PRIVATE;
       assert (size > 0);
-      p->arg_info[p->num_args].type_size = size;
+      p->arg_info[ord].type_size = size;
       pp->pods[pp->num_pods].binding = binding;
       pp->pods[pp->num_pods].dset = dSet;
       pp->pods[pp->num_pods].offset = offset;
@@ -1656,7 +1648,7 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
       pp->num_pod_bytes += size;
     }
 
-  // TODO constants !!!
+  /* TODO constants !!! */
 
   ++p->num_args;
   assert (p->num_args < MAX_ARGS);
@@ -1668,7 +1660,7 @@ pocl_vulkan_setup_metadata (cl_device_id device, cl_program program,
 {
   assert (program->data[program_device_i]);
 
-  // read map
+  /* read map file from clspv-reflection */
   char *content;
   uint64_t content_size;
   int r = pocl_read_file (program->data[program_device_i], &content,
@@ -1740,8 +1732,6 @@ pocl_vulkan_build_poclbinary (cl_program program, cl_uint device_i)
 
   assert (program->binaries[device_i]);
 
-  // TODO just write out the binaries
-
   POCL_UNLOCK_OBJ (program);
 
   return CL_SUCCESS;
@@ -1778,7 +1768,6 @@ pocl_vulkan_init_queue (cl_device_id dev, cl_command_queue queue)
   queue->data
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  //  int r = POCL_INIT_COND (cond);
   int r = pthread_cond_init (cond, NULL);
   assert (r == 0);
   return CL_SUCCESS;
@@ -1788,7 +1777,6 @@ int
 pocl_vulkan_free_queue (cl_device_id dev, cl_command_queue queue)
 {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  //  int r = POCL_DESTROY_COND (cond);
   int r = pthread_cond_destroy (cond);
   assert (r == 0);
   POCL_MEM_FREE (queue->data);
@@ -1803,7 +1791,6 @@ pocl_vulkan_notify_cmdq_finished (cl_command_queue cq)
    * user threads waiting on the same command queue
    * in pthread_scheduler_wait_cq(). */
   pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  //  int r = POCL_BROADCAST_COND (cq_cond);
   int r = pthread_cond_broadcast (cq_cond);
   assert (r == 0);
 }
@@ -1848,7 +1835,6 @@ pocl_vulkan_join (cl_device_id device, cl_command_queue cq)
 void
 pocl_vulkan_flush (cl_device_id device, cl_command_queue cq)
 {
-  // TODO later...
 }
 
 void
@@ -1907,8 +1893,6 @@ pocl_vulkan_wait_event (cl_device_id device, cl_event event)
 
 /****************************************************************************************/
 
-// TODO: vkFlushMappedMemoryRanges and vkInvalidateMappedMemoryRanges
-
 static void
 pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
                       pocl_vulkan_mem_data_t *memdata,
@@ -1917,18 +1901,25 @@ pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
 {
   void *mapped_ptr = (char *)mem_id->extra_ptr + offset;
 
+  /* TODO: vkFlushMappedMemoryRanges and vkInvalidateMappedMemoryRanges */
+
   if (d->needs_staging_mem)
     {
-      // copy dev mem -> staging mem
+      size_t size2 = pocl_align_value(size, d->dev_props.limits.nonCoherentAtomSize);
+      size_t offset2 = offset;
+      if (offset2 + size2 > mem_id->extra)
+        offset2 = mem_id->extra - size2;
+
+      /* copy dev mem -> staging mem */
       VkCommandBuffer cb = d->command_buffer;
       VULKAN_CHECK (vkResetCommandBuffer (cb, 0));
       VULKAN_CHECK (vkBeginCommandBuffer (cb, &d->cmd_buf_begin_info));
       VkBufferCopy copy;
-      copy.srcOffset = offset;
-      copy.dstOffset = offset;
-      copy.size = size;
+      copy.srcOffset = offset2;
+      copy.dstOffset = offset2;
+      copy.size = size2;
 
-      //POCL_MSG_ERR ("DEV2HOST : %zu / %zu \n", offset, size);
+      /* POCL_MSG_ERR ("DEV2HOST : %zu / %zu \n", offset, size); */
       vkCmdCopyBuffer (cb, memdata->device_buf, memdata->staging_buf, 1,
                        &copy);
       VULKAN_CHECK (vkEndCommandBuffer (cb));
@@ -1937,21 +1928,17 @@ pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
           vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
       VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
 
-      // copy staging mem -> host_ptr
+      /* copy staging mem -> host_ptr */
       VkMappedMemoryRange mem_range
           = { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, NULL,
-              memdata->staging_mem, offset, size };
-      // TODO only if non-coherent
+              memdata->staging_mem, offset2, size2 };
+      /* TODO only if non-coherent */
       VULKAN_CHECK (vkInvalidateMappedMemoryRanges (d->device, 1, &mem_range));
     }
 
   if (mapped_ptr != host_ptr)
     {
-      //POCL_MSG_ERR ("DEV2HOST : memcpy HOST_PTR %p <- MAPPED_PTR %p\n",
-      //              host_ptr, mapped_ptr);
       memcpy (host_ptr, mapped_ptr, size);
-      //POCL_MSG_ERR ("DEV2HOST : SRC[7]:  %20lxu  DST[7]: %20lxu \n",
-      //              ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
     }
 }
 
@@ -1962,35 +1949,35 @@ pocl_vulkan_host2dev (pocl_vulkan_device_data_t *d,
                       const void *restrict host_ptr, size_t offset,
                       size_t size)
 {
-
   void *mapped_ptr = (char *)mem_id->extra_ptr + offset;
 
   if (mapped_ptr != host_ptr)
     {
-      //POCL_MSG_ERR ("HOST2DEV : memcpy MAPPED_PTR %p <- HOST_PTR %p\n",
-      //              mapped_ptr, host_ptr);
       memcpy (mapped_ptr, host_ptr, size);
-      //POCL_MSG_ERR ("HOST2DEV : DST[7]:  %20lxu  SRC[7]: %20lxu \n",
-      //              ((size_t *)mapped_ptr)[7], ((size_t *)host_ptr)[7]);
     }
 
   if (d->needs_staging_mem)
     {
-      //POCL_MSG_ERR ("HOST2DEV : %zu / %zu\n", offset, size);
+      size_t size2 = pocl_align_value(size, d->dev_props.limits.nonCoherentAtomSize);
+      size_t offset2 = offset;
+      if (offset2 + size2 > mem_id->extra)
+        offset2 = mem_id->extra - size2;
+
+      /* POCL_MSG_ERR ("HOST2DEV : %zu / %zu\n", offset, size); */
       VkMappedMemoryRange mem_range
           = { VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, NULL,
-              memdata->staging_mem, offset, size };
-      // TODO only if non-coherent
+              memdata->staging_mem, offset2, size2 };
+      /* TODO only if non-coherent */
       VULKAN_CHECK (vkFlushMappedMemoryRanges (d->device, 1, &mem_range));
 
-      // copy staging mem -> dev mem
+      /* copy staging mem -> dev mem */
       VkCommandBuffer cb = d->command_buffer;
       VULKAN_CHECK (vkResetCommandBuffer (cb, 0));
       VULKAN_CHECK (vkBeginCommandBuffer (cb, &d->cmd_buf_begin_info));
       VkBufferCopy copy;
-      copy.srcOffset = offset;
-      copy.dstOffset = offset;
-      copy.size = size;
+      copy.srcOffset = offset2;
+      copy.dstOffset = offset2;
+      copy.size = size2;
 
       vkCmdCopyBuffer (cb, memdata->staging_buf, memdata->device_buf, 1,
                        &copy);
@@ -2040,7 +2027,7 @@ pocl_vulkan_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
   pocl_vulkan_mem_data_t *src = src_mem_id->mem_ptr;
   pocl_vulkan_mem_data_t *dst = dst_mem_id->mem_ptr;
 
-  // copy dev mem -> dev mem
+  /* copy dev mem -> dev mem */
   VkCommandBuffer cb = d->command_buffer;
   VULKAN_CHECK (vkResetCommandBuffer (cb, 0));
   VULKAN_CHECK (vkBeginCommandBuffer (cb, &d->cmd_buf_begin_info));
@@ -2055,7 +2042,7 @@ pocl_vulkan_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
   VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
 }
 
-/*
+/* TODO implement these callbacks */
 void
 pocl_vulkan_copy_rect (void *data,
                       pocl_mem_identifier * dst_mem_id,
@@ -2070,11 +2057,12 @@ pocl_vulkan_copy_rect (void *data,
                       size_t const src_row_pitch,
                       size_t const src_slice_pitch)
 {
+  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_copy_rect is not implemented\n");
 }
 
 void
 pocl_vulkan_read_rect (void *data,
-                      void *__restrict__ const host_ptr,
+                      void *__restrict__ host_ptr,
                       pocl_mem_identifier * src_mem_id,
                       cl_mem src_buf,
                       const size_t *__restrict__ const buffer_origin,
@@ -2085,6 +2073,23 @@ pocl_vulkan_read_rect (void *data,
                       size_t const host_row_pitch,
                       size_t const host_slice_pitch)
 {
+  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_read_rect is not implemented\n");
+}
+
+void
+pocl_vulkan_write_rect (void *data,
+                      const void *__restrict__ host_ptr,
+                      pocl_mem_identifier * dst_mem_id,
+                      cl_mem dst_buf,
+                      const size_t *__restrict__ const buffer_origin,
+                      const size_t *__restrict__ const host_origin,
+                      const size_t *__restrict__ const region,
+                      size_t const buffer_row_pitch,
+                      size_t const buffer_slice_pitch,
+                      size_t const host_row_pitch,
+                      size_t const host_slice_pitch)
+{
+  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_write_rect is not implemented\n");
 }
 
 
@@ -2096,8 +2101,8 @@ void pocl_vulkan_memfill(void *data,
                         const void *__restrict__  pattern,
                         size_t pattern_size)
 {
+  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_memfill is not implemented\n");
 }
-*/
 
 cl_int
 pocl_vulkan_map_mem (void *data, pocl_mem_identifier *src_mem_id,
@@ -2125,8 +2130,7 @@ pocl_vulkan_unmap_mem (void *data, pocl_mem_identifier *dst_mem_id,
 
   POCL_MSG_PRINT_VULKAN ("UNMAP MEM: %p FLAGS %zu\n", memdata, map->map_flags);
 
-  // TODO
-  // for read mappings, don't copy anything
+  /* for read mappings, don't copy anything */
   if (map->map_flags == CL_MAP_READ)
     return CL_SUCCESS;
 
@@ -2176,7 +2180,7 @@ pocl_vulkan_setup_kernel_arguments (
     }
   *compute_shader = pp->shader;
 
-  // setup specialization constants for local size.
+  /* setup specialization constants for local size. */
   spec_data[0] = (uint32_t)co->pc.local_size[0];
   spec_data[1] = (uint32_t)co->pc.local_size[1];
   spec_data[2] = (uint32_t)co->pc.local_size[2];
@@ -2217,13 +2221,15 @@ pocl_vulkan_setup_kernel_arguments (
     {
       assert (pp->num_pod_bytes > 0);
 
-      size_t kernarg_aligned_size = page_size_align (pp->num_pod_bytes);
+      size_t kernarg_aligned_size = pocl_align_value (pp->num_pod_bytes, PAGE_SIZE);
 
       VkBufferCreateInfo buffer_info = {
         VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, NULL, 0, kernarg_aligned_size,
-        // TODO flags OK ?
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+
+        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+            | VK_BUFFER_USAGE_TRANSFER_SRC_BIT
             | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+
         VK_SHARING_MODE_EXCLUSIVE, 1, &d->compute_queue_fam_index
       };
 
@@ -2245,7 +2251,7 @@ pocl_vulkan_setup_kernel_arguments (
 
   if (pp->constant_buf == NULL && pp->num_constant_bytes > 0)
     {
-      size_t constants_aligned_size = page_size_align (pp->num_constant_bytes);
+      size_t constants_aligned_size = pocl_align_value (pp->num_constant_bytes, PAGE_SIZE);
 
       VkBufferCreateInfo buffer_info
           = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
@@ -2275,7 +2281,7 @@ pocl_vulkan_setup_kernel_arguments (
                                         d->constant_mem,
                                         pp->constant_buf_offset));
 
-      // copy data to contant mem
+      /* copy data to contant mem */
       if (d->kernarg_is_mappable)
         {
           void *constant_pod_ptr;
@@ -2302,23 +2308,22 @@ pocl_vulkan_setup_kernel_arguments (
    * https: *github.com/google/clspv/blob/master/docs/OpenCLCOnVulkan.md
 
    * The default way to map an OpenCL C language kernel to a Vulkan SPIR-V
-   compute
-   * shader is as follows:
+   * compute shader is as follows:
 
- * If a sampler map file is specified, all literal samplers use descriptor set 0.
+   * If a sampler map file is specified, all literal samplers use descriptor set 0.
 
- * By default, all kernels in the translation unit use the same descriptor set number,
- * either 0, 1, or 2. (The particular value depends on whether a sampler map is used,
- * and how __constant variables are mapped.) This is new default behaviour.
+   * By default, all kernels in the translation unit use the same descriptor set number,
+   * either 0, 1, or 2. (The particular value depends on whether a sampler map is used,
+   * and how __constant variables are mapped.) This is new default behaviour.
 
- * The compiler can report the descriptor set and bindings used for samplers
- * in the sampler map and for the kernel arguments, and also array sizing
- * information for pointer-to-local arguments. Use option -descriptormap
- *  to name a file that should contain the mapping information.
+   * The compiler can report the descriptor set and bindings used for samplers
+   * in the sampler map and for the kernel arguments, and also array sizing
+   * information for pointer-to-local arguments. Use option -descriptormap
+   *  to name a file that should contain the mapping information.
 
- * Except for pointer-to-local arguments, each kernel argument is assigned
- * a descriptor binding in that kernel's corresponding DescriptorSet.
- */
+   * Except for pointer-to-local arguments, each kernel argument is assigned
+   * a descriptor binding in that kernel's corresponding DescriptorSet.
+   */
 
   char *kernarg_pod_ptr;
 
@@ -2339,8 +2344,8 @@ pocl_vulkan_setup_kernel_arguments (
   cl_uint i;
   for (i = 0; i < kernel->meta->num_args; ++i)
     {
-      //POCL_MSG_ERR ("ARGUMENT: %u | SIZE %lu | VAL %p \n", i, pa[i].size,
-      //              pa[i].value);
+      /* POCL_MSG_ERR ("ARGUMENT: %u | SIZE %lu | VAL %p \n",
+                        i, pa[i].size, pa[i].value); */
       if (ARG_IS_LOCAL (kernel->meta->arg_info[i]))
         {
           /* If the argument to the kernel is a pointer to type T in __local
@@ -2354,9 +2359,9 @@ pocl_vulkan_setup_kernel_arguments (
 
           assert (pp->locals[locals].ord == i);
           uint32_t elems = pa[i].size / pp->locals[locals].elem_size;
-          POCL_MSG_WARN ("VULK: setting LOCAL var %i TO SIZE %zu ELEMS: %u\n; "
-                         "NOTE: MOST DRIVERS SEGFAULT ON THIS OPERATION\n",
-                         i, pa[i].size, elems);
+          POCL_MSG_PRINT_VULKAN ("setting LOCAL argument %i TO"
+                                 "SIZE %zu ELEMS: %u\n; ",
+                                  i, pa[i].size, elems);
           assert (pp->locals[locals].spec_id == spec_entries);
           entries[spec_entries].constantID = spec_entries;
           entries[spec_entries].offset = spec_offset;
@@ -2417,7 +2422,7 @@ pocl_vulkan_setup_kernel_arguments (
         }
       else
         {
-          /* Normally plan-old-data arguments are passed into the kernel via a
+          /* Normally plain-old-data arguments are passed into the kernel via a
            * storage buffer. Use option -pod-ubo to pass these parameters in
            * via a uniform buffer. These can be faster to read in the shader.
            * When option -pod-ubo is used, the descriptor map list the argKind
@@ -2472,15 +2477,15 @@ pocl_vulkan_setup_kernel_arguments (
   /* PODs: setup descriptor & bindings for PODs; last binding in DS 0 */
   if (pp->num_pods > 0)
     {
-      // add the kernarg memory
+      /* add the kernarg memory */
       descriptor_buffer_info[current].buffer
-          = pp->kernarg_buf; // the POD buffer
+          = pp->kernarg_buf; /* the POD buffer */
       descriptor_buffer_info[current].offset = 0;
       descriptor_buffer_info[current].range = pp->kernarg_buf_size;
 
       assert (pp->pods[0].binding == current);
       bindings[current].binding = current;
-      bindings[current].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+      bindings[current].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       bindings[current].descriptorCount = 1;
       bindings[current].pImmutableSamplers = 0;
       bindings[current].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -2506,7 +2511,10 @@ pocl_vulkan_setup_kernel_arguments (
         spec_data[i]);
 
   VkDescriptorSetLayoutCreateInfo dslCreateInfo
-      = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO, 0, 0, current,
+      = { VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+          NULL,
+          0,
+          current,
           bindings };
   VULKAN_CHECK (
       vkCreateDescriptorSetLayout (d->device, &dslCreateInfo, NULL, dsl));
@@ -2517,25 +2525,43 @@ pocl_vulkan_setup_kernel_arguments (
   VULKAN_CHECK (
       vkAllocateDescriptorSets (d->device, &descriptorSetallocate_info, ds));
 
+  /* cl_mem arguments */
   VkWriteDescriptorSet writeDescriptorSet
       = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
           0,
-          *ds,
-          0,
-          0,
-          current,
-          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+          *ds, /* dstSet */
+          0,   /* dstBinding */
+          0,   /* dstArrayElement */
+          (pp->num_pods > 0) ? current-1 : current, /* descriptorCount */
+          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, /* descriptorType */
           0,
           descriptor_buffer_info,
           0 };
   vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet, 0, 0);
 
-  /* CONSTANTS: setup descriptor & bindings for constants */
+  /* setup descriptor & bindings POD arguments in UBO */
+  if (pp->num_pods > 0)
+    {
+      VkWriteDescriptorSet writeDescriptorSet2
+          = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+              0,
+              *ds, /* dstSet */
+              current-1,   /* dstBinding */
+              0,   /* dstArrayElement */
+              1, /* descriptorCount */
+              VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, /* descriptorType */
+              0,
+              &descriptor_buffer_info[current-1],
+              0 };
+      vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet2, 0, 0);
+    }
+
+  /* setup descriptor & bindings for constants   */
   if (pp->num_constant_bytes > 0)
     {
-      // add the constant memory
+      /* add the constant memory */
       const_descriptor_buffer_info->buffer
-          = pp->constant_buf; // the POD buffer
+          = pp->constant_buf; /* the constant buffer */
       const_descriptor_buffer_info->offset = 0;
       const_descriptor_buffer_info->range = VK_WHOLE_SIZE;
 
@@ -2591,8 +2617,8 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   size_t wg_y = pc->num_groups[1];
   size_t wg_z = pc->num_groups[2];
 
-  // TODO we need working global offsets before we can handle arbitrary group
-  // sizes.
+  /* TODO we need working global offsets
+   * before we can handle arbitrary group sizes */
   assert (wg_x < d->max_wg_count[0]);
   assert (wg_y < d->max_wg_count[1]);
   assert (wg_z < d->max_wg_count[2]);
@@ -2662,12 +2688,12 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   begin_info.pNext = NULL;
   begin_info.flags
-      = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT; // the buffer is only
-                                                     // submitted and used once
-                                                     // in this application.
+      = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+      /* the buffer is only submitted and used once in this application. */
+
   begin_info.pInheritanceInfo = NULL;
   VULKAN_CHECK (
-      vkBeginCommandBuffer (cb, &begin_info)); // start recording commands.
+      vkBeginCommandBuffer (cb, &begin_info)); /* start recording commands. */
 
   vkCmdBindPipeline (cb, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
   vkCmdBindDescriptorSets (cb, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout,
@@ -2675,7 +2701,7 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
                            0, NULL);
 
   vkCmdDispatch (cb, (uint32_t)wg_x, (uint32_t)wg_y, (uint32_t)wg_z);
-  VULKAN_CHECK (vkEndCommandBuffer (cb)); // end recording commands.
+  VULKAN_CHECK (vkEndCommandBuffer (cb)); /* end recording commands. */
 
   d->submit_info.pCommandBuffers = &cb;
   VULKAN_CHECK (vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
@@ -2710,7 +2736,7 @@ RETRY:
   if ((cmd == NULL) && (do_exit == 0))
     {
       pthread_cond_wait (&d->wakeup_cond, &d->wq_lock_fast);
-      // since cond_wait returns with locked mutex, might as well retry
+      /* since cond_wait returns with locked mutex, might as well retry */
       goto RETRY;
     }
 
@@ -2733,14 +2759,14 @@ pocl_vulkan_driver_pthread (void *cldev)
 
 EXIT_PTHREAD:
 
-  // TODO free device data
+  /* TODO free device data */
 
   pthread_exit (NULL);
 }
 
 /****************************************************************************************/
 
-// assumes alignment is pow-of-2
+/* assumes alignment is pow-of-2 */
 size_t
 pocl_vulkan_actual_memobj_size (pocl_vulkan_device_data_t *d, cl_mem mem,
                                 pocl_mem_identifier *p,
@@ -2754,7 +2780,7 @@ pocl_vulkan_actual_memobj_size (pocl_vulkan_device_data_t *d, cl_mem mem,
   VkBufferCreateInfo buffer_info
       = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
           NULL,
-          0, // TODO flags
+          0, /* TODO flags */
           mem->size,
           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT
               | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -2776,8 +2802,6 @@ pocl_vulkan_actual_memobj_size (pocl_vulkan_device_data_t *d, cl_mem mem,
   return p->extra;
 }
 
-// Global memory callbacks
-
 int
 pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 {
@@ -2796,11 +2820,12 @@ pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   size_t actual_mem_size = pocl_vulkan_actual_memobj_size (d, mem, p, &memReq);
   assert (actual_mem_size > 0);
 
-  // actual size already set up.
+  /* POCL_MSG_WARN ("actual BUF size: %zu \n", actual_mem_size); */
+  /* actual size already set up. */
   pocl_vulkan_mem_data_t *memdata
       = (pocl_vulkan_mem_data_t *)calloc (1, sizeof (pocl_vulkan_mem_data_t));
   VkDeviceMemory m;
-  // TODO host_ptr argument / CL_MEM_USE_HOST_PTR
+  /* TODO host_ptr argument / CL_MEM_USE_HOST_PTR */
   void *vk_host_ptr = NULL;
 
   /* DEVICE MEM */

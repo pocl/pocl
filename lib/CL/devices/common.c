@@ -151,7 +151,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   else
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
-      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device,
+      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program,
+                                       command->program_device_i,
                                        kernel, "", command, specialize);
       error = pocl_mkdir_p (kernel_parallel_path);
     }
