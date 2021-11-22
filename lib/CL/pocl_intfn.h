@@ -149,5 +149,6 @@ POdeclsym(clGetPipeInfo)
 POdeclsym(clSetDefaultDeviceCommandQueue)
 POdeclsym(clGetDeviceAndHostTimer)
 POdeclsym(clGetHostTimer)
+POdeclsym(clSetProgramReleaseCallback)
 
 #endif

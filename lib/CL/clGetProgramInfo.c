@@ -145,6 +145,16 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_GETINFO(size_t, program->num_kernels);
     }
 
+  case CL_PROGRAM_SCOPE_GLOBAL_CTORS_PRESENT:
+    {
+      POCL_RETURN_GETINFO(cl_bool, CL_FALSE);
+    }
+
+  case CL_PROGRAM_SCOPE_GLOBAL_DTORS_PRESENT:
+    {
+      POCL_RETURN_GETINFO(cl_bool, CL_FALSE);
+    }
+
   case CL_PROGRAM_KERNEL_NAMES:
     {
       POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),

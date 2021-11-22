@@ -182,7 +182,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POname(clGetHostTimer),
   &POname(clGetKernelSubGroupInfo),
   &POname(clSetDefaultDeviceCommandQueue),
-  NULL, /* &clUnknown144 */
+  &POname(clSetProgramReleaseCallback),
   NULL, /* &clUnknown145 */
   NULL, /* &clUnknown146 */
   NULL, /* &clUnknown147 */
