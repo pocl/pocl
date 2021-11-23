@@ -270,8 +270,8 @@ pocl_vulkan_abort_on_vk_error (VkResult status, unsigned line,
     {
       /* TODO convert vulkan errors to strings */
       POCL_MSG_PRINT2 (VULKAN, func, line,
-                       "Error from Vulkan Runtime call:\n");
-      POCL_ABORT ("%s\n", str);
+                       "Error %i from Vulkan Runtime call:\n", (int)status );
+      POCL_ABORT ("Code:\n%s\n", str);
     }
 }
 
@@ -1893,6 +1893,24 @@ pocl_vulkan_wait_event (cl_device_id device, cl_event event)
 
 /****************************************************************************************/
 
+#define POCL_VK_FENCE_TIMEOUT (60ULL * 1000ULL * 1000ULL * 1000ULL)
+
+static void submit_CB (pocl_vulkan_device_data_t *d, VkCommandBuffer *cmdbuf_p)
+{
+  VkFence fence;
+
+  VkFenceCreateInfo fCreateInfo = {
+    VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, NULL, 0 };
+
+  VULKAN_CHECK (vkCreateFence (d->device, &fCreateInfo, NULL, &fence));
+
+  d->submit_info.pCommandBuffers = cmdbuf_p;
+  VULKAN_CHECK (vkQueueSubmit (d->compute_queue, 1, &d->submit_info, fence));
+
+  VULKAN_CHECK (vkWaitForFences (d->device, 1, &fence, VK_TRUE, POCL_VK_FENCE_TIMEOUT));
+  vkDestroyFence (d->device, fence, NULL);
+}
+
 static void
 pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
                       pocl_vulkan_mem_data_t *memdata,
@@ -1923,10 +1941,7 @@ pocl_vulkan_dev2host (pocl_vulkan_device_data_t *d,
       vkCmdCopyBuffer (cb, memdata->device_buf, memdata->staging_buf, 1,
                        &copy);
       VULKAN_CHECK (vkEndCommandBuffer (cb));
-      d->submit_info.pCommandBuffers = &cb;
-      VULKAN_CHECK (
-          vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
-      VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
+      submit_CB (d, &cb);
 
       /* copy staging mem -> host_ptr */
       VkMappedMemoryRange mem_range
@@ -1982,10 +1997,7 @@ pocl_vulkan_host2dev (pocl_vulkan_device_data_t *d,
       vkCmdCopyBuffer (cb, memdata->staging_buf, memdata->device_buf, 1,
                        &copy);
       VULKAN_CHECK (vkEndCommandBuffer (cb));
-      d->submit_info.pCommandBuffers = &cb;
-      VULKAN_CHECK (
-          vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
-      VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
+      submit_CB (d, &cb);
     }
 }
 
@@ -2037,9 +2049,7 @@ pocl_vulkan_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
   copy.size = size;
   vkCmdCopyBuffer (cb, src->device_buf, dst->device_buf, 1, &copy);
   VULKAN_CHECK (vkEndCommandBuffer (cb));
-  d->submit_info.pCommandBuffers = &cb;
-  VULKAN_CHECK (vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
-  VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
+  submit_CB (d, &cb);
 }
 
 /* TODO implement these callbacks */
@@ -2703,9 +2713,7 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   vkCmdDispatch (cb, (uint32_t)wg_x, (uint32_t)wg_y, (uint32_t)wg_z);
   VULKAN_CHECK (vkEndCommandBuffer (cb)); /* end recording commands. */
 
-  d->submit_info.pCommandBuffers = &cb;
-  VULKAN_CHECK (vkQueueSubmit (d->compute_queue, 1, &d->submit_info, NULL));
-  VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
+  submit_CB (d, &cb);
 }
 
 static size_t
