@@ -286,12 +286,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
     ret = CL_INVALID_DEVICE;
 
   /* Get specific device name */
-  dev->long_name = dev->short_name = calloc (256, sizeof (char));
+  {
+     char *name = calloc (256, sizeof (char));
 
-  if (ret != CL_INVALID_DEVICE)
-    cuDeviceGetName (dev->long_name, 256, data->device);
-  else
-    snprintf (dev->long_name, 255, "Unavailable CUDA device #%d", j);
+     if (ret != CL_INVALID_DEVICE)
+       cuDeviceGetName (name, 256, data->device);
+     else
+       snprintf (name, 255, "Unavailable CUDA device #%d", j);
+     dev->long_name = dev->short_name = name;
+  }
 
   SETUP_DEVICE_CL_VERSION (CUDA_DEVICE_CL_VERSION_MAJOR,
                            CUDA_DEVICE_CL_VERSION_MINOR);
@@ -533,7 +536,10 @@ pocl_cuda_uninit (unsigned j, cl_device_id device)
   POCL_MEM_FREE (data);
   device->data = NULL;
 
-  POCL_MEM_FREE (device->long_name);
+  char *name = (char*)device->long_name;
+  POCL_MEM_FREE (name);
+  device->long_name = device->short_name = NULL;
+
   return CL_SUCCESS;
 }
 
