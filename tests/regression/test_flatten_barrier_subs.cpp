@@ -245,5 +245,6 @@ int main()
         return EXIT_FAILURE;
     }
 
+    std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
 }

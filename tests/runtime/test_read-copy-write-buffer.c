@@ -137,5 +137,6 @@ main(void)
 
   CHECK_CL_ERROR (clUnloadCompiler ());
 
+  printf ("OK\n");
   return EXIT_SUCCESS;
 }

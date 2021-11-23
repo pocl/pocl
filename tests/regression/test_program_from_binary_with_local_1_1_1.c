@@ -150,5 +150,6 @@ int main ()
   clReleaseDevice(device);
   clUnloadPlatformCompiler(platform);
 
+  printf ("OK\n");
   return EXIT_SUCCESS;
 }

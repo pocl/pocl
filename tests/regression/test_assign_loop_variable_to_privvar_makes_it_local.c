@@ -24,6 +24,7 @@
 */
 
 #include "pocl_opencl.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -86,6 +87,7 @@ int main() {
 
     if (ret == 0)
       {
+        printf ("OK\n");
         return EXIT_SUCCESS;
       }
     return EXIT_FAILURE;

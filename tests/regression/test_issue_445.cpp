@@ -65,6 +65,7 @@ int main(int, char **)
   }
 
   if (success) {
+    std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
   }
   return EXIT_FAILURE;

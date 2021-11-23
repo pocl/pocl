@@ -74,5 +74,6 @@ int main(int argc, char *argv[])
   queue.finish();
   cl::Platform::getDefault().unloadCompiler();
 
+  std::cout << "OK" << std::endl;
   return EXIT_SUCCESS;
 }

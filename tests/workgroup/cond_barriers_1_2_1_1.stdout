@@ -4,3 +4,4 @@ LOCAL_ID=0 inside if
 LOCAL_ID=1 inside if
 LOCAL_ID=0 after if
 LOCAL_ID=1 after if
+OK

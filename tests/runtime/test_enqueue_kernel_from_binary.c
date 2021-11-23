@@ -438,5 +438,6 @@ int main(void)
 
   if (errors)
     return EXIT_FAILURE;
+  printf ("OK\n");
   return EXIT_SUCCESS;
 }

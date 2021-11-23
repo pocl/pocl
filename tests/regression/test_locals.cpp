@@ -139,6 +139,7 @@ main(void)
         platformList[0].unloadCompiler();
 
         if (success) {
+            std::cout << "OK" << std::endl;
             return EXIT_SUCCESS;
         }
     }

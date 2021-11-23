@@ -141,6 +141,7 @@ main(void)
         platformList[0].unloadCompiler();
 
         // If the kernel compiler succeeds, we are happy for now.
+        std::cout << "OK" << std::endl;
         return EXIT_SUCCESS;
     } 
     catch (cl::Error &err) {

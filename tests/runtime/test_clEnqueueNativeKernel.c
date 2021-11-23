@@ -139,6 +139,7 @@ int main(int argc, char **argv) {
   free(h_b);
   free(h_c);
 
+  printf ("OK\n");
   return EXIT_SUCCESS;
 
 error:

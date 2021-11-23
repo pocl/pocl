@@ -171,8 +171,10 @@ int main() {
         queue.finish();
         platformList[0].unloadCompiler();
 
-        if (ok) 
+        if (ok) {
+            std::cout << "OK" << std::endl;
             return EXIT_SUCCESS;
+        }
     } 
     catch (cl::Error &err) {
          std::cerr

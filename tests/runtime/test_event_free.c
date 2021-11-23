@@ -230,8 +230,8 @@ int main(int argc, char **argv)
 
   CHECK_CL_ERROR (clUnloadCompiler ());
 
+  printf ("OK\n");
   return EXIT_SUCCESS;
-
 }
 
 

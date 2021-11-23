@@ -152,6 +152,7 @@ ERROR:
 
   if (err == CL_SUCCESS)
     {
+      printf ("OK\n");
       return EXIT_SUCCESS;
     }
   return EXIT_FAILURE;
