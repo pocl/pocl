@@ -136,9 +136,7 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
-
-         return EXIT_FAILURE;
     }
 
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
 }

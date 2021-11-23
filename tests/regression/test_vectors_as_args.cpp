@@ -172,10 +172,7 @@ int main() {
         platformList[0].unloadCompiler();
 
         if (ok) 
-          return EXIT_SUCCESS;
-        else
-          return EXIT_FAILURE;
-
+            return EXIT_SUCCESS;
     } 
     catch (cl::Error &err) {
          std::cerr
@@ -185,9 +182,7 @@ int main() {
              << err.err()
              << ")"
              << std::endl;
-
-         return EXIT_FAILURE;
     }
 
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
 }

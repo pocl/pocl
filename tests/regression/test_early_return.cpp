@@ -145,8 +145,6 @@ main(void)
 
         if (ok)
             return EXIT_SUCCESS;
-        else
-            return EXIT_FAILURE;
     }
     catch (cl::Error &err) {
          std::cerr
@@ -156,9 +154,7 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
-
-         return EXIT_FAILURE;
     }
 
-    return EXIT_SUCCESS;
+    return EXIT_FAILURE;
 }

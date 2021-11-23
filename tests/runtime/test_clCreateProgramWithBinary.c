@@ -209,5 +209,9 @@ main(void){
 
   CHECK_CL_ERROR (clUnloadCompiler ());
 
-  return err == CL_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
+  if (err == CL_SUCCESS)
+    {
+      return EXIT_SUCCESS;
+    }
+  return EXIT_FAILURE;
 }
