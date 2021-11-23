@@ -24,6 +24,7 @@
 */
 
 #include "pocl_opencl.h"
+#include <stdlib.h>
 #include <string.h>
 
 const char* kernel_src = 
@@ -82,5 +83,10 @@ int main() {
     
     clFinish(command_queue);
     ret |= clReleaseKernel(kernel);
-    return ret;
+
+    if (ret == 0)
+      {
+        return EXIT_SUCCESS;
+      }
+    return EXIT_FAILURE;
 }

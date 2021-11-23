@@ -150,5 +150,9 @@ ERROR:
   if (context)
     clReleaseContext (context);
 
-  return (err == CL_SUCCESS) ? 0 : 1;
+  if (err == CL_SUCCESS)
+    {
+      return EXIT_SUCCESS;
+    }
+  return EXIT_FAILURE;
 }

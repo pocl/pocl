@@ -36,9 +36,9 @@ int main(int argc, char *argv[]) {
 
   if (error_count == 2) {
     std::cout << "OK\n";
-    return 0;
+    return EXIT_SUCCESS;
   } else {
     std::cout << "FAIL\n";
-    return 1;
+    return EXIT_FAILURE;
   }
 }

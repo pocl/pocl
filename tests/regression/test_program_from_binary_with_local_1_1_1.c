@@ -136,7 +136,7 @@ int main ()
             {
               printf("Error at %u %u : %u != %u\n", k, i,
                      output_buffer[k*vec_size+i], expected);
-              return 1;
+              return EXIT_FAILURE;
             }
         }
     }
@@ -149,5 +149,6 @@ int main ()
   clReleaseContext(context);
   clReleaseDevice(device);
   clUnloadPlatformCompiler(platform);
-  return 0;
+
+  return EXIT_SUCCESS;
 }

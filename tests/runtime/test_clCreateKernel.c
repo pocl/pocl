@@ -45,8 +45,5 @@ int main(int argc, char **argv)
   free ((void *)krn_src);
 
   printf("OK\n");
-
-  return 0;
+  return EXIT_SUCCESS;
 }
-
-

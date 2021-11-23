@@ -137,6 +137,10 @@ main(void)
             aBuffer, (void *) res);
         queue.finish();
         platformList[0].unloadCompiler();
+
+        if (success) {
+            return EXIT_SUCCESS;
+        }
     }
     catch (cl::Error &err) {
          std::cerr
@@ -146,9 +150,7 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
-
-         return EXIT_FAILURE;
     }
 
-    return success ? EXIT_SUCCESS : EXIT_FAILURE;
+    return EXIT_FAILURE;
 }

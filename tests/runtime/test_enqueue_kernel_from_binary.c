@@ -364,20 +364,20 @@ int main(void)
     if(h_c1[i] != h_c2[i])
     {
       printf("[1] Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
-      ++errors;
-      if (errors > 10) exit(1);
+      if (++errors > 10)
+        return EXIT_FAILURE;
     }
     if ((((i/128)%2) && (h_c1[i]-16 != h_c3[i])))
     {
       printf("[2] Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]-16);
-      ++errors;
-      if (errors > 10) exit(1);
+      if (++errors > 10)
+        return EXIT_FAILURE;
     }
     if (!((i/128)%2) && (h_c1[i] != h_c3[i]))
     {
       printf("[3] Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]);
-      ++errors;
-      if (errors > 10) exit(1);
+      if (++errors > 10)
+        return EXIT_FAILURE;
     }
   }
 
@@ -436,5 +436,7 @@ int main(void)
   free (static_wg_binary);
   free (static_wg_buf);
 
-  return 0;
+  if (errors)
+    return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }

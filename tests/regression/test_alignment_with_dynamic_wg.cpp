@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
   if (argc < 4) {
     std::cout << "USAGE: $0 X Y Z\n";
-    return 1;
+    return EXIT_FAILURE;
   }
 
   std::string arg_x(argv[1]);
@@ -124,13 +124,13 @@ int main(int argc, char *argv[]) {
   unsigned z = std::stoi(argv[3]);
 
   if (!test_invocation(x, y, z, arg_x, arg_y, arg_z, queue))
-    return 1;
+    return EXIT_FAILURE;
 
   if (!test_invocation(y, z, x, arg_y, arg_z, arg_x, queue))
-    return 1;
+    return EXIT_FAILURE;
 
   if (!test_invocation(z, x, y, arg_z, arg_x, arg_y, queue))
-    return 1;
+    return EXIT_FAILURE;
 
-  return 0;
+  return EXIT_SUCCESS;
 }

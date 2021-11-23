@@ -182,9 +182,9 @@ error:
   if (retval) 
     {
       printf("FAIL\n");
-      return 1;
+      return EXIT_FAILURE;
     }
  
   printf("OK\n");
-  return 0;
+  return EXIT_SUCCESS;
 }

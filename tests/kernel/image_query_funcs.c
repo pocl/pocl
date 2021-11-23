@@ -139,5 +139,5 @@ int main(int argc, char **argv)
   free (imageData);
 
   printf("OK\n");
-  return 0;
+  return EXIT_SUCCESS;
 }

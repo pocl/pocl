@@ -31,6 +31,7 @@ private_local_array(__global int *__restrict__ out)
 
 int main(int, char **)
 {
+  bool success = true;
   try {
     int N = 9;
 
@@ -48,9 +49,11 @@ int main(int, char **)
     cl_int *output = (cl_int*)queue.enqueueMapBuffer(
       buffer, CL_TRUE, CL_MAP_READ, 0, N*sizeof(int));
     for (int i = 0; i < N; i++) {
-      if ((int)output[i] != i + 1)
+      if ((int)output[i] != i + 1) {
         std::cout << "FAIL: " << output[i] << " should be " << i + 1
 		  << std::endl;
+        success = false;
+      }
     }
     queue.enqueueUnmapMemObject(buffer, output);
     queue.finish();
@@ -58,6 +61,11 @@ int main(int, char **)
   }
   catch (cl::Error& err) {
     std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+    return EXIT_FAILURE;
   }
-  return 0;
+
+  if (success) {
+    return EXIT_SUCCESS;
+  }
+  return EXIT_FAILURE;
 }

@@ -84,4 +84,6 @@ int main(int argc, char *argv[]) {
   printf("Value: %le \n", out[0]);
   printf("Value: %le \n", out[1]);
   printf("Value: %le \n", out[2]);
+
+  return EXIT_SUCCESS;
 }

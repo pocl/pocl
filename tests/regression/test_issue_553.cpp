@@ -73,4 +73,6 @@ int main(int argc, char *argv[])
 
   queue.finish();
   cl::Platform::getDefault().unloadCompiler();
+
+  return EXIT_SUCCESS;
 }

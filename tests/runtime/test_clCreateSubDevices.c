@@ -405,7 +405,5 @@ int main(int argc, char **argv)
   free (dev_pt);
 
   printf ("OK\n");
-
-  return 0;
+  return EXIT_SUCCESS;
 }
-

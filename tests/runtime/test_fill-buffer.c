@@ -113,7 +113,7 @@ main (void)
                     {
                       printf ("Expected value at %d: 1, actual value: %d\n", i,
                               host_buf1[i]);
-                      exit (1);
+                      return EXIT_FAILURE;
                     }
                 }
               for (int i = buf_size - pattern_size; i < buf_size; i++)
@@ -122,7 +122,7 @@ main (void)
                     {
                       printf ("Expected value at %d: 1, actual value: %d\n", i,
                               host_buf1[i]);
-                      exit (1);
+                      return EXIT_FAILURE;
                     }
                 }
               for (int i = pattern_size * 2; i < buf_size - pattern_size;
@@ -136,7 +136,7 @@ main (void)
                           printf (
                               "Expected value at %d: %d, actual value: %d\n",
                               i + j, expected_value, host_buf1[i + j]);
-                          exit (1);
+                          return EXIT_FAILURE;
                         }
                     }
                 }

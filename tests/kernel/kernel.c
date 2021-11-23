@@ -166,6 +166,5 @@ int main(int argc, char **argv)
     printf("OK\n");
   fflush(stdout);
   fflush(stderr);
-  return (retval ? 1 : 0);
+  return (retval ? EXIT_FAILURE : EXIT_SUCCESS);
 }
-

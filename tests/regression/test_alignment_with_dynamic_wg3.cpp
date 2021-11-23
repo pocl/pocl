@@ -58,10 +58,11 @@ int main(int argc, char *argv[]) {
 
   queue.finish();
 
-  if (out[0] == 1.0f)
+  if (out[0] == 1.0f) {
     printf("OK\n");
-  else
+    return EXIT_SUCCESS;
+  } else {
     printf("FAIL\n");
-
-  return (out[0] == 1.0f) ? 0 : 1;
+    return EXIT_FAILURE;
+  }
 }

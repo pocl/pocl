@@ -242,7 +242,8 @@ int main()
     {
         std::cout << "CL gave wrong results" << std::endl;
         print_vec(cl_indices);
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

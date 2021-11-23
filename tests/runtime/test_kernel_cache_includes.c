@@ -85,5 +85,5 @@ int main(int argc, char **argv)
 
   free ((void *)krn_src);
 
-  return 0;
+  return EXIT_SUCCESS;
 }
