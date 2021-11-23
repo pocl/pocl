@@ -22,7 +22,7 @@ Required:
 Optional:
 
  * "vulkan-validationlayers-dev" for vulkan validation layers
- * "vulkan-tools" package for vulkaninfo
+ * "vulkan-tools" or "vulkan-utils" package for vulkaninfo
 
 Note that the Vulkan device MUST support the following extensions (clspv requirements):
 
@@ -109,6 +109,10 @@ Validation layers on Nvidia print this message:
 "After specialization was applied, VkShaderModule 0xXY0000XY[] does not contain valid spirv for stage VK_SHADER_STAGE_COMPUTE_BIT. The Vulkan spec states: module must be a valid VkShaderModule handle (https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VUID-VkPipelineShaderStageCreateInfo-module-parameter)"
 
 This seems to be harmless (AFAICT).
+
+
+The kernel execution timeout is set to 60 seconds in PoCL, note however that GPU drivers have their own "freeze detection" timeouts and could kill the kernel sooner. This would result in PoCL aborting with error -4 (device lost).
+
 
 Testing
 ---------
