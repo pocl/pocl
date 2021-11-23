@@ -225,8 +225,12 @@ uint16_t float_to_half (float value);
 
 float half_to_float (uint16_t value);
 
+/* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
+ * OpenCL-style bitcode produced by e.g. llvm-spirv */
 int bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
 
+/* returns !0 if binary is SPIR-V bitcode with OpCapability Shader
+ * these are produced by e.g. GLSL and clspv compilation */
 int bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 
 #ifdef __cplusplus

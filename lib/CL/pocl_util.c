@@ -2105,8 +2105,8 @@ float_to_half (float value)
 /* execution model = Shader is used by Vulkan SPIR-V modules */
 #define ShaderExecModel 0x1
 
-int
-bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
+static int
+bitcode_is_spirv_execmodel (const char *bitcode, size_t size, uint32_t type)
 {
   const uint32_t *bc32 = (const uint32_t *)bitcode;
   unsigned location = 0;
@@ -2117,42 +2117,29 @@ bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
 
   // skip version, generator, bound, schema
   location += 4;
-  int is_opencl = 0;
-  uint32_t instruction, value;
-  do
+  int is_type = 0;
+  uint32_t value, instruction;
+  instruction = htole32 (bc32[location++]);
+  value = htole32 (bc32[location++]);
+  while (instruction == OpCapab && location < (size / 4))
     {
+      if (value == type)
+        return 1;
       instruction = htole32 (bc32[location++]);
       value = htole32 (bc32[location++]);
-      if (value == KernelExecModel)
-        is_opencl = 1;
     }
-  while (instruction == OpCapab);
 
-  return is_opencl;
+  return 0;
+}
+
+int
+bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
+{
+  return bitcode_is_spirv_execmodel (bitcode, size, KernelExecModel);
 }
 
 int
 bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
 {
-  const uint32_t *bc32 = (const uint32_t *)bitcode;
-  unsigned location = 0;
-  uint32_t header_magic = htole32 (bc32[location++]);
-
-  if ((size < 20) || (header_magic != SPIRV_MAGIC))
-    return 0;
-
-  // skip version, generator, bound, schema
-  location += 4;
-  int is_shader = 0;
-  uint32_t instruction, value;
-  do
-    {
-      instruction = htole32 (bc32[location++]);
-      value = htole32 (bc32[location++]);
-      if (value == ShaderExecModel)
-        is_shader = 1;
-    }
-  while (instruction == OpCapab);
-
-  return is_shader;
+  return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel);
 }
