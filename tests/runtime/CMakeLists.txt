@@ -96,7 +96,7 @@ add_test_pocl(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSuppo
 
 add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram")
 
-add_test_pocl(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
+add_test(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
 
 add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free")
 
@@ -137,6 +137,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     LABELS "internal;runtime")
 
 set_tests_properties(
+  "runtime/clCreateSubDevices"
   "runtime/test_buffer_migration"
   "runtime/test_buffer_ping_pong"
   "runtime/test_cl_pocl_content_size"

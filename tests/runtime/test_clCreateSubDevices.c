@@ -140,7 +140,7 @@ int main(int argc, char **argv)
     {
       printf("This test requires a cl device with at least 2 compute units"
              " (a dual-core or better CPU)\n");
-      return 1;
+      return 77;
     }
 
   err = clGetDeviceInfo(rootdev, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,

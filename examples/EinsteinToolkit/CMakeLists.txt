@@ -54,5 +54,6 @@ if(NOT MIPS)
     COST 15.0
     LABELS "EinsteinToolkit"
     ENVIRONMENT "POCL_AFFINITY=1"
+    SKIP_RETURN_CODE 77
     DEPENDS "pocl_version_check")
 endif()

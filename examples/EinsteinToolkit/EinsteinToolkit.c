@@ -524,6 +524,18 @@ void setup(const char* program_source1, const char* program_source2)
 
   if (use_subdev)
     {
+      {
+        cl_uint max_cus;
+        int err = clGetDeviceInfo (main_device_id, CL_DEVICE_MAX_COMPUTE_UNITS,
+                                   sizeof (max_cus), &max_cus, NULL);
+        assert (err == CL_SUCCESS);
+        if (max_cus < 2)
+          {
+            fprintf (stderr,
+                     "Insufficient compute units for subdevice creation\n");
+            exit (77);
+          }
+      }
       const cl_device_partition_property props[]
           = { CL_DEVICE_PARTITION_EQUALLY, 2, 0 };
       cl_device_id subdevs[128];
