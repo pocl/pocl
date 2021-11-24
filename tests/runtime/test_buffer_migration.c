@@ -61,7 +61,7 @@ main (int argc, char **argv)
   if (num_devices < 2)
     {
       printf ("NOT ENOUGH DEVICES! (need 2)\n");
-      exit(0);
+      return 77;
     }
 
   const char *basename = "migration_test";

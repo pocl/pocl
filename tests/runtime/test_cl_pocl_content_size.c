@@ -57,8 +57,7 @@ main (void)
   if (strstr (devname, "basic") == NULL && strstr (devname, "pthread") == NULL)
     {
       printf ("Device is not basic/pthread -> skipping test\n");
-      printf ("OK");
-      return 0;
+      return 77;
     }
 
   buf_content_src

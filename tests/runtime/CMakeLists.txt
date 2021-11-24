@@ -106,13 +106,13 @@ add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enque
 
 add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event")
 
-add_test_pocl(NAME "runtime/test_buffer_migration" COMMAND  "test_buffer_migration")
+add_test(NAME "runtime/test_buffer_migration" COMMAND "test_buffer_migration")
 
-add_test_pocl(NAME "runtime/test_buffer_ping_pong" COMMAND  "test_buffer_ping_pong")
+add_test(NAME "runtime/test_buffer_ping_pong" COMMAND "test_buffer_ping_pong")
 
 add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clSetMemObjectDestructorCallback")
 
-add_test_pocl(NAME "runtime/test_cl_pocl_content_size" COMMAND "test_cl_pocl_content_size")
+add_test(NAME "runtime/test_cl_pocl_content_size" COMMAND "test_cl_pocl_content_size")
 
 add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_enqueue")
 
@@ -135,6 +135,12 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;runtime")
+
+set_tests_properties(
+  "runtime/test_buffer_migration"
+  "runtime/test_buffer_ping_pong"
+  "runtime/test_cl_pocl_content_size"
+  PROPERTIES SKIP_RETURN_CODE 77)
 
 if(NOT ENABLE_ANYSAN)
   set_tests_properties("runtime/clCreateKernelsInProgram"
