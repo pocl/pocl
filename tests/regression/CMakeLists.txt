@@ -26,7 +26,9 @@
 
 set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_program_from_binary_with_local_1_1_1
-     test_assign_loop_variable_to_privvar_makes_it_local_2)
+     test_assign_loop_variable_to_privvar_makes_it_local_2
+  test_llvm_segfault_issue_889
+)
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   if(MSVC)
     set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
@@ -75,6 +77,8 @@ add_test_pocl(NAME "regression/test_issue_553" COMMAND "test_issue_553")
 add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
+
+add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
@@ -270,6 +274,7 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
   "regression/autolocals_in_constexprs" "regression/test_issue_231"
   "regression/test_issue_445" "regression/test_issue_553"
   "regression/test_issue_577" "regression/test_issue_757"
+  "regression/test_llvm_segfault_issue_889"
   "regression/test_issue_893"
   "regression/test_flatten_barrier_subs"
   ${TCE_TESTS}
