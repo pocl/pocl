@@ -32,7 +32,7 @@ add_executable("boxadd" boxadd.c boxadd_exec.c boxadd.cl)
 
 target_link_libraries("boxadd" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/boxadd" "boxadd")
+add_test(NAME "examples/boxadd" COMMAND "boxadd")
 
 set(PROPS)
 if(NOT ENABLE_ANYSAN)

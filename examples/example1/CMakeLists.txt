@@ -32,7 +32,7 @@ add_executable("example1" example1.c example1_exec.c example1.cl)
 
 target_link_libraries("example1" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/example1_dot_product" "example1")
+add_test(NAME "examples/example1_dot_product" COMMAND "example1")
 
 if (ENABLE_SPIR)
   add_test(NAME "examples/example1_spir"
@@ -46,7 +46,7 @@ if (ENABLE_SPIR)
 endif()
 
 if (ENABLE_SPIRV)
-  add_test("examples/example1_spirv" "example1" "v")
+	add_test(NAME "examples/example1_spirv" COMMAND "example1" "v")
   list(APPEND SPIREX "examples/example1_spirv")
 endif()
 

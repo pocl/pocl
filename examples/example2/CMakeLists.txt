@@ -32,7 +32,7 @@ add_executable("example2" example2.c example2.cl)
 
 target_link_libraries("example2" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/example2" "example2")
+add_test(NAME "examples/example2" COMMAND "example2")
 
 if (ENABLE_SPIR)
   add_test(NAME "examples/example2_spir"

@@ -32,9 +32,9 @@ add_executable("matrix1" matrix1.c matrix1.cl)
 
 target_link_libraries("matrix1" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/matrix1" "matrix1" 512)
+add_test(NAME "examples/matrix1" COMMAND "matrix1" 512)
 
-add_test("examples/matrix1_local" "matrix1" 512 -l)
+add_test(NAME "examples/matrix1_local" COMMAND "matrix1" 512 -l)
 
 if (ENABLE_SPIR)
   add_test(NAME "examples/matrix1_spir"

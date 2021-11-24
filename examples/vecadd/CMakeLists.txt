@@ -32,9 +32,9 @@ add_executable("vecadd" vecadd.c vecadd_exec.c vecadd.cl)
 
 target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/vecadd" "vecadd")
+add_test(NAME "examples/vecadd" COMMAND "vecadd")
 
-add_test("examples/vecadd_large_grid" "vecadd" "128000" "128" "10000" "100" "1" "1")
+add_test(NAME "examples/vecadd_large_grid" COMMAND "vecadd" "128000" "128" "10000" "100" "1" "1")
 
 set(PROPS)
 if(NOT ENABLE_ANYSAN)
