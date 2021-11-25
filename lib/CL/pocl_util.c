@@ -42,14 +42,16 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "pocl_util.h"
-#include "pocl_timing.h"
-#include "pocl_llvm.h"
-#include "utlist.h"
 #include "common.h"
-#include "pocl_mem_management.h"
 #include "devices.h"
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+#include "pocl_llvm.h"
+#include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_timing.h"
+#include "pocl_util.h"
+#include "utlist.h"
 
 /* required for setting SSE/AVX flush denorms to zero flag */
 #if defined(__x86_64__) && defined(__GNUC__)
@@ -1809,6 +1811,77 @@ pocl_run_command (char *const *args)
       int status;
       if (waitpid (p, &status, 0) < 0)
         POCL_ABORT ("pocl: waitpid() failed.\n");
+      if (WIFEXITED (status))
+        return WEXITSTATUS (status);
+      else if (WIFSIGNALED (status))
+        return WTERMSIG (status);
+      else
+        return EXIT_FAILURE;
+    }
+}
+
+int
+pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
+                                 char *const *args)
+{
+  POCL_MSG_PRINT_INFO ("Launching: %s\n", args[0]);
+
+  int in[2];
+  int out[2];
+  pipe (in);
+  pipe (out);
+
+#ifdef HAVE_VFORK
+  pid_t p = vfork ();
+#elif defined(HAVE_FORK)
+  pid_t p = fork ();
+#else
+#error Must have fork() or vfork() system calls
+#endif
+  if (p == 0)
+    {
+      close (in[1]);
+      close (out[0]);
+
+      dup2 (in[0], STDIN_FILENO);
+      dup2 (out[1], STDOUT_FILENO);
+      dup2 (out[1], STDERR_FILENO);
+
+      return execv (args[0], args);
+    }
+  else
+    {
+      if (p < 0)
+        return EXIT_FAILURE;
+
+      close (in[0]);
+      close (out[1]);
+
+      ssize_t r = 0;
+      size_t total_bytes = 0;
+      size_t capture_limit = *captured_bytes;
+      char buf[4096];
+
+      while ((r = read (out[0], buf, 4096)) > 0)
+        {
+          if (total_bytes + r > capture_limit)
+            break;
+          memcpy (capture_string + total_bytes, buf, r);
+          total_bytes += r;
+        }
+      if (total_bytes > capture_limit)
+        total_bytes = capture_limit;
+
+      capture_string[total_bytes] = 0;
+      *captured_bytes = total_bytes;
+
+      int status;
+      if (waitpid (p, &status, 0) < 0)
+        POCL_ABORT ("pocl: waitpid() failed.\n");
+
+      close (out[0]);
+      close (in[1]);
+
       if (WIFEXITED (status))
         return WEXITSTATUS (status);
       else if (WIFSIGNALED (status))

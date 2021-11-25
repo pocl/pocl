@@ -1275,6 +1275,37 @@ pocl_vulkan_get_timer_value(void *data)
 }
 #endif
 
+int
+run_and_append_output_to_build_log (cl_program program, char *const *args)
+{
+  int errcode = CL_SUCCESS;
+
+  char *capture_string = NULL;
+
+  capture_string = malloc (MAIN_PROGRAM_LOG_SIZE);
+  POCL_GOTO_ERROR_ON ((capture_string == NULL), CL_OUT_OF_HOST_MEMORY,
+                      "Error while allocating temporary memory\n");
+
+  capture_string[0] = 0;
+  size_t log_len = strlen (program->main_build_log);
+  /* if the log is full, run without capture */
+  if (log_len + 1 >= MAIN_PROGRAM_LOG_SIZE)
+    return pocl_run_command (args);
+
+  size_t capture_len = MAIN_PROGRAM_LOG_SIZE - log_len - 1;
+  errcode
+      = pocl_run_command_capture_output (capture_string, &capture_len, args);
+  if (capture_len > 0)
+    {
+      assert (log_len + capture_len < MAIN_PROGRAM_LOG_SIZE - 1);
+      memcpy (program->main_build_log + log_len, capture_string, capture_len);
+      program->main_build_log[log_len + capture_len] = 0;
+    }
+
+ERROR:
+  free (capture_string);
+  return errcode;
+}
 
 int
 pocl_vulkan_build_source (cl_program program, cl_uint device_i,
@@ -1283,6 +1314,11 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                           const char **header_include_names, int link_program)
 {
 #ifdef HAVE_CLSPV
+  uint64_t bin_size;
+  char *binary;
+  int errcode = CL_SUCCESS;
+  program->main_build_log[0] = 0;
+
   assert (program->devices[device_i]->compiler_available == CL_TRUE);
   assert (program->devices[device_i]->linker_available == CL_TRUE);
   assert (program->source);
@@ -1314,14 +1350,27 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
   strcat (program_map_path, "map");
 
+  if (pocl_exists (program_spv_path) && pocl_exists (program_map_path))
+    goto FINISH;
+
   pocl_write_file (program_cl_path, program->source, source_len, 0, 1);
 
+  char program_spv_path_temp[POCL_FILENAME_LENGTH];
+  pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
   char *COMPILATION[1024]
-      = { CLSPV, "-x=cl", "--spv-version=1.0", "-cl-kernel-arg-info",
-          "--keep-unused-arguments", "--uniform-workgroup-size",
-          /* "--pod-pushconstant",*/  /* TODO push constants should be faster */
-          "--pod-ubo", "--cluster-pod-kernel-args", "-o", program_spv_path,
-          program_cl_path, NULL };
+      = { CLSPV,
+          "-x=cl",
+          "--spv-version=1.0",
+          "-cl-kernel-arg-info",
+          "--keep-unused-arguments",
+          "--uniform-workgroup-size",
+          /* "--pod-pushconstant",*/ /* TODO push constants should be faster */
+          "--pod-ubo",
+          "--cluster-pod-kernel-args",
+          "-o",
+          program_spv_path_temp,
+          program_cl_path,
+          NULL };
 
   if (program->compiler_options)
     {
@@ -1342,27 +1391,31 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
       COMPILATION[i] = NULL;
     }
 
-  pocl_run_command (COMPILATION);
+  errcode = run_and_append_output_to_build_log (program, COMPILATION);
+  POCL_GOTO_ERROR_ON (!pocl_exists (program_spv_path_temp),
+                      CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
 
-  POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path),
-                        CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
+  char program_map_path_temp[POCL_FILENAME_LENGTH];
+  pocl_cache_tempname (program_map_path_temp, ".map", NULL);
+  char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path_temp, "-o",
+                         program_map_path_temp, NULL };
+  errcode = run_and_append_output_to_build_log (program, REFLECTION);
 
-  char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path, "-o",
-                         program_map_path, NULL };
+  POCL_GOTO_ERROR_ON (!pocl_exists (program_map_path_temp),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "clspv-reflection compilation error");
 
-  pocl_run_command (REFLECTION);
+  pocl_rename (program_spv_path_temp, program_spv_path);
+  pocl_rename (program_map_path_temp, program_map_path);
 
-  POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path),
-                        CL_BUILD_PROGRAM_FAILURE,
-                        "clspv-reflection compilation error");
-
-  uint64_t bin_size;
-  char *binary;
+FINISH:
   pocl_read_file (program_spv_path, &binary, &bin_size);
   program->binaries[device_i] = binary;
   program->binary_sizes[device_i] = bin_size;
   program->data[device_i] = strdup (program_map_path);
-  return CL_SUCCESS;
+  /* POCL_MSG_WARN ("BUILD LOG:\n%s\n", program->main_build_log); */
+ERROR:
+  return errcode;
 #else
   return CL_BUILD_PROGRAM_FAILURE;
 #endif
