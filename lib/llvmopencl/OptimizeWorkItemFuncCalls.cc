@@ -130,8 +130,7 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
         llvm::CallInst *MovedCall = dyn_cast<llvm::CallInst>(M);
 
         // WI functions do not have variable argument lists.
-        assert (MovedCall->getNumArgOperands() ==
-                CallInst->getNumArgOperands());
+        assert(MovedCall->arg_size() == CallInst->arg_size());
 
         bool IsApplicable = true;
         for (unsigned I = 0; I < MovedCall->arg_size(); ++I) {

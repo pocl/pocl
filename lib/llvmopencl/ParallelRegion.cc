@@ -688,11 +688,18 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
+#if __clang_major__ > 14
     AttributeList func_printf_PAL =
         AttributeList()
             .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)
             .addAttributeAtIndex(M->getContext(), 4294967295U,
                                  Attribute::NoUnwind);
+#else
+    AttributeList func_printf_PAL =
+        AttributeList()
+            .addAttribute(M->getContext(), 1U, Attribute::NoCapture)
+            .addAttribute(M->getContext(), 4294967295U, Attribute::NoUnwind);
+#endif
 
     printfFunc->setAttributes(func_printf_PAL);
   }

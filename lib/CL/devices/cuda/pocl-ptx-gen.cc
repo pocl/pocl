@@ -325,7 +325,7 @@ void fixPrintF(llvm::Module *Module) {
     if (!Call)
       continue;
 
-    unsigned NumArgs = Call->getNumArgOperands() - 1;
+    unsigned NumArgs = Call->arg_size() - 1;
     llvm::Value *Format = Call->getArgOperand(0);
 
     // Allocate array for arguments.
