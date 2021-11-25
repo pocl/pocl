@@ -104,7 +104,17 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   mapping_info->offset = offset;
   mapping_info->size = size;
 
-  errcode = device->ops->get_mapping_ptr (device->data, mem_id, buffer,
+  /* because cl_mems are per-context, PoCL delays allocation of
+   * cl_mem backing memory until it knows which device will need it,
+   * so the cl_mem might not yet be allocated on this device. However,
+   * some drivers can avoid unnecessary host memory usage if we
+   * allocate it now. We can assume it will be used on this device. */
+  pocl_mem_identifier *p = &buffer->device_ptrs[device->global_mem_id];
+  if (p->mem_ptr == NULL)
+    errcode = device->ops->alloc_mem_obj (device, buffer, NULL);
+
+  if (errcode == CL_SUCCESS)
+    errcode = device->ops->get_mapping_ptr (device->data, mem_id, buffer,
                                           mapping_info);
   DL_APPEND (buffer->mappings, mapping_info);
   ++buffer->map_count;
