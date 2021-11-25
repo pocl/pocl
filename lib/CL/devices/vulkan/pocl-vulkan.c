@@ -105,7 +105,9 @@
 #include "bufalloc.h"
 
 #define MAX_CMD_BUFFERS 8
-#define MAX_BUF_DESCRIPTORS 1024
+#define MAX_BUF_DESCRIPTORS 4096
+#define MAX_UBO_DESCRIPTORS 1024
+#define MAX_DESC_SETS 1024
 
 #define PAGE_SIZE 4096
 
@@ -1218,19 +1220,21 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   d->cmd_buf_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   d->cmd_buf_begin_info.pInheritanceInfo = NULL;
 
-  VkDescriptorPoolSize descriptor_pool_size
-      = { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_BUF_DESCRIPTORS };
+  VkDescriptorPoolSize descriptor_pool_size[2]
+      = { { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, MAX_BUF_DESCRIPTORS },
+          { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, MAX_UBO_DESCRIPTORS } };
 
   VkDescriptorPoolCreateInfo descriptor_pool_create_info
       = { VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-          0,
-          0,
-          MAX_BUF_DESCRIPTORS,
-          1,
-          &descriptor_pool_size };
+          NULL,
+          VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+          MAX_DESC_SETS, /* maxSets */
+          2,             /* size of next array */
+          descriptor_pool_size };
 
-  VULKAN_CHECK (vkCreateDescriptorPool (
-      d->device, &descriptor_pool_create_info, NULL, &d->buf_descriptor_pool));
+  VULKAN_CHECK (vkCreateDescriptorPool ( d->device,
+                                         &descriptor_pool_create_info,
+                                         NULL, &d->buf_descriptor_pool));
 
   POCL_INIT_COND (d->wakeup_cond);
 
@@ -2637,7 +2641,7 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
 
   POCL_MSG_PRINT_VULKAN ("WG X %zu Y %zu Z %zu \n", wg_x, wg_y, wg_z);
 
-  VkDescriptorSet descriptor_sets[2];
+  VkDescriptorSet descriptor_sets[2] = { NULL, NULL };
   VkDescriptorSetLayout descriptor_set_layouts[2];
   VkSpecializationInfo specInfo;
   uint32_t spec_data[128];
@@ -2716,6 +2720,21 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   VULKAN_CHECK (vkEndCommandBuffer (cb)); /* end recording commands. */
 
   submit_CB (d, &cb);
+
+
+  if (descriptor_sets[0]) {
+    vkDestroyDescriptorSetLayout (d->device, descriptor_set_layouts[0], NULL);
+    VULKAN_CHECK (vkFreeDescriptorSets (d->device, d->buf_descriptor_pool,
+                                        1, descriptor_sets));
+  }
+  if (descriptor_sets[1]) {
+    vkDestroyDescriptorSetLayout (d->device, descriptor_set_layouts[1], NULL);
+    VULKAN_CHECK (vkFreeDescriptorSets (d->device, d->buf_descriptor_pool,
+                                        1, descriptor_sets+1));
+  }
+
+  vkDestroyPipelineLayout (d->device, pipeline_layout, NULL);
+  vkDestroyPipeline (d->device, pipeline, NULL);
 }
 
 static size_t
