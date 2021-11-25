@@ -323,9 +323,11 @@ pocl_vulkan_get_best_compute_queue (VkPhysicalDevice dev,
   return VK_SUCCESS;
 }
 
-#define KERNARG_BUFFER_SIZE (8 << 20)
+/* Memory for OpenCL constant memory and kernel arguments */
+#define KERNARG_BUFFER_SIZE (2 << 20)
 #define CONSTANT_BUFFER_SIZE (8 << 20)
-#define STAGING_BUF_SIZE (4 << 20)
+/* larger of the previous two */
+#define STAGING_BUF_SIZE (8 << 20)
 
 static void
 pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
@@ -906,18 +908,16 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
                                                       dev_exts));
   assert (dev_ext_count < 256);
 
-#ifdef VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD
-  int have_amd_shader_count = 0;
-#endif
+  int have_amd_shader_core_properties = 0;
   int have_needed_extensions = 0;
   for (i = 0; i < dev_ext_count; ++i)
     {
-#ifdef VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD
+#ifdef VK_AMD_shader_core_properties
       if (strncmp ("VK_AMD_shader_core_properties", dev_exts[i].extensionName,
                    VK_MAX_EXTENSION_NAME_SIZE)
           == 0)
         {
-          ++have_amd_shader_count;
+          have_amd_shader_core_properties = 1;
           requested_exts[requested_ext_count++]
               = "VK_AMD_shader_core_properties";
         }
@@ -937,6 +937,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
           requested_exts[requested_ext_count++]
               = "VK_KHR_storage_buffer_storage_class";
         }
+
 /* TODO this will be required once we get rid of clspv-reflection
       if (strncmp ("VK_KHR_shader_non_semantic_info",
                    dev_exts[i].extensionName, VK_MAX_EXTENSION_NAME_SIZE)
@@ -963,8 +964,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     dev->available = CL_TRUE;
 
     /* get device properties */
-#ifdef VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD
-  if (have_amd_shader_count)
+  if (have_amd_shader_core_properties)
     {
       VkPhysicalDeviceProperties2 general_props;
       VkPhysicalDeviceShaderCorePropertiesAMD shader_core_properties;
@@ -986,12 +986,11 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
             * shader_core_properties.shaderArraysPerEngineCount
             * shader_core_properties.computeUnitsPerShaderArray;
     }
-#else
-  {
-    vkGetPhysicalDeviceProperties (pd, &d->dev_props);
-    dev->max_compute_units = 1;
-  }
-#endif
+  else
+    {
+      vkGetPhysicalDeviceProperties (pd, &d->dev_props);
+      dev->max_compute_units = 1;
+    }
 
   /* TODO get this from Vulkan API */
   dev->max_clock_frequency = 1000;
@@ -1113,21 +1112,22 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->preferred_vector_width_long = 1;
   dev->preferred_vector_width_float = 1;
   dev->preferred_vector_width_double = 1;
-  dev->preferred_vector_width_half = 0;
+  dev->preferred_vector_width_half = 1;
   dev->native_vector_width_char = 1;
   dev->native_vector_width_short = 1;
   dev->native_vector_width_int = 1;
   dev->native_vector_width_long = 1;
   dev->native_vector_width_float = 1;
   dev->native_vector_width_double = 1;
-  dev->native_vector_width_half = 0;
+  dev->native_vector_width_half = 1;
 
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
                           | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
                           | CL_FP_DENORM;
+  dev->half_fp_config = 0;
 
   dev->device_side_printf = 0;
-  dev->printf_buffer_size = 0;
+  dev->printf_buffer_size = 1024*1024;
 
   dev->available = CL_TRUE;
   dev->endian_little = CL_TRUE;
