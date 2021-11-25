@@ -72,6 +72,7 @@ set_tests_properties(
   "workgroup/switch_case"
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
   "workgroup/for_with_divergent_return"
+  "workgroup/cond_barriers_in_for"
   PROPERTIES
     COST 2.0
     PROCESSORS 1

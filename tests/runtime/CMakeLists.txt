@@ -126,6 +126,8 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_fill-buffer"
   "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
+  "runtime/test_buffer_migration"
+  "runtime/test_buffer_ping_pong"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   PROPERTIES
