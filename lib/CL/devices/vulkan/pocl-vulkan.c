@@ -729,7 +729,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
   cinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   cinfo.pApplicationInfo = &pocl_vulkan_application_info;
 
-#ifdef ENABLE_CLSPV
+#ifdef HAVE_CLSPV
   if (!pocl_exists (CLSPV))
     POCL_ABORT ("Can't find CLSPV compiler\n");
 #endif
@@ -1089,7 +1089,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO: (cl_uint)d->dev_props.limits.minStorageBufferOffsetAlignment * 8; */
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
 
-#ifdef ENABLE_CLSPV
+#ifdef HAVE_CLSPV
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
   dev->consumes_il_directly = CL_TRUE;
@@ -1276,7 +1276,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                           const cl_program *input_headers,
                           const char **header_include_names, int link_program)
 {
-#ifdef ENABLE_CLSPV
+#ifdef HAVE_CLSPV
   assert (program->devices[device_i]->compiler_available == CL_TRUE);
   assert (program->devices[device_i]->linker_available == CL_TRUE);
   assert (program->source);
@@ -1341,7 +1341,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path),
                         CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
 
-  char *REFLECTION[] = { CLSPV "-reflection", program_spv_path, "-o",
+  char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path, "-o",
                          program_map_path, NULL };
 
   pocl_run_command (REFLECTION);
@@ -1370,7 +1370,7 @@ pocl_vulkan_supports_binary (cl_device_id device, const size_t length,
 * are fixed to extract kernel metadata from SPIR-V directly
 * instead of using clspv-reflection
 */
-#ifdef ENABLE_CLSPV
+#ifdef HAVE_CLSPV
   return bitcode_is_spirv_execmodel_shader (binary, length);
 #else
   return 0;
@@ -1411,7 +1411,7 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
       return CL_SUCCESS;
     }
 
-#ifdef ENABLE_CLSPV
+#ifdef HAVE_CLSPV
   /* we have program->binaries[] which is SPIR-V */
   assert (program->binaries[device_i]);
   int is_spirv = bitcode_is_spirv_execmodel_shader(program->binaries[device_i], program->binary_sizes[device_i]);

@@ -35,17 +35,20 @@ Easiest to check is with vulkaninfo utility, they must be listed in 'Device Exte
 To build the full pocl-vulkan, first you must build the clspv compiler::
 
     git clone https://github.com/google/clspv.git
-    cmake /path/to/clspv -DCLSPV_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=${CLSPV_BIN_DIR} -DCMAKE_BUILD_TYPE=Release
+    cd clspv
+    python utils/fetch_sources.py
+    mkdir build ; cd build
+    cmake /path/to/clspv -DCLSPV_BUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release
     make -jX
     make install
 
 ... this will take some time and space, because it compiles its own checkout of LLVM.
 
-After the build, copy "clspv" and "clspv-reflection" to some place CLSPV_BIN_DIR
+After the build, copy "clspv" and "clspv-reflection" binaries to some place CLSPV_BIN_DIR
 
 Then build the vulkan driver::
 
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_EXPERIMENTAL_DRIVERS=1 -DENABLE_VULKAN=1 -DCLSPV=${CLSPV_BIN_DIR}/clspv <path-to-pocl-source-dir>
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_EXPERIMENTAL_DRIVERS=1 -DENABLE_VULKAN=1 -DCLSPV_DIR=${CLSPV_BIN_DIR} <path-to-pocl-source-dir>
 
 You may set VULKAN_SDK env variable before running cmake, then it will look for libvulkan in VULKAN_SDK/lib directory.
 
