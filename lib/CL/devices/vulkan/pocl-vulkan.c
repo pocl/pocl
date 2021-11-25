@@ -614,6 +614,8 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
   ops->memfill = pocl_vulkan_memfill;
   ops->map_mem = pocl_vulkan_map_mem;
   ops->unmap_mem = pocl_vulkan_unmap_mem;
+  ops->get_mapping_ptr = pocl_vulkan_get_mapping_ptr;
+  ops->free_mapping_ptr = pocl_vulkan_free_mapping_ptr;
   ops->can_migrate_d2d = NULL;
   ops->migrate_d2d = NULL;
 
@@ -2124,7 +2126,7 @@ pocl_vulkan_map_mem (void *data, pocl_mem_identifier *src_mem_id,
 
   POCL_MSG_PRINT_VULKAN ("MAP MEM: %p FLAGS %zu\n", memdata, map->map_flags);
 
-  pocl_vulkan_dev2host (d, memdata, map->host_ptr, src_mem_id, map->offset,
+  pocl_vulkan_dev2host (d, memdata, src_mem_id, map->host_ptr, map->offset,
                         map->size);
 
   return CL_SUCCESS;
@@ -2941,4 +2943,32 @@ pocl_vulkan_free (cl_device_id device, cl_mem mem)
   p->version = 0;
   p->extra_ptr = NULL;
   p->extra = 0;
+}
+
+
+cl_int
+pocl_vulkan_get_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                             cl_mem mem, mem_mapping_t *map)
+{
+  pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)data;
+  /* assume buffer is allocated */
+  assert (mem_id->mem_ptr != NULL);
+  assert (mem_id->extra_ptr != NULL);
+  assert (mem->size > 0);
+  assert (map->size > 0);
+
+  map->host_ptr = (char *)mem_id->extra_ptr + map->offset;
+  /* POCL_MSG_ERR ("map HOST_PTR: %p | SIZE %zu | OFFS %zu | DEV PTR: %p \n",
+                  map->host_ptr, map->size, map->offset, mem_id->mem_ptr); */
+  assert (map->host_ptr);
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_vulkan_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                              cl_mem mem, mem_mapping_t *map)
+{
+  pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)data;
+  map->host_ptr = NULL;
+  return CL_SUCCESS;
 }
