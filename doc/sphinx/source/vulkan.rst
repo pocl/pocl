@@ -1,12 +1,9 @@
 Vulkan driver
 =================
 
-NOTE: THIS DRIVER IS INCOMPLETE AND IS NOT ACTIVELY DEVELOPED BY TUNI.
-ANY MAINTENANCE WOULD NEED TO BE DONE BY COMMUNITY IN THEIR FREE TIME.
+NOTE: This driver is incomplete without an active maintainer. Pull Requests welcomed.
 
-PULL REQUESTS ON GITHUB WILL BE CONSIDERED, BUT REPORTS ON
-MISSING FEATURES WITHOUT CODE CONTRIBUTIONS ARE POINTLESS,
-BECAUSE LIMITATIONS ARE ALREADY KNOWN.
+
 
 This driver uses libvulkan and clspv to run OpenCL code on GPU devices via Vulkan API.
 
@@ -66,7 +63,7 @@ What works
 
  * both integrated and discrete GPUs
  * buffer arguments (cl_mem)
- * POD (plain old data) arguments (integers; structs / unions are untested)
+ * POD (plain old data) arguments (int32 and float32; others are untested)
  * local memory, both as static (in-kernel) and as kernel argument
  * clEnqueue{Map,Unmap,Read,Write}Buffer & clEnqueueNDRangeKernel should work
  * clGetDeviceInfo should work

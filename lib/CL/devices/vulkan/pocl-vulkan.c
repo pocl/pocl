@@ -952,7 +952,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   if (have_needed_extensions < 2)
     {
-      POCL_MSG_ERR ("pocl-vulkan requires a device to support: "
+      POCL_MSG_ERR ("pocl-vulkan requires a device that supports: "
                     "VK_KHR_variable_pointers + "
                     "VK_KHR_storage_buffer_storage_class + "
                     "VK_KHR_shader_non_semantic_info;\n"
@@ -2126,7 +2126,7 @@ pocl_vulkan_copy_rect (void *data,
                       size_t const src_row_pitch,
                       size_t const src_slice_pitch)
 {
-  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_copy_rect is not implemented\n");
+  POCL_ABORT_UNIMPLEMENTED ("clEnqueueCopyBufferRect is not implemented for the Vulkan driver\n");
 }
 
 void
@@ -2142,7 +2142,7 @@ pocl_vulkan_read_rect (void *data,
                       size_t const host_row_pitch,
                       size_t const host_slice_pitch)
 {
-  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_read_rect is not implemented\n");
+  POCL_ABORT_UNIMPLEMENTED ("clEnqueueReadBufferRect is not implemented for the Vulkan driver\n");
 }
 
 void
@@ -2158,7 +2158,7 @@ pocl_vulkan_write_rect (void *data,
                       size_t const host_row_pitch,
                       size_t const host_slice_pitch)
 {
-  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_write_rect is not implemented\n");
+  POCL_ABORT_UNIMPLEMENTED ("clEnqueueWriteBufferRect is not implemented for the Vulkan driver\n");
 }
 
 
@@ -2170,7 +2170,7 @@ void pocl_vulkan_memfill(void *data,
                         const void *__restrict__  pattern,
                         size_t pattern_size)
 {
-  POCL_ABORT_UNIMPLEMENTED ("pocl_vulkan_memfill is not implemented\n");
+  POCL_ABORT_UNIMPLEMENTED ("clEnqueueFillBuffer is not implemented for the Vulkan driver\n");
 }
 
 cl_int
