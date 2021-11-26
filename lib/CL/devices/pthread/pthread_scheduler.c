@@ -81,7 +81,7 @@ typedef struct scheduler_data_
 
 static scheduler_data scheduler;
 
-void
+cl_int
 pthread_scheduler_init (cl_device_id device)
 {
   unsigned i;
@@ -114,6 +114,7 @@ pthread_scheduler_init (cl_device_id device)
                                      (void *)&scheduler.thread_pool[i]));
     }
 
+  return CL_SUCCESS;
 }
 
 void

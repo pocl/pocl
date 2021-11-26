@@ -208,14 +208,19 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-      pthread_scheduler_init (device);
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
-  return CL_SUCCESS;
+
+  return ret;
 }
 
 cl_int
@@ -246,13 +251,17 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   d->current_kernel = NULL;
   device->data = d;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      pthread_scheduler_init (device);
-      scheduler_initialized = 1;
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
 
-  return CL_SUCCESS;
+  return ret;
 }
 
 void
