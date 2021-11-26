@@ -80,6 +80,8 @@ typedef struct scheduler_data_
 
   pthread_barrier_t init_barrier
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
+  int worker_out_of_memory;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
@@ -111,6 +113,7 @@ pthread_scheduler_init (cl_device_id device)
 
   PTHREAD_CHECK (pthread_barrier_init (&scheduler.init_barrier, NULL,
                                        num_worker_threads + 1));
+  scheduler.worker_out_of_memory = 0;
 
   for (i = 0; i < num_worker_threads; ++i)
     {
@@ -122,6 +125,12 @@ pthread_scheduler_init (cl_device_id device)
 
   PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
                   pthread_barrier_wait (&scheduler.init_barrier));
+
+  if (scheduler.worker_out_of_memory)
+    {
+      pthread_scheduler_uninit ();
+      return CL_OUT_OF_HOST_MEMORY;
+    }
 
   return CL_SUCCESS;
 }
@@ -518,12 +527,10 @@ pocl_pthread_driver_thread (void *p)
   td->num_threads = scheduler.num_threads;
   td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                            scheduler.printf_buf_size);
-  assert (td->printf_buffer != NULL);
 
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                        scheduler.local_mem_size);
-  assert (td->local_mem);
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))
     {
@@ -534,6 +541,11 @@ pocl_pthread_driver_thread (void *p)
           pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set));
     }
 #endif
+
+  if (td->printf_buffer == NULL || td->local_mem == NULL)
+    {
+      POCL_ATOMIC_INC (scheduler.worker_out_of_memory);
+    }
 
   PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
                   pthread_barrier_wait (&scheduler.init_barrier));
