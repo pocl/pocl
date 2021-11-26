@@ -77,6 +77,9 @@ typedef struct scheduler_data_
   POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   int thread_pool_shutdown_requested;
+
+  pthread_barrier_t init_barrier
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
@@ -106,6 +109,9 @@ pthread_scheduler_init (cl_device_id device)
    * TODO fix this */
   scheduler.local_mem_size = device->local_mem_size + device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
 
+  PTHREAD_CHECK (pthread_barrier_init (&scheduler.init_barrier, NULL,
+                                       num_worker_threads + 1));
+
   for (i = 0; i < num_worker_threads; ++i)
     {
       scheduler.thread_pool[i].index = i;
@@ -113,6 +119,9 @@ pthread_scheduler_init (cl_device_id device)
                                      pocl_pthread_driver_thread,
                                      (void *)&scheduler.thread_pool[i]));
     }
+
+  PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
+                  pthread_barrier_wait (&scheduler.init_barrier));
 
   return CL_SUCCESS;
 }
@@ -135,6 +144,7 @@ pthread_scheduler_uninit ()
   pocl_aligned_free (scheduler.thread_pool);
   POCL_FAST_DESTROY (scheduler.wq_lock_fast);
   PTHREAD_CHECK (pthread_cond_destroy (&scheduler.wake_pool));
+  PTHREAD_CHECK (pthread_barrier_destroy (&scheduler.init_barrier));
 
   scheduler.thread_pool_shutdown_requested = 0;
 }
@@ -524,6 +534,9 @@ pocl_pthread_driver_thread (void *p)
           pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set));
     }
 #endif
+
+  PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
+                  pthread_barrier_wait (&scheduler.init_barrier));
 
   while (1)
     {
