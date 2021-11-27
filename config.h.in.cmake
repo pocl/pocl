@@ -76,6 +76,7 @@
 #cmakedefine HAVE_LTTNG_UST
 
 #cmakedefine HAVE_OCL_ICD
+#cmakedefine HAVE_OCL_ICD_30_COMPATIBLE
 
 #cmakedefine HAVE_POSIX_MEMALIGN
 

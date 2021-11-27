@@ -18,11 +18,11 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #  define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
 #  define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
 
-/* Define the ICD dispatch structure that gets filled below. 
+/* Define the ICD dispatch structure that gets filled below.
  * Prefer to get it from ocl-icd, as that has compile time type checking
  * of the function signatures. This checks that they are in correct order.
  */
-#ifdef HAVE_OCL_ICD 
+#if defined(HAVE_OCL_ICD) && defined(HAVE_OCL_ICD_30_COMPATIBLE)
 #include <ocl_icd.h>
 #else
 #define OCL_ICD_IDENTIFIED_FUNCTIONS 116

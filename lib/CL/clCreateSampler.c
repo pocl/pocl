@@ -23,7 +23,6 @@
 
 #include "devices.h"
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "pocl_util.h"
 
 extern unsigned long sampler_c;

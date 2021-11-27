@@ -69,7 +69,6 @@
 
 #include "bufalloc.h"
 #include "utlist.h"
-#include "pocl_icd.h"
 
 //#define DEBUG_BUFALLOC
 

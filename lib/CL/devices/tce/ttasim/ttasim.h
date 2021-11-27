@@ -26,7 +26,6 @@
 
 #include "pocl_cl.h"
 #include "pocl_device.h"
-#include "pocl_icd.h"
 #include "bufalloc.h"
 
 #include "tce_common.h"

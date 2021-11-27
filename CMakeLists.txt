@@ -921,7 +921,11 @@ else()
     list(APPEND OCL_LDFLAGS "OpenCL")
     set(OPENCL_LIBRARIES "${OCL_LDFLAGS}" CACHE INTERNAL "opencl ICD/library link flags")
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
-
+    if(DEFINED OCL_ICD_VERSION AND (OCL_ICD_VERSION VERSION_GREATER_EQUAL "2.3.0"))
+      set(HAVE_OCL_ICD_30_COMPATIBLE 1 CACHE INTERNAL "ICD 3.0 compat")
+    else()
+      set(HAVE_OCL_ICD_30_COMPATIBLE 0 CACHE INTERNAL "ICD 3.0 compat")
+    endif()
   else()
 
     set(HAVE_OCL_ICD 0 CACHE INTERNAL "OCL library is ocl-icd")
