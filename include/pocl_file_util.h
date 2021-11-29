@@ -60,6 +60,7 @@ int pocl_write_tempfile (char *output_path, const char *prefix,
 
 /* Allocates memory and places file contents in it.
  * Returns negative errno on error, zero otherwise. */
+POCL_EXPORT
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
 
 int pocl_write_module(void *module, const char* path, int dont_rewrite);

@@ -99,6 +99,7 @@ POdeclsym(clGetSupportedImageFormats)
 POdeclsymICD(clIcdGetPlatformIDsKHR)
 POdeclsym(clReleaseCommandQueue)
 POdeclsym(clReleaseContext)
+POCL_EXPORT
 POdeclsym(clReleaseDevice)
 POCL_EXPORT
 POdeclsym(clReleaseEvent)

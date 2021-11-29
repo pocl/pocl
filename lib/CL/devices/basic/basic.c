@@ -245,6 +245,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 }
 
 
+POCL_EXPORT
 cl_int
 pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 {
@@ -274,6 +275,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 }
 
 
+POCL_EXPORT
 void
 pocl_basic_free (cl_device_id device, cl_mem mem)
 {
@@ -831,6 +833,7 @@ pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
   memcpy (dst, src, size);
 }
 
+POCL_EXPORT
 void
 pocl_basic_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
                      void *__restrict__ pattern, size_t pattern_size)

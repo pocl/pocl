@@ -191,6 +191,7 @@ void pocl_update_event_queued (cl_event event);
 POCL_EXPORT
 void pocl_update_event_submitted (cl_event event);
 
+POCL_EXPORT
 void pocl_update_event_running_unlocked (cl_event event);
 
 POCL_EXPORT
@@ -216,6 +217,7 @@ POCL_EXPORT
 const char *
 pocl_command_to_str (cl_command_type cmd);
 
+POCL_EXPORT
 int
 pocl_run_command(char * const *args);
 

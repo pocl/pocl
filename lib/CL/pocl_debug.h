@@ -175,6 +175,7 @@ POCL_EXPORT
                                                const char* msg,
                                                const char *func,
                                                unsigned line);
+POCL_EXPORT
         extern void pocl_debug_print_duration (const char* func, unsigned line,
                                                const char* msg, uint64_t nanosecs);
         #define POCL_MEASURE_START(SUFFIX) \

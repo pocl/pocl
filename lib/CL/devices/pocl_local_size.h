@@ -39,6 +39,7 @@ void pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
  * results as a side effect from the small work-groups. Performs an exhaustive
  * search, thus should not be used with devices with a large work-group
  * support. */
+POCL_EXPORT
 void pocl_wg_utilization_maximizer (cl_device_id dev, size_t global_x,
                                     size_t global_y, size_t global_z,
                                     size_t *local_x, size_t *local_y,
