@@ -95,6 +95,8 @@ main (int argc, char **argv)
   CHECK_CL_ERROR2 (err);
 
   err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+  if (err != CL_SUCCESS)
+    poclu_show_program_build_log (program);
   CHECK_CL_ERROR2 (err);
 
   kernel = clCreateKernel (program, "test_kernel", &err);

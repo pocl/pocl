@@ -75,6 +75,7 @@ int call_test(const char *name)
   result = clBuildProgram(program, 0, NULL, "-I" SRCDIR, NULL, NULL);
   if (result != CL_SUCCESS) {
     puts("clBuildProgram call failed\n");
+    poclu_show_program_build_log (program);
     goto error;
   }
 
