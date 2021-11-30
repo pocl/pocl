@@ -199,8 +199,6 @@ option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
 
-option(ENABLE_EXPERIMENTAL_DRIVERS "Enable compilation of experimental drivers. Required for Vulkan driver" OFF)
-
 option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" OFF)
 if(VISIBILITY_HIDDEN)
   add_compile_options(-fvisibility=hidden)
@@ -1322,7 +1320,7 @@ endif()
 
 ##########################################################
 
-if (ENABLE_EXPERIMENTAL_DRIVERS AND ENABLE_VULKAN)
+if (ENABLE_VULKAN)
 
   # Use FindVulkan module added with CMAKE 3.7
   if (NOT Vulkan_FOUND)
@@ -1339,8 +1337,7 @@ if (ENABLE_EXPERIMENTAL_DRIVERS AND ENABLE_VULKAN)
   endif()
 
   if(NOT Vulkan_FOUND)
-    message(STATUS "Vulkan NOT found, disabling")
-    set(ENABLE_VULKAN OFF CACHE INTERNAL "Vulkan")
+    message(FATAL_ERROR "Vulkan not found")
   else()
     find_program(CLSPV NAMES clspv HINTS ${CLSPV_DIR})
     find_program(CLSPV_REFLECTION NAMES clspv-reflection HINTS ${CLSPV_DIR})
@@ -1351,9 +1348,8 @@ if (ENABLE_EXPERIMENTAL_DRIVERS AND ENABLE_VULKAN)
       message(STATUS "please provide a path to clspv & clspv-reflection binaries with -DCLSPV_DIR=...")
       set(HAVE_CLSPV OFF)
     endif()
-    message(STATUS "Using Vulkan library ${Vulkan_LIBRARY} Vulkan headers in ${Vulkan_INCLUDE_DIR}")
+    message(STATUS "Using Vulkan library ${Vulkan_LIBRARY} and Vulkan headers in ${Vulkan_INCLUDE_DIR}")
     message(WARNING "Note: Vulkan backend is highly experimental and very incomplete." )
-    set(ENABLE_VULKAN ON CACHE INTERNAL "Vulkan")
     set(OCL_DRIVERS "${OCL_DRIVERS} vulkan")
     set(OCL_TARGETS "${OCL_TARGETS} vulkan")
   endif()

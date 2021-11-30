@@ -1,11 +1,9 @@
 Vulkan driver
 =================
 
-NOTE: This driver is incomplete without an active maintainer. Pull Requests welcomed.
-
-
-
 This driver uses libvulkan and clspv to run OpenCL code on GPU devices via Vulkan API.
+
+NOTE: THIS DRIVER IS INCOMPLETE, without an active maintainer. Pull Requests welcomed.
 
 Installation
 -------------
@@ -119,7 +117,7 @@ Testing
 
 The tests that should work with Vulkan driver can be run with tools/scripts/run_vulkan_tests.
 
-Devices where this driver was tested:
+This driver was tested with these devices:
 
 * Intel HD 530 integrated GPU
 * AMD Vega 56 discrete GPU
