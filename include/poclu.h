@@ -124,6 +124,8 @@ int poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                                  const char *explicit_binary,
                                  const char *extra_build_opts, cl_program *p);
 
+POCLU_API cl_int POCLU_CALL poclu_show_program_build_log (cl_program program);
+
 /* In case cl_err != CL_SUCCESS, prints out the error +
  * function : line to stderr, and returns 1, otherwise
  * returns 0

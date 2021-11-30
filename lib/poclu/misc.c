@@ -198,6 +198,72 @@ poclu_write_file (const char *filemane, char *content, size_t size)
   return 0;
 }
 
+cl_int
+poclu_show_program_build_log (cl_program program)
+{
+  cl_int err;
+  cl_uint num_devices;
+  cl_device_id *devices;
+
+  err = clGetProgramInfo (program, CL_PROGRAM_NUM_DEVICES,
+                          sizeof (num_devices), &num_devices, NULL);
+  if (err != CL_SUCCESS)
+    goto fail;
+
+  devices = (cl_device_id *)malloc (sizeof (cl_device_id) * num_devices);
+  if (!devices)
+    {
+      err = CL_OUT_OF_HOST_MEMORY;
+      goto fail;
+    }
+
+  err = clGetProgramInfo (program, CL_PROGRAM_DEVICES,
+                          sizeof (cl_device_id) * num_devices, devices, NULL);
+  if (err != CL_SUCCESS)
+    goto fail2;
+
+  for (cl_uint i = 0; i < num_devices; ++i)
+    {
+      char *log;
+      size_t log_size;
+
+      err = clGetProgramBuildInfo (program, devices[i], CL_PROGRAM_BUILD_LOG,
+                                   0, NULL, &log_size);
+      if (err != CL_SUCCESS)
+        goto fail2;
+
+      log = (char *)malloc (log_size);
+      if (!log)
+        {
+          err = CL_OUT_OF_HOST_MEMORY;
+          goto fail2;
+        }
+
+      err = clGetProgramBuildInfo (program, devices[i], CL_PROGRAM_BUILD_LOG,
+                                   log_size, log, NULL);
+      if (err != CL_SUCCESS)
+        {
+          free (log);
+          goto fail2;
+        }
+
+      if (num_devices > 1)
+        fprintf (stderr, "device %d/%d:\n", i, num_devices);
+      fprintf (stderr, "%s\n", log);
+
+      free (log);
+    }
+
+  err = CL_SUCCESS;
+
+fail2:
+  free (devices);
+
+fail:
+  check_cl_error (err, __LINE__, __PRETTY_FUNCTION__);
+  return err;
+}
+
 #define OPENCL_ERROR_CASE(ERR) \
   case ERR:                                                             \
   { fprintf (stderr, "" #ERR " in %s on line %i\n", func_name, line);   \
