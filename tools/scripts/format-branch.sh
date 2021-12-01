@@ -11,9 +11,9 @@ case "$(git describe --always --dirty=-DIRTY)" in
     exit 1
 esac
 
-PATCHY=/tmp/p.patch
+PATCHY=$(mktemp /tmp/pocl.XXXXXXXX.patch)
+trap "rm -f $PATCHY" EXIT
 
-rm -f $PATCHY
 git diff master -U0 --no-color >$PATCHY
 
 SCRIPTPATH=$( realpath "$0"  )
