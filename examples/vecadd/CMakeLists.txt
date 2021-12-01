@@ -49,5 +49,5 @@ set_tests_properties(
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "internal;"
+    LABELS "internal;vulkan"
     DEPENDS "pocl_version_check")

@@ -37,7 +37,7 @@ if(ENABLE_HOST_CPU_DEVICES)
 endif()
 
 #######################################################################
-if (UNIX)
+if (UNIX AND ENABLE_LOADABLE_DRIVERS)
 
 add_test(NAME pocl_test_dlopen_libpocl COMMAND test_dlopen)
 set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_libpocl")
@@ -70,6 +70,12 @@ endif()
 if(ENABLE_CUDA)
   add_test(NAME pocl_test_dlopen_device_cuda COMMAND test_dlopen cuda)
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_cuda")
+endif()
+
+if(ENABLE_VULKAN)
+  add_test(NAME pocl_test_dlopen_device_vulkan COMMAND test_dlopen vulkan)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
+  set_property(TEST "pocl_version_check" "pocl_test_dlopen_libpocl" "pocl_test_dlopen_device_vulkan" APPEND PROPERTY LABELS "vulkan")
 endif()
 
 endif ()

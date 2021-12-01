@@ -48,5 +48,5 @@ set_tests_properties(
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "internal;cuda;hsa-native"
+    LABELS "internal;cuda;hsa-native;vulkan"
     DEPENDS "pocl_version_check")

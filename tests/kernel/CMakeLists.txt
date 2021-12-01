@@ -347,3 +347,8 @@ set_property(TEST
   "kernel/test_convert_sat_regression"
   "kernel/test_short16"
   APPEND PROPERTY LABELS "proxy")
+
+# Label tests that work with Vulkan
+set_property(TEST
+  "kernel/test_convert_sat_regression"
+  APPEND PROPERTY LABELS "vulkan")
