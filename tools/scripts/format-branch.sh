@@ -5,6 +5,12 @@ if [ ! -e .git ]; then
   exit 1
 fi
 
+case "$(git describe --always --dirty=-DIRTY)" in
+  *-DIRTY)
+    echo "There are uncommitted changes - aborting."
+    exit 1
+esac
+
 PATCHY=/tmp/p.patch
 
 rm -f $PATCHY
