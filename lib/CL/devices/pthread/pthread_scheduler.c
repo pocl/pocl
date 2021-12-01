@@ -88,7 +88,7 @@ pthread_scheduler_init (cl_device_id device)
   size_t num_worker_threads = device->max_compute_units;
   POCL_FAST_INIT (scheduler.wq_lock_fast);
 
-  pthread_cond_init (&(scheduler.wake_pool), NULL);
+  PTHREAD_CHECK (pthread_cond_init (&(scheduler.wake_pool), NULL));
 
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
@@ -109,9 +109,9 @@ pthread_scheduler_init (cl_device_id device)
   for (i = 0; i < num_worker_threads; ++i)
     {
       scheduler.thread_pool[i].index = i;
-      pthread_create (&scheduler.thread_pool[i].thread, NULL,
-                      pocl_pthread_driver_thread,
-                      (void*)&scheduler.thread_pool[i]);
+      PTHREAD_CHECK (pthread_create (&scheduler.thread_pool[i].thread, NULL,
+                                     pocl_pthread_driver_thread,
+                                     (void *)&scheduler.thread_pool[i]));
     }
 
 }
@@ -123,17 +123,17 @@ pthread_scheduler_uninit ()
 
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
-      pthread_join (scheduler.thread_pool[i].thread, NULL);
+      PTHREAD_CHECK (pthread_join (scheduler.thread_pool[i].thread, NULL));
     }
 
   pocl_aligned_free (scheduler.thread_pool);
   POCL_FAST_DESTROY (scheduler.wq_lock_fast);
-  pthread_cond_destroy (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_destroy (&scheduler.wake_pool));
 
   scheduler.thread_pool_shutdown_requested = 0;
 }
@@ -144,7 +144,7 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -153,7 +153,7 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.kernel_queue, run_cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -483,7 +483,8 @@ RETRY:
   /* if neither a command nor a kernel was available, sleep */
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
-      pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
+      PTHREAD_CHECK (
+          pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast));
       goto RETRY;
     }
 
@@ -518,7 +519,8 @@ pocl_pthread_driver_thread (void *p)
       cpu_set_t set;
       CPU_ZERO (&set);
       CPU_SET (td->index, &set);
-      pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set);
+      PTHREAD_CHECK (
+          pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set));
     }
 #endif
 
