@@ -28,7 +28,7 @@ if [ "$REPLY" == "y" ]; then
 
   git commit --amend
 
-  if [ -e .git/ORIG_HEAD ]; then
+  if [ -d .git/rebase-merge ]; then
 
     git rebase --continue
 
