@@ -2035,7 +2035,7 @@ void
 pocl_hsa_notify_event_finished (cl_event event)
 {
   pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
-  pthread_cond_broadcast (&e_d->event_cond);
+  PTHREAD_CHECK (pthread_cond_broadcast (&e_d->event_cond));
 }
 
 void
@@ -2048,7 +2048,7 @@ pocl_hsa_update_event (cl_device_id device, cl_event event)
       pocl_hsa_event_data_t *e_d
           = (pocl_hsa_event_data_t *)malloc (sizeof (pocl_hsa_event_data_t));
       assert (e_d);
-      pthread_cond_init (&e_d->event_cond, NULL);
+      PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *)e_d;
     }
   else
