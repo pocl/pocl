@@ -184,11 +184,6 @@ int pocl_check_event_wait_list(cl_command_queue     command_queue,
                                cl_uint              num_events_in_wait_list,
                                const cl_event *     event_wait_list);
 
-void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
-
-#define PTHREAD_CHECK(code)                                                   \
-  pocl_abort_on_pthread_error ((code), __LINE__, __FUNCTION__);
-
 void pocl_update_event_queued (cl_event event);
 
 POCL_EXPORT

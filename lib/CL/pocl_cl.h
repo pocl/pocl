@@ -107,6 +107,20 @@ typedef pthread_t pocl_thread_t;
 #define ALIGN_CACHE(x) x
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+POCL_EXPORT
+void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
+
+#ifdef __cplusplus
+}
+#endif
+
+#define PTHREAD_CHECK(code)                                                   \
+  pocl_abort_on_pthread_error ((code), __LINE__, __FUNCTION__);
+
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
 
