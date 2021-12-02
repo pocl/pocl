@@ -218,6 +218,10 @@ add_test_pocl(NAME "kernel/test_shuffle_ulong"
 
 ######################################################################
 
+add_test_pocl(NAME "kernel/test_ucharn"
+              EXPECTED_OUTPUT "test_ucharn_expout.txt"
+              COMMAND "kernel" "test_ucharn")
+
 add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")

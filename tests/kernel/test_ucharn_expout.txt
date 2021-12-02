@@ -1,0 +1,12 @@
+Running test test_ucharn...
+uchar2         0
+uchar3         0
+uchar4         0
+uchar8         0
+uchar16        0
+uchar2        41
+uchar3        7b
+uchar4        c6
+uchar8       29c
+uchar16      7a0
+OK
