@@ -104,7 +104,13 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
 
       bool Unsupported = false;
       // Check that the argument list is something we can handle.
-      for (unsigned I = 0; I < Call->arg_size(); ++I) {
+
+#ifndef LLVM_OLDER_THAN_8_0
+      const unsigned CallNumArg = Call->arg_size();
+#else
+      const unsigned CallNumArg = Call->getNumArgOperands();
+#endif
+      for (unsigned I = 0; I < CallNumArg; ++I) {
         llvm::ConstantInt *CallOperand =
           dyn_cast<llvm::ConstantInt>(Call->getArgOperand(I));
         if (CallOperand == nullptr)
@@ -130,10 +136,18 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
         llvm::CallInst *MovedCall = dyn_cast<llvm::CallInst>(M);
 
         // WI functions do not have variable argument lists.
-        assert(MovedCall->arg_size() == CallInst->arg_size());
+
+#ifndef LLVM_OLDER_THAN_8_0
+        const unsigned MovedCallNumArg = MovedCall->arg_size();
+        assert(MovedCallNumArg == CallInst->arg_size());
+#else
+        const unsigned MovedCallNumArg = MovedCall->getNumArgOperands();
+        assert(MovedCallNumArg == CallInst->getNumArgOperands());
+#endif
 
         bool IsApplicable = true;
-        for (unsigned I = 0; I < MovedCall->arg_size(); ++I) {
+
+        for (unsigned I = 0; I < MovedCallNumArg; ++I) {
           llvm::ConstantInt *CallOperand =
             dyn_cast<llvm::ConstantInt>(CallInst->getArgOperand(I));
           llvm::ConstantInt *PrevCallOperand =

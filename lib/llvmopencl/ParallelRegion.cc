@@ -688,7 +688,7 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-#if __clang_major__ > 13
+#ifndef LLVM_OLDER_THAN_14_0
     AttributeList func_printf_PAL =
         AttributeList()
             .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)
