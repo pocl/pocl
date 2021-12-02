@@ -371,6 +371,15 @@ set_property(TEST
   "regression/test_issue_553"
   APPEND PROPERTY LABELS "proxy")
 
+# Label tests that work with Vulkan
+set_property(TEST
+  "regression/issues_with_local_pointers_LOOPS"
+  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
+  "regression/early_return_before_a_barrier_region_LOOPS"
+  "regression/test_alignment_with_dynamic_wg3"
+  "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
+  APPEND PROPERTY LABELS "vulkan")
+
 
 ###################################################################
 

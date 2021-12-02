@@ -4,6 +4,7 @@
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
+#cmakedefine BUILD_VULKAN
 
 #cmakedefine BUILD_PROXY
 
@@ -13,6 +14,10 @@
 #cmakedefine BUILD_ICD
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
+#cmakedefine HAVE_CLSPV
+#define CLSPV "@CLSPV@"
+#define CLSPV_REFLECTION "@CLSPV_REFLECTION@"
 
 #cmakedefine ENABLE_ASAN
 #cmakedefine ENABLE_LSAN

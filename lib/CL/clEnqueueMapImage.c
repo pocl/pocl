@@ -154,8 +154,18 @@ CL_API_SUFFIX__VERSION_1_0
   assert (start_offset <= end_offset);
   mapping_info->size = end_offset + 1 - start_offset;
 
-  errcode = device->ops->get_mapping_ptr (device->data, mem_id, image,
-                                          mapping_info);
+  /* because cl_mems are per-context, PoCL delays allocation of
+   * cl_mem backing memory until it knows which device will need it,
+   * so the cl_mem might not yet be allocated on this device. However,
+   * some drivers can avoid unnecessary host memory usage if we
+   * allocate it now. We can assume it will be used on this device. */
+  pocl_mem_identifier *p = &image->device_ptrs[device->global_mem_id];
+  if (p->mem_ptr == NULL)
+    errcode = device->ops->alloc_mem_obj (device, image, NULL);
+
+  if (errcode == CL_SUCCESS)
+    errcode = device->ops->get_mapping_ptr (device->data, mem_id, image,
+                                            mapping_info);
   DL_APPEND (image->mappings, mapping_info);
   ++image->map_count;
   POCL_UNLOCK_OBJ (image);

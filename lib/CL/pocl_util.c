@@ -42,14 +42,16 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "pocl_util.h"
-#include "pocl_timing.h"
-#include "pocl_llvm.h"
-#include "utlist.h"
 #include "common.h"
-#include "pocl_mem_management.h"
 #include "devices.h"
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+#include "pocl_llvm.h"
+#include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_timing.h"
+#include "pocl_util.h"
+#include "utlist.h"
 
 /* required for setting SSE/AVX flush denorms to zero flag */
 #if defined(__x86_64__) && defined(__GNUC__)
@@ -252,6 +254,17 @@ pocl_size_ceil2_64 (uint64_t x)
   x |= x >> 16;
   x |= x >> 32;
   return ++x;
+}
+
+/* Rounds up to the (power of two) alignment */
+size_t pocl_align_value (size_t value, size_t alignment)
+{
+  if (value & (alignment-1))
+    {
+      value |= (alignment-1);
+      ++value;
+    }
+  return value;
 }
 
 #if defined(_WIN32) || defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__)    \
@@ -1807,6 +1820,77 @@ pocl_run_command (char *const *args)
     }
 }
 
+int
+pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
+                                 char *const *args)
+{
+  POCL_MSG_PRINT_INFO ("Launching: %s\n", args[0]);
+
+  int in[2];
+  int out[2];
+  pipe (in);
+  pipe (out);
+
+#ifdef HAVE_VFORK
+  pid_t p = vfork ();
+#elif defined(HAVE_FORK)
+  pid_t p = fork ();
+#else
+#error Must have fork() or vfork() system calls
+#endif
+  if (p == 0)
+    {
+      close (in[1]);
+      close (out[0]);
+
+      dup2 (in[0], STDIN_FILENO);
+      dup2 (out[1], STDOUT_FILENO);
+      dup2 (out[1], STDERR_FILENO);
+
+      return execv (args[0], args);
+    }
+  else
+    {
+      if (p < 0)
+        return EXIT_FAILURE;
+
+      close (in[0]);
+      close (out[1]);
+
+      ssize_t r = 0;
+      size_t total_bytes = 0;
+      size_t capture_limit = *captured_bytes;
+      char buf[4096];
+
+      while ((r = read (out[0], buf, 4096)) > 0)
+        {
+          if (total_bytes + r > capture_limit)
+            break;
+          memcpy (capture_string + total_bytes, buf, r);
+          total_bytes += r;
+        }
+      if (total_bytes > capture_limit)
+        total_bytes = capture_limit;
+
+      capture_string[total_bytes] = 0;
+      *captured_bytes = total_bytes;
+
+      int status;
+      if (waitpid (p, &status, 0) < 0)
+        POCL_ABORT ("pocl: waitpid() failed.\n");
+
+      close (out[0]);
+      close (in[1]);
+
+      if (WIFEXITED (status))
+        return WEXITSTATUS (status);
+      else if (WIFSIGNALED (status))
+        return WTERMSIG (status);
+      else
+        return EXIT_FAILURE;
+    }
+}
+
 // event locked
 void
 pocl_update_event_queued (cl_event event)
@@ -2091,9 +2175,11 @@ float_to_half (float value)
 #define OpCapab 0x00020011
 /* execution model = Kernel is used by OpenCL SPIR-V modules */
 #define KernelExecModel 0x6
+/* execution model = Shader is used by Vulkan SPIR-V modules */
+#define ShaderExecModel 0x1
 
-int
-bitcode_is_spirv_kernel (const char *bitcode, size_t size)
+static int
+bitcode_is_spirv_execmodel (const char *bitcode, size_t size, uint32_t type)
 {
   const uint32_t *bc32 = (const uint32_t *)bitcode;
   unsigned location = 0;
@@ -2104,23 +2190,29 @@ bitcode_is_spirv_kernel (const char *bitcode, size_t size)
 
   // skip version, generator, bound, schema
   location += 4;
-  int is_opencl = 0;
-  uint32_t instruction, value;
-  do
+  int is_type = 0;
+  uint32_t value, instruction;
+  instruction = htole32 (bc32[location++]);
+  value = htole32 (bc32[location++]);
+  while (instruction == OpCapab && location < (size / 4))
     {
+      if (value == type)
+        return 1;
       instruction = htole32 (bc32[location++]);
       value = htole32 (bc32[location++]);
-      if (value == KernelExecModel)
-        is_opencl = 1;
-    }
-  while (instruction == OpCapab);
-
-  /* SPIR-V but not OpenCL-type. */
-  if (!is_opencl)
-    {
-      POCL_MSG_ERR ("SPIR-V binary provided, but is not using Kernel mode."
-                    "Pocl can't process this binary.\n");
     }
 
-  return is_opencl;
+  return 0;
+}
+
+int
+bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
+{
+  return bitcode_is_spirv_execmodel (bitcode, size, KernelExecModel);
+}
+
+int
+bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
+{
+  return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel);
 }

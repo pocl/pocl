@@ -207,3 +207,12 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   APPEND PROPERTY LABELS "proxy")
+
+# Label tests that work with Vulkan
+set_property(TEST
+  "runtime/clGetEventInfo"
+  "runtime/test_event_cycle"
+  "runtime/test_event_free"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "vulkan")

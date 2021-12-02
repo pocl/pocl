@@ -129,12 +129,12 @@
   cl_int pocl_##__DRV__##_unmap_mem (void *data,                              \
                                      pocl_mem_identifier *dst_mem_id,         \
                                      cl_mem dst_buf, mem_mapping_t *map);     \
-  cl_int pocl_##__DRV__##_get_mapping_ptr (cl_mem mem,                        \
+  cl_int pocl_##__DRV__##_get_mapping_ptr (void *data,                        \
                             pocl_mem_identifier *mem_id,                      \
-                            mem_mapping_t *map);                              \
-  cl_int pocl_##__DRV__##_free_mapping_ptr (cl_mem mem,                       \
+                            cl_mem mem, mem_mapping_t *map);                  \
+  cl_int pocl_##__DRV__##_free_mapping_ptr (void *data,                       \
                             pocl_mem_identifier *mem_id,                      \
-                            mem_mapping_t *map);                              \
+                            cl_mem mem, mem_mapping_t *map);                  \
   char *pocl_##__DRV__##_init_build (void *data);                             \
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \

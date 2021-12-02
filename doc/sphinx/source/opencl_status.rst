@@ -41,6 +41,10 @@ Note that SPIR 1.2 and 2.0 are unsupported (though they may accidentally work);
 "SPIR" in the following text refers to LLVM IR bitcode with SPIR target,
 the exact format of which is LLVM-version-dependent. The binary format
 of SPIR-V is independent of LLVM; for this reason SPIR-V is the preferred format.
+Note that SPIR-V format supports different "capabilities" which in effect
+are different "dialects" of SPIR-V. The CPU driver supports the "Kernel" dialect,
+produced by llvm-spirv, Vulkan driver supports the "Shader" dialect produced
+by clspv.
 
 How to build PoCL with SPIR/SPIR-V support
 --------------------------------------------

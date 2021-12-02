@@ -71,7 +71,7 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/example1_dot_product"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native")
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")
 
 
 add_test(NAME "examples/example1_poclbin"

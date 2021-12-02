@@ -979,7 +979,7 @@ void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize)
 {
-  load_or_generate_kernel (kernel, device, 0, cmd->device_i, cmd,
+  load_or_generate_kernel (kernel, device, 0, cmd->program_device_i, cmd,
                            specialize);
 }
 
@@ -999,7 +999,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
   /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata = load_or_generate_kernel (
-      kernel, device, has_offsets, cmd->device_i, cmd, 1);
+      kernel, device, has_offsets, cmd->program_device_i, cmd, 1);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 

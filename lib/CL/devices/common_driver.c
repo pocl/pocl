@@ -713,7 +713,7 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
   assert (program->binaries[device_i]);
 
   cmd.device = device;
-  cmd.device_i = device_i;
+  cmd.program_device_i = device_i;
 
   struct _cl_kernel fake_k;
   memset (&fake_k, 0, sizeof (fake_k));

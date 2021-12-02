@@ -45,6 +45,10 @@ Other
   the proxy driver, PoCL will automatically manage buffer memory within
   the context.
 
+- a new experimental Vulkan driver, using clspv and Vulkan API to run
+  OpenCL code on Vulkan-enabled devices. To learn about the limitations,
+  please read the documentation at doc/sphinx/source/vulkan.rst.
+
 1.8 October 2021
 ================
 

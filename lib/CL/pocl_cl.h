@@ -1347,6 +1347,8 @@ typedef struct pocl_kernel_metadata_s
   void **data;
 } pocl_kernel_metadata_t;
 
+#define MAIN_PROGRAM_LOG_SIZE 6400
+
 struct _cl_program {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -1399,7 +1401,7 @@ struct _cl_program {
   /* Per-device build logs, for the case when we don't yet have the program's cachedir */
   char** build_log;
   /* Per-program build log, for the case when we aren't yet building for devices */
-  char main_build_log[640];
+  char main_build_log[MAIN_PROGRAM_LOG_SIZE];
   /* Use to store build status */
   cl_build_status build_status;
   /* Use to store binary type */

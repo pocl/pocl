@@ -233,6 +233,12 @@ pocl.
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
 
+- **POCL_VULKAN_VALIDATE=1**
+
+ When set to 1, and the Vulkan implementation has the validation layers,
+ enables the validation layers in the driver. You will also need POCL_DEBUG=vulkan
+ or POCL_DEBUG=all to see the output printed.
+
 - **POCL_WORK_GROUP_METHOD**
 
  The kernel compiler method to produce the work group functions from

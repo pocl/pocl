@@ -64,6 +64,7 @@ void bzero_s (void *v, size_t n);
 /* Finds the next highest power of two of the given value. */
 size_t pocl_size_ceil2 (size_t x);
 uint64_t pocl_size_ceil2_64 (uint64_t x);
+size_t pocl_align_value (size_t value, size_t alignment);
 
 /* Allocates aligned blocks of memory.
  *
@@ -220,11 +221,21 @@ pocl_command_to_str (cl_command_type cmd);
 int
 pocl_run_command(char * const *args);
 
+int pocl_run_command_capture_output (char *capture_string,
+                                     size_t *captured_bytes,
+                                     char *const *args);
+
 uint16_t float_to_half (float value);
 
 float half_to_float (uint16_t value);
 
-int bitcode_is_spirv_kernel (const char *bitcode, size_t size);
+/* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
+ * OpenCL-style bitcode produced by e.g. llvm-spirv */
+int bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
+
+/* returns !0 if binary is SPIR-V bitcode with OpCapability Shader
+ * these are produced by e.g. GLSL and clspv compilation */
+int bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 
 #ifdef __cplusplus
 }

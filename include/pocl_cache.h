@@ -84,7 +84,7 @@ int pocl_cache_write_descriptor (_cl_command_node *Command, cl_kernel kernel,
                                  size_t size);
 
 void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
-                                      cl_program program, unsigned device_i,
+                                      cl_program program, unsigned program_device_i,
                                       cl_kernel kernel, const char *append_str,
                                       _cl_command_node *command,
                                       int specialize);

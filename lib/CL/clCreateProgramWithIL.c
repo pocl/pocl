@@ -48,11 +48,18 @@ CL_API_SUFFIX__VERSION_2_1
 
   POCL_GOTO_ERROR_COND ((length == 0), CL_INVALID_VALUE);
 
-  int is_spirv = bitcode_is_spirv_kernel ((const char *)il, length);
+  int is_spirv = 0;
+#ifdef ENABLE_SPIRV
+  is_spirv += bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
+#endif
+#ifdef ENABLE_VULKAN
+  is_spirv += bitcode_is_spirv_execmodel_shader ((const char *)il, length);
+#endif
+
   POCL_GOTO_ERROR_ON (
       (!is_spirv), CL_INVALID_VALUE,
       "The IL provided to clCreateProgramWithIL "
-      "is not OpenCL Kernel-mode SPIR-V!\n");
+      "is not recognized as SPIR-V!\n");
 
 #ifdef ENABLE_SPIRV
   /* convert and the SPIR-V to LLVM IR with spir triple */
@@ -115,8 +122,7 @@ CL_API_SUFFIX__VERSION_2_1
             }
 #else
           else
-            POCL_MSG_WARN ("Device %s supports SPIR but not SPIR-V "
-                           "(we don't have LLVM-SPIRV translator)\n",
+            POCL_MSG_WARN ("Device %s does not support this kind of SPIR-V bitcode\n",
                            dev->long_name);
 #endif
         }

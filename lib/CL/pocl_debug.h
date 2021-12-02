@@ -93,6 +93,9 @@ extern "C" {
 #define POCL_DEBUG_FLAG_ACCEL 0x800
 #define POCL_DEBUG_FLAG_PROXY 0x1000
 
+
+#define POCL_DEBUG_FLAG_VULKAN 0x80000
+
 #define POCL_DEBUG_FLAG_WARNING  0x8000000000UL
 #define POCL_DEBUG_FLAG_ERROR   0x10000000000UL
 #define POCL_DEBUG_FLAG_ALL (uint64_t)(-1)
@@ -230,6 +233,8 @@ POCL_EXPORT
 
     #define POCL_MSG_PRINT_PROXY2(errcode, ...) POCL_MSG_PRINT_INFO_F(PROXY, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_PROXY(...) POCL_MSG_PRINT_INFO_F(PROXY, "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_VULKAN2(errcode, ...) POCL_MSG_PRINT_INFO_F(VULKAN, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_VULKAN(...) POCL_MSG_PRINT_INFO_F(VULKAN, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA(...) POCL_MSG_PRINT_INFO_F(CUDA, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_HSA2(errcode, ...) POCL_MSG_PRINT_INFO_F(HSA, errcode, __VA_ARGS__)
@@ -275,6 +280,8 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_ACCEL(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
+    #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_VULKAN(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA(...)  do {} while (0)
     #define POCL_MSG_PRINT_HSA2(...)  do {} while (0)

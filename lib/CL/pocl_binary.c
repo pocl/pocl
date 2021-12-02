@@ -245,14 +245,16 @@ check_binary(cl_device_id device, const unsigned char *binary)
     }
   if (b.version < FIRST_SUPPORTED_POCLCC_VERSION)
     {
-      POCL_MSG_WARN ("PoclBinary version %i is not supported by "
+      POCL_MSG_WARN ("PoCLBinary version %i is not supported by "
                      "this pocl (the minimal is: %i)\n",
                      b.version, FIRST_SUPPORTED_POCLCC_VERSION);
       return NULL;
     }
-  if (pocl_binary_get_device_id(device) != b.device_id)
+  uint64_t dev_id = pocl_binary_get_device_id(device);
+  if (dev_id != b.device_id)
     {
-      POCL_MSG_WARN ("PoclBinary device id mismatch\n");
+      POCL_MSG_WARN ("PoCLBinary device id mismatch, DEVICE: %lx, BINARY: %lx\n",
+                      dev_id, b.device_id);
       return NULL;
     }
   return p;

@@ -1077,7 +1077,7 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
   _cl_command_run *run_cmd = &cmd->command.run;
 
   pocl_cache_work_group_function_path (parallel_bc_path,
-                                       run_cmd->kernel->program, cmd->device_i,
+                                       run_cmd->kernel->program, cmd->program_device_i,
                                        run_cmd->kernel, cmd, specialize);
 
   strcpy (brigfile, parallel_bc_path);
@@ -1297,7 +1297,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
-  int error = pocl_llvm_generate_workgroup_function (cmd->device_i, device,
+  int error = pocl_llvm_generate_workgroup_function (cmd->program_device_i, device,
                                                      kernel, cmd, specialize);
   if (error)
     {

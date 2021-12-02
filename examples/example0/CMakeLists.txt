@@ -67,4 +67,4 @@ set_tests_properties( "examples/example0" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/example0"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native")
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")
