@@ -222,6 +222,10 @@ add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
 
+add_test_pocl(NAME "kernel/test_printf_vectors"
+              EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
+              COMMAND "kernel" "test_printf_vectors")
+
 add_test_pocl(NAME "kernel/test_sizeof_uint"
               EXPECTED_OUTPUT "test_sizeof_expout.txt"
               COMMAND "kernel" "test_sizeof")
@@ -237,7 +241,9 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
   "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
   "kernel/test_shuffle_float" ${EXTRA_TESTS}
-  "kernel/test_printf" "kernel/test_sizeof_uint"
+  "kernel/test_printf"
+  "kernel/test_printf_vectors"
+  "kernel/test_sizeof_uint"
 
   PROPERTIES
     COST 77
@@ -301,6 +307,7 @@ endif()
 set_property(TEST
   "kernel/test_local_struct_array"
   "kernel/test_printf"
+  "kernel/test_printf_vectors"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"
