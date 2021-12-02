@@ -22,6 +22,7 @@
 // THE SOFTWARE.
 
 #include "config.h"
+#include "pocl.h"
 
 #include <set>
 #include <iostream>
