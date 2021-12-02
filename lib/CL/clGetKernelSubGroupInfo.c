@@ -34,17 +34,10 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
      risk of confusion. */
   if (device != NULL)
     {
-      unsigned i;
-      int found_it = 0;
-      for (i = 0; i < kernel->context->num_devices; i++)
-        if (pocl_real_dev (device) == kernel->context->devices[i])
-          {
-            found_it = 1;
-            break;
-          }
-      POCL_RETURN_ERROR_ON ((!found_it), CL_INVALID_DEVICE,
-                            "could not find the "
-                            "device supplied in argument\n");
+      POCL_RETURN_ERROR_ON (
+          !(pocl_device_is_associated_with_kernel (device, kernel)),
+          CL_INVALID_DEVICE,
+          "could not find the device supplied in argument\n");
     }
   else
     {
@@ -60,7 +53,9 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
       return CL_INVALID_OPERATION;
     }
 
-  /* In case device reports subgroup support */
+  /* Subgroups are not currently supported,
+     but in case device reports subgroup support
+  */
   POCL_ABORT_UNIMPLEMENTED (
       "device associated with the kernel falsely indicates "
       "subgroup support\n");

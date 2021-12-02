@@ -226,6 +226,9 @@ float half_to_float (uint16_t value);
 
 int bitcode_is_spirv_kernel (const char *bitcode, size_t size);
 
+int pocl_device_is_associated_with_kernel (cl_device_id device,
+                                           cl_kernel kernel);
+
 #ifdef __cplusplus
 }
 #endif
