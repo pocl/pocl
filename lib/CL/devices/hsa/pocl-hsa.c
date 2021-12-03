@@ -485,7 +485,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
               /* TODO: Add a CMake variable or HSA description string
                  autodetection to control these. */
               if (dev->llvm_cpu == NULL)
-                dev->llvm_cpu = get_llvm_cpu_name ();
+                dev->llvm_cpu = pocl_get_llvm_cpu_name ();
               if (dev->llvm_target_triplet == NULL)
                 dev->llvm_target_triplet = OCL_KERNEL_TARGET;
               dev->arg_buffer_launcher = CL_TRUE;

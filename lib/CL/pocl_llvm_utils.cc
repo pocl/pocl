@@ -121,8 +121,7 @@ static int getModuleTriple(const char *input_stream, size_t size,
   return 0;
 }
 
-char *
-get_llvm_cpu_name () {
+char *pocl_get_llvm_cpu_name() {
   StringRef r = llvm::sys::getHostCPUName();
 
   // LLVM may return an empty string -- treat as generic

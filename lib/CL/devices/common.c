@@ -1521,7 +1521,7 @@ pocl_init_default_device_infos (cl_device_id dev)
 #ifdef HOST_CPU_FORCED
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
-  dev->llvm_cpu = get_llvm_cpu_name ();
+  dev->llvm_cpu = pocl_get_llvm_cpu_name ();
 #endif
 
   dev->spirv_version = "SPIR-V_1.2";

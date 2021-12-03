@@ -144,7 +144,7 @@ pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name ();
+  char *name = pocl_get_llvm_cpu_name ();
   snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
   POCL_MEM_FREE (name);
 #else
