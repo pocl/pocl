@@ -276,11 +276,6 @@ set_tests_properties("kernel/test_shuffle_char"
 #add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_block"
 #                "test_block_expout.txt" "test_block")
 
-#if(LLVM_3_4)
-#  set_tests_properties("kernel/test_block"
-#    PROPERTIES WILL_FAIL 1)
-#endif()
-
 #set_tests_properties("kernel/test_sizeof_uint" "kernel/test_block" "kernel/test_printf"
 #  PROPERTIES
 #    COST 2.0
