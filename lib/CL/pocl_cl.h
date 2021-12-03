@@ -118,8 +118,20 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 }
 #endif
 
-#define PTHREAD_CHECK(code)                                                   \
-  pocl_abort_on_pthread_error ((code), __LINE__, __FUNCTION__);
+/* Some pthread_*() calls may return '0' or a specific non-zero value on
+ * success.
+ */
+#define PTHREAD_CHECK2(_status_ok, _code)                                     \
+  do                                                                          \
+    {                                                                         \
+      int _pthread_status = (_code);                                          \
+      if (_pthread_status != 0 && _pthread_status != (_status_ok))            \
+        pocl_abort_on_pthread_error (_pthread_status, __LINE__,               \
+                                     __FUNCTION__);                           \
+    }                                                                         \
+  while (0)
+
+#define PTHREAD_CHECK(code) PTHREAD_CHECK2 (0, code)
 
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
