@@ -33,7 +33,7 @@ install(FILES "tta_device_main.c"
 
 add_pocl_device_library(pocl-devices-ttasim tce_common.h tce_common.cc ttasim/ttasim.h ttasim/ttasim.cc)
 if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-ttasim PRIVATE ${TCE_LIBS})
+  target_link_libraries(pocl-devices-ttasim PRIVATE ${TCE_LIBS} ${PTHREAD_LIBRARY})
 endif()
 
 if(MSVC)
