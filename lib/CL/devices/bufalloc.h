@@ -146,7 +146,9 @@ struct memory_region
   ba_lock_t lock;
 };
 
-chunk_info_t *alloc_buffer_from_region(memory_region_t *region, size_t size);
+POCL_EXPORT
+chunk_info_t *pocl_alloc_buffer_from_region (memory_region_t *region,
+                                             size_t size);
 chunk_info_t *alloc_buffer(memory_region_t *regions, size_t size);
 
 memory_region_t *free_buffer (memory_region_t *regions, memory_address_t addr);

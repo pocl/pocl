@@ -182,8 +182,8 @@ append_new_chunk (memory_region_t *region,
  *
  * @return The chunk, or NULL if no space available in the region.
  */
-chunk_info_t*
-alloc_buffer_from_region (memory_region_t *region, size_t size)
+chunk_info_t *
+pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 {
 #ifdef ENABLE_ASSERTS
   assert (region != NULL);
@@ -258,7 +258,7 @@ alloc_buffer (memory_region_t *regions, size_t size)
   memory_region_t *region = NULL;
   LL_FOREACH(regions, region)
     {
-      chunk = alloc_buffer_from_region (region, size);
+      chunk = pocl_alloc_buffer_from_region (region, size);
       if (chunk != NULL)
         return chunk;
     }

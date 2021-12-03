@@ -2298,8 +2298,8 @@ pocl_vulkan_setup_kernel_arguments (
         VK_SHARING_MODE_EXCLUSIVE, 1, &d->compute_queue_fam_index
       };
 
-      chunk_info_t *chunk = alloc_buffer_from_region (&d->kernarg_region,
-                                                      kernarg_aligned_size);
+      chunk_info_t *chunk = pocl_alloc_buffer_from_region (
+          &d->kernarg_region, kernarg_aligned_size);
       assert (chunk);
       pp->kernarg_chunk = chunk;
 
@@ -2330,8 +2330,8 @@ pocl_vulkan_setup_kernel_arguments (
               1,
               &d->compute_queue_fam_index };
 
-      chunk_info_t *chunk = alloc_buffer_from_region (&d->constant_region,
-                                                      constants_aligned_size);
+      chunk_info_t *chunk = pocl_alloc_buffer_from_region (
+          &d->constant_region, constants_aligned_size);
       assert (chunk);
       pp->constant_chunk = chunk;
 

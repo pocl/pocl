@@ -311,7 +311,7 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
   if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == nullptr))
     goto ERROR;
 
-  chunk = alloc_buffer_from_region(&d->global_mem, mem->size);
+  chunk = pocl_alloc_buffer_from_region(&d->global_mem, mem->size);
   if (chunk == NULL)
     goto ERROR;
 
@@ -392,7 +392,7 @@ chunk_info_t*
 pocl_tce_malloc_local (void *device_data, size_t size) 
 {
   TCEDevice *d = (TCEDevice*)device_data;
-  return alloc_buffer_from_region(&d->local_mem, size);
+  return pocl_alloc_buffer_from_region(&d->local_mem, size);
 }
 
 static void pocl_tce_write_kernel_descriptor(_cl_command_node *Command,
@@ -684,14 +684,15 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
     /* Allocate globalmem for kernel args here. */
     s = (write_pos - temp);
-    chunk_info_t *kernargs = alloc_buffer_from_region(&d->global_mem, s + 8);
+    chunk_info_t *kernargs =
+        pocl_alloc_buffer_from_region(&d->global_mem, s + 8);
     assert(kernargs);
     POCL_MSG_PRINT_TCE("COPYING %u bytes to KERNARGS: %u \n", s,
                        (uint32_t)kernargs->start_address);
     d->copyHostToDevice(temp, kernargs->start_address, s);
 
-    chunk_info_t *context =
-        alloc_buffer_from_region(&d->global_mem, sizeof(struct pocl_context32));
+    chunk_info_t *context = pocl_alloc_buffer_from_region(
+        &d->global_mem, sizeof(struct pocl_context32));
     pocl_context32 temp_ctx;
     temp_ctx.work_dim =
         byteswap_uint32_t(cmd->command.run.pc.work_dim, d->needsByteSwap);

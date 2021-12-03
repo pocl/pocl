@@ -384,7 +384,7 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
   if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  chunk = alloc_buffer_from_region(&data->AllocRegion, mem_obj->size);
+  chunk = pocl_alloc_buffer_from_region(&data->AllocRegion, mem_obj->size);
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
@@ -697,7 +697,8 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
   }
   // Additional space for a signal
   size_t extraAlloc = sizeof(uint32_t);
-  chunk_info_t *chunk = alloc_buffer_from_region(&data->AllocRegion, arg_size + extraAlloc);
+  chunk_info_t *chunk =
+      pocl_alloc_buffer_from_region(&data->AllocRegion, arg_size + extraAlloc);
   assert(chunk && "Failed to allocate signal/argument buffer");
 
   POCL_MSG_PRINT_INFO("accel: allocated 0x%zx bytes for signal/arguments "
