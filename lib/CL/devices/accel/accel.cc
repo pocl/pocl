@@ -521,7 +521,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   D->DataMemory.Map(D->BaseAddress + 2 * max_region, dmem_size, mem_fd);
   D->ParameterMemory.Map(D->BaseAddress + 3 * max_region, pmem_size, mem_fd);
 
-  init_mem_region(&D->AllocRegion, D->ParameterMemory.PhysAddress, pmem_size);
+  pocl_init_mem_region(&D->AllocRegion, D->ParameterMemory.PhysAddress,
+                       pmem_size);
 
   // memory mapping done
   close(mem_fd);

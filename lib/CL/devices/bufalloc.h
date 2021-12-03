@@ -155,7 +155,8 @@ memory_region_t *free_buffer (memory_region_t *regions, memory_address_t addr);
 POCL_EXPORT
 void pocl_free_chunk (chunk_info_t *chunk);
 
-void init_mem_region (
+POCL_EXPORT
+void pocl_init_mem_region (
     memory_region_t *region, memory_address_t start, size_t size);
 
 chunk_info_t *create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size);

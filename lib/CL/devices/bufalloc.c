@@ -398,7 +398,8 @@ pocl_free_chunk (chunk_info_t *chunk)
  * @Param size  the size of the region (in bytes?)
  */
 void
-init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
+pocl_init_mem_region (memory_region_t *region, memory_address_t start,
+                      size_t size)
 {
   int i;
   BA_INIT_LOCK (region->lock);

@@ -498,7 +498,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
   VULKAN_CHECK (
       vkAllocateMemory (d->device, &allocate_info, NULL, &d->kernarg_mem));
 
-  init_mem_region (&d->kernarg_region, 0, d->kernarg_size);
+  pocl_init_mem_region (&d->kernarg_region, 0, d->kernarg_size);
   d->kernarg_region.strategy = BALLOCS_TIGHT;
   d->kernarg_region.alignment = PAGE_SIZE;
 
@@ -513,7 +513,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
   VULKAN_CHECK (
       vkAllocateMemory (d->device, &allocate_info, NULL, &d->constant_mem));
 
-  init_mem_region (&d->constant_region, 0, d->constant_size);
+  pocl_init_mem_region (&d->constant_region, 0, d->constant_size);
   d->constant_region.strategy = BALLOCS_TIGHT;
   d->constant_region.alignment = PAGE_SIZE;
 
