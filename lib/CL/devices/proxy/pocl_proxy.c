@@ -1515,8 +1515,7 @@ pocl_proxy_notify_cmdq_finished (cl_command_queue cq)
    * this must be a broadcast since there could be multiple
    * user threads waiting on the same command queue */
   proxy_queue_data_t *dd = (proxy_queue_data_t *)cq->data;
-  int r = POCL_BROADCAST_COND (dd->wait_cond);
-  assert (r == 0);
+  POCL_BROADCAST_COND (dd->wait_cond);
 }
 
 void
@@ -1534,8 +1533,7 @@ pocl_proxy_join (cl_device_id device, cl_command_queue cq)
         }
       else
         {
-          int r = POCL_WAIT_COND (dd->wait_cond, cq->pocl_lock);
-          assert (r == 0);
+          POCL_WAIT_COND (dd->wait_cond, cq->pocl_lock);
         }
     }
 }
