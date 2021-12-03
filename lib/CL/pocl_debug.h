@@ -170,7 +170,9 @@ POCL_EXPORT
 POCL_EXPORT
         extern void pocl_debug_print_header (const char * func, unsigned line,
                                              const char* filter, int filter_type);
+POCL_EXPORT
         extern void pocl_debug_measure_start (uint64_t* start);
+POCL_EXPORT
         extern void pocl_debug_measure_finish (uint64_t* start, uint64_t* finish,
                                                const char* msg,
                                                const char *func,

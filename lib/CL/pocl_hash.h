@@ -22,6 +22,8 @@
 #ifndef POCL_HASH_H
 #define POCL_HASH_H
 
+#include "pocl_export.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,8 +41,11 @@ typedef struct {
 
 #define SHA1_DIGEST_SIZE 20
 
+POCL_EXPORT
 void pocl_SHA1_Init(SHA1_CTX* context);
+POCL_EXPORT
 void pocl_SHA1_Update(SHA1_CTX* context, const uint8_t* data, const size_t len);
+POCL_EXPORT
 void pocl_SHA1_Final(SHA1_CTX* context, uint8_t digest[SHA1_DIGEST_SIZE]);
 
 #ifdef __cplusplus

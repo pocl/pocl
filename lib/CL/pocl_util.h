@@ -62,6 +62,7 @@ void pocl_install_sigusr2_handler ();
 void bzero_s (void *v, size_t n);
 
 /* Finds the next highest power of two of the given value. */
+POCL_EXPORT
 size_t pocl_size_ceil2 (size_t x);
 uint64_t pocl_size_ceil2_64 (uint64_t x);
 size_t pocl_align_value (size_t value, size_t alignment);

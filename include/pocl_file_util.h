@@ -35,11 +35,13 @@ extern "C" {
 int pocl_rm_rf(const char* path);
 
 /* Make a directory, including all directories along path */
+POCL_EXPORT
 int pocl_mkdir_p(const char* path);
 
 /* Remove a file or empty directory */
 int pocl_remove(const char* path);
 
+POCL_EXPORT
 int pocl_rename(const char *oldpath, const char *newpath);
 
 POCL_EXPORT
@@ -67,6 +69,7 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite);
 
 int pocl_mk_tempdir (char *output, const char *prefix);
 
+POCL_EXPORT
 int pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                       int *ret_fd);
 

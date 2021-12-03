@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 
+POCL_EXPORT
 int pocl_is_option_set(const char *key);
 POCL_EXPORT
 int pocl_get_int_option(const char *key, int default_value);
