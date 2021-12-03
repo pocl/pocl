@@ -152,7 +152,8 @@ chunk_info_t *pocl_alloc_buffer_from_region (memory_region_t *region,
 chunk_info_t *alloc_buffer(memory_region_t *regions, size_t size);
 
 memory_region_t *free_buffer (memory_region_t *regions, memory_address_t addr);
-void free_chunk(chunk_info_t* chunk);
+POCL_EXPORT
+void pocl_free_chunk (chunk_info_t *chunk);
 
 void init_mem_region (
     memory_region_t *region, memory_address_t start, size_t size);

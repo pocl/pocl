@@ -339,7 +339,7 @@ pocl_tce_free (cl_device_id device, cl_mem mem) {
   POCL_MSG_PRINT_MEMORY("TCE: FREE 0x%zu bytes START AT 0x%zu\n", mem->size,
                         chunk->start_address);
 
-  free_chunk (chunk);
+  pocl_free_chunk(chunk);
 
   p->mem_ptr = NULL;
   p->version = 0;
@@ -791,10 +791,10 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
   for (ChunkVector::iterator i = tempChunks.begin();
        i != tempChunks.end(); ++i) 
-    free_chunk (*i);
+    pocl_free_chunk(*i);
 
-  free_chunk(kernargs);
-  free_chunk(context);
+  pocl_free_chunk(kernargs);
+  pocl_free_chunk(context);
 
   POCL_MEM_FREE(cmd->command.run.device_data);
 

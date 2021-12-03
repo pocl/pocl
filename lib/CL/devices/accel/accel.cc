@@ -410,7 +410,7 @@ void pocl_accel_free(cl_device_id device, cl_mem mem) {
                           mem->size, chunk->start_address);
 
   assert(chunk != NULL);
-  free_chunk (chunk);
+  pocl_free_chunk(chunk);
 
   p->mem_ptr = NULL;
   p->version = 0;

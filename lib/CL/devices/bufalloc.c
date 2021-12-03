@@ -374,7 +374,7 @@ free_buffer (memory_region_t *regions, memory_address_t addr)
  * form larger unallocated chunks.
  */
 void
-free_chunk (chunk_info_t* chunk)
+pocl_free_chunk (chunk_info_t *chunk)
 {
   memory_region_t *region = chunk->parent_region;
   BA_LOCK (region->lock);
@@ -385,7 +385,7 @@ free_chunk (chunk_info_t* chunk)
   BA_UNLOCK (region->lock);
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### after free_chunk (%x)\n", chunk);
+  printf ("#### after pocl_free_chunk (%x)\n", chunk);
   print_chunks (region->chunks);
   printf ("\n");
 #endif
