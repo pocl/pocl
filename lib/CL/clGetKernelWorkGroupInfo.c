@@ -42,16 +42,10 @@ POname(clGetKernelWorkGroupInfo)
      risk of confusion. */
   if (device != NULL)
     {
-      unsigned i;
-      int found_it = 0;
-      for (i = 0; i < kernel->context->num_devices; i++)
-        if (pocl_real_dev (device) == kernel->context->devices[i])
-          {
-            found_it = 1;
-            break;
-          }
-      POCL_RETURN_ERROR_ON((!found_it), CL_INVALID_DEVICE, "could not find the "
-        "device supplied in argument\n");
+      POCL_RETURN_ERROR_ON (
+          !(pocl_device_is_associated_with_kernel (device, kernel)),
+          CL_INVALID_DEVICE,
+          "could not find the device supplied in argument\n");
     }
   else
     {

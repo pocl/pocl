@@ -237,6 +237,9 @@ int bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
  * these are produced by e.g. GLSL and clspv compilation */
 int bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 
+int pocl_device_is_associated_with_kernel (cl_device_id device,
+                                           cl_kernel kernel);
+
 #ifdef __cplusplus
 }
 #endif

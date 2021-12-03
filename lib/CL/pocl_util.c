@@ -2216,3 +2216,18 @@ bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
 {
   return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel);
 }
+
+int
+pocl_device_is_associated_with_kernel (cl_device_id device, cl_kernel kernel)
+{
+  unsigned i;
+  int found_it = 0;
+  for (i = 0; i < kernel->context->num_devices; i++)
+    if (pocl_real_dev (device) == kernel->context->devices[i])
+      {
+        found_it = 1;
+        break;
+      }
+
+  return found_it;
+}

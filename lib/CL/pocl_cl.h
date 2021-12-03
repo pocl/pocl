@@ -1035,6 +1035,9 @@ struct _cl_device_id {
   /* OpenCL 2.1 */
   char *spirv_version;
 
+  cl_uint max_num_sub_groups;
+  cl_bool sub_group_independent_forward_progress;
+
   /* image formats supported by the device, per image type */
   const cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
   cl_uint num_image_formats[NUM_OPENCL_IMAGE_TYPES];
