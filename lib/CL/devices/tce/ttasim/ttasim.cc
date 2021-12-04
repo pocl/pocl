@@ -330,7 +330,7 @@ public:
     out << "typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;" << std::endl;
 
     /* Need to byteswap back as we are writing C code. */
-#define BSWAP(__X) byteswap_uint32_t (__X, needsByteSwap)
+#define BSWAP(__X) pocl_byteswap_uint32_t(__X, needsByteSwap)
 
     /* The standalone binary shall have the same input data as in the original
        kernel host-device kernel launch command. The data is put into

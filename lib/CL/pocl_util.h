@@ -33,7 +33,8 @@
 extern "C" {
 #endif
 
-uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
+POCL_EXPORT
+uint32_t pocl_byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
 /* set rounding mode */

@@ -169,7 +169,7 @@ pocl_restore_rm (unsigned rm)
 }
 
 uint32_t
-byteswap_uint32_t (uint32_t word, char should_swap)
+pocl_byteswap_uint32_t (uint32_t word, char should_swap)
 {
     union word_union
     {

@@ -119,7 +119,7 @@ TCEDevice::setMachine(const TTAMachine::Machine& machine) {
 
 void
 TCEDevice::writeWordToDevice(uint32_t dest_addr, uint32_t word) {
-  uint32_t swapped = byteswap_uint32_t(word, needsByteSwap);
+  uint32_t swapped = pocl_byteswap_uint32_t(word, needsByteSwap);
   copyHostToDevice(&swapped, dest_addr, sizeof (swapped));
 }
 
@@ -127,7 +127,7 @@ uint32_t
 TCEDevice::readWordFromDevice(uint32_t addr) {
   uint32_t result;
   copyDeviceToHost(addr, &result, sizeof(result));
-  return byteswap_uint32_t(result, needsByteSwap);
+  return pocl_byteswap_uint32_t(result, needsByteSwap);
 }
 
 void
@@ -573,7 +573,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   }
 
   __kernel_exec_cmd dev_cmd;
-  dev_cmd.kernel_meta = byteswap_uint32_t(kernelAddr, d->needsByteSwap);
+  dev_cmd.kernel_meta = pocl_byteswap_uint32_t(kernelAddr, d->needsByteSwap);
 
   /* assume 8KB is enough for kernargs */
   char *temp = (char *)alloca(8200);
@@ -607,8 +607,8 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           if (local_chunk == NULL)
             POCL_ABORT ("Could not allocate memory for a local argument. Out of local mem?\n");
 
-          uint32_t address =
-              byteswap_uint32_t(local_chunk->start_address, d->needsByteSwap);
+          uint32_t address = pocl_byteswap_uint32_t(local_chunk->start_address,
+                                                    d->needsByteSwap);
           POCL_MSG_PRINT_TCE("LOCAL ARG: %u WRITE POS: %p \n", address,
                              write_pos);
           CHECK_AND_ALIGN_ARGBUFFER(4);
@@ -636,8 +636,8 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
             chunk_info_t *p =
                 (chunk_info_t *)m->device_ptrs[d->parent->global_mem_id]
                     .mem_ptr;
-            address = byteswap_uint32_t(p->start_address + al->offset,
-                                        d->needsByteSwap);
+            address = pocl_byteswap_uint32_t(p->start_address + al->offset,
+                                             d->needsByteSwap);
           }
           POCL_MSG_PRINT_TCE("PTR ARG: %u WRITE POS: %p\n", address, write_pos);
           CHECK_AND_ALIGN_ARGBUFFER(4);
@@ -669,7 +669,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
 
       uint32_t address =
-          byteswap_uint32_t(local_chunk->start_address, d->needsByteSwap);
+          pocl_byteswap_uint32_t(local_chunk->start_address, d->needsByteSwap);
       POCL_MSG_PRINT_TCE("AUTO LOCAL: %u WRITE POS: %p\n", address, write_pos);
       CHECK_AND_ALIGN_ARGBUFFER(4);
       *(uint32_t *)write_pos = address;
@@ -695,25 +695,25 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
         &d->global_mem, sizeof(struct pocl_context32));
     pocl_context32 temp_ctx;
     temp_ctx.work_dim =
-        byteswap_uint32_t(cmd->command.run.pc.work_dim, d->needsByteSwap);
-    temp_ctx.num_groups[0] =
-        byteswap_uint32_t(cmd->command.run.pc.num_groups[0], d->needsByteSwap);
-    temp_ctx.num_groups[1] =
-        byteswap_uint32_t(cmd->command.run.pc.num_groups[1], d->needsByteSwap);
-    temp_ctx.num_groups[2] =
-        byteswap_uint32_t(cmd->command.run.pc.num_groups[2], d->needsByteSwap);
-    temp_ctx.global_offset[0] = byteswap_uint32_t(
+        pocl_byteswap_uint32_t(cmd->command.run.pc.work_dim, d->needsByteSwap);
+    temp_ctx.num_groups[0] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.num_groups[0], d->needsByteSwap);
+    temp_ctx.num_groups[1] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.num_groups[1], d->needsByteSwap);
+    temp_ctx.num_groups[2] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.num_groups[2], d->needsByteSwap);
+    temp_ctx.global_offset[0] = pocl_byteswap_uint32_t(
         cmd->command.run.pc.global_offset[0], d->needsByteSwap);
-    temp_ctx.global_offset[1] = byteswap_uint32_t(
+    temp_ctx.global_offset[1] = pocl_byteswap_uint32_t(
         cmd->command.run.pc.global_offset[1], d->needsByteSwap);
-    temp_ctx.global_offset[2] = byteswap_uint32_t(
+    temp_ctx.global_offset[2] = pocl_byteswap_uint32_t(
         cmd->command.run.pc.global_offset[2], d->needsByteSwap);
-    temp_ctx.local_size[0] =
-        byteswap_uint32_t(cmd->command.run.pc.local_size[0], d->needsByteSwap);
-    temp_ctx.local_size[1] =
-        byteswap_uint32_t(cmd->command.run.pc.local_size[1], d->needsByteSwap);
-    temp_ctx.local_size[2] =
-        byteswap_uint32_t(cmd->command.run.pc.local_size[2], d->needsByteSwap);
+    temp_ctx.local_size[0] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.local_size[0], d->needsByteSwap);
+    temp_ctx.local_size[1] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.local_size[1], d->needsByteSwap);
+    temp_ctx.local_size[2] = pocl_byteswap_uint32_t(
+        cmd->command.run.pc.local_size[2], d->needsByteSwap);
     // currently unused by TCE
     temp_ctx.printf_buffer = 0x11223344;
     temp_ctx.printf_buffer_position = 0x9900ccaa;
@@ -724,14 +724,16 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
     d->copyHostToDevice(&temp_ctx, context->start_address,
                         sizeof(struct pocl_context32));
 
-    dev_cmd.status = byteswap_uint32_t(POCL_KST_FREE, d->needsByteSwap);
-    dev_cmd.args = byteswap_uint32_t(kernargs->start_address, d->needsByteSwap);
-    dev_cmd.ctx = byteswap_uint32_t(context->start_address, d->needsByteSwap);
+    dev_cmd.status = pocl_byteswap_uint32_t(POCL_KST_FREE, d->needsByteSwap);
+    dev_cmd.args =
+        pocl_byteswap_uint32_t(kernargs->start_address, d->needsByteSwap);
+    dev_cmd.ctx =
+        pocl_byteswap_uint32_t(context->start_address, d->needsByteSwap);
     s = sizeof(struct pocl_context32);
-    dev_cmd.ctx_size = byteswap_uint32_t(s, d->needsByteSwap);
+    dev_cmd.ctx_size = pocl_byteswap_uint32_t(s, d->needsByteSwap);
     s = write_pos - temp;
-    dev_cmd.args_size = byteswap_uint32_t(s, d->needsByteSwap);
-    dev_cmd.kernel_meta = byteswap_uint32_t(kernelAddr, d->needsByteSwap);
+    dev_cmd.args_size = pocl_byteswap_uint32_t(s, d->needsByteSwap);
+    dev_cmd.kernel_meta = pocl_byteswap_uint32_t(kernelAddr, d->needsByteSwap);
     POCL_MSG_PRINT_TCE("KERNEL %s IS AT: %u \n", kernel->name,
                        dev_cmd.kernel_meta);
     POCL_MSG_PRINT_TCE("ARGS %u   CTX %u   ARG_S %u    CTX_S %u \n",
@@ -759,7 +761,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
      been really written, in case the data transfers are not guaranteed
      to be ordered. */
   d->writeWordToDevice(d->statusAddr, POCL_KST_READY);
-  dev_cmd.status = byteswap_uint32_t (POCL_KST_READY, d->needsByteSwap);
+  dev_cmd.status = pocl_byteswap_uint32_t(POCL_KST_READY, d->needsByteSwap);
 
   d->notifyKernelRunCommandSent(dev_cmd, &cmd->command.run, gmem_ptr_positions,
                                 gmem_count);
