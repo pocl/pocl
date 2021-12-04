@@ -1874,7 +1874,7 @@ pocl_proxy_enque_run (cl_device_id pocl_device, void *data, unsigned device_i,
   int err;
   cl_kernel pocl_kernel = node->command.run.kernel;
   assert (pocl_device == node->device);
-  unsigned program_i = node->device_i;
+  unsigned program_i = node->program_device_i;
 
   pocl_kernel_metadata_t *kernel_md = pocl_kernel->meta;
 
