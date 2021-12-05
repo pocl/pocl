@@ -1540,14 +1540,14 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
           &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
           event_data->start);
       CUDA_CHECK (result, "cuEventElapsedTime");
-      event->time_start = (cl_ulong) (epoch + diff * 1e6);
+      event->time_start = epoch + (cl_ulong)(diff * 1e6);
       event->time_start = max (event->time_start, epoch + 1);
 
       result = cuEventElapsedTime (
           &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
           event_data->end);
       CUDA_CHECK (result, "cuEventElapsedTime");
-      event->time_end = (cl_ulong) (epoch + diff * 1e6);
+      event->time_end = epoch + (cl_ulong)(diff * 1e6);
       event->time_end = max (event->time_end, event->time_start + 1);
     }
 }
