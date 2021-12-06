@@ -37,11 +37,15 @@ if(ENABLE_HOST_CPU_DEVICES)
 endif()
 
 #######################################################################
-if (UNIX AND ENABLE_LOADABLE_DRIVERS)
+if(UNIX AND HAVE_DLFCN_H)
 
+if(ENABLE_ICD)
 add_test(NAME pocl_test_dlopen_libpocl COMMAND test_dlopen)
 set_tests_properties("pocl_test_dlopen_libpocl" PROPERTIES LABELS "internal;dlopen;vulkan")
 set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_libpocl")
+endif()
+
+if(ENABLE_LOADABLE_DRIVERS)
 
 if(BUILD_BASIC)
   add_test(NAME pocl_test_dlopen_device_basic COMMAND test_dlopen basic)
@@ -85,7 +89,9 @@ if(ENABLE_VULKAN)
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
 endif()
 
-endif ()
+endif()
+
+endif()
 #######################################################################
 
 add_subdirectory("kernel")

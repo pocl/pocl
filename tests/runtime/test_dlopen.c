@@ -43,6 +43,7 @@ main (int argc, char **argv)
               SHLIB_ORIGIN "/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
               argv[1]);
 
+#ifdef ENABLE_ICD
   void *handle_libpocl = dlopen (libpocl, RTLD_NOW | RTLD_GLOBAL);
   if (!handle_libpocl)
     {
@@ -50,6 +51,7 @@ main (int argc, char **argv)
                libpocl, dlerror ());
       ret = 1;
     }
+#endif
 
   if (ret == 0 && argc > 1)
     {
@@ -64,8 +66,10 @@ main (int argc, char **argv)
         dlclose (handle_device);
     }
 
+#ifdef ENABLE_ICD
   if (handle_libpocl)
     dlclose (handle_libpocl);
+#endif
 
   return ret;
 }
