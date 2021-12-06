@@ -881,7 +881,7 @@ pocl_hsa_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
 {
   /* if we share global memory with CPU, let the CPU driver allocate it */
   if (device->global_mem_id == 0)
-    return pocl_basic_alloc_mem_obj (device, mem_obj, host_ptr);
+    return pocl_driver_alloc_mem_obj (device, mem_obj, host_ptr);
 
   /* ... otherwise allocate it via HSA. */
   pocl_mem_identifier *p = &mem_obj->device_ptrs[device->global_mem_id];

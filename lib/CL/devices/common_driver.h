@@ -74,6 +74,10 @@ POCL_EXPORT
   cl_int pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
                                        cl_mem mem, mem_mapping_t *map);
 
+POCL_EXPORT
+cl_int pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem,
+                                  void *host_ptr);
+
   POCL_EXPORT
   int pocl_driver_build_source (cl_program program, cl_uint device_i,
                                 cl_uint num_input_headers,

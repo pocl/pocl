@@ -454,6 +454,34 @@ pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
   return CL_SUCCESS;
 }
 
+cl_int
+pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
+{
+  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
+
+  /* let other drivers preallocate */
+  if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+  /* malloc mem_host_ptr then increase refcount */
+  pocl_alloc_or_retain_mem_host_ptr (mem);
+
+  cl_device_id svm_dev = mem->context->svm_allocdev;
+  /* if we have a device which shares global memory with host,
+   * and it needs to do anything to make allocations accessible
+   * to itself, do it here */
+  if (svm_dev && svm_dev->global_mem_id == 0 && svm_dev->ops->svm_register)
+    svm_dev->ops->svm_register (svm_dev, mem->mem_host_ptr, mem->size);
+
+  p->version = mem->mem_host_ptr_version;
+  p->mem_ptr = mem->mem_host_ptr;
+
+  POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,
+                         mem->size);
+
+  return CL_SUCCESS;
+}
+
 /* These are implementations of compilation callbacks for all devices
  * that support compilation via LLVM. They take care of compilation/linking
  * of source/binary/spir down to parallel.bc level.
