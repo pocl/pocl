@@ -257,7 +257,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_free = pocl_hsa_svm_free;
   ops->svm_alloc = pocl_hsa_svm_alloc;
   ops->svm_copy = pocl_hsa_svm_copy;
-  ops->svm_fill = pocl_basic_svm_fill;
+  ops->svm_fill = pocl_driver_svm_fill;
   ops->svm_register = pocl_hsa_svm_register;
   ops->svm_unregister = pocl_hsa_svm_unregister;
 
