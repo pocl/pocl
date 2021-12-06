@@ -223,8 +223,10 @@ public:
 
     POCL_INIT_LOCK(lock);
     POCL_INIT_COND(simulation_start_cond);
-    pthread_create (&ttasim_thread, NULL, pocl_ttasim_thread, this);
-    pthread_create(&driver_thread, NULL, pocl_tce_driver_thread, this);
+    PTHREAD_CHECK(
+        pthread_create(&ttasim_thread, NULL, pocl_ttasim_thread, this));
+    PTHREAD_CHECK(
+        pthread_create(&driver_thread, NULL, pocl_tce_driver_thread, this));
   }
 
   ~TTASimDevice() {
@@ -541,7 +543,7 @@ pocl_ttasim_thread (void *p)
     if (d->shutdownRequested)
       goto EXIT;
     POCL_LOCK(d->lock);
-    pthread_cond_wait (&d->simulation_start_cond, &d->lock);
+    PTHREAD_CHECK(pthread_cond_wait(&d->simulation_start_cond, &d->lock));
     POCL_UNLOCK(d->lock);
     if (d->shutdownRequested)
       goto EXIT;

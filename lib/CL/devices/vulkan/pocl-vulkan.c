@@ -1242,8 +1242,8 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   d->work_queue = NULL;
 
-  pthread_create (&d->driver_pthread_id, NULL, pocl_vulkan_driver_pthread,
-                  dev);
+  PTHREAD_CHECK (pthread_create (&d->driver_pthread_id, NULL,
+                                 pocl_vulkan_driver_pthread, dev));
 
   return CL_SUCCESS;
 }
@@ -1827,8 +1827,7 @@ pocl_vulkan_init_queue (cl_device_id dev, cl_command_queue queue)
   queue->data
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_init (cond, NULL);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_init (cond, NULL));
   return CL_SUCCESS;
 }
 
@@ -1836,8 +1835,7 @@ int
 pocl_vulkan_free_queue (cl_device_id dev, cl_command_queue queue)
 {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_destroy (cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_destroy (cond));
   POCL_MEM_FREE (queue->data);
   return CL_SUCCESS;
 }
@@ -1850,8 +1848,7 @@ pocl_vulkan_notify_cmdq_finished (cl_command_queue cq)
    * user threads waiting on the same command queue
    * in pthread_scheduler_wait_cq(). */
   pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  int r = pthread_cond_broadcast (cq_cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_broadcast (cq_cond));
 }
 
 void
@@ -1884,8 +1881,7 @@ pocl_vulkan_join (cl_device_id device, cl_command_queue cq)
         }
       else
         {
-          int r = pthread_cond_wait (cq_cond, &cq->pocl_lock);
-          assert (r == 0);
+          PTHREAD_CHECK (pthread_cond_wait (cq_cond, &cq->pocl_lock));
         }
     }
   return;
@@ -2817,7 +2813,7 @@ RETRY:
 
   if ((cmd == NULL) && (do_exit == 0))
     {
-      pthread_cond_wait (&d->wakeup_cond, &d->wq_lock_fast);
+      PTHREAD_CHECK (pthread_cond_wait (&d->wakeup_cond, &d->wq_lock_fast));
       /* since cond_wait returns with locked mutex, might as well retry */
       goto RETRY;
     }

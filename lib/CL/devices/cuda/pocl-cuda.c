@@ -438,9 +438,9 @@ pocl_cuda_init_queue (cl_device_id device, cl_command_queue queue)
 
   if (queue_data->use_threads)
     {
-      pthread_mutex_init (&queue_data->lock, NULL);
-      pthread_cond_init (&queue_data->pending_cond, NULL);
-      pthread_cond_init (&queue_data->running_cond, NULL);
+      PTHREAD_CHECK (pthread_mutex_init (&queue_data->lock, NULL));
+      PTHREAD_CHECK (pthread_cond_init (&queue_data->pending_cond, NULL));
+      PTHREAD_CHECK (pthread_cond_init (&queue_data->running_cond, NULL));
       int err = pthread_create (&queue_data->submit_thread, NULL,
                                 pocl_cuda_submit_thread, queue_data);
       if (err)
@@ -475,13 +475,13 @@ pocl_cuda_free_queue (cl_device_id device, cl_command_queue queue)
   /* Kill queue threads */
   if (queue_data->use_threads)
     {
-      pthread_mutex_lock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
       queue_data->queue = NULL;
-      pthread_cond_signal (&queue_data->pending_cond);
-      pthread_cond_signal (&queue_data->running_cond);
-      pthread_mutex_unlock (&queue_data->lock);
-      pthread_join (queue_data->submit_thread, NULL);
-      pthread_join (queue_data->finalize_thread, NULL);
+      PTHREAD_CHECK (pthread_cond_signal (&queue_data->pending_cond));
+      PTHREAD_CHECK (pthread_cond_signal (&queue_data->running_cond));
+      PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
+      PTHREAD_CHECK (pthread_join (queue_data->submit_thread, NULL));
+      PTHREAD_CHECK (pthread_join (queue_data->finalize_thread, NULL));
     }
   return CL_SUCCESS;
 }
@@ -1413,14 +1413,14 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   if (((pocl_cuda_queue_data_t *)cq->data)->use_threads)
     {
 
-      pthread_cond_init (&p->event_cond, NULL);
+      PTHREAD_CHECK (pthread_cond_init (&p->event_cond, NULL));
       /* Add command to work queue */
       POCL_UNLOCK_OBJ (node->event);
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
-      pthread_mutex_lock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
       DL_APPEND (queue_data->pending_queue, node);
-      pthread_cond_signal (&queue_data->pending_cond);
-      pthread_mutex_unlock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_cond_signal (&queue_data->pending_cond));
+      PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
     }
   else
     {
@@ -1568,7 +1568,7 @@ pocl_cuda_notify_event_finished (cl_event event)
   pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
 
   if (((pocl_cuda_queue_data_t *)event->queue->data)->use_threads)
-    pthread_cond_broadcast (&e_d->event_cond);
+    PTHREAD_CHECK (pthread_cond_broadcast (&e_d->event_cond));
 }
 
 void
@@ -1582,7 +1582,8 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       POCL_LOCK_OBJ (event);
       while (event->status > CL_COMPLETE)
         {
-          pthread_cond_wait (&e_d->event_cond, &event->pocl_lock);
+          PTHREAD_CHECK (
+              pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
         }
       POCL_UNLOCK_OBJ (event);
     }
@@ -1600,7 +1601,7 @@ pocl_cuda_free_event_data (cl_event event)
     {
       pocl_cuda_event_data_t *event_data
           = (pocl_cuda_event_data_t *)event->data;
-      pthread_cond_destroy (&event_data->event_cond);
+      PTHREAD_CHECK (pthread_cond_destroy (&event_data->event_cond));
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         cuEventDestroy (event_data->start);
       cuEventDestroy (event_data->end);
@@ -1649,22 +1650,23 @@ pocl_cuda_submit_thread (void *data)
     {
       /* Attempt to get next command from work queue */
       _cl_command_node *node = NULL;
-      pthread_mutex_lock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
       if (!queue_data->queue)
         {
-          pthread_mutex_unlock (&queue_data->lock);
+          PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
           break;
         }
       if (!queue_data->pending_queue)
         {
-          pthread_cond_wait (&queue_data->pending_cond, &queue_data->lock);
+          PTHREAD_CHECK (pthread_cond_wait (&queue_data->pending_cond,
+                                            &queue_data->lock));
         }
       if (queue_data->pending_queue)
         {
           node = queue_data->pending_queue;
           DL_DELETE (queue_data->pending_queue, node);
         }
-      pthread_mutex_unlock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
 
       /* Submit command, if we found one */
       if (node)
@@ -1672,10 +1674,10 @@ pocl_cuda_submit_thread (void *data)
           pocl_cuda_submit_node (node, queue_data->queue, 0);
 
           /* Add command to running queue */
-          pthread_mutex_lock (&queue_data->lock);
+          PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
           DL_APPEND (queue_data->running_queue, node);
-          pthread_cond_signal (&queue_data->running_cond);
-          pthread_mutex_unlock (&queue_data->lock);
+          PTHREAD_CHECK (pthread_cond_signal (&queue_data->running_cond));
+          PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
         }
     }
 
@@ -1699,22 +1701,23 @@ pocl_cuda_finalize_thread (void *data)
     {
       /* Attempt to get next node from running queue */
       _cl_command_node *node = NULL;
-      pthread_mutex_lock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
       if (!queue_data->queue)
         {
-          pthread_mutex_unlock (&queue_data->lock);
+          PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
           break;
         }
       if (!queue_data->running_queue)
         {
-          pthread_cond_wait (&queue_data->running_cond, &queue_data->lock);
+          PTHREAD_CHECK (pthread_cond_wait (&queue_data->running_cond,
+                                            &queue_data->lock));
         }
       if (queue_data->running_queue)
         {
           node = queue_data->running_queue;
           DL_DELETE (queue_data->running_queue, node);
         }
-      pthread_mutex_unlock (&queue_data->lock);
+      PTHREAD_CHECK (pthread_mutex_unlock (&queue_data->lock));
 
       /* Wait for command to finish, if we found one */
       if (node)

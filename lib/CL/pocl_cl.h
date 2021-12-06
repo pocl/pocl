@@ -28,6 +28,7 @@
 #include "config.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
 #ifdef HAVE_VALGRIND
@@ -107,40 +108,44 @@ typedef pthread_t pocl_thread_t;
 #define ALIGN_CACHE(x) x
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+POCL_EXPORT
+void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Some pthread_*() calls may return '0' or a specific non-zero value on
+ * success.
+ */
+#define PTHREAD_CHECK2(_status_ok, _code)                                     \
+  do                                                                          \
+    {                                                                         \
+      int _pthread_status = (_code);                                          \
+      if (_pthread_status != 0 && _pthread_status != (_status_ok))            \
+        pocl_abort_on_pthread_error (_pthread_status, __LINE__,               \
+                                     __FUNCTION__);                           \
+    }                                                                         \
+  while (0)
+
+#define PTHREAD_CHECK(code) PTHREAD_CHECK2 (0, code)
+
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
 
-#define POCL_LOCK(__LOCK__)                                                   \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_lock (&(__LOCK__));                               \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
+#define POCL_LOCK(__LOCK__) PTHREAD_CHECK (pthread_mutex_lock (&(__LOCK__)))
 #define POCL_UNLOCK(__LOCK__)                                                 \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_unlock (&(__LOCK__));                             \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
+  PTHREAD_CHECK (pthread_mutex_unlock (&(__LOCK__)))
 #define POCL_INIT_LOCK(__LOCK__)                                              \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_init (&(__LOCK__), NULL);                         \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
+  PTHREAD_CHECK (pthread_mutex_init (&(__LOCK__), NULL))
 /* We recycle OpenCL objects by not actually freeing them until the
-   very end. Thus, the lock should not be destoryed at the refcount 0. */
+   very end. Thus, the lock should not be destroyed at the refcount 0. */
 #define POCL_DESTROY_LOCK(__LOCK__)                                           \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_destroy (&(__LOCK__));                            \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
-
+  PTHREAD_CHECK (pthread_mutex_destroy (&(__LOCK__)))
 
 /* If available, use an Adaptive mutex for locking in the pthread driver,
    otherwise fallback to simple mutexes */
@@ -153,10 +158,10 @@ typedef pthread_t pocl_thread_t;
     do { \
       pthread_mutexattr_t attrs; \
       pthread_mutexattr_init (&attrs); \
-      int r = pthread_mutexattr_settype (&attrs, PTHREAD_MUTEX_ADAPTIVE_NP); \
-      assert (r == 0); \
-      pthread_mutex_init(&l, &attrs); \
-      pthread_mutexattr_destroy(&attrs);\
+      PTHREAD_CHECK (                                                         \
+          pthread_mutexattr_settype (&attrs, PTHREAD_MUTEX_ADAPTIVE_NP));     \
+      PTHREAD_CHECK (pthread_mutex_init (&l, &attrs));                        \
+      PTHREAD_CHECK (pthread_mutexattr_destroy (&attrs));                     \
     } while (0)
 #else
 #define POCL_FAST_INIT(l) POCL_INIT_LOCK (l)
@@ -164,17 +169,18 @@ typedef pthread_t pocl_thread_t;
 
 #define POCL_FAST_DESTROY(l) POCL_DESTROY_LOCK(l)
 
-#define POCL_INIT_COND(c) pthread_cond_init (&c, NULL)
-#define POCL_DESTROY_COND(c) pthread_cond_destroy (&c)
-#define POCL_SIGNAL_COND(c) pthread_cond_signal (&c)
-#define POCL_BROADCAST_COND(c) pthread_cond_broadcast (&c)
-#define POCL_WAIT_COND(c, m) pthread_cond_wait (&c, &m)
-#define POCL_TIMEDWAIT_COND(c, m, t) pthread_cond_timedwait (&c, &m, &t)
+#define POCL_INIT_COND(c) PTHREAD_CHECK (pthread_cond_init (&c, NULL))
+#define POCL_DESTROY_COND(c) PTHREAD_CHECK (pthread_cond_destroy (&c))
+#define POCL_SIGNAL_COND(c) PTHREAD_CHECK (pthread_cond_signal (&c))
+#define POCL_BROADCAST_COND(c) PTHREAD_CHECK (pthread_cond_broadcast (&c))
+#define POCL_WAIT_COND(c, m) PTHREAD_CHECK (pthread_cond_wait (&c, &m))
+#define POCL_TIMEDWAIT_COND(c, m, t) PTHREAD_CHECK2(ETIMEDOUT, pthread_cond_timedwait (&c, &m, &t))
 
 #define POCL_CREATE_THREAD(thr, func, arg)                                    \
-  pthread_create (&thr, NULL, func, arg)
-#define POCL_JOIN_THREAD(thr) pthread_join (thr, NULL)
-#define POCL_JOIN_THREAD2(thr, res_ptr) pthread_join (thr, res_ptr)
+  PTHREAD_CHECK (pthread_create (&thr, NULL, func, arg))
+#define POCL_JOIN_THREAD(thr) PTHREAD_CHECK (pthread_join (thr, NULL))
+#define POCL_JOIN_THREAD2(thr, res_ptr)                                       \
+  PTHREAD_CHECK (pthread_join (thr, res_ptr))
 #define POCL_EXIT_THREAD(res) pthread_exit (res)
 
 //############################################################################

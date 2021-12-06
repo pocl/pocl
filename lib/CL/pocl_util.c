@@ -1679,8 +1679,8 @@ pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
 {
   if (status != 0)
     {
-      POCL_MSG_PRINT2 (HSA, func, line, "Error from pthread call:\n");
-      POCL_ABORT ("%s\n", strerror (status));
+      POCL_MSG_PRINT2 (ERROR, func, line, "Error from pthread call:\n");
+      POCL_ABORT ("PTHREAD ERROR in %s():%u: %s (%d)\n", func, line, strerror (status), status);
     }
 }
 

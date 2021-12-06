@@ -77,18 +77,23 @@ typedef struct scheduler_data_
   POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   int thread_pool_shutdown_requested;
+
+  pthread_barrier_t init_barrier
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
+  int worker_out_of_memory;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
 
-void
+cl_int
 pthread_scheduler_init (cl_device_id device)
 {
   unsigned i;
   size_t num_worker_threads = device->max_compute_units;
   POCL_FAST_INIT (scheduler.wq_lock_fast);
 
-  pthread_cond_init (&(scheduler.wake_pool), NULL);
+  PTHREAD_CHECK (pthread_cond_init (&(scheduler.wake_pool), NULL));
 
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
@@ -106,14 +111,28 @@ pthread_scheduler_init (cl_device_id device)
    * TODO fix this */
   scheduler.local_mem_size = device->local_mem_size + device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
 
+  PTHREAD_CHECK (pthread_barrier_init (&scheduler.init_barrier, NULL,
+                                       num_worker_threads + 1));
+  scheduler.worker_out_of_memory = 0;
+
   for (i = 0; i < num_worker_threads; ++i)
     {
       scheduler.thread_pool[i].index = i;
-      pthread_create (&scheduler.thread_pool[i].thread, NULL,
-                      pocl_pthread_driver_thread,
-                      (void*)&scheduler.thread_pool[i]);
+      PTHREAD_CHECK (pthread_create (&scheduler.thread_pool[i].thread, NULL,
+                                     pocl_pthread_driver_thread,
+                                     (void *)&scheduler.thread_pool[i]));
     }
 
+  PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
+                  pthread_barrier_wait (&scheduler.init_barrier));
+
+  if (scheduler.worker_out_of_memory)
+    {
+      pthread_scheduler_uninit ();
+      return CL_OUT_OF_HOST_MEMORY;
+    }
+
+  return CL_SUCCESS;
 }
 
 void
@@ -123,17 +142,18 @@ pthread_scheduler_uninit ()
 
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
-      pthread_join (scheduler.thread_pool[i].thread, NULL);
+      PTHREAD_CHECK (pthread_join (scheduler.thread_pool[i].thread, NULL));
     }
 
   pocl_aligned_free (scheduler.thread_pool);
   POCL_FAST_DESTROY (scheduler.wq_lock_fast);
-  pthread_cond_destroy (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_destroy (&scheduler.wake_pool));
+  PTHREAD_CHECK (pthread_barrier_destroy (&scheduler.init_barrier));
 
   scheduler.thread_pool_shutdown_requested = 0;
 }
@@ -144,7 +164,7 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -153,7 +173,7 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.kernel_queue, run_cmd);
-  pthread_cond_broadcast (&scheduler.wake_pool);
+  PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
@@ -483,7 +503,8 @@ RETRY:
   /* if neither a command nor a kernel was available, sleep */
   if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
     {
-      pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
+      PTHREAD_CHECK (
+          pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast));
       goto RETRY;
     }
 
@@ -506,21 +527,28 @@ pocl_pthread_driver_thread (void *p)
   td->num_threads = scheduler.num_threads;
   td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                            scheduler.printf_buf_size);
-  assert (td->printf_buffer != NULL);
 
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                        scheduler.local_mem_size);
-  assert (td->local_mem);
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))
     {
       cpu_set_t set;
       CPU_ZERO (&set);
       CPU_SET (td->index, &set);
-      pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set);
+      PTHREAD_CHECK (
+          pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set));
     }
 #endif
+
+  if (td->printf_buffer == NULL || td->local_mem == NULL)
+    {
+      POCL_ATOMIC_INC (scheduler.worker_out_of_memory);
+    }
+
+  PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
+                  pthread_barrier_wait (&scheduler.init_barrier));
 
   while (1)
     {

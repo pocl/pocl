@@ -208,14 +208,19 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-      pthread_scheduler_init (device);
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
-  return CL_SUCCESS;
+
+  return ret;
 }
 
 cl_int
@@ -246,13 +251,17 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   d->current_kernel = NULL;
   device->data = d;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      pthread_scheduler_init (device);
-      scheduler_initialized = 1;
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
 
-  return CL_SUCCESS;
+  return ret;
 }
 
 void
@@ -294,8 +303,7 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
         }
       else
         {
-          int r = pthread_cond_wait (cq_cond, &cq->pocl_lock);
-          assert (r == 0);
+          PTHREAD_CHECK (pthread_cond_wait (cq_cond, &cq->pocl_lock));
         }
     }
   return;
@@ -335,15 +343,14 @@ pocl_pthread_notify_cmdq_finished (cl_command_queue cq)
    * user threads waiting on the same command queue
    * in pthread_scheduler_wait_cq(). */
   pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  int r = pthread_cond_broadcast (cq_cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_broadcast (cq_cond));
 }
 
 void
 pocl_pthread_notify_event_finished (cl_event event)
 {
   struct event_data *e_d = event->data;
-  pthread_cond_broadcast (&e_d->event_cond);
+  PTHREAD_CHECK (pthread_cond_broadcast (&e_d->event_cond));
 }
 
 void
@@ -355,7 +362,7 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
       e_d = malloc(sizeof(struct event_data));
       assert(e_d);
 
-      pthread_cond_init(&e_d->event_cond, NULL);
+      PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *) e_d;
     }
 }
@@ -367,7 +374,7 @@ void pocl_pthread_wait_event (cl_device_id device, cl_event event)
   POCL_LOCK_OBJ (event);
   while (event->status > CL_COMPLETE)
     {
-      pthread_cond_wait(&e_d->event_cond, &event->pocl_lock);
+      PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
     }
   POCL_UNLOCK_OBJ (event);
 }
@@ -386,8 +393,7 @@ pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
   queue->data
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_init (cond, NULL);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_init (cond, NULL));
   return CL_SUCCESS;
 }
 
@@ -395,8 +401,7 @@ int
 pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
 {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_destroy (cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_destroy (cond));
   POCL_MEM_FREE (queue->data);
   return CL_SUCCESS;
 }

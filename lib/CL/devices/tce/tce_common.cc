@@ -1023,8 +1023,7 @@ int pocl_tce_init_queue(cl_device_id device, cl_command_queue queue) {
     goto ERROR;
   queue->data = dd;
 
-  if (POCL_INIT_COND(dd->cq_cond))
-    goto ERROR;
+  POCL_INIT_COND(dd->cq_cond);
 
   return CL_SUCCESS;
 
@@ -1085,8 +1084,7 @@ void pocl_tce_notify_cmdq_finished(cl_command_queue cq) {
    * this must be a broadcast since there could be multiple
    * user threads waiting on the same command queue */
   tce_queue_data_t *dd = (tce_queue_data_t *)cq->data;
-  int r = POCL_BROADCAST_COND(dd->cq_cond);
-  assert(r == 0);
+  POCL_BROADCAST_COND(dd->cq_cond);
 }
 
 void pocl_tce_join(cl_device_id device, cl_command_queue cq) {
@@ -1098,8 +1096,7 @@ void pocl_tce_join(cl_device_id device, cl_command_queue cq) {
       POCL_UNLOCK_OBJ(cq);
       return;
     } else {
-      int r = POCL_WAIT_COND(dd->cq_cond, cq->pocl_lock);
-      assert(r == 0);
+      POCL_WAIT_COND(dd->cq_cond, cq->pocl_lock);
     }
   }
 }
