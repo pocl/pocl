@@ -199,7 +199,12 @@ option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
 
-option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" OFF)
+if (ENABLE_PROXY_DEVICE)
+  set(VISIBILITY_HIDDEN_DEFAULT OFF)
+else()
+  set(VISIBILITY_HIDDEN_DEFAULT ON)
+endif()
+option(VISIBILITY_HIDDEN "Build with -fvisibility=hidden -fvisibility-inlines-hidden" VISIBILITY_HIDDEN_DEFAULT)
 if(VISIBILITY_HIDDEN)
   add_compile_options(-fvisibility=hidden)
   add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fvisibility-inlines-hidden>)
