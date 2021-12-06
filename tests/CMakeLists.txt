@@ -83,6 +83,12 @@ if(ENABLE_CUDA)
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_cuda")
 endif()
 
+if(ENABLE_PROXY)
+  add_test(NAME pocl_test_dlopen_device_proxy COMMAND test_dlopen proxy)
+  set_tests_properties("pocl_test_dlopen_device_proxy" PROPERTIES LABELS "internal;dlopen")
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_proxy")
+endif()
+
 if(ENABLE_VULKAN)
   add_test(NAME pocl_test_dlopen_device_vulkan COMMAND test_dlopen vulkan)
   set_tests_properties("pocl_test_dlopen_device_vulkan" PROPERTIES LABELS "internal;dlopen;vulkan")
