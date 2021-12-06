@@ -230,12 +230,17 @@ add_test_pocl(NAME "kernel/test_printf_vectors"
               EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
               COMMAND "kernel" "test_printf_vectors")
 
+add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
+              EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
+              COMMAND "kernel" "test_printf_vectors_ulongn")
+
 # on most platforms, the printf tests for vector types expose bugs in the
 # pocl printf implementation (passing of variadic arguments containing OpenCL
 # vector types) and maybe also related bugs in llvm (issue #682, #1007)
 if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
         CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
   set_tests_properties("kernel/test_printf_vectors"
+    "kernel/test_printf_vectors_ulongn"
     PROPERTIES WILL_FAIL 1)
 endif()
 
@@ -256,6 +261,7 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_float" ${EXTRA_TESTS}
   "kernel/test_printf"
   "kernel/test_printf_vectors"
+  "kernel/test_printf_vectors_ulongn"
   "kernel/test_sizeof_uint"
 
   PROPERTIES
