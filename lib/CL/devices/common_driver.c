@@ -482,6 +482,19 @@ pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   return CL_SUCCESS;
 }
 
+void
+pocl_driver_free (cl_device_id device, cl_mem mem)
+{
+  cl_device_id svm_dev = mem->context->svm_allocdev;
+  if (svm_dev && svm_dev->global_mem_id == 0 && svm_dev->ops->svm_unregister)
+    svm_dev->ops->svm_unregister (svm_dev, mem->mem_host_ptr, mem->size);
+
+  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
+  pocl_release_mem_host_ptr (mem);
+  p->mem_ptr = NULL;
+  p->version = 0;
+}
+
 /* These are implementations of compilation callbacks for all devices
  * that support compilation via LLVM. They take care of compilation/linking
  * of source/binary/spir down to parallel.bc level.

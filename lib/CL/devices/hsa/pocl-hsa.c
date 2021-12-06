@@ -902,7 +902,7 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
 {
   /* if we share global memory with CPU, let the CPU driver free it */
   if (device->global_mem_id == 0)
-    return pocl_basic_free (device, memobj);
+    return pocl_driver_free (device, memobj);
 
   /* ... otherwise free it via HSA. */
   cl_mem_flags flags = memobj->flags;

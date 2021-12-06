@@ -78,6 +78,9 @@ POCL_EXPORT
 cl_int pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem,
                                   void *host_ptr);
 
+POCL_EXPORT
+void pocl_driver_free (cl_device_id device, cl_mem mem);
+
   POCL_EXPORT
   int pocl_driver_build_source (cl_program program, cl_uint device_i,
                                 cl_uint num_input_headers,

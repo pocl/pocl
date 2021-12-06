@@ -78,7 +78,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_basic_init;
 
   ops->alloc_mem_obj = pocl_driver_alloc_mem_obj;
-  ops->free = pocl_basic_free;
+  ops->free = pocl_driver_free;
 
   ops->read = pocl_driver_read;
   ops->read_rect = pocl_driver_read_rect;
@@ -242,21 +242,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->max_compute_units = 1;
 
   return ret;
-}
-
-
-POCL_EXPORT
-void
-pocl_basic_free (cl_device_id device, cl_mem mem)
-{
-  cl_device_id svm_dev = mem->context->svm_allocdev;
-  if (svm_dev && svm_dev->global_mem_id == 0 && svm_dev->ops->svm_unregister)
-    svm_dev->ops->svm_unregister (svm_dev, mem->mem_host_ptr, mem->size);
-
-  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
-  pocl_release_mem_host_ptr (mem);
-  p->mem_ptr = NULL;
-  p->version = 0;
 }
 
 void

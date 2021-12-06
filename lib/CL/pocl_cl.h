@@ -518,7 +518,7 @@ struct pocl_device_ops {
   /* these are optional. If the driver needs to do anything to be able
    * to use host memory, it should do it (and undo it) in these callbacks.
    * Currently used by HSA.
-   * See pocl_basic_alloc and pocl_basic_free for details. */
+   * See pocl_driver_alloc_mem_obj and pocl_driver_free for details. */
   void (*svm_register) (cl_device_id dev, void *host_ptr, size_t size);
   void (*svm_unregister) (cl_device_id dev, void *host_ptr, size_t size);
 
