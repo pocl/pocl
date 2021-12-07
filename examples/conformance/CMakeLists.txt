@@ -134,8 +134,24 @@ add_test(NAME "${TS_NAME}_basic_image"
 add_test(NAME "${TS_NAME}_basic_other"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" mri_one  mri_multiple  barrier  createkernelsinprogram  work_item_functions  astype  prefetch  kernel_call_kernel_function  host_numeric_constants  kernel_numeric_constants  kernel_limit_constants  kernel_preprocessor_macros  parameter_types  vector_creation  vec_type_hint  global_work_offsets  get_global_offset  hostptr  hiloeo  if  sizeof  loop  pointer_cast  local_arg_def  local_kernel_def  local_kernel_scope  constant  constant_source)
 
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_basic_other_ocl_30"
+         COMMAND "${TS_BUILDDIR}/basic/test_basic" async_copy_global_to_local2D async_copy_global_to_local3D  async_copy_local_to_global2D async_copy_local_to_global3D
+          async_work_group_copy_fence_export_after_import_aliased_global
+          async_work_group_copy_fence_export_after_import_aliased_global_and_local
+          async_work_group_copy_fence_export_after_import_aliased_local
+          async_work_group_copy_fence_import_after_export_aliased_global
+          async_work_group_copy_fence_import_after_export_aliased_global_and_local
+          async_work_group_copy_fence_import_after_export_aliased_local
+          enqueued_local_size   get_linear_ids  global_linear_id  local_linear_id
+          progvar_func_scope    progvar_prog_scope_init   progvar_prog_scope_misc   progvar_prog_scope_uninit
+          rw_image_access_qualifier   simple_read_image_pitch   simple_write_image_pitch    vector_swizzle    wg_barrier
+          )
+endif()
+
 add_test(NAME "${TS_NAME}_buffers_read_async"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" buffer_read_async_int  buffer_read_async_uint  buffer_read_async_long  buffer_read_async_ulong  buffer_read_async_short  buffer_read_async_ushort  buffer_read_async_char  buffer_read_async_uchar  buffer_read_async_float)
+
 add_test(NAME "${TS_NAME}_buffers_write_async"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers"  buffer_write_async_int  buffer_write_async_uint  buffer_write_async_short  buffer_write_async_ushort  buffer_write_async_char  buffer_write_async_uchar  buffer_write_async_float  buffer_write_async_long  buffer_write_async_ulong)
 
@@ -167,6 +183,9 @@ add_test(NAME "${TS_NAME}_compiler"
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
 if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_c11_atomics"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" )
+
 add_test(NAME "${TS_NAME}_computeinfo"
          COMMAND "${TS_BUILDDIR}/computeinfo/test_computeinfo" )
 
@@ -481,9 +500,15 @@ add_test(NAME "${TS_NAME}_conversion_long_long"
          COMMAND "${TS_BUILDDIR}/conversions/test_conversions" long_long long_sat_long )
 
 add_test(NAME "${TS_NAME}_device_partition"
-         COMMAND "${TS_BUILDDIR}/device_partition/test_device_partition" device_partition_all)
+         COMMAND "${TS_BUILDDIR}/device_partition/test_device_partition")
 
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_device_execution"
+         COMMAND "${TS_BUILDDIR}/device_execution/test_device_execution")
 
+add_test(NAME "${TS_NAME}_device_timer"
+         COMMAND "${TS_BUILDDIR}/device_timer/test_device_timer")
+endif()
 
 add_test(NAME "${TS_NAME}_events"
          COMMAND "${TS_BUILDDIR}/events/test_events" event_get_execute_status  event_get_write_array_status  event_get_read_array_status  event_get_info  event_wait_for_execute  event_wait_for_array  event_flush  event_finish_execute  event_finish_array  event_release_before_done  event_enqueue_marker  event_enqueue_marker_with_event_list  event_enqueue_barrier_with_event_list)
@@ -496,6 +521,12 @@ add_test(NAME "${TS_NAME}_events_other"
 else()
 add_test(NAME "${TS_NAME}_events_other"
          COMMAND "${TS_BUILDDIR}/events/test_events" test_userevents  waitlists  callbacks  callbacks_simultaneous  userevents_multithreaded)
+endif()
+
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_generic_address_space"
+         COMMAND "${TS_BUILDDIR}/generic_address_space/test_generic_address_space")
+# TODO : extensions/cl_ext_cxx_for_opencl/
 endif()
 
 add_test(NAME "${TS_NAME}_geometrics"
@@ -675,6 +706,15 @@ add_test(NAME "${TS_NAME}_integer_ops_uchar"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  uchar_math  uchar_logic  uchar_shift  uchar_compare )
 add_test(NAME "${TS_NAME}_integer_ops_other"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  popcount  vector_scalar )
+
+if(ENABLE_CTS_3_0)
+
+add_test(NAME "${TS_NAME}_integer_ops_ocl_30"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  integer_ctz integer_dot_product )
+
+# quick_char_compare     quick_char_logic    quick_char_math    quick_char_shift    quick_int_compare    quick_int_logic    quick_int_math    quick_int_shift    quick_long_compare    quick_long_logic    quick_long_math    quick_long_shift    quick_short_compare    quick_short_logic    quick_short_math    quick_short_shift    quick_uchar_compare    quick_uchar_logic    quick_uchar_math    quick_uchar_shift    quick_uint_compare    quick_uint_logic    quick_uint_math    quick_uint_shift    quick_ulong_compare    quick_ulong_logic    quick_ulong_math    quick_ulong_shift    quick_ushort_compare    quick_ushort_logic    quick_ushort_math    quick_ushort_shift
+
+endif()
 
 #***************************************************************************
 
@@ -899,6 +939,13 @@ add_test(NAME "${TS_NAME}_mem_host_flags"
 add_test(NAME "${TS_NAME}_multiples"
          COMMAND "${TS_BUILDDIR}/multiple_device_context/test_multiples" )
 
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_non_uniform_work_group"
+         COMMAND "${TS_BUILDDIR}/non_uniform_work_group/test_non_uniform_work_group" )
+add_test(NAME "${TS_NAME}_pipes"
+         COMMAND "${TS_BUILDDIR}/pipes/test_pipes" )
+endif()
+
 add_test(NAME "${TS_NAME}_printf"
          COMMAND "${TS_BUILDDIR}/printf/test_printf"
    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/printf" )
@@ -938,6 +985,14 @@ add_test(NAME "${TS_NAME}_select_int_uint"
 add_test(NAME "${TS_NAME}_select_int_int"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_int_int)
 
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_select_float_uint"
+         COMMAND "${TS_BUILDDIR}/select/test_select" select_float_uint)
+add_test(NAME "${TS_NAME}_select_float_int"
+         COMMAND "${TS_BUILDDIR}/select/test_select" select_float_int)
+endif()
+
+
 add_test(NAME "${TS_NAME}_select_ulong_ulong"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_ulong_ulong)
 add_test(NAME "${TS_NAME}_select_ulong_long"
@@ -946,6 +1001,57 @@ add_test(NAME "${TS_NAME}_select_long_ulong"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_long_ulong)
 add_test(NAME "${TS_NAME}_select_long_long"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_long_long)
+
+# we don't support the old (1.2 / 2.0) spir
+#add_test(NAME "${TS_NAME}_spir"
+#         COMMAND "${TS_BUILDDIR}/spir/test_spir")
+
+if(ENABLE_CTS_3_0)
+
+add_test(NAME "${TS_NAME}_spirv_new_1"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fnegate_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_uint)
+
+add_test(NAME "${TS_NAME}_spirv_new_2"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked  decorate_saturated_conversion_char  decorate_saturated_conversion_uchar  decorate_saturated_conversion_short  decorate_saturated_conversion_ushort  decorate_saturated_conversion_int  decorate_saturated_conversion_uint  decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_float_int  decorate_fp_rounding_mode_rtp_float_int  decorate_fp_rounding_mode_rtn_float_int  decorate_fp_rounding_mode_rte_double_long  decorate_fp_rounding_mode_rtz_double_long  decorate_fp_rounding_mode_rtp_double_long  decorate_fp_rounding_mode_rtn_double_long)
+
+add_test(NAME "${TS_NAME}_spirv_new_3"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct)
+
+add_test(NAME "${TS_NAME}_spirv_new_4"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" op_constant_true_simple  op_constant_false_simple  op_constant_int_simple  op_constant_uint_simple  op_constant_char_simple  op_constant_uchar_simple  op_constant_ushort_simple  op_constant_long_simple  op_constant_ulong_simple  op_constant_short_simple  op_constant_float_simple  op_constant_double_simple  op_constant_int4_simple  op_constant_int3_simple  op_constant_struct_int_float_simple  op_constant_struct_int_char_simple  op_constant_struct_struct_simple  op_constant_half_simple)
+
+add_test(NAME "${TS_NAME}_spirv_new_5"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" op_copy_int_simple  op_copy_uint_simple  op_copy_char_simple  op_copy_uchar_simple  op_copy_ushort_simple  op_copy_long_simple  op_copy_ulong_simple  op_copy_short_simple  op_copy_float_simple  op_copy_double_simple  op_copy_int4_simple  op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple  op_copy_half_simple)
+
+add_test(NAME "${TS_NAME}_spirv_new_6"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" op_fadd_float_regular  op_fsub_float_regular  op_fmul_float_regular  op_fdiv_float_regular  op_frem_float_regular  op_fmod_float_regular  op_fadd_float_fast  op_fsub_float_fast  op_fmul_float_fast  op_fdiv_float_fast  op_frem_float_fast  op_fmod_float_fast  op_fadd_double_regular  op_fsub_double_regular  op_fmul_double_regular  op_fdiv_double_regular  op_frem_double_regular  op_fmod_double_regular  op_fadd_double_fast  op_fsub_double_fast  op_fmul_double_fast  op_fdiv_double_fast  op_frem_double_fast  op_fmod_double_fast  op_fadd_float4_regular  op_fsub_float4_regular  op_fmul_float4_regular  op_fdiv_float4_regular  op_frem_float4_regular  op_fmod_float4_regular  op_fadd_float4_fast  op_fsub_float4_fast  op_fmul_float4_fast  op_fdiv_float4_fast  op_frem_float4_fast  op_fmod_float4_fast  op_fadd_double2_regular  op_fsub_double2_regular  op_fmul_double2_regular  op_fdiv_double2_regular  op_frem_double2_regular  op_fmod_double2_regular  op_fadd_double2_fast  op_fsub_double2_fast  op_fmul_double2_fast  op_fdiv_double2_fast  op_frem_double2_fast  op_fmod_double2_fast  op_fadd_half_regular  op_fsub_half_regular  op_fmul_half_regular  op_fdiv_half_regular  op_frem_half_regular  op_fmod_half_regular  op_fadd_half_fast  op_fsub_half_fast  op_fmul_half_fast  op_fdiv_half_fast  op_frem_half_fast  op_fmod_half_fast)
+
+add_test(NAME "${TS_NAME}_spirv_new_7"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  function_none  function_inline  function_noinline  function_pure  function_const  function_pure_ptr)
+
+add_test(NAME "${TS_NAME}_spirv_new_8"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_lifetime_simple  op_loop_merge_branch_none  op_loop_merge_branch_unroll  op_loop_merge_branch_dont_unroll  op_loop_merge_branch_conditional_none  op_loop_merge_branch_conditional_unroll  op_loop_merge_branch_conditional_dont_unroll  op_neg_float  op_neg_double  op_neg_int  op_neg_long  op_not_int  op_not_long  op_neg_short  op_not_short  op_neg_float4  op_neg_int4  op_not_int4  op_type_opaque_simple  op_phi_2_blocks  op_phi_3_blocks  op_phi_4_blocks)
+
+add_test(NAME "${TS_NAME}_spirv_new_9"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_selection_merge_if_none  op_selection_merge_if_flatten  op_selection_merge_if_dont_flatten  op_selection_merge_swith_none  op_selection_merge_swith_flatten  op_selection_merge_swith_dont_flatten  op_spec_constant_uint_simple  op_spec_constant_uchar_simple  op_spec_constant_ushort_simple  op_spec_constant_ulong_simple  op_spec_constant_float_simple  op_spec_constant_half_simple  op_spec_constant_double_simple  op_spec_constant_true_simple  op_spec_constant_false_simple)
+
+add_test(NAME "${TS_NAME}_spirv_new_0"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_undef_true_simple  op_undef_false_simple  op_undef_int_simple  op_undef_uint_simple  op_undef_char_simple  op_undef_uchar_simple  op_undef_ushort_simple  op_undef_long_simple  op_undef_ulong_simple  op_undef_short_simple  op_undef_float_simple  op_undef_double_simple  op_undef_int4_simple  op_undef_int3_simple  op_undef_struct_int_float_simple  op_undef_struct_int_char_simple  op_undef_struct_struct_simple  op_undef_half_simple  op_vector_int4_extract  op_vector_float4_extract  op_vector_long2_extract  op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert  op_vector_float4_insert  op_vector_long2_insert  op_vector_double2_insert  op_vector_char16_insert  op_vector_times_scalar_float  op_vector_times_scalar_double)
+
+add_test(NAME "${TS_NAME}_subgroups_1"
+         COMMAND "${TS_BUILDDIR}/subgroups/test_subgroups" sub_group_info_ext  sub_group_info_core  work_item_functions_ext  work_item_functions_core  subgroup_functions_ext  subgroup_functions_core  barrier_functions_ext  barrier_functions_core)
+
+add_test(NAME "${TS_NAME}_subgroups_2"
+         COMMAND "${TS_BUILDDIR}/subgroups/test_subgroups" ifp_ext  ifp_core  subgroup_functions_extended_types  subgroup_functions_non_uniform_vote  subgroup_functions_non_uniform_arithmetic  subgroup_functions_ballot  subgroup_functions_clustered_reduce  subgroup_functions_shuffle  subgroup_functions_shuffle_relative)
+
+add_test(NAME "${TS_NAME}_SVM_1"
+         COMMAND "${TS_BUILDDIR}/SVM/test_svm" svm_byte_granularity  svm_set_kernel_exec_info_svm_ptrs  svm_fine_grain_memory_consistency  svm_fine_grain_sync_buffers  svm_shared_address_space_fine_grain  svm_shared_sub_buffers  svm_shared_address_space_fine_grain_buffers)
+
+add_test(NAME "${TS_NAME}_SVM_2"
+         COMMAND "${TS_BUILDDIR}/SVM/test_svm" svm_allocate_shared_buffer  svm_shared_address_space_coarse_grain_old_api  svm_shared_address_space_coarse_grain_new_api  svm_cross_buffer_pointers_coarse_grain  svm_pointer_passing  svm_enqueue_api  svm_migrate)
+
+endif()
+
 
 add_test(NAME "${TS_NAME}_thread_dimensions_quick"
          COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" quick_1d_explicit_local  quick_2d_explicit_local  quick_3d_explicit_local  quick_1d_implicit_local  quick_2d_implicit_local  quick_3d_implicit_local)
@@ -970,6 +1076,83 @@ add_test(NAME "${TS_NAME}_vecalign"
 add_test(NAME "${TS_NAME}_vecstep"
          COMMAND "${TS_BUILDDIR}/vec_step/test_vecstep" )
 endif()
+
+
+if(ENABLE_CTS_3_0)
+
+add_test(NAME "${TS_NAME}_workgroup"
+         COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
+        work_group_all
+        work_group_any)
+
+add_test(NAME "${TS_NAME}_workgroup_reduce"
+         COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
+        work_group_reduce_add
+        work_group_reduce_min
+        work_group_reduce_max)
+
+add_test(NAME "${TS_NAME}_workgroup_scan"
+         COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
+        work_group_scan_inclusive_add
+        work_group_scan_inclusive_min
+        work_group_scan_inclusive_max
+        work_group_scan_exclusive_add
+        work_group_scan_exclusive_min
+        work_group_scan_exclusive_max)
+
+add_test(NAME "${TS_NAME}_workgroup_broadcast"
+         COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
+        work_group_broadcast_1D
+        work_group_broadcast_2D
+        work_group_broadcast_3D)
+
+add_test(NAME "${TS_NAME}_workgroup_lsize"
+         COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
+       work_group_suggested_local_size_1D
+        work_group_suggested_local_size_2D
+        work_group_suggested_local_size_3D)
+
+endif()
+
+
+if(ENABLE_CTS_3_0)
+
+set(OCL_30_TESTS
+"${TS_NAME}_basic_other_ocl_30"
+"${TS_NAME}_c11_atomics"
+"${TS_NAME}_device_execution"
+"${TS_NAME}_device_timer"
+"${TS_NAME}_generic_address_space"
+"${TS_NAME}_integer_ops_ocl_30"
+"${TS_NAME}_non_uniform_work_group"
+"${TS_NAME}_pipes"
+"${TS_NAME}_select_float_uint"
+"${TS_NAME}_select_float_int"
+"${TS_NAME}_spirv_new_0"
+"${TS_NAME}_spirv_new_1"
+"${TS_NAME}_spirv_new_2"
+"${TS_NAME}_spirv_new_3"
+"${TS_NAME}_spirv_new_4"
+"${TS_NAME}_spirv_new_5"
+"${TS_NAME}_spirv_new_6"
+"${TS_NAME}_spirv_new_7"
+"${TS_NAME}_spirv_new_8"
+"${TS_NAME}_spirv_new_9"
+"${TS_NAME}_subgroups_1"
+"${TS_NAME}_subgroups_2"
+"${TS_NAME}_SVM_1"
+"${TS_NAME}_SVM_2"
+"${TS_NAME}_workgroup"
+"${TS_NAME}_workgroup_reduce"
+"${TS_NAME}_workgroup_scan"
+"${TS_NAME}_workgroup_broadcast"
+"${TS_NAME}_workgroup_lsize"
+)
+
+else()
+  set(OCL_30_TESTS)
+endif()
+
 
 set_tests_properties(
     "${TS_NAME}_allocations_buffer"
@@ -1260,6 +1443,7 @@ set_tests_properties(
     "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
+    ${OCL_30_TESTS}
   PROPERTIES
     LABELS "conformance_suite_full"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -1566,7 +1750,7 @@ set_tests_properties(
     "${TS_NAME}_math_mini_tanh"
     "${TS_NAME}_math_mini_tanpi"
     "${TS_NAME}_math_mini_trunc"
-
+    ${OCL_30_TESTS}
     "${TS_NAME}_conversion_mini_uint_uchar"
     "${TS_NAME}_conversion_mini_short_char"
     "${TS_NAME}_conversion_mini_uchar_ushort"
@@ -2050,6 +2234,8 @@ set_tests_properties(
     "${TS_NAME}_select_micro_int_int"
     "${TS_NAME}_select_micro_ulong_ulong"
 
+    ${OCL_30_TESTS}
+
   PROPERTIES
     LABELS "conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -2101,6 +2287,10 @@ set_tests_properties(
   PROPERTIES
     LABELS "conformance_suite_full;conformance_suite_mini;conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+
+set_property(TEST
+    ${OCL_30_TESTS}
+    APPEND PROPERTY LABELS "conformance_30_only")
 
 
 endif()
