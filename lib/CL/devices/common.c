@@ -1524,12 +1524,16 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
 #endif
 
-  dev->spirv_version = "SPIR-V_1.2";
 #else /* No compiler, no CPU info */
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";
 #endif
 
+#ifdef ENABLE_SPIRV
+  dev->spirv_version = "SPIR-V_1.2";
+#else
+  dev->spirv_version = NULL;
+#endif
   /* OpenCL 3.0 properties */
   /* Minimum mandated capability */
   dev->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED

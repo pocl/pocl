@@ -128,7 +128,7 @@ CL_API_SUFFIX__VERSION_2_1
         }
     }
 
-  POCL_GOTO_ERROR_ON ((num_devices_with_spir == 0), CL_INVALID_VALUE,
+  POCL_GOTO_ERROR_ON ((num_devices_with_spir == 0), CL_INVALID_OPERATION,
                       "No device in context supports SPIR\n");
   POCL_MSG_PRINT_GENERAL ("Creating context from IL for %u devices\n",
                           num_devices_with_spir);
