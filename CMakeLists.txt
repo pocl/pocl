@@ -23,7 +23,8 @@
 #
 #=============================================================================
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
+cmake_policy(SET CMP0067 OLD)
 
 project(pocl)
 set(CMAKE_PROJECT_DESCRIPTION "pocl is a portable OpenCl runtime.")
