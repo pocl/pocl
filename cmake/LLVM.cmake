@@ -576,51 +576,6 @@ endmacro()
 
 ####################################################################
 #
-# clangxx works check 
-#
-
-# TODO clang + vecmathlib doesn't work on Windows yet...
-if(CLANGXX AND (NOT WIN32) AND ENABLE_HOST_CPU_DEVICES)
-
-  message(STATUS "Checking if clang++ works (required by vecmathlib)")
-
-  set(CXX_WORKS 0)
-  set(CXX_STDLIB "")
-
-  if(NOT DEFINED CLANGXX_WORKS)
-
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-std=c++11")
-
-    if(NOT _STATUS_FAIL)
-      set(CXX_WORKS 1)
-    else()
-      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++" "-std=c++11")
-      if (NOT _STATUS_FAIL)
-        set(CXX_STDLIB "-stdlib=libstdc++")
-        set(CXX_WORKS 1)
-      else()
-        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++" "-std=c++11")
-        if(NOT _STATUS_FAIL)
-          set(CXX_STDLIB "-stdlib=libc++")
-          set(CXX_WORKS 1)
-        endif()
-      endif()
-    endif()
-
-    set(CLANGXX_WORKS ${CXX_WORKS} CACHE INTERNAL "Clang++ ")
-    set(CLANGXX_STDLIB ${CXX_STDLIB} CACHE INTERNAL "Clang++ stdlib")
-  endif()
-
-
-endif()
-
-if(CLANGXX_STDLIB AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-  set(LLVM_CXXFLAGS "${CLANGXX_STDLIB} ${LLVM_CXXFLAGS}")
-  set(LLVM_LDFLAGS "${CLANGXX_STDLIB} ${LLVM_LDFLAGS}")
-endif()
-
-####################################################################
-#
 # - '-DNDEBUG' is a work-around for llvm bug 18253
 #
 # llvm-config does not always report the "-DNDEBUG" flag correctly
