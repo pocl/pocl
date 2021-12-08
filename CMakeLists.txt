@@ -349,7 +349,7 @@ endif()
 # for libpocl.so
 set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "POCL public libdir")
 
-# for llvmopencl.so
+# for libpocl-devices-*.so
 set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
 
 # for pocl.icd
