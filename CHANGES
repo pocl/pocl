@@ -26,6 +26,7 @@ Notable Bug Fixes
 - Fixed the post-event-finish-cleanup process in the drivers,
   this should improve reliability
 - Few more fixes for Android
+- Fixed loss of precision in CUDA event times due to type conversion
 
 Other
 -----
