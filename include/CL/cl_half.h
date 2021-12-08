@@ -127,7 +127,7 @@ static inline cl_half cl_half_from_float(cl_float f, cl_half_rounding_mode round
   int32_t exp = f_exp - CL_FLT_MAX_EXP + 1;
 
   // Add FP16 exponent bias
-  uint16_t h_exp = exp + CL_HALF_MAX_EXP - 1;
+  uint16_t h_exp = (uint16_t)(exp + CL_HALF_MAX_EXP - 1);
 
   // Position of the bit that will become the FP16 mantissa LSB
   uint32_t lsb_pos = CL_FLT_MANT_DIG - CL_HALF_MANT_DIG;
@@ -138,7 +138,7 @@ static inline cl_half cl_half_from_float(cl_float f, cl_half_rounding_mode round
     if (f_mant)
     {
       // NaN -> propagate mantissa and silence it
-      uint16_t h_mant = f_mant >> lsb_pos;
+      uint16_t h_mant = (uint16_t)(f_mant >> lsb_pos);
       h_mant |= 0x200;
       return (sign << 15) | CL_HALF_EXP_MASK | h_mant;
     }
@@ -179,7 +179,7 @@ static inline cl_half cl_half_from_float(cl_float f, cl_half_rounding_mode round
   }
 
   // Generate FP16 mantissa by shifting FP32 mantissa
-  uint16_t h_mant = f_mant >> lsb_pos;
+  uint16_t h_mant = (uint16_t)(f_mant >> lsb_pos);
 
   // Check whether we need to round
   uint32_t halfway = 1 << (lsb_pos - 1);

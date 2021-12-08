@@ -38,6 +38,7 @@ typedef struct _cl_sampler *        cl_sampler;
 
 typedef cl_uint             cl_bool;                     /* WARNING!  Unlike cl_ types in cl_platform.h, cl_bool is not guaranteed to be the same size as the bool in kernels. */
 typedef cl_ulong            cl_bitfield;
+typedef cl_ulong            cl_properties;
 typedef cl_bitfield         cl_device_type;
 typedef cl_uint             cl_platform_info;
 typedef cl_uint             cl_device_info;
@@ -57,7 +58,7 @@ typedef cl_bitfield         cl_device_affinity_domain;
 typedef intptr_t            cl_context_properties;
 typedef cl_uint             cl_context_info;
 #ifdef CL_VERSION_2_0
-typedef cl_bitfield         cl_queue_properties;
+typedef cl_properties       cl_queue_properties;
 #endif
 typedef cl_uint             cl_command_queue_info;
 typedef cl_uint             cl_channel_order;
@@ -104,13 +105,14 @@ typedef cl_uint             cl_event_info;
 typedef cl_uint             cl_command_type;
 typedef cl_uint             cl_profiling_info;
 #ifdef CL_VERSION_2_0
-typedef cl_bitfield         cl_sampler_properties;
+typedef cl_properties       cl_sampler_properties;
 typedef cl_uint             cl_kernel_exec_info;
 #endif
 #ifdef CL_VERSION_3_0
 typedef cl_bitfield         cl_device_atomic_capabilities;
+typedef cl_bitfield         cl_device_device_enqueue_capabilities;
 typedef cl_uint             cl_khronos_vendor_id;
-typedef cl_bitfield         cl_mem_properties;
+typedef cl_properties       cl_mem_properties;
 typedef cl_uint             cl_version;
 #endif
 
@@ -132,20 +134,28 @@ typedef struct _cl_image_desc {
     cl_uint                 num_mip_levels;
     cl_uint                 num_samples;
 #ifdef CL_VERSION_2_0
-#ifdef __GNUC__
-    __extension__   /* Prevents warnings about anonymous union in -pedantic builds */
+#if defined(__GNUC__)
+    __extension__                   /* Prevents warnings about anonymous union in -pedantic builds */
 #endif
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__STDC__)
 #pragma warning( push )
-#pragma warning( disable : 4201 ) /* Prevents warning about nameless struct/union in /W4 /Za builds */
+#pragma warning( disable : 4201 )   /* Prevents warning about nameless struct/union in /W4 builds */
 #endif
+#if defined(_MSC_VER) && defined(__STDC__)
+    /* Anonymous unions are not supported in /Za builds */
+#else
     union {
+#endif
 #endif
       cl_mem                  buffer;
 #ifdef CL_VERSION_2_0
+#if defined(_MSC_VER) && defined(__STDC__)
+    /* Anonymous unions are not supported in /Za builds */
+#else
       cl_mem                  mem_object;
     };
-#ifdef _MSC_VER
+#endif
+#if defined(_MSC_VER) && !defined(__STDC__)
 #pragma warning( pop )
 #endif
 #endif
@@ -408,8 +418,9 @@ typedef struct _cl_name_version {
 #define CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT          0x1069
 /* 0x106A to 0x106E - Reserved for upcoming KHR extension */
 #define CL_DEVICE_OPENCL_C_FEATURES                      0x106F
-#define CL_DEVICE_DEVICE_ENQUEUE_SUPPORT                 0x1070
+#define CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES            0x1070
 #define CL_DEVICE_PIPE_SUPPORT                           0x1071
+#define CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED      0x1072
 #endif
 
 /* cl_device_fp_config - bitfield */
@@ -893,6 +904,12 @@ typedef struct _cl_name_version {
 #define CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES      (1 << 6)
 #endif
 
+/* cl_device_device_enqueue_capabilities - bitfield */
+#ifdef CL_VERSION_3_0
+#define CL_DEVICE_QUEUE_SUPPORTED               (1 << 0)
+#define CL_DEVICE_QUEUE_REPLACEABLE_DEFAULT     (1 << 1)
+#endif
+
 /* cl_khronos_vendor_id */
 #define CL_KHRONOS_VENDOR_ID_CODEPLAY               0x10004
 
@@ -1022,6 +1039,16 @@ clGetContextInfo(cl_context         context,
                  size_t             param_value_size,
                  void *             param_value,
                  size_t *           param_value_size_ret) CL_API_SUFFIX__VERSION_1_0;
+
+#ifdef CL_VERSION_3_0
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clSetContextDestructorCallback(cl_context         context,
+                               void (CL_CALLBACK* pfn_notify)(cl_context context,
+                                                              void* user_data),
+                               void*              user_data) CL_API_SUFFIX__VERSION_3_0;
+
+#endif
 
 /* Command Queue APIs */
 
@@ -1284,11 +1311,11 @@ clLinkProgram(cl_context           context,
 
 #ifdef CL_VERSION_2_2
 
-extern CL_API_ENTRY cl_int CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_2_2_DEPRECATED cl_int CL_API_CALL
 clSetProgramReleaseCallback(cl_program          program,
                             void (CL_CALLBACK * pfn_notify)(cl_program program,
                                                             void * user_data),
-                            void *              user_data) CL_API_SUFFIX__VERSION_2_2;
+                            void *              user_data) CL_API_SUFFIX__VERSION_2_2_DEPRECATED;
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 clSetProgramSpecializationConstant(cl_program  program,
@@ -1483,8 +1510,8 @@ extern CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueReadBufferRect(cl_command_queue    command_queue,
                         cl_mem              buffer,
                         cl_bool             blocking_read,
-                        const size_t *      buffer_offset,
-                        const size_t *      host_offset,
+                        const size_t *      buffer_origin,
+                        const size_t *      host_origin,
                         const size_t *      region,
                         size_t              buffer_row_pitch,
                         size_t              buffer_slice_pitch,
@@ -1514,8 +1541,8 @@ extern CL_API_ENTRY cl_int CL_API_CALL
 clEnqueueWriteBufferRect(cl_command_queue    command_queue,
                          cl_mem              buffer,
                          cl_bool             blocking_write,
-                         const size_t *      buffer_offset,
-                         const size_t *      host_offset,
+                         const size_t *      buffer_origin,
+                         const size_t *      host_origin,
                          const size_t *      region,
                          size_t              buffer_row_pitch,
                          size_t              buffer_slice_pitch,
@@ -1830,11 +1857,11 @@ clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
     clSetCommandQueueProperty(cl_command_queue              command_queue,
                               cl_command_queue_properties   properties,
                               cl_bool                       enable,
-                              cl_command_queue_properties * old_properties) CL_EXT_SUFFIX__VERSION_1_0_DEPRECATED;
+                              cl_command_queue_properties * old_properties) CL_API_SUFFIX__VERSION_1_0_DEPRECATED;
 #endif /* CL_USE_DEPRECATED_OPENCL_1_0_APIS */
 
 /* Deprecated OpenCL 1.1 APIs */
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
 clCreateImage2D(cl_context              context,
                 cl_mem_flags            flags,
                 const cl_image_format * image_format,
@@ -1842,9 +1869,9 @@ clCreateImage2D(cl_context              context,
                 size_t                  image_height,
                 size_t                  image_row_pitch,
                 void *                  host_ptr,
-                cl_int *                errcode_ret) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+                cl_int *                errcode_ret) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
 clCreateImage3D(cl_context              context,
                 cl_mem_flags            flags,
                 const cl_image_format * image_format,
@@ -1854,46 +1881,46 @@ clCreateImage3D(cl_context              context,
                 size_t                  image_row_pitch,
                 size_t                  image_slice_pitch,
                 void *                  host_ptr,
-                cl_int *                errcode_ret) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+                cl_int *                errcode_ret) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 clEnqueueMarker(cl_command_queue    command_queue,
-                cl_event *          event) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+                cl_event *          event) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
 clEnqueueWaitForEvents(cl_command_queue  command_queue,
                         cl_uint          num_events,
-                        const cl_event * event_list) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+                        const cl_event * event_list) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
-clEnqueueBarrier(cl_command_queue command_queue) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+clEnqueueBarrier(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
-clUnloadCompiler(void) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED cl_int CL_API_CALL
+clUnloadCompiler(void) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED void * CL_API_CALL
-clGetExtensionFunctionAddress(const char * func_name) CL_EXT_SUFFIX__VERSION_1_1_DEPRECATED;
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_1_DEPRECATED void * CL_API_CALL
+clGetExtensionFunctionAddress(const char * func_name) CL_API_SUFFIX__VERSION_1_1_DEPRECATED;
 
 /* Deprecated OpenCL 2.0 APIs */
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_2_DEPRECATED cl_command_queue CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_2_DEPRECATED cl_command_queue CL_API_CALL
 clCreateCommandQueue(cl_context                     context,
                      cl_device_id                   device,
                      cl_command_queue_properties    properties,
-                     cl_int *                       errcode_ret) CL_EXT_SUFFIX__VERSION_1_2_DEPRECATED;
+                     cl_int *                       errcode_ret) CL_API_SUFFIX__VERSION_1_2_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_2_DEPRECATED cl_sampler CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_2_DEPRECATED cl_sampler CL_API_CALL
 clCreateSampler(cl_context          context,
                 cl_bool             normalized_coords,
                 cl_addressing_mode  addressing_mode,
                 cl_filter_mode      filter_mode,
-                cl_int *            errcode_ret) CL_EXT_SUFFIX__VERSION_1_2_DEPRECATED;
+                cl_int *            errcode_ret) CL_API_SUFFIX__VERSION_1_2_DEPRECATED;
 
-extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_2_DEPRECATED cl_int CL_API_CALL
+extern CL_API_ENTRY CL_API_PREFIX__VERSION_1_2_DEPRECATED cl_int CL_API_CALL
 clEnqueueTask(cl_command_queue  command_queue,
               cl_kernel         kernel,
               cl_uint           num_events_in_wait_list,
               const cl_event *  event_wait_list,
-              cl_event *        event) CL_EXT_SUFFIX__VERSION_1_2_DEPRECATED;
+              cl_event *        event) CL_API_SUFFIX__VERSION_1_2_DEPRECATED;
 
 #ifdef __cplusplus
 }
