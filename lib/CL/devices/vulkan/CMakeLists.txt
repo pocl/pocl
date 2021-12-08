@@ -30,5 +30,5 @@ endif(MSVC)
 add_pocl_device_library(pocl-devices-vulkan pocl-vulkan.c pocl-vulkan.h)
 
 if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-vulkan PRIVATE ${Vulkan_LIBRARY})
+  target_link_libraries(pocl-devices-vulkan PRIVATE ${Vulkan_LIBRARY} ${PTHREAD_LIBRARY})
 endif()
