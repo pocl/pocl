@@ -38,11 +38,6 @@ else()
 	set(CMAKE_CXX_STANDARD "${SUPPORTED_CXX_STD_VERSION}")
 endif()
 
-# Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
-if(POLICY CMP0025)
-  cmake_policy(SET CMP0025 NEW)
-endif()
-
 include(CheckCCompilerFlag)
 include(CPackComponent)
 macro(pass_through_cpack_vars)
