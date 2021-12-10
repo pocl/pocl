@@ -31,7 +31,7 @@
 class MMAPDevice : public Device
 {
 public:
-  MMAPDevice (size_t base_address);
+  MMAPDevice (size_t base_address, char* kernel_name);
 };
 
 #endif

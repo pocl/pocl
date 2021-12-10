@@ -34,7 +34,7 @@
 
 
 
-MMAPDevice::MMAPDevice(size_t base_address) {
+MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
     int mem_fd = -1;  
     mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
     if (mem_fd == -1) {
@@ -48,7 +48,12 @@ MMAPDevice::MMAPDevice(size_t base_address) {
     InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
     CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
     DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
- 
+
+    char file_name[120];
+    snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
+
+
+    ((MMAPRegion*)InstructionMemory)->initRegion(file_name); 
     close(mem_fd);
 }
 
