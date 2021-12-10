@@ -26,6 +26,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <fstream>
+
 #include "MMAPRegion.h"
 
 // MMAPRegion debug prints get quite spammy
@@ -56,6 +58,26 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   POCL_MSG_PRINT_INFO("accel: got address %p\n", Data);
 #endif
 }
+
+void
+MMAPRegion::initRegion(char* init_file)
+{
+  std::ifstream inFile;
+  inFile.open(init_file, std::ios::binary);
+  unsigned int current;
+  int i = 0;
+  while (inFile.good()) {
+    inFile.read(reinterpret_cast<char *>(&current), sizeof(current));
+    Write32(i, current);
+    i += 4;
+  }
+
+#ifdef ACCEL_MMAP_DEBUG
+  POCL_MSG_PRINT_INFO("MMAP: Initialized region with %i bytes \n", i - 4);
+#endif
+}
+
+
 
 MMAPRegion::~MMAPRegion() {
 #ifdef ACCEL_MMAP_DEBUG

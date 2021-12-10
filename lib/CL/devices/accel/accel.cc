@@ -275,10 +275,10 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   std::string supportedList;
   char xrt_kernel_name[100];
-  if (D->BaseAddress == 0xA || D->BaseAddress == 0xB) {
+  if (D->BaseAddress != 0xE) {
     paramToken = strtok_r(NULL, ",", &savePtr);
     strcpy(xrt_kernel_name, paramToken);
-    POCL_MSG_PRINT_INFO("accel: enabling xrt with kernel name %s",
+    POCL_MSG_PRINT_INFO("accel: enabling device with device kernel name %s",
                         xrt_kernel_name);
   }
 
@@ -339,7 +339,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     } else if (D->BaseAddress == 0xB) {
       D->Dev = new TTASimDevice(xrt_kernel_name);
     } else {
-      D->Dev = new MMAPDevice(D->BaseAddress);
+      D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
     }
 
     if (!(D->Dev->RelativeAddressing))

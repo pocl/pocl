@@ -49,6 +49,7 @@ public:
                            size_t bytes) override;
   virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
 
+  virtual void initRegion(char* init_file);
 protected:
   MMAPRegion();
 
