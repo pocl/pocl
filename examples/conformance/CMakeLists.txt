@@ -120,6 +120,11 @@ add_test(NAME "${TS_NAME}_allocations_image"
 add_test(NAME "${TS_NAME}_api"
            COMMAND "${TS_BUILDDIR}/api/test_api" get_platform_info  get_sampler_info  get_command_queue_info  get_context_info  get_device_info  enqueue_task  binary_get  binary_create  kernel_required_group_size  release_kernel_order  release_during_execute  load_single_kernel  load_two_kernels  load_two_kernels_in_one  load_two_kernels_manually  get_program_info_kernel_names   create_kernels_in_program  get_kernel_info  execute_kernel_local_sizes  set_kernel_arg_by_index  set_kernel_arg_constant  set_kernel_arg_struct_array  kernel_global_constant  min_max_thread_dimensions  min_max_work_items_sizes  min_max_work_group_size  min_max_read_image_args  min_max_write_image_args  min_max_mem_alloc_size  min_max_image_2d_width  min_max_image_2d_height  min_max_image_3d_width  min_max_image_3d_height  min_max_image_3d_depth  min_max_image_array_size  min_max_image_buffer_size  min_max_parameter_size  min_max_samplers  min_max_constant_buffer_size  min_max_constant_args  min_max_compute_units  min_max_address_bits  min_max_single_fp_config  min_max_double_fp_config  min_max_local_mem_size  min_max_kernel_preferred_work_group_size_multiple  min_max_execution_capabilities  min_max_queue_properties  min_max_device_version  min_max_language_version  kernel_arg_changes  kernel_arg_multi_setup_random  native_kernel  create_context_from_type  platform_extensions  get_platform_ids  bool_type  repeated_setup_cleanup  retain_queue_single  retain_queue_multiple  retain_mem_object_single  retain_mem_object_multiple  min_data_type_align_size_alignment  mem_object_destructor_callback  null_buffer_arg  get_buffer_info  get_image2d_info  get_image3d_info  get_image1d_info  get_image1d_array_info  get_image2d_array_info)
 
+if(ENABLE_CTS_3_0)
+add_test(NAME "${TS_NAME}_api_ocl_30"
+           COMMAND "${TS_BUILDDIR}/api/test_api" buffer_properties_queries   clone_kernel   consistency_2d_image_from_buffer   consistency_3d_image_writes   consistency_depth_images   consistency_device_and_host_timer   consistency_device_enqueue   consistency_il_programs   consistency_memory_model   consistency_non_uniform_work_group   consistency_pipes   consistency_prog_ctor_dtor   consistency_progvar   consistency_read_write_images   consistency_subgroups   consistency_svm   context_destructor_callback   get_command_queue_info_compatibility   get_sampler_info_compatibility   image_properties_queries   kernel_attributes   kernel_private_memory_size   min_image_formats   negative_get_platform_ids   negative_get_platform_info   pipe_properties_queries   queue_flush_on_release   queue_hint   queue_properties   queue_properties_queries   retain_mem_object_set_kernel_arg   sub_group_dispatch   zero_sized_enqueue)
+endif()
+
 add_test(NAME "${TS_NAME}_atomics"
          COMMAND "${TS_BUILDDIR}/atomics/test_atomics" )
 
@@ -1118,6 +1123,7 @@ endif()
 if(ENABLE_CTS_3_0)
 
 set(OCL_30_TESTS
+"${TS_NAME}_api_ocl_30"
 "${TS_NAME}_basic_other_ocl_30"
 "${TS_NAME}_c11_atomics"
 "${TS_NAME}_device_execution"
