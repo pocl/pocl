@@ -38,6 +38,7 @@ extern "C" {
 
 int pocl_cache_init_topdir ();
 
+POCL_EXPORT
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
                                    const char* preprocessed_source, size_t source_len,
@@ -45,6 +46,7 @@ pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
+POCL_EXPORT
 int pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
 
 int pocl_cache_create_tempdir(char* path);
@@ -107,6 +109,7 @@ void pocl_cache_kernel_cachedir (char *kernel_cachedir_path,
 
 // these two required by llvm API
 
+POCL_EXPORT
 void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
                                unsigned     device_i);

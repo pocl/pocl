@@ -66,6 +66,7 @@ void bzero_s (void *v, size_t n);
 POCL_EXPORT
 size_t pocl_size_ceil2 (size_t x);
 uint64_t pocl_size_ceil2_64 (uint64_t x);
+POCL_EXPORT
 size_t pocl_align_value (size_t value, size_t alignment);
 
 /* Allocates aligned blocks of memory.
@@ -223,6 +224,7 @@ POCL_EXPORT
 int
 pocl_run_command(char * const *args);
 
+POCL_EXPORT
 int pocl_run_command_capture_output (char *capture_string,
                                      size_t *captured_bytes,
                                      char *const *args);
