@@ -50,10 +50,10 @@ CL_API_SUFFIX__VERSION_2_1
 
   int is_spirv = 0;
 #ifdef ENABLE_SPIRV
-  is_spirv += bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
+  is_spirv += pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
 #endif
 #ifdef ENABLE_VULKAN
-  is_spirv += bitcode_is_spirv_execmodel_shader ((const char *)il, length);
+  is_spirv += pocl_bitcode_is_spirv_execmodel_shader ((const char *)il, length);
 #endif
 
   POCL_GOTO_ERROR_ON (

@@ -235,11 +235,12 @@ float half_to_float (uint16_t value);
 
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
  * OpenCL-style bitcode produced by e.g. llvm-spirv */
-int bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
+int pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size);
 
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Shader
  * these are produced by e.g. GLSL and clspv compilation */
-int bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
+POCL_EXPORT
+int pocl_bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 
 int pocl_device_is_associated_with_kernel (cl_device_id device,
                                            cl_kernel kernel);

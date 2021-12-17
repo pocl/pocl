@@ -1430,7 +1430,7 @@ pocl_vulkan_supports_binary (cl_device_id device, const size_t length,
 * instead of using clspv-reflection
 */
 #ifdef HAVE_CLSPV
-  return bitcode_is_spirv_execmodel_shader (binary, length);
+  return pocl_bitcode_is_spirv_execmodel_shader (binary, length);
 #else
   return 0;
 #endif
@@ -1473,7 +1473,7 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
 #ifdef HAVE_CLSPV
   /* we have program->binaries[] which is SPIR-V */
   assert (program->binaries[device_i]);
-  int is_spirv = bitcode_is_spirv_execmodel_shader(program->binaries[device_i], program->binary_sizes[device_i]);
+  int is_spirv = pocl_bitcode_is_spirv_execmodel_shader(program->binaries[device_i], program->binary_sizes[device_i]);
   assert (is_spirv != 0);
 
   char program_bc_path[POCL_FILENAME_LENGTH];

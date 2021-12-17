@@ -2206,13 +2206,13 @@ bitcode_is_spirv_execmodel (const char *bitcode, size_t size, uint32_t type)
 }
 
 int
-bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
+pocl_bitcode_is_spirv_execmodel_kernel (const char *bitcode, size_t size)
 {
   return bitcode_is_spirv_execmodel (bitcode, size, KernelExecModel);
 }
 
 int
-bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
+pocl_bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size)
 {
   return bitcode_is_spirv_execmodel (bitcode, size, ShaderExecModel);
 }
