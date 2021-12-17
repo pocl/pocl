@@ -226,22 +226,28 @@ add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
 
-add_test_pocl(NAME "kernel/test_printf_vectors"
-              EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
-              COMMAND "kernel" "test_printf_vectors")
+# fails (gets stuck on 100% CPU) with full device-side printf
+if (NOT ENABLE_POCL_FLOAT_CONVERSION)
 
-add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
-              EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
-              COMMAND "kernel" "test_printf_vectors_ulongn")
+  add_test_pocl(NAME "kernel/test_printf_vectors"
+                EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
+                COMMAND "kernel" "test_printf_vectors")
 
-# on most platforms, the printf tests for vector types expose bugs in the
-# pocl printf implementation (passing of variadic arguments containing OpenCL
-# vector types) and maybe also related bugs in llvm (issue #682, #1007)
-if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
-        CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
-  set_tests_properties("kernel/test_printf_vectors"
-    "kernel/test_printf_vectors_ulongn"
-    PROPERTIES WILL_FAIL 1)
+  add_test_pocl(NAME "kernel/test_printf_vectors_ulongn"
+                EXPECTED_OUTPUT "test_printf_vectors_ulongn_expout.txt"
+                COMMAND "kernel" "test_printf_vectors_ulongn")
+
+  list(APPEND EXTRA_TESTS "kernel/test_printf_vectors" "kernel/test_printf_vectors_ulongn")
+
+  # on most platforms, the printf tests for vector types expose bugs in the
+  # pocl printf implementation (passing of variadic arguments containing OpenCL
+  # vector types) and maybe also related bugs in llvm (issue #682, #1007)
+  if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
+          CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
+    set_tests_properties("kernel/test_printf_vectors"
+                        "kernel/test_printf_vectors_ulongn"
+      PROPERTIES WILL_FAIL 1)
+  endif()
 endif()
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"
@@ -258,11 +264,10 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_short" "kernel/test_shuffle_ushort"
   "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
   "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_float" ${EXTRA_TESTS}
+  "kernel/test_shuffle_float"
   "kernel/test_printf"
-  "kernel/test_printf_vectors"
-  "kernel/test_printf_vectors_ulongn"
   "kernel/test_sizeof_uint"
+  ${EXTRA_TESTS}
 
   PROPERTIES
     COST 77
@@ -321,7 +326,6 @@ endif()
 set_property(TEST
   "kernel/test_local_struct_array"
   "kernel/test_printf"
-  "kernel/test_printf_vectors"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"
