@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2021 Michal Babej / Tampere University
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,9 @@
 #
 #=============================================================================
 
+#cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
+
 if(INSTALL_OPENCL_HEADERS)
-  add_subdirectory("CL")
-  add_subdirectory("hpp/CL")
+  install(FILES cl2.hpp
+          DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}" COMPONENT "dev")
 endif()
-
-set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h
-                    _kernel.h _clang_opencl.h
-                    _kernel_c.h _kernel_constants.h _libclang_versions_checks.h
-                    pocl_types.h pocl_device.h pocl.h pocl_spir.h
-                    pocl_image_types.h)
-
-cpack_add_component("dev")
-
-install(FILES ${PRIVATE_HEADERS}
-        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")

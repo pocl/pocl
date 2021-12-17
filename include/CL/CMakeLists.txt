@@ -27,7 +27,6 @@
 
 if(INSTALL_OPENCL_HEADERS)
   install(FILES cl.h
-                cl2.hpp
                 cl_d3d10.h
                 cl_d3d11.h
                 cl_dx9_media_sharing.h
