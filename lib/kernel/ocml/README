@@ -1,6 +1,6 @@
-This is a partial mirror copy of
+This is a partial mirror copy of the ocml subtree from
 
-  https://github.com/RadeonOpenCompute/ROCm-Device-Libs/ocml
+  https://github.com/RadeonOpenCompute/ROCm-Device-Libs
 
 Its purpose is to make it easy for device drivers to utilize
 these builtin implementations if desired.

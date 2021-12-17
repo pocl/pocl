@@ -5,9 +5,15 @@ if [ ! -e .git ]; then
   exit 1
 fi
 
-PATCHY=/tmp/p.patch
+case "$(git describe --always --dirty=-DIRTY)" in
+  *-DIRTY)
+    echo "There are uncommitted changes - aborting."
+    exit 1
+esac
 
-rm -f $PATCHY
+PATCHY=$(mktemp /tmp/pocl.XXXXXXXX.patch)
+trap "rm -f $PATCHY" EXIT
+
 git diff master -U0 --no-color >$PATCHY
 
 SCRIPTPATH=$( realpath "$0"  )
