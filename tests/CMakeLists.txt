@@ -47,7 +47,7 @@ set_tests_properties("pocl_test_dlopen_libpocl" PROPERTIES LABELS "internal;dlop
 set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_libpocl")
 endif()
 
-if(ENABLE_LOADABLE_DRIVERS)
+if(ENABLE_ICD AND ENABLE_LOADABLE_DRIVERS)
 
 if(BUILD_BASIC)
   add_test(NAME pocl_test_dlopen_device_basic COMMAND test_dlopen basic)

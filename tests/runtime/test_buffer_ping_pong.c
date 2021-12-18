@@ -75,6 +75,12 @@ main (int argc, char **argv)
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   printf ("NUM DEVICES: %u \n", num_devices);
+  if (num_devices < 2)
+    {
+      printf ("NOT ENOUGH DEVICES! (need 2)\n");
+      err = 77;
+      goto EARLY_EXIT;
+    }
 
   kernel_buffer = kernelASourceCode;
   program_a = clCreateProgramWithSource (
@@ -103,12 +109,6 @@ main (int argc, char **argv)
   buf = clCreateBuffer (context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
                         sizeof (cl_int), &input, &err);
   CHECK_CL_ERROR2 (err);
-
-  if (num_devices < 2)
-    {
-      printf ("NOT ENOUGH DEVICES! (need 2)\n");
-      return 77;
-    }
 
   err = clSetKernelArg (kernel_a, 0, sizeof (cl_mem), &buf);
   CHECK_CL_ERROR2 (err);
@@ -143,20 +143,20 @@ main (int argc, char **argv)
 
 ERROR:
   CHECK_CL_ERROR (clReleaseMemObject (buf));
-
-  for (i = 0; i < num_devices; ++i)
-    {
-      CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
-    }
-
   CHECK_CL_ERROR (clReleaseKernel (kernel_c));
   CHECK_CL_ERROR (clReleaseProgram (program_c));
   CHECK_CL_ERROR (clReleaseKernel (kernel_b));
   CHECK_CL_ERROR (clReleaseProgram (program_b));
   CHECK_CL_ERROR (clReleaseKernel (kernel_a));
   CHECK_CL_ERROR (clReleaseProgram (program_a));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
+
+EARLY_EXIT:
+  for (i = 0; i < num_devices; ++i)
+    {
+      CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
+    }
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (devices);
   free (queues);
 

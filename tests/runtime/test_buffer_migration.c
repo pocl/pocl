@@ -57,11 +57,11 @@ main (int argc, char **argv)
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   printf ("NUM DEVICES: %u \n", num_devices);
-
   if (num_devices < 2)
     {
       printf ("NOT ENOUGH DEVICES! (need 2)\n");
-      return 77;
+      err = 77;
+      goto EARLY_EXIT;
     }
 
   const char *basename = "migration_test";
@@ -173,14 +173,14 @@ main (int argc, char **argv)
 ERROR:
   CHECK_CL_ERROR (clReleaseMemObject (buf_in));
   CHECK_CL_ERROR (clReleaseMemObject (buf_out));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
 
+EARLY_EXIT:
   for (i = 0; i < num_devices; ++i)
     {
       CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
     }
-
-  CHECK_CL_ERROR (clReleaseKernel (kernel));
-  CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (input);
