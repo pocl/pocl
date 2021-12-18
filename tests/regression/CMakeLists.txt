@@ -373,7 +373,6 @@ set_property(TEST
 # Label tests that work with proxy driver
 set_property(TEST
   "regression/phi_nodes_not_replicated_LOOPS"
-  "regression/issues_with_local_pointers_LOOPS"
   "regression/barrier_between_two_for_loops_LOOPS"
   "regression/simple_for-loop_with_a_barrier_inside_LOOPS"
   "regression/for-loop_with_computation_after_the_brexit_LOOPS"

@@ -202,19 +202,15 @@ set_property(TEST
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST
-  "runtime/clGetDeviceInfo"
   "runtime/clGetEventInfo"
-  "runtime/clCreateProgramWithBinary"
   "runtime/clFinish"
   "runtime/test_read-copy-write-buffer"
   "runtime/test_fill-buffer"
   "runtime/test_buffer-image-copy"
   "runtime/clSetEventCallback"
   "runtime/clGetSupportedImageFormats"
-  "runtime/clCreateKernelsInProgram"
   "runtime/test_event_cycle"
   "runtime/test_event_free"
-  "runtime/test_event_double_wait"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   APPEND PROPERTY LABELS "proxy")

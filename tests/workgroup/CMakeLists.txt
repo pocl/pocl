@@ -163,7 +163,6 @@ set_property(TEST
   "workgroup/unbarriered_for_loops"
   "workgroup/barriered_for_loops"
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
-  "workgroup/different_implicit_barrier_injection_scenarios"
   APPEND PROPERTY LABELS "proxy")
 
 set_property(TEST
