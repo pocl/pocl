@@ -17,10 +17,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
 {
   unsigned idx;
 
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
-
-  POCL_RETURN_ERROR_ON((program->num_devices == 0),
-    CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_RETURN_ERROR_ON((program->build_status == CL_BUILD_NONE),
     CL_INVALID_PROGRAM_EXECUTABLE, "You must call clBuildProgram first!"
@@ -29,25 +26,27 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
-  POCL_RETURN_ERROR_ON((program->llvm_irs == NULL),
-    CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
-    "(this shouldn't happen...)\n");
+  assert (program->num_devices != 0);
 
   POCL_RETURN_ERROR_ON(((kernels != NULL && num_kernels == 0)
                        || (kernels == NULL && num_kernels != 0)),
                        CL_INVALID_VALUE, "kernels & num_kernels must be "
                        "either both set, or both NULL\n");
 
-  POCL_RETURN_ERROR_ON((kernels && num_kernels < program->num_kernels),
-                       CL_INVALID_VALUE,
-                       "kernels is not NULL and num_kernels "
-                       "is less than the number of kernels in program\n");
+  cl_uint real_num_kernels = (program->num_builtin_kernels > 0)
+                                 ? program->num_builtin_kernels
+                                 : program->num_kernels;
+
+  POCL_RETURN_ERROR_ON ((kernels && num_kernels < real_num_kernels),
+                        CL_INVALID_VALUE,
+                        "kernels is not NULL and num_kernels "
+                        "is less than the number of kernels in program\n");
 
   for (idx = 0; idx < num_kernels; idx++)
     kernels[idx] = NULL;
 
-  if (num_kernels > program->num_kernels)
-    num_kernels = program->num_kernels;
+  if (num_kernels > real_num_kernels)
+    num_kernels = real_num_kernels;
 
   cl_int error_ret;
   if (num_kernels > 0 && kernels != NULL)
@@ -79,7 +78,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
     }
 
   if (num_kernels_ret)
-    *num_kernels_ret = program->num_kernels;
+    *num_kernels_ret = real_num_kernels;
 
   return CL_SUCCESS;
 }

@@ -1,6 +1,7 @@
-/* Pocl tool: poclcc
+/* poclcc: A tool for building OpenCL clBuildProgram() compatible binaries of
+   kernels from the command line.
 
-   Copyright (c) 2016 pocl developers
+   Copyright (c) 2016-2021 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +22,19 @@
    THE SOFTWARE.
 */
 
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
 
+#include "config.h"
+#ifdef BUILD_PROXY
+#include "rename_opencl.h"
+#endif
 #include "poclu.h"
+#include <CL/opencl.h>
 
 #define DEVICE_INFO_MAX_LENGTH 2048
 #define NUM_OF_DEVICE_ID 32
@@ -65,7 +71,7 @@ poclcc_option *options_help;
 static int
 print_help()
 {
-  printf("USAGE: poclcc [OPTION]... [FILE]\n");
+  printf("USAGE: poclcc [OPTION]... [kernel program file]\n");
   printf("\n");
   printf("OPTIONS:\n");
   int i;
@@ -98,7 +104,7 @@ process_kernel_file(int arg, char **argv, int argc)
     ERRNO_EXIT(filename);
   if (output_file == NULL)
     {
-      output_file = malloc(strlen(filename)+strlen(ext));
+      output_file = malloc (strlen (filename) + strlen (ext) + 2);
       strcpy(output_file, filename);
       strcat(output_file, ext);
     }
@@ -197,7 +203,7 @@ static poclcc_option options[NUM_OPTIONS] =
    2},
   {process_list_devices, "-l",
    "\t-l\n"
-   "\t\tList the opencl device found (that match the <device_type>\n",
+   "\t\tList the OpenCL device found (that match the <device_type>)\n",
    1},
   {process_device_id, "-i",
    "\t-i <device_id>\n"

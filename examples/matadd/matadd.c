@@ -24,8 +24,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include <poclu.h>
+
+#include "poclu.h"
 
 #define N (16*16)
 #define M (8*16)
@@ -105,8 +105,8 @@ main (int argc, char **argv)
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   return err;
 }

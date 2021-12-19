@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -51,11 +51,7 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
-#ifndef HAVE_LIBDL
-#error Pthread driver requires DL library
-#endif
-
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
@@ -106,7 +102,7 @@ pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name ();
+  char *name = pocl_get_llvm_cpu_name ();
   snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
   POCL_MEM_FREE (name);
 #else
@@ -131,13 +127,12 @@ static cl_device_partition_property pthread_partition_properties[2]
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
-char scheduler_initialized = 0;
+static int scheduler_initialized = 0;
 
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
-  cl_int ret = CL_SUCCESS;
   int err;
 
   d = (struct data *) calloc (1, sizeof (struct data));
@@ -148,20 +143,41 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+  /* 0 is the host memory shared with all drivers that use it */
+  device->global_mem_id = 0;
   device->extensions = HOST_DEVICE_EXTENSIONS;
 
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+  
+  /* full memory consistency model for atomic memory and fence operations
+  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
+  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
+  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+
+  device->svm_allocation_priority = 1;
+  /* OpenCL 2.0 properties */
+  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to
      initialize global_mem_size which it is not yet. Just put 
      a nonzero there for now. */
-  device->global_mem_size = 1;
   err = pocl_topology_detect_device_info (device);
   if (err)
-    ret = CL_INVALID_DEVICE;
+    return CL_INVALID_DEVICE;
 
   /* device->max_compute_units was set up by topology_detect,
    * but if the user requests, lower it */
@@ -192,15 +208,18 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-      pthread_scheduler_init (device);
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
-  /* system mem as global memory */
-  device->global_mem_id = 0;
+
   return ret;
 }
 
@@ -232,13 +251,17 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   d->current_kernel = NULL;
   device->data = d;
 
+  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
-      pthread_scheduler_init (device);
-      scheduler_initialized = 1;
+      ret = pthread_scheduler_init (device);
+      if (ret == CL_SUCCESS)
+        {
+          scheduler_initialized = 1;
+        }
     }
 
-  return CL_SUCCESS;
+  return ret;
 }
 
 void
@@ -280,8 +303,7 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
         }
       else
         {
-          int r = pthread_cond_wait (cq_cond, &cq->pocl_lock);
-          assert (r == 0);
+          PTHREAD_CHECK (pthread_cond_wait (cq_cond, &cq->pocl_lock));
         }
     }
   return;
@@ -290,8 +312,7 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 void
 pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-   int wake_thread = 0;
-  _cl_command_node * volatile node = event->command;
+  _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE)
     {
@@ -307,13 +328,10 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
       if (event->status == CL_QUEUED)
         {
           pocl_update_event_submitted (event);
-          wake_thread = 1;
+          pthread_scheduler_push_command (node);
         }
     }
-  if (wake_thread)
-    {
-      pthread_scheduler_push_command (node);
-    }
+
   return;
 }
 
@@ -325,15 +343,14 @@ pocl_pthread_notify_cmdq_finished (cl_command_queue cq)
    * user threads waiting on the same command queue
    * in pthread_scheduler_wait_cq(). */
   pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
-  int r = pthread_cond_broadcast (cq_cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_broadcast (cq_cond));
 }
 
 void
 pocl_pthread_notify_event_finished (cl_event event)
 {
   struct event_data *e_d = event->data;
-  pthread_cond_broadcast (&e_d->event_cond);
+  PTHREAD_CHECK (pthread_cond_broadcast (&e_d->event_cond));
 }
 
 void
@@ -345,7 +362,7 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
       e_d = malloc(sizeof(struct event_data));
       assert(e_d);
 
-      pthread_cond_init(&e_d->event_cond, NULL);
+      PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *) e_d;
     }
 }
@@ -357,7 +374,7 @@ void pocl_pthread_wait_event (cl_device_id device, cl_event event)
   POCL_LOCK_OBJ (event);
   while (event->status > CL_COMPLETE)
     {
-      pthread_cond_wait(&e_d->event_cond, &event->pocl_lock);
+      PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
     }
   POCL_UNLOCK_OBJ (event);
 }
@@ -370,22 +387,21 @@ void pocl_pthread_free_event_data (cl_event event)
   event->data = NULL;
 }
 
-cl_int
-pocl_pthread_init_queue (cl_command_queue queue)
+int
+pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
 {
   queue->data
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_init (cond, NULL);
-  assert (r == 0);
-  return CL_BUILD_SUCCESS;
+  PTHREAD_CHECK (pthread_cond_init (cond, NULL));
+  return CL_SUCCESS;
 }
 
-void
-pocl_pthread_free_queue (cl_command_queue queue)
+int
+pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
 {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
-  int r = pthread_cond_destroy (cond);
-  assert (r == 0);
+  PTHREAD_CHECK (pthread_cond_destroy (cond));
   POCL_MEM_FREE (queue->data);
+  return CL_SUCCESS;
 }

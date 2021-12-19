@@ -25,6 +25,8 @@
 #include "pocl_cq_profiling.h"
 #include "pocl_util.h"
 
+extern unsigned long queue_c;
+
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
                      cl_device_id device, 
@@ -35,15 +37,22 @@ POname(clCreateCommandQueue)(cl_context context,
   int errcode;
   cl_bool found = CL_FALSE;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
-  POCL_GOTO_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
+
+  POCL_GOTO_ERROR_ON ((device->available != CL_TRUE), CL_INVALID_DEVICE,
+                        "device is not available\n");
 
   POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
 
   /* validate flags */
-  POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
-            "Properties must be <= 3 (there are only 2)\n");
+  cl_command_queue_properties all_properties
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE
+        | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_HIDDEN;
+
+  POCL_GOTO_ERROR_ON ((properties & (~all_properties)), CL_INVALID_VALUE,
+                      "Unknown properties requested\n");
 
   if (POCL_DEBUGGING_ON || pocl_cq_profiling_enabled)
     properties |= CL_QUEUE_PROFILING_ENABLE;
@@ -57,7 +66,8 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE,
                                 "Could not find device in the context\n");
 
-  cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
+  cl_command_queue command_queue
+      = (cl_command_queue)calloc (1, sizeof (struct _cl_command_queue));
   if (command_queue == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -69,18 +79,18 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;
-  command_queue->barrier = NULL;
-  command_queue->events = NULL;
-  command_queue->command_count = 0;
-  command_queue->last_event.event = NULL;
-  command_queue->last_event.next = NULL;
 
-  POname(clRetainContext) (context);
-  POname(clRetainDevice) (device);
+  /* hidden queues don't retain the context. */
+  if ((properties & CL_QUEUE_HIDDEN) == 0)
+    POname (clRetainContext) (context);
+
+  TP_CREATE_QUEUE (context->id, command_queue->id);
 
   errcode = CL_SUCCESS;
   if (device->ops->init_queue)
-    errcode = device->ops->init_queue (command_queue);
+    errcode = device->ops->init_queue (device, command_queue);
+
+  POCL_ATOMIC_INC (queue_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = errcode;

@@ -29,7 +29,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
@@ -44,24 +44,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
-//#define DEBUG_REFERENCE_FIXING
-extern cl_device_id currentPoclDevice;
-
 namespace pocl {
 
 using namespace llvm;
-
-/* These are used to communicate the work-group function specialization
-   properites of the currently compiled kernel command.
-
-   TODO: Something cleaner than global values. */
-
-bool WGDynamicLocalSize = false;
-size_t WGLocalSizeX = 1;
-size_t WGLocalSizeY = 1;
-size_t WGLocalSizeZ = 1;
-size_t WGMaxGridDimWidth = 0;
-bool WGAssumeZeroGlobalOffset = false;
 
 cl::opt<bool> AddWIMetadata(
     "add-wi-metadata", cl::init(false), cl::Hidden,
@@ -81,7 +66,25 @@ WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
 
-  SizeTWidth = currentPoclDevice->address_bits;
+  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+
+  getModuleStringMetadata(*M, "KernelName", KernelName);
+  getModuleIntMetadata(*M, "WGMaxGridDimWidth", WGMaxGridDimWidth);
+  getModuleIntMetadata(*M, "WGLocalSizeX", WGLocalSizeX);
+  getModuleIntMetadata(*M, "WGLocalSizeY", WGLocalSizeY);
+  getModuleIntMetadata(*M, "WGLocalSizeZ", WGLocalSizeZ);
+  getModuleBoolMetadata(*M, "WGDynamicLocalSize", WGDynamicLocalSize);
+  getModuleBoolMetadata(*M, "WGAssumeZeroGlobalOffset",
+                        WGAssumeZeroGlobalOffset);
+
+  if (WGLocalSizeX == 0)
+    WGLocalSizeX = 1;
+  if (WGLocalSizeY == 0)
+    WGLocalSizeY = 1;
+  if (WGLocalSizeZ == 0)
+    WGLocalSizeZ = 1;
+
+  SizeTWidth = address_bits;
   SizeT = IntegerType::get(M->getContext(), SizeTWidth);
 
   assert ((SizeTWidth == 32 || SizeTWidth == 64) &&

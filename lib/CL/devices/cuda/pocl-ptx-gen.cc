@@ -325,7 +325,12 @@ void fixPrintF(llvm::Module *Module) {
     if (!Call)
       continue;
 
+#ifndef LLVM_OLDER_THAN_8_0
+    unsigned NumArgs = Call->arg_size() - 1;
+#else
     unsigned NumArgs = Call->getNumArgOperands() - 1;
+#endif
+
     llvm::Value *Format = Call->getArgOperand(0);
 
     // Allocate array for arguments.
@@ -491,7 +496,7 @@ void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
 
   // Clone function.
   llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
+  CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
 
   Function->eraseFromParent();
 
@@ -680,7 +685,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
       llvm::GetElementPtrInst *GEP =
-          llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
+          llvm::GetElementPtrInst::Create(Base->getType()->getPointerElementType(), Base, {Zero, Offset});
 
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
@@ -724,7 +729,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
   // Clone function.
   llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
+  CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
 
   // Insert offset instructions into new function.
   for (auto Pair : ToInsert) {

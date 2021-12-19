@@ -27,10 +27,9 @@
 #define _ISOC99_SOURCE
 
 #include <math.h>
-#include "poclu.h"
-#include <CL/opencl.h>
 #include <stdint.h>
-#include "config.h"
+
+#include "pocl_opencl.h"
 
 typedef union 
 {
@@ -51,7 +50,7 @@ poclu_float_to_cl_half_fast(float value)
 }
 
 // The idea behind these float to half functions is from:
-// http://gamedev.stackexchange.com/a/17410
+// https://gamedev.stackexchange.com/a/17410
 cl_half 
 poclu_float_to_cl_half(float value) 
 {

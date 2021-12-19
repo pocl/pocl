@@ -380,10 +380,13 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
     current_arg = &kernel_meta->arg_info[j];
     kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
     current_arg->type_name = (char *)malloc(val.size() + 1);
-    if (type_size_map.find(val) != type_size_map.end())
+    if (current_arg->address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) {
+      current_arg->type_size = sizeof(void *);
+    } else if (type_size_map.find(val) != type_size_map.end()) {
       current_arg->type_size = type_size_map[val];
-    else
+    } else {
       current_arg->type_size = 0;
+    }
     std::strcpy(current_arg->type_name, val.c_str());
   }
 
@@ -443,8 +446,9 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
 
 int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
-  PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   unsigned i,j;
   llvm::Module *input = nullptr;
@@ -452,8 +456,8 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   cl_device_id Device = program->devices[device_i];
   assert(Device->llvm_target_triplet && "Device has no target triple set");
 
-  if (program->llvm_irs != nullptr && program->llvm_irs[device_i] != nullptr)
-    input = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
+  if (program->data != nullptr && program->data[device_i] != nullptr)
+    input = static_cast<llvm::Module *>(program->data[device_i]);
   else {
     return CL_INVALID_PROGRAM_EXECUTABLE;
   }
@@ -614,13 +618,15 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
 unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
 
-  PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   /* any device's module will do for metadata, just use first non-nullptr */
-  llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
+  llvm::Module *mod = (llvm::Module *)program->data[device_i];
   if (mod == nullptr)
     return 0;
+
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {
     return md->getNumOperands();

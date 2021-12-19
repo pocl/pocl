@@ -4,6 +4,9 @@
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
+#cmakedefine BUILD_VULKAN
+
+#cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
 
@@ -12,10 +15,16 @@
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
+#cmakedefine HAVE_CLSPV
+#define CLSPV "@CLSPV@"
+#define CLSPV_REFLECTION "@CLSPV_REFLECTION@"
+
 #cmakedefine ENABLE_ASAN
 #cmakedefine ENABLE_LSAN
 #cmakedefine ENABLE_TSAN
 #cmakedefine ENABLE_UBSAN
+
+#cmakedefine ENABLE_EXTRA_VALIDITY_CHECKS
 
 #cmakedefine ENABLE_CONFORMANCE
 
@@ -29,11 +38,20 @@
 
 #cmakedefine ENABLE_RELOCATION
 
+#cmakedefine ENABLE_EGL_INTEROP
+#cmakedefine ENABLE_OPENGL_INTEROP
+
+#ifdef ENABLE_OPENGL_INTEROP
+#cmakedefine ENABLE_CL_GET_GL_CONTEXT
+#endif
+
 #cmakedefine ENABLE_SLEEF
 
 #cmakedefine ENABLE_SPIR
 
 #cmakedefine ENABLE_SPIRV
+
+#cmakedefine HAVE_DLFCN_H
 
 #cmakedefine HAVE_FORK
 
@@ -57,8 +75,6 @@
 
 #cmakedefine HAVE_LTTNG_UST
 
-#cmakedefine HAVE_LIBDL
-
 #cmakedefine HAVE_OCL_ICD
 
 #cmakedefine HAVE_POSIX_MEMALIGN
@@ -67,7 +83,11 @@
 
 #cmakedefine HAVE_UTIME
 
-#cmakedefine OCS_AVAILABLE
+#cmakedefine HAVE_VALGRIND
+
+#cmakedefine ENABLE_LLVM
+
+#cmakedefine ENABLE_LOADABLE_DRIVERS
 
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
@@ -94,9 +114,9 @@
 
 #cmakedefine HOST_FLOAT_SOFT_ABI
 
-#define HOST_DEVICE_BUILD_HASH "@HOST_DEVICE_BUILD_HASH@"
-
 #endif
+
+#define HOST_DEVICE_BUILD_HASH "@HOST_DEVICE_BUILD_HASH@"
 
 #define DEFAULT_DEVICE_EXTENSIONS "@DEFAULT_DEVICE_EXTENSIONS@"
 
@@ -115,9 +135,6 @@
 #endif
 
 
-
-
-
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
 #define LINK_COMMAND "@LINK_COMMAND@"
@@ -127,7 +144,7 @@
 
 
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
@@ -181,7 +198,8 @@
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
 #define OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"
 
-#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+#define POCL_VERSION_BASE "@POCL_VERSION_BASE@"
+#define POCL_VERSION_FULL "@POCL_VERSION_FULL@"
 
 #define POCL_KERNEL_CACHE_DEFAULT @POCL_KERNEL_CACHE_DEFAULT@
 

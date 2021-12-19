@@ -2,6 +2,8 @@
   Issue #701
 */
 
+#include "pocl_opencl.h"
+
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
@@ -57,8 +59,8 @@ int main(int argc, char *argv[]) {
   cl::Program program(SOURCE);
   program.build("-cl-std=CL1.2");
 
-  float in1[ARRAY_SIZE];
-  float out[ARRAY_SIZE];
+  float in1[ARRAY_SIZE] = { 0.0f };
+  float out[ARRAY_SIZE] = { 0.0f };
 
   cl::Buffer inbuf((cl_mem_flags)(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR),
                    (ARRAY_SIZE * sizeof(float)), in1);

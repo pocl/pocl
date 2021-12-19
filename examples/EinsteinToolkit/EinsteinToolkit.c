@@ -47,11 +47,7 @@ int const niters = 10;
 #include <stdlib.h>
 #include <sys/time.h>
 
-#ifdef __APPLE__
-#  include <OpenCL/opencl.h>
-#else
-#  include <CL/opencl.h>
-#endif
+#include "pocl_opencl.h"
 
 // Stringify
 #define XSTR(x) #x
@@ -633,8 +629,8 @@ void cleanup() {
   clReleaseProgram(program2);
 
   clReleaseCommandQueue(cmd_queue);
-  clUnloadPlatformCompiler(platform_id);
   clReleaseContext(context);
+  clUnloadPlatformCompiler (platform_id);
 }
 
 void init(cGH              * const cctkGH,

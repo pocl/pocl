@@ -3,7 +3,7 @@
 # ----------
 #
 # Try to find Portable Hardware Locality (hwloc) libraries.
-# http://www.open-mpi.org/software/hwloc
+# https://www.open-mpi.org/software/hwloc
 #
 # You may declare HWLOC_ROOT environment variable to tell where
 # your hwloc library is installed. 
@@ -40,8 +40,8 @@ if(WIN32)
   )
 
   find_library(Hwloc_LIBRARY
-    NAMES 
-      libhwloc.lib
+    NAMES
+      hwloc
     PATHS
       ENV "PROGRAMFILES(X86)"
       ENV HWLOC_ROOT
@@ -119,7 +119,7 @@ if(WIN32)
   find_package_handle_standard_args(
     Hwloc
     FOUND_VAR Hwloc_FOUND
-    REQUIRED_VARS Hwloc_LIBRARY Hwloc_INCLUDE_DIR Hwloc_VERSION_PARSED Hwloc_VERSION_MAJOR Hwloc_VERSION_MINOR
+    REQUIRED_VARS Hwloc_LIBRARIES Hwloc_INCLUDE_DIRS
     VERSION_VAR Hwloc_VERSION)
 
   mark_as_advanced(
@@ -134,34 +134,10 @@ if(WIN32)
 
 else()
 
-  if(CMAKE_CROSSCOMPILING)
-
-  find_path(Hwloc_INCLUDE_DIRS
-    NAMES
-      hwloc.h
-    PATHS
-      ENV HWLOC_ROOT
-  )
-
-  find_library(Hwloc_LIBRARIES
-    NAMES
-      hwloc
-    PATHS
-      ENV HWLOC_ROOT
-  )
-
-  if(Hwloc_INCLUDE_DIRS AND Hwloc_LIBRARIES)
-    message(WARNING "HWLOC library found using find_library() - cannot determine version. Assuming 1.7.0")
-    set(Hwloc_FOUND 1)
-    set(Hwloc_VERSION "1.7.0")
-  endif()
-
-  else() # Find with pkgconfig for non-crosscompile builds
-
   find_package(PkgConfig)
 
   if(HWLOC_ROOT)
-    set(ENV{PKG_CONFIG_PATH} "${HWLOC_ROOT}/lib/pkgconfig")
+    set(ENV{PKG_CONFIG_PATH} "${HWLOC_ROOT}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
   else()
     foreach(PREFIX ${CMAKE_PREFIX_PATH})
       set(PKG_CONFIG_PATH "${PKG_CONFIG_PATH}:${PREFIX}/lib/pkgconfig")
@@ -208,7 +184,5 @@ else()
     endif()
   endif()
 
-  endif() # cross-compile else
 
 endif()
-

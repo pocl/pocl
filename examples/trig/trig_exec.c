@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include "poclu.h"
+
+#include "pocl_opencl.h"
 
 void 
 delete_memobjs(cl_mem *memobjs, int n) 

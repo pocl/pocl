@@ -43,9 +43,11 @@ CL_API_SUFFIX__VERSION_1_0
   cl_int errcode;
   _cl_command_node *cmd = NULL;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (image)),
+                          CL_INVALID_MEM_OBJECT);
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
 
@@ -65,6 +67,8 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
                         "image argument is not an image\n");
+  POCL_RETURN_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                        "image is a GL texture\n");
   POCL_RETURN_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
@@ -92,10 +96,12 @@ CL_API_SUFFIX__VERSION_1_0
   errcode = pocl_check_image_origin_region (image, origin, region);
   if (errcode != CL_SUCCESS)
     return errcode;
-  
+
+  char rdonly = 1;
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE,
-                                event, num_events_in_wait_list, 
-                                event_wait_list, 1, &image);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &image, &rdonly);
   if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(cmd);
@@ -103,9 +109,10 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   cl_device_id dev = command_queue->device;
-  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->dev_id];
+  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->global_mem_id];
   cmd->command.read_image.dst_host_ptr = ptr;
   cmd->command.read_image.dst_mem_id = NULL;
+  cmd->command.read_image.src = image;
 
   cmd->command.read_image.origin[0] = origin[0];
   cmd->command.read_image.origin[1] = origin[1];
@@ -118,8 +125,6 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.read_image.dst_slice_pitch = slice_pitch;
   cmd->command.read_image.dst_offset = 0;
 
-  POname(clRetainMemObject) (image);  
-  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)

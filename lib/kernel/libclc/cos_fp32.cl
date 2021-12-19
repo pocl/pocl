@@ -41,7 +41,7 @@ _CL_OVERLOADABLE vtype cos(vtype x)
     c = (ax >= (itype)PINFBITPATT_SP32) ? as_vtype((utype)QNANBITPATT_SP32) : c;
 
     //Subnormals
-    c = (x == 0.0f) ? (vtype)1.0f : c;
+    c = (x == (vtype)0.0f) ? (vtype)1.0f : c;
 
     return c;
 }

@@ -23,6 +23,14 @@
 #
 #=============================================================================
 
+# do not link test_dlopen with -lOpenCL
+if (UNIX AND HAVE_DLFCN_H)
+  add_executable("test_dlopen" "test_dlopen.c")
+  if(SANITIZER_OPTIONS)
+    target_link_libraries("test_dlopen" ${SANITIZER_LIBS})
+  endif()
+  target_link_libraries("test_dlopen" ${DL_LIB})
+endif ()
 
 set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
@@ -30,9 +38,10 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
   test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
-  test_event_double_wait
+  test_event_double_wait test_buffer_migration test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
-  test_clSetMemObjectDestructorCallback)
+  test_clSetMemObjectDestructorCallback
+  test_cl_pocl_content_size test_deviceside_enqueue)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -97,7 +106,15 @@ add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enque
 
 add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event")
 
+add_test_pocl(NAME "runtime/test_buffer_migration" COMMAND  "test_buffer_migration")
+
+add_test_pocl(NAME "runtime/test_buffer_ping_pong" COMMAND  "test_buffer_ping_pong")
+
 add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clSetMemObjectDestructorCallback")
+
+add_test_pocl(NAME "runtime/test_cl_pocl_content_size" COMMAND "test_cl_pocl_content_size")
+
+add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_enqueue")
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
@@ -110,6 +127,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
+  "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -123,7 +141,7 @@ if(NOT ENABLE_ANYSAN)
 
   set_tests_properties("runtime/clFinish"
   PROPERTIES
-    PASS_REGULAR_EXPRESSION "ABABC")
+    PASS_REGULAR_EXPRESSION "ABABC;A\nB\nA\nB\nC\n")
 
   set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
@@ -148,6 +166,7 @@ set_property(TEST
   "runtime/test_event_double_wait"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  "runtime/test_deviceside_enqueue"
   APPEND PROPERTY LABELS "cuda")
 
 set_property(TEST
@@ -168,4 +187,32 @@ set_property(TEST
   "runtime/test_enqueue_kernel_from_binary"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  "runtime/test_deviceside_enqueue"
   APPEND PROPERTY LABELS "hsa-native")
+
+set_property(TEST
+  "runtime/clGetDeviceInfo"
+  "runtime/clGetEventInfo"
+  "runtime/clCreateProgramWithBinary"
+  "runtime/clFinish"
+  "runtime/test_read-copy-write-buffer"
+  "runtime/test_fill-buffer"
+  "runtime/test_buffer-image-copy"
+  "runtime/clSetEventCallback"
+  "runtime/clGetSupportedImageFormats"
+  "runtime/clCreateKernelsInProgram"
+  "runtime/test_event_cycle"
+  "runtime/test_event_free"
+  "runtime/test_event_double_wait"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "proxy")
+
+# Label tests that work with Vulkan
+set_property(TEST
+  "runtime/clGetEventInfo"
+  "runtime/test_event_cycle"
+  "runtime/test_event_free"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "vulkan")

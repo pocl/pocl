@@ -24,10 +24,13 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+extern unsigned long queue_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   int new_refcount;
   cl_context context = command_queue->context;
@@ -39,15 +42,26 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (command_queue);
+
+      TP_FREE_QUEUE (context->id, command_queue->id);
+
+      POCL_ATOMIC_DEC (queue_c);
+
+      /* hidden queues don't retain the context. */
+      if ((command_queue->properties & CL_QUEUE_HIDDEN) == 0)
+        POname (clReleaseContext) (context);
+
       assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %p\n", command_queue);
       if (command_queue->device->ops->free_queue)
-        command_queue->device->ops->free_queue (command_queue);
+        command_queue->device->ops->free_queue (device, command_queue);
       POCL_DESTROY_OBJECT (command_queue);
       POCL_MEM_FREE(command_queue);
-
-      POname(clReleaseContext) (context);
-      POname(clReleaseDevice) (device);
+    }
+  else
+    {
+      VG_REFC_NONZERO (command_queue);
     }
   return CL_SUCCESS;
 }

@@ -1,8 +1,8 @@
-#include "poclu.h"
-#include <CL/opencl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "pocl_opencl.h"
 
 #ifdef __cplusplus
 extern "C" {

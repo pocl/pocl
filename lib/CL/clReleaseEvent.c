@@ -24,18 +24,21 @@
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 
+extern unsigned long uevent_c;
+extern unsigned long event_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
 
-  POCL_RETURN_ERROR_COND((event->context == NULL), CL_INVALID_EVENT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
 
   POCL_RELEASE_OBJECT (event, new_refcount);
   
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (event);
       event_callback_item *cb_ptr = NULL;
       event_callback_item *next = NULL;
       for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = next)
@@ -46,22 +49,31 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 
       if (event->command_type == CL_COMMAND_USER)
         {
-          pocl_user_event_data *p = event->data;
-          pthread_cond_destroy (&p->wakeup_cond);
+          POCL_ATOMIC_DEC (uevent_c);
+          pocl_user_event_data *p = (pocl_user_event_data *)event->data;
+          POCL_DESTROY_COND (p->wakeup_cond);
           POCL_MEM_FREE (p);
         }
+      else
+        POCL_ATOMIC_DEC (event_c);
 
-      POCL_MSG_PRINT_REFCOUNTS ("Free event %d | %p\n", event->id, event);
+      POCL_MSG_PRINT_REFCOUNTS ("Free event %" PRIu64 " | %p\n",
+                                event->id, event);
       if (event->command_type != CL_COMMAND_USER &&
           event->queue->device->ops->free_event_data)
         event->queue->device->ops->free_event_data(event);
 
-      POname(clReleaseContext) (event->context);
       if (event->queue)
         POname(clReleaseCommandQueue) (event->queue);
+      else
+        POname(clReleaseContext) (event->context);
 
       POCL_DESTROY_OBJECT (event);
       pocl_mem_manager_free_event (event);
+    }
+  else
+    {
+      VG_REFC_NONZERO (event);
     }
 
   return CL_SUCCESS;

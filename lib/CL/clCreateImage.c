@@ -20,19 +20,23 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
-extern CL_API_ENTRY cl_mem CL_API_CALL
-POname(clCreateImage) (cl_context              context,
-                       cl_mem_flags            flags,
-                       const cl_image_format * image_format,
-                       const cl_image_desc *   image_desc,
-                       void *                  host_ptr,
-                       cl_int *                errcode_ret)
-CL_API_SUFFIX__VERSION_1_2
+extern unsigned long image_c;
+
+cl_mem
+pocl_create_image_internal (cl_context context, cl_mem_flags flags,
+                            const cl_image_format *image_format,
+                            const cl_image_desc *image_desc, void *host_ptr,
+                            cl_int *errcode_ret,
+                            cl_GLenum gl_target, cl_GLint gl_miplevel,
+                            cl_GLuint gl_texture,
+                            CLeglDisplayKHR egl_display,
+                            CLeglImageKHR egl_image)
 {
     cl_mem mem = NULL;
     unsigned i, num_devices_supporting_image = 0;
@@ -47,7 +51,7 @@ CL_API_SUFFIX__VERSION_1_2
     cl_int image_type_idx;
     cl_mem_object_type image_type;
 
-    POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+    POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
     POCL_GOTO_ERROR_COND((image_format == NULL), CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
 
@@ -67,7 +71,18 @@ CL_API_SUFFIX__VERSION_1_2
      * the minimum maximum image dimensions described in the table of allowed
      * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
      */
-    device_image_support = calloc (context->num_devices, sizeof (int));
+    device_image_support = (int *)calloc (context->num_devices, sizeof (int));
+#ifdef ENABLE_OPENGL_INTEROP
+    unsigned is_gl_texture
+        = (unsigned)((intptr_t)gl_target | (intptr_t)gl_miplevel
+                     | (intptr_t)gl_texture);
+#elif defined(ENABLE_EGL_INTEROP)
+    unsigned is_gl_texture
+        = (unsigned)((intptr_t)egl_display | (intptr_t)egl_image);
+#else
+    unsigned is_gl_texture = 0;
+#endif
+
     for (i = 0; i < context->num_devices; i++)
       {
         cl_device_id dev = context->devices[i];
@@ -75,9 +90,9 @@ CL_API_SUFFIX__VERSION_1_2
           continue;
         else
           {
-            if (pocl_check_device_supports_image (dev, image_format,
-                                                  image_desc, image_type_idx,
-                                                  &device_image_support[i])
+            if (pocl_check_device_supports_image (
+                    dev, image_format, image_desc, image_type_idx,
+                    is_gl_texture, &device_image_support[i])
                 == CL_SUCCESS)
               {
                 /* can't break here as we need device_image_support[]
@@ -178,6 +193,9 @@ CL_API_SUFFIX__VERSION_1_2
         POCL_INIT_OBJECT (mem);
 
         cl_mem b = image_desc->buffer;
+        mem->is_image = CL_TRUE;
+        mem->type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+        mem->device_supports_this_image = device_image_support;
         mem->buffer = b;
 
         mem->size = size;
@@ -197,32 +215,14 @@ CL_API_SUFFIX__VERSION_1_2
       }
     else
       {
-        mem = POname (clCreateBuffer) (context, flags, size, host_ptr,
-                                       &errcode);
-        POCL_GOTO_ERROR_ON ((mem == NULL), CL_OUT_OF_HOST_MEMORY,
-                            "clCreateBuffer (for backing the image) failed\n");
-
-        for (i = 0; i < context->num_devices; i++)
-          {
-            cl_device_id dev = context->devices[i];
-            if (!dev->image_support)
-              {
-                continue;
-              } // image_data[i] = NULL
-            if (dev->ops->create_image)
-              mem->device_ptrs[dev->dev_id].image_data
-                  = dev->ops->create_image (dev, image_format, image_desc, mem,
-                                            &errcode);
-            if (errcode)
-              goto ERROR;
-          }
-
-        mem->buffer = NULL;
+        mem = pocl_create_memobject (context, flags, size,
+                                     image_desc->image_type,
+                                     device_image_support,
+                                     host_ptr, &errcode);
+        if (mem == NULL)
+          goto ERROR;
       }
 
-    mem->type = image_desc->image_type;
-    mem->device_supports_this_image = device_image_support;
-    mem->is_image = CL_TRUE;
     mem->image_width = image_desc->image_width;
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
@@ -248,30 +248,47 @@ CL_API_SUFFIX__VERSION_1_2
     mem->image_channels = channels;
     mem->image_elem_size = elem_size;
 
-#if 0
-    printf("flags = %X\n",mem->flags); 
-    printf("mem_image_width %d\n", mem->image_width);
-    printf("mem_image_height %d\n", mem->image_height);
-    printf("mem_image_depth %d\n", mem->image_depth);
-    printf("mem_image_array_size %d\n", mem->image_array_size);
-    printf("mem_image_row_pitch %d\n", mem->image_row_pitch);
-    printf("mem_image_slice_pitch %d\n", mem->image_slice_pitch);
-    printf("mem_host_ptr %u\n", mem->mem_host_ptr);
-    printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
-    printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
-#endif
+    TP_CREATE_IMAGE (context->id, mem->id);
 
-    if (errcode_ret != NULL)
-      *errcode_ret = CL_SUCCESS;
+    mem->is_gl_texture = is_gl_texture;
+    if (is_gl_texture)
+      {
+        mem->is_gl_acquired = 0;
+        mem->target = gl_target;
+        mem->miplevel = gl_miplevel;
+        mem->texture = gl_texture;
+        mem->egl_display = egl_display;
+        mem->egl_image = egl_image;
+      }
 
-    return mem;
-    
+    POCL_RETAIN_OBJECT (context);
+
+    POCL_MSG_PRINT_MEMORY (
+        "Created Image %p, HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
+        mem, mem->mem_host_ptr, size, mem->image_row_pitch,
+        mem->image_slice_pitch, (unsigned)flags);
+
+    POCL_ATOMIC_INC (image_c);
+
  ERROR:
-   POCL_MEM_FREE (device_image_support);
+   if (errcode != CL_SUCCESS)
+     POCL_MEM_FREE (device_image_support);
+
    if (errcode_ret)
      {
        *errcode_ret = errcode;
      }
-   return NULL;
+
+   return mem;
+}
+
+extern CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateImage) (
+    cl_context context, cl_mem_flags flags,
+    const cl_image_format *image_format, const cl_image_desc *image_desc,
+    void *host_ptr, cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_2
+{
+  return pocl_create_image_internal (context, flags, image_format, image_desc,
+                                     host_ptr, errcode_ret,
+                                     0, 0, 0, NULL, NULL);
 }
 POsym(clCreateImage)

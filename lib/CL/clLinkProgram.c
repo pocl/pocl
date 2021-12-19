@@ -41,7 +41,8 @@ CL_API_SUFFIX__VERSION_1_2
   cl_program program = NULL;
   cl_device_id *unique_devlist = NULL;
 
-  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (!IS_CL_OBJECT_VALID (context)),
+                        CL_INVALID_CONTEXT);
 
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_input_programs == 0),
                         CL_INVALID_VALUE);
@@ -86,7 +87,7 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     goto PFN_NOTIFY;
 
-  assert (num_devices == program->num_devices);
+  assert (num_devices == program->associated_num_devices);
 
   /* link the program */
   errcode = compile_and_link_program (0, 1, program,

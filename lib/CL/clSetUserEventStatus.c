@@ -8,7 +8,7 @@ CL_API_SUFFIX__VERSION_1_1
 {
   int errcode = CL_SUCCESS;
   /* Must be a valid user event */
-  POCL_RETURN_ERROR_COND ((event == NULL), CL_INVALID_EVENT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
   /* Can only be set to CL_COMPLETE (0) or negative values */
   POCL_RETURN_ERROR_COND ((execution_status > CL_COMPLETE), CL_INVALID_VALUE);
 
@@ -24,16 +24,16 @@ CL_API_SUFFIX__VERSION_1_1
 
   if (execution_status <= CL_COMPLETE)
     {
-      POCL_MSG_PRINT_EVENTS ("User event %u completed with status: %i\n",
+      POCL_MSG_PRINT_EVENTS ("User event %" PRIu64 " completed with status: %i\n",
                              event->id, execution_status);
       pocl_broadcast (event);
     }
 
   POCL_LOCK_OBJ (event);
   pocl_event_updated (event, execution_status);
-  pocl_user_event_data *p = event->data;
+  pocl_user_event_data *p = (pocl_user_event_data *)event->data;
   if (execution_status <= CL_COMPLETE)
-    pthread_cond_broadcast (&p->wakeup_cond);
+    POCL_BROADCAST_COND (p->wakeup_cond);
 
 ERROR:
   POCL_UNLOCK_OBJ (event);

@@ -1,7 +1,7 @@
 /* basic.c - a minimalistic single core pocl device driver layer implementation
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2020 Pekka Jääskeläinen
+                 2011-2021 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -35,35 +35,34 @@
 
 #include <assert.h>
 #include <limits.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <utlist.h>
 
 #include "pocl_cache.h"
-#include "pocl_timing.h"
 #include "pocl_file_util.h"
+#include "pocl_mem_management.h"
+#include "pocl_timing.h"
 #include "pocl_workgroup_func.h"
 
-#ifdef OCS_AVAILABLE
+#include "common_driver.h"
+
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
-#ifndef HAVE_LIBDL
-#error Basic driver requires DL library
-#endif
-
 struct data {
+  /* List of commands ready to be executed */
+  _cl_command_node *ready_list;
+  /* List of commands not yet ready to be executed */
+  _cl_command_node *command_list;
+  /* Lock for command list related operations */
+  pocl_lock_t cq_lock;
+
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
 
-  /* List of commands ready to be executed */
-  _cl_command_node * volatile ready_list;
-  /* List of commands not yet ready to be executed */
-  _cl_command_node * volatile command_list;
-  /* Lock for command list related operations */
-  pocl_lock_t cq_lock;
   /* printf buffer */
   void *printf_buffer;
 };
@@ -77,20 +76,38 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->uninit = pocl_basic_uninit;
   ops->reinit = pocl_basic_reinit;
   ops->init = pocl_basic_init;
-  ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
-  ops->free = pocl_basic_free;
-  ops->read = pocl_basic_read;
-  ops->read_rect = pocl_basic_read_rect;
-  ops->write = pocl_basic_write;
-  ops->write_rect = pocl_basic_write_rect;
-  ops->copy = pocl_basic_copy;
-  ops->copy_rect = pocl_basic_copy_rect;
-  ops->memfill = pocl_basic_memfill;
-  ops->map_mem = pocl_basic_map_mem;
-  ops->compile_kernel = pocl_basic_compile_kernel;
-  ops->unmap_mem = pocl_basic_unmap_mem;
+
+  ops->alloc_mem_obj = pocl_driver_alloc_mem_obj;
+  ops->free = pocl_driver_free;
+
+  ops->read = pocl_driver_read;
+  ops->read_rect = pocl_driver_read_rect;
+  ops->write = pocl_driver_write;
+  ops->write_rect = pocl_driver_write_rect;
+  ops->copy = pocl_driver_copy;
+  ops->copy_with_size = pocl_driver_copy_with_size;
+  ops->copy_rect = pocl_driver_copy_rect;
+  ops->memfill = pocl_driver_memfill;
+  ops->map_mem = pocl_driver_map_mem;
+  ops->unmap_mem = pocl_driver_unmap_mem;
+  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
+  ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
+
+  ops->can_migrate_d2d = NULL;
+  ops->migrate_d2d = NULL;
+
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
+
+  ops->build_source = pocl_driver_build_source;
+  ops->link_program = pocl_driver_link_program;
+  ops->build_binary = pocl_driver_build_binary;
+  ops->free_program = pocl_driver_free_program;
+  ops->setup_metadata = pocl_driver_setup_metadata;
+  ops->supports_binary = pocl_driver_supports_binary;
+  ops->build_poclbinary = pocl_driver_build_poclbinary;
+  ops->compile_kernel = pocl_basic_compile_kernel;
+
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
   ops->broadcast = pocl_broadcast;
@@ -108,10 +125,10 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
   ops->svm_copy = pocl_basic_svm_copy;
-  ops->svm_fill = pocl_basic_svm_fill;
+  ops->svm_fill = pocl_driver_svm_fill;
 
-  ops->create_image = NULL;
-  ops->free_image = NULL;
+  ops->create_kernel = NULL;
+  ops->free_kernel = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
   ops->copy_image_rect = pocl_basic_copy_image_rect;
@@ -127,7 +144,7 @@ pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name ();
+  char *name = pocl_get_llvm_cpu_name ();
   snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
   POCL_MEM_FREE (name);
 #else
@@ -162,7 +179,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
     }
-  device->global_mem_id = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
@@ -172,7 +188,29 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+  /* 0 is the host memory shared with all drivers that use it */
+  device->global_mem_id = 0;
   device->extensions = HOST_DEVICE_EXTENSIONS;
+
+  /* full memory consistency model for atomic memory and fence operations
+  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
+  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
+  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                      | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                      | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
+                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                      | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+
+  device->svm_allocation_priority = 1;
+  /* OpenCL 2.0 properties */
+  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
@@ -204,114 +242,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->max_compute_units = 1;
 
   return ret;
-}
-
-cl_int
-pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
-{
-  void *b = NULL;
-  cl_mem_flags flags = mem_obj->flags;
-  unsigned i;
-  POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
-  /* check if some driver has already allocated memory for this mem_obj 
-     in our global address space, and use that*/
-  for (i = 0; i < mem_obj->context->num_devices; ++i)
-    {
-      if (!mem_obj->device_ptrs[i].available)
-        continue;
-
-      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
-          && mem_obj->device_ptrs[i].mem_ptr != NULL)
-        {
-          mem_obj->device_ptrs[device->dev_id].mem_ptr =
-            mem_obj->device_ptrs[i].mem_ptr;
-          POCL_MSG_PRINT_MEMORY (
-              "mem %p dev %d, using already allocated mem\n", mem_obj,
-              device->dev_id);
-          return CL_SUCCESS;
-        }
-    }
-
-  /* memory for this global memory is not yet allocated -> do it */
-  if (flags & CL_MEM_USE_HOST_PTR)
-    {
-      // mem_host_ptr must be non-NULL
-      assert(host_ptr != NULL);
-      b = host_ptr;
-    }
-  else
-    {
-      POCL_MSG_PRINT_MEMORY ("!USE_HOST_PTR\n");
-      b = pocl_aligned_malloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
-                                          mem_obj->size);
-      if (b==NULL)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-
-      mem_obj->shared_mem_allocation_owner = device;
-    }
-
-  /* use this dev mem allocation as host ptr */
-  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
-    mem_obj->mem_host_ptr = b;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      POCL_MSG_PRINT_MEMORY ("COPY_HOST_PTR\n");
-      // mem_host_ptr must be non-NULL
-      assert(host_ptr != NULL);
-      memcpy (b, host_ptr, mem_obj->size);
-    }
-
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
-
-  return CL_SUCCESS;
-}
-
-
-void
-pocl_basic_free (cl_device_id device, cl_mem memobj)
-{
-  cl_mem_flags flags = memobj->flags;
-
-  /* allocation owner executes freeing */
-  if (flags & CL_MEM_USE_HOST_PTR ||
-      memobj->shared_mem_allocation_owner != device)
-    return;
-
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  size_t size = memobj->size;
-
-  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
-    memobj->mem_host_ptr = NULL;
-  pocl_free_global_mem(device, ptr, size);
-}
-
-void
-pocl_basic_read (void *data,
-                 void *__restrict__ host_ptr,
-                 pocl_mem_identifier * src_mem_id,
-                 cl_mem src_buf,
-                 size_t offset, size_t size)
-{
-  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (host_ptr, (char *)device_ptr + offset, size);
-}
-
-void
-pocl_basic_write (void *data,
-                  const void *__restrict__  host_ptr,
-                  pocl_mem_identifier * dst_mem_id,
-                  cl_mem dst_buf,
-                  size_t offset, size_t size)
-{
-  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy ((char *)device_ptr + offset, host_ptr, size);
 }
 
 void
@@ -369,15 +299,23 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
             }
           else
             {
-              cl_mem m = (*(cl_mem *)(al->value));
-              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              void *ptr = NULL;
+              if (al->is_svm)
+                {
+                  ptr = *(void **)al->value;
+                }
+              else
+                {
+                  cl_mem m = (*(cl_mem *)(al->value));
+                  ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+                }
               *(void **)arguments[i] = (char *)ptr + al->offset;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
-          fill_dev_image_t (&di, al, cmd->device);
+          pocl_fill_dev_image_t (&di, al, cmd->device);
 
           void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                               sizeof (dev_image_t));
@@ -388,7 +326,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
-          fill_dev_sampler_t(&ds, al);
+          pocl_fill_dev_sampler_t (&ds, al);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = (void *)ds;
         }
@@ -477,359 +415,22 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
-  cmd->command.native.user_func(cmd->command.native.args);
-}
-
-void
-pocl_basic_copy (void *data,
-                 pocl_mem_identifier * dst_mem_id,
-                 cl_mem dst_buf,
-                 pocl_mem_identifier * src_mem_id,
-                 cl_mem src_buf,
-                 size_t dst_offset,
-                 size_t src_offset,
-                 size_t size)
-{
-  char *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  char *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
-  if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
-    return;
-
-  memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
-}
-
-void
-pocl_basic_copy_rect (void *data,
-                      pocl_mem_identifier * dst_mem_id,
-                      cl_mem dst_buf,
-                      pocl_mem_identifier * src_mem_id,
-                      cl_mem src_buf,
-                      const size_t *__restrict__ const dst_origin,
-                      const size_t *__restrict__ const src_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const dst_row_pitch,
-                      size_t const dst_slice_pitch,
-                      size_t const src_row_pitch,
-                      size_t const src_slice_pitch)
-{
-
-  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
-  char const *__restrict const adjusted_src_ptr = 
-    (char const*)src_ptr +
-    src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
-  char *__restrict__ const adjusted_dst_ptr = 
-    (char*)dst_ptr +
-    dst_origin[0] + dst_row_pitch * dst_origin[1] + dst_slice_pitch * dst_origin[2];
-
-  POCL_MSG_PRINT_MEMORY (
-      "BASIC COPY RECT \n"
-      "SRC %p DST %p SIZE %zu\n"
-      "src origin %u %u %u dst origin %u %u %u \n"
-      "src_row_pitch %lu src_slice pitch %lu\n"
-      "dst_row_pitch %lu dst_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      adjusted_src_ptr, adjusted_dst_ptr,
-      region[0] * region[1] * region[2],
-      (unsigned)src_origin[0], (unsigned)src_origin[1],
-      (unsigned)src_origin[2], (unsigned)dst_origin[0],
-      (unsigned)dst_origin[1], (unsigned)dst_origin[2],
-      (unsigned long)src_row_pitch, (unsigned long)src_slice_pitch,
-      (unsigned long)dst_row_pitch, (unsigned long)dst_slice_pitch,
-      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  if ((src_row_pitch == dst_row_pitch && dst_row_pitch == region[0])
-      && (src_slice_pitch == dst_slice_pitch && dst_slice_pitch == (region[1]*region[0])))
-    {
-      memcpy (adjusted_dst_ptr, adjusted_src_ptr,
-              region[2] * region[1] * region[0]);
-    }
-  else
-    {
-      for (k = 0; k < region[2]; ++k)
-        for (j = 0; j < region[1]; ++j)
-          memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
-                  adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
-                  region[0]);
-    }
-}
-
-void
-pocl_basic_write_rect (void *data,
-                       const void *__restrict__ const host_ptr,
-                       pocl_mem_identifier * dst_mem_id,
-                       cl_mem dst_buf,
-                       const size_t *__restrict__ const buffer_origin,
-                       const size_t *__restrict__ const host_origin, 
-                       const size_t *__restrict__ const region,
-                       size_t const buffer_row_pitch,
-                       size_t const buffer_slice_pitch,
-                       size_t const host_row_pitch,
-                       size_t const host_slice_pitch)
-{
-  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
-
-  char *__restrict const adjusted_device_ptr
-      = (char *)device_ptr + buffer_origin[0]
-        + buffer_row_pitch * buffer_origin[1]
-        + buffer_slice_pitch * buffer_origin[2];
-  char const *__restrict__ const adjusted_host_ptr = 
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
-
-  POCL_MSG_PRINT_MEMORY (
-      "BASIC WRITE RECT \n"
-      "SRC HOST %p DST DEV %p SIZE %zu\n"
-      "borigin %u %u %u horigin %u %u %u \n"
-      "row_pitch %lu slice pitch \n"
-      "%lu host_row_pitch %lu host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      adjusted_host_ptr, adjusted_device_ptr,
-      region[0] * region[1] * region[2],
-      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1],
-      (unsigned)buffer_origin[2], (unsigned)host_origin[0],
-      (unsigned)host_origin[1], (unsigned)host_origin[2],
-      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
-      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  if ((buffer_row_pitch == host_row_pitch
-            && host_row_pitch == region[0])
-      && (buffer_slice_pitch == host_slice_pitch
-            && host_slice_pitch == (region[1]*region[0])))
-    {
-      memcpy (adjusted_device_ptr,
-              adjusted_host_ptr,
-              region[2] * region[1] * region[0]);
-    }
-  else
-    {
-      for (k = 0; k < region[2]; ++k)
-        for (j = 0; j < region[1]; ++j)
-          memcpy (adjusted_device_ptr
-                    + buffer_row_pitch * j
-                    + buffer_slice_pitch * k,
-                  adjusted_host_ptr
-                    + host_row_pitch * j
-                    + host_slice_pitch * k,
-                  region[0]);
-    }
-}
-
-void
-pocl_basic_read_rect (void *data,
-                      void *__restrict__ const host_ptr,
-                      pocl_mem_identifier * src_mem_id,
-                      cl_mem src_buf,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const host_origin, 
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      size_t const host_row_pitch,
-                      size_t const host_slice_pitch)
-{
-  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
-
-  char const *__restrict const adjusted_device_ptr = 
-    (char const*)device_ptr +
-    buffer_origin[2] * buffer_slice_pitch + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
-  char *__restrict__ const adjusted_host_ptr = 
-    (char*)host_ptr +
-    host_origin[2] * host_slice_pitch + host_origin[1] * host_row_pitch + host_origin[0];
-
-  POCL_MSG_PRINT_MEMORY (
-      "BASIC READ RECT \n"
-      "SRC DEV %p DST HOST %p SIZE %zu\n"
-      "borigin %u %u %u horigin %u %u %u row_pitch %lu slice pitch "
-      "%lu host_row_pitch %lu host_slice_pitch %lu\n"
-      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
-      adjusted_device_ptr, adjusted_host_ptr,
-      region[0] * region[1] * region[2],
-      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1],
-      (unsigned)buffer_origin[2], (unsigned)host_origin[0],
-      (unsigned)host_origin[1], (unsigned)host_origin[2],
-      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
-      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  if ((buffer_row_pitch == host_row_pitch
-            && host_row_pitch == region[0])
-      && (buffer_slice_pitch == host_slice_pitch
-            && host_slice_pitch == (region[1]*region[0])))
-    {
-      memcpy (adjusted_host_ptr,
-              adjusted_device_ptr,
-              region[2] * region[1] * region[0]);
-    }
-  else
-    {
-      for (k = 0; k < region[2]; ++k)
-        for (j = 0; j < region[1]; ++j)
-          memcpy (adjusted_host_ptr
-                    + host_row_pitch * j
-                    + host_slice_pitch * k,
-                  adjusted_device_ptr
-                    + buffer_row_pitch * j
-                    + buffer_slice_pitch * k,
-                  region[0]);
-    }
-}
-
-void
-pocl_basic_memfill (void *data, pocl_mem_identifier *dst_mem_id,
-                    cl_mem dst_buf, size_t size, size_t offset,
-                    const void *__restrict__ pattern, size_t pattern_size)
-{
-  void *__restrict__ ptr = dst_mem_id->mem_ptr;
+  cl_event ev = cmd->event;
+  cl_device_id dev = cmd->device;
   size_t i;
-  unsigned j;
-
-  /* memfill size is in bytes, we wanto make it into elements */
-  size /= pattern_size;
-  offset /= pattern_size;
-
-  switch (pattern_size)
+  for (i = 0; i < ev->num_buffers; i++)
     {
-    case 1:
-      {
-      uint8_t * p = (uint8_t*)ptr + offset;
-      for (i = 0; i < size; i++)
-        p[i] = *(uint8_t*)pattern;
-      }
-      break;
-    case 2:
-      {
-      uint16_t * p = (uint16_t*)ptr + offset;
-      for (i = 0; i < size; i++)
-        p[i] = *(uint16_t*)pattern;
-      }
-      break;
-    case 4:
-      {
-      uint32_t * p = (uint32_t*)ptr + offset;
-      for (i = 0; i < size; i++)
-        p[i] = *(uint32_t*)pattern;
-      }
-      break;
-    case 8:
-      {
-      uint64_t * p = (uint64_t*)ptr + offset;
-      for (i = 0; i < size; i++)
-        p[i] = *(uint64_t*)pattern;
-      }
-      break;
-    case 16:
-      {
-      uint64_t * p = (uint64_t*)ptr + (offset << 1);
-      for (i = 0; i < size; i++)
-        for (j = 0; j < 2; j++)
-          p[(i<<1) + j] = *((uint64_t*)pattern + j);
-      }
-      break;
-    case 32:
-      {
-      uint64_t * p = (uint64_t*)ptr + (offset << 2);
-      for (i = 0; i < size; i++)
-        for (j = 0; j < 4; j++)
-          p[(i<<2) + j] = *((uint64_t*)pattern + j);
-      }
-      break;
-    case 64:
-      {
-      uint64_t * p = (uint64_t*)ptr + (offset << 3);
-      for (i = 0; i < size; i++)
-        for (j = 0; j < 8; j++)
-          p[(i<<3) + j] = *((uint64_t*)pattern + j);
-      }
-      break;
-    case 128:
-      {
-      uint64_t * p = (uint64_t*)ptr + (offset << 4);
-      for (i = 0; i < size; i++)
-        for (j = 0; j < 16; j++)
-          p[(i<<4) + j] = *((uint64_t*)pattern + j);
-      }
-      break;
-    default:
-      assert (0 && "Invalid pattern size");
-      break;
-    }
-}
-
-cl_int
-pocl_basic_map_mem (void *data,
-                    pocl_mem_identifier * src_mem_id,
-                    cl_mem src_buf,
-                    mem_mapping_t *map)
-{
-  void *__restrict__ src_device_ptr = src_mem_id->mem_ptr;
-  void *host_ptr = map->host_ptr;
-  size_t offset = map->offset;
-  size_t size = map->size;
-
-  if (host_ptr == NULL)
-    {
-      map->host_ptr = ((char *)src_device_ptr + offset);
-      return CL_SUCCESS;
+      void *arg_loc = cmd->command.native.arg_locs[i];
+      void *buf = ev->mem_objs[i]->device_ptrs[dev->global_mem_id].mem_ptr;
+      if (dev->address_bits == 32)
+        *((uint32_t *)arg_loc) = (uint32_t) (((uintptr_t)buf) & 0xFFFFFFFF);
+      else
+        *((uint64_t *)arg_loc) = (uint64_t) (uintptr_t)buf;
     }
 
-  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
-    return CL_SUCCESS;
+  cmd->command.native.user_func(cmd->command.native.args);
 
-  /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
-   * CL_MEM_COPY_HOST_PTR,
-   * the dst_host_ptr is not the same memory as pocl's device_ptrs[], and we
-   * need to copy pocl's buffer content back to dst_host_ptr. */
-  if (host_ptr != (src_device_ptr + offset))
-    {
-      POCL_MSG_PRINT_MEMORY ("device: MAP memcpy() "
-                             "src_device_ptr %p + offset %zu"
-                             "to dst_host_ptr %p\n",
-                             src_device_ptr, offset, host_ptr);
-      memcpy ((char *)host_ptr, (char *)src_device_ptr + offset, size);
-    }
-  return CL_SUCCESS;
-}
-
-cl_int
-pocl_basic_unmap_mem(void *data,
-                     pocl_mem_identifier * dst_mem_id,
-                     cl_mem dst_buf,
-                     mem_mapping_t *map)
-{
-  void *__restrict__ dst_device_ptr = dst_mem_id->mem_ptr;
-  /* it could be CL_MAP_READ | CL_MAP_WRITE(..invalidate) which has to be
-   * handled like a write */
-  if (map->map_flags == CL_MAP_READ)
-    return CL_SUCCESS;
-
-  void *host_ptr = map->host_ptr;
-  assert (host_ptr != NULL);
-  size_t offset = map->offset;
-  size_t size = map->size;
-
-  /* If the buffer was allocated with CL_MEM_ALLOC_src_host_ptr |
-   * CL_MEM_COPY_src_host_ptr,
-   * the src_host_ptr is not the same memory as pocl's device_ptrs[], and we
-   * need to copy src_host_ptr content back to  pocl's device_ptrs[]. */
-  if (host_ptr != (dst_device_ptr + offset))
-    {
-      POCL_MSG_PRINT_MEMORY ("device: UNMAP memcpy() "
-                             "host_ptr %p to buf_ptr %p + offset %zu\n",
-                             host_ptr, dst_device_ptr, offset);
-      memcpy ((char *)dst_device_ptr + offset, (char *)host_ptr, size);
-    }
-  return CL_SUCCESS;
+  POCL_MEM_FREE (cmd->command.native.arg_locs);
 }
 
 cl_int
@@ -993,18 +594,10 @@ cl_int pocl_basic_copy_image_rect( void *data,
       region[0], region[1], region[2],
       px);
 
-  pocl_basic_copy_rect(data,
-                       dst_mem_id,
-                       NULL,
-                       src_mem_id,
-                       NULL,
-                       adj_dst_origin,
-                       adj_src_origin,
-                       adj_region,
-                       dst_image->image_row_pitch,
-                       dst_image->image_slice_pitch,
-                       src_image->image_row_pitch,
-                       src_image->image_slice_pitch);
+  pocl_driver_copy_rect (
+      data, dst_mem_id, NULL, src_mem_id, NULL, adj_dst_origin, adj_src_origin,
+      adj_region, dst_image->image_row_pitch, dst_image->image_slice_pitch,
+      src_image->image_row_pitch, src_image->image_slice_pitch);
 
   return CL_SUCCESS;
 }
@@ -1047,17 +640,10 @@ cl_int pocl_basic_write_image_rect (  void *data,
   const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
   const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
 
-  pocl_basic_write_rect (data,
-                         ptr,
-                         dst_mem_id,
-                         NULL,
-                         adj_origin,
-                         zero_origin,
-                         adj_region,
-                         dst_image->image_row_pitch,
-                         dst_image->image_slice_pitch,
-                         src_row_pitch,
-                         src_slice_pitch);
+  pocl_driver_write_rect (data, ptr, dst_mem_id, NULL, adj_origin, zero_origin,
+                          adj_region, dst_image->image_row_pitch,
+                          dst_image->image_slice_pitch, src_row_pitch,
+                          src_slice_pitch);
   return CL_SUCCESS;
 }
 
@@ -1097,17 +683,10 @@ cl_int pocl_basic_read_image_rect(  void *data,
   const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
   const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
 
-  pocl_basic_read_rect (data,
-                        ptr,
-                        src_mem_id,
-                        NULL,
-                        adj_origin,
-                        zero_origin,
-                        adj_region,
-                        src_image->image_row_pitch,
-                        src_image->image_slice_pitch,
-                        dst_row_pitch,
-                        dst_slice_pitch);
+  pocl_driver_read_rect (data, ptr, src_mem_id, NULL, adj_origin, zero_origin,
+                         adj_region, src_image->image_row_pitch,
+                         src_image->image_slice_pitch, dst_row_pitch,
+                         dst_slice_pitch);
   return CL_SUCCESS;
 }
 
@@ -1117,11 +696,7 @@ cl_int pocl_basic_map_image (void *data,
                              cl_mem src_image,
                              mem_mapping_t *map)
 {
-  if (map->host_ptr == NULL)
-    {
-      map->host_ptr = (char *)mem_id->mem_ptr + map->offset;
-      return CL_SUCCESS;
-    }
+  assert (map->host_ptr != NULL);
 
   if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
     return CL_SUCCESS;
@@ -1155,8 +730,8 @@ cl_int pocl_basic_unmap_image(void *data,
 cl_int
 pocl_basic_fill_image (void *data, cl_mem image,
                        pocl_mem_identifier *image_data, const size_t *origin,
-                       const size_t *region,
-                       const void *__restrict__ fill_pixel, size_t pixel_size)
+                       const size_t *region, cl_uint4 orig_pixel,
+                       pixel_t fill_pixel, size_t pixel_size)
 {
    POCL_MSG_PRINT_MEMORY ("BASIC / FILL IMAGE \n"
                           "image %p data %p \n"
@@ -1190,6 +765,7 @@ pocl_basic_fill_image (void *data, cl_mem image,
   return CL_SUCCESS;
 }
 
+/***************************************************************************/
 void
 pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
 {
@@ -1200,6 +776,7 @@ pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
 
 void *
 pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+
 {
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }
@@ -1209,13 +786,4 @@ pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
                      const void *__restrict__ src, size_t size)
 {
   memcpy (dst, src, size);
-}
-
-void
-pocl_basic_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
-                     void *__restrict__ pattern, size_t pattern_size)
-{
-  pocl_mem_identifier temp;
-  temp.mem_ptr = svm_ptr;
-  pocl_basic_memfill (dev->data, &temp, NULL, size, 0, pattern, pattern_size);
 }

@@ -23,9 +23,7 @@
 #
 #=============================================================================
 
-if(Hwloc_CFLAGS)
-  add_compile_options(${Hwloc_CFLAGS})
-else()
+if(Hwloc_FOUND)
   include_directories(${Hwloc_INCLUDE_DIRS})
 endif()
 

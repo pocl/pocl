@@ -23,8 +23,7 @@
    THE SOFTWARE.
 */
 
-#include <CL/cl.h>
-#include "poclu.h"
+#include "pocl_opencl.h"
 #include <string.h>
 
 const char* kernel_src = 

@@ -38,10 +38,6 @@ add_test_pocl(NAME "workgroup/different_implicit_barrier_injection_scenarios"
               EXPECTED_OUTPUT "implicit_barriers_1_2_1_1.stdout"
               COMMAND "run_kernel" "implicit_barriers.cl" 1 2 1 1)
 
-add_test_pocl(NAME "workgroup/unconditional_barriers"
-              EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
-              COMMAND "run_kernel" "basic_barriers.cl" 2 2 2 2)
-
 add_test_pocl(NAME "workgroup/unbarriered_for_loops"
               EXPECTED_OUTPUT "forloops_2_2_1_1.stdout"
               COMMAND "run_kernel" "forloops.cl" 2 2 1 1)
@@ -54,10 +50,6 @@ add_test_pocl(NAME "workgroup/switch_case"
               EXPECTED_OUTPUT "switch_case_1_4_1_1.stdout"
               COMMAND "run_kernel" "switch_case.cl" 1 4 1 1)
 
-add_test_pocl(NAME "workgroup/conditional_barrier"
-              EXPECTED_OUTPUT "cond_barriers_1_2_1_1.stdout"
-              COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1)
-
 add_test_pocl(NAME "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
               EXPECTED_OUTPUT "tricky_for_1_2_1_1.stdout"
               COMMAND "run_kernel" "tricky_for.cl" 1 2 1 1)
@@ -65,6 +57,34 @@ add_test_pocl(NAME "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
 add_test_pocl(NAME "workgroup/for_with_divergent_return"
               EXPECTED_OUTPUT "for_with_divergent_return_1_6_1_1.stdout"
               COMMAND "run_kernel" "for_with_divergent_return.cl" 1 6 1 1)
+
+add_test_pocl(NAME "workgroup/cond_barriers_in_for"
+              EXPECTED_OUTPUT "cond_barriers_in_for_2_4_1_1.stdout"
+              COMMAND "run_kernel" "cond_barriers_in_for.cl" 2 4 1 1)
+
+# Cases which are not dependent on the work-group or work-item
+# execution (printout) order or the method (use the default method
+# for the device).
+set_tests_properties(
+  "workgroup/different_implicit_barrier_injection_scenarios"
+  "workgroup/unbarriered_for_loops"
+  "workgroup/barriered_for_loops"
+  "workgroup/switch_case"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
+  "workgroup/for_with_divergent_return"
+  PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;workgroup")
+
+add_test_pocl(NAME "workgroup/unconditional_barriers"
+              EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
+              COMMAND "run_kernel" "basic_barriers.cl" 2 2 2 2)
+
+add_test_pocl(NAME "workgroup/conditional_barrier"
+              EXPECTED_OUTPUT "cond_barriers_1_2_1_1.stdout"
+              COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1)
 
 add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
               EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
@@ -98,7 +118,8 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
-set_tests_properties( "workgroup/unconditional_barriers"
+set_tests_properties(
+  "workgroup/unconditional_barriers"
   "workgroup/conditional_barrier"
   "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
   "workgroup/loop_with_two_paths_to_the_latch"
@@ -110,22 +131,7 @@ set_tests_properties( "workgroup/unconditional_barriers"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    LABELS "workgroup"
     ENVIRONMENT "POCL_DEVICES=basic;POCL_WORK_GROUP_METHOD=workitemloops"
-    DEPENDS "pocl_version_check"
-    LABELS "internal;workgroup")
-
-# Cases which are not dependent on the work-group or work-item
-# execution (printout) order or the method (use the default method
-# for the device).
-set_tests_properties("workgroup/unbarriered_for_loops"
-  "workgroup/barriered_for_loops"
-  "workgroup/switch_case"
-  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
-  PROPERTIES
-    COST 2.0
-    PROCESSORS 1
-    LABELS "workgroup"
     DEPENDS "pocl_version_check"
     LABELS "internal;workgroup")
 
@@ -151,3 +157,19 @@ set_property(TEST
   "workgroup/issue_548_convergent_propagation"
   "workgroup/different_implicit_barrier_injection_scenarios"
   APPEND PROPERTY LABELS "hsa-native")
+
+set_property(TEST
+  "workgroup/unbarriered_for_loops"
+  "workgroup/barriered_for_loops"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
+  "workgroup/different_implicit_barrier_injection_scenarios"
+  APPEND PROPERTY LABELS "proxy")
+
+set_property(TEST
+  "workgroup/unbarriered_for_loops"
+  "workgroup/barriered_for_loops"
+  "workgroup/range_md_small_grid"
+  "workgroup/range_md_large_grid"
+  "workgroup/switch_case"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
+  APPEND PROPERTY LABELS "vulkan")

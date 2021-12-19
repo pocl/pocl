@@ -32,12 +32,13 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode;
   _cl_command_node *cmd = NULL;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_VALUE);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
-                                 event, 0, NULL, 0, NULL);
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, event,
+                                 0, NULL, 0, NULL, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 

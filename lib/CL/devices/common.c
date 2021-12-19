@@ -2,7 +2,7 @@
               implementations
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
-                 2011-2019 Pekka Jääskeläinen
+                 2011-2021 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -36,13 +36,14 @@
 #include <unistd.h>
 #include <utlist.h>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include "vccompat.hpp"
 #endif
 
 #include "common.h"
 #include "pocl_shared.h"
 
+#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -61,24 +62,33 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_LIBDL
+#ifdef HAVE_DLFCN_H
 #if defined(__APPLE__)
 #define _DARWIN_C_SOURCE
 #endif
 #include <dlfcn.h>
 #endif
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
 #include "_kernel_constants.h"
 
-#if defined(__x86_64__) || defined(__i386__)
-#define CPU_IS_X86 1
-#endif
-
 #define WORKGROUP_STRING_LENGTH 1024
+
+uint64_t last_object_id = 0;
+
+unsigned long buffer_c;
+unsigned long svm_buffer_c;
+unsigned long queue_c;
+unsigned long context_c;
+unsigned long image_c;
+unsigned long kernel_c;
+unsigned long program_c;
+unsigned long sampler_c;
+unsigned long uevent_c;
+unsigned long event_c;
 
 /**
  * Generate code from the final bitcode using the LLVM
@@ -87,8 +97,8 @@
  * Uses an existing (cached) one, if available.
  */
 
-#ifdef OCS_AVAILABLE
-int
+#ifdef ENABLE_LLVM
+static int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
 {
@@ -141,7 +151,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   else
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
-      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
+      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program,
+                                       command->program_device_i,
                                        kernel, "", command, specialize);
       error = pocl_mkdir_p (kernel_parallel_path);
     }
@@ -157,7 +168,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
+  error = pocl_llvm_codegen (device, program, llvm_module, &objfile,
+                             &objfile_size);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
@@ -241,7 +253,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
 
 FINISH:
-  pocl_destroy_llvm_module (llvm_module);
+  pocl_destroy_llvm_module (llvm_module, kernel->context);
   POCL_MEM_FREE (objfile);
   POCL_MEASURE_FINISH (llvm_codegen);
 
@@ -261,8 +273,8 @@ FINISH:
  * from given kernel image argument
  */
 void
-fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
-                  cl_device_id device)
+pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
+                       cl_device_id device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
   di->_width = mem->image_width;
@@ -278,114 +290,25 @@ fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               &(di->_num_channels), &(di->_elem_size));
 
   IMAGE1D_TO_BUFFER (mem);
-  di->_data = (mem->device_ptrs[device->dev_id].mem_ptr);
+  di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-void
-pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
-                      size_t dest_offset,
-                      cl_device_id source_dev, cl_mem source,
-                      size_t source_offset, size_t cb)
-{
-  /* if source_dev is NULL -> src and dest dev must be the same */
-  cl_device_id src_dev = (source_dev) ? source_dev : dest_dev;
-
-  /* if source and destination are on the same global mem  */
-  if (src_dev->global_mem_id == dest_dev->global_mem_id)
-    {
-      src_dev->ops->copy 
-        (dest_dev->data, 
-         &dest->device_ptrs[dest_dev->dev_id],
-         dest,
-         &source->device_ptrs[src_dev->dev_id],
-         source,
-         dest_offset, source_offset,
-         cb);
-    }
-  else
-    {
-      void* tofree = NULL;
-      void* tmp = NULL;
-      if (source->flags & CL_MEM_USE_HOST_PTR)
-        tmp = source->mem_host_ptr;
-      else if (dest->flags & CL_MEM_USE_HOST_PTR)
-        tmp = dest->mem_host_ptr;
-      else
-        {
-          tmp = malloc (dest->size);
-          tofree = tmp;
-        }
-      
-      src_dev->ops->read 
-        (src_dev->data, tmp, 
-          &source->device_ptrs[src_dev->dev_id],
-          source,
-          source_offset, cb);
-      dest_dev->ops->write 
-        (dest_dev->data, tmp, 
-         &dest->device_ptrs[dest_dev->dev_id],
-          dest, dest_offset,
-         cb);
-      free (tofree);
-    }
-  return;
-}
-
-void
-pocl_migrate_mem_objects (_cl_command_node * volatile node)
-{
-  size_t i;
-  cl_mem *mem_objects = node->command.migrate.mem_objects;
-  
-  for (i = 0; i < node->command.migrate.num_mem_objects; ++i)
-    {
-      pocl_copy_mem_object (node->device,
-                            mem_objects[i], 0,
-                            node->command.migrate.source_devices[i], 
-                            mem_objects[i], 0, mem_objects[i]->size);
-      
-      return;
-    }
-}
-
-void
-pocl_ndrange_node_cleanup(_cl_command_node *node)
-{
-  cl_uint i;
-  for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
-    {
-      pocl_aligned_free (node->command.run.arguments[i].value);
-    }
-  free (node->command.run.arguments);
-
-  POname(clReleaseKernel)(node->command.run.kernel);
-}
-
-void
-pocl_mem_objs_cleanup (cl_event event)
-{
-  size_t i;
-  for (i = 0; i < event->num_buffers; ++i)
-    {
-      assert(event->mem_objs[i] != NULL);
-      POname(clReleaseMemObject) (event->mem_objs[i]);
-    }
-  free (event->mem_objs);
-  event->mem_objs = NULL;
-  event->num_buffers = 0;
-}
 
 /**
  * executes given command. Call with node->event UNLOCKED.
  */
 void
-pocl_exec_command (_cl_command_node * volatile node)
+pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
   cl_event event = node->event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
+  cl_mem mem = NULL;
+  if (event->num_buffers > 0)
+    mem = event->mem_objs[0];
+
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -417,15 +340,28 @@ pocl_exec_command (_cl_command_node * volatile node)
     case CL_COMMAND_COPY_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->copy);
-      dev->ops->copy
-        (dev->data,
-         cmd->copy.dst_mem_id,
-         event->mem_objs[1],
-         cmd->copy.src_mem_id,
-         event->mem_objs[0],
-         cmd->copy.dst_offset,
-         cmd->copy.src_offset,
-         cmd->copy.size);
+      if (dev->ops->copy_with_size && cmd->copy.src_content_size != NULL)
+          dev->ops->copy_with_size
+            (dev->data,
+             cmd->copy.dst_mem_id,
+             cmd->copy.dst,
+             cmd->copy.src_mem_id,
+             cmd->copy.src,
+             cmd->copy.src_content_size_mem_id,
+             cmd->copy.src_content_size,
+             cmd->copy.dst_offset,
+             cmd->copy.src_offset,
+             cmd->copy.size);
+      else
+          dev->ops->copy
+            (dev->data,
+             cmd->copy.dst_mem_id,
+             cmd->copy.dst,
+             cmd->copy.src_mem_id,
+             cmd->copy.src,
+             cmd->copy.dst_offset,
+             cmd->copy.src_offset,
+             cmd->copy.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer           ");
       break;
 
@@ -441,7 +377,6 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->memfill.pattern,
          cmd->memfill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Buffer           ");
-      pocl_aligned_free (cmd->memfill.pattern);
       break;
 
     case CL_COMMAND_READ_BUFFER_RECT:
@@ -465,19 +400,13 @@ pocl_exec_command (_cl_command_node * volatile node)
     case CL_COMMAND_COPY_BUFFER_RECT:
       pocl_update_event_running (event);
       assert (dev->ops->copy_rect);
-      dev->ops->copy_rect
-        (dev->data,
-         cmd->copy_rect.dst_mem_id,
-         event->mem_objs[1],
-         cmd->copy_rect.src_mem_id,
-         event->mem_objs[0],
-         cmd->copy_rect.dst_origin,
-         cmd->copy_rect.src_origin,
-         cmd->copy_rect.region,
-         cmd->copy_rect.dst_row_pitch,
-         cmd->copy_rect.dst_slice_pitch,
-         cmd->copy_rect.src_row_pitch,
-         cmd->copy_rect.src_slice_pitch);
+      dev->ops->copy_rect (
+          dev->data, cmd->copy_rect.dst_mem_id, cmd->copy_rect.dst,
+          cmd->copy_rect.src_mem_id, cmd->copy_rect.src,
+          cmd->copy_rect.dst_origin, cmd->copy_rect.src_origin,
+          cmd->copy_rect.region, cmd->copy_rect.dst_row_pitch,
+          cmd->copy_rect.dst_slice_pitch, cmd->copy_rect.src_row_pitch,
+          cmd->copy_rect.src_slice_pitch);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer Rect      ");
       break;
 
@@ -501,20 +430,81 @@ pocl_exec_command (_cl_command_node * volatile node)
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
       pocl_update_event_running (event);
-      pocl_migrate_mem_objects (node);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Migrate Buffer        ");
+      switch (cmd->migrate.type)
+        {
+        case ENQUEUE_MIGRATE_TYPE_D2H:
+          {
+            if (mem->is_image)
+              {
+                size_t region[3] = { mem->image_width, mem->image_height,
+                                     mem->image_depth };
+                if (region[2] == 0)
+                  region[2] = 1;
+                if (region[1] == 0)
+                  region[1] = 1;
+                size_t origin[3] = { 0, 0, 0 };
+                assert (dev->ops->read_image_rect);
+                dev->ops->read_image_rect (dev->data, mem, cmd->migrate.mem_id,
+                                           mem->mem_host_ptr, NULL, origin,
+                                           region, 0, 0, 0);
+              }
+            else
+              {
+                assert (dev->ops->read);
+                dev->ops->read (dev->data, mem->mem_host_ptr,
+                                cmd->migrate.mem_id, mem, 0, mem->size);
+              }
+            break;
+          }
+        case ENQUEUE_MIGRATE_TYPE_H2D:
+          {
+            if (mem->is_image)
+              {
+                size_t region[3] = { mem->image_width, mem->image_height,
+                                     mem->image_depth };
+                if (region[2] == 0)
+                  region[2] = 1;
+                if (region[1] == 0)
+                  region[1] = 1;
+                size_t origin[3] = { 0, 0, 0 };
+                assert (dev->ops->write_image_rect);
+                dev->ops->write_image_rect (
+                    dev->data, mem, cmd->migrate.mem_id, mem->mem_host_ptr,
+                    NULL, origin, region, 0, 0, 0);
+              }
+            else
+              {
+                assert (dev->ops->write);
+                dev->ops->write (dev->data, mem->mem_host_ptr,
+                                 cmd->migrate.mem_id, mem, 0, mem->size);
+              }
+            break;
+          }
+        case ENQUEUE_MIGRATE_TYPE_D2D:
+          {
+            assert (dev->ops->can_migrate_d2d);
+            assert (dev->ops->migrate_d2d);
+            dev->ops->migrate_d2d (cmd->migrate.src_device, dev, mem,
+                                   cmd->migrate.src_id,
+                                   cmd->migrate.dst_id);
+            break;
+          }
+        case ENQUEUE_MIGRATE_TYPE_NOP:
+          {
+            break;
+          }
+        }
+
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Migrate Buffer(s)     ");
       break;
 
     case CL_COMMAND_MAP_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->map_mem);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
         dev->ops->map_mem (dev->data,
                            cmd->map.mem_id,
                            event->mem_objs[0],
                            cmd->map.mapping);
-      (event->mem_objs[0])->map_count++;
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Buffer            ");
       break;
 
@@ -522,16 +512,10 @@ pocl_exec_command (_cl_command_node * volatile node)
       pocl_update_event_running (event);
       assert (dev->ops->read_image_rect);
       dev->ops->read_image_rect (
-          dev->data,
-          event->mem_objs[0],
-          cmd->read_image.src_mem_id,
-          NULL,
-          cmd->read_image.dst_mem_id,
-          cmd->read_image.origin,
-          cmd->read_image.region,
-          cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch,
-          cmd->read_image.dst_offset);
+          dev->data, cmd->read_image.src, cmd->read_image.src_mem_id, NULL,
+          cmd->read_image.dst_mem_id, cmd->read_image.origin,
+          cmd->read_image.region, cmd->read_image.dst_row_pitch,
+          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event CopyImageToBuffer       ");
       break;
 
@@ -539,16 +523,10 @@ pocl_exec_command (_cl_command_node * volatile node)
       pocl_update_event_running (event);
       assert (dev->ops->read_image_rect);
       dev->ops->read_image_rect (
-          dev->data,
-          event->mem_objs[0],
-          cmd->read_image.src_mem_id,
-          cmd->read_image.dst_host_ptr,
-          NULL,
-          cmd->read_image.origin,
-          cmd->read_image.region,
-          cmd->read_image.dst_row_pitch,
-          cmd->read_image.dst_slice_pitch,
-          cmd->read_image.dst_offset);
+          dev->data, cmd->read_image.src, cmd->read_image.src_mem_id,
+          cmd->read_image.dst_host_ptr, NULL, cmd->read_image.origin,
+          cmd->read_image.region, cmd->read_image.dst_row_pitch,
+          cmd->read_image.dst_slice_pitch, cmd->read_image.dst_offset);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Image            ");
       break;
 
@@ -556,122 +534,85 @@ pocl_exec_command (_cl_command_node * volatile node)
       pocl_update_event_running (event);
       assert (dev->ops->write_image_rect);
       dev->ops->write_image_rect (
-          dev->data,
-          event->mem_objs[1],
-          cmd->write_image.dst_mem_id,
-          NULL,
-          cmd->write_image.src_mem_id,
-          cmd->write_image.origin,
-          cmd->write_image.region,
-          cmd->write_image.src_row_pitch,
-          cmd->write_image.src_slice_pitch,
-          cmd->write_image.src_offset);
+          dev->data, cmd->write_image.dst, cmd->write_image.dst_mem_id, NULL,
+          cmd->write_image.src_mem_id, cmd->write_image.origin,
+          cmd->write_image.region, cmd->write_image.src_row_pitch,
+          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event CopyBufferToImage       ");
       break;
 
     case CL_COMMAND_WRITE_IMAGE:
-        pocl_update_event_running (event);
-        assert (dev->ops->write_image_rect);
-        dev->ops->write_image_rect (
-            dev->data,
-            event->mem_objs[0],
-            cmd->write_image.dst_mem_id,
-            cmd->write_image.src_host_ptr,
-            NULL,
-            cmd->write_image.origin,
-            cmd->write_image.region,
-            cmd->write_image.src_row_pitch,
-            cmd->write_image.src_slice_pitch,
-            cmd->write_image.src_offset);
-        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Image           ");
-        break;
+      pocl_update_event_running (event);
+      assert (dev->ops->write_image_rect);
+      dev->ops->write_image_rect (
+          dev->data, cmd->write_image.dst, cmd->write_image.dst_mem_id,
+          cmd->write_image.src_host_ptr, NULL, cmd->write_image.origin,
+          cmd->write_image.region, cmd->write_image.src_row_pitch,
+          cmd->write_image.src_slice_pitch, cmd->write_image.src_offset);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Image           ");
+      break;
 
     case CL_COMMAND_COPY_IMAGE:
-        pocl_update_event_running (event);
-        assert (dev->ops->copy_image_rect);
-        dev->ops->copy_image_rect(
-              dev->data,
-              event->mem_objs[0],
-              event->mem_objs[1],
-              cmd->copy_image.src_mem_id,
-              cmd->copy_image.dst_mem_id,
-              cmd->copy_image.src_origin,
-              cmd->copy_image.dst_origin,
-              cmd->copy_image.region);
-        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Image            ");
-        break;
+      pocl_update_event_running (event);
+      assert (dev->ops->copy_image_rect);
+      dev->ops->copy_image_rect (
+          dev->data, cmd->copy_image.src, cmd->copy_image.dst,
+          cmd->copy_image.src_mem_id, cmd->copy_image.dst_mem_id,
+          cmd->copy_image.src_origin, cmd->copy_image.dst_origin,
+          cmd->copy_image.region);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Image            ");
+      break;
 
     case CL_COMMAND_FILL_IMAGE:
       pocl_update_event_running (event);
       assert (dev->ops->fill_image);
-      dev->ops->fill_image
-        (dev->data,
-         event->mem_objs[0],
-         cmd->fill_image.mem_id,
-         cmd->fill_image.origin,
-         cmd->fill_image.region,
-         cmd->fill_image.fill_pixel,
-         cmd->fill_image.pixel_size);
+      dev->ops->fill_image (dev->data, event->mem_objs[0],
+                            cmd->fill_image.mem_id, cmd->fill_image.origin,
+                            cmd->fill_image.region, cmd->fill_image.orig_pixel,
+                            cmd->fill_image.fill_pixel,
+                            cmd->fill_image.pixel_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Image            ");
-      POCL_MEM_FREE (cmd->fill_image.fill_pixel);
       break;
 
     case CL_COMMAND_MAP_IMAGE:
       pocl_update_event_running (event);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
       assert (dev->ops->map_image != NULL);
       dev->ops->map_image (dev->data,
                            cmd->map.mem_id,
                            event->mem_objs[0],
                            cmd->map.mapping);
-     (event->mem_objs[0])->map_count++;
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Image             ");
       break;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       pocl_update_event_running (event);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
-      if (event->mem_objs[0]->is_image == CL_FALSE
-          || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
+      pocl_mem_identifier *mem_id = &mem->device_ptrs[dev->global_mem_id];
+      if (mem->is_image == CL_FALSE || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
         {
           assert (dev->ops->unmap_mem != NULL);
-          dev->ops->unmap_mem (dev->data,
-                               cmd->unmap.mem_id,
-                               event->mem_objs[0],
+          dev->ops->unmap_mem (dev->data, cmd->unmap.mem_id, mem,
                                cmd->unmap.mapping);
         }
       else
         {
           assert (dev->ops->unmap_image != NULL);
-          dev->ops->unmap_image (dev->data,
-                                 cmd->unmap.mem_id,
-                                 event->mem_objs[0],
+          dev->ops->unmap_image (dev->data, cmd->unmap.mem_id, mem,
                                  cmd->unmap.mapping);
         }
-      assert ((cmd->unmap.mapping)->unmap_requested > 0);
-      DL_DELETE((event->mem_objs[0])->mappings,
-                cmd->unmap.mapping);
-      (event->mem_objs[0])->map_count--;
-      POCL_MEM_FREE (cmd->unmap.mapping);
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Unmap Mem obj         ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
       break;
 
     case CL_COMMAND_NDRANGE_KERNEL:
       pocl_update_event_running (event);
-      assert (event == node->event);
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
-      pocl_ndrange_node_cleanup(node);
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:
       pocl_update_event_running (event);
       assert (dev->ops->run_native);
       dev->ops->run_native (dev->data, node);
-      POCL_MEM_FREE (node->command.native.args);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
@@ -742,14 +683,12 @@ pocl_exec_command (_cl_command_node * volatile node)
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
-      pocl_aligned_free (cmd->svm_fill.pattern);
       break;
 
     default:
       POCL_ABORT_UNIMPLEMENTED("");
       break;
-    }   
-  pocl_mem_manager_free_command (node);
+    }
 }
 
 /* call with brc_event UNLOCKED. */
@@ -780,6 +719,16 @@ pocl_broadcast (cl_event brc_event)
                 target->event->command->device, target->event, brc_event);
           }
 
+        if (pocl_is_tracing_enabled() && target->event->meta_data)
+          {
+            pocl_event_md *md = target->event->meta_data;
+            for (size_t i = 0; i < md->num_deps; ++i)
+              if (md->dep_ids[i] == brc_event->id)
+                {
+                  md->dep_ts[i] = brc_event->time_end;
+                  break;
+                }
+          }
         LL_DELETE (brc_event->notify_list, target);
         pocl_unlock_events_inorder (brc_event, target->event);
         pocl_mem_manager_free_event_node (target);
@@ -791,7 +740,7 @@ pocl_broadcast (cl_event brc_event)
  * from given kernel sampler argument
  */
 void
-fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
+pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 {
   cl_sampler sampler = *(cl_sampler *)parg->value;
 
@@ -821,7 +770,21 @@ fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
   }
 }
 
+/* Returns the width of the widest dimension in the grid of the given
+   run command. */
+size_t
+pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
+{
+  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
+                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
+              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
+}
+
+
 /* CPU driver stuff */
+
+#ifdef HAVE_DLFCN_H
+
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
@@ -832,6 +795,7 @@ struct pocl_dlhandle_cache_item
   size_t local_wgs[3];
   /* If global offset must be zero for this WG function version. */
   int goffs_zero;
+  int specialize;
   /* Maximum grid dimension this WG function works with. */
   size_t max_grid_dim_width;
 
@@ -937,7 +901,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   _cl_command_run *run_cmd = &command->command.run;
   cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
-  unsigned dev_i = command->device_i;
+  unsigned dev_i = command->program_device_i;
 
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
@@ -955,14 +919,16 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
    * (program.bc), try to compile a new parallel.bc and static binary */
   if (p->binaries[dev_i])
     {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       POCL_LOCK (pocl_llvm_codegen_lock);
       int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
                                 specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       if (error)
         POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
-      POCL_MSG_PRINT_INFO ("Built a WG function: %s\n", module_fn);
+      POCL_MSG_PRINT_INFO ("Built a %sWG function: %s\n",
+                           specialized ? "specialized " : "generic ",
+                           module_fn);
       return module_fn;
 #else
       /* TODO: This should be caught earlier. */
@@ -995,22 +961,13 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   return module_fn;
 }
 
-/* Returns the width of the widest dimension in the grid of the given
-   run command. */
-size_t
-pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
-{
-  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
-                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
-              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
-}
 
 /* Look for a dlhandle in the dlhandle cache for the given kernel command.
    If found, push the handle up in the cache to improve cache hit speed,
    and return it. Otherwise return NULL. The caller should hold
    pocl_dlhandle_lock. */
 static pocl_dlhandle_cache_item *
-fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
+fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
 {
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
@@ -1021,8 +978,8 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
         && (ci->local_wgs[1] == run_cmd->pc.local_size[1])
         && (ci->local_wgs[2] == run_cmd->pc.local_size[2])
         && (max_grid_width <= ci->max_grid_dim_width)
-        && (!ci->goffs_zero
-            || (run_cmd->pc.global_offset[0] == 0
+        && (ci->specialize == specialize)
+        && (ci->goffs_zero == (run_cmd->pc.global_offset[0] == 0
                 && run_cmd->pc.global_offset[1] == 0
                 && run_cmd->pc.global_offset[2] == 0)))
       {
@@ -1053,12 +1010,17 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                   unsigned initial_refcount, int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
-  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  pocl_dlhandle_cache_item *ci = NULL;
   const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
+  /* Brute force mechanism to test relying on generic work-group functions
+     only. */
+  if (!pocl_get_bool_option("POCL_WORK_GROUP_SPECIALIZATION", 1))
+    specialize = 0;
+
   POCL_LOCK (pocl_dlhandle_lock);
-  ci = fetch_dlhandle_cache_item (run_cmd);
+  ci = fetch_dlhandle_cache_item (run_cmd, specialize);
   if (ci != NULL)
     {
       POCL_UNLOCK (pocl_dlhandle_lock);
@@ -1072,7 +1034,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->local_wgs[1] = run_cmd->pc.local_size[1];
   ci->local_wgs[2] = run_cmd->pc.local_size[2];
   ci->ref_count = initial_refcount;
-
+  ci->specialize = specialize;
   ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
                    && run_cmd->pc.global_offset[1] == 0
                    && run_cmd->pc.global_offset[2] == 0;
@@ -1118,9 +1080,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   DL_PREPEND (pocl_dlhandle_cache, ci);
 
   POCL_UNLOCK (pocl_dlhandle_lock);
-  /***************************************************************************/
   POCL_MEM_FREE (module_fn);
 }
+
+#endif
+
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
@@ -1318,28 +1282,6 @@ pocl_print_system_memory_stats()
                     system_memory.max_ever_allocated >> 10);
 }
 
-/* Unique hash for a device + program build + kernel name combination.
-   NOTE: this does NOT take into account the local WG sizes or other
-   specialization properties. */
-void
-pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
-                            unsigned device_i)
-{
-  SHA1_CTX hash_ctx;
-  pocl_SHA1_Init (&hash_ctx);
-
-  char *n = program->kernel_meta[kernel_i].name;
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
-                    sizeof (SHA1_digest_t));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
-
-  uint8_t digest[SHA1_DIGEST_SIZE];
-  pocl_SHA1_Final (&hash_ctx, digest);
-
-  memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
-          sizeof (pocl_kernel_hash_t));
-}
-
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 4096
@@ -1411,7 +1353,7 @@ pocl_init_default_device_infos (cl_device_id dev)
       = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
 
   dev->preferred_wg_size_multiple = 8;
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   cpu_setup_vector_widths (dev);
 #else
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
@@ -1474,7 +1416,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
                             | CL_FP_ROUND_TO_ZERO
                             | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   if (cpu_has_fma())
     dev->single_fp_config |= CL_FP_FMA;
 #endif
@@ -1509,8 +1451,10 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->endian_little = !(WORDS_BIGENDIAN);
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
+  dev->linker_available = CL_TRUE;
   dev->spmd = CL_FALSE;
   dev->arg_buffer_launcher = CL_FALSE;
+  dev->grid_launcher = CL_FALSE;
   dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->platform = 0;
@@ -1543,33 +1487,41 @@ pocl_init_default_device_infos (cl_device_id dev)
      identifiers. */
   dev->global_as_id = dev->local_as_id = dev->constant_as_id = 0;
 
-  dev->should_allocate_svm = 0;
+  dev->svm_allocation_priority = 0;
   /* OpenCL 2.0 properties */
-  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
-                  | CL_DEVICE_SVM_ATOMICS;
+  dev->svm_caps = 0;
   /* TODO these are minimums, figure out whats a reasonable value */
-  dev->max_events = 1024;
-  dev->max_queues = 1;
-  dev->max_pipe_args = 16;
-  dev->max_pipe_active_res = 1;
-  dev->max_pipe_packet_size = 1024;
-  dev->dev_queue_pref_size = 16 * 1024;
-  dev->dev_queue_max_size = 256 * 1024;
-  dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
-                               | CL_QUEUE_PROFILING_ENABLE;
+  dev->max_events = 0;
+  dev->max_queues = 0;
+
+  /* Default pipe support for PoCL devices */
+  dev->pipe_support = CL_FALSE;
+  /* Specification requires pipe values to be 0, when pipes are not supported
+   */
+  dev->max_pipe_args = 0;
+  dev->max_pipe_active_res = 0;
+  dev->max_pipe_packet_size = 0;
+
+  dev->dev_queue_pref_size = 0;
+  dev->dev_queue_max_size = 0;
+  dev->on_dev_queue_props = 0;
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
   dev->device_alloca_locals = 0;
+  dev->global_var_max_size = 0;
+  dev->global_var_pref_size = 0;
+  dev->non_uniform_work_group_support = CL_FALSE;
+  dev->max_num_sub_groups = 0;
+  dev->sub_group_independent_forward_progress = CL_FALSE;
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
 #ifdef HOST_CPU_FORCED
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
-  dev->llvm_cpu = get_llvm_cpu_name ();
+  dev->llvm_cpu = pocl_get_llvm_cpu_name ();
 #endif
 
   dev->spirv_version = "SPIR-V_1.2";
@@ -1578,4 +1530,11 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->llvm_target_triplet = "";
 #endif
 
+  /* OpenCL 3.0 properties */
+  /* Minimum mandated capability */
+  dev->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                    | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+  dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                    | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                    | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
 }

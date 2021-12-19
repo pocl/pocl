@@ -23,7 +23,7 @@
 
 #include "config.h"
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  define _DEFAULT_SOURCE
 #  define __POSIX_VISIBLE 200112L
 #  ifndef _POSIX_C_SOURCE
@@ -35,7 +35,7 @@
 #  else
 #    include <sys/time.h>
 #  endif
-#  ifdef __MACH__
+#  ifdef __APPLE__
 #    include <mach/clock.h>
 #    include <mach/mach.h>
 #  endif
@@ -67,16 +67,13 @@ uint64_t pocl_gettimemono_ns() {
 
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec timespec;
-# ifdef __linux__
-#  ifdef CLOCK_MONOTONIC_RAW 
+# ifdef CLOCK_MONOTONIC_RAW /* Linux */
   clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
-#  else
-#   warning Using clock_gettime with CLOCK_MONOTONIC for monotonic clocks
-  clock_gettime(CLOCK_MONOTONIC, &timespec);
-#  endif
-# elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
+# elif defined(CLOCK_UPTIME_FAST) /* FreeBSD, DragonFlyBSD, etc */
   clock_gettime(CLOCK_UPTIME_FAST, &timespec);
-# else
+# elif defined(CLOCK_MONOTONIC) /* POSIX 2008, NetBSD, etc */
+  clock_gettime(CLOCK_MONOTONIC, &timespec);
+# else /* older POSIX didn't define CLOCK_MONOTONIC */
 # warning Using clock_gettime with CLOCK_REALTIME for monotonic clocks
   clock_gettime(CLOCK_REALTIME, &timespec);
 # endif
@@ -93,11 +90,12 @@ uint64_t pocl_gettimemono_ns() {
 
 #elif defined(_WIN32)
   FILETIME ft;
+  uint64_t res = 0;
   GetSystemTimeAsFileTime(&ft);
   res |= ft.dwHighDateTime;
   res <<= 32;
   res |= ft.dwLowDateTime;
-  res -= 11644473600000000Ui64;
+  res -= 11644473600000000ULL;
   res /= 10;
   return res;
 
@@ -136,7 +134,7 @@ int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *se
 #endif
   gmtime_r(&sec_input, &t);
   *year = (t.tm_year + 1900);
-  *mon = t.tm_mon;
+  *mon = t.tm_mon + 1;
   *day = t.tm_mday;
   *hour = t.tm_hour;
   *min = t.tm_min;
@@ -144,15 +142,20 @@ int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *se
   return 0;
 
 #elif defined(_WIN32)
-  FILETIME ft;
-  GetSystemTimeAsFileTime(&ft);
-  res |= ft.dwHighDateTime;
-  res <<= 32;
-  res |= ft.dwLowDateTime;
-  res -= 11644473600000000Ui64;
-  res /= 10;
-  // TODO finish this
-  return 1;
+  SYSTEMTIME st;
+  FILETIME t;
+  GetSystemTimeAsFileTime (&t);
+  FileTimeToSystemTime (&t, &st);
+  uint64_t st_nanosec = (t.dwLowDateTime % 10000000) * 100;
+
+  *year = (int)st.wYear;
+  *mon = (int)st.wMonth;
+  *day = (int)st.wDay;
+  *hour = (int)st.wHour;
+  *min = (int)st.wMinute;
+  *sec = (int)st.wSecond;
+  *nanosec = (long)st_nanosec;
+  return 0;
 #else
 #error Unknown system variant
 #endif

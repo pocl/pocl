@@ -1,14 +1,124 @@
-1.7 unreleased
+1.9 Unreleased
 ==============
 
 Notable User Facing Changes
 ---------------------------
 
+- Updated API calls towards (minimal) conformance to OpenCL 3.0
+  specification:
+  - Pipes, reporting no pipe support.
+  - Device-side Enqueue, reporting no support for device-side enqueue.
+- Text tracing improved - a few new command types traced,
+  event dependencies are now also recorded
+- There are now two scripts, which let the user parse & convert the
+  outputs of LTTNG and Text tracer into a JSON format, suitable
+  for loading into Chromium's trace visualizer (chrome://tracing)
+- Support for generating specialized work-group functions to the PoCL
+  kernel program binaries.
+
+Notable Bug Fixes
+-----------------
+- Fixed poclbin for non-SPMD targets. The generic size WG function generation
+  was completely broken and the breakage was hidden by the WG specialization
+  recompilation, if online compiler was available.
+- Fixed a race condidion in clBuildProgram
+- Fixed uninitialized variables and other issues in tests
+- Fixed the post-event-finish-cleanup process in the drivers,
+  this should improve reliability
+- Few more fixes for Android
+- Fixed loss of precision in CUDA event times due to type conversion
+
+Other
+-----
+
+- lib/kernel/libclc has received a number of new math library function
+  implementations. These are useful for some drivers which can't
+  use SLEEF and want to avoid libm calls or simple expression
+  implementations.
+
+- TCE driver significantly improved, it now uses argbuffer launcher,
+  handles multithreaded user programs properly, uses the new libclc
+  math library functions, and has fixed some filesystem race conditions.
+  Should be able to run the TCE testsuite in parallel without random errors.
+
+- a new proxy driver that lets PoCL proxy to another OpenCL implementation.
+  if a user creates a cl_context with multiple devices including one via
+  the proxy driver, PoCL will automatically manage buffer memory within
+  the context.
+
+- a new experimental Vulkan driver, using clspv and Vulkan API to run
+  OpenCL code on Vulkan-enabled devices. To learn about the limitations,
+  please read the documentation at doc/sphinx/source/vulkan.rst.
+
+1.8 October 2021
+================
+
+Notable User Facing Changes
+---------------------------
+
+- support for LLVM 13
+- CMake: Inter-Procedural Optimization is enabled on code of runtime library
+  (libpocl.so is compiled with -flto on systems that support it).
+- LTTng tracing improved - more command types are traced, and also
+  some synchronous API calls (like clCreateBuffer) are traced.
+- poclcc, tests and examples can be disabled with CMake options
+- Valgrind support improved by making Valgrind aware of pocl's
+  reference counting of cl_* objects
+- kernels which are called by kernels are now force-inlined
+- Support for NetBSD.
+- Support for Unix systems without libdl.
+- PoCL can now (optionally) respond to SIGUSR2 by printing
+  some live debug information.
+- improved SPIR support for CUDA devices
+
+Notable Bug Fixes
+-----------------
+
+- Fixed a potential crash on Unix systems without sysfs mounted.
+- Fixed compilation errors when building on macOS.
+  - Fixed POCL_FAST_INIT macro; POCL_INIT_LOCK must be invoked with only one argument.
+  - Fix bin/poclcc to not depend on OpenCL 2.0 symbols
+- Fixed miscompilation in kernel loops with multiple conditionals with barriers in them.
+
+Other
+-----
+- Add cmake options PARALLEL_COMPILE_JOBS, PARALLEL_LINK_JOBS to
+  use ninja's seperate compile and link job pools.
+
+- Improve memory architecture, buffer migration and allocation.
+  Buffers are now allocated on a device when first used
+  (previously each buffer was allocated on every device in context).
+
+- the single global LLVMContext was replaced with
+  multiple LLVMContexts, one per OpenCL cl_context.
+  OpenCL code can now be compiled in parallel
+  when using separate cl_contexts. This feature
+  is disabled by default since it significantly slowed
+  down PyOpenCL. This should be resolved by separating
+  LLVM compilation in their own threads in the future.
+
+- a new OpenCL extension was added to PoCL: cl_pocl_content_size.
+  The extension allows the user to give optimization hint to PoCL,
+  which will be used internally by PoCL to optimize buffer transfers
+  between multiple devices.
+
+1.7 May 2021
+============
+
+Notable User Facing Changes
+---------------------------
+
+- Support for LLVM 12.
+- support for cross-compiling PoCL
 - Added support for the cl_nv_device_attribute_query extension on CUDA devices.
 - improved support for SPIR-V binaries when using CPU device:
   - improved local variables support
   - OpenCL 2.0 atomics are now supported
   - work_group_barrier, to_local/to_global are implemented
+- Implemented OpenCL 3.0 features
+  - clGetDeviceInfo queries
+    - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)
+    - CL_DEVICE_ATOMIC_FENCE_CAPABILITIES (Minimal implementation)
 
 Notable Bug Fixes
 -----------------

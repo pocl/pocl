@@ -24,10 +24,11 @@
 
 #include "accel.h"
 #include "bufalloc.h"
+#include "common.h"
+#include "common_driver.h"
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_util.h"
-#include "common.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -39,6 +40,7 @@
 #include <climits>
 #include <iostream>
 #include <set>
+#include <string>
 #include <vector>
 
 // MMAPRegion debug prints get quite spammy
@@ -297,9 +299,9 @@ struct AccelData {
 
   std::set<BIKD *> SupportedKernels;
   // List of commands ready to be executed.
-  _cl_command_node *volatile ReadyList;
+  _cl_command_node *ReadyList;
   // List of commands not yet ready to be executed.
-  _cl_command_node *volatile CommandList;
+  _cl_command_node *CommandList;
   // Lock for command list related operations.
   pocl_lock_t CommandListLock;
 
@@ -314,13 +316,15 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->uninit = pocl_accel_uninit;
   ops->probe = pocl_accel_probe;
   ops->build_hash = pocl_accel_build_hash;
-  ops->supports_builtin_kernel = pocl_accel_supports_builtin_kernel;
-  ops->get_builtin_kernel_metadata = pocl_accel_get_builtin_kernel_metadata;
+  ops->setup_metadata = pocl_accel_setup_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */
   ops->alloc_mem_obj = pocl_accel_alloc_mem_obj;
   ops->free = pocl_accel_free;
   ops->map_mem = pocl_accel_map_mem;
+  ops->unmap_mem = pocl_accel_unmap_mem;
+  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
+  ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
 
   ops->submit = pocl_accel_submit;
   ops->flush = ops->join = pocl_accel_join;
@@ -344,7 +348,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
     ops->wait_event = pocl_accel_wait_event;
     ops->free_event_data = pocl_accel_free_event_data;
     ops->init_target_machine = NULL;
-    ops->wait_event = pocl_accel_wait_event;
     ops->init_build = pocl_accel_init_build;
 #endif
 }
@@ -371,46 +374,71 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
 
 cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
                                 void *host_ptr) {
-  AccelData *data = (AccelData *)device->data;
 
-  chunk_info_t *chunk = alloc_buffer(&data->AllocRegion, mem_obj->size);
+  AccelData *data = (AccelData *)device->data;
+  pocl_mem_identifier *p = &mem_obj->device_ptrs[device->global_mem_id];
+  assert(p->mem_ptr == NULL);
+  chunk_info_t *chunk = NULL;
+
+  /* accel driver doesn't preallocate */
+  if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+  chunk = pocl_alloc_buffer_from_region(&data->AllocRegion, mem_obj->size);
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  POCL_MSG_PRINT_INFO("accel: allocated 0x%zu bytes from 0x%zu\n",
-                      mem_obj->size, chunk->start_address);
+  POCL_MSG_PRINT_MEMORY ("accel: allocated 0x%zu bytes from 0x%zu\n",
+                          mem_obj->size, chunk->start_address);
 
-  if ((mem_obj->flags & CL_MEM_COPY_HOST_PTR) ||
-      ((mem_obj->flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)) {
-    /* TODO:
-       CL_MEM_USE_HOST_PTR must synch the buffer after execution
-       back to the host's memory in case it's used as an output (?). */
-    data->ParameterMemory.CopyToMMAP(chunk->start_address, host_ptr,
-                                     mem_obj->size);
-  }
-
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = (void *)chunk;
+  p->mem_ptr = chunk;
+  p->version = 0;
 
   return CL_SUCCESS;
 }
 
-void pocl_accel_free(cl_device_id device, cl_mem mem_obj) {
+
+void pocl_accel_free(cl_device_id device, cl_mem mem) {
+
+  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
+  AccelData *data = (AccelData *)device->data;
+
   chunk_info_t *chunk =
-      (chunk_info_t *)mem_obj->device_ptrs[device->dev_id].mem_ptr;
-  free_chunk(chunk);
+      (chunk_info_t *)p->mem_ptr;
+
+  POCL_MSG_PRINT_MEMORY ("accel: freed 0x%zu bytes from 0x%zu\n",
+                          mem->size, chunk->start_address);
+
+  assert(chunk != NULL);
+  pocl_free_chunk(chunk);
+
+  p->mem_ptr = NULL;
+  p->version = 0;
+
 }
 
 cl_int pocl_accel_map_mem(void *data, pocl_mem_identifier *src_mem_id,
                           cl_mem src_buf, mem_mapping_t *map) {
-  if (map->host_ptr == NULL) {
-    map->host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, map->size);
-  }
 
   /* Synch the device global region to the host memory. */
   pocl_accel_read(data, map->host_ptr, src_mem_id, src_buf, map->offset,
                   map->size);
+
   return CL_SUCCESS;
 }
+
+cl_int pocl_accel_unmap_mem(void *data, pocl_mem_identifier *dst_mem_id,
+                            cl_mem dst_buf, mem_mapping_t *map) {
+
+  if (map->map_flags != CL_MAP_READ) {
+  /* Synch the host memory to the device global region. */
+  pocl_accel_write(data, map->host_ptr, dst_mem_id, dst_buf, map->offset,
+                  map->size);
+  }
+
+  return CL_SUCCESS;
+}
+
 
 cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
@@ -438,6 +466,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   char *paramToken = strtok_r(scanParams, ",", &savePtr);
   D->BaseAddress = strtoull(paramToken, NULL, 0);
 
+  std::string supportedList;
   while (paramToken = strtok_r(NULL, ",", &savePtr)) {
     auto token = strtoul(paramToken, NULL, 0);
     BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
@@ -446,6 +475,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     bool found = false;
     for (size_t i = 0; i < numBIKDs; ++i) {
       if (BIDescriptors[i].KernelId == kernelId) {
+        if (supportedList.size() > 0)
+          supportedList += ";";
+        supportedList += BIDescriptors[i].name;
         D->SupportedKernels.insert(&BIDescriptors[i]);
         found = true;
         break;
@@ -455,6 +487,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       POCL_ABORT("accel: Unknown Kernel ID (%lu) given\n", token);
     }
   }
+
+  dev->builtin_kernel_list = strdup(supportedList.c_str());
 
   POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels\n",
                       D->BaseAddress, D->SupportedKernels.size());
@@ -487,7 +521,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   D->DataMemory.Map(D->BaseAddress + 2 * max_region, dmem_size, mem_fd);
   D->ParameterMemory.Map(D->BaseAddress + 3 * max_region, pmem_size, mem_fd);
 
-  init_mem_region(&D->AllocRegion, D->ParameterMemory.PhysAddress, pmem_size);
+  pocl_init_mem_region(&D->AllocRegion, D->ParameterMemory.PhysAddress,
+                       pmem_size);
 
   // memory mapping done
   close(mem_fd);
@@ -533,28 +568,13 @@ unsigned int pocl_accel_probe(struct pocl_device_ops *ops) {
 
 char *pocl_accel_build_hash(cl_device_id /*device*/) {
   char *res = (char *)calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_llvm_cpu_name();
-  snprintf(res, 1000, "accel-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE(name);
-#else
   snprintf(res, 1000, "accel-%s", HOST_DEVICE_BUILD_HASH);
-#endif
   return res;
 }
 
-cl_int pocl_accel_supports_builtin_kernel(void *data, const char *kernel_name) {
-  AccelData *D = (AccelData *)data;
-  for (auto supportedKernel : D->SupportedKernels) {
-    if (strcmp(supportedKernel->name, kernel_name) == 0)
-      return 1;
-  }
-  return 0;
-}
-
-cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
-                                              const char *kernel_name,
-                                              pocl_kernel_metadata_t *target) {
+static cl_int
+pocl_accel_get_builtin_kernel_metadata(void *data, const char *kernel_name,
+                                       pocl_kernel_metadata_t *target) {
   AccelData *D = (AccelData *)data;
   BIKD *Desc = nullptr;
   for (size_t i = 0; i < sizeof(BIDescriptors) / sizeof(BIDescriptors[0]);
@@ -568,7 +588,7 @@ cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
           Desc->num_args, sizeof(struct pocl_argument_info));
       memset(target->arg_info, 0,
              sizeof(struct pocl_argument_info) * Desc->num_args);
-      for (int Arg = 0; Arg < Desc->num_args; ++Arg) {
+      for (unsigned Arg = 0; Arg < Desc->num_args; ++Arg) {
         memcpy(&target->arg_info[Arg], &Desc->arg_info[Arg],
                sizeof(pocl_argument_info));
         target->arg_info[Arg].name = strdup(Desc->arg_info[Arg].name);
@@ -579,6 +599,25 @@ cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
   return 0;
 }
 
+int pocl_accel_setup_metadata(cl_device_id device, cl_program program,
+                              unsigned program_device_i) {
+  if (program->builtin_kernel_names == nullptr)
+    return 0;
+
+  program->num_kernels = program->num_builtin_kernels;
+  if (program->num_kernels) {
+    program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
+        program->num_kernels, sizeof(pocl_kernel_metadata_t));
+
+    for (size_t i = 0; i < program->num_kernels; ++i) {
+      pocl_accel_get_builtin_kernel_metadata(device->data,
+                                             program->builtin_kernel_names[i],
+                                             &program->kernel_meta[i]);
+    }
+  }
+
+  return 1;
+}
 
 static void scheduleCommands(AccelData &D) {
 
@@ -659,7 +698,8 @@ size_t scheduleNDRange(AccelData *data, _cl_command_run *run, size_t arg_size,
   }
   // Additional space for a signal
   size_t extraAlloc = sizeof(uint32_t);
-  chunk_info_t *chunk = alloc_buffer(&data->AllocRegion, arg_size + extraAlloc);
+  chunk_info_t *chunk =
+      pocl_alloc_buffer_from_region(&data->AllocRegion, arg_size + extraAlloc);
   assert(chunk && "Failed to allocate signal/argument buffer");
 
   POCL_MSG_PRINT_INFO("accel: allocated 0x%zx bytes for signal/arguments "
@@ -761,9 +801,11 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
       if (al->value == NULL) {
         *(size_t *)current_arg = 0;
       } else {
+        // accel doesn't support SVM pointers
+        assert(al->is_svm == 0);
         cl_mem m = (*(cl_mem *)(al->value));
         auto chunk =
-            (chunk_info_t *)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+            (chunk_info_t *)m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
         size_t buffer = (size_t)chunk->start_address;
         size_t phys = buffer + al->offset;
         *(size_t *)current_arg = phys;

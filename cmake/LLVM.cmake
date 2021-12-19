@@ -24,6 +24,22 @@
 #
 #=============================================================================
 
+if(TCE_CONFIG AND ((NOT DEFINED ENABLE_TCE) OR (ENABLE_TCE)) )
+  execute_process(COMMAND "${TCE_CONFIG}" --llvm-config
+                  RESULT_VARIABLE RES
+                  OUTPUT_VARIABLE TCE_LLVM_CONFIG
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(RES EQUAL 0)
+    if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
+      if(NOT WITH_LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG)
+        message(FATAL_ERROR "TCE is not disabled, and the llvm-config in WITH_LLVM_CONFIG (${WITH_LLVM_CONFIG}) is different from llvm-config used by TCE (${TCE_LLVM_CONFIG})")
+      endif()
+    else()
+      set(WITH_LLVM_CONFIG "${TCE_LLVM_CONFIG}")
+    endif()
+  endif()
+endif()
+
 if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   # search for preferred version
   if(IS_ABSOLUTE "${WITH_LLVM_CONFIG}")
@@ -39,6 +55,8 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-14.0" "llvm-config-14" "llvm-config140"
+      "llvm-config-mp-13.0" "llvm-config-13" "llvm-config130"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
@@ -56,7 +74,9 @@ if(NOT LLVM_CONFIG)
 else()
   file(TO_CMAKE_PATH "${LLVM_CONFIG}" LLVM_CONFIG)
   message(STATUS "Using llvm-config: ${LLVM_CONFIG}")
-  if(LLVM_CONFIG MATCHES "llvm-config${CMAKE_EXECUTABLE_SUFFIX}$")
+  if(LLVM_CONFIG MATCHES "llvmtce-config${CMAKE_EXECUTABLE_SUFFIX}$")
+    set(LLVM_BINARY_SUFFIX "")
+  elseif(LLVM_CONFIG MATCHES "llvm-config${CMAKE_EXECUTABLE_SUFFIX}$")
     set(LLVM_BINARY_SUFFIX "")
   elseif(LLVM_CONFIG MATCHES "llvm-config(.*)${CMAKE_EXECUTABLE_SUFFIX}$")
     set(LLVM_BINARY_SUFFIX "${CMAKE_MATCH_1}")
@@ -74,13 +94,14 @@ get_filename_component(LLVM_CONFIG_LOCATION "${LLVM_CONFIG}" DIRECTORY)
 macro(run_llvm_config VARIABLE_NAME)
   execute_process(
     COMMAND "${LLVM_CONFIG}" ${ARGN}
-    OUTPUT_VARIABLE ${VARIABLE_NAME}
+    OUTPUT_VARIABLE LLVM_CONFIG_VALUE
     RESULT_VARIABLE LLVM_CONFIG_RETVAL
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
   if(LLVM_CONFIG_RETVAL)
     message(SEND_ERROR "Error running llvm-config with arguments: ${ARGN}")
   else()
+    set(${VARIABLE_NAME} ${LLVM_CONFIG_VALUE} CACHE STRING "llvm-config's ${VARIABLE_NAME} value")
     message(STATUS "llvm-config's ${VARIABLE_NAME} is: ${${VARIABLE_NAME}}")
   endif()
 endmacro(run_llvm_config)
@@ -198,8 +219,14 @@ elseif(LLVM_VERSION MATCHES "^11[.]")
 elseif(LLVM_VERSION MATCHES "^12[.]")
   set(LLVM_MAJOR 12)
   set(LLVM_12_0 1)
+elseif(LLVM_VERSION MATCHES "^13[.]")
+  set(LLVM_MAJOR 13)
+  set(LLVM_13_0 1)
+elseif(LLVM_VERSION MATCHES "^14[.]")
+  set(LLVM_MAJOR 14)
+  set(LLVM_14_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 12.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 6.0 and 14.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
@@ -269,7 +296,13 @@ endforeach()
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
-  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" DOC "${DOCSTRING}")
+  find_program(${OUTPUT_VAR}
+    NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}"
+    HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}"
+    DOC "${DOCSTRING}"
+    NO_CMAKE_PATH
+    NO_CMAKE_ENVIRONMENT_PATH
+  )
   if(${OUTPUT_VAR})
     message(STATUS "Found ${PROG_NAME}: ${${OUTPUT_VAR}}")
   else()
@@ -543,51 +576,6 @@ endmacro()
 
 ####################################################################
 #
-# clangxx works check 
-#
-
-# TODO clang + vecmathlib doesn't work on Windows yet...
-if(CLANGXX AND (NOT WIN32) AND ENABLE_HOST_CPU_DEVICES)
-
-  message(STATUS "Checking if clang++ works (required by vecmathlib)")
-
-  set(CXX_WORKS 0)
-  set(CXX_STDLIB "")
-
-  if(NOT DEFINED CLANGXX_WORKS)
-
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-std=c++11")
-
-    if(NOT _STATUS_FAIL)
-      set(CXX_WORKS 1)
-    else()
-      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++" "-std=c++11")
-      if (NOT _STATUS_FAIL)
-        set(CXX_STDLIB "-stdlib=libstdc++")
-        set(CXX_WORKS 1)
-      else()
-        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++" "-std=c++11")
-        if(NOT _STATUS_FAIL)
-          set(CXX_STDLIB "-stdlib=libc++")
-          set(CXX_WORKS 1)
-        endif()
-      endif()
-    endif()
-
-    set(CLANGXX_WORKS ${CXX_WORKS} CACHE INTERNAL "Clang++ ")
-    set(CLANGXX_STDLIB ${CXX_STDLIB} CACHE INTERNAL "Clang++ stdlib")
-  endif()
-
-
-endif()
-
-if(CLANGXX_STDLIB AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-  set(LLVM_CXXFLAGS "${CLANGXX_STDLIB} ${LLVM_CXXFLAGS}")
-  set(LLVM_LDFLAGS "${CLANGXX_STDLIB} ${LLVM_LDFLAGS}")
-endif()
-
-####################################################################
-#
 # - '-DNDEBUG' is a work-around for llvm bug 18253
 #
 # llvm-config does not always report the "-DNDEBUG" flag correctly
@@ -735,6 +723,7 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
       message(FATAL_ERROR "Could not determine whether to use -march or -mcpu with clang")
     endif()
   endif()
+  message(STATUS "  Using ${CLANG_MARCH_FLAG}")
 
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
 endif()

@@ -28,10 +28,12 @@
 
 #include "pocl.h"
 #include "pocl_spir.h"
+//#include "_libclang_versions_checks.h"
 
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Metadata.h>
 #include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/Cloning.h> // for CloneFunctionIntoAbs
 
 namespace llvm {
     class Module;
@@ -47,6 +49,7 @@ void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 // Remove a function from a module, along with all callsites.
+POCL_EXPORT
 void eraseFunctionAndCallers(llvm::Function *Function);
 
 inline bool
@@ -106,6 +109,30 @@ void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
                               unsigned AS);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
+}
+
+template <typename VectorT>
+void CloneFunctionIntoAbs(llvm::Function *NewFunc,
+                          const llvm::Function *OldFunc,
+                          llvm::ValueToValueMapTy &VMap, VectorT &Returns,
+                          bool sameModule = true,
+                          const char *NameSuffix = "",
+                          llvm::ClonedCodeInfo *CodeInfo = nullptr,
+                          llvm::ValueMapTypeRemapper *TypeMapper = nullptr,
+                          llvm::ValueMaterializer *Materializer = nullptr) {
+
+
+#ifdef LLVM_OLDER_THAN_13_0
+  CloneFunctionInto(NewFunc, OldFunc, VMap, true,
+                    Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
+#else
+                    // ClonedModule DifferentModule LocalChangesOnly
+                    // GlobalChanges
+  CloneFunctionInto(NewFunc, OldFunc, VMap,
+                    (sameModule ? llvm::CloneFunctionChangeType::GlobalChanges
+                                : llvm::CloneFunctionChangeType::DifferentModule),
+                    Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
+#endif
 }
 
 #endif

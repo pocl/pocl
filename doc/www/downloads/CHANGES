@@ -1,3 +1,73 @@
+1.8 October 2021
+================
+
+Notable User Facing Changes
+---------------------------
+
+- support for LLVM 13
+- CMake: Inter-Procedural Optimization is enabled on code of runtime library
+  (libpocl.so is compiled with -flto on systems that support it).
+- LTTng tracing improved - more command types are traced, and also
+  some synchronous API calls (like clCreateBuffer) are traced.
+- poclcc, tests and examples can be disabled with CMake options
+- Valgrind support improved by making Valgrind aware of pocl's
+  reference counting of cl_* objects
+- kernels which are called by kernels are now force-inlined
+- Support for NetBSD.
+- Support for Unix systems without libdl.
+- PoCL can now (optionally) respond to SIGUSR2 by printing
+  some live debug information.
+- improved SPIR support for CUDA devices
+
+Notable Bug Fixes
+-----------------
+
+- Fixed a potential crash on Unix systems without sysfs mounted.
+- Fixed compilation errors when building on macOS.
+  - Fixed POCL_FAST_INIT macro; POCL_INIT_LOCK must be invoked with only one argument.
+  - Fix bin/poclcc to not depend on OpenCL 2.0 symbols
+- Fixed miscompilation in kernel loops with multiple conditionals with barriers in them.
+
+Other
+-----
+- Add cmake options PARALLEL_COMPILE_JOBS, PARALLEL_LINK_JOBS to
+  use ninja's seperate compile and link job pools.
+
+- Improve memory architecture, buffer migration and allocation.
+  Buffers are now allocated on a device when first used
+  (previously each buffer was allocated on every device in context).
+
+- the single global LLVMContext was replaced with
+  multiple LLVMContexts, one per OpenCL cl_context.
+  OpenCL code can now be compiled in parallel
+  when using separate cl_contexts. This feature
+  is disabled by default since it significantly slowed
+  down PyOpenCL. This should be resolved by separating
+  LLVM compilation in their own threads in the future.
+
+- a new OpenCL extension was added to PoCL: cl_pocl_content_size.
+  The extension allows the user to give optimization hint to PoCL,
+  which will be used internally by PoCL to optimize buffer transfers
+  between multiple devices.
+
+1.7 May 2021
+============
+
+Notable User Facing Changes
+---------------------------
+
+- Support for LLVM 12.
+- support for cross-compiling PoCL
+- Added support for the cl_nv_device_attribute_query extension on CUDA devices.
+- improved support for SPIR-V binaries when using CPU device:
+  - improved local variables support
+  - OpenCL 2.0 atomics are now supported
+  - work_group_barrier, to_local/to_global are implemented
+- Implemented OpenCL 3.0 features
+  - clGetDeviceInfo queries
+    - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)
+    - CL_DEVICE_ATOMIC_FENCE_CAPABILITIES (Minimal implementation)
+
 1.6 December 2020
 =================
 

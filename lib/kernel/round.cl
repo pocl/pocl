@@ -24,4 +24,14 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(round)
+float __attribute__ ((overloadable))
+pocl_round(float x)
+{
+  float t = trunc(x);
+  float d = fabs(x - t);
+  float o = copysign(1.0f, x);
+  return t + (d >= 0.5f ? o : 0.0f);
+}
+
+DEFINE_FLOAT_BUILTIN_V_V(round, pocl_round)
+DEFINE_HALF_BUILTIN_V_V(round, pocl_round)

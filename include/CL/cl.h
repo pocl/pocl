@@ -1,29 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2008-2019 The Khronos Group Inc.
+ * Copyright (c) 2008-2020 The Khronos Group Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and/or associated documentation files (the
- * "Materials"), to deal in the Materials without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Materials, and to
- * permit persons to whom the Materials are furnished to do so, subject to
- * the following conditions:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Materials.
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
- * MODIFICATIONS TO THIS FILE MAY MEAN IT NO LONGER ACCURATELY REFLECTS
- * KHRONOS STANDARDS. THE UNMODIFIED, NORMATIVE VERSIONS OF KHRONOS
- * SPECIFICATIONS AND HEADER INFORMATION ARE LOCATED AT
- *    https://www.khronos.org/registry/
- *
- * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
- * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
- * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  ******************************************************************************/
 
 #ifndef __OPENCL_CL_H
@@ -119,6 +107,12 @@ typedef cl_uint             cl_profiling_info;
 typedef cl_bitfield         cl_sampler_properties;
 typedef cl_uint             cl_kernel_exec_info;
 #endif
+#ifdef CL_VERSION_3_0
+typedef cl_bitfield         cl_device_atomic_capabilities;
+typedef cl_uint             cl_khronos_vendor_id;
+typedef cl_bitfield         cl_mem_properties;
+typedef cl_uint             cl_version;
+#endif
 
 typedef struct _cl_image_format {
     cl_channel_order        image_channel_order;
@@ -165,6 +159,17 @@ typedef struct _cl_buffer_region {
     size_t                  origin;
     size_t                  size;
 } cl_buffer_region;
+
+#endif
+
+#ifdef CL_VERSION_3_0
+
+#define CL_NAME_VERSION_MAX_NAME_SIZE 64
+
+typedef struct _cl_name_version {
+    cl_version              version;
+    char                    name[CL_NAME_VERSION_MAX_NAME_SIZE];
+} cl_name_version;
 
 #endif
 
@@ -265,6 +270,10 @@ typedef struct _cl_buffer_region {
 #define CL_PLATFORM_EXTENSIONS                      0x0904
 #ifdef CL_VERSION_2_1
 #define CL_PLATFORM_HOST_TIMER_RESOLUTION           0x0905
+#endif
+#ifdef CL_VERSION_3_0
+#define CL_PLATFORM_NUMERIC_VERSION                 0x0906
+#define CL_PLATFORM_EXTENSIONS_WITH_VERSION         0x0907
 #endif
 
 /* cl_device_type - bitfield */
@@ -385,6 +394,23 @@ typedef struct _cl_buffer_region {
 #define CL_DEVICE_MAX_NUM_SUB_GROUPS                     0x105C
 #define CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS 0x105D
 #endif
+#ifdef CL_VERSION_3_0
+#define CL_DEVICE_NUMERIC_VERSION                        0x105E
+#define CL_DEVICE_EXTENSIONS_WITH_VERSION                0x1060
+#define CL_DEVICE_ILS_WITH_VERSION                       0x1061
+#define CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION          0x1062
+#define CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES             0x1063
+#define CL_DEVICE_ATOMIC_FENCE_CAPABILITIES              0x1064
+#define CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT         0x1065
+#define CL_DEVICE_OPENCL_C_ALL_VERSIONS                  0x1066
+#define CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE     0x1067
+#define CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT 0x1068
+#define CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT          0x1069
+/* 0x106A to 0x106E - Reserved for upcoming KHR extension */
+#define CL_DEVICE_OPENCL_C_FEATURES                      0x106F
+#define CL_DEVICE_DEVICE_ENQUEUE_SUPPORT                 0x1070
+#define CL_DEVICE_PIPE_SUPPORT                           0x1071
+#endif
 
 /* cl_device_fp_config - bitfield */
 #define CL_FP_DENORM                                (1 << 0)
@@ -477,6 +503,9 @@ typedef struct _cl_buffer_region {
 #endif
 #ifdef CL_VERSION_2_1
 #define CL_QUEUE_DEVICE_DEFAULT                     0x1095
+#endif
+#ifdef CL_VERSION_3_0
+#define CL_QUEUE_PROPERTIES_ARRAY                   0x1098
 #endif
 
 /* cl_mem_flags and cl_svm_mem_flags - bitfield */
@@ -586,6 +615,9 @@ typedef struct _cl_buffer_region {
 #ifdef CL_VERSION_2_0
 #define CL_MEM_USES_SVM_POINTER                     0x1109
 #endif
+#ifdef CL_VERSION_3_0
+#define CL_MEM_PROPERTIES                           0x110A
+#endif
 
 /* cl_image_info */
 #define CL_IMAGE_FORMAT                             0x1110
@@ -602,12 +634,14 @@ typedef struct _cl_buffer_region {
 #define CL_IMAGE_NUM_SAMPLES                        0x111A
 #endif
 
-#ifdef CL_VERSION_2_0
 
 /* cl_pipe_info */
+#ifdef CL_VERSION_2_0
 #define CL_PIPE_PACKET_SIZE                         0x1120
 #define CL_PIPE_MAX_PACKETS                         0x1121
-
+#endif
+#ifdef CL_VERSION_3_0
+#define CL_PIPE_PROPERTIES                          0x1122
 #endif
 
 /* cl_addressing_mode */
@@ -636,6 +670,9 @@ typedef struct _cl_buffer_region {
 #define CL_SAMPLER_MIP_FILTER_MODE                  0x1155
 #define CL_SAMPLER_LOD_MIN                          0x1156
 #define CL_SAMPLER_LOD_MAX                          0x1157
+#endif
+#ifdef CL_VERSION_3_0
+#define CL_SAMPLER_PROPERTIES                       0x1158
 #endif
 
 /* cl_map_flags - bitfield */
@@ -701,10 +738,6 @@ typedef struct _cl_buffer_region {
 #ifdef CL_VERSION_1_2
 #define CL_KERNEL_ATTRIBUTES                        0x1195
 #endif
-#ifdef CL_VERSION_2_1
-#define CL_KERNEL_MAX_NUM_SUB_GROUPS                0x11B9
-#define CL_KERNEL_COMPILE_NUM_SUB_GROUPS            0x11BA
-#endif
 
 #ifdef CL_VERSION_1_2
 
@@ -766,6 +799,8 @@ typedef struct _cl_buffer_region {
 #define CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE    0x2033
 #define CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE       0x2034
 #define CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT    0x11B8
+#define CL_KERNEL_MAX_NUM_SUB_GROUPS                0x11B9
+#define CL_KERNEL_COMPILE_NUM_SUB_GROUPS            0x11BA
 
 #endif
 
@@ -823,6 +858,9 @@ typedef struct _cl_buffer_region {
 #define CL_COMMAND_SVM_MAP                          0x120C
 #define CL_COMMAND_SVM_UNMAP                        0x120D
 #endif
+#ifdef CL_VERSION_3_0
+#define CL_COMMAND_SVM_MIGRATE_MEM                  0x120E
+#endif
 
 /* command execution status */
 #define CL_COMPLETE                                 0x0
@@ -830,11 +868,9 @@ typedef struct _cl_buffer_region {
 #define CL_SUBMITTED                                0x2
 #define CL_QUEUED                                   0x3
 
-#ifdef CL_VERSION_1_1
-
 /* cl_buffer_create_type */
+#ifdef CL_VERSION_1_1
 #define CL_BUFFER_CREATE_TYPE_REGION                0x1220
-
 #endif
 
 /* cl_profiling_info */
@@ -844,6 +880,47 @@ typedef struct _cl_buffer_region {
 #define CL_PROFILING_COMMAND_END                    0x1283
 #ifdef CL_VERSION_2_0
 #define CL_PROFILING_COMMAND_COMPLETE               0x1284
+#endif
+
+/* cl_device_atomic_capabilities - bitfield */
+#ifdef CL_VERSION_3_0
+#define CL_DEVICE_ATOMIC_ORDER_RELAXED          (1 << 0)
+#define CL_DEVICE_ATOMIC_ORDER_ACQ_REL          (1 << 1)
+#define CL_DEVICE_ATOMIC_ORDER_SEQ_CST          (1 << 2)
+#define CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM        (1 << 3)
+#define CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP       (1 << 4)
+#define CL_DEVICE_ATOMIC_SCOPE_DEVICE           (1 << 5)
+#define CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES      (1 << 6)
+#endif
+
+/* cl_khronos_vendor_id */
+#define CL_KHRONOS_VENDOR_ID_CODEPLAY               0x10004
+
+#ifdef CL_VERSION_3_0
+
+/* cl_version */
+#define CL_VERSION_MAJOR_BITS (10)
+#define CL_VERSION_MINOR_BITS (10)
+#define CL_VERSION_PATCH_BITS (12)
+
+#define CL_VERSION_MAJOR_MASK ((1 << CL_VERSION_MAJOR_BITS) - 1)
+#define CL_VERSION_MINOR_MASK ((1 << CL_VERSION_MINOR_BITS) - 1)
+#define CL_VERSION_PATCH_MASK ((1 << CL_VERSION_PATCH_BITS) - 1)
+
+#define CL_VERSION_MAJOR(version) \
+  ((version) >> (CL_VERSION_MINOR_BITS + CL_VERSION_PATCH_BITS))
+
+#define CL_VERSION_MINOR(version) \
+  (((version) >> CL_VERSION_PATCH_BITS) & CL_VERSION_MINOR_MASK)
+
+#define CL_VERSION_PATCH(version) ((version) & CL_VERSION_PATCH_MASK)
+
+#define CL_MAKE_VERSION(major, minor, patch)                      \
+  ((((major) & CL_VERSION_MAJOR_MASK)                             \
+       << (CL_VERSION_MINOR_BITS + CL_VERSION_PATCH_BITS)) |      \
+   (((minor) & CL_VERSION_MINOR_MASK) << CL_VERSION_PATCH_BITS) | \
+   ((patch) & CL_VERSION_PATCH_MASK))
+
 #endif
 
 /********************************************************************************************************/
@@ -1011,6 +1088,27 @@ clCreatePipe(cl_context                 context,
              cl_uint                    pipe_max_packets,
              const cl_pipe_properties * properties,
              cl_int *                   errcode_ret) CL_API_SUFFIX__VERSION_2_0;
+
+#endif
+
+#ifdef CL_VERSION_3_0
+
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateBufferWithProperties(cl_context                context,
+                             const cl_mem_properties * properties,
+                             cl_mem_flags              flags,
+                             size_t                    size,
+                             void *                    host_ptr,
+                             cl_int *                  errcode_ret) CL_API_SUFFIX__VERSION_3_0;
+
+extern CL_API_ENTRY cl_mem CL_API_CALL
+clCreateImageWithProperties(cl_context                context,
+                            const cl_mem_properties * properties,
+                            cl_mem_flags              flags,
+                            const cl_image_format *   image_format,
+                            const cl_image_desc *     image_desc,
+                            void *                    host_ptr,
+                            cl_int *                  errcode_ret) CL_API_SUFFIX__VERSION_3_0;
 
 #endif
 

@@ -32,7 +32,7 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
                 void *         param_value ,
                 size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_2
 {
-  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   POCL_RETURN_ERROR_ON ((arg_indx >= kernel->meta->num_args),
                         CL_INVALID_ARG_INDEX,

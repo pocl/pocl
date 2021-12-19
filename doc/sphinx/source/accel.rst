@@ -141,7 +141,7 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
     - Copies from argument 0 to argument 1 as many bytes as there are work items
   * - pocl.add32
     - 1
-    - 32-bit element-wise addtion on arrays pointed to by arguments 0 and 1,
+    - 32-bit element-wise addition on arrays pointed to by arguments 0 and 1,
       stored in an array pointed to by argument 3
   * - pocl.mul32
     - 2

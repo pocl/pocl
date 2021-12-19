@@ -30,6 +30,8 @@
 #include "pocl_util.h"
 #include <string.h>
 
+extern unsigned long program_c;
+
 /* creates either a program with binaries, or an empty program. The latter
  * is useful for clLinkProgram() which needs an empty program to put the
  * compiled results in.
@@ -46,7 +48,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   int errcode;
   cl_device_id *unique_devlist = NULL;
 
-  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   POCL_GOTO_ERROR_COND((device_list == NULL), CL_INVALID_VALUE);
 
@@ -103,30 +105,39 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   
   POCL_INIT_OBJECT(program);
 
-  if ((program->binary_sizes =
-       (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
-      (program->binaries = (unsigned char**)
-       calloc (num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binaries = (unsigned char**)
-       calloc (num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binary_sizes =
-             (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
-      (program->build_log = (char**)
-       calloc (num_devices, sizeof(char*))) == NULL ||
-      ((program->llvm_irs =
-        (void**) calloc (num_devices, sizeof(void*))) == NULL) ||
-      ((program->build_hash = (SHA1_digest_t*)
-        calloc (num_devices, sizeof(SHA1_digest_t))) == NULL))
+  if ((program->binary_sizes = (size_t *)calloc (num_devices, sizeof (size_t)))
+          == NULL
+      || (program->binaries
+          = (unsigned char **)calloc (num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binaries
+          = (unsigned char **)calloc (num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binary_sizes
+          = (size_t *)calloc (num_devices, sizeof (size_t)))
+             == NULL
+      || (program->build_log = (char **)calloc (num_devices, sizeof (char *)))
+             == NULL
+      || ((program->data = (void **)calloc (num_devices, sizeof (void *)))
+          == NULL)
+      || ((program->build_hash
+           = (SHA1_digest_t *)calloc (num_devices, sizeof (SHA1_digest_t)))
+          == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
   program->context = context;
+  program->associated_num_devices = num_devices;
+  program->associated_devices = unique_devlist;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
+
+  TP_CREATE_PROGRAM (context->id, program->id);
+
   char program_bc_path[POCL_FILENAME_LENGTH];
 
   if (allow_empty_binaries && (lengths == NULL) && (binaries == NULL))
@@ -134,18 +145,6 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   for (i = 0; i < num_devices; ++i)
     {
-#ifdef OCS_AVAILABLE
-      /* LLVM IR */
-      if (!strncmp((const char *)binaries[i], "BC", 2))
-        {
-          program->binary_sizes[i] = lengths[i];
-          program->binaries[i] = (unsigned char*) malloc(lengths[i]);
-          memcpy (program->binaries[i], binaries[i], lengths[i]);
-          if (binary_status != NULL)
-            binary_status[i] = CL_SUCCESS;
-        }
-      else
-#endif
       /* Poclcc binary */
       if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
@@ -161,30 +160,48 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           POCL_GOTO_ERROR_ON(pocl_binary_deserialize (program, i),
                              CL_INVALID_BINARY,
                              "Could not unpack a pocl binary\n");
-          /* read program.bc, can be useful later */
+
+          /* read program.bc if present; can be useful later */
           if (pocl_exists (program_bc_path))
             {
+              uint64_t size = 0;
               pocl_read_file (program_bc_path,
-                              (char **)(&program->binaries[i]),
-                              (uint64_t *)(&program->binary_sizes[i]));
+                              (char **)(&program->binaries[i]), &size);
+              program->binary_sizes[i] = (size_t)size;
             }
 
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
         }
-      /* Unknown binary */
+      /* check if the driver supports that binary */
       else
         {
-          POCL_MSG_WARN ("Could not recognize binary\n");
-          if (binary_status != NULL)
-            binary_status[i] = CL_INVALID_BINARY;
-          errcode = CL_INVALID_BINARY;
-          goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+          cl_device_id device = program->associated_devices[i];
+          if (device->ops->supports_binary
+              && device->ops->supports_binary (device, lengths[i],
+                                               (const char *)binaries[i]))
+            {
+              program->binary_sizes[i] = lengths[i];
+              program->binaries[i] = (unsigned char *)malloc (lengths[i]);
+              memcpy (program->binaries[i], binaries[i], lengths[i]);
+              if (binary_status != NULL)
+                binary_status[i] = CL_SUCCESS;
+            }
+          else
+            {
+              POCL_MSG_WARN ("Could not recognize binary for device %i\n", i);
+              if (binary_status != NULL)
+                binary_status[i] = CL_INVALID_BINARY;
+              errcode = CL_INVALID_BINARY;
+              goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+            }
         }
     }
 
 SUCCESS:
-  POCL_RETAIN_OBJECT(context);
+  POname(clRetainContext)(context);
+
+  POCL_ATOMIC_INC (program_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
@@ -200,6 +217,7 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
     for (i = 0; i < num_devices; ++i)
       POCL_MEM_FREE(program->pocl_binaries[i]);
   POCL_MEM_FREE(program->pocl_binaries);
+  POCL_MEM_FREE (program->data);
   POCL_MEM_FREE(program->pocl_binary_sizes);
   POCL_MEM_FREE(program);
 ERROR:

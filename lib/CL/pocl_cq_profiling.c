@@ -26,6 +26,9 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+/* for bzero */
+#include <strings.h>
+
 /* Maximum number of events collected. */
 #define POCL_CQ_PROFILING_MAX_EVENTS 1000000
 #define POCL_CQ_PROFILING_MAX_KERNELS 1000
@@ -60,7 +63,7 @@ pocl_atexit ()
   unsigned long different_kernels = 0;
 
   struct kernel_stats kernel_statistics[cq_events_collected];
-  bzero (kernel_statistics, sizeof (kernel_statistics));
+  bzero_s (&kernel_statistics, sizeof (kernel_statistics));
 
   /* First statistics computation round. */
   for (unsigned i = 0; i < cq_events_collected; ++i)
@@ -92,9 +95,9 @@ pocl_atexit ()
   qsort (kernel_statistics, different_kernels, sizeof (struct kernel_stats),
          order_by_time);
 
-  for (int i = 0; i < different_kernels; ++i)
+  for (unsigned long i = 0; i < different_kernels; ++i)
     {
-      printf ("%3d) %-30s %10lu %15lu %3lu%% %10lu\n", i + 1,
+      printf ("%3lu) %-30s %10lu %15lu %3lu%% %10lu\n", i + 1,
               kernel_statistics[i].kernel->name, kernel_statistics[i].launches,
               kernel_statistics[i].time,
               kernel_statistics[i].time * 100 / total_time,
@@ -103,8 +106,9 @@ pocl_atexit ()
   printf ("     %-30s %10s %15s %3s %10s\n", "",
           "==========", "==========", "====", "==========");
 
+  /* Add !total_commands to avoid a division by 0 if total_commands is 0 */
   printf ("     %-30s %10lu %15lu %4s %10lu\n", "", total_commands, total_time,
-          "100%", total_time / total_commands);
+          "100%", total_time / (total_commands + !total_commands) );
 
   /* TODO: Critical path information of the task graph. */
 }

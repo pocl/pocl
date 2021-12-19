@@ -28,10 +28,8 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFlush)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-
-  /* Some AMD tests assume that flushed commands will be asynchronously 
-     executed. Call join here so that possible blocking device can execute 
-     commands here. */
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   if(command_queue->device->ops->flush)
     command_queue->device->ops->flush (command_queue->device, command_queue);

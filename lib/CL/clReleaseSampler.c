@@ -23,12 +23,14 @@
 
 #include "pocl_util.h"
 
+extern unsigned long sampler_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseSampler)(cl_sampler sampler)
 CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
-  POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (sampler)), CL_INVALID_SAMPLER);
 
   int new_refcount;
   POCL_RELEASE_OBJECT (sampler, new_refcount);
@@ -37,14 +39,19 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (sampler);
+      POCL_ATOMIC_DEC (sampler_c);
+
       cl_context context = sampler->context;
+      TP_FREE_SAMPLER (context->id, sampler->id);
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
+          if (dev->available != CL_TRUE)
+            continue;
           if (dev->image_support == CL_TRUE && dev->ops->free_sampler)
             {
-              dev->ops->free_sampler (
-                  dev->data, sampler, sampler->device_data[dev->dev_id]);
+              dev->ops->free_sampler (dev, sampler, dev->dev_id);
               sampler->device_data[dev->dev_id] = NULL;
             }
         }
@@ -52,6 +59,10 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_DESTROY_OBJECT (sampler);
       POCL_MEM_FREE (sampler);
       POname (clReleaseContext) (context);
+    }
+  else
+    {
+      VG_REFC_NONZERO (sampler);
     }
 
   return CL_SUCCESS;

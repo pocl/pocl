@@ -36,32 +36,54 @@
 #include <ucontext.h>
 #endif
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
 #endif
 
 #include "common.h"
-#include "config.h"
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
 #include "pocl_runtime_config.h"
+#include "pocl_shared.h"
 #include "pocl_tracing.h"
+#include "pocl_util.h"
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
-#if defined(TCE_AVAILABLE)
+#ifdef BUILD_BASIC
+#include "basic/basic.h"
+#endif
+#ifdef BUILD_PTHREAD
+#include "pthread/pocl-pthread.h"
+#endif
+
+#ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
 #endif
 
+#ifdef BUILD_HSA
 #include "hsa/pocl-hsa.h"
+#endif
+
+#ifdef BUILD_CUDA
+#include "cuda/pocl-cuda.h"
+#endif
 
 #if defined(BUILD_ACCEL)
 #include "accel/accel.h"
+#endif
+
+#ifdef BUILD_PROXY
+#include "proxy/pocl_proxy.h"
+#endif
+
+#ifdef BUILD_VULKAN
+#include "vulkan/pocl-vulkan.h"
 #endif
 
 #define MAX_DEV_NAME_LEN 64
@@ -70,17 +92,32 @@
 #define PATH_MAX 4096
 #endif
 
-#ifdef HAVE_LIBDL
+#ifdef HAVE_DLFCN_H
 #if defined(__APPLE__)
 #define _DARWIN_C_SOURCE
 #endif
 #include <dlfcn.h>
 #endif
 
+
 /* the enabled devices */
-static struct _cl_device_id* pocl_devices = NULL;
+struct _cl_device_id *pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
-unsigned int pocl_num_device_types = 0;
+
+#ifdef ENABLE_LOADABLE_DRIVERS
+#define INIT_DEV(ARG) NULL
+#else
+#define INIT_DEV(ARG) pocl_##ARG##_init_device_ops
+#endif
+
+const char *
+pocl_get_device_name (unsigned index)
+{
+  if (index < pocl_num_devices)
+    return pocl_devices[index].long_name;
+  else
+    return NULL;
+}
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -88,22 +125,28 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_BASIC
-  NULL,
+  INIT_DEV (basic),
 #endif
 #ifdef BUILD_PTHREAD
-  NULL,
+  INIT_DEV (pthread),
 #endif
-#if defined(TCE_AVAILABLE)
-  NULL,
+#ifdef TCE_AVAILABLE
+  INIT_DEV (ttasim),
 #endif
-#if defined(BUILD_HSA)
-  NULL,
+#ifdef BUILD_HSA
+  INIT_DEV (hsa),
 #endif
-#if defined(BUILD_CUDA)
-  NULL,
+#ifdef BUILD_CUDA
+  INIT_DEV (cuda),
 #endif
-#if defined(BUILD_ACCEL)
-  NULL,
+#ifdef BUILD_ACCEL
+  INIT_DEV (accel),
+#endif
+#ifdef BUILD_PROXY
+  INIT_DEV (proxy),
+#endif
+#ifdef BUILD_VULKAN
+  INIT_DEV (vulkan),
 #endif
 };
 
@@ -116,21 +159,32 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #ifdef BUILD_PTHREAD
   "pthread",
 #endif
-#if defined(TCE_AVAILABLE)
+#ifdef TCE_AVAILABLE
   "ttasim",
 #endif
-#if defined(BUILD_HSA)
+#ifdef BUILD_HSA
   "hsa",
 #endif
-#if defined(BUILD_CUDA)
+#ifdef BUILD_CUDA
   "cuda",
 #endif
-#if defined(BUILD_ACCEL)
+#ifdef BUILD_ACCEL
   "accel",
+#endif
+#ifdef BUILD_PROXY
+  "proxy",
+#endif
+#ifdef BUILD_VULKAN
+  "vulkan",
 #endif
 };
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
+
+extern pocl_lock_t pocl_runtime_config_lock;
+extern pocl_lock_t pocl_context_handling_lock;
+
+int pocl_offline_compile = 0;
 
 // first setup
 static unsigned first_init_done = 0;
@@ -142,19 +196,21 @@ static unsigned devices_active = 0;
 
 static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
+#ifdef ENABLE_LOADABLE_DRIVERS
+
 static void *pocl_device_handles[POCL_NUM_DEVICE_TYPES];
 
-#ifndef _MSC_VER
+#ifndef _WIN32
 #define POCL_PATH_SEPARATOR "/"
 #else
 #define POCL_PATH_SEPARATOR "\\"
 #endif
 
 static void
-get_pocl_device_lib_path (char *result, char *device_name)
+get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
 {
   Dl_info info;
-  if (dladdr ((void *)get_pocl_device_lib_path, &info))
+  if (absolute_path && dladdr ((void *)get_pocl_device_lib_path, &info))
     {
       char const *soname = info.dli_fname;
       strcpy (result, soname);
@@ -186,10 +242,16 @@ get_pocl_device_lib_path (char *result, char *device_name)
           strcat (result, "libpocl-devices-");
           strcat (result, device_name);
           strcat (result, ".so");
-          return;
         }
     }
+  else
+    {
+      strcat (result, "libpocl-devices-");
+      strcat (result, device_name);
+      strcat (result, ".so");
+    }
 }
+#endif
 
 /**
  * Get the number of specified devices from environment
@@ -216,15 +278,14 @@ int pocl_device_get_env_count(const char *dev_type)
 }
 
 unsigned int
-pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices)
+pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
+                  unsigned int num_devices)
 {
   unsigned int i, dev_added = 0;
 
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
-
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type == CL_DEVICE_TYPE_DEFAULT)
@@ -253,14 +314,12 @@ pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, uns
 unsigned int
 pocl_get_device_type_count(cl_device_type device_type)
 {
-  int count = 0;
+  unsigned int count = 0;
   unsigned int i;
-
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
 
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type == CL_DEVICE_TYPE_DEFAULT)
@@ -285,119 +344,6 @@ str_toupper(char *out, const char *in)
     out[i] = toupper(in[i]);
   out[i] = '\0';
 }
-
-/* This ugly hack is required because:
- *
- * OpenCL 1.2 specification, 6.3 Operators :
- *
- * A divide by zero with integer types does not cause an exception
- * but will result in an unspecified value. Division by zero for
- * floating-point types will result in ±infinity or NaN as
- * prescribed by the IEEE-754 standard.
- *
- * FPU exceptions are masked by default on x86 linux, but integer divide
- * is not and there doesn't seem any sane way to mask it.
- *
- * This *might* be possible to fix with a LLVM pass (either check divisor
- * for 0, or perhaps some vector extension has a suitable instruction), but
- * it's likely to ruin the performance.
- */
-
-#ifdef ENABLE_HOST_CPU_DEVICES
-#ifdef __linux__
-#ifdef __x86_64__
-
-#define DIV_OPCODE_SIZE 1
-#define DIV_OPCODE_MASK 0xf6
-
-/* F6 /6, F6 /7, F7 /6, F7 /7 */
-#define DIV_OPCODE_1 0xf6
-#define DIV_OPCODE_2 0xf7
-#define DIV_MODRM_OPCODE_EXT_1 0x38 //  /7
-#define DIV_MODRM_OPCODE_EXT_2 0x30 //  /6
-
-#define MODRM_SIZE 1
-#define MODRM_MASK 0xC0
-#define REG2_MASK 0x38
-#define REG1_MASK 0x07
-#define ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET 0x40
-#define ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET 0x80
-#define ADDR_MODE_INDIRECT 0x0
-#define ADDR_MODE_REGISTER_ONLY 0xC0
-#define REG_SP 0x4
-#define REG_BP 0x5
-#define SIB_BYTE 1
-#define IP_RELATIVE_INDEXING 4
-
-static struct sigaction sigfpe_action, old_sigfpe_action;
-
-static void
-sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
-{
-  ucontext_t *uc;
-  uc = (ucontext_t *)data;
-  unsigned char *eip = (unsigned char *)(uc->uc_mcontext.gregs[REG_RIP]);
-
-  if ((signo == SIGFPE)
-      && ((si->si_code == FPE_INTDIV) || (si->si_code == FPE_INTOVF)))
-    {
-      /* Luckily for us, div-by-0 exceptions do NOT advance the IP register,
-       * so we have to disassemble the instruction (to know its length)
-       * and move IP past it. */
-      unsigned n = 0;
-
-      /* skip all prefixes */
-      while ((n < 4) && ((eip[n] & DIV_OPCODE_MASK) != DIV_OPCODE_MASK))
-        ++n;
-
-      /* too much prefixes = decoding failed */
-      if (n >= 4)
-        goto ORIGINAL_HANDLER;
-
-      /* check opcode */
-      unsigned opcode = eip[n];
-      if ((opcode != DIV_OPCODE_1) && (opcode != DIV_OPCODE_2))
-        goto ORIGINAL_HANDLER;
-      n += DIV_OPCODE_SIZE;
-
-      unsigned modrm = eip[n];
-      unsigned modmask = modrm & MODRM_MASK;
-      unsigned reg1mask = modrm & REG1_MASK;
-      unsigned reg2mask = modrm & REG2_MASK;
-      /* check opcode extension in ModR/M reg2 */
-      if ((reg2mask != DIV_MODRM_OPCODE_EXT_1)
-          && (reg2mask != DIV_MODRM_OPCODE_EXT_2))
-        goto ORIGINAL_HANDLER;
-      n += MODRM_SIZE;
-
-      /* handle immediates/registers */
-      if (modmask == ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET)
-        n += 1;
-      if (modmask == ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET)
-        n += 4;
-      if (modmask == ADDR_MODE_INDIRECT)
-        n += 0;
-      if (modmask != ADDR_MODE_REGISTER_ONLY)
-        {
-          if (reg1mask == REG_SP)
-            n += SIB_BYTE;
-          if (reg1mask == REG_BP)
-            n += IP_RELATIVE_INDEXING;
-        }
-
-      uc->uc_mcontext.gregs[REG_RIP] += n;
-      return;
-    }
-  else
-    {
-    ORIGINAL_HANDLER:
-      (*old_sigfpe_action.sa_sigaction) (signo, si, data);
-    }
-}
-
-#endif
-#endif
-#endif
 
 cl_int
 pocl_uninit_devices ()
@@ -432,10 +378,12 @@ pocl_uninit_devices ()
               retval = ret;
               goto FINISH;
             }
+#ifdef ENABLE_LOADABLE_DRIVERS
           if (pocl_device_handles[i] != NULL)
             {
               dlclose (pocl_device_handles[i]);
             }
+#endif
           ++dev_index;
         }
     }
@@ -520,6 +468,11 @@ pocl_init_devices ()
       errcode = pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
       goto ERROR;
     }
+  else
+    {
+      POCL_INIT_LOCK (pocl_runtime_config_lock);
+      POCL_INIT_LOCK (pocl_context_handling_lock);
+    }
 
   /* first time initialization */
   unsigned i, j, dev_index;
@@ -531,13 +484,13 @@ pocl_init_devices ()
 #ifdef POCL_DEBUG_MESSAGES
   const char* debug = pocl_get_string_option ("POCL_DEBUG", "0");
   pocl_debug_messages_setup (debug);
-  stderr_is_a_tty = isatty(fileno(stderr));
+  pocl_stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
   POCL_GOTO_ERROR_ON ((pocl_cache_init_topdir ()), CL_DEVICE_NOT_FOUND,
                       "Cache directory initialization failed");
 
-  pocl_tracing_init ();
+  pocl_event_tracing_init ();
 
 #ifdef HAVE_SLEEP
   int delay = pocl_get_int_option ("POCL_STARTUP_DELAY", 0);
@@ -546,60 +499,70 @@ pocl_init_devices ()
 #endif
 
 
-#ifdef ENABLE_HOST_CPU_DEVICES
 #ifdef __linux__
-#ifdef __x86_64__
 
+#ifdef ENABLE_HOST_CPU_DEVICES
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
     {
-
-#ifdef OCS_AVAILABLE
-      /* This is required to force LLVM to register its signal
-       * handlers, before pocl registers its own SIGFPE handler.
-       * LLVM otherwise calls this via
-       *    pocl_llvm_build_program ->
-       *    clang::PrintPreprocessedAction ->
-       *    CreateOutputFile -> RemoveFileOnSignal
-       * Registering our handlers before LLVM creates its sigaltstack
-       * leads to interesting crashes & bugs later.
-       */
-      char random_empty_file[POCL_FILENAME_LENGTH];
-      pocl_cache_tempname (random_empty_file, NULL, NULL);
-      pocl_llvm_remove_file_on_signal (random_empty_file);
-#endif
-
-      POCL_MSG_PRINT_GENERAL ("Installing SIGFPE handler...\n");
-      sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
-      sigfpe_action.sa_sigaction = sigfpe_signal_handler;
-      int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
-      assert (res == 0);
+      pocl_install_sigfpe_handler ();
     }
+#endif
 
+  if (pocl_get_bool_option ("POCL_SIGUSR2_HANDLER", 0))
+    {
+      pocl_install_sigusr2_handler ();
+    }
 #endif
-#endif
-#endif
+
+  pocl_offline_compile = pocl_get_bool_option ("POCL_OFFLINE_COMPILE", 0);
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+#ifdef ENABLE_LOADABLE_DRIVERS
       if (pocl_devices_init_ops[i] == NULL)
         {
           char device_library[PATH_MAX] = "";
-          get_pocl_device_lib_path (device_library, pocl_device_types[i]);
-          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
           char init_device_ops_name[MAX_DEV_NAME_LEN + 21] = "";
+          get_pocl_device_lib_path (device_library, pocl_device_types[i], 1);
+          pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+          if (pocl_device_handles[i] == NULL)
+            {
+              POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+                             dlerror ());
+
+              /* Try again with just the *.so filename */
+              device_library[0] = 0;
+              get_pocl_device_lib_path (device_library,
+                                        pocl_device_types[i], 0);
+              pocl_device_handles[i] = dlopen (device_library, RTLD_LAZY);
+              if (pocl_device_handles[i] == NULL)
+                {
+                  POCL_MSG_WARN ("Loading %s failed: %s\n", device_library,
+                                 dlerror ());
+                  device_count[i] = 0;
+                  continue;
+                }
+              else
+                {
+                  POCL_MSG_WARN ("Fallback loading %s succeeded\n",
+                                 device_library);
+                }
+            }
           strcat (init_device_ops_name, "pocl_");
           strcat (init_device_ops_name, pocl_device_types[i]);
           strcat (init_device_ops_name, "_init_device_ops");
-          if (pocl_device_handles[i] != NULL)
+          pocl_devices_init_ops[i] = (init_device_ops)dlsym (
+          pocl_device_handles[i], init_device_ops_name);
+          if (pocl_devices_init_ops[i] != NULL)
             {
-              pocl_devices_init_ops[i] = (init_device_ops)dlsym (
-                  pocl_device_handles[i], init_device_ops_name);
               pocl_devices_init_ops[i](&pocl_device_ops[i]);
             }
           else
             {
-              POCL_MSG_WARN ("Loading %s failed.\n", device_library);
+              POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
+                             init_device_ops_name, device_library,
+                             dlerror ());
               device_count[i] = 0;
               continue;
             }
@@ -608,6 +571,9 @@ pocl_init_devices ()
         {
           pocl_device_handles[i] = NULL;
         }
+#else
+      assert (pocl_devices_init_ops[i] != NULL);
+#endif
       pocl_devices_init_ops[i](&pocl_device_ops[i]);
       assert(pocl_device_ops[i].device_name != NULL);
 
@@ -638,16 +604,16 @@ pocl_init_devices ()
           cl_device_id dev = &pocl_devices[dev_index];
           dev->ops = &pocl_device_ops[i];
           dev->dev_id = dev_index;
-          POCL_INIT_OBJECT (dev);
-          dev->driver_version = PACKAGE_VERSION;
-          if (dev->version == NULL)
-            dev->version = "OpenCL 2.0 pocl";
-          dev->short_name = strdup (dev->ops->device_name);
           /* The default value for the global memory space identifier is
              the same as the device id. The device instance can then override
              it to point to some other device's global memory id in case of
              a shared global memory. */
-          pocl_devices[dev_index].global_mem_id = dev_index;
+          dev->global_mem_id = dev_index;
+          POCL_INIT_OBJECT (dev);
+          dev->driver_version = POCL_VERSION_FULL;
+          if (dev->version == NULL)
+            dev->version = "OpenCL 2.0 pocl";
+          dev->short_name = strdup (dev->ops->device_name);
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
@@ -671,10 +637,4 @@ ERROR:
   init_in_progress = 0;
   POCL_UNLOCK (pocl_init_lock);
   return errcode;
-}
-
-int pocl_get_unique_global_mem_id ()
-{
-  static int global_id_counter = 1;
-  return global_id_counter++;
 }

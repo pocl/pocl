@@ -23,7 +23,7 @@
 
 /* Note: Most of the debug code is broken because lwpr_print_str() only works
  *       with char* to local address space */
-//#define DEBUG_TTA_DEVICE
+#define DEBUG_TTA_DEVICE
 
 #include <malloc.h>
 #include <stdlib.h>
@@ -81,10 +81,13 @@ static void *wg_thread(void *targ) {
     context.num_groups[0] = cmd->num_groups[0];
     context.num_groups[1] = cmd->num_groups[1];
     context.num_groups[2] = cmd->num_groups[2];
+    context.local_size[0] = cmd->local_size[0];
+    context.local_size[1] = cmd->local_size[1];
+    context.local_size[2] = cmd->local_size[2];
     context.global_offset[0] = cmd->global_offset[0];
     context.global_offset[1] = cmd->global_offset[1];
     context.global_offset[2] = cmd->global_offset[2];
-                
+
     for (unsigned gid_x = first_gidx; gid_x <= last_gidx; gid_x++) { 
         for (unsigned gid_y = 0; gid_y < num_groups_y; gid_y++) { 
             for (unsigned gid_z = 0; gid_z < num_groups_z; gid_z++) {

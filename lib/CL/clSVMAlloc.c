@@ -21,8 +21,11 @@
    THE SOFTWARE.
 */
 
-#include "pocl_util.h"
 #include "devices.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
+
+extern unsigned long svm_buffer_c;
 
 CL_API_ENTRY void* CL_API_CALL
 POname(clSVMAlloc)(cl_context context,
@@ -33,7 +36,7 @@ POname(clSVMAlloc)(cl_context context,
   unsigned i;
   int p;
 
-  POCL_RETURN_ERROR_COND((context == NULL), NULL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), NULL);
 
   POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
                        "None of the devices in this context is SVM-capable\n");
@@ -76,10 +79,8 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
-#define dev context->svm_allocdev
-
   if (alignment == 0)
-    alignment = dev->min_data_type_align_size;
+    alignment = context->svm_allocdev->min_data_type_align_size;
 
   /* alignment is not a power of two or the OpenCL implementation cannot support
    * the specified alignment for at least one device in context. */
@@ -91,8 +92,22 @@ POname(clSVMAlloc)(cl_context context,
                          NULL, "All devices must support the requested memory "
                          "aligment (%u) \n", alignment);
 
-  void *ptr = dev->ops->svm_alloc (dev, flags, size);
-  POCL_MSG_PRINT_INFO ("clSVMAlloc: allocated %zu bytes @ %p\n", size, ptr);
+  void *ptr = context->svm_allocdev->ops->svm_alloc (context->svm_allocdev,
+                                                     flags, size);
+  if (ptr == NULL)
+    {
+      POCL_MSG_ERR ("Device failed to allocate SVM memory");
+      return NULL;
+    }
+
+  POname (clRetainContext) (context);
+
+  POCL_MSG_PRINT_MEMORY ("Allocated SVM: PTR %p, SIZE %zu, FLAGS %" PRIu64
+                         " \n",
+                         ptr, size, flags);
+
+  POCL_ATOMIC_INC (svm_buffer_c);
+
   return ptr;
 }
 POsym(clSVMAlloc)

@@ -46,9 +46,11 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   _cl_command_node *cmd;
   cl_int errcode;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
+                          CL_INVALID_MEM_OBJECT);
 
   POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
 
@@ -90,11 +92,13 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
                         CL_OUT_OF_RESOURCES,
                         "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
+  char rdonly = 0;
+
   pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1,
-                       &buffer);
+                       &buffer, &rdonly);
 
-  cmd->command.write_rect.dst_mem_id = &buffer->device_ptrs[device->dev_id];
+  cmd->command.write_rect.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
   cmd->command.write_rect.src_host_ptr = ptr;
 
   cmd->command.write_rect.host_origin[0] = host_origin[0];
@@ -111,9 +115,6 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   cmd->command.write_rect.host_slice_pitch = host_slice_pitch;
   cmd->command.write_rect.buffer_row_pitch = buffer_row_pitch;
   cmd->command.write_rect.buffer_slice_pitch = buffer_slice_pitch;
-
-  POname (clRetainMemObject) (buffer);
-  buffer->owning_device = device;
 
   pocl_command_enqueue (command_queue, cmd);
 

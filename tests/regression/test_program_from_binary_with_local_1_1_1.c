@@ -1,7 +1,7 @@
 /* Tests a case where a program created from binary (with a loop) is run with
    a local size of (1, 1, 1).
 
-   Copyright (c) 2017 pocl developers
+   Copyright (c) 2017-2021 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,8 +22,8 @@
    THE SOFTWARE.
 */
 
-#include "poclu.h"
-#include <CL/opencl.h>
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -53,7 +53,7 @@ const char *kernelSource =
 
 int main ()
 {
-	cl_platform_id platform;
+  cl_platform_id platform;
   cl_device_id device;
   cl_context context;
   cl_command_queue queue;
@@ -81,6 +81,10 @@ int main ()
           input_buffer[k*vec_size+i]=k*vec_size+i;
         }
     }
+
+  /* Test executing from the generic binary only to avoid the
+     online compiler creating a specialized one that is ran. */
+  setenv("POCL_WORK_GROUP_SPECIALIZATION", "0", 1);
 
   err = clGetPlatformIDs(1, &platform, NULL);
   CHECK_CL_ERROR (err);
@@ -144,6 +148,6 @@ int main ()
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
   clReleaseDevice(device);
-
+  clUnloadPlatformCompiler(platform);
   return 0;
 }

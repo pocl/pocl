@@ -21,12 +21,12 @@
    IN THE SOFTWARE.
 */
 
-#include <CL/opencl.h>
 #include <assert.h>
-#include <poclu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "poclu.h"
 
 #define N 128
 
@@ -110,8 +110,8 @@ main (int argc, char **argv)
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   return err;
 }

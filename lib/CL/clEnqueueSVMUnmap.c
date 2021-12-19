@@ -34,7 +34,8 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
   unsigned i;
   cl_int errcode;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
       CL_INVALID_CONTEXT, "None of the devices in this context is SVM-capable\n");
@@ -57,8 +58,8 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
   _cl_command_node *cmd = NULL;
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_UNMAP,
-                                     event, num_events_in_wait_list,
-                                     event_wait_list, 0, NULL);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 0, NULL, NULL);
 
   if (errcode != CL_SUCCESS)
     {
@@ -67,7 +68,6 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
     }
 
   cmd->command.svm_unmap.svm_ptr = svm_ptr;
-
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

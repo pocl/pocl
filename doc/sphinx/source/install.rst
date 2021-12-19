@@ -21,11 +21,13 @@ tools:
 
 Installing requirements for Ubuntu::
 
-    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev
+Note: The binary packages from https://apt.llvm.org/ are recommended
+(and tested for each release) instead of the binary tar balls or
+the packages included in the distribution. The following assumes
+apt.llvm.org is added to your apt repos (LLVM_VERSION=13 recommended
+for PoCL 1.8)::
 
-If you're using LLVM 10 or newer, additionally you must::
-
-    apt install -y libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
+    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
 Installing requirements for Arch Linux::
 
@@ -59,7 +61,7 @@ Supported LLVM versions
 Configure & Build
 -----------------
 
-CMake version 2.8.12 or higher is required.
+CMake version 3.3 or higher is required.
 
 The build+install is the usual CMake way::
 
@@ -213,6 +215,13 @@ use ";" as separator (you'll have to escape it for bash).
   with ``-DTESTSUITE_BASEDIR=/home/pocltest-build -DTESTSUITE_SOURCE_BASEDIR=/home/pocltest-src``,
   place the ``AMD-APP-SDK-v2.9-RC-lnx64.tgz`` file into ``/home/pocltest-src/AMDSDK2.9`` directory.
 
+- ``-DENABLE_TESTS=ON/OFF`` enable/disable compilation of internal tests.
+
+- ``-DENABLE_EXAMPLES=ON/OFF`` enable/disable compilation of all examples.
+  Disabling this makes ENABLE_TESTSUITES option unavailable.
+
+- ``-DENABLE_POCLCC=ON/OFF`` enable/disable compilation of poclcc.
+
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   Ensures that certain build options which would result in non-conformant pocl
   build stay disabled. Defaults to ON. Note that this does not quarantee a
@@ -266,16 +275,16 @@ The string after "HSTR:" is the device build hash.
 * now build the LLVM-less pocl. You will need the device build hash from
   previous step:
 
-  ``cmake -DOCS_AVAILABLE=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
+  ``cmake -DENABLE_LLVM=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
 
   This is required because pocl binaries contain a device hash, and the LLVM-less
   pocl needs to know which binaries it can load.
 
 
-Cross-compile pocl LLVM-less build
------------------------------------
+Cross-compile pocl
+------------------
 It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
-but only the LLVM-less build. There is a ToolchainExample.cmake file;
+There is a ToolchainExample.cmake file;
 copy it under different name, then follow the instructions in the file.
 
 
@@ -284,12 +293,6 @@ Known build-time issues
 
 There are unsolved issues and bugs in pocl. See the bug listing
 for a complete listing at https://github.com/pocl/pocl/issues
-
-Known issues not related to pocl are listed below.
-
-- Using Clang compiled with gcc 4.7 causes indeterminism in the
-  kernel compilation results. See LLVM bug report:
-  http://llvm.org/bugs/show_bug.cgi?id=12945
 
 building / running in Docker
 --------------------------------

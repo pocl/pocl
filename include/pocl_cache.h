@@ -45,9 +45,6 @@ pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
-int pocl_cl_device_to_index(cl_program   program,
-                            cl_device_id device);
-
 int pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
 
 int pocl_cache_create_tempdir(char* path);
@@ -62,6 +59,10 @@ int pocl_cache_write_kernel_objfile (char *objfile_path,
 int pocl_cache_write_spirv (char *spirv_path,
                             const char *spirv_content,
                             uint64_t file_size);
+
+int pocl_cache_write_generic_objfile (char *objfile_path,
+                                      const char *objfile_content,
+                                      uint64_t objfile_size);
 
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);
@@ -78,14 +79,14 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 int pocl_cache_device_cachedir_exists(cl_program   program,
                                       unsigned device_i);
 
-int pocl_cache_write_descriptor(cl_program   program,
-                                unsigned     device_i,
-                                const char*  kernel_name,
-                                const char*  content,
-                                size_t       size);
+POCL_EXPORT
+int pocl_cache_write_descriptor (_cl_command_node *Command, cl_kernel kernel,
+                                 int Specialize, const char *content,
+                                 size_t size);
 
+POCL_EXPORT
 void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
-                                      cl_program program, unsigned device_i,
+                                      cl_program program, unsigned program_device_i,
                                       cl_kernel kernel, const char *append_str,
                                       _cl_command_node *command,
                                       int specialize);
@@ -110,6 +111,7 @@ void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
                                unsigned     device_i);
 
+POCL_EXPORT
 void pocl_cache_work_group_function_path (char *parallel_bc_path,
                                           cl_program program,
                                           unsigned device_i, cl_kernel kernel,

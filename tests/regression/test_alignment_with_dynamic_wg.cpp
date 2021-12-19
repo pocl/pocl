@@ -1,3 +1,5 @@
+#include "pocl_opencl.h"
+
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
@@ -48,8 +50,7 @@ __kernel void test(global uint *output, global const uint* trialValue){
 
 bool test_invocation(unsigned x, unsigned y, unsigned z,
                      const std::string &arg_x, const std::string &arg_y,
-                     const std::string &arg_z, cl::CommandQueue &queue,
-                     cl::Program &program) {
+                     const std::string &arg_z, cl::CommandQueue &queue) {
 
   unsigned expected_sum = x * y * z * 4;
 
@@ -57,6 +58,7 @@ bool test_invocation(unsigned x, unsigned y, unsigned z,
   assert(local_size > 0);
   assert(local_size <= 256);
 
+  cl::Program program(SOURCE);
   std::string options = "-cl-std=CL1.2";
   options += " -DX=" + arg_x + " -DY=" + arg_y + " -DZ=" + arg_z;
   program.build(options.c_str());
@@ -107,7 +109,6 @@ bool test_invocation(unsigned x, unsigned y, unsigned z,
 int main(int argc, char *argv[]) {
   cl::Device device = cl::Device::getDefault();
   cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE);
 
   if (argc < 4) {
     std::cout << "USAGE: $0 X Y Z\n";
@@ -122,13 +123,13 @@ int main(int argc, char *argv[]) {
   unsigned y = std::stoi(argv[2]);
   unsigned z = std::stoi(argv[3]);
 
-  if (!test_invocation(x, y, z, arg_x, arg_y, arg_z, queue, program))
+  if (!test_invocation(x, y, z, arg_x, arg_y, arg_z, queue))
     return 1;
 
-  if (!test_invocation(y, z, x, arg_y, arg_z, arg_x, queue, program))
+  if (!test_invocation(y, z, x, arg_y, arg_z, arg_x, queue))
     return 1;
 
-  if (!test_invocation(z, x, y, arg_z, arg_x, arg_y, queue, program))
+  if (!test_invocation(z, x, y, arg_z, arg_x, arg_y, queue))
     return 1;
 
   return 0;

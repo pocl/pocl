@@ -32,6 +32,7 @@
 
 #include "config.h"
 #include "pocl.h"
+#include "pocl_llvm_api.h"
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -44,15 +45,15 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "pocl_cl.h"
 
+#include "LLVMUtils.h"
 #include "linker.h"
+
 
 using namespace llvm;
 
 //#include <cstdio>
 //#define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
-
-extern cl_device_id currentPoclDevice;
 
 /*
  * Find needle in haystack. O(n) implementation, but n should be
@@ -77,7 +78,7 @@ find_from_list(llvm::StringRef             needle,
 /* Fixes address space on opencl.imageX_t arguments to be global.
  * Note this does not change the types in Function->FunctionType
  * so it's only used inside CopyFunc on kernel library functions */
-static void fixOpenCLimageArguments(llvm::Function *Func) {
+static void fixOpenCLimageArguments(llvm::Function *Func, unsigned AS) {
     Function::arg_iterator b = Func->arg_begin();
     Function::arg_iterator e = Func->arg_end();
     for (; b != e; b++)  {
@@ -87,7 +88,7 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
             Type *pe_type = t->getPointerElementType();
             if (pe_type->getStructName().startswith("opencl.image"))  {
               Type *new_t =
-                PointerType::get(pe_type, currentPoclDevice->global_as_id);
+                PointerType::get(pe_type, AS);
               j->mutateType(new_t);
             }
         }
@@ -99,7 +100,7 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
  * require a fix. To be used on user's kernel code itself, not on kernel library.
  */
 static llvm::Function *
-CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
+CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
 {
     assert(F && "No function to copy");
     assert(!F->isDeclaration());
@@ -116,8 +117,8 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
           Type *pe_type = t->getPointerElementType();
           if (pe_type->getStructName().startswith("opencl.image")) {
 
-            if (t->getPointerAddressSpace() != currentPoclDevice->global_as_id) {
-              new_t = PointerType::get(pe_type, currentPoclDevice->global_as_id);
+            if (t->getPointerAddressSpace() != AS) {
+              new_t = PointerType::get(pe_type, AS);
               changed = 1;
             }
           }
@@ -128,15 +129,14 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
     if (!changed)
       return F;
 
-    F->removeFromParent();
-
     FunctionType *NewFT = FunctionType::get(F->getReturnType(),
                                          ArrayRef<Type *> (sv),
                                          false);
     assert(NewFT);
     llvm::Function *DstFunc = nullptr;
 
-    DstFunc = Function::Create(NewFT, F->getLinkage(), F->getName(), Mod);
+    DstFunc = Function::Create(NewFT, F->getLinkage(), "temporary", Mod);
+    DstFunc->takeName(F);
 
     Function::arg_iterator j = DstFunc->arg_begin();
     for (Function::const_arg_iterator i = F->arg_begin(),
@@ -150,7 +150,10 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
     DstFunc->copyAttributesFrom(F);
 
     SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
-    CloneFunctionInto(DstFunc, F, VVMap, true, RI);
+    CloneFunctionIntoAbs(DstFunc, F, VVMap, RI);
+
+    F->removeFromParent();
+
     delete F;
 
     return DstFunc;
@@ -202,7 +205,8 @@ static void
 CopyFunc(const llvm::StringRef Name,
          const llvm::Module *  From,
          llvm::Module *        To,
-         ValueToValueMapTy &   VVMap) {
+         ValueToValueMapTy &   VVMap,
+         unsigned AS) {
 
     llvm::Function *SrcFunc = From->getFunction(Name);
     // TODO: is this the linker error "not found", and not an assert?
@@ -236,8 +240,8 @@ CopyFunc(const llvm::StringRef Name,
     if (!SrcFunc->isDeclaration()) {
         SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
         DB_PRINT("  cloning %s\n", Name.data());
-        CloneFunctionInto(DstFunc, SrcFunc, VVMap, true, RI);
-        fixOpenCLimageArguments(DstFunc);
+        CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
+        fixOpenCLimageArguments(DstFunc, AS);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",
                  Name.data());
@@ -252,7 +256,8 @@ static int
 copy_func_callgraph(const llvm::StringRef func_name,
                     const llvm::Module *  from,
                     llvm::Module *        to,
-                    ValueToValueMapTy &   vvm) {
+                    ValueToValueMapTy &   vvm,
+                    unsigned AS) {
     std::list<llvm::StringRef> callees;
     llvm::Function *RootFunc = from->getFunction(func_name);
     if (RootFunc == NULL)
@@ -268,14 +273,14 @@ copy_func_callgraph(const llvm::StringRef func_name,
     for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
       llvm::Function *SrcFunc = from->getFunction(*ci);
       if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(*ci, from, to, vvm);
+        copy_func_callgraph(*ci, from, to, vvm, AS);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
 		 SrcFunc->getName().str().c_str());
       }
-      CopyFunc(*ci, from, to, vvm);
+      CopyFunc(*ci, from, to, vvm, AS);
     }
-    CopyFunc(func_name, from, to, vvm);
+    CopyFunc(func_name, from, to, vvm, AS);
     return 0;
 }
 
@@ -341,14 +346,16 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
   }
 }
 
-int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
+int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
+         unsigned global_AS, const char **DevAuxFuncs) {
+
   assert(program);
   assert(lib);
   ValueToValueMapTy vvm;
   std::list<llvm::StringRef> declared;
 
   // Include auxiliary functions required by the device at hand.
-  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
+  if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
       declared.push_back(*Func++);
@@ -363,7 +370,7 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
     if (f->isDeclaration())
       continue;
     // need to restart iteration if we replace a function
-    if (CloneFuncFixOpenCLImageT(program, f) != f) {
+    if (CloneFuncFixOpenCLImageT(program, f, global_AS) != f) {
       fi = program->begin();
     }
   }
@@ -422,7 +429,7 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
   for (di = declared.begin(), de = declared.end();
        di != de; di++) {
       llvm::StringRef r = *di;
-      if (copy_func_callgraph(r, lib, program, vvm)) {
+      if (copy_func_callgraph(r, lib, program, vvm, global_AS)) {
         Function *f = program->getFunction(r);
         if ((f == NULL) ||
             (f->isDeclaration() &&
@@ -448,7 +455,8 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
 }
 
 int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
-                          const llvm::Module *program) {
+                          const llvm::Module *program, unsigned global_AS,
+                          const char **DevAuxFuncs) {
   ValueToValueMapTy vvm;
 
   // Copy all the globals from lib to program.
@@ -467,17 +475,22 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   }
 
   const StringRef kernel_name(name);
-  copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
+  copy_func_callgraph(kernel_name, program, parallel_bc, vvm, global_AS);
 
-  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
+  if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      copy_func_callgraph(*Func++, program, parallel_bc, vvm);
+      copy_func_callgraph(*Func++, program, parallel_bc, vvm, global_AS);
     }
   }
 
   std::string log;
   shared_copy(parallel_bc, program, log, vvm);
+
+  /* LLVM 13 complains about this being an invalid MDnode. */
+  llvm::NamedMDNode *DebugCU = parallel_bc->getNamedMetadata("llvm.dbg.cu");
+  if (DebugCU && DebugCU->getNumOperands()==0)
+    parallel_bc->eraseNamedMetadata(DebugCU);
 
   return 0;
 }

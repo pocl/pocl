@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-add_test("pocl_version_check" "runtime/test_version")
+add_test(NAME pocl_version_check COMMAND test_version)
 
 if(ENABLE_HOST_CPU_DEVICES)
     # If basic OpenCL device is not included, we assume the device is chosen using
@@ -36,6 +36,49 @@ if(ENABLE_HOST_CPU_DEVICES)
       LABELS "internal;cuda")
 endif()
 
+#######################################################################
+if (UNIX AND ENABLE_LOADABLE_DRIVERS)
+
+add_test(NAME pocl_test_dlopen_libpocl COMMAND test_dlopen)
+set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_libpocl")
+
+if(BUILD_BASIC)
+  add_test(NAME pocl_test_dlopen_device_basic COMMAND test_dlopen basic)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_basic")
+endif()
+
+if(BUILD_PTHREAD)
+  add_test(NAME pocl_test_dlopen_device_pthread COMMAND test_dlopen pthread)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_pthread")
+endif()
+
+if(BUILD_ACCEL)
+  add_test(NAME pocl_test_dlopen_device_accel COMMAND test_dlopen accel)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_accel")
+endif()
+
+if(ENABLE_TCE)
+  add_test(NAME pocl_test_dlopen_device_tce COMMAND test_dlopen tce)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_tce")
+endif()
+
+if(ENABLE_HSA)
+  add_test(NAME pocl_test_dlopen_device_hsa COMMAND test_dlopen hsa)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_hsa")
+endif()
+
+if(ENABLE_CUDA)
+  add_test(NAME pocl_test_dlopen_device_cuda COMMAND test_dlopen cuda)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_cuda")
+endif()
+
+if(ENABLE_VULKAN)
+  add_test(NAME pocl_test_dlopen_device_vulkan COMMAND test_dlopen vulkan)
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
+  set_property(TEST "pocl_version_check" "pocl_test_dlopen_libpocl" "pocl_test_dlopen_device_vulkan" APPEND PROPERTY LABELS "vulkan")
+endif()
+
+endif ()
 #######################################################################
 
 add_subdirectory("kernel")

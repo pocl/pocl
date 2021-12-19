@@ -53,8 +53,6 @@ public:
 };
 }
 
-extern cl::opt<std::string> KernelName;
-
 char FlattenGlobals::ID = 0;
 static RegisterPass<FlattenGlobals>
     X("flatten-globals",

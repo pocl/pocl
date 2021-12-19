@@ -40,12 +40,19 @@ Known issues with the conformance testsuite
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
+- compiler_defines_for_extensions from ``compiler/test_compiler`` might fail
+  because cl_khr_spir extension is not recognized with OpenCL 1.2 - officially
+  it's only recognized since OpenCL 2.0.
+
 - a few tests from ``conversions/test_conversions`` may report failures.
   This is likely a bug in the test; the same test from branch
   cl20_trunk of CTS passes.
 
-- math_brute_force tests may occasionally fail with an empty build log,
-  this is a bug in CTS. See pocl issue #614.
+- some tests from ``relationals/test_relationals`` can fail with specific
+  LLVM versions, this is an LLVM bug, fixed in LLVM 13.
+
+- ``math_brute_force/bruteforce`` tests may occasionally fail with an empty build log,
+  this is a bug in CTS. See pocl issue #614. ``export CL_TEST_SINGLE_THREADED=1`` might help.
 
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
@@ -67,9 +74,6 @@ Known issues with the conformance testsuite
   returned if the **argument is a pointer** and the referenced type is declared with
   the restrict or const qualifier
 
-- the compiler test may fail with pocl-1.1 when it's built with SPIR support,
-  because cl_khr_spir extension is not recognized with OpenCL 1.2 - officially
-  it's only recognized since OpenCL 2.0.
 
 .. _sigfpe-handler:
 

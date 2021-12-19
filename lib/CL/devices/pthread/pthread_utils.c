@@ -62,21 +62,21 @@ kernel_run_command* new_kernel_run_command ()
     {
       LL_DELETE (kernel_pool, k);
       memset (k, 0, sizeof(kernel_run_command));
-      pthread_mutex_init(&k->lock, NULL);
+      PTHREAD_CHECK (pthread_mutex_init (&k->lock, NULL));
       POCL_UNLOCK (kernel_pool_lock);
       return k;
     }
 
   POCL_UNLOCK (kernel_pool_lock);
   k = (kernel_run_command*)calloc (1, sizeof (kernel_run_command));
-  pthread_mutex_init (&k->lock, NULL);
+  PTHREAD_CHECK (pthread_mutex_init (&k->lock, NULL));
   return k;
 }
 
 void free_kernel_run_command (kernel_run_command *k)
 {
   POCL_LOCK (kernel_pool_lock);
-  pthread_mutex_destroy (&k->lock);
+  PTHREAD_CHECK (pthread_mutex_destroy (&k->lock));
   LL_PREPEND (kernel_pool, k);
   POCL_UNLOCK (kernel_pool_lock);
 }
@@ -134,19 +134,23 @@ setup_kernel_arg_array (kernel_run_command *k)
             }
           else
             {
-              cl_mem m = *(cl_mem *)al->value;
-              if (m->device_ptrs)
-                arguments2[i] = m->device_ptrs[k->device->dev_id].mem_ptr;
+              void *ptr = NULL;
+              if (al->is_svm)
+                {
+                  ptr = *(void **)al->value;
+                }
               else
-                arguments2[i] = m->mem_host_ptr;
-
-              arguments2[i] += al->offset;
+                {
+                  cl_mem m = (*(cl_mem *)(al->value));
+                  ptr = m->device_ptrs[k->device->global_mem_id].mem_ptr;
+                }
+              arguments2[i] = (char *)ptr + al->offset;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
-          fill_dev_image_t(&di, al, k->device);
+          pocl_fill_dev_image_t (&di, al, k->device);
           void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                               sizeof (dev_image_t));
           arguments[i] = &arguments2[i];
@@ -156,7 +160,7 @@ setup_kernel_arg_array (kernel_run_command *k)
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
-          fill_dev_sampler_t(&ds, al);
+          pocl_fill_dev_sampler_t (&ds, al);
 
           arguments[i] = &arguments2[i];
           arguments2[i] = (void *)ds;

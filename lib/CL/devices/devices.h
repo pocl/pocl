@@ -34,6 +34,9 @@ extern "C" {
 
 /* The number of available devices. */
 extern unsigned int pocl_num_devices;
+extern struct _cl_device_id *pocl_devices;
+
+const char *pocl_get_device_name (unsigned index);
 
 /**
  * Populates the pocl_devices with the wanted device types.
@@ -68,14 +71,9 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
  * \return If the env var was not set, return -1, if the env var is specified, return 0
  * or the number of occurrence of dev_type in the env var
  */
+POCL_EXPORT
 int pocl_device_get_env_count(const char *dev_type);
 
-
-/**
- * \brief Unique global memory id for devices with distinct memory from the system memory
- * \return Unique global mem id, id > 0. Zero is reserved for shared system memory
- */
-int pocl_get_unique_global_mem_id();
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"

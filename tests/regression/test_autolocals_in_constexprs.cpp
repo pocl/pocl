@@ -23,6 +23,8 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -94,6 +96,8 @@ main(void)
     // Do the work
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1));
     queue.finish();
+
+    platformList[0].unloadCompiler();
 
     // We don't actually care about the result.
   }

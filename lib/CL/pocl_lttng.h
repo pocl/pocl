@@ -32,6 +32,9 @@
 
 #include <lttng/tracepoint.h>
 
+/******************************************************************************/
+/******************************************************************************/
+
 /**
  *  NDRange kernel tracepoint
  */
@@ -39,13 +42,19 @@ TRACEPOINT_EVENT(
   pocl_trace,
   ndrange_kernel,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
+    uint64_t, event_id,
+    uint32_t, evt_status,
+    uint32_t, dev_id,
+    uint32_t, queue_id,
+    uint32_t, kernel_id,
     const char*, kernel_name
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
+    ctf_integer_hex(uint64_t, event_id, event_id)
+    ctf_integer_hex(uint32_t, evt_status, evt_status)
+    ctf_integer_hex(uint32_t, dev_id, dev_id)
+    ctf_integer_hex(uint32_t, queue_id, queue_id)
+    ctf_integer_hex(uint32_t, kernel_id, kernel_id)
     ctf_string(kernel_name, kernel_name)
   )
 )
@@ -57,16 +66,18 @@ TRACEPOINT_EVENT(
   pocl_trace,
   read_buffer,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    const void *, host_ptr,
-    size_t, buffer_size
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_integer_hex(const void *, host_ptr, host_ptr)
-    ctf_integer_hex(size_t, buffer_size, buffer_size)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
   )
 )
 
@@ -74,16 +85,18 @@ TRACEPOINT_EVENT(
   pocl_trace,
   write_buffer,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    const void *, host_ptr,
-    size_t, buffer_size
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_integer_hex(const void *, host_ptr, host_ptr)
-    ctf_integer_hex(size_t, buffer_size, buffer_size)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
   )
 )
 
@@ -94,14 +107,20 @@ TRACEPOINT_EVENT(
   pocl_trace,
   copy_buffer,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    size_t, buffer_size
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, src_id,
+      uint32_t, dst_id
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_integer_hex(size_t, buffer_size, buffer_size)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, src_id, src_id)
+      ctf_integer_hex(uint32_t, dst_id, dst_id)
   )
 )
 
@@ -112,56 +131,474 @@ TRACEPOINT_EVENT(
   pocl_trace,
   fill_buffer,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    size_t, fill_size
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
   ),
   TP_FIELDS(
-      ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_integer_hex(size_t, fill_size, fill_size)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
   )
 )
 
+
 /**
- *  Map tracepoint
+ *  R/W Buffer tracepoint
  */
 TRACEPOINT_EVENT(
   pocl_trace,
-  map,
+  read_buffer_rect,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    size_t, fill_size
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_integer_hex(size_t, fill_size, fill_size)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  write_buffer_rect,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
   )
 )
 
 /**
- *  Generic tracepoint for other commands
+ *  Copy Buffer tracepoint
  */
 TRACEPOINT_EVENT(
   pocl_trace,
-  command,
+  copy_buffer_rect,
   TP_ARGS(
-    unsigned long, event_id,
-    int, event_status,
-    const char *, cmd_type
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, src_id,
+      uint32_t, dst_id
   ),
   TP_FIELDS(
-    ctf_integer(unsigned long, event_id, event_id)
-    ctf_integer(int, event_status, event_status)
-    ctf_string(cmd_type, cmd_type)
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, src_id, src_id)
+      ctf_integer_hex(uint32_t, dst_id, dst_id)
+  )
+)
+
+
+
+
+/**
+ * IMAGEs
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  read_image_rect,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  write_image_rect,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  copy_image_rect,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, src_id,
+      uint32_t, dst_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, src_id, src_id)
+      ctf_integer_hex(uint32_t, dst_id, dst_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  copy_image2buf,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, src_id,
+      uint32_t, dst_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, src_id, src_id)
+      ctf_integer_hex(uint32_t, dst_id, dst_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  copy_buf2image,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, src_id,
+      uint32_t, dst_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, src_id, src_id)
+      ctf_integer_hex(uint32_t, dst_id, dst_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  fill_image,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  map_image,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  map_buffer,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  unmap_memobj,
+  TP_ARGS(
+      uint64_t, event_id,
+      uint32_t, evt_status,
+      uint32_t, dev_id,
+      uint32_t, queue_id,
+      uint32_t, obj_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(uint64_t, event_id, event_id)
+      ctf_integer_hex(uint32_t, evt_status, evt_status)
+      ctf_integer_hex(uint32_t, dev_id, dev_id)
+      ctf_integer_hex(uint32_t, queue_id, queue_id)
+      ctf_integer_hex(uint32_t, obj_id, obj_id)
+  )
+)
+
+/**************************************************************************/
+/**************************************************************************/
+
+/**
+ *  Create / Free Queue tracepoint
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_queue,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, queue_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, queue_id, queue_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_queue,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, queue_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, queue_id, queue_id)
+  )
+)
+
+
+
+/**
+ *  Create / Free buffer tracepoint
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_buffer,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, buffer_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, buffer_id, buffer_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_buffer,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, buffer_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, buffer_id, buffer_id)
+  )
+)
+
+
+
+
+/**
+ *  Create / Free program tracepoint
+ */
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  build_program,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, program_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, program_id, program_id)
+  )
+)
+
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_program,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, program_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, program_id, program_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_program,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, program_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, program_id, program_id)
+  )
+)
+
+
+
+/**
+ *  Create / Free kernel tracepoint
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_kernel,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, kernel_id,
+    const char*, kernel_name
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, kernel_id, kernel_id)
+      ctf_string(kernel_name, kernel_name)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_kernel,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, kernel_id,
+    const char*, kernel_name
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, kernel_id, kernel_id)
+      ctf_string(kernel_name, kernel_name)
+  )
+)
+
+
+/**
+ *  Create / Free image tracepoint
+ */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_image,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, image_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, image_id, image_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_image,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, image_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, image_id, image_id)
   )
 )
 
 /**
- *  Default tracepoint
+ *  Create / Free sampler tracepoint
  */
+TRACEPOINT_EVENT(
+  pocl_trace,
+  create_sampler,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, sampler_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, sampler_id, sampler_id)
+  )
+)
+
+TRACEPOINT_EVENT(
+  pocl_trace,
+  free_sampler,
+  TP_ARGS(
+    size_t, context_id,
+    size_t, sampler_id
+  ),
+  TP_FIELDS(
+      ctf_integer_hex(size_t, context_id, context_id)
+      ctf_integer_hex(size_t, sampler_id, sampler_id)
+  )
+)
 
 #endif /* POCL_LLTTNG_H */
 

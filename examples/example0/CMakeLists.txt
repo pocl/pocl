@@ -35,7 +35,13 @@ target_link_libraries("example0" ${POCLU_LINK_OPTIONS})
 add_test("examples/example0" "example0")
 
 if (ENABLE_SPIR)
-  add_test("examples/example0_spir" "example0" "s")
+  add_test(NAME "examples/example0_spir"
+           COMMAND ${CMAKE_COMMAND}
+           "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example0.spir32####-c####${CMAKE_CURRENT_SOURCE_DIR}/example0.cl"
+           "-DCMD2=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example0.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/example0.cl"
+           "-DCMD3=${CMAKE_BINARY_DIR}/examples/example0/example0####s"
+           "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example0.spir32####${CMAKE_BINARY_DIR}/example0.spir64"
+            -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
   list(APPEND SPIREX "examples/example0_spir")
 endif()
 
@@ -61,4 +67,4 @@ set_tests_properties( "examples/example0" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/example0"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native")
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")

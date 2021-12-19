@@ -182,8 +182,8 @@ append_new_chunk (memory_region_t *region,
  *
  * @return The chunk, or NULL if no space available in the region.
  */
-chunk_info_t*
-alloc_buffer_from_region (memory_region_t *region, size_t size)
+chunk_info_t *
+pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 {
 #ifdef ENABLE_ASSERTS
   assert (region != NULL);
@@ -258,7 +258,7 @@ alloc_buffer (memory_region_t *regions, size_t size)
   memory_region_t *region = NULL;
   LL_FOREACH(regions, region)
     {
-      chunk = alloc_buffer_from_region (region, size);
+      chunk = pocl_alloc_buffer_from_region (region, size);
       if (chunk != NULL)
         return chunk;
     }
@@ -374,7 +374,7 @@ free_buffer (memory_region_t *regions, memory_address_t addr)
  * form larger unallocated chunks.
  */
 void
-free_chunk (chunk_info_t* chunk)
+pocl_free_chunk (chunk_info_t *chunk)
 {
   memory_region_t *region = chunk->parent_region;
   BA_LOCK (region->lock);
@@ -385,7 +385,7 @@ free_chunk (chunk_info_t* chunk)
   BA_UNLOCK (region->lock);
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### after free_chunk (%x)\n", chunk);
+  printf ("#### after pocl_free_chunk (%x)\n", chunk);
   print_chunks (region->chunks);
   printf ("\n");
 #endif
@@ -398,7 +398,8 @@ free_chunk (chunk_info_t* chunk)
  * @Param size  the size of the region (in bytes?)
  */
 void
-init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
+pocl_init_mem_region (memory_region_t *region, memory_address_t start,
+                      size_t size)
 {
   int i;
   BA_INIT_LOCK (region->lock);

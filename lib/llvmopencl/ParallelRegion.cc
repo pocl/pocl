@@ -28,7 +28,7 @@
 #include <algorithm>
 
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -55,10 +55,7 @@ using namespace pocl;
 
 int ParallelRegion::idGen = 0;
 
-extern cl_device_id currentPoclDevice;
-
-ParallelRegion::ParallelRegion(int forcedRegionId) : 
-  std::vector<llvm::BasicBlock *>(), 
+ParallelRegion::ParallelRegion(int forcedRegionId) :
   LocalIDXLoadInstr(NULL), LocalIDYLoadInstr(NULL), LocalIDZLoadInstr(NULL),
   exitIndex_(0), entryIndex_(0), pRegionId(forcedRegionId)
 {
@@ -289,8 +286,10 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* Entry,
 
   Module *M = Entry->getParent()->getParent();
 
-  llvm::Type *SizeT =
-    IntegerType::get(M->getContext(), currentPoclDevice->address_bits);
+  unsigned long address_bits;
+  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+
+  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
 
   GlobalVariable *GVX = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
   if (GVX != NULL)
@@ -468,12 +467,24 @@ ParallelRegion::Verify()
  *     !1 distinct !{}
  *     !2 distinct !{}
  *
- * Parallel loop metadata on memory reads also implies that
- * if-conversion (i.e., speculative execution within a loop iteration)
- * is safe. Given an instruction reading from memory,
- * IsLoadUnconditionallySafe should return whether it is safe under
- * (unconditional, unpredicated) speculative execution.
- * See https://bugs.llvm.org/show_bug.cgi?id=46666
+ * Parallel loop metadata prior to LLVM 12.0.1 on memory reads also implies that
+ * if-conversion (i.e., speculative execution within a loop iteration) is safe.
+ * Given an instruction reading from memory, IsLoadUnconditionallySafe should
+ * return whether it is safe under (unconditional, unpredicated) speculative
+ * execution. See https://bugs.llvm.org/show_bug.cgi?id=46666 and
+ * https://github.com/pocl/pocl/issues/757.
+ *
+ * From LLVM 12.0.1 onward parallel loop metadata does not imply if-conversion
+ * safety anymore. This got fixed by this change:
+ * https://reviews.llvm.org/D103907 for LLVM 13 which also got backported to
+ * LLVM 12.0.1. In other words this means that before the fix, the loop
+ * vectorizer was not able to vectorize some kernels because they would required
+ * a huge runtime memory check code insertion. Leading to vectorizer to give up.
+ * With above fix, we can add metadata to every load.  This will cause
+ * vectorizer to skip runtime memory check code insertion part because it
+ * indicates that iterations do not depend on each other. Which in turn makes
+ * vectorization easier. In this case using of IsLoadUnconditionallySafe
+ * parameter will be skipped.
  */
 void
 ParallelRegion::AddParallelLoopMetadata(
@@ -487,9 +498,15 @@ ParallelRegion::AddParallelLoopMetadata(
         continue;
       }
 
+#if LLVM_VERSION_MAJOR < 13 &&                                                 \
+    !(LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR >= 0 &&                   \
+      LLVM_VERSION_PATCH >= 1)
+      // This check will skip insertion of metadata on loads inside conditions
+      // before LLVM 12.0.1.
       if (ii->mayReadFromMemory() && !IsLoadUnconditionallySafe(&*ii)) {
         continue;
       }
+#endif
 
       MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
       MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
@@ -649,7 +666,7 @@ ParallelRegion::InjectPrintF
   llvm::Value *stringArg = 
     builder.CreateGlobalString(formatStr);
     
-  /* generated with help from http://llvm.org/demo/index.cgi */
+  /* generated with help from https://llvm.org/demo/index.cgi */
   Function* printfFunc = M->getFunction("printf");
   if (printfFunc == NULL) {
     PointerType* PointerTy_4 = PointerType::get(IntegerType::get(M->getContext(), 8), 0);
@@ -670,10 +687,18 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
+#ifndef LLVM_OLDER_THAN_14_0
     AttributeList func_printf_PAL =
-      AttributeList()
-      .addAttribute(M->getContext(), 1U, Attribute::NoCapture)
-      .addAttribute(M->getContext(), 4294967295U, Attribute::NoUnwind);
+        AttributeList()
+            .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)
+            .addAttributeAtIndex(M->getContext(), 4294967295U,
+                                 Attribute::NoUnwind);
+#else
+    AttributeList func_printf_PAL =
+        AttributeList()
+            .addAttribute(M->getContext(), 1U, Attribute::NoCapture)
+            .addAttribute(M->getContext(), 4294967295U, Attribute::NoUnwind);
+#endif
 
     printfFunc->setAttributes(func_printf_PAL);
   }

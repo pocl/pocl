@@ -26,7 +26,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2 
 {
-  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   if (device->parent_device == NULL)
     return CL_SUCCESS;
@@ -38,6 +38,7 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
     {
       POCL_DESTROY_OBJECT (device);
       POCL_MEM_FREE (device->partition_type);
+      POCL_MEM_FREE (device->builtin_kernel_list);
       POCL_MSG_PRINT_REFCOUNTS ("Free Device %p\n", device);
       POCL_MEM_FREE (device);
     }

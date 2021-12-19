@@ -48,20 +48,18 @@ typedef struct {
 
 /* A kernel invocation command. */
 typedef struct {
-    /* The execution status of this queue slot. */
-    ALIGN8(uint status);
     /* The kernel to execute. Points to the metadata in the device global
        memory. It will be casted to a __kernel_metadata* */
-    ALIGN8(uint kernel);
-    /* Pointers to the kernel arguments in the global memory. Will be
+    ALIGN8 (uint kernel_meta);
+    /* Pointer to the kernel arguments in the local memory. Will be
        casted to 32 bit void* */
-    ALIGN8(uint args[MAX_KERNEL_ARGS]);
-    /* Sizes of the dynamically allocated local buffers. */
-/*    uint32_t dynamic_local_arg_sizes[MAX_KERNEL_ARGS] ALIGN4; */
-    /* Number of dimensions in the work space. */
-    ALIGN4(uint work_dim);
-    ALIGN4(uint num_groups[3]);
-    ALIGN4(uint global_offset[3]);
+    ALIGN8 (uint args);
+    ALIGN8 (uint args_size);
+    /* pocl context */
+    ALIGN8 (uint ctx);
+    ALIGN8 (uint ctx_size);
+    /* The execution status of this queue slot. */
+    ALIGN8 (uint status);
 } __kernel_exec_cmd;
 
 /* Kernel execution statuses. */

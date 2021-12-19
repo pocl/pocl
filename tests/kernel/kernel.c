@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <CL/opencl.h>
 
 #include "poclu.h"
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #  include "vccompat.hpp"
 #endif
 
@@ -110,6 +109,7 @@ error:
   }
   if (context) {
     clReleaseContext (context);
+    clUnloadCompiler ();
   }
   if (source) {
     free(source);

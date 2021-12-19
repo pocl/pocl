@@ -28,7 +28,7 @@
 #ifndef VCCOMPAT_HPP
 #define VCCOMPAT_HPP
 
-#include <Windows.h>
+#include <windows.h>
 #define __restrict__ __restrict
 #define restrict __restrict
 
@@ -50,17 +50,24 @@ static inline int snprintf(char *str, size_t size, const char *format, ...) {
 }
 */
 
+#ifdef _MSC_VER
 static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
   return strtok_s(str, delim, saveptr);
 }
+#endif
 
 #define _USE_MATH_DEFINES
 
 #define srand48(x) srand(x)
-#define drand48() (double(rand()) / RAND_MAX)
+#define drand48() (((double)rand()) / RAND_MAX)
+
+#define random rand
+#define srandom(x) srand(x)
 
 #include <sys/utime.h>
 #define utime _utime;
+
+#ifdef _MSC_VER
 
 #define RTLD_NOW 1
 #define RTLD_LOCAL 1
@@ -80,6 +87,7 @@ static inline int dlerror(void) {
 static inline void *dlsym(void* handle, const char *symbol) {
   return GetProcAddress((HMODULE)handle, symbol);
 }
+#endif
 
 /**
  * Filesystem stuff
@@ -93,7 +101,7 @@ static inline void *dlsym(void* handle, const char *symbol) {
 #include <direct.h>
 #include <process.h>
 
-#define mkdir(a,b) mkdir(a)
+#define mkdir(a,b) _mkdir(a)
 
 /**
  * TODO: test these implementations...
@@ -131,6 +139,8 @@ static int posix_memalign(void **p, size_t align, size_t size) {
    return 0;
 }
 
+#ifdef _MSC_VER
 #define alloca _alloca
+#endif
 
 #endif

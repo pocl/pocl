@@ -32,6 +32,9 @@ CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode;
 
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
+
   errcode = pocl_check_event_wait_list (command_queue, num_events, event_list);
   if (errcode != CL_SUCCESS)
     return errcode;

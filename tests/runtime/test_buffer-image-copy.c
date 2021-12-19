@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <CL/cl.h>
+
 #include "poclu.h"
 
 #define MAX_PLATFORMS 32

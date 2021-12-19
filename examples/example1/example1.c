@@ -24,10 +24,11 @@
 */
 
 #include <assert.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include <poclu.h>
+
+#include "poclu.h"
 
 #define N 4
 
@@ -51,22 +52,39 @@ main (int argc, char **argv)
   int i, err, spir, spirv, poclbin;
 
   cl_context context = NULL;
-  cl_device_id device = NULL;
   cl_platform_id platform = NULL;
-  cl_command_queue queue = NULL;
   cl_program program = NULL;
+  cl_uint num_devices = 0;
+  cl_device_id *devices = NULL;
+  cl_command_queue *queues = NULL;
 
-  err = poclu_get_any_device2 (&context, &device, &queue, &platform);
+  srand ((unsigned int)time (NULL));
+
+  err = poclu_get_multiple_devices (&platform, &context, &num_devices,
+                                    &devices, &queues);
+
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
+  cl_device_id first_dev = devices[0];
+  cl_command_queue first_queue = queues[0];
 
   spir = (argc > 1 && argv[1][0] == 's');
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');
   const char *explicit_binary_path = (poclbin && (argc > 2)) ? argv[2] : NULL;
 
+  if (poclbin)
+    {
+      /* Force disable the WG specialization to test executing from the generic
+         binary only. This is to avoid the online compiler creating
+         a specialized WG function that is ran instead of the binary we
+         want to test here. */
+      setenv("POCL_WORK_GROUP_SPECIALIZATION", "0", 1);
+    }
   const char *basename = "example1";
-  err = poclu_load_program (context, device, basename, spir, spirv, poclbin,
-                            explicit_binary_path, NULL, &program);
+  err = poclu_load_program_multidev (context, devices, num_devices, basename,
+                                     spir, spirv, poclbin,
+                                     explicit_binary_path, NULL, &program);
+
   if (err != CL_SUCCESS)
     goto FINISH;
 
@@ -89,8 +107,8 @@ main (int argc, char **argv)
 
   err = 0;
 
-  if (exec_dot_product_kernel (context, device, queue, program, N, srcA, srcB,
-                               dst))
+  if (exec_dot_product_kernel (context, first_dev, first_queue, program, N,
+                               srcA, srcB, dst))
     {
       printf ("Error running the tests\n");
       err = 1;
@@ -118,9 +136,12 @@ main (int argc, char **argv)
 
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));
-  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
+  for (i = 0; i < num_devices; ++i)
+    {
+      CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
+    }
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (srcA);
   free (srcB);
   free (dst);

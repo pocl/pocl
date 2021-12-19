@@ -1,7 +1,8 @@
-
 // Trying to build a faulty program twice results in NULL deref
 // See https://github.com/pocl/pocl/issues/577
 // should print "BUILD ERROR" twice then "OK" once.
+
+#include "pocl_opencl.h"
 
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
       error_count++;
     }
   }
+
+  cl::Platform::getDefault().unloadCompiler();
 
   if (error_count == 2) {
     std::cout << "OK\n";

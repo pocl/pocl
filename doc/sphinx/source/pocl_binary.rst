@@ -1,12 +1,12 @@
 Binary inputs format
 --------------------
 
-This section describe how to use ``clCreateProgramWithBinary`` with the POCL
+This section describes how to use ``clCreateProgramWithBinary`` with the POCL
 implementation of OpenCL.
 
 .. _khronos : https://www.khronos.org/registry/cl/sdk/1.2/docs/man/xhtml/clCreateProgramWithBinary.html
 
-As mentionned in the khronos_ documentation, the parameter ``binaries`` of  
+As mentioned in the khronos_ documentation, the parameter ``binaries`` of
 ``clCreateProgramWithBinary`` can consist of either or both of device-specific
 code and/or implementation-specific intermediate representation.
 
@@ -23,7 +23,7 @@ generate such a file.
 Device-specific representation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-POCL implementation also enable the user to create a program from a
+POCL implementation also enables the user to create a program from a
 device-specific binary file. The benefit of this method is that the run of your
 opencl code will not make any call to the compiler. 
 
@@ -40,7 +40,7 @@ then dump it without any modifications.
 compile your kernel, and to specify some specific build options. If you want 
 to see the complete list, run ``./poclcc -h``
 
-When ``poclcc`` generates a binary file, it has not enough information to 
+When ``poclcc`` generates a binary file, it doesn't have enough information to
 generate a code as optimized as it would have been if it has been created from 
 source, build and enqueued in the same OpenCL code.
 
@@ -61,7 +61,7 @@ Here is an example on how to create a program from a file:
    rewind(f);
 
    binary = malloc(binary_size);
-   fread(buffer, 1, binary_size, f);
+   fread(binary, 1, binary_size, f);
    
    fclose(f);
 

@@ -42,6 +42,25 @@ The compilation of kernels in pocl is performed roughly as follows.
    (``pocl_basic_run()`` of ``lib/CL/devices/basic/basic.c``).
    
 
+Multiple logical address spaces
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, Clang converts the OpenCL C address space qualifiers to "language"
+address space identifiers, which are later converted to target-specific address
+spaces. That is, e.g., for the common CPU targets with single uniform address space,
+all of the OpenCL address spaces are mapped to the address space identifier 0
+(the default C address space).
+
+For multiple address space LLVM backends such as AMD GPUs, there are different IDs
+produced for the OpenCL C address spaces, but they differ from those of the TCE backend,
+etc.
+
+Thus, after the Clang processing of the kernel source, the information of the original
+OpenCL C address spaces is lost or is target specific, preventing or complicating the special
+treatment of the pointers pointing to (logically) different address spaces (e.g. OpenCL
+disjoint address space alias analysis, see :ref:`opencl-optimizations`).
+
+
 Work group function generation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

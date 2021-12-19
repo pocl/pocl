@@ -82,7 +82,9 @@ pocl_topology_detect_device_info(cl_device_id device)
    * I could find is to point the plugin search path to a place where there
    * are no plugins to be found.
    */
+#ifndef _WIN32
   setenv ("HWLOC_PLUGINS_PATH", "/dev/null", 1);
+#endif
 
   ret = hwloc_topology_init (&pocl_topology);
   if (ret == -1)

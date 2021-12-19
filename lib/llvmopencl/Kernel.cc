@@ -27,7 +27,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -40,8 +40,6 @@ POP_COMPILER_DIAGS
 
 using namespace llvm;
 using namespace pocl;
-
-extern cl_device_id currentPoclDevice;
 
 static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
                              BasicBlock *b);
@@ -186,6 +184,10 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
     BasicBlock *exit = exit_blocks.back();
     exit_blocks.pop_back();
 
+    // already handled
+    if (found_barriers.count(exit) != 0)
+      continue;
+
     while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
       assert(PR != NULL && !PR->empty() && 
              "Empty parallel region in kernel (contiguous barriers)!");
@@ -281,8 +283,10 @@ Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalS
 
   llvm::Module* M = getParent();
 
-  llvm::Type *SizeT =
-    IntegerType::get(M->getContext(), currentPoclDevice->address_bits);
+  unsigned long address_bits;
+  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+
+  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
 
   GV = M->getGlobalVariable("_local_size_x");
   if (GV != NULL)

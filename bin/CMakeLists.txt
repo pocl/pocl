@@ -28,6 +28,8 @@ harden(poclcc)
 
 target_link_libraries(poclcc ${OPENCL_LIBS})
 
+target_compile_definitions(poclcc PRIVATE DISABLE_OPENCL_20)
+
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")
 

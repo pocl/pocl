@@ -10,7 +10,8 @@ POname(clGetImageInfo)(cl_mem            image ,
                        size_t *          param_value_size_ret ) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (image)),
+                          CL_INVALID_MEM_OBJECT);
 
   cl_image_format image_format = {image->image_channel_order, 
                                   image->image_channel_data_type};

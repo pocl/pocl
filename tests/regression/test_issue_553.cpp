@@ -1,5 +1,6 @@
-
 // See https://github.com/pocl/pocl/issues/553
+
+#include "pocl_opencl.h"
 
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -71,4 +72,5 @@ int main(int argc, char *argv[])
 #endif
 
   queue.finish();
+  cl::Platform::getDefault().unloadCompiler();
 }

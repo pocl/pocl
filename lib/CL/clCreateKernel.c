@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <sys/stat.h>
-#ifndef _MSC_VER
+#ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -35,6 +35,8 @@
 #include "pocl_cache.h"
 #include "pocl_binary.h"
 #include "pocl_util.h"
+
+extern unsigned long kernel_c;
 
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,
@@ -47,10 +49,7 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
-  POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
-
-  POCL_GOTO_ERROR_ON((program->num_devices == 0),
-    CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_GOTO_ERROR_ON((program->build_status == CL_BUILD_NONE),
     CL_INVALID_PROGRAM_EXECUTABLE, "You must call clBuildProgram first!"
@@ -59,11 +58,7 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
-  POCL_GOTO_ERROR_ON (
-      (program->builtin_kernel_names == NULL && program->llvm_irs == NULL),
-      CL_INVALID_PROGRAM_EXECUTABLE,
-      "No built binaries nor built-in kernels in program "
-      "(this shouldn't happen...)\n");
+  assert (program->num_devices != 0);
 
   kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
   POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
@@ -80,26 +75,62 @@ POname(clCreateKernel)(cl_program program,
                       kernel_name);
 
   kernel->meta = &program->kernel_meta[i];
+  kernel->data = (void **)calloc (program->num_devices, sizeof (void *));
   kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
 
-  kernel->dyn_arguments
-      = calloc ((kernel->meta->num_args), sizeof (struct pocl_argument));
+  kernel->dyn_arguments = (pocl_argument *)calloc (
+      (kernel->meta->num_args), sizeof (struct pocl_argument));
   POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
                         CL_OUT_OF_HOST_MEMORY);
+
+  if (kernel->meta->total_argument_storage_size)
+    {
+      kernel->dyn_argument_storage
+          = (char *)calloc (1, kernel->meta->total_argument_storage_size);
+      kernel->dyn_argument_offsets
+          = (void **)malloc (kernel->meta->num_args * sizeof (void *));
+
+      size_t offset = 0;
+      for (i = 0; i < kernel->meta->num_args; ++i)
+        {
+          kernel->dyn_argument_offsets[i]
+              = kernel->dyn_argument_storage + offset;
+          unsigned type_size = kernel->meta->arg_info[i].type_size;
+          assert (type_size > 0);
+          offset += type_size;
+        }
+      assert (offset == kernel->meta->total_argument_storage_size);
+    }
+
+  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
+
+  for (i = 0; i < program->num_devices; ++i)
+    {
+      cl_device_id device = program->devices[i];
+      if (device->ops->create_kernel)
+        device->ops->create_kernel (device, program, kernel, i);
+    }
 
   POCL_LOCK_OBJ (program);
   LL_PREPEND (program->kernels, kernel);
   POCL_RETAIN_OBJECT_UNLOCKED (program);
   POCL_UNLOCK_OBJ (program);
 
+  POCL_ATOMIC_INC (kernel_c);
+
   errcode = CL_SUCCESS;
   goto SUCCESS;
 
 ERROR:
   if (kernel)
-    POCL_MEM_FREE (kernel->dyn_arguments);
+    {
+      POCL_MEM_FREE (kernel->dyn_arguments);
+      POCL_MEM_FREE (kernel->data);
+      POCL_MEM_FREE (kernel->dyn_argument_storage);
+      POCL_MEM_FREE (kernel->dyn_argument_offsets);
+    }
   POCL_MEM_FREE (kernel);
   kernel = NULL;
 

@@ -4,10 +4,11 @@
  * not run against an other installed OpenCL library.
  */
 
-#include "poclu.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "poclu.h"
 #include "config.h"
 
 int main(void)
@@ -32,10 +33,11 @@ int main(void)
 
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
         const char *expected = "OpenCL " POCL_CL_VERSION
-                               " pocl " PACKAGE_VERSION;
+                               " pocl " POCL_VERSION_FULL;
         if (strncmp (result, expected, strlen (expected)) != 0)
           {
             printf ("Error: platform is: %s\n", result);
+            printf ("Should be: %s\n", expected);
             return 2;
           }
 

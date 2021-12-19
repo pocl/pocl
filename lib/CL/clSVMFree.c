@@ -24,27 +24,33 @@
 #include "pocl_util.h"
 #include "pocl_debug.h"
 
+extern unsigned long svm_buffer_c;
+
 CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {
-  if (context == NULL)
-  {
-    POCL_MSG_WARN("Bad cl_context");
-    return;
-  }
+  if (!IS_CL_OBJECT_VALID (context))
+    {
+      POCL_MSG_ERR ("Invalid cl_context\n");
+      return;
+    }
 
-  if (context->svm_allocdev==NULL)
-  {
-    POCL_MSG_WARN("None of the devices in this context is SVM-capable");
-    return;
-  }
+  if (context->svm_allocdev == NULL)
+    {
+      POCL_MSG_ERR ("None of the devices in this context is SVM-capable\n");
+      return;
+    }
 
   if (svm_pointer == NULL)
-    return;
+    {
+      POCL_MSG_ERR ("Invalid SVM pointer\n");
+      return;
+    }
 
   context->svm_allocdev->ops->svm_free (context->svm_allocdev, svm_pointer);
 
+  POCL_ATOMIC_DEC (svm_buffer_c);
 }
-POsym(clSVMFree)
 
+POsym (clSVMFree)

@@ -297,6 +297,7 @@ set(KERNEL_CL_FLAGS
       "-Wall" "-Wno-unused-local-typedef" "-Xclang"
       "-cl-std=CL${HOST_DEVICE_CL_STD}"
       "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}"
+      "-DENABLE_SLEEF=1"
       ${KERNEL_CL_FLAGS})
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1657502
@@ -381,6 +382,9 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/test.c" TEST_SRC)
   file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/fma_test.c" FMA_TEST_SRC)
+
+  set(STR "#define SLEEF_ENABLED\n")
+  file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
   if(ENABLE_FP64)
     set(STR "#define SLEEF_DOUBLE_AVAILABLE\n")

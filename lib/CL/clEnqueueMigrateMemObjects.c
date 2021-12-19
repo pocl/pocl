@@ -39,7 +39,8 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   _cl_command_node *cmd = NULL;
   cl_mem *new_mem_objects = NULL;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
   POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
 
@@ -47,22 +48,27 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
      ~(CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | CL_MIGRATE_MEM_OBJECT_HOST);
   POCL_RETURN_ERROR_COND (((flags != 0) && (flags & invalid_flags)),
                           CL_INVALID_VALUE);
-  /* TODO check if it's OK to ignore flags. */
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  new_mem_objects = calloc (sizeof (cl_mem), num_mem_objects);
+  new_mem_objects = (cl_mem *)calloc (sizeof (cl_mem), num_mem_objects);
+
+  char *rdonly = (char*)alloca (num_mem_objects);
 
   for (i = 0; i < num_mem_objects; ++i)
     {
-      POCL_GOTO_ERROR_COND ((mem_objects[i] == NULL), CL_INVALID_MEM_OBJECT);
+      POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (mem_objects[i])),
+                            CL_INVALID_MEM_OBJECT);
 
       POCL_GOTO_ERROR_COND (
           (mem_objects[i]->context != command_queue->context),
           CL_INVALID_CONTEXT);
+
+      POCL_GOTO_ERROR_ON ((mem_objects[i]->is_gl_texture),
+                          CL_INVALID_MEM_OBJECT, "mem_obj is a GL texture\n");
 
       if (mem_objects[i]->parent == NULL)
         new_mem_objects[i] = mem_objects[i];
@@ -70,31 +76,22 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
         new_mem_objects[i] = mem_objects[i]->parent;
 
       IMAGE1D_TO_BUFFER (new_mem_objects[i]);
+
+      rdonly[i] = 1;
     }
 
-  errcode = pocl_create_command (&cmd, command_queue,
-                                 CL_COMMAND_MIGRATE_MEM_OBJECTS, event,
-                                 num_events_in_wait_list, event_wait_list,
-                                 num_mem_objects, new_mem_objects);
+  errcode = pocl_create_command_migrate (
+      &cmd, command_queue, flags, event, num_events_in_wait_list,
+      event_wait_list, num_mem_objects, new_mem_objects, rdonly);
+
+  POCL_MEM_FREE (new_mem_objects);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.migrate.data = command_queue->device->data;
-  cmd->command.migrate.num_mem_objects = num_mem_objects;
-  cmd->command.migrate.mem_objects = new_mem_objects;
-  cmd->command.migrate.source_devices = malloc
-    (num_mem_objects * sizeof (cl_device_id));
-
-  for (i = 0; i < num_mem_objects; ++i)
-    {
-      POname (clRetainMemObject) (new_mem_objects[i]);
-
-      cmd->command.migrate.source_devices[i]
-          = new_mem_objects[i]->owning_device;
-
-      new_mem_objects[i]->owning_device = command_queue->device;
-    }
+  /* This is an empty command, because the actual migrations are created in
+   * the pocl_create_command above, for each buffer separately. */
+  cmd->command.migrate.type = ENQUEUE_MIGRATE_TYPE_NOP;
 
   pocl_command_enqueue (command_queue, cmd);
 
@@ -102,8 +99,6 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
 ERROR:
   POCL_MEM_FREE (new_mem_objects);
-  free (cmd);
-  free (event);
   return errcode;
 }
 POsym(clEnqueueMigrateMemObjects)

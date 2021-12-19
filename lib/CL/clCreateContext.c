@@ -21,23 +21,27 @@
    THE SOFTWARE.
 */
 
-#include "devices/devices.h"
+#include "devices.h"
 #include "pocl_cl.h"
-#include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
-#include <stdlib.h>
-#include <string.h>
+#include "pocl_util.h"
+#ifdef ENABLE_LLVM
+#include "pocl_llvm.h"
+#endif
 
-int context_set_properties(cl_context                    context,
-                           const cl_context_properties * properties,
-                           cl_int *                      errcode)
+extern unsigned long context_c;
+
+int
+context_set_properties (cl_context context,
+                        const cl_context_properties *properties)
 {
   unsigned i;
   int num_properties = 0;
   
   context->properties = NULL;
-  
+  context->gl_interop = CL_FALSE;
+
   /* verify if data in properties is valid
    * and set them */
   if (properties)
@@ -59,8 +63,7 @@ int context_set_properties(cl_context                    context,
             if (q[0] == p[0])
               {
                 POCL_MSG_ERR("Duplicate properties: %lu\n", (unsigned long)q[0]);
-                *errcode = CL_INVALID_PROPERTY; 
-                return 0;
+                return CL_INVALID_PROPERTY;
               }
           
           switch (p[0])
@@ -76,17 +79,24 @@ int context_set_properties(cl_context                    context,
               if (platform_found == CL_FALSE)
                 {
                   POCL_MSG_ERR("Could not find platform %p\n", (void*)p[1]);
-                  *errcode = CL_INVALID_PLATFORM;
-                  return 0;
+                  return CL_INVALID_PLATFORM;
                 }
 
               p += 2;
               break;
 
+            case CL_CONTEXT_INTEROP_USER_SYNC:
+            case CL_GL_CONTEXT_KHR:
+            case CL_EGL_DISPLAY_KHR:
+            case CL_GLX_DISPLAY_KHR:
+            case CL_CGL_SHAREGROUP_KHR:
+              context->gl_interop = CL_TRUE;
+              p += 2;
+              break;
+
             default: 
               POCL_MSG_ERR("Unknown context property: %lu\n", (unsigned long)p[0]);
-              *errcode = CL_INVALID_PROPERTY;
-              return 0;
+              return CL_INVALID_PROPERTY;
             }
           num_properties++;
         }
@@ -95,29 +105,28 @@ int context_set_properties(cl_context                    context,
         ((num_properties * 2 + 1) * sizeof(cl_context_properties));
       if (context->properties == NULL)
         {
-          *errcode = CL_OUT_OF_HOST_MEMORY;
-          return 0;
+          return CL_OUT_OF_HOST_MEMORY;
         }
       
       memcpy(context->properties, properties, 
              (num_properties * 2 + 1) * sizeof(cl_context_properties));
       context->num_properties = num_properties;
 
-      *errcode = 0;
-      return num_properties;
+      return CL_SUCCESS;
     }
   else
     {
       context->properties     = NULL;
       context->num_properties = 0;
       
-      *errcode = 0;
       return 0;
     }
 }
 
+extern int pocl_offline_compile;
+
 unsigned cl_context_count = 0;
-pocl_lock_t pocl_context_handling_lock = POCL_LOCK_INITIALIZER;
+pocl_lock_t pocl_context_handling_lock;
 
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContext)(const cl_context_properties * properties,
@@ -127,18 +136,19 @@ POname(clCreateContext)(const cl_context_properties * properties,
                 void *                        user_data,
                 cl_int *                      errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  unsigned i;
-  cl_device_id device_ptr;
+  unsigned i = 0;
   cl_int errcode = 0;
   cl_context context = NULL;
 
   POCL_LOCK (pocl_context_handling_lock);
 
+#ifdef ENABLE_LLVM
+  InitializeLLVM ();
+#endif
+
   POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
-
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
 
   errcode = pocl_init_devices();
   /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
@@ -149,84 +159,93 @@ POname(clCreateContext)(const cl_context_properties * properties,
    * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
    * not to handle it.
    */
+
   if (errcode == CL_DEVICE_NOT_FOUND)
     errcode = CL_INVALID_DEVICE;
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
                       "Could not initialize devices\n");
 
-  context = (cl_context)calloc (1, sizeof (struct _cl_context));
-  if (context == NULL)
+  for (i = 0; i < num_devices; ++i)
     {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
+      POCL_GOTO_ERROR_ON ((devices[i] == NULL), CL_INVALID_DEVICE,
+                          "one of the devices in device list is NULL\n");
     }
+
+  context = (cl_context)calloc (1, sizeof (struct _cl_context));
+  POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
 
-  context_set_properties(context, properties, &errcode);
+  errcode = context_set_properties (context, properties);
   if (errcode)
-    {
-      goto ERROR;
-    }
+    goto ERROR;
 
   context->devices = pocl_unique_device_list(devices, num_devices,
                                              &context->num_devices);
-  if (context->devices == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
-  
-  i = 0;
-  while (i < context->num_devices)
-    {
-      device_ptr = context->devices[i++];
-      if (device_ptr == NULL)
-        {
-          POCL_MSG_ERR("one of the devices in device list is NULL\n");
-          errcode = CL_INVALID_DEVICE;
-          goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
-        }
-      
-      if (!offline_compile && (device_ptr->available != CL_TRUE))
-        {
-          POCL_MSG_WARN("Offline compilation disabled - dropping unavailable device: %s\n", device_ptr->long_name);
-          context->devices[i] = context->devices[--context->num_devices];
-        }
-      else if((device_ptr->compiler_available != CL_TRUE) && (device_ptr->available != CL_TRUE))
-        {
-          POCL_MSG_WARN("Device unavailable and device compiler unavailable - dropping device: %s\n", device_ptr->long_name);
-          context->devices[i] = context->devices[--context->num_devices];
-        }
-      else
-        POname(clRetainDevice)(device_ptr);
-    }
+  POCL_GOTO_ERROR_COND ((context->devices == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  if (context->num_devices == 0)
-    {
-      POCL_MSG_ERR ("Zero devices after dropping the unavailable ones\n");
-      errcode = CL_INVALID_DEVICE;
-      goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
-    }
+  POCL_GOTO_ERROR_ON ((context->num_devices == 0), CL_INVALID_DEVICE,
+                      "Zero devices\n");
 
-  pocl_setup_context(context);
+  context->default_queues
+      = (cl_command_queue *)calloc (num_devices, sizeof (cl_command_queue));
+  POCL_GOTO_ERROR_COND ((context->default_queues == NULL),
+                        CL_OUT_OF_HOST_MEMORY);
+
+  for (i = 0; i < context->num_devices; ++i)
+    {
+      cl_device_id dev = context->devices[i];
+      POCL_GOTO_ERROR_ON (
+          (!pocl_offline_compile && (dev->available == CL_FALSE)),
+          CL_INVALID_DEVICE,
+          "Device unavailable and offline compilation "
+          "disabled: %s\n",
+          dev->long_name);
+    }
 
   pocl_init_mem_manager ();
-  
+
+  /* only required for online context */
+  if (!pocl_offline_compile)
+    pocl_setup_context (context);
+
+  for (i = 0; i < context->num_devices; ++i)
+    POname (clRetainDevice) (context->devices[i]);
+
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
-  context->valid = 1;
+
+#ifdef ENABLE_LLVM
+  pocl_llvm_create_context (context);
+#endif
+
+  POCL_ATOMIC_INC (context_c);
 
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);
 
   return context;
   
-ERROR_CLEAN_CONTEXT_AND_DEVICES:
-  POCL_MEM_FREE(context->devices);
- /*ERROR_CLEAN_CONTEXT_AND_PROPERTIES:*/
-  POCL_MEM_FREE(context->properties);
 ERROR:
+  if (context)
+    {
+      for (i = 0; i < context->num_devices; i++)
+        {
+          if (context->default_queues && context->default_queues[i])
+            {
+              POname (clReleaseCommandQueue) (context->default_queues[i]);
+            }
+          if (context->devices && context->devices[i])
+            {
+              POname (clReleaseDevice) (context->devices[i]);
+            }
+        }
+      for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+        POCL_MEM_FREE (context->image_formats[i]);
+      POCL_MEM_FREE (context->default_queues);
+      POCL_MEM_FREE (context->devices);
+      POCL_MEM_FREE (context->properties);
+    }
   POCL_MEM_FREE(context);
   if(errcode_ret != NULL)
     {

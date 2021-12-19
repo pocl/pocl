@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -131,9 +133,8 @@ main(void)
             outBuffer,
             (void *) output);
 
-        // There is no need to perform a finish on the final unmap
-        // or release any objects as this all happens implicitly with
-        // the C++ Wrapper API.
+        queue.finish();
+        platformList[0].unloadCompiler();
 
         if (ok)
           return EXIT_SUCCESS;

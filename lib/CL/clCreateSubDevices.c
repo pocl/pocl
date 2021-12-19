@@ -48,7 +48,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    cl_uint num_props = 0;
    cl_uint i;
 
-   POCL_GOTO_ERROR_COND((in_device == NULL), CL_INVALID_DEVICE);
+   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (in_device)), CL_INVALID_DEVICE);
    POCL_GOTO_ERROR_COND((properties == NULL), CL_INVALID_VALUE);
    POCL_GOTO_ERROR_COND((num_devices && !out_devices), CL_INVALID_VALUE);
    POCL_GOTO_ERROR_COND((!num_devices && out_devices), CL_INVALID_VALUE);
@@ -127,12 +127,12 @@ POname(clCreateSubDevices)(cl_device_id in_device,
 
    if (out_devices) {
      // we allocate our own array of devices to simplify management
-     new_devs = calloc(count_devices, sizeof(cl_device_id));
+     new_devs = (cl_device_id *)calloc (count_devices, sizeof (cl_device_id));
      POCL_GOTO_ERROR_COND((!new_devs), CL_OUT_OF_HOST_MEMORY);
      unsigned sum = 0;
 
      for (i = 0; i < count_devices; ++i) {
-       new_devs[i] = calloc(1, sizeof(struct _cl_device_id));
+       new_devs[i] = (cl_device_id)calloc(1, sizeof(struct _cl_device_id));
        POCL_GOTO_ERROR_COND((new_devs[i] == NULL), CL_OUT_OF_HOST_MEMORY);
 
        // clone in_device
@@ -158,7 +158,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
          }
 
        /* copy the partition type argument, for clGetDeviceInfo() */
-       new_devs[i]->partition_type = calloc(num_props, sizeof(*properties));
+       new_devs[i]->partition_type = (cl_device_partition_property *)calloc(num_props, sizeof(*properties));
        POCL_GOTO_ERROR_COND((new_devs[i]->partition_type == NULL),
          CL_OUT_OF_HOST_MEMORY);
        memcpy(new_devs[i]->partition_type, properties, num_props*sizeof(*properties));

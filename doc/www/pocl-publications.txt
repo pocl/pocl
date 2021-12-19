@@ -1,6 +1,6 @@
 Pekka J&auml;&auml;skel&auml;inen, Carlos S&aacute;nchez de La Lama, Erik Schnetter, Kalle Raiskila, Jarmo Takala, Heikki Berg
 pocl: A Performance-Portable OpenCL Implementation
-http://link.springer.com/article/10.1007/s10766-014-0320-y
+https://link.springer.com/article/10.1007/s10766-014-0320-y
 International Journal of Parallel Programming, Springer. October 2015, Volume 43, Issue 5.
 
 Ville Korhonen

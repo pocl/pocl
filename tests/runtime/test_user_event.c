@@ -20,13 +20,13 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-#include <CL/cl.h>
+
+#include "pocl_opencl.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#include "poclu.h"
 
 #define ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*arr))
 

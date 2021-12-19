@@ -42,9 +42,11 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   int errcode;
   size_t i;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
+                          CL_INVALID_MEM_OBJECT);
 
   POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
 
@@ -75,20 +77,18 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue,
-                                 CL_COMMAND_READ_BUFFER,
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list, 1, &buffer);
+  char rdonly = 1;
+
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &buffer, &rdonly);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   cmd->command.read.dst_host_ptr = ptr;
-  cmd->command.read.src_mem_id = &buffer->device_ptrs[device->dev_id];
+  cmd->command.read.src_mem_id = &buffer->device_ptrs[device->global_mem_id];
   cmd->command.read.offset = offset;
   cmd->command.read.size = size;
-
-  POname(clRetainMemObject) (buffer);
-  buffer->owning_device = command_queue->device;
 
   pocl_command_enqueue(command_queue, cmd);
 

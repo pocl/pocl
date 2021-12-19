@@ -1,37 +1,35 @@
-#include "pocl_debug.h"
-#include "pocl_timing.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <stdarg.h>
+
+#include "pocl_cl.h"
+#include "pocl_debug.h"
+#include "pocl_timing.h"
 
 #ifdef POCL_DEBUG_MESSAGES
 
 uint64_t pocl_debug_messages_filter; /* Bitfield */
-int stderr_is_a_tty;
+int pocl_stderr_is_a_tty;
 
-static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-  #if !defined(_MSC_VER) && !defined(__MINGW32__)
+static pocl_lock_t console_mutex;
 
     void
-    pocl_debug_output_lock ()
+    pocl_debug_output_lock (void)
     {
-      pthread_mutex_lock (&console_mutex);
+      POCL_LOCK (console_mutex);
     }
 
     void
-    pocl_debug_output_unlock ()
+    pocl_debug_output_unlock (void)
     {
-      pthread_mutex_unlock (&console_mutex);
+      POCL_UNLOCK (console_mutex);
     }
 
     void
     pocl_debug_messages_setup (const char* debug)
     {
+      POCL_INIT_LOCK (console_mutex);
       pocl_debug_messages_filter = 0;
       if (strlen (debug) == 1)
         {
@@ -50,10 +48,14 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       {
         if (strncmp (ptr, "general", 7) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_GENERAL;
+        else if (strncmp (ptr, "vulkan", 6) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_VULKAN;
         else if (strncmp (ptr, "event", 5) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_EVENTS;
         else if (strncmp (ptr, "cache", 5) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_CACHE;
+        else if (strncmp (ptr, "proxy", 5) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_PROXY;
         else if (strncmp (ptr, "llvm", 4) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LLVM;
         else if (strncmp (ptr, "refc", 4) == 0)
@@ -84,8 +86,8 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
 
       free (tokenize);
       if (pocl_debug_messages_filter)
-        fprintf (stderr, "** Final POCL_DEBUG flags: %" PRIX64 " \n",
-                 pocl_debug_messages_filter);
+        log_printf ("** Final POCL_DEBUG flags: %" PRIX64 " \n",
+                    pocl_debug_messages_filter);
     }
 
     void
@@ -100,15 +102,15 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
         const char *formatstring;
 
         if (filter_type == POCL_FILTER_TYPE_ERR)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_RED : " *** ERROR *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_RED : " *** ERROR *** ");
         else if (filter_type == POCL_FILTER_TYPE_WARN)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_YELLOW : " *** WARNING *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_YELLOW : " *** WARNING *** ");
         else if (filter_type == POCL_FILTER_TYPE_INFO)
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_GREEN : " *** INFO *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_GREEN : " *** INFO *** ");
         else
-          filter_type_str = (stderr_is_a_tty ? POCL_COLOR_GREEN : " *** UNKNOWN *** ");
+          filter_type_str = (pocl_stderr_is_a_tty ? POCL_COLOR_GREEN : " *** UNKNOWN *** ");
 
-        if (stderr_is_a_tty)
+        if (pocl_stderr_is_a_tty)
           formatstring = POCL_COLOR_BLUE
               "[%04i-%02i-%02i %02i:%02i:%02i.%09li]"
               POCL_COLOR_RESET "POCL: in fn %s "
@@ -117,25 +119,23 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
           formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] "
               "POCL: in fn %s at line %u:\n %s | %9s | ";
 
-        fprintf (stderr, formatstring, year, mon, day, hour, min, sec,
-                 nanosec, func, line, filter_type_str, filter);
+        log_printf (formatstring, year, mon, day, hour, min, sec, nanosec,
+                    func, line, filter_type_str, filter);
     }
 
     void pocl_debug_measure_start(uint64_t *start) {
       *start = pocl_gettimemono_ns();
     }
 
-    #define PRINT_DURATION(func, line, ...)                                   \
-      do                                                                      \
-        {                                                                     \
-          pocl_debug_output_lock ();                                          \
-          pocl_debug_print_header (func, line,                                \
-                                   "TIMING", POCL_FILTER_TYPE_INFO);          \
-          fprintf (stderr, __VA_ARGS__);                                      \
-          pocl_debug_output_unlock ();                                        \
-        }                                                                     \
-      while (0)
-
+#define PRINT_DURATION(func, line, ...)                                       \
+  do                                                                          \
+    {                                                                         \
+      pocl_debug_output_lock ();                                              \
+      pocl_debug_print_header (func, line, "TIMING", POCL_FILTER_TYPE_INFO);  \
+      log_printf (__VA_ARGS__);                                               \
+      pocl_debug_output_unlock ();                                            \
+    }                                                                         \
+  while (0)
 
     void pocl_debug_print_duration(const char* func, unsigned line,
                                    const char* msg, uint64_t nanosecs)
@@ -143,7 +143,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       if (!(pocl_debug_messages_filter & POCL_DEBUG_FLAG_TIMING))
         return;
       const char* formatstring;
-      if (stderr_is_a_tty)
+      if (pocl_stderr_is_a_tty)
         formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
                        ".%03" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
       else
@@ -157,7 +157,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       if ((sec == 0) && (nsec < 1000))
         {
           b = nsec % 1000;
-          if (stderr_is_a_tty)
+          if (pocl_stderr_is_a_tty)
             formatstring = "      >>>      " POCL_COLOR_MAGENTA
                     "     %3" PRIu64 " " POCL_COLOR_RESET " ns    %s\n";
           else
@@ -178,7 +178,7 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
         }
       else
         {
-          if (stderr_is_a_tty)
+          if (pocl_stderr_is_a_tty)
             formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
                            ".%09" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
           else
@@ -199,35 +199,6 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       *finish = pocl_gettimemono_ns();
       pocl_debug_print_duration(func, line, msg, (*finish - *start) );
     }
-
-  #else
-
-/* Doesn't work, haven't been able to get it working.
- * Needs someone with experience in Win programming. */
-
-    #include <windows.h>
-    #include <stdio.h>
-
-    void pocl_debug_print_header(const char* func, unsigned line) {
-        SYSTEMTIME st;
-        FILETIME t;
-        unsigned long st_nanosec;
-        GetSystemTimeAsFileTime(&t);
-        FileTimeToSystemTime(&t, &st);
-        st_nanosec = (t.dwLowDateTime % 10000000) * 100;
-
-        fprintf(stderr,
-            "[%04u-%02u-%02u %02u:%02u:%02u.%09lu] POCL: "
-            "in fn %s at line %u:\n",
-            (unsigned int)st.wYear, (unsigned int)st.wMonth,
-            (unsigned int)st.wDay, (unsigned int)st.wHour,
-            (unsigned int)st.wMinute, (unsigned int)st.wSecond,
-            (unsigned long)st_nanosec, func, line);
-    }
-
-
-  #endif
-
 
 
 #endif

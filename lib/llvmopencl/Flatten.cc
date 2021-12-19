@@ -31,7 +31,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
-#include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -56,9 +56,6 @@ namespace {
 
 }
 
-extern cl::opt<std::string> KernelName;
-extern cl_device_id currentPoclDevice;
-
 char Flatten::ID = 0;
 static RegisterPass<Flatten>
     X("flatten-inline-all",
@@ -71,11 +68,19 @@ Flatten::runOnModule(Module &M)
 {
   bool changed = false;
 
+  std::string DevAuxFunctionsList;
+  getModuleStringMetadata(M, "device_aux_functions", DevAuxFunctionsList);
+  std::string KernelName;
+  getModuleStringMetadata(M, "KernelName", KernelName);
+
   std::set<std::string> AuxFuncs;
-  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
-    const char **Func = DevAuxFuncs;
-    while (*Func != nullptr) {
-      AuxFuncs.insert(*Func++);
+  if (DevAuxFunctionsList.size() > 0) {
+    size_t pos = 0;
+    std::string token;
+    while ((pos = DevAuxFunctionsList.find(";")) != std::string::npos) {
+      token = DevAuxFunctionsList.substr(0, pos);
+      AuxFuncs.insert(token);
+      DevAuxFunctionsList.erase(0, pos + 1);
     }
   }
 
@@ -84,32 +89,37 @@ Flatten::runOnModule(Module &M)
     if (f->isDeclaration() || f->getName().startswith("__pocl_print") ||
         AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
       continue;
+
+    AttributeSet Attrs;
+    changed = true;
+    decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
+    decltype(llvm::GlobalValue::ExternalLinkage) linkage;
     if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeList::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             Attribute::AlwaysInline));
-
-      f->addFnAttr(Attribute::NoInline);
-
-      f->setLinkage(llvm::GlobalValue::ExternalLinkage);
-      changed = true;
+      replaceThisAttr = Attribute::AlwaysInline;
+      replacementAttr = Attribute::NoInline;
+      linkage = llvm::GlobalValue::ExternalLinkage;
 #ifdef DEBUG_FLATTEN
       std::cerr << "### NoInline for " << f->getName().str() << std::endl;
 #endif
     } else {
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeList::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             Attribute::NoInline));
-      f->addFnAttr(Attribute::AlwaysInline);
-
-      f->setLinkage(llvm::GlobalValue::InternalLinkage);
-      changed = true;
+      replaceThisAttr = Attribute::NoInline;
+      replacementAttr = Attribute::AlwaysInline;
+      linkage = llvm::GlobalValue::InternalLinkage;
 #ifdef DEBUG_FLATTEN
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
     }
+#ifdef LLVM_OLDER_THAN_14_0
+    f->removeAttributes(AttributeList::FunctionIndex,
+                        Attrs.addAttribute(M.getContext(), replaceThisAttr));
+    f->addFnAttr(replacementAttr);
+#else
+    f->setAttributes(f->getAttributes()
+                         .removeFnAttribute(M.getContext(), replaceThisAttr)
+                         .addFnAttribute(f->getContext(), replacementAttr));
+#endif
+
+    f->setLinkage(linkage);
   }
   return changed;
 }

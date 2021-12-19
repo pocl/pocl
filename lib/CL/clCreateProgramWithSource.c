@@ -26,6 +26,8 @@
 #include "pocl_util.h"
 #include <string.h>
 
+extern unsigned long program_c;
+
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithSource)(cl_context context,
                           cl_uint count,
@@ -39,7 +41,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   unsigned i;
   int errcode;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   POCL_GOTO_ERROR_COND((count == 0), CL_INVALID_VALUE);
 
@@ -96,31 +98,45 @@ POname(clCreateProgramWithSource)(cl_context context,
   *source = '\0';
 
   program->context = context;
-  program->num_devices = context->num_devices;
-  program->devices = context->devices;
+  program->associated_num_devices = context->num_devices;
+  program->associated_devices = context->devices;
+  program->num_devices = 0;
+  program->devices = 0;
+
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
-  if ((program->binary_sizes =
-       (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
-      (program->binaries = (unsigned char**)
-       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binaries = (unsigned char**)
-       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binary_sizes =
-             (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
-      (program->build_log = (char**)
-       calloc (program->num_devices, sizeof(char*))) == NULL ||
-      ((program->llvm_irs =
-        (void**) calloc (program->num_devices, sizeof(void*))) == NULL) ||
-      ((program->build_hash = (SHA1_digest_t*)
-        calloc (program->num_devices, sizeof(SHA1_digest_t))) == NULL))
+  if ((program->binary_sizes
+       = (size_t *)calloc (program->associated_num_devices, sizeof (size_t)))
+          == NULL
+      || (program->binaries = (unsigned char **)calloc (
+              program->associated_num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binaries = (unsigned char **)calloc (
+              program->associated_num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binary_sizes
+          = (size_t *)calloc (program->associated_num_devices, sizeof (size_t)))
+             == NULL
+      || (program->build_log
+          = (char **)calloc (program->associated_num_devices, sizeof (char *)))
+             == NULL
+      || ((program->data
+           = (void **)calloc (program->associated_num_devices, sizeof (void *)))
+          == NULL)
+      || ((program->build_hash = (SHA1_digest_t *)calloc (
+               program->associated_num_devices, sizeof (SHA1_digest_t)))
+          == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
 
-  POCL_RETAIN_OBJECT(context);
+  POname(clRetainContext)(context);
+
+  TP_CREATE_PROGRAM (context->id, program->id);
+
+  POCL_ATOMIC_INC (program_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
@@ -129,7 +145,7 @@ POname(clCreateProgramWithSource)(cl_context context,
 ERROR:
   if (program) {
     POCL_MEM_FREE(program->build_hash);
-    POCL_MEM_FREE(program->llvm_irs);
+    POCL_MEM_FREE (program->data);
     POCL_MEM_FREE(program->build_log);
     POCL_MEM_FREE(program->binaries);
     POCL_MEM_FREE(program->binary_sizes);

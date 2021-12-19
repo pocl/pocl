@@ -6,12 +6,14 @@ CL_API_ENTRY cl_event CL_API_CALL
 POname(clCreateUserEvent)(cl_context     context ,
                   cl_int *       errcode_ret ) CL_API_SUFFIX__VERSION_1_1
 {
-  int error;
+  int errcode;
   cl_event event = NULL;
 
-  error = pocl_create_event (&event, 0, CL_COMMAND_USER, 0, NULL, context);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
-  if (error != CL_SUCCESS)
+  errcode = pocl_create_event (&event, 0, CL_COMMAND_USER, 0, NULL, context);
+
+  if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(event);
     }
@@ -20,14 +22,15 @@ POname(clCreateUserEvent)(cl_context     context ,
       event->pocl_refcount = 1;
       event->status = CL_SUBMITTED;
       event->context = context;
-      pocl_user_event_data *p = malloc (sizeof (pocl_user_event_data));
+      pocl_user_event_data *p
+          = (pocl_user_event_data *)malloc (sizeof (pocl_user_event_data));
       assert (p);
-      pthread_cond_init (&p->wakeup_cond, NULL);
+      POCL_INIT_COND (p->wakeup_cond);
       event->data = p;
     }
-
+ERROR:
   if (errcode_ret)
-    *errcode_ret = error;
+    *errcode_ret = errcode;
 
   return event;
 }

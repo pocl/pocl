@@ -49,13 +49,13 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "ImplicitConditionalBarriers.h"
                        "ImplicitLoopBarriers.cc"
                        "ImplicitLoopBarriers.h"
+                       "InlineKernels.cc"
                        "IsolateRegions.cc"
                        "IsolateRegions.h"
                        "Kernel.cc"
                        "Kernel.h"
                        "linker.cpp"
                        "linker.h"
-                       "LLVMFileUtils.cc"
                        "LLVMUtils.cc"
                        "LLVMUtils.h"
                        "LoopBarriers.cc"
@@ -101,6 +101,8 @@ endif(MSVC)
 add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
 harden("llvmpasses")
 
+option(ENABLE_LIBLLVMOPENCL "Build separate libllvmopencl.so for use with 'opt'" OFF)
+if(ENABLE_LIBLLVMOPENCL)
 # This creates a separate llvmopencl.so that is loaded to 'opt'
 # for the pocl-workgroup version.
 #pkglib_LTLIBRARIES = llvmopencl.la
@@ -114,6 +116,7 @@ if(MSVC)
 endif(MSVC)
 
 #target_link_libraries("llvmopencl" "${LLVM_SYSLIBS}")
+endif(ENABLE_LIBLLVMOPENCL)
  
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
@@ -122,9 +125,10 @@ else()
   set(ADD_LD_FLAGS "-Wl,-export-dynamic")
 endif()
 
+if(ENABLE_LIBLLVMOPENCL)
 # TODO ENABLE_EXPORTS -> Wl,export_dynamic
-# http://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
-# http://www.cmake.org/pipermail/cmake/2011-November/047708.html
+# https://www.cmake.org/cmake/help/v2.8.12/cmake.html#prop_tgt:ENABLE_EXPORTS
+# https://www.cmake.org/pipermail/cmake/2011-November/047708.html
 set_target_properties("llvmopencl" PROPERTIES LINK_FLAGS "${LLVM_LDFLAGS} ${ADD_LD_FLAGS}")
 if(NOT APPLE)
   set_target_properties("llvmopencl" PROPERTIES SOVERSION "${KERNEL_COMPILER_LIB_VERSION}" VERSION "${KERNEL_COMPILER_LIB_VERSION}")
@@ -136,3 +140,11 @@ install(TARGETS "llvmopencl"
         ARCHIVE DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}/static
         COMPONENT "dev"
 )
+endif(ENABLE_LIBLLVMOPENCL)
+
+if(ENABLE_IPO)
+  set_property(TARGET "llvmpasses" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(ENABLE_LIBLLVMOPENCL)
+  set_property(TARGET "llvmopencl" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif(ENABLE_LIBLLVMOPENCL)
+endif()

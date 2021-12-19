@@ -44,37 +44,36 @@ POname(clEnqueueMapImage)(cl_command_queue   command_queue,
 CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode = CL_SUCCESS;
-  cl_int mapping_result = CL_FAILED;
-  cl_device_id device;
+  cl_device_id device = NULL;
   _cl_command_node *cmd = NULL;
   unsigned i;
   mem_mapping_t *mapping_info = NULL;
-  void *retval = NULL;
   /* need to release the memobject before returning? */
   int must_release = 0;
 
-  POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                        CL_INVALID_COMMAND_QUEUE);
+
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (image)), CL_INVALID_MEM_OBJECT);
 
   device = command_queue->device;
 
   POCL_GOTO_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
-  POCL_GOTO_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
-
   if (IS_IMAGE1D_BUFFER (image))
     {
       IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region)
       return POname (clEnqueueMapBuffer) (
-          command_queue, image,
-          blocking_map, map_flags,
-          i1d_origin[0], i1d_region[0],
-          num_events_in_wait_list, event_wait_list, event,
+          command_queue, image->buffer, blocking_map, map_flags, i1d_origin[0],
+          i1d_region[0], num_events_in_wait_list, event_wait_list, event,
           errcode_ret);
     }
 
   POCL_GOTO_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
                       "image argument is not an image\n");
+  POCL_GOTO_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                      "image is a GL texture\n");
 
   POCL_GOTO_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 
@@ -98,17 +97,40 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  POname (clRetainMemObject) (image);
-  must_release = 1;
+  /* CL_INVALID_OPERATION if buffer has been created with
+   * CL_MEM_HOST_WRITE_ONLY
+   * or CL_MEM_HOST_NO_ACCESS and CL_MAP_READ is set in map_flags or
+   *
+   * if buffer has been created with CL_MEM_HOST_READ_ONL or
+   * CL_MEM_HOST_NO_ACCESS
+   * and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags.
+   */
+  POCL_GOTO_ERROR_COND (
+      ((map_flags & CL_MAP_READ)
+       && (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS))),
+      CL_INVALID_OPERATION);
+
+  POCL_GOTO_ERROR_COND (
+      ((map_flags & CL_MAP_WRITE)
+       && (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))),
+      CL_INVALID_OPERATION);
 
   mapping_info = (mem_mapping_t*) calloc (1, sizeof (mem_mapping_t));
   POCL_GOTO_ERROR_COND ((mapping_info == NULL), CL_OUT_OF_HOST_MEMORY);
+  pocl_mem_identifier *mem_id = &image->device_ptrs[device->global_mem_id];
+
+  POCL_LOCK_OBJ (image);
+  /* increment refcount, actually twice (one happens in pocl_create_command):
+     one is for duration of Map command, and is implicitly decreased
+     after EnqueueMap is finished; the other one is for the duration
+     of mapping, and is decreased by UnMap. */
+  POCL_RETAIN_OBJECT_UNLOCKED (image);
+  must_release = 1;
 
   *image_row_pitch = image->image_row_pitch;
   if (image_slice_pitch)
     *image_slice_pitch = image->image_slice_pitch;
 
-  mapping_info->host_ptr = NULL;
   mapping_info->map_flags = map_flags;
   mapping_info->origin[0] = origin[0];
   mapping_info->origin[1] = origin[1];
@@ -120,70 +142,50 @@ CL_API_SUFFIX__VERSION_1_0
   mapping_info->slice_pitch = image->image_slice_pitch;
 
   size_t px = image->image_elem_size * image->image_channels;
-  mapping_info->offset = origin[2] * mapping_info->slice_pitch
-                         + origin[1] * mapping_info->row_pitch
-                         + origin[0] * px;
+  size_t start_offset = origin[2] * mapping_info->slice_pitch
+                        + origin[1] * mapping_info->row_pitch + origin[0] * px;
+  size_t end_offset
+      = px * (origin[0] + region[0] - 1)
+        + mapping_info->row_pitch * (origin[1] + region[1] - 1)
+        + mapping_info->slice_pitch * (origin[2] + region[2] - 1);
 
-  /* CL_INVALID_OPERATION if buffer has been created with
-   * CL_MEM_HOST_WRITE_ONLY
-   * or CL_MEM_HOST_NO_ACCESS and CL_MAP_READ is set in map_flags or
-   *
-   * if buffer has been created with CL_MEM_HOST_READ_ONL or
-   * CL_MEM_HOST_NO_ACCESS
-   * and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags.
-   */
+  mapping_info->offset = start_offset;
+  assert (start_offset <= image->size);
+  assert (start_offset <= end_offset);
+  mapping_info->size = end_offset + 1 - start_offset;
 
-  POCL_GOTO_ERROR_COND (
-      ((map_flags & CL_MAP_READ)
-       && (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS))),
-      CL_INVALID_OPERATION);
+  /* because cl_mems are per-context, PoCL delays allocation of
+   * cl_mem backing memory until it knows which device will need it,
+   * so the cl_mem might not yet be allocated on this device. However,
+   * some drivers can avoid unnecessary host memory usage if we
+   * allocate it now. We can assume it will be used on this device. */
+  pocl_mem_identifier *p = &image->device_ptrs[device->global_mem_id];
+  if (p->mem_ptr == NULL)
+    errcode = device->ops->alloc_mem_obj (device, image, NULL);
 
-  POCL_GOTO_ERROR_COND (
-      ((map_flags & CL_MAP_WRITE)
-       && (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))),
-      CL_INVALID_OPERATION);
+  if (errcode == CL_SUCCESS)
+    errcode = device->ops->get_mapping_ptr (device->data, mem_id, image,
+                                            mapping_info);
+  DL_APPEND (image->mappings, mapping_info);
+  ++image->map_count;
+  POCL_UNLOCK_OBJ (image);
 
-  if (image->flags & CL_MEM_USE_HOST_PTR)
-    {
-      /* In this case it should use the given host_ptr + offset as
-         the mapping area in the host memory. */
-      assert (image->mem_host_ptr != NULL);
-      mapping_info->host_ptr
-          = (char *)image->mem_host_ptr + mapping_info->offset;
-    }
-  else
-    {
-      /* The first call to the device driver's map mem tells where
-         the mapping will be stored in the host memory.
-         When return value (mapping_info->host_ptr) is non-NULL, the
-         buffer will be mapped there (assumed it will succeed).  */
-      mapping_info->host_ptr = NULL;
-      mapping_result = device->ops->map_image
-        (device->data,
-         &image->device_ptrs[device->dev_id],
-         image,
-         mapping_info);
-    }
-
-  retval = mapping_info->host_ptr;
-  POCL_GOTO_ERROR_ON ((retval == NULL), CL_MAP_FAILURE, "device map failed\n");
-
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list, 1, &image);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.map.mem_id = &image->device_ptrs[device->dev_id];
+  char rdonly = (map_flags & CL_MAP_READ);
+
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &image, &rdonly);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
 
   POCL_MSG_PRINT_MEMORY ("Image %p, Mapping: host_ptr %p offset %zu\n", image,
                          mapping_info->host_ptr, mapping_info->offset);
-
-  POCL_LOCK_OBJ (image);
-  DL_APPEND (image->mappings, mapping_info);
-  image->owning_device = device;
-  POCL_UNLOCK_OBJ (image);
 
   pocl_command_enqueue(command_queue, cmd);
 
@@ -194,17 +196,22 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode_ret)
     *errcode_ret = errcode;
 
-  return retval;
+  return mapping_info->host_ptr;
 
 ERROR:
   if (must_release)
-    POname (clReleaseMemObject) (image);
-  if (mapping_result == CL_SUCCESS)
-    device->ops->unmap_image (device->data,
-                              &image->device_ptrs[device->dev_id],
-                              image,
-                              mapping_info);
-  POCL_MEM_FREE(mapping_info);
+    {
+      POCL_LOCK_OBJ (image);
+      assert (mapping_info);
+      if (mapping_info->host_ptr)
+        device->ops->free_mapping_ptr (device->data, mem_id, image,
+                                       mapping_info);
+      DL_DELETE (image->mappings, mapping_info);
+      --image->map_count;
+      POCL_UNLOCK_OBJ (image);
+      POname (clReleaseMemObject) (image);
+    }
+  POCL_MEM_FREE (mapping_info);
   POCL_MEM_FREE (cmd);
   if (errcode_ret)
     *errcode_ret = errcode;

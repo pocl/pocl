@@ -21,12 +21,19 @@
    THE SOFTWARE.
 */
 
-#ifdef HAVE_FMA64
+#if defined(ENABLE_SLEEF)
 
 _CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
 
 #else
 
+#if __has_builtin(__builtin_fma)
 _CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
+_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
+// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
+#else
+_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
+_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
+#endif
 
 #endif

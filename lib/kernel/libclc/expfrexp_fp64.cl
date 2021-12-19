@@ -32,7 +32,8 @@ _cl_expfrexp(vtype x)
   ret = cond ? (ret - (itype)63) : ret;
 
   //ret += (as_itype((as_utype(x) >> 52) & (utype)0x7FF) - (itype)0x3FE);
-  ret += (as_itype( (as_utype(x) << 1) >> 52 ) - (itype)0x3FE);
+
+  ret += (as_itype( (as_utype(x) << 1) >> 53 ) - (itype)0x3FE);
 
   ret = (x == (vtype)0.0) ? (itype)0 : ret;
   ret = (isnan(x) | isinf(x)) ? (itype)0 : ret;

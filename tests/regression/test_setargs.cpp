@@ -22,6 +22,8 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -115,6 +117,7 @@ main(void)
             2 * sizeof(int));
 
         queue.finish();
+        platformList[0].unloadCompiler();
 
         if (!(res[0] == 1 && res[1] == 2)) {
             std::cerr << res[0] << res[1] << std::endl;

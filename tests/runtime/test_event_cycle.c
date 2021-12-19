@@ -21,14 +21,13 @@
    THE SOFTWARE.
  */
 
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <CL/cl.h>
-
-#include "poclu.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -47,7 +46,7 @@ main(void)
   cl_device_id devices[MAX_DEVICES];
   cl_uint ndevices;
   cl_uint i, j;
-
+#ifndef _WIN32
   /* set up a signal handler for ALRM that will kill
    * the program with EXIT_FAILURE on timeout
    */
@@ -139,6 +138,6 @@ main(void)
   }
 
   CHECK_CL_ERROR (clUnloadCompiler ());
-
+#endif
   return EXIT_SUCCESS;
 }

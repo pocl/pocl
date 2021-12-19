@@ -18,9 +18,11 @@ CL_API_SUFFIX__VERSION_1_0
   /* pass src_origin through in a format pocl_rect_copy understands */
   const size_t src_origin[3] = { src_offset, 0, 0};
 
-  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
+                          CL_INVALID_MEM_OBJECT);
 
   if (IS_IMAGE1D_BUFFER (dst_image))
     {
@@ -61,9 +63,12 @@ CL_API_SUFFIX__VERSION_1_0
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->global_mem_id];
+  cmd->command.write_image.dst = dst_image;
+
   cmd->command.write_image.src_host_ptr = NULL;
-  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
+  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->global_mem_id];
+  cmd->command.write_image.src = src_buffer;
 
   // TODO
   cmd->command.write_image.src_row_pitch = 0;   // dst_image->image_row_pitch;
@@ -76,11 +81,6 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.write_image.region[0] = region[0];
   cmd->command.write_image.region[1] = region[1];
   cmd->command.write_image.region[2] = region[2];
-
-  POname (clRetainMemObject) (dst_image);
-  dst_image->owning_device = dev;
-  POname (clRetainMemObject) (src_buffer);
-  src_buffer->owning_device = dev;
 
   pocl_command_enqueue (command_queue, cmd);
 

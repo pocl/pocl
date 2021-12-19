@@ -162,8 +162,8 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown122 */
 #if (OCL_ICD_IDENTIFIED_FUNCTIONS > 110)
   &POname(clCreateCommandQueueWithProperties),
-  NULL, /* &POname(clCreatePipe),*/
-  NULL, /* &POname(clGetPipeInfo),*/
+  &POname(clCreatePipe),
+  &POname(clGetPipeInfo),
   &POname(clSVMAlloc),
   &POname(clSVMFree),
   &POname(clEnqueueSVMFree),
@@ -178,10 +178,10 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* clCloneKernel */
   &POname(clCreateProgramWithIL),
   NULL, /* &clUnknown139 */
-  NULL, /* &clUnknown140 */
-  NULL, /* &clUnknown141 */
-  NULL, /* &clUnknown142 */
-  NULL, /* &clUnknown143 */
+  &POname(clGetDeviceAndHostTimer),
+  &POname(clGetHostTimer),
+  &POname(clGetKernelSubGroupInfo),
+  &POname(clSetDefaultDeviceCommandQueue),
   NULL, /* &clUnknown144 */
   NULL, /* &clUnknown145 */
   NULL, /* &clUnknown146 */
@@ -256,7 +256,7 @@ POname(clGetPlatformIDs)(cl_uint           num_entries,
   if (platforms != NULL) {
       platforms[0] = &_platforms[0];
   }
-  
+
   if (num_platforms != NULL)
     *num_platforms = 1;
 

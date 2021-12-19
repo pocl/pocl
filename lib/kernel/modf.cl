@@ -23,4 +23,9 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_VPV (modf)
+DEFINE_EXPR_V_VPV (modf, ({
+                     vtype tr = (vtype) trunc (a);
+                     *b = tr;
+                     vtype ret = a - tr;
+                     copysign((isinf(a) ? (vtype)0.0f : ret), a);
+                   }))

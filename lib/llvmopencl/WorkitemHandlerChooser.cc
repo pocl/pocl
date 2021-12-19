@@ -65,11 +65,6 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
-  if (WGDynamicLocalSize) {
-      chosenHandler_ = POCL_WIH_LOOPS;
-      return false;
-  }
-  
   Kernel *K = cast<Kernel> (&F);
 
   /* FIXME: this is not thread safe. We cannot compile multiple kernels at
@@ -79,6 +74,11 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
      constructing the passes for the kernel, or done fully inside a single
      FunctionPass that delegates to other passes. */    
   Initialize(K);
+
+  if (WGDynamicLocalSize) {
+    chosenHandler_ = POCL_WIH_LOOPS;
+    return false;
+  }
 
   std::string method = "auto";
   if (getenv("POCL_WORK_GROUP_METHOD") != NULL)

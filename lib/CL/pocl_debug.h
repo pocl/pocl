@@ -1,3 +1,26 @@
+/* pocl_debug.h: Internal debugging aids.
+
+   Copyright (c) 2011-2021 pocl developers
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #ifndef POCL_DEBUG_H
 #define POCL_DEBUG_H
 
@@ -17,9 +40,19 @@
 
 #include "config.h"
 
+#include "pocl_export.h"
+
 // size_t print spec
 #ifndef PRIuS
 # define PRIuS "zu"
+#endif
+
+#if defined(__ANDROID__)
+#include <android/log.h>
+#define log_printf(...)                                                       \
+  __android_log_print (ANDROID_LOG_INFO, "POCL_LOG", __VA_ARGS__)
+#else
+#define log_printf(...) fprintf (stderr, __VA_ARGS__)
 #endif
 
 #ifdef __cplusplus
@@ -57,8 +90,14 @@ extern "C" {
 #define POCL_DEBUG_FLAG_HSA 0x100
 #define POCL_DEBUG_FLAG_TCE 0x200
 #define POCL_DEBUG_FLAG_CUDA 0x400
-#define POCL_DEBUG_FLAG_WARNING 0x800
-#define POCL_DEBUG_FLAG_ERROR 0x1000
+#define POCL_DEBUG_FLAG_ACCEL 0x800
+#define POCL_DEBUG_FLAG_PROXY 0x1000
+
+
+#define POCL_DEBUG_FLAG_VULKAN 0x80000
+
+#define POCL_DEBUG_FLAG_WARNING  0x8000000000UL
+#define POCL_DEBUG_FLAG_ERROR   0x10000000000UL
 #define POCL_DEBUG_FLAG_ALL (uint64_t)(-1)
 
 #define POCL_FILTER_TYPE_INFO 1
@@ -68,32 +107,39 @@ extern "C" {
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
 
-#define POCL_ABORT_UNIMPLEMENTED(MSG)                                   \
-    do {                                                                \
-        fprintf(stderr,"%s is unimplemented (%s:%d)\n",                 \
-                        MSG, __FILE__, __LINE__);                       \
-        exit(2);                                                        \
-    } while (0)
+#define POCL_ABORT_UNIMPLEMENTED(MSG)                                         \
+  do                                                                          \
+    {                                                                         \
+      log_printf ("%s is unimplemented (%s:%d)\n", MSG, __FILE__, __LINE__);  \
+      exit (2);                                                               \
+    }                                                                         \
+  while (0)
 
-#define POCL_WARN_UNTESTED()                                            \
-    do {                                                                \
-        fprintf( stderr,                                                \
-            "pocl warning: encountered untested part of the "           \
-            "implementation in %s:%d\n", __FILE__, __LINE__);           \
-    } while (0)
+#define POCL_WARN_UNTESTED()                                                  \
+  do                                                                          \
+    {                                                                         \
+      log_printf ("pocl warning: encountered untested part of the "           \
+                  "implementation in %s:%d\n",                                \
+                  __FILE__, __LINE__);                                        \
+    }                                                                         \
+  while (0)
 
-#define POCL_WARN_INCOMPLETE()                                          \
-    do {                                                                \
-        fprintf( stderr,                                                \
-            "pocl warning: encountered incomplete implementation"       \
-            " in %s:%d\n", __FILE__, __LINE__);                         \
-    } while (0)
+#define POCL_WARN_INCOMPLETE()                                                \
+  do                                                                          \
+    {                                                                         \
+      log_printf ("pocl warning: encountered incomplete implementation"       \
+                  " in %s:%d\n",                                              \
+                  __FILE__, __LINE__);                                        \
+    }                                                                         \
+  while (0)
 
-#define POCL_ABORT(...)                                                 \
-    do {                                                                \
-        fprintf(stderr, __VA_ARGS__);                                   \
-        abort();                                                        \
-    } while (0)
+#define POCL_ABORT(...)                                                       \
+  do                                                                          \
+    {                                                                         \
+      log_printf (__VA_ARGS__);                                               \
+      abort ();                                                               \
+    }                                                                         \
+  while (0)
 
 #define POCL_ERROR(x) do { if (errcode_ret != NULL) {                   \
                               *errcode_ret = (x);                       \
@@ -103,35 +149,35 @@ extern "C" {
                               *errcode_ret = CL_SUCCESS;                \
                             } } while (0)
 
-
-
-#include "config.h"
-
 #ifdef POCL_DEBUG_MESSAGES
 
+POCL_EXPORT
     extern uint64_t pocl_debug_messages_filter;
-    extern int stderr_is_a_tty;
+POCL_EXPORT
+    extern int pocl_stderr_is_a_tty;
 
     #define POCL_DEBUGGING_ON (pocl_debug_messages_filter)
 
-    #if __GNUC__ >= 2
-    #define __func__ __PRETTY_FUNCTION__
-    #else
-    #define __func__ __FUNCTION__
-    #endif
-
         #define POCL_DEBUG_HEADER(FILTER, FILTER_TYPE) \
             pocl_debug_print_header (__func__, __LINE__, #FILTER, FILTER_TYPE);
-        extern void pocl_debug_output_lock ();
-        extern void pocl_debug_output_unlock ();
+
+POCL_EXPORT
+        extern void pocl_debug_output_lock (void);
+POCL_EXPORT
+        extern void pocl_debug_output_unlock (void);
+POCL_EXPORT
         extern void pocl_debug_messages_setup (const char *debug);
+POCL_EXPORT
         extern void pocl_debug_print_header (const char * func, unsigned line,
                                              const char* filter, int filter_type);
+POCL_EXPORT
         extern void pocl_debug_measure_start (uint64_t* start);
+POCL_EXPORT
         extern void pocl_debug_measure_finish (uint64_t* start, uint64_t* finish,
                                                const char* msg,
                                                const char *func,
                                                unsigned line);
+POCL_EXPORT
         extern void pocl_debug_print_duration (const char* func, unsigned line,
                                                const char* msg, uint64_t nanosecs);
         #define POCL_MEASURE_START(SUFFIX) \
@@ -148,12 +194,12 @@ extern "C" {
           if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {    \
             pocl_debug_output_lock ();                                      \
                 POCL_DEBUG_HEADER(FILTER, POCL_FILTER_TYPE_ ## TYPE)        \
-                if (stderr_is_a_tty)                                        \
-                  fprintf (stderr, "%s", POCL_COLOR_BOLDRED                 \
+                if (pocl_stderr_is_a_tty)                                   \
+                  log_printf ( "%s", POCL_COLOR_BOLDRED                 \
                                     ERRCODE " "  POCL_COLOR_RESET);         \
                 else                                                        \
-                  fprintf (stderr, "%s", ERRCODE " ");                      \
-                fprintf (stderr, __VA_ARGS__);                              \
+                  log_printf ( "%s", ERRCODE " ");                      \
+                log_printf ( __VA_ARGS__);                              \
             pocl_debug_output_unlock ();                                    \
           }                                                                 \
         } while (0)
@@ -164,7 +210,7 @@ extern "C" {
             pocl_debug_output_lock ();                                      \
                 pocl_debug_print_header (func, line,                        \
                                  #FILTER, POCL_FILTER_TYPE_INFO);           \
-                fprintf  (stderr, __VA_ARGS__);                             \
+                log_printf (__VA_ARGS__);                             \
             pocl_debug_output_unlock ();                                    \
           }                                                                 \
         } while (0)
@@ -185,6 +231,13 @@ extern "C" {
     #define POCL_MSG_PRINT_INFO_F(filter, errcode, ...) \
           POCL_MSG_PRINT_F(filter, INFO, errcode, __VA_ARGS__)
 
+    #define POCL_MSG_PRINT_ACCEL2(errcode, ...) POCL_MSG_PRINT_INFO_F(ACCEL, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_ACCEL(...) POCL_MSG_PRINT_INFO_F(ACCEL, "", __VA_ARGS__)
+
+    #define POCL_MSG_PRINT_PROXY2(errcode, ...) POCL_MSG_PRINT_INFO_F(PROXY, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_PROXY(...) POCL_MSG_PRINT_INFO_F(PROXY, "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_VULKAN2(errcode, ...) POCL_MSG_PRINT_INFO_F(VULKAN, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_VULKAN(...) POCL_MSG_PRINT_INFO_F(VULKAN, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA(...) POCL_MSG_PRINT_INFO_F(CUDA, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_HSA2(errcode, ...) POCL_MSG_PRINT_INFO_F(HSA, errcode, __VA_ARGS__)
@@ -226,6 +279,12 @@ extern "C" {
     #define POCL_MEASURE_FINISH(...)  do {} while (0)
     #define POCL_DEBUG_EVENT_TIME(...)  do {} while (0)
 
+    #define POCL_MSG_PRINT_ACCEL2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ACCEL(...)  do {} while (0)
+    #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
+    #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_VULKAN(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA(...)  do {} while (0)
     #define POCL_MSG_PRINT_HSA2(...)  do {} while (0)

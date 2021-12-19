@@ -59,7 +59,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
                 void *         param_value,
                 size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   switch (param_name)
   {
@@ -100,6 +100,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       typedef struct { size_t size[3]; } size_t_3;
       POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }
+  case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->non_uniform_work_group_support);
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
                                              device->max_mem_alloc_size);
@@ -186,12 +188,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_COMPILER_AVAILABLE                :
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_LINKER_AVAILABLE                  :
-    /* TODO currently we return the same availability as the compiler,
-     * since if the compiler is available the linker MUST be available
-     * too. The only case where the linker and compiler availability can
-     * be different is when the linker is available and the compiler is not,
-     * which is not the case in pocl currently */
-    POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
+    POCL_RETURN_GETINFO (cl_bool, device->linker_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
 
@@ -248,7 +245,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_GETINFO_STR (HOST_CL_VERSION);
   case CL_DEVICE_BUILT_IN_KERNELS                  :
-    POCL_RETURN_GETINFO_STR("");
+    if (device->builtin_kernel_list)
+      POCL_RETURN_GETINFO_STR (device->builtin_kernel_list);
+    else
+      POCL_RETURN_GETINFO_STR ("");
 
   case CL_DEVICE_PARENT_DEVICE                     :
     POCL_RETURN_GETINFO(cl_device_id, device->parent_device);
@@ -287,10 +287,16 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 
   case CL_DEVICE_SVM_CAPABILITIES:
     POCL_RETURN_GETINFO(cl_device_svm_capabilities, device->svm_caps);
+  case CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES:
+    POCL_RETURN_GETINFO(cl_device_atomic_capabilities, device->atomic_memory_capabilities);
+  case CL_DEVICE_ATOMIC_FENCE_CAPABILITIES:
+    POCL_RETURN_GETINFO(cl_device_atomic_capabilities, device->atomic_fence_capabilities);
   case CL_DEVICE_MAX_ON_DEVICE_EVENTS:
     POCL_RETURN_GETINFO(cl_uint, device->max_events);
   case CL_DEVICE_MAX_ON_DEVICE_QUEUES:
     POCL_RETURN_GETINFO(cl_uint, device->max_queues);
+  case CL_DEVICE_PIPE_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->pipe_support);
   case CL_DEVICE_MAX_PIPE_ARGS:
     POCL_RETURN_GETINFO(cl_uint, device->max_pipe_args);
   case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
@@ -312,17 +318,28 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       POCL_RETURN_GETINFO_STR ("1.2");
     else
       POCL_RETURN_GETINFO_STR ("");
+
+  /* NOTE: This will be renamed to CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES */
+  case CL_DEVICE_DEVICE_ENQUEUE_SUPPORT:
+    POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);
   case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_host_queue_props);
-
   case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:
     POCL_RETURN_GETINFO(size_t, device->global_var_pref_size);
   case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:
     POCL_RETURN_GETINFO(size_t, device->global_var_max_size);
   case CL_DEVICE_IL_VERSION:
-    POCL_RETURN_GETINFO_STR (device->spirv_version);
+    if (device->spirv_version)
+      POCL_RETURN_GETINFO_STR (device->spirv_version);
+    else
+      POCL_RETURN_GETINFO_STR ("");
+  case CL_DEVICE_MAX_NUM_SUB_GROUPS:
+    POCL_RETURN_GETINFO (cl_uint, device->max_num_sub_groups);
+  case CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS:
+    POCL_RETURN_GETINFO (cl_bool,
+                         device->sub_group_independent_forward_progress);
   }
 
   if(device->ops->get_device_info_ext != NULL) {

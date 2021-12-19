@@ -72,8 +72,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
       (event_wait_list != NULL && num_events_in_wait_list == 0),
       CL_INVALID_EVENT_WAIT_LIST);
 
-  POCL_RETURN_ERROR_COND((src == NULL), CL_INVALID_MEM_OBJECT);
-  POCL_RETURN_ERROR_COND((dst == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src)), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst)), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND((src_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((dst_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
@@ -82,6 +82,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON ((!src->is_image), CL_INVALID_MEM_OBJECT,
                             "src is not an image\n");
+      POCL_RETURN_ERROR_ON ((src->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                            "src is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (src, command_queue->device);
       POCL_RETURN_ERROR_ON((src->type == CL_MEM_OBJECT_IMAGE2D && src_origin[2] != 0),
         CL_INVALID_VALUE, "src_origin[2] must be 0 for 2D src_image\n");
@@ -100,6 +102,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON ((!dst->is_image), CL_INVALID_MEM_OBJECT,
                             "dst is not an image\n");
+      POCL_RETURN_ERROR_ON ((dst->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                            "dst is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (dst, command_queue->device);
       POCL_RETURN_ERROR_ON((dst->type == CL_MEM_OBJECT_IMAGE2D && dst_origin[2] != 0),
         CL_INVALID_VALUE, "dst_origin[2] must be 0 for 2D dst_image\n");
@@ -186,9 +190,11 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (cmd, command_queue, command_type,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 2, buffers);
+  char rdonly[] = { 1, 0 };
+
+  errcode = pocl_create_command (cmd, command_queue, command_type, event,
+                                 num_events_in_wait_list, event_wait_list, 2,
+                                 buffers, rdonly);
 
   /* for CL_COMMAND_COPY_BUFFER_RECT, we also need to setup
    * the output row/slice pitch parameters. */

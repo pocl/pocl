@@ -32,6 +32,7 @@
 
 #include "pocl_cl.h"
 
+POCL_EXPORT
 void pocl_cpuinfo_detect_device_info(cl_device_id device);
 
 #endif /* POCL_TOPOLOGY_H */

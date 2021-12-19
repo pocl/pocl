@@ -24,4 +24,11 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(trunc)
+float __attribute__ ((overloadable))
+pocl_trunc(float x)
+{
+  return convert_float(convert_int(x));
+}
+
+DEFINE_FLOAT_BUILTIN_V_V(trunc, pocl_trunc)
+DEFINE_HALF_BUILTIN_V_V(trunc, pocl_trunc)

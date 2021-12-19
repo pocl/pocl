@@ -35,7 +35,8 @@ CL_API_SUFFIX__VERSION_1_2
   int errcode;
   _cl_command_node *cmd;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
@@ -45,7 +46,7 @@ CL_API_SUFFIX__VERSION_1_2
   /* Even if we do not need to create a full command, the runtime requires it */
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_BARRIER,
                                  event, num_events_in_wait_list,
-                                 event_wait_list, 0, NULL);
+                                 event_wait_list, 0, NULL, NULL);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;

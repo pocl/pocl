@@ -32,18 +32,15 @@
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
-#ifdef OCS_AVAILABLE
-  if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
-    {
-      memset(sizes, 0, program->num_devices * sizeof(size_t));
-      return;
-    }
-#endif
   unsigned i;
   for (i=0; i < program->num_devices; i++)
     {
+      if (program->devices[i]->ops->build_poclbinary)
+        program->devices[i]->ops->build_poclbinary (program, i);
+
       if (!program->pocl_binaries[i] && program->binaries[i])
-        program->pocl_binary_sizes[i] = pocl_binary_sizeof_binary(program, i);
+        pocl_binary_sizeof_binary (program, i);
+
       if (program->pocl_binaries[i])
         sizes[i] = program->pocl_binary_sizes[i];
       else
@@ -53,17 +50,13 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
 
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
-#ifdef OCS_AVAILABLE
-  if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
-    {
-      memset(binaries, 0, program->num_devices * sizeof(unsigned char*));
-      return;
-    }
-#endif
   unsigned i;
   size_t res;
   for (i=0; i < program->num_devices; i++)
     {
+      if (program->devices[i]->ops->build_poclbinary)
+        program->devices[i]->ops->build_poclbinary (program, i);
+
       if (!program->pocl_binaries[i] && program->binaries[i])
         {
           pocl_binary_serialize(program, i, &res);
@@ -71,6 +64,7 @@ static void get_binaries(cl_program program, unsigned char **binaries)
             assert(program->pocl_binary_sizes[i] == res);
           program->pocl_binary_sizes[i] = res;
         }
+
       if (program->pocl_binaries[i])
         memcpy(binaries[i], program->pocl_binaries[i], program->pocl_binary_sizes[i]);
       else
@@ -88,8 +82,8 @@ POname(clGetProgramInfo)(cl_program program,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
-  
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   switch (param_name)
   {
@@ -112,7 +106,8 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(size_t) * program->num_devices;
-      POCL_RETURN_GETINFO_INNER(value_size, get_binary_sizes(program, param_value));
+      POCL_RETURN_GETINFO_INNER (
+          value_size, get_binary_sizes (program, (size_t *)param_value));
     }
 
   case CL_PROGRAM_BINARIES:
@@ -120,7 +115,8 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
-      POCL_RETURN_GETINFO_INNER(value_size, get_binaries(program, param_value));
+      POCL_RETURN_GETINFO_INNER (
+          value_size, get_binaries (program, (unsigned char **)param_value));
     }
 
   case CL_PROGRAM_IL:
@@ -131,12 +127,13 @@ POname(clGetProgramInfo)(cl_program program,
     }
 
   case CL_PROGRAM_NUM_DEVICES:
-    POCL_RETURN_GETINFO(cl_uint, program->num_devices);
+    POCL_RETURN_GETINFO (cl_uint, program->associated_num_devices);
 
   case CL_PROGRAM_DEVICES:
     {
-      size_t const value_size = sizeof(cl_device_id) * program->num_devices;
-      POCL_RETURN_GETINFO_SIZE(value_size, program->devices);
+      size_t const value_size
+          = sizeof (cl_device_id) * program->associated_num_devices;
+      POCL_RETURN_GETINFO_SIZE (value_size, program->associated_devices);
     }
 
   case CL_PROGRAM_NUM_KERNELS:
@@ -209,7 +206,9 @@ POname(clGetProgramInfo)(cl_program program,
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
-                strcpy (param_value, program->kernel_meta[i].name); /* copy including NULL */
+                strcpy (
+                    (char *)param_value,
+                    program->kernel_meta[i].name); /* copy including NULL */
               else
                 strcat ((char*)param_value, program->kernel_meta[i].name);
               if (i != num_kernels - 1)

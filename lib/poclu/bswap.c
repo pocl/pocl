@@ -21,9 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "poclu.h"
-#include <CL/opencl.h>
-#include "config.h"
+#include "pocl_opencl.h"
 
 #define GENERIC_BYTESWAP(__DTYPE, __WORD)                         \
   do {                                                            \

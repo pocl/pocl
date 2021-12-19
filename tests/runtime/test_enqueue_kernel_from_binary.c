@@ -21,12 +21,11 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <CL/opencl.h>
-
-#include "poclu.h"
 
 #define BUFFER_SIZE 1024
 
@@ -359,22 +358,26 @@ int main(void)
 
   /* Check output of each kernels.  */
 
+  unsigned errors = 0;
   for(i = 0; i < BUFFER_SIZE; i++)
   {
     if(h_c1[i] != h_c2[i])
     {
-      printf("Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
-      exit(1);
+      printf("[1] Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
+      ++errors;
+      if (errors > 10) exit(1);
     }
     if ((((i/128)%2) && (h_c1[i]-16 != h_c3[i])))
     {
-      printf("Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]-16);
-      exit(1);
+      printf("[2] Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]-16);
+      ++errors;
+      if (errors > 10) exit(1);
     }
     if (!((i/128)%2) && (h_c1[i] != h_c3[i]))
     {
-      printf("Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]);
-      exit(1);
+      printf("[3] Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]);
+      ++errors;
+      if (errors > 10) exit(1);
     }
   }
 

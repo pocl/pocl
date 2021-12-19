@@ -20,10 +20,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-#include <CL/cl.h>
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "poclu.h"
 
 char kernelASourceCode[] = 

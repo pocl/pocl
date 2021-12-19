@@ -21,10 +21,10 @@
    THE SOFTWARE.
 */
 
-#include <CL/cl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "poclu.h"
 
 
@@ -133,11 +133,11 @@ int main(int argc, char **argv) {
   CHECK_CL_ERROR (clReleaseMemObject (d_c));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   free(h_a);
   free(h_b);
   free(h_c);
-  CHECK_CL_ERROR (clUnloadCompiler ());
 
   return EXIT_SUCCESS;
 

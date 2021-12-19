@@ -22,13 +22,14 @@
    THE SOFTWARE.
 */
 
-#include "poclu.h"
-#include <CL/opencl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "config.h"
+
+#include "pocl_opencl.h"
 
 cl_context
 poclu_create_any_context ()
@@ -113,8 +114,10 @@ poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
   if (err != CL_SUCCESS)
     return err;
 
-  cl_device_id *devs = calloc (*num_devices, sizeof (cl_device_id));
-  cl_command_queue *ques = calloc (*num_devices, sizeof (cl_command_queue));
+  cl_device_id *devs
+      = (cl_device_id *)calloc (*num_devices, sizeof (cl_device_id));
+  cl_command_queue *ques
+      = (cl_command_queue *)calloc (*num_devices, sizeof (cl_command_queue));
 
   err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, *num_devices, devs,
                         NULL);
@@ -265,6 +268,7 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
         OPENCL_ERROR_CASE (CL_INVALID_COMPILER_OPTIONS)
         OPENCL_ERROR_CASE (CL_INVALID_LINKER_OPTIONS)
         OPENCL_ERROR_CASE (CL_INVALID_DEVICE_PARTITION_COUNT)
+        OPENCL_ERROR_CASE (CL_PLATFORM_NOT_FOUND_KHR)
 
     default:
       printf ("Unknown OpenCL error %i in %s on line %i\n", cl_err, func_name,
@@ -362,11 +366,13 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   else
     {
       snprintf (path, 1024, "%s%s", basename, ext);
-
       if (access (path, F_OK))
         {
-          snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
-                    basename, ext);
+          if (from_source)
+            snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
+                      basename, ext);
+          else
+            snprintf (path, 1024, "%s/%s%s", BUILDDIR, basename, ext);
           if (access (path, F_OK))
             {
               fprintf (stderr, "Can't find %s%s SPIR / POCLBIN file anywhere\n",
@@ -392,6 +398,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
     }
   else if (spirv)
     {
+#ifndef DISABLE_OPENCL_20
       TEST_ASSERT (device != NULL);
       binary = poclu_read_binfile (path, &binary_size);
       TEST_ASSERT (binary != NULL);
@@ -403,6 +410,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (binary);
+#endif
     }
   else
     {

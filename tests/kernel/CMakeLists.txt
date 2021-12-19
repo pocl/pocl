@@ -218,9 +218,26 @@ add_test_pocl(NAME "kernel/test_shuffle_ulong"
 
 ######################################################################
 
+add_test_pocl(NAME "kernel/test_ucharn"
+              EXPECTED_OUTPUT "test_ucharn_expout.txt"
+              COMMAND "kernel" "test_ucharn")
+
 add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
+
+add_test_pocl(NAME "kernel/test_printf_vectors"
+              EXPECTED_OUTPUT "test_printf_vectors_expout.txt"
+              COMMAND "kernel" "test_printf_vectors")
+
+# on most platforms, the printf tests for vector types expose bugs in the
+# pocl printf implementation (passing of variadic arguments containing OpenCL
+# vector types) and maybe also related bugs in llvm (issue #682, #1007)
+if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
+        CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
+  set_tests_properties("kernel/test_printf_vectors"
+    PROPERTIES WILL_FAIL 1)
+endif()
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"
               EXPECTED_OUTPUT "test_sizeof_expout.txt"
@@ -237,7 +254,9 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
   "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
   "kernel/test_shuffle_float" ${EXTRA_TESTS}
-  "kernel/test_printf" "kernel/test_sizeof_uint"
+  "kernel/test_printf"
+  "kernel/test_printf_vectors"
+  "kernel/test_sizeof_uint"
 
   PROPERTIES
     COST 77
@@ -256,11 +275,6 @@ set_tests_properties("kernel/test_shuffle_char"
 #to be printed
 #add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_block"
 #                "test_block_expout.txt" "test_block")
-
-#if(LLVM_3_4)
-#  set_tests_properties("kernel/test_block"
-#    PROPERTIES WILL_FAIL 1)
-#endif()
 
 #set_tests_properties("kernel/test_sizeof_uint" "kernel/test_block" "kernel/test_printf"
 #  PROPERTIES
@@ -301,6 +315,7 @@ endif()
 set_property(TEST
   "kernel/test_local_struct_array"
   "kernel/test_printf"
+  "kernel/test_printf_vectors"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"
@@ -330,3 +345,20 @@ set_property(TEST
   "kernel/test_isnan"
   "kernel/test_short16"
   APPEND PROPERTY LABELS "hsa-native")
+
+set_property(TEST
+  "kernel/test_local_struct_array"
+  "kernel/test_shuffle_char"
+  "kernel/test_shuffle_short"
+  "kernel/test_shuffle_ushort"
+  "kernel/test_shuffle_int"
+  "kernel/test_shuffle_uint"
+  "kernel/test_shuffle_float"
+  "kernel/test_shuffle_long"
+  "kernel/test_shuffle_ulong"
+  "kernel/test_min_max"
+  "kernel/test_length_distance"
+  "kernel/test_fmin_fmax_fma"
+  "kernel/test_convert_sat_regression"
+  "kernel/test_short16"
+  APPEND PROPERTY LABELS "proxy")

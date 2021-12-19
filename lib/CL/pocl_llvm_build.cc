@@ -85,8 +85,6 @@ using namespace llvm;
 
 POP_COMPILER_DIAGS
 
-/* Global pocl device to be used by passes if needed */
-cl_device_id currentPoclDevice = NULL;
 
 
 //#define DEBUG_POCL_LLVM_API
@@ -96,31 +94,6 @@ cl_device_id currentPoclDevice = NULL;
 #include <cassert>
 #endif
 
-
-// Read input source to clang::FrontendOptions.
-// The source is contained in the program->source array,
-// but if debugging option is enabled in the kernel compiler
-// we need to dump the file to disk first for the debugger
-// to find it.
-static inline int
-load_source(FrontendOptions &fe,
-            cl_program program)
-{
-  char source_file[POCL_FILENAME_LENGTH];
-  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
-                       CL_OUT_OF_HOST_MEMORY, "Could not write program source");
-
-  fe.Inputs.push_back(
-      FrontendInputFile(source_file,
-#ifndef LLVM_OLDER_THAN_10_0
-                        clang::InputKind(clang::Language::OpenCL)
-#else
-                        clang::InputKind::OpenCL
-#endif
-                            ));
-
-  return 0;
-}
 
 // Unlink input sources
 static inline int
@@ -184,7 +157,8 @@ static void get_build_log(cl_program program,
   appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *getKernelLibrary(cl_device_id device);
+static llvm::Module *getKernelLibrary(cl_device_id device,
+                                      PoclLLVMContextData *llvm_ctx);
 
 static std::string getPoclPrivateDataDir() {
 #ifdef ENABLE_RELOCATION
@@ -205,8 +179,6 @@ static std::string getPoclPrivateDataDir() {
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
-                            const char *user_options_cstr,
-                            char *program_bc_path,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
                             const char **header_include_names,
@@ -214,15 +186,17 @@ int pocl_llvm_build_program(cl_program program,
 
 {
   char tempfile[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
-  llvm::Module **mod = NULL;
+  llvm::Module *mod = nullptr;
   char temp_include_dir[POCL_FILENAME_LENGTH];
-  std::string user_options(user_options_cstr ? user_options_cstr : "");
+  std::string user_options(program->compiler_options ? program->compiler_options
+                                                     : "");
   size_t n = 0;
   int error;
-
-  PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   if (num_input_headers > 0) {
     error = pocl_cache_create_tempdir(temp_include_dir);
@@ -285,6 +259,13 @@ int pocl_llvm_build_program(cl_program program,
 
   llvm::StringRef extensions(device->extensions);
 
+#if !(defined(__x86_64__) && defined(__GNUC__))
+  if (program->flush_denorms) {
+    POCL_MSG_WARN("flush to zero is currently only implemented for "
+                  "x86-64 & gcc/clang, ignoring flag\n");
+  }
+#endif
+
   std::string cl_ext;
   if (extensions.size() > 0) {
     size_t e_start = 0, e_end = 0;
@@ -302,6 +283,7 @@ int pocl_llvm_build_program(cl_program program,
     cl_ext.back() = ' '; // replace last "," with space
     ss << "-cl-ext=-all," << cl_ext;
   }
+
   /* temp dir takes preference */
   if (num_input_headers > 0)
     ss << "-I" << temp_include_dir << " ";
@@ -311,6 +293,9 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
   ss << "-D__USE_CLANG_OPENCL_C_H ";
+#ifndef LLVM_OLDER_THAN_13_0
+  ss << "-Dreserve_id_t=unsigned ";
+#endif
 
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
@@ -391,9 +376,6 @@ int pocl_llvm_build_program(cl_program program,
             << "user_options: " << user_options << std::endl;
 #endif
 
-  if (program->build_log[device_i])
-    POCL_MEM_FREE(program->build_log[device_i]);
-
   if (!CompilerInvocation::CreateFromArgs(
           pocl_build,
 #ifndef LLVM_OLDER_THAN_10_0
@@ -403,7 +385,8 @@ int pocl_llvm_build_program(cl_program program,
           itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
 #endif
           diags)) {
-    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+    pocl_cache_create_program_cachedir(program, device_i, program->source,
+                                       strlen(program->source),
                                        program_bc_path);
     get_build_log(program, device_i, ss_build_log, diagsBuffer,
                   CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
@@ -419,7 +402,13 @@ int pocl_llvm_build_program(cl_program program,
 #else
                              clang::InputKind::OpenCL,
 #endif
-                             triple, po, clang::LangStandard::lang_opencl12);
+                             triple,
+#ifndef LLVM_OLDER_THAN_12_0
+                             po.Includes,
+#else
+                             po,
+#endif
+                             clang::LangStandard::lang_opencl12);
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
@@ -494,18 +483,35 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear();
-  if (load_source(fe, program) != 0)
-    return CL_OUT_OF_HOST_MEMORY;
+
+  // Read input source to clang::FrontendOptions.
+  // The source is contained in the program->source array,
+  // but if debugging option is enabled in the kernel compiler
+  // we need to dump the file to disk first for the debugger
+  // to find it.
+  char source_file[POCL_FILENAME_LENGTH];
+  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
+                       CL_OUT_OF_HOST_MEMORY, "Could not write program source");
+  fe.Inputs.push_back(
+      FrontendInputFile(source_file,
+#ifndef LLVM_OLDER_THAN_10_0
+                        clang::InputKind(clang::Language::OpenCL)
+#else
+                        clang::InputKind::OpenCL
+#endif
+                            ));
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
   cg.StackRealignment = true;
-  // Let the vectorizer or another optimization pass unroll the loops,
-  // in case it sees beneficial.
-  cg.UnrollLoops = false;
-  // Lets leave vectorization to later compilation phase
-  cg.VectorizeLoop = false;
-  cg.VectorizeSLP = false;
+  if (!device->spmd) {
+    // Let the vectorizer or another optimization pass unroll the loops,
+    // in case it sees beneficial.
+    cg.UnrollLoops = false;
+    // Lets leave vectorization to later compilation phase
+    cg.VectorizeLoop = false;
+    cg.VectorizeSLP = false;
+  }
   cg.VerifyModule = true;
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
@@ -516,8 +522,9 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
-  fe.OutputFile.assign(tempfile);
+  error = pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
+  assert(error == 0);
+  fe.OutputFile.assign((const char *)tempfile);
 
   bool success = true;
   clang::PrintPreprocessedAction Preprocess;
@@ -537,7 +544,8 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   if (PreprocessedOut == nullptr) {
-    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+    pocl_cache_create_program_cachedir(program, device_i, program->source,
+                                       strlen(program->source),
                                        program_bc_path);
     get_build_log(program, device_i, ss_build_log, diagsBuffer,
                   CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
@@ -551,14 +559,41 @@ int pocl_llvm_build_program(cl_program program,
 
   unlink_source(fe);
 
-  if (pocl_exists(program_bc_path))
+  if (pocl_exists(program_bc_path)) {
+    char *binary = nullptr;
+    uint64_t fsize;
+    /* Read binaries from program.bc to memory */
+    if (program->binaries[device_i] != nullptr) {
+      POCL_MEM_FREE(program->binaries[device_i]);
+      program->binary_sizes[device_i] = 0;
+    }
+    int r = pocl_read_file(program_bc_path, &binary, &fsize);
+    POCL_RETURN_ERROR_ON(r, CL_BUILD_ERROR,
+                         "Failed to read binaries from program.bc to "
+                         "memory: %s\n",
+                         program_bc_path);
+
+    program->binary_sizes[device_i] = (size_t)fsize;
+    program->binaries[device_i] = (unsigned char *)binary;
+
+    mod = (llvm::Module *)program->data[device_i];
+    if (mod != nullptr) {
+      delete mod;
+      program->data[device_i] = nullptr;
+      --llvm_ctx->number_of_IRs;
+    }
+
+    program->data[device_i] = parseModuleIR(program_bc_path, llvm_ctx->Context);
+    assert(program->data[device_i]);
+    ++llvm_ctx->number_of_IRs;
+
     return CL_SUCCESS;
+  }
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
-  llvm::LLVMContext &c = GlobalContext();
-  clang::EmitLLVMOnlyAction EmitLLVM(&c);
+  clang::EmitLLVMOnlyAction EmitLLVM(llvm_ctx->Context);
   success = CI.ExecuteAction(EmitLLVM);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
@@ -566,49 +601,50 @@ int pocl_llvm_build_program(cl_program program,
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
 
-  mod = (llvm::Module **)&program->llvm_irs[device_i];
-  if (*mod != NULL) {
-    delete *mod;
-    --numberOfIRs;
+  mod = (llvm::Module *)program->data[device_i];
+  if (mod != nullptr) {
+    delete mod;
+    --llvm_ctx->number_of_IRs;
   }
 
-  *mod = EmitLLVM.takeModule().release();
-
-  if (*mod == NULL)
+  mod = EmitLLVM.takeModule().release();
+  if (mod == nullptr)
     return CL_BUILD_PROGRAM_FAILURE;
+  else
+    ++llvm_ctx->number_of_IRs;
 
-  ++numberOfIRs;
-
-  if ((*mod)->getModuleFlag("PIC Level") == nullptr)
-    (*mod)->setPICLevel(PICLevel::BigPIC);
+  if (mod->getModuleFlag("PIC Level") == nullptr)
+    mod->setPICLevel(PICLevel::BigPIC);
 #ifndef __PPC64__
-  if ((*mod)->getModuleFlag("PIE Level") == nullptr)
-    (*mod)->setPIELevel(PIELevel::Large);
+  if (mod->getModuleFlag("PIE Level") == nullptr)
+    mod->setPIELevel(PIELevel::Large);
 #endif
 
   // link w kernel lib, but not if we're called from clCompileProgram()
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
   if (linking_program) {
-    currentPoclDevice = device;
-    llvm::Module *libmodule = getKernelLibrary(device);
+    llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
-    if (link(*mod, libmodule, log)) {
+    if (link(mod, libmodule, log, device->global_as_id,
+             device->device_aux_functions)) {
       appendToProgramBuildLog(program, device_i, log);
-      std::string msg = getDiagString();
+      std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
-      delete *mod;
-      *mod = nullptr;
-      --numberOfIRs;
+      delete mod;
+      mod = nullptr;
+      --llvm_ctx->number_of_IRs;
       return CL_BUILD_PROGRAM_FAILURE;
     }
   }
 
+  program->data[device_i] = mod;
+
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
-  /* Always retain program.bc. Its required in clBuildProgram */
-  error = pocl_write_module(*mod, program_bc_path, 0);
+  /* Always retain program.bc */
+  error = pocl_write_module(mod, program_bc_path, 0);
   if(error)
     return error;
 
@@ -616,7 +652,7 @@ int pocl_llvm_build_program(cl_program program,
    * save program->binaries[i]
    */
   std::string content;
-  writeModuleIR(*mod, content);
+  writeModuleIRtoString(mod, content);
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);
@@ -630,34 +666,39 @@ int pocl_llvm_build_program(cl_program program,
 }
 
 int pocl_llvm_link_program(cl_program program, unsigned device_i,
-                           char *program_bc_path, cl_uint num_input_programs,
+                           cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes, void **cur_llvm_irs,
-                           int create_library, int spir) {
+                           int link_program, int spir) {
 
+  char program_bc_path[POCL_FILENAME_LENGTH];
   std::string concated_binaries;
   llvm::Module *linked_module = nullptr;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
-  llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
+  llvm::Module **modptr = (llvm::Module **)&program->data[device_i];
   int error;
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
-  currentPoclDevice = device;
-  llvm::Module *libmodule = getKernelLibrary(device);
+  llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
   assert(libmodule != NULL);
 
-  PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
 
   if (spir) {
 #ifdef ENABLE_SPIR
-
+    assert(num_input_programs == 1);
     POCL_RETURN_ERROR_ON ((device->endian_little == CL_FALSE),
                          CL_LINK_PROGRAM_FAILURE,
                          "SPIR is only supported on little-endian devices\n");
 
-    linked_module = parseModuleIRMem((char *)program->binaries[device_i],
-                                     program->binary_sizes[device_i]);
+    concated_binaries.append((char *)cur_device_binaries[0],
+                             cur_device_binary_sizes[0]);
+
+    linked_module =
+        parseModuleIRMem((char *)cur_device_binaries[0],
+                         cur_device_binary_sizes[0], llvm_ctx->Context);
 
     const std::string &spir_triple = linked_module->getTargetTriple();
     size_t spir_addrbits = Triple(spir_triple).isArch64Bit() ? 64 : 32;
@@ -676,6 +717,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
      */
     linked_module->setTargetTriple(libmodule->getTargetTriple());
     linked_module->setDataLayout(libmodule->getDataLayout());
+
     if (linked_module->getModuleFlag("PIC Level") == nullptr)
       linked_module->setPICLevel(PICLevel::BigPIC);
 #ifndef __PPC64__
@@ -689,30 +731,30 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #endif
   } else {
 
-  std::unique_ptr<llvm::Module> mod(
-      new llvm::Module(StringRef("linked_program"), GlobalContext()));
+    std::unique_ptr<llvm::Module> mod(
+        new llvm::Module(StringRef("linked_program"), *llvm_ctx->Context));
 
-  for (i = 0; i < num_input_programs; i++) {
-    assert(cur_device_binaries[i]);
-    assert(cur_device_binary_sizes[i]);
-    concated_binaries.append(std::string((char *)cur_device_binaries[i],
-                                         cur_device_binary_sizes[i]));
+    for (i = 0; i < num_input_programs; i++) {
+      assert(cur_device_binaries[i]);
+      assert(cur_device_binary_sizes[i]);
+      concated_binaries.append((char *)cur_device_binaries[i],
+                               cur_device_binary_sizes[i]);
 
-    llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
-    assert(p);
+      llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
+      assert(p);
 
 #ifdef LLVM_OLDER_THAN_7_0
-    if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
+      if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
 #else
-    if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
+      if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
 #endif
-      std::string msg = getDiagString();
-      appendToProgramBuildLog(program, device_i, msg);
-      return CL_LINK_PROGRAM_FAILURE;
+        std::string msg = getDiagString(ctx);
+        appendToProgramBuildLog(program, device_i, msg);
+        return CL_LINK_PROGRAM_FAILURE;
+      }
     }
-  }
 
-  linked_module = mod.release();
+    linked_module = mod.release();
   }
 
   if (linked_module == nullptr)
@@ -720,16 +762,17 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   if (*modptr != nullptr) {
     delete *modptr;
-    --numberOfIRs;
+    --llvm_ctx->number_of_IRs;
     *modptr = nullptr;
   }
 
-  if (!create_library) {
+  if (link_program) {
     // linked all the programs together, now link in the kernel library
     std::string log("Error(s) while linking: \n");
-    if (link(linked_module, libmodule, log)) {
+    if (link(linked_module, libmodule, log, device->global_as_id,
+             device->device_aux_functions)) {
       appendToProgramBuildLog(program, device_i, log);
-      std::string msg = getDiagString();
+      std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
       delete linked_module;
       return CL_BUILD_PROGRAM_FAILURE;
@@ -737,7 +780,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   }
 
   *modptr = linked_module;
-  ++numberOfIRs;
+  ++llvm_ctx->number_of_IRs;
 
   /* TODO currently cached on concated binary contents (in undefined order),
      this is not terribly useful (but we have to store it somewhere..) */
@@ -754,7 +797,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
-  /* Always retain program.bc. Its required in clBuildProgram */
+  /* Always retain program.bc for metadata */
   error = pocl_write_module(linked_module, program_bc_path, 0);
   if (error)
     return error;
@@ -763,7 +806,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
    * save program->binaries[i]
    */
   std::string content;
-  writeModuleIR(linked_module, content);
+  writeModuleIRtoString(linked_module, content);
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);
@@ -816,24 +859,24 @@ const char *getX86KernelLibName() {
 #endif
 
 
-static std::map<cl_device_id, llvm::Module *> kernelLibraryMap;
-
 /**
  * Return the OpenCL C built-in function library bitcode
  * for the given device.
  */
-static llvm::Module* getKernelLibrary(cl_device_id device)
-{
+static llvm::Module *getKernelLibrary(cl_device_id device,
+                                      PoclLLVMContextData *llvm_ctx) {
   Triple triple(device->llvm_target_triplet);
+  llvm::LLVMContext *llvmContext = llvm_ctx->Context;
+  kernelLibraryMapTy *kernelLibraryMap = llvm_ctx->kernelLibraryMap;
 
-  if (kernelLibraryMap.find(device) != kernelLibraryMap.end())
-    return kernelLibraryMap[device];
+  if (kernelLibraryMap->find(device) != kernelLibraryMap->end())
+    return kernelLibraryMap->at(device);
 
   const char *subdir = "host";
   bool is_host = true;
   // TODO: move this to the device layer, a property to ask for
   // the kernel builtin bitcode library name, including its subdir
-#ifdef TCE_AVAILABLE
+#if defined(TCE_AVAILABLE)
   if (triple.getArch() == Triple::tce || triple.getArch() == Triple::tcele) {
     subdir = "tce";
     is_host = false;
@@ -879,7 +922,8 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;
     kernellib_fallback += ".bc";
-    kernellib += device->llvm_cpu;
+    if (device->llvm_cpu)
+      kernellib += device->llvm_cpu;
 #endif
   }
   kernellib += ".bc";
@@ -889,7 +933,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
   if (pocl_exists(kernellib.c_str()))
     {
       POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
-      lib = parseModuleIR(kernellib.c_str());
+      lib = parseModuleIR(kernellib.c_str(), llvmContext);
     }
   else
     {
@@ -898,24 +942,16 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
                         kernellib_fallback.c_str());
-          lib = parseModuleIR(kernellib_fallback.c_str());
+          lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
         }
       else
 #endif
         POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
     }
   assert (lib != NULL);
-  kernelLibraryMap[device] = lib;
+  kernelLibraryMap->insert(std::make_pair(device, lib));
 
   return lib;
-}
-
-void cleanKernelLibrary() {
-  for (auto i = kernelLibraryMap.begin(), e = kernelLibraryMap.end();
-       i != e; ++i) {
-    delete (llvm::Module *)i->second;
-  }
-  kernelLibraryMap.clear();
 }
 
 /**

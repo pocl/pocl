@@ -26,7 +26,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0 
 {
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
   POCL_RETAIN_OBJECT(program);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Program %p  : %d\n", program, program->pocl_refcount);
   return CL_SUCCESS;

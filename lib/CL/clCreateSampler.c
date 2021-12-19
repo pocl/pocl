@@ -24,6 +24,9 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "pocl_util.h"
+
+extern unsigned long sampler_c;
 
 extern CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
@@ -36,7 +39,7 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode = CL_SUCCESS;
   cl_sampler sampler = NULL;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   /* at least 1 device must support images */
   size_t i, any_device_has_images = 0;
@@ -66,12 +69,18 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
   sampler->device_data = (void **)calloc (pocl_num_devices, sizeof (void *));
+
+  TP_CREATE_SAMPLER (context->id, sampler->id);
+
+  POCL_ATOMIC_INC (sampler_c);
+
   for (i = 0; i < context->num_devices; ++i)
     {
       cl_device_id dev = context->devices[i];
+      if (dev->available != CL_TRUE)
+        continue;
       if (dev->image_support == CL_TRUE && dev->ops->create_sampler)
-        sampler->device_data[dev->dev_id]
-            = dev->ops->create_sampler (dev->data, sampler, &errcode);
+        dev->ops->create_sampler (dev, sampler, dev->dev_id);
     }
 
 ERROR:

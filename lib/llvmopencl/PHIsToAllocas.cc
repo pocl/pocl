@@ -138,7 +138,7 @@ PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
   }
   builder.SetInsertPoint(phi);
 
-  llvm::Instruction *loadedValue = builder.CreateLoad(alloca);
+  llvm::Instruction *loadedValue = builder.CreateLoad(phi->getType(), alloca);
   phi->replaceAllUsesWith(loadedValue);
 
   if (OriginalPHIWasUniform) {

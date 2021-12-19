@@ -24,10 +24,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include "poclu.h"
 
-#ifdef _MSC_VER
+#include "pocl_opencl.h"
+
+#ifdef _WIN32
 #  include "vccompat.hpp"
 #endif
 
@@ -69,10 +69,12 @@ main (int argc, char **argv)
   output = (cl_float *) malloc (WIDTH * (HEIGHT + PADDING) * sizeof (cl_float));
 
   srand48(0);
-  for (i = 0; i < HEIGHT; ++i)
+  for (i = 0; i < WIDTH; ++i)
     {
-      for (j = 0; j < WIDTH; ++j)
-      input[i * WIDTH + j] = (cl_float)drand48();
+      for (j = 0; j < HEIGHT; ++j)
+      input[i * HEIGHT + j] = (cl_float)drand48();
+      for (j = 0; j < (HEIGHT + PADDING); ++j)
+      output[i * (HEIGHT + PADDING) + j] = 0.0f;
     }
 
   CHECK_CL_ERROR2 (err);
@@ -136,8 +138,8 @@ ERROR:
   CHECK_CL_ERROR (clReleaseKernel (kernel));
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (input);
   free (output);
 

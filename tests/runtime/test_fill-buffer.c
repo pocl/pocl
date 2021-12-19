@@ -21,8 +21,8 @@
    IN THE SOFTWARE.
  */
 
-#include "poclu.h"
-#include <CL/cl.h>
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

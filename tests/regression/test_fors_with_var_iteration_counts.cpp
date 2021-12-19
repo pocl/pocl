@@ -21,6 +21,8 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -134,6 +136,9 @@ main(void)
             CL_MAP_READ,
             0,
             WORK_ITEMS * sizeof(int));
+
+        queue.finish();
+        platformList[0].unloadCompiler();
 
         // If the kernel compiler succeeds, we are happy for now.
         return EXIT_SUCCESS;

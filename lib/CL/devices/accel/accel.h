@@ -25,9 +25,7 @@
 #ifndef POCL_ACCEL_H
 #define POCL_ACCEL_H
 
-#include "config.h"
 #include "pocl_cl.h"
-#include "pocl_icd.h"
 #include "prototypes.inc"
 
 #ifdef __cplusplus
@@ -35,7 +33,6 @@ extern "C"
 {
 #endif
 
-  GEN_PROTOTYPES (basic)
   GEN_PROTOTYPES (accel)
 
 #ifdef __cplusplus

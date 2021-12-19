@@ -254,13 +254,13 @@ WorkitemLoops::CreateLoopAround
   IRBuilder<> builder(forInitBB);
 
   if (peeledFirst) {
-    builder.CreateStore(builder.CreateLoad(localIdXFirstVar), localIdVar);
+    builder.CreateStore(builder.CreateLoad(SizeT, localIdXFirstVar), localIdVar);
     builder.CreateStore(ConstantInt::get(SizeT, 0), localIdXFirstVar);
 
     if (WGDynamicLocalSize) {
       llvm::Value *cmpResult;
-      cmpResult = builder.CreateICmpULT(builder.CreateLoad(localIdVar),
-                                        builder.CreateLoad(DynamicLocalSize));
+      cmpResult = builder.CreateICmpULT(builder.CreateLoad(SizeT, localIdVar),
+                                        builder.CreateLoad(SizeT, DynamicLocalSize));
 
       builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
     } else {
@@ -283,12 +283,12 @@ WorkitemLoops::CreateLoopAround
   llvm::Value *cmpResult;
   if (!WGDynamicLocalSize)
     cmpResult = builder.CreateICmpULT(
-                  builder.CreateLoad(localIdVar),
+                  builder.CreateLoad(SizeT, localIdVar),
                     ConstantInt::get(SizeT, LocalSizeForDim));
   else
     cmpResult = builder.CreateICmpULT(
-                  builder.CreateLoad(localIdVar),
-                    builder.CreateLoad(DynamicLocalSize));
+                  builder.CreateLoad(SizeT, localIdVar),
+                    builder.CreateLoad(SizeT, DynamicLocalSize));
   
   Instruction *loopBranch =
       builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
@@ -378,7 +378,7 @@ WorkitemLoops::ProcessFunction(Function &F)
   Initialize(K);
   unsigned workItemCount = WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ;
 
-  if (workItemCount == 1)
+  if (workItemCount == 1 && !WGDynamicLocalSize)
     {
       K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
       ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
@@ -727,8 +727,8 @@ WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
 
   assert(LocalSizeXPtr != NULL && LocalSizeYPtr != NULL);
 
-  LoadInst* LoadX = builder.CreateLoad(LocalSizeXPtr, "ls_x");
-  LoadInst* LoadY = builder.CreateLoad(LocalSizeYPtr, "ls_y");
+  LoadInst* LoadX = builder.CreateLoad(SizeT, LocalSizeXPtr, "ls_x");
+  LoadInst* LoadY = builder.CreateLoad(SizeT, LocalSizeYPtr, "ls_y");
 
   /* Form linear index from xyz coordinates:
        local_size_x * local_size_y * local_id_z  (z dimension)
@@ -796,12 +796,14 @@ WorkitemLoops::AddContextSave
       gepArgs.push_back(region->LocalIDXLoad());
     }
 
-  return builder.CreateStore(instruction, builder.CreateGEP(alloca,
-                                                            gepArgs));
+  return builder.CreateStore(instruction,
+             builder.CreateGEP(alloca->getType()->getPointerElementType(),
+                               alloca, gepArgs));
 }
 
 llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
                                                     llvm::Instruction *alloca,
+                                                    llvm::Type *InstType,
                                                     bool PoclWrapperStructAdded,
                                                     llvm::Instruction *before,
                                                     bool isAlloca) {
@@ -848,14 +850,16 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
           ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
 
     llvm::Instruction *gep =
-        dyn_cast<Instruction>(builder.CreateGEP(alloca, gepArgs));
+        dyn_cast<Instruction>(builder.CreateGEP(
+            alloca->getType()->getPointerElementType(),
+            alloca, gepArgs));
     if (isAlloca) {
       /* In case the context saved instruction was an alloca, we created a
          context array with pointed-to elements, and now want to return a
          pointer to the elements to emulate the original alloca. */
       return gep;
   }
-  return builder.CreateLoad(gep);
+  return builder.CreateLoad(InstType, gep);
 }
 
 /**
@@ -1025,7 +1029,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
         snprintf(GlobalName, 32, "_local_size_%c", 'x' + i);
         LocalSize =
           cast<GlobalVariable>(M->getOrInsertGlobal(GlobalName, SizeT));
-        LocalSizeLoad[i] = builder.CreateLoad(LocalSize);
+        LocalSizeLoad[i] = builder.CreateLoad(SizeT, LocalSize);
       }
 
       Value* LocalXTimesY =
@@ -1232,7 +1236,8 @@ WorkitemLoops::AddContextSaveRestore
           contextRestoreLocation = incomingBB->getTerminator();
         }
         llvm::Value *loadedValue = AddContextRestore(
-            user, alloca, PoclWrapperStructAdded, contextRestoreLocation,
+            user, alloca, instruction->getType(),
+            PoclWrapperStructAdded, contextRestoreLocation,
             isa<AllocaInst>(instruction));
         user->replaceUsesOfWith(instruction, loadedValue);
 
@@ -1309,7 +1314,7 @@ WorkitemLoops::AppendIncBlock
   builder.SetInsertPoint(forIncBB);
   /* Create the iteration variable increment */
   builder.CreateStore(builder.CreateAdd(
-                        builder.CreateLoad(localIdVar),
+                        builder.CreateLoad(SizeT, localIdVar),
                         ConstantInt::get(SizeT, 1)),
                       localIdVar);
 

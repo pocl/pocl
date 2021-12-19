@@ -55,7 +55,7 @@ static pocl_mem_manager *mm = NULL;
 void pocl_init_mem_manager (void)
 {
   static unsigned int init_done = 0;
-  static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+  static pocl_lock_t pocl_init_lock;
 
   if(!init_done)
     {

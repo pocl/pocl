@@ -35,7 +35,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   cl_mem mem = NULL;
   int errcode;
 
-  POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)), CL_INVALID_MEM_OBJECT);
 
   POCL_GOTO_ERROR_ON ((buffer->is_image || IS_IMAGE1D_BUFFER (buffer)),
                       CL_INVALID_MEM_OBJECT,

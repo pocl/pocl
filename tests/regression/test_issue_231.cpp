@@ -1,6 +1,7 @@
-
 // Used to cause an LLVM crash with Haswell/Broadwell.
 // See https://github.com/pocl/pocl/issues/231
+
+#include "pocl_opencl.h"
 
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
@@ -99,4 +100,5 @@ int main(int argc, char *argv[])
 #endif
 
   queue.finish();
+  cl::Platform::getDefault().unloadCompiler();
 }

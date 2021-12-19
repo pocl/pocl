@@ -52,9 +52,11 @@
                           no sense in binary, and whether argument is local
                           is already in cl_kernel_arg_address_qualifier);
                           add has_arg_metadata & kernel attributes */
+/* changes for version 8: compilation parameters are stored in module metadata
+                          */
 
-#define FIRST_SUPPORTED_POCLCC_VERSION 6
-#define POCLCC_VERSION 7
+#define FIRST_SUPPORTED_POCLCC_VERSION 8
+#define POCLCC_VERSION 8
 
 /* pocl binary structures */
 
@@ -243,14 +245,16 @@ check_binary(cl_device_id device, const unsigned char *binary)
     }
   if (b.version < FIRST_SUPPORTED_POCLCC_VERSION)
     {
-      POCL_MSG_WARN ("PoclBinary version %i is not supported by "
+      POCL_MSG_WARN ("PoCLBinary version %i is not supported by "
                      "this pocl (the minimal is: %i)\n",
                      b.version, FIRST_SUPPORTED_POCLCC_VERSION);
       return NULL;
     }
-  if (pocl_binary_get_device_id(device) != b.device_id)
+  uint64_t dev_id = pocl_binary_get_device_id(device);
+  if (dev_id != b.device_id)
     {
-      POCL_MSG_WARN ("PoclBinary device id mismatch\n");
+      POCL_MSG_WARN ("PoCLBinary device id mismatch, DEVICE: %lx, BINARY: %lx\n",
+                      dev_id, b.device_id);
       return NULL;
     }
   return p;
@@ -352,7 +356,10 @@ serialize_kernel_cachedir (cl_program program,
   pocl_cache_kernel_cachedir (path, program, device_i, kernel_name);
   POCL_MSG_PRINT_INFO ("Kernel %s: recur serializing cachedir %s\n",
                        kernel_name, path);
-  buffer = recursively_serialize_path (path, basedir_len, buffer);
+  if (pocl_exists (path))
+    buffer = recursively_serialize_path (path, basedir_len, buffer);
+  else
+    POCL_MSG_ERR ("CAN't serialize %s - doesn't exist \n", path);
 
   return buffer;
 }
@@ -758,7 +765,8 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       km->attributes = k.attributes;
       km->has_arg_metadata = k.has_arg_metadata;
       km->name = k.kernel_name;
-      km->data = (void **)calloc (program->num_devices, sizeof (void *));
+      km->data
+          = (void **)calloc (program->associated_num_devices, sizeof (void *));
       assert (km->name);
 
       unsigned l;

@@ -22,37 +22,42 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clWaitForEvents)(cl_uint              num_events ,
                   const cl_event *     event_list ) CL_API_SUFFIX__VERSION_1_0
 {
-  unsigned event_i;
+  unsigned i;
   cl_device_id dev;
   cl_int ret = CL_SUCCESS;
+
   POCL_RETURN_ERROR_COND((num_events == 0 || event_list == NULL), CL_INVALID_VALUE);
 
-  for (event_i = 0; event_i < num_events; ++event_i)
+  for (i = 0; i < num_events; ++i)
     {
-      POCL_RETURN_ERROR_COND((event_list[event_i] == NULL), CL_INVALID_EVENT);
-      if (event_i > 0)
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event_list[i])),
+                              CL_INVALID_EVENT);
+      if (i > 0)
         {
-          POCL_RETURN_ERROR_COND((event_list[event_i]->context != event_list[event_i - 1]->context), CL_INVALID_CONTEXT);
+          POCL_RETURN_ERROR_COND (
+              (event_list[i]->context != event_list[i - 1]->context),
+              CL_INVALID_CONTEXT);
         }
     }
 
   // dummy implementation, waits until *all* events have completed.
-  for (event_i = 0; event_i < num_events; ++event_i)
+  for (i = 0; i < num_events; ++i)
     {
       /* lets handle user events later */
-      if (event_list[event_i]->command_type == CL_COMMAND_USER)
+      if (event_list[i]->command_type == CL_COMMAND_USER)
         continue;
-      dev = event_list[event_i]->queue->device;
-      if (dev->ops->wait_event)  
-        dev->ops->wait_event(dev, event_list[event_i]);
+      dev = event_list[i]->queue->device;
+      if (dev->ops->wait_event)
+        dev->ops->wait_event (dev, event_list[i]);
       else
-        POname(clFinish)(event_list[event_i]->queue);
-      if (event_list[event_i]->status < 0)
+        POname (clFinish) (event_list[i]->queue);
+      if (event_list[i]->status < 0)
         ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }
 
@@ -62,18 +67,17 @@ POname(clWaitForEvents)(cl_uint              num_events ,
   /* wait for user events */
   struct timespec time_to_wait = { 0, 0 };
 
-  for (event_i = 0; event_i < num_events; ++event_i)
+  for (i = 0; i < num_events; ++i)
     {
-      cl_event e = event_list[event_i];
+      cl_event e = event_list[i];
       POCL_LOCK_OBJ (e);
-      pocl_user_event_data *p = e->data;
+      pocl_user_event_data *p = (pocl_user_event_data *)e->data;
       if (e->command_type == CL_COMMAND_USER)
         {
           while (e->status > CL_COMPLETE)
             {
               time_to_wait.tv_sec = time (NULL) + 1;
-              pthread_cond_timedwait (&p->wakeup_cond, &e->pocl_lock,
-                                      &time_to_wait);
+              POCL_TIMEDWAIT_COND (p->wakeup_cond, e->pocl_lock, time_to_wait);
             }
           if (e->status < 0)
             ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;

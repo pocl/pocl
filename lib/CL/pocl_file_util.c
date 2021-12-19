@@ -1,16 +1,21 @@
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#ifndef _WIN32
 #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
 #define _BSD_SOURCE
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
 #else
-#include <io.h>
+#include "vccompat.hpp"
+#ifdef __MINGW32__
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+#endif
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,29 +49,36 @@ pocl_rm_rf(const char* path)
         {
           char *buf;
           if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
-            continue;
-          
+            {
+              p = readdir (d);
+              continue;
+            }
+
           size_t len = path_len + strlen(p->d_name) + 2;
           buf = malloc(len);
-          buf[len] = '\0';
           if (buf)
             {
               struct stat statbuf;
               snprintf(buf, len, "%s/%s", path, p->d_name);
-              
-              if (!stat(buf, &statbuf))
-                error = pocl_rm_rf(buf);
-              else 
-                error = remove(buf);
-              
+
+              if (stat (buf, &statbuf) < 0)
+                POCL_ABORT ("Can't get stat() on %s\n", buf);
+              if (S_ISDIR (statbuf.st_mode))
+                error = pocl_rm_rf (buf);
+              if (S_ISREG (statbuf.st_mode) || S_ISLNK (statbuf.st_mode))
+                error = remove (buf);
+
               free(buf);
             }
+          else
+            POCL_ABORT ("out of memory");
+
           p = readdir(d);
         }
       closedir(d);
       
       if (!error)
-        remove(path);
+        error = remove (path);
     }
   return error;
 }
@@ -75,24 +87,40 @@ pocl_rm_rf(const char* path)
 int
 pocl_mkdir_p (const char* path)
 {
-  int error;
-  int errno_tmp;
-  error = mkdir (path, S_IRWXU);
-  if (error && errno == ENOENT)
-    { // creates all needed directories recursively
-      char *previous_path;
-      int previous_path_length = strrchr (path, '/') - path;
-      previous_path = malloc (previous_path_length + 1);
-      strncpy (previous_path, path, previous_path_length);
-      previous_path[previous_path_length] = '\0';
-      pocl_mkdir_p ((const char*) previous_path);
-      free (previous_path);
-      error = mkdir (path, S_IRWXU);
+  size_t len = strlen (path);
+  if (len >= POCL_FILENAME_LENGTH - 1)
+    {
+      return -1;
     }
-  else if (error && errno == EEXIST)
-    error = 0;
+  if (len <= 1)
+    return -1;
 
-  return error;
+  char path_copy[POCL_FILENAME_LENGTH];
+  memcpy (path_copy, path, len);
+  path_copy[len] = 0;
+
+  for (char *tmp = path_copy + 1; *tmp; tmp++)
+    {
+      if (*tmp == '/')
+        {
+          *tmp = '\0';
+          errno = 0;
+          if (mkdir (path_copy, S_IRWXU) != 0)
+            {
+              if (errno != EEXIST)
+                return -1;
+            }
+          *tmp = '/';
+        }
+    }
+
+  if (mkdir (path_copy, S_IRWXU) != 0)
+    {
+      if (errno != EEXIST)
+        return -1;
+    }
+
+  return 0;
 }
 
 int
@@ -175,17 +203,16 @@ ERROR:
   return -1;
 }
 
-
-
-int 
-pocl_write_file(const char *path, const char* content,
-                uint64_t    count,
-                int         append,
-                int         dont_rewrite) 
+/* Atomic write - with rename() */
+int
+pocl_write_file (const char *path, const char *content, uint64_t count,
+                 int append, int dont_rewrite)
 {
   assert(path);
   assert(content);
-  
+  char path2[POCL_FILENAME_LENGTH];
+  int err, fd = -1;
+
   if (pocl_exists(path)) 
     {
       if (dont_rewrite) 
@@ -204,45 +231,50 @@ pocl_write_file(const char *path, const char* content,
         }
     }
   
-  FILE *f;
   if (append)
-    f = fopen(path, "a");
+    {
+      fd = open (path, O_RDWR | O_APPEND | O_CREAT, 0660);
+      err = fd < 0;
+    }
   else
-    f = fopen(path, "w");
-
-  if (f == NULL)
     {
-      POCL_MSG_ERR ("fopen(%s) failed\n", path);
+      err = pocl_mk_tempname (path2, path, ".temp", &fd);
+    }
+
+  if (err)
+    {
+      POCL_MSG_ERR ("open(%s) failed\n", path);
       return -1;
     }
 
-  if (fwrite (content, 1, (size_t)count, f) < (size_t)count)
+  ssize_t res = write (fd, content, (size_t)count);
+  if (res < 0 || (size_t)res < (size_t)count)
     {
-      POCL_MSG_ERR ("fwrite(%s) failed\n", path);
+      POCL_MSG_ERR ("write(%s) failed\n", path);
       return -1;
-    }
-
-  if (fflush (f))
-    {
-      POCL_MSG_ERR ("fflush() failed\n");
-      return errno;
     }
 
 #ifdef HAVE_FDATASYNC
-  if (fdatasync (fileno (f)))
+  if (fdatasync (fd))
     {
       POCL_MSG_ERR ("fdatasync() failed\n");
       return errno;
     }
 #elif defined(HAVE_FSYNC)
-  if (fsync (fileno (f)))
+  if (fsync (fd))
     {
       POCL_MSG_ERR ("fsync() failed\n");
       return errno;
     }
 #endif
 
-  return fclose(f);
+  if (close (fd) < 0)
+    return errno;
+
+  if (append)
+    return 0;
+  else
+    return pocl_rename (path2, path);
 }
 
 /****************************************************************************/
@@ -255,8 +287,10 @@ int
 pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                   int *ret_fd)
 {
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#error "making temporary files on Windows not implemented"
+#if defined(_WIN32)
+  char buf[256];
+  int ok = GetTempFileName(getenv("TEMP"), prefix, 0, buf);
+  return ok ? 0 : 1;
 #elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS) || defined(__ANDROID__)
   /* using mkstemp() instead of tmpnam() has no real benefit
    * here, as we have to pass the filename to llvm,
@@ -310,7 +344,7 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
 int
 pocl_mk_tempdir (char *output, const char *prefix)
 {
-#if defined(_MSC_VER) || defined(__MINGW32__)
+#if defined(_WIN32)
   assert (0);
 #elif defined(HAVE_MKDTEMP)
   /* TODO mkdtemp() might not be portable outside Linux */
@@ -327,15 +361,14 @@ pocl_mk_tempdir (char *output, const char *prefix)
  * output_path */
 int
 pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
-                     const char *content, uint64_t count, int *ret_fd)
+                     const char *content, unsigned long count, int *ret_fd)
 {
   assert (output_path);
   assert (prefix);
   assert (suffix);
   assert (content);
-  assert (count > 0);
 
-  int fd, err;
+  int fd = -1, err = 0;
 
   err = pocl_mk_tempname (output_path, prefix, suffix, &fd);
   if (err)
@@ -343,9 +376,10 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
       POCL_MSG_ERR ("pocl_mk_tempname() failed\n");
       return err;
     }
-  size_t bytes = (size_t)count;
+
+  size_t bytes = count;
   ssize_t res;
-  do
+  while (bytes > 0)
     {
       res = write (fd, content, bytes);
       if (res < 0)
@@ -359,7 +393,6 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
           content += res;
         }
     }
-  while (bytes > 0);
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fd))

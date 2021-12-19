@@ -28,6 +28,30 @@
 #include "pocl_cache.h"
 #include <string.h>
 
+static int
+pocl_cl_device_assoc_index (cl_program program, cl_device_id device)
+{
+  unsigned i;
+  assert (program);
+  for (i = 0; i < program->associated_num_devices; i++)
+    if (program->associated_devices[i] == device
+        || program->associated_devices[i] == device->parent_device)
+      return i;
+  return -1;
+}
+
+static int
+pocl_cl_device_built_index (cl_program program, cl_device_id device)
+{
+  unsigned i;
+  assert (program);
+  for (i = 0; i < program->num_devices; i++)
+    if (program->devices[i] == device
+        || program->devices[i] == device->parent_device)
+      return i;
+  return -1;
+}
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramBuildInfo)(cl_program            program,
                       cl_device_id          device,
@@ -38,13 +62,9 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 {
   const char *str;
 
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
-  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
-
-  int device_i = pocl_cl_device_to_index(program, device);
-  POCL_RETURN_ERROR_ON((device_i < 0), CL_INVALID_DEVICE, "Program does not have "
-    "this device in it's device list\n");
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
@@ -71,22 +91,39 @@ POname(clGetProgramBuildInfo)(cl_program            program,
         {
           POCL_RETURN_GETINFO_STR (program->main_build_log);
         }
-      else if (program->build_log[device_i])
-        {
-          POCL_RETURN_GETINFO_STR (program->build_log[device_i]);
-        }
       else
         {
-          char *build_log = pocl_cache_read_buildlog (program, device_i);
-          if (build_log)
-            POCL_RETURN_GETINFO_STR_FREE (build_log);
+          /*  Returns CL_INVALID_DEVICE if device is not in the list
+           *  of devices associated with program. */
+          int device_i = pocl_cl_device_assoc_index (program, device);
+          POCL_RETURN_ERROR_ON ((device_i < 0), CL_INVALID_DEVICE,
+                                "Device is not in the list of devices"
+                                " associated with the program\n");
+          /*  If build status of program for device is CL_BUILD_NONE,
+           *  an empty string is returned. */
+          device_i = pocl_cl_device_built_index (program, device);
+          if (device_i < 0)
+            POCL_RETURN_GETINFO_STR ("");
+          if (program->build_log[device_i])
+            {
+              POCL_RETURN_GETINFO_STR (program->build_log[device_i]);
+            }
+          else
+            {
+              char *build_log = pocl_cache_read_buildlog (program, device_i);
+              if (build_log)
+                POCL_RETURN_GETINFO_STR_FREE (build_log);
+            }
         }
-
       POCL_RETURN_GETINFO_STR ("");
     }
   case CL_PROGRAM_BINARY_TYPE:
     {
       POCL_RETURN_GETINFO(cl_program_binary_type, program->binary_type);
+    }
+  case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE:
+    {
+      POCL_RETURN_GETINFO (size_t, device->global_var_pref_size);
     }
   }
   
