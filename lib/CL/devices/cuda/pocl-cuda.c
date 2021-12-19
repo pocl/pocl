@@ -1190,7 +1190,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
 
       /* Add CUDA event dependency */
       if (dep->event->command_type != CL_COMMAND_USER
-          && dep->event->queue->device->ops == cqf->device->ops)
+          && dep->event->queue->device->ops == cq->device->ops)
         {
           /* Block stream on event, but only for different queues */
           if (dep->event->queue != node->event->queue)
