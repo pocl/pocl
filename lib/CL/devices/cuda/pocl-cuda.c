@@ -559,11 +559,11 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 
   if (flags & CL_MEM_USE_HOST_PTR)
     {
-#if defined __arm__
+#if defined __arm__ || __aarch64__
           /* cuMemHostRegister is not supported on ARM.
            * Allocate device memory and perform explicit copies
            * before and after running a kernel */
-          result = cuMemAlloc ((CUdeviceptr *)&b, mem_obj->size);
+          result = cuMemAlloc ((CUdeviceptr *)&b, mem->size);
           CUDA_CHECK (result, "cuMemAlloc");
 #else
       POCL_RETURN_ERROR_ON ((pocl_alloc_or_retain_mem_host_ptr (mem) != 0),
@@ -635,7 +635,7 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
 
   if (mem_obj->flags & CL_MEM_USE_HOST_PTR)
     {
-#if defined __arm__
+#if defined __arm__ || __aarch64__
       cuMemFree ((CUdeviceptr)p->mem_ptr);
 #else
       assert (p->extra_ptr == NULL);
@@ -1090,7 +1090,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                     params[i] = &mem->device_ptrs[device->global_mem_id].mem_ptr
                                 + arguments[i].offset;
 
-#if defined __arm__
+#if defined __arm__ || __aarch64__
                     /* On ARM with USE_HOST_PTR, perform explicit copy to
                      * device */
                     if (mem->flags & CL_MEM_USE_HOST_PTR)
@@ -1477,16 +1477,16 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
       || event->command_type == CL_COMMAND_TASK)
     {
-#if defined __arm__
+#if defined __arm__ || __aarch64__
       /* On ARM with USE_HOST_PTR, perform explict copies back from device */
-      cl_kernel kernel = event->command.run.kernel;
-      pocl_argument *arguments = event->command.run.arguments;
+      cl_kernel kernel = event->command->command.run.kernel;
+      pocl_argument *arguments = event->command->command.run.arguments;
       unsigned i;
-      for (i = 0; i < meta->num_args; i++)
+      for (i = 0; i < kernel->meta->num_args; i++)
         {
-          if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+          if (kernel->meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
             {
-              if (!ARG_IS_LOCAL (meta->arg_info[i]) && arguments[i].value)
+              if (!ARG_IS_LOCAL (kernel->meta->arg_info[i]) && arguments[i].value)
                 {
                   cl_mem mem = *(void **)arguments[i].value;
                   if (mem->flags & CL_MEM_USE_HOST_PTR)
