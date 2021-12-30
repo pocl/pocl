@@ -1484,9 +1484,10 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
       if (!((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register)
         {
           /* On ARM with USE_HOST_PTR, perform explict copies back from device */
-          cl_kernel kernel = event->command.run.kernel;
-          pocl_argument *arguments = event->command.run.arguments;
+          cl_kernel kernel = event->command->command.run.kernel;
+          pocl_argument *arguments = event->command->command.run.arguments;
           unsigned i;
+          pocl_kernel_metadata_t *meta = kernel->meta;
           for (i = 0; i < meta->num_args; i++)
             {
               if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
