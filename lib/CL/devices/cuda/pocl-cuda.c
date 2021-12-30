@@ -566,7 +566,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
           /* cuMemHostRegister is not supported on ARM.
            * Allocate device memory and perform explicit copies
            * before and after running a kernel */
-          result = cuMemAlloc ((CUdeviceptr *)&b, mem_obj->size);
+          result = cuMemAlloc ((CUdeviceptr *)&b, mem->size);
           CUDA_CHECK (result, "cuMemAlloc");
         }
       else
