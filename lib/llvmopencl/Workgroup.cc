@@ -1216,7 +1216,12 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMValueRef call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
+#ifdef LLVM_OLDER_THAN_14_0
+    LLVMValueRef Call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
+#else
+    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy4);
+    LLVMValueRef Call4 = LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
+#endif
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
     LLVMTypeRef i8PtrAS1 = LLVMPointerType(Int8Type, DeviceArgsASid);
@@ -1230,7 +1235,12 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMValueRef call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
+#ifdef LLVM_OLDER_THAN_14_0
+    LLVMValueRef Call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
+#else
+    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy1);
+    LLVMValueRef Call1 = LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
+#endif
   }
 
   return LocalArgAlloca;
@@ -1434,7 +1444,12 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
 
   assert (i == ArgCount);
 
+#ifdef LLVM_OLDER_THAN_14_0
   LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
+#else
+  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(F);
+  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, F, Args, ArgCount, "");
+#endif
   LLVMBuildRetVoid(Builder);
 
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
@@ -1520,7 +1535,12 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
       LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
       LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
 
+#ifdef LLVM_OLDER_THAN_14_0
   LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 4, "");
+#else
+  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(RunnerFunc);
+  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, RunnerFunc, Args, 4, "");
+#endif
   LLVMBuildRetVoid(Builder);
 
   InlineFunctionInfo IFI;
