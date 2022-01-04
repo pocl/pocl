@@ -329,7 +329,16 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
+#if CUDA_VERSION >= 11010
       GET_CU_PROP (READ_ONLY_HOST_REGISTER_SUPPORTED, data->supports_cu_mem_host_register);
+#elif defined(__aarch64__) || defined(__arm64__)
+      // For cuda < 11.1, we don't know if the device supports cuMemHostRegister
+      // or not. Let's assume that it doesn't in ARM devices.
+      // This gives a false negative for Jetson Xavier, but it is the best we could do.
+      data->supports_cu_mem_host_register = false;
+#else
+      data->supports_cu_mem_host_register = true;
+#endif
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
