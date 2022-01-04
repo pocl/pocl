@@ -563,7 +563,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
     {
       if (!((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register)
         {
-          /* cuMemHostRegister is not supported on ARM.
+          /* cuMemHostRegister is not supported on some ARM devices like the Nano, but supported on Xavier.
            * Allocate device memory and perform explicit copies
            * before and after running a kernel */
           result = cuMemAlloc ((CUdeviceptr *)&b, mem->size);
