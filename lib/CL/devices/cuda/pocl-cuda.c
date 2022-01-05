@@ -335,9 +335,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       // For cuda < 11.1, we don't know if the device supports cuMemHostRegister
       // or not. Let's assume that it doesn't in ARM devices.
       // This gives a false negative for Jetson Xavier, but it is the best we could do.
-      data->supports_cu_mem_host_register = false;
+      data->supports_cu_mem_host_register = 0;
 #else
-      data->supports_cu_mem_host_register = true;
+      data->supports_cu_mem_host_register = 1;
 #endif
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
