@@ -405,7 +405,7 @@ llvm::Value *
 Workgroup::createLoadFromContext(
   IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex=-1) {
 
-  Value *GEP;
+  Value *GEP, *Ptr;
   Type *ContextType = ContextArg->getType()->getPointerElementType();
   GEP = Builder.CreateStructGEP(ContextType, ContextArg, StructFieldIndex);
   Type *GEPType = GEP->getType()->getPointerElementType();
@@ -413,29 +413,34 @@ Workgroup::createLoadFromContext(
   llvm::LoadInst *Load = nullptr;
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
-      Load = Builder.CreateLoad(Builder.CreateConstGEP1_64(
+      Ptr = Builder.CreateConstGEP1_64(
 #ifndef LLVM_OLDER_THAN_13_0
           GEPType,
 #endif
-          GEP, 0));
+          GEP, 0);
     else
-      Load = Builder.CreateLoad(Builder.CreateConstGEP2_64(
+      Ptr = Builder.CreateConstGEP2_64(
 #ifndef LLVM_OLDER_THAN_13_0
           GEPType,
 #endif
-          GEP, 0, FieldIndex));
+          GEP, 0, FieldIndex);
   } else {
     if (FieldIndex == -1)
-      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(
+      Ptr = Builder.CreateConstGEP1_32(
 #ifndef LLVM_OLDER_THAN_13_0
           GEPType,
 #endif
-          GEP, 0));
+          GEP, 0);
     else
-      Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(
+      Ptr = Builder.CreateConstGEP2_32(
           GEPType,
-          GEP, 0, FieldIndex));
+          GEP, 0, FieldIndex);
   }
+  Load = Builder.CreateLoad(
+#ifndef LLVM_OLDER_THAN_13_0
+	  Ptr->getType()->getPointerElementType(),
+#endif
+	  Ptr);
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
 }

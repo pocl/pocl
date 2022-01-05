@@ -622,9 +622,12 @@ ParallelRegion::LocalIDZLoad()
 {
   if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  return LocalIDZLoadInstr =
-    builder.CreateLoad
-    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL));
+  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
+  return LocalIDZLoadInstr = builder.CreateLoad(
+#ifndef LLVM_OLDER_THAN_13_0
+    Ptr->getType()->getPointerElementType(),
+#endif
+    Ptr);
 }
 
 /**
@@ -636,9 +639,12 @@ ParallelRegion::LocalIDYLoad()
 {
   if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  return LocalIDYLoadInstr = 
-    builder.CreateLoad
-    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL));
+  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
+  return LocalIDYLoadInstr = builder.CreateLoad(
+#ifndef LLVM_OLDER_THAN_13_0
+    Ptr->getType()->getPointerElementType(),
+#endif
+    Ptr);
 }
 
 /**
@@ -650,9 +656,12 @@ ParallelRegion::LocalIDXLoad()
 {
   if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  return LocalIDXLoadInstr = 
-    builder.CreateLoad
-    (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
+  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
+  return LocalIDXLoadInstr = builder.CreateLoad(
+#ifndef LLVM_OLDER_THAN_13_0
+    Ptr->getType()->getPointerElementType(),
+#endif
+    Ptr);
 }
 
 void
