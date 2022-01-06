@@ -23,6 +23,7 @@
 
 #include <dlfcn.h>
 #include <stdio.h>
+#include <config.h>
 
 #ifdef __APPLE__
 #define SHLIB_EXT "dylib"
@@ -43,7 +44,7 @@ main (int argc, char **argv)
               SHLIB_ORIGIN "/../../lib/CL/devices/%s/libpocl-devices-%s.so", argv[1],
               argv[1]);
 
-#ifdef ENABLE_ICD
+#ifdef BUILD_ICD
   void *handle_libpocl = dlopen (libpocl, RTLD_NOW | RTLD_GLOBAL);
   if (!handle_libpocl)
     {
@@ -66,7 +67,7 @@ main (int argc, char **argv)
         dlclose (handle_device);
     }
 
-#ifdef ENABLE_ICD
+#ifdef BUILD_ICD
   if (handle_libpocl)
     dlclose (handle_libpocl);
 #endif
