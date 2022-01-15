@@ -39,7 +39,11 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/Support/Casting.h>
+#ifdef LLVM_OLDER_THAN_14_0
 #include <llvm/Support/TargetRegistry.h>
+#else
+#include <llvm/MC/TargetRegistry.h>
+#endif
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/CommandLine.h>
 
