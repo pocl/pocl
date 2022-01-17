@@ -1424,7 +1424,9 @@ pocl_proxy_free_queue (cl_device_id device, cl_command_queue queue)
   POCL_SIGNAL_COND (qd->wakeup_cond);
   POCL_FAST_UNLOCK (qd->wq_lock);
 
-  POCL_JOIN_THREAD (qd->cq_thread_id);
+  if (pthread_self() != qd->cq_thread_id)
+    POCL_JOIN_THREAD (qd->cq_thread_id);
+  qd->cq_thread_id = 0;
 
   cl_command_queue cq = (cl_command_queue)qd->proxied_id;
   int err = clReleaseCommandQueue (cq);
@@ -2448,6 +2450,10 @@ pocl_proxy_queue_pthread (void *ptr)
           assert (cmd->event->status == CL_SUBMITTED);
 
           proxy_exec_command (cmd, device, d, qd);
+          /* if the proxy_exec_command called proxy_free_cmd_queue(),
+           * return immediately */
+          if (qd->cq_thread_exit_requested && qd->cq_thread_id==0)
+            return NULL;
 
           POCL_FAST_LOCK (qd->wq_lock);
         }
