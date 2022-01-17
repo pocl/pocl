@@ -38,7 +38,7 @@ typedef struct compilation_data_s
 
   /* backend-specific data */
   void *backend_data;
-};
+} compilation_data_t;
 
 typedef struct almaif_kernel_data_s
 {

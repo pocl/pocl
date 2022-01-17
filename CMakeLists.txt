@@ -1221,6 +1221,12 @@ endif()
 # The accel device could be built by default, but it's implemented in C++,
 # thus requires a C++ compiler, so let's not.
 if(ENABLE_ACCEL_DEVICE)
+
+  if(DEFINED ENV{XILINX_XRT})
+    set(XRT $ENV{XILINX_XRT})
+    set(HAVE_XRT 1)
+  endif()
+
   set(BUILD_ACCEL 1)
   set(OCL_DRIVERS "${OCL_DRIVERS} accel")
 endif()

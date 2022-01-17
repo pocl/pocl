@@ -79,10 +79,10 @@ void *emulate_accel(void *E_void) {
 
   uint32_t ctrl_size = 1024;
   uint32_t imem_size = 0;
-  uint32_t dmem_size = 2097152;
+  uint32_t dmem_size = EMULATING_MAX_SIZE * 3 / 4;
   // The accelerator can choose the size of the queue (must be a power-of-two)
   // Can be even 1, to make the packet handling easiest with static offsets
-  uint32_t queue_length = 2;
+  uint32_t queue_length = 3;
   uint32_t cqmem_size = (queue_length + 1) * AQL_PACKET_LENGTH;
 
   // The accelerator can set the starting addresses
@@ -163,7 +163,7 @@ void *emulate_accel(void *E_void) {
     POCL_MSG_PRINT_INFO("accel emulate: Found valid AQL_packet from location "
                         "%u, starting parsing:",
                         packet_loc);
-    POCL_MSG_PRINT_INFO("accel emulate: kernargs are at %lu\n",
+    POCL_MSG_PRINT_INFO("accel emulate: kernargs are at %" PRIu64 "\n",
                         packet->kernarg_address);
     // Find the 3 pointers
     // Pointer size can be different on different systems
@@ -237,4 +237,6 @@ void *emulate_accel(void *E_void) {
     read_iter++; // move on to the next AQL packet
     CQ[ACCEL_CQ_READ / 4] = read_iter;
   }
+
+  return NULL;
 }
