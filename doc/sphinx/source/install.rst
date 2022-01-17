@@ -40,6 +40,12 @@ Installing requirements for Fedora::
 There are also Dockerfiles available for a few most common linux
 distributions in ``tools/docker``, looking into them might be helpful.
 
+OpenCL 3.0 support
+------------------
+
+If you want PoCL built with ICD and OpenCL 3.0 support, you will need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
+
+
 Clang / LLVM Notes
 ------------------
 

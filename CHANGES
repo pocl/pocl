@@ -8,6 +8,10 @@ Notable User Facing Changes
   specification:
   - Pipes, reporting no pipe support.
   - Device-side Enqueue, reporting no support for device-side enqueue.
+- OpenCL 3.0 enabled at platform level; the CPU device reports 3.0
+  if LLVM is recent enough (12+)
+- the updated Conformance Test Suite for OpenCL 3.0 is automatically used
+  if possible (either PoCL built without ICD, or with ICD that supports 3.0)
 - Text tracing improved - a few new command types traced,
   event dependencies are now also recorded
 - There are now two scripts, which let the user parse & convert the
