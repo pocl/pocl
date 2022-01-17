@@ -48,8 +48,7 @@ set(ACCEL_SOURCES "accel-shared.h"
                   "almaif-compile-tce.h"
                   )
 
-if(DEFINED ENV{XILINX_XRT})
-    set(XRT $ENV{XILINX_XRT})
+if(HAVE_XRT)
     add_compile_options(-I${XRT}/include)
     set(ACCEL_SOURCES ${ACCEL_SOURCES}
                       "XrtDevice.cc"
@@ -76,7 +75,7 @@ endif(MSVC)
 
 add_pocl_device_library(pocl-devices-accel ${ACCEL_SOURCES})
 
-if(DEFINED ENV{XILINX_XRT})
+if(HAVE_XRT})
     target_link_libraries(pocl-devices-accel PRIVATE "${XRT}/lib/libxrt_coreutil.so")
 endif()
 

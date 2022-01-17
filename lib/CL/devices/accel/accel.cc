@@ -22,10 +22,13 @@
    IN THE SOFTWARE.
 */
 
+#include "config.h"
 #include "accel.h"
 #include "Region.h"
 #include "MMAPDevice.h"
+#ifdef HAVE_XRT
 #include "XrtDevice.h"
+#endif
 #include "EmulationDevice.h"
 #include "TTASimDevice.h"
 #include "accel-shared.h"
@@ -323,8 +326,13 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
     dev->ops->setup_metadata = pocl_driver_setup_metadata;
 
+    dev->compiler_available = CL_TRUE;
+    dev->linker_available = CL_TRUE;
+
   } else {
     D->compilationData = NULL;
+    dev->compiler_available = CL_FALSE;
+    dev->linker_available = CL_FALSE;
   }
 
   if(!pocl_offline_compile){
@@ -334,8 +342,10 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     // Recognize whether we are emulating or not
     if (D->BaseAddress == EMULATING_ADDRESS) {
       D->Dev = new EmulationDevice();
+#ifdef HAVE_XRT
     } else if (D->BaseAddress == 0xA) {
       D->Dev = new XrtDevice(xrt_kernel_name);
+#endif
     } else if (D->BaseAddress == 0xB) {
       D->Dev = new TTASimDevice(xrt_kernel_name);
     } else {
@@ -356,6 +366,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       }
       POCL_UNLOCK(globalMemIDLock);
     }
+    dev->global_mem_size = 128 * 1024 * 1024;
   } else {
     POCL_MSG_PRINT_INFO("Starting offline compilation device initialization\n");
   }
@@ -365,18 +376,16 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     pocl_almaif_init(j, dev, adf_file);
   }
 
-
-
   POCL_MSG_PRINT_INFO("accel: mmap done\n");
   if (pocl_offline_compile){
     std::cout <<"Offline compilation device initialized"<<std::endl;
     return CL_SUCCESS;
   }
   for (int i = 0; i < (D->Dev->DataMemory->Size >> 2); i++) {
-    D->Dev->DataMemory->Write32(4 * i, 0);
+//    D->Dev->DataMemory->Write32(4 * i, 0);
   }
   for (int i = 0; i < (D->Dev->CQMemory->Size >> 2); i++) {
-    D->Dev->CQMemory->Write32(4 * i, 0);
+//    D->Dev->CQMemory->Write32(4 * i, 0);
   }
   // Initialize AQL queue by setting all headers to invalid
   for (uint32_t i = AQL_PACKET_LENGTH; i < D->Dev->CQMemory->Size; i += AQL_PACKET_LENGTH) {
@@ -397,7 +406,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   // Either way, the minimum is 3 for a device
   dev->max_work_item_dimensions = 3;
   dev->max_work_group_size = dev->max_work_item_sizes[0] =
-      dev->max_work_item_sizes[1] = dev->max_work_item_sizes[2] = INT_MAX;
+      dev->max_work_item_sizes[1] = dev->max_work_item_sizes[2] = 1024;
 
   D->ReadyList = NULL;
   D->CommandList = NULL;
@@ -794,7 +803,7 @@ void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
     int i;
     for (i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
       packet.dep_signals[i] = ((chunk_info_t*)(dep_event->event->data))->start_address;
-      POCL_MSG_PRINT_INFO("Creating AND barrier depending on signal id=%d at address %llx\n", dep_event->event->id, packet.dep_signals[i]);
+      POCL_MSG_PRINT_INFO("Creating AND barrier depending on signal id=%" PRIu64 " at address %" PRIu64 " \n", dep_event->event->id, packet.dep_signals[i]);
       dep_event = dep_event->next;
       if (dep_event == NULL) {
         all_done = true;
@@ -921,4 +930,5 @@ void* runningThreadFunc(void*)
     POCL_UNLOCK(runningLock);
     usleep(1000);
   }
+  return NULL;
 }

@@ -86,6 +86,8 @@
 
 #cmakedefine HAVE_VALGRIND
 
+#cmakedefine HAVE_XRT
+
 #cmakedefine ENABLE_LLVM
 
 #cmakedefine ENABLE_LOADABLE_DRIVERS

@@ -120,7 +120,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
 
   InstructionMemory->CopyToMMAP(InstructionMemory->PhysAddress,
                                    kd->imem_img, kd->imem_img_size);
-  POCL_MSG_PRINT_INFO("IMEM image written: %p / %zu B\n",
+  POCL_MSG_PRINT_INFO("IMEM image written: %zu / %zu B\n",
                       InstructionMemory->PhysAddress, kd->imem_img_size);
 
   ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);

@@ -30,7 +30,7 @@
 #include "Device.h"
 
 #define EMULATING_ADDRESS 0xE
-#define EMULATING_MAX_SIZE 4194304
+#define EMULATING_MAX_SIZE (256 * 1024 * 1024)
 //#define EMULATING_MAX_SIZE 4 * 4096
 
 struct emulation_data_t

@@ -111,7 +111,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     assert(adi->build_hash);
   }
   else
-    adi->build_hash = DEFAULT_BUILD_HASH;
+    adi->build_hash = strdup(DEFAULT_BUILD_HASH);
 #endif
 
   /*
