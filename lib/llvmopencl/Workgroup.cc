@@ -1281,10 +1281,15 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
 
     // not by-val argument
   } else {
+    LLVMTypeRef DestTy = LLVMPointerType(ParamType, DeviceArgsASid);
     LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
-        Builder, ArgByteOffset, LLVMPointerType(ParamType, DeviceArgsASid),
-        "arg_ptr");
+        Builder, ArgByteOffset, DestTy, "arg_ptr");
+#ifdef LLVM_OLDER_THAN_14_0
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
+#else
+    LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
+    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
+#endif
   }
 }
 
@@ -1394,14 +1399,20 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
         LLVMValueRef SizeByteOffset =
             LLVMBuildGEP(Builder, ArgBuffer, &Offs, 1, "size_byte_offset");
+	LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
         LLVMValueRef SizeOffsetBitcast =
-            LLVMBuildPointerCast(Builder, SizeByteOffset,
-                                 LLVMPointerType(ParamIntType, 0), "size_ptr");
+            LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
 
         // The buffer size passed from the runtime is a byte size, we
         // need to convert it to an element count for the alloca.
+#ifdef LLVM_OLDER_THAN_14_0
         LLVMValueRef LocalArgByteSize =
             LLVMBuildLoad(Builder, SizeOffsetBitcast, "byte_size");
+#else
+        LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
+        LLVMValueRef LocalArgByteSize =
+            LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
+#endif
         uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, ArgElementType);
         LLVMValueRef ElementCount =
             LLVMBuildUDiv(Builder, LocalArgByteSize,
