@@ -80,7 +80,7 @@ Device::discoverDeviceParameters()
     POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu",ControlMemory->PhysAddress);
 
 
-    init_mem_region(&AllocRegion, dmem_start, dmem_size);
+    pocl_init_mem_region(&AllocRegion, dmem_start, dmem_size);
 
 }
 
@@ -93,10 +93,10 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
     char img_file[POCL_FILENAME_LENGTH];
     char cachedir[POCL_FILENAME_LENGTH];
     // first try specialized
-    pocl_cache_kernel_cachedir_path(img_file, kernel->program, cmd->device_i,
+    pocl_cache_kernel_cachedir_path(img_file, kernel->program, cmd->program_device_i,
                                     kernel, "/parallel.img", cmd, 1);
     if (pocl_exists(img_file)) {
-      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
+      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->program_device_i,
                                       kernel, "", cmd, 1);
       preread_images(cachedir, kd);
     } else {
@@ -107,7 +107,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
       cmd_copy.command.run.pc.local_size[0] = 0;
       cmd_copy.command.run.pc.local_size[1] = 0;
       cmd_copy.command.run.pc.local_size[2] = 0;
-      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
+      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->program_device_i,
                                       kernel, "", &cmd_copy, 1);
       POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
       preread_images(cachedir, kd);

@@ -253,7 +253,7 @@ check_binary(cl_device_id device, const unsigned char *binary)
   uint64_t dev_id = pocl_binary_get_device_id(device);
   if (dev_id != b.device_id)
     {
-      POCL_MSG_WARN ("PoCLBinary device id mismatch, DEVICE: %lx, BINARY: %lx\n",
+      POCL_MSG_WARN ("PoCLBinary device id mismatch, DEVICE: %" PRIX64 ", BINARY: %" PRIX64 "\n",
                       dev_id, b.device_id);
       return NULL;
     }

@@ -337,8 +337,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   if(!pocl_offline_compile){
 
-    POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels\n",
-        D->BaseAddress, D->SupportedKernels.size());
+    POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels (%s)\n",
+        D->BaseAddress, D->SupportedKernels.size(), dev->builtin_kernel_list);
     // Recognize whether we are emulating or not
     if (D->BaseAddress == EMULATING_ADDRESS) {
       D->Dev = new EmulationDevice();
@@ -697,7 +697,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
 
     packet.reserved = pc_start_addr;
 
-    almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->device_i];
+    almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->program_device_i];
     packet.kernel_object = kd->kernel_address;
 
     POCL_MSG_PRINT_INFO("Kernel addresss=%zu\n", kd->kernel_address);
@@ -909,7 +909,7 @@ void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
 void pocl_accel_free_event_data (cl_event event)
 {
   if(event->data != NULL){
-    free_chunk((chunk_info_t*)event->data);
+    pocl_free_chunk((chunk_info_t*)event->data);
     event->data = NULL;
   }
 }
