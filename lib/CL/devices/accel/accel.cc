@@ -366,7 +366,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       }
       POCL_UNLOCK(globalMemIDLock);
     }
-    dev->global_mem_size = 128 * 1024 * 1024;
+    dev->global_mem_size = D->Dev->DataMemory->Size;
   } else {
     POCL_MSG_PRINT_INFO("Starting offline compilation device initialization\n");
   }
@@ -514,17 +514,16 @@ int pocl_accel_setup_metadata(cl_device_id device, cl_program program,
 static void scheduleCommands(AccelData &D) {
 
   _cl_command_node *Node;
-
   // Execute commands from ready list.
   while ((Node = D.ReadyList)) {
     assert(pocl_command_is_ready(Node->event));
     assert(Node->event->status == CL_SUBMITTED);
+
+    POCL_UNLOCK(D.CommandListLock);
+
+    pocl_exec_command(Node);
+    POCL_LOCK(D.CommandListLock);
     CDL_DELETE(D.ReadyList, Node);
-    if (Node->type != CL_COMMAND_NDRANGE_KERNEL) {
-      POCL_UNLOCK(D.CommandListLock);
-      pocl_exec_command(Node);
-      POCL_LOCK(D.CommandListLock);
-    }
   }
 
   return;
@@ -565,7 +564,15 @@ void pocl_accel_join(cl_device_id Device, cl_command_queue /*CQ*/) {
 
   struct AccelData *D = (AccelData *)Device->data;
   POCL_LOCK(D->CommandListLock);
-  scheduleCommands(*D);
+  while(D->CommandList || D->ReadyList) {
+    //scheduleCommands(*D);
+ 
+    POCL_UNLOCK(D->CommandListLock);
+    usleep(1000);
+    POCL_LOCK(D->CommandListLock);
+  }
+
+  //scheduleCommands(*D);
   POCL_UNLOCK(D->CommandListLock);
 
   _cl_command_node* Node;
@@ -611,7 +618,10 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
       POCL_LOCK(D.CommandListLock);
       CDL_DELETE(D.CommandList, Node);
       CDL_PREPEND(D.ReadyList, Node);
+
+      POCL_UNLOCK_OBJ(Node->event);
       scheduleCommands(D);
+      POCL_LOCK_OBJ(Node->event);
       POCL_UNLOCK(D.CommandListLock);
     }
     return;
@@ -922,9 +932,11 @@ void* runningThreadFunc(void*)
       DL_FOREACH_SAFE(runningList, Node, tmp)
       {
         if (isEventDone((AccelData*)Node->device->data, Node->event)) {
-          POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
           DL_DELETE(runningList, Node);
-        }
+	  POCL_UNLOCK(runningLock);
+	  POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
+          POCL_LOCK(runningLock);
+	}
       }
     }
     POCL_UNLOCK(runningLock);
