@@ -107,7 +107,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
       POCL_MSG_PRINT_GENERAL ("Kernel %15s || SetArg idx %3u || %8s || "
                               "Local %1i || Size %6zu || Value %p || "
                               "Pointer %p || *(uint32*)Value: %8u || "
-                              "*(uint64*)Value: %8lu ||\nHex Value: %s\n",
+                              "*(uint64*)Value: %8" PRIu64 " ||\nHex Value: %s\n",
                               kernel->name, arg_index, pi->type_name, is_local,
                               arg_size, arg_value, ptr_value, uint32_value,
                               uint64_value, hexval);

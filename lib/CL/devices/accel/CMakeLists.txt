@@ -49,7 +49,7 @@ set(ACCEL_SOURCES "accel-shared.h"
                   )
 
 if(HAVE_XRT)
-    add_compile_options(-I${XRT}/include)
+    add_compile_options(-I${XRT_INCLUDEDIR})
     set(ACCEL_SOURCES ${ACCEL_SOURCES}
                       "XrtDevice.cc"
                       "XrtRegion.cc"
@@ -76,7 +76,7 @@ endif(MSVC)
 add_pocl_device_library(pocl-devices-accel ${ACCEL_SOURCES})
 
 if(HAVE_XRT})
-    target_link_libraries(pocl-devices-accel PRIVATE "${XRT}/lib/libxrt_coreutil.so")
+    target_link_libraries(pocl-devices-accel PRIVATE "${XRT_LIBDIR}/libxrt_coreutil.so")
 endif()
 
 if(ENABLE_TCE)

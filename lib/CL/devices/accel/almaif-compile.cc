@@ -135,7 +135,7 @@ cl_int pocl_almaif_uninit(unsigned j, cl_device_id dev) {
   d->compilationData->cleanup_device(dev);
 #endif
 
-  free_chunk(d->compilationData->pocl_context);
+  pocl_free_chunk(d->compilationData->pocl_context);
   pocl_aligned_free(d->compilationData);
 
   return CL_SUCCESS;
@@ -152,7 +152,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   cl_program program = kernel->program;
   cl_device_id dev = (device ? device : cmd->device);
   AccelData *d = (AccelData *)dev->data;
-  unsigned dev_i = cmd->device_i;
+  unsigned dev_i = cmd->program_device_i;
 
   POCL_MSG_PRINT_INFO("Current kernel %p, new kernel %p\n",
                       d->compilationData->current_kernel, kernel);
@@ -177,7 +177,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
     return;
   }
   almaif_kernel_data_t *kd =
-      (almaif_kernel_data_t *)kernel->data[cmd->device_i];
+      (almaif_kernel_data_t *)kernel->data[cmd->program_device_i];
 
   POCL_MSG_PRINT_INFO("Loading program to device\n");
   d->Dev->loadProgramToDevice(kd, kernel, cmd);

@@ -1188,9 +1188,28 @@ endif()
 # thus requires a C++ compiler, so let's not.
 if(ENABLE_ACCEL_DEVICE)
 
-  if(DEFINED ENV{XILINX_XRT})
+  if(NOT HAVE_XRT AND DEFINED ENV{XILINX_XRT})
     set(XRT $ENV{XILINX_XRT})
-    set(HAVE_XRT 1)
+
+    if(NOT XRT_INCLUDEDIR)
+      if(EXISTS "${XRT}/include/xrt")
+        set(XRT_INCLUDEDIR "${XRT}/include/xrt" CACHE PATH "XRT include dir")
+      else()
+        message(FATAL_ERROR "please provide -DXRT_INCLUDEDIR=... to CMake")
+      endif()
+    endif()
+
+    if(NOT XRT_LIBDIR)
+      if (EXISTS "${XRT}/lib")
+       set(XRT_LIBDIR "${XRT}/lib" CACHE PATH "XRT library dir")
+      else()
+        message(FATAL_ERROR "please provide -DXRT_LIBDIR=... to CMake")
+      endif()
+    endif()
+
+    if(XRT_INCLUDEDIR AND XRT_LIBDIR)
+      set(HAVE_XRT 1 CACHE BOOL "have XRT")
+    endif()
   endif()
 
   set(BUILD_ACCEL 1)
