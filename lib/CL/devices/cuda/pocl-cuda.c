@@ -685,41 +685,6 @@ pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
 }
 
 void
-pocl_cuda_submit_memfill (CUstream stream, void *mem_ptr, size_t size_in_bytes,
-                          size_t offset, const void *pattern,
-                          size_t pattern_size)
-{
-  CUresult result;
-  switch (pattern_size)
-    {
-    case 1:
-      result
-          = cuMemsetD8Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
-                             *(unsigned char *)pattern, size_in_bytes, stream);
-      break;
-    case 2:
-      result = cuMemsetD16Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
-                                 *(unsigned short *)pattern, size_in_bytes / 2,
-                                 stream);
-      break;
-    case 4:
-      result = cuMemsetD32Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
-                                 *(unsigned int *)pattern, size_in_bytes / 4,
-                                 stream);
-      break;
-    case 8:
-    case 16:
-    case 32:
-    case 64:
-    case 128:
-      POCL_ABORT_UNIMPLEMENTED ("fill_kernel with pattern_size >=8");
-    default:
-      POCL_ABORT ("unrecognized pattern_size");
-    }
-  CUDA_CHECK (result, "cuMemset*Async");
-}
-
-void
 pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
                         void *device_ptr, size_t offset, size_t cb)
 {
@@ -745,6 +710,59 @@ pocl_cuda_submit_copy (CUstream stream, void*__restrict__ src_mem_ptr,
   result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
                                 cb, stream);
   CUDA_CHECK (result, "cuMemcpyDtoDAsync");
+}
+
+void
+pocl_cuda_submit_memfill (CUstream stream, void *mem_ptr, size_t size_in_bytes,
+                          size_t offset, const void *pattern,
+                          size_t pattern_size)
+{
+  CUresult result;
+  size_t align_check = (offset & 3) | (size_in_bytes & 3);
+
+  POCL_MSG_PRINT_MEMORY ("CUDA / MEMFILL\n"
+			 "mem_ptr %p size_in_bytes %zu \n"
+			 "offset %zu pattern_size %zu \n"
+			 "align_check %zu \n",
+			 mem_ptr, size_in_bytes,
+			 offset, pattern_size,
+			 align_check);
+
+  if (pattern_size == 4 && align_check == 0) {
+    result = cuMemsetD32Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+			       *(uint32_t *)pattern, size_in_bytes / 4,
+			       stream);
+    CUDA_CHECK (result, "cuMemsetD32Async");
+  } else if (pattern_size == 2 && align_check == 2) {
+    result = cuMemsetD16Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+			       *(uint16_t *)pattern, size_in_bytes / 2,
+			       stream);
+    CUDA_CHECK (result, "cuMemsetD16Async");
+  } else if (pattern_size == 1) {
+    result = cuMemsetD8Async ((CUdeviceptr) (((char *)mem_ptr) + offset),
+			      *(uint8_t *)pattern, size_in_bytes, stream);
+    CUDA_CHECK (result, "cuMemsetD8Async");
+  } else {
+    size_t device_block_size = pattern_size;
+    /* copy the first pattern to device */
+    pocl_cuda_submit_write (stream, pattern, mem_ptr, offset, pattern_size);
+    size_in_bytes -= device_block_size;
+    /* replicate the pattern, doubling size on every iteration */
+    while (device_block_size < size_in_bytes) {
+      pocl_cuda_submit_copy (stream,
+			     mem_ptr, offset,
+			     mem_ptr, offset + device_block_size,
+			     device_block_size);
+      size_in_bytes -= device_block_size;
+      device_block_size *= 2;
+    }
+    /* handle leftovers */
+    if (size_in_bytes)
+      pocl_cuda_submit_copy (stream,
+			     mem_ptr, offset,
+			     mem_ptr, offset + device_block_size,
+			     size_in_bytes);
+  }
 }
 
 void
