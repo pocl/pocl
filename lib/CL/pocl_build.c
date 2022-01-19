@@ -159,18 +159,18 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
  * search for an unused ASCII character in temp_options,
  * to be used to replace whitespaces within double quoted substrings
  */
-static bool find_unused_char (const char *options, char *replace_me)
+static int find_unused_char (const char *options, char *replace_me)
 {
   for (int y = 35; y < 128; y++)
   {
     if (strchr (options, (char) y) == NULL)
     {
       *replace_me = (char) y;
-      return true;
+      return 0;
     }
   }
 
-  return false;
+  return -1;
 }
 
 /* options must be non-NULL.
@@ -213,34 +213,34 @@ process_options (const char *options, char *modded_options, char *link_options,
   /* searching for double quote in temp_options */
   if (strchr (temp_options, '"') != NULL)
   {
-    bool in_substring = false;
+    int in_substring = -1;
 
     /* scan for double quoted substring */
     for (size_t x = 0; x < strlen (temp_options); x++)
     {
       if (temp_options[x] == '"')
       {
-        if (in_substring == false)
+        if (in_substring == -1)
         {
           /* enter in double quoted substring */
-          in_substring = true;
+          in_substring = 0;
           continue;
         }
 
         /* exit from double quoted substring */
-        in_substring = false;
+        in_substring = -1;
         continue;
       }
 
       /* search for whitespaces in substring */
-      if (in_substring == true)
+      if (in_substring == 0)
       {
         if (temp_options[x] == ' ')
         {
           /* at first need, get an unused char */
           if (replace_cnt == 0)
           {
-            if (find_unused_char (temp_options, &replace_me) == false)
+            if (find_unused_char (temp_options, &replace_me) == -1)
             {
               /* no replace, no party */
               error = CL_INVALID_BUILD_OPTIONS;
