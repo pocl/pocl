@@ -67,6 +67,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include <iostream>
 #include <sstream>
+#include <regex>
 
 // For some reason including pocl.h before including CodeGenAction.h
 // causes an error. Some kind of macro definition issue. To investigate.
@@ -175,6 +176,24 @@ static std::string getPoclPrivateDataDir() {
     }
 #endif
     return POCL_INSTALL_PRIVATE_DATADIR;
+}
+
+/*
+ * search for an unused ASCII character in temp_options,
+ * to be used to replace whitespaces within double quoted substrings
+ */
+static int find_unused_char (const char *options, char *replace_me)
+{
+  for (int y = 35; y < 128; y++)
+  {
+    if (strchr (options, (char) y) == NULL)
+    {
+      *replace_me = (char) y;
+      return 0;
+    }
+  }
+
+  return -1;
 }
 
 int pocl_llvm_build_program(cl_program program,
@@ -353,14 +372,84 @@ int pocl_llvm_build_program(cl_program program,
 
   POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
 
-  std::istream_iterator<std::string> begin(ss);
-  std::istream_iterator<std::string> end;
-  std::istream_iterator<std::string> i = begin;
-  std::vector<const char*> itemcstrs;
+  size_t replace_cnt = 0;
+  char replace_me = 0;
+
+  char *temp_options = (char *) malloc (ss.str().length() + 1);
+  strncpy (temp_options, ss.str().c_str(), ss.str().length());
+
+  /* searching for double quote in temp_options */
+  if (strchr (temp_options, '"') != NULL)
+  {
+    int in_substring = -1;
+
+    /* scan for double quoted substring */
+    for (size_t x = 0; x < strlen (temp_options); x++)
+    {
+      if (temp_options[x] == '"')
+      {
+        if (in_substring == -1)
+        {
+          /* enter in double quoted substring */
+          in_substring = 0;
+          continue;
+        }
+
+        /* exit from double quoted substring */
+        in_substring = -1;
+        continue;
+      }
+
+      /* search for whitespaces in substring */
+      if (in_substring == 0)
+      {
+        if (temp_options[x] == ' ')
+        {
+          /* at first need, get an unused char */
+          if (replace_cnt == 0)
+          {
+            if (find_unused_char (temp_options, &replace_me) == -1)
+            {
+              /* no replace, no party */
+              free (temp_options);
+              return CL_INVALID_BUILD_OPTIONS;
+            }
+          }
+
+          /* replace whitespace with unused char */
+          temp_options[x] = replace_me;
+          replace_cnt++;
+        }
+      }
+    }
+  }
+
+  std::istringstream iss(temp_options);
+  std::vector<const char *> itemcstrs;
   std::vector<std::string> itemstrs;
-  while (i != end) {
-    itemstrs.push_back(*i);
-    ++i;
+
+  std::string s;
+
+  while (iss >> s)
+  {
+    // if needed, put back whitespace
+    if (replace_me != 0)
+    {
+      if (s.find(replace_me) != std::string::npos)
+      {
+        std::replace(s.begin(), s.end(), replace_me, ' ');
+      }
+    }
+
+    // if quoted, remove it to make compiler happy
+    if (s.find("\"") != std::string::npos)
+    {
+      std::regex target("\"");
+      std::string replacement = " ";
+      s = std::regex_replace(s, target, replacement);
+    }
+
+    itemstrs.push_back(s);
   }
 
   for (unsigned idx = 0; idx < itemstrs.size(); idx++) {
@@ -368,6 +457,8 @@ int pocl_llvm_build_program(cl_program program,
     // of invalid pointers! Could make copies, but would have to clean up then...
     itemcstrs.push_back(itemstrs[idx].c_str());
   }
+
+  free (temp_options);
 
 #ifdef DEBUG_POCL_LLVM_API
   // TODO: for some reason the user_options are replicated,
