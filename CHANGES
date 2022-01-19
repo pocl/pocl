@@ -50,6 +50,8 @@ Other
   OpenCL code on Vulkan-enabled devices. To learn about the limitations,
   please read the documentation at doc/sphinx/source/vulkan.rst.
 
+- handling whitespace chars in build options (lib/CL/pocl_build.c)
+
 1.8 October 2021
 ================
 

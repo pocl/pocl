@@ -155,6 +155,23 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
     }                                                                         \
   while (0)
 
+/*
+ * search for an unused ASCII character in temp_options,
+ * to be used to replace whitespaces within double quoted substrings
+ */
+static bool find_unused_char (const char *options, char *replace_me)
+{
+  for (int y = 35; y < 128; y++)
+  {
+    if (strchr (options, (char) y) == NULL)
+    {
+      *replace_me = (char) y;
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
@@ -185,10 +202,59 @@ process_options (const char *options, char *modded_options, char *link_options,
   assert (modded_options);
   assert (compiling || linking);
 
+  size_t replace_cnt = 0;
+  char replace_me = 0;
+
   size_t i = 1; /* terminating char */
   size_t needed = 0;
   char *temp_options = (char*) malloc (strlen (options) + 1);
   strcpy (temp_options, options);
+
+  /* searching for double quote in temp_options */
+  if (strchr (temp_options, '"') != NULL)
+  {
+    bool in_substring = false;
+
+    /* scan for double quoted substring */
+    for (size_t x = 0; x < strlen (temp_options); x++)
+    {
+      if (temp_options[x] == '"')
+      {
+        if (in_substring == false)
+        {
+          /* enter in double quoted substring */
+          in_substring = true;
+          continue;
+        }
+
+        /* exit from double quoted substring */
+        in_substring = false;
+        continue;
+      }
+
+      /* search for whitespaces in substring */
+      if (in_substring == true)
+      {
+        if (temp_options[x] == ' ')
+        {
+          /* at first need, get an unused char */
+          if (replace_cnt == 0)
+          {
+            if (find_unused_char (temp_options, &replace_me) == false)
+            {
+              /* no replace, no party */
+              error = CL_INVALID_BUILD_OPTIONS;
+              goto ERROR;
+            }
+          }
+
+          /* replace whitespace with unused char */
+          temp_options[x] = replace_me;
+          replace_cnt++;
+        }
+      }
+    }
+  }
 
   token = strtok_r (temp_options, " ", &saveptr);
   while (token != NULL)
@@ -365,6 +431,16 @@ process_options (const char *options, char *modded_options, char *link_options,
   i = strlen (modded_options);
   if ((i > 0) && (modded_options[i - 1] == ' '))
     modded_options[i - 1] = 0;
+
+  /* put back replaced whitespaces if needed */
+  if (replace_me != 0)
+  {
+    for (size_t x = 0; x < i; x++)
+    {
+      if (modded_options[x] == replace_me) modded_options[x] = ' ';
+    }
+  }
+
 ERROR:
   POCL_MEM_FREE (temp_options);
   return error;
