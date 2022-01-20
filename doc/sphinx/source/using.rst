@@ -152,15 +152,21 @@ pocl.
  *         **basic**    A minimalistic example device driver for executing
                         kernels on the host CPU. No multithreading.
 
+ *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
+
+ *         **hsa**      Uses HSA Runtime API to control HSA-compliant
+                        kernel agents that support HSAIL finalization
+			(deprecated).
+
+ *         **vulkan**   An experimental driver that uses Vulkan and SPIR-V for executing on
+	                Vulkan supported devices.
+ 
  *         **pthread**  Native kernel execution on the host CPU with
                         threaded execution of work groups using pthreads.
 
  *         **ttasim**   Device that simulates a TTA device using the
                         TCE's ttasim library. Enabled only if TCE libraries
                         installed.
-
- *         **hsa***     Uses HSA Runtime API to control HSA-compliant
-                        kernel agents that support HSAIL finalization.
 
  If POCL_DEVICES is not set, one pthread device will be used.
  To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
