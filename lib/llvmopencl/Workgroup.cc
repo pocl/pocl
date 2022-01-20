@@ -2,7 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2019 Pekka Jääskeläinen
+//               2012-2022 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -565,8 +565,22 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         ops.push_back(pbc);
 
         unsigned j = CallInstr->getNumOperands() - 1;
-        for (unsigned i = 0; i < j; ++i)
-          ops.push_back(CallInstr->getOperand(i));
+        for (unsigned i = 0; i < j; ++i) {
+          auto *Operand = CallInstr->getOperand(i);
+#ifndef LLVM_OLDER_THAN_10_0
+          // The printf decl might have the format string in the constant AS
+          // in order to support compilation from SPIR-V where the calls adhere
+          // to the SPIR-V/OpenCL standard in terms of the argument type.
+          // Thus, when compiling directly from OpenCL C to native LLVM we
+          // have to add an (temporarily illegal) AS cast in case the target
+          // is a flat address space target (CPUs).
+          if (i == 0)
+            Operand = llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
+                Operand, poclPrintf->getArg(3)->getType(),
+                "printf_fmt_str_as_cast", CallInstr);
+#endif
+          ops.push_back(Operand);
+        }
 
         CallInst *NewCI = CallInst::Create(poclPrintf, ops);
         NewCI->setCallingConv(poclPrintf->getCallingConv());
@@ -1282,8 +1296,8 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
     // not by-val argument
   } else {
     LLVMTypeRef DestTy = LLVMPointerType(ParamType, DeviceArgsASid);
-    LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
-        Builder, ArgByteOffset, DestTy, "arg_ptr");
+    LLVMValueRef ArgOffsetBitcast =
+        LLVMBuildPointerCast(Builder, ArgByteOffset, DestTy, "arg_ptr");
 #ifdef LLVM_OLDER_THAN_14_0
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
 #else

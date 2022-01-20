@@ -15,6 +15,7 @@ Notable User Facing Changes
   for loading into Chromium's trace visualizer (chrome://tracing)
 - Support for generating specialized work-group functions to the PoCL
   kernel program binaries.
+- SPIR-V input: printf fixed
 
 Notable Bug Fixes
 -----------------
