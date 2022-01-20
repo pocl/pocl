@@ -1,7 +1,7 @@
 // Lightweight bitcode linker to replace llvm::Linker.
 //
 // Copyright (c) 2014 Kalle Raiskila
-//               2016-2019 Pekka Jääskeläinen
+//               2016-2022 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 
 #include <list>
 #include <iostream>
+#include <set>
 
 #include "config.h"
 #include "pocl.h"
@@ -51,8 +52,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 using namespace llvm;
 
-//#include <cstdio>
-//#define DB_PRINT(...) printf("linker:" __VA_ARGS__)
+// #include <cstdio>
+// #define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
 
 /*
@@ -169,31 +170,35 @@ find_called_functions(llvm::Function *F,
     DB_PRINT("it's a declaration.\n");
     return;
   }
-  llvm::Function::iterator fi,fe;
-  for (fi = F->begin(), fe = F->end();
-       fi != fe; fi++) {
-    llvm::BasicBlock::iterator bi, be;
-    for (bi = fi->begin(), be = fi->end();
-         bi != be;
-         bi++) {
-      CallInst *CI = dyn_cast<CallInst>(bi);
+  llvm::Function::iterator FI;
+  for (FI = F->begin(); FI != F->end(); FI++) {
+    llvm::BasicBlock::iterator BI;
+    for (BI = FI->begin(); BI != FI->end(); BI++) {
+      CallInst *CI = dyn_cast<CallInst>(BI);
       if (CI == NULL)
         continue;
-      llvm::Function *callee = CI->getCalledFunction();
+      llvm::Function *Callee = CI->getCalledFunction();
       // this happens with e.g. inline asm calls
-      if (callee == NULL) {
+      if (Callee == NULL) {
         DB_PRINT("search: %s callee NULL\n", F->getName().str().c_str());
         continue;
       }
+      if (Callee->getCallingConv() == llvm::CallingConv::SPIR_FUNC ||
+          CI->getCallingConv() == llvm::CallingConv::SPIR_FUNC) {
+        // Loosen the CC to the default one. It should be always the
+        // preferred one to SPIR_FUNC at this stage.
+        Callee->setCallingConv(llvm::CallingConv::C);
+        CI->setCallingConv(llvm::CallingConv::C);
+      }
       DB_PRINT("search: %s calls %s\n",
-               F->getName().data(), callee->getName().data());
-      if (find_from_list(callee->getName(), list))
+               F->getName().data(), Callee->getName().data());
+      if (find_from_list(Callee->getName(), list))
         continue;
       else {
-        list.push_back(callee->getName());
+        list.push_back(Callee->getName());
         DB_PRINT("search: recursing into %s\n",
-                 callee->getName().data());
-        find_called_functions(callee, list);
+                 Callee->getName().data());
+        find_called_functions(Callee, list);
       }
     }
   }
@@ -240,6 +245,15 @@ CopyFunc(const llvm::StringRef Name,
     if (!SrcFunc->isDeclaration()) {
         SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
         DB_PRINT("  cloning %s\n", Name.data());
+        
+        if (SrcFunc->getName() == "printf" &&
+            SrcFunc->getArg(0)->getType() != DstFunc->getArg(0)->getType()) {
+          DstFunc->setName("_old_printf");
+          auto NewPrintf = Function::Create(
+              SrcFunc->getFunctionType(), SrcFunc->getLinkage(), "printf", To);
+          DstFunc = NewPrintf;
+        }
+
         CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
         fixOpenCLimageArguments(DstFunc, AS);
     } else {
@@ -262,7 +276,7 @@ copy_func_callgraph(const llvm::StringRef func_name,
     llvm::Function *RootFunc = from->getFunction(func_name);
     if (RootFunc == NULL)
       return -1;
-    DB_PRINT("copying function %s with callgraph\n", RootFunc.data());
+    DB_PRINT("copying function %s with callgraph\n", RootFunc->getName().data());
 
     find_called_functions(RootFunc, callees);
 
@@ -346,13 +360,68 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
   }
 }
 
-int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
+
+// Printf requires special treatment at bitcode link time for seamless SPIR-V
+// import support: The printf we link in might be SPIR-V compliant with the format
+// string address space in the constant space or the other way around. The calls to
+// the printf, however, depend whether we are importing the kernel from SPIR or
+// through OpenCL C native compilation path. In the former, the kernel calls refer
+// to constant address space in the format string, and in the latter, when compiling
+// natively to CPUs and other flat address space targets, the calls see an AS0 format
+// string address space due to Clang's printf declaration adhering to target address
+// spaces.
+//
+// In this function we fix calls to the printf to refer to one in the bitcode
+// library's printf, with the correct AS for the format string. Other considered
+// options include building two different bitcode libraries: One with SPIR-V
+// address spaces, another with the target's (flat) AS. This would be
+// problematic in other ways and redundant.
+void unifyPrintfFingerPrint(llvm::Module *Program, const llvm::Module *Lib) {
+
+  llvm::Function *CalledPrintf = Program->getFunction("printf");
+  llvm::Function *LibPrintf = Lib->getFunction("printf");
+  llvm::Function *NewPrintf = nullptr;
+
+  assert(LibPrintf != nullptr);
+  if (CalledPrintf != nullptr && CalledPrintf->getArg(0)->getType() !=
+      LibPrintf->getArg(0)->getType()) {
+    CalledPrintf->setName("_old_printf");
+    // Create a declaration with a fingerprint with the correct format argument
+    // type which we will import from the BC library.
+    NewPrintf =
+        Function::Create(
+            LibPrintf->getFunctionType(), LibPrintf->getLinkage(), "printf",
+            Program);
+  } else {
+    // No printf fingerprint mismatch detected in this module.
+    return;
+  }
+
+  // Fix the printf calls to point to the library imported declaration.
+  while (CalledPrintf->getNumUses() > 0) {
+    auto U = CalledPrintf->user_begin();
+    llvm::CallInst *Call = dyn_cast<llvm::CallInst>(*U);
+    if (Call == nullptr)
+      continue;
+    auto Cast =
+        llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
+            Call->getArgOperand(0), NewPrintf->getArg(0)->getType(),
+            "fmt_str_cast", Call);
+    Call->setCalledFunction(NewPrintf);
+    Call->setArgOperand(0, Cast);
+  }
+  CalledPrintf->eraseFromParent();
+}
+
+int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
          unsigned global_AS, const char **DevAuxFuncs) {
 
-  assert(program);
-  assert(lib);
+  assert(Program);
+  assert(Lib);
   ValueToValueMapTy vvm;
   std::list<llvm::StringRef> declared;
+
+  unifyPrintfFingerPrint(Program, Lib);
 
   // Include auxiliary functions required by the device at hand.
   if (DevAuxFuncs) {
@@ -365,18 +434,18 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
   llvm::Module::iterator fi, fe;
 
   // Find and fix opencl.imageX_t arguments
-  for (fi = program->begin(), fe = program->end(); fi != fe; fi++) {
+  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
     llvm::Function *f = &*fi;
     if (f->isDeclaration())
       continue;
     // need to restart iteration if we replace a function
-    if (CloneFuncFixOpenCLImageT(program, f, global_AS) != f) {
-      fi = program->begin();
+    if (CloneFuncFixOpenCLImageT(Program, f, global_AS) != f) {
+      fi = Program->begin();
     }
   }
 
   // Inspect the program, find undefined functions
-  for (fi = program->begin(), fe = program->end(); fi != fe; fi++) {
+  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
     if ((*fi).isDeclaration()) {
       DB_PRINT("%s is not defined\n", fi->getName().data());
       declared.push_back(fi->getName());
@@ -394,7 +463,7 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
   // otherwise these end up in ELF relocation tables and cause link
   // failures when linking with -fPIC/PIE
   llvm::Module::global_iterator gi1, ge1;
-  for (gi1 = program->global_begin(), ge1 = program->global_end(); gi1 != ge1;
+  for (gi1 = Program->global_begin(), ge1 = Program->global_end(); gi1 != ge1;
        gi1++) {
     GlobalValue::LinkageTypes linkage = gi1->getLinkage();
     if (linkage == GlobalValue::LinkageTypes::ExternalLinkage)
@@ -406,10 +475,10 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
   // both program and lib to find which actually are used.
   DB_PRINT("cloning the global variables:\n");
   llvm::Module::const_global_iterator gi,ge;
-  for (gi=lib->global_begin(), ge=lib->global_end(); gi != ge; gi++) {
+  for (gi = Lib->global_begin(), ge = Lib->global_end(); gi != ge; gi++) {
     DB_PRINT(" %s\n", gi->getName().data());
     GlobalVariable *GV = new GlobalVariable(
-      *program, gi->getType()->getElementType(), gi->isConstant(),
+      *Program, gi->getType()->getElementType(), gi->isConstant(),
       gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
       gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*gi);
@@ -429,8 +498,8 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
   for (di = declared.begin(), de = declared.end();
        di != de; di++) {
       llvm::StringRef r = *di;
-      if (copy_func_callgraph(r, lib, program, vvm, global_AS)) {
-        Function *f = program->getFunction(r);
+      if (copy_func_callgraph(r, Lib, Program, vvm, global_AS)) {
+        Function *f = Program->getFunction(r);
         if ((f == NULL) ||
             (f->isDeclaration() &&
              // A target might want to expose the C99 printf in case not supporting
@@ -446,10 +515,11 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log,
         }
       }
   }
+
   if (!found_all_undefined)
     return 1;
 
-  shared_copy(program, lib, log, vvm);
+  shared_copy(Program, Lib, log, vvm);
 
   return 0;
 }
