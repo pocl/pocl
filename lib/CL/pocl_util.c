@@ -2231,3 +2231,22 @@ pocl_device_is_associated_with_kernel (cl_device_id device, cl_kernel kernel)
 
   return found_it;
 }
+
+/*
+ * search for an unused ASCII character in options,
+ * to be used to replace whitespaces within double quoted substrings
+ */
+int
+pocl_find_unused_char (const char *options, char *replace_me)
+{
+  for (int y = 35; y < 128; y++)
+  {
+    if (strchr (options, (char) y) == NULL)
+    {
+      *replace_me = (char) y;
+      return 0;
+    }
+  }
+
+  return -1;
+}

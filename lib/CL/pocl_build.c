@@ -155,24 +155,6 @@ append_to_build_log (cl_program program, unsigned device_i, const char *format,
     }                                                                         \
   while (0)
 
-/*
- * search for an unused ASCII character in temp_options,
- * to be used to replace whitespaces within double quoted substrings
- */
-static int find_unused_char (const char *options, char *replace_me)
-{
-  for (int y = 35; y < 128; y++)
-  {
-    if (strchr (options, (char) y) == NULL)
-    {
-      *replace_me = (char) y;
-      return 0;
-    }
-  }
-
-  return -1;
-}
-
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
  */
@@ -240,7 +222,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           /* at first need, get an unused char */
           if (replace_cnt == 0)
           {
-            if (find_unused_char (temp_options, &replace_me) == -1)
+            if (pocl_find_unused_char (temp_options, &replace_me) == -1)
             {
               /* no replace, no party */
               error = CL_INVALID_BUILD_OPTIONS;

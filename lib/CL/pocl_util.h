@@ -245,6 +245,9 @@ int pocl_bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 int pocl_device_is_associated_with_kernel (cl_device_id device,
                                            cl_kernel kernel);
 
+int
+pocl_find_unused_char (const char *options, char *replace_me);
+
 #ifdef __cplusplus
 }
 #endif

@@ -80,6 +80,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "LLVMUtils.h"
+#include "pocl_util.h"
 
 using namespace clang;
 using namespace llvm;
@@ -176,24 +177,6 @@ static std::string getPoclPrivateDataDir() {
     }
 #endif
     return POCL_INSTALL_PRIVATE_DATADIR;
-}
-
-/*
- * search for an unused ASCII character in temp_options,
- * to be used to replace whitespaces within double quoted substrings
- */
-static int find_unused_char (const char *options, char *replace_me)
-{
-  for (int y = 35; y < 128; y++)
-  {
-    if (strchr (options, (char) y) == NULL)
-    {
-      *replace_me = (char) y;
-      return 0;
-    }
-  }
-
-  return -1;
 }
 
 int pocl_llvm_build_program(cl_program program,
@@ -408,7 +391,7 @@ int pocl_llvm_build_program(cl_program program,
           /* at first need, get an unused char */
           if (replace_cnt == 0)
           {
-            if (find_unused_char (temp_options, &replace_me) == -1)
+            if (pocl_find_unused_char (temp_options, &replace_me) == -1)
             {
               /* no replace, no party */
               free (temp_options);
