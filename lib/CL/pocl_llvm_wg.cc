@@ -202,7 +202,7 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
      Notes about the kernel compiler phase ordering:
 
      -mem2reg first because we get unoptimized output from Clang where all
-     variables are allocas. Avoid context saving the allocas and make the
+     variables are allocas. Avoid context saving the allocas and make them
      more readable by calling -mem2reg at the beginning.
 
      -implicit-cond-barriers after -implicit-loop-barriers because the latter
