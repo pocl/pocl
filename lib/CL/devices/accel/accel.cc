@@ -275,19 +275,6 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   dev->builtin_kernel_list = strdup(supportedList.c_str());
   if (enable_compilation) {
-    POCL_MSG_PRINT_INFO("Enabling compilation\n");
-    dev->ops->create_kernel = pocl_almaif_create_kernel;
-    dev->ops->free_kernel = pocl_almaif_free_kernel;
-    dev->ops->compile_kernel = pocl_almaif_compile_kernel;
-    dev->ops->build_hash = pocl_almaif_build_hash;
-    dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
-    dev->ops->build_binary = pocl_almaif_build_binary;
-
-    dev->ops->build_source = pocl_driver_build_source;
-    dev->ops->link_program = pocl_driver_link_program;
-    dev->ops->free_program = pocl_driver_free_program;
-
-    dev->ops->setup_metadata = pocl_driver_setup_metadata;
 
     dev->compiler_available = CL_TRUE;
     dev->linker_available = CL_TRUE;
