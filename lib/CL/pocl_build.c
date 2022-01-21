@@ -184,58 +184,19 @@ process_options (const char *options, char *modded_options, char *link_options,
   assert (modded_options);
   assert (compiling || linking);
 
-  size_t replace_cnt = 0;
   char replace_me = 0;
 
   size_t i = 1; /* terminating char */
   size_t needed = 0;
-  char *temp_options = (char*) malloc (strlen (options) + 1);
-  strcpy (temp_options, options);
+  char *temp_options = (char *) malloc (strlen (options) + 1);
 
-  /* searching for double quote in temp_options */
-  if (strchr (temp_options, '"') != NULL)
+  memset (temp_options, 0, strlen (options) + 1);
+  strncpy (temp_options, options, strlen (options));
+
+  if (pocl_escape_quoted_whitespace (temp_options, &replace_me) == -1)
   {
-    int in_substring = -1;
-
-    /* scan for double quoted substring */
-    for (size_t x = 0; x < strlen (temp_options); x++)
-    {
-      if (temp_options[x] == '"')
-      {
-        if (in_substring == -1)
-        {
-          /* enter in double quoted substring */
-          in_substring = 0;
-          continue;
-        }
-
-        /* exit from double quoted substring */
-        in_substring = -1;
-        continue;
-      }
-
-      /* search for whitespaces in substring */
-      if (in_substring == 0)
-      {
-        if (temp_options[x] == ' ')
-        {
-          /* at first need, get an unused char */
-          if (replace_cnt == 0)
-          {
-            if (pocl_find_unused_char (temp_options, &replace_me) == -1)
-            {
-              /* no replace, no party */
-              error = CL_INVALID_BUILD_OPTIONS;
-              goto ERROR;
-            }
-          }
-
-          /* replace whitespace with unused char */
-          temp_options[x] = replace_me;
-          replace_cnt++;
-        }
-      }
-    }
+    error = CL_INVALID_BUILD_OPTIONS;
+    goto ERROR;
   }
 
   token = strtok_r (temp_options, " ", &saveptr);

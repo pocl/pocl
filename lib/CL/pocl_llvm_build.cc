@@ -355,56 +355,17 @@ int pocl_llvm_build_program(cl_program program,
 
   POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
 
-  size_t replace_cnt = 0;
   char replace_me = 0;
 
   char *temp_options = (char *) malloc (ss.str().length() + 1);
+
+  memset (temp_options, 0, ss.str().length() + 1);
   strncpy (temp_options, ss.str().c_str(), ss.str().length());
 
-  /* searching for double quote in temp_options */
-  if (strchr (temp_options, '"') != NULL)
+  if (pocl_escape_quoted_whitespace (temp_options, &replace_me) == -1)
   {
-    int in_substring = -1;
-
-    /* scan for double quoted substring */
-    for (size_t x = 0; x < strlen (temp_options); x++)
-    {
-      if (temp_options[x] == '"')
-      {
-        if (in_substring == -1)
-        {
-          /* enter in double quoted substring */
-          in_substring = 0;
-          continue;
-        }
-
-        /* exit from double quoted substring */
-        in_substring = -1;
-        continue;
-      }
-
-      /* search for whitespaces in substring */
-      if (in_substring == 0)
-      {
-        if (temp_options[x] == ' ')
-        {
-          /* at first need, get an unused char */
-          if (replace_cnt == 0)
-          {
-            if (pocl_find_unused_char (temp_options, &replace_me) == -1)
-            {
-              /* no replace, no party */
-              free (temp_options);
-              return CL_INVALID_BUILD_OPTIONS;
-            }
-          }
-
-          /* replace whitespace with unused char */
-          temp_options[x] = replace_me;
-          replace_cnt++;
-        }
-      }
-    }
+    POCL_MEM_FREE (temp_options);
+    return CL_INVALID_BUILD_OPTIONS;
   }
 
   std::istringstream iss(temp_options);
@@ -441,7 +402,7 @@ int pocl_llvm_build_program(cl_program program,
     itemcstrs.push_back(itemstrs[idx].c_str());
   }
 
-  free (temp_options);
+  POCL_MEM_FREE (temp_options);
 
 #ifdef DEBUG_POCL_LLVM_API
   // TODO: for some reason the user_options are replicated,

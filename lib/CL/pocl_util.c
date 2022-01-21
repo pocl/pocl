@@ -2236,7 +2236,7 @@ pocl_device_is_associated_with_kernel (cl_device_id device, cl_kernel kernel)
  * search for an unused ASCII character in options,
  * to be used to replace whitespaces within double quoted substrings
  */
-int
+static int
 pocl_find_unused_char (const char *options, char *replace_me)
 {
   for (int y = 35; y < 128; y++)
@@ -2249,4 +2249,57 @@ pocl_find_unused_char (const char *options, char *replace_me)
   }
 
   return -1;
+}
+
+int
+pocl_escape_quoted_whitespace (char *temp_options, char *replace_me)
+{
+  /* searching for double quote in temp_options */
+  if (strchr (temp_options, '"') != NULL)
+  {
+    size_t replace_cnt = 0;
+
+    int in_substring = -1;
+
+    /* scan for double quoted substring */
+    for (size_t x = 0; x < strlen (temp_options); x++)
+    {
+      if (temp_options[x] == '"')
+      {
+        if (in_substring == -1)
+        {
+          /* enter in double quoted substring */
+          in_substring = 0;
+          continue;
+        }
+
+        /* exit from double quoted substring */
+        in_substring = -1;
+        continue;
+      }
+
+      /* search for whitespaces in substring */
+      if (in_substring == 0)
+      {
+        if (temp_options[x] == ' ')
+        {
+          /* at first need, get an unused char */
+          if (replace_cnt == 0)
+          {
+            if (pocl_find_unused_char (temp_options, replace_me) == -1)
+            {
+              /* no replace, no party */
+              return -1;
+            }
+          }
+
+          /* replace whitespace with unused char */
+          temp_options[x] = *replace_me;
+          replace_cnt++;
+        }
+      }
+    }
+  }
+
+  return 0;
 }
