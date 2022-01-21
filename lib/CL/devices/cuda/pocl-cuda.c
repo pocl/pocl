@@ -999,7 +999,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
       unsigned int out_size = (unsigned int) val[1];
 
-      if (out_size > 0)
+      if (out_size > 0 || result != CUDA_SUCCESS)
         POCL_MSG_PRINT_CUDA("cuModuleLoadDataEx(%s) log: %s\n", ptx_filename, log);
 
       CUDA_CHECK (result, "cuModuleLoadDataEx");
