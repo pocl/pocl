@@ -32,12 +32,16 @@ else ()
 endif ()
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
-include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
+include_directories("${CMAKE_SOURCE_DIR}/lib/CL" ${CMAKE_CURRENT_SOURCE_DIR})
 
 foreach(PROG ${PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.cpp")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
+
+set(CMAKE_CXX_STANDARD 14)
+add_executable(accel_countred accel_countred.cpp OpenCLcontext.cpp  OpenCLcontext.h)
+target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 
 ######################################################################
