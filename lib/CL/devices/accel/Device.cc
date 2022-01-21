@@ -77,7 +77,7 @@ Device::discoverDeviceParameters()
     (void*)cq_start,(void*)imem_start,(void*)dmem_start);
     POCL_MSG_PRINT_INFO("cq_size=%u imem_size=%u dmem_size=%u\n",cq_size,
     imem_size, dmem_size);
-    POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu",ControlMemory->PhysAddress);
+    POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu\n",ControlMemory->PhysAddress);
 
 
     pocl_init_mem_region(&AllocRegion, dmem_start, dmem_size);

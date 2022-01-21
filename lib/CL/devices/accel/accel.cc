@@ -352,7 +352,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   }
   // Initialize AQL queue by setting all headers to invalid
   for (uint32_t i = AQL_PACKET_LENGTH; i < D->Dev->CQMemory->Size; i += AQL_PACKET_LENGTH) {
-    POCL_MSG_PRINT_INFO("Initializing AQL Packet cqmemory size=%i\n",D->Dev->CQMemory->Size);
+    POCL_MSG_PRINT_INFO("Initializing AQL Packet cqmemory size=%zu\n",D->Dev->CQMemory->Size);
     D->Dev->CQMemory->Write16(i, AQL_PACKET_INVALID);
   }
 
@@ -673,7 +673,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->program_device_i];
     packet.kernel_object = kd->kernel_address;
 
-    POCL_MSG_PRINT_INFO("Kernel addresss=%zu\n", kd->kernel_address);
+    POCL_MSG_PRINT_INFO("Kernel addresss=%u\n", kd->kernel_address);
   }
 
   if (data->Dev->RelativeAddressing) {
@@ -684,7 +684,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     packet.completion_signal = signalAddress;
   }
 
-  POCL_MSG_PRINT_INFO("ArgsAddress=%llu SignalAddress=%llu\n",
+  POCL_MSG_PRINT_INFO("ArgsAddress=%" PRIu64 " SignalAddress=%" PRIu64 "\n",
                       packet.kernarg_address, packet.completion_signal);
 
   POCL_LOCK(data->AQLQueueLock);
@@ -732,7 +732,7 @@ void pocl_accel_wait_event(cl_device_id device, cl_event event)
   AccelData *D = (AccelData *)(device->data);
   size_t offset = ((chunk_info_t *)event->data)->start_address - D->Dev->DataMemory->PhysAddress;
 
-  POCL_MSG_PRINT_INFO("accel wait on event: ADDRESS=%d, PHYSDDRESS=%d, OFFSET=%d\n", ((chunk_info_t *)event->data)->start_address, D->Dev->DataMemory->PhysAddress, offset);
+  POCL_MSG_PRINT_INFO("accel wait on event: ADDRESS=%lu, PHYSDDRESS=%zu, OFFSET=%zu\n", ((chunk_info_t *)event->data)->start_address, D->Dev->DataMemory->PhysAddress, offset);
 
   uint32_t status;
   int counter = 1;
