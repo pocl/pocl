@@ -1399,7 +1399,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
         LLVMValueRef SizeByteOffset =
             LLVMBuildGEP(Builder, ArgBuffer, &Offs, 1, "size_byte_offset");
-	LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
+        LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
         LLVMValueRef SizeOffsetBitcast =
             LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
 
