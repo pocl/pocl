@@ -435,7 +435,16 @@ pocl_accel_get_builtin_kernel_metadata(void *data, const char *kernel_name,
                sizeof(pocl_argument_info));
         target->arg_info[Arg].name = strdup(Desc->arg_info[Arg].name);
         target->arg_info[Arg].type_name = strdup(Desc->arg_info[Arg].type_name);
+        if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER)
+          target->arg_info[Arg].type_size = 4; // TODO shouldnt be hardcoded
       }
+
+      target->has_arg_metadata =
+        POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
+        POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER  |
+        POCL_HAS_KERNEL_ARG_TYPE_NAME         |
+        POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER    |
+        POCL_HAS_KERNEL_ARG_NAME;
     }
   }
   return 0;
