@@ -1,5 +1,7 @@
 #include "pocl_cl.h"
 
+#include <vector>
+
 enum BuiltinKernelId : uint16_t
 {
   // CD = custom device, BI = built-in
@@ -10,7 +12,8 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_MUL32 = 2,
   POCL_CDBI_LEDBLINK = 3,
   POCL_CDBI_COUNTRED = 4,
-  POCL_CDBI_LAST = 5,
+  POCL_CDBI_CUDA_TEST1 = 5,
+  POCL_CDBI_LAST = 6,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
 
@@ -55,5 +58,27 @@ struct BIKD : public pocl_kernel_metadata_t
   BuiltinKernelId KernelId;
 };
 
+BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
+           const std::vector<pocl_argument_info> &ArgInfos)
+    : KernelId(KernelIdentifier) {
+
+  builtin_kernel = 1;
+  name = strdup(KernelName);
+  num_args = ArgInfos.size();
+  arg_info = new pocl_argument_info[num_args];
+  int i = 0;
+  for (auto ArgInfo : ArgInfos) {
+    arg_info[i] = ArgInfo;
+    arg_info[i].name = strdup(ArgInfo.name);
+    arg_info[i].type_name = strdup(ArgInfo.type_name);
+    ++i;
+  }
+}
+
 #define BIKERNELS POCL_CDBI_LAST
 extern BIKD BIDescriptors[BIKERNELS];
+
+extern "C" {
+int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
+                                unsigned program_device_i);
+}

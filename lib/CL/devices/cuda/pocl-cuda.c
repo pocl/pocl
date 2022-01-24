@@ -49,6 +49,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define CUDA_BUILTIN_KERNELS 2
+static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.cuda.test1" };
+
 typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
@@ -232,6 +235,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_cuda_compile_kernel;
+  ops->build_builtin = pocl_cuda_build_builtin;
 
   // TODO
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -285,6 +289,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       = POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT;
 
   dev->has_64bit_long = 1;
+
+  dev->builtin_kernel_list = "pocl.cuda.test1;pocl.countred";
+  dev->num_builtin_kernels = CUDA_BUILTIN_KERNELS;
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
   result = cuDeviceGet (&data->device, j);
@@ -1049,6 +1056,43 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   return kdata;
 }
 
+static cuModule cuda_builtin_module = NULL;
+static CUfunction cuda_builtin_kernels[CUDA_BUILTIN_KERNELS];
+
+// https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage
+
+/* build a program with builtin kernels. */
+int
+pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
+{
+  // build a program with builtin source
+  if (cuda_builtin_module != NULL)
+    return 0;
+
+  nvPTXCompilerHandle nvptx_compiler = NULL;
+  // nvPTXCompilerCreate ( nvPTXCompilerHandle* compiler, size_t ptxCodeLen, const char* ptxCode );
+  //nvPTXCompilerCompile ( nvPTXCompilerHandle compiler, int  numCompileOptions, const char** compileOptions )
+  nvPTXCompilerCreate (&compiler, ptx_code_len, ptx_code);
+  const char* compile_options[] = { "--gpu-name=sm_70",
+                                    "--verbose"
+                                    };
+
+  nvPTXCompilerCompile (compiler, 2, compile_options );
+
+  size_t elfSize = 0;
+  nvPTXCompilerGetCompiledProgramSize(compiler, &elfSize);
+  char* elf = (char*) malloc(elfSize);
+  nvPTXCompilerGetCompiledProgram(compiler, (void*)elf);
+
+  cuModuleLoadDataEx(&cuda_builtin_module, elf, 0, 0, 0);
+  cuModuleGetFunction(&cuda_builtin_kernels[0], cuda_builtin_module, "");
+  cuModuleGetFunction(&cuda_builtin_kernels[0], cuda_builtin_module, "");
+
+  nvPTXCompilerDestroy(&compiler);
+  free (elf);
+}
+
+
 void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize)
@@ -1063,6 +1107,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 {
   _cl_command_run run = cmd->command.run;
   cl_kernel kernel = run.kernel;
+  cl_program prog = kernel->program;
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
   pocl_kernel_metadata_t *meta = kernel->meta;
@@ -1071,11 +1116,30 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   int has_offsets =
     (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2]);
 
+  CUmodule module = NULL;
+  CUfunction function = NULL;
+  pocl_cuda_kernel_data_t *kdata;
   /* Get kernel function */
-  pocl_cuda_kernel_data_t *kdata = load_or_generate_kernel (
-      kernel, device, has_offsets, cmd->program_device_i, cmd, 1);
-  CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
-  CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
+  if (prog->num_builtin_kernels > 0)
+    {
+      module = cuda_builtin_module;
+      for (size_t i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
+        {
+          if (strcmp(kernel->name, CudaBuiltinKernels[i]) == 0)
+            {
+              function = builtin_kernels[i];
+              kdata = TODO;
+              break;
+            }
+        }
+    }
+  else
+    {
+      kdata = load_or_generate_kernel (
+          kernel, device, has_offsets, cmd->program_device_i, cmd, 1);
+      module = has_offsets ? kdata->module_offsets : kdata->module;
+      function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
+    }
 
   /* Prepare kernel arguments */
   void *null = NULL;

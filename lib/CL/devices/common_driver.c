@@ -35,6 +35,9 @@
 // for pocl_aligned_malloc
 #include "pocl_util.h"
 
+int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
+                                unsigned program_device_i);
+
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -689,6 +692,9 @@ int
 pocl_driver_setup_metadata (cl_device_id device, cl_program program,
                             unsigned program_device_i)
 {
+  if (program->num_builtin_kernels > 0)
+    return pocl_setup_builtin_metadata (device, program, program_device_i);
+
 #ifdef ENABLE_LLVM
   unsigned num_kernels
       = pocl_llvm_get_kernel_count (program, program_device_i);
