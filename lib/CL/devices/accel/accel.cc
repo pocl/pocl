@@ -54,6 +54,8 @@
 #include <string>
 #include <vector>
 
+#include "builtin_kernels.hh"
+
 extern int pocl_offline_compile;
 
 class SimpleSimulatorFrontend;
@@ -82,7 +84,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->uninit = pocl_accel_uninit;
   ops->probe = pocl_accel_probe;
   ops->build_hash = pocl_accel_build_hash;
-  ops->setup_metadata = pocl_accel_setup_metadata;
+  ops->setup_metadata = pocl_setup_builtin_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */
   ops->alloc_mem_obj = pocl_accel_alloc_mem_obj;
@@ -269,10 +271,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   while (paramToken = strtok_r(NULL, ",", &savePtr)) {
     auto token = strtoul(paramToken, NULL, 0);
     BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
-    size_t numBIKDs = sizeof(BIDescriptors) / sizeof(*BIDescriptors);
 
     bool found = false;
-    for (size_t i = 0; i < numBIKDs; ++i) {
+    for (size_t i = 0; i < BIKERNELS; ++i) {
       if (BIDescriptors[i].KernelId == kernelId) {
         if (supportedList.size() > 0)
           supportedList += ";";
@@ -290,6 +291,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   }
 
   dev->builtin_kernel_list = strdup(supportedList.c_str());
+  dev->num_builtin_kernels = D->SupportedKernels.size();
   if (enable_compilation) {
 
     dev->compiler_available = CL_TRUE;
@@ -430,61 +432,6 @@ char *pocl_accel_build_hash(cl_device_id /*device*/) {
   return res;
 }
 
-static cl_int
-pocl_accel_get_builtin_kernel_metadata(void *data, const char *kernel_name,
-                                       pocl_kernel_metadata_t *target) {
-  AccelData *D = (AccelData *)data;
-  BIKD *Desc = nullptr;
-  for (size_t i = 0; i < sizeof(BIDescriptors) / sizeof(BIDescriptors[0]);
-       ++i) {
-    Desc = &BIDescriptors[i];
-    if (std::string(Desc->name) == kernel_name) {
-      memcpy(target, (pocl_kernel_metadata_t *)Desc,
-             sizeof(pocl_kernel_metadata_t));
-      target->name = strdup(Desc->name);
-      target->arg_info = (struct pocl_argument_info *)calloc(
-          Desc->num_args, sizeof(struct pocl_argument_info));
-      memset(target->arg_info, 0,
-             sizeof(struct pocl_argument_info) * Desc->num_args);
-      for (unsigned Arg = 0; Arg < Desc->num_args; ++Arg) {
-        memcpy(&target->arg_info[Arg], &Desc->arg_info[Arg],
-               sizeof(pocl_argument_info));
-        target->arg_info[Arg].name = strdup(Desc->arg_info[Arg].name);
-        target->arg_info[Arg].type_name = strdup(Desc->arg_info[Arg].type_name);
-        if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER)
-          target->arg_info[Arg].type_size = 4; // TODO shouldnt be hardcoded
-      }
-
-      target->has_arg_metadata =
-        POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
-        POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER  |
-        POCL_HAS_KERNEL_ARG_TYPE_NAME         |
-        POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER    |
-        POCL_HAS_KERNEL_ARG_NAME;
-    }
-  }
-  return 0;
-}
-
-int pocl_accel_setup_metadata(cl_device_id device, cl_program program,
-                              unsigned program_device_i) {
-  if (program->builtin_kernel_names == nullptr)
-    return 0;
-
-  program->num_kernels = program->num_builtin_kernels;
-  if (program->num_kernels) {
-    program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
-        program->num_kernels, sizeof(pocl_kernel_metadata_t));
-
-    for (size_t i = 0; i < program->num_kernels; ++i) {
-      pocl_accel_get_builtin_kernel_metadata(device->data,
-                                             program->builtin_kernel_names[i],
-                                             &program->kernel_meta[i]);
-    }
-  }
-
-  return 1;
-}
 
 static void scheduleCommands(AccelData &D) {
 
