@@ -251,7 +251,7 @@ pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 
 #ifndef BUFALLOC_NO_MULTIPLE_REGIONS 
 chunk_info_t *
-alloc_buffer (memory_region_t *regions, size_t size)
+pocl_alloc_buffer (memory_region_t *regions, size_t size)
 {
   chunk_info_t *chunk = NULL;
   memory_region_t *region = NULL;
@@ -331,7 +331,7 @@ coalesce_chunks (chunk_info_t* first,
 #endif
 
 memory_region_t *
-free_buffer (memory_region_t *regions, memory_address_t addr)
+pocl_free_buffer (memory_region_t *regions, memory_address_t addr)
 {
   memory_region_t *region = NULL;
 

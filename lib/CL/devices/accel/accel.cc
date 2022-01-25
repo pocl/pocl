@@ -172,7 +172,7 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
   if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  chunk = alloc_buffer(data->Dev->AllocRegions, mem_obj->size);
+  chunk = pocl_alloc_buffer(data->Dev->AllocRegions, mem_obj->size);
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
