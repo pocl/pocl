@@ -10,6 +10,7 @@
 #include "MMAPDevice.h"
 #include "EmulationDevice.h"
 #include "bufalloc.h"
+#include "builtin_kernels.hh"
 
 #define ACCEL_DEFAULT_CTRL_SIZE (1024)
 
