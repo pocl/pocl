@@ -1,4 +1,5 @@
 #include "pocl_cl.h"
+#include "pocl_export.h"
 
 #include <vector>
 
@@ -60,9 +61,10 @@ struct BIKD : public pocl_kernel_metadata_t
 
 
 #define BIKERNELS POCL_CDBI_LAST
-extern BIKD BIDescriptors[BIKERNELS];
+POCL_EXPORT extern BIKD BIDescriptors[BIKERNELS];
 
 extern "C" {
+POCL_EXPORT
 int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
                                 unsigned program_device_i);
 }
