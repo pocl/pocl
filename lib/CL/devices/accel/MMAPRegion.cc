@@ -25,8 +25,9 @@
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
 #include <fstream>
+
+#include "pocl_util.h"
 
 #include "MMAPRegion.h"
 
@@ -154,9 +155,7 @@ void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
   size_t offset = destination - PhysAddress;
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto dst = offset + static_cast<volatile char *>(Data);
-  for (size_t i = 0; i < bytes; ++i) {
-    dst[i] = src[i];
-  }
+  memcpy((void*)dst,src, bytes);
 }
 
 void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
@@ -169,7 +168,5 @@ void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
   size_t offset = source - PhysAddress;
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto src = offset + static_cast<volatile char *>(Data);
-  for (size_t i = 0; i < bytes; ++i) {
-    dst[i] = src[i];
-  }
+  memcpy(dst, (void*)src, bytes);
 }

@@ -30,6 +30,8 @@
 
 class MMAPDevice : public Device
 {
+private:
+  ~MMAPDevice();
 public:
   MMAPDevice (size_t base_address, char* kernel_name);
 };

@@ -27,7 +27,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   if(!pocl_offline_compile){
   d->compilationData->pocl_context =
-     alloc_buffer(&d->Dev->AllocRegion, sizeof(pocl_context32));
+     alloc_buffer(d->Dev->AllocRegions, sizeof(pocl_context32));
   assert(d->compilationData->pocl_context &&
          "Failed to allocate pocl context on device\n");
   } 

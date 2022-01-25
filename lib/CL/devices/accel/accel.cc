@@ -130,8 +130,16 @@ void pocl_accel_write(void *data, const void *__restrict__ src_host_ptr,
   chunk_info_t *chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
   size_t dst = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
-  POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to 0x%zu\n", size, dst);
-  d->Dev->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
+
+  if (d->Dev->DataMemory->isInRange(dst)) {
+    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to 0x%zu\n", size, dst);
+    d->Dev->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
+  } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(dst)) {
+    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to external 0x%zu\n", size, dst);
+    d->Dev->ExternalMemory->CopyToMMAP(dst, src_host_ptr, size);
+  } else {
+    POCL_ABORT("Attempt to write data to outside the device memories\n");
+  }
 }
 
 void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
@@ -140,8 +148,16 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
   chunk_info_t *chunk = (chunk_info_t *)src_mem_id->mem_ptr;
   size_t src = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
-  POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from 0x%zu\n", size, src);
-  d->Dev->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
+
+  if (d->Dev->DataMemory->isInRange(src)) {
+    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from 0x%zu\n", size, src);
+    d->Dev->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
+  } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(src)) {
+    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from external 0x%zu\n", size, src);
+    d->Dev->ExternalMemory->CopyFromMMAP(dst_host_ptr, src, size);
+  } else {
+    POCL_ABORT("Attempt to write data to outside the device memories\n");
+  }
 }
 
 cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
@@ -156,7 +172,7 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
   if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  chunk = pocl_alloc_buffer_from_region(&data->Dev->AllocRegion, mem_obj->size);
+  chunk = alloc_buffer(data->Dev->AllocRegions, mem_obj->size);
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
@@ -610,7 +626,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   // Additional space for a signal
   size_t extraAlloc = sizeof(uint32_t);
   chunk_info_t *chunk =
-     pocl_alloc_buffer_from_region(&data->Dev->AllocRegion, arg_size + extraAlloc);
+     pocl_alloc_buffer_from_region(data->Dev->AllocRegions, arg_size + extraAlloc);
   assert(chunk && "Failed to allocate signal/argument buffer");
 
   POCL_MSG_PRINT_INFO("accel: allocated 0x%zx bytes for signal/arguments "
