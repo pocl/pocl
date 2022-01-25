@@ -19,11 +19,17 @@ main(void)
         mgr.initialize(X, Y);
         unsigned long redpixels = 0;
         while (true) {
+            using clock_type = std::chrono::steady_clock;
+            using second_type = std::chrono::duration<double, std::ratio<1> >;
+
             for (size_t i = 0; i < X*Y; ++i)
                 framebuffer[i] = dist(mt);
             redpixels = 0;
+            std::chrono::time_point<clock_type> m_beg { clock_type::now() };
             mgr.processCameraFrame(reinterpret_cast<unsigned char*>(framebuffer), &redpixels);
-            std::cout << "FRAME red pixels: " << redpixels << "\n";
+            std::chrono::time_point<clock_type> m_end { clock_type::now() };
+            double diff = std::chrono::duration_cast<second_type>(m_end - m_beg).count();
+            std::cout << "FRAME red pixels: " << redpixels << " time: " << diff << "\n";
         }
     }
     catch (std::exception &e) {
