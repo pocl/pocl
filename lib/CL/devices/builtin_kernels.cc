@@ -5,8 +5,8 @@
 #include "builtin_kernels.hh"
 
 // Shortcut handles to make the descriptor list more compact.
-#define READ_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_CONST
-#define WRITE_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
+#define READ_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_CONST | CL_KERNEL_ARG_TYPE_RESTRICT
+#define WRITE_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_RESTRICT
 
 BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
                              {BIArg("char*", "input", READ_BUF),
@@ -23,9 +23,6 @@ BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
                              {BIArg("int*", "input", READ_BUF),
                               BIArg("int*", "input", READ_BUF)}),
                         BIKD(POCL_CDBI_COUNTRED, "pocl.countred",
-                             {BIArg("int*", "input", READ_BUF),
-                              BIArg("int*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_CUDA_TEST1, "pocl.cuda.test1",
                              {BIArg("int*", "input", READ_BUF),
                               BIArg("int*", "output", WRITE_BUF)}),
                               };

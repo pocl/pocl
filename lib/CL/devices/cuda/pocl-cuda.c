@@ -131,16 +131,6 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
 
-#define CHECK_NVPTX3(CODE, STR) \
-  do { \
-    nvPTXCompileResult result = CODE; \
-    if (result != NVPTXCOMPILE_SUCCESS) { \
-      const char *str = "NVPTX failed to execute " STR; \
-      POCL_ABORT ("%s", str);\
-    } \
-  } while(0)
-
-#define CHECK_NVPTX(C) CHECK_NVPTX3(C, #C)
 
 #define CUDA_BUILTIN_KERNELS 2
 static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.add32" };
@@ -303,6 +293,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->builtin_kernel_list[0] = 0;
   for (unsigned i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
      {
+       if (i>0)
+         strcat(dev->builtin_kernel_list, ";");
        strcat(dev->builtin_kernel_list, CudaBuiltinKernels[i]);
      }
 
@@ -1069,13 +1061,16 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   return kdata;
 }
 
-/* both "pocl.mul32" and "pocl.add32" builtin kernels have 3 arguments,
- * and all of them are pointers. The alignment requirements for the driver are:
- * "0" for pointer types
+/* The alignment requirements for the driver are:
+ * 0 for pointer types
  * "allocation size" for non-pointer types
+ *
  * ... see the code in pocl_cuda_get_ptr_arg_alignment()
+ *
+ * Since builtin kernels use pointers for all arguments (so far),
+ * we can use an array of zeros for alignments.
  */
-static size_t cuda_builtin_kernel_alignments[3] = {0, 0, 0};
+static size_t cuda_builtin_kernel_alignments[20] = {0};
 
 // https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage
 
@@ -1096,39 +1091,12 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
   char* ptx_code = NULL;
   if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.ptx", &ptx_code, &ptx_code_len) < 0)
     POCL_ABORT ("can't find cuda builtins");
-  // nvPTXCompilerCreate ( nvPTXCompilerHandle* compiler, size_t ptxCodeLen, const char* ptxCode );
-  //nvPTXCompilerCompile ( nvPTXCompilerHandle compiler, int  numCompileOptions, const char** compileOptions )
-  CHECK_NVPTX (nvPTXCompilerCreate (&compiler, ptx_code_len, ptx_code));
-  char opt1[64];
-  strcat(opt1, "--gpu-name=");
-  strcat(opt1, dev->llvm_cpu);
-  const char* compile_options[] = { opt1,
-                                    "--verbose",
-                                    "--m64"
-                                    };
-
-  CHECK_NVPTX (nvPTXCompilerCompile (compiler, 2, compile_options ));
-  size_t elfSize = 0;
-  CHECK_NVPTX (nvPTXCompilerGetCompiledProgramSize(compiler, &elfSize));
-  char* elf = (char*) malloc(elfSize);
-  CHECK_NVPTX (nvPTXCompilerGetCompiledProgram(compiler, (void*)elf));
-
-  size_t errorSize = 0;
-  char* errorLog = NULL;
-  CHECK_NVPTX (nvPTXCompilerGetErrorLogSize(compiler, &errorSize));
-  if (errorSize != 0) {
-    errorLog = (char*)malloc(errorSize+1);
-    CHECK_NVPTX (nvPTXCompilerGetErrorLog(compiler, errorLog));
-    POCL_MSG_PRINT_CUDA ("NVPTX compilation log: %s\n", errorLog);
-    free(errorLog);
-  }
-  CHECK_NVPTX (nvPTXCompilerDestroy(&compiler));
 
   CUresult res;
   CUfunction ff;
   CUmodule mod;
-  res = cuModuleLoadDataEx(&mod, elf, 0, 0, 0);
-  CUDA_CHECK (res, "cuModuleLoadDataEx builtin");
+  res = cuModuleLoadData(&mod, ptx_code);
+  CUDA_CHECK (res, "cuModuleLoadData builtin");
 
   res = cuModuleGetFunction(&ff, mod, "pocl_mul32");
   CUDA_CHECK (res, "cuModuleGetFunction  pocl_mul32");
@@ -1146,7 +1114,6 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
   CudaBuiltinKernelsData[1].module_offsets = mod; // TODO fix this
   CudaBuiltinKernelsData[1].alignments = cuda_builtin_kernel_alignments;
 
-  free (elf);
   builtins_prepared = 1;
   return 0;
 }
