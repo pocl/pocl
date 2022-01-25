@@ -132,10 +132,10 @@ void pocl_accel_write(void *data, const void *__restrict__ src_host_ptr,
   AccelData *d = (AccelData *)data;
 
   if (d->Dev->DataMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to 0x%zu\n", size, dst);
+    POCL_MSG_PRINT_INFO("accel: Copying %zu bytes to 0x%zx\n", size, dst);
     d->Dev->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
   } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes to external 0x%zu\n", size, dst);
+    POCL_MSG_PRINT_INFO("accel: Copying %zu bytes to external 0x%zx\n", size, dst);
     d->Dev->ExternalMemory->CopyToMMAP(dst, src_host_ptr, size);
   } else {
     POCL_ABORT("Attempt to write data to outside the device memories\n");
@@ -150,10 +150,10 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
   AccelData *d = (AccelData *)data;
 
   if (d->Dev->DataMemory->isInRange(src)) {
-    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from 0x%zu\n", size, src);
+    POCL_MSG_PRINT_INFO("accel: Copying %zu bytes from 0x%zx\n", size, src);
     d->Dev->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
   } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(src)) {
-    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from external 0x%zu\n", size, src);
+    POCL_MSG_PRINT_INFO("accel: Copying 0x%zu bytes from external 0x%zx\n", size, src);
     d->Dev->ExternalMemory->CopyFromMMAP(dst_host_ptr, src, size);
   } else {
     POCL_ABORT("Attempt to write data to outside the device memories\n");
@@ -176,7 +176,7 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
   if (chunk == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  POCL_MSG_PRINT_MEMORY ("accel: allocated 0x%zu bytes from 0x%zu\n",
+  POCL_MSG_PRINT_MEMORY ("accel: allocated %zu bytes from 0x%zx\n",
                           mem_obj->size, chunk->start_address);
 
   p->mem_ptr = chunk;
@@ -194,7 +194,7 @@ void pocl_accel_free(cl_device_id device, cl_mem mem) {
   chunk_info_t *chunk =
       (chunk_info_t *)p->mem_ptr;
 
-  POCL_MSG_PRINT_MEMORY ("accel: freed 0x%zu bytes from 0x%zu\n",
+  POCL_MSG_PRINT_MEMORY ("accel: freed %zu bytes from 0x%zx\n",
                           mem->size, chunk->start_address);
 
   assert(chunk != NULL);
@@ -630,7 +630,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->program_device_i];
     packet.kernel_object = kd->kernel_address;
 
-    POCL_MSG_PRINT_INFO("Kernel addresss=%u\n", kd->kernel_address);
+    POCL_MSG_PRINT_INFO("Kernel addresss=0x%zx\n", kd->kernel_address);
   }
 
   if (data->Dev->RelativeAddressing) {
@@ -641,7 +641,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     packet.completion_signal = signalAddress;
   }
 
-  POCL_MSG_PRINT_INFO("ArgsAddress=%" PRIu64 " SignalAddress=%" PRIu64 "\n",
+  POCL_MSG_PRINT_INFO("ArgsAddress=0x%zx SignalAddress=0x%zx\n",
                       packet.kernarg_address, packet.completion_signal);
 
   POCL_LOCK(data->AQLQueueLock);

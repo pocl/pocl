@@ -163,11 +163,12 @@ void *emulate_accel(void *E_void) {
     POCL_MSG_PRINT_INFO("accel emulate: Found valid AQL_packet from location "
                         "%u, starting parsing:",
                         packet_loc);
-    POCL_MSG_PRINT_INFO("accel emulate: kernargs are at %" PRIu64 "\n",
+    POCL_MSG_PRINT_INFO("accel emulate: kernargs are at 0x%zx\n",
                         packet->kernarg_address);
     // Find the 3 pointers
     // Pointer size can be different on different systems
     // Also the endianness might need some attention in the real case.
+
     union args_u {
       uint32_t *ptrs[3];
       uint8_t values[3 * PTR_SIZE];
