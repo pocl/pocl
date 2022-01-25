@@ -30,6 +30,24 @@ BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
                               BIArg("int*", "output", WRITE_BUF)}),
                               };
 
+BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
+           const std::vector<pocl_argument_info> &ArgInfos)
+    : KernelId(KernelIdentifier) {
+
+  builtin_kernel = 1;
+  name = strdup(KernelName);
+  num_args = ArgInfos.size();
+  arg_info = new pocl_argument_info[num_args];
+  int i = 0;
+  for (auto ArgInfo : ArgInfos) {
+    arg_info[i] = ArgInfo;
+    arg_info[i].name = strdup(ArgInfo.name);
+    arg_info[i].type_name = strdup(ArgInfo.type_name);
+    ++i;
+  }
+}
+
+
 
 static cl_int
 pocl_get_builtin_kernel_metadata(cl_device_id dev,

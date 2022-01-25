@@ -43,6 +43,7 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <nvPTXCompiler.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -50,7 +51,7 @@
 #include <unistd.h>
 
 #define CUDA_BUILTIN_KERNELS 2
-static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.cuda.test1" };
+static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.add32" };
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -290,8 +291,13 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->has_64bit_long = 1;
 
-  dev->builtin_kernel_list = "pocl.cuda.test1;pocl.countred";
   dev->num_builtin_kernels = CUDA_BUILTIN_KERNELS;
+  dev->builtin_kernel_list = (char*)malloc(1024);
+  dev->builtin_kernel_list[0] = 0;
+  for (unsigned i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
+     {
+       strcat(dev->builtin_kernel_list, CudaBuiltinKernels[i]);
+     }
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
   result = cuDeviceGet (&data->device, j);
@@ -1056,7 +1062,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   return kdata;
 }
 
-static cuModule cuda_builtin_module = NULL;
+static CUModule cuda_builtin_module = NULL;
 static CUfunction cuda_builtin_kernels[CUDA_BUILTIN_KERNELS];
 
 // https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage

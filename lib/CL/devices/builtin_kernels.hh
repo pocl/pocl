@@ -58,22 +58,6 @@ struct BIKD : public pocl_kernel_metadata_t
   BuiltinKernelId KernelId;
 };
 
-BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
-           const std::vector<pocl_argument_info> &ArgInfos)
-    : KernelId(KernelIdentifier) {
-
-  builtin_kernel = 1;
-  name = strdup(KernelName);
-  num_args = ArgInfos.size();
-  arg_info = new pocl_argument_info[num_args];
-  int i = 0;
-  for (auto ArgInfo : ArgInfos) {
-    arg_info[i] = ArgInfo;
-    arg_info[i].name = strdup(ArgInfo.name);
-    arg_info[i].type_name = strdup(ArgInfo.type_name);
-    ++i;
-  }
-}
 
 #define BIKERNELS POCL_CDBI_LAST
 extern BIKD BIDescriptors[BIKERNELS];

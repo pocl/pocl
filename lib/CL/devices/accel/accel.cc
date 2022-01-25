@@ -54,8 +54,6 @@
 #include <string>
 #include <vector>
 
-#include "builtin_kernels.hh"
-
 extern int pocl_offline_compile;
 
 class SimpleSimulatorFrontend;
