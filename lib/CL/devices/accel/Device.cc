@@ -56,7 +56,7 @@ Device::discoverDeviceParameters()
       ControlMemory->Read64(ACCEL_INFO_FEATURE_FLAGS_LOW);
 
   //TODO read from hardware interface
-  PointerSize = 4;
+  PointerSize = sizeof(void*);
   // Turn on the relative addressing if the target has no axi master.
   RelativeAddressing = (feature_flags & ACCEL_FF_BIT_AXI_MASTER) ? (false) : (true);
   // Reset accelerator
