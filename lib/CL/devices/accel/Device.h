@@ -47,8 +47,9 @@ public:
   Region* InstructionMemory;
   Region* CQMemory;
   Region* DataMemory;
-  memory_region_t AllocRegion;
-  
+  Region* ExternalMemory = nullptr;
+  memory_region_t* AllocRegions;
+
   bool RelativeAddressing;
   int PointerSize = 0;
 

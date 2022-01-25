@@ -30,6 +30,7 @@ add_compile_options(${TCE_INCLUDES})
 set(ACCEL_SOURCES "accel-shared.h"
                   "accel.cc"
                   "accel.h"
+                  "Region.cc"
                   "Region.h"
                   "Device.cc"
                   "Device.h"

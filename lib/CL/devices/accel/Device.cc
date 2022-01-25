@@ -39,6 +39,10 @@ Device::~Device(){
   delete InstructionMemory;
   delete CQMemory;
   delete DataMemory;
+  memory_region_t *el,*tmp;
+  LL_FOREACH_SAFE(AllocRegions, el, tmp) {
+    free(el);
+  }
 }
 
 void
@@ -79,8 +83,8 @@ Device::discoverDeviceParameters()
     imem_size, dmem_size);
     POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu\n",ControlMemory->PhysAddress);
 
-
-    pocl_init_mem_region(&AllocRegion, dmem_start, dmem_size);
+    AllocRegions = (memory_region_t*)calloc(1, sizeof(memory_region_t));
+    pocl_init_mem_region(AllocRegions, dmem_start, dmem_size);
 
 }
 

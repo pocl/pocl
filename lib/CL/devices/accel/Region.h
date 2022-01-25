@@ -42,6 +42,8 @@ public:
                            size_t bytes) = 0;
   virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) = 0;
 
+  virtual bool isInRange(size_t dst);
+
   size_t PhysAddress;
   size_t Size;
 
