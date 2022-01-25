@@ -70,8 +70,9 @@ pocl_get_builtin_kernel_metadata(cl_device_id dev,
                sizeof(pocl_argument_info));
         target->arg_info[Arg].name = strdup(Desc->arg_info[Arg].name);
         target->arg_info[Arg].type_name = strdup(Desc->arg_info[Arg].type_name);
-        if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER)
-          target->arg_info[Arg].type_size = dev->address_bits / 8;
+        if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER ||
+            target->arg_info[Arg].type == POCL_ARG_TYPE_IMAGE)
+          target->arg_info[Arg].type_size = sizeof (cl_mem);
       }
 
       target->has_arg_metadata =

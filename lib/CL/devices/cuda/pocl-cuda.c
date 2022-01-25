@@ -45,14 +45,6 @@
 #include <cuda_runtime.h>
 #include <nvPTXCompiler.h>
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#define CUDA_BUILTIN_KERNELS 2
-static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.add32" };
-
 typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
@@ -138,6 +130,21 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
+
+#define CHECK_NVPTX3(CODE, STR) \
+  do { \
+    nvPTXCompileResult result = CODE; \
+    if (result != NVPTXCOMPILE_SUCCESS) { \
+      const char *str = "NVPTX failed to execute " STR; \
+      POCL_ABORT ("%s", str);\
+    } \
+  } while(0)
+
+#define CHECK_NVPTX(C) CHECK_NVPTX3(C, #C)
+
+#define CUDA_BUILTIN_KERNELS 2
+static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = { "pocl.mul32", "pocl.add32" };
+static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
 
 cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
                                                      cl_device_info param_name,
@@ -1062,8 +1069,13 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   return kdata;
 }
 
-static CUModule cuda_builtin_module = NULL;
-static CUfunction cuda_builtin_kernels[CUDA_BUILTIN_KERNELS];
+/* both "pocl.mul32" and "pocl.add32" builtin kernels have 3 arguments,
+ * and all of them are pointers. The alignment requirements for the driver are:
+ * "0" for pointer types
+ * "allocation size" for non-pointer types
+ * ... see the code in pocl_cuda_get_ptr_arg_alignment()
+ */
+static size_t cuda_builtin_kernel_alignments[3] = {0, 0, 0};
 
 // https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage
 
@@ -1071,31 +1083,72 @@ static CUfunction cuda_builtin_kernels[CUDA_BUILTIN_KERNELS];
 int
 pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
 {
+  static int builtins_prepared = 0;
   // build a program with builtin source
-  if (cuda_builtin_module != NULL)
+  if (builtins_prepared)
     return 0;
+  POCL_MSG_PRINT_CUDA ("preparing builtin kernels\n");
+  cl_device_id dev = program->devices[device_i];
 
-  nvPTXCompilerHandle nvptx_compiler = NULL;
+  nvPTXCompilerHandle compiler = NULL;
+  nvPTXCompileResult result;
+  uint64_t ptx_code_len = 0;
+  char* ptx_code = NULL;
+  if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.ptx", &ptx_code, &ptx_code_len) < 0)
+    POCL_ABORT ("can't find cuda builtins");
   // nvPTXCompilerCreate ( nvPTXCompilerHandle* compiler, size_t ptxCodeLen, const char* ptxCode );
   //nvPTXCompilerCompile ( nvPTXCompilerHandle compiler, int  numCompileOptions, const char** compileOptions )
-  nvPTXCompilerCreate (&compiler, ptx_code_len, ptx_code);
-  const char* compile_options[] = { "--gpu-name=sm_70",
-                                    "--verbose"
+  CHECK_NVPTX (nvPTXCompilerCreate (&compiler, ptx_code_len, ptx_code));
+  char opt1[64];
+  strcat(opt1, "--gpu-name=");
+  strcat(opt1, dev->llvm_cpu);
+  const char* compile_options[] = { opt1,
+                                    "--verbose",
+                                    "--m64"
                                     };
 
-  nvPTXCompilerCompile (compiler, 2, compile_options );
-
+  CHECK_NVPTX (nvPTXCompilerCompile (compiler, 2, compile_options ));
   size_t elfSize = 0;
-  nvPTXCompilerGetCompiledProgramSize(compiler, &elfSize);
+  CHECK_NVPTX (nvPTXCompilerGetCompiledProgramSize(compiler, &elfSize));
   char* elf = (char*) malloc(elfSize);
-  nvPTXCompilerGetCompiledProgram(compiler, (void*)elf);
+  CHECK_NVPTX (nvPTXCompilerGetCompiledProgram(compiler, (void*)elf));
 
-  cuModuleLoadDataEx(&cuda_builtin_module, elf, 0, 0, 0);
-  cuModuleGetFunction(&cuda_builtin_kernels[0], cuda_builtin_module, "");
-  cuModuleGetFunction(&cuda_builtin_kernels[0], cuda_builtin_module, "");
+  size_t errorSize = 0;
+  char* errorLog = NULL;
+  CHECK_NVPTX (nvPTXCompilerGetErrorLogSize(compiler, &errorSize));
+  if (errorSize != 0) {
+    errorLog = (char*)malloc(errorSize+1);
+    CHECK_NVPTX (nvPTXCompilerGetErrorLog(compiler, errorLog));
+    POCL_MSG_PRINT_CUDA ("NVPTX compilation log: %s\n", errorLog);
+    free(errorLog);
+  }
+  CHECK_NVPTX (nvPTXCompilerDestroy(&compiler));
 
-  nvPTXCompilerDestroy(&compiler);
+  CUresult res;
+  CUfunction ff;
+  CUmodule mod;
+  res = cuModuleLoadDataEx(&mod, elf, 0, 0, 0);
+  CUDA_CHECK (res, "cuModuleLoadDataEx builtin");
+
+  res = cuModuleGetFunction(&ff, mod, "pocl_mul32");
+  CUDA_CHECK (res, "cuModuleGetFunction  pocl_mul32");
+  CudaBuiltinKernelsData[0].kernel = ff;
+  CudaBuiltinKernelsData[0].kernel_offsets = ff; // TODO fix this
+  CudaBuiltinKernelsData[0].module = mod;
+  CudaBuiltinKernelsData[0].module_offsets = mod; // TODO fix this
+  CudaBuiltinKernelsData[0].alignments = cuda_builtin_kernel_alignments;
+
+  res = cuModuleGetFunction(&ff, mod, "pocl_add32");
+  CUDA_CHECK (res, "cuModuleGetFunction  pocl_add32");
+  CudaBuiltinKernelsData[1].kernel = ff;
+  CudaBuiltinKernelsData[1].kernel_offsets = ff; // TODO fix this
+  CudaBuiltinKernelsData[1].module = mod;
+  CudaBuiltinKernelsData[1].module_offsets = mod; // TODO fix this
+  CudaBuiltinKernelsData[1].alignments = cuda_builtin_kernel_alignments;
+
   free (elf);
+  builtins_prepared = 1;
+  return 0;
 }
 
 
@@ -1128,13 +1181,13 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   /* Get kernel function */
   if (prog->num_builtin_kernels > 0)
     {
-      module = cuda_builtin_module;
       for (size_t i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
         {
           if (strcmp(kernel->name, CudaBuiltinKernels[i]) == 0)
             {
-              function = builtin_kernels[i];
-              kdata = TODO;
+              function = CudaBuiltinKernelsData[i].kernel;
+              module = CudaBuiltinKernelsData[i].module;
+              kdata = &CudaBuiltinKernelsData[i];
               break;
             }
         }
