@@ -24,8 +24,9 @@
 #include "config.h"
 #include "pocl.h"
 
-#include <set>
 #include <iostream>
+#include <map>
+#include <set>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")

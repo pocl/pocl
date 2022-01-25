@@ -25,6 +25,8 @@
 
 #include "config.h"
 
+#include <map>
+
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 
