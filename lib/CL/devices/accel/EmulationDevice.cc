@@ -150,7 +150,7 @@ void *emulate_accel(void *E_void) {
     }
 
     // Compute packet location
-    uint32_t packet_loc = (read_iter & (queue_length - 1)) * AQL_PACKET_LENGTH;
+    uint32_t packet_loc = (read_iter % queue_length) * AQL_PACKET_LENGTH;
     struct AQLDispatchPacket *packet =
         (struct AQLDispatchPacket *)(CQ + AQL_PACKET_LENGTH/4 + packet_loc/4);
 
