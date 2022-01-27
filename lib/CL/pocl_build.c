@@ -856,25 +856,26 @@ compile_and_link_program(int compile_program,
     program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
   if (compile_program && !link_program)
     program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+  if (program->num_builtin_kernels > 0)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   assert(program->num_kernels == 0);
 
-  if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
+  /* for executables & programs with builtin kernels,
+   * setup the kernel metadata */
+  if (program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE
+      || program->binary_type == CL_PROGRAM_BINARY_TYPE_NONE)
     {
-      program->build_status = CL_BUILD_SUCCESS;
-      errcode = CL_SUCCESS;
-      goto FINISH;
-    }
+      errcode = setup_kernel_metadata (program);
+      if (errcode != CL_SUCCESS)
+        {
+          POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
+          goto ERROR;
+        }
 
-  errcode = setup_kernel_metadata (program);
-  if (errcode != CL_SUCCESS)
-    {
-      POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
-      goto ERROR;
+      if (program->builtin_kernel_names == NULL)
+        setup_device_kernel_hashes (program);
     }
-
-  if (program->builtin_kernel_names == NULL)
-    setup_device_kernel_hashes (program);
 
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
