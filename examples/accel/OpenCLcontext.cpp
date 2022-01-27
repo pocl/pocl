@@ -20,6 +20,11 @@
 
 #include "OpenCLcontext.h"
 
+#ifdef LIBCARLA_INCLUDED_FROM_UE4
+#include "carla/Debug.h"
+#include "carla/Logging.h"
+#endif
+
 static const char *PX_COUNT_SOURCE = R"(
 
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
@@ -79,9 +84,16 @@ __kernel void downsample_image(global const uchar4 *input, global uchar4* output
 
 #define OUTPUT_SIZE (cl::size_type)(sizeof(unsigned long)*64)
 
+#ifdef LIBCARLA_INCLUDED_FROM_UE4
+#define LOG_I(...) carla::log_info(__VA_ARGS__)
+#define LOG_D(...) carla::log_debug(__VA_ARGS__)
+#define LOG_E(...) carla::log_error(__VA_ARGS__)
+#else
 #define LOG_I(...)
 #define LOG_D(...)
 #define LOG_E(...)
+#endif
+
 
 #define CHECK_CL_ERROR(EXPR, ...) \
     if (EXPR != CL_SUCCESS) { LOG_E(__VA_ARGS__); return false; }
@@ -209,15 +221,11 @@ bool OpenCL_Context::initialize(unsigned width, unsigned height, unsigned bpp)
     if (ptr)
         SetBufferComPOCL = (clSetBufferCompressionPOCL_fn)ptr;
 #endif
-    ptr = clGetExtensionFunctionAddressForPlatform(platform(), "clEnqueueReadBufferContentPOCL");
-    if (ptr == nullptr)
-      LOG_I("platform doesn't support clEnqueueReadBufferContentPOCL\n");
-    else
 
     if (devices.size() == 1) {
         GpuDev = devices[0];
         FpgaDev = devices[0];
-    } else if (devices[0].getInfo<CL_DEVICE_TYPE>() & CL_DEVICE_TYPE_GPU) {
+    } else if (devices[1].getInfo<CL_DEVICE_TYPE>() & CL_DEVICE_TYPE_CUSTOM) {
         GpuDev = devices[0];
         FpgaDev = devices[1];
     } else {
@@ -317,20 +325,22 @@ bool OpenCL_Context::processCameraFrame(unsigned char* input, unsigned long *out
     if (err != CL_SUCCESS)
         return false;
 
+/*
     err = FpgaQueue.enqueueWriteBuffer(FpgaOutputBuffer, CL_FALSE, 0, sizeof(cl_ulong), output, nullptr, &ev3);
     if (err != CL_SUCCESS)
         return false;
+*/
 
     evts.clear();
     evts.push_back(ev2);
-    evts.push_back(ev3);
+//    evts.push_back(ev3);
     err = FpgaQueue.enqueueNDRangeKernel(FpgaKernel, Offset, Global, Local, &evts, &ev4);
     if (err != CL_SUCCESS)
         return false;
 
     evts.clear();
     evts.push_back(ev4);
-    err = GpuQueue.enqueueReadBuffer(FpgaOutputBuffer, CL_TRUE, 0, sizeof(unsigned long), output, &evts);
+    err = FpgaQueue.enqueueReadBuffer(FpgaOutputBuffer, CL_TRUE, 0, sizeof(unsigned long), output, &evts);
     if (err != CL_SUCCESS)
         return false;
 
