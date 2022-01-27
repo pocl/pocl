@@ -1076,27 +1076,29 @@ static size_t cuda_builtin_kernel_alignments[20] = {0};
 // https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage
 
 /* build a program with builtin kernels. */
-int
-pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
+
+static int
+pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
 {
-  static int builtins_prepared = 0;
-  // build a program with builtin source
-  if (builtins_prepared)
-    return 0;
-  POCL_MSG_PRINT_CUDA ("preparing builtin kernels\n");
+  POCL_MSG_PRINT_CUDA ("preparing CUDA builtin kernels\n");
   cl_device_id dev = program->devices[device_i];
 
   nvPTXCompilerHandle compiler = NULL;
   nvPTXCompileResult result;
-  uint64_t ptx_code_len = 0;
-  char* ptx_code = NULL;
-  if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.ptx", &ptx_code, &ptx_code_len) < 0)
-    POCL_ABORT ("can't find cuda builtins");
+
+  uint64_t builtins_file_len = 0;
+  char* builtins_file = NULL;
+  if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.ptx",
+                     &builtins_file, &builtins_file_len) < 0)
+    {
+      POCL_MSG_ERR ("can't find cuda builtins");
+      return -1;
+    }
 
   CUresult res;
   CUfunction ff;
   CUmodule mod;
-  res = cuModuleLoadData(&mod, ptx_code);
+  res = cuModuleLoadData(&mod, builtins_file);
   CUDA_CHECK (res, "cuModuleLoadData builtin");
 
   res = cuModuleGetFunction(&ff, mod, "pocl_mul_i32");
@@ -1123,6 +1125,59 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
   CudaBuiltinKernelsData[2].module_offsets = mod; // TODO fix this
   CudaBuiltinKernelsData[2].alignments = cuda_builtin_kernel_alignments;
 
+  return 0;
+}
+
+static int
+pocl_cuda_build_opencl_builtins (cl_program program, cl_uint device_i)
+{
+  int err;
+
+  POCL_MSG_PRINT_CUDA ("preparing OPENCL builtin kernels\n");
+  cl_device_id dev = program->devices[device_i];
+
+  assert (program->build_status == CL_BUILD_NONE);
+
+  uint64_t builtins_file_len = 0;
+  char* builtins_file = NULL;
+  if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.cl",
+                     &builtins_file, &builtins_file_len) < 0)
+    {
+      POCL_MSG_ERR ("CUDA: can't find opencl builtins");
+      return -1;
+    }
+
+  program->source = builtins_file;
+
+  err = pocl_llvm_build_program (program, device_i, 0, NULL, NULL, 1);
+  POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to build OpenCL builtins for CUDA\n");
+
+  // TODO we don't need to build kernels here, or do we ?
+/*
+  pocl_cuda_kernel_data_t *kdata;
+  kdata = load_or_generate_kernel (
+      kernel, device, 1, device_i, cmd, 1);
+  load_or_generate_kernel (
+      kernel, device, 1, device_i, cmd, 1);
+*/
+}
+
+
+int
+pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
+{
+  static int builtins_prepared = 0;
+  // build a program with builtin source
+  if (builtins_prepared)
+    return 0;
+
+  if (pocl_cuda_build_cuda_builtins (program, device_i) != 0)
+    return -1;
+/*
+  if (pocl_cuda_build_opencl_builtins (program, device_i) != 0)
+    return -1;
+*/
   builtins_prepared = 1;
   return 0;
 }
