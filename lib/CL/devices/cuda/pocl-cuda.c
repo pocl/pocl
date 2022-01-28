@@ -134,7 +134,7 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 
 #define CUDA_BUILTIN_KERNELS 3
 static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = {
-  "pocl.mul32", "pocl.add32", "pocl.dnn.conv2d_int8_relu" };
+  "pocl.mul.i32", "pocl.add.i32", "pocl.dnn.conv2d_int8_relu" };
 static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
 
 cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
@@ -1099,16 +1099,16 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
   res = cuModuleLoadData(&mod, ptx_code);
   CUDA_CHECK (res, "cuModuleLoadData builtin");
 
-  res = cuModuleGetFunction(&ff, mod, "pocl_mul32");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_mul32");
+  res = cuModuleGetFunction(&ff, mod, "pocl_mul_i32");
+  CUDA_CHECK (res, "cuModuleGetFunction  pocl_mul_i32");
   CudaBuiltinKernelsData[0].kernel = ff;
   CudaBuiltinKernelsData[0].kernel_offsets = ff; // TODO fix this
   CudaBuiltinKernelsData[0].module = mod;
   CudaBuiltinKernelsData[0].module_offsets = mod; // TODO fix this
   CudaBuiltinKernelsData[0].alignments = cuda_builtin_kernel_alignments;
 
-  res = cuModuleGetFunction(&ff, mod, "pocl_add32");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_add32");
+  res = cuModuleGetFunction(&ff, mod, "pocl_add_i32");
+  CUDA_CHECK (res, "cuModuleGetFunction  pocl_add_i32");
   CudaBuiltinKernelsData[1].kernel = ff;
   CudaBuiltinKernelsData[1].kernel_offsets = ff; // TODO fix this
   CudaBuiltinKernelsData[1].module = mod;

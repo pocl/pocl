@@ -8,9 +8,9 @@ enum BuiltinKernelId : uint16_t
   // CD = custom device, BI = built-in
   // 1D array byte copy, get_global_size(0) defines the size of data to copy
   // kernel prototype: pocl.copy(char *input, char *output)
-  POCL_CDBI_COPY = 0,
-  POCL_CDBI_ADD32 = 1,
-  POCL_CDBI_MUL32 = 2,
+  POCL_CDBI_COPY_I8 = 0,
+  POCL_CDBI_ADD_I32 = 1,
+  POCL_CDBI_MUL_I32 = 2,
   POCL_CDBI_LEDBLINK = 3,
   POCL_CDBI_COUNTRED = 4,
   POCL_CDBI_DNN_CONV2D_INT8_RELU = 5,
