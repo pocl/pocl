@@ -789,7 +789,7 @@ void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
       //POCL_MSG_PRINT_INFO("write_iter=%u, read_iter=%u length=%u", write_iter, read_iter, queue_length);
       read_iter = D->Dev->CQMemory->Read32(ACCEL_CQ_READ);
     }
-    uint32_t packet_loc = (write_iter & (queue_length - 1)) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
+    uint32_t packet_loc = (write_iter % queue_length) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
     D->Dev->CQMemory->CopyToMMAP(packet_loc + D->Dev->CQMemory->PhysAddress,
                                    &packet, 64);
 
