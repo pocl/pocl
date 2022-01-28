@@ -14,7 +14,10 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_LEDBLINK = 3,
   POCL_CDBI_COUNTRED = 4,
   POCL_CDBI_DNN_CONV2D_INT8_RELU = 5,
-  POCL_CDBI_LAST = 6,
+  POCL_CDBI_SGEMM_LOCAL_F32 = 6,
+  POCL_CDBI_SGEMM_TENSOR_F16F16F32_SCALE = 7,
+  POCL_CDBI_SGEMM_TENSOR_F16F16F32 = 8,
+  POCL_CDBI_LAST = 9,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
 
@@ -48,7 +51,8 @@ struct BIArg : public pocl_argument_info
 struct BIKD : public pocl_kernel_metadata_t
 {
   BIKD (BuiltinKernelId KernelId, const char *KernelName,
-        const std::vector<pocl_argument_info> &ArgInfos);
+        const std::vector<pocl_argument_info> &ArgInfos,
+        unsigned local_mem_size = 0);
 
   ~BIKD ()
   {
