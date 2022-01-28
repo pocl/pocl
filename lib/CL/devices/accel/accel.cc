@@ -439,15 +439,41 @@ static void scheduleCommands(AccelData &D) {
     assert(pocl_command_is_ready(Node->event));
     assert(Node->event->status == CL_SUBMITTED);
 
-    POCL_UNLOCK(D.CommandListLock);
+    if (Node->type == CL_COMMAND_NDRANGE_KERNEL) {
+      pocl_update_event_running(Node->event);
 
-    pocl_exec_command(Node);
-    POCL_LOCK(D.CommandListLock);
+      submit_and_barrier((AccelData*)Node->device->data, Node);
+      submit_kernel_packet((AccelData*)Node->device->data, Node);
+
+      POCL_LOCK(runningLock);
+      DL_PREPEND(runningList, Node);
+      POCL_UNLOCK(runningLock);
+    } else {
+      POCL_UNLOCK(D.CommandListLock);
+      pocl_exec_command(Node);
+      POCL_LOCK(D.CommandListLock);
+    }
     CDL_DELETE(D.ReadyList, Node);
   }
 
   return;
 }
+
+bool only_custom_device_events_left(cl_event event) {
+  event_node* dep_event = event->wait_list;
+  while(dep_event) {
+      POCL_MSG_PRINT_INFO("Looking at event id=%" PRIu64 "\n", dep_event->event->id);
+      cl_device_type dev_type = dep_event->event->queue->device->type;
+      if (dev_type != CL_DEVICE_TYPE_CUSTOM || (dep_event->event->command->type != CL_COMMAND_NDRANGE_KERNEL)) {
+        POCL_MSG_PRINT_INFO("Found a dependent non-custom event, have to wait on this cmd\n");
+        return false;
+      }
+      dep_event = dep_event->next;
+  }
+  POCL_MSG_PRINT_INFO("No non-custom events left, let this cmd through\n");
+  return true;
+}
+
 
 void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
 
@@ -455,7 +481,7 @@ void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
 
   struct AccelData *D = (AccelData *)Node->device->data;
   
-  if (Node->type == CL_COMMAND_NDRANGE_KERNEL) {
+  if ((Node->type == CL_COMMAND_NDRANGE_KERNEL) && only_custom_device_events_left(Node->event)) {
     pocl_update_event_submitted(Node->event);
 
     POCL_UNLOCK_OBJ(Node->event);
@@ -485,14 +511,13 @@ void pocl_accel_join(cl_device_id Device, cl_command_queue /*CQ*/) {
   struct AccelData *D = (AccelData *)Device->data;
   POCL_LOCK(D->CommandListLock);
   while(D->CommandList || D->ReadyList) {
-    //scheduleCommands(*D);
+    scheduleCommands(*D);
  
     POCL_UNLOCK(D->CommandListLock);
     usleep(1000);
     POCL_LOCK(D->CommandListLock);
   }
 
-  //scheduleCommands(*D);
   POCL_UNLOCK(D->CommandListLock);
 
   _cl_command_node* Node;
@@ -532,20 +557,31 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
     return;
 
   if (Event->command->type != CL_COMMAND_NDRANGE_KERNEL) {
-  if (pocl_command_is_ready(Event)) {
-    if (Event->status == CL_QUEUED) {
-      pocl_update_event_submitted(Event);
-      POCL_LOCK(D.CommandListLock);
-      CDL_DELETE(D.CommandList, Node);
-      CDL_PREPEND(D.ReadyList, Node);
+    if (pocl_command_is_ready(Event)) {
+      if (Event->status == CL_QUEUED) {
+        pocl_update_event_submitted(Event);
+        POCL_LOCK(D.CommandListLock);
+        CDL_DELETE(D.CommandList, Node);
+        CDL_PREPEND(D.ReadyList, Node);
 
-      POCL_UNLOCK_OBJ(Node->event);
-      scheduleCommands(D);
-      POCL_LOCK_OBJ(Node->event);
-      POCL_UNLOCK(D.CommandListLock);
+        POCL_UNLOCK_OBJ(Node->event);
+        scheduleCommands(D);
+        POCL_LOCK_OBJ(Node->event);
+        POCL_UNLOCK(D.CommandListLock);
+        }
     }
-    return;
-  }
+  } else {
+    if (only_custom_device_events_left(Event)) {
+        pocl_update_event_submitted(Event);
+        POCL_LOCK(D.CommandListLock);
+        CDL_DELETE(D.CommandList, Node);
+        CDL_PREPEND(D.ReadyList, Node);
+
+        POCL_UNLOCK_OBJ(Node->event);
+        scheduleCommands(D);
+        POCL_LOCK_OBJ(Node->event);
+        POCL_UNLOCK(D.CommandListLock);
+    }
   }
 }
 
