@@ -436,7 +436,6 @@ static void scheduleCommands(AccelData &D) {
   _cl_command_node *Node;
   // Execute commands from ready list.
   while ((Node = D.ReadyList)) {
-    assert(pocl_command_is_ready(Node->event));
     assert(Node->event->status == CL_SUBMITTED);
 
     if (Node->type == CL_COMMAND_NDRANGE_KERNEL) {
@@ -448,12 +447,15 @@ static void scheduleCommands(AccelData &D) {
       POCL_LOCK(runningLock);
       DL_PREPEND(runningList, Node);
       POCL_UNLOCK(runningLock);
+      CDL_DELETE(D.ReadyList, Node);
     } else {
+      assert(pocl_command_is_ready(Node->event));
+
+      CDL_DELETE(D.ReadyList, Node);
       POCL_UNLOCK(D.CommandListLock);
       pocl_exec_command(Node);
       POCL_LOCK(D.CommandListLock);
     }
-    CDL_DELETE(D.ReadyList, Node);
   }
 
   return;
