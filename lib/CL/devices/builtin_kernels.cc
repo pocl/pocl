@@ -8,14 +8,14 @@
 #define READ_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_CONST | CL_KERNEL_ARG_TYPE_RESTRICT
 #define WRITE_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_RESTRICT
 
-BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
+BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
                              {BIArg("char*", "input", READ_BUF),
                               BIArg("char*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_ADD32, "pocl.add32",
+                        BIKD(POCL_CDBI_ADD_I32, "pocl.add.i32",
                              {BIArg("int*", "input1", READ_BUF),
                               BIArg("int*", "input2", READ_BUF),
                               BIArg("int*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_MUL32, "pocl.mul32",
+                        BIKD(POCL_CDBI_MUL_I32, "pocl.mul.i32",
                              {BIArg("int*", "input1", READ_BUF),
                               BIArg("int*", "input2", READ_BUF),
                               BIArg("int*", "output", WRITE_BUF)}),

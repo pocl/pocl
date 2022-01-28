@@ -1,12 +1,12 @@
 extern "C"
-__global__ void pocl_add32(unsigned *x, unsigned *y, unsigned *out)
+__global__ void pocl_add_i32(const int* __restrict x, const int* __restrict y, int* __restrict out)
 {
       size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
       out[tid] = x[tid] + y[tid];
 }
 
 extern "C"
-__global__ void pocl_mul32(unsigned *x, unsigned *y, unsigned *out)
+__global__ void pocl_mul_i32(const int* __restrict x, const int* __restrict y, int* __restrict out)
 {
       size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
       out[tid] = x[tid] * y[tid];
