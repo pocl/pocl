@@ -57,7 +57,7 @@ MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
 
 
     if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
-      char* region_params = strdup(pocl_get_string_option("POCL_ACCEL0_EXTERNALREGION","0,0"));
+      char* region_params = strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION","0,0"));
       char* save_ptr;
       char* param_token = strtok_r(region_params, ",", &save_ptr);
       size_t region_address = strtoul(param_token, NULL, 0);
