@@ -466,7 +466,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   if (!Device)
     Device = Command->device;
 
-  const char* Save;
+  char* Save;
   sanitize_builtin_kernel_name(Kernel, &Save);
 
   POCL_LOCK(Dev->tce_compile_lock);

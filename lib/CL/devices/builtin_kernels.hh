@@ -85,10 +85,10 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
                                 unsigned program_device_i);
 
 POCL_EXPORT
-int sanitize_builtin_kernel_name(cl_kernel kernel, const char** saved_name);
+int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name);
 
 POCL_EXPORT
-int restore_builtin_kernel_name(cl_kernel kernel, const char* saved_name);
+int restore_builtin_kernel_name(cl_kernel kernel, char* saved_name);
 
 #ifdef __cplusplus
 }
