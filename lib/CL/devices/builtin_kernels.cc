@@ -159,19 +159,20 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
 }
 
 
-int sanitize_builtin_kernel_name(cl_kernel kernel, const char** saved_name)
+int sanitize_builtin_kernel_name(cl_kernel kernel, char** saved_name)
 {
   *saved_name = nullptr;
   if (kernel->program->num_builtin_kernels)
     {
-      *saved_name = kernel->name;
+      *saved_name = kernel->meta->name;
       std::string name(kernel->name);
       for (BIKD& BI : BIDescriptors)
         {
           if (name.compare(BI.name) == 0)
             {
               std::replace(name.begin(), name.end(), '.', '_');
-              kernel->name = strdup(name.c_str());
+              kernel->meta->name = strdup(name.c_str());
+              kernel->name = kernel->meta->name;
               break;
             }
         }
@@ -179,12 +180,13 @@ int sanitize_builtin_kernel_name(cl_kernel kernel, const char** saved_name)
   return 0;
 }
 
-int restore_builtin_kernel_name(cl_kernel kernel, const char* saved_name)
+int restore_builtin_kernel_name(cl_kernel kernel, char* saved_name)
 {
   if (kernel->program->num_builtin_kernels)
     {
       std::free((void*)kernel->name);
-      kernel->name = saved_name;
+      kernel->meta->name = saved_name;
+      kernel->name = kernel->meta->name;
     }
   return 0;
 }
