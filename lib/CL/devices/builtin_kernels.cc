@@ -1,6 +1,8 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <cstdlib>
 
 #include "builtin_kernels.hh"
 
@@ -21,6 +23,9 @@ BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
                              {BIArg("int*", "input1", READ_BUF),
                               BIArg("int*", "input2", READ_BUF),
                               BIArg("int*", "output", WRITE_BUF)}),
+                        BIKD(POCL_CDBI_ABS_F32, "pocl.abs.f32",
+                             {BIArg("float*", "input", READ_BUF),
+                              BIArg("float*", "output", WRITE_BUF)}),
                         BIKD(POCL_CDBI_LEDBLINK, "pocl.ledblink",
                              {BIArg("int*", "input1", READ_BUF),
                               BIArg("int*", "input2", READ_BUF)}),
@@ -77,6 +82,7 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
   num_args = ArgInfos.size();
   arg_info = new pocl_argument_info[num_args];
   int i = 0;
+  data = NULL;
 
   if (local_mem_size > 0)
     { num_locals = 1; local_sizes = new size_t[1]; local_sizes[0] = local_mem_size; }
@@ -144,8 +150,41 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
       pocl_get_builtin_kernel_metadata(device,
                                        program->builtin_kernel_names[i],
                                        &program->kernel_meta[i]);
+      program->kernel_meta[i].data =
+          (void**)calloc(program->num_devices, sizeof(void*));
     }
   }
 
   return 1;
+}
+
+
+int sanitize_builtin_kernel_name(cl_kernel kernel, const char** saved_name)
+{
+  *saved_name = nullptr;
+  if (kernel->program->num_builtin_kernels)
+    {
+      *saved_name = kernel->name;
+      std::string name(kernel->name);
+      for (BIKD& BI : BIDescriptors)
+        {
+          if (name.compare(BI.name) == 0)
+            {
+              std::replace(name.begin(), name.end(), '.', '_');
+              kernel->name = strdup(name.c_str());
+              break;
+            }
+        }
+    }
+  return 0;
+}
+
+int restore_builtin_kernel_name(cl_kernel kernel, const char* saved_name)
+{
+  if (kernel->program->num_builtin_kernels)
+    {
+      std::free((void*)kernel->name);
+      kernel->name = saved_name;
+    }
+  return 0;
 }
