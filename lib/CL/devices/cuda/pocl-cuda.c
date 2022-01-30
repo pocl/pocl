@@ -38,7 +38,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-
+#include "builtin_kernels.hh"
 #include <string.h>
 
 #include <cuda.h>
@@ -139,6 +139,12 @@ static const char* CudaBuiltinKernels[CUDA_BUILTIN_KERNELS] = {
   "pocl.sgemm.local.f32", "pocl.sgemm.tensor.f16f16f32",
   "pocl.sgemm_ab.tensor.f16f16f32" };
 static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
+
+#define OPENCL_BUILTIN_KERNELS 1
+static const char* OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
+  "pocl.abs.f32", };
+static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
+
 
 cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
                                                      cl_device_info param_name,
@@ -418,6 +424,12 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
           if (i>0)
             strcat(dev->builtin_kernel_list, ";");
           strcat(dev->builtin_kernel_list, CudaBuiltinKernels[i]);
+        }
+      dev->num_builtin_kernels += OPENCL_BUILTIN_KERNELS;
+      for (unsigned i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
+        {
+          strcat(dev->builtin_kernel_list, ";");
+          strcat(dev->builtin_kernel_list, OpenclBuiltinKernels[i]);
         }
     }
 
@@ -1200,18 +1212,9 @@ pocl_cuda_build_opencl_builtins (cl_program program, cl_uint device_i)
 
   program->source = builtins_file;
 
-  err = pocl_llvm_build_program (program, device_i, 0, NULL, NULL, 1);
+  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
   POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
                         "failed to build OpenCL builtins for CUDA\n");
-
-  // TODO we don't need to build kernels here, or do we ?
-/*
-  pocl_cuda_kernel_data_t *kdata;
-  kdata = load_or_generate_kernel (
-      kernel, device, 1, device_i, cmd, 1);
-  load_or_generate_kernel (
-      kernel, device, 1, device_i, cmd, 1);
-*/
   return 0;
 }
 
@@ -1226,10 +1229,10 @@ pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
 
   if (pocl_cuda_build_cuda_builtins (program, device_i) != 0)
     return -1;
-/*
+
   if (pocl_cuda_build_opencl_builtins (program, device_i) != 0)
     return -1;
-*/
+
   builtins_prepared = 1;
   return 0;
 }
@@ -1260,10 +1263,11 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
   CUmodule module = NULL;
   CUfunction function = NULL;
-  pocl_cuda_kernel_data_t *kdata;
+  pocl_cuda_kernel_data_t *kdata = NULL;
   /* Get kernel function */
   if (prog->num_builtin_kernels > 0)
     {
+      /* CUDA builtins */
       for (size_t i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
         {
           if (strcmp(kernel->name, CudaBuiltinKernels[i]) == 0)
@@ -1274,6 +1278,31 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               break;
             }
         }
+      /* OpenCL builtins. TODO we just assign OpenclBuiltinKernelsData[i] here,
+       * it could be assigned to multiple kernel objects with same name. currently
+       * won't crash because it's not freed, but should be refcounted & freed */
+      if (kdata == NULL)
+      {
+          for (size_t i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
+            {
+              if (strcmp(kernel->name, OpenclBuiltinKernels[i]) == 0)
+                {
+
+                  pocl_kernel_metadata_t *meta = kernel->meta;
+                  assert (meta->data != NULL);
+                  meta->data[cmd->program_device_i] = &OpenclBuiltinKernelsData[i];
+                  const char* saved_name = NULL;
+                  sanitize_builtin_kernel_name (kernel, &saved_name);
+                  kdata = load_or_generate_kernel (kernel, device, has_offsets,
+                                           cmd->program_device_i, cmd, 1);
+                  assert (kdata == meta->data[cmd->program_device_i]);
+                  assert (kdata == &OpenclBuiltinKernelsData[i]);
+                  module = has_offsets ? kdata->module_offsets : kdata->module;
+                  function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
+                  restore_builtin_kernel_name (kernel, saved_name);
+                }
+            }
+      }
     }
   else
     {

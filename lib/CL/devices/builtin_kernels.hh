@@ -1,6 +1,11 @@
 #include "pocl_cl.h"
 #include "pocl_export.h"
 
+#ifndef POCL_BUILTIN_KERNELS_H
+#define POCL_BUILTIN_KERNELS_H
+
+#ifdef __cplusplus
+
 #include <vector>
 
 enum BuiltinKernelId : uint16_t
@@ -17,7 +22,8 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_SGEMM_LOCAL_F32 = 6,
   POCL_CDBI_SGEMM_TENSOR_F16F16F32_SCALE = 7,
   POCL_CDBI_SGEMM_TENSOR_F16F16F32 = 8,
-  POCL_CDBI_LAST = 9,
+  POCL_CDBI_ABS_F32 = 9,
+  POCL_CDBI_LAST = 10,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
 
@@ -67,8 +73,26 @@ struct BIKD : public pocl_kernel_metadata_t
 #define BIKERNELS POCL_CDBI_LAST
 POCL_EXPORT extern BIKD BIDescriptors[BIKERNELS];
 
-extern "C" {
+#endif // #ifdef __cplusplus
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 POCL_EXPORT
 int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
                                 unsigned program_device_i);
+
+POCL_EXPORT
+int sanitize_builtin_kernel_name(cl_kernel kernel, const char** saved_name);
+
+POCL_EXPORT
+int restore_builtin_kernel_name(cl_kernel kernel, const char* saved_name);
+
+#ifdef __cplusplus
 }
+#endif
+
+
+#endif
