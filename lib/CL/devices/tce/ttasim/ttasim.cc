@@ -65,6 +65,7 @@
 #include "common_driver.h"
 
 #define DEFAULT_WG_SIZE 64
+#define MAX_WG_SIZE 4096
 
 using namespace TTAMachine;
 
@@ -625,10 +626,11 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 
   int max_wg
       = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
-  assert (max_wg > 0);
-  max_wg = std::min (max_wg, DEFAULT_WG_SIZE);
   if (max_wg < 0)
     max_wg = DEFAULT_WG_SIZE;
+  if (max_wg > MAX_WG_SIZE)
+    max_wg = DEFAULT_WG_SIZE;
+
 
   dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
       = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
