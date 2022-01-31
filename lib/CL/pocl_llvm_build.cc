@@ -355,14 +355,14 @@ int pocl_llvm_build_program(cl_program program,
 
   POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
 
-  char replace_me = 0;
+  char WSReplacementChar = 0;
 
   char *temp_options = (char *) malloc (ss.str().length() + 1);
 
   memset (temp_options, 0, ss.str().length() + 1);
   strncpy (temp_options, ss.str().c_str(), ss.str().length());
 
-  if (pocl_escape_quoted_whitespace (temp_options, &replace_me) == -1)
+  if (pocl_escape_quoted_whitespace (temp_options, &WSReplacementChar) == -1)
   {
     POCL_MEM_FREE (temp_options);
     return CL_INVALID_BUILD_OPTIONS;
@@ -377,11 +377,11 @@ int pocl_llvm_build_program(cl_program program,
   while (iss >> s)
   {
     // if needed, put back whitespace
-    if (replace_me != 0)
+    if (WSReplacementChar != 0)
     {
-      if (s.find(replace_me) != std::string::npos)
+      if (s.find(WSReplacementChar) != std::string::npos)
       {
-        std::replace(s.begin(), s.end(), replace_me, ' ');
+        std::replace(s.begin(), s.end(), WSReplacementChar, ' ');
       }
     }
 
