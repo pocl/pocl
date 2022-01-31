@@ -44,10 +44,10 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -978,34 +978,37 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   else
     {
       struct stat st;
-      stat(ptx_filename, &st);
+      stat (ptx_filename, &st);
 
-      const int fd = open(ptx_filename, O_RDONLY);
-      assert(fd != -1);
+      const int fd = open (ptx_filename, O_RDONLY);
+      assert (fd != -1);
 
-      char *buffer = (char *)malloc(st.st_size + 1);
-      const ssize_t r = read(fd, buffer, st.st_size);
-      assert(r == st.st_size);
+      char *buffer = (char *)malloc (st.st_size + 1);
+      const ssize_t r = read (fd, buffer, st.st_size);
+      assert (r == st.st_size);
 
       buffer[r] = '\0';
-      close(fd);
+      close (fd);
 
       unsigned int log_size = 1 << 12;
-      char *log = (char*)malloc(log_size);
+      char *log = (char *)malloc (log_size);
 
-      CUjit_option opt[] = { CU_JIT_ERROR_LOG_BUFFER, CU_JIT_ERROR_LOG_BUFFER_SIZE_BYTES };
-      void* val[] = { log, (void *)log_size };
-      result = cuModuleLoadDataEx(&module, buffer, sizeof(opt) / sizeof(opt[0]), opt, val);
+      CUjit_option opt[]
+          = { CU_JIT_ERROR_LOG_BUFFER, CU_JIT_ERROR_LOG_BUFFER_SIZE_BYTES };
+      void *val[] = { log, (void *)log_size };
+      result = cuModuleLoadDataEx (&module, buffer,
+                                   sizeof (opt) / sizeof (opt[0]), opt, val);
 
-      unsigned int out_size = (unsigned int) val[1];
+      unsigned int out_size = (unsigned int)val[1];
 
       if (out_size > 0 || result != CUDA_SUCCESS)
-        POCL_MSG_PRINT_CUDA("cuModuleLoadDataEx(%s) log: %s\n", ptx_filename, log);
+        POCL_MSG_PRINT_CUDA ("cuModuleLoadDataEx(%s) log: %s\n", ptx_filename,
+                             log);
 
       CUDA_CHECK (result, "cuModuleLoadDataEx");
 
-      free(log);
-      free(buffer);
+      free (log);
+      free (buffer);
     }
 
   /* Get kernel function */
