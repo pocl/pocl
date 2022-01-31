@@ -230,7 +230,7 @@ typedef CL_API_ENTRY cl_command_queue
 #define CL_DEVICE_PCI_SLOT_ID_NV                    0x4009
 
 /* extension to cl_nv_device_attribute_query */
-#define CL_DEVICE_PCI_DOMAIN_ID_NV                  0x4010
+#define CL_DEVICE_PCI_DOMAIN_ID_NV                  0x400A
 
 /*********************************
 * cl_amd_device_attribute_query *
