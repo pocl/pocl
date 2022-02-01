@@ -48,41 +48,73 @@ Device::~Device(){
 void
 Device::discoverDeviceParameters()
 {
+  // Reset accelerator
+  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
 
   if (ControlMemory->Read32(ACCEL_INFO_CORE_COUNT) != 1) {
     POCL_ABORT_UNIMPLEMENTED("Multicore accelerators");
   }
-  uint64_t feature_flags =
-      ControlMemory->Read64(ACCEL_INFO_FEATURE_FLAGS_LOW);
 
-  //TODO read from hardware interface
-  PointerSize = sizeof(void*);
-  // Turn on the relative addressing if the target has no axi master.
-  RelativeAddressing = (feature_flags & ACCEL_FF_BIT_AXI_MASTER) ? (false) : (true);
-  // Reset accelerator
-  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
+  uint32_t interface_version = ControlMemory->Read32(ACCEL_INFO_IF_TYPE); 
 
-  imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE);
-  cq_size = ControlMemory->Read32(ACCEL_INFO_CQMEM_SIZE_LOW);
-  dmem_size = ControlMemory->Read32(ACCEL_INFO_DMEM_SIZE_LOW);
+  if (interface_version == ALMAIF_VERSION_2) {
+    /*Only AamuDSP should be using the old interface, if somethine else is,
+     * you should modify this part to be more generic
+    The mmap for opencl use case goes like this:
+    BaseAddress                                       -->ControlMemory
+    BaseAddress + segment_size                        --> Imem
+    BaseAddress + 3*segment_size                      --> Dmem (for buffers)
+    BaseAddress + 3*segment_size + Dmem_size/2 - 4*64 --> Cqmem
+    BaseAddress + 3*segment_size + Dmem_size/2        --> Local scratchpad memory for stack etc
+    Where segment_size = 0x10000 (size of imem)
+    */
+    imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE_LEGACY);
+    //cq_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
+    cq_size = 4*64;
+    //dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
+    dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY) / 2 - cq_size;
+    PointerSize = 4;
+    RelativeAddressing = false;
 
-  imem_start = ControlMemory->Read64(ACCEL_INFO_IMEM_START_LOW);
-  cq_start = ControlMemory->Read64(ACCEL_INFO_CQMEM_START_LOW);
-  dmem_start = ControlMemory->Read64(ACCEL_INFO_DMEM_START_LOW);
-
-  if (RelativeAddressing) {
-    POCL_MSG_PRINT_INFO("Accel: Enabled relative addressing\n");
+    uint32_t segment_size = imem_size;
+    imem_start = segment_size;
+    dmem_start = 3*segment_size;
+    cq_start = dmem_start + dmem_size;
     cq_start += ControlMemory->PhysAddress;
     imem_start += ControlMemory->PhysAddress;
     dmem_start += ControlMemory->PhysAddress;
   }
+  else if (interface_version == ALMAIF_VERSION_3) {
+    uint64_t feature_flags =
+        ControlMemory->Read64(ACCEL_INFO_FEATURE_FLAGS_LOW);
 
+    PointerSize = ControlMemory->Read32(ACCEL_INFO_PTR_SIZE);
+    // Turn on the relative addressing if the target has no axi master.
+    RelativeAddressing = (feature_flags & ACCEL_FF_BIT_AXI_MASTER) ? (false) : (true);
+
+    imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE);
+    cq_size = ControlMemory->Read32(ACCEL_INFO_CQMEM_SIZE_LOW);
+    dmem_size = ControlMemory->Read32(ACCEL_INFO_DMEM_SIZE_LOW);
+
+    imem_start = ControlMemory->Read64(ACCEL_INFO_IMEM_START_LOW);
+    cq_start = ControlMemory->Read64(ACCEL_INFO_CQMEM_START_LOW);
+    dmem_start = ControlMemory->Read64(ACCEL_INFO_DMEM_START_LOW);
+
+    if (RelativeAddressing) {
+      POCL_MSG_PRINT_INFO("Accel: Enabled relative addressing\n");
+      cq_start += ControlMemory->PhysAddress;
+      imem_start += ControlMemory->PhysAddress;
+      dmem_start += ControlMemory->PhysAddress;
+    }
+
+  } else {
+    POCL_ABORT_UNIMPLEMENTED("Unsupported AlmaIF version\n");
+  }
     POCL_MSG_PRINT_INFO("cq_start=%p imem_start=%p dmem_start=%p\n",
     (void*)cq_start,(void*)imem_start,(void*)dmem_start);
     POCL_MSG_PRINT_INFO("cq_size=%u imem_size=%u dmem_size=%u\n",cq_size,
     imem_size, dmem_size);
     POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu\n",ControlMemory->PhysAddress);
-
     AllocRegions = (memory_region_t*)calloc(1, sizeof(memory_region_t));
     pocl_init_mem_region(AllocRegions, dmem_start, dmem_size);
 

@@ -100,7 +100,7 @@ void *emulate_accel(void *E_void) {
   // Set initial values for info registers:
   Control[ACCEL_INFO_DEV_CLASS / 4] = 0xE; // Unused
   Control[ACCEL_INFO_DEV_ID / 4] = 0;      // Unused
-  Control[ACCEL_INFO_IF_TYPE / 4] = 1;
+  Control[ACCEL_INFO_IF_TYPE / 4] = 3;
   Control[ACCEL_INFO_CORE_COUNT / 4] = 1;
   Control[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
 
@@ -202,13 +202,13 @@ void *emulate_accel(void *E_void) {
           int idx = x * dim_y * dim_z + y * dim_z + z;
           // Do the operation based on the kernel_object (integer id)
           switch (packet->kernel_object) {
-          case (POCL_CDBI_COPY):
+          case (POCL_CDBI_COPY_I8):
             arg1[idx] = arg0[idx];
             break;
-          case (POCL_CDBI_ADD32):
+          case (POCL_CDBI_ADD_I32):
             arg2[idx] = arg0[idx] + arg1[idx];
             break;
-          case (POCL_CDBI_MUL32):
+          case (POCL_CDBI_MUL_I32):
             arg2[idx] = arg0[idx] * arg1[idx];
             break;
           case (POCL_CDBI_COUNTRED):
