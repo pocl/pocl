@@ -131,7 +131,7 @@ pocl.
 
  The old way (setting POCL_DEBUG to 1) has been updated to support categories.
  Using this limits the amount of debug messages produced. Current options are:
- error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,all.
+ error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,cuda,vulkan,proxy,all.
  Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
 - **POCL_SIGUSR2_HANDLER**
