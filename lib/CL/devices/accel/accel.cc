@@ -238,8 +238,36 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->available = CL_TRUE;
   dev->extensions = "";
   dev->profile = "FULL_PROFILE";
+
+  dev->profiling_timer_resolution = 1000;
+  dev->profile = "EMBEDDED_PROFILE";
+  // TODO not sure about these 2
   dev->max_mem_alloc_size = 100 * 1024 * 1024;
   dev->mem_base_addr_align = 16;
+  dev->max_constant_buffer_size = 32768;
+  dev->local_mem_size = 16384;
+  dev->max_work_item_dimensions = 3;
+  // kernel param size. this is a bit arbitrary
+  dev->max_parameter_size = 64;
+  dev->address_bits = 32;
+  // This would be more logical as a per builtin kernel value?
+  // there is a way to query it: clGetKernelWorkGroupInfo
+  /*
+   * CL_​KERNEL_​GLOBAL_​WORK_​SIZE
+   * query the maximum global size that can be used to execute a kernel
+   * (i.e. global_work_size argument to clEnqueueNDRangeKernel) on a custom device
+   *
+   * CL_​KERNEL_​WORK_​GROUP_​SIZE
+   * query the maximum workgroup size that can be used to execute the kernel
+   * on a specific device given by device.
+   */
+  // Either way, the minimum is 3 for a device
+  dev->max_work_item_dimensions = 3;
+  dev->max_work_group_size = dev->max_work_item_sizes[0] =
+      dev->max_work_item_sizes[1] = dev->max_work_item_sizes[2] = 1024;
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
+      dev->max_work_item_sizes[2] = dev->max_work_group_size = 64;
+  dev->preferred_wg_size_multiple = 8;
 
   AccelData *D = new AccelData;
   dev->data = (void *)D;
@@ -290,6 +318,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   dev->builtin_kernel_list = strdup(supportedList.c_str());
   dev->num_builtin_kernels = D->SupportedKernels.size();
+
   if (enable_compilation) {
 
     dev->compiler_available = CL_TRUE;
@@ -314,6 +343,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 #endif
     } else if (D->BaseAddress == 0xB) {
       D->Dev = new TTASimDevice(xrt_kernel_name);
+      enable_compilation = true;
     } else {
       D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
     }
@@ -336,6 +366,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   } else {
     POCL_MSG_PRINT_INFO("Starting offline compilation device initialization\n");
   }
+
   if (enable_compilation) {
     char adf_file[200];
     snprintf(adf_file, 200, "%s.adf", xrt_kernel_name);
@@ -367,12 +398,6 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   // Lift accelerator reset
   D->Dev->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
-
-  // This would be more logical as a per builtin kernel value?
-  // Either way, the minimum is 3 for a device
-  dev->max_work_item_dimensions = 3;
-  dev->max_work_group_size = dev->max_work_item_sizes[0] =
-      dev->max_work_item_sizes[1] = dev->max_work_item_sizes[2] = 1024;
 
   D->ReadyList = NULL;
   D->CommandList = NULL;

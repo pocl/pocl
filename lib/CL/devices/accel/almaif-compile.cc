@@ -10,7 +10,7 @@
 #include "common_driver.h"
 
 // TODO TCE SPECIFIC
-//#define ENABLE_COMPILER
+#define ENABLE_COMPILER
 #ifdef ENABLE_COMPILER
 #include "almaif-compile-tce.h"
 #endif
@@ -41,8 +41,6 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->half_fp_config = CL_FP_ROUND_TO_ZERO;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
   dev->double_fp_config = 0;
-  dev->profiling_timer_resolution = 1000;
-  dev->profile = "EMBEDDED_PROFILE";
   dev->llvm_target_triplet = NULL;
   dev->llvm_cpu = NULL;
   dev->has_64bit_long = 0;
@@ -58,24 +56,9 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->args_as_id = TTA_ASID_GLOBAL;
   dev->context_as_id = TTA_ASID_GLOBAL;
 
-  // TODO not sure about these 2
-  dev->max_constant_buffer_size = 32768;
-  dev->local_mem_size = 16384;
-
-  dev->max_work_item_dimensions = 3;
   dev->final_linkage_flags = NULL;
 
-  // kernel param size. this is a bit arbitrary
-  dev->max_parameter_size = 64;
-  dev->address_bits = 32;
-  dev->mem_base_addr_align = 16;
   d->compilationData->current_kernel = NULL;
-
-  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
-      dev->max_work_item_sizes[2] = dev->max_work_group_size = 64;
-
-  dev->preferred_wg_size_multiple = 8;
-
   SETUP_DEVICE_CL_VERSION(1, 2);
 
   //dev->available = CL_TRUE;
