@@ -82,6 +82,7 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
     device->llvm_target_triplet = "tce-tut-llvm";
   device->llvm_cpu = NULL;
   d->compilationData->backend_data = (void *)bd;
+  device->builtins_sources_path = "tce_builtins.cl";
 
   return 0;
 }

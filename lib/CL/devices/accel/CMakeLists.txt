@@ -83,3 +83,6 @@ endif()
 if(ENABLE_TCE)
     target_link_libraries(pocl-devices-accel PRIVATE ${TCE_LIBS})
 endif()
+
+install(FILES "tce_builtins.cl"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/accel" COMPONENT "lib")
