@@ -56,15 +56,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "llvm/Support/Host.h"
 #endif
 
-#ifdef ENABLE_RELOCATION
-
-#if defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#endif
-#include <dlfcn.h>
-
-#endif
-
 #include <iostream>
 #include <sstream>
 #include <regex>
@@ -161,23 +152,6 @@ static void get_build_log(cl_program program,
 
 static llvm::Module *getKernelLibrary(cl_device_id device,
                                       PoclLLVMContextData *llvm_ctx);
-
-static std::string getPoclPrivateDataDir() {
-#ifdef ENABLE_RELOCATION
-    Dl_info info;
-    if (dladdr((void*)getPoclPrivateDataDir, &info)) {
-        char const * soname = info.dli_fname;
-        std::string result = std::string(soname);
-        size_t last_slash = result.rfind('/');
-        result = result.substr(0, last_slash+1);
-        if (result.size() > 0) {
-            result += POCL_INSTALL_PRIVATE_DATADIR_REL;
-            return result;
-        }
-    }
-#endif
-    return POCL_INSTALL_PRIVATE_DATADIR;
-}
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
@@ -479,7 +453,9 @@ int pocl_llvm_build_program(cl_program program,
   if (0) {
 #endif
   } else {
-    IncludeRoot = getPoclPrivateDataDir();
+    char temp[POCL_FILENAME_LENGTH];
+    pocl_get_private_datadir(temp);
+    IncludeRoot = temp;
 #ifdef ENABLE_RELOCATION
     ClangResourceDir = IncludeRoot;
 #endif
@@ -937,6 +913,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
 
   std::string kernellib;
   std::string kernellib_fallback;
+
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
@@ -944,9 +921,15 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     kernellib += subdir;
   } else // POCL_BUILDING == 0, use install dir
 #endif
-  kernellib = getPoclPrivateDataDir();
+  {
+    char temp[POCL_FILENAME_LENGTH];
+    pocl_get_private_datadir(temp);
+    kernellib = temp;
+  }
+
   kernellib += "/kernel-";
   kernellib += device->llvm_target_triplet;
+
   if (is_host) {
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS

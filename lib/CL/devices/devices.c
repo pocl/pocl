@@ -25,7 +25,6 @@
 #define _GNU_SOURCE
 
 #include <string.h>
-#include <ctype.h>
 
 #ifdef __linux__
 #include <limits.h>
@@ -336,16 +335,6 @@ pocl_get_device_type_count(cl_device_type device_type)
 }
 
 
-static inline void
-str_toupper(char *out, const char *in)
-{
-  int i;
-
-  for (i = 0; in[i] != '\0'; i++)
-    out[i] = toupper(in[i]);
-  out[i] = '\0';
-}
-
 cl_int
 pocl_uninit_devices ()
 {
@@ -598,7 +587,7 @@ pocl_init_devices ()
     {
       if (pocl_devices_init_ops[i] == NULL)
         continue;
-      str_toupper (dev_name, pocl_device_ops[i].device_name);
+      pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
