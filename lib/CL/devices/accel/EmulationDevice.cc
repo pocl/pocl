@@ -26,7 +26,9 @@
 #include "EmulationRegion.h"
 #include "accel-shared.h"
 
+#include <unistd.h>
 #include <iostream>
+
 
 EmulationDevice::EmulationDevice() {
 
@@ -150,9 +152,9 @@ void *emulate_accel(void *E_void) {
     }
 
     // Compute packet location
-    uint32_t packet_loc = (read_iter % queue_length) * AQL_PACKET_LENGTH;
+    uint32_t packet_loc = ((read_iter % queue_length) + 1) * AQL_PACKET_LENGTH;
     struct AQLDispatchPacket *packet =
-        (struct AQLDispatchPacket *)(CQ + AQL_PACKET_LENGTH/4 + packet_loc/4);
+        (struct AQLDispatchPacket *)(CQ + packet_loc/4);
 
     // The driver will mark the packet as not INVALID when it wants us to
     // compute it
@@ -160,79 +162,99 @@ void *emulate_accel(void *E_void) {
       continue;
     }
 
-    POCL_MSG_PRINT_INFO("accel emulate: Found valid AQL_packet from location "
-                        "%u, starting parsing:",
-                        packet_loc);
-    POCL_MSG_PRINT_INFO("accel emulate: kernargs are at 0x%zx\n",
-                        packet->kernarg_address);
-    // Find the 3 pointers
-    // Pointer size can be different on different systems
-    // Also the endianness might need some attention in the real case.
-
-    union args_u {
-      uint32_t *ptrs[3];
-      uint8_t values[3 * PTR_SIZE];
-    } args;
-    for (int i = 0; i < 3; i++) {
-      for (int k = 0; k < PTR_SIZE; k++) {
-        args.values[PTR_SIZE * i + k] =
-            *(uint8_t *)(packet->kernarg_address + PTR_SIZE * i + k);
+    uint16_t header = packet->header;
+    if (header & (1 << AQL_PACKET_BARRIER_AND)) {
+      struct AQLAndPacket *andPacket = (struct AQLAndPacket *)packet;
+      POCL_MSG_PRINT_INFO("accel emulate: Found valid AND packet from location "
+                          "%u, starting parsing:",
+                          packet_loc);
+      for (int i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
+        uint32_t *signal = (uint32_t *)(andPacket->dep_signals[i]);
+        if (signal != NULL) {
+          while (*signal == 0) {
+            usleep(100);
+          }
+        }
       }
+      POCL_MSG_PRINT_INFO("accel emulate: And packet done\n");
     }
-    uint32_t *arg0 = args.ptrs[0];
-    uint32_t *arg1 = args.ptrs[1];
-    uint32_t *arg2 = args.ptrs[2];
+    else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
+      POCL_MSG_PRINT_INFO("accel emulate: Found valid kernel dispatch packet from location "
+                          "%u, starting parsing:",
+                          packet_loc);
+      POCL_MSG_PRINT_INFO("accel emulate: kernargs are at 0x%zx\n",
+                          packet->kernarg_address);
+      // Find the 3 pointers
+      // Pointer size can be different on different systems
+      // Also the endianness might need some attention in the real case.
 
-    POCL_MSG_PRINT_INFO("accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n",
-                        arg0, arg1, arg2);
+      union args_u {
+        uint32_t *ptrs[3];
+        uint8_t values[3 * PTR_SIZE];
+      } args;
+      for (int i = 0; i < 3; i++) {
+        for (int k = 0; k < PTR_SIZE; k++) {
+          args.values[PTR_SIZE * i + k] =
+              *(uint8_t *)(packet->kernarg_address + PTR_SIZE * i + k);
+        }
+      }
+      uint32_t *arg0 = args.ptrs[0];
+      uint32_t *arg1 = args.ptrs[1];
+      uint32_t *arg2 = args.ptrs[2];
 
-    // Check how many dimensions are in use, and set the unused ones to 1.
-    int dim_x = packet->grid_size_x;
-    int dim_y = (packet->dimensions >= 2) ? (packet->grid_size_y) : 1;
-    int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
+      POCL_MSG_PRINT_INFO("accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n",
+                          arg0, arg1, arg2);
 
-    int red_count = 0;
-    POCL_MSG_PRINT_INFO(
-        "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)",
-        dim_x, dim_y, dim_z);
-    for (int x = 0; x < dim_x; x++) {
-      for (int y = 0; y < dim_y; y++) {
-        for (int z = 0; z < dim_z; z++) {
-          // Linearize grid
-          int idx = x * dim_y * dim_z + y * dim_z + z;
-          // Do the operation based on the kernel_object (integer id)
-          switch (packet->kernel_object) {
-          case (POCL_CDBI_COPY_I8):
-            arg1[idx] = arg0[idx];
-            break;
-          case (POCL_CDBI_ADD_I32):
-            arg2[idx] = arg0[idx] + arg1[idx];
-            break;
-          case (POCL_CDBI_MUL_I32):
-            arg2[idx] = arg0[idx] * arg1[idx];
-            break;
-          case (POCL_CDBI_COUNTRED):
-            uint32_t pixel = arg0[idx];
-            uint8_t pixel_r = pixel & 0xFF;
-            if (pixel_r > 100) {
-              red_count++;
+      // Check how many dimensions are in use, and set the unused ones to 1.
+      int dim_x = packet->grid_size_x;
+      int dim_y = (packet->dimensions >= 2) ? (packet->grid_size_y) : 1;
+      int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
+
+      int red_count = 0;
+      POCL_MSG_PRINT_INFO(
+          "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)",
+          dim_x, dim_y, dim_z);
+      for (int x = 0; x < dim_x; x++) {
+        for (int y = 0; y < dim_y; y++) {
+          for (int z = 0; z < dim_z; z++) {
+            // Linearize grid
+            int idx = x * dim_y * dim_z + y * dim_z + z;
+            // Do the operation based on the kernel_object (integer id)
+            switch (packet->kernel_object) {
+            case (POCL_CDBI_COPY_I8):
+              arg1[idx] = arg0[idx];
+              break;
+            case (POCL_CDBI_ADD_I32):
+              arg2[idx] = arg0[idx] + arg1[idx];
+              break;
+            case (POCL_CDBI_MUL_I32):
+              arg2[idx] = arg0[idx] * arg1[idx];
+              break;
+            case (POCL_CDBI_COUNTRED):
+              uint32_t pixel = arg0[idx];
+              uint8_t pixel_r = pixel & 0xFF;
+              if (pixel_r > 100) {
+                red_count++;
+              }
             }
           }
         }
       }
-    }
-    if (packet->kernel_object == POCL_CDBI_LEDBLINK) {
-      std::cout << "Emulation blinking " << dim_x << " led(s) at interval "
-                << arg0[0] << " us " << arg1[0] << " times" << std::endl;
-    }
-    if (packet->kernel_object == POCL_CDBI_COUNTRED) {
-      arg1[0] = red_count;
-    }
+      if (packet->kernel_object == POCL_CDBI_LEDBLINK) {
+        std::cout << "Emulation blinking " << dim_x << " led(s) at interval "
+                  << arg0[0] << " us " << arg1[0] << " times" << std::endl;
+      }
+      if (packet->kernel_object == POCL_CDBI_COUNTRED) {
+        arg1[0] = red_count;
+      }
 
-    POCL_MSG_PRINT_INFO("accel emulate: Kernel done");
+      POCL_MSG_PRINT_INFO("accel emulate: Kernel done");
+    }
 
     // Completion signal is given as absolute address
-    *(uint32_t *)packet->completion_signal = 1;
+    if (packet->completion_signal) {
+      *(uint32_t *)packet->completion_signal = 1;
+    }
     packet->header = AQL_PACKET_INVALID;
 
     read_iter++; // move on to the next AQL packet
