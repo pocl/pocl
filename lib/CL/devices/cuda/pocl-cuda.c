@@ -414,6 +414,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   if (ret != CL_INVALID_DEVICE && dev->compiler_available)
   {
       dev->num_builtin_kernels = CUDA_BUILTIN_KERNELS;
+      dev->builtins_sources_path = "builtins.cl";
       if (sm_maj < 7) {
         dev->num_builtin_kernels -= 2; // last two kernels require tensor cores
       }
@@ -1095,7 +1096,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   POCL_MSG_PRINT_CUDA ("preparing CUDA builtin kernels\n");
   cl_device_id dev = program->devices[device_i];
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
-  int have_tensors = (ddata->sm_maj >= 7);
+  int have_sm70 = (ddata->sm_maj >= 7);
 
   nvPTXCompilerHandle compiler = NULL;
   nvPTXCompileResult result;
@@ -1103,14 +1104,20 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   uint64_t builtins_file_len = 0;
   char* builtins_file = NULL;
   char builtin_path[POCL_FILENAME_LENGTH];
-  strcpy(builtin_path, SRCDIR);
-  if (have_tensors)
-    strcat(builtin_path,  "/lib/CL/devices/cuda/builtins_tensor.ptx");
+
+  char filename[64];
+  str_tolower (filename, dev->ops->device_name);
+  strcat(filename, "/");
+  if (have_sm70)
+    strcat(filename, "builtins_sm70.ptx");
   else
-    strcat(builtin_path,  "/lib/CL/devices/cuda/builtins.ptx");
+    strcat(filename, "builtins_sm50.ptx");
+
+  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices/", "", filename);
+
   if (pocl_read_file(builtin_path, &builtins_file, &builtins_file_len) < 0)
     {
-      POCL_MSG_ERR ("can't find cuda builtins");
+      POCL_MSG_ERR ("can't find cuda builtins in file %s\n", builtin_path);
       return -1;
     }
 
@@ -1165,7 +1172,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   static size_t sgemm_local_alignments[] = {0, 0, 0, 4, 4, 4,};
   CudaBuiltinKernelsData[3].alignments = sgemm_local_alignments;
 
-  if (have_tensors)
+  if (have_sm70)
   {
       res = cuModuleGetFunction(&ff, mod, "pocl_sgemm_tensor_f16f16f32");
       CUDA_CHECK (res, "cuModuleGetFunction  pocl_sgemm_tensor_f16f16f32");
@@ -1191,49 +1198,16 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   return 0;
 }
 
-static int
-pocl_cuda_build_opencl_builtins (cl_program program, cl_uint device_i)
-{
-  int err;
-
-  POCL_MSG_PRINT_CUDA ("preparing OPENCL builtin kernels\n");
-  cl_device_id dev = program->devices[device_i];
-
-  assert (program->build_status == CL_BUILD_NONE);
-
-  uint64_t builtins_file_len = 0;
-  char* builtins_file = NULL;
-  if (pocl_read_file(SRCDIR "/lib/CL/devices/cuda/builtins.cl",
-                     &builtins_file, &builtins_file_len) < 0)
-    {
-      POCL_MSG_ERR ("CUDA: can't find opencl builtins");
-      return -1;
-    }
-
-  program->source = builtins_file;
-
-  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
-  POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to build OpenCL builtins for CUDA\n");
-  return 0;
-}
-
 
 int
 pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
 {
-  static int builtins_prepared = 0;
-  // build a program with builtin source
-  if (builtins_prepared)
-    return 0;
-
   if (pocl_cuda_build_cuda_builtins (program, device_i) != 0)
     return -1;
 
-  if (pocl_cuda_build_opencl_builtins (program, device_i) != 0)
+  if (pocl_driver_build_opencl_builtins (program, device_i) != 0)
     return -1;
 
-  builtins_prepared = 1;
   return 0;
 }
 
@@ -1343,6 +1317,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               {
                 size_t size = arguments[i].size;
                 size_t align = kdata->alignments[i];
+                if (align < 1) align = 1;
 
                 /* Pad offset to align memory */
                 if (sharedMemBytes % align)
@@ -1431,6 +1406,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
         {
           size_t size = meta->local_sizes[i];
           size_t align = kdata->alignments[arg_index];
+          if (align < 1) align = 1;
 
           /* Pad offset to align memory */
           if (sharedMemBytes % align)
