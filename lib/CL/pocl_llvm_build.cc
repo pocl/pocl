@@ -357,18 +357,18 @@ int pocl_llvm_build_program(cl_program program,
 
   char WSReplacementChar = 0;
 
-  char *temp_options = (char *) malloc (ss.str().length() + 1);
+  char *WSTempOptions = (char *) malloc (ss.str().length() + 1);
 
-  memset (temp_options, 0, ss.str().length() + 1);
-  strncpy (temp_options, ss.str().c_str(), ss.str().length());
+  memset (WSTempOptions, 0, ss.str().length() + 1);
+  strncpy (WSTempOptions, ss.str().c_str(), ss.str().length());
 
-  if (pocl_escape_quoted_whitespace (temp_options, &WSReplacementChar) == -1)
+  if (pocl_escape_quoted_whitespace (WSTempOptions, &WSReplacementChar) == -1)
   {
-    POCL_MEM_FREE (temp_options);
+    POCL_MEM_FREE (WSTempOptions);
     return CL_INVALID_BUILD_OPTIONS;
   }
 
-  std::istringstream iss(temp_options);
+  std::istringstream iss(WSTempOptions);
   std::vector<const char *> itemcstrs;
   std::vector<std::string> itemstrs;
 
@@ -402,7 +402,7 @@ int pocl_llvm_build_program(cl_program program,
     itemcstrs.push_back(itemstrs[idx].c_str());
   }
 
-  POCL_MEM_FREE (temp_options);
+  POCL_MEM_FREE (WSTempOptions);
 
 #ifdef DEBUG_POCL_LLVM_API
   // TODO: for some reason the user_options are replicated,
