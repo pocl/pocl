@@ -32,7 +32,7 @@
 class Region
 {
 public:
-  virtual ~Region() = 0;
+  virtual ~Region();
   virtual uint32_t Read32 (size_t offset) = 0;
   virtual void Write32 (size_t offset, uint32_t value) = 0;
   virtual void Write16 (size_t offset, uint16_t value) = 0;

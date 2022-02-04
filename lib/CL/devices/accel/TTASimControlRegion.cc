@@ -6,7 +6,10 @@
 
 #include <SimpleSimulatorFrontend.hh>
 //#include <SimulatorFrontend.hh>
+#include <AddressSpace.hh>
 #include <Machine.hh>
+
+#include <math.h>
 
 //#define ACCEL_TTASIM_DEBUG
 
@@ -87,23 +90,66 @@ void TTASimControlRegion::CopyFromMMAP(void *destination, size_t source, size_t 
 
 void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
 {
-/*  const TTAMachine::Machine::AddressSpaceNavigator& nav =
-    mach->addressSpaceNavigator();
+  bool hasPrivateMem = false;
+  bool sharedDataAndCq = false;
+  bool relativeAddressing = true;
+  int dmem_size = 0;
+  int cq_size = 0;
+  const TTAMachine::Machine::AddressSpaceNavigator& nav =
+    mach.addressSpaceNavigator();
   for (int i = 0; i < nav.count(); i++){
-    if (nav.item(i) == instAddressSpace
-*/
+    TTAMachine::AddressSpace *as = nav.item(i);
+    if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
+      if (as->end() == UINT32_MAX) {
+        dmem_size = pow(2,16); //TODO magic number from almaifintegrator.cc (this one is from aamudsp)
+        relativeAddressing = false;
+      } else {
+        dmem_size = as->end() + 1;
+      }
+      if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+        sharedDataAndCq = true;
+      }
+    }
+    else if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+      cq_size = as->end() + 1;
+    }
+    else if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
+      hasPrivateMem = true;
+    }
+  }
+
+  int segment_size = dmem_size;
+
+  int dmem_start = 3*segment_size;
+          POCL_MSG_PRINT_INFO("segsize=%d, dmem_start=%d\n",segment_size,dmem_start);
+
+  int cq_start;
+  if (!hasPrivateMem) {
+    //No private mem, so the latter half of the dmem is reserved for it
+    dmem_size /= 2;
+  }
+  if(sharedDataAndCq) {
+    //No separate Cq so reserve small slice of dmem for it
+    cq_size = 4 * AQL_PACKET_LENGTH;
+    dmem_size -= cq_size;
+    cq_start = dmem_start + dmem_size;
+  } else {
+    cq_start = 2*segment_size;
+  }
   int imem_start = 0; 
-  int imem_size = 2048*4;
-  int cq_size = 128 + 64;
-  int dmem_size = 4096-cq_size;
-  int cq_start = dmem_size;
-  int dmem_start = 0;
+  int imem_size = 0;
+
+  if (!relativeAddressing) {
+    unsigned default_baseaddress = 0x43C00000; //TODO get from env variable
+    cq_start += default_baseaddress;
+    dmem_start += default_baseaddress;
+  }
 
   memset(ControlRegisters_, 0, ACCEL_DEFAULT_CTRL_SIZE);
 
   ControlRegisters_[ACCEL_INFO_DEV_CLASS / 4] = 0;
   ControlRegisters_[ACCEL_INFO_DEV_ID / 4] = 0;
-  ControlRegisters_[ACCEL_INFO_IF_TYPE / 4] = 2;
+  ControlRegisters_[ACCEL_INFO_IF_TYPE / 4] = 3;
   ControlRegisters_[ACCEL_INFO_CORE_COUNT / 4] = mach.coreCount();
   ControlRegisters_[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
   ControlRegisters_[ACCEL_INFO_IMEM_SIZE / 4] = imem_size;
@@ -112,7 +158,7 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
   ControlRegisters_[ACCEL_INFO_CQMEM_START_LOW / 4] = cq_start;
   ControlRegisters_[ACCEL_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
   ControlRegisters_[ACCEL_INFO_DMEM_START_LOW / 4] = dmem_start;
-  ControlRegisters_[ACCEL_INFO_FEATURE_FLAGS_LOW / 4] = 0;
+  ControlRegisters_[ACCEL_INFO_FEATURE_FLAGS_LOW / 4] = (relativeAddressing) ? 0 : 1;
   ControlRegisters_[ACCEL_INFO_PTR_SIZE / 4] = 4;
   
 }

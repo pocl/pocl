@@ -53,7 +53,9 @@
 #define __cq__ __attribute__ ((address_space (3)))
 #define __buffer__ __attribute__ ((address_space (1)))
 
+#ifndef QUEUE_START
 #define QUEUE_START 0
+#endif
 
 #ifndef _STANDALONE_MODE
 #define _STANDALONE_MODE 0
@@ -224,7 +226,7 @@ int main() {
   do {
     uint32_t packet_loc
       = QUEUE_START + AQL_PACKET_LENGTH
-      + ((read_iter & (QUEUE_LENGTH - 1)) * AQL_PACKET_LENGTH);
+      + ((read_iter % QUEUE_LENGTH) * AQL_PACKET_LENGTH);
     __cq__ volatile struct AQLDispatchPacket *packet
       = (__cq__ volatile struct AQLDispatchPacket *)packet_loc;
 

@@ -11,7 +11,7 @@
 #include <string>
 
 #include <Machine.hh>
-
+#include <AddressSpace.hh>
 /*#include <CodeLabel.hh>
 #include <DataLabel.hh>
 #include <Environment.hh>
@@ -132,20 +132,18 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   }
 
   char extraFlags[POCL_FILENAME_LENGTH * 8];
-  if (extraParams == NULL)
-    extraParams = "";
   const char *multicoreFlags = "";
   if (is_multicore)
     multicoreFlags = " -ldthread -lsync-lu -llockunit";
 
-  int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
+
 
   const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
   const char *endianFlags = little_endian ? "--little-endian" : "";
   snprintf(extraFlags, (POCL_FILENAME_LENGTH * 8),
-           "%s %s %s %s -k dummy_argbuffer -DQUEUE_LENGTH=%i ",
-           extraParams, multicoreFlags, userFlags, endianFlags,
-           AQL_queue_length);
+           "%s %s %s %s -k dummy_argbuffer",
+           extraParams, multicoreFlags, userFlags, endianFlags);
+
 
   char kernelObjSrc[POCL_FILENAME_LENGTH];
   snprintf(kernelObjSrc, POCL_FILENAME_LENGTH, "%s%s", tempDir,
@@ -248,11 +246,12 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
 
 #define MAX_CMDLINE_LEN (32 * POCL_FILENAME_LENGTH)
 
-int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
+void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                             cl_device_id device, int specialize) {
 
-  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
-    return -1;
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
+    POCL_ABORT("Accel: trying to compile non-ndrange command\n");
+  }
 
   void *data = cmd->device->data;
   AccelData *d = (AccelData *)data;
@@ -267,16 +266,15 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(device);
   POCL_MSG_PRINT_INFO("COMPILATION BEFORE WG FUNC\n");
   POCL_LOCK(bd->tce_compile_lock);
-  int error = pocl_llvm_generate_workgroup_function(cmd->device_i, device,
+  int error = pocl_llvm_generate_workgroup_function(cmd->program_device_i, device,
                                                     kernel, cmd, specialize);
 
   POCL_MSG_PRINT_INFO("COMPILATION AFTER WG FUNC\n");
   if (error) {
     POCL_UNLOCK(bd->tce_compile_lock);
-    POCL_MSG_ERR("TCE: pocl_llvm_generate_workgroup_function()"
+    POCL_ABORT("TCE: pocl_llvm_generate_workgroup_function()"
                  " failed for kernel %s\n",
                  kernel->name);
-    return -1;
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
@@ -286,7 +284,7 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(cmd->command.run.kernel);
 
   char cachedir[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->device_i,
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->program_device_i,
                                   kernel, "", cmd, specialize);
 
   // output TPEF
@@ -305,12 +303,67 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     error = snprintf(inputBytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
                      POCL_PARALLEL_BC_FILENAME);
 
-    char commandLine[MAX_CMDLINE_LEN];
+    //int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
+    TTAMachine::Machine* mach = NULL;
+    try {
+      mach = TTAMachine::Machine::loadFromADF(bd->machine_file);
+    } catch (Exception &e) {
+      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
+      POCL_ABORT("Couldn't open mach\n");
+    }
 
+    bool separatePrivateMem = true;
+    bool separateCQMem = true;
+    const TTAMachine::Machine::AddressSpaceNavigator& nav =
+      mach->addressSpaceNavigator();
+    for (int i = 0; i < nav.count(); i++){
+      TTAMachine::AddressSpace *as = nav.item(i);
+      if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
+        if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+          separateCQMem = false;
+        }
+        if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
+          separatePrivateMem = false;
+        }
+      }
+    }
+    int AQL_queue_length = d->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
+    unsigned dmem_size = d->Dev->DataMemory->Size;
+    unsigned cq_size = d->Dev->CQMemory->Size;
+
+    bool relativeAddressing = d->Dev->RelativeAddressing;
+    int i=0;
+    char extraParams[POCL_FILENAME_LENGTH*8];
+    i = snprintf(extraParams, (POCL_FILENAME_LENGTH * 8),
+    "-DQUEUE_LENGTH=%i ", AQL_queue_length);
+    if(!separatePrivateMem) {
+      unsigned initsp = 2 * dmem_size;
+      unsigned private_mem_start = dmem_size;
+      if(!separateCQMem) {
+        initsp += 2 * cq_size;
+        private_mem_start += cq_size;
+      }
+      if(!relativeAddressing) {
+        initsp += d->Dev->DataMemory->PhysAddress;
+        private_mem_start += d->Dev->DataMemory->PhysAddress;
+      }
+      i += snprintf(extraParams+i, (POCL_FILENAME_LENGTH * 8),
+      "--init-sp=%u --data-start=%u ", initsp, private_mem_start);
+    }
+    if(!separateCQMem){
+      unsigned queue_start = d->Dev->CQMemory->PhysAddress;
+      if (relativeAddressing) {
+        queue_start -= d->Dev->DataMemory->PhysAddress;
+      }
+      i += snprintf(extraParams+i, (POCL_FILENAME_LENGTH * 8),
+      "-DQUEUE_START=%u ", queue_start);
+    }
+
+    char commandLine[MAX_CMDLINE_LEN];
     tceccCommandLine(commandLine, MAX_CMDLINE_LEN, &cmd->command.run, tempDir,
                      inputBytecode, // inputSrc
                      assemblyFileName, bd->machine_file, bd->core_count > 1,
-                     device->endian_little, NULL);
+                     device->endian_little, extraParams);
 
     POCL_MSG_PRINT_INFO("build command: \n%s", commandLine);
 
@@ -370,7 +423,7 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     // --dmemwidthinmaus 4
     snprintf(genbits_command, (POCL_FILENAME_LENGTH * 8),
              "SAVEDIR=$PWD; cd %s; generatebits --dmemwidthinmaus 4 "
-             "--dataimages --piformat=bin2n --diformat=bin2n --program "
+             "--piformat=bin2n --diformat=bin2n --program "
              "parallel.tpef %s ; cd $SAVEDIR",
              cachedir, bd->machine_file);
     POCL_MSG_PRINT_INFO("running genbits: \n %s \n", genbits_command);
@@ -389,15 +442,14 @@ int pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
 
   error = pocl_exists(imem_file);
   assert(error != 0 && "parallel.img does not exist!");
-
+/*
   error = pocl_exists(data_img);
   assert(error != 0 && "parallel_local.img does not exist!");
-
-  error = pocl_exists(param_img);
+*/
+ /* error = pocl_exists(param_img);
   assert(error != 0 && "parallel_param.img does not exist!");
-
+*/
   POCL_UNLOCK(bd->tce_compile_lock);
-  return 0;
 }
 
 /* This is a version number that is supposed to increase when there is

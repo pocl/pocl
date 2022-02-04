@@ -7,6 +7,8 @@
 #include "accel.h"
 #include "almaif-compile.h"
 
+#include "common_driver.h"
+
 // TODO TCE SPECIFIC
 //#define ENABLE_COMPILER
 #ifdef ENABLE_COMPILER
@@ -114,6 +116,12 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     adi->build_hash = strdup(DEFAULT_BUILD_HASH);
 #endif
 
+  dev->ops->build_source = pocl_driver_build_source;
+  dev->ops->setup_metadata = pocl_driver_setup_metadata;
+  dev->ops->create_kernel = pocl_almaif_create_kernel;
+  dev->ops->free_kernel = pocl_almaif_free_kernel;
+  dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
+  dev->ops->compile_kernel = pocl_almaif_tce_compile;
   /*
     // must be run AFTER initialize, since it changes little_endian
   #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
@@ -168,8 +176,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   if (!program->pocl_binaries[dev_i]) {
     POCL_MSG_PRINT_INFO("Compiling kernel to poclbinary\n");
 
-    if (d->compilationData->compile_kernel(cmd, kernel, device, specialize))
-      POCL_ABORT("Kernel compilation failed\n");
+    d->compilationData->compile_kernel(cmd, kernel, device, specialize);
   }
 #endif
 

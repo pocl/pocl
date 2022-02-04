@@ -894,10 +894,14 @@ void* runningThreadFunc(void*)
       {
         if (isEventDone((AccelData*)Node->device->data, Node->event)) {
           DL_DELETE(runningList, Node);
-	  POCL_UNLOCK(runningLock);
-	  POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
+          #ifdef ACCEL_DUMP_MEMORY
+          POCL_MSG_PRINT_INFO("FINAL MEMORY DUMP\n");
+          ((AccelData*)(Node->device->data))->Dev->printMemoryDump();
+          #endif
+	      POCL_UNLOCK(runningLock);
+	      POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
           POCL_LOCK(runningLock);
-	}
+	    }
       }
     }
     POCL_UNLOCK(runningLock);
