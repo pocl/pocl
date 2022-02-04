@@ -31,7 +31,7 @@ typedef struct compilation_data_s
   chunk_info_t *pocl_context;
 
   /* device-specific callbacks */
-  int (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
+  void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
                          cl_device_id device, int specialize);
   int (*initialize_device) (cl_device_id device, const char *parameters);
   int (*cleanup_device) (cl_device_id device);

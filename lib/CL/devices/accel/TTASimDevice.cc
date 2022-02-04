@@ -102,6 +102,16 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   CQMemory = new TTASimRegion(cq_start, cq_size, mem);
   DataMemory = new TTASimRegion(dmem_start, dmem_size, mem);
 
+  //For built-in kernel use-case. If the firmware.tpef exists, load it in
+  char tpef_file[120];
+  snprintf(tpef_file, sizeof(tpef_file), "%s.tpef", adf_name);
+  if (pocl_exists(tpef_file)) {
+    POCL_MSG_PRINT_INFO("Accel: Found built-in kernel firmware for ttasim. Loading it in.\n");
+    loadProgram(tpef_file);
+  } else {
+    POCL_MSG_PRINT_INFO("File %s not found. Skipping program initialization\n", tpef_file);
+  }
+
 
   POCL_INIT_LOCK(lock);
   POCL_INIT_COND(simulation_start_cond);
@@ -125,6 +135,19 @@ TTASimDevice::~TTASimDevice() {
 }
 
 void
+TTASimDevice::loadProgram(char* tpef_file){
+  if (simulator_->isRunning()) 
+    ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
+  while (simulator_->isRunning());
+  /* Save the cycle count to maintain a global running cycle count
+     over all the simulations. */
+  //if (currentProgram != NULL)
+  //  globalCycleCount += simulator_.cycleCount();
+  simulator_->loadProgram(tpef_file);
+}
+
+
+void
 TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_command_node *cmd)
 {
   assert(kd);
@@ -132,7 +155,7 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
   char tpef_file[POCL_FILENAME_LENGTH];
   char cachedir[POCL_FILENAME_LENGTH];
   // first try specialized
-  pocl_cache_kernel_cachedir_path(tpef_file, kernel->program, cmd->device_i,
+  pocl_cache_kernel_cachedir_path(tpef_file, kernel->program, cmd->program_device_i,
       kernel, "/parallel.tpef", cmd, 1);
   if (!pocl_exists(tpef_file)) {
     // if it doesn't exist, try specialized with local sizes 0-0-0
@@ -142,15 +165,16 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
     cmd_copy.command.run.pc.local_size[0] = 0;
     cmd_copy.command.run.pc.local_size[1] = 0;
     cmd_copy.command.run.pc.local_size[2] = 0;
-    pocl_cache_kernel_cachedir_path(tpef_file, kernel->program, cmd->device_i,
+    pocl_cache_kernel_cachedir_path(tpef_file, kernel->program, cmd->program_device_i,
         kernel, "/parallel.tpef", &cmd_copy, 1);
     POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
   }
 
+  loadProgram(tpef_file);
+
   char wg_func_name[120];
   snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer", kernel->name);
-  const TTAMachine::Machine& mach = simulator_->machine();
-  const TTAProgram::Program* prog = TTAProgram::Program::loadFromTPEF(tpef_file, mach);
+  const TTAProgram::Program* prog = &simulator_->program();
   if (prog->hasProcedure(wg_func_name)){
     const TTAProgram::Procedure& proc = prog->procedure(wg_func_name);
     kd->kernel_address = proc.startAddress().location();
@@ -163,19 +187,6 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
   }*/
   //TODO Figure out kernel addres
 
-
-
-  if (simulator_->isRunning()) 
-    ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
-  while (simulator_->isRunning()) 
-    ;
-  /* Save the cycle count to maintain a global running cycle count
-     over all the simulations. */
-  //if (currentProgram != NULL)
-  //  globalCycleCount += simulator_.cycleCount();
-
-  simulator_->loadProgram(tpef_file);
-  // Initialize AQL queue by setting all headers to invalid
 
   ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
 //  //currentProgram = &simulator_->program();
