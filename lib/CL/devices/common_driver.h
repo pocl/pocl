@@ -112,6 +112,10 @@ POCL_EXPORT
 POCL_EXPORT
   int pocl_driver_build_poclbinary (cl_program program, cl_uint device_i);
 
+POCL_EXPORT
+  int pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i);
+
+
 #ifdef __cplusplus
 }
 #endif

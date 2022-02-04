@@ -251,6 +251,20 @@ int pocl_device_is_associated_with_kernel (cl_device_id device,
 
 int pocl_escape_quoted_whitespace (char *temp_options, char *replace_me);
 
+POCL_EXPORT
+int pocl_get_private_datadir (char* private_datadir);
+
+POCL_EXPORT
+int pocl_get_srcdir_or_datadir (char* path,
+                                const char* srcdir_suffix,
+                                const char *datadir_suffix,
+                                const char* filename);
+
+POCL_EXPORT
+void pocl_str_toupper (char *out, const char *in);
+
+POCL_EXPORT
+void pocl_str_tolower (char *out, const char *in);
 
 #ifdef __cplusplus
 }
