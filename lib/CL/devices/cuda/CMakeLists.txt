@@ -34,3 +34,6 @@ target_compile_definitions("pocl-devices-cuda" PRIVATE "-DCUDA_TOOLKIT_ROOT_DIR=
 if(ENABLE_LOADABLE_DRIVERS)
   target_link_libraries(pocl-devices-cuda PRIVATE cuda ${POCL_LLVM_LIBS} ${PTHREAD_LIBRARY})
 endif()
+
+install(FILES "builtins.cl" "builtins_sm50.ptx" "builtins_sm70.ptx"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/cuda" COMPONENT "lib")

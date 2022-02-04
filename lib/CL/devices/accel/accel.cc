@@ -107,7 +107,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->free_event_data = pocl_accel_free_event_data;
   ops->wait_event = pocl_accel_wait_event;
 
-
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
 #if 0
     ops->read_rect = pocl_accel_read_rect;
