@@ -837,9 +837,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   if (error)
     return error;
 
-  /* To avoid writing & reading the same back,
-   * save program->binaries[i]
-   */
+  /* To avoid writing & reading the same back, save program->binaries[i] */
   std::string content;
   writeModuleIRtoString(linked_module, content);
 

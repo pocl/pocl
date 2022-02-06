@@ -2,7 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2019 Pekka Jääskeläinen
+//               2012-2022 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -565,8 +565,22 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         ops.push_back(pbc);
 
         unsigned j = CallInstr->getNumOperands() - 1;
-        for (unsigned i = 0; i < j; ++i)
-          ops.push_back(CallInstr->getOperand(i));
+        for (unsigned i = 0; i < j; ++i) {
+          auto *Operand = CallInstr->getOperand(i);
+#ifndef LLVM_OLDER_THAN_10_0
+          // The printf decl might have the format string in the constant AS
+          // in order to support compilation from SPIR-V where the calls adhere
+          // to the SPIR-V/OpenCL standard in terms of the argument type.
+          // Thus, when compiling directly from OpenCL C to native LLVM we
+          // have to add an (temporarily illegal) AS cast in case the target
+          // is a flat address space target (CPUs).
+          if (i == 0)
+            Operand = llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
+                Operand, poclPrintf->getArg(3)->getType(),
+                "printf_fmt_str_as_cast", CallInstr);
+#endif
+          ops.push_back(Operand);
+        }
 
         CallInst *NewCI = CallInst::Create(poclPrintf, ops);
         NewCI->setCallingConv(poclPrintf->getCallingConv());
@@ -1216,7 +1230,12 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMValueRef call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
+#ifdef LLVM_OLDER_THAN_14_0
+    LLVMValueRef Call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
+#else
+    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy4);
+    LLVMValueRef Call4 = LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
+#endif
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
     LLVMTypeRef i8PtrAS1 = LLVMPointerType(Int8Type, DeviceArgsASid);
@@ -1230,7 +1249,12 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
     args[1] = CARG1;
     args[2] = Size;
 
-    LLVMValueRef call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
+#ifdef LLVM_OLDER_THAN_14_0
+    LLVMValueRef Call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
+#else
+    LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy1);
+    LLVMValueRef Call1 = LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
+#endif
   }
 
   return LocalArgAlloca;
@@ -1271,10 +1295,15 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
 
     // not by-val argument
   } else {
-    LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
-        Builder, ArgByteOffset, LLVMPointerType(ParamType, DeviceArgsASid),
-        "arg_ptr");
+    LLVMTypeRef DestTy = LLVMPointerType(ParamType, DeviceArgsASid);
+    LLVMValueRef ArgOffsetBitcast =
+        LLVMBuildPointerCast(Builder, ArgByteOffset, DestTy, "arg_ptr");
+#ifdef LLVM_OLDER_THAN_14_0
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
+#else
+    LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
+    return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
+#endif
   }
 }
 
@@ -1384,14 +1413,20 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
         LLVMValueRef SizeByteOffset =
             LLVMBuildGEP(Builder, ArgBuffer, &Offs, 1, "size_byte_offset");
+        LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
         LLVMValueRef SizeOffsetBitcast =
-            LLVMBuildPointerCast(Builder, SizeByteOffset,
-                                 LLVMPointerType(ParamIntType, 0), "size_ptr");
+            LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
 
         // The buffer size passed from the runtime is a byte size, we
         // need to convert it to an element count for the alloca.
+#ifdef LLVM_OLDER_THAN_14_0
         LLVMValueRef LocalArgByteSize =
             LLVMBuildLoad(Builder, SizeOffsetBitcast, "byte_size");
+#else
+        LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
+        LLVMValueRef LocalArgByteSize =
+            LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
+#endif
         uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, ArgElementType);
         LLVMValueRef ElementCount =
             LLVMBuildUDiv(Builder, LocalArgByteSize,
@@ -1434,7 +1469,12 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
 
   assert (i == ArgCount);
 
+#ifdef LLVM_OLDER_THAN_14_0
   LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
+#else
+  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(F);
+  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, F, Args, ArgCount, "");
+#endif
   LLVMBuildRetVoid(Builder);
 
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
@@ -1520,7 +1560,12 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
       LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
       LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
 
+#ifdef LLVM_OLDER_THAN_14_0
   LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 4, "");
+#else
+  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(RunnerFunc);
+  LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, RunnerFunc, Args, 4, "");
+#endif
   LLVMBuildRetVoid(Builder);
 
   InlineFunctionInfo IFI;
