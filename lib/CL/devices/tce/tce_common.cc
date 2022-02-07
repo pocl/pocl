@@ -525,32 +525,6 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   POCL_UNLOCK(Dev->tce_compile_lock);
 }
 
-int pocl_tce_build_builtin(cl_program program, cl_uint device_i)
-{
-  int err;
-
-  POCL_MSG_PRINT_TCE ("preparing OPENCL builtin kernels\n");
-  cl_device_id dev = program->devices[device_i];
-
-  assert (program->build_status == CL_BUILD_NONE);
-
-  uint64_t builtins_file_len = 0;
-  char* builtins_file = NULL;
-  if (pocl_read_file(SRCDIR "/lib/CL/devices/tce/builtins.cl",
-                     &builtins_file, &builtins_file_len) < 0)
-    {
-      POCL_MSG_ERR ("TCE: can't find opencl builtins");
-      return -1;
-    }
-
-  program->source = builtins_file;
-
-  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
-  POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to build OpenCL builtins for TCE\n");
-
-  return 0;
-}
 
 
 #define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                      \
