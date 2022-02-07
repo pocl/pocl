@@ -109,7 +109,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_tce_compile_kernel;
-  ops->build_builtin = pocl_tce_build_builtin;
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
   // new driver api
   ops->join = pocl_tce_join;
