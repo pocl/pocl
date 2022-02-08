@@ -157,7 +157,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 
 #ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
-    POCL_MSG_PRINT_INFO("Compiling kernel to poclbinary\n");
+    POCL_MSG_PRINT_INFO("Compiling kernel %s to poclbinary\n", kernel->name);
 
     d->compilationData->compile_kernel(cmd, kernel, device, specialize);
   }
