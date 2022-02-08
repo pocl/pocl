@@ -42,7 +42,7 @@ main(int argc, char** argv)
     cl::Program AccelProgram;
     cl::Kernel AccelKernel;
 
-    cl::NDRange Offset, Global, Local;
+    cl::NDRange Offset, Global2D, Local2D, Global, Local;
     int err;
 
     std::vector<cl::Platform> all_platforms;
@@ -125,8 +125,10 @@ main(int argc, char** argv)
 
     void *i1, *i2, *o1;
     Offset = cl::NullRange;
-    Local = cl::NDRange(TILE, TILE);
-    Global = cl::NDRange(X, Y);
+    Local2D = cl::NDRange(TILE, TILE);
+    Global2D = cl::NDRange(X, Y);
+    Local = cl::NDRange(TILE);
+    Global = cl::NDRange(X);
 
     if (kernel_str.compare("pocl.add.i32") == 0 ||
         kernel_str.compare("pocl.mul.i32") == 0)
@@ -195,7 +197,10 @@ main(int argc, char** argv)
     err = AccelQueue.enqueueWriteBuffer(Input2, CL_FALSE, 0, BUFSIZE, i2);
     CHECK_CL_ERROR(err, "en 2");
 
-    err = AccelQueue.enqueueNDRangeKernel(Kernel, Offset, Global, Local);
+    if (kernel_str.compare("pocl.sgemm.local.f32") == 0)
+      err = AccelQueue.enqueueNDRangeKernel(Kernel, Offset, Global2D, Local2D);
+    else
+      err = AccelQueue.enqueueNDRangeKernel(Kernel, Offset, Global, Local);
     CHECK_CL_ERROR(err, "en 3");
     err = AccelQueue.enqueueReadBuffer(Out1, CL_TRUE, 0, BUFSIZE, o1);
     CHECK_CL_ERROR(err, "en 4");
