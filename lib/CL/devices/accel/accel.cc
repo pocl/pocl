@@ -320,17 +320,6 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->builtin_kernel_list = strdup(supportedList.c_str());
   dev->num_builtin_kernels = D->SupportedKernels.size();
 
-  if (enable_compilation) {
-
-    dev->compiler_available = CL_TRUE;
-    dev->linker_available = CL_TRUE;
-
-  } else {
-    D->compilationData = NULL;
-    dev->compiler_available = CL_FALSE;
-    dev->linker_available = CL_FALSE;
-  }
-
   if(!pocl_offline_compile){
 
     POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels (%s)\n",
@@ -369,10 +358,19 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   }
 
   if (enable_compilation) {
+
+    dev->compiler_available = CL_TRUE;
+    dev->linker_available = CL_TRUE;
     char adf_file[200];
     snprintf(adf_file, 200, "%s.adf", xrt_kernel_name);
     pocl_almaif_init(j, dev, adf_file);
+
+  } else {
+    D->compilationData = NULL;
+    dev->compiler_available = CL_FALSE;
+    dev->linker_available = CL_FALSE;
   }
+
 
   POCL_MSG_PRINT_INFO("accel: mmap done\n");
   if (pocl_offline_compile){
