@@ -85,21 +85,27 @@ TTASimDevice::TTASimDevice(char *adf_name) {
 
   TTAMachine::Machine::AddressSpaceNavigator nav = mach.addressSpaceNavigator();
   TTAMachine::AddressSpace *global_as = nullptr;
+  TTAMachine::AddressSpace *cq_as = nullptr;
+
   for (int i = 0; i < nav.count(); ++i) {
-    global_as = nav.item(i);
-    if (global_as->hasNumericalId(TTA_ASID_GLOBAL)) {
-      break;
+    TTAMachine::AddressSpace *as = nav.item(i);
+    if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
+      global_as = as;
+    }
+    if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+      cq_as = as;
     }
   }
   assert(global_as != nullptr);
+  assert(cq_as != nullptr);
   
   MemorySystem &mems = simulator_->memorySystem();
   MemorySystem::MemoryPtr mem = mems.memory(*global_as);
-
+  MemorySystem::MemoryPtr cq_mem = mems.memory(*cq_as);
 
   //Doesn't exist and should not ever be accessed
   InstructionMemory = nullptr;
-  CQMemory = new TTASimRegion(cq_start, cq_size, mem);
+  CQMemory = new TTASimRegion(cq_start, cq_size, cq_mem);
   DataMemory = new TTASimRegion(dmem_start, dmem_size, mem);
 
   //For built-in kernel use-case. If the firmware.tpef exists, load it in
