@@ -37,7 +37,7 @@ uint32_t TTASimRegion::Read32(size_t offset) {
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   
   uint64_t result = 0;
-  mem_->read(offset, 4, result);
+  mem_->read(PhysAddress + offset, 4, result);
   return result;
 }
 
@@ -51,7 +51,7 @@ void TTASimRegion::Write32(size_t offset, uint32_t value) {
   assert(mem_ != nullptr &&
          "No memory handle; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
-  mem_->writeDirectlyLE(offset, 4, value);
+  mem_->writeDirectlyLE(PhysAddress + offset, 4, value);
 
 }
 
@@ -65,7 +65,7 @@ void TTASimRegion::Write16(size_t offset, uint16_t value) {
          "No memory handle; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
 
-  mem_->writeDirectlyLE(offset, 2, value);
+  mem_->writeDirectlyLE(PhysAddress + offset, 2, value);
 }
 
 uint64_t TTASimRegion::Read64(size_t offset) {
@@ -97,7 +97,7 @@ void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
 
   for (size_t i = 0; i < bytes; ++i) {
-    mem_->writeDirectlyLE(offset + i, 1, (Memory::MAU)src[i]);
+    mem_->writeDirectlyLE(destination + i, 1, (Memory::MAU)src[i]);
   }
 }
 
@@ -113,7 +113,7 @@ void TTASimRegion::CopyFromMMAP(void *destination, size_t source,
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
 
   for (size_t i = 0; i < bytes; ++i) {
-    dst[i] = mem_->read(offset + i);
+    dst[i] = mem_->read(source + i);
   }
 }
 

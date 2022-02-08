@@ -120,10 +120,16 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
 
   int segment_size = dmem_size;
 
-  int dmem_start = 3*segment_size;
+  int dmem_start, cq_start;
+  if (relativeAddressing) {
+    dmem_start = 0;
+    cq_start = 0;
+  } else {
+    cq_start = 2*segment_size;
+    dmem_start = 3*segment_size;
           POCL_MSG_PRINT_INFO("segsize=%d, dmem_start=%d\n",segment_size,dmem_start);
+  }
 
-  int cq_start;
   if (!hasPrivateMem) {
     //No private mem, so the latter half of the dmem is reserved for it
     dmem_size /= 2;
@@ -133,9 +139,8 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
     cq_size = 4 * AQL_PACKET_LENGTH;
     dmem_size -= cq_size;
     cq_start = dmem_start + dmem_size;
-  } else {
-    cq_start = 2*segment_size;
   }
+
   int imem_start = 0; 
   int imem_size = 0;
 
