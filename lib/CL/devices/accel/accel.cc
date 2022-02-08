@@ -108,6 +108,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->wait_event = pocl_accel_wait_event;
 
   ops->build_builtin = pocl_driver_build_opencl_builtins;
+  ops->free_program = pocl_driver_free_program;
 
 #if 0
     ops->read_rect = pocl_accel_read_rect;
@@ -385,8 +386,8 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 //    D->Dev->CQMemory->Write32(4 * i, 0);
   }
   // Initialize AQL queue by setting all headers to invalid
+  POCL_MSG_PRINT_INFO("Initializing AQL Packet cqmemory size=%zu\n",D->Dev->CQMemory->Size);
   for (uint32_t i = AQL_PACKET_LENGTH; i < D->Dev->CQMemory->Size; i += AQL_PACKET_LENGTH) {
-    POCL_MSG_PRINT_INFO("Initializing AQL Packet cqmemory size=%zu\n",D->Dev->CQMemory->Size);
     D->Dev->CQMemory->Write16(i, AQL_PACKET_INVALID);
   }
 
