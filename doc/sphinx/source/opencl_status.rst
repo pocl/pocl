@@ -105,6 +105,7 @@ Limitations
 
 The most complete support is for the CPU device, but there are a few parts
 of OpenCL kernel library which CPU driver doesn't yet support with SPIR-V:
-vectors (cl_uintX etc), images, certain geometric math functions.
+Vector datatypes, images, certain geometric math functions.
 
-SPIR / SPIR-V on TCE,CUDA and other devices is currently untested.
+SPIR / SPIR-V support on other devices than the CPU devices is currently
+untested.

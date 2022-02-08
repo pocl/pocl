@@ -166,7 +166,7 @@ DEFINE_PRINT_FLOATS (double)
 #define ERROR_UNKNOWN_CONVERSION_SPECIFIER 0x33
 
 int
-__pocl_printf_format_full (const OCL_CONSTANT_AS char *restrict format,
+__pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
                            param_t *p, va_list ap)
 {
   DEBUG_PRINTF (("[printf:format=%s]\n", format));
@@ -687,7 +687,7 @@ error:;
 int
 __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
                uint32_t __buffer_capacity,
-               const OCL_CONSTANT_AS char *restrict fmt, ...)
+               const PRINTF_FMT_STR_AS char *restrict fmt, ...)
 {
   param_t p = { 0 };
 
@@ -712,12 +712,12 @@ extern uint32_t *_printf_buffer_position;
 extern uint32_t _printf_buffer_capacity;
 
 /* This is a placeholder printf function that will be replaced by calls
- * to __pocl_printf(), after a LLVM pass handles the hidden arguments.
+ * to __pocl_printf(), after an LLVM pass handles the hidden arguments.
  * both __pocl_printf and __pocl_printf_format_simple must be referenced
  * here, so that the kernel library linker pulls them in. */
 
 int
-printf (const OCL_CONSTANT_AS char *restrict fmt, ...)
+printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
 {
   param_t p = { 0 };
 

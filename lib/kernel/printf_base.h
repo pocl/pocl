@@ -1,6 +1,6 @@
 /* OpenCL built-in library: printf_base.h
 
-   Copyright (c) 2018 Michal Babej / Tampere University of Technology
+   Copyright (c) 2018 Michal Babej / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -31,11 +31,17 @@
 
 #define NULL ((void*)0)
 
-/* This should be queried from the machine in the non-TAS case.
- * For now assume that if we are not using the fake address space
- * ids then we have a single address space. This version of printf
- * doesn't work with multiple address spaces anyways. */
-#define OCL_CONSTANT_AS
+#if __clang_major__ > 9
+/* Produce a SPIR-V compliant bitcode where the format string is
+   in the constant address space (2 in SPIR-V). Address space cast
+   in Workgroup.cc in case of native compilation. */
+#define PRINTF_FMT_STR_AS __attribute__ ((address_space (2)))
+#else
+/* Use the default address space with the older LLVMs. No SPIR-V
+   support. */
+#define PRINTF_FMT_STR_AS
+
+#endif
 
 typedef intptr_t ssize_t;
 
