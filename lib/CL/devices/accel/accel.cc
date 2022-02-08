@@ -614,10 +614,22 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
 void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
                               size_t arg_size, void *arguments) {
   _cl_command_run *run = &cmd->command.run;
+  cl_kernel k = run->kernel;
+  cl_program p = k->program;
   int32_t kernelID = -1;
+  bool SanitizeKernelName = false;
   for (auto supportedKernel : data->SupportedKernels) {
-    if (strcmp(supportedKernel->name, run->kernel->name) == 0)
-      kernelID = (int32_t)supportedKernel->KernelId;
+    if (strcmp(supportedKernel->name, k->name) == 0) {
+        kernelID = (int32_t)supportedKernel->KernelId;
+        /* builtin kernels that come from tce_kernels.cl need compiling */
+        if (p->num_builtin_kernels > 0 && p->source) {
+            POCL_MSG_PRINT_INFO(
+                  "accel: builtin kernel with source, needs compiling\n");
+            kernelID = -1;
+            SanitizeKernelName = true;
+          }
+        break;
+      }
   }
 
   if (kernelID == -1) {
@@ -625,8 +637,15 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
       POCL_ABORT("accel: scheduled an NDRange with unsupported kernel\n");
     } else {
       POCL_MSG_PRINT_INFO(
-          "accel: fixed function kernel not found, start compiling:\n");
-      pocl_almaif_compile_kernel(cmd, run->kernel, cmd->device, 1);
+          "accel: compiling kernel\n");
+      char* SavedName = nullptr;
+      if (SanitizeKernelName)
+        sanitize_builtin_kernel_name (k, &SavedName);
+
+      pocl_almaif_compile_kernel(cmd, k, cmd->device, 1);
+
+      if (SanitizeKernelName)
+        restore_builtin_kernel_name (k, SavedName);
     }
   }
 
