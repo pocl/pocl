@@ -43,16 +43,6 @@
 #  include "vccompat.hpp"
 #endif
 
-#ifdef ENABLE_RELOCATION
-#if defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#endif
-#ifdef __linux__
-#define _GNU_SOURCE
-#endif
-#include <dlfcn.h>
-#endif
-
 #include "common.h"
 #include "devices.h"
 #include "pocl_cache.h"
@@ -63,6 +53,16 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
+
+#ifdef ENABLE_RELOCATION
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif
+#include <dlfcn.h>
+#endif
 
 /* required for setting SSE/AVX flush denorms to zero flag */
 #if defined(__x86_64__) && defined(__GNUC__)
