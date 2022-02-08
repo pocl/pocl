@@ -357,18 +357,18 @@ int pocl_llvm_build_program(cl_program program,
 
   char WSReplacementChar = 0;
 
-  char *WSTempOptions = (char *) malloc (ss.str().length() + 1);
+  char *TempOptions = (char *) malloc (ss.str().length() + 1);
 
-  memset (WSTempOptions, 0, ss.str().length() + 1);
-  strncpy (WSTempOptions, ss.str().c_str(), ss.str().length());
+  memset (TempOptions, 0, ss.str().length() + 1);
+  strncpy (TempOptions, ss.str().c_str(), ss.str().length());
 
-  if (pocl_escape_quoted_whitespace (WSTempOptions, &WSReplacementChar) == -1)
+  if (pocl_escape_quoted_whitespace (TempOptions, &WSReplacementChar) == -1)
   {
-    POCL_MEM_FREE (WSTempOptions);
+    POCL_MEM_FREE (TempOptions);
     return CL_INVALID_BUILD_OPTIONS;
   }
 
-  std::istringstream iss(WSTempOptions);
+  std::istringstream iss(TempOptions);
   std::vector<const char *> itemcstrs;
   std::vector<std::string> itemstrs;
 
@@ -388,9 +388,9 @@ int pocl_llvm_build_program(cl_program program,
     // if quoted, remove it to make compiler happy
     if (s.find("\"") != std::string::npos)
     {
-      std::regex target("\"");
-      std::string replacement = " ";
-      s = std::regex_replace(s, target, replacement);
+      std::regex Target("\"");
+      std::string Replacement = " ";
+      s = std::regex_replace(s, Target, Replacement);
     }
 
     itemstrs.push_back(s);
@@ -402,7 +402,7 @@ int pocl_llvm_build_program(cl_program program,
     itemcstrs.push_back(itemstrs[idx].c_str());
   }
 
-  POCL_MEM_FREE (WSTempOptions);
+  POCL_MEM_FREE (TempOptions);
 
 #ifdef DEBUG_POCL_LLVM_API
   // TODO: for some reason the user_options are replicated,
