@@ -240,7 +240,6 @@ static void finalize_kernel_command(kernel_run_command *k) {
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(k->cmd->event, "NDRange Kernel        ");
 
-  pocl_mem_manager_free_command(k->cmd);
   free_kernel_run_command(k);
 }
 
