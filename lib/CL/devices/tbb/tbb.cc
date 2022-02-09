@@ -23,7 +23,9 @@
    IN THE SOFTWARE.
 */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #define __USE_GNU
 
 #include <assert.h>

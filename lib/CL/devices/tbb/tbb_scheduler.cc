@@ -21,7 +21,9 @@
    IN THE SOFTWARE.
 */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <algorithm>
 #include <pthread.h>
