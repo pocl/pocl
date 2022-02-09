@@ -419,8 +419,10 @@ include(sanitizers)
 
 if(ENABLE_TBB_DEVICE)
   # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
-  find_package(TBB)
-  if(NOT TBB AND PKG_CONFIG_FOUND)
+  find_package(TBB REQUIRED)
+  if(TARGET TBB::tbb)
+    set(TBB_IMPORTED_TARGETS TBB::tbb)
+  elseif(NOT TBB_FOUND AND PKG_CONFIG_FOUND)
     pkg_check_modules(TBB tbb>=2015)
     if(TBB_FOUND)
       set(TBB_IMPORTED_TARGETS "${TBB_LIBRARIES}" CACHE STRING "TBB libraries" FORCE)
