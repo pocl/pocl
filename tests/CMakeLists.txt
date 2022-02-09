@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2022 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -94,7 +94,6 @@ if(ENABLE_VULKAN)
   set_tests_properties("pocl_test_dlopen_device_vulkan" PROPERTIES LABELS "internal;dlopen;vulkan")
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
 endif()
-
 endif()
 
 endif()
@@ -106,5 +105,8 @@ add_subdirectory("runtime")
 add_subdirectory("workgroup")
 if(ENABLE_TCE)
   add_subdirectory("tce")
+endif()
+if(ENABLE_SPIRV)
+  add_subdirectory("spirv")
 endif()
 

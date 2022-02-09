@@ -1,0 +1,45 @@
+Testing 'ocl_std_no_args'
+Hello
+IO == 0
+
+Testing 'ocl_std_literal_str_arg'
+Hello strings.
+IO == 0
+
+Testing 'ocl_std_nop_str_arg'
+Howdy HIPpies!
+I'm correct since I'm not an empty string!
+IO == 0
+
+Testing 'ocl_std_global_str_arg_emulated'
+HELLO GLOBAL
+STRiNGS
+IO == 1
+
+Testing 'spirv_std_var_str_arg_constant_program_scope'
+CONSTANT AS program scope
+IO == 0
+
+Testing 'spirv_std_var_str_arg_constant_func_scope'
+CONSTANT AS function scope
+IO == 0
+
+Testing 'spriv_std_str_arg_global'
+HELLO GLOBAL
+ STRiNGS
+
+IO == 0
+
+Testing 'spirv_std_conditional_string'
+io[0] was 1 1
+IO == 0
+
+Testing 'spirv_std_array_of_strings'
+I am a dynamic str arg B.
+
+IO == 0
+
+Testing 'spirv_host_defined_strings'
+host defined string: String from the HOST
+IO == 0
+
