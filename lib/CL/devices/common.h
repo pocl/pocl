@@ -70,6 +70,7 @@ void pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 POCL_EXPORT
 void pocl_exec_command (_cl_command_node *node);
 
+POCL_EXPORT
 char *pocl_build_hash (cl_device_id device);
 
 POCL_EXPORT
