@@ -48,10 +48,6 @@
 #include "tbb.h"
 #include "tbb_scheduler.h"
 
-#ifndef HAVE_LIBDL
-#error tbb driver requires DL library
-#endif
-
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
 #endif

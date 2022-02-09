@@ -26,12 +26,7 @@
 if(MSVC)
   set_source_files_properties( pocl-pthread.h pthread.c pthread_scheduler.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-<<<<<<< HEAD
-add_pocl_device_library(pocl-devices-pthread pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c)
+add_pocl_device_library(pocl-devices-pthread pocl-pthread.h pthread.c pthread_scheduler.c)
 if(ENABLE_LOADABLE_DRIVERS)
 target_link_libraries(pocl-devices-pthread PRIVATE pocl-devices-basic ${PTHREAD_LIBRARY})
 endif()
-=======
-add_pocl_device_library(pocl-devices-pthread pocl-pthread.h pthread.c pthread_scheduler.c)
-target_link_libraries(pocl-devices-pthread PRIVATE pocl-devices-basic)
->>>>>>> c68746b3... Migrate pthread_utils, tbb_utils to common_utils

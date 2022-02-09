@@ -79,8 +79,6 @@ if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
   endif()
 endif()
 
-set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>" "$<TARGET_OBJECTS:pocl-devices-topology>")
-
 if(ENABLE_TCE)
   include_directories(AFTER "tce")
   add_subdirectory("tce")

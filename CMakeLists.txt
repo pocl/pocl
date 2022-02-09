@@ -1199,7 +1199,6 @@ if(DEFINED EXTRA_OCL_TARGETS)
   set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
 endif()
 
-<<<<<<< HEAD
 
 if(ENABLE_PROXY_DEVICE)
   # see doc/sphinx/source/proxy.rst
@@ -1232,8 +1231,6 @@ if(ENABLE_PROXY_DEVICE)
 endif()
 
 
-=======
->>>>>>> 9138584d... Enable tbb device
 ####################################################################
 
 # Determine which device drivers to build.

@@ -111,6 +111,8 @@ cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
   cl_int ret = pocl_device_init_common (device);
+  if (ret != CL_SUCCESS)
+    return ret;
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;
@@ -119,7 +121,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
-  cl_int ret = CL_SUCCESS;
   if (!scheduler_initialized)
     {
       pocl_init_dlhandle_cache();
