@@ -182,7 +182,7 @@ void *emulate_accel(void *E_void) {
     }
     else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
       POCL_MSG_PRINT_INFO("accel emulate: Found valid kernel dispatch packet from location "
-                          "%u, starting parsing:",
+                          "%u, starting parsing:\n",
                           packet_loc);
       POCL_MSG_PRINT_INFO("accel emulate: kernargs are at 0x%zx\n",
                           packet->kernarg_address);
@@ -214,7 +214,7 @@ void *emulate_accel(void *E_void) {
 
       int red_count = 0;
       POCL_MSG_PRINT_INFO(
-          "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)",
+          "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)\n",
           dim_x, dim_y, dim_z);
       for (int x = 0; x < dim_x; x++) {
         for (int y = 0; y < dim_y; y++) {
@@ -260,7 +260,7 @@ void *emulate_accel(void *E_void) {
         arg1[0] = red_count;
       }
 
-      POCL_MSG_PRINT_INFO("accel emulate: Kernel done");
+      POCL_MSG_PRINT_INFO("accel emulate: Kernel done\n");
     }
 
     // Completion signal is given as absolute address

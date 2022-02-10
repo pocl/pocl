@@ -71,9 +71,10 @@ void* runningThreadFunc(void*);
 _cl_command_node *runningList;
 bool runningJoinRequested = false;
 
-
-
-
+struct accel_event_data_t {
+  pthread_cond_t event_cond;
+  chunk_info_t *chunk;
+};
 
 void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
 
@@ -87,6 +88,8 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   /* TODO: Bufalloc-based allocation from the onchip memories. */
   ops->alloc_mem_obj = pocl_accel_alloc_mem_obj;
   ops->free = pocl_accel_free;
+  ops->write = pocl_accel_write;
+  ops->read = pocl_accel_read;
   ops->map_mem = pocl_accel_map_mem;
   ops->unmap_mem = pocl_accel_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -94,18 +97,17 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
 
   ops->submit = pocl_accel_submit;
   ops->join = pocl_accel_join;
-
-  ops->write = pocl_accel_write;
-  ops->read = pocl_accel_read;
-
   ops->notify = pocl_accel_notify;
-
   ops->broadcast = pocl_broadcast;
   ops->run = pocl_accel_run;
-
 //  ops->update_event = pocl_accel_update_event;
   ops->free_event_data = pocl_accel_free_event_data;
+
   ops->wait_event = pocl_accel_wait_event;
+  ops->notify_event_finished = pocl_accel_notify_event_finished;
+  ops->notify_cmdq_finished = pocl_accel_notify_cmdq_finished;
+  ops->init_queue = pocl_accel_init_queue;
+  ops->free_queue = pocl_accel_free_queue;
 
   ops->build_builtin = pocl_driver_build_opencl_builtins;
   ops->free_program = pocl_driver_free_program;
@@ -118,8 +120,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
     ops->copy = pocl_accel_copy;
 
     // new driver api (out-of-order): TODO implement these for accel
-    ops->wait_event = pocl_accel_wait_event;
-    ops->free_event_data = pocl_accel_free_event_data;
     ops->init_target_machine = NULL;
     ops->init_build = pocl_accel_init_build;
 #endif
@@ -510,25 +510,33 @@ void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
   Node->ready = 1;
 
   struct AccelData *D = (AccelData *)Node->device->data;
-  
-  if ((Node->type == CL_COMMAND_NDRANGE_KERNEL) && only_custom_device_events_left(Node->event)) {
-    pocl_update_event_submitted(Node->event);
+  cl_event E = Node->event;
 
-    POCL_UNLOCK_OBJ(Node->event);
-    pocl_update_event_running(Node->event);
+  if (E->data == nullptr) {
+      E->data = calloc(1, sizeof(accel_event_data_t));
+      assert(E->data && "event data allocation failed");
+      accel_event_data_t *ed = (accel_event_data_t *)E->data;
+      POCL_INIT_COND(ed->event_cond);
+    }
 
-    submit_and_barrier((AccelData*)Node->device->data, Node);
-    submit_kernel_packet((AccelData*)Node->device->data, Node);
+  if ((Node->type == CL_COMMAND_NDRANGE_KERNEL) &&
+      only_custom_device_events_left(E)) {
+    pocl_update_event_submitted(E);
+
+    POCL_UNLOCK_OBJ(E);
+    pocl_update_event_running(E);
+
+    submit_and_barrier(D, Node);
+    submit_kernel_packet(D, Node);
 
     POCL_LOCK(runningLock);
     DL_PREPEND(runningList, Node);
     POCL_UNLOCK(runningLock);
-  }
-  else {
+  } else {
     POCL_LOCK(D->CommandListLock);
     pocl_command_push(Node, &D->ReadyList, &D->CommandList);
 
-    POCL_UNLOCK_OBJ(Node->event);
+    POCL_UNLOCK_OBJ(E);
     scheduleCommands(*D);
     POCL_UNLOCK(D->CommandListLock);
   }
@@ -536,37 +544,28 @@ void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
   return;
 }
 
-void pocl_accel_join(cl_device_id Device, cl_command_queue /*CQ*/) {
+void pocl_accel_join(cl_device_id device, cl_command_queue cq) {
 
-  struct AccelData *D = (AccelData *)Device->data;
+  struct AccelData *D = (AccelData *)device->data;
   POCL_LOCK(D->CommandListLock);
   while(D->CommandList || D->ReadyList) {
     scheduleCommands(*D);
- 
     POCL_UNLOCK(D->CommandListLock);
-    usleep(1000);
+    usleep(100);
     POCL_LOCK(D->CommandListLock);
   }
 
   POCL_UNLOCK(D->CommandListLock);
 
-  _cl_command_node* Node;
-  bool stillRunning = true;
-  while (stillRunning) {
-    stillRunning = false;
-    POCL_LOCK(runningLock);
-    if(runningList) {
-      DL_FOREACH(runningList, Node)
-      {
-        if (Node->device == Device) {
-          stillRunning = true;
-          break;
-        }
-      }
-    }
-    POCL_UNLOCK(runningLock);
-    if(stillRunning) {
-      usleep(1000);
+  POCL_LOCK_OBJ(cq);
+  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
+  assert(cq_cond);
+  while (1) {
+    if (cq->command_count == 0) {
+      POCL_UNLOCK_OBJ(cq);
+      return;
+    } else {
+      POCL_WAIT_COND(*cq_cond, cq->pocl_lock);
     }
   }
   return;
@@ -620,8 +619,11 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   _cl_command_run *run = &cmd->command.run;
   cl_kernel k = run->kernel;
   cl_program p = k->program;
+  cl_event e = cmd->event;
+  accel_event_data_t *event_data = (accel_event_data_t *)e->data;
   int32_t kernelID = -1;
   bool SanitizeKernelName = false;
+
   for (auto supportedKernel : data->SupportedKernels) {
     if (strcmp(supportedKernel->name, k->name) == 0) {
         kernelID = (int32_t)supportedKernel->KernelId;
@@ -662,7 +664,9 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   POCL_MSG_PRINT_INFO("accel: allocated 0x%zx bytes for signal/arguments "
                       "from 0x%zx\n",
                       arg_size + extraAlloc, chunk->start_address);
-  cmd->event->data = (void *) chunk;
+  assert(event_data);
+  assert(event_data->chunk == NULL);
+  event_data->chunk = chunk;
 
   size_t signalAddress = chunk->start_address;
   size_t argsAddress = chunk->start_address + sizeof(uint32_t);
@@ -762,44 +766,64 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
 
 bool isEventDone(AccelData* data, cl_event event) {
 
-  size_t offset = ((chunk_info_t*)event->data)->start_address - data->Dev->DataMemory->PhysAddress;
+  accel_event_data_t *ed = (accel_event_data_t*)event->data;
+  if (ed->chunk->start_address == 0)
+    return false;
+
+  size_t offset = ed->chunk->start_address - data->Dev->DataMemory->PhysAddress;
 
   uint32_t status = data->Dev->DataMemory->Read32(offset);
 
   return (status != 0);
 }
 
-void pocl_accel_wait_event(cl_device_id device, cl_event event)
-{
-  AccelData *D = (AccelData *)(device->data);
-  size_t offset = ((chunk_info_t *)event->data)->start_address - D->Dev->DataMemory->PhysAddress;
+void pocl_accel_wait_event(cl_device_id device, cl_event event) {
+  accel_event_data_t *ed = (accel_event_data_t *)event->data;
 
-  POCL_MSG_PRINT_INFO("accel wait on event: ADDRESS=%lu, PHYSDDRESS=%zu, OFFSET=%zu\n", ((chunk_info_t *)event->data)->start_address, D->Dev->DataMemory->PhysAddress, offset);
+  POCL_LOCK_OBJ(event);
+  while (event->status > CL_COMPLETE) {
+    POCL_WAIT_COND(ed->event_cond, event->pocl_lock);
+  }
+  POCL_UNLOCK_OBJ(event);
+}
 
-  uint32_t status;
-  int counter = 1;
-  do
-  {
-    usleep(200);
-    status = D->Dev->DataMemory->Read32(offset);
+void pocl_accel_notify_cmdq_finished(cl_command_queue cq) {
+  /* must be called with CQ already locked.
+   * this must be a broadcast since there could be multiple
+   * user threads waiting on the same command queue
+   * in pthread_scheduler_wait_cq(). */
+  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
+  PTHREAD_CHECK(pthread_cond_broadcast(cq_cond));
+}
 
-#ifdef ACCEL_DUMP_MEMORY
-    uint64_t cyclecount = D->Dev->ControlMemory->Read64(ACCEL_STATUS_REG_CC_LOW);
-    uint64_t stallcount = D->Dev->ControlMemory->Read64(ACCEL_STATUS_REG_SC_LOW);
-    uint32_t programcounter = D->Dev->ControlMemory->Read32(ACCEL_STATUS_REG_PC);
-    POCL_MSG_PRINT_INFO(
-        "Accel: RUNNING Cyclecount=%lu Stallcount=%lu Current PC=%u\n",
-        cyclecount, stallcount, programcounter);
+void pocl_accel_notify_event_finished(cl_event event) {
+  accel_event_data_t *ed = (accel_event_data_t *)event->data;
+  POCL_BROADCAST_COND(ed->event_cond);
 
-    if (counter % 2000 == 0)
+  /* this is a hack required b/c pocld does not release events,
+   * the "pocl_accel_free_event_data" is not called, and because
+   * accel allocates memory from device globalmem for signals,
+   * the device eventually runs out of memory. */
+  if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
+      && ed->chunk != NULL)
     {
-      D->Dev->printMemoryDump();
+      pocl_free_chunk((chunk_info_t *)ed->chunk);
+      ed->chunk = NULL;
     }
-    counter++;
+}
 
-#endif
+int pocl_accel_init_queue(cl_device_id device, cl_command_queue queue) {
+  queue->data = malloc(sizeof(pthread_cond_t));
+  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
+  POCL_INIT_COND(*cond);
+  return CL_SUCCESS;
+}
 
-  } while (status == 0);
+int pocl_accel_free_queue(cl_device_id device, cl_command_queue queue) {
+  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
+  POCL_DESTROY_COND(*cond);
+  POCL_MEM_FREE(queue->data);
+  return CL_SUCCESS;
 }
 
 void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
@@ -923,10 +947,15 @@ void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
 
 void pocl_accel_free_event_data (cl_event event)
 {
-  if(event->data != NULL){
-    pocl_free_chunk((chunk_info_t*)event->data);
-    event->data = NULL;
+  accel_event_data_t *ed = (accel_event_data_t *)event->data;
+  if (ed) {
+    if (ed->chunk != NULL) {
+      pocl_free_chunk((chunk_info_t *)ed->chunk);
+    }
+    POCL_DESTROY_COND(ed->event_cond);
+    POCL_MEM_FREE(event->data);
   }
+  event->data = NULL;
 }
 
 void* runningThreadFunc(void*)
@@ -939,16 +968,18 @@ void* runningThreadFunc(void*)
       _cl_command_node *tmp = NULL;
       DL_FOREACH_SAFE(runningList, Node, tmp)
       {
-        if (isEventDone((AccelData*)Node->device->data, Node->event)) {
+        AccelData *AD = (AccelData *)Node->device->data;
+        if (isEventDone(AD, Node->event)) {
           DL_DELETE(runningList, Node);
-          #ifdef ACCEL_DUMP_MEMORY
+          cl_event E = Node->event;
+#ifdef ACCEL_DUMP_MEMORY
           POCL_MSG_PRINT_INFO("FINAL MEMORY DUMP\n");
-          ((AccelData*)(Node->device->data))->Dev->printMemoryDump();
-          #endif
-	      POCL_UNLOCK(runningLock);
-	      POCL_UPDATE_EVENT_COMPLETE_MSG (Node->event, "Accel, asynchronous NDRange    ");
+          AD->Dev->printMemoryDump();
+#endif
+	  POCL_UNLOCK(runningLock);
+	  POCL_UPDATE_EVENT_COMPLETE_MSG (E, "Accel, asynchronous NDRange    ");
           POCL_LOCK(runningLock);
-	    }
+        }
       }
     }
     POCL_UNLOCK(runningLock);
