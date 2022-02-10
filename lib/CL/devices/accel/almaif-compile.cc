@@ -10,7 +10,7 @@
 #include "common_driver.h"
 
 // TODO TCE SPECIFIC
-#define ENABLE_COMPILER
+//#define ENABLE_COMPILER
 #ifdef ENABLE_COMPILER
 #include "almaif-compile-tce.h"
 #endif
@@ -104,7 +104,9 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->ops->create_kernel = pocl_almaif_create_kernel;
   dev->ops->free_kernel = pocl_almaif_free_kernel;
   dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
+#ifdef ENABLE_COMPILER
   dev->ops->compile_kernel = pocl_almaif_tce_compile;
+#endif
   /*
     // must be run AFTER initialize, since it changes little_endian
   #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
