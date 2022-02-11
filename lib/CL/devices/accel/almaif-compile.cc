@@ -10,7 +10,10 @@
 #include "common_driver.h"
 
 // TODO TCE SPECIFIC
-//#define ENABLE_COMPILER
+#ifdef ENABLE_TCE
+#define ENABLE_COMPILER
+#endif
+
 #ifdef ENABLE_COMPILER
 #include "almaif-compile-tce.h"
 #endif
