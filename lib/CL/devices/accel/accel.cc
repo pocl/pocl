@@ -353,6 +353,10 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       POCL_UNLOCK(globalMemIDLock);
     }
     dev->global_mem_size = D->Dev->DataMemory->Size;
+    if (D->Dev->ExternalMemory != nullptr
+            && D->Dev->ExternalMemory->Size > D->Dev->DataMemory->Size)
+        dev->global_mem_size = D->Dev->ExternalMemory->Size;
+
   } else {
     POCL_MSG_PRINT_INFO("Starting offline compilation device initialization\n");
   }
@@ -722,7 +726,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     packet.completion_signal = signalAddress;
   }
 
-  POCL_MSG_PRINT_INFO("ArgsAddress=0x%zx SignalAddress=0x%zx\n",
+  POCL_MSG_PRINT_INFO("ArgsAddress=0x%" PRIx64 " SignalAddress=0x%"  PRIx64 " \n",
                       packet.kernarg_address, packet.completion_signal);
 
   POCL_LOCK(data->AQLQueueLock);
