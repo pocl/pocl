@@ -20,9 +20,10 @@
 #include <random>
 #include <iostream>
 
-#define TILE 16
-#define X 640
-#define Y 640
+// SGEMM kernel requires 16
+#define SGEMM_TILE 16
+#define X 400
+#define Y 400
 #define BUFSIZE (X*Y*4)
 
 #define CHECK_CL_ERROR(EXPR, ...) \
@@ -126,9 +127,12 @@ main(int argc, char** argv)
 
     void *i1, *i2, *o1;
     Offset = cl::NullRange;
-    Local2D = cl::NDRange(TILE, TILE);
+    Local = cl::NullRange;
+    if (kernel_str.compare("pocl.sgemm.local.f32") == 0)
+        Local2D = cl::NDRange(SGEMM_TILE, SGEMM_TILE);
+    else
+        Local2D = cl::NullRange;
     Global2D = cl::NDRange(X, Y);
-    Local = cl::NDRange(TILE);
     Global = cl::NDRange(X);
 
     if (kernel_str.compare("pocl.add.i32") == 0 ||
