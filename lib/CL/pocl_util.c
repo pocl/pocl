@@ -599,8 +599,11 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
 
       assert (dev->ops->alloc_mem_obj);
       errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
-      if (errcode != CL_SUCCESS)
-        return CL_FALSE;
+      POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS),
+                           CL_OUT_OF_RESOURCES,
+                           "Failed to allocate %zx bytes on device %s\n",
+                           objs[i]->size,
+                           dev->short_name);
     }
 
   return CL_TRUE;
