@@ -948,7 +948,7 @@ void* runningThreadFunc(void*)
       }
     }
     POCL_UNLOCK(runningLock);
-    usleep(1000);
+    usleep(100);
   }
   return NULL;
 }
