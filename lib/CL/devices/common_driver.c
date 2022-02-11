@@ -876,7 +876,6 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
 int
 pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 {
-#ifdef ENABLE_LLVM
   int err;
 
   cl_device_id dev = program->devices[device_i];
@@ -887,6 +886,9 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
   if (dev->builtins_sources_path == NULL)
     return 0;
 
+
+// TODO this should probably be outside
+#ifdef ENABLE_LLVM
   POCL_MSG_PRINT_LLVM ("building builtin kernels for %s\n", dev->short_name);
 
   assert (program->build_status == CL_BUILD_NONE);
