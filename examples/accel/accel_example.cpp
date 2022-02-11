@@ -63,6 +63,7 @@ main(int argc, char** argv)
     const char* known_kernels[] = { "pocl.add.i32", "pocl.mul.i32",
                                     "pocl.abs.f32",
                                     "pocl.sgemm.local.f32",
+                                    "pocl.countred",
                                     NULL,
                                   };
     if (argc > 1)
@@ -138,7 +139,8 @@ main(int argc, char** argv)
         Kernel.setArg(2, Out1);
     }
 
-    if (kernel_str.compare("pocl.abs.f32") == 0)
+    if (kernel_str.compare("pocl.abs.f32") == 0 ||
+        kernel_str.compare("pocl.countred") == 0)
     {
         Kernel.setArg(0, Input1);
         Kernel.setArg(1, Out1);
@@ -197,7 +199,8 @@ main(int argc, char** argv)
     err = AccelQueue.enqueueWriteBuffer(Input2, CL_FALSE, 0, BUFSIZE, i2);
     CHECK_CL_ERROR(err, "en 2");
 
-    if (kernel_str.compare("pocl.sgemm.local.f32") == 0)
+    if (kernel_str.compare("pocl.sgemm.local.f32") == 0 ||
+        kernel_str.compare("pocl.countred") == 0)
       err = AccelQueue.enqueueNDRangeKernel(Kernel, Offset, Global2D, Local2D);
     else
       err = AccelQueue.enqueueNDRangeKernel(Kernel, Offset, Global, Local);
