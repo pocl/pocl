@@ -21,8 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#define DEBUG_TYPE "workitem-loops"
-
 #include <iostream>
 
 #include "CompilerWarnings.h"
@@ -30,6 +28,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+
+#define DEBUG_TYPE "workitem-loops"
 
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"

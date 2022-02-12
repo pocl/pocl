@@ -21,8 +21,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#define DEBUG_TYPE "workitem-loops"
-
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -47,6 +45,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
+#define DEBUG_TYPE "workitem-loops"
 
 #include "WorkitemLoops.h"
 #include "Workgroup.h"
