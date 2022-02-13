@@ -63,7 +63,7 @@ COMMAND_REGEXP = /^(?<timestamp>\d+) \| EV ID (?<event_id>\d+) \| DEV (?<dev_id>
 DEP_REGEXP = /DEP \| EV ID (?<src_id>\d+) -> EV ID (?<dst_id>\d+)/
 
 # KERNEL ID 6 | name=ML_BSSN_CL_RHS1
-NDR_REGEXP = /KERNEL ID (?<kernel_id>\d+) \| name=(?<kernel_name>\w+)/
+NDR_REGEXP = /KERNEL ID (?<kernel_id>\d+) \| name=(?<kernel_name>[\.\w]+)/
 
 # MEM ID 34 | size=2744000 | host_ptr=0x5574f7c0b990
 # unmap_mem_object | complete | MEM ID 21
