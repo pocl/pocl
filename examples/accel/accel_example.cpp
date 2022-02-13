@@ -133,7 +133,7 @@ main(int argc, char** argv)
     else
         Local2D = cl::NullRange;
     Global2D = cl::NDRange(X, Y);
-    Global = cl::NDRange(X);
+    Global = cl::NDRange(X * Y);
 
     if (kernel_str.compare("pocl.add.i32") == 0 ||
         kernel_str.compare("pocl.mul.i32") == 0)
@@ -216,6 +216,8 @@ main(int argc, char** argv)
     double diff = std::chrono::duration_cast<second_type>(m_end - m_beg).count();
     std::cout << "Execution time(s): " << diff << "\n\n";
 
+    bool failed = false;
+
     if (kernel_str.compare("pocl.sgemm.local.f32") == 0 ||
         kernel_str.compare("pocl.abs.f32") == 0)
     {
@@ -227,6 +229,13 @@ main(int argc, char** argv)
            std::cout << "IN1: " << in1[i] << "  IN2: " << in2[i] <<
                      "  OUT1: " << out1[i] << "\n";
         }
+
+        if (kernel_str.compare("pocl.abs.f32") == 0) {
+          for (size_t i = 0; i < X*Y; ++i) {
+            if (out1[i] != fabsf(in1[i])) { failed = true ; break; }
+          }
+        }
+
         delete [] in1;
         delete [] in2;
         delete [] out1;
@@ -236,15 +245,34 @@ main(int argc, char** argv)
         uint32_t *in1 = (uint32_t *)i1;
         uint32_t *in2 = (uint32_t *)i2;
         uint32_t *out1 = (uint32_t *)o1;
+
         for (size_t i = 0; i < 10; ++i)
         {
            std::cout << "IN1: " << in1[i] << "  IN2: " << in2[i] <<
                      "  OUT1: " << out1[i] << "\n";
         }
+
+        if (kernel_str.compare("pocl.add.i32") == 0) {
+          for (size_t i = 0; i < X*Y; ++i) {
+            if (out1[i] != in1[i] + in2[i]) { failed = true ; break; }
+          }
+        }
+
+        if (kernel_str.compare("pocl.mul.i32") == 0) {
+          for (size_t i = 0; i < X*Y; ++i) {
+            if (out1[i] != in1[i] * in2[i]) { failed = true ; break; }
+          }
+        }
+
         delete [] in1;
         delete [] in2;
         delete [] out1;
       }
+
+    if (failed)
+      std::cout << "TEST FAILED\n";
+    else
+      std::cout << "OK; TEST PASSED\n";
 
     return EXIT_SUCCESS;
 }

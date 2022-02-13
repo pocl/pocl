@@ -40,18 +40,24 @@ foreach(PROG ${PROGRAMS_TO_BUILD})
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
-set(CMAKE_CXX_STANDARD 14)
+# this test requires 2 devices
 add_executable(accel_countred accel_countred.cpp OpenCLcontext.cpp  OpenCLcontext.h)
 target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 
 ######################################################################
 
-add_test_pocl(NAME "examples/accel" COMMAND "accel_example")
+add_test_pocl(NAME "examples/accel/countred" COMMAND "accel_example" "pocl.countred")
 
-set_tests_properties( "examples/accel"
+add_test_pocl(NAME "examples/accel/add.i32" COMMAND "accel_example" "pocl.add.i32")
+
+add_test_pocl(NAME "examples/accel/mul.i32" COMMAND "accel_example" "pocl.mul.i32")
+
+add_test_pocl(NAME "examples/accel/abs.f32" COMMAND "accel_example" "pocl.abs.f32")
+
+set_tests_properties( "examples/accel/countred" "examples/accel/add.i32"
+  "examples/accel/mul.i32"  "examples/accel/abs.f32"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "custom_device"
-    ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0x43c00000,1,2"
+    LABELS "custom_device;accel_no_LLVM"
     DEPENDS "pocl_version_check")

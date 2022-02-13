@@ -61,10 +61,9 @@ set_tests_properties( "examples/example0" ${SPIREX}
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     LABELS "internal;cuda"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
 set_property(TEST "examples/example0"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan;accel_LLVM")
