@@ -1,18 +1,18 @@
 #!/bin/bash
 # run_tta_tests - Runs tests against the tta device drivers.
 #
-# Copyright (c) 2012 Pekka Jääskeläinen / Tampere Univ. of Technology
-# 
+# Copyright (c) 2021 Michal Babe / Tampere University
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -23,10 +23,9 @@
 
 export POCL_BUILDING=1
 
-if [ -z "$POCL_TTASIM0_PARAMETERS" ]; then
-  export POCL_DEVICES="ttasim"
-  D=$(dirname "$(readlink -f "$0")")
-  export POCL_TTASIM0_PARAMETERS="$D/../data/test_machine_LE.adf"
+if [ -z "$POCL_ACCEL0_PARAMETERS" ]; then
+  export POCL_DEVICES=accel
+  export POCL_ACCEL0_PARAMETERS="14,1,2,4"
 fi
 
 if [ -z "$OCL_ICD_VENDORS" ]; then
@@ -37,10 +36,18 @@ if [ ! -e "$OCL_ICD_VENDORS" ]; then
   echo "OCL_ICD_VENDORS: $OCL_ICD_VENDORS doesn't exist"
   exit 1
 fi
-echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 
-if [ ! -f "CMakeCache.txt" ]; then
-  make check TESTSUITEFLAGS="-k tce"
+echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
+echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
+
+if [ -z "$LLVM" ]; then
+  LLVM=0
+fi
+
+if [ "$LLVM" -eq "0" ]; then
+  echo "running accel tests without LLVM"
+  ctest -L accel_no_LLVM $@
 else
-  ctest -L tce $@
+  echo "running accel tests with LLVM"
+  ctest -L accel_LLVM $@
 fi
