@@ -10,7 +10,7 @@
 #include "common_driver.h"
 
 // TODO TCE SPECIFIC
-#ifdef ENABLE_TCE
+#if defined(TCEMC_AVAILABLE) || defined(TCE_AVAILABLE)
 #define ENABLE_COMPILER
 #endif
 
