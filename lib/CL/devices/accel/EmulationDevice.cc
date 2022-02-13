@@ -233,11 +233,21 @@ void *emulate_accel(void *E_void) {
               arg2[idx] = arg0[idx] * arg1[idx];
               break;
             case (POCL_CDBI_COUNTRED):
-              uint32_t pixel = arg0[idx];
-              uint8_t pixel_r = pixel & 0xFF;
-              if (pixel_r > 100) {
-                red_count++;
+              {
+                  uint32_t pixel = arg0[idx];
+                  uint8_t pixel_r = pixel & 0xFF;
+                  if (pixel_r > 100) {
+                      red_count++;
+                    }
               }
+              break;
+            case (POCL_CDBI_ABS_F32):
+              {
+                  float *arg0f = (float*)arg0;
+                  float *arg1f = (float*)arg1;
+                  arg1f[idx] = std::abs(arg0f[idx]);
+              }
+              break;
             }
           }
         }
