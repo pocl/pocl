@@ -30,7 +30,7 @@ static const char *PX_COUNT_SOURCE = R"(
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 #pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
 
-__kernel void process_frame(global const uchar4 *input, global ulong* output) {
+__kernel void count_red_pixels(global const uchar4 *input, global ulong* output) {
     size_t x = get_global_id(0);
     size_t y = get_global_id(1);
     size_t width = get_global_size(0);
@@ -254,22 +254,23 @@ bool OpenCL_Context::initialize(unsigned width, unsigned height, unsigned bpp)
     CHECK_CL_ERROR(err, "Kernel creation failed\n");
 
     std::string FpgaBuiltinKernels = FpgaDev.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
-    const std::string BuiltinKernelName{"pocl.countred"};
+    std::string RedPixelKernelName{"pocl.countred"};
     std::vector<cl::Device> FpgaDevs = {FpgaDev};
-    if (FpgaBuiltinKernels.find(BuiltinKernelName) != std::string::npos)
+    if (FpgaBuiltinKernels.find(RedPixelKernelName) != std::string::npos)
       {
-        FpgaProgram = cl::Program{ClContext, FpgaDevs, BuiltinKernelName, &err};
+        FpgaProgram = cl::Program{ClContext, FpgaDevs, RedPixelKernelName, &err};
         CHECK_CL_ERROR(err, "Program creation failed\n");
       }
     else
       {
         FpgaProgram = cl::Program{ClContext, PX_COUNT_SOURCE, false, &err};
+        RedPixelKernelName = "count_red_pixels";
         CHECK_CL_ERROR(err, "Program creation failed\n");
       }
 
     err = FpgaProgram.build(FpgaDevs);
     CHECK_CL_ERROR(err, "Program build failed\n");
-    FpgaKernel = cl::Kernel(FpgaProgram, BuiltinKernelName.c_str(), &err);
+    FpgaKernel = cl::Kernel(FpgaProgram, RedPixelKernelName.c_str(), &err);
     CHECK_CL_ERROR(err, "Kernel creation failed\n");
 
     GpuInputBuffer = cl::Buffer(ClContext, CL_MEM_READ_WRITE, (cl::size_type)(InputBufferSize), nullptr, &err);
@@ -325,15 +326,14 @@ bool OpenCL_Context::processCameraFrame(unsigned char* input, unsigned long *out
     if (err != CL_SUCCESS)
         return false;
 
-/*
+    // required to clear the output buffer
     err = FpgaQueue.enqueueWriteBuffer(FpgaOutputBuffer, CL_FALSE, 0, sizeof(cl_ulong), output, nullptr, &ev3);
     if (err != CL_SUCCESS)
         return false;
-*/
 
     evts.clear();
     evts.push_back(ev2);
-//    evts.push_back(ev3);
+    evts.push_back(ev3);
     err = FpgaQueue.enqueueNDRangeKernel(FpgaKernel, Offset, Global, Local, &evts, &ev4);
     if (err != CL_SUCCESS)
         return false;
