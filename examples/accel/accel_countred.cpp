@@ -6,6 +6,8 @@
 #define X 800
 #define Y 600
 
+#define SAMPLES 40
+
 int
 main(void)
 {
@@ -18,6 +20,7 @@ main(void)
         OpenCL_Manager mgr;
         mgr.initialize(X, Y);
         unsigned long redpixels = 0;
+        std::vector<float> samples;
         while (true) {
             using clock_type = std::chrono::steady_clock;
             using second_type = std::chrono::duration<double, std::ratio<1> >;
@@ -30,6 +33,14 @@ main(void)
             std::chrono::time_point<clock_type> m_end { clock_type::now() };
             double diff = std::chrono::duration_cast<second_type>(m_end - m_beg).count();
             std::cout << "FRAME red pixels: " << redpixels << " time: " << diff << "\n";
+            if (samples.size() < SAMPLES) {
+              samples.push_back((float)diff);
+            } else {
+              float sum = std::accumulate(samples.begin(), samples.end(), 0.0f);
+              float fps = (float)SAMPLES / sum;
+              std::cout << "FPS : " << fps << "\n";
+              samples.clear();
+            }
         }
     }
     catch (std::exception &e) {
