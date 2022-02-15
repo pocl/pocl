@@ -180,7 +180,7 @@ main(int argc, char** argv)
     else
     {
         std::mt19937 mt{234545649UL};
-        std::uniform_int_distribution<unsigned int> dist(10, 24);
+        std::uniform_int_distribution<unsigned int> dist(10, 124);
 
         uint32_t *in1 = new uint32_t[X*Y];
         uint32_t *in2 = new uint32_t[X*Y];
@@ -216,7 +216,8 @@ main(int argc, char** argv)
     double diff = std::chrono::duration_cast<second_type>(m_end - m_beg).count();
     std::cout << "Execution time(s): " << diff << "\n\n";
 
-    bool failed = false;
+    bool Failed = false;
+    bool ResultChecked = false;
 
     if (kernel_str.compare("pocl.sgemm.local.f32") == 0 ||
         kernel_str.compare("pocl.abs.f32") == 0)
@@ -231,8 +232,9 @@ main(int argc, char** argv)
         }
 
         if (kernel_str.compare("pocl.abs.f32") == 0) {
+          ResultChecked = true;
           for (size_t i = 0; i < X*Y; ++i) {
-            if (out1[i] != fabsf(in1[i])) { failed = true ; break; }
+            if (out1[i] != fabsf(in1[i])) { Failed = true ; break; }
           }
         }
 
@@ -253,15 +255,27 @@ main(int argc, char** argv)
         }
 
         if (kernel_str.compare("pocl.add.i32") == 0) {
+          ResultChecked = true;
           for (size_t i = 0; i < X*Y; ++i) {
-            if (out1[i] != in1[i] + in2[i]) { failed = true ; break; }
+            if (out1[i] != in1[i] + in2[i]) { Failed = true ; break; }
           }
         }
 
         if (kernel_str.compare("pocl.mul.i32") == 0) {
+          ResultChecked = true;
           for (size_t i = 0; i < X*Y; ++i) {
-            if (out1[i] != in1[i] * in2[i]) { failed = true ; break; }
+            if (out1[i] != in1[i] * in2[i]) { Failed = true ; break; }
           }
+        }
+
+        if (kernel_str.compare("pocl.countred") == 0) {
+          ResultChecked = true;
+          unsigned count = 0;
+          for (size_t i = 0; i < X*Y; ++i) {
+            if (in1[i] > 100) count++;
+          }
+          if (out1[0] != count)
+            Failed = true;
         }
 
         delete [] in1;
@@ -269,10 +283,12 @@ main(int argc, char** argv)
         delete [] out1;
       }
 
-    if (failed)
-      std::cout << "TEST FAILED\n";
-    else
-      std::cout << "OK; TEST PASSED\n";
+    if (ResultChecked) {
+        if (Failed)
+          std::cout << "TEST FAILED\n";
+        else
+          std::cout << "OK; TEST PASSED\n";
+      }
 
     return EXIT_SUCCESS;
 }
