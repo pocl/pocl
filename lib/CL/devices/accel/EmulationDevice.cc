@@ -148,7 +148,7 @@ void *emulate_accel(void *E_void) {
     // (This could probably be outside of the loop)
     int reset = Control[ACCEL_CONTROL_REG_COMMAND / 4];
     if (reset != ACCEL_CONTINUE_CMD) {
-      usleep(100);
+      usleep(ACCEL_DRIVER_SLEEP);
       continue;
     }
 
@@ -160,7 +160,7 @@ void *emulate_accel(void *E_void) {
     // The driver will mark the packet as not INVALID when it wants us to
     // compute it
     if (packet->header == AQL_PACKET_INVALID) {
-      usleep(100);
+      usleep(ACCEL_DRIVER_SLEEP);
       continue;
     }
 
@@ -174,7 +174,7 @@ void *emulate_accel(void *E_void) {
         uint32_t *signal = (uint32_t *)(andPacket->dep_signals[i]);
         if (signal != NULL) {
           while (*signal == 0) {
-            usleep(100);
+            usleep(ACCEL_DRIVER_SLEEP);
           }
         }
       }

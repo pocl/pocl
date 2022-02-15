@@ -551,7 +551,7 @@ void pocl_accel_join(cl_device_id device, cl_command_queue cq) {
   while(D->CommandList || D->ReadyList) {
     scheduleCommands(*D);
     POCL_UNLOCK(D->CommandListLock);
-    usleep(100);
+    usleep(ACCEL_DRIVER_SLEEP);
     POCL_LOCK(D->CommandListLock);
   }
 
@@ -980,7 +980,7 @@ void* runningThreadFunc(void*)
       }
     }
     POCL_UNLOCK(runningLock);
-    usleep(100);
+    usleep(ACCEL_DRIVER_SLEEP);
   }
   return NULL;
 }

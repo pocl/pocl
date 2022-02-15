@@ -103,6 +103,7 @@ struct AQLQueueInfo
 #define ACCEL_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
 #define ACCEL_CQ_LENGTH (offsetof(AQLQueueInfo, size))
 
+#define ACCEL_DRIVER_SLEEP 200
 
 struct AQLDispatchPacket
 {
