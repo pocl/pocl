@@ -119,6 +119,7 @@ class OpenCL_Context {
     std::mutex OclMutex;
     cl::NDRange Offset, Global, Local;
     bool initialized = false;
+    bool UsingFpgaBuiltinKernel = false;
     unsigned imgID = 0;
 
 public:
@@ -258,6 +259,7 @@ bool OpenCL_Context::initialize(unsigned width, unsigned height, unsigned bpp)
     std::vector<cl::Device> FpgaDevs = {FpgaDev};
     if (FpgaBuiltinKernels.find(RedPixelKernelName) != std::string::npos)
       {
+        UsingFpgaBuiltinKernel = true;
         FpgaProgram = cl::Program{ClContext, FpgaDevs, RedPixelKernelName, &err};
         CHECK_CL_ERROR(err, "Program creation failed\n");
       }
@@ -326,14 +328,17 @@ bool OpenCL_Context::processCameraFrame(unsigned char* input, unsigned long *out
     if (err != CL_SUCCESS)
         return false;
 
-    // required to clear the output buffer
+    evts.clear();
+    evts.push_back(ev2);
+
+    if (!UsingFpgaBuiltinKernel) {
+    /* clear the output buffer. only required for some devices */
     err = FpgaQueue.enqueueWriteBuffer(FpgaOutputBuffer, CL_FALSE, 0, sizeof(cl_ulong), output, nullptr, &ev3);
     if (err != CL_SUCCESS)
         return false;
-
-    evts.clear();
-    evts.push_back(ev2);
     evts.push_back(ev3);
+    }
+
     err = FpgaQueue.enqueueNDRangeKernel(FpgaKernel, Offset, Global, Local, &evts, &ev4);
     if (err != CL_SUCCESS)
         return false;
