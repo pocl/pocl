@@ -40,6 +40,7 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_timing.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -102,6 +103,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->run = pocl_accel_run;
 //  ops->update_event = pocl_accel_update_event;
   ops->free_event_data = pocl_accel_free_event_data;
+  ops->update_event = pocl_accel_update_event;
 
   ops->wait_event = pocl_accel_wait_event;
   ops->notify_event_finished = pocl_accel_notify_event_finished;
@@ -401,6 +403,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   // Lift accelerator reset
   D->Dev->ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
+  D->Dev->HwClockStart = pocl_gettimemono_ns();
 
   D->ReadyList = NULL;
   D->CommandList = NULL;
@@ -458,6 +461,47 @@ char *pocl_accel_build_hash(cl_device_id /*device*/) {
   return res;
 }
 
+void pocl_accel_update_event (cl_device_id device, cl_event event) {
+  AccelData* D = (AccelData*)device->data;
+  accel_event_data_t *ed = (accel_event_data_t*)event->data;
+  union {
+    struct { uint32_t a; uint32_t b; } u32;
+    uint64_t u64;
+  } timestamp;
+
+  if ((event->queue->properties & CL_QUEUE_PROFILING_ENABLE) &&
+      (event->command_type == CL_COMMAND_NDRANGE_KERNEL)) {
+
+      if (event->status <= CL_COMPLETE) {
+          assert(ed);
+          size_t commandMetaAddress = ed->chunk->start_address;
+          assert(commandMetaAddress);
+          commandMetaAddress -= D->Dev->DataMemory->PhysAddress;
+
+          timestamp.u32.a = D->Dev->DataMemory->Read32(commandMetaAddress + offsetof(CommandMetadata, start_timestamp));
+          timestamp.u32.b = D->Dev->DataMemory->Read32(commandMetaAddress + offsetof(CommandMetadata, start_timestamp) + sizeof(uint32_t));
+          if (timestamp.u64 > 0)
+            event->time_start = timestamp.u64;
+
+          timestamp.u32.a = D->Dev->DataMemory->Read32(commandMetaAddress + offsetof(CommandMetadata, finish_timestamp));
+          timestamp.u32.b = D->Dev->DataMemory->Read32(commandMetaAddress + offsetof(CommandMetadata, finish_timestamp) + sizeof(uint32_t));
+          if (timestamp.u64 > 0)
+            event->time_end = timestamp.u64;
+
+          // recalculation of timestamps to host clock
+          if (D->Dev->HasHardwareClock &&
+              D->Dev->HwClockFrequency > 0) {
+              double NsPerClock = (double)1000000000.0 / (double)D->Dev->HwClockFrequency;
+
+              double StartNs = (double)event->time_start * NsPerClock;
+              event->time_start = D->Dev->HwClockStart + (uint64_t)StartNs;
+
+              double EndNs = (double)event->time_end * NsPerClock;
+              event->time_end = D->Dev->HwClockStart + (uint64_t)EndNs;
+            }
+        }
+    }
+}
 
 static void scheduleCommands(AccelData &D) {
 
@@ -656,7 +700,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   }
 
   // Additional space for a signal
-  size_t extraAlloc = sizeof(uint32_t);
+  size_t extraAlloc = sizeof(struct CommandMetadata);
   chunk_info_t *chunk =
      pocl_alloc_buffer_from_region(data->Dev->AllocRegions, arg_size + extraAlloc);
   assert(chunk && "Failed to allocate signal/argument buffer");
@@ -668,11 +712,13 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   assert(event_data->chunk == NULL);
   event_data->chunk = chunk;
 
-  size_t signalAddress = chunk->start_address;
-  size_t argsAddress = chunk->start_address + sizeof(uint32_t);
+  size_t commandMetaAddress = chunk->start_address;
+  size_t signalAddress = commandMetaAddress + offsetof(CommandMetadata, completion_signal);
+  size_t argsAddress = chunk->start_address + sizeof(struct CommandMetadata);
   POCL_MSG_PRINT_INFO("Signal address=0x%zx\n", signalAddress);
-  // Set initial signal value
-  data->Dev->DataMemory->Write32(signalAddress - data->Dev->DataMemory->PhysAddress, 0);
+  // clear the timestamps and initial signal value
+  for (unsigned offset = 0; offset < sizeof(CommandMetadata) ; offset += 4)
+  data->Dev->DataMemory->Write32(commandMetaAddress - data->Dev->DataMemory->PhysAddress + offset, 0);
   // Set arguments
   data->Dev->DataMemory->CopyToMMAP(argsAddress, arguments, arg_size);
 
@@ -724,14 +770,14 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
 
   if (data->Dev->RelativeAddressing) {
     packet.kernarg_address = argsAddress - data->Dev->DataMemory->PhysAddress;
-    packet.completion_signal = signalAddress - data->Dev->DataMemory->PhysAddress;
+    packet.command_meta_address = commandMetaAddress - data->Dev->DataMemory->PhysAddress;
   } else {
     packet.kernarg_address = argsAddress;
-    packet.completion_signal = signalAddress;
+    packet.command_meta_address = commandMetaAddress;
   }
 
-  POCL_MSG_PRINT_INFO("ArgsAddress=0x%" PRIx64 " SignalAddress=0x%"  PRIx64 " \n",
-                      packet.kernarg_address, packet.completion_signal);
+  POCL_MSG_PRINT_INFO("ArgsAddress=0x%" PRIx64 " CommandMetaAddress=0x%"  PRIx64 " \n",
+                      packet.kernarg_address, packet.command_meta_address);
 
   POCL_LOCK(data->AQLQueueLock);
   uint32_t queue_length = data->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
@@ -770,9 +816,12 @@ bool isEventDone(AccelData* data, cl_event event) {
   if (ed->chunk->start_address == 0)
     return false;
 
-  size_t offset = ed->chunk->start_address - data->Dev->DataMemory->PhysAddress;
+  size_t commandMetaAddress = ed->chunk->start_address;
+  assert(commandMetaAddress);
+  size_t signalAddress = commandMetaAddress + offsetof(CommandMetadata, completion_signal);
+  signalAddress -= data->Dev->DataMemory->PhysAddress;
 
-  uint32_t status = data->Dev->DataMemory->Read32(offset);
+  uint32_t status = data->Dev->DataMemory->Read32(signalAddress);
 
   return (status != 0);
 }
@@ -973,8 +1022,8 @@ void* runningThreadFunc(void*)
           POCL_MSG_PRINT_INFO("FINAL MEMORY DUMP\n");
           AD->Dev->printMemoryDump();
 #endif
-	  POCL_UNLOCK(runningLock);
-	  POCL_UPDATE_EVENT_COMPLETE_MSG (E, "Accel, asynchronous NDRange    ");
+          POCL_UNLOCK(runningLock);
+          POCL_UPDATE_EVENT_COMPLETE_MSG (E, "Accel, asynchronous NDRange    ");
           POCL_LOCK(runningLock);
         }
       }

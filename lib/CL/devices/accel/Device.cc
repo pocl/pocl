@@ -29,6 +29,7 @@
 #include "bufalloc.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_timing.h"
 
 #include <iostream>
 
@@ -160,7 +161,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
                       InstructionMemory->PhysAddress, kd->imem_img_size);
 
   ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
-
+  HwClockStart = pocl_gettimemono_ns();
 }
 
 void Device::preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd) {
