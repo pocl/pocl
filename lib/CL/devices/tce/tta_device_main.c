@@ -67,6 +67,18 @@ typedef void (*pocl_workgroup_func32_argb) (
     uint /* group_x */, uint /* group_y */, uint /* group_z */);
 
 
+struct CommandMetadata {
+  uint32_t completion_signal;
+  uint32_t reserved0;
+  uint32_t start_timestamp_low;
+  uint32_t start_timestamp_high;
+  uint32_t finish_timestamp_low;
+  uint32_t finish_timestamp_high;
+  uint32_t reserved1;
+  uint32_t reserved2;
+};
+
+
 struct AQLQueueInfo
 {
   uint32_t type;
@@ -118,8 +130,8 @@ struct AQLDispatchPacket
   uint32_t reserved1;
   uint32_t reserved2;
 
-  uint32_t completion_signal_low;
-  uint32_t completion_signal_high;
+  uint32_t cmd_metadata_low;
+  uint32_t cmd_metadata_high;
 };
 
 struct AQLAndPacket
@@ -192,7 +204,7 @@ tta_opencl_wg_launch (__cq__ volatile struct AQLDispatchPacket *packet)
   lwpr_print_str ("\ntta: ------------------- kernel finished\n");
 #endif
 
-  *(__buffer__ uint32_t *)packet->completion_signal_low = 1;
+  ((__buffer__ struct CommandMetadata *)packet->cmd_metadata_low)->completion_signal = 1;
 }
 
 #if _STANDALONE_MODE == 1

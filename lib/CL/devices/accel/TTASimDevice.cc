@@ -64,7 +64,6 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   assert(simulator_ != NULL && "simulator null\n");
   simulatorCLI_ = new SimulatorCLI(simulator_->frontend());
 
-
    SigINTHandler* ctrlcHandler = new SigINTHandler(this);
    Application::setSignalHandler(SIGINT, *ctrlcHandler);
 

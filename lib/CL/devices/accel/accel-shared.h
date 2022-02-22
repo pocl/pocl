@@ -105,6 +105,15 @@ struct AQLQueueInfo
 
 #define ACCEL_DRIVER_SLEEP 200
 
+struct CommandMetadata {
+  uint32_t completion_signal;
+  uint32_t reserved0;
+  uint64_t start_timestamp;
+  uint64_t finish_timestamp;
+  uint64_t reserved1;
+};
+
+
 struct AQLDispatchPacket
 {
   uint16_t header;
@@ -127,8 +136,9 @@ struct AQLDispatchPacket
 
   uint64_t reserved;
 
-  uint64_t completion_signal;
+  uint64_t command_meta_address;
 };
+
 
 struct AQLAndPacket
 {
@@ -142,7 +152,6 @@ struct AQLAndPacket
 
   uint64_t completion_signal;
 };
-
 
 
 

@@ -25,6 +25,7 @@
 
 #include "EmulationRegion.h"
 #include "accel-shared.h"
+#include "pocl_timing.h"
 
 #include <unistd.h>
 #include <iostream>
@@ -164,6 +165,10 @@ void *emulate_accel(void *E_void) {
       continue;
     }
 
+    CommandMetadata *cmd  = (CommandMetadata *)packet->command_meta_address;
+    assert(cmd);
+    cmd->start_timestamp = pocl_gettimemono_ns();
+
     uint16_t header = packet->header;
     if (header & (1 << AQL_PACKET_BARRIER_AND)) {
       struct AQLAndPacket *andPacket = (struct AQLAndPacket *)packet;
@@ -263,10 +268,8 @@ void *emulate_accel(void *E_void) {
       POCL_MSG_PRINT_INFO("accel emulate: Kernel done\n");
     }
 
-    // Completion signal is given as absolute address
-    if (packet->completion_signal) {
-      *(uint32_t *)packet->completion_signal = 1;
-    }
+    cmd->finish_timestamp = pocl_gettimemono_ns();
+    cmd->completion_signal = 1;
     packet->header = AQL_PACKET_INVALID;
 
     read_iter++; // move on to the next AQL packet

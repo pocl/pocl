@@ -51,6 +51,14 @@ public:
   memory_region_t* AllocRegions;
 
   bool RelativeAddressing;
+  // if set to true, the device has its own time source in hardware,
+  // and timestamps we get from device should be converted to host clock
+  // for Emul it's false because we can get usable host timestamps in driver
+  bool HasHardwareClock = false;
+  // the *host* timestamp recorded when the time source on device is zero
+  uint64_t HwClockStart = 0;
+  // Hz, frequency of the device's clock source
+  uint64_t HwClockFrequency = 0;
   int PointerSize = 0;
 
   void printMemoryDump();
