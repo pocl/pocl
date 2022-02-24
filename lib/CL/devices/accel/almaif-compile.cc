@@ -153,12 +153,12 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   POCL_MSG_PRINT_INFO("Current kernel %p, new kernel %p\n",
                       d->compilationData->current_kernel, kernel);
 
-  if (d->compilationData->current_kernel == kernel) {
+ /* if (d->compilationData->current_kernel == kernel) {
     POCL_MSG_PRINT_INFO(
         "kernel %s is the currently loaded kernel, nothing to do\n",
         kernel->name);
     return;
-  }
+  }*/
 
 #ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
