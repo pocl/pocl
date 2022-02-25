@@ -11,10 +11,17 @@ Howdy HIPpies!
 I'm correct since I'm not an empty string!
 IO == 0
 
+Testing 'ocl_std_percent_escape'
+hello
+%
+hello % world
+%s
+IO == 1
+
 Testing 'ocl_std_global_str_arg_emulated'
 HELLO GLOBAL
 STRiNGS
-IO == 1
+IO == 0
 
 Testing 'spirv_std_var_str_arg_constant_program_scope'
 CONSTANT AS program scope

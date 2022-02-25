@@ -52,6 +52,13 @@ kernel void ocl_std_nop_str_arg(global int *io) {
   io[0] += printf("I'm correct since I'm not an empty string!\n");
 }
 
+kernel void ocl_std_percent_escape(global int *io) {
+  printf("hello\n");
+  printf("%%\n");
+  printf("hello %% world\n");
+  io[0] = printf("%%s\n");
+}
+
 // OpenCL 1.2-compliant fallback to print strings that are not in the
 // constant memory.
 void putstr(global char *str) {
