@@ -1106,14 +1106,15 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   char builtin_path[POCL_FILENAME_LENGTH];
 
   char filename[64];
-  str_tolower (filename, dev->ops->device_name);
+  filename[0] = '/';
+  str_tolower (filename+1, dev->ops->device_name);
   strcat(filename, "/");
   if (have_sm70)
     strcat(filename, "builtins_sm70.ptx");
   else
     strcat(filename, "builtins_sm50.ptx");
 
-  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices/", "", filename);
+  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices", "", filename);
 
   if (pocl_read_file(builtin_path, &builtins_file, &builtins_file_len) < 0)
     {
