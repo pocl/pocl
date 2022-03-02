@@ -247,6 +247,25 @@ typedef struct pocl_vulkan_device_data_s
   int kernarg_is_device_mem;
   /* 1 if kernarg memory is directly mappable to host AS */
   int kernarg_is_mappable;
+  /* capabilities */
+  int have_atom_64bit;
+
+  int have_i8_shader;
+  int have_i16_shader;
+  int have_i64_shader;
+
+  int have_f16_shader;
+  int have_f64_shader;
+
+  int have_8b_ssbo;
+  int have_8b_ubo;
+  int have_8b_pushc;
+  int have_16b_ssbo;
+  int have_16b_ubo;
+  int have_16b_pushc;
+
+  uint32_t max_pushc_size;
+  uint32_t max_ubo_size;
 
   _cl_command_node *work_queue;
 
@@ -897,7 +916,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
    * VK_KHR_shader_non_semantic_info
    */
 
-  const char *requested_exts[4];
+  const char *requested_exts[32];
   uint32_t requested_ext_count = 0;
 
   uint32_t dev_ext_count = 0;
@@ -910,6 +929,10 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   int have_amd_shader_core_properties = 0;
   int have_needed_extensions = 0;
+  int ext_atom_64bit = 0;
+  int ext_i8_f16_shader = 0;
+  int ext_8b_store = 0;
+  int ext_16b_store = 0;
   for (i = 0; i < dev_ext_count; ++i)
     {
 #ifdef VK_AMD_shader_core_properties
@@ -948,6 +971,38 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
               = "VK_KHR_shader_non_semantic_info";
         }
 */
+
+      if (strncmp ("VK_KHR_shader_atomic_int64", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ext_atom_64bit = 1;
+          requested_exts[requested_ext_count++] = "VK_KHR_shader_atomic_int64";
+        }
+
+      if (strncmp ("VK_KHR_shader_float16_int8", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ext_i8_f16_shader = 1;
+          requested_exts[requested_ext_count++] = "VK_KHR_shader_float16_int8";
+        }
+
+      if (strncmp ("VK_KHR_8bit_storage", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ext_8b_store = 1;
+          requested_exts[requested_ext_count++] = "VK_KHR_8bit_storage";
+        }
+
+      if (strncmp ("VK_KHR_16bit_storage", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ext_16b_store = 1;
+          requested_exts[requested_ext_count++] = "VK_KHR_16bit_storage";
+        }
     }
 
   if (have_needed_extensions < 2)
@@ -1002,20 +1057,100 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
           shaderInt64                             = 1
           shaderInt16                             = 0
   */
-  VkPhysicalDeviceFeatures dev_features = { 0 };
-  if (dev_features.shaderFloat64)
+
+  VkPhysicalDeviceFeatures2 dev_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2, 0 };
+#ifdef VK_VERSION_1_2
+
+  VkPhysicalDeviceShaderAtomicInt64Features atomic64b_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES, 0 };
+  VkPhysicalDeviceShaderFloat16Int8Features f16_i8_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES, 0 };
+  VkPhysicalDevice8BitStorageFeatures storage8b_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES, 0 };
+  VkPhysicalDevice16BitStorageFeatures storage16b_features
+      = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES, 0 };
+
+  VkStructBase *p = (VkStructBase *)&dev_features;
+  if (ext_atom_64bit)
     {
-      dev->extensions = "cl_khr_fp64";
+      p->pNext = &atomic64b_features;
+      p  = (VkStructBase *)&atomic64b_features;
+    }
+  if (ext_i8_f16_shader)
+    {
+      p->pNext = &f16_i8_features;
+      p  = (VkStructBase *)&f16_i8_features;
+    }
+  if (ext_8b_store)
+    {
+      p->pNext = &storage8b_features;
+      p = (VkStructBase *)&storage8b_features;
+    }
+  if (ext_16b_store)
+    {
+      p->pNext = &storage16b_features;
+      p = (VkStructBase *)&storage16b_features;
+    }
+  p->pNext = NULL;
+#endif
+  vkGetPhysicalDeviceFeatures2 (pd, &dev_features);
+
+#ifdef VK_VERSION_1_2
+  d->have_atom_64bit
+      = (ext_atom_64bit && atomic64b_features.shaderBufferInt64Atomics
+         && atomic64b_features.shaderSharedInt64Atomics);
+
+  d->have_8b_ssbo
+      = (ext_8b_store && storage8b_features.storageBuffer8BitAccess);
+  d->have_8b_ubo
+      = (ext_8b_store && storage8b_features.uniformAndStorageBuffer8BitAccess);
+  d->have_8b_pushc = (ext_8b_store && storage8b_features.storagePushConstant8);
+  d->have_16b_ssbo
+      = (ext_16b_store && storage16b_features.storageBuffer16BitAccess);
+  d->have_16b_ubo
+      = (ext_16b_store
+         && storage16b_features.uniformAndStorageBuffer16BitAccess);
+  d->have_16b_pushc
+      = (ext_16b_store && storage16b_features.storagePushConstant16);
+
+  d->have_f16_shader = (ext_i8_f16_shader && f16_i8_features.shaderFloat16);
+
+  d->have_i8_shader = (ext_i8_f16_shader && f16_i8_features.shaderInt8);
+#endif
+  d->have_f64_shader = dev_features.features.shaderFloat64;
+
+  d->have_i16_shader = dev_features.features.shaderInt16;
+  d->have_i64_shader = dev_features.features.shaderInt64;
+
+  d->max_pushc_size = d->dev_props.limits.maxPushConstantsSize;
+  d->max_ubo_size = d->dev_props.limits.maxUniformBufferRange;
+
+  if (d->have_f64_shader)
+    {
       dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
                               | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
                               | CL_FP_DENORM;
     }
   else
     {
-      dev->extensions = "";
       dev->double_fp_config = 0;
     }
-  dev->has_64bit_long = (dev_features.shaderInt64 > 0);
+  if (d->have_f16_shader)
+    {
+      dev->half_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+                            | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
+                            | CL_FP_DENORM;
+    }
+  else
+    {
+      dev->half_fp_config = 0;
+    }
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+                          | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
+                          | CL_FP_DENORM;
+
+  dev->has_64bit_long = d->have_i64_shader;
 
   /*
    If images are used in the OpenCL C:
@@ -1028,7 +1163,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->image_support = CL_FALSE;
 
   VkDeviceCreateInfo dev_cinfo = { VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-                                   0,
+                                   dev_features.pNext,
                                    0,
                                    1,
                                    &queue_fam_cinfo,
@@ -1036,7 +1171,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
                                    0, /* deprecated */
                                    requested_ext_count,
                                    requested_exts,
-                                   &dev_features };
+                                   &dev_features.features };
 
   /* create logical device */
   VULKAN_CHECK (
@@ -1118,11 +1253,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->native_vector_width_float = 1;
   dev->native_vector_width_double = 1;
   dev->native_vector_width_half = 1;
-
-  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
-                          | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
-                          | CL_FP_DENORM;
-  dev->half_fp_config = 0;
 
   dev->device_side_printf = 0;
   dev->printf_buffer_size = 1024*1024;
@@ -1317,8 +1447,11 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   int errcode = CL_SUCCESS;
   program->main_build_log[0] = 0;
 
-  assert (program->devices[device_i]->compiler_available == CL_TRUE);
-  assert (program->devices[device_i]->linker_available == CL_TRUE);
+  cl_device_id dev = program->devices[device_i];
+  pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)dev->data;
+
+  assert (dev->compiler_available == CL_TRUE);
+  assert (dev->linker_available == CL_TRUE);
   assert (program->source);
   size_t source_len = strlen (program->source);
 
@@ -1355,6 +1488,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
 
   char program_spv_path_temp[POCL_FILENAME_LENGTH];
   pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
+
   char *COMPILATION[1024]
       = { CLSPV,
           "-x=cl",
@@ -1365,29 +1499,112 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
           /* "--pod-pushconstant",*/ /* TODO push constants should be faster */
           "--pod-ubo",
           "--cluster-pod-kernel-args",
-          "-o",
-          program_spv_path_temp,
-          program_cl_path,
           NULL };
+
+  unsigned last_arg_idx = 8;
+  if (d->have_i8_shader)
+    COMPILATION[last_arg_idx++] = "--int8";
+
+  if (d->have_f16_shader)
+    COMPILATION[last_arg_idx++] = "--fp16";
+
+  if (d->have_f64_shader)
+    COMPILATION[last_arg_idx++] = "--fp64";
+
+  char max_ubo_size_str[128] = { 0 };
+  if (d->max_ubo_size != UINT32_MAX)
+    {
+      snprintf (max_ubo_size_str, 128, "--max-ubo-size=%u", d->max_ubo_size);
+      COMPILATION[last_arg_idx++] = max_ubo_size_str;
+    }
+
+  char max_pushc_size_str[128] = { 0 };
+  if (d->max_pushc_size != UINT32_MAX)
+    {
+      snprintf (max_pushc_size_str, 128, "--max-pushconstant-size=%u",
+                d->max_pushc_size);
+      COMPILATION[last_arg_idx++] = max_pushc_size_str;
+    }
+
+  char disable_16b_stor[128] = { 0 };
+  if (!d->have_16b_pushc || !d->have_16b_ssbo || !d->have_16b_ubo)
+    {
+      int need_comma = 0;
+      strcat (disable_16b_stor, "-no-16bit-storage=");
+      if (!d->have_16b_pushc)
+        {
+          if (need_comma)
+            strcat (disable_16b_stor, ",");
+          need_comma = 1;
+          strcat (disable_16b_stor, "pushconstant");
+        }
+      if (!d->have_16b_ssbo)
+        {
+          if (need_comma)
+            strcat (disable_16b_stor, ",");
+          need_comma = 1;
+          strcat (disable_16b_stor, "ssbo");
+        }
+      if (!d->have_16b_ubo)
+        {
+          if (need_comma)
+            strcat (disable_16b_stor, ",");
+          strcat (disable_16b_stor, "ubo");
+        }
+    }
+
+  char disable_8b_stor[128] = { 0 };
+  if (!d->have_8b_pushc || !d->have_8b_ssbo || !d->have_8b_ubo)
+    {
+      int need_comma = 0;
+      strcat (disable_8b_stor, "-no-8bit-storage=");
+      if (!d->have_8b_pushc)
+        {
+          if (need_comma)
+            strcat (disable_8b_stor, ",");
+          need_comma = 1;
+          strcat (disable_8b_stor, "pushconstant");
+        }
+      if (!d->have_8b_ssbo)
+        {
+          if (need_comma)
+            strcat (disable_8b_stor, ",");
+          need_comma = 1;
+          strcat (disable_8b_stor, "ssbo");
+        }
+      if (!d->have_8b_ubo)
+        {
+          if (need_comma)
+            strcat (disable_8b_stor, ",");
+          strcat (disable_8b_stor, "ubo");
+        }
+    }
+
+  if (disable_8b_stor[0])
+    COMPILATION[last_arg_idx++] = disable_8b_stor;
+
+  if (disable_16b_stor[0])
+    COMPILATION[last_arg_idx++] = disable_16b_stor;
+
+  COMPILATION[last_arg_idx++] = "-o";
+  COMPILATION[last_arg_idx++] = program_spv_path_temp;
+  COMPILATION[last_arg_idx++] = program_cl_path;
 
   if (program->compiler_options)
     {
-      size_t i = 0;
-      for (i = 0; i < 1024; ++i)
-        if (COMPILATION[i] == NULL)
-          break;
       /* TODO mishandles quoted strings with spaces */
+      /* TODO options are not exactly same for clspv */
       char *token = NULL;
       char delim[] = { ' ', 0 };
       token = strtok (program->compiler_options, delim);
-      while (i < 1024 && token != NULL)
+      while (last_arg_idx < 1024 && token != NULL)
         {
-          COMPILATION[i] = strdup (token);
+          COMPILATION[last_arg_idx++] = strdup (token);
           token = strtok (NULL, delim);
-          ++i;
         }
-      COMPILATION[i] = NULL;
     }
+
+  COMPILATION[last_arg_idx++] = NULL;
 
   errcode = run_and_append_output_to_build_log (program, COMPILATION);
   POCL_GOTO_ERROR_ON (!pocl_exists (program_spv_path_temp),
