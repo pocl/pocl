@@ -107,6 +107,9 @@ endif()
 if(ENABLE_VULKAN)
   include_directories(AFTER "${Vulkan_INCLUDE_DIR}")
   add_subdirectory("vulkan")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-vulkan>")
+
   if(NOT ENABLE_LOADABLE_DRIVERS)
     list(APPEND POCL_DEVICES_LINK_LIST ${Vulkan_LIBRARY})
   endif()
