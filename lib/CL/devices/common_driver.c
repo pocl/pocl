@@ -897,17 +897,18 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
   char* builtins_file = NULL;
   char builtin_path[POCL_FILENAME_LENGTH];
   char filename[64];
-  pocl_str_tolower (filename, dev->ops->device_name);
+  filename[0] = '/';
+  pocl_str_tolower (filename+1, dev->ops->device_name);
   strcat(filename, "/");
   strcat(filename, dev->builtins_sources_path);
 
-  /* filename is now e.g. "cuda/builtins.cl";
+  /* filename is now e.g. "/cuda/builtins.cl";
    * loads either
    * <srcdir>/lib/CL/devices/cuda/builtins.cl
    * or
    * <private_datadir>/cuda/builtins.cl
    */
-  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices/", "", filename);
+  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices", "", filename);
 
   POCL_RETURN_ERROR_ON( (pocl_read_file (builtin_path, &builtins_file, &builtins_file_len)),
                          CL_BUILD_PROGRAM_FAILURE,

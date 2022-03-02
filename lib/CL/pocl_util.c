@@ -2365,7 +2365,9 @@ int pocl_get_private_datadir(char* private_datadir)
 }
 
 /* returns path to a file from either the PoCL's source directory
- * (if POCL_BUILDING=1), or PoCL's private datadir (if POCL_BUILDING=0) */
+ * (if POCL_BUILDING=1), or PoCL's private datadir (if POCL_BUILDING=0)
+ * each arg (if not empty) should start with '/' but NOT end with it
+ */
 int pocl_get_srcdir_or_datadir (char* path,
                                 const char* srcdir_suffix,
                                 const char* datadir_suffix,
