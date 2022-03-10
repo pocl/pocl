@@ -461,7 +461,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
     }
   else if (spirv)
     {
-#ifndef CL_VERSION_2_1
+#ifdef CL_VERSION_2_1
       TEST_ASSERT (device != NULL);
       binary = poclu_read_binfile (path, &binary_size);
       TEST_ASSERT (binary != NULL);
@@ -474,7 +474,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (binary);
 #else
-      TEST_ASSERT (0 && "test not compiled with OpenCL 2.1 can't use clCreateProgramWithIL");
+      TEST_ASSERT (0 && "test compiled without OpenCL 2.1 can't use clCreateProgramWithIL");
 #endif
     }
   else
