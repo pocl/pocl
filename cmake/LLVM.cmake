@@ -459,31 +459,6 @@ endmacro()
 ####################################################################
 ####################################################################
 
-# The option for specifying the target changed; try the modern syntax
-# first, and fall back to the old-style syntax if this failed
-
-if(NOT DEFINED CLANG_TARGET_OPTION AND ENABLE_HOST_CPU_DEVICES)
-
-  custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
-  if(NOT RES)
-    set(CLANG_TGT "--target=")
-  else()
-    #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
-    custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
-    if(NOT RES)
-      set(CLANG_TGT "-target ")
-    else()
-      message(FATAL_ERROR "Cannot determine Clang option to specify the target")
-    endif()
-  endif()
-
-  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
-
-endif()
-
-####################################################################
-####################################################################
-
 if(NOT DEFINED CLANG_NEEDS_RTLIB)
 
   set(RT128 OFF)
@@ -618,6 +593,31 @@ endif()
 
 ####################################################################
 
+if(ENABLE_HOST_CPU_DEVICES)
+
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+
+if(NOT DEFINED CLANG_TARGET_OPTION)
+
+  custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
+  if(NOT RES)
+    set(CLANG_TGT "--target=")
+  else()
+    #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
+    custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
+    if(NOT RES)
+      set(CLANG_TGT "-target ")
+    else()
+      message(FATAL_ERROR "Cannot determine Clang option to specify the target")
+    endif()
+  endif()
+
+  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
+
+endif()
+
+
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
 # to all the scripts, or set the respective flags here in
@@ -632,8 +632,7 @@ endif()
 # depending on whether they are generated via clang or directly
 # via llc.
 
-
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_TRIPLE)
+if(NOT DEFINED LLC_TRIPLE)
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
   set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
   file(WRITE "${_EMPTY_C_FILE}" "")
@@ -652,7 +651,6 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_TRIPLE)
   string(REPLACE "armv7l-" "armv7-" LLC_TRIPLE "${LLC_TRIPLE}")
 
   set(LLC_TRIPLE "${LLC_TRIPLE}" CACHE INTERNAL "LLC_TRIPLE")
-
 endif()
 
 
@@ -660,7 +658,7 @@ endif()
 # targeted if you pass -mcpu=native to llc, so we could replace this auto-detection
 # with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
 # because of the work-around for arm1176jz-s.
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
+if(NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   if(RES_VAR)
@@ -680,8 +678,6 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
   endif()
 endif()
 
-
-
 if((LLC_HOST_CPU_AUTO MATCHES "unknown") AND (NOT LLC_HOST_CPU))
   message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please run CMake with -DLLC_HOST_CPU=<cpu> (you can find valid names with: llc -mcpu=help)")
 else()
@@ -700,9 +696,7 @@ else()
 endif()
 
 
-####################################################################
 # Some architectures have -march and -mcpu reversed
-
 if(NOT DEFINED CLANG_MARCH_FLAG)
   message(STATUS "Checking clang -march vs. -mcpu flag")
   custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${SELECTED_HOST_CPU})
@@ -720,6 +714,8 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
 
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
 endif()
+
+endif(ENABLE_HOST_CPU_DEVICES)
 
 ####################################################################
 
