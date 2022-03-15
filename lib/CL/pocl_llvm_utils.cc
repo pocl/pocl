@@ -136,7 +136,8 @@ static int getModuleTriple(const char *input_stream, size_t size,
 }
 
 char *pocl_get_llvm_cpu_name() {
-  StringRef r = llvm::sys::getHostCPUName();
+  const char *custom = pocl_get_string_option("POCL_LLVM_CPU_NAME", NULL);
+  StringRef r = custom ? StringRef(custom) : llvm::sys::getHostCPUName();
 
   // LLVM may return an empty string -- treat as generic
   if (r.empty())
@@ -146,7 +147,7 @@ char *pocl_get_llvm_cpu_name() {
   if (r.str() == "generic" && strlen(OCL_KERNEL_TARGET_CPU)) {
     POCL_MSG_WARN("LLVM does not recognize your cpu, trying to use "
                    OCL_KERNEL_TARGET_CPU " for -target-cpu\n");
-    r = llvm::StringRef(OCL_KERNEL_TARGET_CPU);
+    r = StringRef(OCL_KERNEL_TARGET_CPU);
   }
 #endif
 
