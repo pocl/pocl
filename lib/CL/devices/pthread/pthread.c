@@ -101,13 +101,8 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
