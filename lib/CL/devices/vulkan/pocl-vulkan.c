@@ -1422,7 +1422,7 @@ ERROR:
 }
 
 int
-pocl_vulkan_supports_binary (cl_device_id device, const size_t length,
+pocl_vulkan_supports_binary (cl_device_id device, size_t length,
                              const char *binary)
 {
 /* TODO remove ifdef once the build callbacks
