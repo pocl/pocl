@@ -85,12 +85,16 @@
 
 #include <vulkan/vulkan.h>
 
-#include "config.h"
-#include "pocl_cl.h"
+#ifndef VK_API_VERSION_1_1
+#error this program needs Vulkan headers to be at least version 1.1
+#endif
 
 #include "common.h"
 #include "common_driver.h"
+#include "config.h"
 #include "devices.h"
+#include "pocl_cl.h"
+#include "pocl_local_size.h"
 #include "utlist.h"
 
 #include "pocl_cache.h"
@@ -698,8 +702,6 @@ pocl_vulkan_enqueue_staging_buffer_copy (pocl_vulkan_device_data_t *d,
                         &memory_barrier, 0, 0, 0, 0);
 }
 
-/********************************************************************/
-
 void
 pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
 {
@@ -723,6 +725,7 @@ pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
   ops->free_mapping_ptr = pocl_vulkan_free_mapping_ptr;
   ops->can_migrate_d2d = NULL;
   ops->migrate_d2d = NULL;
+  ops->compute_local_size = pocl_wg_utilization_maximizer;
 
   ops->run = pocl_vulkan_run;
   ops->run_native = NULL;
@@ -791,8 +794,13 @@ static const VkApplicationInfo pocl_vulkan_application_info
         "PoCL OpenCL application",
         0,
         "PoCL " POCL_VERSION_BASE,
-        VK_MAKE_VERSION (1, 2, 0),
-        VK_API_VERSION_1_1 };
+        120,
+#ifdef VK_MAKE_API_VERSION
+        VK_MAKE_API_VERSION(0, 1, 2, 0)
+#else
+        VK_MAKE_VERSION(1, 2, 0)
+#endif
+};
 
 #define MAX_VULKAN_DEVICES 32
 
@@ -833,7 +841,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
     return 0;
 
   size_t i;
-  VkInstanceCreateInfo cinfo;
+  VkInstanceCreateInfo cinfo = { 0 };
   cinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   cinfo.pApplicationInfo = &pocl_vulkan_application_info;
 
@@ -850,7 +858,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
   assert (ext_prop_count < 128);
 
   cinfo.enabledExtensionCount = 0;
-  const char *ins_extensions[2];
+  const char *ins_extensions[2] = { 0 };
   cinfo.ppEnabledExtensionNames = ins_extensions;
 
   if (pocl_vulkan_enable_validation)
@@ -883,7 +891,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
   assert (layer_count < 128);
 
   cinfo.enabledLayerCount = 0;
-  const char *ins_layers[3];
+  const char *ins_layers[3] = { 0 };
   cinfo.ppEnabledLayerNames = ins_layers;
 
   if (pocl_vulkan_enable_validation)
@@ -1417,6 +1425,10 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     {
       dev->vendor = "Intel Corporation";
     }
+  else if (dev->vendor_id == 0x14e4)
+    {
+      dev->vendor = "Broadcom Inc.";
+    }
   else
     {
       dev->vendor = "Unknown";
@@ -1540,7 +1552,10 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
 
   /* TODO VkPhysicalDeviceVulkan11Properties . maxMemoryAllocationSize */
-  dev->max_mem_alloc_size = max (dev->global_mem_size / 2, 128 * 1024 * 1024);
+  dev->max_mem_alloc_size
+      = min (dev->global_mem_size / 2,
+             d->dev_props.limits.maxStorageBufferRange & (~4095U));
+  dev->max_mem_alloc_size = max (dev->max_mem_alloc_size, 128 * 1024 * 1024);
 
   pocl_vulkan_setup_memfill_kernels (dev, d);
   /************************************************************************/
@@ -3209,6 +3224,9 @@ pocl_vulkan_map_mem (void *data, pocl_mem_identifier *src_mem_id,
   pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)data;
 
   POCL_MSG_PRINT_VULKAN ("MAP MEM: %p FLAGS %zu\n", memdata, map->map_flags);
+
+  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
+    return CL_SUCCESS;
 
   pocl_vulkan_dev2host (d, memdata, src_mem_id, map->host_ptr, map->offset,
                         map->size);
