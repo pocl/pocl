@@ -21,22 +21,34 @@
    IN THE SOFTWARE.
 */
 
-/********************************************************************/
-
-/* What works:
+/********** What works:
  *
  * (hopefully) reasonable memory-type handling with both iGPUs and dGPUs
- * buffer arguments (cl_mem)
- * POD (plain old data) arguments, by which i mean integers; structs / unions
- * are untested automatic (hidden) locals local arguments simple kernels like
- * matrix multiplication
  *
- * Doesnt work / unfinished / non-optimal:
+ * buffer arguments (cl_mem)
+ *
+ * global offsets
+ *
+ * unlimited WG counts (implemented via global offsets)
+ *
+ * POD (plain old data) arguments = integers + structs
+ *
+ * automatic (hidden) locals; local arguments;
+ *
+ *
+ * pocl-binaries
+ *
+ * CL_MEM_USE_HOST_PTR (partially)
+ *
+ * module scope constants support
+ *
+ * compilation arguments
+ *
+ ********* Doesn't work / unfinished / non-optimal:
  *
  * VMA (virtual memory allocator) on device memory, currently
  * driver just calls vkAllocateMemory for each cl_mem allocation
  *
- * CL_MEM_USE_HOST_PTR is broken,
  * CL_MEM_ALLOC_HOST_PTR is ignored
  *
  * properly cleanup objects, check for memory leaks
@@ -45,21 +57,10 @@
  *
  * descriptor set should be cached (setup once per kernel, then just update)
  *
- * there's a device limit on max WG count
- *    (the amount of local WGs that can be executed by a single command)
- *    - need to handle global size > than that
- *    - need offset in get_global_id()
- *
  * image / sampler support support missing
- *
- * global offsets of kernel enqueue are ignored (should be solved by
- * compiling two versions of each program, one with goffsets and one
- * without, then select at runtime which to use)
  *
  * some things that are stored per-kernel should be stored per-program,
  * and v-v (e.g. compiled shader)
- *
- * module scope constants support missing
  *
  * do transfers on transfer queues not compute queues
  *
