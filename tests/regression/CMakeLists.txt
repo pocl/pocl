@@ -85,9 +85,11 @@ add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
 
 if(LLVM_VERSION_MAJOR GREATER 9 AND LLVM_VERSION_MAJOR LESS 13)
-  # reproducibly segfaults on 32-bit ARM
-  if(ARM32)
-    set_tests_properties("regression/test_llvm_segfault_issue_889" PROPERTIES WILL_FAIL 1)
+  # segfaults on some 32-bit ARM & 64-bit ARM but not all of them;
+  # does not segfault on ODROID C2 & XU3 with Debian 10
+  # segfaults on Cavium ThunderX
+  if(ARM)
+    set_tests_properties("regression/test_llvm_segfault_issue_889" PROPERTIES DISABLED 1)
   endif()
   # (sporadically?) segfaults on AMD CPUs
   # in distro builds, we don't know whether we target a failing or a
