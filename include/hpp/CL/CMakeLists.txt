@@ -26,6 +26,6 @@
 #cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
 
 if(INSTALL_OPENCL_HEADERS)
-  install(FILES cl2.hpp
+  install(FILES cl2.hpp opencl.hpp
           DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}" COMPONENT "dev")
 endif()
