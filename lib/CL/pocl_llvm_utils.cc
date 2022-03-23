@@ -157,6 +157,65 @@ char *pocl_get_llvm_cpu_name() {
   return cpu_name;
 }
 
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+const struct kernellib_features {
+  const char *kernellib_name;
+  const char *features[12];
+} kernellib_feature_map[] = {
+// order the entries s.t. if a cpu matches multiple entries, the "best" match
+// comes last
+#if defined(__x86_64__)
+    "sse2",
+    {"sse2", NULL},
+    "ssse3",
+    {"sse2", "ssse3", "cx16", NULL},
+    "sse41",
+    {"sse2", "sse4.1", "cx16", NULL},
+    "avx",
+    {"sse2", "avx", "cx16", "popcnt", NULL},
+    "avx_f16c",
+    {"sse2", "avx", "cx16", "popcnt", "f16c", NULL},
+    "avx_fma4",
+    {"sse2", "avx", "cx16", "popcnt", "xop", "fma4", NULL},
+    "avx2",
+    {"sse2", "avx", "avx2", "cx16", "popcnt", "lzcnt", "f16c", "fma", "bmi",
+     "bmi2", NULL},
+    "avx512",
+    {"sse2", "avx512f", NULL},
+#endif
+    NULL,
+    {NULL}};
+
+/* for "distro" style kernel libs, return which kernellib to use, at runtime */
+const char *pocl_get_distro_kernellib_name() {
+  StringMap<bool> Features;
+
+  if (!llvm::sys::getHostCPUFeatures(Features)) {
+    POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
+    return "";
+  }
+
+  const kernellib_features *best_match = NULL;
+  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
+       ++kf) {
+    bool matches = true;
+    for (const char *const *f = kf->features; *f; ++f)
+      matches &= Features[*f];
+    if (matches) {
+      best_match = kf;
+    }
+  }
+
+  if (!best_match) {
+    POCL_MSG_WARN("Can't find a kernellib supported by the host CPU (%s)\n",
+                  llvm::sys::getHostCPUName());
+    return "";
+  }
+
+  return best_match->kernellib_name;
+}
+#endif
+
 int pocl_bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
   std::string Triple;
   if (getModuleTriple(bitcode, size, Triple) == 0)
