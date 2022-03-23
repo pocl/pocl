@@ -151,7 +151,7 @@ void XrtRegion::CopyToMMAP(size_t destination, const void *source,
 #endif
   auto src = (uint32_t *)source;
   size_t offset = destination - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size && "Attempt to access data outside XRT memory");
 
   assert((offset & 0b11) == 0 &&
          "Xrt copytommap destination must be 4 byte aligned");
@@ -173,7 +173,7 @@ void XrtRegion::CopyFromMMAP(void *destination, size_t source,
 #endif
   auto dst = (uint32_t *)destination;
   size_t offset = source - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size && "Attempt to access data outside XRT memory");
 
   assert((offset & 0b11) == 0 &&
          "Xrt copyfrommmap source must be 4 byte aligned");
@@ -183,5 +183,24 @@ void XrtRegion::CopyFromMMAP(void *destination, size_t source,
 
   for (size_t i = 0; i < bytes / 4; ++i) {
     dst[i] = ((xrt::kernel *)Kernel)->read_register(source + 4 * i);
+  }
+}
+
+void XrtRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+#ifdef ACCEL_MMAP_DEBUG
+  POCL_MSG_PRINT_INFO("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
+                      "to 0x%zx\n",
+                      bytes, source, destination);
+#endif
+  size_t src_offset = source - PhysAddress;
+  size_t dst_offset = destination - PhysAddress;
+  assert(src_offset < Size && (src_offset+bytes) <= Size && "Attempt to access data outside XRT memory");
+  assert(dst_offset < Size && (dst_offset+bytes) <= Size && "Attempt to access data outside XRT memory");
+  assert((bytes % 4) == 0 && "Xrt copyinmem size must be 4 byte multiple");
+  xrt::kernel *k = (xrt::kernel *)Kernel;
+
+  for (size_t i = 0; i < bytes / 4; ++i) {
+    uint32_t m = k->read_register(source + 4 * i);
+    k->write_register(destination + 4 * i, m);
   }
 }

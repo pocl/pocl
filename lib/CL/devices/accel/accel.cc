@@ -91,6 +91,8 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->free = pocl_accel_free;
   ops->write = pocl_accel_write;
   ops->read = pocl_accel_read;
+  ops->copy = pocl_accel_copy;
+
   ops->map_mem = pocl_accel_map_mem;
   ops->unmap_mem = pocl_accel_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -115,11 +117,11 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->free_program = pocl_driver_free_program;
 
 #if 0
+    ops->copy_rect = pocl_accel_copy_rect;
     ops->read_rect = pocl_accel_read_rect;
     ops->write_rect = pocl_accel_write_rect;
     ops->unmap_mem = pocl_accel_unmap_mem;
     ops->memfill = pocl_accel_memfill;
-    ops->copy = pocl_accel_copy;
 
     // new driver api (out-of-order): TODO implement these for accel
     ops->init_target_machine = NULL;
@@ -162,6 +164,31 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
     POCL_ABORT("Attempt to write data to outside the device memories\n");
   }
 }
+
+void pocl_accel_copy(void *data, pocl_mem_identifier * dst_mem_id,
+                cl_mem dst_buf, pocl_mem_identifier * src_mem_id,
+                cl_mem src_buf, size_t dst_offset,
+                size_t src_offset, size_t size) {
+
+  chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
+  chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
+  size_t src = src_chunk->start_address + src_offset;
+  size_t dst = dst_chunk->start_address + dst_offset;
+  AccelData *d = (AccelData *)data;
+
+  if (d->Dev->DataMemory->isInRange(dst) && d->Dev->DataMemory->isInRange(src)) {
+    POCL_MSG_PRINT_INFO("accel: Copying %zu bytes from %zx to 0x%zx\n", size, src, dst);
+    d->Dev->DataMemory->CopyInMem(src, dst, size);
+
+  } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(dst)) {
+    POCL_MSG_PRINT_INFO("accel: Copying %zu bytes to external 0x%zx\n", size, dst);
+    d->Dev->ExternalMemory->CopyInMem(src, dst, size);
+
+  } else {
+    POCL_ABORT("Attempt to copy data outside the device memories\n");
+  }
+}
+
 
 cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
                                 void *host_ptr) {

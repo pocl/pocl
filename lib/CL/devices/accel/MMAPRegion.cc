@@ -170,3 +170,18 @@ void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
   auto src = offset + static_cast<volatile char *>(Data);
   memcpy(dst, (void*)src, bytes);
 }
+
+void MMAPRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+#ifdef ACCEL_MMAP_DEBUG
+  POCL_MSG_PRINT_INFO("MMAP: Copying 0x%zx bytes from 0x%zx "
+                      "to 0x%zx\n",
+                      bytes, source, destination);
+#endif
+  size_t src_offset = source - PhysAddress;
+  size_t dst_offset = destination - PhysAddress;
+  assert(src_offset < Size && (src_offset+bytes) <= Size && "Attempt to access data outside MMAP'd buffer");
+  assert(dst_offset < Size && (dst_offset+bytes) <= Size && "Attempt to access data outside MMAP'd buffer");
+  volatile char* src = src_offset + static_cast<volatile char *>(Data);
+  volatile char* dst = dst_offset + static_cast<volatile char *>(Data);
+  memcpy ((void*)dst, (void*)src, bytes);
+}

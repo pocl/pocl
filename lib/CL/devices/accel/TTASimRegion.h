@@ -51,6 +51,7 @@ public:
 
   void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
   void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
+  void CopyInMem (size_t source, size_t destination, size_t bytes) override;
 
 private:
   MemorySystem::MemoryPtr mem_;

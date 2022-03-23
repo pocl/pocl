@@ -41,6 +41,7 @@ public:
   virtual void CopyToMMAP (size_t destination, const void *source,
                            size_t bytes) = 0;
   virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) = 0;
+  virtual void CopyInMem (size_t source, size_t destination, size_t bytes) = 0;
 
   virtual bool isInRange(size_t dst);
 
