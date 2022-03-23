@@ -94,7 +94,7 @@ void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
 #endif
   auto src = (uint8_t *)source;
   size_t offset = destination - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size && "Attempt to access data outside TTASim Region");
 
   for (size_t i = 0; i < bytes; ++i) {
     mem_->writeDirectlyLE(destination + i, 1, (Memory::MAU)src[i]);
@@ -110,11 +110,25 @@ void TTASimRegion::CopyFromMMAP(void *destination, size_t source,
 #endif
   auto dst = (uint8_t *)destination;
   size_t offset = source - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size && "Attempt to access data outside TTASim Region");
 
   for (size_t i = 0; i < bytes; ++i) {
     dst[i] = mem_->read(source + i);
   }
 }
 
-
+void TTASimRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+#ifdef ACCEL_MMAP_DEBUG
+  POCL_MSG_PRINT_INFO("TTASim: Copying 0x%zx bytes from 0x%zx "
+                      "to 0x%zx\n",
+                      bytes, source, destination);
+#endif
+  size_t src_offset = source - PhysAddress;
+  size_t dst_offset = destination - PhysAddress;
+  assert(src_offset < Size && (src_offset+bytes) <= Size && "Attempt to access data outside TTASim Region");
+  assert(dst_offset < Size && (dst_offset+bytes) <= Size && "Attempt to access data outside TTASim Region");
+  for (size_t i = 0; i < bytes; ++i) {
+    Memory::MAU m = mem_->read(source + i);
+    mem_->writeDirectlyLE(destination + i, 1, m);
+  }
+}

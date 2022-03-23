@@ -88,6 +88,11 @@ void TTASimControlRegion::CopyFromMMAP(void *destination, size_t source, size_t 
   POCL_ABORT("Unimplemented copyfrommmap for ttasimcontrolregion\n");
 }
 
+void TTASimControlRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+
+  POCL_ABORT("Unimplemented copyinmem for ttasimcontrolregion\n");
+}
+
 void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
 {
   bool hasPrivateMem = false;
