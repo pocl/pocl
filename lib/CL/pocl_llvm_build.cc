@@ -944,21 +944,18 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
 /* for "distro" style kernel libs, return which kernellib to use, at runtime */
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-const char *getX86KernelLibName() {
+const char *pocl_get_distro_kernellib_name() {
   StringMap<bool> Features;
   const char *res = NULL;
 
   if (!llvm::sys::getHostCPUFeatures(Features)) {
-    POCL_MSG_WARN ("getX86KernelLibName(): LLVM can't get host CPU flags!\n");
-    /* getX86KernelLibName should only ever be enabled
-       on x86-64, which always has sse2 */
-    return "sse2";
+    POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
+    return NULL;
   }
 
+#if defined(__x86_64__)
   if (Features["sse2"])
     res = "sse2";
-  else
-    POCL_ABORT("Pocl on x86_64 requires at least SSE2\n");
   if (Features["ssse3"] && Features["cx16"])
     res = "ssse3";
   if (Features["sse4.1"] && Features["cx16"])
@@ -976,6 +973,11 @@ const char *getX86KernelLibName() {
     res = "avx2";
   if (Features["avx512f"] )
     res = "avx512";
+#endif
+
+  if (!res)
+    POCL_MSG_WARN("Can't find a kernellib supported by the host CPU (%s)\n",
+                  llvm::sys::getHostCPUName());
 
   return res;
 }
@@ -1047,7 +1049,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   if (is_host) {
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    kernellib += getX86KernelLibName();
+    kernellib += pocl_get_distro_kernellib_name();
 #elif defined(HOST_CPU_FORCED)
     kernellib += OCL_KERNEL_TARGET_CPU;
 #else
