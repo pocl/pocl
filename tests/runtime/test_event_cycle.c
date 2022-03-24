@@ -69,13 +69,19 @@ main(void)
       cl_command_queue queue = clCreateCommandQueue(context, devices[j], 0, &err);
       CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
 
-      cl_ulong alloc;
-#define MAXALLOC (128*1024U*1024U)
+      cl_ulong alloc = 0, maxalloc = (128U * 1024U * 1024U), gmem_size = 0;
 
       CHECK_CL_ERROR(clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
           sizeof(alloc), &alloc, NULL));
 
-      while (alloc > MAXALLOC)
+      CHECK_CL_ERROR (clGetDeviceInfo (devices[j], CL_DEVICE_GLOBAL_MEM_SIZE,
+                                       sizeof (gmem_size), &gmem_size, NULL));
+      gmem_size = gmem_size / 2;
+
+      while (alloc > maxalloc)
+        alloc /= 2;
+
+      while (alloc > gmem_size)
         alloc /= 2;
 
       const size_t buf_size = alloc;
