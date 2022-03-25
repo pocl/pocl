@@ -654,12 +654,15 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
 
   if (mem_obj->flags & CL_MEM_USE_HOST_PTR)
     {
-#if defined __arm__
-      cuMemFree ((CUdeviceptr)p->mem_ptr);
-#else
-      assert (p->extra_ptr == NULL);
-      cuMemHostUnregister (mem_obj->mem_host_ptr);
-#endif
+      if (((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register)
+        {
+          assert (p->extra_ptr == NULL);
+          cuMemHostUnregister (mem_obj->mem_host_ptr);
+        }
+      else
+        {
+          cuMemFree ((CUdeviceptr)p->mem_ptr);
+        }
     }
   else if (p->extra_ptr)
     {
