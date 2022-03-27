@@ -403,6 +403,7 @@ pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
   pocl_SHA1_Init (&hash_ctx);
 
   char *n = program->kernel_meta[kernel_i].name;
+  assert (n != NULL && program->build_hash[device_i] != NULL);
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
                     sizeof (SHA1_digest_t));
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
@@ -568,13 +569,13 @@ setup_device_kernel_hashes (cl_program program)
 {
   cl_uint i, device_i;
 
-  if ((program->builtin_kernel_names != NULL) || (program->num_kernels == 0)
-      || (program->num_devices == 0))
+  if ((program->num_kernels == 0) || (program->num_devices == 0))
     return;
 
   assert (program->kernel_meta);
   for (i = 0; i < program->num_kernels; ++i)
     {
+      assert (program->kernel_meta[i].build_hash == NULL);
       program->kernel_meta[i].build_hash = (pocl_kernel_hash_t *)calloc (
           program->num_devices, sizeof (pocl_kernel_hash_t));
     }
