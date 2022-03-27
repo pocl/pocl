@@ -617,12 +617,8 @@ pocl_exec_command (_cl_command_node *node)
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
-    case CL_COMMAND_MARKER:
-      pocl_update_event_running (event);
-      POCL_UPDATE_EVENT_COMPLETE(event);
-      break;
-
     case CL_COMMAND_BARRIER:
+    case CL_COMMAND_MARKER:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
@@ -1612,14 +1608,12 @@ pocl_init_default_device_infos (cl_device_id dev)
   if (dev->llvm_cpu != NULL)
     {
       dev->builtin_kernel_list = strdup (
-      "pocl.vote.u8;"
-      "pocl.vote.u32;"
       "pocl.add.i8;"
       "org.khronos.openvx.scale_image.nn.u8;"
       "org.khronos.openvx.scale_image.bl.u8"
       "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32"
       );
-      dev->num_builtin_kernels = 6;
+      dev->num_builtin_kernels = 4;
     }
 }
 

@@ -22,10 +22,10 @@
    THE SOFTWARE.
 */
 
-#include "pocl_util.h"
-#include "pocl_debug.h"
 #include "pocl_cl.h"
-
+#include "pocl_debug.h"
+#include "pocl_util.h"
+#include <string.h>
 
 /* Creates an array of sub-devices that each reference a non-intersecting
    set of compute units within in_device, according to a partition scheme
@@ -142,6 +142,9 @@ POname(clCreateSubDevices)(cl_device_id in_device,
        POCL_INIT_OBJECT (new_devs[i]);
 
        new_devs[i]->parent_device = in_device;
+       if (in_device->builtin_kernel_list)
+         new_devs[i]->builtin_kernel_list
+             = strdup (in_device->builtin_kernel_list);
 
        new_devs[i]->max_sub_devices = new_devs[i]->max_compute_units
            = (properties[0] == CL_DEVICE_PARTITION_EQUALLY

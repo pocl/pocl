@@ -32,14 +32,16 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "pocl-pthread_scheduler.h"
-#include "pocl_cl.h"
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "utlist.h"
-#include "pocl_util.h"
+#include "builtin_kernels.hh"
 #include "common.h"
+#include "pocl-pthread.h"
+#include "pocl-pthread_scheduler.h"
+#include "pocl-pthread_utils.h"
+#include "pocl_cl.h"
 #include "pocl_mem_management.h"
+#include "pocl_util.h"
+#include "utlist.h"
+
 #ifdef __APPLE__
 #include "pthread_barrier.h"
 #endif
@@ -369,6 +371,11 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   kernel_run_command *run_cmd;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+
+  char *saved_name = NULL;
+  sanitize_builtin_kernel_name (kernel, &saved_name);
+  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
+  restore_builtin_kernel_name (kernel, saved_name);
 
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 

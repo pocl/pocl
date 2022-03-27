@@ -23,6 +23,7 @@
 */
 
 #include "basic.h"
+#include "builtin_kernels.hh"
 #include "common.h"
 #include "config.h"
 #include "config2.h"
@@ -107,6 +108,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_basic_compile_kernel;
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
@@ -585,8 +587,11 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
+  char *saved_name = NULL;
+  sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
+  restore_builtin_kernel_name (kernel, saved_name);
 }
 
 /*********************** IMAGES ********************************/
