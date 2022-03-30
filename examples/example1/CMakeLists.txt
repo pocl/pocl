@@ -34,7 +34,7 @@ target_link_libraries("example1" ${POCLU_LINK_OPTIONS})
 
 add_test(NAME "examples/example1_dot_product" COMMAND "example1")
 
-if (FALSE) # ENABLE_SPIR - disabled for now because missing the SPIR binaries.
+if (ENABLE_SPIR)
   add_test(NAME "examples/example1_spir"
            COMMAND ${CMAKE_COMMAND}
            "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example1.spir32####-c####${CMAKE_CURRENT_SOURCE_DIR}/example1.cl"

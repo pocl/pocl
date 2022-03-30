@@ -38,7 +38,7 @@ add_test(NAME "examples/matrix1_local" COMMAND "matrix1" 512 -l)
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-if (FALSE) # ENABLE_SPIR - disabled for now because missing the SPIR binaries.
+if (ENABLE_SPIR)
   add_test(NAME "examples/matrix1_spir"
            COMMAND ${CMAKE_COMMAND}
            "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/matrix1_spir.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
