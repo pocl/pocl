@@ -27,6 +27,8 @@
 #include "MMAPRegion.h"
 #include "accel-shared.h"
 
+#include "pocl_file_util.h"
+
 #include <unistd.h>
 //#include <sys/stat.h>
 #include <fcntl.h>
@@ -52,9 +54,12 @@ MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
     char file_name[120];
     snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
 
-
-    ((MMAPRegion*)InstructionMemory)->initRegion(file_name); 
-
+    if (pocl_exists(file_name)) {
+      POCL_MSG_PRINT_INFO("Accel: Found built-in kernel firmaware. Loading it in\n");
+      ((MMAPRegion*)InstructionMemory)->initRegion(file_name);
+    } else {
+      POCL_MSG_PRINT_INFO("Accel: No default firmware found. Skipping\n");
+    }
 
     if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
       char* region_params = strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION","0,0"));

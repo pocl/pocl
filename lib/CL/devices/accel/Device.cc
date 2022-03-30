@@ -65,15 +65,17 @@ Device::discoverDeviceParameters()
     BaseAddress                                       -->ControlMemory
     BaseAddress + segment_size                        --> Imem
     BaseAddress + 3*segment_size                      --> Dmem (for buffers)
-    BaseAddress + 3*segment_size + Dmem_size/2 - 4*64 --> Cqmem
-    BaseAddress + 3*segment_size + Dmem_size/2        --> Local scratchpad memory for stack etc
+    BaseAddress + 3*segment_size + Dmem_size - PRIVATE_MEM_SIZE - 4*64 --> Cqmem
+    BaseAddress + 3*segment_size + Dmem_size - PRIVATE_MEM_SIZE        --> Local scratchpad memory for stack etc
     Where segment_size = 0x10000 (size of imem)
     */
     imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE_LEGACY);
     //cq_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
     cq_size = 4*64;
     //dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
-    dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY) / 2 - cq_size;
+    int private_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",1024);
+
+    dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY) - private_mem_size - cq_size;
     PointerSize = 4;
     RelativeAddressing = false;
 
