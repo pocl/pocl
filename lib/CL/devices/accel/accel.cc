@@ -544,9 +544,9 @@ static void scheduleCommands(AccelData &D) {
       submit_kernel_packet((AccelData*)Node->device->data, Node);
 
       POCL_LOCK(runningLock);
+      CDL_DELETE(D.ReadyList, Node);
       DL_PREPEND(runningList, Node);
       POCL_UNLOCK(runningLock);
-      CDL_DELETE(D.ReadyList, Node);
     } else {
       assert(pocl_command_is_ready(Node->event));
 
@@ -850,7 +850,11 @@ bool isEventDone(AccelData* data, cl_event event) {
 
   uint32_t status = data->Dev->DataMemory->Read32(signalAddress);
 
-  return (status != 0);
+  if(status == 1) {
+    POCL_MSG_PRINT_INFO("Event %d done, completion signal address=%zx, value=%u\n",event->id, signalAddress, status);
+  }
+  
+  return (status == 1);
 }
 
 void pocl_accel_wait_event(cl_device_id device, cl_event event) {
@@ -917,8 +921,12 @@ void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
     packet.header = AQL_PACKET_INVALID;
     int i;
     for (i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
-      packet.dep_signals[i] = ((chunk_info_t*)(dep_event->event->data))->start_address;
-      POCL_MSG_PRINT_INFO("Creating AND barrier depending on signal id=%" PRIu64 " at address %" PRIu64 " \n", dep_event->event->id, packet.dep_signals[i]);
+      accel_event_data_t *dep_ed = (accel_event_data_t*)dep_event->event->data;
+      assert(dep_ed);
+      if(dep_ed->chunk) {
+        packet.dep_signals[i] = dep_ed->chunk->start_address;
+        POCL_MSG_PRINT_INFO("Creating AND barrier depending on signal id=%" PRIu64 " at address %" PRIu64 " \n", dep_event->event->id, packet.dep_signals[i]);
+      }
       dep_event = dep_event->next;
       if (dep_event == NULL) {
         all_done = true;
@@ -966,7 +974,7 @@ void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
   size_t arg_size = 0;
   for (i = 0; i < meta->num_args; ++i) {
     if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
-      arg_size += sizeof(size_t);
+      arg_size += D->Dev->PointerSize;
     } else {
       arg_size += meta->arg_info[i].type_size;
     }
@@ -1009,7 +1017,8 @@ void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
       POCL_ABORT_UNIMPLEMENTED("accel: sampler arguments");
     } else {
       size_t size = meta->arg_info[i].type_size;
-      memcpy(current_arg, &al->value, size);
+      memcpy(current_arg, al->value, size);
+
       current_arg += size;
     }
   }
