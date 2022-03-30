@@ -343,6 +343,35 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
     }
 }
 
+static int
+pocl_getpath (char *path, size_t len, const char *explicit_binary,
+              const char *basename, const char *ext)
+{
+  if (explicit_binary)
+    {
+      snprintf (path, len, "%s", explicit_binary);
+      return CL_SUCCESS;
+    }
+
+  snprintf (path, len, "%s%s", basename, ext);
+  if (access (path, F_OK) == 0)
+    return CL_SUCCESS;
+
+  snprintf (path, len, "%s/%s%s", BUILDDIR, basename, ext);
+  if (access (path, F_OK) == 0)
+    return CL_SUCCESS;
+
+  snprintf (path, len, "%s/examples/%s/%s%s", SRCDIR, basename, basename, ext);
+  if (access (path, F_OK) == 0)
+    return CL_SUCCESS;
+
+  fprintf (stderr,
+           "Can't find %s%s SPIR / PoCLbin file in BUILDDIR, SRCDIR/examples "
+           "or current dir.\n",
+           basename, ext);
+  return CL_BUILD_PROGRAM_FAILURE;
+}
+
 int
 poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                              cl_uint num_devices, const char *basename,
@@ -427,23 +456,9 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       ext = ".cl";
     }
 
-  if (explicit_binary)
-    snprintf (path, 1024, "%s", explicit_binary);
-  else
-    {
-      snprintf (path, 1024, "%s%s", basename, ext);
-      if (access (path, F_OK))
-        {
-          snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
-                    basename, ext);
-          if (access (path, F_OK))
-            {
-              fprintf (stderr, "Can't find %s%s SPIR / PoCLbin file in %s.\n",
-                       basename, ext, path);
-              return 1;
-            }
-        }
-    }
+  err = pocl_getpath (path, 1024, explicit_binary, basename, ext);
+  if (err != CL_SUCCESS)
+    return err;
 
   if (from_source)
     {
