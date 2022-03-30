@@ -813,6 +813,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
   uint32_t read_iter = data->Dev->CQMemory->Read32(ACCEL_CQ_READ);
   while (write_iter >= read_iter + queue_length) {
     //POCL_MSG_PRINT_INFO("write_iter=%u, read_iter=%u length=%u", write_iter, read_iter, queue_length);
+    usleep(ACCEL_DRIVER_SLEEP);
     read_iter = data->Dev->CQMemory->Read32(ACCEL_CQ_READ);
   }
   uint32_t packet_loc = (write_iter % queue_length) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
@@ -943,6 +944,7 @@ void submit_and_barrier(AccelData *D, _cl_command_node *cmd){
     while (write_iter >= read_iter + queue_length) {
       //POCL_MSG_PRINT_INFO("write_iter=%u, read_iter=%u length=%u", write_iter, read_iter, queue_length);
       read_iter = D->Dev->CQMemory->Read32(ACCEL_CQ_READ);
+      usleep(ACCEL_DRIVER_SLEEP);
     }
     uint32_t packet_loc = (write_iter % queue_length) * AQL_PACKET_LENGTH + AQL_PACKET_LENGTH;
     D->Dev->CQMemory->CopyToMMAP(packet_loc + D->Dev->CQMemory->PhysAddress,

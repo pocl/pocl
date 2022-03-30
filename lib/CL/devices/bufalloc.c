@@ -308,6 +308,8 @@ coalesce_chunks (chunk_info_t* first,
      detect that here and do not merge first with the second. */
   if (first->start_address > second->start_address) return second;
 
+  if(first == second) return first;
+
 #ifdef DEBUG_BUFALLOC
   printf ("### coalescing chunks:\n");
   print_chunk (first);
@@ -379,7 +381,8 @@ pocl_free_chunk (chunk_info_t *chunk)
   BA_LOCK (region->lock);
   chunk->is_allocated = 0;
 #ifndef BUFALLOC_NO_CHUNK_COALESCING
-  coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+  chunk = coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+  chunk = coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
 #endif
   BA_UNLOCK (region->lock);
 
