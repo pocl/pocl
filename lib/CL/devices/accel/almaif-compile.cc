@@ -102,11 +102,13 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     adi->build_hash = strdup(DEFAULT_BUILD_HASH);
 #endif
 
+  dev->ops->build_hash = pocl_almaif_build_hash;
   dev->ops->build_source = pocl_driver_build_source;
   dev->ops->setup_metadata = pocl_driver_setup_metadata;
   dev->ops->create_kernel = pocl_almaif_create_kernel;
   dev->ops->free_kernel = pocl_almaif_free_kernel;
   dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
+  dev->ops->build_binary = pocl_almaif_build_binary;
 #ifdef ENABLE_COMPILER
   dev->ops->compile_kernel = pocl_almaif_tce_compile;
 #endif
