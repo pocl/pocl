@@ -816,7 +816,7 @@ debug_callback (VkDebugReportFlagsEXT flags,
                 const char *msg, void *userData)
 {
 
-  POCL_MSG_PRINT_VULKAN ("VALIDATION LAYER %s ::\n%s\n", layerPrefix, msg);
+  POCL_MSG_WARN ("VALIDATION LAYER %s ::\n%s\n", layerPrefix, msg);
 
   return VK_FALSE;
 }
@@ -1646,15 +1646,37 @@ pocl_vulkan_get_timer_value(void *data)
 #endif
 
 int
-run_and_append_output_to_build_log (cl_program program, char *const *args)
+run_and_append_output_to_build_log (cl_program program, unsigned device_i,
+                                    char *const *args)
 {
   int errcode = CL_SUCCESS;
 
   char *capture_string = NULL;
-
-  capture_string = malloc (MAIN_PROGRAM_LOG_SIZE);
-  POCL_GOTO_ERROR_ON ((capture_string == NULL), CL_OUT_OF_HOST_MEMORY,
-                      "Error while allocating temporary memory\n");
+  size_t capture_capacity = 0;
+  if (program->build_log[device_i] != NULL)
+    {
+      size_t len = strlen (program->build_log[device_i]);
+      capture_string = program->build_log[device_i] + len;
+      if (len + 1 < 128 * 1024)
+        {
+          capture_capacity = (128 * 1024) - len - 1;
+          capture_string[0] = 0;
+        }
+      else
+        {
+          capture_string = NULL;
+          capture_capacity = 0;
+        }
+    }
+  else
+    {
+      capture_string = (char *)malloc (128 * 1024);
+      POCL_RETURN_ERROR_ON ((capture_string == NULL), CL_OUT_OF_HOST_MEMORY,
+                            "Error while allocating temporary memory\n");
+      program->build_log[device_i] = capture_string;
+      capture_capacity = (128 * 1024) - 1;
+      capture_string[0] = 0;
+    }
 
   char cmdline[8192];
   char *p = cmdline;
@@ -1668,32 +1690,88 @@ run_and_append_output_to_build_log (cl_program program, char *const *args)
       *p++ = ' ';
     }
   *p = 0;
-  POCL_MSG_WARN ("launching command: \n#### %s\n", cmdline);
+  POCL_MSG_PRINT_VULKAN ("launching command: \n#### %s\n", cmdline);
 
-  capture_string[0] = 0;
-  size_t log_len = strlen (program->main_build_log);
-  /* if the log is full, run without capture */
-  if (log_len + 1 >= MAIN_PROGRAM_LOG_SIZE)
-    return pocl_run_command (args);
-
-  size_t capture_len = MAIN_PROGRAM_LOG_SIZE - log_len - 1;
-  errcode
-      = pocl_run_command_capture_output (capture_string, &capture_len, args);
-  if (capture_len > 0)
+  if (capture_string)
     {
-      assert (log_len + capture_len < MAIN_PROGRAM_LOG_SIZE - 1);
-      memcpy (program->main_build_log + log_len, capture_string, capture_len);
-      program->main_build_log[log_len + capture_len] = 0;
+      char launch[1024];
+      int len = snprintf (launch, 1023, "Output of %s:\n", args[0]);
+      if (len > 0 && len < capture_capacity)
+        {
+          strcat (capture_string, launch);
+          capture_string += len;
+          capture_capacity -= len;
+        }
     }
 
-ERROR:
-  free (capture_string);
+  errcode = pocl_run_command_capture_output (capture_string, &capture_capacity,
+                                             args);
+  if (capture_string && capture_capacity > 0)
+    capture_string[capture_capacity] = 0;
+
   return errcode;
 }
 
 static int
 extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
                             cl_uint program_num_devices);
+
+static int
+compile_shader (cl_program program, cl_uint device_i,
+                const char *program_spv_path,
+                const char *program_map_path)
+{
+  cl_device_id dev = program->devices[device_i];
+  pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)dev->data;
+
+  if (program->binaries[device_i] == NULL)
+    {
+      assert (program_spv_path);
+      uint64_t bin_size;
+      char *binary;
+      int res = pocl_read_file (program_spv_path, &binary, &bin_size);
+      POCL_RETURN_ERROR_ON ((res != 0),
+                            CL_BUILD_PROGRAM_FAILURE,
+                            "Failed to read file %s\n", program_spv_path);
+      program->binaries[device_i] = binary;
+      program->binary_sizes[device_i] = bin_size;
+    }
+
+  assert (program->binaries[device_i] != NULL);
+  assert (program->binary_sizes[device_i] != 0);
+
+  pocl_vulkan_program_data_t *vpd
+      = calloc (1, sizeof (pocl_vulkan_program_data_t));
+  POCL_RETURN_ERROR_COND ((vpd == NULL), CL_OUT_OF_HOST_MEMORY);
+
+  vpd->clspv_map_filename = strdup (program_map_path);
+
+  int err = extract_clspv_map_metadata (vpd, program->num_devices);
+  POCL_RETURN_ERROR_ON ((err != CL_SUCCESS),
+                        CL_BUILD_PROGRAM_FAILURE,
+                        "Failed to parse program map file\n");
+  POCL_RETURN_ERROR_ON ((vpd->num_kernels == 0),
+                        CL_BUILD_PROGRAM_FAILURE,
+                        "No kernels found in the program\n");
+
+  VkShaderModuleCreateInfo shader_info;
+  shader_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  shader_info.pNext = NULL;
+  shader_info.pCode = program->binaries[device_i];
+  shader_info.codeSize = program->binary_sizes[device_i];
+  shader_info.flags = 0;
+  VkShaderModule tempShader = NULL;
+  int res = (vkCreateShaderModule (d->device, &shader_info, NULL,
+                                   &tempShader));
+  POCL_RETURN_ERROR_ON ((res != VK_SUCCESS),
+                        CL_BUILD_PROGRAM_FAILURE,
+                        "Failed to create Vulkan shader from the Spir-V\n");
+
+  vpd->shader = tempShader;
+
+  program->data[device_i] = vpd;
+  return CL_SUCCESS;
+}
 
 int
 pocl_vulkan_build_source (cl_program program, cl_uint device_i,
@@ -1704,8 +1782,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
 #ifdef HAVE_CLSPV
   uint64_t bin_size;
   char *binary;
-  int errcode = CL_SUCCESS;
-  program->main_build_log[0] = 0;
+  int err;
 
   cl_device_id dev = program->devices[device_i];
   pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)dev->data;
@@ -1866,39 +1943,31 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   COMPILATION[last_arg_idx++] = "-o";
   COMPILATION[last_arg_idx++] = program_spv_path_temp;
   COMPILATION[last_arg_idx++] = program_cl_path;
-
   COMPILATION[last_arg_idx++] = NULL;
 
-  errcode = run_and_append_output_to_build_log (program, COMPILATION);
-  POCL_GOTO_ERROR_ON (!pocl_exists (program_spv_path_temp),
-                      CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
+  err = run_and_append_output_to_build_log (program, device_i, COMPILATION);
+  POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
+                      "clspv exited with nonzero code\n");
+  POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path_temp),
+                      CL_BUILD_PROGRAM_FAILURE, "clspv produced no output\n");
 
   char program_map_path_temp[POCL_FILENAME_LENGTH];
   pocl_cache_tempname (program_map_path_temp, ".map", NULL);
   char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path_temp, "-o",
                          program_map_path_temp, NULL };
-  errcode = run_and_append_output_to_build_log (program, REFLECTION);
+  err = run_and_append_output_to_build_log (program, device_i, REFLECTION);
 
-  POCL_GOTO_ERROR_ON (!pocl_exists (program_map_path_temp),
+  POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
+                      "clspv-reflection exited with nonzero code\n");
+  POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path_temp),
                       CL_BUILD_PROGRAM_FAILURE,
-                      "clspv-reflection compilation error");
+                      "clspv-reflection produced no output\n");
 
   pocl_rename (program_spv_path_temp, program_spv_path);
   pocl_rename (program_map_path_temp, program_map_path);
 
 FINISH:
-  pocl_read_file (program_spv_path, &binary, &bin_size);
-  program->binaries[device_i] = binary;
-  program->binary_sizes[device_i] = bin_size;
-  pocl_vulkan_program_data_t *vpd
-      = calloc (1, sizeof (pocl_vulkan_program_data_t));
-  assert (vpd);
-  vpd->clspv_map_filename = strdup (program_map_path);
-  extract_clspv_map_metadata (vpd, program->num_devices);
-  program->data[device_i] = vpd;
-  /* POCL_MSG_WARN ("BUILD LOG:\n%s\n", program->main_build_log); */
-ERROR:
-  return errcode;
+  return compile_shader (program, device_i, program_spv_path, program_map_path);
 #else
   return CL_BUILD_PROGRAM_FAILURE;
 #endif
@@ -1944,27 +2013,26 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
       strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
       strcat (program_map_path, "map");
 
-      uint64_t bin_size;
-      char *binary;
-      pocl_read_file (program_spv_path, &binary, &bin_size);
-      program->binaries[device_i] = binary;
-      program->binary_sizes[device_i] = bin_size;
+      POCL_RETURN_ERROR_ON (
+          (!pocl_exists (program_spv_path)), CL_BUILD_PROGRAM_FAILURE,
+          "PoCL binary doesn't contain %s\n", program_spv_path);
 
-      pocl_vulkan_program_data_t *vpd
-          = calloc (1, sizeof (pocl_vulkan_program_data_t));
-      assert (vpd);
-      vpd->clspv_map_filename = strdup (program_map_path);
-      extract_clspv_map_metadata (vpd, program->num_devices);
-      program->data[device_i] = vpd;
+      POCL_RETURN_ERROR_ON (
+          (!pocl_exists (program_map_path)), CL_BUILD_PROGRAM_FAILURE,
+          "PoCL binary doesn't contain %s\n", program_map_path);
 
-      return CL_SUCCESS;
+      return compile_shader (program, device_i,
+                             program_spv_path, program_map_path);
     }
 
 #ifdef HAVE_CLSPV
   /* we have program->binaries[] which is SPIR-V */
   assert (program->binaries[device_i]);
-  int is_spirv = pocl_bitcode_is_spirv_execmodel_shader(program->binaries[device_i], program->binary_sizes[device_i]);
-  assert (is_spirv != 0);
+  int is_spirv = pocl_bitcode_is_spirv_execmodel_shader (
+      program->binaries[device_i], program->binary_sizes[device_i]);
+  POCL_RETURN_ERROR_ON ((is_spirv == 0), CL_BUILD_PROGRAM_FAILURE,
+                        "the binary supplied to vulkan driver is not SPIR-V, "
+                        "or it's not using execution model shader\n");
 
   char program_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_create_program_cachedir (program, device_i,
@@ -1985,32 +2053,34 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
   strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
   strcat (program_map_path, "map");
 
-  if (!pocl_exists(program_spv_path))
+  if (!pocl_exists (program_spv_path) || !pocl_exists (program_map_path))
     {
-    pocl_write_file (program_spv_path, program->binaries[device_i], program->binary_sizes[device_i], 0, 1);
-    POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path),
-                          CL_BUILD_PROGRAM_FAILURE, "clspv compilation error");
-    }
+      char program_spv_path_temp[POCL_FILENAME_LENGTH];
+      pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
+      char program_map_path_temp[POCL_FILENAME_LENGTH];
+      pocl_cache_tempname (program_map_path_temp, ".map", NULL);
+      int err = CL_SUCCESS;
 
-  if (!pocl_exists(program_map_path))
-    {
-      char *REFLECTION[] = { CLSPV "-reflection", program_spv_path, "-o",
-                             program_map_path, NULL };
+      pocl_write_file (program_spv_path_temp, program->binaries[device_i],
+                       program->binary_sizes[device_i], 0, 0);
+      POCL_RETURN_ERROR_ON (
+          !pocl_exists (program_spv_path_temp), CL_BUILD_PROGRAM_FAILURE,
+          "failed to write SPIR-V file %s\n", program_spv_path_temp);
 
-      pocl_run_command (REFLECTION);
+      char *REFLECTION[] = { CLSPV "-reflection", program_spv_path_temp, "-o",
+                             program_map_path_temp, NULL };
 
-      POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path),
+      err = run_and_append_output_to_build_log (program, device_i, REFLECTION);
+      POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
+                            "clspv-reflection exited with nonzero code\n");
+      POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path_temp),
                             CL_BUILD_PROGRAM_FAILURE,
-                            "clspv-reflection compilation error");
+                            "clspv-reflection produced no output\n");
+      pocl_rename (program_spv_path_temp, program_spv_path);
+      pocl_rename (program_map_path_temp, program_map_path);
     }
 
-  pocl_vulkan_program_data_t *vpd
-      = calloc (1, sizeof (pocl_vulkan_program_data_t));
-  assert (vpd);
-  vpd->clspv_map_filename = strdup (program_map_path);
-  extract_clspv_map_metadata (vpd, program->num_devices);
-  program->data[device_i] = vpd;
-  return CL_SUCCESS;
+  return compile_shader (program, device_i, program_spv_path, program_map_path);
 
 #else
   return CL_BUILD_PROGRAM_FAILURE;
@@ -2031,16 +2101,19 @@ pocl_vulkan_free_program (cl_device_id device, cl_program program,
                           unsigned program_device_i)
 {
   pocl_vulkan_program_data_t *vpd = program->data[program_device_i];
-  assert (vpd);
-  POCL_MEM_FREE (vpd->clspv_map_filename);
-  pocl_vulkan_kernel_data_t *el, *tmp;
-  DL_FOREACH_SAFE (vpd->vk_kernel_meta_list, el, tmp)
-  {
-    POCL_MEM_FREE (el->name);
-    POCL_MEM_FREE (el);
-  }
-  POCL_MEM_FREE (vpd->kernel_meta);
-  POCL_MEM_FREE (vpd);
+  /* vpd can be NULL if compilation fails */
+  if (vpd)
+    {
+      POCL_MEM_FREE (vpd->clspv_map_filename);
+      pocl_vulkan_kernel_data_t *el, *tmp;
+      DL_FOREACH_SAFE (vpd->vk_kernel_meta_list, el, tmp)
+      {
+        POCL_MEM_FREE (el->name);
+        POCL_MEM_FREE (el);
+      }
+      POCL_MEM_FREE (vpd->kernel_meta);
+      POCL_MEM_FREE (vpd);
+    }
   return 0;
 }
 
@@ -2068,6 +2141,8 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
   p->data = NULL;
   p->build_hash = NULL;
   p->builtin_kernel = 0;
+
+  if (p->arg_info == NULL || p->name == NULL) return -1;
   return 0;
 }
 
@@ -2086,6 +2161,8 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
       num_tokens++;
       token = strtok (NULL, delim);
     }
+  if (num_tokens == 1024 && token != NULL)
+    return -1;
   token = NULL;
 
   char *arg_name = NULL;
@@ -2106,25 +2183,25 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
         {
           errno = 0;
           ord = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "descriptorSet") == 0)
         {
           errno = 0;
           dSet = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "binding") == 0)
         {
           errno = 0;
           binding = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "offset") == 0)
         {
           errno = 0;
           offset = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "argKind") == 0)
         {
@@ -2151,25 +2228,25 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
               is_pushc = CL_TRUE;
             }
           else
-            POCL_ABORT_UNIMPLEMENTED ("unknown arg Type\n");
+            return -1;
         }
       if (strcmp (tokens[j], "argSize") == 0)
         {
           errno = 0;
           size = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "arrayElemSize") == 0)
         {
           errno = 0;
           elemSize = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
       if (strcmp (tokens[j], "arrayNumElemSpecId") == 0)
         {
           errno = 0;
           specID = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
         }
     }
 
@@ -2209,7 +2286,7 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
     {
       p->arg_info[ord].address_qualifier
           = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-      assert (size > 0);
+      if (size == 0) return -1;
       p->arg_info[ord].type_size = size;
 
       if (is_pushc)
@@ -2234,11 +2311,12 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
   /* TODO constants !!! */
 
   ++p->num_args;
-  assert (p->num_args < MAX_ARGS);
+  if (p->num_args > MAX_ARGS) return -1;
+
   return 0;
 }
 
-void
+int
 parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
                         pocl_vulkan_kernel_data_t *pp, char *line,
                         unsigned *goffs_pushc_offset,
@@ -2255,6 +2333,8 @@ parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
       num_tokens++;
       token = strtok (NULL, delim);
     }
+  if (num_tokens == 32 && token != NULL)
+    return -1;
   token = NULL;
 
   char *const_name = NULL;
@@ -2264,21 +2344,21 @@ parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
     {
       if (strcmp (tokens[j], "name") == 0)
         {
-          assert (strcmp (tokens[j + 1], "global_offset") == 0);
+          if (strcmp (tokens[j + 1], "global_offset") != 0) return -1;
           continue;
         }
       if (strcmp (tokens[j], "offset") == 0)
         {
           errno = 0;
           offset = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
           continue;
         }
       if (strcmp (tokens[j], "size") == 0)
         {
           errno = 0;
           size = strtol (tokens[j + 1], NULL, 10);
-          assert (errno == 0);
+          if (errno != 0) return -1;
           continue;
         }
     }
@@ -2288,6 +2368,7 @@ parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
 
   *goffs_pushc_offset = offset;
   *goffs_pushc_size = size;
+  return 0;
 }
 
 static int
@@ -2295,12 +2376,14 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
                             cl_uint program_num_devices)
 {
   /* read map file from clspv-reflection */
-  char *content;
-  uint64_t content_size;
+  char *content = NULL;
+  int errcode = CL_SUCCESS;
+  uint64_t content_size = 0;
   int r = pocl_read_file (vulkan_program_data->clspv_map_filename, &content,
                           &content_size);
-  if (r != 0)
-    return -1;
+  POCL_GOTO_ERROR_ON ((r != 0),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "can't read map file\n");
 
   char *lines[4096];
   unsigned num_lines = 0;
@@ -2312,6 +2395,9 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
       num_lines++;
       token = strtok (NULL, delim);
     }
+  POCL_GOTO_ERROR_ON ((num_lines >= 4096),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "too many lines in the map file\n");
 
   POCL_MEM_FREE (content);
 
@@ -2328,14 +2414,20 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
     {
       if (memcmp (lines[i], "kernel_decl,", 12) == 0)
         {
+          current_kernel_metadata = NULL;
           p = &kernel_meta_array[vulkan_program_data->num_kernels];
-          parse_new_kernel (p, lines[i]);
+          POCL_GOTO_ERROR_ON (parse_new_kernel (p, lines[i]) != 0,
+                              CL_BUILD_PROGRAM_FAILURE,
+                              "failed to parse kernel_decl line\n");
           current_kernel_metadata
               = calloc (1, sizeof (pocl_vulkan_kernel_data_t));
-          assert (current_kernel_metadata);
+          POCL_GOTO_ERROR_COND (current_kernel_metadata == NULL,
+                                CL_OUT_OF_HOST_MEMORY);
           DL_APPEND (vulkan_program_data->vk_kernel_meta_list,
                      current_kernel_metadata);
           current_kernel_metadata->name = strdup (p->name);
+          POCL_GOTO_ERROR_COND (current_kernel_metadata->name == NULL,
+                                CL_OUT_OF_HOST_MEMORY);
           ++vulkan_program_data->num_kernels;
           continue;
         }
@@ -2355,14 +2447,20 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
       if (memcmp (lines[i], "pushconstant", 12) == 0)
         {
           has_goffs_pushc++;
-          parse_goffs_pushc_line (p, current_kernel_metadata, lines[i],
-                                  &go_pushc_offset, &go_pushc_size);
+          int r = parse_goffs_pushc_line (p, current_kernel_metadata, lines[i],
+                                          &go_pushc_offset, &go_pushc_size);
+          POCL_GOTO_ERROR_ON (r != 0,
+                              CL_BUILD_PROGRAM_FAILURE,
+                              "failed to parse pushconstant line\n");
           continue;
         }
     }
 
   for (size_t i = 0; i < num_lines; ++i)
+  {
     free (lines[i]);
+    lines[i] = NULL;
+  }
 
   if (vulkan_program_data->num_kernels > 0)
     {
@@ -2388,7 +2486,19 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
   else
     POCL_MSG_WARN ("vulkan compilation: zero kernels found\n");
 
-  return 0;
+  return CL_SUCCESS;
+
+ERROR:
+  if (content != NULL)
+    POCL_MEM_FREE (content);
+  for (size_t i = 0; i < num_lines; ++i)
+    free (lines[i]);
+  if (current_kernel_metadata)
+    {
+      POCL_MEM_FREE (current_kernel_metadata->name);
+    }
+
+  return CL_BUILD_PROGRAM_FAILURE;
 }
 
 int
@@ -3137,6 +3247,7 @@ pocl_vulkan_setup_kernel_arguments (
     uint32_t *spec_data, VkPushConstantRange *pushc_range, char *pushc_data,
     VkSpecializationMapEntry *entries, VkDescriptorSetLayoutBinding *bindings,
     VkDescriptorBufferInfo *descriptor_buffer_info,
+    VkDescriptorBufferInfo *pod_ubo_info,
     VkDescriptorSetLayoutBinding *const_binding,
     VkDescriptorBufferInfo *const_descriptor_buffer_info)
 {
@@ -3155,23 +3266,7 @@ pocl_vulkan_setup_kernel_arguments (
       }
   }
   assert (kdata != NULL);
-
-  if (pdata->shader == NULL)
-    {
-      cl_program program = kernel->program;
-      assert (program->binaries[dev_i] != NULL);
-      assert (program->binary_sizes[dev_i] > 0);
-
-      VkShaderModuleCreateInfo shader_info;
-      shader_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-      shader_info.pNext = NULL;
-      shader_info.pCode = program->binaries[dev_i];
-      shader_info.codeSize = program->binary_sizes[dev_i];
-      shader_info.flags = 0;
-
-      VULKAN_CHECK (vkCreateShaderModule (d->device, &shader_info, NULL,
-                                          &pdata->shader));
-    }
+  assert (pdata->shader != NULL);
   *compute_shader = pdata->shader;
 
   /* setup specialization constants for local size. */
@@ -3197,7 +3292,6 @@ pocl_vulkan_setup_kernel_arguments (
   uint32_t spec_entries = 3;
   uint32_t spec_offset = 12;
 
-  uint64_t pod_offset = 0;
   uint32_t pod_entries = 0;
 
   uint32_t pushc_entries = 0;
@@ -3208,6 +3302,7 @@ pocl_vulkan_setup_kernel_arguments (
   uint32_t bufs = 0;
 
   unsigned current = 0;
+  unsigned pod_binding = 0;
 
   if (kdata->goffset_pushc_size > 0)
     {
@@ -3417,20 +3512,21 @@ pocl_vulkan_setup_kernel_arguments (
           POCL_MSG_PRINT_VULKAN (
               "ARG BUF: %p MEMDATA: %p VULKANBUF: %zu CURRENT: %u \n", arg_buf,
               memdata, (size_t)memdata->device_buf, current);
+
           descriptor_buffer_info[current].buffer = memdata->device_buf;
           descriptor_buffer_info[current].offset = 0;
           descriptor_buffer_info[current].range = memid->extra;
-          bindings[current].binding = current;
+
+          bindings[current].binding = kdata->bufs[bufs].binding;
           bindings[current].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
           bindings[current].descriptorCount = 1;
           bindings[current].pImmutableSamplers = 0;
           bindings[current].stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
           assert (current < 128);
+          ++current;
 
           assert (kdata->bufs[bufs].dset == 0);
-          assert (kdata->bufs[bufs].binding == current);
           assert (kdata->bufs[bufs].ord == i);
-          ++current;
           ++bufs;
         }
       else if (kernel->meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -3493,10 +3589,9 @@ pocl_vulkan_setup_kernel_arguments (
             {
               assert (kdata->pods[pod_entries].dset == 0);
               assert (kdata->pods[pod_entries].ord == i);
-              assert (kdata->pods[pod_entries].offset == pod_offset);
+              uint32_t offs = kdata->pods[pod_entries].offset;
 
-              memcpy (kernarg_pod_ptr + pod_offset, pa[i].value, pa[i].size);
-              pod_offset += pa[i].size;
+              memcpy (kernarg_pod_ptr + offs, pa[i].value, pa[i].size);
               ++pod_entries;
             }
         }
@@ -3523,13 +3618,13 @@ pocl_vulkan_setup_kernel_arguments (
   if (kdata->num_pods > 0)
     {
       /* add the kernarg memory */
-      descriptor_buffer_info[current].buffer
-          = kdata->kernarg_buf; /* the POD buffer */
-      descriptor_buffer_info[current].offset = 0;
-      descriptor_buffer_info[current].range = kdata->kernarg_buf_size;
+      pod_binding = kdata->pods[0].binding;
 
-      assert (kdata->pods[0].binding == current);
-      bindings[current].binding = current;
+      pod_ubo_info->buffer = kdata->kernarg_buf; /* the POD buffer */
+      pod_ubo_info->offset = 0;
+      pod_ubo_info->range = kdata->num_pod_bytes;
+
+      bindings[current].binding = pod_binding;
       bindings[current].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       bindings[current].descriptorCount = 1;
       bindings[current].pImmutableSamplers = 0;
@@ -3570,35 +3665,41 @@ pocl_vulkan_setup_kernel_arguments (
   VULKAN_CHECK (
       vkAllocateDescriptorSets (d->device, &descriptorSetallocate_info, ds));
 
-  /* cl_mem arguments */
-  VkWriteDescriptorSet writeDescriptorSet
-      = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-          0,
-          *ds,                                           /* dstSet */
-          0,                                             /* dstBinding */
-          0,                                             /* dstArrayElement */
-          (kdata->num_pods > 0) ? current - 1 : current, /* descriptorCount */
-          VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,             /* descriptorType */
-          0,
-          descriptor_buffer_info,
-          0 };
-  vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet, 0, 0);
-
-  /* setup descriptor & bindings POD arguments in UBO */
-  if (kdata->num_pods > 0)
+  /* write descriptors  */
+  for (i = 0; i < current; ++i)
     {
-      VkWriteDescriptorSet writeDescriptorSet2
-          = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-              0,
-              *ds, /* dstSet */
-              current-1,   /* dstBinding */
-              0,   /* dstArrayElement */
-              1, /* descriptorCount */
-              VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, /* descriptorType */
-              0,
-              &descriptor_buffer_info[current-1],
-              0 };
-      vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet2, 0, 0);
+
+      if (bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+        {
+          VkWriteDescriptorSet writeDescriptorSet
+              = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                  0,                                 /* next */
+                  *ds,                               /* dstSet */
+                  bindings[i].binding,               /* dstBinding */
+                  0,                                 /* dstArrayElement */
+                  1,                                 /* descriptorCount */
+                  VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, /* descriptorType */
+                  0,
+                  &descriptor_buffer_info[i],
+                  0 };
+          vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet, 0, 0);
+        }
+
+      if (bindings[i].descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        {
+          VkWriteDescriptorSet writeDescriptorSet
+              = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                  0,
+                  *ds,                               /* dstSet */
+                  pod_binding,                       /* dstBinding */
+                  0,                                 /* dstArrayElement */
+                  1,                                 /* descriptorCount */
+                  VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, /* descriptorType */
+                  0,
+                  pod_ubo_info,
+                  0 };
+          vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet, 0, 0);
+        }
     }
 
   /* setup descriptor & bindings for constants   */
@@ -3610,7 +3711,7 @@ pocl_vulkan_setup_kernel_arguments (
       const_descriptor_buffer_info->offset = 0;
       const_descriptor_buffer_info->range = VK_WHOLE_SIZE;
 
-      const_binding->binding = current;
+      const_binding->binding = current; // TODO get from parsed data
       const_binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
       const_binding->descriptorCount = 1;
       const_binding->pImmutableSamplers = 0;
@@ -3681,8 +3782,10 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   VkSpecializationMapEntry entries[128];
   VkDescriptorSetLayoutBinding bindings[128];
   VkDescriptorBufferInfo descriptor_buffer_info[128];
-  VkDescriptorSetLayoutBinding const_binding;
-  VkDescriptorBufferInfo const_descriptor_buffer_info;
+  VkDescriptorBufferInfo pod_ubo_info = { NULL, 0, 0 };
+  VkDescriptorSetLayoutBinding const_binding = { 0, 0, 0, 0, NULL };
+  VkDescriptorBufferInfo const_descriptor_buffer_info = { 0 };
+
   VkPipelineLayout pipeline_layout;
   VkPipeline pipeline;
   VkShaderModule compute_shader = NULL;
@@ -3693,9 +3796,8 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
       d, cmd->device, cmd->program_device_i, co, &compute_shader,
       descriptor_sets, descriptor_sets + 1, descriptor_set_layouts,
       descriptor_set_layouts + 1, &specInfo, spec_data, &pushc_range,
-      pushc_data, entries, bindings, descriptor_buffer_info, &const_binding,
-      &const_descriptor_buffer_info);
-
+      pushc_data, entries, bindings, descriptor_buffer_info, &pod_ubo_info,
+      &const_binding, &const_descriptor_buffer_info);
   VkPipelineShaderStageCreateInfo shader_stage_info;
   shader_stage_info.sType
       = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
