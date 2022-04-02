@@ -116,6 +116,11 @@
 
 static void *pocl_vulkan_driver_pthread (void *cldev);
 
+typedef struct VkStructBase {
+    VkStructureType    sType;
+    void*              pNext;
+} VkStructBase;
+
 typedef struct pushc_data
 {
   uint32_t ord;
@@ -293,6 +298,11 @@ typedef struct pocl_vulkan_device_data_s
   int have_16b_ssbo;
   int have_16b_ubo;
   int have_16b_pushc;
+  int have_ext_host_mem;
+  /* minimal alignment of imported host pointers */
+  uint32_t min_ext_host_mem_align;
+  /* it's an extension function so we need to get its pointer */
+  PFN_vkGetMemoryHostPointerPropertiesEXT vkGetMemoryHostPointerProperties;
 
   uint32_t max_pushc_size;
   uint32_t max_ubo_size;
@@ -1074,6 +1084,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   int ext_i8_f16_shader = 0;
   int ext_8b_store = 0;
   int ext_16b_store = 0;
+  int ext_memory_host_ptr = 0;
   for (i = 0; i < dev_ext_count; ++i)
     {
 #ifdef VK_AMD_shader_core_properties
@@ -1144,6 +1155,23 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
           ext_16b_store = 1;
           requested_exts[requested_ext_count++] = "VK_KHR_16bit_storage";
         }
+
+      if (strncmp ("VK_EXT_external_memory_host", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ++ext_memory_host_ptr;
+          requested_exts[requested_ext_count++]
+              = "VK_EXT_external_memory_host";
+        }
+
+      if (strncmp ("VK_KHR_external_memory", dev_exts[i].extensionName,
+                   VK_MAX_EXTENSION_NAME_SIZE)
+          == 0)
+        {
+          ++ext_memory_host_ptr;
+          requested_exts[requested_ext_count++] = "VK_KHR_external_memory";
+        }
     }
 
   if (have_needed_extensions < 2)
@@ -1160,32 +1188,54 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
     dev->available = CL_TRUE;
 
     /* get device properties */
-  if (have_amd_shader_core_properties)
+  if (have_amd_shader_core_properties || ext_memory_host_ptr == 2)
     {
-      VkPhysicalDeviceProperties2 general_props;
-      VkPhysicalDeviceShaderCorePropertiesAMD shader_core_properties;
-
-      shader_core_properties.pNext = NULL;
-      shader_core_properties.sType
-          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD;
-
-      general_props.pNext = &shader_core_properties;
-      general_props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+      VkPhysicalDeviceProperties2 general_props
+          = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
+      VkStructBase *p = (VkStructBase *)&general_props;
+#ifdef VK_AMD_shader_core_properties
+      VkPhysicalDeviceShaderCorePropertiesAMD shader_core_properties
+          = { VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD };
+      p->pNext = &shader_core_properties;
+      p = (VkStructBase *)&shader_core_properties;
+#endif
+#ifdef VK_EXT_external_memory_host
+      VkPhysicalDeviceExternalMemoryHostPropertiesEXT ext_mem_properties = {
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT
+      };
+      p->pNext = &ext_mem_properties;
+      p = (VkStructBase *)&ext_mem_properties;
+#endif
+      p->pNext = NULL;
 
       vkGetPhysicalDeviceProperties2 (pocl_vulkan_devices[j], &general_props);
 
       memcpy (&d->dev_props, &general_props.properties,
               sizeof (VkPhysicalDeviceProperties));
 
-      dev->max_compute_units
-          = shader_core_properties.shaderEngineCount
-            * shader_core_properties.shaderArraysPerEngineCount
-            * shader_core_properties.computeUnitsPerShaderArray;
+#ifdef VK_EXT_external_memory_host
+      if (ext_memory_host_ptr == 2)
+        d->min_ext_host_mem_align
+            = ext_mem_properties.minImportedHostPointerAlignment;
+      else
+#endif
+        d->min_ext_host_mem_align = 0;
+
+#ifdef VK_AMD_shader_core_properties
+      if (have_amd_shader_core_properties)
+        dev->max_compute_units
+            = shader_core_properties.shaderEngineCount
+              * shader_core_properties.shaderArraysPerEngineCount
+              * shader_core_properties.computeUnitsPerShaderArray;
+      else
+#endif
+        dev->max_compute_units = 1;
     }
   else
     {
       vkGetPhysicalDeviceProperties (pd, &d->dev_props);
       dev->max_compute_units = 1;
+      d->min_ext_host_mem_align = 0;
     }
 
   /* TODO get this from Vulkan API */
@@ -1266,6 +1316,23 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   d->max_pushc_size = d->dev_props.limits.maxPushConstantsSize;
   d->max_ubo_size = d->dev_props.limits.maxUniformBufferRange;
+
+#ifdef VK_EXT_external_memory_host
+  d->have_ext_host_mem
+      = (ext_memory_host_ptr == 2 && d->min_ext_host_mem_align > 0);
+  if (d->have_ext_host_mem)
+    {
+      d->vkGetMemoryHostPointerProperties
+          = (PFN_vkGetMemoryHostPointerPropertiesEXT)vkGetInstanceProcAddr (
+              pocl_vulkan_instance, "vkGetMemoryHostPointerPropertiesEXT");
+      if (d->vkGetMemoryHostPointerProperties == NULL)
+        {
+          POCL_MSG_WARN ("couldn't get ext address of function "
+                         "vkGetMemoryHostPointerPropertiesEXT\n");
+          d->have_ext_host_mem = 0;
+        }
+    }
+#endif
 
   if (d->have_f64_shader)
     {
@@ -1382,8 +1449,12 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->execution_capabilities = CL_EXEC_KERNEL;
   dev->address_bits = 64;
-  /* TODO: (cl_uint)d->dev_props.limits.minStorageBufferOffsetAlignment * 8; */
-  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  dev->mem_base_addr_align
+      = max ((cl_uint)MAX_EXTENDED_ALIGNMENT,
+             (cl_uint)d->dev_props.limits.minStorageBufferOffsetAlignment);
+  if (d->min_ext_host_mem_align)
+    dev->mem_base_addr_align
+        = max (d->min_ext_host_mem_align, dev->mem_base_addr_align);
 
 #ifdef HAVE_CLSPV
   dev->compiler_available = CL_TRUE;
@@ -3812,6 +3883,68 @@ pocl_vulkan_actual_memobj_size (pocl_vulkan_device_data_t *d, cl_mem mem,
   return p->extra;
 }
 
+static int
+should_import_external_memory (cl_mem mem, pocl_vulkan_device_data_t *d,
+                               VkMemoryAllocateInfo *allocate_info,
+                               VkImportMemoryHostPointerInfoEXT *import_mem)
+{
+  int res = CL_FALSE;
+  if ((mem->flags & CL_MEM_USE_HOST_PTR) && (d->needs_staging_mem == CL_FALSE))
+    {
+      assert (mem->mem_host_ptr != NULL);
+
+      if ((uintptr_t)mem->mem_host_ptr
+          & (uintptr_t) (d->min_ext_host_mem_align - 1))
+        POCL_MSG_WARN (
+            "Vulkan: pointer %p given to CL_MEM_USE_HOST_PTR is not "
+            "aligned properly; using an extra staging buffer\n",
+            mem->mem_host_ptr);
+      else
+        {
+          VkMemoryHostPointerPropertiesEXT host_mem_props
+              = { VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT, NULL,
+                  0 };
+          VkResult r = d->vkGetMemoryHostPointerProperties (
+              d->device,
+              VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT,
+              mem->mem_host_ptr, &host_mem_props);
+
+          if (r == VK_SUCCESS)
+            {
+              POCL_MSG_WARN ("memory Type Bits: %u\n",
+                             host_mem_props.memoryTypeBits);
+              unsigned memtype = 0;
+              unsigned val = host_mem_props.memoryTypeBits;
+              while (val != 1)
+                {
+                  ++memtype;
+                  val >>= 1;
+                }
+              allocate_info->pNext = import_mem;
+              allocate_info->memoryTypeIndex = memtype;
+              res = CL_TRUE;
+
+              size_t imported_mem_size = allocate_info->allocationSize;
+              /* round up the buffer size to the nearest multiple of
+               * minImportedHostPointerAlignment. This is required for some
+               * drivers like AMD RADV, otherwise they return
+               *  -2 VK_ERROR_OUT_OF_DEVICE_MEMORY.
+               * in theory should be safe, but cache
+               * invalidation could be a problem */
+              if (imported_mem_size & (size_t) (d->min_ext_host_mem_align - 1))
+                {
+                  imported_mem_size
+                      = (imported_mem_size
+                         | (size_t) (d->min_ext_host_mem_align - 1))
+                        + 1;
+                }
+              allocate_info->allocationSize = imported_mem_size;
+            }
+        }
+    }
+  return res;
+}
+
 int
 pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 {
@@ -3830,15 +3963,49 @@ pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   size_t actual_mem_size = pocl_vulkan_actual_memobj_size (d, mem, p, &memReq);
   assert (actual_mem_size > 0);
 
-  /* POCL_MSG_WARN ("actual BUF size: %zu \n", actual_mem_size); */
-  /* actual size already set up. */
   pocl_vulkan_mem_data_t *memdata
       = (pocl_vulkan_mem_data_t *)calloc (1, sizeof (pocl_vulkan_mem_data_t));
   VkDeviceMemory m;
-  /* TODO host_ptr argument / CL_MEM_USE_HOST_PTR */
+  /* either mapped staging buffer (dGPU), mapped device buffer (iGPU),
+   * or host memory (imported pointer) when CL_MEM_USE_HOST_PTR */
   void *vk_host_ptr = NULL;
 
-  /* DEVICE MEM */
+  VkMemoryAllocateInfo allocate_info
+      = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, NULL, actual_mem_size,
+          d->device_mem_type };
+  VkImportMemoryHostPointerInfoEXT import_mem
+      = { VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT, NULL,
+          VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT,
+          mem->mem_host_ptr };
+
+  int import_success = CL_FALSE;
+
+  /* if CL_MEM_USE_HOST_PTR is in flags, try to import host pointer */
+  if (should_import_external_memory (mem, d, &allocate_info, &import_mem))
+    {
+      int res = (vkAllocateMemory (d->device, &allocate_info, NULL, &m));
+      if (res != VK_SUCCESS)
+        {
+          goto WITHOUT_EXT_MEM;
+        }
+      import_success = CL_TRUE;
+    }
+
+WITHOUT_EXT_MEM:
+  /* host pointer import failed / not supported / no CL_USE_MEM_HOST_PTR */
+  if (!import_success)
+    {
+      allocate_info.pNext = NULL;
+      allocate_info.memoryTypeIndex = d->device_mem_type;
+      allocate_info.allocationSize = actual_mem_size;
+      int res = (vkAllocateMemory (d->device, &allocate_info, NULL, &m));
+      if (res != VK_SUCCESS)
+        {
+          goto ERROR;
+        }
+    }
+
+  actual_mem_size = allocate_info.allocationSize;
   VkBufferCreateInfo buffer_info
       = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
           NULL,
@@ -3849,15 +4016,13 @@ pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
           VK_SHARING_MODE_EXCLUSIVE,
           1,
           &d->compute_queue_fam_index };
+  int res = (vkCreateBuffer (d->device, &buffer_info, NULL, &b));
+  if (res != VK_SUCCESS)
+    goto ERROR;
 
-  VkMemoryAllocateInfo allocate_info
-      = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, NULL, actual_mem_size,
-          d->device_mem_type };
-
-  VULKAN_CHECK (vkCreateBuffer (d->device, &buffer_info, NULL, &b));
   memdata->device_buf = b;
-  VULKAN_CHECK (vkAllocateMemory (d->device, &allocate_info, NULL, &m));
   memdata->device_mem = m;
+
   vkGetBufferMemoryRequirements (d->device, memdata->device_buf, &memReq);
   assert (actual_mem_size == memReq.size);
   VULKAN_CHECK (vkBindBufferMemory (d->device, memdata->device_buf,
@@ -3887,9 +4052,11 @@ pocl_vulkan_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
     {
       memdata->staging_buf = 0;
       memdata->staging_mem = 0;
-
-      VULKAN_CHECK (vkMapMemory (d->device, memdata->device_mem, 0,
-                                 actual_mem_size, 0, &vk_host_ptr));
+      if (import_success)
+        vk_host_ptr = mem->mem_host_ptr;
+      else
+        VULKAN_CHECK (vkMapMemory (d->device, memdata->device_mem, 0,
+                                   actual_mem_size, 0, &vk_host_ptr));
     }
 
   p->mem_ptr = memdata;
@@ -3928,7 +4095,8 @@ pocl_vulkan_free (cl_device_id device, cl_mem mem)
     }
   else
     {
-      vkUnmapMemory (d->device, memdata->device_mem);
+      if (p->extra_ptr != mem->mem_host_ptr)
+        vkUnmapMemory (d->device, memdata->device_mem);
 
       vkDestroyBuffer (d->device, memdata->device_buf, NULL);
       vkFreeMemory (d->device, memdata->device_mem, NULL);
@@ -3957,7 +4125,10 @@ pocl_vulkan_get_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
   assert (mem->size > 0);
   assert (map->size > 0);
 
-  map->host_ptr = (char *)mem_id->extra_ptr + map->offset;
+  if (mem->flags & CL_MEM_USE_HOST_PTR)
+    map->host_ptr = (char *)mem->mem_host_ptr + map->offset;
+  else
+    map->host_ptr = (char *)mem_id->extra_ptr + map->offset;
   /* POCL_MSG_ERR ("map HOST_PTR: %p | SIZE %zu | OFFS %zu | DEV PTR: %p \n",
                   map->host_ptr, map->size, map->offset, mem_id->mem_ptr); */
   assert (map->host_ptr);
