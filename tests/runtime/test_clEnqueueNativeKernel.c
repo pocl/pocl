@@ -86,6 +86,16 @@ int main(int argc, char **argv) {
   TEST_ASSERT( did );
   TEST_ASSERT( queue );
 
+  cl_device_exec_capabilities cap;
+  err = clGetDeviceInfo (did, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof (cap),
+                         &cap, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+  if ((cap & CL_EXEC_NATIVE_KERNEL) == 0)
+    {
+      printf ("device doesn't support executing native kernels, exiting\n");
+      return 77;
+    }
+
   d_a = clCreateBuffer(ctx, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes, h_a, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
   TEST_ASSERT(d_a);
@@ -110,7 +120,7 @@ int main(int argc, char **argv) {
   args_mem_loc[0] = &args.a;
   args_mem_loc[1] = &args.b;
   args_mem_loc[2] = &args.c;
-  
+
   err = clEnqueueNativeKernel ( queue, native_vec_add, &args, sizeof(struct native_kernel_args),
           3, mem_list, args_mem_loc, 0, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("clEnqueueNativeKernel");
