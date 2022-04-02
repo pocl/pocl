@@ -789,11 +789,13 @@ compile_and_link_program(int compile_program,
 
           if (error != CL_SUCCESS)
             {
+              if (program->build_log[device_i])
+                POCL_MSG_ERR ("Build log for device %s:\n%s\n",
+                              device->long_name, program->build_log[device_i]);
               APPEND_TO_BUILD_LOG_GOTO (build_error_code,
                                         "Device %s failed to build"
-                                        " the program, log: %s",
-                                        device->long_name,
-                                        program->build_log[device_i]);
+                                        " the program\n",
+                                        device->long_name);
             }
         }
       /* compile and/or link from binary */
@@ -819,11 +821,13 @@ compile_and_link_program(int compile_program,
 
           if (error != CL_SUCCESS)
             {
+              if (program->build_log[device_i])
+                POCL_MSG_ERR ("Build log for device %s:\n%s\n",
+                              device->long_name, program->build_log[device_i]);
               APPEND_TO_BUILD_LOG_GOTO (build_error_code,
                                         "Device %s failed to build"
-                                        " the program, log: %s",
-                                        device->long_name,
-                                        program->build_log[device_i]);
+                                        " the program\n",
+                                        device->long_name);
             }
         }
 
