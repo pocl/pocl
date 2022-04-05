@@ -26,6 +26,10 @@
 #include "../templates.h"
 
 #undef ENABLE_BUILTIN
+float _CL_OVERLOADABLE rsqrt(float a)
+{
+  return __nvvm_rsqrt_approx_f(a);
+}
 
 float2 _CL_OVERLOADABLE rsqrt(float2 a)
 {
@@ -59,6 +63,11 @@ float16 _CL_OVERLOADABLE rsqrt(float16 a)
 
 
 #ifdef cl_khr_fp64
+double _CL_OVERLOADABLE rsqrt(double a)
+{
+  return __nvvm_rsqrt_approx_d(a);
+}
+
 double2 _CL_OVERLOADABLE rsqrt(double2 a)
 {
   return (double2)(rsqrt(a.x), rsqrt(a.y));
