@@ -180,16 +180,9 @@ typedef struct pocl_vulkan_kernel_data_s
    * total size helps with preallocating kernarg buffer */
   size_t num_pod_bytes;
 
-  /* constants are also preallocated, this is the total size */
-  size_t num_constant_bytes;
-
   /* size of push constant bytes used for arguments.
    * (doesn't include goffset_pushc_size) */
   size_t num_pushc_arg_bytes;
-
-  /* device-specific kernel data */
-  uint32_t constant_dset, constant_binding;
-  uint32_t *constant_data;
 
   /* offset for goffset push constants */
   uint32_t goffset_pushc_offset;
@@ -201,13 +194,6 @@ typedef struct pocl_vulkan_kernel_data_s
   VkDeviceSize kernarg_buf_offset;
   VkDeviceSize kernarg_buf_size;
   chunk_info_t *kernarg_chunk;
-
-  /* buffer for holding Constant data per kernel
-   * TODO this should be per-program not per-kernel */
-  VkBuffer constant_buf;
-  VkDeviceSize constant_buf_offset;
-  VkDeviceSize constant_buf_size;
-  chunk_info_t *constant_chunk;
 } pocl_vulkan_kernel_data_t;
 
 typedef struct pocl_vulkan_event_data_s
@@ -340,6 +326,18 @@ typedef struct pocl_vulkan_program_data_s
   pocl_kernel_metadata_t *kernel_meta;
   unsigned num_kernels;
   VkShaderModule shader;
+
+  /* module constant data */
+  size_t constant_data_size;
+  uint32_t *constant_data;
+  uint32_t constant_dset, constant_binding;
+
+  /* buffer for holding module constant data */
+  VkBuffer constant_buf;
+  VkDeviceSize constant_buf_offset;
+  VkDeviceSize constant_buf_size;
+  chunk_info_t *constant_chunk;
+
 } pocl_vulkan_program_data_t;
 
 static void
@@ -1850,6 +1848,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
           "--uniform-workgroup-size",
           "--global-offset",
           "--global-offset-push-constant", // goffs as push constant
+          "--module-constants-in-storage-buffer",
           /* push constants should be faster,
            * but currently don't work with goffs */
           /* "--pod-pushconstant",*/
@@ -2386,6 +2385,85 @@ parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
   return 0;
 }
 
+int
+parse_constant_line (pocl_kernel_metadata_t *p,
+                     pocl_vulkan_kernel_data_t *pp,
+                     unsigned char** constant_data,
+                     unsigned *constant_data_size,
+                     unsigned *constant_dset,
+                     unsigned *constant_binding,
+                     char *line)
+{
+  char delim[2] = { ',', 0x0 };
+
+  char *token = strtok (line, delim);
+  char *tokens[32];
+  unsigned num_tokens = 0;
+  while (num_tokens < 32 && token != NULL)
+    {
+      tokens[num_tokens] = strdup (token);
+      num_tokens++;
+      token = strtok (NULL, delim);
+    }
+  if (num_tokens == 32 && token != NULL)
+    return -1;
+  token = NULL;
+
+  uint32_t descriptor_set = UINT32_MAX;
+  uint32_t ds_binding = UINT32_MAX;
+  unsigned char* bytes = NULL;
+  unsigned len = 0;
+  for (size_t j = 1; j < num_tokens; j += 2)
+    {
+      if (strcmp (tokens[j], "descriptorSet") == 0)
+        {
+          errno = 0;
+          descriptor_set = strtol (tokens[j + 1], NULL, 10);
+          if (errno != 0) return -1;
+        }
+      if (strcmp (tokens[j], "binding") == 0)
+        {
+          errno = 0;
+          ds_binding = strtol (tokens[j + 1], NULL, 10);
+          if (errno != 0) return -1;
+        }
+      if (strcmp (tokens[j], "hexbytes") == 0)
+        {
+          errno = 0;
+          size_t i = 0;
+          char* hexbytes = tokens[j + 1];
+          len = strlen (hexbytes);
+          bytes = malloc(len + 1);
+          if (bytes == NULL) return -1;
+
+          while (hexbytes[i] != 0)
+            {
+              char tmp[3];
+              tmp[0] = hexbytes[i];
+              tmp[1] = hexbytes[i+1];
+              tmp[2] = 0;
+              unsigned long converted = strtol (tmp, NULL, 16);
+              if (errno != 0) return -1;
+              bytes[i/2] = converted;
+              i += 2;
+            }
+          continue;
+        }
+    }
+
+  for (size_t i = 0; i < num_tokens; ++i)
+    free (tokens[i]);
+
+  if (len == 0 || bytes == NULL)
+    return -1;
+
+  *constant_data = bytes;
+  *constant_data_size = len;
+  *constant_dset = descriptor_set;
+  *constant_binding = ds_binding;
+  return 0;
+}
+
 static int
 extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
                             cl_uint program_num_devices)
@@ -2422,8 +2500,14 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
   pocl_vulkan_kernel_data_t *current_kernel_metadata = NULL;
   int has_wg_spec_const = 0;
   int has_goffs_pushc = 0;
+  int has_constants = 0;
   unsigned go_pushc_offset = 0;
   unsigned go_pushc_size = 0;
+
+  unsigned constant_size = 0;
+  unsigned char* constant_bytes = NULL;
+  unsigned constant_binding = 0;
+  unsigned constant_dset = 0;
 
   for (size_t i = 0; i < num_lines; ++i)
     {
@@ -2469,6 +2553,18 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
                               "failed to parse pushconstant line\n");
           continue;
         }
+      if (memcmp (lines[i], "constant", 8) == 0)
+        {
+          has_constants++;
+          int r = parse_constant_line (p, current_kernel_metadata,
+                                       &constant_bytes, &constant_size,
+                                       &constant_dset, &constant_binding,
+                                       lines[i]);
+          POCL_GOTO_ERROR_ON (r != 0,
+                              CL_BUILD_PROGRAM_FAILURE,
+                              "failed to parse constant line\n");
+          continue;
+        }
     }
 
   for (size_t i = 0; i < num_lines; ++i)
@@ -2490,6 +2586,14 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
       {
         el->goffset_pushc_offset = go_pushc_offset;
         el->goffset_pushc_size = go_pushc_size;
+      }
+
+      if (constant_size > 0)
+      {
+          vulkan_program_data->constant_binding = constant_binding;
+          vulkan_program_data->constant_dset = constant_dset;
+          vulkan_program_data->constant_data = constant_bytes;
+          vulkan_program_data->constant_data_size = constant_size;
       }
 
       vulkan_program_data->kernel_meta = calloc (
@@ -3371,16 +3475,14 @@ pocl_vulkan_setup_kernel_arguments (
                                         kdata->kernarg_buf_offset));
     }
 
-  if (kdata->constant_buf == NULL && kdata->num_constant_bytes > 0)
+  if (pdata->constant_buf == NULL && pdata->constant_data_size > 0)
     {
-      size_t size = kdata->num_constant_bytes;
-
       VkBufferCreateInfo buffer_info
           = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
               NULL,
               0,
-              size,
-              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT
+              pdata->constant_data_size,
+              VK_BUFFER_USAGE_STORAGE_BUFFER_BIT
                   | VK_BUFFER_USAGE_TRANSFER_SRC_BIT
                   | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
               VK_SHARING_MODE_EXCLUSIVE,
@@ -3388,39 +3490,39 @@ pocl_vulkan_setup_kernel_arguments (
               &d->compute_queue_fam_index };
 
       VULKAN_CHECK (vkCreateBuffer (d->device, &buffer_info, NULL,
-                                    &kdata->constant_buf));
+                                    &pdata->constant_buf));
 
-      vkGetBufferMemoryRequirements (d->device, kdata->constant_buf, &mem_req);
-      assert (mem_req.size >= size);
+      vkGetBufferMemoryRequirements (d->device, pdata->constant_buf, &mem_req);
+      assert (mem_req.size >= pdata->constant_data_size);
 
-      kdata->constant_chunk
+      pdata->constant_chunk
           = pocl_alloc_buffer_from_region (&d->constant_region, mem_req.size);
-      assert (kdata->constant_chunk);
+      assert (pdata->constant_chunk);
 
-      kdata->constant_buf_offset = kdata->constant_chunk->start_address;
-      kdata->constant_buf_size = mem_req.size;
+      pdata->constant_buf_offset = pdata->constant_chunk->start_address;
+      pdata->constant_buf_size = mem_req.size;
 
-      VULKAN_CHECK (vkBindBufferMemory (d->device, kdata->constant_buf,
+      VULKAN_CHECK (vkBindBufferMemory (d->device, pdata->constant_buf,
                                         d->constant_mem,
-                                        kdata->constant_buf_offset));
+                                        pdata->constant_buf_offset));
 
       /* copy data to contant mem */
       if (d->kernarg_is_mappable)
         {
           void *constant_pod_ptr;
           VULKAN_CHECK (vkMapMemory (
-              d->device, d->constant_mem, kdata->constant_buf_offset,
-              kdata->constant_buf_size, 0, &constant_pod_ptr));
-          memcpy (constant_pod_ptr, kdata->constant_data,
-                  kdata->num_constant_bytes);
+              d->device, d->constant_mem, pdata->constant_buf_offset,
+              pdata->constant_buf_size, 0, &constant_pod_ptr));
+          memcpy (constant_pod_ptr, pdata->constant_data,
+                  pdata->constant_data_size);
           vkUnmapMemory (d->device, d->constant_mem);
         }
       else
         {
-          memcpy (d->staging_mapped, kdata->constant_data,
-                  kdata->num_constant_bytes);
-          pocl_vulkan_enqueue_staging_buffer_copy (d, kdata->constant_buf,
-                                                   kdata->constant_buf_size);
+          memcpy (d->staging_mapped, pdata->constant_data,
+                  pdata->constant_data_size);
+          pocl_vulkan_enqueue_staging_buffer_copy (d, pdata->constant_buf,
+                                                   pdata->constant_buf_size);
           VULKAN_CHECK (vkQueueWaitIdle (d->compute_queue));
         }
     }
@@ -3705,16 +3807,16 @@ pocl_vulkan_setup_kernel_arguments (
     }
 
   /* setup descriptor & bindings for constants   */
-  if (kdata->num_constant_bytes > 0)
+  if (pdata->constant_data_size > 0)
     {
       /* add the constant memory */
       const_descriptor_buffer_info->buffer
-          = kdata->constant_buf; /* the constant buffer */
+          = pdata->constant_buf; /* the constant buffer */
       const_descriptor_buffer_info->offset = 0;
       const_descriptor_buffer_info->range = VK_WHOLE_SIZE;
 
-      const_binding->binding = current; // TODO get from parsed data
-      const_binding->descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+      const_binding->binding = pdata->constant_binding;
+      const_binding->descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
       const_binding->descriptorCount = 1;
       const_binding->pImmutableSamplers = 0;
       const_binding->stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
@@ -3733,15 +3835,15 @@ pocl_vulkan_setup_kernel_arguments (
 
       VkWriteDescriptorSet writeDescriptorSet
           = { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-              0,
-              *const_ds,
-              0,
-              0,
-              1,
-              VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-              0,
-              const_descriptor_buffer_info,
-              0 };
+              0,                                  /* pNext */
+              *const_ds,                          /* dstSet */
+              pdata->constant_binding,            /* dstBinding */
+              0,                                  /* dstArrayElement */
+              1,                                  /* descriptorCount */
+              VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,  /* descriptorType */
+              0,                                  /* pImageInfo*/
+              const_descriptor_buffer_info,       /* pBufferInfo */
+              0 };                                /* pTexelBufferView */
       vkUpdateDescriptorSets (d->device, 1, &writeDescriptorSet, 0, 0);
     }
   else
