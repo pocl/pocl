@@ -43,6 +43,10 @@ extern "C" {
   POCL_EXPORT
   const char *pocl_get_distro_kernellib_name ();
 
+  /* For distro builds, return the target cpu name for a kernellib name */
+  POCL_EXPORT
+  const char *pocl_get_distro_cpu_name (const char *kernellib_name);
+
   /* Returns if the cpu supports FMA instruction (uses LLVM). */
   int cpu_has_fma ();
 
