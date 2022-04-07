@@ -1043,7 +1043,7 @@ endif()
 
 set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
-string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
+string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S" UTC)
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ####################################################################
