@@ -1034,6 +1034,8 @@ pocl_vulkan_setup_memfill_kernels (cl_device_id dev,
       (d->memfill128_ker->meta->num_args), sizeof (struct pocl_argument));
 }
 
+static const char* VULKAN_SERIALIZE_ENTRIES[2] = { "/program.spv", "/program.map" };
+
 cl_int
 pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 {
@@ -1394,6 +1396,9 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   VULKAN_CHECK (
       vkCreateDevice (pocl_vulkan_devices[j], &dev_cinfo, 0, &d->device));
   pocl_vulkan_initialized_dev_count++;
+
+  dev->num_serialize_entries = 2;
+  dev->serialize_entries = VULKAN_SERIALIZE_ENTRIES;
 
   dev->profile = "FULL_PROFILE";
   dev->vendor_id = d->dev_props.vendorID;
