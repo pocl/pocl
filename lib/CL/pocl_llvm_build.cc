@@ -1006,10 +1006,8 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
 
   if (is_host) {
     kernellib += '-';
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    kernellib += pocl_get_distro_kernellib_name();
-#elif defined(HOST_CPU_FORCED)
-    kernellib += OCL_KERNEL_TARGET_CPU;
+#if defined(KERNELLIB_HOST_DISTRO_VARIANTS) || defined(HOST_CPU_FORCED)
+    kernellib += device->kernellib_name;
 #else
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;

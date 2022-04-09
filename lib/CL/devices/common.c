@@ -1660,13 +1660,19 @@ pocl_init_default_device_infos (cl_device_id dev)
 #ifdef ENABLE_LLVM
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-#ifdef HOST_CPU_FORCED
+#if defined(KERNELLIB_HOST_DISTRO_VARIANTS)
+  dev->kernellib_name = pocl_get_distro_kernellib_name ();
+  dev->llvm_cpu = pocl_get_distro_cpu_name (dev->kernellib_name);
+#elif defined(HOST_CPU_FORCED)
+  dev->kernellib_name = OCL_KERNEL_TARGET_CPU;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
+  dev->kernellib_name = NULL;
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
 #endif
 
 #else /* No compiler, no CPU info */
+  dev->kernellib_name = NULL;
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";
 #endif
