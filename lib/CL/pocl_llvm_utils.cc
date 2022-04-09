@@ -205,6 +205,8 @@ const char *pocl_get_distro_kernellib_name() {
     return NULL;
   }
 
+  const char *custom = pocl_get_string_option("POCL_KERNELLIB_NAME", NULL);
+
   const kernellib_features *best_match = NULL;
   for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
        ++kf) {
@@ -213,6 +215,8 @@ const char *pocl_get_distro_kernellib_name() {
       matches &= Features[*f];
     if (matches) {
       best_match = kf;
+      if (custom && !strcmp(custom, kf->kernellib_name))
+        break;
     }
   }
 
