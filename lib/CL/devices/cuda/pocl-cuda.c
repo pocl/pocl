@@ -428,6 +428,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
   dev->global_mem_size = memtotal;
 
+  // All devices starting from Compute Capability 2.0 have this limit;
+  // See e.g.
+  // https://forums.developer.nvidia.com/t/max-size-of-cuda-arguments/50218
   dev->max_parameter_size = 4352;
 
   dev->data = data;
