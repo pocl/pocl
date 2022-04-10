@@ -428,6 +428,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
   dev->global_mem_size = memtotal;
 
+  dev->max_parameter_size = 4352;
+
   dev->data = data;
 
   POCL_INIT_LOCK (data->compile_lock);
