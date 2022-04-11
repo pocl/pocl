@@ -1091,11 +1091,20 @@ endif()
 
 # define it here, b/c we'll need these both at runtime and buildtime
 if(X86 OR ARM)
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+  set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
+  cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
+  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
 else()
   # set some conservative defaults
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
+  set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics \
+  cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
 endif()
+
+# __opencl_c_atomic_scope_all_devices is not supported for now
+set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes \
+  __opencl_c_images __opencl_c_read_write_images \
+  __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+  __opencl_c_atomic_scope_device")
 
 if(ENABLE_SPIR)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
@@ -1104,20 +1113,25 @@ endif()
 
 if(NOT CL_DISABLE_HALF)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
-  set(DEFAULT_DEVICE_EXTENSIONS "${DEFAULT_DEVICE_EXTENSIONS} cl_khr_fp16")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp16")
 endif()
 
-# must not be defined in HOST_DEVICE_EXTENSIONS list, because
-# this extension doesn't exist in official extension list
-# there is "cles_khr_int64" which indicates int64 support for embedded profiles
-set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
+
+# don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
+# such extension doesn't exist in official extension list
+# for FULL profile, int64 is always enabled;
+# for embedded profiles, it's optional
+set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -Dcl_khr_int64=1")
+#set(HOST_DEVICE_EXTENSION_DEFINES_30 "${HOST_DEVICE_EXTENSION_DEFINES_30} -D__opencl_c_int64=1")
+set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_int64")
 
 if(X86)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
 
 if(ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp64")
   set(_CL_DISABLE_DOUBLE 0)
 else()
   set(_CL_DISABLE_DOUBLE 1)
@@ -1127,9 +1141,18 @@ set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
 separate_arguments(TEMP_EXT)
 set(TEMP_CLEXT "-Xclang -cl-ext=-all,")
 foreach(EXT ${TEMP_EXT})
-  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
+  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}=1")
   set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
 endforeach()
+
+if(HOST_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 3)
+  set(TEMP_EXT "${HOST_DEVICE_FEATURES_30}")
+  separate_arguments(TEMP_EXT)
+  foreach(EXT ${TEMP_EXT})
+    set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}=1")
+    set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
+  endforeach()
+endif()
 
 set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
 

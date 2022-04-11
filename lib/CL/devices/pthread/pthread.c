@@ -145,7 +145,11 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   pocl_init_default_device_infos (device);
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
+#if HOST_DEVICE_CL_VERSION_MAJOR >= 3
+  device->extensions = HOST_DEVICE_EXTENSIONS " " HOST_DEVICE_FEATURES_30;
+#else
   device->extensions = HOST_DEVICE_EXTENSIONS;
+#endif
 
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;

@@ -272,10 +272,14 @@ int pocl_llvm_build_program(cl_program program,
   if (extensions.size() > 0) {
     size_t e_start = 0, e_end = 0;
     while (e_end < std::string::npos) {
+      while (e_start < extensions.size() &&  std::isspace(extensions[e_start]))
+        ++e_start;
+      if (e_start >= extensions.size())
+        break;
       e_end = extensions.find(' ', e_start);
       llvm::StringRef tok = extensions.slice(e_start, e_end);
       e_start = e_end + 1;
-      ss << "-D" << tok.str() << " ";
+      ss << "-D" << tok.str() << "=1 ";
       cl_ext += "+";
       cl_ext += tok.str();
       cl_ext += ",";
