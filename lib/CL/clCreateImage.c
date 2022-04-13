@@ -215,6 +215,8 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
       }
     else
       {
+        POCL_GOTO_ERROR_COND ((image_desc->buffer != NULL),
+                              CL_INVALID_OPERATION);
         mem = pocl_create_memobject (context, flags, size,
                                      image_desc->image_type,
                                      device_image_support,
