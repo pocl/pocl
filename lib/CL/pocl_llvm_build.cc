@@ -299,9 +299,6 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
   ss << "-D__USE_CLANG_OPENCL_C_H ";
-#ifndef LLVM_OLDER_THAN_13_0
-  ss << "-Dreserve_id_t=unsigned ";
-#endif
 
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
