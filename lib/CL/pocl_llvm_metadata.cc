@@ -569,8 +569,10 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     std::stringstream attrstr;
     std::string vectypehint;
+    std::string wgsizehint;
 
     size_t reqdx = 0, reqdy = 0, reqdz = 0;
+    size_t wghintx = 0, wghinty = 0, wghintz = 0;
 
     llvm::MDNode *ReqdWGSize =
         KernelFunction->getMetadata("reqd_work_group_size");
@@ -586,19 +588,133 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
                    ReqdWGSize->getOperand(2))->getValue()))->getLimitedValue();
     }
 
-    // TODO: implement vec_type_hint / work_group_size_hint attributes
-    meta->reqd_wg_size[0] = reqdx;
-    meta->reqd_wg_size[1] = reqdy;
-    meta->reqd_wg_size[2] = reqdz;
-    if (reqdx || reqdy || reqdz)
+    llvm::MDNode *WGSizeHint =
+        KernelFunction->getMetadata("work_group_size_hint");
+    if (WGSizeHint != nullptr) {
+      wghintx = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   WGSizeHint->getOperand(0))->getValue()))->getLimitedValue();
+      wghinty = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   WGSizeHint->getOperand(1))->getValue()))->getLimitedValue();
+      wghintz = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   WGSizeHint->getOperand(2))->getValue()))->getLimitedValue();
+    }
+
+#ifndef LLVM_OLDER_THAN_11_0
+    llvm::MDNode *VecTypeHint = KernelFunction->getMetadata("vec_type_hint");
+    if (VecTypeHint != nullptr) {
+      llvm::Value *VTHvalue = nullptr;
+      if (isa<ValueAsMetadata>(VecTypeHint->getOperand(0))) {
+        llvm::Value *val =
+            dyn_cast<ValueAsMetadata>(VecTypeHint->getOperand(0))->getValue();
+        llvm::Type *ty = val->getType();
+        llvm::FixedVectorType *VectorTy = nullptr;
+        if (ty != nullptr)
+          VectorTy = dyn_cast<llvm::FixedVectorType>(ty);
+
+        if (VectorTy) {
+          llvm::Type *ElemType = VectorTy->getElementType();
+          switch (ElemType->getTypeID()) {
+          case Type::TypeID::HalfTyID:
+            vectypehint = "half";
+            break;
+          case Type::TypeID::FloatTyID:
+            vectypehint = "float";
+            break;
+          case Type::TypeID::DoubleTyID:
+            vectypehint = "double";
+            break;
+          case Type::TypeID::IntegerTyID: {
+            const llvm::MDOperand &SignMD = VecTypeHint->getOperand(1);
+            llvm::Constant *SignVal =
+              dyn_cast<ConstantAsMetadata>(SignMD)->getValue();
+            llvm::ConstantInt *SignValInt = llvm::cast<ConstantInt>(SignVal);
+            assert(SignValInt);
+            if (SignValInt->getLimitedValue() == 0)
+              vectypehint = "u";
+            else
+              vectypehint.clear();
+            switch (ElemType->getIntegerBitWidth()) {
+            case 8:
+              vectypehint += "char";
+              break;
+            case 16:
+              vectypehint += "short";
+              break;
+            case 32:
+              vectypehint += "int";
+              break;
+            case 64:
+              vectypehint += "long";
+              break;
+            default:
+              vectypehint += "unknownInt";
+              break;
+            }
+            break;
+          }
+          default:
+            vectypehint = "unknownType";
+            break;
+          }
+          switch (VectorTy->getNumElements()) {
+          case 1:
+            break;
+          case 2:
+            vectypehint += "2";
+            break;
+          case 3:
+            vectypehint += "3";
+            break;
+          case 4:
+            vectypehint += "4";
+            break;
+          case 8:
+            vectypehint += "8";
+            break;
+          case 16:
+            vectypehint += "16";
+            break;
+          default:
+            vectypehint += "99";
+            break;
+          }
+        }
+      }
+    }
+#endif
+
+    if (reqdx || reqdy || reqdz) {
+      meta->reqd_wg_size[0] = reqdx;
+      meta->reqd_wg_size[1] = reqdy;
+      meta->reqd_wg_size[2] = reqdz;
       attrstr << "__attribute__((reqd_work_group_size("
               << reqdx << ", " << reqdy
               << ", " << reqdz << " )))";
+    }
+
+    if (wghintx || wghinty || wghintz) {
+      meta->wg_size_hint[0] = wghintx;
+      meta->wg_size_hint[1] = wghinty;
+      meta->wg_size_hint[2] = wghintz;
+      if (attrstr.tellp() > 0)
+        attrstr << " ";
+      attrstr << "__attribute__((work_group_size_hint("
+              << wghintx << ", " << wghinty
+              << ", " << wghintz << " )))";
+    }
+
+#ifndef LLVM_OLDER_THAN_11_0
     if (vectypehint.size() > 0) {
-      if (reqdx || reqdy || reqdz)
+      strncpy(meta->vectypehint, vectypehint.c_str(),
+              sizeof(meta->vectypehint));
+      if (attrstr.tellp() > 0)
         attrstr << " ";
       attrstr << "__attribute__ ((vec_type_hint (" << vectypehint << ")))";
     }
+#endif
 
     std::string r = attrstr.str();
     if (r.size() > 0) {

@@ -1358,6 +1358,8 @@ typedef struct pocl_kernel_metadata_s
   struct pocl_argument_info *arg_info;
   cl_bitfield has_arg_metadata;
   size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
+  size_t wg_size_hint[OPENCL_MAX_DIMENSION];
+  char vectypehint[16];
 
   /* if we know the size of _every_ kernel argument, we store
    * the total size here. see struct _cl_kernel on why */
