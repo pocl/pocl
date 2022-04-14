@@ -94,6 +94,7 @@ mad_sat.cl
 max.cl
 max_i.cl
 maxmag.cl
+mem_fence.c
 min.cl
 min_i.cl
 minmag.cl
@@ -282,8 +283,6 @@ if(ENABLE_SLEEF)
 else()
   set(KERNEL_SOURCES ${SOURCES_GENERIC})
 endif()
-
-list(APPEND KERNEL_SOURCES "mem_fence.c")
 
 if(HOST_DEVICE_CL_VERSION GREATER 199)
 if(MIPS)
