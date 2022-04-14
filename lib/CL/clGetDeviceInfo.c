@@ -42,15 +42,6 @@
     POCL_WARN_INCOMPLETE ();                                                  \
   POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
 
-#define STRINGIFY_(x) #x
-#define STRINGIFY(x) STRINGIFY_ (x)
-#define HOST_DEVICE_CL_VERSION_MAJOR_STR                                      \
-  STRINGIFY (HOST_DEVICE_CL_VERSION_MAJOR)
-#define HOST_DEVICE_CL_VERSION_MINOR_STR                                      \
-  STRINGIFY (HOST_DEVICE_CL_VERSION_MINOR)
-#define HOST_CL_VERSION                                                       \
-  "OpenCL C " HOST_DEVICE_CL_VERSION_MAJOR_STR                                \
-  "." HOST_DEVICE_CL_VERSION_MINOR_STR " pocl"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
@@ -249,8 +240,16 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->native_vector_width_double, cl_khr_fp64);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->native_vector_width_half, cl_khr_fp16);
+  /* Returns a fixed (1.2) version for all devices. The spec says:
+   * .. highest fully backwards compatible OpenCL C version supported by
+   * the compiler. An OpenCL 3.0 device may return an OpenCL C version newer
+   * than OpenCL C 1.2 if and only if all optional OpenCL C features are
+   * supported by the device for the newer version.
+   *
+   * none of the PoCL devices have fully compatible 2.x compilers,
+   * and also in 3.0 this query is deprecated (there is a better solution). */
   case CL_DEVICE_OPENCL_C_VERSION                  :
-    POCL_RETURN_GETINFO_STR (HOST_CL_VERSION);
+    POCL_RETURN_GETINFO_STR ("OpenCL C 1.2 PoCL");
   case CL_DEVICE_BUILT_IN_KERNELS                  :
     if (device->builtin_kernel_list)
       POCL_RETURN_GETINFO_STR (device->builtin_kernel_list);
