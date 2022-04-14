@@ -50,6 +50,7 @@ ceil.cl
 clamp.cl
 clamp_int.cl
 clz.cl
+ctz.cl
 convert_type.cl
 copysign.cl
 cos.cl

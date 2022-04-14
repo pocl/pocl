@@ -39,6 +39,7 @@ bitselect.cl
 clamp.cl
 clamp_int.cl
 clz.cl
+ctz.cl
 convert_type.cl
 cross.cl
 distance.cl
