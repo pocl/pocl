@@ -76,6 +76,7 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
     "_Z12get_group_idj",
     "_Z12get_local_idj",
     "_Z14get_local_sizej",
+    "_Z23get_enqueued_local_sizej",
     "_Z14get_num_groupsj",
     "_Z12get_work_dimv"
   };
