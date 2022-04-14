@@ -1051,12 +1051,45 @@ struct _cl_device_id {
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 
+  /* cl_khr_spir / CL_DEVICE_SPIR_VERSIONS, only includes SPIR not SPIR-V */
+  const char *supported_spir_versions;
+  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
+  const char *supported_spir_v_versions;
+
   /* OpenCL 3.0 properties */
+
+  /* list of compiler features, e.g. __opencl_c_fp64 */
+  const char *features;
 
   cl_device_atomic_capabilities atomic_memory_capabilities;
   cl_device_atomic_capabilities atomic_fence_capabilities;
 
+  const char *version_of_latest_passed_cts;
+
   cl_bool pipe_support;
+
+  /* extensions as listed in device->extensions,
+   * but with version */
+  size_t num_extensions_with_version;
+  const cl_name_version *extensions_with_version;
+
+  /* ILs and their versions supported by
+   * the compiler of the device */
+  size_t num_ils_with_version;
+  const cl_name_version *ils_with_version;
+
+  /* list of builtin kernels as in device->builtin_kernel_list,
+   * but with their versions */
+  size_t num_builtin_kernels_with_version;
+  const cl_name_version *builtin_kernels_with_version;
+
+  /* OpenCL C language versions supported by the device compiler */
+  size_t num_opencl_c_with_version;
+  const cl_name_version *opencl_c_with_version;
+
+  /* OpenCL C features supported by the device compiler */
+  size_t num_opencl_features_with_version;
+  const cl_name_version *opencl_features_with_version;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \

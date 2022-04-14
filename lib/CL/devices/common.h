@@ -110,6 +110,21 @@ void pocl_print_system_memory_stats();
 POCL_EXPORT
 void pocl_init_default_device_infos (cl_device_id dev);
 
+POCL_EXPORT
+void pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30);
+
+POCL_EXPORT
+void pocl_setup_extensions_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_ils_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_features_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_builtin_kernels_with_version (cl_device_id dev);
+
 #ifdef __cplusplus
 }
 #endif
