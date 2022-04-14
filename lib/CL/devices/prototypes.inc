@@ -181,6 +181,10 @@
   void pocl_##__DRV__##_svm_fill (                                            \
       cl_device_id dev, void *__restrict__ svm_ptr, size_t size,              \
       void *__restrict__ pattern, size_t pattern_size);                       \
+  void pocl_##__DRV__##_svm_migrate (cl_device_id dev,                        \
+        size_t num_svm_pointers,                                              \
+                       void *__restrict__ svm_pointers,    \
+                       size_t *__restrict__ sizes); \
   void pocl_##__DRV__##_svm_register (cl_device_id dev, void *host_ptr, size_t size);      \
   void pocl_##__DRV__##_svm_unregister (cl_device_id dev, void *host_ptr, size_t size);    \
   void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \

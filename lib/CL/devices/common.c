@@ -637,7 +637,24 @@ pocl_exec_command (_cl_command_node *node)
            cmd->svm_free.data);
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
-          dev->ops->svm_free (dev, cmd->svm_free.svm_pointers[i]);
+          {
+            void *ptr = cmd->svm_free.svm_pointers[i];
+            POCL_LOCK_OBJ (event->context);
+            pocl_svm_ptr *tmp = NULL, *item = NULL;
+            DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+            {
+              if (item->svm_ptr == ptr)
+                {
+                  DL_DELETE (event->context->svm_ptrs, item);
+                  break;
+                }
+            }
+            POCL_UNLOCK_OBJ (event->context);
+            assert (item);
+            POCL_MEM_FREE (item);
+            POname (clReleaseContext) (event->context);
+            dev->ops->svm_free (dev, ptr);
+          }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
@@ -683,6 +700,15 @@ pocl_exec_command (_cl_command_node *node)
                           cmd->svm_fill.size,
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
+      break;
+
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+      pocl_update_event_running (event);
+      if (dev->ops->svm_migrate)
+        dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
+                               cmd->svm_migrate.svm_pointers,
+                               cmd->svm_migrate.sizes);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
       break;
 

@@ -1634,6 +1634,22 @@ pocl_setup_context (cl_context context)
   return CL_SUCCESS;
 }
 
+pocl_svm_ptr *
+pocl_find_svm_ptr_in_context (cl_context context, const void *host_ptr)
+{
+  POCL_LOCK_OBJ (context);
+  pocl_svm_ptr *item = NULL;
+  DL_FOREACH (context->svm_ptrs, item)
+  {
+    if (item->svm_ptr == host_ptr)
+      {
+        break;
+      }
+  }
+  POCL_UNLOCK_OBJ (context);
+  return item;
+}
+
 int
 pocl_check_event_wait_list (cl_command_queue command_queue,
                             cl_uint num_events_in_wait_list,
@@ -1981,6 +1997,11 @@ static void pocl_free_event_node (cl_event event)
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       pocl_unmap_command_finished (event, &node->command);
+      break;
+
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+      POCL_MEM_FREE (node->command.svm_migrate.sizes);
+      POCL_MEM_FREE (node->command.svm_migrate.svm_pointers);
       break;
     }
   pocl_mem_manager_free_command (node);

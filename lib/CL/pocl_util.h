@@ -132,6 +132,9 @@ int pocl_buffer_boundcheck_3d(const size_t buffer_size, const size_t *origin,
                               const size_t *region, size_t *row_pitch,
                               size_t *slice_pitch, const char* prefix);
 
+pocl_svm_ptr *pocl_find_svm_ptr_in_context (cl_context context,
+                                            const void *host_ptr);
+
 int
 check_copy_overlap(const size_t src_offset[3],
                    const size_t dst_offset[3],

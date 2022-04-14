@@ -232,6 +232,17 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
 
+  if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
+    {
+      pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
+      if (item)
+        POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
+                            "The provided host_ptr is SVM pointer, "
+                            "but the allocated SVM size (%zu) is smaller "
+                            "then requested size (%zu)",
+                            item->size, size);
+    }
+
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
                                NULL, host_ptr, &errcode);
 

@@ -354,6 +354,13 @@ typedef struct
 
 typedef struct
 {
+  unsigned num_svm_pointers;
+  size_t *sizes;
+  void **svm_pointers;
+} _cl_command_svm_migrate;
+
+typedef struct
+{
   void* svm_ptr;
   size_t size;
   cl_map_flags flags;
@@ -409,6 +416,7 @@ typedef union
   _cl_command_svm_unmap svm_unmap;
   _cl_command_svm_cpy svm_memcpy;
   _cl_command_svm_fill svm_fill;
+  _cl_command_svm_migrate svm_migrate;
 } _cl_command_t;
 
 // one item in the command queue

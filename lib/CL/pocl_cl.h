@@ -528,6 +528,9 @@ struct pocl_device_ops {
                     const void *__restrict__ src, size_t size);
   void (*svm_fill) (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
                     void *__restrict__ pattern, size_t pattern_size);
+  void (*svm_migrate) (cl_device_id dev, size_t num_svm_pointers,
+                       void *__restrict__ svm_pointers,
+                       size_t *__restrict__ sizes);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -1109,6 +1112,13 @@ struct _context_destructor_callback
   context_destructor_callback_t *next;
 };
 
+typedef struct _pocl_svm_ptr pocl_svm_ptr;
+struct _pocl_svm_ptr
+{
+  void *svm_ptr;
+  size_t size;
+  struct _pocl_svm_ptr *prev, *next;
+};
 
 struct _cl_context {
   POCL_ICD_OBJECT
@@ -1158,6 +1168,9 @@ struct _cl_context {
 
   /* list of destructor callbacks */
   context_destructor_callback_t *destructor_callbacks;
+
+  /* list of SVM buffers */
+  pocl_svm_ptr *svm_ptrs;
 
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
@@ -1368,9 +1381,6 @@ struct _cl_mem {
   cl_bool                 is_pipe;
   size_t                  pipe_packet_size;
   size_t                  pipe_max_packets;
-
-  /* list of SVM buffers */
-  struct _cl_mem *prev, *next;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
