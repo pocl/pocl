@@ -2682,6 +2682,10 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   size_t wg_y = pc->num_groups[1];
   size_t wg_z = pc->num_groups[2];
 
+  size_t total_wgs = wg_x * wg_y * wg_z;
+  if (total_wgs == 0)
+    return;
+
   /* TODO we need working global offsets
    * before we can handle arbitrary group sizes */
   assert (wg_x < d->max_wg_count[0]);

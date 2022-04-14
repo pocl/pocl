@@ -112,6 +112,12 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   realdev = pocl_real_dev (command_queue->device);
 
+  if (global_work_size == NULL)
+    {
+      global_x = global_y = global_z = 0;
+      goto SKIP_WG_SIZE_CALCULATION;
+    }
+
   if (global_work_offset != NULL)
     {
       offset_x = global_work_offset[0];
@@ -129,8 +135,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   global_y = work_dim > 1 ? global_work_size[1] : 1;
   global_z = work_dim > 2 ? global_work_size[2] : 1;
 
-  POCL_RETURN_ERROR_COND((global_x == 0 || global_y == 0 || global_z == 0),
-    CL_INVALID_GLOBAL_WORK_SIZE);
+  if (global_x == 0 || global_y == 0 || global_z == 0)
+    {
+      global_x = global_y = global_z = 0;
+      goto SKIP_WG_SIZE_CALCULATION;
+    }
 
   max_local_x = command_queue->device->max_work_item_sizes[0];
   max_local_y
@@ -226,6 +235,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   assert (global_x % local_x == 0);
   assert (global_y % local_y == 0);
   assert (global_z % local_z == 0);
+
+SKIP_WG_SIZE_CALCULATION:
 
   for (i = 0; i < kernel->meta->num_args; ++i)
     {

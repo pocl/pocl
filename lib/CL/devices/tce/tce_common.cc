@@ -538,6 +538,11 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   assert(cmd->command.run.kernel);
   assert(cmd->command.run.device_data);
 
+  struct pocl_context *pc = &cmd->command.run.pc;
+
+  if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
+    return;
+
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName((const char*)cmd->command.run.device_data);
     assemblyFileName += "/parallel.tpef";

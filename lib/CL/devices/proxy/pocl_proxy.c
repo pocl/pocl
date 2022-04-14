@@ -1878,6 +1878,11 @@ pocl_proxy_enque_run (cl_device_id pocl_device, void *data, unsigned device_i,
   assert (pocl_device == node->device);
   unsigned program_i = node->program_device_i;
 
+  struct pocl_context *pc = &node->command.run.pc;
+
+  if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
+    return;
+
   pocl_kernel_metadata_t *kernel_md = pocl_kernel->meta;
 
   cl_kernel kernel = (cl_kernel)pocl_kernel->data[program_i];
@@ -1927,19 +1932,19 @@ pocl_proxy_enque_run (cl_device_id pocl_device, void *data, unsigned device_i,
         }
     }
 
-  size_t local[] = { node->command.run.pc.local_size[0],
-                     node->command.run.pc.local_size[1],
-                     node->command.run.pc.local_size[2] };
+  size_t local[] = { pc->local_size[0],
+                     pc->local_size[1],
+                     pc->local_size[2] };
 
-  size_t *ptr = node->command.run.pc.num_groups;
+  size_t *ptr = pc->num_groups;
   size_t global[]
       = { ptr[0] * local[0], ptr[1] * local[1], ptr[2] * local[2] };
 
-  size_t offset[] = { node->command.run.pc.global_offset[0],
-                      node->command.run.pc.global_offset[1],
-                      node->command.run.pc.global_offset[2] };
+  size_t offset[] = { pc->global_offset[0],
+                      pc->global_offset[1],
+                      pc->global_offset[2] };
 
-  ENQUEUE (clEnqueueNDRangeKernel (cq, kernel, node->command.run.pc.work_dim,
+  ENQUEUE (clEnqueueNDRangeKernel (cq, kernel, pc->work_dim,
                                    offset, global, local, 0, NULL, NULL));
 }
 

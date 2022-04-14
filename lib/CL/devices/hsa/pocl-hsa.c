@@ -1682,6 +1682,15 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   _cl_command_run *run_cmd = &cmd->command.run;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+
+  if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
+    {
+      pocl_update_event_running_unlocked (event);
+      POCL_UNLOCK_OBJ (event);
+      POCL_UPDATE_EVENT_COMPLETE (event);
+      return;
+    }
+
   hsa_kernel_dispatch_packet_t *kernel_packet;
   pocl_hsa_device_pthread_data_t* dd = &d->driver_data;
   pocl_hsa_event_data_t *event_data = (pocl_hsa_event_data_t *)event->data;

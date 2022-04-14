@@ -259,6 +259,9 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
 
+  if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
+    return;
+
   assert (data != NULL);
   d = (struct data *) data;
 
