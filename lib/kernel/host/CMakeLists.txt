@@ -49,6 +49,7 @@ fast_length.cl
 fast_normalize.cl
 fract.cl
 get_global_id.c
+get_linear_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c

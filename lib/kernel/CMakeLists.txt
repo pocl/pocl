@@ -83,6 +83,7 @@ get_global_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c
+get_linear_id.c
 get_local_id.c
 get_local_size.c
 get_num_groups.c

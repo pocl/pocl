@@ -69,17 +69,17 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
   // reduce the inlining bloat.
 
   typedef std::set<std::string> WIFuncNameVec;
-  const WIFuncNameVec WIFuncNames = {
-    "_Z13get_global_idj",
-    "_Z17get_global_offsetj",
-    "_Z15get_global_sizej",
-    "_Z12get_group_idj",
-    "_Z12get_local_idj",
-    "_Z14get_local_sizej",
-    "_Z23get_enqueued_local_sizej",
-    "_Z14get_num_groupsj",
-    "_Z12get_work_dimv"
-  };
+  const WIFuncNameVec WIFuncNames = {"_Z13get_global_idj",
+                                     "_Z17get_global_offsetj",
+                                     "_Z15get_global_sizej",
+                                     "_Z12get_group_idj",
+                                     "_Z12get_local_idj",
+                                     "_Z14get_local_sizej",
+                                     "_Z23get_enqueued_local_sizej",
+                                     "_Z14get_num_groupsj",
+                                     "_Z20get_global_linear_idv",
+                                     "_Z19get_local_linear_idv",
+                                     "_Z12get_work_dimv"};
 
   Function::iterator I = F.begin();
   Instruction *FirstInsnPt = &*(I++)->getFirstInsertionPt();
