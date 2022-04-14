@@ -129,23 +129,37 @@ static const cl_name_version pocl_platform_extensions[] = {
 static const size_t pocl_platform_extensions_num
     = sizeof (pocl_platform_extensions) / sizeof (cl_name_version);
 
-char *
-pocl_cl_name_version_to_str (cl_name_version *arr, size_t arr_size)
+static const cl_version pocl_numeric_version
+    = CL_MAKE_VERSION ((cl_uint)(POCL_CL_VERSION[0] - '0'),
+                       (cl_uint)(POCL_CL_VERSION[2] - '0'), 0);
+
+static void
+pocl_cl_name_version_to_str (char *output, size_t limit)
 {
-  if (arr_size == 0)
+  output[0] = 0;
+  if (pocl_platform_extensions_num == 0)
     {
-      return "";
+      return;
     }
-  char str[(CL_NAME_VERSION_MAX_NAME_SIZE + 1) * arr_size];
-  char *str_ptr = str;
-  strcpy (str, arr[0].name);
-  size_t i;
-  for (i = 1; i < arr_size; ++i)
+  char *str_ptr = output;
+  size_t i, remain = limit;
+  for (i = 0; i < pocl_platform_extensions_num; ++i)
     {
-      strcat (str, " ");
-      strcat (str, arr[i].name);
+      // space + NULL
+      size_t len = strlen (pocl_platform_extensions[i].name);
+      if (len + 2 > remain)
+        break;
+
+      if (i > 0)
+        {
+          strcpy (str_ptr, " ");
+          str_ptr++;
+          remain--;
+        }
+      strcat (str_ptr, pocl_platform_extensions[i].name);
+      str_ptr += len;
+      remain -= len;
     }
-  return str_ptr;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -171,16 +185,12 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR ("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
-
       POCL_RETURN_GETINFO_STR (pocl_version);
 
     case CL_PLATFORM_NUMERIC_VERSION:
       // Let's asume that only single digit is used for major and minor
       // versioning , and there is no patch.
-      POCL_RETURN_GETINFO (cl_version,
-                           CL_MAKE_VERSION ((cl_uint)POCL_CL_VERSION[0],
-                                                (cl_uint)POCL_CL_VERSION[2],
-                                                0));
+      POCL_RETURN_GETINFO (cl_version, pocl_numeric_version);
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_GETINFO_STR("Portable Computing Language");
@@ -189,8 +199,11 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR("The pocl project");
 
     case CL_PLATFORM_EXTENSIONS:
-      POCL_RETURN_GETINFO_STR (pocl_cl_name_version_to_str (
-          pocl_platform_extensions, pocl_platform_extensions_num));
+      {
+        char result[2048];
+        pocl_cl_name_version_to_str (result, 2048);
+        POCL_RETURN_GETINFO_STR (result);
+      }
 
     case CL_PLATFORM_EXTENSIONS_WITH_VERSION:
       POCL_RETURN_GETINFO_ARRAY (cl_name_version,
