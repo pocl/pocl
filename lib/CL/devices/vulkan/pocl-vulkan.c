@@ -195,6 +195,7 @@ typedef struct pocl_vulkan_kernel_data_s
   VkDeviceSize kernarg_buf_offset;
   VkDeviceSize kernarg_buf_size;
   chunk_info_t *kernarg_chunk;
+
 } pocl_vulkan_kernel_data_t;
 
 typedef struct pocl_vulkan_event_data_s
@@ -328,6 +329,7 @@ typedef struct pocl_vulkan_program_data_s
   pocl_vulkan_kernel_data_t *vk_kernel_meta_list;
   pocl_kernel_metadata_t *kernel_meta;
   unsigned num_kernels;
+  int has_wg_spec_constants;
   VkShaderModule shader;
 
   /* module constant data */
@@ -2593,7 +2595,9 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
   if (vulkan_program_data->num_kernels > 0)
     {
       // should have 3 spec constants for local WG sizes
-      assert (has_wg_spec_const == 3);
+      if (has_wg_spec_const > 0) {
+        assert (has_wg_spec_const == 3);
+      }
 
       if (go_pushc_size > 0)
         assert (go_pushc_size == 12); // (3 * uint32) for global offsets
@@ -2604,6 +2608,8 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
         el->goffset_pushc_offset = go_pushc_offset;
         el->goffset_pushc_size = go_pushc_size;
       }
+
+      vulkan_program_data->has_wg_spec_constants = (has_wg_spec_const > 0);
 
       if (constant_size > 0)
       {
@@ -3438,8 +3444,13 @@ pocl_vulkan_setup_kernel_arguments (
   entries[2].offset = 8;
   entries[2].size = 4;
 
-  uint32_t spec_entries = 3;
-  uint32_t spec_offset = 12;
+  uint32_t spec_entries = 0;
+  uint32_t spec_offset = 0;
+  if (pdata->has_wg_spec_constants)
+  {
+    spec_entries = 3;
+    spec_offset = 12;
+  }
 
   uint32_t pod_entries = 0;
 
@@ -3767,9 +3778,9 @@ pocl_vulkan_setup_kernel_arguments (
   assert (kernel->meta->num_locals == 0);
 
   spec_info->mapEntryCount = spec_entries;
-  spec_info->pMapEntries = entries;
+  spec_info->pMapEntries = (spec_entries > 0) ? entries : NULL;
   spec_info->dataSize = spec_offset;
-  spec_info->pData = spec_data;
+  spec_info->pData = (spec_entries > 0) ? spec_data : NULL;
 
   POCL_MSG_PRINT_VULKAN (
       "SPECINFO  entry count: %u ENTRIES %p DATASIZE %lu DATA %p\n",
