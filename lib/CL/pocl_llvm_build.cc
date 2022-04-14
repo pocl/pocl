@@ -259,36 +259,12 @@ int pocl_llvm_build_program(cl_program program,
       POCL_MEM_FREE(device_switches);
     }
 
-  llvm::StringRef extensions(device->extensions);
-
 #if !(defined(__x86_64__) && defined(__GNUC__))
   if (program->flush_denorms) {
     POCL_MSG_WARN("flush to zero is currently only implemented for "
                   "x86-64 & gcc/clang, ignoring flag\n");
   }
 #endif
-
-  std::string cl_ext;
-  if (extensions.size() > 0) {
-    size_t e_start = 0, e_end = 0;
-    while (e_end < std::string::npos) {
-      while (e_start < extensions.size() &&  std::isspace(extensions[e_start]))
-        ++e_start;
-      if (e_start >= extensions.size())
-        break;
-      e_end = extensions.find(' ', e_start);
-      llvm::StringRef tok = extensions.slice(e_start, e_end);
-      e_start = e_end + 1;
-      ss << "-D" << tok.str() << "=1 ";
-      cl_ext += "+";
-      cl_ext += tok.str();
-      cl_ext += ",";
-    }
-  }
-  if (!cl_ext.empty()) {
-    cl_ext.back() = ' '; // replace last "," with space
-    ss << "-cl-ext=-all," << cl_ext;
-  }
 
   /* temp dir takes preference */
   if (num_input_headers > 0)
@@ -335,6 +311,35 @@ int pocl_llvm_build_program(cl_program program,
   int cl_std_minor = temp.c_str()[pos+2] - '0';
   int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
+
+  std::string exts = device->extensions;
+  if (cl_std_major >= 3) {
+    exts += ' ';
+    exts += device->features;
+  }
+  llvm::StringRef extensions(exts);
+
+  std::string cl_ext;
+  if (extensions.size() > 0) {
+    size_t e_start = 0, e_end = 0;
+    while (e_end < std::string::npos) {
+      while (e_start < extensions.size() && std::isspace(extensions[e_start]))
+        ++e_start;
+      if (e_start >= extensions.size())
+        break;
+      e_end = extensions.find(' ', e_start);
+      llvm::StringRef tok = extensions.slice(e_start, e_end);
+      e_start = e_end + 1;
+      ss << "-D" << tok.str() << "=1 ";
+      cl_ext += "+";
+      cl_ext += tok.str();
+      cl_ext += ",";
+    }
+  }
+  if (!cl_ext.empty()) {
+    cl_ext.back() = ' '; // replace last "," with space
+    ss << "-cl-ext=-all," << cl_ext;
+  }
 
   ss << "-fno-builtin ";
   /* with fp-contract=on we get calls to fma with processors which do not
