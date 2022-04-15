@@ -171,22 +171,22 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POname(clEnqueueSVMMemFill),
   &POname(clEnqueueSVMMap),
   &POname(clEnqueueSVMUnmap),
-  NULL, /* clCreateSamplerWithProperties */
+  &POname(clCreateSamplerWithProperties),
   &POname(clSetKernelArgSVMPointer),
   &POname(clSetKernelExecInfo),
   NULL, /* clGetKernelSubGroupInfoKHR */
-  NULL, /* clCloneKernel */
+  &POname(clCloneKernel),
   &POname(clCreateProgramWithIL),
-  NULL, /* &clUnknown139 */
+  &POname(clEnqueueSVMMigrateMem),
   &POname(clGetDeviceAndHostTimer),
   &POname(clGetHostTimer),
   &POname(clGetKernelSubGroupInfo),
   &POname(clSetDefaultDeviceCommandQueue),
   &POname(clSetProgramReleaseCallback),
-  NULL, /* &clUnknown145 */
-  NULL, /* &clUnknown146 */
-  NULL, /* &clUnknown147 */
-  NULL, /* &clUnknown148 */
+  &POname(clSetProgramSpecializationConstant),
+  &POname(clCreateBufferWithProperties),
+  &POname(clCreateImageWithProperties),
+  &POname(clSetContextDestructorCallback),
   NULL, /* &clUnknown149 */
   NULL, /* &clUnknown150 */
   NULL, /* &clUnknown151 */

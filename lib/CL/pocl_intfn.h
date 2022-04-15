@@ -150,5 +150,12 @@ POdeclsym(clSetDefaultDeviceCommandQueue)
 POdeclsym(clGetDeviceAndHostTimer)
 POdeclsym(clGetHostTimer)
 POdeclsym(clSetProgramReleaseCallback)
+POdeclsym(clSetContextDestructorCallback)
+POdeclsym(clSetProgramSpecializationConstant)
+POdeclsym(clCreateSamplerWithProperties)
+POdeclsym(clCreateBufferWithProperties)
+POdeclsym(clCreateImageWithProperties)
+POdeclsym(clCloneKernel)
+POdeclsym(clEnqueueSVMMigrateMem)
 
 #endif
