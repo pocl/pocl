@@ -1785,6 +1785,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_order_acq_rel" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_order_seq_cst" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_scope_device" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_scope_all_devices" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },

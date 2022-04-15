@@ -242,8 +242,6 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
-option(ENABLE_HOST_CPU_DEVICE_CL20 "Enable reporting OpenCL 2.0 for the CPU device" OFF)
-
 option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
@@ -693,7 +691,9 @@ setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building 
 
 option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)
 
-option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware)" ON)
+option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. \
+  Enabling this option this does not guarantee conformance (depends on hardware), \
+  but CMake will give errors if options that conflict with conformance are used" OFF)
 
 if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
@@ -776,7 +776,8 @@ endif()
 
 set(SPIRV OFF)
 
-if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
+if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
+   AND (NOT ENABLE_CONFORMANCE))
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
 else()
   set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
@@ -797,6 +798,10 @@ if(ENABLE_SPIR)
 endif()
 
 set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
+
+if(ENABLE_CONFORMANCE AND (ENABLE_SPIR OR ENABLE_SPIRV))
+  message(FATAL_ERROR "conformance needs SPIR AND SPIR-V support disabled")
+endif()
 
 ######################################################################################
 
@@ -1076,28 +1081,26 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
-if(ENABLE_HOST_CPU_DEVICE_CL20)
-  set(HOST_DEVICE_CL_VERSION "200")
-  set(HOST_DEVICE_CL_STD "2.0")
-  set(HOST_DEVICE_CL_VERSION_MAJOR 2)
+# set the host device OpenCL version (and OpenCL C version too)
+# ..... to enable OpenCL C 3.0 language for the CPU device,
+# it must have compiler capable of 3.0
+# theoretically LLVM 12 is enough, but it lacks
+# https://reviews.llvm.org/D106778
+# and so it fails the C11 atomics tests of the CTS
+# with '... unknown call to _cl_atomic_store_explicit' or similar
+if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+  set(HOST_DEVICE_CL_VERSION_MAJOR 3)
   set(HOST_DEVICE_CL_VERSION_MINOR 0)
 else()
-  set(HOST_DEVICE_CL_VERSION "120")
-  set(HOST_DEVICE_CL_STD "1.2")
   set(HOST_DEVICE_CL_VERSION_MAJOR 1)
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
-# define it here, b/c we'll need these both at runtime and buildtime
-if(X86 OR ARM)
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
+
+# These are mandatory for OpenCL 1.1 (except for 3D writes but those are CPU-independent)
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
   cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
   cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
-else()
-  # set some conservative defaults
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics \
-  cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
-endif()
 
 # __opencl_c_atomic_scope_all_devices is not supported for now
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes \
@@ -1108,6 +1111,10 @@ set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes \
 if(ENABLE_SPIR)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
   set(DEFAULT_DEVICE_EXTENSIONS "${DEFAULT_DEVICE_EXTENSIONS} cl_khr_spir")
+endif()
+
+if(ENABLE_SPIRV)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program")
 endif()
 
 if(NOT CL_DISABLE_HALF)
@@ -1121,12 +1128,8 @@ endif()
 # for FULL profile, int64 is always enabled;
 # for embedded profiles, it's optional
 set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -Dcl_khr_int64=1")
-#set(HOST_DEVICE_EXTENSION_DEFINES_30 "${HOST_DEVICE_EXTENSION_DEFINES_30} -D__opencl_c_int64=1")
 set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_int64")
-
-if(X86)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
-endif()
+set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 
 if(ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
