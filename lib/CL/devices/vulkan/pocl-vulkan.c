@@ -1805,6 +1805,8 @@ compile_shader (cl_program program, cl_uint device_i,
   return CL_SUCCESS;
 }
 
+#define MAX_COMPILATION_ARGS 2048
+#define MAX_COMPILATION_ARGS_LEN (256*1024)
 int
 pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                           cl_uint num_input_headers,
@@ -1812,9 +1814,16 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                           const char **header_include_names, int link_program)
 {
 #ifdef HAVE_CLSPV
+  int errcode = CL_BUILD_PROGRAM_FAILURE;
+  int failed_to_add_compiler_options = CL_FALSE;
   uint64_t bin_size;
   char *binary;
   int err;
+  char *strings_to_free[MAX_COMPILATION_ARGS];
+  unsigned num_strings_to_free = 0;
+  char *compilation_args_concated = NULL;
+  unsigned compilation_args_concated_len = 0;
+  char* hash_source = NULL;
 
   cl_device_id dev = program->devices[device_i];
   pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)dev->data;
@@ -1827,38 +1836,27 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   POCL_MSG_PRINT_VULKAN ("building with CLSPV from sources for device %d\n",
                          device_i);
 
-  if (num_input_headers > 0)
-    POCL_ABORT_UNIMPLEMENTED ("Vulkan compilation with headers\n");
+  POCL_GOTO_ERROR_ON ((num_input_headers > 0),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "Vulkan compilation with "
+                      "headers is not implemented yet\n");
 
-  if (!link_program)
-    POCL_ABORT_UNIMPLEMENTED ("Vulkan compilation without linking\n");
+  POCL_GOTO_ERROR_ON ((!link_program),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "clCompileProgram() for Vulkan "
+                      "is not yet implemented\n");
 
-  char program_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_create_program_cachedir (program, device_i, program->source,
-                                      source_len, program_bc_path);
-  size_t len = strlen (program_bc_path);
-  assert (len > 3);
-  len -= 2;
-  program_bc_path[len] = 0;
-  char program_cl_path[POCL_FILENAME_LENGTH];
-  strncpy (program_cl_path, program_bc_path, POCL_FILENAME_LENGTH);
-  strcat (program_cl_path, "cl");
-  char program_spv_path[POCL_FILENAME_LENGTH];
-  strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
-  strcat (program_spv_path, "spv");
-  char program_map_path[POCL_FILENAME_LENGTH];
-  strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
-  strcat (program_map_path, "map");
+  char program_cl_path_temp[POCL_FILENAME_LENGTH];
+  pocl_cache_tempname (program_cl_path_temp, ".cl", NULL);
+  pocl_write_file (program_cl_path_temp, program->source, source_len, 0, 0);
 
-  if (pocl_exists (program_spv_path) && pocl_exists (program_map_path))
-    goto FINISH;
-
-  pocl_write_file (program_cl_path, program->source, source_len, 0, 1);
+  char program_map_path_temp[POCL_FILENAME_LENGTH];
+  pocl_cache_tempname (program_map_path_temp, ".map", NULL);
 
   char program_spv_path_temp[POCL_FILENAME_LENGTH];
   pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
 
-  char *COMPILATION[1024]
+  char *COMPILATION[MAX_COMPILATION_ARGS]
       = { CLSPV,
           "-x=cl",
           "--spv-version=1.0",
@@ -1866,14 +1864,17 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
           "--keep-unused-arguments",
           "--uniform-workgroup-size",
           "--global-offset",
+          "--long-vector",
           "--global-offset-push-constant", // goffs as push constant
           "--module-constants-in-storage-buffer",
           /* push constants should be faster,
            * but currently don't work with goffs */
           /* "--pod-pushconstant",*/
-          "--pod-ubo", "--cluster-pod-kernel-args", NULL };
+          "--pod-ubo",
+          "--cluster-pod-kernel-args",
+          NULL };
 
-  unsigned last_arg_idx = 10;
+  unsigned last_arg_idx = 12;
 
   if (d->have_i8_shader)
     COMPILATION[last_arg_idx++] = "--int8";
@@ -1959,40 +1960,105 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   if (disable_16b_stor[0])
     COMPILATION[last_arg_idx++] = disable_16b_stor;
 
+  compilation_args_concated = malloc(MAX_COMPILATION_ARGS_LEN);
+  POCL_GOTO_ERROR_COND (compilation_args_concated == NULL,
+                        CL_OUT_OF_HOST_MEMORY);
+  compilation_args_concated[0] = 0;
+  for (unsigned i = 0; i < last_arg_idx; ++i) {
+    strcpy (compilation_args_concated + compilation_args_concated_len,
+            COMPILATION[i]);
+    compilation_args_concated_len += strlen(COMPILATION[i]);
+    assert (compilation_args_concated_len < MAX_COMPILATION_ARGS_LEN);
+  }
+
   if (program->compiler_options)
     {
-      /* TODO mishandles quoted strings with spaces */
       /* TODO options are not exactly same for clspv */
-      char *token = NULL;
-      char delim[] = { ' ', 0 };
-      token = strtok (program->compiler_options, delim);
-      while (last_arg_idx < 1024 && token != NULL)
+      char* temp_opts = strdup (program->compiler_options);
+      POCL_GOTO_ERROR_COND ( (temp_opts == NULL), CL_OUT_OF_HOST_MEMORY );
+      char space_replacement_char = 0;
+      if (pocl_escape_quoted_whitespace (temp_opts,
+                                         &space_replacement_char) != 0)
         {
-          COMPILATION[last_arg_idx++] = strdup (token);
-          token = strtok (NULL, delim);
+          POCL_MSG_ERR ("could not find an unused char in options\n");
+          failed_to_add_compiler_options = CL_TRUE;
         }
+      else
+        {
+          char *token = NULL;
+          char delim[] = { ' ', 0 };
+          token = strtok (temp_opts, delim);
+          while (last_arg_idx < MAX_COMPILATION_ARGS && token != NULL)
+            {
+              char *tok = strdup (token);
+
+              strcpy (compilation_args_concated + compilation_args_concated_len,
+                      tok);
+              compilation_args_concated_len += strlen(tok);
+              assert (compilation_args_concated_len < MAX_COMPILATION_ARGS_LEN);
+
+              for (char* p = tok; *p; ++p)
+                if (*p == space_replacement_char)
+                  *p = ' ';
+              COMPILATION[last_arg_idx++] = tok;
+              strings_to_free[num_strings_to_free++] = tok;
+
+              token = strtok (NULL, delim);
+            }
+          if (last_arg_idx >= MAX_COMPILATION_ARGS)
+            failed_to_add_compiler_options = CL_TRUE;
+        }
+      free (temp_opts);
     }
+  POCL_GOTO_ERROR_ON( (failed_to_add_compiler_options != CL_FALSE),
+                      CL_BUILD_PROGRAM_FAILURE,
+                      "failed to process build options\n");
+
+  unsigned hash_source_len = source_len + compilation_args_concated_len;
+  hash_source = malloc (hash_source_len);
+  POCL_GOTO_ERROR_COND ((hash_source == NULL), CL_OUT_OF_HOST_MEMORY);
+  memcpy (hash_source, program->source, source_len);
+  memcpy (hash_source+source_len, compilation_args_concated,
+          compilation_args_concated_len);
+
+  char program_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_create_program_cachedir (program, device_i, hash_source,
+                                      hash_source_len, program_bc_path);
+  size_t len = strlen (program_bc_path);
+  assert (len > 3);
+  len -= 2;
+  program_bc_path[len] = 0;
+//  char program_cl_path[POCL_FILENAME_LENGTH];
+//  strncpy (program_cl_path, program_bc_path, POCL_FILENAME_LENGTH);
+//  strcat (program_cl_path, "cl");
+  char program_spv_path[POCL_FILENAME_LENGTH];
+  strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
+  strcat (program_spv_path, "spv");
+  char program_map_path[POCL_FILENAME_LENGTH];
+  strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
+  strcat (program_map_path, "map");
+
+  if (pocl_exists (program_spv_path) && pocl_exists (program_map_path))
+    goto FINISH;
 
   COMPILATION[last_arg_idx++] = "-o";
   COMPILATION[last_arg_idx++] = program_spv_path_temp;
-  COMPILATION[last_arg_idx++] = program_cl_path;
+  COMPILATION[last_arg_idx++] = program_cl_path_temp;
   COMPILATION[last_arg_idx++] = NULL;
 
   err = run_and_append_output_to_build_log (program, device_i, COMPILATION);
-  POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
+  POCL_GOTO_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
                       "clspv exited with nonzero code\n");
-  POCL_RETURN_ERROR_ON (!pocl_exists (program_spv_path_temp),
+  POCL_GOTO_ERROR_ON (!pocl_exists (program_spv_path_temp),
                       CL_BUILD_PROGRAM_FAILURE, "clspv produced no output\n");
 
-  char program_map_path_temp[POCL_FILENAME_LENGTH];
-  pocl_cache_tempname (program_map_path_temp, ".map", NULL);
   char *REFLECTION[] = { CLSPV_REFLECTION, program_spv_path_temp, "-o",
                          program_map_path_temp, NULL };
   err = run_and_append_output_to_build_log (program, device_i, REFLECTION);
 
-  POCL_RETURN_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
+  POCL_GOTO_ERROR_ON ((err != 0), CL_BUILD_PROGRAM_FAILURE,
                       "clspv-reflection exited with nonzero code\n");
-  POCL_RETURN_ERROR_ON (!pocl_exists (program_map_path_temp),
+  POCL_GOTO_ERROR_ON (!pocl_exists (program_map_path_temp),
                       CL_BUILD_PROGRAM_FAILURE,
                       "clspv-reflection produced no output\n");
 
@@ -2000,8 +2066,18 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   pocl_rename (program_map_path_temp, program_map_path);
 
 FINISH:
-  return compile_shader (program, device_i, program_spv_path, program_map_path);
+  errcode = compile_shader (program, device_i, program_spv_path, program_map_path);
+
+ERROR:
+  for (unsigned i = 0; i < num_strings_to_free; ++i)
+    free (strings_to_free[i]);
+
+  free (compilation_args_concated);
+  free (hash_source);
+
+  return errcode;
 #else
+  POCL_MSG_ERR ("vulkan driver without clspv can't compile anything\n");
   return CL_BUILD_PROGRAM_FAILURE;
 #endif
 }
@@ -2133,6 +2209,7 @@ int
 pocl_vulkan_free_program (cl_device_id device, cl_program program,
                           unsigned program_device_i)
 {
+  pocl_vulkan_device_data_t *d = (pocl_vulkan_device_data_t *)device->data;
   pocl_vulkan_program_data_t *vpd = program->data[program_device_i];
   /* vpd can be NULL if compilation fails */
   if (vpd)
@@ -2141,14 +2218,41 @@ pocl_vulkan_free_program (cl_device_id device, cl_program program,
       pocl_vulkan_kernel_data_t *el, *tmp;
       DL_FOREACH_SAFE (vpd->vk_kernel_meta_list, el, tmp)
       {
+        if (el->kernarg_chunk)
+          pocl_free_chunk (el->kernarg_chunk);
+        if (el->kernarg_buf)
+          vkDestroyBuffer (d->device, el->kernarg_buf, NULL);
         POCL_MEM_FREE (el->name);
         POCL_MEM_FREE (el);
       }
-      POCL_MEM_FREE (vpd->kernel_meta);
+
+      if (vpd->shader)
+        vkDestroyShaderModule (d->device, vpd->shader, NULL);
+      if (vpd->kernel_meta)
+        {
+          pocl_kernel_metadata_t *meta = vpd->kernel_meta;
+          POCL_MEM_FREE (meta->build_hash);
+          POCL_MEM_FREE (meta->attributes);
+          POCL_MEM_FREE (meta->name);
+          for (unsigned j = 0; j < meta->num_args; ++j)
+            {
+              POCL_MEM_FREE (meta->arg_info[j].name);
+              POCL_MEM_FREE (meta->arg_info[j].type_name);
+            }
+          POCL_MEM_FREE (meta->arg_info);
+          POCL_MEM_FREE (vpd->kernel_meta);
+        }
+      if (vpd->constant_data_size)
+        POCL_MEM_FREE (vpd->constant_data);
+      if (vpd->constant_chunk)
+        pocl_free_chunk( vpd->constant_chunk);
+      if (vpd->constant_buf)
+         vkDestroyBuffer(d->device, vpd->constant_buf, NULL);
       POCL_MEM_FREE (vpd);
     }
   return 0;
 }
+
 
 #define MAX_ARGS 128
 
