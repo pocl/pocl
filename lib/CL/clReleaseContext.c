@@ -54,9 +54,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MSG_PRINT_REFCOUNTS ("Free Context %p\n", context);
 
-      if (context->num_devices == 0)
-        goto FINISH;
-
       /* The context holds references to all its devices,
          memory objects, command-queues etc. Release the
          references and let the objects to get freed. */
@@ -72,8 +69,8 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
         }
 
       POCL_MEM_FREE (context->default_queues);
-      POCL_MEM_FREE(context->devices);
-      POCL_MEM_FREE(context->properties);
+      POCL_MEM_FREE (context->devices);
+      POCL_MEM_FREE (context->properties);
 
       for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
         POCL_MEM_FREE (context->image_formats[i]);
@@ -81,6 +78,17 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 #ifdef ENABLE_LLVM
       pocl_llvm_release_context (context);
 #endif
+
+      /* Fire any registered destructor callbacks */
+      context_destructor_callback_t *next_callback,
+          *callback = context->destructor_callbacks;
+      while (callback)
+        {
+          callback->pfn_notify (context, callback->user_data);
+          next_callback = callback->next;
+          free (callback);
+          callback = next_callback;
+        }
 
       POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
@@ -93,7 +101,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       VG_REFC_NONZERO (context);
     }
 
-FINISH:
   POCL_UNLOCK (pocl_context_handling_lock);
 
   return CL_SUCCESS;

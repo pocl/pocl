@@ -1074,6 +1074,15 @@ struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
 }; 
 
+typedef struct _context_destructor_callback context_destructor_callback_t;
+struct _context_destructor_callback
+{
+  void (CL_CALLBACK *pfn_notify) (cl_context, void *);
+  void *user_data;
+  context_destructor_callback_t *next;
+};
+
+
 struct _cl_context {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -1119,6 +1128,9 @@ struct _cl_context {
    * is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value.
    */
   size_t min_buffer_alignment;
+
+  /* list of destructor callbacks */
+  context_destructor_callback_t *destructor_callbacks;
 
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
