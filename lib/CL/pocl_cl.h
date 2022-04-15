@@ -950,10 +950,16 @@ struct _cl_device_id {
   const char *vendor;
   const char *driver_version;
   const char *profile;
-  const char *version;
   const char *extensions;
-  const char *cl_version_std;  // "CL2.0"
-  cl_ulong cl_version_int;     // 200
+
+  /* these are Device versions, not OpenCL C versions */
+  const char *version;
+  unsigned version_as_int;  /* e.g. 200 */
+  cl_version version_as_cl; /* cl_version format */
+
+  /* highest OpenCL C version supported by the compiler */
+  const char *opencl_c_version_as_opt;
+  cl_version opencl_c_version_as_cl;
 
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */

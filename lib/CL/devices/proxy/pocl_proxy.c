@@ -433,10 +433,7 @@ pocl_proxy_get_device_info (cl_device_id device, proxy_device_data_t *d)
 
   device->execution_capabilities = CL_EXEC_KERNEL;
 
-  // TODO
-  device->cl_version_int = 120;
-
-  DIstring (cl_version_std, CL_DEVICE_OPENCL_C_VERSION);
+  DIstring (opencl_c_version_as_opt, CL_DEVICE_OPENCL_C_VERSION);
 
   DIstring (short_name, CL_DEVICE_NAME);
 

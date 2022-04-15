@@ -75,8 +75,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       typedef struct { size_t size[3]; } size_t_3;
       POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }
-  case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:
-    POCL_RETURN_GETINFO (cl_bool, device->non_uniform_work_group_support);
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
                                              device->max_mem_alloc_size);
@@ -277,16 +275,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 
   case CL_DEVICE_SVM_CAPABILITIES:
     POCL_RETURN_GETINFO(cl_device_svm_capabilities, device->svm_caps);
-  case CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES:
-    POCL_RETURN_GETINFO(cl_device_atomic_capabilities, device->atomic_memory_capabilities);
-  case CL_DEVICE_ATOMIC_FENCE_CAPABILITIES:
-    POCL_RETURN_GETINFO(cl_device_atomic_capabilities, device->atomic_fence_capabilities);
   case CL_DEVICE_MAX_ON_DEVICE_EVENTS:
     POCL_RETURN_GETINFO(cl_uint, device->max_events);
   case CL_DEVICE_MAX_ON_DEVICE_QUEUES:
     POCL_RETURN_GETINFO(cl_uint, device->max_queues);
-  case CL_DEVICE_PIPE_SUPPORT:
-    POCL_RETURN_GETINFO (cl_bool, device->pipe_support);
   case CL_DEVICE_MAX_PIPE_ARGS:
     POCL_RETURN_GETINFO(cl_uint, device->max_pipe_args);
   case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
@@ -304,12 +296,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT:
     POCL_RETURN_GETINFO(cl_uint, 0);
 
-  case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
-    POCL_RETURN_GETINFO(cl_uint, 0);
-  case CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT:
-    POCL_RETURN_GETINFO(cl_bool, CL_FALSE);
-  case CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT:
-    POCL_RETURN_GETINFO(cl_bool, CL_FALSE);
   case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);
   case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:
@@ -333,6 +319,59 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS:
     POCL_RETURN_GETINFO (cl_bool,
                          device->sub_group_independent_forward_progress);
+
+  /** OpenCL 3.0 queries **/
+
+  case CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES:
+    POCL_RETURN_GETINFO (cl_device_atomic_capabilities,
+                         device->atomic_memory_capabilities);
+  case CL_DEVICE_ATOMIC_FENCE_CAPABILITIES:
+    POCL_RETURN_GETINFO (cl_device_atomic_capabilities,
+                         device->atomic_fence_capabilities);
+  case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->non_uniform_work_group_support);
+  case CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
+  case CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
+  case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
+    POCL_RETURN_GETINFO (cl_uint, 0);
+  case CL_DEVICE_PIPE_SUPPORT:
+    POCL_RETURN_GETINFO (cl_bool, device->pipe_support);
+  case CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
+    POCL_RETURN_GETINFO (size_t, device->preferred_wg_size_multiple);
+  case CL_DEVICE_NUMERIC_VERSION:
+    POCL_RETURN_GETINFO (cl_version, device->version_as_cl);
+
+  case CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED:
+    if (device->version_of_latest_passed_cts)
+      POCL_RETURN_GETINFO_STR (device->version_of_latest_passed_cts);
+    else
+      POCL_RETURN_GETINFO_STR ("");
+
+  case CL_DEVICE_EXTENSIONS_WITH_VERSION:
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
+                               device->num_extensions_with_version,
+                               device->extensions_with_version);
+
+  case CL_DEVICE_ILS_WITH_VERSION:
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version, device->num_ils_with_version,
+                               device->ils_with_version);
+
+  case CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION:
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
+                               device->num_builtin_kernels_with_version,
+                               device->builtin_kernels_with_version);
+
+  case CL_DEVICE_OPENCL_C_ALL_VERSIONS:
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
+                               device->num_opencl_c_with_version,
+                               device->opencl_c_with_version);
+
+  case CL_DEVICE_OPENCL_C_FEATURES:
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
+                               device->num_opencl_features_with_version,
+                               device->opencl_features_with_version);
   }
 
   if(device->ops->get_device_info_ext != NULL) {

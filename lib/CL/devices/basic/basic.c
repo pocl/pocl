@@ -190,31 +190,53 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   pocl_init_default_device_infos (device);
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
-#if HOST_DEVICE_CL_VERSION_MAJOR >= 3
-  device->extensions = HOST_DEVICE_EXTENSIONS " " HOST_DEVICE_FEATURES_30;
-#else
+
+  device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
   device->extensions = HOST_DEVICE_EXTENSIONS;
+
+#if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
+  device->features = HOST_DEVICE_FEATURES_30;
+
+  pocl_setup_opencl_c_with_version (device, CL_TRUE);
+  pocl_setup_features_with_version (device);
+#else
+  pocl_setup_opencl_c_with_version (device, CL_FALSE);
 #endif
 
+  pocl_setup_extensions_with_version (device);
+
+  /* builtin kernels.. skip, basic/pthread doesn't have any
+  pocl_setup_builtin_kernels_with_version (device); */
+
+  pocl_setup_ils_with_version (device);
+
+  device->on_host_queue_props
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+
+#if (!defined(ENABLE_CONFORMANCE)                                             \
+     || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
   /* full memory consistency model for atomic memory and fence operations
-  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
+  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see
   https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
   device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                        | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                        | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
                                        | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
   device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                      | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                      | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
-                                      | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                      | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
 
   device->svm_allocation_priority = 1;
+
   /* OpenCL 2.0 properties */
   device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_ATOMICS;
+#endif
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 

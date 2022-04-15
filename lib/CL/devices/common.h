@@ -32,10 +32,12 @@
 #include "pocl_image_types.h"
 #undef __CBUILD__
 
-#define XSETUP_DEVICE_CL_VERSION(A, B)             \
-  dev->cl_version_int = (A * 100) + (B * 10);     \
-  dev->cl_version_std = "CL" # A "." # B;         \
-  dev->version = "OpenCL " # A "." # B " pocl";
+#define XSETUP_DEVICE_CL_VERSION(A, B)                                        \
+  dev->version_as_int = (A * 100) + (B * 10);                                 \
+  dev->version_as_cl = CL_MAKE_VERSION (A, B, 0);                             \
+  dev->version = "OpenCL " #A "." #B " PoCL";                                 \
+  dev->opencl_c_version_as_opt = "CL" #A "." #B;                              \
+  dev->opencl_c_version_as_cl = CL_MAKE_VERSION (A, B, 0);
 
 #define SETUP_DEVICE_CL_VERSION(a, b) XSETUP_DEVICE_CL_VERSION(a, b)
 

@@ -299,10 +299,10 @@ int pocl_llvm_build_program(cl_program program,
   if (user_options.find("cl-fast-relaxed-math") != std::string::npos)
     ss << "-D__FAST_RELAXED_MATH__=1 ";
 
-  ss << "-D__OPENCL_VERSION__=" << device->cl_version_int << " ";
+  ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 
   if (user_options.find("-cl-std=") == std::string::npos)
-    ss << "-cl-std=" << device->cl_version_std << " ";
+    ss << "-cl-std=" << device->opencl_c_version_as_opt << " ";
 
   std::string temp(ss.str());
   size_t pos = temp.find("-cl-std=CL");
