@@ -255,4 +255,42 @@ ERROR:
 
   return mem;
 }
-POsym(clCreateBuffer)
+POsym (clCreateBuffer)
+
+
+CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
+                               cl_context                context,
+                               const cl_mem_properties * properties,
+                               cl_mem_flags              flags,
+                               size_t                    size,
+                               void *                    host_ptr,
+                               cl_int *                  errcode_ret)
+CL_API_SUFFIX__VERSION_3_0
+{
+  int errcode;
+  /* pocl doesn't support any extra properties ATM */
+  POCL_GOTO_ERROR_ON ((properties && properties[0] != 0), CL_INVALID_PROPERTY,
+                      "PoCL doesn't support any properties on buffers yet\n");
+
+  cl_mem mem_ret = POname(clCreateBuffer) (context, flags, size,
+                                           host_ptr, errcode_ret);
+  if (mem_ret == NULL)
+    return NULL;
+
+  if (properties && properties[0] == 0)
+    {
+      mem_ret->num_properties = 1;
+      mem_ret->properties[0] = 0;
+    }
+
+  return mem_ret;
+
+ERROR:
+  if (errcode_ret)
+    {
+      *errcode_ret = errcode;
+    }
+
+  return NULL;
+}
+POsym (clCreateBufferWithProperties)

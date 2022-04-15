@@ -282,7 +282,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
    return mem;
 }
 
-extern CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateImage) (
+CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateImage) (
     cl_context context, cl_mem_flags flags,
     const cl_image_format *image_format, const cl_image_desc *image_desc,
     void *host_ptr, cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_2
@@ -291,4 +291,43 @@ extern CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateImage) (
                                      host_ptr, errcode_ret,
                                      0, 0, 0, NULL, NULL);
 }
-POsym(clCreateImage)
+POsym (clCreateImage)
+
+CL_API_ENTRY cl_mem CL_API_CALL
+POname(clCreateImageWithProperties)(cl_context                context,
+                            const cl_mem_properties * properties,
+                            cl_mem_flags              flags,
+                            const cl_image_format *   image_format,
+                            const cl_image_desc *     image_desc,
+                            void *                    host_ptr,
+                            cl_int *                  errcode_ret)
+CL_API_SUFFIX__VERSION_3_0
+{
+  int errcode;
+
+  /* pocl doesn't support any extra properties ATM */
+  POCL_GOTO_ERROR_ON ((properties && properties[0] != 0), CL_INVALID_PROPERTY,
+                      "PoCL doesn't support any properties on images yet\n");
+
+  cl_mem mem_ret = POname (clCreateImage) (context, flags, image_format,
+                                           image_desc, host_ptr, errcode_ret);
+
+  if (mem_ret == NULL)
+    return NULL;
+
+  if (properties && properties[0] == 0)
+    {
+      mem_ret->num_properties = 1;
+      mem_ret->properties[0] = 0;
+    }
+
+  return mem_ret;
+
+ERROR:
+  if (errcode_ret)
+    {
+      *errcode_ret = errcode;
+    }
+  return NULL;
+}
+POsym (clCreateImageWithProperties)

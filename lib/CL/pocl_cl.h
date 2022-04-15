@@ -1161,6 +1161,9 @@ struct _cl_command_queue {
   unsigned long command_count; /* counter for unfinished command enqueued */
   pocl_data_sync_item last_event;
 
+  cl_queue_properties queue_properties[10];
+  unsigned num_queue_properties;
+
   /* device specific data */
   void *data;
 };
@@ -1246,6 +1249,9 @@ struct _cl_mem {
   cl_context context;
   cl_mem_object_type type;
   cl_mem_flags flags;
+
+  cl_mem_properties properties[5];
+  unsigned num_properties;
 
   size_t size;
   size_t origin; /* for sub-buffers */
@@ -1563,6 +1569,8 @@ struct _cl_sampler {
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
   cl_filter_mode      filter_mode;
+  cl_sampler_properties properties[10];
+  cl_uint             num_properties;
   void**              device_data;
 };
 

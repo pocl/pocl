@@ -66,6 +66,9 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
       POCL_RETURN_GETINFO (size_t, 0);
     else
       POCL_RETURN_GETINFO (size_t, memobj->origin);
+  case CL_MEM_PROPERTIES:
+    POCL_RETURN_GETINFO_ARRAY (cl_mem_properties, memobj->num_properties,
+                               memobj->properties);
   }
   return CL_INVALID_VALUE;
 }

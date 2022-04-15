@@ -51,6 +51,11 @@ POname(clGetCommandQueueInfo)(cl_command_queue      command_queue ,
       POCL_RETURN_GETINFO( cl_command_queue_properties, 
                               command_queue->properties );
       break;
+    case CL_QUEUE_PROPERTIES_ARRAY:
+      POCL_RETURN_GETINFO_ARRAY (cl_queue_properties,
+                                 command_queue->num_queue_properties,
+                                 command_queue->queue_properties);
+
     /* Device-side enqueue specific queries */
     case CL_QUEUE_SIZE:
       return CL_INVALID_COMMAND_QUEUE;
