@@ -899,11 +899,10 @@ else()
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
- #   set(OPENCL_LIBRARY "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl library")
-    # duh, why doesn't ocl-icd set this in its .pc file ??
-    separate_arguments(OCL_LDFLAGS UNIX_COMMAND "${OCL_ICD_LDFLAGS}")
-    list(APPEND OCL_LDFLAGS "OpenCL")
-    set(OPENCL_LIBRARIES "${OCL_LDFLAGS}" CACHE INTERNAL "opencl ICD/library link flags")
+
+    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "ocl-icd library")
+    set(OPENCL_LIBDIR "${OCL_ICD_LIBDIR}" CACHE INTERNAL "opencl ICD/library path")
+
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
     if(DEFINED OCL_ICD_VERSION AND (OCL_ICD_VERSION VERSION_GREATER_EQUAL "2.3.0"))
       set(HAVE_OCL_ICD_30_COMPATIBLE 1 CACHE INTERNAL "ICD 3.0 compat")
