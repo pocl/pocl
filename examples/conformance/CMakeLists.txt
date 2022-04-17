@@ -2294,9 +2294,18 @@ set_tests_properties(
     LABELS "conformance_suite_full;conformance_suite_mini;conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
+if(ENABLE_CTS_3_0)
+
 set_property(TEST
     ${OCL_30_TESTS}
     APPEND PROPERTY LABELS "conformance_30_only")
+
+set_tests_properties(
+  "${TS_NAME}_non_uniform_work_group"
+  PROPERTIES
+    ENVIRONMENT "POCL_MEMORY_LIMIT=4")
+
+endif()
 
 
 endif()
