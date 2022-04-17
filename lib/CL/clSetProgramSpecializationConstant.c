@@ -30,6 +30,11 @@ POname(clSetProgramSpecializationConstant)
                                    size_t      spec_size,
                                    const void* spec_value) CL_API_SUFFIX__VERSION_2_2
 {
+  /* SPIR is disabled when building with conformance */
+#ifdef ENABLE_CONFORMANCE
+  return CL_INVALID_OPERATION;
+#endif
+
 #ifdef ENABLE_VULKAN
   /* TODO implement for Vulkan + possibly CPU devices */
 #endif
