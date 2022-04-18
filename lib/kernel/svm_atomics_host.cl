@@ -96,13 +96,17 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_int  *o
 
 #  define ATOMIC_TYPE atomic_long
 #  define NONATOMIC_TYPE long
+#  define IS_INT
 #  include "svm_atomics_host.cl"
+#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_ulong
 #  define NONATOMIC_TYPE ulong
+#  define IS_UINT
 #  include "svm_atomics_host.cl"
+#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 

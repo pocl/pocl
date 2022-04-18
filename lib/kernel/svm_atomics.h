@@ -48,13 +48,17 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_flag  *
 
 #  define ATOMIC_TYPE atomic_int
 #  define NONATOMIC_TYPE int
+#  define IS_INT
 #  include "svm_atomics.h"
+#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_uint
 #  define NONATOMIC_TYPE uint
+#  define IS_UINT
 #  include "svm_atomics.h"
+#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
