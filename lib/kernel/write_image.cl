@@ -170,6 +170,17 @@ pocl_write_pixel_fast_ui (uint4 color, size_t base_index, int order,
       return;
     }
 
+  if (order == CLK_R)
+    {
+      if (elem_size == 1)
+        ((uchar *)data)[base_index] = convert_uchar_sat (color.x);
+      else if (elem_size == 2)
+        ((ushort *)data)[base_index] = convert_ushort_sat (color.x);
+      else if (elem_size == 4)
+        ((uint *)data)[base_index] = color.x;
+      return;
+    }
+
   if (elem_size == 1)
     {
       ((uchar4 *)data)[base_index] = convert_uchar4_sat (color);
@@ -197,6 +208,10 @@ pocl_write_pixel_fast_f (float4 color, size_t base_index, int channel_type,
     {
       write_float_pixel (color.w, data, base_index, channel_type);
     }
+  else if (order == CLK_R)
+    {
+      write_float_pixel (color.x, data, base_index, channel_type);
+    }
   else
     {
       write_float4_pixel (color, data, base_index, channel_type);
@@ -220,6 +235,17 @@ pocl_write_pixel_fast_i (int4 color, size_t base_index, int order,
         ((short *)data)[base_index] = convert_short_sat (color.w);
       else if (elem_size == 4)
         ((int *)data)[base_index] = color.w;
+      return;
+    }
+
+  if (order == CLK_R)
+    {
+      if (elem_size == 1)
+        ((char *)data)[base_index] = convert_char_sat (color.x);
+      else if (elem_size == 2)
+        ((short *)data)[base_index] = convert_short_sat (color.x);
+      else if (elem_size == 4)
+        ((int *)data)[base_index] = color.x;
       return;
     }
 
