@@ -303,11 +303,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT:
     POCL_RETURN_GETINFO(cl_uint, 0);
-  case CL_DEVICE_SPIR_VERSIONS:
-    if (strstr (device->extensions, "cl_khr_spir"))
-      POCL_RETURN_GETINFO_STR ("1.2");
-    else
-      POCL_RETURN_GETINFO_STR ("");
 
   case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
     POCL_RETURN_GETINFO(cl_uint, 0);
@@ -323,9 +318,14 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(size_t, device->global_var_pref_size);
   case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:
     POCL_RETURN_GETINFO(size_t, device->global_var_max_size);
+  case CL_DEVICE_SPIR_VERSIONS:
+    if (device->supported_spir_versions)
+      POCL_RETURN_GETINFO_STR (device->supported_spir_versions);
+    else
+      POCL_RETURN_GETINFO_STR ("");
   case CL_DEVICE_IL_VERSION:
-    if (device->spirv_version)
-      POCL_RETURN_GETINFO_STR (device->spirv_version);
+    if (device->supported_spir_v_versions)
+      POCL_RETURN_GETINFO_STR (device->supported_spir_v_versions);
     else
       POCL_RETURN_GETINFO_STR ("");
   case CL_DEVICE_MAX_NUM_SUB_GROUPS:

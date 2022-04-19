@@ -1531,10 +1531,11 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 
 #ifdef ENABLE_SPIRV
-  dev->spirv_version = "SPIR-V_1.2";
+  dev->supported_spir_v_versions = "SPIR-V_1.2";
 #else
-  dev->spirv_version = NULL;
+  dev->supported_spir_v_versions = "";
 #endif
+
   /* OpenCL 3.0 properties */
   /* Minimum mandated capability */
   dev->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED

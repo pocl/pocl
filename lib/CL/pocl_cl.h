@@ -969,11 +969,6 @@ struct _cl_device_id {
    * the host's system time (pocl_gettimemono_ns). */
   int has_own_timer;
 
-  /* If the driver wants SPIR-V input directly, without translation to
-   * LLVM IR with "spir" triple, set this to 1,
-   * and make sure device->ops->supports_binary returns 1 for SPIR-V */
-  int consumes_il_directly;
-
   /* whether this device supports OpenGL / EGL interop */
   int has_gl_interop;
 
@@ -1039,7 +1034,6 @@ struct _cl_device_id {
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
   /* OpenCL 2.1 */
-  char *spirv_version;
 
   cl_uint max_num_sub_groups;
   cl_bool sub_group_independent_forward_progress;
