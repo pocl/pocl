@@ -8,18 +8,19 @@ Conformance related CMake options
 ---------------------------------
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
-  This is mostly related to the kernel library (the runtime is always built to
-  be conformant on x86). Defaults to ON. This option by itself does not
-  guarantee OpenCL-conformant build; it merely ensures that a build fails
-  if some options which would result in non-conformant kernel library
-  are given.
+  Defaults to OFF. This option by itself does not guarantee OpenCL-conformant build;
+  it merely ensures that a build fails if some options which would result
+  in non-conformant kernel library are given.
 
-  Non-conformant kernel library might be somewhat faster, at the expense of
-  precision and/or range. Note that conformance was tested **only** on certain
-  hardware and software (Linux, x86-64, CPU with AVX & FMA instructions).
+  Changes when ENABLE_CONFORMANCE is ON:
 
-How to run the conformance test suite on your hardware
-------------------------------------------------------
+    * SPIR and SPIR-V support are disabled (they are incomplete)
+    * read-write images are disabled (some 1D/2D image array tests fail),
+      even though compiler support is indicated (__opencl_c_read_write_images)
+    * -cl-fast-relaxed-math flag behaviour is slightly changed to pass the ULP requirements
+
+How to run the OpenCL 1.2 conformance test suite
+------------------------------------------------
 
 First you need to enable the suite in the pocl's external test suite set.
 This is done by adding switch ``-DENABLE_TESTSUITES=conformance``
@@ -34,8 +35,27 @@ To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
 Note that this can take a week to finish on slow hardware, and about a day
 on relatively fast hardware (6C/12T Intel or equivalent).
 
-Known issues with the conformance testsuite
--------------------------------------------
+How to run the OpenCL 3.0 conformance test suite
+-------------------------------------------------
+
+The same things apply as previous paragraph, but additionally:
+
+OpenCL 3.0 CTS is automatically enabled if ocl-icd version 2.3.x is installed,
+ICD enabled in CMake (-DENABLE_ICD=ON) and PoCL is compiled against LLVM 14
+or newer (in this case the CPU device version will also report 3.0).
+It can also be enabled manually with CMake option ENABLE_CTS_3_0.
+
+In addition to conformance_suite_{mini,micro,full}, there is a new cmake label,
+"conformance_30_only" - to run tests which are only relevant to 3.0.
+
+Note that if PoCL CPU device version reports 3.0, the 1.2 CTS will be confused
+and report some failures, however CPU device version 1.2 should work with CTS 3.0
+(tests will skip).
+
+If the 3.0 CTS is not enabled, the old 1.2 CTS is used.
+
+Known issues with the 1.2 conformance testsuite
+-----------------------------------------------
 
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
@@ -75,6 +95,7 @@ Known issues with the conformance testsuite
   the restrict or const qualifier
 
 
+
 .. _sigfpe-handler:
 
 Known issues in pocl / things to be aware of
@@ -90,11 +111,6 @@ Known issues in pocl / things to be aware of
   Note that this is currently only relevant for x86(-64) + Linux, on all other
   systems this issue is not handled in any way (thus Pocl is likely
   non-conformant there).
-
-- Several options to clBuildProgram() are accepted but currently have no effect.
-  This is related mostly to optimization options like `-cl-fast-relaxed-math`.
-  The `-cl-denorms-are-zero` and `-cl-fp32-correctly-rounded-divide-sqrt`
-  options are honored.
 
 - Many of ``native_`` and ``half_`` variants of kernel library functions are mapped
   to the "full" variants.
