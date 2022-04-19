@@ -195,8 +195,34 @@ add_test(NAME "${TS_NAME}_compiler"
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
 if(ENABLE_CTS_3_0)
-add_test(NAME "${TS_NAME}_c11_atomics"
-         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" )
+
+add_test(NAME "${TS_NAME}_c11_atomics_micro"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_store atomic_exchange atomic_fetch_max atomic_fetch_add atomic_fetch_xor)
+
+add_test(NAME "${TS_NAME}_c11_atomics_init_store_load_exchange"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_init atomic_store atomic_load atomic_exchange atomic_compare_exchange_weak atomic_compare_exchange_strong)
+
+add_test(NAME "${TS_NAME}_c11_atomics_add_sub_min_max"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_add atomic_fetch_sub atomic_fetch_min atomic_fetch_max)
+
+add_test(NAME "${TS_NAME}_c11_atomics_flag_fence"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_flag atomic_fence)
+
+add_test(NAME "${TS_NAME}_c11_atomics_or_xor_and"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_and atomic_fetch_or atomic_fetch_orand atomic_fetch_xor atomic_fetch_xor2)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_init_store_load_exchange"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_init svm_atomic_store svm_atomic_load svm_atomic_exchange svm_atomic_compare_exchange_weak svm_atomic_compare_exchange_strong)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_add_sub_min_max"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_fetch_add svm_atomic_fetch_sub svm_atomic_fetch_min svm_atomic_fetch_max)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_flag_fence"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_flag svm_atomic_fence)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_or_xor_and"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_fetch_and svm_atomic_fetch_or svm_atomic_fetch_orand svm_atomic_fetch_xor svm_atomic_fetch_xor2)
+
 
 add_test(NAME "${TS_NAME}_computeinfo"
          COMMAND "${TS_BUILDDIR}/computeinfo/test_computeinfo" )
@@ -1129,10 +1155,17 @@ endif()
 
 if(ENABLE_CTS_3_0)
 
-set(OCL_30_TESTS
+set(OCL_30_TESTS_FULL
 "${TS_NAME}_api_ocl_30"
 "${TS_NAME}_basic_other_ocl_30"
-"${TS_NAME}_c11_atomics"
+"${TS_NAME}_c11_atomics_init_store_load_exchange"
+"${TS_NAME}_c11_atomics_add_sub_min_max"
+"${TS_NAME}_c11_atomics_flag_fence"
+"${TS_NAME}_c11_atomics_or_xor_and"
+"${TS_NAME}_c11_atomics_svm_init_store_load_exchange"
+"${TS_NAME}_c11_atomics_svm_add_sub_min_max"
+"${TS_NAME}_c11_atomics_svm_flag_fence"
+"${TS_NAME}_c11_atomics_svm_or_xor_and"
 "${TS_NAME}_device_execution"
 "${TS_NAME}_device_timer"
 "${TS_NAME}_generic_address_space"
@@ -1162,8 +1195,28 @@ set(OCL_30_TESTS
 "${TS_NAME}_workgroup_lsize"
 )
 
+set(OCL_30_TESTS_MICRO
+"${TS_NAME}_api_ocl_30"
+"${TS_NAME}_basic_other_ocl_30"
+"${TS_NAME}_c11_atomics_micro"
+"${TS_NAME}_device_execution"
+"${TS_NAME}_device_timer"
+"${TS_NAME}_generic_address_space"
+"${TS_NAME}_integer_ops_ocl_30"
+"${TS_NAME}_non_uniform_work_group"
+"${TS_NAME}_pipes"
+"${TS_NAME}_spirv_new_0"
+"${TS_NAME}_subgroups_1"
+"${TS_NAME}_SVM_1"
+"${TS_NAME}_SVM_2"
+)
+
+set(OCL_30_TESTS_MINI ${OCL_30_TESTS_MICRO})
+
 else()
-  set(OCL_30_TESTS)
+  set(OCL_30_TESTS_FULL)
+  set(OCL_30_TESTS_MINI)
+  set(OCL_30_TESTS_MICRO)
 endif()
 
 
@@ -1456,7 +1509,7 @@ set_tests_properties(
     "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
-    ${OCL_30_TESTS}
+    ${OCL_30_TESTS_FULL}
   PROPERTIES
     LABELS "conformance_suite_full"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -1763,7 +1816,7 @@ set_tests_properties(
     "${TS_NAME}_math_mini_tanh"
     "${TS_NAME}_math_mini_tanpi"
     "${TS_NAME}_math_mini_trunc"
-    ${OCL_30_TESTS}
+
     "${TS_NAME}_conversion_mini_uint_uchar"
     "${TS_NAME}_conversion_mini_short_char"
     "${TS_NAME}_conversion_mini_uchar_ushort"
@@ -2247,8 +2300,6 @@ set_tests_properties(
     "${TS_NAME}_select_micro_int_int"
     "${TS_NAME}_select_micro_ulong_ulong"
 
-    ${OCL_30_TESTS}
-
   PROPERTIES
     LABELS "conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -2297,6 +2348,7 @@ set_tests_properties(
     "${TS_NAME}_relationals"
     "${TS_NAME}_thread_dimensions_quick"
     "${TS_NAME}_vecstep"
+    ${OCL_30_TESTS_MICRO}
   PROPERTIES
     LABELS "conformance_suite_full;conformance_suite_mini;conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -2304,7 +2356,7 @@ set_tests_properties(
 if(ENABLE_CTS_3_0)
 
 set_property(TEST
-    ${OCL_30_TESTS}
+    ${OCL_30_TESTS_FULL}
     APPEND PROPERTY LABELS "conformance_30_only")
 
 set_tests_properties(
