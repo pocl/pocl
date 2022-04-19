@@ -1103,10 +1103,13 @@ set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_ba
   cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
 
 # __opencl_c_atomic_scope_all_devices is not supported for now
-set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes \
-  __opencl_c_images __opencl_c_read_write_images \
+set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
   __opencl_c_atomic_scope_device")
+
+if(NOT ENABLE_CONFORMANCE)
+  set( HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
+endif()
 
 if(ENABLE_SPIR)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")

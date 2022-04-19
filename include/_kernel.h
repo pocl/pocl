@@ -188,7 +188,7 @@
 #define IMG_RO_AQ __read_only
 #define IMG_WO_AQ __write_only
 
-#if (__OPENCL_C_VERSION__ > 199)
+#ifdef __opencl_c_read_write_images
 #define CLANG_HAS_RW_IMAGES
 #define IMG_RW_AQ __read_write
 #else

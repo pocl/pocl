@@ -1317,6 +1317,27 @@ static const char *final_ld_flags[] =
   {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
+
+#ifdef ENABLE_CONFORMANCE
+static const cl_image_format supported_image_formats[] = {
+  { CL_RGBA, CL_SNORM_INT8 },
+  { CL_RGBA, CL_SNORM_INT16 },
+  { CL_RGBA, CL_UNORM_INT8 },
+  { CL_RGBA, CL_UNORM_INT16 },
+  { CL_RGBA, CL_SIGNED_INT8 },
+  { CL_RGBA, CL_SIGNED_INT16 },
+  { CL_RGBA, CL_SIGNED_INT32 },
+  { CL_RGBA, CL_UNSIGNED_INT8 },
+  { CL_RGBA, CL_UNSIGNED_INT16 },
+  { CL_RGBA, CL_UNSIGNED_INT32 },
+  { CL_RGBA, CL_HALF_FLOAT },
+  { CL_RGBA, CL_FLOAT },
+  { CL_BGRA, CL_SNORM_INT8 },
+  { CL_BGRA, CL_UNORM_INT8 },
+  { CL_BGRA, CL_SIGNED_INT8 },
+  { CL_BGRA, CL_UNSIGNED_INT8 }
+};
+#else
 static const cl_image_format supported_image_formats[] = {
   { CL_A, CL_SNORM_INT8 },
   { CL_A, CL_SNORM_INT16 },
@@ -1363,6 +1384,7 @@ static const cl_image_format supported_image_formats[] = {
   { CL_BGRA, CL_SIGNED_INT8 },
   { CL_BGRA, CL_UNSIGNED_INT8 }
 };
+#endif
 
 void
 pocl_init_default_device_infos (cl_device_id dev)
@@ -1430,8 +1452,12 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
      somewhere. */
-  dev->max_read_image_args = dev->max_write_image_args
-      = dev->max_read_write_image_args = 128;
+  dev->max_read_image_args = dev->max_write_image_args = 128;
+#ifdef ENABLE_CONFORMANCE
+  dev->max_read_write_image_args = 0;
+#else
+  dev->max_read_write_image_args = 128;
+#endif
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
   dev->max_samplers = 16;
