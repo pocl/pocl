@@ -38,8 +38,12 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Linker/Linker.h"
-#include "llvm/Support/FileSystem.h"
+#ifndef LLVM_OLDER_THAN_14_0
+#include "llvm/MC/TargetRegistry.h"
+#else
 #include "llvm/Support/TargetRegistry.h"
+#endif
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetSelect.h"
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
