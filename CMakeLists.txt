@@ -328,47 +328,31 @@ else()
   set(COMMAND_USES_TERMINAL USES_TERMINAL)
 endif()
 
-if(UNIX)
-  include(GNUInstallDirs)
-else()
-  if (WIN32)
-    set(${CMAKE_INSTALL_LIBDIR} "lib")
-    set(${CMAKE_INSTALL_DATADIR} "share")
-    set(${CMAKE_INSTALL_INCLUDEDIR} "include")
-    set(${CMAKE_INSTALL_BINDIR} "bin")
-    message(STATUS "Setting installation destination on Windows to: ${CMAKE_INSTALL_PREFIX}")
-  else()
-    message(FATAL_ERROR "System not UNIX nor WIN32 - not implemented yet")
-  endif()
-endif()
+include(GNUInstallDirs)
 
 # for libpocl.so
-set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "POCL public libdir")
+set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}" CACHE PATH "POCL public libdir")
 
 # for libpocl-devices-*.so
-set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
+set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_FULL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
 
 # for pocl.icd
-if(UNIX AND (NOT CMAKE_CROSSCOMPILING) AND (CMAKE_INSTALL_PREFIX STREQUAL "/usr"))
-  set(POCL_INSTALL_ICD_VENDORDIR "/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
-else()
-  set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
-endif()
+set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
 
 # for kernel-<target>.bc
-set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
+set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
 
 # for poclu.h
-set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
+set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_FULL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
 
 # for _kernel.h et al
 set(POCL_INSTALL_PRIVATE_HEADER_DIR "${POCL_INSTALL_PRIVATE_DATADIR}/include" CACHE PATH "POCL private header dir")
 
 # for pocl-standalone et al
-set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" CACHE PATH "POCL public bindir")
+set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_FULL_BINDIR}" CACHE PATH "POCL public bindir")
 
 # for PoclConfig.cmake & stuff
-set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}" CACHE PATH   "Installation directory for CMake files")
+set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}/cmake" CACHE PATH   "Installation directory for CMake files")
 
 # TODO maybe use output of pkg-config --variable=pc_path pkg-config ?
 set(POCL_INSTALL_PKGCONFIG_DIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pkgconfig" CACHE PATH "Destination for pocl.pc")
