@@ -107,7 +107,7 @@ POCL_EXPORT
   int pocl_driver_setup_metadata (cl_device_id device, cl_program program,
                                   unsigned program_device_i);
 POCL_EXPORT
-  int pocl_driver_supports_binary (cl_device_id device, const size_t length,
+  int pocl_driver_supports_binary (cl_device_id device, size_t length,
                                    const char *binary);
 POCL_EXPORT
   int pocl_driver_build_poclbinary (cl_program program, cl_uint device_i);

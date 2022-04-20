@@ -708,7 +708,7 @@ pocl_driver_setup_metadata (cl_device_id device, cl_program program,
 }
 
 int
-pocl_driver_supports_binary (cl_device_id device, const size_t length,
+pocl_driver_supports_binary (cl_device_id device, size_t length,
                              const char *binary)
 {
 #ifdef ENABLE_LLVM
