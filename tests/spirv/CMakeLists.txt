@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2021 Michal Babej / Tampere University
+#   Copyright (c) 2022 Michal Babej
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,24 @@
 #
 #=============================================================================
 
-#cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
+if(ENABLE_SPIRV)
 
-if(INSTALL_OPENCL_HEADERS)
-  install(FILES cl2.hpp opencl.hpp
-          DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}" COMPONENT "dev")
+add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
+
+add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
+
+add_executable("spirv_printf" printf.cc)
+
+target_link_libraries("spirv_printf" ${POCLU_LINK_OPTIONS})
+
+add_test_pocl(NAME "spirv/printf" COMMAND "spirv_printf")
+
+set_tests_properties( "spirv/printf"
+  PROPERTIES
+    COST 4.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "OK"
+    LABELS "internal;spirv"
+    DEPENDS "pocl_version_check")
+
 endif()

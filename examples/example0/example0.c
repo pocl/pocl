@@ -64,7 +64,7 @@ main (int argc, char **argv)
   spir = (argc > 1 && argv[1][0] == 's');
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');
-  const char *explicit_binary_path = (poclbin && (argc > 2)) ? argv[2] : NULL;
+  const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
 
   const char *basename = "example0";
   err = poclu_load_program (context, device, basename, spir, spirv, poclbin,

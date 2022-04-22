@@ -970,10 +970,10 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 
 if(APPLE)
   find_file(OPENCL_H opencl.h PATH_SUFFIXES OpenCL CL)
-  find_file(CL2_HPP cl2.hpp PATH_SUFFIXES OpenCL CL)
+  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES OpenCL CL)
 else()
   find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
-  find_file(CL2_HPP cl2.hpp PATH_SUFFIXES CL)
+  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
 endif()
 
 # if ICD is disabled, we might as well compile with our own headers
