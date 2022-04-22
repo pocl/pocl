@@ -286,6 +286,28 @@ int pocl_llvm_build_program(cl_program program,
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
+  size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
+
+  if (fastmath_flag != std::string::npos) {
+#ifdef ENABLE_CONFORMANCE
+    user_options.replace(fastmath_flag, 21,
+                         "-cl-finite-math-only -cl-unsafe-math-optimizations");
+#endif
+    ss << "-D__FAST_RELAXED_MATH__=1 ";
+  }
+
+#ifdef ENABLE_CONFORMANCE
+  size_t unsafemath_flag = user_options.find("-cl-unsafe-math-optimizations");
+
+  if (unsafemath_flag != std::string::npos) {
+    // this should be almost the same but disables -freciprocal-math.
+    // required for conformance_math_divide test to pass with OpenCL 3.0
+    user_options.replace(unsafemath_flag, 29,
+                         "-cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast");
+  }
+#endif
+
+
   ss << user_options << " ";
 
   if (device->endian_little)
@@ -296,8 +318,6 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
 
-  if (user_options.find("cl-fast-relaxed-math") != std::string::npos)
-    ss << "-D__FAST_RELAXED_MATH__=1 ";
 
   ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 
