@@ -570,17 +570,26 @@ endif()
 add_test(NAME "${TS_NAME}_geometrics"
          COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" )
 
+if(ENABLE_CTS_3_0)
+  set(HALF_TEST_NAME "${TS_BUILDDIR}/half/test_half")
+else()
+  set(HALF_TEST_NAME "${TS_BUILDDIR}/half/Test_half")
+endif()
+
 add_test(NAME "${TS_NAME}_half_1"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vload_half vloada_half vstore_half)
+         COMMAND ${HALF_TEST_NAME} vload_half vloada_half vstore_half)
 
 add_test(NAME "${TS_NAME}_half_2"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstorea_half vstore_half_rte vstorea_half_rte)
+         COMMAND ${HALF_TEST_NAME} vstorea_half vstore_half_rte vstorea_half_rte)
 
 add_test(NAME "${TS_NAME}_half_3"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstore_half_rtz vstore_half_rtn vstore_half_rtp)
+         COMMAND ${HALF_TEST_NAME} vstore_half_rtz vstore_half_rtn vstore_half_rtp)
 
 add_test(NAME "${TS_NAME}_half_4"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
+         COMMAND ${HALF_TEST_NAME} vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
+
+add_test(NAME "${TS_NAME}_mini_half"
+         COMMAND ${HALF_TEST_NAME} -w)
 
 if(ENABLE_CTS_3_0)
 # not available
@@ -1742,14 +1751,6 @@ add_test(NAME "${TS_NAME}_math_mini_tanpi"
 
 add_test(NAME "${TS_NAME}_math_mini_trunc"
          COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d trunc)
-
-if(ENABLE_CTS_3_0)
-add_test(NAME "${TS_NAME}_mini_half"
-         COMMAND "${TS_BUILDDIR}/half/test_half" -w)
-else()
-add_test(NAME "${TS_NAME}_mini_half"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" -w)
-endif()
 
 set_tests_properties(
     "${TS_NAME}_mini_half"
