@@ -171,13 +171,13 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 #if (!defined(ENABLE_CONFORMANCE)                                             \
      || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
   /* full memory consistency model for atomic memory and fence operations
-  except CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES. see 
   https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
   device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                        | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                        | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
                                        | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE
+                                       | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
   device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                        | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                        | CL_DEVICE_ATOMIC_ORDER_SEQ_CST

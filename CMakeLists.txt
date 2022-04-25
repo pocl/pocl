@@ -1102,10 +1102,16 @@ set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_ba
   cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
   cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
 
-# __opencl_c_atomic_scope_all_devices is not supported for now
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
   __opencl_c_atomic_scope_device")
+
+# TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
+# for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
+# .... seems like a bug in CTS, but needs to be investigated.
+if(ENABLE_CONFORMANCE)
+  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_atomic_scope_all_devices")
+endif()
 
 if(NOT ENABLE_CONFORMANCE)
   set( HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
