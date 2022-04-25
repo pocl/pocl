@@ -19,7 +19,7 @@ Conformance related CMake options
       even though compiler support is indicated (__opencl_c_read_write_images)
     * -cl-fast-relaxed-math flag behaviour is slightly changed to pass the ULP requirements
 
-How to run the OpenCL 1.2 conformance test suite
+How to run the OpenCL 3.0 conformance test suite
 ------------------------------------------------
 
 First you need to enable the suite in the pocl's external test suite set.
@@ -35,65 +35,23 @@ To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
 Note that this can take a week to finish on slow hardware, and about a day
 on relatively fast hardware (6C/12T Intel or equivalent).
 
-How to run the OpenCL 3.0 conformance test suite
--------------------------------------------------
-
-The same things apply as previous paragraph, but additionally:
-
-OpenCL 3.0 CTS is automatically enabled if ocl-icd version 2.3.x is installed,
-ICD enabled in CMake (-DENABLE_ICD=ON) and PoCL is compiled against LLVM 14
-or newer (in this case the CPU device version will also report 3.0).
-It can also be enabled manually with CMake option ENABLE_CTS_3_0.
-
 In addition to conformance_suite_{mini,micro,full}, there is a new cmake label,
 "conformance_30_only" - to run tests which are only relevant to 3.0.
 
-Note that if PoCL CPU device version reports 3.0, the 1.2 CTS will be confused
-and report some failures, however CPU device version 1.2 should work with CTS 3.0
-(tests will skip).
+CPU device version 1.2 should also work with CTS 3.0 (tests will be skipped).
 
-If the 3.0 CTS is not enabled, the old 1.2 CTS is used.
-
-Known issues with the 1.2 conformance testsuite
+Known issues with the conformance testsuite
 -----------------------------------------------
 
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
-- compiler_defines_for_extensions from ``compiler/test_compiler`` might fail
-  because cl_khr_spir extension is not recognized with OpenCL 1.2 - officially
-  it's only recognized since OpenCL 2.0.
-
-- a few tests from ``conversions/test_conversions`` may report failures.
-  This is likely a bug in the test; the same test from branch
-  cl20_trunk of CTS passes.
-
 - some tests from ``relationals/test_relationals`` can fail with specific
   LLVM versions, this is an LLVM bug, fixed in LLVM 13.
-
-- ``math_brute_force/bruteforce`` tests may occasionally fail with an empty build log,
-  this is a bug in CTS. See pocl issue #614. ``export CL_TEST_SINGLE_THREADED=1`` might help.
 
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
   with "max_images" argument.
-
-- two tests in ``api/test_api`` fail with LLVM 5.0 because of
-  LLVM commit 1c1154229a41b688f9:
-
-    ``[OpenCL] Do not generate "kernel_arg_type_qual" metadata for non-pointer args``
-
-  This is a bug in CTS, which tests for non-pointer type qualifiers, not in pocl.
-  See:
-
-  https://www.khronos.org/registry/OpenCL/specs/opencl-1.2.pdf page 169:
-
-  ``CL_KERNEL_ARG_TYPE_VOLATILE`` is returned if the **argument is a pointer**
-  and the referenced type is declared with the volatile qualifier.
-  Similarly, ``CL_KERNEL_ARG_TYPE_RESTRICT`` or ``CL_KERNEL_ARG_TYPE_CONST`` is
-  returned if the **argument is a pointer** and the referenced type is declared with
-  the restrict or const qualifier
-
 
 
 .. _sigfpe-handler:
