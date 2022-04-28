@@ -23,8 +23,13 @@
 
 #include "pocl_util.h"
 
+#define S(A) #A
+#define STRINGIFY(X) S(X)
+
 static const char *pocl_version
-    = "OpenCL " POCL_CL_VERSION " pocl " POCL_VERSION_FULL
+    = "OpenCL " STRINGIFY(POCL_PLATFORM_VERSION_MAJOR)
+      "." STRINGIFY(POCL_PLATFORM_VERSION_MINOR)
+      " PoCL " POCL_VERSION_FULL
 
 #if defined(_WIN32)
    #if defined(_WIN64)
@@ -130,8 +135,9 @@ static const size_t pocl_platform_extensions_num
     = sizeof (pocl_platform_extensions) / sizeof (cl_name_version);
 
 static const cl_version pocl_numeric_version
-    = CL_MAKE_VERSION ((cl_uint)(POCL_CL_VERSION[0] - '0'),
-                       (cl_uint)(POCL_CL_VERSION[2] - '0'), 0);
+    = CL_MAKE_VERSION (POCL_PLATFORM_VERSION_MAJOR,
+                       POCL_PLATFORM_VERSION_MINOR,
+                       POCL_PLATFORM_VERSION_PATCH);
 
 static void
 pocl_cl_name_version_to_str (char *output, size_t limit)
