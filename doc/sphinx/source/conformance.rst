@@ -17,7 +17,36 @@ Conformance related CMake options
     * SPIR and SPIR-V support are disabled (they are incomplete)
     * read-write images are disabled (some 1D/2D image array tests fail),
       even though compiler support is indicated (__opencl_c_read_write_images)
-    * -cl-fast-relaxed-math flag behaviour is slightly changed to pass the ULP requirements
+
+
+Supported & Unsupported optional OpenCL 3.0 features
+------------------------------------------------------
+
+This list is only related to CPU devices (basic & pthread drivers).
+Other drivers (CUDA, TCE etc) only support 1.2 partially.
+
+Supported 3.0 features:
+
+  * Shared Virtual Memory
+  * C11 atomics
+  * 3D Image Writes
+
+Unsupported 3.0 features:
+
+  * Device-side enqueue
+  * Pipes
+  * Program Scope Global Variables
+  * Non-Uniform Work Groups
+  * Read-Write Images
+  * Creating 2D Images from Buffers
+  * sRGB & Depth Images
+  * Device and Host Timer Synchronization
+  * Intermediate Language Programs
+  * Subgroups
+  * Program Initialization and Clean-Up Kernels
+  * Work Group Collective Functions
+  * Generic Address Space
+
 
 How to run the OpenCL 3.0 conformance test suite
 ------------------------------------------------
