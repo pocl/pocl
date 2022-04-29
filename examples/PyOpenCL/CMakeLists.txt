@@ -48,7 +48,14 @@ elseif(NOT BASH)
 else()
 
 find_program(VIRTUALENV NAMES "virtualenv")
-find_program(PYTHON_INTERP NAMES python3)
+find_package(Python3 3.8 COMPONENTS Interpreter Development)
+if(NOT Python3_FOUND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, can't find suitable python3")
+  return()
+else()
+  message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
+  set(PYTHON_INTERP "${Python3_EXECUTABLE}")
+endif()
 
 if(VIRTUALENV)
 
