@@ -1095,7 +1095,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 #ifdef HAVE_CLSPV
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
-  dev->consumes_il_directly = CL_TRUE;
 #else
   dev->compiler_available = CL_FALSE;
   dev->linker_available = CL_FALSE;
@@ -1103,7 +1102,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
    * are fixed to extract kernel metadata from SPIR-V
    * directly instead of using clspv-reflection
    */
-  dev->consumes_il_directly = CL_FALSE;
 #endif
 
   dev->preferred_vector_width_char = 1;
