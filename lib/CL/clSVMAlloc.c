@@ -79,6 +79,9 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
+  pocl_svm_ptr *item = calloc (1, sizeof (pocl_svm_ptr));
+  POCL_RETURN_ERROR_ON ((item == NULL), NULL, "out of host memory\n");
+
   if (alignment == 0)
     alignment = context->svm_allocdev->min_data_type_align_size;
 
@@ -96,10 +99,16 @@ POname(clSVMAlloc)(cl_context context,
                                                      flags, size);
   if (ptr == NULL)
     {
+      POCL_MEM_FREE (item);
       POCL_MSG_ERR ("Device failed to allocate SVM memory");
       return NULL;
     }
 
+  POCL_LOCK_OBJ (context);
+  item->svm_ptr = ptr;
+  item->size = size;
+  DL_APPEND (context->svm_ptrs, item);
+  POCL_UNLOCK_OBJ (context);
   POname (clRetainContext) (context);
 
   POCL_MSG_PRINT_MEMORY ("Allocated SVM: PTR %p, SIZE %zu, FLAGS %" PRIu64

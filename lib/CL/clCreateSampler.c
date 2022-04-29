@@ -27,7 +27,7 @@
 
 extern unsigned long sampler_c;
 
-extern CL_API_ENTRY cl_sampler CL_API_CALL
+CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
                 cl_bool             normalized_coords, 
                 cl_addressing_mode  addressing_mode, 
@@ -58,7 +58,7 @@ CL_API_SUFFIX__VERSION_1_0
                          && (addressing_mode == CL_ADDRESS_REPEAT)),
                         CL_INVALID_VALUE);
 
-  sampler = (cl_sampler) malloc(sizeof(struct _cl_sampler));
+  sampler = (cl_sampler)calloc (1, sizeof (struct _cl_sampler));
   POCL_GOTO_ERROR_COND ((sampler == NULL), CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT (sampler);
@@ -89,4 +89,82 @@ ERROR:
   }
   return sampler;
 }
-POsym(clCreateSampler)
+POsym (clCreateSampler)
+
+
+
+CL_API_ENTRY cl_sampler CL_API_CALL
+POname (clCreateSamplerWithProperties) (
+        cl_context context, const cl_sampler_properties *sampler_properties,
+        cl_int *errcode_ret) CL_API_SUFFIX__VERSION_2_0
+{
+
+  cl_bool normalized_coords = CL_TRUE;
+  cl_addressing_mode addressing_mode = CL_ADDRESS_CLAMP;
+  cl_filter_mode filter_mode = CL_FILTER_NEAREST;
+  int coords_set = 0, addr_set = 0, filter_set = 0;
+  int errcode;
+
+  POCL_GOTO_ERROR_COND ((sampler_properties == NULL), CL_INVALID_VALUE);
+
+  const cl_sampler_properties *p = sampler_properties;
+  while (*p != 0)
+    {
+      switch (*p)
+        {
+        case CL_SAMPLER_NORMALIZED_COORDS:
+          {
+            POCL_GOTO_ERROR_ON ((coords_set != 0), CL_INVALID_VALUE,
+                                "CL_SAMPLER_NORMALIZED_COORDS property "
+                                "has been already set");
+            normalized_coords = p[1];
+            coords_set = 1;
+            break;
+          }
+        case CL_SAMPLER_ADDRESSING_MODE:
+          {
+            POCL_GOTO_ERROR_ON ((addr_set != 0), CL_INVALID_VALUE,
+                                "CL_SAMPLER_ADDRESSING_MODE property "
+                                "has been already set");
+            addressing_mode = p[1];
+            addr_set = 1;
+            break;
+          }
+        case CL_SAMPLER_FILTER_MODE:
+          {
+            POCL_GOTO_ERROR_ON ((filter_set != 0), CL_INVALID_VALUE,
+                                "CL_SAMPLER_FILTER_MODE property "
+                                "has been already set");
+            filter_mode = p[1];
+            filter_set = 1;
+            break;
+          }
+        default:
+          POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE,
+                              "Unknown value in properties: %lu\n",
+                              (unsigned long)(*p));
+        }
+      p += 2;
+    }
+  unsigned num_props = (p - sampler_properties) + 1; /* include final 0 */
+  cl_sampler ret_sam = POname (clCreateSampler) (
+      context, normalized_coords, addressing_mode, filter_mode, errcode_ret);
+  if (ret_sam == NULL)
+    return NULL;
+
+  ret_sam->num_properties = num_props;
+  assert (num_props < 10);
+  memcpy (ret_sam->properties, sampler_properties,
+          num_props * sizeof (cl_sampler_properties));
+
+  return ret_sam;
+
+ERROR:
+  if (errcode_ret)
+    {
+      *errcode_ret = errcode;
+    }
+
+  return NULL;
+}
+POsym (clCreateSamplerWithProperties)

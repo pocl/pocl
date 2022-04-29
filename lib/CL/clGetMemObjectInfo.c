@@ -60,12 +60,19 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
   case CL_MEM_ASSOCIATED_MEMOBJECT:
     POCL_RETURN_GETINFO (cl_mem, memobj->parent);
   case CL_MEM_USES_SVM_POINTER:
-    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
+    {
+      pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (memobj->context,
+                                                         memobj->mem_host_ptr);
+      POCL_RETURN_GETINFO (cl_bool, (item != NULL));
+    }
   case CL_MEM_OFFSET:
     if (memobj->parent == NULL)
       POCL_RETURN_GETINFO (size_t, 0);
     else
       POCL_RETURN_GETINFO (size_t, memobj->origin);
+  case CL_MEM_PROPERTIES:
+    POCL_RETURN_GETINFO_ARRAY (cl_mem_properties, memobj->num_properties,
+                               memobj->properties);
   }
   return CL_INVALID_VALUE;
 }

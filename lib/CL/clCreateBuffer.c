@@ -232,6 +232,17 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
 
+  if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
+    {
+      pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
+      if (item)
+        POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
+                            "The provided host_ptr is SVM pointer, "
+                            "but the allocated SVM size (%zu) is smaller "
+                            "then requested size (%zu)",
+                            item->size, size);
+    }
+
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
                                NULL, host_ptr, &errcode);
 
@@ -255,4 +266,42 @@ ERROR:
 
   return mem;
 }
-POsym(clCreateBuffer)
+POsym (clCreateBuffer)
+
+
+CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
+                               cl_context                context,
+                               const cl_mem_properties * properties,
+                               cl_mem_flags              flags,
+                               size_t                    size,
+                               void *                    host_ptr,
+                               cl_int *                  errcode_ret)
+CL_API_SUFFIX__VERSION_3_0
+{
+  int errcode;
+  /* pocl doesn't support any extra properties ATM */
+  POCL_GOTO_ERROR_ON ((properties && properties[0] != 0), CL_INVALID_PROPERTY,
+                      "PoCL doesn't support any properties on buffers yet\n");
+
+  cl_mem mem_ret = POname(clCreateBuffer) (context, flags, size,
+                                           host_ptr, errcode_ret);
+  if (mem_ret == NULL)
+    return NULL;
+
+  if (properties && properties[0] == 0)
+    {
+      mem_ret->num_properties = 1;
+      mem_ret->properties[0] = 0;
+    }
+
+  return mem_ret;
+
+ERROR:
+  if (errcode_ret)
+    {
+      *errcode_ret = errcode;
+    }
+
+  return NULL;
+}
+POsym (clCreateBufferWithProperties)

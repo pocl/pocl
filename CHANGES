@@ -4,14 +4,15 @@
 Notable User Facing Changes
 ---------------------------
 
-- Updated API calls towards (minimal) conformance to OpenCL 3.0
-  specification:
-  - Pipes, reporting no pipe support.
-  - Device-side Enqueue, reporting no support for device-side enqueue.
-- OpenCL 3.0 enabled at platform level; the CPU device reports 3.0
-  if LLVM is recent enough (12+)
-- the updated Conformance Test Suite for OpenCL 3.0 is automatically used
-  if possible (either PoCL built without ICD, or with ICD that supports 3.0)
+- OpenCL 3.0 support:
+   * OpenCL 3.0 is enabled at platform level, all API calls
+     up to 3.0 are implemented
+   * The CPU device reports OpenCL 3.0 if LLVM is recent enough
+     (LLVM 14+), otherwise it reports OpenCL 1.2
+   * The Conformance Test Suite was updated to a version that supports
+     OpenCL 3.0; the CTS should also work with devices that report 1.2
+   * For the list of supported features & more details,
+     see doc/sphinx/source/conformance.rst
 - Text tracing improved - a few new command types traced,
   event dependencies are now also recorded
 - There are now two scripts, which let the user parse & convert the

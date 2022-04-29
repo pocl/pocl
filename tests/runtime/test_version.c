@@ -11,6 +11,9 @@
 #include "poclu.h"
 #include "config.h"
 
+#define S(A) #A
+#define STRINGIFY(X) S(X)
+
 int main(void)
 {
 	cl_context context;
@@ -32,8 +35,9 @@ int main(void)
 				sizeof(result), result, &rvs));
 
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
-        const char *expected = "OpenCL " POCL_CL_VERSION
-                               " pocl " POCL_VERSION_FULL;
+
+        const char *expected = "OpenCL " STRINGIFY(POCL_PLATFORM_VERSION_MAJOR)
+         "." STRINGIFY(POCL_PLATFORM_VERSION_MINOR) " PoCL " POCL_VERSION_FULL;
         if (strncmp (result, expected, strlen (expected)) != 0)
           {
             printf ("Error: platform is: %s\n", result);

@@ -528,6 +528,9 @@ struct pocl_device_ops {
                     const void *__restrict__ src, size_t size);
   void (*svm_fill) (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
                     void *__restrict__ pattern, size_t pattern_size);
+  void (*svm_migrate) (cl_device_id dev, size_t num_svm_pointers,
+                       void *__restrict__ svm_pointers,
+                       size_t *__restrict__ sizes);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -947,10 +950,16 @@ struct _cl_device_id {
   const char *vendor;
   const char *driver_version;
   const char *profile;
-  const char *version;
   const char *extensions;
-  const char *cl_version_std;  // "CL2.0"
-  cl_ulong cl_version_int;     // 200
+
+  /* these are Device versions, not OpenCL C versions */
+  const char *version;
+  unsigned version_as_int;  /* e.g. 200 */
+  cl_version version_as_cl; /* cl_version format */
+
+  /* highest OpenCL C version supported by the compiler */
+  const char *opencl_c_version_as_opt;
+  cl_version opencl_c_version_as_cl;
 
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
@@ -968,11 +977,6 @@ struct _cl_device_id {
    * if zero, the default event change handlers set the event times based on
    * the host's system time (pocl_gettimemono_ns). */
   int has_own_timer;
-
-  /* If the driver wants SPIR-V input directly, without translation to
-   * LLVM IR with "spir" triple, set this to 1,
-   * and make sure device->ops->supports_binary returns 1 for SPIR-V */
-  int consumes_il_directly;
 
   /* whether this device supports OpenGL / EGL interop */
   int has_gl_interop;
@@ -1039,7 +1043,6 @@ struct _cl_device_id {
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
   /* OpenCL 2.1 */
-  char *spirv_version;
 
   cl_uint max_num_sub_groups;
   cl_bool sub_group_independent_forward_progress;
@@ -1051,12 +1054,45 @@ struct _cl_device_id {
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 
+  /* cl_khr_spir / CL_DEVICE_SPIR_VERSIONS, only includes SPIR not SPIR-V */
+  const char *supported_spir_versions;
+  /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
+  const char *supported_spir_v_versions;
+
   /* OpenCL 3.0 properties */
+
+  /* list of compiler features, e.g. __opencl_c_fp64 */
+  const char *features;
 
   cl_device_atomic_capabilities atomic_memory_capabilities;
   cl_device_atomic_capabilities atomic_fence_capabilities;
 
+  const char *version_of_latest_passed_cts;
+
   cl_bool pipe_support;
+
+  /* extensions as listed in device->extensions,
+   * but with version */
+  size_t num_extensions_with_version;
+  const cl_name_version *extensions_with_version;
+
+  /* ILs and their versions supported by
+   * the compiler of the device */
+  size_t num_ils_with_version;
+  const cl_name_version *ils_with_version;
+
+  /* list of builtin kernels as in device->builtin_kernel_list,
+   * but with their versions */
+  size_t num_builtin_kernels_with_version;
+  const cl_name_version *builtin_kernels_with_version;
+
+  /* OpenCL C language versions supported by the device compiler */
+  size_t num_opencl_c_with_version;
+  const cl_name_version *opencl_c_with_version;
+
+  /* OpenCL C features supported by the device compiler */
+  size_t num_opencl_features_with_version;
+  const cl_name_version *opencl_features_with_version;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
@@ -1073,6 +1109,22 @@ struct _cl_device_id {
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
 }; 
+
+typedef struct _context_destructor_callback context_destructor_callback_t;
+struct _context_destructor_callback
+{
+  void (CL_CALLBACK *pfn_notify) (cl_context, void *);
+  void *user_data;
+  context_destructor_callback_t *next;
+};
+
+typedef struct _pocl_svm_ptr pocl_svm_ptr;
+struct _pocl_svm_ptr
+{
+  void *svm_ptr;
+  size_t size;
+  struct _pocl_svm_ptr *prev, *next;
+};
 
 struct _cl_context {
   POCL_ICD_OBJECT
@@ -1120,6 +1172,12 @@ struct _cl_context {
    */
   size_t min_buffer_alignment;
 
+  /* list of destructor callbacks */
+  context_destructor_callback_t *destructor_callbacks;
+
+  /* list of SVM buffers */
+  pocl_svm_ptr *svm_ptrs;
+
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
 #endif
@@ -1148,6 +1206,9 @@ struct _cl_command_queue {
   struct _cl_event *barrier;
   unsigned long command_count; /* counter for unfinished command enqueued */
   pocl_data_sync_item last_event;
+
+  cl_queue_properties queue_properties[10];
+  unsigned num_queue_properties;
 
   /* device specific data */
   void *data;
@@ -1234,6 +1295,9 @@ struct _cl_mem {
   cl_context context;
   cl_mem_object_type type;
   cl_mem_flags flags;
+
+  cl_mem_properties properties[5];
+  unsigned num_properties;
 
   size_t size;
   size_t origin; /* for sub-buffers */
@@ -1323,9 +1387,6 @@ struct _cl_mem {
   cl_bool                 is_pipe;
   size_t                  pipe_packet_size;
   size_t                  pipe_max_packets;
-
-  /* list of SVM buffers */
-  struct _cl_mem *prev, *next;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
@@ -1340,6 +1401,8 @@ typedef struct pocl_kernel_metadata_s
   struct pocl_argument_info *arg_info;
   cl_bitfield has_arg_metadata;
   size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
+  size_t wg_size_hint[OPENCL_MAX_DIMENSION];
+  char vectypehint[16];
 
   /* if we know the size of _every_ kernel argument, we store
    * the total size here. see struct _cl_kernel on why */
@@ -1551,6 +1614,8 @@ struct _cl_sampler {
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
   cl_filter_mode      filter_mode;
+  cl_sampler_properties properties[10];
+  cl_uint             num_properties;
   void**              device_data;
 };
 

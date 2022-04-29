@@ -43,22 +43,22 @@ POname(clEnqueueSVMFree) (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
-      CL_INVALID_CONTEXT, "None of the devices in this context is SVM-capable\n");
+  POCL_RETURN_ERROR_ON (
+      (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
+      "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND((num_svm_pointers == 0), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND((svm_pointers == NULL), CL_INVALID_VALUE);
-  for (i=0; i<num_svm_pointers; i++)
-    POCL_RETURN_ERROR_COND((svm_pointers[i] == NULL), CL_INVALID_VALUE);
 
+  for (i = 0; i < num_svm_pointers; i++)
+    {
+      POCL_RETURN_ERROR_COND ((svm_pointers[i] == NULL), CL_INVALID_VALUE);
+    }
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  for(i=0; i<num_events_in_wait_list; i++)
-    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   _cl_command_node *cmd = NULL;
 

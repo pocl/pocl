@@ -48,9 +48,9 @@ if (ENABLE_SPIR)
 
   add_test(NAME "examples/matrix1_spir_local"
            COMMAND ${CMAKE_COMMAND}
-           "-DCMD2=${CLANG}####${SPIR_COMMON_FLAGS}####-DMYGEMM4####-DLOCAL_SIZE=32####-DMYGEMM6####-DTSN=64####-DTSM=64####-DTSK=8####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
-           "-DCMD3=${CMAKE_BINARY_DIR}/examples/matrix1/matrix1####256####-s####-l####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64"
-           "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64"
+           "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-DMYGEMM4####-DLOCAL_SIZE=32####-DMYGEMM6####-DTSN=64####-DTSM=64####-DTSK=8####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
+           "-DCMD2=${CMAKE_BINARY_DIR}/examples/matrix1/matrix1####256####-s####-l####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64"
+           "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
   list(APPEND SPIREX "examples/matrix1_spir" "examples/matrix1_spir_local")
@@ -72,10 +72,9 @@ set_property(TEST "examples/matrix1" "examples/matrix1_local"
 
 add_test(NAME "examples/matrix1_poclbin"
          COMMAND ${CMAKE_COMMAND}
-            "-DCMD4=${CMAKE_COMMAND}####-E####rm####-rf####/tmp/pocl_test_matrix_poclbin"
-            "-DCMD2=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
-            "-DCMD3=${CMAKE_BINARY_DIR}/examples/matrix1/matrix1####256####-b####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin"
-            "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin"
+            "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
+            "-DCMD2=${CMAKE_BINARY_DIR}/examples/matrix1/matrix1####256####-b####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin"
+            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1_poclbin.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
 set_tests_properties( "examples/matrix1_poclbin"
@@ -85,4 +84,4 @@ set_tests_properties( "examples/matrix1_poclbin"
     PROCESSORS 1
     LABELS "poclbin;internal"
     DEPENDS "pocl_version_check"
-    ENVIRONMENT "POCL_CACHE_DIR=/tmp/pocl_test_matrix_poclbin")
+    ENVIRONMENT "POCL_KERNEL_CACHE=0")

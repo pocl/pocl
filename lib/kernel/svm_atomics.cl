@@ -89,13 +89,17 @@ atomic_flag_clear (volatile Q atomic_flag *object)
 
 #  define ATOMIC_TYPE atomic_int
 #  define NONATOMIC_TYPE int
+#  define IS_INT
 #  include "svm_atomics.cl"
+#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_uint
 #  define NONATOMIC_TYPE uint
+#  define IS_UINT
 #  include "svm_atomics.cl"
+#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
@@ -111,13 +115,17 @@ atomic_flag_clear (volatile Q atomic_flag *object)
 
 #  define ATOMIC_TYPE atomic_long
 #  define NONATOMIC_TYPE long
+#  define INV_TYPE ulong
 #  include "svm_atomics.cl"
+#  undef INV_TYPE
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_ulong
 #  define NONATOMIC_TYPE ulong
+#  define INV_TYPE long
 #  include "svm_atomics.cl"
+#  undef INV_TYPE
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
@@ -412,6 +420,160 @@ atomic_fetch_max (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE operand)
 {
   return atomic_fetch_max_explicit (object, operand, memory_order_seq_cst);
 }
+
+
+#ifdef INV_TYPE
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_add_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_add) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_add_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_add_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_add (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_add_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_sub_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_sub) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_sub_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_sub_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_sub (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_sub_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_or_explicit (volatile Q ATOMIC_TYPE *object,
+                          INV_TYPE operand, memory_order order,
+                          memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_or) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_or_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_or_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_or (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_or_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_xor_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_xor) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_xor_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_xor_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_xor (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_xor_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_and_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_and) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_and_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_and_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_and (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_and_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_min_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_min) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_min_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_min_explicit(object, (NONATOMIC_TYPE)operand, order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_min (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_min_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_max_explicit (volatile Q ATOMIC_TYPE *object,
+                           INV_TYPE operand, memory_order order,
+                           memory_scope scope)
+{
+  return QUAL (__pocl_atomic_fetch_max) (object, (NONATOMIC_TYPE)operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE atomic_fetch_max_explicit ( volatile Q ATOMIC_TYPE  *object,
+  INV_TYPE  operand,
+  memory_order order)
+{
+  return atomic_fetch_max_explicit(object, operand, (NONATOMIC_TYPE)order, memory_scope_device);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE
+atomic_fetch_max (volatile Q ATOMIC_TYPE *object, INV_TYPE operand)
+{
+  return atomic_fetch_max_explicit (object, (NONATOMIC_TYPE)operand, memory_order_seq_cst);
+}
+
+#endif
 
 #endif
 

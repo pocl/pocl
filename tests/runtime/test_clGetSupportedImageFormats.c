@@ -23,9 +23,9 @@ main(void)
 
   cl_bool img_support = 0;
   err = clGetDeviceInfo(dev, CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool), &img_support, 0);
-
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
   if (img_support != CL_TRUE)
-    return EXIT_SUCCESS;
+    return 77;
 
   err = clGetSupportedImageFormats (ctx, 0, CL_MEM_OBJECT_IMAGE2D, 0,
                                     NULL, &num_entries);

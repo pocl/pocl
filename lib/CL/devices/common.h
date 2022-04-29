@@ -32,10 +32,12 @@
 #include "pocl_image_types.h"
 #undef __CBUILD__
 
-#define XSETUP_DEVICE_CL_VERSION(A, B)             \
-  dev->cl_version_int = (A * 100) + (B * 10);     \
-  dev->cl_version_std = "CL" # A "." # B;         \
-  dev->version = "OpenCL " # A "." # B " pocl";
+#define XSETUP_DEVICE_CL_VERSION(A, B)                                        \
+  dev->version_as_int = (A * 100) + (B * 10);                                 \
+  dev->version_as_cl = CL_MAKE_VERSION (A, B, 0);                             \
+  dev->version = "OpenCL " #A "." #B " PoCL";                                 \
+  dev->opencl_c_version_as_opt = "CL" #A "." #B;                              \
+  dev->opencl_c_version_as_cl = CL_MAKE_VERSION (A, B, 0);
 
 #define SETUP_DEVICE_CL_VERSION(a, b) XSETUP_DEVICE_CL_VERSION(a, b)
 
@@ -109,6 +111,21 @@ void pocl_print_system_memory_stats();
 
 POCL_EXPORT
 void pocl_init_default_device_infos (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30);
+
+POCL_EXPORT
+void pocl_setup_extensions_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_ils_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_features_with_version (cl_device_id dev);
+
+POCL_EXPORT
+void pocl_setup_builtin_kernels_with_version (cl_device_id dev);
 
 #ifdef __cplusplus
 }

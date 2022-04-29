@@ -50,6 +50,7 @@ ceil.cl
 clamp.cl
 clamp_int.cl
 clz.cl
+ctz.cl
 convert_type.cl
 copysign.cl
 cos.cl
@@ -82,6 +83,7 @@ get_global_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c
+get_linear_id.c
 get_local_id.c
 get_local_size.c
 get_num_groups.c

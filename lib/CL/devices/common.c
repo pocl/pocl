@@ -29,6 +29,7 @@
 #define _POSIX_C_SOURCE 200809L
 
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -636,7 +637,24 @@ pocl_exec_command (_cl_command_node *node)
            cmd->svm_free.data);
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
-          dev->ops->svm_free (dev, cmd->svm_free.svm_pointers[i]);
+          {
+            void *ptr = cmd->svm_free.svm_pointers[i];
+            POCL_LOCK_OBJ (event->context);
+            pocl_svm_ptr *tmp = NULL, *item = NULL;
+            DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+            {
+              if (item->svm_ptr == ptr)
+                {
+                  DL_DELETE (event->context->svm_ptrs, item);
+                  break;
+                }
+            }
+            POCL_UNLOCK_OBJ (event->context);
+            assert (item);
+            POCL_MEM_FREE (item);
+            POname (clReleaseContext) (event->context);
+            dev->ops->svm_free (dev, ptr);
+          }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
@@ -682,6 +700,15 @@ pocl_exec_command (_cl_command_node *node)
                           cmd->svm_fill.size,
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
+      break;
+
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+      pocl_update_event_running (event);
+      if (dev->ops->svm_migrate)
+        dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
+                               cmd->svm_migrate.svm_pointers,
+                               cmd->svm_migrate.sizes);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
       break;
 
@@ -1290,6 +1317,27 @@ static const char *final_ld_flags[] =
   {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
+
+#ifdef ENABLE_CONFORMANCE
+static const cl_image_format supported_image_formats[] = {
+  { CL_RGBA, CL_SNORM_INT8 },
+  { CL_RGBA, CL_SNORM_INT16 },
+  { CL_RGBA, CL_UNORM_INT8 },
+  { CL_RGBA, CL_UNORM_INT16 },
+  { CL_RGBA, CL_SIGNED_INT8 },
+  { CL_RGBA, CL_SIGNED_INT16 },
+  { CL_RGBA, CL_SIGNED_INT32 },
+  { CL_RGBA, CL_UNSIGNED_INT8 },
+  { CL_RGBA, CL_UNSIGNED_INT16 },
+  { CL_RGBA, CL_UNSIGNED_INT32 },
+  { CL_RGBA, CL_HALF_FLOAT },
+  { CL_RGBA, CL_FLOAT },
+  { CL_BGRA, CL_SNORM_INT8 },
+  { CL_BGRA, CL_UNORM_INT8 },
+  { CL_BGRA, CL_SIGNED_INT8 },
+  { CL_BGRA, CL_UNSIGNED_INT8 }
+};
+#else
 static const cl_image_format supported_image_formats[] = {
   { CL_A, CL_SNORM_INT8 },
   { CL_A, CL_SNORM_INT16 },
@@ -1301,7 +1349,20 @@ static const cl_image_format supported_image_formats[] = {
   { CL_A, CL_UNSIGNED_INT8 },
   { CL_A, CL_UNSIGNED_INT16 },
   { CL_A, CL_UNSIGNED_INT32 },
+  { CL_A, CL_HALF_FLOAT },
   { CL_A, CL_FLOAT },
+  { CL_R, CL_SNORM_INT8 },
+  { CL_R, CL_SNORM_INT16 },
+  { CL_R, CL_UNORM_INT8 },
+  { CL_R, CL_UNORM_INT16 },
+  { CL_R, CL_SIGNED_INT8 },
+  { CL_R, CL_SIGNED_INT16 },
+  { CL_R, CL_SIGNED_INT32 },
+  { CL_R, CL_UNSIGNED_INT8 },
+  { CL_R, CL_UNSIGNED_INT16 },
+  { CL_R, CL_UNSIGNED_INT32 },
+  { CL_R, CL_HALF_FLOAT },
+  { CL_R, CL_FLOAT },
   { CL_RGBA, CL_SNORM_INT8 },
   { CL_RGBA, CL_SNORM_INT16 },
   { CL_RGBA, CL_UNORM_INT8 },
@@ -1323,6 +1384,7 @@ static const cl_image_format supported_image_formats[] = {
   { CL_BGRA, CL_SIGNED_INT8 },
   { CL_BGRA, CL_UNSIGNED_INT8 }
 };
+#endif
 
 void
 pocl_init_default_device_infos (cl_device_id dev)
@@ -1390,8 +1452,12 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
      somewhere. */
-  dev->max_read_image_args = dev->max_write_image_args
-      = dev->max_read_write_image_args = 128;
+  dev->max_read_image_args = dev->max_write_image_args = 128;
+#ifdef ENABLE_CONFORMANCE
+  dev->max_read_write_image_args = 0;
+#else
+  dev->max_read_write_image_args = 128;
+#endif
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
   dev->max_samplers = 16;
@@ -1530,10 +1596,11 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 
 #ifdef ENABLE_SPIRV
-  dev->spirv_version = "SPIR-V_1.2";
+  dev->supported_spir_v_versions = "SPIR-V_1.2";
 #else
-  dev->spirv_version = NULL;
+  dev->supported_spir_v_versions = "";
 #endif
+
   /* OpenCL 3.0 properties */
   /* Minimum mandated capability */
   dev->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
@@ -1541,4 +1608,231 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                     | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                     | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+}
+
+/*
+ * Input: a space-delim string, and an array of cl_name_version items
+ * (which should have all possible items that could occur in input string).
+ * Then for each item in string, finds its corresponding cl_name_version
+ * in the array, and copy it to the output array of cl_name_version items.
+ * Returns: number of items found
+ */
+
+static unsigned
+pocl_space_delim_string_to_cl_name_version_array (
+    cl_name_version **output, const char *input_str,
+    const cl_name_version *search_array, unsigned search_array_size)
+{
+  unsigned i, start = 0, end = 0, pos = 0, len = 0;
+  const char *p = input_str;
+  char item_name[256];
+  unsigned num_output = 0;
+  cl_name_version storage[256];
+
+  while (p[pos])
+    {
+      while (p[pos] && isspace ((unsigned char)p[pos]))
+        pos++;
+      start = pos;
+      if (p[pos] == 0)
+        break;
+      while (p[pos] && !isspace ((unsigned char)p[pos]))
+        pos++;
+      end = pos;
+      len = end - start;
+      if (len > 255)
+        {
+          POCL_MSG_WARN ("item too long: %u | %s", len, p + start);
+          continue;
+        }
+      memcpy (item_name, p + start, len);
+      item_name[len] = 0;
+
+      int found = -1;
+      for (i = 0; i < search_array_size; ++i)
+        {
+          if (strcmp (item_name, search_array[i].name) == 0)
+            {
+              found = i;
+              break;
+            }
+        }
+      if (found >= 0)
+        {
+          memcpy (&storage[num_output], &search_array[found],
+                  sizeof (cl_name_version));
+          ++num_output;
+          if (num_output == 256) {
+            POCL_MSG_WARN ("max items reached (256)\n");
+            break;
+          }
+        }
+      else
+        POCL_MSG_WARN ("could not find item: %s\n", item_name);
+    }
+
+  if (num_output)
+    {
+      cl_name_version *tmp = malloc (num_output * sizeof (cl_name_version));
+      memcpy (tmp, storage, (num_output * sizeof (cl_name_version)));
+      *output = tmp;
+    }
+  else
+    *output = NULL;
+
+  return num_output;
+}
+
+static const cl_name_version OPENCL_C_VERSIONS[]
+    = { { CL_MAKE_VERSION (1, 0, 0), "OpenCL C" },
+        { CL_MAKE_VERSION (1, 1, 0), "OpenCL C" },
+        { CL_MAKE_VERSION (1, 2, 0), "OpenCL C" },
+        { CL_MAKE_VERSION (3, 0, 0), "OpenCL C" } };
+
+void
+pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
+{
+  dev->opencl_c_with_version = OPENCL_C_VERSIONS;
+  dev->num_opencl_c_with_version = supports_30 ? 4 : 3;
+}
+
+static const cl_name_version OPENCL_EXTENSIONS[]
+    = { { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_nv_device_attribute_query" },
+
+        { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
+
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" } };
+
+const size_t OPENCL_EXTENSIONS_NUM
+    = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);
+
+void
+pocl_setup_extensions_with_version (cl_device_id dev)
+{
+  cl_name_version *tmp = NULL;
+  unsigned ret = pocl_space_delim_string_to_cl_name_version_array (
+      &tmp, dev->extensions, OPENCL_EXTENSIONS, OPENCL_EXTENSIONS_NUM);
+
+  dev->num_extensions_with_version = ret;
+  dev->extensions_with_version = tmp;
+}
+
+static const cl_name_version OPENCL_SPIRV_VERSIONS[]
+    = { { CL_MAKE_VERSION (1, 0, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 1, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 2, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 3, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 4, 0), "SPIR-V" },
+        { CL_MAKE_VERSION (1, 5, 0), "SPIR-V" } };
+
+const size_t OPENCL_SPIRV_VERSIONS_NUM
+    = sizeof (OPENCL_SPIRV_VERSIONS) / sizeof (OPENCL_SPIRV_VERSIONS[0]);
+
+void
+pocl_setup_ils_with_version (cl_device_id dev)
+{
+  unsigned i, start = 0, end = 0, pos = 0, len = 0;
+  const char *p = dev->supported_spir_v_versions;
+  char item_name[256];
+  unsigned num_output = 0;
+  cl_name_version storage[256];
+
+  while (p[pos])
+    {
+      while (p[pos] && isspace ((unsigned char)p[pos]))
+        pos++;
+      start = pos;
+      if (p[pos] == 0)
+        break;
+      while (p[pos] && !isspace ((unsigned char)p[pos]))
+        pos++;
+      end = pos;
+      len = end - start;
+      if (len > 255)
+        {
+          POCL_MSG_WARN ("item too long: %u | %s", len, p + start);
+          continue;
+        }
+      memcpy (item_name, p + start, len);
+      item_name[len] = 0;
+
+      cl_version V = CL_MAKE_VERSION (0, 0, 0);
+      if (strncmp (item_name, "SPIR-V_1.", 9) == 0)
+        {
+          unsigned minor = item_name[9] - '0';
+          V = CL_MAKE_VERSION (1, minor, 0);
+        }
+      int found = -1;
+      for (i = 0; i < OPENCL_SPIRV_VERSIONS_NUM; ++i)
+        {
+          if (OPENCL_SPIRV_VERSIONS[i].version == V)
+            {
+              found = i;
+              break;
+            }
+        }
+      if (found >= 0)
+        {
+          memcpy (&storage[num_output], &OPENCL_SPIRV_VERSIONS[found],
+                  sizeof (cl_name_version));
+          ++num_output;
+          if (num_output >= 256)
+            break;
+        }
+      else
+        POCL_MSG_WARN ("could not find item: %s\n", item_name);
+    }
+
+  if (num_output)
+    {
+      cl_name_version *tmp = malloc (num_output * sizeof (cl_name_version));
+      memcpy (tmp, storage, (num_output * sizeof (cl_name_version)));
+      dev->ils_with_version = tmp;
+      dev->num_ils_with_version = num_output;
+    }
+}
+
+static const cl_name_version OPENCL_FEATURES[] = {
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_3d_image_writes" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_images" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_read_write_images" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_order_acq_rel" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_order_seq_cst" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_scope_device" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_atomic_scope_all_devices" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
+};
+
+const size_t OPENCL_FEATURES_NUM
+    = sizeof (OPENCL_FEATURES) / sizeof (OPENCL_FEATURES[0]);
+
+void
+pocl_setup_features_with_version (cl_device_id dev)
+{
+  cl_name_version *tmp = NULL;
+  unsigned ret = pocl_space_delim_string_to_cl_name_version_array (
+      &tmp, dev->features, OPENCL_FEATURES, OPENCL_FEATURES_NUM);
+
+  dev->num_opencl_features_with_version = ret;
+  dev->opencl_features_with_version = tmp;
+}
+
+void
+pocl_setup_builtin_kernels_with_version (cl_device_id dev)
+{
+  /* implementation should use BIDescriptors */
 }

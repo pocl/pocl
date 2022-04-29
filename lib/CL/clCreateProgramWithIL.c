@@ -35,11 +35,17 @@ POname(clCreateProgramWithIL)(cl_context context,
                               cl_int *errcode_ret)
 CL_API_SUFFIX__VERSION_2_1
 {
+  /* SPIR is disabled when building with conformance */
+#ifdef ENABLE_CONFORMANCE
+  if (errcode_ret)
+    *errcode_ret = CL_INVALID_OPERATION;
+  return NULL;
+#endif
   cl_program program = NULL;
   int errcode = CL_SUCCESS;
 #ifdef ENABLE_SPIRV
-  uint64_t fsize = 0;
-  char *content = NULL;
+  uint64_t converted_spir_file_size = 0;
+  char *converted_spir_file = NULL;
 #endif
 
   POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
@@ -50,10 +56,14 @@ CL_API_SUFFIX__VERSION_2_1
 
   int is_spirv = 0;
 #ifdef ENABLE_SPIRV
-  is_spirv += pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
+  int is_spirv_kernel
+      = pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
+  is_spirv += is_spirv_kernel;
 #endif
 #ifdef ENABLE_VULKAN
-  is_spirv += pocl_bitcode_is_spirv_execmodel_shader ((const char *)il, length);
+  int is_spirv_shader
+      = pocl_bitcode_is_spirv_execmodel_shader ((const char *)il, length);
+  is_spirv += is_spirv_shader;
 #endif
 
   POCL_GOTO_ERROR_ON (
@@ -62,33 +72,40 @@ CL_API_SUFFIX__VERSION_2_1
       "is not recognized as SPIR-V!\n");
 
 #ifdef ENABLE_SPIRV
-  /* convert and the SPIR-V to LLVM IR with spir triple */
-  POCL_MSG_PRINT_LLVM ("SPIR-V binary detected, converting to LLVM SPIR\n");
+  if (is_spirv_kernel)
+    {
+      /* convert and the SPIR-V to LLVM IR with spir triple */
+      POCL_MSG_PRINT_LLVM (
+          "SPIR-V binary detected, converting to LLVM SPIR\n");
 
-  char program_bc_spirv[POCL_FILENAME_LENGTH];
-  char program_bc_temp[POCL_FILENAME_LENGTH];
-  pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
-                          (uint64_t)length);
-  pocl_cache_tempname (program_bc_temp, ".bc", NULL);
+      char program_bc_spirv[POCL_FILENAME_LENGTH];
+      char program_bc_temp[POCL_FILENAME_LENGTH];
+      pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
+                              (uint64_t)length);
+      pocl_cache_tempname (program_bc_temp, ".bc", NULL);
 
-  char *args[]
-      = { LLVM_SPIRV, "-r", "-o", program_bc_temp, program_bc_spirv, NULL };
+      char *args[] = { LLVM_SPIRV,       "-r", "-o", program_bc_temp,
+                       program_bc_spirv, NULL };
 
-  errcode = pocl_run_command (args);
-  POCL_GOTO_ERROR_ON ((errcode != 0), CL_INVALID_VALUE,
-                      "External command (llvm-spirv translator) failed!\n");
+      errcode = pocl_run_command (args);
+      POCL_GOTO_ERROR_ON (
+          (errcode != 0), CL_INVALID_VALUE,
+          "External command (llvm-spirv translator) failed!\n");
 
-  /* load LLVM SPIR binary. */
-  pocl_read_file (program_bc_temp, &content, &fsize);
-  POCL_GOTO_ERROR_ON ((content == NULL), CL_INVALID_VALUE,
-                      "Can't read converted bitcode file\n");
-  pocl_remove (program_bc_temp);
+      /* load LLVM SPIR binary. */
+      pocl_read_file (program_bc_temp, &converted_spir_file,
+                      &converted_spir_file_size);
+      POCL_GOTO_ERROR_ON ((converted_spir_file == NULL), CL_INVALID_VALUE,
+                          "Can't read converted bitcode file\n");
+      pocl_remove (program_bc_temp);
+    }
 #endif
 
   /* TODO should we create a program for all devices ?
    * should we fail if we can't create for all devices ?
    * this seems to be unspecified.
-   * right now, we create for only devices with "cl_khr_spir" extension,
+   * right now, we create only for devices
+   * which have supports_binary() callback
    * and fail if there's no such device in context. */
   unsigned num = context->num_devices;
   unsigned num_devices_with_spir = 0;
@@ -102,30 +119,27 @@ CL_API_SUFFIX__VERSION_2_1
   for (unsigned i = 0; i < num; ++i)
     {
       cl_device_id dev = context->devices[i];
-      if (strstr (dev->extensions, "cl_khr_spir") != NULL)
+      if (dev->ops->supports_binary == NULL)
+        continue;
+      if (dev->ops->supports_binary (dev, length, il))
         {
-          if (dev->consumes_il_directly)
-            {
-              devices_with_spir[num_devices_with_spir] = dev;
-              devices_with_spir_lens[num_devices_with_spir] = length;
-              devices_with_spir_bins[num_devices_with_spir] = il;
-              ++num_devices_with_spir;
-            }
-#ifdef ENABLE_SPIRV
-          else
-            {
-              devices_with_spir[num_devices_with_spir] = dev;
-              devices_with_spir_lens[num_devices_with_spir] = (size_t)fsize;
-              devices_with_spir_bins[num_devices_with_spir]
-                  = (const unsigned char *)content;
-              ++num_devices_with_spir;
-            }
-#else
-          else
-            POCL_MSG_WARN ("Device %s does not support this kind of SPIR-V bitcode\n",
-                           dev->long_name);
-#endif
+          devices_with_spir[num_devices_with_spir] = dev;
+          devices_with_spir_lens[num_devices_with_spir] = length;
+          devices_with_spir_bins[num_devices_with_spir] = il;
+          ++num_devices_with_spir;
         }
+#ifdef ENABLE_SPIRV
+      else if (dev->ops->supports_binary (dev, converted_spir_file_size,
+                                          converted_spir_file))
+        {
+          devices_with_spir[num_devices_with_spir] = dev;
+          devices_with_spir_lens[num_devices_with_spir]
+              = (size_t)converted_spir_file_size;
+          devices_with_spir_bins[num_devices_with_spir]
+              = (const unsigned char *)converted_spir_file;
+          ++num_devices_with_spir;
+        }
+#endif
     }
 
   POCL_GOTO_ERROR_ON ((num_devices_with_spir == 0), CL_INVALID_OPERATION,
@@ -149,7 +163,7 @@ ERROR:
   if (errcode_ret)
     *errcode_ret = errcode;
 #ifdef ENABLE_SPIRV
-  POCL_MEM_FREE (content);
+  POCL_MEM_FREE (converted_spir_file);
 #endif
   return program;
 }

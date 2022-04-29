@@ -33,7 +33,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
   int errcode;
   cl_bool found = CL_FALSE;
   cl_command_queue_properties queue_props = 0;
-  int queue_props_set = 0;
+  int queue_props_set = 0, queue_size_set = 0;
   cl_uint queue_size = 0;
   const cl_command_queue_properties valid_prop_flags =
       (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
@@ -56,20 +56,31 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
 
   i = 0;
   if (properties)
-    while(properties[i])
-      switch(properties[i])
+    while (properties[i])
+      switch (properties[i])
         {
         case CL_QUEUE_PROPERTIES:
-          queue_props = (cl_command_queue_properties)properties[i+1];
-          queue_props_set = 1;
-          i+=2;
-          break;
+          {
+            POCL_GOTO_ERROR_ON ((queue_props_set > 0), CL_INVALID_VALUE,
+                                "CL_QUEUE_PROPERTIES was already set");
+            queue_props = (cl_command_queue_properties)properties[i + 1];
+            queue_props_set = 1;
+            i += 2;
+            break;
+          }
         case CL_QUEUE_SIZE:
-          queue_size = (cl_uint)properties[i+1];
-          i+=2;
-          break;
+          {
+            POCL_GOTO_ERROR_ON ((queue_size_set > 0), CL_INVALID_VALUE,
+                                "CL_QUEUE_PROPERTIES was already set");
+            queue_size = (cl_uint)properties[i + 1];
+            queue_size_set = 1;
+            i += 2;
+            break;
+          }
         default:
-          POCL_GOTO_ERROR_ON(1, CL_INVALID_VALUE, "Invalid values it properties\n");
+          POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE,
+                              "Invalid values in properties: %lu\n",
+                              (unsigned long)properties[i]);
         }
 
   if (queue_props_set)
@@ -95,7 +106,20 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
     }
 
   // currently thhere's only support for host side queues.
-  return POname(clCreateCommandQueue)(context, device, queue_props, errcode_ret);
+  cl_command_queue cq_ret = POname (clCreateCommandQueue) (
+      context, device, queue_props, errcode_ret);
+  if (cq_ret == NULL)
+    return NULL;
+
+  if (properties)
+    {
+      assert (i < 10);
+      cq_ret->num_queue_properties = i + 1;
+      memcpy (cq_ret->queue_properties, properties,
+              cq_ret->num_queue_properties * sizeof (cl_queue_properties));
+    }
+
+  return cq_ret;
 
 ERROR:
   if(errcode_ret)

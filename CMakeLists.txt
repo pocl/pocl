@@ -242,8 +242,6 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
-option(ENABLE_HOST_CPU_DEVICE_CL20 "Enable reporting OpenCL 2.0 for the CPU device" OFF)
-
 option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
@@ -693,7 +691,9 @@ setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building 
 
 option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)
 
-option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware)" ON)
+option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. \
+  Enabling this option this does not guarantee conformance (depends on hardware), \
+  but CMake will give errors if options that conflict with conformance are used" OFF)
 
 if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
@@ -776,7 +776,8 @@ endif()
 
 set(SPIRV OFF)
 
-if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
+if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
+   AND (NOT ENABLE_CONFORMANCE))
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
 else()
   set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
@@ -797,6 +798,10 @@ if(ENABLE_SPIR)
 endif()
 
 set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
+
+if(ENABLE_CONFORMANCE AND (ENABLE_SPIR OR ENABLE_SPIRV))
+  message(FATAL_ERROR "conformance needs SPIR AND SPIR-V support disabled")
+endif()
 
 ######################################################################################
 
@@ -899,11 +904,10 @@ else()
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
- #   set(OPENCL_LIBRARY "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl library")
-    # duh, why doesn't ocl-icd set this in its .pc file ??
-    separate_arguments(OCL_LDFLAGS UNIX_COMMAND "${OCL_ICD_LDFLAGS}")
-    list(APPEND OCL_LDFLAGS "OpenCL")
-    set(OPENCL_LIBRARIES "${OCL_LDFLAGS}" CACHE INTERNAL "opencl ICD/library link flags")
+
+    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "ocl-icd library")
+    set(OPENCL_LIBDIR "${OCL_ICD_LIBDIR}" CACHE INTERNAL "opencl ICD/library path")
+
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
     if(DEFINED OCL_ICD_VERSION AND (OCL_ICD_VERSION VERSION_GREATER_EQUAL "2.3.0"))
       set(HAVE_OCL_ICD_30_COMPATIBLE 1 CACHE INTERNAL "ICD 3.0 compat")
@@ -1077,24 +1081,40 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
-if(ENABLE_HOST_CPU_DEVICE_CL20)
-  set(HOST_DEVICE_CL_VERSION "200")
-  set(HOST_DEVICE_CL_STD "2.0")
-  set(HOST_DEVICE_CL_VERSION_MAJOR 2)
+# set the host device OpenCL version (and OpenCL C version too)
+# ..... to enable OpenCL C 3.0 language for the CPU device,
+# it must have compiler capable of 3.0
+# theoretically LLVM 12 is enough, but it lacks
+# https://reviews.llvm.org/D106778
+# and so it fails the C11 atomics tests of the CTS
+# with '... unknown call to _cl_atomic_store_explicit' or similar
+if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+  set(HOST_DEVICE_CL_VERSION_MAJOR 3)
   set(HOST_DEVICE_CL_VERSION_MINOR 0)
 else()
-  set(HOST_DEVICE_CL_VERSION "120")
-  set(HOST_DEVICE_CL_STD "1.2")
   set(HOST_DEVICE_CL_VERSION_MAJOR 1)
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
-# define it here, b/c we'll need these both at runtime and buildtime
-if(X86 OR ARM)
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
-else()
-  # set some conservative defaults
-  set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
+
+# These are mandatory for OpenCL 1.1 (except for 3D writes but those are CPU-independent)
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
+  cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
+  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+
+set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
+  __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+  __opencl_c_atomic_scope_device")
+
+# TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
+# for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
+# .... seems like a bug in CTS, but needs to be investigated.
+if(ENABLE_CONFORMANCE)
+  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_atomic_scope_all_devices")
+endif()
+
+if(NOT ENABLE_CONFORMANCE)
+  set( HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()
 
 if(ENABLE_SPIR)
@@ -1102,22 +1122,27 @@ if(ENABLE_SPIR)
   set(DEFAULT_DEVICE_EXTENSIONS "${DEFAULT_DEVICE_EXTENSIONS} cl_khr_spir")
 endif()
 
+if(ENABLE_SPIRV)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program")
+endif()
+
 if(NOT CL_DISABLE_HALF)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
-  set(DEFAULT_DEVICE_EXTENSIONS "${DEFAULT_DEVICE_EXTENSIONS} cl_khr_fp16")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp16")
 endif()
 
-# must not be defined in HOST_DEVICE_EXTENSIONS list, because
-# this extension doesn't exist in official extension list
-# there is "cles_khr_int64" which indicates int64 support for embedded profiles
-set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 
-if(X86)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
-endif()
+# don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
+# such extension doesn't exist in official extension list
+# for FULL profile, int64 is always enabled;
+# for embedded profiles, it's optional
+set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -Dcl_khr_int64=1")
+set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_int64")
+set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 
 if(ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp64")
   set(_CL_DISABLE_DOUBLE 0)
 else()
   set(_CL_DISABLE_DOUBLE 1)
@@ -1127,9 +1152,18 @@ set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
 separate_arguments(TEMP_EXT)
 set(TEMP_CLEXT "-Xclang -cl-ext=-all,")
 foreach(EXT ${TEMP_EXT})
-  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
+  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}=1")
   set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
 endforeach()
+
+if(HOST_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 3)
+  set(TEMP_EXT "${HOST_DEVICE_FEATURES_30}")
+  separate_arguments(TEMP_EXT)
+  foreach(EXT ${TEMP_EXT})
+    set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}=1")
+    set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
+  endforeach()
+endif()
 
 set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
 

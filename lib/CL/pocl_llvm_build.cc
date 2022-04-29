@@ -259,32 +259,12 @@ int pocl_llvm_build_program(cl_program program,
       POCL_MEM_FREE(device_switches);
     }
 
-  llvm::StringRef extensions(device->extensions);
-
 #if !(defined(__x86_64__) && defined(__GNUC__))
   if (program->flush_denorms) {
     POCL_MSG_WARN("flush to zero is currently only implemented for "
                   "x86-64 & gcc/clang, ignoring flag\n");
   }
 #endif
-
-  std::string cl_ext;
-  if (extensions.size() > 0) {
-    size_t e_start = 0, e_end = 0;
-    while (e_end < std::string::npos) {
-      e_end = extensions.find(' ', e_start);
-      llvm::StringRef tok = extensions.slice(e_start, e_end);
-      e_start = e_end + 1;
-      ss << "-D" << tok.str() << " ";
-      cl_ext += "+";
-      cl_ext += tok.str();
-      cl_ext += ",";
-    }
-  }
-  if (!cl_ext.empty()) {
-    cl_ext.back() = ' '; // replace last "," with space
-    ss << "-cl-ext=-all," << cl_ext;
-  }
 
   /* temp dir takes preference */
   if (num_input_headers > 0)
@@ -295,9 +275,6 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
   ss << "-D__USE_CLANG_OPENCL_C_H ";
-#ifndef LLVM_OLDER_THAN_13_0
-  ss << "-Dreserve_id_t=unsigned ";
-#endif
 
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
@@ -309,6 +286,28 @@ int pocl_llvm_build_program(cl_program program,
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
+  size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
+
+  if (fastmath_flag != std::string::npos) {
+#ifdef ENABLE_CONFORMANCE
+    user_options.replace(fastmath_flag, 21,
+                         "-cl-finite-math-only -cl-unsafe-math-optimizations");
+#endif
+    ss << "-D__FAST_RELAXED_MATH__=1 ";
+  }
+
+#ifdef ENABLE_CONFORMANCE
+  size_t unsafemath_flag = user_options.find("-cl-unsafe-math-optimizations");
+
+  if (unsafemath_flag != std::string::npos) {
+    // this should be almost the same but disables -freciprocal-math.
+    // required for conformance_math_divide test to pass with OpenCL 3.0
+    user_options.replace(unsafemath_flag, 29,
+                         "-cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast");
+  }
+#endif
+
+
   ss << user_options << " ";
 
   if (device->endian_little)
@@ -319,13 +318,11 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
 
-  if (user_options.find("cl-fast-relaxed-math") != std::string::npos)
-    ss << "-D__FAST_RELAXED_MATH__=1 ";
 
-  ss << "-D__OPENCL_VERSION__=" << device->cl_version_int << " ";
+  ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 
   if (user_options.find("-cl-std=") == std::string::npos)
-    ss << "-cl-std=" << device->cl_version_std << " ";
+    ss << "-cl-std=" << device->opencl_c_version_as_opt << " ";
 
   std::string temp(ss.str());
   size_t pos = temp.find("-cl-std=CL");
@@ -334,6 +331,35 @@ int pocl_llvm_build_program(cl_program program,
   int cl_std_minor = temp.c_str()[pos+2] - '0';
   int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
+
+  std::string exts = device->extensions;
+  if (cl_std_major >= 3) {
+    exts += ' ';
+    exts += device->features;
+  }
+  llvm::StringRef extensions(exts);
+
+  std::string cl_ext;
+  if (extensions.size() > 0) {
+    size_t e_start = 0, e_end = 0;
+    while (e_end < std::string::npos) {
+      while (e_start < extensions.size() && std::isspace(extensions[e_start]))
+        ++e_start;
+      if (e_start >= extensions.size())
+        break;
+      e_end = extensions.find(' ', e_start);
+      llvm::StringRef tok = extensions.slice(e_start, e_end);
+      e_start = e_end + 1;
+      ss << "-D" << tok.str() << "=1 ";
+      cl_ext += "+";
+      cl_ext += tok.str();
+      cl_ext += ",";
+    }
+  }
+  if (!cl_ext.empty()) {
+    cl_ext.back() = ' '; // replace last "," with space
+    ss << "-cl-ext=-all," << cl_ext;
+  }
 
   ss << "-fno-builtin ";
   /* with fp-contract=on we get calls to fma with processors which do not

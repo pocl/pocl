@@ -230,7 +230,7 @@ use ";" as separator (you'll have to escape it for bash).
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   Ensures that certain build options which would result in non-conformant pocl
-  build stay disabled. Defaults to ON. Note that this does not quarantee a
+  build stay disabled. Defaults to OFF. Note that this does not quarantee a
   fully conformant build of pocl by itself. See :ref:`pocl-conformance` for details.
 
 - ``-DENABLE_{A,L,T,UB}SAN`` - compiles pocl's host code (and tests

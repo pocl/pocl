@@ -53,6 +53,7 @@ main(void)
   cl_context context;
   cl_command_queue queue;
   cl_mem buf, img;
+  int tested = 0;
 
   CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
 
@@ -73,6 +74,7 @@ main(void)
       if (!has_img)
         continue;
 
+      tested = 1;
       context = clCreateContext (NULL, 1, &devices[j], NULL, NULL, &err);
       CHECK_OPENCL_ERROR_IN("clCreateContext");
       queue = clCreateCommandQueue (context, devices[j], 0, &err);
@@ -204,6 +206,11 @@ main(void)
 
   CHECK_CL_ERROR (clUnloadCompiler ());
 
-  printf ("OK\n");
-  return EXIT_SUCCESS;
+  if (tested)
+    {
+      printf ("OK\n");
+      return EXIT_SUCCESS;
+    }
+  else
+    return 77;
 }

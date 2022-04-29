@@ -60,7 +60,7 @@ endforeach()
 
 add_test_pocl(NAME "runtime/clGetDeviceInfo" COMMAND "test_clGetDeviceInfo")
 
-add_test_pocl(NAME "runtime/clEnqueueNativeKernel" COMMAND "test_clEnqueueNativeKernel")
+add_test(NAME "runtime/clEnqueueNativeKernel" COMMAND "test_clEnqueueNativeKernel")
 
 add_test_pocl(NAME "runtime/clGetEventInfo" COMMAND "test_clGetEventInfo")
 
@@ -84,7 +84,7 @@ add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy
 
 add_test_pocl(NAME "runtime/test_fill-buffer" COMMAND "test_fill-buffer")
 
-add_test_pocl(NAME "runtime/test_buffer-image-copy" COMMAND "test_buffer-image-copy")
+add_test(NAME "runtime/test_buffer-image-copy" COMMAND "test_buffer-image-copy")
 
 add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel")
 
@@ -94,7 +94,7 @@ add_test_pocl(NAME "runtime/clSetEventCallback"
               COMMAND "test_clSetEventCallback"
               EXPECTED_OUTPUT "test_clSetEventCallback_expout.txt" )
 
-add_test_pocl(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSupportedImageFormats")
+add_test(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSupportedImageFormats")
 
 add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram")
 
@@ -143,6 +143,9 @@ set_tests_properties(
   "runtime/test_buffer_migration"
   "runtime/test_buffer_ping_pong"
   "runtime/test_cl_pocl_content_size"
+  "runtime/test_buffer-image-copy"
+  "runtime/clGetSupportedImageFormats"
+  "runtime/clEnqueueNativeKernel"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(NOT ENABLE_ANYSAN)

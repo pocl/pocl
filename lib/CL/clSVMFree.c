@@ -48,6 +48,28 @@ POname(clSVMFree)(cl_context context,
       return;
     }
 
+  POCL_LOCK_OBJ (context);
+  pocl_svm_ptr *tmp = NULL, *item = NULL;
+  DL_FOREACH_SAFE (context->svm_ptrs, item, tmp)
+  {
+    if (item->svm_ptr == svm_pointer)
+      {
+        DL_DELETE (context->svm_ptrs, item);
+        break;
+      }
+  }
+  POCL_UNLOCK_OBJ (context);
+
+  if (item == NULL)
+    {
+      POCL_MSG_ERR ("can't find pointer in list of allocated SVM pointers");
+      return;
+    }
+
+  POCL_MEM_FREE (item);
+
+  POname (clReleaseContext) (context);
+
   context->svm_allocdev->ops->svm_free (context->svm_allocdev, svm_pointer);
 
   POCL_ATOMIC_DEC (svm_buffer_c);

@@ -1,7 +1,7 @@
 Supported OpenCL features
 =========================
 
-All mandatory features for OpenCL 1.2 are supported
+All mandatory features for OpenCL 1.2 and 3.0 are supported
 on x86-64+Linux, see :ref:`pocl-conformance` for details.
 
 Known unsupported OpenCL features
@@ -29,9 +29,9 @@ Frontend/Clang
 Unimplemented host side functions
 ---------------------------------
 
-All 1.2 API call are implemented. From the 2.x API, only a small part
-is implemented: clCreateProgramWithIL, clSetKernelArgSVMPointer, clSVM*
-and clEnqueueSVM* calls.
+All 1.2 API call are implemented. From the 2.x and 3.0 API, all should
+exist, but some (e.g. clSetProgramSpecializationConstant) have
+"dummy" implementations (they always return an error).
 
 SPIR and SPIR-V support
 =========================

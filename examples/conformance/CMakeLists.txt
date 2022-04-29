@@ -43,7 +43,7 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
-if(ENABLE_CTS_3_0)
+message(STATUS "enabling OpenCL-CTS version 3")
 
 # new CTS (3.0)
 if(ENABLE_ICD)
@@ -60,7 +60,7 @@ ExternalProject_Add(
   GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
   GIT_TAG "cl30"
   CONFIGURE_COMMAND ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DD3D10_IS_SUPPORTED=0 -DD3D11_IS_SUPPORTED=0
     -DGL_IS_SUPPORTED=0 -DGLES_IS_SUPPORTED=0
     -DCL_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/include
@@ -73,37 +73,6 @@ ExternalProject_Add(
 )
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
-
-set(MATH_LAUNCHER "test_bruteforce")
-
-else()
-
-# old CTS (1.2)
-if(ENABLE_ICD)
-  set(CTS_OPENCL_LIBRARY "")
-else()
-  set(CTS_OPENCL_LIBRARY "-DPOCL=$<TARGET_FILE:${POCL_LIBRARY_NAME}>")
-endif()
-
-ExternalProject_Add(
-  ${TS_NAME}
-  PREFIX "${TS_BASEDIR}"
-  GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
-  GIT_TAG "cl12_trunk"
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
-    -DCMAKE_BUILD_TYPE=Release
-    -DCMAKE_C_FLAGS_RELEASE=-DCL_TARGET_OPENCL_VERSION=120
-    -DCMAKE_CXX_FLAGS_RELEASE=-DCL_TARGET_OPENCL_VERSION=120
-    -DENABLE_ASAN=${ENABLE_ASAN}
-    -DENABLE_TSAN=${ENABLE_TSAN}
-    ${CTS_OPENCL_LIBRARY}
-    "${TS_BASEDIR}/src/${TS_NAME}/test_conformance"
-  INSTALL_COMMAND /bin/true
-)
-
-set(MATH_LAUNCHER "bruteforce")
-
-endif()
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
@@ -120,10 +89,13 @@ add_test(NAME "${TS_NAME}_allocations_image"
 add_test(NAME "${TS_NAME}_api"
            COMMAND "${TS_BUILDDIR}/api/test_api" get_platform_info  get_sampler_info  get_command_queue_info  get_context_info  get_device_info  enqueue_task  binary_get  binary_create  kernel_required_group_size  release_kernel_order  release_during_execute  load_single_kernel  load_two_kernels  load_two_kernels_in_one  load_two_kernels_manually  get_program_info_kernel_names   create_kernels_in_program  get_kernel_info  execute_kernel_local_sizes  set_kernel_arg_by_index  set_kernel_arg_constant  set_kernel_arg_struct_array  kernel_global_constant  min_max_thread_dimensions  min_max_work_items_sizes  min_max_work_group_size  min_max_read_image_args  min_max_write_image_args  min_max_mem_alloc_size  min_max_image_2d_width  min_max_image_2d_height  min_max_image_3d_width  min_max_image_3d_height  min_max_image_3d_depth  min_max_image_array_size  min_max_image_buffer_size  min_max_parameter_size  min_max_samplers  min_max_constant_buffer_size  min_max_constant_args  min_max_compute_units  min_max_address_bits  min_max_single_fp_config  min_max_double_fp_config  min_max_local_mem_size  min_max_kernel_preferred_work_group_size_multiple  min_max_execution_capabilities  min_max_queue_properties  min_max_device_version  min_max_language_version  kernel_arg_changes  kernel_arg_multi_setup_random  native_kernel  create_context_from_type  platform_extensions  get_platform_ids  bool_type  repeated_setup_cleanup  retain_queue_single  retain_queue_multiple  retain_mem_object_single  retain_mem_object_multiple  min_data_type_align_size_alignment  mem_object_destructor_callback  null_buffer_arg  get_buffer_info  get_image2d_info  get_image3d_info  get_image1d_info  get_image1d_array_info  get_image2d_array_info)
 
-if(ENABLE_CTS_3_0)
-add_test(NAME "${TS_NAME}_api_ocl_30"
-           COMMAND "${TS_BUILDDIR}/api/test_api" buffer_properties_queries   clone_kernel   consistency_2d_image_from_buffer   consistency_3d_image_writes   consistency_depth_images   consistency_device_and_host_timer   consistency_device_enqueue   consistency_il_programs   consistency_memory_model   consistency_non_uniform_work_group   consistency_pipes   consistency_prog_ctor_dtor   consistency_progvar   consistency_read_write_images   consistency_subgroups   consistency_svm   context_destructor_callback   get_command_queue_info_compatibility   get_sampler_info_compatibility   image_properties_queries   kernel_attributes   kernel_private_memory_size   min_image_formats   negative_get_platform_ids   negative_get_platform_info   pipe_properties_queries   queue_flush_on_release   queue_hint   queue_properties   queue_properties_queries   retain_mem_object_set_kernel_arg   sub_group_dispatch   zero_sized_enqueue)
+if(LLVM_VERSION VERSION_GREATER_EQUAL 11.0)
+  set(API_OCL_30_EXTRA_TEST kernel_attributes)
 endif()
+
+
+add_test(NAME "${TS_NAME}_api_ocl_30"
+           COMMAND "${TS_BUILDDIR}/api/test_api" buffer_properties_queries   clone_kernel   consistency_2d_image_from_buffer   consistency_3d_image_writes   consistency_depth_images   consistency_device_and_host_timer   consistency_device_enqueue   consistency_il_programs   consistency_memory_model   consistency_non_uniform_work_group   consistency_pipes   consistency_prog_ctor_dtor   consistency_progvar   consistency_read_write_images   consistency_subgroups   consistency_svm   context_destructor_callback   get_command_queue_info_compatibility   get_sampler_info_compatibility   image_properties_queries   ${API_OCL_30_EXTRA_TEST}    kernel_private_memory_size   min_image_formats   negative_get_platform_ids   negative_get_platform_info   pipe_properties_queries   queue_flush_on_release   queue_hint   queue_properties   queue_properties_queries   retain_mem_object_set_kernel_arg   sub_group_dispatch   zero_sized_enqueue)
 
 add_test(NAME "${TS_NAME}_atomics"
          COMMAND "${TS_BUILDDIR}/atomics/test_atomics" )
@@ -139,7 +111,6 @@ add_test(NAME "${TS_NAME}_basic_image"
 add_test(NAME "${TS_NAME}_basic_other"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" mri_one  mri_multiple  barrier  createkernelsinprogram  work_item_functions  astype  prefetch  kernel_call_kernel_function  host_numeric_constants  kernel_numeric_constants  kernel_limit_constants  kernel_preprocessor_macros  parameter_types  vector_creation  vec_type_hint  global_work_offsets  get_global_offset  hostptr  hiloeo  if  sizeof  loop  pointer_cast  local_arg_def  local_kernel_def  local_kernel_scope  constant  constant_source)
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_basic_other_ocl_30"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" async_copy_global_to_local2D async_copy_global_to_local3D  async_copy_local_to_global2D async_copy_local_to_global3D
           async_work_group_copy_fence_export_after_import_aliased_global
@@ -152,7 +123,6 @@ add_test(NAME "${TS_NAME}_basic_other_ocl_30"
           progvar_func_scope    progvar_prog_scope_init   progvar_prog_scope_misc   progvar_prog_scope_uninit
           rw_image_access_qualifier   simple_read_image_pitch   simple_write_image_pitch    vector_swizzle    wg_barrier
           )
-endif()
 
 add_test(NAME "${TS_NAME}_buffers_read_async"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" buffer_read_async_int  buffer_read_async_uint  buffer_read_async_long  buffer_read_async_ulong  buffer_read_async_short  buffer_read_async_ushort  buffer_read_async_char  buffer_read_async_uchar  buffer_read_async_float)
@@ -187,22 +157,39 @@ add_test(NAME "${TS_NAME}_compiler"
          COMMAND "${TS_BUILDDIR}/compiler/test_compiler"
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
-if(ENABLE_CTS_3_0)
-add_test(NAME "${TS_NAME}_c11_atomics"
-         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" )
+add_test(NAME "${TS_NAME}_c11_atomics_micro"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_store atomic_exchange atomic_fetch_max atomic_fetch_add atomic_fetch_xor)
+
+add_test(NAME "${TS_NAME}_c11_atomics_init_store_load_exchange"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_init atomic_store atomic_load atomic_exchange atomic_compare_exchange_weak atomic_compare_exchange_strong)
+
+add_test(NAME "${TS_NAME}_c11_atomics_add_sub_min_max"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_add atomic_fetch_sub atomic_fetch_min atomic_fetch_max)
+
+add_test(NAME "${TS_NAME}_c11_atomics_flag_fence"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_flag atomic_fence)
+
+add_test(NAME "${TS_NAME}_c11_atomics_or_xor_and"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_and atomic_fetch_or atomic_fetch_orand atomic_fetch_xor atomic_fetch_xor2)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_init_store_load_exchange"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_init svm_atomic_store svm_atomic_load svm_atomic_exchange svm_atomic_compare_exchange_weak svm_atomic_compare_exchange_strong)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_add_sub_min_max"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_fetch_add svm_atomic_fetch_sub svm_atomic_fetch_min svm_atomic_fetch_max)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_flag_fence"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_flag svm_atomic_fence)
+
+add_test(NAME "${TS_NAME}_c11_atomics_svm_or_xor_and"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" svm_atomic_fetch_and svm_atomic_fetch_or svm_atomic_fetch_orand svm_atomic_fetch_xor svm_atomic_fetch_xor2)
+
 
 add_test(NAME "${TS_NAME}_computeinfo"
          COMMAND "${TS_BUILDDIR}/computeinfo/test_computeinfo" )
 
 add_test(NAME "${TS_NAME}_contractions"
          COMMAND "${TS_BUILDDIR}/contractions/test_contractions" )
-else()
-add_test(NAME "${TS_NAME}_computeinfo"
-         COMMAND "${TS_BUILDDIR}/computeinfo/computeinfo" )
-
-add_test(NAME "${TS_NAME}_contractions"
-         COMMAND "${TS_BUILDDIR}/contractions/contractions" )
-endif()
 
 add_test(NAME "${TS_NAME}_conversion_uchar_uchar"
          COMMAND "${TS_BUILDDIR}/conversions/test_conversions" uchar_uchar uchar_sat_uchar )
@@ -507,91 +494,41 @@ add_test(NAME "${TS_NAME}_conversion_long_long"
 add_test(NAME "${TS_NAME}_device_partition"
          COMMAND "${TS_BUILDDIR}/device_partition/test_device_partition")
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_device_execution"
          COMMAND "${TS_BUILDDIR}/device_execution/test_device_execution")
 
 add_test(NAME "${TS_NAME}_device_timer"
          COMMAND "${TS_BUILDDIR}/device_timer/test_device_timer")
-endif()
 
 add_test(NAME "${TS_NAME}_events"
          COMMAND "${TS_BUILDDIR}/events/test_events" event_get_execute_status  event_get_write_array_status  event_get_read_array_status  event_get_info  event_wait_for_execute  event_wait_for_array  event_flush  event_finish_execute  event_finish_array  event_release_before_done  event_enqueue_marker  event_enqueue_marker_with_event_list  event_enqueue_barrier_with_event_list)
 add_test(NAME "${TS_NAME}_events_ooo"
          COMMAND "${TS_BUILDDIR}/events/test_events" out_of_order_event_waitlist_single_queue  out_of_order_event_waitlist_multi_queue  out_of_order_event_waitlist_multi_queue_multi_device  out_of_order_event_enqueue_wait_for_events_single_queue  out_of_order_event_enqueue_wait_for_events_multi_queue  out_of_order_event_enqueue_wait_for_events_multi_queue_multi_device  out_of_order_event_enqueue_marker_single_queue  out_of_order_event_enqueue_marker_multi_queue  out_of_order_event_enqueue_marker_multi_queue_multi_device  out_of_order_event_enqueue_barrier_single_queue)
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_events_other"
          COMMAND "${TS_BUILDDIR}/events/test_events" userevents  waitlists  callbacks  callbacks_simultaneous  userevents_multithreaded)
-else()
-add_test(NAME "${TS_NAME}_events_other"
-         COMMAND "${TS_BUILDDIR}/events/test_events" test_userevents  waitlists  callbacks  callbacks_simultaneous  userevents_multithreaded)
-endif()
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_generic_address_space"
          COMMAND "${TS_BUILDDIR}/generic_address_space/test_generic_address_space")
-# TODO : extensions/cl_ext_cxx_for_opencl/
-endif()
 
 add_test(NAME "${TS_NAME}_geometrics"
          COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" )
 
 add_test(NAME "${TS_NAME}_half_1"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vload_half vloada_half vstore_half)
+         COMMAND "${TS_BUILDDIR}/half/test_half" vload_half vloada_half vstore_half)
 
 add_test(NAME "${TS_NAME}_half_2"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstorea_half vstore_half_rte vstorea_half_rte)
+         COMMAND "${TS_BUILDDIR}/half/test_half" vstorea_half vstore_half_rte vstorea_half_rte)
 
 add_test(NAME "${TS_NAME}_half_3"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstore_half_rtz vstore_half_rtn vstore_half_rtp)
+         COMMAND "${TS_BUILDDIR}/half/test_half" vstore_half_rtz vstore_half_rtn vstore_half_rtp)
 
 add_test(NAME "${TS_NAME}_half_4"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
+         COMMAND "${TS_BUILDDIR}/half/test_half" vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
 
-if(ENABLE_CTS_3_0)
-# not available
-unset(HEADER_TESTS)
-else()
-add_test(NAME "${TS_NAME}_cl_gl_h"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_gl_h" )
+add_test(NAME "${TS_NAME}_mini_half"
+         COMMAND "${TS_BUILDDIR}/half/test_half" -w)
 
-add_test(NAME "${TS_NAME}_cl_gl_h_c99"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_gl_h_c99" )
-
-add_test(NAME "${TS_NAME}_cl_h"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_h" )
-
-add_test(NAME "${TS_NAME}_cl_h_c99"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_h_c99" )
-
-add_test(NAME "${TS_NAME}_cl_platform_h"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_platform_h" )
-
-add_test(NAME "${TS_NAME}_cl_platform_h_c99"
-         COMMAND "${TS_BUILDDIR}/headers/test_cl_platform_h_c99" )
-
-add_test(NAME "${TS_NAME}_headers"
-         COMMAND "${TS_BUILDDIR}/headers/test_headers" )
-
-add_test(NAME "${TS_NAME}_opencl_h"
-         COMMAND "${TS_BUILDDIR}/headers/test_opencl_h" )
-
-add_test(NAME "${TS_NAME}_opencl_h_c99"
-         COMMAND "${TS_BUILDDIR}/headers/test_opencl_h_c99" )
-
-set(HEADER_TESTS
-    "${TS_NAME}_cl_gl_h"
-    "${TS_NAME}_cl_gl_h_c99"
-    "${TS_NAME}_cl_h"
-    "${TS_NAME}_cl_h_c99"
-    "${TS_NAME}_cl_platform_h"
-    "${TS_NAME}_cl_platform_h_c99"
-    "${TS_NAME}_headers"
-    "${TS_NAME}_opencl_h"
-    "${TS_NAME}_opencl_h_c99"
-)
-endif()
 
 #***************************************************************************
 
@@ -712,229 +649,223 @@ add_test(NAME "${TS_NAME}_integer_ops_uchar"
 add_test(NAME "${TS_NAME}_integer_ops_other"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  popcount  vector_scalar )
 
-if(ENABLE_CTS_3_0)
-
 add_test(NAME "${TS_NAME}_integer_ops_ocl_30"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  integer_ctz integer_dot_product )
-
-# quick_char_compare     quick_char_logic    quick_char_math    quick_char_shift    quick_int_compare    quick_int_logic    quick_int_math    quick_int_shift    quick_long_compare    quick_long_logic    quick_long_math    quick_long_shift    quick_short_compare    quick_short_logic    quick_short_math    quick_short_shift    quick_uchar_compare    quick_uchar_logic    quick_uchar_math    quick_uchar_shift    quick_uint_compare    quick_uint_logic    quick_uint_math    quick_uint_shift    quick_ulong_compare    quick_ulong_logic    quick_ulong_math    quick_ulong_shift    quick_ushort_compare    quick_ushort_logic    quick_ushort_math    quick_ushort_shift
-
-endif()
 
 #***************************************************************************
 
 add_test(NAME "${TS_NAME}_math_add"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" add)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" add)
 
 add_test(NAME "${TS_NAME}_math_assignment"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" assignment)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" assignment)
 
 add_test(NAME "${TS_NAME}_math_cbrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" cbrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" cbrt)
 
 add_test(NAME "${TS_NAME}_math_ceil"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" ceil)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ceil)
 
 add_test(NAME "${TS_NAME}_math_copysign"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" copysign)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" copysign)
 
 add_test(NAME "${TS_NAME}_math_cos"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" cos)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" cos)
 
 add_test(NAME "${TS_NAME}_math_cosh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" cosh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" cosh)
 
 add_test(NAME "${TS_NAME}_math_cospi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" cospi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" cospi)
 
 add_test(NAME "${TS_NAME}_math_divide"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" divide)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" divide)
 
 add_test(NAME "${TS_NAME}_math_exp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" exp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" exp)
 
 add_test(NAME "${TS_NAME}_math_exp10"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" exp10)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" exp10)
 
 add_test(NAME "${TS_NAME}_math_exp2"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" exp2)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" exp2)
 
 add_test(NAME "${TS_NAME}_math_expm1"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" expm1)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" expm1)
 
 add_test(NAME "${TS_NAME}_math_fabs"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fabs)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fabs)
 
 add_test(NAME "${TS_NAME}_math_fdim"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fdim)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fdim)
 
 add_test(NAME "${TS_NAME}_math_floor"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" floor)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" floor)
 
 add_test(NAME "${TS_NAME}_math_fma"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fma)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fma)
 
 add_test(NAME "${TS_NAME}_math_fmax"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fmax)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fmax)
 
 add_test(NAME "${TS_NAME}_math_fmin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fmin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fmin)
 
 add_test(NAME "${TS_NAME}_math_fmod"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fmod)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fmod)
 
 add_test(NAME "${TS_NAME}_math_fract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" fract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" fract)
 
 add_test(NAME "${TS_NAME}_math_frexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" frexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" frexp)
 
 add_test(NAME "${TS_NAME}_math_hypot"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" hypot)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" hypot)
 
 add_test(NAME "${TS_NAME}_math_ilogb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" ilogb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ilogb)
 
 add_test(NAME "${TS_NAME}_math_isequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isequal)
 
 add_test(NAME "${TS_NAME}_math_isfinite"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isfinite)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isfinite)
 
 add_test(NAME "${TS_NAME}_math_isgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isgreater)
 
 add_test(NAME "${TS_NAME}_math_isgreaterequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isgreaterequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isgreaterequal)
 
 add_test(NAME "${TS_NAME}_math_isinf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isinf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isinf)
 
 add_test(NAME "${TS_NAME}_math_isless"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isless)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isless)
 
 add_test(NAME "${TS_NAME}_math_islessequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" islessequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" islessequal)
 
 add_test(NAME "${TS_NAME}_math_islessgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" islessgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" islessgreater)
 
 add_test(NAME "${TS_NAME}_math_isnan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isnan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isnan)
 
 add_test(NAME "${TS_NAME}_math_isnormal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isnormal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isnormal)
 
 add_test(NAME "${TS_NAME}_math_isnotequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isnotequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isnotequal)
 
 add_test(NAME "${TS_NAME}_math_isordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isordered)
 
 add_test(NAME "${TS_NAME}_math_isunordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" isunordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" isunordered)
 
 add_test(NAME "${TS_NAME}_math_ldexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" ldexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ldexp)
 
 add_test(NAME "${TS_NAME}_math_log"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" log)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" log)
 
 add_test(NAME "${TS_NAME}_math_log10"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" log10)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" log10)
 
 add_test(NAME "${TS_NAME}_math_log1p"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" log1p)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" log1p)
 
 add_test(NAME "${TS_NAME}_math_log2"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" log2)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" log2)
 
 add_test(NAME "${TS_NAME}_math_logb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" logb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" logb)
 
 add_test(NAME "${TS_NAME}_math_mad"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" mad)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" mad)
 
 add_test(NAME "${TS_NAME}_math_maxmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" maxmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" maxmag)
 
 add_test(NAME "${TS_NAME}_math_minmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" minmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" minmag)
 
 add_test(NAME "${TS_NAME}_math_modf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" modf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" modf)
 
 add_test(NAME "${TS_NAME}_math_multiply"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" multiply)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" multiply)
 
 add_test(NAME "${TS_NAME}_math_nan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" nan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" nan)
 
 add_test(NAME "${TS_NAME}_math_nextafter"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" nextafter)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" nextafter)
 
 add_test(NAME "${TS_NAME}_math_not"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" not)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" not)
 
 add_test(NAME "${TS_NAME}_math_pow"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" pow)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" pow)
 
 add_test(NAME "${TS_NAME}_math_pown"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" pown)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" pown)
 
 add_test(NAME "${TS_NAME}_math_powr"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" powr)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" powr)
 
 add_test(NAME "${TS_NAME}_math_remainder"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" remainder)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" remainder)
 
 add_test(NAME "${TS_NAME}_math_remquo"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" remquo)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" remquo)
 
 add_test(NAME "${TS_NAME}_math_rint"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" rint)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" rint)
 
 add_test(NAME "${TS_NAME}_math_rootn"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" rootn)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" rootn)
 
 add_test(NAME "${TS_NAME}_math_round"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" round)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" round)
 
 add_test(NAME "${TS_NAME}_math_rsqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" rsqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" rsqrt)
 
 add_test(NAME "${TS_NAME}_math_signbit"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" signbit)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" signbit)
 
 add_test(NAME "${TS_NAME}_math_sin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" sin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" sin)
 
 add_test(NAME "${TS_NAME}_math_sincos"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" sincos)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" sincos)
 
 add_test(NAME "${TS_NAME}_math_sinh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" sinh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" sinh)
 
 add_test(NAME "${TS_NAME}_math_sinpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" sinpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" sinpi)
 
 add_test(NAME "${TS_NAME}_math_sqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" sqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" sqrt)
 
 add_test(NAME "${TS_NAME}_math_subtract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" subtract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" subtract)
 
 add_test(NAME "${TS_NAME}_math_tan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" tan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" tan)
 
 add_test(NAME "${TS_NAME}_math_tanh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" tanh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" tanh)
 
 add_test(NAME "${TS_NAME}_math_tanpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" tanpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" tanpi)
 
 add_test(NAME "${TS_NAME}_math_trunc"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}" trunc)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" trunc)
 
 #***************************************************************************
 
@@ -944,12 +875,10 @@ add_test(NAME "${TS_NAME}_mem_host_flags"
 add_test(NAME "${TS_NAME}_multiples"
          COMMAND "${TS_BUILDDIR}/multiple_device_context/test_multiples" )
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_non_uniform_work_group"
          COMMAND "${TS_BUILDDIR}/non_uniform_work_group/test_non_uniform_work_group" )
 add_test(NAME "${TS_NAME}_pipes"
          COMMAND "${TS_BUILDDIR}/pipes/test_pipes" )
-endif()
 
 add_test(NAME "${TS_NAME}_printf"
          COMMAND "${TS_BUILDDIR}/printf/test_printf"
@@ -990,12 +919,10 @@ add_test(NAME "${TS_NAME}_select_int_uint"
 add_test(NAME "${TS_NAME}_select_int_int"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_int_int)
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_select_float_uint"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_float_uint)
 add_test(NAME "${TS_NAME}_select_float_int"
          COMMAND "${TS_BUILDDIR}/select/test_select" select_float_int)
-endif()
 
 
 add_test(NAME "${TS_NAME}_select_ulong_ulong"
@@ -1010,8 +937,6 @@ add_test(NAME "${TS_NAME}_select_long_long"
 # we don't support the old (1.2 / 2.0) spir
 #add_test(NAME "${TS_NAME}_spir"
 #         COMMAND "${TS_BUILDDIR}/spir/test_spir")
-
-if(ENABLE_CTS_3_0)
 
 add_test(NAME "${TS_NAME}_spirv_new_1"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fnegate_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_uint)
@@ -1055,8 +980,6 @@ add_test(NAME "${TS_NAME}_SVM_1"
 add_test(NAME "${TS_NAME}_SVM_2"
          COMMAND "${TS_BUILDDIR}/SVM/test_svm" svm_allocate_shared_buffer  svm_shared_address_space_coarse_grain_old_api  svm_shared_address_space_coarse_grain_new_api  svm_cross_buffer_pointers_coarse_grain  svm_pointer_passing  svm_enqueue_api  svm_migrate)
 
-endif()
-
 
 add_test(NAME "${TS_NAME}_thread_dimensions_quick"
          COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" quick_1d_explicit_local  quick_2d_explicit_local  quick_3d_explicit_local  quick_1d_implicit_local  quick_2d_implicit_local  quick_3d_implicit_local)
@@ -1070,20 +993,11 @@ add_test(NAME "${TS_NAME}_thread_dimensions_full_12_ex"
 add_test(NAME "${TS_NAME}_thread_dimensions_full_3_ex"
          COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_3d_explicit_local)
 
-if(ENABLE_CTS_3_0)
 add_test(NAME "${TS_NAME}_vecalign"
          COMMAND "${TS_BUILDDIR}/vectors/test_vectors" vec_align_array vec_align_struct vec_align_packed_struct vec_align_struct_arr vec_align_packed_struct_arr )
 add_test(NAME "${TS_NAME}_vecstep"
          COMMAND "${TS_BUILDDIR}/vectors/test_vectors" step_type step_var step_typedef_type step_typedef_var )
-else()
-add_test(NAME "${TS_NAME}_vecalign"
-         COMMAND "${TS_BUILDDIR}/vec_align/test_vecalign" )
-add_test(NAME "${TS_NAME}_vecstep"
-         COMMAND "${TS_BUILDDIR}/vec_step/test_vecstep" )
-endif()
 
-
-if(ENABLE_CTS_3_0)
 
 add_test(NAME "${TS_NAME}_workgroup"
          COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups"
@@ -1117,15 +1031,18 @@ add_test(NAME "${TS_NAME}_workgroup_lsize"
         work_group_suggested_local_size_2D
         work_group_suggested_local_size_3D)
 
-endif()
 
-
-if(ENABLE_CTS_3_0)
-
-set(OCL_30_TESTS
+set(OCL_30_TESTS_FULL
 "${TS_NAME}_api_ocl_30"
 "${TS_NAME}_basic_other_ocl_30"
-"${TS_NAME}_c11_atomics"
+"${TS_NAME}_c11_atomics_init_store_load_exchange"
+"${TS_NAME}_c11_atomics_add_sub_min_max"
+"${TS_NAME}_c11_atomics_flag_fence"
+"${TS_NAME}_c11_atomics_or_xor_and"
+"${TS_NAME}_c11_atomics_svm_init_store_load_exchange"
+"${TS_NAME}_c11_atomics_svm_add_sub_min_max"
+"${TS_NAME}_c11_atomics_svm_flag_fence"
+"${TS_NAME}_c11_atomics_svm_or_xor_and"
 "${TS_NAME}_device_execution"
 "${TS_NAME}_device_timer"
 "${TS_NAME}_generic_address_space"
@@ -1155,9 +1072,23 @@ set(OCL_30_TESTS
 "${TS_NAME}_workgroup_lsize"
 )
 
-else()
-  set(OCL_30_TESTS)
-endif()
+set(OCL_30_TESTS_MICRO
+"${TS_NAME}_api_ocl_30"
+"${TS_NAME}_basic_other_ocl_30"
+"${TS_NAME}_c11_atomics_micro"
+"${TS_NAME}_device_execution"
+"${TS_NAME}_device_timer"
+"${TS_NAME}_generic_address_space"
+"${TS_NAME}_integer_ops_ocl_30"
+"${TS_NAME}_non_uniform_work_group"
+"${TS_NAME}_pipes"
+"${TS_NAME}_spirv_new_0"
+"${TS_NAME}_subgroups_1"
+"${TS_NAME}_SVM_1"
+"${TS_NAME}_SVM_2"
+)
+
+set(OCL_30_TESTS_MINI ${OCL_30_TESTS_MICRO})
 
 
 set_tests_properties(
@@ -1449,7 +1380,7 @@ set_tests_properties(
     "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
-    ${OCL_30_TESTS}
+    ${OCL_30_TESTS_FULL}
   PROPERTIES
     LABELS "conformance_suite_full"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -1495,201 +1426,193 @@ add_test(NAME "${TS_NAME}_conversion_mini_long_double"
 # This is usually the fastest version on machines with AVX(2)
 
 add_test(NAME "${TS_NAME}_math_mini_add"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d add)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d add)
 
 add_test(NAME "${TS_NAME}_math_mini_assignment"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d assignment)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d assignment)
 
 add_test(NAME "${TS_NAME}_math_mini_cbrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d cbrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d cbrt)
 
 add_test(NAME "${TS_NAME}_math_mini_ceil"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d ceil)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d ceil)
 
 add_test(NAME "${TS_NAME}_math_mini_copysign"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d copysign)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d copysign)
 
 add_test(NAME "${TS_NAME}_math_mini_cos"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d cos)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d cos)
 
 add_test(NAME "${TS_NAME}_math_mini_cosh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d cosh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d cosh)
 
 add_test(NAME "${TS_NAME}_math_mini_cospi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d cospi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d cospi)
 
 add_test(NAME "${TS_NAME}_math_mini_divide"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d divide)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d divide)
 
 add_test(NAME "${TS_NAME}_math_mini_exp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d exp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d exp)
 
 add_test(NAME "${TS_NAME}_math_mini_expm1"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d expm1)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d expm1)
 
 add_test(NAME "${TS_NAME}_math_mini_fabs"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fabs)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fabs)
 
 add_test(NAME "${TS_NAME}_math_mini_fdim"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fdim)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fdim)
 
 add_test(NAME "${TS_NAME}_math_mini_floor"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d floor)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d floor)
 
 add_test(NAME "${TS_NAME}_math_mini_fma"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fma)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fma)
 
 add_test(NAME "${TS_NAME}_math_mini_fmax"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fmax)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fmax)
 
 add_test(NAME "${TS_NAME}_math_mini_fmin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fmin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fmin)
 
 add_test(NAME "${TS_NAME}_math_mini_fract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d fract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d fract)
 
 add_test(NAME "${TS_NAME}_math_mini_frexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d frexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d frexp)
 
 add_test(NAME "${TS_NAME}_math_mini_hypot"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d hypot)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d hypot)
 
 add_test(NAME "${TS_NAME}_math_mini_ilogb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d ilogb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d ilogb)
 
 add_test(NAME "${TS_NAME}_math_mini_isequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isequal)
 
 add_test(NAME "${TS_NAME}_math_mini_isfinite"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isfinite)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isfinite)
 
 add_test(NAME "${TS_NAME}_math_mini_isgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isgreater)
 
 add_test(NAME "${TS_NAME}_math_mini_isgreaterequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isgreaterequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isgreaterequal)
 
 add_test(NAME "${TS_NAME}_math_mini_isinf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isinf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isinf)
 
 add_test(NAME "${TS_NAME}_math_mini_isless"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isless)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isless)
 
 add_test(NAME "${TS_NAME}_math_mini_islessequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d islessequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d islessequal)
 
 add_test(NAME "${TS_NAME}_math_mini_islessgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d islessgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d islessgreater)
 
 add_test(NAME "${TS_NAME}_math_mini_isnan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isnan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isnan)
 
 add_test(NAME "${TS_NAME}_math_mini_isnormal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isnormal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isnormal)
 
 add_test(NAME "${TS_NAME}_math_mini_isnotequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isnotequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isnotequal)
 
 add_test(NAME "${TS_NAME}_math_mini_isordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isordered)
 
 add_test(NAME "${TS_NAME}_math_mini_isunordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d isunordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d isunordered)
 
 add_test(NAME "${TS_NAME}_math_mini_ldexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d ldexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d ldexp)
 
 add_test(NAME "${TS_NAME}_math_mini_log"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d log)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d log)
 
 add_test(NAME "${TS_NAME}_math_mini_log10"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d log10)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d log10)
 
 add_test(NAME "${TS_NAME}_math_mini_log1p"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d log1p)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d log1p)
 
 add_test(NAME "${TS_NAME}_math_mini_log2"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d log2)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d log2)
 
 add_test(NAME "${TS_NAME}_math_mini_logb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d logb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d logb)
 
 add_test(NAME "${TS_NAME}_math_mini_mad"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d mad)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d mad)
 
 add_test(NAME "${TS_NAME}_math_mini_maxmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d maxmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d maxmag)
 
 add_test(NAME "${TS_NAME}_math_mini_minmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d minmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d minmag)
 
 add_test(NAME "${TS_NAME}_math_mini_modf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d modf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d modf)
 
 add_test(NAME "${TS_NAME}_math_mini_multiply"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d multiply)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d multiply)
 
 add_test(NAME "${TS_NAME}_math_mini_nan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d nan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d nan)
 
 add_test(NAME "${TS_NAME}_math_mini_nextafter"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d nextafter)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d nextafter)
 
 add_test(NAME "${TS_NAME}_math_mini_not"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d not)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d not)
 
 add_test(NAME "${TS_NAME}_math_mini_pown"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d pown)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d pown)
 
 add_test(NAME "${TS_NAME}_math_mini_rint"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d rint)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d rint)
 
 add_test(NAME "${TS_NAME}_math_mini_rootn"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d rootn)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d rootn)
 
 add_test(NAME "${TS_NAME}_math_mini_round"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d round)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d round)
 
 add_test(NAME "${TS_NAME}_math_mini_rsqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d rsqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d rsqrt)
 
 add_test(NAME "${TS_NAME}_math_mini_signbit"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d signbit)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d signbit)
 
 add_test(NAME "${TS_NAME}_math_mini_sin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d sin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d sin)
 
 add_test(NAME "${TS_NAME}_math_mini_sinh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d sinh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d sinh)
 
 add_test(NAME "${TS_NAME}_math_mini_sinpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d sinpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d sinpi)
 
 add_test(NAME "${TS_NAME}_math_mini_sqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d sqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d sqrt)
 
 add_test(NAME "${TS_NAME}_math_mini_subtract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d subtract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d subtract)
 
 add_test(NAME "${TS_NAME}_math_mini_tan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d tan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d tan)
 
 add_test(NAME "${TS_NAME}_math_mini_tanh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d tanh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d tanh)
 
 add_test(NAME "${TS_NAME}_math_mini_tanpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d tanpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d tanpi)
 
 add_test(NAME "${TS_NAME}_math_mini_trunc"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -d trunc)
-
-if(ENABLE_CTS_3_0)
-add_test(NAME "${TS_NAME}_mini_half"
-         COMMAND "${TS_BUILDDIR}/half/test_half" -w)
-else()
-add_test(NAME "${TS_NAME}_mini_half"
-         COMMAND "${TS_BUILDDIR}/half/Test_half" -w)
-endif()
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d trunc)
 
 set_tests_properties(
     "${TS_NAME}_mini_half"
@@ -1756,7 +1679,7 @@ set_tests_properties(
     "${TS_NAME}_math_mini_tanh"
     "${TS_NAME}_math_mini_tanpi"
     "${TS_NAME}_math_mini_trunc"
-    ${OCL_30_TESTS}
+
     "${TS_NAME}_conversion_mini_uint_uchar"
     "${TS_NAME}_conversion_mini_short_char"
     "${TS_NAME}_conversion_mini_uchar_ushort"
@@ -1947,193 +1870,193 @@ add_test(NAME "${TS_NAME}_conversion_micro_long_double"
 # vectors of 4, wimpy mode
 
 add_test(NAME "${TS_NAME}_math_micro_add"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w add)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w add)
 
 add_test(NAME "${TS_NAME}_math_micro_assignment"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w assignment)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w assignment)
 
 add_test(NAME "${TS_NAME}_math_micro_cbrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w cbrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w cbrt)
 
 add_test(NAME "${TS_NAME}_math_micro_ceil"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w ceil)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w ceil)
 
 add_test(NAME "${TS_NAME}_math_micro_copysign"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w copysign)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w copysign)
 
 add_test(NAME "${TS_NAME}_math_micro_cos"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w cos)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w cos)
 
 add_test(NAME "${TS_NAME}_math_micro_cosh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w cosh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w cosh)
 
 add_test(NAME "${TS_NAME}_math_micro_cospi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w cospi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w cospi)
 
 add_test(NAME "${TS_NAME}_math_micro_divide"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w divide)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w divide)
 
 add_test(NAME "${TS_NAME}_math_micro_exp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w exp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w exp)
 
 add_test(NAME "${TS_NAME}_math_micro_expm1"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w expm1)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w expm1)
 
 add_test(NAME "${TS_NAME}_math_micro_fabs"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fabs)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fabs)
 
 add_test(NAME "${TS_NAME}_math_micro_fdim"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fdim)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fdim)
 
 add_test(NAME "${TS_NAME}_math_micro_floor"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w floor)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w floor)
 
 add_test(NAME "${TS_NAME}_math_micro_fma"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fma)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fma)
 
 add_test(NAME "${TS_NAME}_math_micro_fmax"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fmax)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fmax)
 
 add_test(NAME "${TS_NAME}_math_micro_fmin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fmin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fmin)
 
 add_test(NAME "${TS_NAME}_math_micro_fract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w fract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w fract)
 
 add_test(NAME "${TS_NAME}_math_micro_frexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w frexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w frexp)
 
 add_test(NAME "${TS_NAME}_math_micro_hypot"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w hypot)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w hypot)
 
 add_test(NAME "${TS_NAME}_math_micro_ilogb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w ilogb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w ilogb)
 
 add_test(NAME "${TS_NAME}_math_micro_isequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isequal)
 
 add_test(NAME "${TS_NAME}_math_micro_isfinite"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isfinite)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isfinite)
 
 add_test(NAME "${TS_NAME}_math_micro_isgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isgreater)
 
 add_test(NAME "${TS_NAME}_math_micro_isgreaterequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isgreaterequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isgreaterequal)
 
 add_test(NAME "${TS_NAME}_math_micro_isinf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isinf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isinf)
 
 add_test(NAME "${TS_NAME}_math_micro_isless"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isless)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isless)
 
 add_test(NAME "${TS_NAME}_math_micro_islessequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w islessequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w islessequal)
 
 add_test(NAME "${TS_NAME}_math_micro_islessgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w islessgreater)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w islessgreater)
 
 add_test(NAME "${TS_NAME}_math_micro_isnan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isnan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isnan)
 
 add_test(NAME "${TS_NAME}_math_micro_isnormal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isnormal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isnormal)
 
 add_test(NAME "${TS_NAME}_math_micro_isnotequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isnotequal)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isnotequal)
 
 add_test(NAME "${TS_NAME}_math_micro_isordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isordered)
 
 add_test(NAME "${TS_NAME}_math_micro_isunordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w isunordered)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w isunordered)
 
 add_test(NAME "${TS_NAME}_math_micro_ldexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w ldexp)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w ldexp)
 
 add_test(NAME "${TS_NAME}_math_micro_log"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w log)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w log)
 
 add_test(NAME "${TS_NAME}_math_micro_log10"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w log10)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w log10)
 
 add_test(NAME "${TS_NAME}_math_micro_log1p"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w log1p)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w log1p)
 
 add_test(NAME "${TS_NAME}_math_micro_log2"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w log2)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w log2)
 
 add_test(NAME "${TS_NAME}_math_micro_logb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w logb)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w logb)
 
 add_test(NAME "${TS_NAME}_math_micro_mad"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w mad)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w mad)
 
 add_test(NAME "${TS_NAME}_math_micro_maxmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w maxmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w maxmag)
 
 add_test(NAME "${TS_NAME}_math_micro_minmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w minmag)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w minmag)
 
 add_test(NAME "${TS_NAME}_math_micro_modf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w modf)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w modf)
 
 add_test(NAME "${TS_NAME}_math_micro_multiply"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w multiply)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w multiply)
 
 add_test(NAME "${TS_NAME}_math_micro_nan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w nan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w nan)
 
 add_test(NAME "${TS_NAME}_math_micro_nextafter"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w nextafter)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w nextafter)
 
 add_test(NAME "${TS_NAME}_math_micro_not"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w not)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w not)
 
 add_test(NAME "${TS_NAME}_math_micro_pown"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w pown)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w pown)
 
 add_test(NAME "${TS_NAME}_math_micro_rint"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w rint)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w rint)
 
 add_test(NAME "${TS_NAME}_math_micro_rootn"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w rootn)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w rootn)
 
 add_test(NAME "${TS_NAME}_math_micro_round"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w round)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w round)
 
 add_test(NAME "${TS_NAME}_math_micro_rsqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w rsqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w rsqrt)
 
 add_test(NAME "${TS_NAME}_math_micro_signbit"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w signbit)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w signbit)
 
 add_test(NAME "${TS_NAME}_math_micro_sin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w sin)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w sin)
 
 add_test(NAME "${TS_NAME}_math_micro_sinh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w sinh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w sinh)
 
 add_test(NAME "${TS_NAME}_math_micro_sinpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w sinpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w sinpi)
 
 add_test(NAME "${TS_NAME}_math_micro_sqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w sqrt)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w sqrt)
 
 add_test(NAME "${TS_NAME}_math_micro_subtract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w subtract)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w subtract)
 
 add_test(NAME "${TS_NAME}_math_micro_tan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w tan)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w tan)
 
 add_test(NAME "${TS_NAME}_math_micro_tanh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w tanh)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w tanh)
 
 add_test(NAME "${TS_NAME}_math_micro_tanpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w tanpi)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w tanpi)
 
 add_test(NAME "${TS_NAME}_math_micro_trunc"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/${MATH_LAUNCHER}"  -4 -w trunc)
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w trunc)
 
 set_tests_properties(
     "${TS_NAME}_basic_micro_memory"
@@ -2240,8 +2163,6 @@ set_tests_properties(
     "${TS_NAME}_select_micro_int_int"
     "${TS_NAME}_select_micro_ulong_ulong"
 
-    ${OCL_30_TESTS}
-
   PROPERTIES
     LABELS "conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
@@ -2290,13 +2211,19 @@ set_tests_properties(
     "${TS_NAME}_relationals"
     "${TS_NAME}_thread_dimensions_quick"
     "${TS_NAME}_vecstep"
+    ${OCL_30_TESTS_MICRO}
   PROPERTIES
     LABELS "conformance_suite_full;conformance_suite_mini;conformance_suite_micro"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
 set_property(TEST
-    ${OCL_30_TESTS}
+    ${OCL_30_TESTS_FULL}
     APPEND PROPERTY LABELS "conformance_30_only")
+
+set_tests_properties(
+  "${TS_NAME}_non_uniform_work_group"
+  PROPERTIES
+    ENVIRONMENT "POCL_MEMORY_LIMIT=4")
 
 
 endif()

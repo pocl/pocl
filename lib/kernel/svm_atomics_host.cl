@@ -4,11 +4,6 @@
 
    This relies on Clang's C11 atomic builtins.
 
-   Note: for some architectures, the host-specific llvm bitcode is used instead
-   of this file (since Clang doesn't have proper builtins for 64bit min/max atomics,
-   yet LLVM's atomicrmw can do them; using this file gives only limited min/max
-   atomics).
-
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -101,13 +96,17 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_int  *o
 
 #  define ATOMIC_TYPE atomic_long
 #  define NONATOMIC_TYPE long
+#  define IS_INT
 #  include "svm_atomics_host.cl"
+#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_ulong
 #  define NONATOMIC_TYPE ulong
+#  define IS_UINT
 #  include "svm_atomics_host.cl"
+#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
@@ -220,14 +219,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_min) ( volatile Q ATOMI
   memory_order order,
   memory_scope scope)
 {
-#if defined(IS_INT)
-  return __sync_fetch_and_min((volatile Q NONATOMIC_TYPE *)object, operand);
-#elif defined(IS_UINT)
-  return __sync_fetch_and_umin((volatile Q NONATOMIC_TYPE *)object, operand);
-#else
-  __builtin_trap();
-  return 0;
-#endif
+  return __c11_atomic_fetch_min(object, operand, CONV_ORDER(order));
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_max) ( volatile Q ATOMIC_TYPE  *object,
@@ -235,14 +227,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_max) ( volatile Q ATOMI
   memory_order order,
   memory_scope scope)
 {
-#if defined(IS_INT)
-  return __sync_fetch_and_max((volatile Q NONATOMIC_TYPE *)object, operand);
-#elif defined(IS_UINT)
-  return __sync_fetch_and_umax((volatile Q NONATOMIC_TYPE *)object, operand);
-#else
-  __builtin_trap();
-  return 0;
-#endif
+  return __c11_atomic_fetch_max(object, operand, CONV_ORDER(order));
 }
 
 #endif

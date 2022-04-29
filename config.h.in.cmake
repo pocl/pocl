@@ -107,6 +107,8 @@
 
 #define HOST_DEVICE_EXTENSIONS "@HOST_DEVICE_EXTENSIONS@"
 
+#define HOST_DEVICE_FEATURES_30 "@HOST_DEVICE_FEATURES_30@"
+
 #cmakedefine HOST_CPU_FORCED
 
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
@@ -114,6 +116,8 @@
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"
 
 #cmakedefine HOST_FLOAT_SOFT_ABI
+
+#define HOST_DEVICE_LATEST_CTS_PASS "v2022-04-19-01"
 
 #endif
 
@@ -240,7 +244,10 @@
 /* Disable cl_khr_fp64 because fp64 is not supported */
 #cmakedefine _CL_DISABLE_DOUBLE
 
-#define POCL_CL_VERSION "2.0"
+/* platform version */
+#define POCL_PLATFORM_VERSION_MAJOR 3
+#define POCL_PLATFORM_VERSION_MINOR 0
+#define POCL_PLATFORM_VERSION_PATCH 0
 
 #define HSA_DEVICE_CL_VERSION_MAJOR 1
 #define HSA_DEVICE_CL_VERSION_MINOR 2

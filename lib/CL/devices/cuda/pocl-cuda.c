@@ -1067,6 +1067,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   struct pocl_context pc = run.pc;
   pocl_kernel_metadata_t *meta = kernel->meta;
 
+  if (pc.num_groups[0] == 0 || pc.num_groups[1] == 0 || pc.num_groups[2] == 0)
+    return;
+
   /* Check if we need to handle global work offsets */
   int has_offsets =
     (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2]);

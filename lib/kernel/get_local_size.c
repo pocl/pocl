@@ -38,3 +38,8 @@ get_local_size(unsigned int dimindx)
     }
 }
 
+size_t _CL_OVERLOADABLE
+get_enqueued_local_size (unsigned int dimindx)
+{
+  return get_local_size (dimindx);
+}
