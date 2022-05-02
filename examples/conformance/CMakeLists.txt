@@ -30,14 +30,26 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
+  return()
+endif()
 
-elseif(NOT MAKE_PROGRAM)
+if(NOT MAKE_PROGRAM)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
+  return()
+endif()
 
-elseif(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
+if(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
   message(STATUS "Disabling ${TS_NAME}, can't find OpenCL library")
+  return()
+endif()
 
-else()
+# the CTS is compiled against:
+#    OpenCL headers in <POCL>/include/CL, which are 3.0
+#    OpenCL library, which might be libpocl or ICD; we need to check ICD is 3.0 compatible
+if(ENABLE_ICD AND HAVE_OCL_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
+  message(STATUS "OCL-ICD is not compatible with OpenCL-CTS version 3, disabling CTS")
+  return()
+endif()
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
@@ -2224,6 +2236,3 @@ set_tests_properties(
   "${TS_NAME}_non_uniform_work_group"
   PROPERTIES
     ENVIRONMENT "POCL_MEMORY_LIMIT=4")
-
-
-endif()
