@@ -39,16 +39,22 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "builtin_kernels.hh"
+
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <nvPTXCompiler.h>
 
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#define ENABLE_CUDNN
+#ifdef ENABLE_CUDNN
+#include <cudnn.h>
+#endif
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -148,11 +154,16 @@ static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
 static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
 
 #define OPENCL_BUILTIN_KERNELS 1
-static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
-  "pocl.abs.f32",
+static const char* OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
+  "pocl.abs.f32", };
+static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
+
+#define CUDNN_BUILTIN_KERNELS 1
+static const char* CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS] = {
+  "pocl.dnn.conv2d.nchw.f32"
 };
-static pocl_cuda_kernel_data_t
-    OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
+static pocl_cuda_kernel_data_t CudnnBuiltinKernelsData[CUDNN_BUILTIN_KERNELS];
+
 
 cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
                                                      cl_device_info param_name,
@@ -441,6 +452,12 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         {
           strcat (dev->builtin_kernel_list, ";");
           strcat (dev->builtin_kernel_list, OpenclBuiltinKernels[i]);
+        }
+      dev->num_builtin_kernels += CUDNN_BUILTIN_KERNELS;
+      for (unsigned i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
+        {
+          strcat(dev->builtin_kernel_list, ";");
+          strcat(dev->builtin_kernel_list, CudnnBuiltinKernels[i]);
         }
     }
 
@@ -1260,6 +1277,141 @@ pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            specialize);
 }
 
+#define CUDA_CALL(f) { \
+  cudaError_t err = (f); \
+  if (err != cudaSuccess) { \
+    POCL_ABORT("  Error occurred: %d",err); \
+  } \
+}
+
+#define CUDNN_CALL(f) { \
+  cudnnStatus_t err = (f); \
+  if (err != CUDNN_STATUS_SUCCESS) { \
+      POCL_ABORT("  CUDNN Error occurred: %d",err); \
+  } \
+}
+
+void
+submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
+                    cl_device_id device, cl_event event)
+{
+  
+  _cl_command_run run = cmd->command.run;
+  cl_kernel kernel = run.kernel;
+  cl_program prog = kernel->program;
+  pocl_argument *arguments = run.arguments;
+  struct pocl_context pc = run.pc;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  // Input, weight and output buffers come from pocl's buffer management
+  cl_mem mem = *(void **)arguments[0].value;
+  float* in_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[0].offset);
+
+  mem = *(void **)arguments[1].value;
+  float* filt_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[1].offset);
+
+  mem = *(void **)arguments[2].value;
+  float* out_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[2].offset);
+
+  // All the other convolution dimensions are passed as arguments.
+  int in_n      = *(int*)(arguments[3].value);
+  int in_c      = *(int*)(arguments[4].value);
+  int in_h      = *(int*)(arguments[5].value);
+  int in_w      = *(int*)(arguments[6].value);
+
+  int filt_k = *(int*)(arguments[7].value);
+  int filt_c = *(int*)(arguments[8].value);
+  int filt_h = *(int*)(arguments[9].value);
+  int filt_w = *(int*)(arguments[10].value);
+  
+  int str_h = *(int*)(arguments[11].value);
+  int str_w = *(int*)(arguments[12].value);
+  int dil_h = *(int*)(arguments[13].value);
+  int dil_w = *(int*)(arguments[14].value);
+  int pad_h = *(int*)(arguments[15].value);
+  int pad_w = *(int*)(arguments[16].value);
+
+  float alpha = *(float*)(arguments[17].value);
+  float beta  = *(float*)(arguments[18].value);
+
+  /*POCL_MSG_PRINT_INFO("ARGS:%zx,%zx,%zx in:%i,%i,%i,%i filt %i,%i,%i,%i strdilpad %i,%i,%i,%i,%i,%i\n",
+  in_data, filt_data, out_data, in_n, in_c, in_h, in_w, filt_k, filt_c, filt_h, filt_w,
+   str_h, str_w, dil_h, dil_w,pad_h,pad_w);*/
+
+  cudnnHandle_t cudnn;
+  CUDNN_CALL(cudnnCreate(&cudnn));
+
+  cudnnTensorDescriptor_t in_desc;
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&in_desc));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        in_n, in_c, in_h, in_w));
+
+  cudnnFilterDescriptor_t filt_desc;
+  CUDNN_CALL(cudnnCreateFilterDescriptor(&filt_desc));
+  CUDNN_CALL(cudnnSetFilter4dDescriptor(
+        filt_desc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
+        filt_k, filt_c, filt_h, filt_w));
+
+  cudnnConvolutionDescriptor_t conv_desc;
+  CUDNN_CALL(cudnnCreateConvolutionDescriptor(&conv_desc));
+  CUDNN_CALL(cudnnSetConvolution2dDescriptor(
+        conv_desc,
+        pad_h, pad_w, str_h, str_w, dil_h, dil_w,
+        CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
+
+  //For depth-wise convolutions
+  //CUDNN_CALL(cudnnSetConvolutionGroupCount(conv_desc, in_c));
+
+  // output
+  int out_n,out_c,out_h,out_w;
+  CUDNN_CALL(cudnnGetConvolution2dForwardOutputDim(
+        conv_desc, in_desc, filt_desc,
+        &out_n, &out_c, &out_h, &out_w));
+
+  cudnnTensorDescriptor_t out_desc;
+  CUDNN_CALL(cudnnCreateTensorDescriptor(&out_desc));
+  CUDNN_CALL(cudnnSetTensor4dDescriptor(
+        out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        out_n, out_c, out_h, out_w));
+
+  // algorithm
+  cudnnConvolutionFwdAlgoPerf_t algos;
+  int return_count = 0;
+  /*CUDNN_CALL(cudnnGetConvolutionForwardAlgorithm_v7(
+        cudnn,
+        in_desc, filt_desc, conv_desc, out_desc,
+        1, &return_count, &algos));
+
+  cudnnConvolutionFwdAlgo_t algo = algos.algo;*/
+  cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  POCL_MSG_PRINT_INFO("CuDNN Picking ALGO %d",algo);
+
+  // workspace
+  size_t ws_size; 
+  CUDNN_CALL(cudnnGetConvolutionForwardWorkspaceSize(
+        cudnn, in_desc, filt_desc, conv_desc, out_desc, algo, &ws_size));
+  float *ws_data;
+  CUDA_CALL(cudaMalloc(&ws_data, ws_size));
+
+  CUDNN_CALL(cudnnConvolutionForward(
+      cudnn,
+      &alpha, in_desc, in_data, filt_desc, filt_data,
+      conv_desc, algo, ws_data, ws_size,
+      &beta, out_desc, out_data));
+
+ // Not sure if needed
+  cudaDeviceSynchronize();
+
+  // finalizing
+  CUDA_CALL(cudaFree(ws_data));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(out_desc));
+  CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
+  CUDNN_CALL(cudnnDestroyFilterDescriptor(filt_desc));
+  CUDNN_CALL(cudnnDestroyTensorDescriptor(in_desc));
+  CUDNN_CALL(cudnnDestroy(cudnn));
+}
+
 void
 pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                          cl_device_id device, cl_event event)
@@ -1293,6 +1445,15 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               module = CudaBuiltinKernelsData[i].module;
               kdata = &CudaBuiltinKernelsData[i];
               break;
+            }
+        }
+      /* CUDNN builtins */
+      for (size_t i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
+        {
+          if (strcmp(kernel->name, CudnnBuiltinKernels[i]) == 0)
+            {
+              submit_cudnn_kernel(stream, cmd, device, event);
+              return;
             }
         }
       /* OpenCL builtins. TODO we just assign OpenclBuiltinKernelsData[i] here,
