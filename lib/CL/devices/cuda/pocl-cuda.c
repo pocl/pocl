@@ -1360,7 +1360,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   CUDNN_CALL(cudnnSetConvolution2dDescriptor(
         conv_desc,
         pad_h, pad_w, str_h, str_w, dil_h, dil_w,
-        CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
+        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
 
   //For depth-wise convolutions
   CUDNN_CALL(cudnnSetConvolutionGroupCount(conv_desc, groups));
