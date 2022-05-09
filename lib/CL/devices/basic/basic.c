@@ -48,6 +48,8 @@
 
 #include "common_driver.h"
 
+#include "dnn_cpu_ref.h"
+
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -66,6 +68,10 @@ struct data {
   /* printf buffer */
   void *printf_buffer;
 };
+
+#define ONEDNN_BUILTIN_KERNELS 1
+static const char *OnednnBuiltinKernels[ONEDNN_BUILTIN_KERNELS]
+    = { "pocl.dnn.conv2d.nchw.f32" };
 
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
@@ -241,6 +247,16 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
+  device->num_builtin_kernels = ONEDNN_BUILTIN_KERNELS;
+  device->builtin_kernel_list = (char *)malloc (1024);
+  device->builtin_kernel_list[0] = 0;
+  for (unsigned i = 0; i < device->num_builtin_kernels; ++i)
+    {
+      if (i > 0)
+        strcat (device->builtin_kernel_list, ";");
+      strcat (device->builtin_kernel_list, OnednnBuiltinKernels[i]);
+    }
+
   return ret;
 }
 
@@ -259,6 +275,19 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   d = (struct data *) data;
 
   d->current_kernel = kernel;
+  cl_program prog = kernel->program;
+  if (prog->num_builtin_kernels > 0)
+    {
+      /* OneDNN builtins */
+      for (size_t i = 0; i < ONEDNN_BUILTIN_KERNELS; ++i)
+        {
+          if (strcmp (kernel->name, OnednnBuiltinKernels[i]) == 0)
+            {
+              submit_dnn_builtin_kernel (cmd);
+              return;
+            }
+        }
+    }
 
   void **arguments = (void **)malloc (sizeof (void *)
                                       * (meta->num_args + meta->num_locals));
@@ -487,7 +516,8 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 {
   struct data *d = node->device->data;
 
-  if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
+  if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL
+      && (node->command.run.kernel->program->num_builtin_kernels == 0))
     pocl_check_kernel_dlhandle_cache (node, 1, 1);
 
   node->ready = 1;
