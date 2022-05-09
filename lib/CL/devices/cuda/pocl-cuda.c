@@ -1296,9 +1296,11 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   int dil_w = *(int*)(arguments[14].value);
   int pad_h = *(int*)(arguments[15].value);
   int pad_w = *(int*)(arguments[16].value);
+  
+  int groups = *(int*)(arguments[17].value);
 
-  float alpha = *(float*)(arguments[17].value);
-  float beta  = *(float*)(arguments[18].value);
+  float alpha = *(float*)(arguments[18].value);
+  float beta  = *(float*)(arguments[19].value);
 
   /*POCL_MSG_PRINT_INFO("ARGS:%zx,%zx,%zx in:%i,%i,%i,%i filt %i,%i,%i,%i strdilpad %i,%i,%i,%i,%i,%i\n",
   in_data, filt_data, out_data, in_n, in_c, in_h, in_w, filt_k, filt_c, filt_h, filt_w,
@@ -1327,7 +1329,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
         CUDNN_CONVOLUTION, CUDNN_DATA_FLOAT));
 
   //For depth-wise convolutions
-  //CUDNN_CALL(cudnnSetConvolutionGroupCount(conv_desc, in_c));
+  CUDNN_CALL(cudnnSetConvolutionGroupCount(conv_desc, groups));
 
   // output
   int out_n,out_c,out_h,out_w;
