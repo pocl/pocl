@@ -264,6 +264,8 @@ typedef struct pocl_vulkan_device_data_s
   VkCommandBuffer command_buffer;
   VkCommandBuffer tmp_command_buffer;
 
+  VkPipelineCache cache;
+
   /* integrated GPUs have different Vulkan memory layout */
   int device_is_iGPU;
   /* device needs staging buffers for memory transfers
@@ -1558,6 +1560,15 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
 
   pocl_vulkan_setup_memfill_kernels (dev, d);
   /************************************************************************/
+
+  VkPipelineCacheCreateInfo cache_create_info = {
+    VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+    NULL,
+    0, // flags
+    0, NULL
+  };
+  VULKAN_CHECK (vkCreatePipelineCache (d->device, &cache_create_info,
+                                       NULL, &d->cache));
 
   VkCommandPoolCreateInfo pool_cinfo;
   pool_cinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -3958,7 +3969,7 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   pipeline_create_info.basePipelineHandle = 0;
 
   VULKAN_CHECK (vkCreateComputePipelines (
-      d->device, VK_NULL_HANDLE, 1, &pipeline_create_info, NULL, &pipeline));
+      d->device, d->cache, 1, &pipeline_create_info, NULL, &pipeline));
 
   VkCommandBuffer cb = d->command_buffer;
   uint32_t commands_recorded = 0;
