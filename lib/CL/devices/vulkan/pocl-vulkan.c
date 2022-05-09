@@ -116,6 +116,14 @@
 
 static void *pocl_vulkan_driver_pthread (void *cldev);
 
+typedef struct pushc_data
+{
+  uint32_t ord;
+  uint32_t offset;
+  uint32_t size;
+  uint32_t unused;
+} pushc_data;
+
 typedef struct local_data
 {
   uint32_t ord;
@@ -135,6 +143,7 @@ typedef struct buf_data
 #define MAX_LOCALS 128
 #define MAX_BUFS 128
 #define MAX_PODS 128
+#define MAX_PUSHC 128
 
 typedef struct pocl_vulkan_kernel_data_s
 {
@@ -152,9 +161,11 @@ typedef struct pocl_vulkan_kernel_data_s
   size_t num_locals;
   size_t num_bufs;
   size_t num_pods;
+  size_t num_pushc;
   local_data locals[MAX_LOCALS];
   buf_data bufs[MAX_BUFS];
   buf_data pods[MAX_PODS];
+  pushc_data pushc[MAX_PUSHC];
 
   /* since POD arguments are pushed via a buffer (kernarg_buf),
    * total size helps with preallocating kernarg buffer */
@@ -163,9 +174,18 @@ typedef struct pocl_vulkan_kernel_data_s
   /* constants are also preallocated, this is the total size */
   size_t num_constant_bytes;
 
+  /* size of push constant bytes used for arguments.
+   * (doesn't include goffset_pushc_size) */
+  size_t num_pushc_arg_bytes;
+
   /* device-specific kernel data */
   uint32_t constant_dset, constant_binding;
   uint32_t *constant_data;
+
+  /* offset for goffset push constants */
+  uint32_t goffset_pushc_offset;
+  /* size should always be 12 (3x uint32) */
+  uint32_t goffset_pushc_size;
 
   /* kernarg buffer, for POD arguments */
   VkBuffer kernarg_buf;
@@ -305,10 +325,7 @@ typedef struct pocl_vulkan_program_data_s
   pocl_vulkan_kernel_data_t *vk_kernel_meta_list;
   pocl_kernel_metadata_t *kernel_meta;
   unsigned num_kernels;
-
-  /* compiled shader binary */
   VkShaderModule shader;
-
 } pocl_vulkan_program_data_t;
 
 static void
@@ -1665,15 +1682,18 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
       = { CLSPV,
           "-x=cl",
           "--spv-version=1.0",
-          "-cl-kernel-arg-info",
+          "--cl-kernel-arg-info",
           "--keep-unused-arguments",
           "--uniform-workgroup-size",
-          /* "--pod-pushconstant",*/ /* TODO push constants should be faster */
-          "--pod-ubo",
-          "--cluster-pod-kernel-args",
-          NULL };
+          "--global-offset",
+          "--global-offset-push-constant", // goffs as push constant
+          /* push constants should be faster,
+           * but currently don't work with goffs */
+          /* "--pod-pushconstant",*/
+          "--pod-ubo", "--cluster-pod-kernel-args", NULL };
 
-  unsigned last_arg_idx = 8;
+  unsigned last_arg_idx = 10;
+
   if (d->have_i8_shader)
     COMPILATION[last_arg_idx++] = "--int8";
 
@@ -1758,10 +1778,6 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   if (disable_16b_stor[0])
     COMPILATION[last_arg_idx++] = disable_16b_stor;
 
-  COMPILATION[last_arg_idx++] = "-o";
-  COMPILATION[last_arg_idx++] = program_spv_path_temp;
-  COMPILATION[last_arg_idx++] = program_cl_path;
-
   if (program->compiler_options)
     {
       /* TODO mishandles quoted strings with spaces */
@@ -1775,6 +1791,10 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
           token = strtok (NULL, delim);
         }
     }
+
+  COMPILATION[last_arg_idx++] = "-o";
+  COMPILATION[last_arg_idx++] = program_spv_path_temp;
+  COMPILATION[last_arg_idx++] = program_cl_path;
 
   COMPILATION[last_arg_idx++] = NULL;
 
@@ -1974,6 +1994,7 @@ parse_new_kernel (pocl_kernel_metadata_t *p, char *line)
       = POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
   p->arg_info = calloc (MAX_ARGS, sizeof (pocl_argument_info));
   p->total_argument_storage_size = 0;
+  p->data = NULL;
   p->build_hash = NULL;
   p->builtin_kernel = 0;
   return 0;
@@ -1997,6 +2018,7 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
   token = NULL;
 
   char *arg_name = NULL;
+  int is_pushc = CL_FALSE;
   unsigned ord, dSet, binding, offset, kind = UINT32_MAX, size, elemSize,
                                        specID = UINT32_MAX;
   for (size_t j = 0; j < num_tokens; j += 2)
@@ -2049,6 +2071,13 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
           else if (strcmp (tokens[j + 1], "local") == 0)
             {
               kind = POCL_ARG_TYPE_POINTER;
+            }
+          /* kernel,test22,arg,size,argOrdinal,3,offset,20,argKind,pod_pushconstant,argSize,4
+           */
+          else if (strcmp (tokens[j + 1], "pod_pushconstant") == 0)
+            {
+              kind = POCL_ARG_TYPE_NONE;
+              is_pushc = CL_TRUE;
             }
           else
             POCL_ABORT_UNIMPLEMENTED ("unknown arg Type\n");
@@ -2111,13 +2140,24 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
           = CL_KERNEL_ARG_ADDRESS_PRIVATE;
       assert (size > 0);
       p->arg_info[ord].type_size = size;
-      pp->pods[pp->num_pods].binding = binding;
-      pp->pods[pp->num_pods].dset = dSet;
-      pp->pods[pp->num_pods].offset = offset;
-      pp->pods[pp->num_pods].ord = ord;
-      ++pp->num_pods;
 
-      pp->num_pod_bytes += size;
+      if (is_pushc)
+        {
+          pp->pushc[pp->num_pushc].size = size;
+          pp->pushc[pp->num_pushc].offset = offset;
+          pp->pushc[pp->num_pushc].ord = ord;
+          ++pp->num_pushc;
+          pp->num_pushc_arg_bytes += size;
+        }
+      else
+        {
+          pp->pods[pp->num_pods].binding = binding;
+          pp->pods[pp->num_pods].dset = dSet;
+          pp->pods[pp->num_pods].offset = offset;
+          pp->pods[pp->num_pods].ord = ord;
+          ++pp->num_pods;
+          pp->num_pod_bytes += size;
+        }
     }
 
   /* TODO constants !!! */
@@ -2125,6 +2165,58 @@ parse_arg_line (pocl_kernel_metadata_t *p, pocl_vulkan_kernel_data_t *pp,
   ++p->num_args;
   assert (p->num_args < MAX_ARGS);
   return 0;
+}
+
+void
+parse_goffs_pushc_line (pocl_kernel_metadata_t *p,
+                        pocl_vulkan_kernel_data_t *pp, char *line,
+                        unsigned *goffs_pushc_offset,
+                        unsigned *goffs_pushc_size)
+{
+  char delim[2] = { ',', 0x0 };
+
+  char *token = strtok (line, delim);
+  char *tokens[32];
+  unsigned num_tokens = 0;
+  while (num_tokens < 32 && token != NULL)
+    {
+      tokens[num_tokens] = strdup (token);
+      num_tokens++;
+      token = strtok (NULL, delim);
+    }
+  token = NULL;
+
+  char *const_name = NULL;
+  unsigned offset = UINT32_MAX;
+  unsigned size = UINT32_MAX;
+  for (size_t j = 1; j < num_tokens; j += 2)
+    {
+      if (strcmp (tokens[j], "name") == 0)
+        {
+          assert (strcmp (tokens[j + 1], "global_offset") == 0);
+          continue;
+        }
+      if (strcmp (tokens[j], "offset") == 0)
+        {
+          errno = 0;
+          offset = strtol (tokens[j + 1], NULL, 10);
+          assert (errno == 0);
+          continue;
+        }
+      if (strcmp (tokens[j], "size") == 0)
+        {
+          errno = 0;
+          size = strtol (tokens[j + 1], NULL, 10);
+          assert (errno == 0);
+          continue;
+        }
+    }
+
+  for (size_t i = 0; i < num_tokens; ++i)
+    free (tokens[i]);
+
+  *goffs_pushc_offset = offset;
+  *goffs_pushc_size = size;
 }
 
 static int
@@ -2156,10 +2248,14 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
   pocl_kernel_metadata_t *p = NULL;
   vulkan_program_data->num_kernels = 0;
   pocl_vulkan_kernel_data_t *current_kernel_metadata = NULL;
+  int has_wg_spec_const = 0;
+  int has_goffs_pushc = 0;
+  unsigned go_pushc_offset = 0;
+  unsigned go_pushc_size = 0;
 
   for (size_t i = 0; i < num_lines; ++i)
     {
-      if (strncmp (lines[i], "kernel_decl,", 12) == 0)
+      if (memcmp (lines[i], "kernel_decl,", 12) == 0)
         {
           p = &kernel_meta_array[vulkan_program_data->num_kernels];
           parse_new_kernel (p, lines[i]);
@@ -2170,22 +2266,56 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
                      current_kernel_metadata);
           current_kernel_metadata->name = strdup (p->name);
           ++vulkan_program_data->num_kernels;
+          continue;
         }
-      if (strncmp (lines[i], "kernel,", 7) == 0)
+      if (memcmp (lines[i], "kernel,", 7) == 0)
         {
           assert (p != NULL);
           assert (current_kernel_metadata != NULL);
           parse_arg_line (p, current_kernel_metadata, lines[i]);
+          continue;
+        }
+      if (memcmp (lines[i], "spec_constant", 12) == 0)
+        {
+          if (strstr (lines[i], "workgroup_size") != NULL)
+            has_wg_spec_const++;
+          continue;
+        }
+      if (memcmp (lines[i], "pushconstant", 12) == 0)
+        {
+          has_goffs_pushc++;
+          parse_goffs_pushc_line (p, current_kernel_metadata, lines[i],
+                                  &go_pushc_offset, &go_pushc_size);
+          continue;
         }
     }
 
   for (size_t i = 0; i < num_lines; ++i)
     free (lines[i]);
 
-  vulkan_program_data->kernel_meta = calloc (vulkan_program_data->num_kernels,
-                                             sizeof (pocl_kernel_metadata_t));
-  memcpy (vulkan_program_data->kernel_meta, kernel_meta_array,
-          sizeof (pocl_kernel_metadata_t) * vulkan_program_data->num_kernels);
+  if (vulkan_program_data->num_kernels > 0)
+    {
+      // should have 3 spec constants for local WG sizes
+      assert (has_wg_spec_const == 3);
+
+      if (go_pushc_size > 0)
+        assert (go_pushc_size == 12); // (3 * uint32) for global offsets
+
+      pocl_vulkan_kernel_data_t *el = NULL;
+      DL_FOREACH (vulkan_program_data->vk_kernel_meta_list, el)
+      {
+        el->goffset_pushc_offset = go_pushc_offset;
+        el->goffset_pushc_size = go_pushc_size;
+      }
+
+      vulkan_program_data->kernel_meta = calloc (
+          vulkan_program_data->num_kernels, sizeof (pocl_kernel_metadata_t));
+      memcpy (vulkan_program_data->kernel_meta, kernel_meta_array,
+              sizeof (pocl_kernel_metadata_t)
+                  * vulkan_program_data->num_kernels);
+    }
+  else
+    POCL_MSG_WARN ("vulkan compilation: zero kernels found\n");
 
   return 0;
 }
@@ -2933,8 +3063,8 @@ pocl_vulkan_setup_kernel_arguments (
     _cl_command_run *co, VkShaderModule *compute_shader, VkDescriptorSet *ds,
     VkDescriptorSet *const_ds, VkDescriptorSetLayout *dsl,
     VkDescriptorSetLayout *const_dsl, VkSpecializationInfo *spec_info,
-    uint32_t *spec_data, VkSpecializationMapEntry *entries,
-    VkDescriptorSetLayoutBinding *bindings,
+    uint32_t *spec_data, VkPushConstantRange *pushc_range, char *pushc_data,
+    VkSpecializationMapEntry *entries, VkDescriptorSetLayoutBinding *bindings,
     VkDescriptorBufferInfo *descriptor_buffer_info,
     VkDescriptorSetLayoutBinding *const_binding,
     VkDescriptorBufferInfo *const_descriptor_buffer_info)
@@ -2997,13 +3127,40 @@ pocl_vulkan_setup_kernel_arguments (
   uint32_t spec_offset = 12;
 
   uint64_t pod_offset = 0;
-  uint64_t pod_entries = 0;
+  uint32_t pod_entries = 0;
+
+  uint32_t pushc_entries = 0;
+  // size including goffset and all variables
+  uint32_t pushc_total_size = 0;
 
   uint32_t locals = 0;
-  uint32_t pods = 0;
   uint32_t bufs = 0;
 
   unsigned current = 0;
+
+  if (kdata->goffset_pushc_size > 0)
+    {
+      POCL_MSG_PRINT_VULKAN ("GOFFS X %zu Y %zu Z %zu \n", co->pc.global_offset[0],
+                             co->pc.global_offset[1], co->pc.global_offset[2]);
+
+      char *start = pushc_data + kdata->goffset_pushc_offset;
+      uint32_t tmp = (uint32_t)co->pc.global_offset[0];
+      memcpy (start, &tmp, sizeof (uint32_t));
+      tmp = (uint32_t)co->pc.global_offset[1];
+      memcpy (start + 4, &tmp, sizeof (uint32_t));
+      tmp = (uint32_t)co->pc.global_offset[2];
+      memcpy (start + 8, &tmp, sizeof (uint32_t));
+      pushc_total_size = 12;
+    }
+  else
+    {
+      if (co->pc.global_offset[0] > 0 || co->pc.global_offset[1] > 0
+          || co->pc.global_offset[2] > 0)
+        POCL_MSG_ERR ("The kernel %s was compiled without global offset "
+                      "support, but the NDRange command has non-zero "
+                      "offsets\n",
+                      kdata->name);
+    }
 
   /****************************************************************************************/
 
@@ -3161,8 +3318,8 @@ pocl_vulkan_setup_kernel_arguments (
           POCL_MSG_PRINT_VULKAN ("setting LOCAL argument %i TO"
                                  "SIZE %zu ELEMS: %u\n; ",
                                   i, pa[i].size, elems);
-          assert (kdata->locals[locals].spec_id == spec_entries);
-          entries[spec_entries].constantID = spec_entries;
+          uint32_t spec_id = kdata->locals[locals].spec_id;
+          entries[spec_entries].constantID = spec_id;
           entries[spec_entries].offset = spec_offset;
           entries[spec_entries].size = 4;
           spec_data[spec_entries] = elems;
@@ -3249,16 +3406,34 @@ pocl_vulkan_setup_kernel_arguments (
           assert (pa[i].size > 0);
           assert (pa[i].size == kernel->meta->arg_info[i].type_size);
 
-          assert (kdata->pods[pods].dset == 0);
-          assert (kdata->pods[pods].ord == i);
-          assert (kdata->pods[pods].offset == pod_offset);
+          if (kdata->num_pushc_arg_bytes > 0)
+            {
+              assert (kdata->pushc[pushc_entries].size == pa[i].size);
+              assert (kdata->pushc[pushc_entries].ord == i);
+              uint32_t offs = kdata->pushc[pushc_entries].offset;
 
-          memcpy (kernarg_pod_ptr + pod_offset, pa[i].value, pa[i].size);
-          pod_offset += pa[i].size;
-          ++pod_entries;
-          ++pods;
+              memcpy (pushc_data + offs, pa[i].value, pa[i].size);
+              if (offs + pa[i].size > pushc_total_size)
+                pushc_total_size = offs + pa[i].size;
+
+              ++pushc_entries;
+            }
+          else
+            {
+              assert (kdata->pods[pod_entries].dset == 0);
+              assert (kdata->pods[pod_entries].ord == i);
+              assert (kdata->pods[pod_entries].offset == pod_offset);
+
+              memcpy (kernarg_pod_ptr + pod_offset, pa[i].value, pa[i].size);
+              pod_offset += pa[i].size;
+              ++pod_entries;
+            }
         }
     }
+
+  pushc_range->offset = 0;
+  pushc_range->size = pushc_total_size;
+  pushc_range->stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
   if (kdata->num_pods > 0)
     {
@@ -3440,12 +3615,15 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   VkPipelineLayout pipeline_layout;
   VkPipeline pipeline;
   VkShaderModule compute_shader = NULL;
+  VkPushConstantRange pushc_range;
+  char pushc_data[d->max_pushc_size];
 
   pocl_vulkan_setup_kernel_arguments (
       d, cmd->device, cmd->program_device_i, co, &compute_shader,
       descriptor_sets, descriptor_sets + 1, descriptor_set_layouts,
-      descriptor_set_layouts + 1, &specInfo, spec_data, entries, bindings,
-      descriptor_buffer_info, &const_binding, &const_descriptor_buffer_info);
+      descriptor_set_layouts + 1, &specInfo, spec_data, &pushc_range,
+      pushc_data, entries, bindings, descriptor_buffer_info, &const_binding,
+      &const_descriptor_buffer_info);
 
   VkPipelineShaderStageCreateInfo shader_stage_info;
   shader_stage_info.sType
@@ -3462,8 +3640,16 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
       = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   pipeline_layout_create_info.pNext = NULL;
   pipeline_layout_create_info.flags = 0;
-  pipeline_layout_create_info.pPushConstantRanges = 0;
-  pipeline_layout_create_info.pushConstantRangeCount = 0;
+  if (pushc_range.size > 0)
+    {
+      pipeline_layout_create_info.pPushConstantRanges = &pushc_range;
+      pipeline_layout_create_info.pushConstantRangeCount = 1;
+    }
+  else
+    {
+      pipeline_layout_create_info.pPushConstantRanges = 0;
+      pipeline_layout_create_info.pushConstantRangeCount = 0;
+    }
   if (descriptor_sets[1])
     pipeline_layout_create_info.setLayoutCount = 2;
   else
@@ -3502,6 +3688,11 @@ pocl_vulkan_run (void *data, _cl_command_node *cmd)
   vkCmdBindDescriptorSets (cb, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout,
                            0, ((descriptor_sets[1] ? 2 : 1)), descriptor_sets,
                            0, NULL);
+
+  // upload the arg data to the GPU via push constants
+  if (pushc_range.size > 0)
+    vkCmdPushConstants (cb, pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0,
+                        pushc_range.size, pushc_data);
 
   vkCmdDispatch (cb, (uint32_t)wg_x, (uint32_t)wg_y, (uint32_t)wg_z);
   VULKAN_CHECK (vkEndCommandBuffer (cb)); /* end recording commands. */
