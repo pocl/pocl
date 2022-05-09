@@ -23,7 +23,27 @@
 #
 #=============================================================================
 
+set(BASIC_SOURCES "basic.h"
+                  "basic.c"
+                  )
+
+set(ONEDNN 1)
+
+if(ONEDNN)
+  add_compile_options(-I/opt/intel/oneapi/dnnl/2022.1.0/cpu_gomp/include/)
+  set(BASIC_SOURCES ${BASIC_SOURCES}
+                      "dnn_cpu_ref.h"
+                      "dnn_cpu_ref.c"
+                      "pocl_onednn.h"
+                      "pocl_onednn.c"
+                      )
+endif(ONEDNN)
+
 if(MSVC)
-  set_source_files_properties( basic.h basic.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( ${BASIC_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_pocl_device_library("pocl-devices-basic" basic.h basic.c)
+add_pocl_device_library("pocl-devices-basic" ${BASIC_SOURCES})
+
+if(ONEDNN)
+  target_link_libraries(pocl-devices-basic PRIVATE "/opt/intel/oneapi/dnnl/2022.1.0/cpu_gomp/lib/libdnnl.so")
+endif(ONEDNN)
