@@ -82,6 +82,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <vulkan/vulkan.h>
 
@@ -2811,8 +2812,6 @@ pocl_vulkan_wait_event (cl_device_id device, cl_event event)
 
 /****************************************************************************************/
 
-#define POCL_VK_FENCE_TIMEOUT (60ULL * 1000ULL * 1000ULL * 1000ULL)
-
 static void submit_CB (pocl_vulkan_device_data_t *d, VkCommandBuffer *cmdbuf_p)
 {
   VkFence fence;
@@ -2825,7 +2824,18 @@ static void submit_CB (pocl_vulkan_device_data_t *d, VkCommandBuffer *cmdbuf_p)
   d->submit_info.pCommandBuffers = cmdbuf_p;
   VULKAN_CHECK (vkQueueSubmit (d->compute_queue, 1, &d->submit_info, fence));
 
-  VULKAN_CHECK (vkWaitForFences (d->device, 1, &fence, VK_TRUE, POCL_VK_FENCE_TIMEOUT));
+  VkResult res = vkWaitForFences (d->device, 1, &fence, VK_TRUE, 1000000000U);
+  if (res == VK_TIMEOUT)
+    {
+      while (res == VK_TIMEOUT)
+        {
+          res = vkWaitForFences (d->device, 1, &fence, VK_TRUE, 0U);
+          if (res == VK_TIMEOUT)
+            usleep(5000);
+        }
+    }
+  VULKAN_CHECK (res);
+
   vkDestroyFence (d->device, fence, NULL);
 }
 
