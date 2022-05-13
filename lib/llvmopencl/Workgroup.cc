@@ -1472,7 +1472,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
 #ifdef LLVM_OLDER_THAN_14_0
   LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
 #else
-  LLVMTypeRef FnTy = LLVMGetCalledFunctionType(F);
+  LLVMTypeRef FnTy = wrap(Func->getFunctionType());
   LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, F, Args, ArgCount, "");
 #endif
   LLVMBuildRetVoid(Builder);
