@@ -1,5 +1,5 @@
-1.9 Unreleased
-==============
+3.0 May
+=======
 
 Notable User Facing Changes
 ---------------------------
@@ -13,13 +13,14 @@ Notable User Facing Changes
      OpenCL 3.0; the CTS should also work with devices that report 1.2
    * For the list of supported features & more details,
      see doc/sphinx/source/conformance.rst
+- Support for Clang/LLVM 14.0
 - Text tracing improved - a few new command types traced,
   event dependencies are now also recorded
 - There are now two scripts, which let the user parse & convert the
   outputs of LTTNG and Text tracer into a JSON format, suitable
   for loading into Chromium's trace visualizer (chrome://tracing)
-- Support for generating specialized work-group functions to the PoCL
-  kernel program binaries.
+- Support for generating specialized work-group functions and include them
+  in the PoCL kernel program binaries.
 - SPIR-V input: printf fixed
 
 Notable Bug Fixes
