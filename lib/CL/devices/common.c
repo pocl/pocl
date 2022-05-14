@@ -1697,7 +1697,8 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
 }
 
 static const cl_name_version OPENCL_EXTENSIONS[]
-    = { { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
+    = { { CL_MAKE_VERSION (1, 0, 0), "cl_ext_relaxed_printf_address_space" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },

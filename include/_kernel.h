@@ -220,6 +220,18 @@
 
 #include "_clang_opencl.h"
 
+
+#ifdef cl_ext_relaxed_printf_address_space
+
+int _CL_OVERLOADABLE printf(__global const char* restrict format, ...)
+  __attribute__((format(printf, 1, 2)));
+int _CL_OVERLOADABLE printf(__local const char* restrict format, ...)
+  __attribute__((format(printf, 1, 2)));
+int _CL_OVERLOADABLE printf(__private const char* restrict format, ...)
+  __attribute__((format(printf, 1, 2)));
+
+#endif
+
 /****************************************************************************/
 
 /* GNU's libm seems to use INT_MIN here while the Clang's header uses

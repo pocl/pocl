@@ -24,9 +24,16 @@
    IN THE SOFTWARE.
 */
 
+#if PRINTF_FMT_STR_AS == SPIR_ADDRESS_SPACE_CONSTANT
+
 #include "printf_base.h"
 
 #include <stdarg.h>
+
+/* The default printf with the constant AS fmt string shall not be mangled. */
+
+#define PRINTF_FUNC_NAME printf
+#define PRINTF_OVERLOAD
 
 #define OCL_C_AS
 
@@ -165,8 +172,12 @@ DEFINE_PRINT_FLOATS (double)
 
 #define ERROR_UNKNOWN_CONVERSION_SPECIFIER 0x33
 
-int
-__pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
+/* #if PRINTF_FMT_STR_AS == SPIR_ADDRESS_SPACE_CONSTANT */
+#endif
+
+int PRINTF_OVERLOAD
+__pocl_printf_format_full (const __attribute__((address_space(PRINTF_FMT_STR_AS)))
+			   char *restrict format,
                            param_t *p, va_list ap)
 {
   DEBUG_PRINTF (("[printf:format=%s]\n", format));
@@ -684,10 +695,11 @@ error:;
 /* This is the actual printf function that will be used,
  * after the external (buffer) variables are handled in a LLVM pass. */
 
-int
+int PRINTF_OVERLOAD
 __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
                uint32_t __buffer_capacity,
-               const PRINTF_FMT_STR_AS char *restrict fmt, ...)
+               const __attribute__((address_space(PRINTF_FMT_STR_AS))) char *restrict fmt,
+	       ...)
 {
   param_t p = { 0 };
 
@@ -716,8 +728,9 @@ extern uint32_t _printf_buffer_capacity;
  * both __pocl_printf and __pocl_printf_format_simple must be referenced
  * here, so that the kernel library linker pulls them in. */
 
-int
-printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
+int PRINTF_FUNC_NAME
+(const __attribute__((address_space(PRINTF_FMT_STR_AS))) char *restrict fmt,
+	...)
 {
   param_t p = { 0 };
 
@@ -731,10 +744,54 @@ printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
   va_end (va);
 
   __pocl_printf (_printf_buffer, _printf_buffer_position,
-                 _printf_buffer_capacity, NULL);
+                 _printf_buffer_capacity, fmt);
 
   *_printf_buffer_position = p.printf_buffer_index;
   return r;
 }
 
 /**************************************************************************/
+
+#ifdef cl_ext_relaxed_printf_address_space
+
+/* Generate overloads for the other address spaces. */
+
+#if PRINTF_FMT_STR_AS == SPIR_ADDRESS_SPACE_CONSTANT
+
+#undef PRINTF_OVERLOAD
+#define PRINTF_OVERLOAD _CL_OVERLOADABLE
+
+#undef PRINTF_FMT_STR_AS
+#define PRINTF_FMT_STR_AS SPIR_ADDRESS_SPACE_GLOBAL
+
+/* Is there a cleaner way to force the OpenCL C mangling? */
+#undef PRINTF_FUNC_NAME
+#define PRINTF_FUNC_NAME _Z6printfPU8CLglobalKcz
+
+#include "printf.c"
+
+#elif PRINTF_FMT_STR_AS == SPIR_ADDRESS_SPACE_GLOBAL
+
+#undef PRINTF_FMT_STR_AS
+#define PRINTF_FMT_STR_AS SPIR_ADDRESS_SPACE_LOCAL
+
+#undef PRINTF_FUNC_NAME
+#define PRINTF_FUNC_NAME _Z6printfPU7CLlocalKcz
+
+#include "printf.c"
+
+#elif PRINTF_FMT_STR_AS == SPIR_ADDRESS_SPACE_LOCAL
+
+#undef PRINTF_FMT_STR_AS
+#define PRINTF_FMT_STR_AS SPIR_ADDRESS_SPACE_PRIVATE
+
+#undef PRINTF_FUNC_NAME
+#define PRINTF_FUNC_NAME _Z6printfPU9CLprivateKcz
+
+#include "printf.c"
+
+#endif
+
+#endif
+
+
