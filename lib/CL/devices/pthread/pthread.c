@@ -148,6 +148,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
   device->extensions = HOST_DEVICE_EXTENSIONS;
+  static const char *dev_aux_funcs[] = { "__pocl_flush_printf_buffer", NULL };
+  device->device_aux_functions = dev_aux_funcs;
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;

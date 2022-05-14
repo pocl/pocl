@@ -463,6 +463,8 @@ static bool callsPrintf(Function *F) {
         return true;
       if (callee->getName().equals("__pocl_printf"))
         return true;
+      if (callee->getName().equals("__pocl_flush_printf"))
+        return true;
       if (callsPrintf(callee))
         return true;
     }
@@ -516,10 +518,12 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
   return NewF;
 }
 
-// Recursively replace _cl_printf calls with _pocl_printf calls, while
-// propagating the required pocl_context->printf_buffer arguments.
+// Recursively replace _cl_printf calls with _pocl_printf calls,
+// and __pocl_flush_printf with __pocl_flush_printf_buffer calls
+// while propagating the required pocl_context->printf_buffer arguments.
 static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
-                               Function *poclPrintf, Module &M, Function *L,
+                               Function *poclPrintf, Function *poclFlushPrintf,
+                               Module &M, Function *L,
                                FunctionMapping &printfCache) {
 
   // If none of the kernels use printf(), it will not be linked into the
@@ -558,7 +562,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName().equals("printf")) {
+      if (oldF->getName().equals("printf") ||
+          oldF->getName().equals("__pocl_flush_printf")) {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);
@@ -582,8 +587,10 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
           ops.push_back(Operand);
         }
 
-        CallInst *NewCI = CallInst::Create(poclPrintf, ops);
-        NewCI->setCallingConv(poclPrintf->getCallingConv());
+        Function *F =
+            oldF->getName().equals("printf") ? poclPrintf : poclFlushPrintf;
+        CallInst *NewCI = CallInst::Create(F, ops);
+        NewCI->setCallingConv(F->getCallingConv());
 #ifdef LLVM_OLDER_THAN_11_0
         CallSite CS(CallInstr);
         NewCI->setTailCall(CS.isTailCall());
@@ -635,8 +642,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       needsPrintf = callsPrintf(oldF);
       if (needsPrintf) {
         newF = cloneFunctionWithPrintfArgs(pb, pbp, pbc, oldF, &M);
-        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintf, M,
-                           newF, printfCache);
+        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintf,
+                           poclFlushPrintf, M, newF, printfCache);
 
         printfCache.insert(
             std::pair<llvm::Function *, llvm::Function *>(oldF, newF));
@@ -796,7 +803,12 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   if (DeviceSidePrintf) {
     Function *poclPrintf = M->getFunction("__pocl_printf");
-    replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, *M, L, printfCache);
+    Function *poclFlushPrintf = M->getFunction("__pocl_flush_printf_buffer");
+    if (poclFlushPrintf == nullptr) {
+      M->dump();
+    }
+    replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, poclFlushPrintf, *M, L,
+                       printfCache);
   }
 
   L->setSubprogram(F->getSubprogram());
