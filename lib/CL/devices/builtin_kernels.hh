@@ -18,12 +18,18 @@ enum BuiltinKernelId : uint16_t
 struct BIArg : public pocl_argument_info
 {
   BIArg (const char *TypeName, const char *Name, pocl_argument_type Type,
-         cl_kernel_arg_address_qualifier AQ)
+         cl_kernel_arg_address_qualifier ADQ = CL_KERNEL_ARG_ADDRESS_GLOBAL,
+         cl_kernel_arg_access_qualifier ACQ = CL_KERNEL_ARG_ACCESS_NONE,
+         cl_kernel_arg_type_qualifier TQ = CL_KERNEL_ARG_TYPE_NONE,
+         size_t size = 0)
   {
-    type = Type;
-    address_qualifier = AQ;
-    type_name = strdup (TypeName);
     name = strdup (Name);
+    address_qualifier = ADQ;
+    access_qualifier = ACQ;
+    type_qualifier = TQ;
+    type_name = strdup (TypeName);
+    type_size = size;
+    type = Type;
   }
 
   ~BIArg ()

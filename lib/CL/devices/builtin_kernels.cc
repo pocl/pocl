@@ -21,23 +21,23 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
 }
 
 // Shortcut handles to make the descriptor list more compact.
-#define PTR_ARG POCL_ARG_TYPE_POINTER
-#define GLOBAL_AS CL_KERNEL_ARG_ADDRESS_GLOBAL
+#define READ_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_CONST
+#define WRITE_BUF POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
 
 BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
-                             {BIArg("char*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("char*", "output", PTR_ARG, GLOBAL_AS)}),
+                             {BIArg("char*", "input", READ_BUF),
+                              BIArg("char*", "output", WRITE_BUF)}),
                         BIKD(POCL_CDBI_ADD32, "pocl.add32",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)}),
+                             {BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "output", WRITE_BUF)}),
                         BIKD(POCL_CDBI_MUL32, "pocl.mul32",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)}),
+                             {BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "output", WRITE_BUF)}),
                         BIKD(POCL_CDBI_LEDBLINK, "pocl.ledblink",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS)}),
+                             {BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "input", READ_BUF)}),
                         BIKD(POCL_CDBI_COUNTRED, "pocl.countred",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)})};
+                             {BIArg("int*", "input", READ_BUF),
+                              BIArg("int*", "output", WRITE_BUF)})};
