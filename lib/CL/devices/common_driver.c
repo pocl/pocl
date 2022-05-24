@@ -35,8 +35,8 @@
 // for pocl_aligned_malloc
 #include "pocl_util.h"
 
-int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
-                                unsigned program_device_i);
+int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
+                                 unsigned program_device_i);
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"

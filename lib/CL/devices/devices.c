@@ -46,11 +46,11 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
+#include "pocl_export.h"
 #include "pocl_runtime_config.h"
 #include "pocl_shared.h"
 #include "pocl_tracing.h"
 #include "pocl_util.h"
-#include "pocl_export.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"

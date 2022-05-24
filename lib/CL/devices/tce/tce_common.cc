@@ -32,11 +32,11 @@
 #include "tce_common.h"
 #include "utlist.h"
 
-#include "pocl_runtime_config.h"
-#include "pocl_hash.h"
-#include "pocl_cache.h"
 #include "builtin_kernels.hh"
 #include "common_driver.h"
+#include "pocl_cache.h"
+#include "pocl_hash.h"
+#include "pocl_runtime_config.h"
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -460,7 +460,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   if (!Device)
     Device = Command->device;
 
-  char* Save;
+  char *Save;
   sanitize_builtin_kernel_name(Kernel, &Save);
 
   POCL_LOCK(Dev->tce_compile_lock);
@@ -472,7 +472,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     POCL_MSG_PRINT_GENERAL("TCE: pocl_llvm_generate_workgroup_function()"
                            " failed for kernel %s\n",
                            Kernel->name);
-    POCL_ABORT ("TCE compilation error\n");
+    POCL_ABORT("TCE compilation error\n");
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
@@ -519,33 +519,30 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   POCL_UNLOCK(Dev->tce_compile_lock);
 }
 
-int pocl_tce_build_builtin(cl_program program, cl_uint device_i)
-{
+int pocl_tce_build_builtin(cl_program program, cl_uint device_i) {
   int err;
 
-  POCL_MSG_PRINT_TCE ("preparing OPENCL builtin kernels\n");
+  POCL_MSG_PRINT_TCE("preparing OPENCL builtin kernels\n");
   cl_device_id dev = program->devices[device_i];
 
-  assert (program->build_status == CL_BUILD_NONE);
+  assert(program->build_status == CL_BUILD_NONE);
 
   uint64_t builtins_file_len = 0;
-  char* builtins_file = NULL;
-  if (pocl_read_file(SRCDIR "/lib/CL/devices/tce/builtins.cl",
-                     &builtins_file, &builtins_file_len) < 0)
-    {
-      POCL_MSG_ERR ("TCE: can't find opencl builtins");
-      return -1;
-    }
+  char *builtins_file = NULL;
+  if (pocl_read_file(SRCDIR "/lib/CL/devices/tce/builtins.cl", &builtins_file,
+                     &builtins_file_len) < 0) {
+    POCL_MSG_ERR("TCE: can't find opencl builtins");
+    return -1;
+  }
 
   program->source = builtins_file;
 
-  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
-  POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to build OpenCL builtins for TCE\n");
+  err = pocl_driver_build_source(program, device_i, 0, NULL, NULL, 1);
+  POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+                       "failed to build OpenCL builtins for TCE\n");
 
   return 0;
 }
-
 
 #define CHECK_AND_ALIGN_ARGBUFFER(DSIZE)                                      \
   do                                                                          \

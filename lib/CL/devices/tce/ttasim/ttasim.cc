@@ -71,8 +71,8 @@ using namespace TTAMachine;
 static void *pocl_ttasim_thread (void *p);
 
 #define TCE_BUILTIN_KERNELS 4
-static const char* TCEBuiltinKernels[TCE_BUILTIN_KERNELS] = {
-  "pocl.mul.i32", "pocl.add.i32", "pocl.copy.i8", "pocl.abs.f32" };
+static const char *TCEBuiltinKernels[TCE_BUILTIN_KERNELS] = {
+    "pocl.mul.i32", "pocl.add.i32", "pocl.copy.i8", "pocl.abs.f32"};
 
 void
 pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
@@ -664,14 +664,13 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 
   dev->num_builtin_kernels = TCE_BUILTIN_KERNELS;
   // TODO refactor to pocl_util
-  dev->builtin_kernel_list = (char*)malloc(1024);
+  dev->builtin_kernel_list = (char *)malloc(1024);
   dev->builtin_kernel_list[0] = 0;
-  for (unsigned i = 0; i < TCE_BUILTIN_KERNELS; ++i)
-     {
-       if (i>0)
-         strcat(dev->builtin_kernel_list, ";");
-       strcat(dev->builtin_kernel_list, TCEBuiltinKernels[i]);
-     }
+  for (unsigned i = 0; i < TCE_BUILTIN_KERNELS; ++i) {
+    if (i > 0)
+      strcat(dev->builtin_kernel_list, ";");
+    strcat(dev->builtin_kernel_list, TCEBuiltinKernels[i]);
+  }
 
   dev->available = CL_TRUE;
 #ifdef ENABLE_LLVM

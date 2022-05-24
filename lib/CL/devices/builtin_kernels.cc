@@ -1,76 +1,87 @@
 
-#include <vector>
-#include <string>
 #include <algorithm>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
 #include "builtin_kernels.hh"
 
 // Shortcut handles to make the descriptor list more compact.
-#define READ_BUF   POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_CONST | CL_KERNEL_ARG_TYPE_RESTRICT
-#define WRITE_BUF  POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_RESTRICT
-#define POD_ARG    POCL_ARG_TYPE_NONE,   CL_KERNEL_ARG_ADDRESS_PRIVATE, CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
-#define POD_ARG_32b  POD_ARG , 4
+#define READ_BUF                                                               \
+  POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL,                         \
+      CL_KERNEL_ARG_ACCESS_NONE,                                               \
+      CL_KERNEL_ARG_TYPE_CONST | CL_KERNEL_ARG_TYPE_RESTRICT
+#define WRITE_BUF                                                              \
+  POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL,                         \
+      CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_RESTRICT
+#define POD_ARG                                                                \
+  POCL_ARG_TYPE_NONE, CL_KERNEL_ARG_ADDRESS_PRIVATE,                           \
+      CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
+#define POD_ARG_32b POD_ARG, 4
 
-BIKD BIDescriptors[BIKERNELS] = {BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
-                             {BIArg("char*", "input", READ_BUF),
-                              BIArg("char*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_ADD_I32, "pocl.add.i32",
-                             {BIArg("int*", "input1", READ_BUF),
-                              BIArg("int*", "input2", READ_BUF),
-                              BIArg("int*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_MUL_I32, "pocl.mul.i32",
-                             {BIArg("int*", "input1", READ_BUF),
-                              BIArg("int*", "input2", READ_BUF),
-                              BIArg("int*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_ABS_F32, "pocl.abs.f32",
-                             {BIArg("float*", "input", READ_BUF),
-                              BIArg("float*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_LEDBLINK, "pocl.ledblink",
-                             {BIArg("int*", "input1", READ_BUF),
-                              BIArg("int*", "input2", READ_BUF)}),
-                        BIKD(POCL_CDBI_COUNTRED, "pocl.countred",
-                             {BIArg("int*", "input", READ_BUF),
-                              BIArg("int*", "output", WRITE_BUF)}),
-                        BIKD(POCL_CDBI_DNN_CONV2D_INT8_RELU,
-                              "pocl.dnn.conv2d_int8_relu",
-                             {BIArg("char*", "placeholder", WRITE_BUF),
-                              BIArg("char*", "placeholder1", WRITE_BUF),
-                              BIArg("char*", "compute", WRITE_BUF),
-                              BIArg("int*", "placeholder2", WRITE_BUF),
-                              BIArg("int*", "placeholder3", WRITE_BUF),
-                              BIArg("int*", "placeholder4", WRITE_BUF),
-                              BIArg("int*", "placeholder5", WRITE_BUF),
-                              BIArg("int*", "placeholder6", WRITE_BUF),
-                              }),
-                        BIKD(POCL_CDBI_SGEMM_LOCAL_F32, "pocl.sgemm.local.f32",
-                             {BIArg("float*", "A", READ_BUF),
-                              BIArg("float*", "B", READ_BUF),
-                              BIArg("float*", "C", WRITE_BUF),
-                              BIArg("unsigned", "M", POD_ARG_32b),
-                              BIArg("unsigned", "N", POD_ARG_32b),
-                              BIArg("unsigned", "K", POD_ARG_32b),
-                              }, 2*16*16*4 // local mem size, 2 float arrays 16x16
-                              ),
-                        BIKD(POCL_CDBI_SGEMM_TENSOR_F16F16F32_SCALE, "pocl.sgemm.scale.tensor.f16f16f32",
-                             {BIArg("half*", "A", READ_BUF),
-                              BIArg("half*", "B", READ_BUF),
-                              BIArg("float*", "C", WRITE_BUF),
-                              BIArg("unsigned", "M", POD_ARG_32b),
-                              BIArg("unsigned", "N", POD_ARG_32b),
-                              BIArg("unsigned", "K", POD_ARG_32b),
-                              BIArg("float", "alpha", POD_ARG_32b),
-                              BIArg("float", "beta", POD_ARG_32b),
-                              }),
-                        BIKD(POCL_CDBI_SGEMM_TENSOR_F16F16F32, "pocl.sgemm.tensor.f16f16f32",
-                             {BIArg("half*", "A", READ_BUF),
-                              BIArg("half*", "B", READ_BUF),
-                              BIArg("float*", "C", WRITE_BUF),
-                              BIArg("unsigned", "M", POD_ARG_32b),
-                              BIArg("unsigned", "N", POD_ARG_32b),
-                              BIArg("unsigned", "K", POD_ARG_32b),
-                              }),
-                        };
+BIKD BIDescriptors[BIKERNELS] = {
+    BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
+         {BIArg("char*", "input", READ_BUF),
+          BIArg("char*", "output", WRITE_BUF)}),
+    BIKD(POCL_CDBI_ADD_I32, "pocl.add.i32",
+         {BIArg("int*", "input1", READ_BUF), BIArg("int*", "input2", READ_BUF),
+          BIArg("int*", "output", WRITE_BUF)}),
+    BIKD(POCL_CDBI_MUL_I32, "pocl.mul.i32",
+         {BIArg("int*", "input1", READ_BUF), BIArg("int*", "input2", READ_BUF),
+          BIArg("int*", "output", WRITE_BUF)}),
+    BIKD(POCL_CDBI_ABS_F32, "pocl.abs.f32",
+         {BIArg("float*", "input", READ_BUF),
+          BIArg("float*", "output", WRITE_BUF)}),
+    BIKD(
+        POCL_CDBI_LEDBLINK, "pocl.ledblink",
+        {BIArg("int*", "input1", READ_BUF), BIArg("int*", "input2", READ_BUF)}),
+    BIKD(
+        POCL_CDBI_COUNTRED, "pocl.countred",
+        {BIArg("int*", "input", READ_BUF), BIArg("int*", "output", WRITE_BUF)}),
+    BIKD(POCL_CDBI_DNN_CONV2D_INT8_RELU, "pocl.dnn.conv2d_int8_relu",
+         {
+             BIArg("char*", "placeholder", WRITE_BUF),
+             BIArg("char*", "placeholder1", WRITE_BUF),
+             BIArg("char*", "compute", WRITE_BUF),
+             BIArg("int*", "placeholder2", WRITE_BUF),
+             BIArg("int*", "placeholder3", WRITE_BUF),
+             BIArg("int*", "placeholder4", WRITE_BUF),
+             BIArg("int*", "placeholder5", WRITE_BUF),
+             BIArg("int*", "placeholder6", WRITE_BUF),
+         }),
+    BIKD(POCL_CDBI_SGEMM_LOCAL_F32, "pocl.sgemm.local.f32",
+         {
+             BIArg("float*", "A", READ_BUF),
+             BIArg("float*", "B", READ_BUF),
+             BIArg("float*", "C", WRITE_BUF),
+             BIArg("unsigned", "M", POD_ARG_32b),
+             BIArg("unsigned", "N", POD_ARG_32b),
+             BIArg("unsigned", "K", POD_ARG_32b),
+         },
+         2 * 16 * 16 * 4 // local mem size, 2 float arrays 16x16
+         ),
+    BIKD(POCL_CDBI_SGEMM_TENSOR_F16F16F32_SCALE,
+         "pocl.sgemm.scale.tensor.f16f16f32",
+         {
+             BIArg("half*", "A", READ_BUF),
+             BIArg("half*", "B", READ_BUF),
+             BIArg("float*", "C", WRITE_BUF),
+             BIArg("unsigned", "M", POD_ARG_32b),
+             BIArg("unsigned", "N", POD_ARG_32b),
+             BIArg("unsigned", "K", POD_ARG_32b),
+             BIArg("float", "alpha", POD_ARG_32b),
+             BIArg("float", "beta", POD_ARG_32b),
+         }),
+    BIKD(POCL_CDBI_SGEMM_TENSOR_F16F16F32, "pocl.sgemm.tensor.f16f16f32",
+         {
+             BIArg("half*", "A", READ_BUF),
+             BIArg("half*", "B", READ_BUF),
+             BIArg("float*", "C", WRITE_BUF),
+             BIArg("unsigned", "M", POD_ARG_32b),
+             BIArg("unsigned", "N", POD_ARG_32b),
+             BIArg("unsigned", "K", POD_ARG_32b),
+         }),
+};
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
            const std::vector<pocl_argument_info> &ArgInfos,
@@ -84,9 +95,11 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
   int i = 0;
   data = NULL;
 
-  if (local_mem_size > 0)
-    { num_locals = 1; local_sizes = new size_t[1]; local_sizes[0] = local_mem_size; }
-  else
+  if (local_mem_size > 0) {
+    num_locals = 1;
+    local_sizes = new size_t[1];
+    local_sizes[0] = local_mem_size;
+  } else
     num_locals = 0;
 
   for (auto ArgInfo : ArgInfos) {
@@ -97,15 +110,12 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
   }
 }
 
-
-
-static cl_int
-pocl_get_builtin_kernel_metadata(cl_device_id dev,
-                                 const char *kernel_name,
-                                 pocl_kernel_metadata_t *target) {
+static cl_int pocl_get_builtin_kernel_metadata(cl_device_id dev,
+                                               const char *kernel_name,
+                                               pocl_kernel_metadata_t *target) {
 
   BIKD *Desc = nullptr;
-  for (size_t i = 0; i < BIKERNELS;  ++i) {
+  for (size_t i = 0; i < BIKERNELS; ++i) {
     Desc = &BIDescriptors[i];
     if (std::string(Desc->name) == kernel_name) {
       memcpy(target, (pocl_kernel_metadata_t *)Desc,
@@ -122,15 +132,13 @@ pocl_get_builtin_kernel_metadata(cl_device_id dev,
         target->arg_info[Arg].type_name = strdup(Desc->arg_info[Arg].type_name);
         if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER ||
             target->arg_info[Arg].type == POCL_ARG_TYPE_IMAGE)
-          target->arg_info[Arg].type_size = sizeof (cl_mem);
+          target->arg_info[Arg].type_size = sizeof(cl_mem);
       }
 
       target->has_arg_metadata =
-        POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
-        POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER  |
-        POCL_HAS_KERNEL_ARG_TYPE_NAME         |
-        POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER    |
-        POCL_HAS_KERNEL_ARG_NAME;
+          POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
+          POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER | POCL_HAS_KERNEL_ARG_TYPE_NAME |
+          POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
     }
   }
   return 0;
@@ -147,46 +155,38 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
         program->num_kernels, sizeof(pocl_kernel_metadata_t));
 
     for (size_t i = 0; i < program->num_kernels; ++i) {
-      pocl_get_builtin_kernel_metadata(device,
-                                       program->builtin_kernel_names[i],
+      pocl_get_builtin_kernel_metadata(device, program->builtin_kernel_names[i],
                                        &program->kernel_meta[i]);
       program->kernel_meta[i].data =
-          (void**)calloc(program->num_devices, sizeof(void*));
+          (void **)calloc(program->num_devices, sizeof(void *));
     }
   }
 
   return 1;
 }
 
-
-int sanitize_builtin_kernel_name(cl_kernel kernel, char** saved_name)
-{
+int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
   *saved_name = nullptr;
-  if (kernel->program->num_builtin_kernels)
-    {
-      *saved_name = kernel->meta->name;
-      std::string name(kernel->name);
-      for (BIKD& BI : BIDescriptors)
-        {
-          if (name.compare(BI.name) == 0)
-            {
-              std::replace(name.begin(), name.end(), '.', '_');
-              kernel->meta->name = strdup(name.c_str());
-              kernel->name = kernel->meta->name;
-              break;
-            }
-        }
+  if (kernel->program->num_builtin_kernels) {
+    *saved_name = kernel->meta->name;
+    std::string name(kernel->name);
+    for (BIKD &BI : BIDescriptors) {
+      if (name.compare(BI.name) == 0) {
+        std::replace(name.begin(), name.end(), '.', '_');
+        kernel->meta->name = strdup(name.c_str());
+        kernel->name = kernel->meta->name;
+        break;
+      }
     }
+  }
   return 0;
 }
 
-int restore_builtin_kernel_name(cl_kernel kernel, char* saved_name)
-{
-  if (kernel->program->num_builtin_kernels)
-    {
-      std::free((void*)kernel->name);
-      kernel->meta->name = saved_name;
-      kernel->name = kernel->meta->name;
-    }
+int restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
+  if (kernel->program->num_builtin_kernels) {
+    std::free((void *)kernel->name);
+    kernel->meta->name = saved_name;
+    kernel->name = kernel->meta->name;
+  }
   return 0;
 }
