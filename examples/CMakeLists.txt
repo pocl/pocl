@@ -72,7 +72,7 @@ endif()
 
 if("${ENABLE_TESTSUITES}" MATCHES "tier1")
   list(REMOVE_ITEM ENABLE_TESTSUITES "tier1")
-  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "conformance" "CLBlast" "shoc")
+  list(APPEND ENABLE_TESTSUITES "piglit" "PyOpenCL" "conformance" "CLBlast" "shoc")
 endif()
 
 include(ExternalProject)
