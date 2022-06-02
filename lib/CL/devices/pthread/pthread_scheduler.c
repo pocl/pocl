@@ -28,6 +28,10 @@
 #endif
 
 #include <pthread.h>
+#ifdef __APPLE__
+#include "pthread_barrier.h"
+#endif
+
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
