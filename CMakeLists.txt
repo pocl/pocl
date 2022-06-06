@@ -971,10 +971,8 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 
 ######################################################################################
 
-if(APPLE)
-  find_file(OPENCL_H opencl.h PATH_SUFFIXES OpenCL CL)
-  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES OpenCL CL)
-else()
+# Apple's OpenCL headers are too old for building PoCL, always use our own
+if(NOT APPLE)
   find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
   find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
 endif()
