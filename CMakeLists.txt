@@ -886,7 +886,7 @@ else()
   endif()
 
   if (NOT OCL_ICD_FOUND)
-    find_path(OCL_ICD_INCLUDE_DIR
+    find_path(OCL_ICD_INCLUDE_DIRS
       NAMES
         ocl_icd.h
     )
@@ -894,11 +894,10 @@ else()
       NAMES
         OpenCL
     )
-    if(OCL_ICD_INCLUDE_DIR AND OCL_ICD_LIBRARIES)
+    if(OCL_ICD_INCLUDE_DIRS AND OCL_ICD_LIBRARIES)
       set(OCL_ICD_FOUND 1)
     endif()
   endif()
-
 
   if(OCL_ICD_FOUND)
 
