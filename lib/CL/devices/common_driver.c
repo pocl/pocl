@@ -657,7 +657,6 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
       && bitcode_is_triple (binary, length, device->llvm_target_triplet))
     return 1;
 
-  POCL_MSG_ERR ("Unknown binary type.\n");
   return 0;
 #else
   POCL_MSG_ERR (
