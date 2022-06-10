@@ -1,5 +1,5 @@
-3.0 June
-========
+3.0 June 2022
+=============
 
 Notable User Facing Changes
 ---------------------------
@@ -25,6 +25,7 @@ Notable User Facing Changes
 
 Notable Bug Fixes
 -----------------
+
 - Fixed poclbin for non-SPMD targets. The generic size WG function generation
   was completely broken and the breakage was hidden by the WG specialization
   recompilation, if online compiler was available.

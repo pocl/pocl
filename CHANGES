@@ -1,5 +1,5 @@
-3.0 May
-=======
+3.0 June 2022
+=============
 
 Notable User Facing Changes
 ---------------------------
@@ -25,6 +25,7 @@ Notable User Facing Changes
 
 Notable Bug Fixes
 -----------------
+
 - Fixed poclbin for non-SPMD targets. The generic size WG function generation
   was completely broken and the breakage was hidden by the WG specialization
   recompilation, if online compiler was available.
@@ -42,23 +43,18 @@ Other
   implementations. These are useful for some drivers which can't
   use SLEEF and want to avoid libm calls or simple expression
   implementations.
-
 - TCE driver significantly improved, it now uses argbuffer launcher,
   handles multithreaded user programs properly, uses the new libclc
   math library functions, and has fixed some filesystem race conditions.
   Should be able to run the TCE testsuite in parallel without random errors.
-
 - A new proxy driver that lets PoCL proxy to another OpenCL implementation.
   if a user creates a cl_context with multiple devices including one via
   the proxy driver, PoCL will automatically manage buffer memory within
   the context.
-
 - A new experimental Vulkan driver, using clspv and Vulkan API to run
   OpenCL code on Vulkan-enabled devices. To learn about the limitations,
   please read the documentation at doc/sphinx/source/vulkan.rst.
-
 - Handling whitespace chars in build options (lib/CL/pocl_build.c)
-
 - Migrated from the deprecated cl2.hpp to opencl.hpp
 
 1.8 October 2021
