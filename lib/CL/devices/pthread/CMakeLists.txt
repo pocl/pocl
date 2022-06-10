@@ -26,13 +26,11 @@
 if(MSVC)
   set_source_files_properties( pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-
-set(PTHREAD_DEVICE_SOURCES pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c)
+set(SOURCES pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c)
 if(APPLE)
-  list(APPEND PTHREAD_DEVICE_SOURCES pthread_barrier.c)
+  list(APPEND SOURCES pthread_barrier.c)
 endif(APPLE)
-add_pocl_device_library(pocl-devices-pthread ${PTHREAD_DEVICE_SOURCES})
-
+add_pocl_device_library(pocl-devices-pthread ${SOURCES})
 if(ENABLE_LOADABLE_DRIVERS)
 target_link_libraries(pocl-devices-pthread PRIVATE pocl-devices-basic ${PTHREAD_LIBRARY})
 endif()
