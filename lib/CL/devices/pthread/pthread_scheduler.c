@@ -40,6 +40,9 @@
 #include "pocl_util.h"
 #include "common.h"
 #include "pocl_mem_management.h"
+#ifdef __APPLE__
+#include "pthread_barrier.h"
+#endif
 
 static void* pocl_pthread_driver_thread (void *p);
 
