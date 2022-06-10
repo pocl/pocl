@@ -762,8 +762,8 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
       llvm::ArrayType::get(llvm::Type::getInt8Ty(Module->getContext()),
                            65536 - TotalAutoConstantSize);
   llvm::GlobalVariable *ConstantMemBase = new llvm::GlobalVariable(
-      *Module, ByteArrayType, false, llvm::GlobalValue::InternalLinkage,
-      llvm::Constant::getNullValue(ByteArrayType), "_constant_memory_region_",
+      *Module, ByteArrayType, false, llvm::GlobalValue::ExternalLinkage,
+      NULL, "_constant_memory_region_",
       NULL, llvm::GlobalValue::NotThreadLocal, 4, false);
 
   convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase);
