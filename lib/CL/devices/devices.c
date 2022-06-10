@@ -46,6 +46,7 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
+#include "pocl_export.h"
 #include "pocl_runtime_config.h"
 #include "pocl_shared.h"
 #include "pocl_tracing.h"
@@ -184,7 +185,7 @@ static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 extern pocl_lock_t pocl_runtime_config_lock;
 extern pocl_lock_t pocl_context_handling_lock;
 
-int pocl_offline_compile = 0;
+POCL_EXPORT int pocl_offline_compile = 0;
 
 // first setup
 static unsigned first_init_done = 0;

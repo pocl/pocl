@@ -136,16 +136,16 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
   * - Kernel name
     - Kernel ID
     - Function
-  * - pocl.copy
+  * - pocl.copy.i8
     - 0
     - Copies from argument 0 to argument 1 as many bytes as there are work items
-  * - pocl.add32
+  * - pocl.add.i32
     - 1
     - 32-bit element-wise addition on arrays pointed to by arguments 0 and 1,
       stored in an array pointed to by argument 3
-  * - pocl.mul32
+  * - pocl.mul.i32
     - 2
-    - As pocl.add32, but with 32-bit multiplication
+    - As pocl.add.i32, but with 32-bit multiplication
 
 This list will be expanded in the future.
 
@@ -163,7 +163,7 @@ functions it supports. To run this example manually, execute::
   POCL_DEVICES=accel POCL_ACCEL0_PARAMETERS=0x43C00000,1,2 ./accel_example
 
 The environment variables define an accelerator with base physical address of
-0x43C0_0000 that can execute pocl.add32 and pocl.mul32. When running the
+0x43C0_0000 that can execute pocl.add.i32 and pocl.mul.i32. When running the
 example, verify that the address given in the parameter matches the base address
 of the accelerator.
 

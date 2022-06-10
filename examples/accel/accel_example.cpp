@@ -54,7 +54,7 @@ main(void)
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
-        cl::Program program(context, devices, "pocl.add32;pocl.mul32");
+        cl::Program program(context, devices, "pocl.add.i32;pocl.mul.i32");
 
         // Build program
         program.build(devices);
@@ -101,17 +101,17 @@ main(void)
         cl::CommandQueue queue(context, devices[0], 0);
 
         // Create kernel object
-        cl::Kernel mul0(program, "pocl.mul32");
+        cl::Kernel mul0(program, "pocl.mul.i32");
         mul0.setArg(0, inBuffer0);
         mul0.setArg(1, inBuffer1);
         mul0.setArg(2, outBuffer0);
 
-        cl::Kernel mul1(program, "pocl.mul32");
+        cl::Kernel mul1(program, "pocl.mul.i32");
         mul1.setArg(0, inBuffer1);
         mul1.setArg(1, inBuffer2);
         mul1.setArg(2, outBuffer1);
 
-        cl::Kernel add(program, "pocl.add32");
+        cl::Kernel add(program, "pocl.add.i32");
         add.setArg(0, outBuffer0);
         add.setArg(1, outBuffer1);
         add.setArg(2, inBuffer0);
