@@ -111,6 +111,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->ops->build_binary = pocl_almaif_build_binary;
 #ifdef ENABLE_COMPILER
   dev->ops->compile_kernel = pocl_almaif_tce_compile;
+  dev->ops->init_build = pocl_tce_init_build;
 #endif
   /*
     // must be run AFTER initialize, since it changes little_endian

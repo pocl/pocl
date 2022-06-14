@@ -100,13 +100,15 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
   bool relativeAddressing = true;
   int dmem_size = 0;
   int cq_size = 0;
+  int imem_size = 0;
   const TTAMachine::Machine::AddressSpaceNavigator& nav =
     mach.addressSpaceNavigator();
   for (int i = 0; i < nav.count(); i++){
     TTAMachine::AddressSpace *as = nav.item(i);
     if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
       if (as->end() == UINT32_MAX) {
-        dmem_size = pow(2,16); //TODO magic number from almaifintegrator.cc (this one is from aamudsp)
+        dmem_size = pow(2, 12); // TODO magic number from almaifintegrator.cc
+                                // (this one is from aamudsp)
         relativeAddressing = false;
       } else {
         dmem_size = as->end() + 1;
@@ -120,10 +122,13 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
     }
     else if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
       hasPrivateMem = true;
+    } else if (as->name() == "instructions") {
+
+      imem_size = (as->end() + 1) * as->width();
     }
   }
 
-  int segment_size = dmem_size;
+  int segment_size = dmem_size > imem_size ? dmem_size : imem_size;
 
   int dmem_start, cq_start;
   if (relativeAddressing) {
@@ -149,7 +154,6 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
   }
 
   int imem_start = 0; 
-  int imem_size = 0;
 
   if (!relativeAddressing) {
     unsigned default_baseaddress = 0x43C00000; //TODO get from env variable

@@ -104,7 +104,11 @@ TTASimDevice::TTASimDevice(char *adf_name) {
 
   //Doesn't exist and should not ever be accessed
   InstructionMemory = nullptr;
-  CQMemory = new TTASimRegion(cq_start, cq_size, cq_mem);
+  if ((global_as != cq_as) && !RelativeAddressing) {
+    CQMemory = new TTASimRegion(0, cq_size, cq_mem);
+  } else {
+    CQMemory = new TTASimRegion(cq_start, cq_size, cq_mem);
+  }
   DataMemory = new TTASimRegion(dmem_start, dmem_size, mem);
 
   //For built-in kernel use-case. If the firmware.tpef exists, load it in
@@ -117,6 +121,30 @@ TTASimDevice::TTASimDevice(char *adf_name) {
     POCL_MSG_PRINT_INFO("File %s not found. Skipping program initialization\n", tpef_file);
   }
 
+  if (!RelativeAddressing) {
+    if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
+      char *region_params =
+          strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION", "0,0"));
+      char *save_ptr;
+      char *param_token = strtok_r(region_params, ",", &save_ptr);
+      size_t region_address = strtoul(param_token, NULL, 0);
+      param_token = strtok_r(NULL, ",", &save_ptr);
+      size_t region_size = strtoul(param_token, NULL, 0);
+      if (region_size > 0) {
+        memory_region_t *ext_region =
+            (memory_region_t *)calloc(1, sizeof(memory_region_t));
+        assert(ext_region && "calloc for ext memory_region_t failed");
+        pocl_init_mem_region(ext_region, region_address, region_size);
+        LL_APPEND(AllocRegions, ext_region);
+
+        POCL_MSG_PRINT_INFO(
+            "Accel: initialized external alloc region at %zx with size %zx\n",
+            region_address, region_size);
+        ExternalMemory = new TTASimRegion(region_address, region_size, mem);
+      }
+      free(region_params);
+    }
+  }
 
   POCL_INIT_LOCK(lock);
   POCL_INIT_COND(simulation_start_cond);
@@ -172,8 +200,13 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
     cmd_copy.command.run.pc.local_size[2] = 0;
     pocl_cache_kernel_cachedir_path(tpef_file, kernel->program, cmd->program_device_i,
         kernel, "/parallel.tpef", &cmd_copy, 1);
-    POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
+    if (!pocl_exists(tpef_file)) {
+      pocl_cache_kernel_cachedir_path(tpef_file, kernel->program,
+                                      cmd->program_device_i, kernel,
+                                      "/parallel.tpef", &cmd_copy, 0);
+    }
   }
+  POCL_MSG_PRINT_INFO("Loading kernel from file %s\n", tpef_file);
 
   loadProgram(tpef_file);
 

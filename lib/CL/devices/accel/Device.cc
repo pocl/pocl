@@ -187,31 +187,47 @@ void Device::preread_images(const char *kernel_cachedir, almaif_kernel_data_t *k
   } else
     POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
 
-  /* dmem/pmem images which contains also struct kernel_metadata;
-   * should be already byteswapped for the device */
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_local.img",
+  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/kernel_address.txt",
            kernel_cachedir);
   if (pocl_exists(module_fn)) {
     int res = pocl_read_file(module_fn, &content, &temp);
     assert(res == 0);
     size = (size_t)temp;
-    if (size == 0)
-      POCL_MEM_FREE(content);
-    kd->dmem_img = content;
-    kd->dmem_img_size = size;
+    assert(size > 0);
 
-    uint32_t kernel_addr = 0;
-    if (size) {
-      void *p = content + size - 4;
-      uint32_t *up = (uint32_t *)p;
-      kernel_addr = *up;
-   }
-    POCL_MSG_PRINT_INFO("Kernel address (%0x) found\n", kernel_addr);
-    kd->kernel_address = kernel_addr;
+    uint32_t kernel_address = 0;
+    sscanf(content, "kernel address = %d", &kernel_address);
+    assert(kernel_address != 0);
+    kd->kernel_address = kernel_address;
     content = NULL;
   } else
     POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
 
+  /* dmem/pmem images which contains also struct kernel_metadata;
+   * should be already byteswapped for the device */
+  /*  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_local.img",
+             kernel_cachedir);
+    if (pocl_exists(module_fn)) {
+      int res = pocl_read_file(module_fn, &content, &temp);
+      assert(res == 0);
+      size = (size_t)temp;
+      if (size == 0)
+        POCL_MEM_FREE(content);
+      kd->dmem_img = content;
+      kd->dmem_img_size = size;
+
+      uint32_t kernel_addr = 0;
+      if (size) {
+        void *p = content + size - 4;
+        uint32_t *up = (uint32_t *)p;
+        kernel_addr = *up;
+     }
+      POCL_MSG_PRINT_INFO("Kernel address (%0x) found\n", kernel_addr);
+      kd->kernel_address = kernel_addr;
+      content = NULL;
+    } else
+      POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
+  */
 }
 
 void

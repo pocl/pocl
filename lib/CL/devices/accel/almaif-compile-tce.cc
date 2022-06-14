@@ -10,11 +10,15 @@
 #include <iostream>
 #include <string>
 
-#include <Machine.hh>
 #include <AddressSpace.hh>
+#include <Environment.hh>
+#include <Machine.hh>
+#include <Procedure.hh>
+#include <Program.hh>
+#include <SimpleSimulatorFrontend.hh>
 /*#include <CodeLabel.hh>
 #include <DataLabel.hh>
-#include <Environment.hh>
+
 #include <GlobalScope.hh>
 #include <Program.hh>
 */
@@ -22,6 +26,8 @@
 #include "accel-shared.h"
 #include "almaif-compile-tce.h"
 #include "almaif-compile.h"
+
+#include "TTASimDevice.h"
 
 int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   AccelData *d = (AccelData *)(device->data);
@@ -296,6 +302,14 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   char tempDir[POCL_FILENAME_LENGTH];
   strncpy(tempDir, cachedir, POCL_FILENAME_LENGTH);
 
+  TTAMachine::Machine *mach = NULL;
+  try {
+    mach = TTAMachine::Machine::loadFromADF(bd->machine_file);
+  } catch (Exception &e) {
+    POCL_MSG_WARN("Error: %s\n", e.errorMessage().c_str());
+    POCL_ABORT("Couldn't open mach\n");
+  }
+
   if (!pocl_exists(assemblyFileName)) {
     char descriptor_content[64 * 1024];
     pocl_tce_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
@@ -305,13 +319,6 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                      POCL_PARALLEL_BC_FILENAME);
 
     //int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
-    TTAMachine::Machine* mach = NULL;
-    try {
-      mach = TTAMachine::Machine::loadFromADF(bd->machine_file);
-    } catch (Exception &e) {
-      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-      POCL_ABORT("Couldn't open mach\n");
-    }
 
     bool separatePrivateMem = true;
     bool separateCQMem = true;
@@ -373,50 +380,33 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     if (error != 0)
       POCL_ABORT("Error while running tcecc.\n");
   }
-  /*
-    TTAMachine::Machine* mach = NULL;
-    try {
-      mach = TTAMachine::Machine::loadFromADF(bd->machine_file);
-    } catch (Exception &e) {
-      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-      POCL_ABORT("Couldn't open mach\n");
-    }
 
     TTAProgram::Program* prog = NULL;
     try{
       prog = TTAProgram::Program::loadFromTPEF(assemblyFileName, *mach);
     } catch (Exception &e) {
       POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-      POCL_ABORT("Couldn't open tpef after compilation\n");
+      POCL_ABORT("Couldn't open tpef %s after compilation\n", assemblyFileName);
     }
 
-    const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-    POCL_MSG_PRINT_INFO("globalcodelabelcount=%i\n",globalScope.globalCodeLabelCount());
-  // POCL_MSG_PRINT_INFO("codelabelcount=%i\n",globalScope.codeLabelCount(184));
-  // POCL_MSG_PRINT_INFO("codelabelcount=%i\n",globalScope.codeLabelCount(183));
-    for (int k = 0; k < globalScope.globalCodeLabelCount(); k++){
-      POCL_MSG_PRINT_INFO("globalCodeLabel %i:
-  %s\n",k,globalScope.globalCodeLabel(k).name().c_str());
-    }*/
-  /*
-    CodeLabelList cll = globalScope.codeLabelList
-    for (int k = 0; k < globalScope.codeLabelCount(); k++){
-      POCL_MSG_PRINT_INFO("CodeLabel %i:
-    %s\n",k,globalScope.codeLabel(k).name().c_str());
-    }
-  */
-  /* uint32_t kernel_address = 0;
-   std::string func_name = "add_workgroup_argbuffer";
-   try {
-     kernel_address = globalScope.codeLabel(func_name).address().location();
-   } catch (Exception &e) {
-     POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-     POCL_ABORT("Couldn't find the code label for
-   {kernel}_workgroup_argbuffer\n");
-   }
-   POCL_MSG_PRINT_INFO("Found kernel address=%u\n", kernel_address);
+    char wg_func_name[4 * POCL_FILENAME_LENGTH];
+    snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
+             cmd->command.run.kernel->name);
+    if (prog->hasProcedure(wg_func_name)) {
+      const TTAProgram::Procedure &proc = prog->procedure(wg_func_name);
+      int kernel_address = proc.startAddress().location();
 
- */
+      char md_path[POCL_FILENAME_LENGTH];
+      snprintf(md_path, POCL_FILENAME_LENGTH, "%s/kernel_address.txt",
+               cachedir);
+      char content[64];
+      snprintf(content, 64, "kernel address = %d", kernel_address);
+      pocl_write_file(md_path, content, strlen(content), 0, 0);
+    } else {
+      POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
+                 wg_func_name);
+    }
+
   char imem_file[POCL_FILENAME_LENGTH];
   snprintf(imem_file, POCL_FILENAME_LENGTH, "%s%s", cachedir, "/parallel.img");
 
@@ -451,6 +441,10 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
  /* error = pocl_exists(param_img);
   assert(error != 0 && "parallel_param.img does not exist!");
 */
+
+  delete mach;
+  delete prog;
+
   POCL_UNLOCK(bd->tce_compile_lock);
 }
 
@@ -491,4 +485,61 @@ int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
   }
   *output = 0;
   return 0;
+}
+
+char *pocl_tce_init_build(void *data) {
+  AccelData *D = (AccelData *)data;
+  tce_backend_data_t *bd =
+      (tce_backend_data_t *)D->compilationData->backend_data;
+  assert(bd);
+
+  TCEString mach_tmpdir = Environment::llvmtceCachePath();
+
+  // $HOME/.tce/tcecc/cache may not exist yet, create it here.
+  pocl_mkdir_p(mach_tmpdir.c_str());
+
+  TCEString mach_header_base =
+      mach_tmpdir + "/" +
+      ((TTASimDevice *)(D->Dev))->simulator_->machine().hash();
+
+  int error = 0;
+
+  std::string devextHeaderFn =
+      std::string(mach_header_base) + std::string("_opencl_devext.h");
+
+  /* Generate the vendor extensions header to provide explicit
+     access to the (custom) hardware operations. */
+  // to avoid threading issues, generate to tempfile then rename
+  if (!pocl_exists(devextHeaderFn.c_str())) {
+    char tempfile[POCL_FILENAME_LENGTH];
+    pocl_mk_tempname(tempfile, mach_tmpdir.c_str(), ".devext", NULL);
+
+    std::string tceopgenCmd = std::string("tceopgen > ") + tempfile;
+
+    POCL_MSG_PRINT_TCE("Running: %s \n", tceopgenCmd.c_str());
+
+    error = system(tceopgenCmd.c_str());
+    if (error == -1)
+      return NULL;
+
+    std::string extgenCmd = std::string("tceoclextgen ") + bd->machine_file +
+                            std::string(" >> ") + tempfile;
+
+    POCL_MSG_PRINT_TCE("Running: %s \n", extgenCmd.c_str());
+
+    error = system(extgenCmd.c_str());
+    if (error == -1)
+      return NULL;
+
+    pocl_rename(tempfile, devextHeaderFn.c_str());
+  }
+
+  // gnu-keywords needed to support the inline asm blocks
+  // -fasm doesn't work in the frontend
+  std::string includeSwitch =
+      std::string("-fgnu-keywords -Dasm=__asm__ -include ") + devextHeaderFn;
+
+  char *include_switch = strdup(includeSwitch.c_str());
+
+  return include_switch;
 }
