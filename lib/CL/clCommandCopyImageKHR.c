@@ -1,0 +1,69 @@
+/* OpenCL runtime library: clCommandCopyImageKHR()
+
+   Copyright (c) 2022 Jan Solanti / Tampere University
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
+#include <CL/cl_ext.h>
+
+#include "pocl_cl.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+POname (clCommandCopyImageKHR) (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_image, cl_mem dst_image, const size_t *src_origin,
+    const size_t *dst_origin, const size_t *region,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point,
+    cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
+{
+  cl_int errcode;
+  _cl_recorded_command *cmd = NULL;
+
+  CMDBUF_VALIDATE_COMMON_HANDLES;
+
+  errcode = pocl_validate_copy_image (src_image, dst_image);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  errcode = pocl_record_rect_copy (command_queue, CL_COMMAND_COPY_IMAGE,
+                                   src_image, CL_TRUE, dst_image, CL_FALSE,
+                                   src_origin, dst_origin, region, 0, 0, 0, 0,
+                                   num_sync_points_in_wait_list,
+                                   sync_point_wait_list, &cmd, command_buffer);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  POCL_FILL_COMMAND_COPY_IMAGE;
+
+  errcode = pocl_command_record (command_buffer, cmd, sync_point);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  return CL_SUCCESS;
+
+ERROR:
+  pocl_free_recorded_command (cmd);
+  return errcode;
+}
+POsym (clCommandCopyImageKHR)

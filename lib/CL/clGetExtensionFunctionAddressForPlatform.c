@@ -66,6 +66,53 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clCreateProgramWithILKHR") == 0)
     return (void *)&POname(clCreateProgramWithIL);
 
+  /* cl_khr_command_buffer */
+  if (strcmp (func_name, "clCreateCommandBufferKHR") == 0)
+    return (void *)&POname (clCreateCommandBufferKHR);
+
+  if (strcmp (func_name, "clRetainCommandBufferKHR") == 0)
+    return (void *)&POname (clRetainCommandBufferKHR);
+
+  if (strcmp (func_name, "clReleaseCommandBufferKHR") == 0)
+    return (void *)&POname (clReleaseCommandBufferKHR);
+
+  if (strcmp (func_name, "clFinalizeCommandBufferKHR") == 0)
+    return (void *)&POname (clFinalizeCommandBufferKHR);
+
+  if (strcmp (func_name, "clEnqueueCommandBufferKHR") == 0)
+    return (void *)&POname (clEnqueueCommandBufferKHR);
+
+  if (strcmp (func_name, "clCommandBarrierWithWaitListKHR") == 0)
+    return (void *)&POname (clCommandBarrierWithWaitListKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferRectKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferRectKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferToImageKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferToImageKHR);
+
+  if (strcmp (func_name, "clCommandCopyImageKHR") == 0)
+    return (void *)&POname (clCommandCopyImageKHR);
+
+  if (strcmp (func_name, "clCommandCopyImageToBufferKHR") == 0)
+    return (void *)&POname (clCommandCopyImageToBufferKHR);
+
+  if (strcmp (func_name, "clCommandFillBufferKHR") == 0)
+    return (void *)&POname (clCommandFillBufferKHR);
+
+  if (strcmp (func_name, "clCommandFillImageKHR") == 0)
+    return (void *)&POname (clCommandFillImageKHR);
+
+  if (strcmp (func_name, "clCommandNDRangeKernelKHR") == 0)
+    return (void *)&POname (clCommandNDRangeKernelKHR);
+
+  if (strcmp (func_name, "clGetCommandBufferInfoKHR") == 0)
+    return (void *)&POname (clGetCommandBufferInfoKHR);
+  /* end of cl_khr_command_buffer */
+
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;
 }

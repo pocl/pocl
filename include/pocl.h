@@ -153,6 +153,12 @@ typedef struct
   int force_large_grid_wg_func;
 } _cl_command_run;
 
+// clEnqueueCommandBufferKHR
+typedef struct
+{
+  cl_command_buffer_khr buffer;
+} _cl_command_replay;
+
 // clEnqueueNativeKernel
 typedef struct
 {
@@ -390,6 +396,7 @@ typedef union
 {
   _cl_command_run run;
   _cl_command_native native;
+  _cl_command_replay replay;
 
   _cl_command_read read;
   _cl_command_write write;
@@ -418,6 +425,25 @@ typedef union
   _cl_command_svm_fill svm_fill;
   _cl_command_svm_migrate svm_migrate;
 } _cl_command_t;
+
+typedef struct _cl_recorded_command _cl_recorded_command;
+struct _cl_recorded_command
+{
+  _cl_command_t command;
+  cl_command_type type;
+
+  _cl_recorded_command *next;
+  _cl_recorded_command *prev;
+
+  cl_uint queue_idx;
+
+  cl_uint num_sync_points_in_wait_list;
+  cl_sync_point_khr *sync_point_wait_list;
+
+  cl_uint memobj_count;
+  cl_mem *memobj_list;
+  char *readonly_flag_list;
+};
 
 // one item in the command queue
 typedef struct _cl_command_node _cl_command_node;

@@ -47,6 +47,7 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
+#include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
@@ -1046,6 +1047,113 @@ pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
                                    readonly_flags, 0);
 }
 
+cl_int
+pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
+                                    cl_command_queue *command_queue)
+{
+  assert (command_queue != NULL);
+  cl_command_queue q = *command_queue;
+  POCL_RETURN_ERROR_COND ((q != NULL), CL_INVALID_COMMAND_QUEUE);
+
+  if (q)
+    {
+      POCL_RETURN_ERROR_COND (
+          (command_buffer->queues[0]->context != q->context),
+          CL_INVALID_CONTEXT);
+      int queue_in_buffer = 0;
+      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+        {
+          if (q == command_buffer->queues[i])
+            queue_in_buffer = 1;
+        }
+      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);
+    }
+  else
+    q = command_buffer->queues[0];
+
+  *command_queue = q;
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_create_recorded_command (_cl_recorded_command **cmd,
+                              cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_command_type command_type,
+                              cl_uint num_sync_points_in_wait_list,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              size_t num_buffers, cl_mem *buffers,
+                              char *readonly_flags)
+{
+  cl_int errcode = pocl_check_syncpoint_wait_list (
+      command_buffer, num_sync_points_in_wait_list, sync_point_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  *cmd = (_cl_recorded_command *)calloc (1, sizeof (_cl_recorded_command));
+  _cl_recorded_command *c = *cmd;
+  POCL_RETURN_ERROR_COND ((c == NULL), CL_OUT_OF_HOST_MEMORY);
+  c->type = command_type;
+
+  c->num_sync_points_in_wait_list = num_sync_points_in_wait_list;
+  if (num_sync_points_in_wait_list > 0)
+    {
+      c->sync_point_wait_list = (cl_sync_point_khr *)malloc (
+          num_sync_points_in_wait_list * sizeof (cl_sync_point_khr));
+      POCL_RETURN_ERROR_COND ((c->sync_point_wait_list == NULL
+                               && num_sync_points_in_wait_list != 0),
+                              CL_OUT_OF_HOST_MEMORY);
+      memcpy (c->sync_point_wait_list, sync_point_wait_list,
+              num_sync_points_in_wait_list * sizeof (cl_sync_point_khr));
+    }
+
+  c->memobj_count = num_buffers;
+  if (num_buffers > 0)
+    {
+      c->memobj_list = (cl_mem *)malloc (sizeof (cl_mem) * num_buffers);
+      POCL_RETURN_ERROR_COND ((c->memobj_list == NULL), CL_OUT_OF_HOST_MEMORY);
+      memcpy (c->memobj_list, buffers, sizeof (cl_mem) * num_buffers);
+
+      c->readonly_flag_list = (char *)malloc (sizeof (char) * num_buffers);
+      POCL_RETURN_ERROR_COND ((c->readonly_flag_list == NULL),
+                              CL_OUT_OF_HOST_MEMORY);
+      memcpy (c->readonly_flag_list, readonly_flags,
+              sizeof (char) * num_buffers);
+    }
+
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_command_record (cl_command_buffer_khr command_buffer,
+                     _cl_recorded_command *cmd, cl_sync_point_khr *sync_point)
+{
+  POCL_LOCK (command_buffer->mutex);
+  if (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR)
+    {
+      POCL_UNLOCK (command_buffer->mutex);
+      return CL_INVALID_OPERATION;
+    }
+  LL_APPEND (command_buffer->cmds, cmd);
+  if (sync_point != NULL)
+    *sync_point = command_buffer->num_syncpoints;
+  command_buffer->num_syncpoints++;
+  POCL_UNLOCK (command_buffer->mutex);
+  return CL_SUCCESS;
+}
+
+void
+pocl_free_recorded_command (_cl_recorded_command *cmd)
+{
+  if (cmd)
+    {
+      POCL_MEM_FREE (cmd->sync_point_wait_list);
+      POCL_MEM_FREE (cmd->memobj_list);
+      POCL_MEM_FREE (cmd->readonly_flag_list);
+    }
+  POCL_MEM_FREE (cmd);
+}
+
 /* call with node->event UNLOCKED */
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
@@ -1194,7 +1302,7 @@ pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
   POCL_UNLOCK_OBJ (mem);
 }
 
-static void
+void
 pocl_ndrange_node_cleanup (_cl_command_node *node)
 {
   cl_uint i;
@@ -1679,6 +1787,31 @@ pocl_check_event_wait_list (cl_command_queue command_queue,
   return CL_SUCCESS;
 }
 
+int
+pocl_check_syncpoint_wait_list (cl_command_buffer_khr command_buffer,
+                                cl_uint num_sync_points_in_wait_list,
+                                const cl_sync_point_khr *sync_point_wait_list)
+{
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list > 0 && sync_point_wait_list == NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list == 0 && sync_point_wait_list != NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+
+  POCL_LOCK (command_buffer->mutex);
+  cl_uint next_syncpoint = command_buffer->num_syncpoints;
+  POCL_UNLOCK (command_buffer->mutex);
+
+  for (unsigned i = 0; i < num_sync_points_in_wait_list; ++i)
+    {
+      POCL_RETURN_ERROR_COND ((sync_point_wait_list[i] >= next_syncpoint),
+                              CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+    }
+
+  return CL_SUCCESS;
+}
+
 const char*
 pocl_status_to_str (int status)
 {
@@ -1767,6 +1900,8 @@ pocl_command_to_str (cl_command_type cmd)
       return "svm_map";
     case CL_COMMAND_SVM_UNMAP:
       return "svm_unmap";
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      return "command_buffer_khr";
     }
 
   return "unknown";

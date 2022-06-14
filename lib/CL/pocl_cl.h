@@ -63,8 +63,9 @@ typedef pthread_t pocl_thread_t;
 #  include "pocl_icd.h"
 #endif
 
-#include <CL/cl_gl.h>
 #include <CL/cl_egl.h>
+#include <CL/cl_ext.h>
+#include <CL/cl_gl.h>
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -818,6 +819,15 @@ struct pocl_device_ops {
    * the GL context described in properties. */
   cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
                                   const cl_context_properties *properties);
+
+  /* cl_khr_command_buffer extension */
+  cl_int (*create_finalized_command_buffer) (
+      cl_device_id device, cl_command_buffer_khr command_buffer);
+
+  cl_int (*free_command_buffer) (cl_device_id device,
+                                 cl_command_buffer_khr command_buffer);
+
+  cl_int (*run_command_buffer) (void *data, cl_command_buffer_khr cmd);
 };
 
 typedef struct pocl_global_mem_t {
@@ -1212,6 +1222,30 @@ struct _cl_command_queue {
 
   /* device specific data */
   void *data;
+};
+
+struct _cl_command_buffer_khr
+{
+  POCL_ICD_OBJECT;
+  POCL_OBJECT;
+
+  /* Queues that this command buffer uses */
+  cl_uint num_queues;
+  cl_command_queue *queues;
+
+  cl_uint num_properties;
+  cl_command_buffer_properties_khr *properties;
+
+  cl_command_buffer_state_khr state;
+  cl_uint pending;
+
+  cl_uint num_syncpoints;
+  _cl_recorded_command *cmds;
+  POCL_FAST_LOCK_T mutex;
+};
+
+struct _cl_mutable_command_khr
+{
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \

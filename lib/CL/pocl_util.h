@@ -110,14 +110,33 @@ cl_int pocl_create_command_migrate (_cl_command_node **cmd,
                                     cl_mem *buffers,
                                     char *readonly_flags);
 
+cl_int pocl_command_record (cl_command_buffer_khr command_buffer,
+                            _cl_recorded_command *cmd,
+                            cl_sync_point_khr *sync_point);
+
+cl_int pocl_create_recorded_command (
+    _cl_recorded_command **cmd, cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue, cl_command_type command_type,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr *sync_point_wait_list, size_t num_buffers,
+    cl_mem *buffers, char *readonly_flags);
+
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
+
+void pocl_free_recorded_command (_cl_recorded_command *cmd);
+
+cl_int
+pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
+                                    cl_command_queue *command_queue);
 
 POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
 
 POCL_EXPORT
 int pocl_release_mem_host_ptr (cl_mem mem);
+
+void pocl_ndrange_node_cleanup (_cl_command_node *node);
 
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
@@ -191,6 +210,11 @@ int pocl_device_supports_builtin_kernel (cl_device_id dev,
 int pocl_check_event_wait_list(cl_command_queue     command_queue,
                                cl_uint              num_events_in_wait_list,
                                const cl_event *     event_wait_list);
+
+int
+pocl_check_syncpoint_wait_list (cl_command_buffer_khr command_buffer,
+                                cl_uint num_sync_points_in_wait_list,
+                                const cl_sync_point_khr *sync_point_wait_list);
 
 void pocl_update_event_queued (cl_event event);
 
@@ -347,5 +371,20 @@ int pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
   size_t px = (mem->image_elem_size * mem->image_channels);                   \
   size_t i1d_origin[3] = { o[0] * px, o[1], o[2] };                           \
   size_t i1d_region[3] = { r[0] * px, r[1], r[2] };
+
+#define CMDBUF_VALIDATE_COMMON_HANDLES                                        \
+  do                                                                          \
+    {                                                                         \
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),         \
+                              CL_INVALID_COMMAND_BUFFER_KHR);                 \
+      POCL_RETURN_ERROR_COND ((command_queue != NULL),                        \
+                              CL_INVALID_COMMAND_QUEUE);                      \
+      POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);    \
+      errcode = pocl_cmdbuf_choose_recording_queue (command_buffer,           \
+                                                    &command_queue);          \
+      if (errcode != CL_SUCCESS)                                              \
+        return errcode;                                                       \
+    }                                                                         \
+  while (0)
 
 #endif

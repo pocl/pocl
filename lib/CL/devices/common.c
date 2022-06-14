@@ -712,6 +712,11 @@ pocl_exec_command (_cl_command_node *node)
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
       break;
 
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      pocl_update_event_running (event);
+      POCL_UPDATE_EVENT_COMPLETE (event);
+      break;
+
     default:
       POCL_ABORT_UNIMPLEMENTED("");
       break;
@@ -1713,7 +1718,9 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
 
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
-        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" } };
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
+
+        { CL_MAKE_VERSION (0, 9, 0), "cl_khr_command_buffer" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);

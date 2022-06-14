@@ -15,23 +15,15 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
 {
   _cl_command_node *cmd = NULL;
   cl_device_id device;
+  cl_int errcode;
   unsigned i;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  /* src_image, dst_image: Can be 1D, 2D, 3D image or a 1D, 2D image array
-   * objects allowing us to perform the following actions */
-  POCL_RETURN_ERROR_ON (
-      (IS_IMAGE1D_BUFFER (src_image) || IS_IMAGE1D_BUFFER (dst_image)),
-      CL_INVALID_MEM_OBJECT,
-      "clEnqueueCopyImage cannot be called on image 1D buffers!\n");
+  errcode = pocl_validate_copy_image (src_image, dst_image);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   POCL_CHECK_DEV_IN_CMDQ;
 
@@ -50,20 +42,7 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   if (err != CL_SUCCESS)
     return err;
 
-  cmd->command.copy_image.src_mem_id = &src_image->device_ptrs[device->global_mem_id];
-  cmd->command.copy_image.src = src_image;
-  cmd->command.copy_image.dst_mem_id = &dst_image->device_ptrs[device->global_mem_id];
-  cmd->command.copy_image.dst = dst_image;
-
-  cmd->command.copy_image.src_origin[0] = src_origin[0];
-  cmd->command.copy_image.src_origin[1] = src_origin[1];
-  cmd->command.copy_image.src_origin[2] = src_origin[2];
-  cmd->command.copy_image.dst_origin[0] = dst_origin[0];
-  cmd->command.copy_image.dst_origin[1] = dst_origin[1];
-  cmd->command.copy_image.dst_origin[2] = dst_origin[2];
-  cmd->command.copy_image.region[0] = region[0];
-  cmd->command.copy_image.region[1] = region[1];
-  cmd->command.copy_image.region[2] = region[2];
+  POCL_FILL_COMMAND_COPY_IMAGE;
 
   pocl_command_enqueue (command_queue, cmd);
 

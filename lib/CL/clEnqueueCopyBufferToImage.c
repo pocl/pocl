@@ -61,26 +61,7 @@ CL_API_SUFFIX__VERSION_1_0
                         CL_OUT_OF_RESOURCES,
                         "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
-  cl_device_id dev = command_queue->device;
-
-  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->global_mem_id];
-  cmd->command.write_image.dst = dst_image;
-
-  cmd->command.write_image.src_host_ptr = NULL;
-  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->global_mem_id];
-  cmd->command.write_image.src = src_buffer;
-
-  // TODO
-  cmd->command.write_image.src_row_pitch = 0;   // dst_image->image_row_pitch;
-  cmd->command.write_image.src_slice_pitch = 0; // dst_image->image_slice_pitch;
-  cmd->command.write_image.src_offset = src_offset;
-
-  cmd->command.write_image.origin[0] = dst_origin[0];
-  cmd->command.write_image.origin[1] = dst_origin[1];
-  cmd->command.write_image.origin[2] = dst_origin[2];
-  cmd->command.write_image.region[0] = region[0];
-  cmd->command.write_image.region[1] = region[1];
-  cmd->command.write_image.region[2] = region[2];
+  POCL_FILL_COMMAND_COPY_BUFFER_TO_IMAGE;
 
   pocl_command_enqueue (command_queue, cmd);
 
