@@ -153,6 +153,24 @@ BIKD BIDescriptors[BIKERNELS] = {
              BIArg("float", "alpha", POD_ARG_32b),
              BIArg("float", "beta", POD_ARG_32b),
          }),
+    BIKD(POCL_CDBI_OPENVX_SCALEIMAGE_NN_U8,
+         "org.khronos.openvx.scale_image.nn.u8",
+         {
+             BIArg("unsigned char*", "input", READ_BUF),
+             BIArg("unsigned char*", "output", WRITE_BUF),
+             BIArg("float", "width_scale", POD_ARG_32b),
+             BIArg("float", "height_scale", POD_ARG_32b),
+             BIArg("int", "input_width", POD_ARG_32b),
+         }),
+    BIKD(POCL_CDBI_OPENVX_SCALEIMAGE_BL_U8,
+         "org.khronos.openvx.scale_image.bl.u8",
+         {
+             BIArg("unsigned char*", "input", READ_BUF),
+             BIArg("unsigned char*", "output", WRITE_BUF),
+             BIArg("float", "width_scale", POD_ARG_32b),
+             BIArg("float", "height_scale", POD_ARG_32b),
+             BIArg("int", "input_width", POD_ARG_32b),
+         }),
 };
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
