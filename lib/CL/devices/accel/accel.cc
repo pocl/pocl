@@ -970,7 +970,7 @@ void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;
-  struct pocl_context *pc = &cmd->command.run.pc;
+  // struct pocl_context *pc = &cmd->command.run.pc;
 
   if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
     return;

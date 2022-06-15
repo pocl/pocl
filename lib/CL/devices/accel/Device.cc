@@ -203,8 +203,6 @@ void Device::preread_images(const char *kernel_cachedir, almaif_kernel_data_t *k
   } else
     POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
 
-  /* dmem/pmem images which contains also struct kernel_metadata;
-   * should be already byteswapped for the device */
   /*  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_local.img",
              kernel_cachedir);
     if (pocl_exists(module_fn)) {

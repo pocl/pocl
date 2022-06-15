@@ -222,13 +222,15 @@ static cl_int pocl_get_builtin_kernel_metadata(cl_device_id dev,
         target->arg_info[Arg].type_name = strdup(Desc->arg_info[Arg].type_name);
         if (target->arg_info[Arg].type == POCL_ARG_TYPE_POINTER ||
             target->arg_info[Arg].type == POCL_ARG_TYPE_IMAGE)
-          target->arg_info[Arg].type_size = sizeof(cl_mem);
+          target->arg_info[Arg].type_size = sizeof (cl_mem);
       }
 
       target->has_arg_metadata =
-          POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
-          POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER | POCL_HAS_KERNEL_ARG_TYPE_NAME |
-          POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER | POCL_HAS_KERNEL_ARG_NAME;
+        POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
+        POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER  |
+        POCL_HAS_KERNEL_ARG_TYPE_NAME         |
+        POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER    |
+        POCL_HAS_KERNEL_ARG_NAME;
     }
   }
   return 0;
@@ -245,38 +247,46 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
         program->num_kernels, sizeof(pocl_kernel_metadata_t));
 
     for (size_t i = 0; i < program->num_kernels; ++i) {
-      pocl_get_builtin_kernel_metadata(device, program->builtin_kernel_names[i],
+      pocl_get_builtin_kernel_metadata(device,
+                                       program->builtin_kernel_names[i],
                                        &program->kernel_meta[i]);
       program->kernel_meta[i].data =
-          (void **)calloc(program->num_devices, sizeof(void *));
+          (void**)calloc(program->num_devices, sizeof(void*));
     }
   }
 
   return 1;
 }
 
-int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
+
+int sanitize_builtin_kernel_name(cl_kernel kernel, char** saved_name)
+{
   *saved_name = nullptr;
-  if (kernel->program->num_builtin_kernels) {
-    *saved_name = kernel->meta->name;
-    std::string name(kernel->name);
-    for (BIKD &BI : BIDescriptors) {
-      if (name.compare(BI.name) == 0) {
-        std::replace(name.begin(), name.end(), '.', '_');
-        kernel->meta->name = strdup(name.c_str());
-        kernel->name = kernel->meta->name;
-        break;
-      }
+  if (kernel->program->num_builtin_kernels)
+    {
+      *saved_name = kernel->meta->name;
+      std::string name(kernel->name);
+      for (BIKD& BI : BIDescriptors)
+        {
+          if (name.compare(BI.name) == 0)
+            {
+              std::replace(name.begin(), name.end(), '.', '_');
+              kernel->meta->name = strdup(name.c_str());
+              kernel->name = kernel->meta->name;
+              break;
+            }
+        }
     }
-  }
   return 0;
 }
 
-int restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
-  if (kernel->program->num_builtin_kernels) {
-    std::free((void *)kernel->name);
-    kernel->meta->name = saved_name;
-    kernel->name = kernel->meta->name;
-  }
+int restore_builtin_kernel_name(cl_kernel kernel, char* saved_name)
+{
+  if (kernel->program->num_builtin_kernels)
+    {
+      std::free((void*)kernel->name);
+      kernel->meta->name = saved_name;
+      kernel->name = kernel->meta->name;
+    }
   return 0;
 }

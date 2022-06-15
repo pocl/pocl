@@ -1203,14 +1203,12 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   CudaBuiltinKernelsData[3].module = mod;
   CudaBuiltinKernelsData[3].module_offsets = mod; // TODO fix this
   // 3 pointers, 3 unsigned
-  static size_t sgemm_local_alignments[] = {
-    0, 0, 0, 4, 4, 4,
-  };
+  static size_t sgemm_local_alignments[] = {0, 0, 0, 4, 4, 4,};
   CudaBuiltinKernelsData[3].alignments = sgemm_local_alignments;
 
   if (have_sm70)
-    {
-      res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_tensor_f16f16f32");
+  {
+      res = cuModuleGetFunction(&ff, mod, "pocl_sgemm_tensor_f16f16f32");
       CUDA_CHECK (res, "cuModuleGetFunction  pocl_sgemm_tensor_f16f16f32");
       CudaBuiltinKernelsData[3].kernel = ff;
       CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
@@ -1232,7 +1230,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
       static size_t sgemm_tensor_scale_alignments[]
           = { 0, 0, 0, 4, 4, 4, 4, 4 };
       CudaBuiltinKernelsData[3].alignments = sgemm_tensor_scale_alignments;
-    }
+  }
   return 0;
 }
 
