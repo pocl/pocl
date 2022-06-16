@@ -22,8 +22,8 @@
 
 // SGEMM kernel requires 16
 #define SGEMM_TILE 16
-#define X 400
-#define Y 400
+#define X 16
+#define Y 16
 #define BUFSIZE (X*Y*4)
 
 #define CHECK_CL_ERROR(EXPR, ...) \
