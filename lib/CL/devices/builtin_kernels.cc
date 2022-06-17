@@ -161,6 +161,7 @@ BIKD BIDescriptors[BIKERNELS] = {
              BIArg("float", "width_scale", POD_ARG_32b),
              BIArg("float", "height_scale", POD_ARG_32b),
              BIArg("int", "input_width", POD_ARG_32b),
+             BIArg("int", "input_height", POD_ARG_32b),
          }),
     BIKD(POCL_CDBI_OPENVX_SCALEIMAGE_BL_U8,
          "org.khronos.openvx.scale_image.bl.u8",
@@ -170,6 +171,7 @@ BIKD BIDescriptors[BIKERNELS] = {
              BIArg("float", "width_scale", POD_ARG_32b),
              BIArg("float", "height_scale", POD_ARG_32b),
              BIArg("int", "input_width", POD_ARG_32b),
+             BIArg("int", "input_height", POD_ARG_32b),
          }),
 };
 

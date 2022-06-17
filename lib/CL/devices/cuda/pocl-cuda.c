@@ -54,7 +54,26 @@
 #define ENABLE_CUDNN
 #ifdef ENABLE_CUDNN
 #include <cudnn.h>
+#define CUDNN_CALL(f)                                                         \
+  {                                                                           \
+    cudnnStatus_t err = (f);                                                  \
+    if (err != CUDNN_STATUS_SUCCESS)                                          \
+      {                                                                       \
+        POCL_ABORT ("  CUDNN Error occurred: %d", err);                       \
+      }                                                                       \
+  }
 #endif
+
+cudnnHandle_t cudnn;
+
+#define CUDA_CALL(f)                                                          \
+  {                                                                           \
+    cudaError_t err = (f);                                                    \
+    if (err != cudaSuccess)                                                   \
+      {                                                                       \
+        POCL_ABORT ("  Error occurred: %d", err);                             \
+      }                                                                       \
+  }
 
 typedef struct pocl_cuda_device_data_s
 {
@@ -163,7 +182,11 @@ static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
 };
 static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
 
+#ifdef ENABLE_CUDNN
 #define CUDNN_BUILTIN_KERNELS 1
+#else
+#define CUDNN_BUILTIN_KERNELS 0
+#endif
 static const char* CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS] = {
   "pocl.dnn.conv2d.nchw.f32"
 };
@@ -505,6 +528,10 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->data = data;
 
+#ifdef ENABLE_CUDNN
+  CUDNN_CALL (cudnnCreate (&cudnn));
+#endif
+
   POCL_INIT_LOCK (data->compile_lock);
   return ret;
 }
@@ -630,6 +657,10 @@ pocl_cuda_uninit (unsigned j, cl_device_id device)
   char *name = (char*)device->long_name;
   POCL_MEM_FREE (name);
   device->long_name = device->short_name = NULL;
+
+#ifdef ENABLE_CUDNN
+  CUDNN_CALL (cudnnDestroy (cudnn));
+#endif
 
   return CL_SUCCESS;
 }
@@ -1255,19 +1286,7 @@ pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            specialize);
 }
 
-#define CUDA_CALL(f) { \
-  cudaError_t err = (f); \
-  if (err != cudaSuccess) { \
-    POCL_ABORT("  Error occurred: %d",err); \
-  } \
-}
 
-#define CUDNN_CALL(f) { \
-  cudnnStatus_t err = (f); \
-  if (err != CUDNN_STATUS_SUCCESS) { \
-      POCL_ABORT("  CUDNN Error occurred: %d",err); \
-  } \
-}
 
 void
 submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
@@ -1317,9 +1336,6 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   /*POCL_MSG_PRINT_INFO("ARGS:%zx,%zx,%zx in:%i,%i,%i,%i filt %i,%i,%i,%i strdilpad %i,%i,%i,%i,%i,%i\n",
   in_data, filt_data, out_data, in_n, in_c, in_h, in_w, filt_k, filt_c, filt_h, filt_w,
    str_h, str_w, dil_h, dil_w,pad_h,pad_w);*/
-
-  cudnnHandle_t cudnn;
-  CUDNN_CALL(cudnnCreate(&cudnn));
 
   cudnnTensorDescriptor_t in_desc;
   CUDNN_CALL(cudnnCreateTensorDescriptor(&in_desc));
@@ -1381,7 +1397,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
       &beta, out_desc, out_data));
 
  // Not sure if needed
-  cudaDeviceSynchronize();
+  CUDA_CALL (cudaDeviceSynchronize ());
 
   // finalizing
   CUDA_CALL(cudaFree(ws_data));
@@ -1389,7 +1405,6 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   CUDNN_CALL(cudnnDestroyConvolutionDescriptor(conv_desc));
   CUDNN_CALL(cudnnDestroyFilterDescriptor(filt_desc));
   CUDNN_CALL(cudnnDestroyTensorDescriptor(in_desc));
-  CUDNN_CALL(cudnnDestroy(cudnn));
 }
 
 void
