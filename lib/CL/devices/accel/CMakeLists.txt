@@ -42,7 +42,6 @@ set(ACCEL_SOURCES "accel-shared.h"
                   "EmulationRegion.h"
                   "EmulationDevice.cc"
                   "EmulationDevice.h"
-                  "TTASimDevice.h"
                   "XrtDevice.h"
                   "almaif-compile.cc"
                   "almaif-compile.h"
@@ -60,6 +59,7 @@ endif()
 
 if(ENABLE_TCE)
     set(ACCEL_SOURCES ${ACCEL_SOURCES}
+                      "TTASimDevice.h"
                       "TTASimDevice.cc"
                       "TTASimRegion.cc"
                       "TTASimRegion.h"

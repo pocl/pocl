@@ -30,7 +30,11 @@
 #include "XrtDevice.h"
 #endif
 #include "EmulationDevice.h"
+
+#ifdef ENABLE_TCE
 #include "TTASimDevice.h"
+#endif
+
 #include "accel-shared.h"
 #include "almaif-compile-tce.h"
 #include "almaif-compile.h"
@@ -354,16 +358,22 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     POCL_MSG_PRINT_INFO("accel: accelerator at 0x%zx with %zu builtin kernels (%s)\n",
         D->BaseAddress, D->SupportedKernels.size(), dev->builtin_kernel_list);
     // Recognize whether we are emulating or not
-    if (D->BaseAddress == EMULATING_ADDRESS) {
-      D->Dev = new EmulationDevice();
-#ifdef HAVE_XRT
-    } else if (D->BaseAddress == 0xA) {
+    if (D->BaseAddress == EMULATING_ADDRESS)
+      {
+        D->Dev = new EmulationDevice ();
+      }
+#ifdef HAVE_XRT \
+    else if (D->BaseAddress == 0xA) {
       D->Dev = new XrtDevice(xrt_kernel_name);
+    }
 #endif
-    } else if (D->BaseAddress == 0xB) {
+#ifdef ENABLE_TCE
+    else if (D->BaseAddress == 0xB) {
       D->Dev = new TTASimDevice(xrt_kernel_name);
       enable_compilation = true;
-    } else {
+    }
+#endif
+    else {
       D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
     }
 
