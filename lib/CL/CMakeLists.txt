@@ -179,6 +179,8 @@ endif()
 add_library("pocl_cache" OBJECT "pocl_cache.c")
 harden("pocl_cache")
 
+target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+
 
 if (ENABLE_LLVM)
   include_directories(${LLVM_INCLUDE_DIRS})
@@ -187,6 +189,8 @@ if (ENABLE_LLVM)
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
   harden("lib_cl_llvm")
+
+  target_include_directories("lib_cl_llvm" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")

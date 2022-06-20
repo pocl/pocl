@@ -35,10 +35,10 @@ set(EXAMPLES_USE_GIT_MASTER 1)
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE
     GIT_REPOSITORY "https://github.com/inducer/pyopencl.git"
-    GIT_TAG v2022.1.3
+    GIT_TAG v2022.1.5
     GIT_SUBMODULES "pyopencl/compyte")
 else()
-  set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2017.2.tar.gz")
+  set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2022.1.5.tar.gz")
 endif()
 
 if(NOT TESTS_USE_ICD)

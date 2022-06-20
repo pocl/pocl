@@ -49,10 +49,8 @@ Finland leads the development of PoCL on the side and for the needs of
 their research projects. This project has received funding from European
 Union's Horizon 2020 research and innovation programme under Grant
 Agreement No 871738 (CPSoSaware), Academy of Finland (decision #331344) and
-Business Finland's AISA project.
-
-The financial support is very much appreciated -- it keeps this open
-source project going!
+Business Finland's AISA project. The financial support is very much
+appreciated -- it keeps this open source project going!
 
 Links
 -----
