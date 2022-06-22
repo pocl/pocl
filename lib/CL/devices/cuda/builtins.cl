@@ -73,19 +73,19 @@ org_khronos_openvx_scale_image_bl_u8 (
 
   float result
       = (1 - s) * (1 - t)
-            * input[planes * (x_min * input_width + y_min) + plane]
+            * input[planes * (y_min * input_width + x_min) + plane]
         + s * (1 - t)
-              * input[planes * ((x_min + 1) * input_width + y_min) + plane]
+              * input[planes * ((y_min + 1) * input_width + x_min) + plane]
         + (1 - s) * t
-              * input[planes * (x_min * input_width + y_min + 1) + plane]
+              * input[planes * (y_min * input_width + x_min + 1) + plane]
         + s * t
-              * input[planes * ((x_min + 1) * input_width + y_min + 1)
+              * input[planes * ((y_min + 1) * input_width + x_min + 1)
                       + plane];
   // printf("x1=%d,y1=%d",x1,y1);
 
   // printf("result=%d",result);
 
-  output[planes * (x * get_global_size (0) + y) + plane]
+  output[planes * (y * get_global_size (0) + x) + plane]
       = (unsigned char)result;
 
   // printf("%hhu", (unsigned char)result);
