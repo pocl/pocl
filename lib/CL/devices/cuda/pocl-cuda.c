@@ -1303,12 +1303,15 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   // Input, weight and output buffers come from pocl's buffer management
   cl_mem mem = *(void **)arguments[0].value;
   float* in_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[0].offset);
+  // cl_float16* in_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[0].offset);
 
   mem = *(void **)arguments[1].value;
   float* filt_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[1].offset);
+  // cl_float16* filt_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[1].offset);
 
   mem = *(void **)arguments[2].value;
   float* out_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[2].offset);
+  // cl_float16* out_data = (float*)(mem->device_ptrs[device->global_mem_id].mem_ptr + arguments[2].offset);
 
   // All the other convolution dimensions are passed as arguments.
   int in_n      = *(int*)(arguments[3].value);
@@ -1340,13 +1343,13 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   cudnnTensorDescriptor_t in_desc;
   CUDNN_CALL(cudnnCreateTensorDescriptor(&in_desc));
   CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        in_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, /*CUDNN_DATA_HALF*/
         in_n, in_c, in_h, in_w));
 
   cudnnFilterDescriptor_t filt_desc;
   CUDNN_CALL(cudnnCreateFilterDescriptor(&filt_desc));
   CUDNN_CALL(cudnnSetFilter4dDescriptor(
-        filt_desc, CUDNN_DATA_FLOAT, CUDNN_TENSOR_NCHW,
+        filt_desc, CUDNN_DATA_FLOAT /*CUDNN_DATA_HALF*/, CUDNN_TENSOR_NCHW,
         filt_k, filt_c, filt_h, filt_w));
 
   cudnnConvolutionDescriptor_t conv_desc;
@@ -1354,7 +1357,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   CUDNN_CALL(cudnnSetConvolution2dDescriptor(
         conv_desc,
         pad_h, pad_w, str_h, str_w, dil_h, dil_w,
-        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT));
+        CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT /*CUDNN_DATA_HALF*/));
 
   //For depth-wise convolutions
   CUDNN_CALL(cudnnSetConvolutionGroupCount(conv_desc, groups));
@@ -1368,7 +1371,7 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   cudnnTensorDescriptor_t out_desc;
   CUDNN_CALL(cudnnCreateTensorDescriptor(&out_desc));
   CUDNN_CALL(cudnnSetTensor4dDescriptor(
-        out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,
+        out_desc, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT,/*CUDNN_DATA_HALF*/
         out_n, out_c, out_h, out_w));
 
   // algorithm
@@ -1380,8 +1383,10 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
         1, &return_count, &algos));
 
   cudnnConvolutionFwdAlgo_t algo = algos.algo;*/
-  cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM;
+  cudnnConvolutionFwdAlgo_t algo = CUDNN_CONVOLUTION_FWD_ALGO_IMPLICIT_PRECOMP_GEMM; // try IMPLICIT_PRECOMP_GEMM if tensor cores not working
   POCL_MSG_PRINT_INFO("CuDNN Picking ALGO %d",algo);
+
+  // CUDNN_CALL(cudnnSetConvolutionMathType(conv_desc, CUDNN_TENSOR_OP_MATH)); // this may not be necessary
 
   // workspace
   size_t ws_size; 
