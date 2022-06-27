@@ -646,6 +646,37 @@ endif()
 
 ######################################################################################
 
+function(check_64bit_atomics varname)
+    check_c_source_compiles("
+#include <stdint.h>
+uint64_t x = 0;
+int main()
+{
+  __atomic_add_fetch(&x, 1, __ATOMIC_SEQ_CST);
+  __atomic_sub_fetch(&x, 1, __ATOMIC_SEQ_CST);
+  return x;
+}
+" ${varname})
+endfunction(check_64bit_atomics)
+
+# platforms w/o lockfree 64bit atomics need to link with -latomic
+if(UNIX)
+    check_64bit_atomics(HAVE_64BIT_ATOMICS_WITHOUT_LIB)
+    if(HAVE_64BIT_ATOMICS_WITHOUT_LIB)
+        set(HAVE_64BIT_ATOMICS_WITH_LIB FALSE)
+    else()
+        set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+        check_64bit_atomics(HAVE_64BIT_ATOMICS_WITH_LIB)
+        set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
+        if(NOT HAVE_64BIT_ATOMICS_WITH_LIB)
+            message(SEND_ERROR "Missing 64-bit atomic increment")
+        endif()
+    endif()
+endif()
+
+######################################################################################
+
 if(UNIX AND ENABLE_LLVM AND HAVE_DLADDR)
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
