@@ -13,6 +13,7 @@ Notable User Facing Changes
   * and other small fixes and improvements
 - All device names used to control the platform setup via
   POCL_DEVICES are now lower case (as documented in the user manual).
+- Switch from __sync_*() to __atomic_*() (compiler builtins).
 
 3.0 June 2022
 =============
