@@ -80,14 +80,10 @@ typedef pthread_t pocl_thread_t;
 /* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
 #define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
 #define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  __sync_val_compare_and_swap (ptr, oldval, newval)
 
 #elif defined(_WIN32)
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  InterlockedCompareExchange64 (ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif
