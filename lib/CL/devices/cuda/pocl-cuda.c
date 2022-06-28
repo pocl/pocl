@@ -1457,6 +1457,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     case CL_COMMAND_SVM_UNMAP:
       /* empty */
       break;
+
+    case CL_COMMAND_SVM_MEMCPY:
+      pocl_cuda_svm_copy (dev, cmd->svm_memcpy.dst, cmd->svm_memcpy.src,
+                          cmd->svm_memcpy.size);
+      break;
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_COPY_IMAGE:
