@@ -248,9 +248,14 @@ int pocl_bitcode_is_spirv_execmodel_shader (const char *bitcode, size_t size);
 
 int pocl_device_is_associated_with_kernel (cl_device_id device,
                                            cl_kernel kernel);
-
+POCL_EXPORT
 int pocl_escape_quoted_whitespace (char *temp_options, char *replace_me);
 
+POCL_EXPORT
+int pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
+                                        size_t size,
+                                        const void *__restrict__ pattern,
+                                        size_t pattern_size);
 
 #ifdef __cplusplus
 }

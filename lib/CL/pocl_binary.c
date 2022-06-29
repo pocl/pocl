@@ -55,8 +55,8 @@
 /* changes for version 8: compilation parameters are stored in module metadata
                           */
 
-#define FIRST_SUPPORTED_POCLCC_VERSION 8
-#define POCLCC_VERSION 8
+#define FIRST_SUPPORTED_POCLCC_VERSION 9
+#define POCLCC_VERSION 9
 
 /* pocl binary structures */
 
@@ -117,6 +117,9 @@ typedef struct pocl_binary_s
   uint32_t num_kernels;
   /* various flags */
   uint64_t flags;
+  /* number of files/directories serialized
+   * from the main cache directory */
+  uint32_t root_entries;
   /* program->build_hash[device_i], required to restore files into pocl cache */
   SHA1_digest_t program_build_hash;
 } pocl_binary;
@@ -207,6 +210,7 @@ read_header(pocl_binary *b, const unsigned char *buffer)
   BUFFER_READ(b->version, uint32_t);
   BUFFER_READ(b->num_kernels, uint32_t);
   BUFFER_READ (b->flags, uint64_t);
+  BUFFER_READ(b->root_entries, uint32_t);
   memcpy(b->program_build_hash, buffer, sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
   return (unsigned char*)buffer;
@@ -358,8 +362,6 @@ serialize_kernel_cachedir (cl_program program,
                        kernel_name, path);
   if (pocl_exists (path))
     buffer = recursively_serialize_path (path, basedir_len, buffer);
-  else
-    POCL_MSG_ERR ("CAN't serialize %s - doesn't exist \n", path);
 
   return buffer;
 }
@@ -408,7 +410,10 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
       BUFFER_STORE(ai->type, uint32_t);
       BUFFER_STORE (ai->type_size, uint32_t);
       BUFFER_STORE_STR(ai->name);
-      BUFFER_STORE_STR(ai->type_name);
+      if (ai->type_name)
+        BUFFER_STORE_STR(ai->type_name);
+      else
+        BUFFER_STORE(0, uint32_t);
     }
   /***********************************************************************/
 
@@ -472,7 +477,7 @@ RET:
 
 /* Deserializes all files of a single pocl kernel cachedir.  */
 static unsigned char*
-deserialize_kernel_cachedir (char* basedir, unsigned char* buffer, size_t bytes)
+recursively_deserialize_path (char* basedir, unsigned char* buffer, size_t bytes)
 {
   size_t done = 0;
   size_t offset = strlen (basedir);
@@ -481,6 +486,7 @@ deserialize_kernel_cachedir (char* basedir, unsigned char* buffer, size_t bytes)
     {
       done += deserialize_file (buffer + done, basedir, offset);
     }
+  basedir[offset] = 0;
   assert(done == bytes);
   return (buffer + done);
 }
@@ -528,14 +534,6 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
 
   if (meta)
     {
-      if (b->version < 7)
-        {
-          for (i = 0; i < kernel->num_args; i++)
-            {
-              BUFFER_READ (dynarg_sizes[i], uint64_t);
-            }
-        }
-
       kernel->local_sizes = calloc (kernel->num_locals, sizeof (size_t));
       for (i = 0; i < kernel->num_locals; i++)
         {
@@ -544,16 +542,8 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
           kernel->local_sizes[i] = temp;
         }
 
-      if (b->version >= 7)
-        {
-          BUFFER_READ_STR2(kernel->attributes, kernel->sizeof_attributes);
-          BUFFER_READ(kernel->has_arg_metadata, uint64_t);
-        }
-      else
-        {
-          kernel->attributes = NULL;
-          kernel->has_arg_metadata = (-1);
-        }
+      BUFFER_READ_STR2(kernel->attributes, kernel->sizeof_attributes);
+      BUFFER_READ(kernel->has_arg_metadata, uint64_t);
 
       meta->arg_info = calloc (kernel->num_args, sizeof (struct pocl_argument_info));
       POCL_RETURN_ERROR_COND ((!meta->arg_info), CL_OUT_OF_HOST_MEMORY);
@@ -564,22 +554,9 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
           BUFFER_READ (ai->access_qualifier, cl_kernel_arg_access_qualifier);
           BUFFER_READ (ai->address_qualifier, cl_kernel_arg_address_qualifier);
           BUFFER_READ (ai->type_qualifier, cl_kernel_arg_type_qualifier);
-          if (b->version < 7)
-            {
-              char t1, t2;
-              BUFFER_READ (t1, char);
-              BUFFER_READ (t2, char);
-            }
 
           BUFFER_READ (ai->type, uint32_t);
-          if (b->version >= 7)
-            {
-              BUFFER_READ (ai->type_size, uint32_t);
-            }
-          else
-            {
-              ai->type_size = dynarg_sizes[i];
-            }
+          BUFFER_READ (ai->type_size, uint32_t);
           BUFFER_READ_STR (ai->name);
           BUFFER_READ_STR (ai->type_name);
         }
@@ -589,7 +566,8 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
     {
       /* skip the arg_info and all kernel metadata */
       buffer = *buf + (kernel->struct_size - kernel->binaries_size);
-      deserialize_kernel_cachedir (basedir, buffer, kernel->binaries_size);
+      if (kernel->binaries_size > 0)
+        recursively_deserialize_path (basedir, buffer, kernel->binaries_size);
       POCL_MEM_FREE (kernel->kernel_name);
     }
 
@@ -601,15 +579,30 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
 
 /***********************************************************/
 
+static const char* DEFAULT_ENTRIES[] = { "/program.bc" };
+
 cl_int
 pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 {
+  unsigned i;
+
+  cl_device_id dev = program->devices[device_i];
   unsigned char *buffer = program->pocl_binaries[device_i];
   size_t sizeof_buffer = program->pocl_binary_sizes[device_i];
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
   unsigned char *start = buffer;
 
   unsigned num_kernels = program->num_kernels;
+
+  char basedir[POCL_FILENAME_LENGTH];
+  pocl_cache_program_path (basedir, program, device_i);
+  size_t basedir_len = strlen (basedir);
+
+  if (dev->num_serialize_entries == 0)
+  {
+    dev->num_serialize_entries = 1;
+    dev->serialize_entries = DEFAULT_ENTRIES;
+  }
 
   memcpy(buffer, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
   buffer += POCLCC_STRING_ID_LENGTH;
@@ -619,22 +612,28 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
   uint64_t flags = 0;
   if (program->flush_denorms)
     flags |= POCL_BINARY_FLAG_FLUSH_DENORMS;
-  flags |= (program->binary_type << 1);
+  flags |= ((uint64_t)program->binary_type << 32);
   BUFFER_STORE (flags, uint64_t);
+  BUFFER_STORE (dev->num_serialize_entries, uint32_t);
   memcpy(buffer, program->build_hash[device_i], sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
-
   assert(buffer < end_of_buffer);
 
-  char basedir[POCL_FILENAME_LENGTH];
-  pocl_cache_program_path (basedir, program, device_i);
-  size_t basedir_len = strlen (basedir);
-  char program_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_program_bc_path (program_bc_path, program, device_i);
-  POCL_MSG_PRINT_INFO ("serializing program.bc: %s\n", program_bc_path);
-  buffer = serialize_file (program_bc_path, basedir_len, buffer);
+  for (i = 0; i < dev->num_serialize_entries; ++i)
+  {
+    unsigned char *saved_b = buffer;
+    BUFFER_STORE(0, uint64_t); // size of the following binaries;
+    char temp[POCL_FILENAME_LENGTH];
+    strcpy(temp, basedir);
+    strcat(temp, dev->serialize_entries[i]);
+    POCL_MSG_PRINT_INFO ("serializing %s\n", temp);
+    unsigned char* new_buffer = recursively_serialize_path (temp, basedir_len, buffer);
+    uint64_t size = new_buffer - buffer;
+    buffer = saved_b;
+    BUFFER_STORE (size, uint64_t);
+    buffer = new_buffer;
+  }
 
-  unsigned i;
   for (i=0; i < num_kernels; i++)
     {
       buffer = pocl_binary_serialize_kernel_to_buffer
@@ -650,6 +649,9 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 cl_int
 pocl_binary_deserialize(cl_program program, unsigned device_i)
 {
+  unsigned i;
+
+  cl_device_id dev = program->devices[device_i];
   unsigned char *buffer = program->pocl_binaries[device_i];
   size_t sizeof_buffer = program->pocl_binary_sizes[device_i];
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
@@ -657,7 +659,15 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   pocl_binary b;
   buffer = read_header(&b, buffer);
   program->flush_denorms = (b.flags & POCL_BINARY_FLAG_FLUSH_DENORMS);
-  program->binary_type = (b.flags >> 1);
+  program->binary_type = (b.flags >> 32);
+
+  if (dev->num_serialize_entries == 0)
+  {
+    dev->num_serialize_entries = 1;
+    dev->serialize_entries = DEFAULT_ENTRIES;
+  }
+
+  assert (b.root_entries == dev->num_serialize_entries);
 
   //assert(pocl_binary_check_binary_header(&b));
   assert (buffer < end_of_buffer);
@@ -665,13 +675,20 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   char basedir[POCL_FILENAME_LENGTH];
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
-  buffer += deserialize_file (buffer, basedir, basedir_len);
+
+  for (i = 0; i < dev->num_serialize_entries; ++i)
+  {
+    uint64_t bytes;
+    BUFFER_READ(bytes, uint64_t);
+    unsigned char* retval = recursively_deserialize_path (basedir, buffer, bytes);
+    assert (retval == buffer + bytes);
+    buffer += bytes;
+  }
 
   pocl_binary_kernel k;
-  unsigned i;
   for (i = 0; i < b.num_kernels; i++)
     {
-      pocl_cache_program_path (basedir, program, device_i);
+      basedir[basedir_len] = 0;
       if (pocl_binary_deserialize_kernel_from_buffer (&b, &buffer, &k, NULL, basedir)
           != CL_SUCCESS)
         goto ERROR;
@@ -723,6 +740,7 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
 {
   unsigned char *binary = program->pocl_binaries[device_i];
   cl_device_id device = program->devices[device_i];
+  size_t max_len = program->pocl_binary_sizes[device_i];
 
   pocl_binary b;
   memset(&b, 0, sizeof (pocl_binary));
@@ -730,20 +748,20 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
   memset(&k, 0, sizeof (pocl_binary_kernel));
 
   unsigned char* buffer = read_header (&b, binary);
+  unsigned char* start = buffer;
   POCL_RETURN_ERROR_ON ((!pocl_binary_check_binary (device, binary)),
                         CL_INVALID_PROGRAM,
                         "Deserialized a binary, but it doesn't seem to be "
                         "for this device.\n");
-  size_t len;
-  /* skip real path of program.bc */
-  BUFFER_READ(len, uint32_t);
-  assert (len > 0);
-  buffer += len;
-
-  /* skip content of program.bc */
-  BUFFER_READ(len, uint32_t);
-  assert (len > 0);
-  buffer += len;
+  unsigned i;
+  for (i = 0; i < b.root_entries; ++i)
+    {
+      uint64_t len;
+      BUFFER_READ(len, uint64_t);
+      assert (len > 0);
+      buffer += len;
+      assert (buffer - start <= max_len);
+    }
 
   unsigned j;
   assert (b.num_kernels > 0);

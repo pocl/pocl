@@ -623,9 +623,9 @@ pocl_init_devices ()
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
           errcode = pocl_devices[dev_index].ops->init (
               j, &pocl_devices[dev_index], getenv (env_name));
-          POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_DEVICE_NOT_AVAILABLE,
-                              "Device %i / %s initialization failed!", j,
-                              dev_name);
+          if (errcode != CL_SUCCESS)
+            POCL_MSG_ERR ("Device %i / %s initialization failed!", j,
+                          dev_name);
 
           ++dev_index;
         }
