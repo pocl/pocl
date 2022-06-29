@@ -251,6 +251,10 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 
   ops->svm_alloc = pocl_cuda_svm_alloc;
   ops->svm_free = pocl_cuda_svm_free;
+  /* No need to implement these two as they are no-ops
+   * and pocl_exec_command takes care of them. */
+  ops->svm_map = NULL;
+  ops->svm_unmap = NULL;
   ops->svm_copy = pocl_cuda_svm_copy;
   ops->svm_fill = pocl_driver_svm_fill;
 }
