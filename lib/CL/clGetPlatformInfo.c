@@ -154,7 +154,10 @@ pocl_cl_name_version_to_str (char *output, size_t limit)
       // space + NULL
       size_t len = strlen (pocl_platform_extensions[i].name);
       if (len + 2 > remain)
-        break;
+        {
+          assert (!"platform extension name does not fit into output array");
+          break;
+        }
 
       if (i > 0)
         {
