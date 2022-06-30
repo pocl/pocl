@@ -709,7 +709,7 @@ pocl_exec_command (_cl_command_node *node)
         dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
                                cmd->svm_migrate.svm_pointers,
                                cmd->svm_migrate.sizes);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
       break;
 
     default:

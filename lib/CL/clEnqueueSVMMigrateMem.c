@@ -44,10 +44,6 @@ POname (clEnqueueSVMMigrateMem) (cl_command_queue command_queue,
       (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
-  POCL_RETURN_ERROR_ON (
-      (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
-      "None of the devices in this context is SVM-capable\n");
-
   POCL_RETURN_ERROR_COND ((svm_pointers == NULL), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND ((num_svm_pointers == 0), CL_INVALID_VALUE);
