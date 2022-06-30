@@ -1146,8 +1146,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
                 CUdeviceptr src
-                    = (CUdeviceptr)mem->device_ptrs[device->global_mem_id]
-                          .mem_ptr
+                    = (CUdeviceptr)mem->device_ptrs[device->global_mem_id].mem_ptr
                       + arguments[i].offset;
 
                 size_t align = kdata->alignments[i];
