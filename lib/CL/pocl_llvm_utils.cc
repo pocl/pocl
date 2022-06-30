@@ -113,6 +113,9 @@ static int getModuleTriple(const char *input_stream, size_t size,
   StringRef input_stream_ref(input_stream, size);
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
+  if (!isBitcode((const unsigned char*)input_stream,
+                 (const unsigned char*)input_stream+size))
+    return -1;
 
   auto triple_e = getBitcodeTargetTriple(buffer->getMemBufferRef());
   if (!triple_e)

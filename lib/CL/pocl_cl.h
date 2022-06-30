@@ -1013,6 +1013,9 @@ struct _cl_device_id {
   /* semicolon separated list of builtin kernels*/
   char *builtin_kernel_list;
 
+  const char **serialize_entries;
+  unsigned num_serialize_entries;
+
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
   unsigned local_as_id;

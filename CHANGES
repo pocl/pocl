@@ -1,6 +1,17 @@
 3.1 unreleased
 ==============
 
+Notable User Facing Changes
+---------------------------
+
+- Work-in-progress Vulkan-driver:
+  * implement clEnqRead/Copy/WriteRect + clEnqFillBuffer
+  * implement global offsets
+  * add support for external memory
+  * implement WG sizes larger than vulkan limits with global offsets
+  * fix module constants
+  * and other small fixes and improvements
+
 3.0 June 2022
 =============
 

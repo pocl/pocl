@@ -90,6 +90,24 @@ TRIPLE_ARG_I = [
 	"clamp", "mad_hi", "mad_sat"
 ]
 
+OLD_ATOMICS_INT_ONLY = [
+	"atomic_add",
+	"atomic_sub",
+	"atomic_or",
+	"atomic_xor",
+	"atomic_and",
+	"atomic_min",
+	"atomic_max",
+	"atomic_inc",
+	"atomic_dec",
+]
+
+OLD_ATOMICS_ALL = [
+        "atomic_xchg",
+        "atomic_cmpxchg",
+]
+
+
 SVM_ATOMICS_INT_ONLY = [
         "atomic_fetch_add",
         "atomic_fetch_sub",
@@ -186,7 +204,7 @@ LLVM_TYPE_EXT_MAP = {
 MANGLING_AS_SPIR = {
 	"global": "PU3AS1",
 	"local": "PU3AS3",
-        "generic": "PU3AS4",
+	"generic": "PU3AS4",
 	"private": "P",
 	"none": ""
 }
@@ -213,10 +231,12 @@ LLVM_SPIR_AS = {
 
 def llvm_arg_type(argtype, AS):
 	if argtype[0] == 'P':
+		idx = 1
 		if argtype[1] == 'V':
-			return SIG_TO_LLVM_TYPE_MAP[argtype[2]] + AS + "*"
-		else:
-			return SIG_TO_LLVM_TYPE_MAP[argtype[1]] + AS + "*"
+			idx = 2
+			if argtype[2] == 'A':
+				idx = 3
+		return SIG_TO_LLVM_TYPE_MAP[argtype[idx]] + AS + "*"
 	else:
 		return SIG_TO_LLVM_TYPE_MAP[argtype]
 
@@ -224,7 +244,10 @@ def llvm_arg_type(argtype, AS):
 def mang_suffix(argtype, AS_prefix):
 	if argtype[0] == 'P':
 		if argtype[1] == 'V':
-			return AS_prefix + "VU7_Atomic" + argtype[2]
+			if argtype[2] == 'A':
+				return AS_prefix + "VU7_Atomic" + argtype[3]
+			else:
+				return AS_prefix + "V" + argtype[2]
 		else:
 			return AS_prefix + argtype[1]
 	else:
@@ -401,28 +424,31 @@ for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 
 for mang_type in ['i', 'j', "l", "m"]:
 	for f in SVM_ATOMICS_INT_ONLY:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, "12memory_order")
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, "12memory_order", "12memory_scope")
+		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type)
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type, "12memory_order")
+		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type, "12memory_order", "12memory_scope")
 
+for mang_type in ['i', 'j', "l", "m"]:
+	for f in OLD_ATOMICS_INT_ONLY:
+		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
 
 for mang_type in ['i', 'j', "l", "m", "f", "d"]:
-	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PV'+mang_type, mang_type)
+	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PVA'+mang_type, mang_type)
 	for f in SVM_ATOMICS_ALL:
 		args = None
 		cmpxchg = False
 		orders = ["12memory_order"]
 		if f == "atomic_store":
-			args = ['PV'+mang_type, mang_type]
+			args = ['PVA'+mang_type, mang_type]
 			ret = "v"
 		if f == "atomic_load":
-			args = ['PV'+mang_type]
+			args = ['PVA'+mang_type]
 			ret = mang_type
 		if f == "atomic_exchange":
-			args = ['PV'+mang_type, mang_type]
+			args = ['PVA'+mang_type, mang_type]
 			ret = mang_type
 		if f == "atomic_compare_exchange_strong" or f == "atomic_compare_exchange_weak":
-			args = ['PV'+mang_type, 'P'+mang_type, mang_type]
+			args = ['PVA'+mang_type, 'P'+mang_type, mang_type]
 			ret = "b"
 			orders = ["12memory_order", "12memory_order"]
 
@@ -431,9 +457,9 @@ for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args, *orders, "12memory_scope")
 
 for f in SVM_ATOMICS_FLAGS:
-	generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi')
-	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi', "12memory_order")
-	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVi', "12memory_order", "12memory_scope")
+	generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi')
+	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order")
+	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order", "12memory_scope")
 
 
 

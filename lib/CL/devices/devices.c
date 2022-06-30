@@ -231,7 +231,6 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
                 {
                   strcat (result, device_name);
                 }
-              strcat (result, POCL_PATH_SEPARATOR);
             }
           else
 #endif
@@ -554,11 +553,7 @@ pocl_init_devices ()
           strcat (init_device_ops_name, "_init_device_ops");
           pocl_devices_init_ops[i] = (init_device_ops)dlsym (
           pocl_device_handles[i], init_device_ops_name);
-          if (pocl_devices_init_ops[i] != NULL)
-            {
-              pocl_devices_init_ops[i](&pocl_device_ops[i]);
-            }
-          else
+          if (pocl_devices_init_ops[i] == NULL)
             {
               POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
                              init_device_ops_name, device_library,
@@ -623,9 +618,9 @@ pocl_init_devices ()
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
           errcode = pocl_devices[dev_index].ops->init (
               j, &pocl_devices[dev_index], getenv (env_name));
-          POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_DEVICE_NOT_AVAILABLE,
-                              "Device %i / %s initialization failed!", j,
-                              dev_name);
+          if (errcode != CL_SUCCESS)
+            POCL_MSG_ERR ("Device %i / %s initialization failed!", j,
+                          dev_name);
 
           ++dev_index;
         }

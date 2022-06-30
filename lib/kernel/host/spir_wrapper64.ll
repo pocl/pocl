@@ -12132,6 +12132,654 @@ define spir_func i64 @_Z25atomic_fetch_max_explicitPU3AS3VU7_Atomicmm12memory_or
 }
 
 
+declare i32 @_Z14_cl_atomic_addPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_addPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_addPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_addPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_addPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_addPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_subPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_subPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_subPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_subPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_subPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_subPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z13_cl_atomic_orPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z9atomic_orPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z13_cl_atomic_orPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z13_cl_atomic_orPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z9atomic_orPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z13_cl_atomic_orPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_xorPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_xorPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_xorPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_xorPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_xorPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_xorPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_andPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_andPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_andPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_andPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_andPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_andPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_minPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_minPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_minPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_minPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_minPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_minPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_maxPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_maxPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_maxPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_maxPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_maxPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_maxPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_incPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_incPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_incPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_incPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_incPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_incPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_decPU8CLglobalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_decPU3AS1Vii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_decPU8CLglobalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_decPU7CLlocalVii(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_decPU3AS3Vii(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_decPU7CLlocalVii(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_addPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_addPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_addPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_addPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_addPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_addPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_subPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_subPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_subPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_subPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_subPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_subPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z13_cl_atomic_orPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z9atomic_orPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z13_cl_atomic_orPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z13_cl_atomic_orPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z9atomic_orPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z13_cl_atomic_orPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_xorPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_xorPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_xorPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_xorPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_xorPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_xorPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_andPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_andPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_andPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_andPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_andPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_andPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_minPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_minPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_minPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_minPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_minPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_minPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_maxPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_maxPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_maxPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_maxPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_maxPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_maxPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_incPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_incPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_incPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_incPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_incPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_incPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_decPU8CLglobalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_decPU3AS1Vjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_decPU8CLglobalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z14_cl_atomic_decPU7CLlocalVjj(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z10atomic_decPU3AS3Vjj(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call  i32 @_Z14_cl_atomic_decPU7CLlocalVjj(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_addPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_addPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_addPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_addPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_addPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_addPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_subPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_subPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_subPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_subPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_subPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_subPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z13_cl_atomic_orPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z9atomic_orPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z13_cl_atomic_orPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z13_cl_atomic_orPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z9atomic_orPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z13_cl_atomic_orPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_xorPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_xorPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_xorPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_xorPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_xorPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_xorPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_andPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_andPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_andPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_andPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_andPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_andPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_minPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_minPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_minPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_minPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_minPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_minPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_maxPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_maxPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_maxPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_maxPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_maxPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_maxPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_incPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_incPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_incPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_incPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_incPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_incPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_decPU8CLglobalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_decPU3AS1Vll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_decPU8CLglobalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_decPU7CLlocalVll(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_decPU3AS3Vll(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_decPU7CLlocalVll(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_addPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_addPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_addPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_addPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_addPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_addPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_subPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_subPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_subPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_subPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_subPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_subPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z13_cl_atomic_orPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z9atomic_orPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z13_cl_atomic_orPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z13_cl_atomic_orPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z9atomic_orPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z13_cl_atomic_orPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_xorPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_xorPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_xorPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_xorPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_xorPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_xorPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_andPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_andPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_andPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_andPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_andPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_andPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_minPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_minPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_minPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_minPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_minPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_minPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_maxPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_maxPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_maxPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_maxPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_maxPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_maxPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_incPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_incPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_incPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_incPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_incPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_incPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_decPU8CLglobalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_decPU3AS1Vmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_decPU8CLglobalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z14_cl_atomic_decPU7CLlocalVmm(i64 *, i64) local_unnamed_addr #0
+
+define spir_func i64 @_Z10atomic_decPU3AS3Vmm(i64 addrspace(3)* %a, i64 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call  i64 @_Z14_cl_atomic_decPU7CLlocalVmm(i64 * %1, i64 %b)
+  ret i64 %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
