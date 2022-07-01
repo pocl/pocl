@@ -655,6 +655,7 @@ pocl_exec_command (_cl_command_node *node)
             POname (clReleaseContext) (event->context);
             dev->ops->svm_free (dev, ptr);
           }
+      POCL_MEM_FREE(cmd->svm_free.svm_pointers);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
