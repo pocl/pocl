@@ -377,6 +377,7 @@ pocl_exec_command (_cl_command_node *node)
          cmd->memfill.offset,
          cmd->memfill.pattern,
          cmd->memfill.pattern_size);
+      POCL_MEM_FREE(cmd->memfill.pattern);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Buffer           ");
       break;
 
@@ -700,6 +701,7 @@ pocl_exec_command (_cl_command_node *node)
                           cmd->svm_fill.size,
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
+      POCL_MEM_FREE(cmd->svm_fill.pattern);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
       break;
 
