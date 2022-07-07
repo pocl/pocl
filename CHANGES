@@ -11,6 +11,8 @@ Notable User Facing Changes
   * implement WG sizes larger than vulkan limits with global offsets
   * fix module constants
   * and other small fixes and improvements
+- All device names used to control the platform setup via
+  POCL_DEVICES are now lower case (as documented in the user manual).
 
 3.0 June 2022
 =============
