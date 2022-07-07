@@ -735,7 +735,7 @@ pocl_vulkan_enqueue_staging_buffer_copy (pocl_vulkan_device_data_t *d,
 void
 pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
 {
-  ops->device_name = "VULKAN";
+  ops->device_name = "vulkan";
 
   ops->probe = pocl_vulkan_probe;
   ops->init = pocl_vulkan_init;
@@ -867,7 +867,7 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
 
   pocl_vulkan_enable_validation = pocl_is_option_set ("POCL_VULKAN_VALIDATE");
 
-  if (env_count < 0)
+  if (env_count <= 0)
     return 0;
 
   size_t i;
@@ -997,6 +997,9 @@ pocl_vulkan_probe (struct pocl_device_ops *ops)
 
   POCL_MSG_PRINT_VULKAN ("%u Vulkan devices found.\n",
                          pocl_vulkan_device_count);
+
+  /* TODO: clamp pocl_vulkan_device_count to env_count */
+
   return pocl_vulkan_device_count;
 }
 
