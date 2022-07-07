@@ -199,7 +199,7 @@ cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 {
-  ops->device_name = "CUDA";
+  ops->device_name = "cuda";
   ops->build_hash = pocl_cuda_build_hash;
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;

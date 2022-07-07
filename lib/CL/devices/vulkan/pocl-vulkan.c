@@ -735,7 +735,7 @@ pocl_vulkan_enqueue_staging_buffer_copy (pocl_vulkan_device_data_t *d,
 void
 pocl_vulkan_init_device_ops (struct pocl_device_ops *ops)
 {
-  ops->device_name = "VULKAN";
+  ops->device_name = "vulkan";
 
   ops->probe = pocl_vulkan_probe;
   ops->init = pocl_vulkan_init;
