@@ -1469,6 +1469,38 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       pocl_driver_svm_fill (dev, cmd->svm_fill.svm_ptr, cmd->svm_fill.size,
                             cmd->svm_fill.pattern, cmd->svm_fill.pattern_size);
       break;
+    case CL_COMMAND_SVM_FREE:
+      if (cmd->svm_free.pfn_free_func)
+        {
+          cmd->svm_free.pfn_free_func (
+              cmd->svm_free.queue, cmd->svm_free.num_svm_pointers,
+              cmd->svm_free.svm_pointers, cmd->svm_free.data);
+        }
+      else
+        {
+          int i;
+          for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
+            {
+              void *ptr = cmd->svm_free.svm_pointers[i];
+              POCL_LOCK_OBJ (event->context);
+              pocl_svm_ptr *tmp = NULL, *item = NULL;
+              DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+              {
+                if (item->svm_ptr == ptr)
+                  {
+                    DL_DELETE (event->context->svm_ptrs, item);
+                    break;
+                  }
+              }
+              POCL_UNLOCK_OBJ (event->context);
+              assert (item);
+              POCL_MEM_FREE (item);
+              // Leads to 'undefined symbol: POclReleaseContext'
+              // POname (clReleaseContext) (event->context);
+              dev->ops->svm_free (dev, ptr);
+            }
+        }
+      break;
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_COPY_IMAGE:
