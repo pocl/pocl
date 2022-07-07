@@ -1466,8 +1466,9 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
                           cmd->svm_memcpy.size);
       break;
     case CL_COMMAND_SVM_MEMFILL:
-      pocl_driver_svm_fill (dev, cmd->svm_fill.svm_ptr, cmd->svm_fill.size,
-                            cmd->svm_fill.pattern, cmd->svm_fill.pattern_size);
+      pocl_cuda_submit_memfill (stream, cmd->svm_fill.svm_ptr, cmd->svm_fill.size,
+                                0, cmd->svm_fill.pattern,
+                                cmd->svm_fill.pattern_size);
       break;
     case CL_COMMAND_SVM_FREE:
       if (cmd->svm_free.pfn_free_func)
