@@ -1608,6 +1608,19 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                     | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                     | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+
+  if (dev->llvm_cpu != NULL)
+    {
+      dev->builtin_kernel_list = strdup (
+      "pocl.vote.u8;"
+      "pocl.vote.u32;"
+      "pocl.add.i8;"
+      "org.khronos.openvx.scale_image.nn.u8;"
+      "org.khronos.openvx.scale_image.bl.u8"
+      "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32"
+      );
+      dev->num_builtin_kernels = 6;
+    }
 }
 
 /*

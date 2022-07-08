@@ -173,6 +173,14 @@ BIKD BIDescriptors[BIKERNELS] = {
              BIArg("int", "input_width", POD_ARG_32b),
              BIArg("int", "input_height", POD_ARG_32b),
          }),
+    BIKD(POCL_CDBI_OPENVX_TENSORCONVERTDEPTH_WRAP_U8_F32,
+         "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32",
+         {
+             BIArg("unsigned char*", "input", READ_BUF),
+             BIArg("float*", "output", WRITE_BUF),
+             BIArg("float", "norm", POD_ARG_32b),
+             BIArg("float", "offset", POD_ARG_32b),
+         }),
 };
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,

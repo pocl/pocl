@@ -172,13 +172,14 @@ static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
         "pocl.sgemm_ab.tensor.f16f16f32" };
 static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
 
-#define OPENCL_BUILTIN_KERNELS 4
+#define OPENCL_BUILTIN_KERNELS 5
 static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
   "pocl.abs.f32",
+  // from common builtin kernels:
   "pocl.add.i8",
-
   "org.khronos.openvx.scale_image.nn.u8",
   "org.khronos.openvx.scale_image.bl.u8",
+  "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32",
 };
 static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
 
