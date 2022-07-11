@@ -1708,6 +1708,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_nv_device_attribute_query" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_ext_device_side_abort" },
 
         { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
