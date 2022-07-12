@@ -352,6 +352,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   // accel devices are little endian by default, but the emulation device is host dependant
   dev->endian_little = D->BaseAddress == 0xE ? !(WORDS_BIGENDIAN) : CL_TRUE;
+  if (D->BaseAddress == 0xE){
+    dev->long_name= (char *)"accel emulation device";
+  }
 
   dev->builtin_kernel_list = strdup(supportedList.c_str());
   dev->num_builtin_kernels = D->SupportedKernels.size();
