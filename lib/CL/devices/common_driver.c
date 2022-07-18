@@ -307,79 +307,8 @@ pocl_driver_memfill (void *data, pocl_mem_identifier *dst_mem_id,
                      const void *__restrict__ pattern, size_t pattern_size)
 {
   void *__restrict__ ptr = dst_mem_id->mem_ptr;
-  size_t i;
-  unsigned j;
-
-  /* memfill size is in bytes, we wanto make it into elements */
-  size /= pattern_size;
-  offset /= pattern_size;
-
-  switch (pattern_size)
-    {
-    case 1:
-      {
-        uint8_t *p = (uint8_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint8_t *)pattern;
-      }
-      break;
-    case 2:
-      {
-        uint16_t *p = (uint16_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint16_t *)pattern;
-      }
-      break;
-    case 4:
-      {
-        uint32_t *p = (uint32_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint32_t *)pattern;
-      }
-      break;
-    case 8:
-      {
-        uint64_t *p = (uint64_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint64_t *)pattern;
-      }
-      break;
-    case 16:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 1);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 2; j++)
-            p[(i << 1) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 32:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 2);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 4; j++)
-            p[(i << 2) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 64:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 3);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 8; j++)
-            p[(i << 3) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 128:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 4);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 16; j++)
-            p[(i << 4) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    default:
-      assert (0 && "Invalid pattern size");
-      break;
-    }
+  pocl_fill_aligned_buf_with_pattern (ptr, offset, size, pattern,
+                                      pattern_size);
 }
 
 cl_int
@@ -734,7 +663,6 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
       && bitcode_is_triple (binary, length, device->llvm_target_triplet))
     return 1;
 
-  POCL_MSG_ERR ("Unknown binary type.\n");
   return 0;
 #else
   POCL_MSG_ERR (

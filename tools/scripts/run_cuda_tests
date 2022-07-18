@@ -22,7 +22,7 @@
 # THE SOFTWARE.
 
 export POCL_BUILDING=1
-export POCL_DEVICES="CUDA"
+export POCL_DEVICES="cuda"
 
 if [ -z "$OCL_ICD_VENDORS" ]; then
   export OCL_ICD_VENDORS=$PWD/ocl-vendors
