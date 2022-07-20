@@ -101,7 +101,9 @@ endif(MSVC)
 add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
 harden("llvmpasses")
 
-target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+if(${OCL_ICD_INCLUDE_DIRS})
+  target_include_directories("llvmpasses" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+endif()
 
 option(ENABLE_LIBLLVMOPENCL "Build separate libllvmopencl.so for use with 'opt'" OFF)
 if(ENABLE_LIBLLVMOPENCL)
