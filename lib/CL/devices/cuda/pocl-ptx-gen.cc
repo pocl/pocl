@@ -545,6 +545,7 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
 
   const char *BasePath[] = {
     pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
+    pocl_get_string_option("CUDA_HOME", "/usr/local/cuda"),
     "/usr/local/lib/cuda",
     "/usr/local/lib",
     "/usr/lib",
