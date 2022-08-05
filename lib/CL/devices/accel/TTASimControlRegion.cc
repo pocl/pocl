@@ -50,7 +50,7 @@ void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
     switch(value) {
     case ACCEL_RESET_CMD:
       POCL_MSG_PRINT_INFO("parent %p",parent_);
-      parent_->simulator_->stop();
+      parent_->stopProgram();
       break;
     case ACCEL_CONTINUE_CMD:
       parent_->restartProgram();

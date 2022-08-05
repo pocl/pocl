@@ -31,7 +31,7 @@
 #endif
 #include "EmulationDevice.h"
 
-#ifdef ENABLE_TCE
+#ifdef TCEMC_AVAILABLE
 #include "TTASimDevice.h"
 #endif
 
@@ -365,17 +365,17 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 #ifdef HAVE_XRT
     else if (D->BaseAddress == 0xA) {
       D->Dev = new XrtDevice(xrt_kernel_name);
-    }
+  }
 #endif
-#ifdef ENABLE_TCE
-    else if (D->BaseAddress == 0xB) {
-      D->Dev = new TTASimDevice(xrt_kernel_name);
-      enable_compilation = true;
-    }
+#ifdef TCEMC_AVAILABLE
+  else if (D->BaseAddress == 0xB) {
+    D->Dev = new TTASimDevice(xrt_kernel_name);
+    enable_compilation = true;
+  }
 #endif
-    else {
+  else {
       D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
-    }
+  }
 
     if (!(D->Dev->RelativeAddressing))
     {
@@ -572,6 +572,17 @@ static void scheduleCommands(AccelData &D) {
 
 bool only_custom_device_events_left(cl_event event) {
   event_node* dep_event = event->wait_list;
+
+  // When the next kernel uses a different jit-compiled program
+  // we cannot insert and-barrier, since the host must be able to switch
+  // the program in between the kernels.
+  // TODO: fix this check to work if the program is the same, or if the program
+  // contains both this kernel and dependent kernels.
+  // Current solution only adds and-barriers in case the device supports just
+  // built-in kernels.
+  if (event->queue->device->compiler_available && dep_event) {
+    return false;
+  }
   while(dep_event) {
       POCL_MSG_PRINT_INFO("Looking at event id=%" PRIu64 "\n", dep_event->event->id);
       cl_device_type dev_type = dep_event->event->queue->device->type;

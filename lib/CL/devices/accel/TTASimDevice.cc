@@ -274,8 +274,7 @@ void TTASimDevice::restartProgram() {
   }
 }
 
-
-
+void TTASimDevice::stopProgram() { simulator_->stop(); }
 
 void SigINTHandler::execute(int /*data*/, siginfo_t* /*info*/) {
     std::cerr << "### ctrl-C handler" << std::endl;

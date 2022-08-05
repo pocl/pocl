@@ -49,6 +49,7 @@ public:
   SimulatorCLI* simulatorCLI_;
 
   void restartProgram();
+  void stopProgram ();
 
 private:
   void loadProgram(char* loadProgram);
