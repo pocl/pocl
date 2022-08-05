@@ -181,7 +181,7 @@ void pocl_accel_copy(void *data, pocl_mem_identifier * dst_mem_id,
   AccelData *d = (AccelData *)data;
 
   if (d->Dev->DataMemory->isInRange(dst) ) {
-      POCL_MSG_PRINT_INFO("accel: Copying %zu bytes from %zx to 0x%zx\n", size,
+      POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes from %zx to 0x%zx\n", size,
                           src, dst);
       if(d->Dev->DataMemory->isInRange(src))
         {

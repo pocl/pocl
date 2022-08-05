@@ -31,8 +31,6 @@
 
 #include "Region.h"
 
-// MMAPRegion debug prints get quite spammy
-// #define ACCEL_MMAP_DEBUG
 
 class MMAPRegion : public Region
 {

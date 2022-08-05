@@ -11,13 +11,10 @@
 
 #include <math.h>
 
-//#define ACCEL_TTASIM_DEBUG
 
 TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine& mach, TTASimDevice* parent) {
 
-#ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_ACCEL("TTASim: Initializing TTASimControlRegion\n");
-#endif
+  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Initializing TTASimControlRegion\n");
   PhysAddress = 0;
   Size = ACCEL_DEFAULT_CTRL_SIZE;
   parent_ = parent;
@@ -29,27 +26,22 @@ TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine& mach, TTASim
 
 uint32_t TTASimControlRegion::Read32(size_t offset) {
 
-#ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
-#endif
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto value = ControlRegisters_[offset / sizeof(uint32_t)];
   return value;
 }
 
 void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
-#ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_ACCEL("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
-#endif
 
   if (offset == ACCEL_CONTROL_REG_COMMAND) {
     switch(value) {
     case ACCEL_RESET_CMD:
-      POCL_MSG_PRINT_ACCEL("parent %p",parent_);
       parent_->stopProgram();
       break;
     case ACCEL_CONTINUE_CMD:
@@ -65,11 +57,9 @@ void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t TTASimControlRegion::Read64(size_t offset) {
 
-#ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
-#endif
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto value =
       reinterpret_cast<uint64_t *>(ControlRegisters_)[offset / sizeof(uint64_t)];
@@ -136,7 +126,6 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
   } else {
     cq_start = 2*segment_size;
     dmem_start = 3*segment_size;
-          POCL_MSG_PRINT_ACCEL("segsize=%d, dmem_start=%d\n",segment_size,dmem_start);
   }
 
   if (!hasPrivateMem) {
