@@ -1,7 +1,7 @@
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h>
 
 #include "pocl_cl.h"
 #include "pocl_debug.h"
@@ -41,6 +41,9 @@ static pocl_lock_t console_mutex;
         }
       /* else parse */
       char* tokenize = strdup (debug);
+      for(int i =0; i < strlen (tokenize); i++){
+          tokenize[i] = tolower(tokenize[i]);
+        }
       char* ptr = NULL;
       ptr = strtok (tokenize, ",");
 
@@ -80,6 +83,8 @@ static pocl_lock_t console_mutex;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ALL;
         else if (strncmp (ptr, "err", 3) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ERROR;
+        else if (strncmp (ptr, "accel", 5) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ACCEL;
         else
           POCL_MSG_WARN ("Unknown token in POCL_DEBUG env var: %s", ptr);
 
