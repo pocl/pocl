@@ -345,7 +345,8 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     i = snprintf(extraParams, (POCL_FILENAME_LENGTH * 8),
     "-DQUEUE_LENGTH=%i ", AQL_queue_length);
     if(!separatePrivateMem) {
-      int fallback_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",1024);
+      int fallback_mem_size = pocl_get_int_option(
+          "POCL_ACCEL_PRIVATE_MEM_SIZE", ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
       unsigned initsp = dmem_size + fallback_mem_size;
       unsigned private_mem_start = dmem_size;
       if(!separateCQMem) {

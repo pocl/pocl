@@ -12,6 +12,8 @@
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
 
+#define ACCEL_DEFAULT_PRIVATE_MEM_SIZE (2048)
+
 #define ACCEL_DEFAULT_CTRL_SIZE (1024)
 
 #define ALMAIF_VERSION_2 (2)

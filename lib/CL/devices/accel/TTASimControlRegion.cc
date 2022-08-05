@@ -141,7 +141,8 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
 
   if (!hasPrivateMem) {
     //No private mem, so the latter half of the dmem is reserved for it
-    int fallback_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",1024);
+    int fallback_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",
+                                                ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
     dmem_size -= fallback_mem_size;
     POCL_MSG_PRINT_INFO("Accel: No separate private mem found. Setting it to %d\n",fallback_mem_size);
   }
