@@ -362,7 +362,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       {
         D->Dev = new EmulationDevice ();
       }
-#ifdef HAVE_XRT \
+#ifdef HAVE_XRT
     else if (D->BaseAddress == 0xA) {
       D->Dev = new XrtDevice(xrt_kernel_name);
     }

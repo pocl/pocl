@@ -146,8 +146,19 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
       cmd_copy.command.run.pc.local_size[0] = 0;
       cmd_copy.command.run.pc.local_size[1] = 0;
       cmd_copy.command.run.pc.local_size[2] = 0;
-      pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->program_device_i,
-                                      kernel, "", &cmd_copy, 1);
+
+      pocl_cache_kernel_cachedir_path(img_file, kernel->program,
+                                      cmd->program_device_i, kernel,
+                                      "/parallel.img", &cmd_copy, 1);
+      if (pocl_exists(img_file)) {
+        pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
+                                        cmd->program_device_i, kernel, "",
+                                        &cmd_copy, 1);
+      } else {
+        pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
+                                        cmd->program_device_i, kernel, "",
+                                        &cmd_copy, 0);
+      }
       POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
       preread_images(cachedir, kd);
     }
