@@ -79,15 +79,15 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   adi->compile_kernel = pocl_almaif_tce_compile;
 
   // backend specific init
-  POCL_MSG_PRINT_INFO("Starting device specific initializion\n");
+  POCL_MSG_PRINT_ACCEL("Starting device specific initializion\n");
   adi->initialize_device(dev, parameters);
 
-  POCL_MSG_PRINT_INFO("Device specific initializion done\n");
+  POCL_MSG_PRINT_ACCEL("Device specific initializion done\n");
 
   SHA1_digest_t digest;
   pocl_almaif_tce_device_hash(parameters, dev->llvm_target_triplet,
                               (char *)digest);
-  POCL_MSG_PRINT_INFO("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
+  POCL_MSG_PRINT_ACCEL("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
   adi->build_hash = strdup((char *)digest);
 
 #else
@@ -121,7 +121,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     d->requires_bswap = !dev->endian_little;
   #endif
 
-  //  POCL_MSG_PRINT_INFO ("LITTLE_ENDIAN: %u, requires BSWAP: %u
+  //  POCL_MSG_PRINT_ACCEL ("LITTLE_ENDIAN: %u, requires BSWAP: %u
   \n",dev->endian_little,  d->requires_bswap);
   */
   return CL_SUCCESS;
@@ -153,11 +153,11 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   AccelData *d = (AccelData *)dev->data;
   unsigned dev_i = cmd->program_device_i;
 
-  POCL_MSG_PRINT_INFO("Current kernel %p, new kernel %p\n",
+  POCL_MSG_PRINT_ACCEL("Current kernel %p, new kernel %p\n",
                       d->compilationData->current_kernel, kernel);
 
  /* if (d->compilationData->current_kernel == kernel) {
-    POCL_MSG_PRINT_INFO(
+    POCL_MSG_PRINT_ACCEL(
         "kernel %s is the currently loaded kernel, nothing to do\n",
         kernel->name);
     return;
@@ -165,7 +165,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 
 #ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
-    POCL_MSG_PRINT_INFO("Compiling kernel %s to poclbinary\n", kernel->name);
+    POCL_MSG_PRINT_ACCEL("Compiling kernel %s to poclbinary\n", kernel->name);
 
     d->compilationData->compile_kernel(cmd, kernel, device, specialize);
   }
@@ -177,11 +177,11 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   almaif_kernel_data_t *kd =
       (almaif_kernel_data_t *)kernel->data[cmd->program_device_i];
 
-  POCL_MSG_PRINT_INFO("Loading program to device\n");
+  POCL_MSG_PRINT_ACCEL("Loading program to device\n");
   d->Dev->loadProgramToDevice(kd, kernel, cmd);
 
 
-  POCL_MSG_PRINT_INFO("Loaded program to device\n");
+  POCL_MSG_PRINT_ACCEL("Loaded program to device\n");
   d->compilationData->current_kernel = kernel;
 }
 

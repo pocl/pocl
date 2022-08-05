@@ -38,7 +38,7 @@
 XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {
 
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtRegion with Address %zu "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Initializing XrtRegion with Address %zu "
                       "and Size %zu and kernel %p\n",
                       Address, RegionSize, kernel);
 #endif
@@ -57,7 +57,7 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
     return; // don't try to write to empty region
   }
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Initializing XrtRegion with file %s\n",
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Initializing XrtRegion with file %s\n",
                       init_file);
 #endif
   std::ifstream inFile;
@@ -72,14 +72,14 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
   }
 
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Initialized region with %i bytes \n", i - 4);
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Initialized region with %i bytes \n", i - 4);
 #endif
 }
 
 
 uint32_t XrtRegion::Read32(size_t offset) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -91,7 +91,7 @@ uint32_t XrtRegion::Read32(size_t offset) {
 
 void XrtRegion::Write32(size_t offset, uint32_t value) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -103,7 +103,7 @@ void XrtRegion::Write32(size_t offset, uint32_t value) {
 
 void XrtRegion::Write16(size_t offset, uint16_t value) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -126,7 +126,7 @@ void XrtRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t XrtRegion::Read64(size_t offset) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -145,7 +145,7 @@ uint64_t XrtRegion::Read64(size_t offset) {
 void XrtRegion::CopyToMMAP(size_t destination, const void *source,
                                size_t bytes) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
                       "address 0x%zx\n",
                       bytes, PhysAddress, destination);
 #endif
@@ -167,7 +167,7 @@ void XrtRegion::CopyToMMAP(size_t destination, const void *source,
 void XrtRegion::CopyFromMMAP(void *destination, size_t source,
                                  size_t bytes) {
 #ifdef ACCEL_XRT_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
                       "with address 0x%zx\n",
                       bytes, PhysAddress, source);
 #endif
@@ -188,7 +188,7 @@ void XrtRegion::CopyFromMMAP(void *destination, size_t source,
 
 void XrtRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
+  POCL_MSG_PRINT_ACCEL("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
                       "to 0x%zx\n",
                       bytes, source, destination);
 #endif

@@ -52,7 +52,7 @@ private:
 TTASimDevice::TTASimDevice(char *adf_name) {
 
 #ifdef ACCEL_TTASimMMAP_DEBUG
-  POCL_MSG_PRINT_INFO(
+  POCL_MSG_PRINT_ACCEL(
       "TTASimMMAP: Initializing TTASimMMAPregion with Address %zu and Size %zu\n",
       Address, RegionSize);
 #endif
@@ -115,10 +115,10 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   char tpef_file[120];
   snprintf(tpef_file, sizeof(tpef_file), "%s.tpef", adf_name);
   if (pocl_exists(tpef_file)) {
-    POCL_MSG_PRINT_INFO("Accel: Found built-in kernel firmware for ttasim. Loading it in.\n");
+    POCL_MSG_PRINT_ACCEL("Accel: Found built-in kernel firmware for ttasim. Loading it in.\n");
     loadProgram(tpef_file);
   } else {
-    POCL_MSG_PRINT_INFO("File %s not found. Skipping program initialization\n", tpef_file);
+    POCL_MSG_PRINT_ACCEL("File %s not found. Skipping program initialization\n", tpef_file);
   }
 
   if (!RelativeAddressing) {
@@ -137,7 +137,7 @@ TTASimDevice::TTASimDevice(char *adf_name) {
         pocl_init_mem_region(ext_region, region_address, region_size);
         LL_APPEND(AllocRegions, ext_region);
 
-        POCL_MSG_PRINT_INFO(
+        POCL_MSG_PRINT_ACCEL(
             "Accel: initialized external alloc region at %zx with size %zx\n",
             region_address, region_size);
         ExternalMemory = new TTASimRegion(region_address, region_size, mem);
@@ -206,7 +206,7 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
                                       "/parallel.tpef", &cmd_copy, 0);
     }
   }
-  POCL_MSG_PRINT_INFO("Loading kernel from file %s\n", tpef_file);
+  POCL_MSG_PRINT_ACCEL("Loading kernel from file %s\n", tpef_file);
 
   loadProgram(tpef_file);
 
@@ -221,7 +221,7 @@ TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _c
   }
   
   /*  for (int i=0; i<prog->procedureCount(); i++){
-      POCL_MSG_PRINT_INFO("procedurename=%s\n", prog->procedure(i).name().c_str());
+      POCL_MSG_PRINT_ACCEL("procedurename=%s\n", prog->procedure(i).name().c_str());
   }*/
   //TODO Figure out kernel addres
 
@@ -270,7 +270,7 @@ void TTASimDevice::restartProgram() {
     POCL_UNLOCK(lock);
   }
   else {
-    POCL_MSG_PRINT_INFO("Trying to start simulator without initialization\n");
+    POCL_MSG_PRINT_ACCEL("Trying to start simulator without initialization\n");
   }
 }
 

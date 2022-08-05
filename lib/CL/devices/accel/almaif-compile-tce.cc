@@ -71,7 +71,7 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
       device->max_compute_units = cores;
     } else
       bd->core_count = 1;
-    POCL_MSG_PRINT_INFO("Multicore: %u Cores: %u \n", bd->core_count > 1,
+    POCL_MSG_PRINT_ACCEL("Multicore: %u Cores: %u \n", bd->core_count > 1,
                         bd->core_count);
     POCL_MEM_FREE(content);
   } else {
@@ -271,12 +271,12 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     device = cmd->device;
   assert(kernel);
   assert(device);
-  POCL_MSG_PRINT_INFO("COMPILATION BEFORE WG FUNC\n");
+  POCL_MSG_PRINT_ACCEL("COMPILATION BEFORE WG FUNC\n");
   POCL_LOCK(bd->tce_compile_lock);
   int error = pocl_llvm_generate_workgroup_function(cmd->program_device_i, device,
                                                     kernel, cmd, specialize);
 
-  POCL_MSG_PRINT_INFO("COMPILATION AFTER WG FUNC\n");
+  POCL_MSG_PRINT_ACCEL("COMPILATION AFTER WG FUNC\n");
   if (error) {
     POCL_UNLOCK(bd->tce_compile_lock);
     POCL_ABORT("TCE: pocl_llvm_generate_workgroup_function()"
@@ -375,7 +375,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                      assemblyFileName, bd->machine_file, bd->core_count > 1,
                      device->endian_little, extraParams);
 
-    POCL_MSG_PRINT_INFO("build command: \n%s", commandLine);
+    POCL_MSG_PRINT_ACCEL("build command: \n%s", commandLine);
 
     error = system(commandLine);
     if (error != 0)
@@ -419,7 +419,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
              "--piformat=bin2n --diformat=bin2n --program "
              "parallel.tpef %s ; cd $SAVEDIR",
              cachedir, bd->machine_file);
-    POCL_MSG_PRINT_INFO("running genbits: \n %s \n", genbits_command);
+    POCL_MSG_PRINT_ACCEL("running genbits: \n %s \n", genbits_command);
     error = system(genbits_command);
     if (error != 0)
       POCL_ABORT("Error while running generatebits.\n");

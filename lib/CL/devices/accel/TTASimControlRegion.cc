@@ -16,7 +16,7 @@
 TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine& mach, TTASimDevice* parent) {
 
 #ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_INFO("TTASim: Initializing TTASimControlRegion\n");
+  POCL_MSG_PRINT_ACCEL("TTASim: Initializing TTASimControlRegion\n");
 #endif
   PhysAddress = 0;
   Size = ACCEL_DEFAULT_CTRL_SIZE;
@@ -30,7 +30,7 @@ TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine& mach, TTASim
 uint32_t TTASimControlRegion::Read32(size_t offset) {
 
 #ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -41,7 +41,7 @@ uint32_t TTASimControlRegion::Read32(size_t offset) {
 
 void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
 #ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -49,7 +49,7 @@ void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
   if (offset == ACCEL_CONTROL_REG_COMMAND) {
     switch(value) {
     case ACCEL_RESET_CMD:
-      POCL_MSG_PRINT_INFO("parent %p",parent_);
+      POCL_MSG_PRINT_ACCEL("parent %p",parent_);
       parent_->stopProgram();
       break;
     case ACCEL_CONTINUE_CMD:
@@ -66,7 +66,7 @@ void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
 uint64_t TTASimControlRegion::Read64(size_t offset) {
 
 #ifdef ACCEL_TTASIM_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -136,7 +136,7 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
   } else {
     cq_start = 2*segment_size;
     dmem_start = 3*segment_size;
-          POCL_MSG_PRINT_INFO("segsize=%d, dmem_start=%d\n",segment_size,dmem_start);
+          POCL_MSG_PRINT_ACCEL("segsize=%d, dmem_start=%d\n",segment_size,dmem_start);
   }
 
   if (!hasPrivateMem) {
@@ -144,7 +144,7 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
     int fallback_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",
                                                 ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
     dmem_size -= fallback_mem_size;
-    POCL_MSG_PRINT_INFO("Accel: No separate private mem found. Setting it to %d\n",fallback_mem_size);
+    POCL_MSG_PRINT_ACCEL("Accel: No separate private mem found. Setting it to %d\n",fallback_mem_size);
   }
   if(sharedDataAndCq) {
     //No separate Cq so reserve small slice of dmem for it

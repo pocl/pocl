@@ -104,7 +104,7 @@ Device::discoverDeviceParameters()
     dmem_start = ControlMemory->Read64(ACCEL_INFO_DMEM_START_LOW);
 
     if (RelativeAddressing) {
-      POCL_MSG_PRINT_INFO("Accel: Enabled relative addressing\n");
+      POCL_MSG_PRINT_ACCEL("Accel: Enabled relative addressing\n");
       cq_start += ControlMemory->PhysAddress;
       imem_start += ControlMemory->PhysAddress;
       dmem_start += ControlMemory->PhysAddress;
@@ -113,11 +113,11 @@ Device::discoverDeviceParameters()
   } else {
     POCL_ABORT_UNIMPLEMENTED("Unsupported AlmaIF version\n");
   }
-    POCL_MSG_PRINT_INFO("cq_start=%p imem_start=%p dmem_start=%p\n",
+    POCL_MSG_PRINT_ACCEL("cq_start=%p imem_start=%p dmem_start=%p\n",
     (void*)cq_start,(void*)imem_start,(void*)dmem_start);
-    POCL_MSG_PRINT_INFO("cq_size=%u imem_size=%u dmem_size=%u\n",cq_size,
+    POCL_MSG_PRINT_ACCEL("cq_size=%u imem_size=%u dmem_size=%u\n",cq_size,
     imem_size, dmem_size);
-    POCL_MSG_PRINT_INFO("ControlMemory->PhysAddress=%zu\n",ControlMemory->PhysAddress);
+    POCL_MSG_PRINT_ACCEL("ControlMemory->PhysAddress=%zu\n",ControlMemory->PhysAddress);
     AllocRegions = (memory_region_t*)calloc(1, sizeof(memory_region_t));
     pocl_init_mem_region(AllocRegions, dmem_start, dmem_size);
 
@@ -159,7 +159,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
                                         cmd->program_device_i, kernel, "",
                                         &cmd_copy, 0);
       }
-      POCL_MSG_PRINT_INFO("Specialized kernel not found, using %s\n", cachedir);
+      POCL_MSG_PRINT_ACCEL("Specialized kernel not found, using %s\n", cachedir);
       preread_images(cachedir, kd);
     }
   }
@@ -170,7 +170,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
 
   InstructionMemory->CopyToMMAP(InstructionMemory->PhysAddress,
                                    kd->imem_img, kd->imem_img_size);
-  POCL_MSG_PRINT_INFO("IMEM image written: %zu / %zu B\n",
+  POCL_MSG_PRINT_ACCEL("IMEM image written: %zu / %zu B\n",
                       InstructionMemory->PhysAddress, kd->imem_img_size);
 
   ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
@@ -178,7 +178,7 @@ Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_comm
 }
 
 void Device::preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd) {
-  POCL_MSG_PRINT_INFO("Reading image files\n");
+  POCL_MSG_PRINT_ACCEL("Reading image files\n");
   uint64_t temp = 0;
   size_t size = 0;
   char *content = NULL;
@@ -231,7 +231,7 @@ void Device::preread_images(const char *kernel_cachedir, almaif_kernel_data_t *k
         uint32_t *up = (uint32_t *)p;
         kernel_addr = *up;
      }
-      POCL_MSG_PRINT_INFO("Kernel address (%0x) found\n", kernel_addr);
+      POCL_MSG_PRINT_ACCEL("Kernel address (%0x) found\n", kernel_addr);
       kd->kernel_address = kernel_addr;
       content = NULL;
     } else

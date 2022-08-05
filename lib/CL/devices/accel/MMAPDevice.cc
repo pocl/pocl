@@ -55,10 +55,10 @@ MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
     snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
 
     if (pocl_exists(file_name)) {
-      POCL_MSG_PRINT_INFO("Accel: Found built-in kernel firmaware. Loading it in\n");
+      POCL_MSG_PRINT_ACCEL("Accel: Found built-in kernel firmaware. Loading it in\n");
       ((MMAPRegion*)InstructionMemory)->initRegion(file_name);
     } else {
-      POCL_MSG_PRINT_INFO("Accel: No default firmware found. Skipping\n");
+      POCL_MSG_PRINT_ACCEL("Accel: No default firmware found. Skipping\n");
     }
 
     if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
@@ -74,7 +74,7 @@ MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
         pocl_init_mem_region(ext_region, region_address, region_size);
 	LL_APPEND(AllocRegions, ext_region);
 
-	POCL_MSG_PRINT_INFO("Accel: initialized external alloc region at %zx with size %zx\n",
+	POCL_MSG_PRINT_ACCEL("Accel: initialized external alloc region at %zx with size %zx\n",
 		      region_address, region_size);
         ExternalMemory = new MMAPRegion(region_address, region_size, mem_fd);
 	}

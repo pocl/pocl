@@ -49,7 +49,7 @@ EmulationDevice::EmulationDevice() {
     pthread_create(&emulate_thread, NULL, emulate_accel, &E);
     while (!E.emulate_init_done)
       ; // Wait for the thread to initialize
-    POCL_MSG_PRINT_INFO("accel: started emulating\n");
+    POCL_MSG_PRINT_ACCEL("accel: started emulating\n");
 
     ControlMemory =
         new EmulationRegion((size_t)E.emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
@@ -62,7 +62,7 @@ EmulationDevice::EmulationDevice() {
 }
 
 EmulationDevice::~EmulationDevice() {
-    POCL_MSG_PRINT_INFO("accel: freeing emulated accel");
+    POCL_MSG_PRINT_ACCEL("accel: freeing emulated accel");
     E.emulate_exit_called = 1; // signal for the emulator to stop
     pthread_join(emulate_thread, NULL);
     free((void *)E.emulating_address); // from
@@ -133,7 +133,7 @@ void *emulate_accel(void *E_void) {
   // (in hardware this signal is probably not needed, since the values are
   // initialized in hw reset)
   E->emulate_init_done = 1;
-  POCL_MSG_PRINT_INFO("accel emulate: Emulator initialized");
+  POCL_MSG_PRINT_ACCEL("accel emulate: Emulator initialized");
 
   int read_iter = 0;
   CQ[ACCEL_CQ_READ / 4] = read_iter;
@@ -172,7 +172,7 @@ void *emulate_accel(void *E_void) {
     uint16_t header = packet->header;
     if (header & (1 << AQL_PACKET_BARRIER_AND)) {
       struct AQLAndPacket *andPacket = (struct AQLAndPacket *)packet;
-      POCL_MSG_PRINT_INFO("accel emulate: Found valid AND packet from location "
+      POCL_MSG_PRINT_ACCEL("accel emulate: Found valid AND packet from location "
                           "%u, starting parsing:",
                           packet_loc);
       for (int i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
@@ -183,13 +183,13 @@ void *emulate_accel(void *E_void) {
           }
         }
       }
-      POCL_MSG_PRINT_INFO("accel emulate: And packet done\n");
+      POCL_MSG_PRINT_ACCEL("accel emulate: And packet done\n");
     }
     else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
-      POCL_MSG_PRINT_INFO("accel emulate: Found valid kernel dispatch packet from location "
+      POCL_MSG_PRINT_ACCEL("accel emulate: Found valid kernel dispatch packet from location "
                           "%u, starting parsing:\n",
                           packet_loc);
-      POCL_MSG_PRINT_INFO("accel emulate: kernargs are at 0x%zx\n",
+      POCL_MSG_PRINT_ACCEL("accel emulate: kernargs are at 0x%zx\n",
                           packet->kernarg_address);
       // Find the 3 pointers
       // Pointer size can be different on different systems
@@ -209,7 +209,7 @@ void *emulate_accel(void *E_void) {
       uint32_t *arg1 = args.ptrs[1];
       uint32_t *arg2 = args.ptrs[2];
 
-      POCL_MSG_PRINT_INFO("accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n",
+      POCL_MSG_PRINT_ACCEL("accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n",
                           arg0, arg1, arg2);
 
       // Check how many dimensions are in use, and set the unused ones to 1.
@@ -218,7 +218,7 @@ void *emulate_accel(void *E_void) {
       int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
 
       int red_count = 0;
-      POCL_MSG_PRINT_INFO(
+      POCL_MSG_PRINT_ACCEL(
           "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)\n",
           dim_x, dim_y, dim_z);
       for (int x = 0; x < dim_x; x++) {
@@ -265,7 +265,7 @@ void *emulate_accel(void *E_void) {
         arg1[0] = red_count;
       }
 
-      POCL_MSG_PRINT_INFO("accel emulate: Kernel done\n");
+      POCL_MSG_PRINT_ACCEL("accel emulate: Kernel done\n");
     }
 
     cmd->finish_timestamp = pocl_gettimemono_ns();

@@ -43,7 +43,7 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
     return;
   }
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("accel: mmap'ing from address 0x%zx with size %zu\n",
+  POCL_MSG_PRINT_ACCEL("accel: mmap'ing from address 0x%zx with size %zu\n",
                       Address, RegionSize);
 #endif
   // In case of unaligned Address, align the mmap call
@@ -56,7 +56,7 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   // Increment back to the unaligned address user asked for
   Data = (void *)((char *)Data + difference);
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("accel: got address %p\n", Data);
+  POCL_MSG_PRINT_ACCEL("accel: got address %p\n", Data);
 #endif
 }
 
@@ -74,7 +74,7 @@ MMAPRegion::initRegion(char* init_file)
   }
 
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Initialized region with %i bytes \n", i - 4);
+  POCL_MSG_PRINT_ACCEL("MMAP: Initialized region with %i bytes \n", i - 4);
 #endif
 }
 
@@ -82,7 +82,7 @@ MMAPRegion::initRegion(char* init_file)
 
 MMAPRegion::~MMAPRegion() {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("accel: munmap'ing from address 0x%zx\n", PhysAddress);
+  POCL_MSG_PRINT_ACCEL("accel: munmap'ing from address 0x%zx\n", PhysAddress);
 #endif
   if (Data) {
     // Align unmap to page_size
@@ -97,7 +97,7 @@ MMAPRegion::~MMAPRegion() {
 
 uint32_t MMAPRegion::Read32(size_t offset) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -110,7 +110,7 @@ uint32_t MMAPRegion::Read32(size_t offset) {
 
 void MMAPRegion::Write32(size_t offset, uint32_t value) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -121,7 +121,7 @@ void MMAPRegion::Write32(size_t offset, uint32_t value) {
 
 void MMAPRegion::Write16(size_t offset, uint16_t value) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Writing to physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -132,7 +132,7 @@ void MMAPRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t MMAPRegion::Read64(size_t offset) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Reading from physical address 0x%zx with "
                       "offset 0x%zx\n",
                       PhysAddress, offset);
 #endif
@@ -147,7 +147,7 @@ uint64_t MMAPRegion::Read64(size_t offset) {
 void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
                             size_t bytes) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
+  POCL_MSG_PRINT_ACCEL("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
                       "address 0x%zx\n",
                       bytes, PhysAddress, destination);
 #endif
@@ -160,7 +160,7 @@ void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
 
 void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Reading 0x%zx bytes from buffer at 0x%zx "
+  POCL_MSG_PRINT_ACCEL("MMAP: Reading 0x%zx bytes from buffer at 0x%zx "
                       "with address 0x%zx\n",
                       bytes, PhysAddress, source);
 #endif
@@ -173,7 +173,7 @@ void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
 
 void MMAPRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
 #ifdef ACCEL_MMAP_DEBUG
-  POCL_MSG_PRINT_INFO("MMAP: Copying 0x%zx bytes from 0x%zx "
+  POCL_MSG_PRINT_ACCEL("MMAP: Copying 0x%zx bytes from 0x%zx "
                       "to 0x%zx\n",
                       bytes, source, destination);
 #endif
