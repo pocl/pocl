@@ -180,10 +180,16 @@ void pocl_accel_copy(void *data, pocl_mem_identifier * dst_mem_id,
   size_t dst = dst_chunk->start_address + dst_offset;
   AccelData *d = (AccelData *)data;
 
-  if (d->Dev->DataMemory->isInRange(dst) && d->Dev->DataMemory->isInRange(src)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes from %zx to 0x%zx\n", size, src, dst);
-    d->Dev->DataMemory->CopyInMem(src, dst, size);
-
+  if (d->Dev->DataMemory->isInRange(dst) ) {
+      POCL_MSG_PRINT_INFO("accel: Copying %zu bytes from %zx to 0x%zx\n", size,
+                          src, dst);
+      if(d->Dev->DataMemory->isInRange(src))
+        {
+          d->Dev->DataMemory->CopyInMem (src, dst, size);
+        }else {
+          char *__restrict__ src_ptr = (char *)src_mem_id->mem_ptr;
+          d->Dev->DataMemory->CopyToMMAP(dst, src_ptr + src_offset, size);
+        }
   } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(dst)) {
     POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to external 0x%zx\n", size, dst);
     d->Dev->ExternalMemory->CopyInMem(src, dst, size);
