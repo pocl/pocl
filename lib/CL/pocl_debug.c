@@ -83,8 +83,6 @@ static pocl_lock_t console_mutex;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ALL;
         else if (strncmp (ptr, "err", 3) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ERROR;
-        else if (strncmp (ptr, "accel", 5) == 0)
-          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ACCEL;
         else
           POCL_MSG_WARN ("Unknown token in POCL_DEBUG env var: %s", ptr);
 
