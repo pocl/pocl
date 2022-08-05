@@ -107,7 +107,7 @@ void TTASimControlRegion::setupControlRegisters(const TTAMachine::Machine& mach)
     TTAMachine::AddressSpace *as = nav.item(i);
     if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
       if (as->end() == UINT32_MAX) {
-        dmem_size = pow(2, 12); // TODO magic number from almaifintegrator.cc
+        dmem_size = pow(2, 15); // TODO magic number from almaifintegrator.cc
         relativeAddressing = false;
       } else {
         dmem_size = as->end() + 1;
