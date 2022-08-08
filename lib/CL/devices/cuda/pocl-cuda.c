@@ -51,7 +51,6 @@
 #include <cuda_runtime.h>
 #include <nvPTXCompiler.h>
 
-#define ENABLE_CUDNN
 #ifdef ENABLE_CUDNN
 #include <cudnn.h>
 #define CUDNN_CALL(f)                                                         \
@@ -62,9 +61,9 @@
         POCL_ABORT ("  CUDNN Error occurred: %d", err);                       \
       }                                                                       \
   }
-#endif
 
 cudnnHandle_t cudnn;
+#endif // ENABLE_CUDNN
 
 #define CUDA_CALL(f)                                                          \
   {                                                                           \
@@ -185,13 +184,14 @@ static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
 
 #ifdef ENABLE_CUDNN
 #define CUDNN_BUILTIN_KERNELS 1
-#else
-#define CUDNN_BUILTIN_KERNELS 0
-#endif
 static const char* CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS] = {
   "pocl.dnn.conv2d.nchw.f32"
 };
 static pocl_cuda_kernel_data_t CudnnBuiltinKernelsData[CUDNN_BUILTIN_KERNELS];
+#else
+#define CUDNN_BUILTIN_KERNELS 0
+#endif
+
 
 
 cl_int pocl_cuda_handle_cl_nv_device_attribute_query(cl_device_id   device,
@@ -483,12 +483,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
           strcat (dev->builtin_kernel_list, ";");
           strcat (dev->builtin_kernel_list, OpenclBuiltinKernels[i]);
         }
+#ifdef ENABLE_CUDNN
       dev->num_builtin_kernels += CUDNN_BUILTIN_KERNELS;
       for (unsigned i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
         {
           strcat(dev->builtin_kernel_list, ";");
           strcat(dev->builtin_kernel_list, CudnnBuiltinKernels[i]);
         }
+#endif //ENABLE_CUDNN
+
     }
 
   dev->device_side_printf = 0;
@@ -1288,7 +1291,7 @@ pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 }
 
 
-
+#ifdef ENABLE_CUDNN
 void
 submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
                     cl_device_id device, cl_event event)
@@ -1413,6 +1416,8 @@ submit_cudnn_kernel(CUstream stream, _cl_command_node *cmd,
   CUDNN_CALL(cudnnDestroyTensorDescriptor(in_desc));
 }
 
+#endif //ENABLE_CUDNN
+
 void
 pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                          cl_device_id device, cl_event event)
@@ -1448,6 +1453,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               break;
             }
         }
+#ifdef ENABLE_CUDNN
       /* CUDNN builtins */
       for (size_t i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
         {
@@ -1457,6 +1463,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               return;
             }
         }
+#endif //ENABLE_CUDNN
+
       /* OpenCL builtins. TODO we just assign OpenclBuiltinKernelsData[i] here,
        * it could be assigned to multiple kernel objects with same name.
        * currently won't crash because it's not freed, but should be refcounted
