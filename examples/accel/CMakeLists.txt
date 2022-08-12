@@ -49,6 +49,8 @@ if(ENABLE_TCE)
   #add_subdirectory(gen_accel)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bitstreams)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs)
+
 
 
   configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/axim_sep.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
@@ -83,11 +85,12 @@ if(ENABLE_TCE)
       list(APPEND PARAMS "--init-sp=${init_sp}")
       list(APPEND PARAMS "--data-start=${data_start}")
     endif()
-    add_custom_command(OUTPUT ${core_name}.tpef
+    add_custom_command(OUTPUT firmwares/${core_name}.tpef
       COMMAND tcecc -o3 ${PARAMS} -g -a ${ADF} -o ${TPEF} firmware.c
       COMMAND generatebits -e tta_core -f bin2n -p ${TPEF} ${ADF}
       COMMAND tcedisasm -n ${ADF} ${TPEF}
-      DEPENDS ${ADF} firmware.c
+      COMMAND mv ${core_name}.img ${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/
+      DEPENDS ${ADF} ${CMAKE_CURRENT_SOURCE_DIR}/firmware.c
       COMMENT "Compiling ${core_name} firmware with params ${PARAMS}")
     add_custom_target(${core_name}_firmware ALL DEPENDS firmwares/${core_name}.tpef)
     
