@@ -82,7 +82,7 @@ if ! [ -z ${PYNQ_AVAILABLE} ]
 then
   echo "Running Accel HLS tests"
   echo "Running on PYNQ"
-  export POCL_ACCEL0_PARAMETERS="0x44A00000,dummy,1,2"
+  export POCL_ACCEL0_PARAMETERS="0x40000000,dummy,1,2"
   sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/hls/bitstreams/vecadd_1.bit')"
   USE_SUDO="sudo -E "
 
