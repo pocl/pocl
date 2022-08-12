@@ -45,6 +45,92 @@ add_executable(accel_countred accel_countred.cpp OpenCLcontext.cpp  OpenCLcontex
 target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 
+if(ENABLE_TCE)
+  #add_subdirectory(gen_accel)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bitstreams)
+
+
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/axim_sep.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/axim_fused_global_private.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/axim_fused_global_cq.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/axim_fused_global_cq_private.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/relative_sep.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/relative_fused_global_private.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/relative_fused_global_cq.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+  configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/relative_fused_global_cq_private.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
+
+  configure_file(firmware.c ${CMAKE_CURRENT_BINARY_DIR})
+
+  function(generate_firmware core_name base_address queue_length queue_start init_sp data_start use_axim)
+    set(ADF ${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/${core_name}.adf)
+    set(TPEF ${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name}.tpef)
+
+    message("ADF=${ADF}")
+
+    set(PARAMS "")
+    if(NOT base_address STREQUAL "")
+      list(APPEND PARAMS "-DBASE_ADDRESS=${base_address}")
+    endif()
+    if(NOT queue_length STREQUAL "")
+      list(APPEND PARAMS "-DQUEUE_LENGTH=${queue_length}")
+    endif()
+    if(NOT queue_start STREQUAL "")
+      list(APPEND PARAMS "-DQUEUE_START=${queue_start}")
+    endif()
+    if(NOT init_sp STREQUAL "")
+      list(APPEND PARAMS "--init-sp=${init_sp}")
+      list(APPEND PARAMS "--data-start=${data_start}")
+    endif()
+    add_custom_command(OUTPUT ${core_name}.tpef
+      COMMAND tcecc -o3 ${PARAMS} -g -a ${ADF} -o ${TPEF} firmware.c
+      COMMAND generatebits -e tta_core -f bin2n -p ${TPEF} ${ADF}
+      COMMAND tcedisasm -n ${ADF} ${TPEF}
+      DEPENDS ${ADF} firmware.c
+      COMMENT "Compiling ${core_name} firmware with params ${PARAMS}")
+    add_custom_target(${core_name}_firmware ALL DEPENDS firmwares/${core_name}.tpef)
+    
+    
+    add_custom_command(OUTPUT rtls/rtl_${core_name}
+      COMMAND generateprocessor --prefer-generation -o rtls/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal,fpga-optimized:yes
+      --hdb-list=generate_lsu_32.hdb,generate_rf_iu.hdb,xilinx_series7.hdb,generate_base32.hdb
+      -f onchip -d onchip -g AlmaIFIntegrator -p ${TPEF} ${ADF}
+      COMMAND generatebits -x rtls/rtl_${core_name} -e tta_core ${ADF}
+      DEPENDS ${ADF})
+    add_custom_target(${core_name}_rtl ALL DEPENDS rtls/rtl_${core_name})
+
+
+    add_custom_command(OUTPUT bitstreams/${core_name}.bit
+      COMMAND rm -rf vivado_${core_name}_1
+      COMMAND /home/topi/Xilinx/Vivado/2021.2/bin/vivado -mode batch -source ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl
+       -tclargs ${core_name} -tclargs 1 -tclargs ${use_axim}
+       COMMAND cp vivado_${core_name}_1/vivado_${core_name}_1.runs/impl_1/toplevel_wrapper.bit
+        bitstreams/${core_name}.bit
+      COMMAND cp vivado_${core_name}_1/vivado_${core_name}_1.gen/sources_1/bd/toplevel/hw_handoff/toplevel.hwh
+        bitstreams/${core_name}.hwh
+      DEPENDS ${ADF} ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl)
+    add_custom_target(${core_name}_bs DEPENDS bitstreams/${core_name}.bit)
+
+    add_dependencies(bitstreams ${core_name}_bs)
+
+  endfunction()
+
+  add_custom_target(bitstreams)
+  
+  generate_firmware("axim_sep"                         "0x43C00000" "1023" ""           ""           ""           "1")
+  generate_firmware("axim_fused_global_cq"             "0x43C00000" "3"    "0x43C1FF00" ""           ""           "1")
+  generate_firmware("axim_fused_global_private"        "0x43C00000" "1023" ""           "0x43C20000" "0x43C1F800" "1")
+  generate_firmware("axim_fused_global_cq_private"     "0x43C00000" "3"    "0x43C1F700" "0x43C20000" "0x43C1F800" "1")
+  generate_firmware("relative_sep"                     ""           "1023" ""           ""           ""           "0")
+  generate_firmware("relative_fused_global_cq"         ""           "3"    "0x7F00"     ""           ""           "0")
+  generate_firmware("relative_fused_global_private"    ""           "1023" ""           "0x8000"     "0x7800"     "0")
+  generate_firmware("relative_fused_global_cq_private" ""           "3"    "0x7700"     "0x8000"     "0x7800"     "0")
+
+
+
+endif()
+
 ######################################################################
 
 add_test_pocl(NAME "examples/accel/countred" COMMAND "accel_example" "pocl.countred")

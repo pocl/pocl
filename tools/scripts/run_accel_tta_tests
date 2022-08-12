@@ -22,11 +22,7 @@
 # THE SOFTWARE.
 
 export POCL_BUILDING=1
-
-if [ -z "$POCL_ACCEL0_PARAMETERS" ]; then
-  export POCL_DEVICES=accel
-  export POCL_ACCEL0_PARAMETERS="0xE,1,2,4,9"
-fi
+export POCL_DEVICES=accel
 
 if [ -z "$OCL_ICD_VENDORS" ]; then
   export OCL_ICD_VENDORS=$PWD/ocl-vendors
@@ -38,16 +34,24 @@ if [ ! -e "$OCL_ICD_VENDORS" ]; then
 fi
 
 echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
-echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
 
-if [ -z "$LLVM" ]; then
-  LLVM=0
-fi
 
-if [ "$LLVM" -eq "0" ]; then
-  echo "running accel tests without LLVM"
-  ctest -L accel_no_LLVM $@
-else
-  echo "running accel tests with LLVM"
-  ctest -L accel_LLVM $@
-fi
+declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
+ "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
+#declare -a TTATests=("axim_sep")
+
+
+
+for val in ${TTATests[@]}; do
+  if [ ${PYNQ_AVAILABLE}] then
+    export POCL_ACCEL0_PARAMETERS="0xB,$PWD/examples/accel/firmwares/$val,1,2"
+  else
+    export POCL_ACCEL0_PARAMETERS="0x43C00000,dummy,1,2"
+    sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
+  fi
+
+  echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
+  ctest -L accel_no_LLVM -R .*i32 $@
+done
+
+

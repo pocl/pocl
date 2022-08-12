@@ -1,0 +1,737 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<adf version="2.1">
+
+  <little-endian/>
+
+  <bus name="B1">
+    <width>32</width>
+    <guard>
+      <always-true/>
+    </guard>
+    <guard>
+      <simple-expr>
+        <bool>
+          <name>bool</name>
+          <index>0</index>
+        </bool>
+      </simple-expr>
+    </guard>
+    <guard>
+      <inverted-expr>
+        <bool>
+          <name>bool</name>
+          <index>0</index>
+        </bool>
+      </inverted-expr>
+    </guard>
+    <guard>
+      <simple-expr>
+        <bool>
+          <name>bool</name>
+          <index>1</index>
+        </bool>
+      </simple-expr>
+    </guard>
+    <guard>
+      <inverted-expr>
+        <bool>
+          <name>bool</name>
+          <index>1</index>
+        </bool>
+      </inverted-expr>
+    </guard>
+    <segment name="seg1">
+      <writes-to/>
+    </segment>
+    <short-immediate>
+      <extension>zero</extension>
+      <width>32</width>
+    </short-immediate>
+  </bus>
+
+  <socket name="lsu_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="lsu_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="lsu_i2">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="alu_comp_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="alu_comp_i2">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="alu_comp_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="RF_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="RF_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="bool_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="bool_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="gcu_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="gcu_i2">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="gcu_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="scratchpad_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="scratchpad_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="scratchpad_i2">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <function-unit name="buffer">
+    <port name="in1t">
+      <connects-to>lsu_i1</connects-to>
+      <width>32</width>
+      <triggers/>
+      <sets-opcode/>
+    </port>
+    <port name="out1">
+      <connects-to>lsu_o1</connects-to>
+      <width>32</width>
+    </port>
+    <port name="in2">
+      <connects-to>lsu_i2</connects-to>
+      <width>32</width>
+    </port>
+    <operation>
+      <name>ld32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ld8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ld16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ldu8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ldu16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <address-space>param</address-space>
+  </function-unit>
+
+  <function-unit name="alu">
+    <port name="in1t">
+      <connects-to>alu_comp_i1</connects-to>
+      <width>32</width>
+      <triggers/>
+      <sets-opcode/>
+    </port>
+    <port name="in2">
+      <connects-to>alu_comp_i2</connects-to>
+      <width>32</width>
+    </port>
+    <port name="out1">
+      <connects-to>alu_comp_o1</connects-to>
+      <width>32</width>
+    </port>
+    <operation>
+      <name>add</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>sub</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>eq</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>gt</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>gtu</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>and</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ior</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>xor</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <bind name="3">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="3">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>shr1_32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>shru1_32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <address-space/>
+  </function-unit>
+
+  <function-unit name="scratchpad">
+    <port name="in1t">
+      <connects-to>scratchpad_i1</connects-to>
+      <width>32</width>
+      <triggers/>
+      <sets-opcode/>
+    </port>
+    <port name="out1">
+      <connects-to>scratchpad_o1</connects-to>
+      <width>32</width>
+    </port>
+    <port name="in2">
+      <connects-to>scratchpad_i2</connects-to>
+      <width>32</width>
+    </port>
+    <operation>
+      <name>ld32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ld8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ld16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st32</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>st16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">in2</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <reads name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ldu8</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>ldu16</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>2</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <address-space>scratchpad</address-space>
+  </function-unit>
+
+  <register-file name="RF">
+    <type>normal</type>
+    <size>16</size>
+    <width>32</width>
+    <max-reads>1</max-reads>
+    <max-writes>1</max-writes>
+    <port name="wr">
+      <connects-to>RF_i1</connects-to>
+    </port>
+    <port name="rd">
+      <connects-to>RF_o1</connects-to>
+    </port>
+  </register-file>
+
+  <register-file name="bool">
+    <type>normal</type>
+    <size>2</size>
+    <width>1</width>
+    <max-reads>1</max-reads>
+    <max-writes>1</max-writes>
+    <port name="wr">
+      <connects-to>bool_i1</connects-to>
+    </port>
+    <port name="rd">
+      <connects-to>bool_o1</connects-to>
+    </port>
+  </register-file>
+
+  <address-space name="param">
+    <width>8</width>
+    <min-address>0</min-address>
+    <max-address>4294967295</max-address>
+    <numerical-id>1</numerical-id>
+    <numerical-id>2</numerical-id>
+    <numerical-id>3</numerical-id>
+  </address-space>
+
+  <address-space name="instructions">
+    <width>8</width>
+    <min-address>0</min-address>
+    <max-address>4095</max-address>
+  </address-space>
+
+  <address-space name="scratchpad">
+    <width>8</width>
+    <min-address>0</min-address>
+    <max-address>1023</max-address>
+    <shared-memory>0</shared-memory>
+    <numerical-id>0</numerical-id>
+  </address-space>
+
+  <global-control-unit name="gcu">
+    <port name="pc">
+      <connects-to>gcu_i1</connects-to>
+      <width>32</width>
+      <triggers/>
+      <sets-opcode/>
+    </port>
+    <special-port name="ra">
+      <connects-to>gcu_i2</connects-to>
+      <connects-to>gcu_o1</connects-to>
+      <width>32</width>
+    </special-port>
+    <return-address>ra</return-address>
+    <ctrl-operation>
+      <name>jump</name>
+      <bind name="1">pc</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </ctrl-operation>
+    <ctrl-operation>
+      <name>call</name>
+      <bind name="1">pc</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+      </pipeline>
+    </ctrl-operation>
+    <address-space>instructions</address-space>
+    <delay-slots>3</delay-slots>
+    <guard-latency>1</guard-latency>
+  </global-control-unit>
+
+</adf>
