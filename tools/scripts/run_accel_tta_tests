@@ -38,20 +38,20 @@ echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 
 declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
  "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
-#declare -a TTATests=("axim_sep")
-
 
 
 for val in ${TTATests[@]}; do
-  if [ ${PYNQ_AVAILABLE}] then
+  if [ -z ${PYNQ_AVAILABLE} ]
+  then
     export POCL_ACCEL0_PARAMETERS="0xB,$PWD/examples/accel/firmwares/$val,1,2"
   else
-    export POCL_ACCEL0_PARAMETERS="0x43C00000,dummy,1,2"
+    export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2"
     sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
+    USE_SUDO="sudo -E "
   fi
 
   echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
-  ctest -L accel_no_LLVM -R .*i32 $@
+  ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
 done
 
 
