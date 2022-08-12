@@ -75,3 +75,18 @@ then
     ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
   done
 fi
+
+
+#Run HLS generated core
+if ! [ -z ${PYNQ_AVAILABLE} ]
+then
+  echo "Running Accel HLS tests"
+  echo "Running on PYNQ"
+  export POCL_ACCEL0_PARAMETERS="0x44A00000,dummy,1,2"
+  sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/hls/bitstreams/vecadd_1.bit')"
+  USE_SUDO="sudo -E "
+
+  echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
+  ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
+fi
+

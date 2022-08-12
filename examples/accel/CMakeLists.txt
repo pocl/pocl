@@ -134,6 +134,8 @@ if(ENABLE_TCE)
 
 endif()
 
+add_subdirectory(hls)
+
 ######################################################################
 
 add_test_pocl(NAME "examples/accel/countred" COMMAND "accel_example" "pocl.countred")
