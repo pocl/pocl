@@ -45,9 +45,33 @@ if [ -z "$LLVM" ]; then
 fi
 
 if [ "$LLVM" -eq "0" ]; then
-  echo "running accel tests without LLVM"
+  echo "running accel emulation tests without LLVM"
   ctest -L accel_no_LLVM $@
 else
   echo "running accel tests with LLVM"
   ctest -L accel_LLVM $@
+fi
+
+#figure out if ENABLE_TCE=1
+if grep ^ENABLE_TCE CMakeCache.txt | cut -d '=' -f 2 | grep -q 1
+then
+  echo "Running Accel tests with different TTA configurations"
+  declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
+ "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
+
+  for val in ${TTATests[@]}; do
+    if [ -z ${PYNQ_AVAILABLE} ]
+    then
+      echo "Running on ttasim"
+      export POCL_ACCEL0_PARAMETERS="0xB,$PWD/examples/accel/firmwares/$val,1,2"
+    else
+      echo "Running on PYNQ"
+      export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2"
+      sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
+      USE_SUDO="sudo -E "
+    fi
+
+    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
+    ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
+  done
 fi
