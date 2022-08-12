@@ -825,7 +825,7 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd,
     almaif_kernel_data_t *kd = (almaif_kernel_data_t *)run->kernel->data[cmd->program_device_i];
     packet.kernel_object = kd->kernel_address;
 
-    POCL_MSG_PRINT_ACCEL("Kernel addresss=0x%zx\n", kd->kernel_address);
+    POCL_MSG_PRINT_ACCEL("Kernel addresss=0x%" PRIu32 "\n", kd->kernel_address);
   }
 
   if (data->Dev->RelativeAddressing) {
@@ -885,7 +885,7 @@ bool isEventDone(AccelData* data, cl_event event) {
   uint32_t status = data->Dev->DataMemory->Read32(signalAddress);
 
   if(status == 1) {
-    POCL_MSG_PRINT_ACCEL("Event %d done, completion signal address=%zx, value=%u\n",event->id, signalAddress, status);
+    POCL_MSG_PRINT_ACCEL("Event %" PRIu64 " done, completion signal address=%zx, value=%u\n",event->id, signalAddress, status);
   }
   
   return (status == 1);
