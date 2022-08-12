@@ -106,7 +106,7 @@ if(ENABLE_TCE)
 
     add_custom_command(OUTPUT bitstreams/${core_name}.bit
       COMMAND rm -rf vivado_${core_name}_1
-      COMMAND /home/topi/Xilinx/Vivado/2021.2/bin/vivado -mode batch -source ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl
+      COMMAND ${VIVADO_PATH}vivado -mode batch -source ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl
        -tclargs ${core_name} -tclargs 1 -tclargs ${use_axim}
        COMMAND cp vivado_${core_name}_1/vivado_${core_name}_1.runs/impl_1/toplevel_wrapper.bit
         bitstreams/${core_name}.bit
