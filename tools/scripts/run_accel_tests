@@ -52,6 +52,12 @@ else
   ctest -L accel_LLVM $@
 fi
 
+if [ "$1" = "--pynq" ]
+then
+  PYNQ_AVAILABLE=1
+fi
+
+
 #figure out if ENABLE_TCE=1
 if grep ^ENABLE_TCE CMakeCache.txt | cut -d '=' -f 2 | grep -q 1 || ! [ -z ${PYNQ_AVAILABLE} ]
 then

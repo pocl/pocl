@@ -45,6 +45,8 @@ add_executable(accel_countred accel_countred.cpp OpenCLcontext.cpp  OpenCLcontex
 target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 
+add_custom_target(bitstreams)
+
 if(ENABLE_TCE)
   #add_subdirectory(gen_accel)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
@@ -119,7 +121,6 @@ if(ENABLE_TCE)
 
   endfunction()
 
-  add_custom_target(bitstreams)
   
   generate_firmware("axim_sep"                         "0x43C00000" "1023" ""           ""           ""           "1")
   generate_firmware("axim_fused_global_cq"             "0x43C00000" "3"    "0x43C1FF00" ""           ""           "1")
@@ -134,7 +135,9 @@ if(ENABLE_TCE)
 
 endif()
 
-add_subdirectory(hls)
+if(defined VITIS_HLS_PATH)
+  add_subdirectory(hls)
+endif()
 
 ######################################################################
 

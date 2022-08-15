@@ -11,10 +11,9 @@ Interface
 ---------
 
 The control register interface for the fixed-function accelerators is quite
-simple. The address space of the device is split into four regions, the size of
-which is determined by the largest of the memories in these regions.
-Therefore, the region is selected with the highest bits of the address space of
-the accelerator:
+simple. The address space of the device is split into four regions. The sizes
+and starting addresses of the regions are advertised in the control region
+by the accelerator.
 
 +-------------+--------------------+
 | High bits   | Address Space      |
@@ -29,9 +28,7 @@ the accelerator:
 | 11          | Parameter memory   |
 +-------------+--------------------+
 
-The size of the memories is read from the control registers, which is sufficient
-to determine the size of the address space of the accelerator as well as the
-offsets of each memory. The control registers are also used to control the
+The control registers are also used to control the
 execution of the accelerator:
 
 .. list-table::
@@ -46,19 +43,6 @@ execution of the accelerator:
     - Status of the accelerator. Bit 0 is high when the execution is stalled
       due to any reason, bit 1 is high when the external stall signal is active,
       and bit 2 is high when the accelerator reset is active.
-  * - 0x100
-    - AQL_READ_IDX_LOW
-    - Read index of the AQL queue (low 32 bits). Read only.
-  * - 0x104
-    - AQL_READ_IDX_HIGH
-    - Read index of the AQL queue (high 32 bits). Read only.
-  * - 0x108
-    - AQL_WRITE_IDX_LOW
-    - Write index of the AQL queue (low 32 bits). Writing to this register
-      increments the 64-bit value.
-  * - 0x10C
-    - AQL_WRITE_IDX_HIGH
-    - Write index of the AQL queue (high 32 bits). Read only.
   * - 0x200
     - COMMAND
     - Command register to control execution. Writing 1 to this register resets
@@ -84,23 +68,49 @@ execution of the accelerator:
     - Size of control memory (this register space) in bytes.
       Must be at least 1024.
   * - 0x314
-    - DMEM_SIZE
-    - Size of the data memory in bytes
-  * - 0x318
     - IMEM_SIZE
     - Size of the instruction memory in bytes
-  * - 0x31c
-    - PMEM_SIZE
-    - Size of the parameter memory in bytes.
+  * - 0x318
+    - IMEM_STARTING_ADDRESS (64b)
+    - Starting address of the instruction memory
+  * - 0x320
+    - CQMEM_SIZE (64b)
+    - Size of the command queue memory in bytes. The cq region includes
+      a ring buffer of 64B packets and the 64B queue header. Therefore
+      the CQMEM_SIZE is (queue_length + 1) * 64.
+  * - 0x328
+    - CQMEM_STARTING_ADDRESS (64b)
+    - Starting address of the command queue memory
+  * - 0x330
+    - BUFFERMEM_SIZE
+    - Size of the data memory reserved for on-chip buffers.
+  * - 0x338
+    - BUFFERMEM_STARTING_ADDRESS
+    - Starting address of the buffer memory.
+  * - 0x340
+    - FEATURE_FLAGS (64b)
+    - Bitmap of various features.
+      Bit 0: HAS_MASTER_INTERFACE. If set to 1, the accelerator can access outside
+      of it's AlmaIF address space with master interface. This also means that the
+      above X_STARTING_ADDRESS values are absolute values (otherwise they would be
+      relative to the base address of the accelerator.) Also, any data buffers,
+      completion signals etc. are given to the accelerator as absolute addresses and
+      the accelerator must decode the address to determine whether its own buffer mem
+      region is being accessed or external devices or memories.
+      If set to 0, the data buffers, completion signals etc. are given as pointers
+      relative to the beginning of the buffer mem region, and the device is assumed
+      to not being able to access external devices or memories.
+      Bits: 1-63: Reserved, should be set to 0
 
-The instruction memory can be used to configure the accelerator. However, it
-currently has to be done manually, and is not managed by pocl. The data memory
-is used to store an AQL Queue, as defined by the `HSA Runtime Programmer’s
+The instruction memory can be used to configure the accelerator. PoCL looks for
+<device_name>.img-binary file and if it exists, writes it to the region at the initialization time.
+In case of compiled kernels, PoCL will overwrite this region with the new program.
+The command queue memory is used to store an AQL Queue, as defined by the `HSA Runtime Programmer’s
 Reference Manual <http://www.hsafoundation.com/standards/>`_, the write and read
-indexes of which are exposed by the control registers. The size of the queue is
-such that it uses all of the data memory. Finally, the parameter memory is used
-to store data and argument buffers as well as completion signals for the
-kernels.
+indexes of which are exposed in a 64B header at the beginnig of the region.
+The size of the queue is such that it uses all of the region remaining after the header.
+Finally, the buffer memory is used to store data and argument buffers as well as
+completion signals for the kernels.
 
 As a practical example, enqueuing a kernel dispatch packet proceeds as follows:
 
@@ -153,6 +163,9 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
   * - pocl.mul.i32
     - 2
     - As pocl.add.i32, but with 32-bit multiplication
+  * - Online compiler available.
+    - 65535
+    - Special flag to communicate that device supports compiled kernels.
 
 This list will be expanded in the future.
 
@@ -164,15 +177,48 @@ instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf>`_,
 in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
 to check the accelerator base address from Vivado.
 
+Alternativaly, you can rapidly generate both TTA and High-level synthesis (HLS)
+based accelerators for PYNQ-Z1 device by enabling few variables in CMAKE configuration.
+First, set CMAKE variable VIVADO_PATH to point to the directory with the
+'vivado' executable. (E.g. at Xilinx/Vivado/2021.2/bin/)
+1. If you have TCEMC toolset installed, you can set ENABLE_TCE to 1 to enable
+RTL and firmware generation of various TTA cores with different memory configurations.
+Then, you can simulate them with ttasim instruction set simulator by running
+../tools/scripts/run_accel_tests from the build directory.
+2. If you have Vitis HLS installed, set VITIS_HLS_PATH to point to the directory
+with the vitis_hls executable.
+This enables the generation of fixed-function accelerator from C description.
+
+The bitstreams themselves are not automatically built with PoCL build process, but rather
+with a separate 'make bitstreams' command. This generates the bitstreams to
+build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams directories. 
+Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
+(You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH) on it.
+Copy the bistreams directories (and in case of TTA, also the firmware_imgs directories)
+to their correct PoCL build directories on PYNQ.
+Finally, run ../tools/scripts/run_accel_tests --pynq to run the test programn
+on the FPGA device.
+
+
+
+
 Driver arguments are used to tell pocl where the accelerator is and what
 functions it supports. To run this example manually, execute::
 
-  POCL_DEVICES=accel POCL_ACCEL0_PARAMETERS=0x43C00000,1,2 ./accel_example
+  POCL_DEVICES=accel POCL_ACCEL0_PARAMETERS=0x43C00000,<device_name>,1,2 ./accel_example
 
 The environment variables define an accelerator with base physical address of
-0x43C0_0000 that can execute pocl.add.i32 and pocl.mul.i32. When running the
-example, verify that the address given in the parameter matches the base address
-of the accelerator.
+0x43C0_0000 that can execute pocl.add.i32 and pocl.mul.i32. If the device requires
+firmware to be loaded in, pocl will attempt to load it from <device_name>.img.
+When running the example, verify that the address given in the parameter matches
+the base address of the accelerator.
+
+The driver supports instruction-set simulation for TTA devices. To enable it,
+set the base address to 0xB, and set the <device_name> to point to a TTA
+device's .adf-file and compiled firmware binary (.tpef-file). PoCL will then
+start up the simulation with <device_name>.adf and, if it exists, <device_name>.tpef.
+
+
 
 There's an alternative way to emulate the accelerator in software by
 setting the base physical address to 0xE. This directs the driver to instead
