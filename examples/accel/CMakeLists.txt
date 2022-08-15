@@ -135,7 +135,7 @@ if(ENABLE_TCE)
 
 endif()
 
-if(defined VITIS_HLS_PATH)
+if(DEFINED VITIS_HLS_PATH)
   add_subdirectory(hls)
 endif()
 
