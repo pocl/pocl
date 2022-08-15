@@ -29,3 +29,4 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetHostTimer) (
   /* PoCL does not support device and host timer synchronization */
   return CL_INVALID_OPERATION;
 }
+POsym(clGetHostTimer)

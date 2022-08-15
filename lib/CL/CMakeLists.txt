@@ -179,7 +179,9 @@ endif()
 add_library("pocl_cache" OBJECT "pocl_cache.c")
 harden("pocl_cache")
 
-target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+if(${OCL_ICD_INCLUDE_DIRS})
+  target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+endif()
 
 
 if (ENABLE_LLVM)
@@ -190,7 +192,9 @@ if (ENABLE_LLVM)
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
   harden("lib_cl_llvm")
 
-  target_include_directories("lib_cl_llvm" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+  if(${OCL_ICD_INCLUDE_DIRS})
+    target_include_directories("lib_cl_llvm" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+  endif()
 
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
@@ -200,7 +204,9 @@ if (ENABLE_LLVM)
 endif()
 
 if(ENABLE_ICD)
-  add_compile_options(${OCL_ICD_CFLAGS})
+  if(${OCL_ICD_CFLAGS})
+    add_compile_options(${OCL_ICD_CFLAGS})
+  endif()
 endif()
 
 if(HAVE_LTTNG_UST)

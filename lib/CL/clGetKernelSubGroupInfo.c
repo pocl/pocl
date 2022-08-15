@@ -61,3 +61,4 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
       "subgroup support\n");
   return CL_INVALID_OPERATION;
 }
+POsym(clGetKernelSubGroupInfo)
