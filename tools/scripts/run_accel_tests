@@ -136,18 +136,18 @@ then
     export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2,65535"
     sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
 
-    tta_hash=$(grep -m 1 ${val} $PWD/examples/example0/hashes.txt |cut -d ":" -f 2)
-    export POCL_ACCEL0_HASH=${tta_hash}
+    tta_hash=$(grep -m 1 ${val} "$PWD/examples/example0/hashes.txt" |cut -d ":" -f 2)
+    export POCL_ACCEL0_HASH="${tta_hash}"
 
     # Copy cross-compiled program file to ./example0.poclbin to avoid
     # having to pass the poclbin filename through ctest
-    cp $PWD/examples/example0/${val}_example0.poclbin $PWD/examples/example0/example0.poclbin
+    cp "$PWD/examples/example0/${val}_example0.poclbin" "$PWD/examples/example0/example0.poclbin"
 
     # Run 2 built-in kernel test and one cross-compiled poclbin test
     echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS and hash: $POCL_ACCEL0_HASH"
     sudo -E ctest -R "examples/accel/.*i32|example0_poclbin" $@
 
-    rm $PWD/examples/example0/example0.poclbin
+    rm "$PWD/examples/example0/example0.poclbin"
   done
 
   #Run HLS generated core
