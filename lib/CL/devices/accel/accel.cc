@@ -469,9 +469,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
 
   if (D->BaseAddress == EMULATING_ADDRESS) {
-    std::cout << "Custom emulation device " << j << " initialized" << std::endl;
+    POCL_MSG_PRINT_ACCEL("Custom emulation device %d initialized", j);
   } else {
-    std::cout << "Custom device " << j << " initialized" << std::endl;
+    POCL_MSG_PRINT_ACCEL("Custom device %d initialized", j);
   }
   return CL_SUCCESS;
 }

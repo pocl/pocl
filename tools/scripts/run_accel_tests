@@ -52,46 +52,79 @@ else
   ctest -L accel_LLVM $@
 fi
 
+
+
+declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
+"relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
+
+
+#figure out if ENABLE_TCE=1, then run tests on ttasim
+if grep ^ENABLE_TCE CMakeCache.txt | cut -d '=' -f 2 | grep -q 1
+then
+  echo "Running Accel tests on TTASim with different TTA configurations"
+
+  for val in ${TTATests[@]}; do
+    export POCL_ACCEL0_PARAMETERS="0xB,$PWD/examples/accel/firmwares/$val,1,2,65535"
+
+    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
+
+    #exclude countred and f32 tests due to not having tta with support for them
+    #Runs basically only
+    # Accel_no_LLVM : add.i32 and mul.i32
+    # Accel_LLVM : example0
+    ctest -L "accel_no_LLVM|accel_LLVM" -E "countred|f32|example1" $@
+
+
+
+    # Cross-compile example0 for future pynq tests.
+    # Save the hash for future use.
+    TTA_DEVICE_HASH=$(POCL_DEBUG=accel poclcc -o \
+    $PWD/examples/example0/${val}_example0.poclbin \
+    ../examples/example0/example0.cl 2>&1 | \
+    grep "TCE DEVICE HASH"|cut -d "=" -f 2 | cut -d "[" -f 1)
+
+    echo "${val}:$TTA_DEVICE_HASH" >> $PWD/examples/example0/hashes.txt
+
+  done
+fi
+
+
 if [ "$1" = "--pynq" ]
 then
   PYNQ_AVAILABLE=1
 fi
 
-
-#figure out if ENABLE_TCE=1
-if grep ^ENABLE_TCE CMakeCache.txt | cut -d '=' -f 2 | grep -q 1 || ! [ -z ${PYNQ_AVAILABLE} ]
-then
-  echo "Running Accel tests with different TTA configurations"
-  declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
- "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
-
-  for val in ${TTATests[@]}; do
-    if [ -z ${PYNQ_AVAILABLE} ]
-    then
-      echo "Running on ttasim"
-      export POCL_ACCEL0_PARAMETERS="0xB,$PWD/examples/accel/firmwares/$val,1,2"
-    else
-      echo "Running on PYNQ"
-      export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2"
-      sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
-      USE_SUDO="sudo -E "
-    fi
-
-    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
-    ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
-  done
-fi
-
-
-#Run HLS generated core
+# Run tests on PYNQ-Z1 device
 if ! [ -z ${PYNQ_AVAILABLE} ]
 then
+  echo "Running Accel tests on PYNQ with different TTA configurations"
+
+  for val in ${TTATests[@]}; do
+    export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2"
+    sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
+
+
+    tta_hash=$(grep -m 1 ${val} $pwd/examples/example0/hashes.txt |cut -d ":" -f 2)
+    export POCL_ACCEL0_HASH=${tta_hash}
+
+    # Run fixed-function kernels
+    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS and hash: $POCL_ACCEL0_HASH"
+    sudo -E ctest -L "accel_no_LLVM" -R ".*i32" $@
+
+    # Run cross-compiled kernel. Copy file to example0.poclbin to avoid
+    # having to pass the poclbin filename through ctest
+    cp $pwd/examples/example0/{${val}_example0.poclbin example0.poclbin}
+    sudo -E ctest -R "example0_poclbin" $@
+    rm $pwd/examples/example0/example0.poclbin
+
+  done
+
+  #Run HLS generated core
   echo "Running Accel HLS tests"
   export POCL_ACCEL0_PARAMETERS="0x40000000,dummy,1,2"
   sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/hls/bitstreams/vecadd_1.bit')"
-  USE_SUDO="sudo -E "
 
   echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS"
-  ${USE_SUDO}ctest -L accel_no_LLVM -R .*i32 $@
+  sudo -E ctest -L accel_no_LLVM -R .*i32 $@
 fi
 
