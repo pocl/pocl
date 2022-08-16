@@ -68,7 +68,8 @@ set_tests_properties( "examples/example0" ${SPIREX}
 set_property(TEST "examples/example0"
   APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan;accel_LLVM")
 
-add_test(NAME "examples/example0_poclbin" COMMAND "example0" "b"
+add_test(NAME "examples/example0_poclbin" COMMAND "example0" "b")
+set_tests_properties("examples/example0_poclbin"
         PROPERTIES
           COST 3.0
           PASS_REGULAR_EXPRESSION "OK"

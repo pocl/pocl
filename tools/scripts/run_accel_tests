@@ -100,11 +100,11 @@ then
   echo "Running Accel tests on PYNQ with different TTA configurations"
 
   for val in ${TTATests[@]}; do
-    export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2"
+    export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2,65535"
     sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
 
 
-    tta_hash=$(grep -m 1 ${val} $pwd/examples/example0/hashes.txt |cut -d ":" -f 2)
+    tta_hash=$(grep -m 1 ${val} $PWD/examples/example0/hashes.txt |cut -d ":" -f 2)
     export POCL_ACCEL0_HASH=${tta_hash}
 
     # Run fixed-function kernels
@@ -113,9 +113,9 @@ then
 
     # Run cross-compiled kernel. Copy file to example0.poclbin to avoid
     # having to pass the poclbin filename through ctest
-    cp $pwd/examples/example0/{${val}_example0.poclbin example0.poclbin}
+    cp $PWD/examples/example0/${val}_example0.poclbin $PWD/examples/example0/example0.poclbin
     sudo -E ctest -R "example0_poclbin" $@
-    rm $pwd/examples/example0/example0.poclbin
+    rm $PWD/examples/example0/example0.poclbin
 
   done
 
