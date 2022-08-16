@@ -53,7 +53,6 @@ else
 fi
 
 
-
 declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
 "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
 
@@ -73,7 +72,6 @@ then
     # Accel_no_LLVM : add.i32 and mul.i32
     # Accel_LLVM : example0
     ctest -L "accel_no_LLVM|accel_LLVM" -E "countred|f32|example1" $@
-
 
 
     # Cross-compile example0 for future pynq tests.
@@ -100,9 +98,43 @@ then
   echo "Running Accel tests on PYNQ with different TTA configurations"
 
   for val in ${TTATests[@]}; do
+    # Check for existence of all the necessary files before launching the tests
+    # The files are generated during make and when running the above ttasim
+    # tests on the host machine
+
+    # Bitstream files needed by all tta configuration tests:
+    if [ ! -f $PWD/examples/accel/bitstreams/${val}.bit ]; then
+      echo "$PWD/examples/accel/bitstreams/${val}.bit doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+    if [ ! -f $PWD/examples/accel/bitstreams/${val}.hwh ]; then
+      echo "$PWD/examples/accel/bitstreams/${val}.hwh doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+
+    # Firmare file which implements pocl.add.i32 and pocl.mul.i32
+    if [ ! -f $PWD/examples/accel/firmware_imgs/${val}.img ]; then
+      echo "$PWD/examples/accel/firmware_imgs/${val}.img doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+
+    # Files needed for the cross-compilation example0
+    if [ ! -f $PWD/examples/example0/hashes.txt ]; then
+      echo "$PWD/examples/example0/hashes.txt doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+    if [ ! -f $PWD/examples/example0/${val}_example0.poclbin ]; then
+      echo "$PWD/examples/example0/${val}_example0.poclbin doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+
     export POCL_ACCEL0_PARAMETERS="0x43C00000,$PWD/examples/accel/firmware_imgs/$val,1,2,65535"
     sudo -E python -c "from pynq import Overlay;Overlay('$PWD/examples/accel/bitstreams/${val}.bit')"
-
 
     tta_hash=$(grep -m 1 ${val} $PWD/examples/example0/hashes.txt |cut -d ":" -f 2)
     export POCL_ACCEL0_HASH=${tta_hash}
@@ -116,7 +148,6 @@ then
     sudo -E ctest -R "examples/accel/.*i32|example0_poclbin" $@
 
     rm $PWD/examples/example0/example0.poclbin
-
   done
 
   #Run HLS generated core
