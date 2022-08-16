@@ -107,14 +107,14 @@ then
     tta_hash=$(grep -m 1 ${val} $PWD/examples/example0/hashes.txt |cut -d ":" -f 2)
     export POCL_ACCEL0_HASH=${tta_hash}
 
-    # Run fixed-function kernels
-    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS and hash: $POCL_ACCEL0_HASH"
-    sudo -E ctest -L "accel_no_LLVM" -R ".*i32" $@
-
-    # Run cross-compiled kernel. Copy file to example0.poclbin to avoid
+    # Copy cross-compiled program file to ./example0.poclbin to avoid
     # having to pass the poclbin filename through ctest
     cp $PWD/examples/example0/${val}_example0.poclbin $PWD/examples/example0/example0.poclbin
-    sudo -E ctest -R "example0_poclbin" $@
+
+    # Run 2 built-in kernel test and one cross-compiled poclbin test
+    echo "Using ACCEL0 params: $POCL_ACCEL0_PARAMETERS and hash: $POCL_ACCEL0_HASH"
+    sudo -E ctest -R "examples/accel/.*i32|example0_poclbin" $@
+
     rm $PWD/examples/example0/example0.poclbin
 
   done
