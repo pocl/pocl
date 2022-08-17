@@ -27,6 +27,6 @@
 // memory
 EmulationRegion::EmulationRegion(size_t Address, size_t RegionSize) {
   PhysAddress = Address;
-  Data = (void*)Address;
+  Data = (void *)Address;
   Size = RegionSize;
 }

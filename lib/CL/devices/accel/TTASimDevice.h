@@ -25,7 +25,6 @@
 #ifndef TTASIMDEVICE_H
 #define TTASIMDEVICE_H
 
-
 #include "Device.h"
 
 class SimpleSimulatorFrontend;
@@ -35,9 +34,10 @@ class TTASimDevice : public Device
 {
 public:
   TTASimDevice (char *adf_name);
-  ~TTASimDevice() override;
+  ~TTASimDevice () override;
 
-  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_command_node *cmd) override;
+  virtual void loadProgramToDevice (almaif_kernel_data_t *kd, cl_kernel kernel,
+                                    _cl_command_node *cmd) override;
 
   pocl_thread_t ttasim_thread;
   pocl_cond_t simulation_start_cond;
@@ -45,15 +45,14 @@ public:
   bool shutdownRequested = false;
   bool debuggerRequested = false;
 
-  SimpleSimulatorFrontend* simulator_;
-  SimulatorCLI* simulatorCLI_;
+  SimpleSimulatorFrontend *simulator_;
+  SimulatorCLI *simulatorCLI_;
 
-  void restartProgram();
+  void restartProgram ();
   void stopProgram ();
 
 private:
-  void loadProgram(char* loadProgram);
+  void loadProgram (char *loadProgram);
 };
-
 
 #endif

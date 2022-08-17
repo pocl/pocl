@@ -25,31 +25,32 @@
 #ifndef TTASIMREGION_H
 #define TTASIMREGION_H
 
-
 #include "Region.h"
 
-#include <MemorySystem.hh>
 #include <Memory.hh>
+#include <MemorySystem.hh>
 
 #include <stdlib.h>
 
 class Memory;
 
-//namespace MemorySystem{
-//class MemoryPtr;
+// namespace MemorySystem{
+// class MemoryPtr;
 //}
 
 class TTASimRegion : public Region
 {
 public:
-  TTASimRegion (size_t Address, size_t RegionSize, MemorySystem::MemoryPtr mem);
+  TTASimRegion (size_t Address, size_t RegionSize,
+                MemorySystem::MemoryPtr mem);
 
   uint32_t Read32 (size_t offset) override;
   void Write32 (size_t offset, uint32_t value) override;
   void Write16 (size_t offset, uint16_t value) override;
   uint64_t Read64 (size_t offset) override;
 
-  void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
+  void CopyToMMAP (size_t destination, const void *source,
+                   size_t bytes) override;
   void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
   void CopyInMem (size_t source, size_t destination, size_t bytes) override;
 

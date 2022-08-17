@@ -7,8 +7,8 @@
 
 //#include "pocl_util.h"
 
-#include "MMAPDevice.h"
 #include "EmulationDevice.h"
+#include "MMAPDevice.h"
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
 
@@ -18,7 +18,6 @@
 
 #define ALMAIF_VERSION_2 (2)
 #define ALMAIF_VERSION_3 (3)
-
 
 #define ACCEL_STATUS_REG (0x00)
 #define ACCEL_STATUS_REG_PC (0x04)
@@ -67,8 +66,6 @@
 #define ACCEL_INFO_IMEM_SIZE_LEGACY (0x318)
 #define ACCEL_INFO_PMEM_SIZE_LEGACY (0x31C)
 
-
-
 #define AQL_PACKET_INVALID (1)
 #define AQL_PACKET_KERNEL_DISPATCH (2)
 #define AQL_PACKET_BARRIER_AND (3)
@@ -89,7 +86,7 @@ struct AQLQueueInfo
 
   uint64_t base_address;
   uint64_t doorbell_signal;
-  
+
   uint32_t size;
   uint32_t reserved0;
 
@@ -101,20 +98,20 @@ struct AQLQueueInfo
   uint64_t reserved1;
 };
 
-#define ACCEL_CQ_READ (offsetof(AQLQueueInfo, read_index))
-#define ACCEL_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
-#define ACCEL_CQ_LENGTH (offsetof(AQLQueueInfo, size))
+#define ACCEL_CQ_READ (offsetof (AQLQueueInfo, read_index))
+#define ACCEL_CQ_WRITE (offsetof (AQLQueueInfo, write_index))
+#define ACCEL_CQ_LENGTH (offsetof (AQLQueueInfo, size))
 
 #define ACCEL_DRIVER_SLEEP 200
 
-struct CommandMetadata {
+struct CommandMetadata
+{
   uint32_t completion_signal;
   uint32_t reserved0;
   uint64_t start_timestamp;
   uint64_t finish_timestamp;
   uint64_t reserved1;
 };
-
 
 struct AQLDispatchPacket
 {
@@ -141,7 +138,6 @@ struct AQLDispatchPacket
   uint64_t command_meta_address;
 };
 
-
 struct AQLAndPacket
 {
   uint16_t header;
@@ -154,8 +150,6 @@ struct AQLAndPacket
 
   uint64_t completion_signal;
 };
-
-
 
 // declaration to resolve circular dependency
 typedef struct compilation_data_s compilation_data_t;
@@ -183,17 +177,14 @@ struct AccelData
   compilation_data_t *compilationData;
 };
 
-bool isEventDone(AccelData* data, cl_event event);
-void submit_kernel_packet(AccelData *D, _cl_command_node *cmd);
-void submit_and_barrier(AccelData *D, _cl_command_node *cmd);
+bool isEventDone (AccelData *data, cl_event event);
+void submit_kernel_packet (AccelData *D, _cl_command_node *cmd);
+void submit_and_barrier (AccelData *D, _cl_command_node *cmd);
 
 /* The address space ids in the ADFs. */
-#define TTA_ASID_PRIVATE  0
-#define TTA_ASID_GLOBAL   1
-#define TTA_ASID_LOCAL    3
+#define TTA_ASID_PRIVATE 0
+#define TTA_ASID_GLOBAL 1
+#define TTA_ASID_LOCAL 3
 #define TTA_ASID_CONSTANT 2
 
 #endif
-
-
-

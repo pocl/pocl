@@ -1,8 +1,7 @@
 #include "Region.h"
 
-Region::~Region(){}
+Region::~Region() {}
 
-bool
-Region::isInRange(size_t dst) {
+bool Region::isInRange(size_t dst) {
   return ((dst >= PhysAddress) && (dst < (PhysAddress + Size)));
 }

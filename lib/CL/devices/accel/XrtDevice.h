@@ -25,7 +25,6 @@
 #ifndef XrtDevice_H
 #define XrtDevice_H
 
-
 #include "Device.h"
 
 class XrtDevice : public Device
@@ -33,9 +32,10 @@ class XrtDevice : public Device
 public:
   XrtDevice (char *xrt_kernel_name);
   ~XrtDevice () override;
+
 private:
-  void* Kernel;
-  void* DeviceHandle;
+  void *Kernel;
+  void *DeviceHandle;
 };
 
 #endif

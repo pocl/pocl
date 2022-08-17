@@ -22,17 +22,16 @@
 */
 
 #include <assert.h>
+#include <fstream>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <fstream>
 
 #include "pocl_util.h"
 
 #include "MMAPRegion.h"
 
-
-MMAPRegion::MMAPRegion(){}
+MMAPRegion::MMAPRegion() {}
 
 MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   PhysAddress = Address;
@@ -40,8 +39,9 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   if (Size == 0) {
     return;
   }
-  POCL_MSG_PRINT_ACCEL_MMAP("accel: mmap'ing from address 0x%zx with size %zu\n",
-                      Address, RegionSize);
+  POCL_MSG_PRINT_ACCEL_MMAP(
+      "accel: mmap'ing from address 0x%zx with size %zu\n", Address,
+      RegionSize);
   // In case of unaligned Address, align the mmap call
   long page_size = sysconf(_SC_PAGESIZE);
   size_t roundDownAddress = (Address / page_size) * page_size;
@@ -54,9 +54,7 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   POCL_MSG_PRINT_ACCEL_MMAP("accel: got address %p\n", Data);
 }
 
-void
-MMAPRegion::initRegion(char* init_file)
-{
+void MMAPRegion::initRegion(char *init_file) {
   std::ifstream inFile;
   inFile.open(init_file, std::ios::binary);
   unsigned int current;
@@ -70,10 +68,9 @@ MMAPRegion::initRegion(char* init_file)
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Initialized region with %i bytes \n", i - 4);
 }
 
-
-
 MMAPRegion::~MMAPRegion() {
-  POCL_MSG_PRINT_ACCEL_MMAP("accel: munmap'ing from address 0x%zx\n", PhysAddress);
+  POCL_MSG_PRINT_ACCEL_MMAP("accel: munmap'ing from address 0x%zx\n",
+                            PhysAddress);
   if (Data) {
     // Align unmap to page_size
     long page_size = sysconf(_SC_PAGESIZE);
@@ -87,8 +84,8 @@ MMAPRegion::~MMAPRegion() {
 
 uint32_t MMAPRegion::Read32(size_t offset) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; read before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto value =
@@ -98,8 +95,8 @@ uint32_t MMAPRegion::Read32(size_t offset) {
 
 void MMAPRegion::Write32(size_t offset, uint32_t value) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   static_cast<volatile uint32_t *>(Data)[offset / sizeof(uint32_t)] = value;
@@ -107,8 +104,8 @@ void MMAPRegion::Write32(size_t offset, uint32_t value) {
 
 void MMAPRegion::Write16(size_t offset, uint16_t value) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   static_cast<volatile uint16_t *>(Data)[offset / sizeof(uint16_t)] = value;
@@ -116,8 +113,8 @@ void MMAPRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t MMAPRegion::Read64(size_t offset) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; read before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto value =
@@ -125,39 +122,40 @@ uint64_t MMAPRegion::Read64(size_t offset) {
   return value;
 }
 
-
 void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
                             size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
-                      "address 0x%zx\n",
-                      bytes, PhysAddress, destination);
+                            "address 0x%zx\n",
+                            bytes, PhysAddress, destination);
   auto src = (char *)source;
   size_t offset = destination - PhysAddress;
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto dst = offset + static_cast<volatile char *>(Data);
-  memcpy((void*)dst,src, bytes);
+  memcpy((void *)dst, src, bytes);
 }
 
 void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading 0x%zx bytes from buffer at 0x%zx "
-                      "with address 0x%zx\n",
-                      bytes, PhysAddress, source);
+                            "with address 0x%zx\n",
+                            bytes, PhysAddress, source);
   auto dst = (char *)destination;
   size_t offset = source - PhysAddress;
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   auto src = offset + static_cast<volatile char *>(Data);
-  memcpy(dst, (void*)src, bytes);
+  memcpy(dst, (void *)src, bytes);
 }
 
-void MMAPRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+void MMAPRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Copying 0x%zx bytes from 0x%zx "
-                      "to 0x%zx\n",
-                      bytes, source, destination);
+                            "to 0x%zx\n",
+                            bytes, source, destination);
   size_t src_offset = source - PhysAddress;
   size_t dst_offset = destination - PhysAddress;
-  assert(src_offset < Size && (src_offset+bytes) <= Size && "Attempt to access data outside MMAP'd buffer");
-  assert(dst_offset < Size && (dst_offset+bytes) <= Size && "Attempt to access data outside MMAP'd buffer");
-  volatile char* src = src_offset + static_cast<volatile char *>(Data);
-  volatile char* dst = dst_offset + static_cast<volatile char *>(Data);
-  memcpy ((void*)dst, (void*)src, bytes);
+  assert(src_offset < Size && (src_offset + bytes) <= Size &&
+         "Attempt to access data outside MMAP'd buffer");
+  assert(dst_offset < Size && (dst_offset + bytes) <= Size &&
+         "Attempt to access data outside MMAP'd buffer");
+  volatile char *src = src_offset + static_cast<volatile char *>(Data);
+  volatile char *dst = dst_offset + static_cast<volatile char *>(Data);
+  memcpy((void *)dst, (void *)src, bytes);
 }

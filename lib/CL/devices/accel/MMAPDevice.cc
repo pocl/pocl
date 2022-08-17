@@ -21,7 +21,6 @@
    IN THE SOFTWARE.
 */
 
-
 #include "MMAPDevice.h"
 
 #include "MMAPRegion.h"
@@ -33,61 +32,60 @@
 //#include <sys/stat.h>
 #include <fcntl.h>
 
+MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
+  int mem_fd = -1;
+  mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+  if (mem_fd == -1) {
+    POCL_ABORT("Could not open /dev/mem\n");
+  }
+  ControlMemory = new MMAPRegion(base_address, ACCEL_DEFAULT_CTRL_SIZE, mem_fd);
 
+  discoverDeviceParameters();
 
+  InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
+  CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
+  DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
 
-MMAPDevice::MMAPDevice(size_t base_address, char* kernel_name) {
-    int mem_fd = -1;  
-    mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
-    if (mem_fd == -1) {
-      POCL_ABORT("Could not open /dev/mem\n");
+  char file_name[120];
+  snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
+
+  if (pocl_exists(file_name)) {
+    POCL_MSG_PRINT_ACCEL(
+        "Accel: Found built-in kernel firmaware. Loading it in\n");
+    ((MMAPRegion *)InstructionMemory)->initRegion(file_name);
+  } else {
+    POCL_MSG_PRINT_ACCEL("Accel: No default firmware found. Skipping\n");
+  }
+
+  if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
+    char *region_params =
+        strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION", "0,0"));
+    char *save_ptr;
+    char *param_token = strtok_r(region_params, ",", &save_ptr);
+    size_t region_address = strtoul(param_token, NULL, 0);
+    param_token = strtok_r(NULL, ",", &save_ptr);
+    size_t region_size = strtoul(param_token, NULL, 0);
+    if (region_size > 0) {
+      memory_region_t *ext_region =
+          (memory_region_t *)calloc(1, sizeof(memory_region_t));
+      assert(ext_region && "calloc for ext memory_region_t failed");
+      pocl_init_mem_region(ext_region, region_address, region_size);
+      LL_APPEND(AllocRegions, ext_region);
+
+      POCL_MSG_PRINT_ACCEL(
+          "Accel: initialized external alloc region at %zx with size %zx\n",
+          region_address, region_size);
+      ExternalMemory = new MMAPRegion(region_address, region_size, mem_fd);
     }
-    ControlMemory =
-        new MMAPRegion(base_address, ACCEL_DEFAULT_CTRL_SIZE, mem_fd);
+    free(region_params);
+  }
 
-    discoverDeviceParameters();
-
-    InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
-    CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
-    DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
-
-    char file_name[120];
-    snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
-
-    if (pocl_exists(file_name)) {
-      POCL_MSG_PRINT_ACCEL("Accel: Found built-in kernel firmaware. Loading it in\n");
-      ((MMAPRegion*)InstructionMemory)->initRegion(file_name);
-    } else {
-      POCL_MSG_PRINT_ACCEL("Accel: No default firmware found. Skipping\n");
-    }
-
-    if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
-      char* region_params = strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION","0,0"));
-      char* save_ptr;
-      char* param_token = strtok_r(region_params, ",", &save_ptr);
-      size_t region_address = strtoul(param_token, NULL, 0);
-      param_token = strtok_r(NULL, ",", &save_ptr);
-      size_t region_size = strtoul(param_token, NULL, 0);
-      if (region_size > 0) {
-        memory_region_t* ext_region = (memory_region_t*)calloc(1,sizeof(memory_region_t));
-	assert(ext_region && "calloc for ext memory_region_t failed");
-        pocl_init_mem_region(ext_region, region_address, region_size);
-	LL_APPEND(AllocRegions, ext_region);
-
-	POCL_MSG_PRINT_ACCEL("Accel: initialized external alloc region at %zx with size %zx\n",
-		      region_address, region_size);
-        ExternalMemory = new MMAPRegion(region_address, region_size, mem_fd);
-	}
-      free(region_params);
-    }
-
-    close(mem_fd);
+  close(mem_fd);
 }
 
 MMAPDevice::~MMAPDevice() {
-  if(ExternalMemory) {
+  if (ExternalMemory) {
     delete ExternalMemory;
     ExternalMemory = nullptr;
   }
 }
-

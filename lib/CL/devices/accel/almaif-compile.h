@@ -32,7 +32,7 @@ typedef struct compilation_data_s
 
   /* device-specific callbacks */
   void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
-                         cl_device_id device, int specialize);
+                          cl_device_id device, int specialize);
   int (*initialize_device) (cl_device_id device, const char *parameters);
   int (*cleanup_device) (cl_device_id device);
 
@@ -66,8 +66,8 @@ extern "C"
                                cl_kernel kernel, unsigned device_i);
 }
 
-
-int pocl_almaif_build_binary(cl_program program, cl_uint device_i, int link_program, int spir_build);
+int pocl_almaif_build_binary (cl_program program, cl_uint device_i,
+                              int link_program, int spir_build);
 
 void preread_images (const char *kernel_cachedir, void *d_void,
                      almaif_kernel_data_t *kd);

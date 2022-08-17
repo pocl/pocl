@@ -27,46 +27,44 @@
 #include "accel-shared.h"
 #include "pocl_timing.h"
 
-#include <unistd.h>
 #include <iostream>
-
+#include <unistd.h>
 
 EmulationDevice::EmulationDevice() {
 
-    // The principle of the emulator is that instead of mmapping a real
-    // accelerator, we just allocate a regular array, which corresponds
-    // to the mmap. The accel_emulate function is working in another thread
-    // and will fill that array and respond to the driver asynchronously.
-    // The driver doesn't really need to know about emulating except
-    // in the initial mapping of the accelerator
-    E.emulating_address = calloc(1, EMULATING_MAX_SIZE);
-    assert(E.emulating_address != NULL && "Emulating calloc failed\n");
+  // The principle of the emulator is that instead of mmapping a real
+  // accelerator, we just allocate a regular array, which corresponds
+  // to the mmap. The accel_emulate function is working in another thread
+  // and will fill that array and respond to the driver asynchronously.
+  // The driver doesn't really need to know about emulating except
+  // in the initial mapping of the accelerator
+  E.emulating_address = calloc(1, EMULATING_MAX_SIZE);
+  assert(E.emulating_address != NULL && "Emulating calloc failed\n");
 
+  // Create emulator thread
+  E.emulate_exit_called = 0;
+  E.emulate_init_done = 0;
+  pthread_create(&emulate_thread, NULL, emulate_accel, &E);
+  while (!E.emulate_init_done)
+    ; // Wait for the thread to initialize
+  POCL_MSG_PRINT_ACCEL("accel: started emulating\n");
 
-    // Create emulator thread
-    E.emulate_exit_called = 0;
-    E.emulate_init_done = 0;
-    pthread_create(&emulate_thread, NULL, emulate_accel, &E);
-    while (!E.emulate_init_done)
-      ; // Wait for the thread to initialize
-    POCL_MSG_PRINT_ACCEL("accel: started emulating\n");
+  ControlMemory =
+      new EmulationRegion((size_t)E.emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
 
-    ControlMemory =
-        new EmulationRegion((size_t)E.emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
+  discoverDeviceParameters();
 
-    discoverDeviceParameters();
-
-    InstructionMemory = new EmulationRegion(imem_start, imem_size);
-    CQMemory = new EmulationRegion(cq_start, cq_size);
-    DataMemory = new EmulationRegion(dmem_start, dmem_size);
+  InstructionMemory = new EmulationRegion(imem_start, imem_size);
+  CQMemory = new EmulationRegion(cq_start, cq_size);
+  DataMemory = new EmulationRegion(dmem_start, dmem_size);
 }
 
 EmulationDevice::~EmulationDevice() {
-    POCL_MSG_PRINT_ACCEL("accel: freeing emulated accel");
-    E.emulate_exit_called = 1; // signal for the emulator to stop
-    pthread_join(emulate_thread, NULL);
-    free((void *)E.emulating_address); // from
-                                        // calloc(emulating_address)
+  POCL_MSG_PRINT_ACCEL("accel: freeing emulated accel");
+  E.emulate_exit_called = 1; // signal for the emulator to stop
+  pthread_join(emulate_thread, NULL);
+  free((void *)E.emulating_address); // from
+                                     // calloc(emulating_address)
 }
 
 /*
@@ -156,7 +154,7 @@ void *emulate_accel(void *E_void) {
     // Compute packet location
     uint32_t packet_loc = ((read_iter % queue_length) + 1) * AQL_PACKET_LENGTH;
     struct AQLDispatchPacket *packet =
-        (struct AQLDispatchPacket *)(CQ + packet_loc/4);
+        (struct AQLDispatchPacket *)(CQ + packet_loc / 4);
 
     // The driver will mark the packet as not INVALID when it wants us to
     // compute it
@@ -165,16 +163,17 @@ void *emulate_accel(void *E_void) {
       continue;
     }
 
-    CommandMetadata *cmd  = (CommandMetadata *)packet->command_meta_address;
+    CommandMetadata *cmd = (CommandMetadata *)packet->command_meta_address;
     assert(cmd);
     cmd->start_timestamp = pocl_gettimemono_ns();
 
     uint16_t header = packet->header;
     if (header & (1 << AQL_PACKET_BARRIER_AND)) {
       struct AQLAndPacket *andPacket = (struct AQLAndPacket *)packet;
-      POCL_MSG_PRINT_ACCEL("accel emulate: Found valid AND packet from location "
-                          "%u, starting parsing:",
-                          packet_loc);
+      POCL_MSG_PRINT_ACCEL(
+          "accel emulate: Found valid AND packet from location "
+          "%u, starting parsing:",
+          packet_loc);
       for (int i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
         uint32_t *signal = (uint32_t *)(andPacket->dep_signals[i]);
         if (signal != NULL) {
@@ -184,13 +183,13 @@ void *emulate_accel(void *E_void) {
         }
       }
       POCL_MSG_PRINT_ACCEL("accel emulate: And packet done\n");
-    }
-    else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
-      POCL_MSG_PRINT_ACCEL("accel emulate: Found valid kernel dispatch packet from location "
-                          "%u, starting parsing:\n",
-                          packet_loc);
+    } else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
+      POCL_MSG_PRINT_ACCEL(
+          "accel emulate: Found valid kernel dispatch packet from location "
+          "%u, starting parsing:\n",
+          packet_loc);
       POCL_MSG_PRINT_ACCEL("accel emulate: kernargs are at 0x%zx\n",
-                          packet->kernarg_address);
+                           packet->kernarg_address);
       // Find the 3 pointers
       // Pointer size can be different on different systems
       // Also the endianness might need some attention in the real case.
@@ -209,8 +208,9 @@ void *emulate_accel(void *E_void) {
       uint32_t *arg1 = args.ptrs[1];
       uint32_t *arg2 = args.ptrs[2];
 
-      POCL_MSG_PRINT_ACCEL("accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n",
-                          arg0, arg1, arg2);
+      POCL_MSG_PRINT_ACCEL(
+          "accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n", arg0, arg1,
+          arg2);
 
       // Check how many dimensions are in use, and set the unused ones to 1.
       int dim_x = packet->grid_size_x;
@@ -237,22 +237,18 @@ void *emulate_accel(void *E_void) {
             case (POCL_CDBI_MUL_I32):
               arg2[idx] = arg0[idx] * arg1[idx];
               break;
-            case (POCL_CDBI_COUNTRED):
-              {
-                  uint32_t pixel = arg0[idx];
-                  uint8_t pixel_r = pixel & 0xFF;
-                  if (pixel_r > 100) {
-                      red_count++;
-                    }
+            case (POCL_CDBI_COUNTRED): {
+              uint32_t pixel = arg0[idx];
+              uint8_t pixel_r = pixel & 0xFF;
+              if (pixel_r > 100) {
+                red_count++;
               }
-              break;
-            case (POCL_CDBI_ABS_F32):
-              {
-                  float *arg0f = (float*)arg0;
-                  float *arg1f = (float*)arg1;
-                  arg1f[idx] = std::abs(arg0f[idx]);
-              }
-              break;
+            } break;
+            case (POCL_CDBI_ABS_F32): {
+              float *arg0f = (float *)arg0;
+              float *arg1f = (float *)arg1;
+              arg1f[idx] = std::abs(arg0f[idx]);
+            } break;
             }
           }
         }

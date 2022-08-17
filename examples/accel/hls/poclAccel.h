@@ -9,16 +9,15 @@
 
 // #define MEM_MAX_SIZE_WORD 8192
 // #define MEM_MAX_SIZE_BYTES (4*MEM_MAX_SIZE_WORD)
-#define MEM_MAX_SIZE_WORD (MEM_MAX_SIZE_BYTES/4)
+#define MEM_MAX_SIZE_WORD (MEM_MAX_SIZE_BYTES / 4)
 
-#define PTR_SIZE sizeof(uint32_t *)
+#define PTR_SIZE sizeof (uint32_t *)
 
 //#define BASE_ADDRESS 0x40000000
 
 //#define BASE_ADDRESS 0x0
 
-
-#define POCL_CDBI_COPY_I8  0
+#define POCL_CDBI_COPY_I8 0
 #define POCL_CDBI_ADD_I32 1
 #define POCL_CDBI_MUL_I32 2
 #define POCL_CDBI_STREAMIN_I32 17
@@ -83,7 +82,7 @@ struct AQLQueueInfo
   uint32_t base_address_high;
   uint32_t doorbell_signal_low;
   uint32_t doorbell_signal_high;
-  
+
   uint32_t size;
   uint32_t reserved0;
 
@@ -144,9 +143,6 @@ struct AQLAndPacket
   uint32_t completion_signal_high;
 };
 
-
-
-void poclAccel(uint32_t base_address[MEM_MAX_SIZE_WORD]);
-
+void poclAccel (uint32_t base_address[MEM_MAX_SIZE_WORD]);
 
 #endif /* POCLACCEL_H */

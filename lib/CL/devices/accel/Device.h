@@ -25,10 +25,8 @@
 #ifndef Device_H
 #define Device_H
 
-
 #include "Region.h"
 #include "almaif-compile.h"
-
 
 #include "bufalloc.h"
 #include "pocl_types.h"
@@ -41,14 +39,15 @@ public:
   Device ();
   virtual ~Device ();
 
-  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel, _cl_command_node *cmd);
+  virtual void loadProgramToDevice (almaif_kernel_data_t *kd, cl_kernel kernel,
+                                    _cl_command_node *cmd);
 
-  Region* ControlMemory;
-  Region* InstructionMemory;
-  Region* CQMemory;
-  Region* DataMemory;
-  Region* ExternalMemory = nullptr;
-  memory_region_t* AllocRegions;
+  Region *ControlMemory;
+  Region *InstructionMemory;
+  Region *CQMemory;
+  Region *DataMemory;
+  Region *ExternalMemory = nullptr;
+  memory_region_t *AllocRegions;
 
   bool RelativeAddressing;
   // if set to true, the device has its own time source in hardware,
@@ -61,19 +60,19 @@ public:
   uint64_t HwClockFrequency = 0;
   int PointerSize = 0;
 
-  void printMemoryDump();
+  void printMemoryDump ();
 
 protected:
-  virtual void discoverDeviceParameters();
+  virtual void discoverDeviceParameters ();
   uintptr_t imem_start;
   uint32_t imem_size;
   uintptr_t cq_start;
   uint32_t cq_size;
   uintptr_t dmem_start;
   uint32_t dmem_size;
-private:
 
-  void preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd);
+private:
+  void preread_images (const char *kernel_cachedir, almaif_kernel_data_t *kd);
 };
 
 #endif

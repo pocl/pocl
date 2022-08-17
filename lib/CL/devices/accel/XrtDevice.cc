@@ -21,7 +21,6 @@
    IN THE SOFTWARE.
 */
 
-
 #include "XrtDevice.h"
 
 #include "XrtRegion.h"
@@ -29,7 +28,7 @@
 
 #include "experimental/xrt_kernel.h"
 
-XrtDevice::XrtDevice(char* xrt_kernel_name) {
+XrtDevice::XrtDevice(char *xrt_kernel_name) {
 
   char xclbin_char[120];
   snprintf(xclbin_char, sizeof(xclbin_char), "%s.xclbin", xrt_kernel_name);
@@ -51,15 +50,13 @@ XrtDevice::XrtDevice(char* xrt_kernel_name) {
   Kernel = (void *)kernel;
   DeviceHandle = (void *)devicehandle;
 
-  ControlMemory =
-    new XrtRegion(0, ACCEL_DEFAULT_CTRL_SIZE, Kernel);
+  ControlMemory = new XrtRegion(0, ACCEL_DEFAULT_CTRL_SIZE, Kernel);
 
   discoverDeviceParameters();
 
   InstructionMemory = new XrtRegion(imem_start, imem_size, Kernel);
   CQMemory = new XrtRegion(cq_start, cq_size, Kernel);
   DataMemory = new XrtRegion(dmem_start, dmem_size, Kernel);
- 
 }
 
 XrtDevice::~XrtDevice() {

@@ -51,12 +51,12 @@ extern "C"
 }
 #endif
 
-
 class EmulationDevice : public Device
 {
 public:
   EmulationDevice ();
   ~EmulationDevice ();
+
 private:
   struct emulation_data_t E;
   pthread_t emulate_thread;

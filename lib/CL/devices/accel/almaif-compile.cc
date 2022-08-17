@@ -30,12 +30,12 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   if (d->compilationData == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  if(!pocl_offline_compile){
-  d->compilationData->pocl_context =
-     pocl_alloc_buffer(d->Dev->AllocRegions, sizeof(pocl_context32));
-  assert(d->compilationData->pocl_context &&
-         "Failed to allocate pocl context on device\n");
-  } 
+  if (!pocl_offline_compile) {
+    d->compilationData->pocl_context =
+        pocl_alloc_buffer(d->Dev->AllocRegions, sizeof(pocl_context32));
+    assert(d->compilationData->pocl_context &&
+           "Failed to allocate pocl context on device\n");
+  }
 
   /**********************************************************/
 
@@ -64,7 +64,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   d->compilationData->current_kernel = NULL;
   SETUP_DEVICE_CL_VERSION(1, 2);
 
-  //dev->available = CL_TRUE;
+  // dev->available = CL_TRUE;
   dev->available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
 
   dev->compiler_available = true;
@@ -93,12 +93,10 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 #else
   char option_str[256];
   snprintf(option_str, 256, "POCL_ACCEL%u_HASH", j);
-  if (pocl_is_option_set(option_str))
-  {
+  if (pocl_is_option_set(option_str)) {
     adi->build_hash = (char *)pocl_get_string_option(option_str, NULL);
     assert(adi->build_hash);
-  }
-  else
+  } else
     adi->build_hash = strdup(DEFAULT_BUILD_HASH);
 #endif
 
@@ -154,14 +152,14 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   unsigned dev_i = cmd->program_device_i;
 
   POCL_MSG_PRINT_ACCEL("Current kernel %p, new kernel %p\n",
-                      d->compilationData->current_kernel, kernel);
+                       d->compilationData->current_kernel, kernel);
 
- /* if (d->compilationData->current_kernel == kernel) {
-    POCL_MSG_PRINT_ACCEL(
-        "kernel %s is the currently loaded kernel, nothing to do\n",
-        kernel->name);
-    return;
-  }*/
+  /* if (d->compilationData->current_kernel == kernel) {
+     POCL_MSG_PRINT_ACCEL(
+         "kernel %s is the currently loaded kernel, nothing to do\n",
+         kernel->name);
+     return;
+   }*/
 
 #ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
@@ -180,12 +178,9 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   POCL_MSG_PRINT_ACCEL("Loading program to device\n");
   d->Dev->loadProgramToDevice(kd, kernel, cmd);
 
-
   POCL_MSG_PRINT_ACCEL("Loaded program to device\n");
   d->compilationData->current_kernel = kernel;
 }
-
-
 
 int pocl_almaif_create_kernel(cl_device_id device, cl_program program,
                               cl_kernel kernel, unsigned device_i) {
@@ -215,15 +210,13 @@ int pocl_almaif_free_kernel(cl_device_id device, cl_program program,
 }
 
 int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
-                             int link_program, int spir_build)
-{
-  assert (program->pocl_binaries[device_i] != NULL);
-  assert (program->pocl_binary_sizes[device_i] > 0);
-  assert (link_program != 0);
-  assert (spir_build == 0);
+                             int link_program, int spir_build) {
+  assert(program->pocl_binaries[device_i] != NULL);
+  assert(program->pocl_binary_sizes[device_i] > 0);
+  assert(link_program != 0);
+  assert(spir_build == 0);
   return CL_SUCCESS;
 }
-
 
 char *pocl_almaif_build_hash(cl_device_id device) {
   AccelData *d = (AccelData *)device->data;

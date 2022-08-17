@@ -9,7 +9,7 @@
 int pocl_almaif_tce_initialize (cl_device_id device, const char *parameters);
 int pocl_almaif_tce_cleanup (cl_device_id device);
 void pocl_almaif_tce_compile (_cl_command_node *cmd, cl_kernel kernel,
-                             cl_device_id device, int specialize);
+                              cl_device_id device, int specialize);
 
 char *pocl_tce_init_build (void *data);
 

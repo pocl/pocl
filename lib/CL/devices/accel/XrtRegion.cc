@@ -32,12 +32,11 @@
 #include "XrtRegion.h"
 #include "pocl_util.h"
 
-
 XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {
 
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initializing XrtRegion with Address %zu "
-                      "and Size %zu and kernel %p\n",
-                      Address, RegionSize, kernel);
+                            "and Size %zu and kernel %p\n",
+                            Address, RegionSize, kernel);
   PhysAddress = Address;
   Size = RegionSize;
   Kernel = kernel;
@@ -46,14 +45,14 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {
 }
 
 XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
-                             char *init_file)
+                     char *init_file)
     : XrtRegion(Address, RegionSize, kernel) {
 
   if (RegionSize == 0) {
     return; // don't try to write to empty region
   }
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initializing XrtRegion with file %s\n",
-                      init_file);
+                            init_file);
   std::ifstream inFile;
   inFile.open(init_file, std::ios::binary);
   unsigned int current;
@@ -65,14 +64,14 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
     i += 4;
   }
 
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initialized region with %i bytes \n", i - 4);
+  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initialized region with %i bytes \n",
+                            i - 4);
 }
-
 
 uint32_t XrtRegion::Read32(size_t offset) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE && "No kernel handle; read before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
   uint32_t value = ((xrt::kernel *)Kernel)->read_register(PhysAddress + offset);
@@ -81,8 +80,8 @@ uint32_t XrtRegion::Read32(size_t offset) {
 
 void XrtRegion::Write32(size_t offset, uint32_t value) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
          "No kernel handle; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
@@ -91,8 +90,8 @@ void XrtRegion::Write32(size_t offset, uint32_t value) {
 
 void XrtRegion::Write16(size_t offset, uint16_t value) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
          "No kernel handle; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
@@ -112,8 +111,8 @@ void XrtRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t XrtRegion::Read64(size_t offset) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
-                      "offset 0x%zx\n",
-                      PhysAddress, offset);
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
          "No kernel handle; write before mapping?");
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
@@ -125,12 +124,12 @@ uint64_t XrtRegion::Read64(size_t offset) {
   return value;
 }
 
-
 void XrtRegion::CopyToMMAP(size_t destination, const void *source,
-                               size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
-                      "address 0x%zx\n",
-                      bytes, PhysAddress, destination);
+                           size_t bytes) {
+  POCL_MSG_PRINT_ACCEL_MMAP(
+      "XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
+      "address 0x%zx\n",
+      bytes, PhysAddress, destination);
   auto src = (uint32_t *)source;
   size_t offset = destination - PhysAddress;
   assert(offset < Size && "Attempt to access data outside XRT memory");
@@ -146,11 +145,10 @@ void XrtRegion::CopyToMMAP(size_t destination, const void *source,
   }
 }
 
-void XrtRegion::CopyFromMMAP(void *destination, size_t source,
-                                 size_t bytes) {
+void XrtRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
-                      "with address 0x%zx\n",
-                      bytes, PhysAddress, source);
+                            "with address 0x%zx\n",
+                            bytes, PhysAddress, source);
   auto dst = (uint32_t *)destination;
   size_t offset = source - PhysAddress;
   assert(offset < Size && "Attempt to access data outside XRT memory");
@@ -166,14 +164,16 @@ void XrtRegion::CopyFromMMAP(void *destination, size_t source,
   }
 }
 
-void XrtRegion::CopyInMem (size_t source, size_t destination, size_t bytes) {
+void XrtRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
-                      "to 0x%zx\n",
-                      bytes, source, destination);
+                            "to 0x%zx\n",
+                            bytes, source, destination);
   size_t src_offset = source - PhysAddress;
   size_t dst_offset = destination - PhysAddress;
-  assert(src_offset < Size && (src_offset+bytes) <= Size && "Attempt to access data outside XRT memory");
-  assert(dst_offset < Size && (dst_offset+bytes) <= Size && "Attempt to access data outside XRT memory");
+  assert(src_offset < Size && (src_offset + bytes) <= Size &&
+         "Attempt to access data outside XRT memory");
+  assert(dst_offset < Size && (dst_offset + bytes) <= Size &&
+         "Attempt to access data outside XRT memory");
   assert((bytes % 4) == 0 && "Xrt copyinmem size must be 4 byte multiple");
   xrt::kernel *k = (xrt::kernel *)Kernel;
 

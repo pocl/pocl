@@ -35,15 +35,15 @@ class XrtRegion : public Region
 {
 public:
   XrtRegion (size_t Address, size_t RegionSize, void *kernel);
-  XrtRegion (size_t Address, size_t RegionSize, void *kernel,
-                 char *init_file);
+  XrtRegion (size_t Address, size_t RegionSize, void *kernel, char *init_file);
 
   uint32_t Read32 (size_t offset) override;
   void Write32 (size_t offset, uint32_t value) override;
   void Write16 (size_t offset, uint16_t value) override;
   uint64_t Read64 (size_t offset) override;
 
-  void CopyToMMAP (size_t destination, const void *source, size_t bytes) override;
+  void CopyToMMAP (size_t destination, const void *source,
+                   size_t bytes) override;
   void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
   void CopyInMem (size_t source, size_t destination, size_t bytes) override;
 

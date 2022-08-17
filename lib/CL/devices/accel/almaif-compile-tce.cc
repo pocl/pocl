@@ -72,11 +72,12 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
     } else
       bd->core_count = 1;
     POCL_MSG_PRINT_ACCEL("Multicore: %u Cores: %u \n", bd->core_count > 1,
-                        bd->core_count);
+                         bd->core_count);
     POCL_MEM_FREE(content);
   } else {
     bd->machine_file = NULL;
-    device->max_compute_units = d->Dev->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
+    device->max_compute_units =
+        d->Dev->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
   }
 
   device->long_name = device->short_name = "ALMAIF TCE";
@@ -143,14 +144,11 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   if (is_multicore)
     multicoreFlags = " -ldthread -lsync-lu -llockunit";
 
-
-
   const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
   const char *endianFlags = little_endian ? "--little-endian" : "";
   snprintf(extraFlags, (POCL_FILENAME_LENGTH * 8),
-           "%s %s %s %s -k dummy_argbuffer",
-           extraParams, multicoreFlags, userFlags, endianFlags);
-
+           "%s %s %s %s -k dummy_argbuffer", extraParams, multicoreFlags,
+           userFlags, endianFlags);
 
   char kernelObjSrc[POCL_FILENAME_LENGTH];
   snprintf(kernelObjSrc, POCL_FILENAME_LENGTH, "%s%s", tempDir,
@@ -254,7 +252,7 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
 #define MAX_CMDLINE_LEN (32 * POCL_FILENAME_LENGTH)
 
 void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
-                            cl_device_id device, int specialize) {
+                             cl_device_id device, int specialize) {
 
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
     POCL_ABORT("Accel: trying to compile non-ndrange command\n");
@@ -273,15 +271,15 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(device);
   POCL_MSG_PRINT_ACCEL("COMPILATION BEFORE WG FUNC\n");
   POCL_LOCK(bd->tce_compile_lock);
-  int error = pocl_llvm_generate_workgroup_function(cmd->program_device_i, device,
-                                                    kernel, cmd, specialize);
+  int error = pocl_llvm_generate_workgroup_function(
+      cmd->program_device_i, device, kernel, cmd, specialize);
 
   POCL_MSG_PRINT_ACCEL("COMPILATION AFTER WG FUNC\n");
   if (error) {
     POCL_UNLOCK(bd->tce_compile_lock);
     POCL_ABORT("TCE: pocl_llvm_generate_workgroup_function()"
-                 " failed for kernel %s\n",
-                 kernel->name);
+               " failed for kernel %s\n",
+               kernel->name);
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
@@ -291,8 +289,9 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(cmd->command.run.kernel);
 
   char cachedir[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_cachedir_path(cachedir, kernel->program, cmd->program_device_i,
-                                  kernel, "", cmd, specialize);
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
+                                  cmd->program_device_i, kernel, "", cmd,
+                                  specialize);
 
   // output TPEF
   char assemblyFileName[POCL_FILENAME_LENGTH];
@@ -318,13 +317,13 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     error = snprintf(inputBytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
                      POCL_PARALLEL_BC_FILENAME);
 
-    //int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
+    // int AQL_queue_length = pocl_get_int_option("POCL_AQL_QUEUE_LENGTH",1);
 
     bool separatePrivateMem = true;
     bool separateCQMem = true;
-    const TTAMachine::Machine::AddressSpaceNavigator& nav =
-      mach->addressSpaceNavigator();
-    for (int i = 0; i < nav.count(); i++){
+    const TTAMachine::Machine::AddressSpaceNavigator &nav =
+        mach->addressSpaceNavigator();
+    for (int i = 0; i < nav.count(); i++) {
       TTAMachine::AddressSpace *as = nav.item(i);
       if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
         if (as->hasNumericalId(TTA_ASID_LOCAL)) {
@@ -340,33 +339,33 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     unsigned cq_size = d->Dev->CQMemory->Size;
 
     bool relativeAddressing = d->Dev->RelativeAddressing;
-    int i=0;
-    char extraParams[POCL_FILENAME_LENGTH*8];
-    i = snprintf(extraParams, (POCL_FILENAME_LENGTH * 8),
-    "-DQUEUE_LENGTH=%i ", AQL_queue_length);
-    if(!separatePrivateMem) {
+    int i = 0;
+    char extraParams[POCL_FILENAME_LENGTH * 8];
+    i = snprintf(extraParams, (POCL_FILENAME_LENGTH * 8), "-DQUEUE_LENGTH=%i ",
+                 AQL_queue_length);
+    if (!separatePrivateMem) {
       int fallback_mem_size = pocl_get_int_option(
           "POCL_ACCEL_PRIVATE_MEM_SIZE", ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
       unsigned initsp = dmem_size + fallback_mem_size;
       unsigned private_mem_start = dmem_size;
-      if(!separateCQMem) {
+      if (!separateCQMem) {
         initsp += cq_size;
         private_mem_start += cq_size;
       }
-      if(!relativeAddressing) {
+      if (!relativeAddressing) {
         initsp += d->Dev->DataMemory->PhysAddress;
         private_mem_start += d->Dev->DataMemory->PhysAddress;
       }
-      i += snprintf(extraParams+i, (POCL_FILENAME_LENGTH * 8),
-      "--init-sp=%u --data-start=%u ", initsp, private_mem_start);
+      i += snprintf(extraParams + i, (POCL_FILENAME_LENGTH * 8),
+                    "--init-sp=%u --data-start=%u ", initsp, private_mem_start);
     }
-    if(!separateCQMem){
+    if (!separateCQMem) {
       unsigned queue_start = d->Dev->CQMemory->PhysAddress;
       if (relativeAddressing) {
         queue_start -= d->Dev->DataMemory->PhysAddress;
       }
-      i += snprintf(extraParams+i, (POCL_FILENAME_LENGTH * 8),
-      "-DQUEUE_START=%u ", queue_start);
+      i += snprintf(extraParams + i, (POCL_FILENAME_LENGTH * 8),
+                    "-DQUEUE_START=%u ", queue_start);
     }
 
     char commandLine[MAX_CMDLINE_LEN];
@@ -382,31 +381,30 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
       POCL_ABORT("Error while running tcecc.\n");
   }
 
-    TTAProgram::Program* prog = NULL;
-    try{
-      prog = TTAProgram::Program::loadFromTPEF(assemblyFileName, *mach);
-    } catch (Exception &e) {
-      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-      POCL_ABORT("Couldn't open tpef %s after compilation\n", assemblyFileName);
-    }
+  TTAProgram::Program *prog = NULL;
+  try {
+    prog = TTAProgram::Program::loadFromTPEF(assemblyFileName, *mach);
+  } catch (Exception &e) {
+    POCL_MSG_WARN("Error: %s\n", e.errorMessage().c_str());
+    POCL_ABORT("Couldn't open tpef %s after compilation\n", assemblyFileName);
+  }
 
-    char wg_func_name[4 * POCL_FILENAME_LENGTH];
-    snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
-             cmd->command.run.kernel->name);
-    if (prog->hasProcedure(wg_func_name)) {
-      const TTAProgram::Procedure &proc = prog->procedure(wg_func_name);
-      int kernel_address = proc.startAddress().location();
+  char wg_func_name[4 * POCL_FILENAME_LENGTH];
+  snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
+           cmd->command.run.kernel->name);
+  if (prog->hasProcedure(wg_func_name)) {
+    const TTAProgram::Procedure &proc = prog->procedure(wg_func_name);
+    int kernel_address = proc.startAddress().location();
 
-      char md_path[POCL_FILENAME_LENGTH];
-      snprintf(md_path, POCL_FILENAME_LENGTH, "%s/kernel_address.txt",
-               cachedir);
-      char content[64];
-      snprintf(content, 64, "kernel address = %d", kernel_address);
-      pocl_write_file(md_path, content, strlen(content), 0, 0);
-    } else {
-      POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
-                 wg_func_name);
-    }
+    char md_path[POCL_FILENAME_LENGTH];
+    snprintf(md_path, POCL_FILENAME_LENGTH, "%s/kernel_address.txt", cachedir);
+    char content[64];
+    snprintf(content, 64, "kernel address = %d", kernel_address);
+    pocl_write_file(md_path, content, strlen(content), 0, 0);
+  } else {
+    POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
+               wg_func_name);
+  }
 
   char imem_file[POCL_FILENAME_LENGTH];
   snprintf(imem_file, POCL_FILENAME_LENGTH, "%s%s", cachedir, "/parallel.img");
@@ -435,13 +433,13 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
 
   error = pocl_exists(imem_file);
   assert(error != 0 && "parallel.img does not exist!");
-/*
-  error = pocl_exists(data_img);
-  assert(error != 0 && "parallel_local.img does not exist!");
-*/
- /* error = pocl_exists(param_img);
-  assert(error != 0 && "parallel_param.img does not exist!");
-*/
+  /*
+    error = pocl_exists(data_img);
+    assert(error != 0 && "parallel_local.img does not exist!");
+  */
+  /* error = pocl_exists(param_img);
+   assert(error != 0 && "parallel_param.img does not exist!");
+ */
 
   delete mach;
   delete prog;

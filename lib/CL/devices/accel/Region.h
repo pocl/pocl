@@ -32,22 +32,23 @@
 class Region
 {
 public:
-  virtual ~Region();
+  virtual ~Region ();
   virtual uint32_t Read32 (size_t offset) = 0;
   virtual void Write32 (size_t offset, uint32_t value) = 0;
   virtual void Write16 (size_t offset, uint16_t value) = 0;
   virtual uint64_t Read64 (size_t offset) = 0;
 
   virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) = 0;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes) = 0;
+                           size_t bytes)
+      = 0;
+  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes)
+      = 0;
   virtual void CopyInMem (size_t source, size_t destination, size_t bytes) = 0;
 
-  virtual bool isInRange(size_t dst);
+  virtual bool isInRange (size_t dst);
 
   size_t PhysAddress;
   size_t Size;
-
 };
 
 #endif
