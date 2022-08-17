@@ -886,7 +886,7 @@ Workgroup::privatizeContext(Function *F)
     LocalIdGlobals[i] = M->getGlobalVariable(TempStr);
     if (LocalIdGlobals[i] != NULL) {
       LocalIdAllocas[i] =
-        Builder.CreateAlloca(LocalIdGlobals[i]->getType()->getElementType(), 0,
+        Builder.CreateAlloca(LocalIdGlobals[i]->getValueType(), 0,
                              TempStr);
       if (LocalIdGlobals[i]->hasInitializer()) {
         Constant *C = LocalIdGlobals[i]->getInitializer();
@@ -911,7 +911,7 @@ Workgroup::privatizeContext(Function *F)
     LocalSizeGlobals[i] = M->getGlobalVariable(TempStr);
     if (LocalSizeGlobals[i] != NULL) {
       LocalSizeAllocas[i] =
-        Builder.CreateAlloca(LocalSizeGlobals[i]->getType()->getElementType(),
+        Builder.CreateAlloca(LocalSizeGlobals[i]->getValueType(),
                              0, TempStr);
       if (LocalSizeGlobals[i]->hasInitializer()) {
         Constant *C = LocalSizeGlobals[i]->getInitializer();
@@ -1055,7 +1055,11 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
     if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
       // Generate allocas for the local buffer arguments.
       PointerType *ParamType = dyn_cast<PointerType>(ArgType);
+#ifdef LLVM_OPAQUE_POINTERS
+      Type *ArgElementType = ii->getParamByValType();
+#else
       Type *ArgElementType = ParamType->getElementType();
+#endif
       if (ArgElementType->isArrayTy()) {
         // Known static local size (converted automatic local).
         Arg =

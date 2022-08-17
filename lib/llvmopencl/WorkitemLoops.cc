@@ -958,7 +958,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
          unique stack space to all the work-items when its wiloop
          iteration is executed. */
       elementType = 
-        dyn_cast<AllocaInst>(instruction)->getType()->getElementType();
+        dyn_cast<AllocaInst>(instruction)->getAllocatedType();
     } 
   else 
     {

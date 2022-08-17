@@ -135,4 +135,9 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #endif
 }
 
+#ifndef LLVM_OPAQUE_POINTERS
+// Globals
+#define getValueType getType()->getElementType
+#endif /* LLVM_OPAQUE_POINTERS */
+
 #endif
