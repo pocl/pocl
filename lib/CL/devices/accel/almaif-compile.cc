@@ -3,9 +3,9 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 
-#include "accel-shared.h"
+#include "accel-shared.hh"
 #include "accel.h"
-#include "almaif-compile.h"
+#include "almaif-compile.hh"
 
 #include "common_driver.h"
 
@@ -15,7 +15,7 @@
 #endif
 
 #ifdef ENABLE_COMPILER
-#include "almaif-compile-tce.h"
+#include "almaif-compile-tce.hh"
 #endif
 
 extern int pocl_offline_compile;

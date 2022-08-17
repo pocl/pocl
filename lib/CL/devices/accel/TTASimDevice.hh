@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* TTASimDevice.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,34 +22,36 @@
    IN THE SOFTWARE.
 */
 
-#ifndef XRTREGION_H
-#define XRTREGION_H
+#ifndef TTASIMDEVICE_H
+#define TTASIMDEVICE_H
 
-#include <stdlib.h>
+#include "Device.hh"
 
-#include "pocl_types.h"
+class SimpleSimulatorFrontend;
+class SimulatorCLI;
 
-#include "Region.h"
-
-class XrtRegion : public Region
-{
+class TTASimDevice : public Device {
 public:
-  XrtRegion (size_t Address, size_t RegionSize, void *kernel);
-  XrtRegion (size_t Address, size_t RegionSize, void *kernel, char *init_file);
+  TTASimDevice(char *adf_name);
+  ~TTASimDevice() override;
 
-  uint32_t Read32 (size_t offset) override;
-  void Write32 (size_t offset, uint32_t value) override;
-  void Write16 (size_t offset, uint16_t value) override;
-  uint64_t Read64 (size_t offset) override;
+  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
+                                   _cl_command_node *cmd) override;
 
-  void CopyToMMAP (size_t destination, const void *source,
-                   size_t bytes) override;
-  void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
-  void CopyInMem (size_t source, size_t destination, size_t bytes) override;
+  pocl_thread_t ttasim_thread;
+  pocl_cond_t simulation_start_cond;
+  pocl_lock_t lock;
+  bool shutdownRequested = false;
+  bool debuggerRequested = false;
+
+  SimpleSimulatorFrontend *simulator_;
+  SimulatorCLI *simulatorCLI_;
+
+  void restartProgram();
+  void stopProgram();
 
 private:
-  void *Kernel;
-  void *DeviceHandle;
+  void loadProgram(char *loadProgram);
 };
 
 #endif

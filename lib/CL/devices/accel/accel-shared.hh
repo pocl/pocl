@@ -7,8 +7,8 @@
 
 //#include "pocl_util.h"
 
-#include "EmulationDevice.h"
-#include "MMAPDevice.h"
+#include "EmulationDevice.hh"
+#include "MMAPDevice.hh"
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
 
@@ -79,8 +79,7 @@
 
 #define DEFAULT_BUILD_HASH "ALMAIF_unset_hash"
 
-struct AQLQueueInfo
-{
+struct AQLQueueInfo {
   uint32_t type;
   uint32_t features;
 
@@ -98,14 +97,13 @@ struct AQLQueueInfo
   uint64_t reserved1;
 };
 
-#define ACCEL_CQ_READ (offsetof (AQLQueueInfo, read_index))
-#define ACCEL_CQ_WRITE (offsetof (AQLQueueInfo, write_index))
-#define ACCEL_CQ_LENGTH (offsetof (AQLQueueInfo, size))
+#define ACCEL_CQ_READ (offsetof(AQLQueueInfo, read_index))
+#define ACCEL_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
+#define ACCEL_CQ_LENGTH (offsetof(AQLQueueInfo, size))
 
 #define ACCEL_DRIVER_SLEEP 200
 
-struct CommandMetadata
-{
+struct CommandMetadata {
   uint32_t completion_signal;
   uint32_t reserved0;
   uint64_t start_timestamp;
@@ -113,8 +111,7 @@ struct CommandMetadata
   uint64_t reserved1;
 };
 
-struct AQLDispatchPacket
-{
+struct AQLDispatchPacket {
   uint16_t header;
   uint16_t dimensions;
 
@@ -138,8 +135,7 @@ struct AQLDispatchPacket
   uint64_t command_meta_address;
 };
 
-struct AQLAndPacket
-{
+struct AQLAndPacket {
   uint16_t header;
   uint16_t reserved0;
   uint32_t reserved1;
@@ -154,8 +150,7 @@ struct AQLAndPacket
 // declaration to resolve circular dependency
 typedef struct compilation_data_s compilation_data_t;
 
-struct AccelData
-{
+struct AccelData {
   size_t BaseAddress;
 
   Device *Dev;
@@ -177,9 +172,9 @@ struct AccelData
   compilation_data_t *compilationData;
 };
 
-bool isEventDone (AccelData *data, cl_event event);
-void submit_kernel_packet (AccelData *D, _cl_command_node *cmd);
-void submit_and_barrier (AccelData *D, _cl_command_node *cmd);
+bool isEventDone(AccelData *data, cl_event event);
+void submit_kernel_packet(AccelData *D, _cl_command_node *cmd);
+void submit_and_barrier(AccelData *D, _cl_command_node *cmd);
 
 /* The address space ids in the ADFs. */
 #define TTA_ASID_PRIVATE 0

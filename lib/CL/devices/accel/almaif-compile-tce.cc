@@ -23,11 +23,11 @@
 #include <Program.hh>
 */
 
-#include "accel-shared.h"
-#include "almaif-compile-tce.h"
-#include "almaif-compile.h"
+#include "accel-shared.hh"
+#include "almaif-compile-tce.hh"
+#include "almaif-compile.hh"
 
-#include "TTASimDevice.h"
+#include "TTASimDevice.hh"
 
 int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   AccelData *d = (AccelData *)(device->data);

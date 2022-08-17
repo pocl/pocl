@@ -1,4 +1,4 @@
-/* Device.h - basic way of accessing accelerator memory.
+/* Device.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -25,22 +25,21 @@
 #ifndef Device_H
 #define Device_H
 
-#include "Region.h"
-#include "almaif-compile.h"
+#include "Region.hh"
+#include "almaif-compile.hh"
 
 #include "bufalloc.h"
 #include "pocl_types.h"
 
 #include <stdlib.h>
 
-class Device
-{
+class Device {
 public:
-  Device ();
-  virtual ~Device ();
+  Device();
+  virtual ~Device();
 
-  virtual void loadProgramToDevice (almaif_kernel_data_t *kd, cl_kernel kernel,
-                                    _cl_command_node *cmd);
+  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
+                                   _cl_command_node *cmd);
 
   Region *ControlMemory;
   Region *InstructionMemory;
@@ -60,10 +59,10 @@ public:
   uint64_t HwClockFrequency = 0;
   int PointerSize = 0;
 
-  void printMemoryDump ();
+  void printMemoryDump();
 
 protected:
-  virtual void discoverDeviceParameters ();
+  virtual void discoverDeviceParameters();
   uintptr_t imem_start;
   uint32_t imem_size;
   uintptr_t cq_start;
@@ -72,7 +71,7 @@ protected:
   uint32_t dmem_size;
 
 private:
-  void preread_images (const char *kernel_cachedir, almaif_kernel_data_t *kd);
+  void preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd);
 };
 
 #endif

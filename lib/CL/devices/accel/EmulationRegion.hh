@@ -1,5 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* EmulationRegion.cc - accessing accelerator memory as Emulationd mmap.
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
 
@@ -21,40 +20,18 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
+#ifndef EMULATIONREGION_H
+#define EMULATIONREGION_H
 
-#ifndef TTASIMCONTROLREGION_H
-#define TTASIMCONTROLREGION_H
+#include <stdlib.h>
 
-#include "Region.h"
+#include "MMAPRegion.hh"
 
-#include "accel-shared.h"
+// class MMAPRegion;
 
-class TTASimDevice;
-namespace TTAMachine
-{
-class Machine;
-}
-
-class TTASimControlRegion : public Region
-{
+class EmulationRegion : public MMAPRegion {
 public:
-  TTASimControlRegion (const TTAMachine::Machine &mach, TTASimDevice *parent);
-
-  uint32_t Read32 (size_t offset) override;
-  void Write32 (size_t offset, uint32_t value) override;
-  void Write16 (size_t offset, uint16_t value) override;
-  uint64_t Read64 (size_t offset) override;
-
-  void CopyToMMAP (size_t destination, const void *source,
-                   size_t bytes) override;
-  void CopyFromMMAP (void *destination, size_t source, size_t bytes) override;
-  virtual void CopyInMem (size_t source, size_t destination,
-                          size_t bytes) override;
-
-private:
-  uint32_t ControlRegisters_[ACCEL_DEFAULT_CTRL_SIZE / 4];
-  void setupControlRegisters (const TTAMachine::Machine &mach);
-  TTASimDevice *parent_;
+  EmulationRegion(size_t Address, size_t RegionSize);
 };
 
 #endif

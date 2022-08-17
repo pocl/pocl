@@ -1,4 +1,4 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
+/* Region.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,39 +22,30 @@
    IN THE SOFTWARE.
 */
 
-#ifndef MMAPREGION_H
-#define MMAPREGION_H
-
-#include <stdlib.h>
+#ifndef Region_H
+#define Region_H
 
 #include "pocl_types.h"
 
-#include "Region.h"
+#include <stdlib.h>
 
-class MMAPRegion : public Region
-{
+class Region {
 public:
-  MMAPRegion (size_t Address, size_t RegionSize, int mem_fd);
-  virtual ~MMAPRegion () override;
+  virtual ~Region();
+  virtual uint32_t Read32(size_t offset) = 0;
+  virtual void Write32(size_t offset, uint32_t value) = 0;
+  virtual void Write16(size_t offset, uint16_t value) = 0;
+  virtual uint64_t Read64(size_t offset) = 0;
 
-  virtual uint32_t Read32 (size_t offset) override;
-  virtual void Write32 (size_t offset, uint32_t value) override;
-  virtual void Write16 (size_t offset, uint16_t value) override;
-  virtual uint64_t Read64 (size_t offset) override;
+  virtual void CopyToMMAP(size_t destination, const void *source,
+                          size_t bytes) = 0;
+  virtual void CopyFromMMAP(void *destination, size_t source, size_t bytes) = 0;
+  virtual void CopyInMem(size_t source, size_t destination, size_t bytes) = 0;
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes) override;
-  virtual void CopyFromMMAP (void *destination, size_t source,
-                             size_t bytes) override;
-  virtual void CopyInMem (size_t source, size_t destination,
-                          size_t bytes) override;
+  virtual bool isInRange(size_t dst);
 
-  virtual void initRegion (char *init_file);
-
-protected:
-  MMAPRegion ();
-
-  void *Data;
+  size_t PhysAddress;
+  size_t Size;
 };
 
 #endif

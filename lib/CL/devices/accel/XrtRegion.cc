@@ -29,7 +29,7 @@
 
 #include "experimental/xrt_kernel.h"
 
-#include "XrtRegion.h"
+#include "XrtRegion.hh"
 #include "pocl_util.h"
 
 XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {

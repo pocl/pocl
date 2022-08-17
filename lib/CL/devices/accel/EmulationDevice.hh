@@ -1,4 +1,4 @@
-/* TTASimDevice.h - basic way of accessing accelerator memory.
+/* EmulationDevice.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,37 +22,41 @@
    IN THE SOFTWARE.
 */
 
-#ifndef TTASIMDEVICE_H
-#define TTASIMDEVICE_H
+#ifndef EMULATIONDEVICE_H
+#define EMULATIONDEVICE_H
 
-#include "Device.h"
+#include <pthread.h>
 
-class SimpleSimulatorFrontend;
-class SimulatorCLI;
+#include "Device.hh"
 
-class TTASimDevice : public Device
-{
+#define EMULATING_ADDRESS 0xE
+#define EMULATING_MAX_SIZE (256 * 1024 * 1024)
+//#define EMULATING_MAX_SIZE 4 * 4096
+
+struct emulation_data_t {
+  void *emulating_address;
+  volatile int emulate_exit_called;
+  volatile int emulate_init_done;
+};
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void *emulate_accel(void *E_void);
+
+#ifdef __cplusplus
+}
+#endif
+
+class EmulationDevice : public Device {
 public:
-  TTASimDevice (char *adf_name);
-  ~TTASimDevice () override;
-
-  virtual void loadProgramToDevice (almaif_kernel_data_t *kd, cl_kernel kernel,
-                                    _cl_command_node *cmd) override;
-
-  pocl_thread_t ttasim_thread;
-  pocl_cond_t simulation_start_cond;
-  pocl_lock_t lock;
-  bool shutdownRequested = false;
-  bool debuggerRequested = false;
-
-  SimpleSimulatorFrontend *simulator_;
-  SimulatorCLI *simulatorCLI_;
-
-  void restartProgram ();
-  void stopProgram ();
+  EmulationDevice();
+  ~EmulationDevice();
 
 private:
-  void loadProgram (char *loadProgram);
+  struct emulation_data_t E;
+  pthread_t emulate_thread;
 };
 
 #endif

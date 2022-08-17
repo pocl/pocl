@@ -21,10 +21,10 @@
    IN THE SOFTWARE.
 */
 
-#include "XrtDevice.h"
+#include "XrtDevice.hh"
 
-#include "XrtRegion.h"
-#include "accel-shared.h"
+#include "XrtRegion.hh"
+#include "accel-shared.hh"
 
 #include "experimental/xrt_kernel.h"
 

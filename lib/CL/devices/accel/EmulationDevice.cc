@@ -21,10 +21,10 @@
    IN THE SOFTWARE.
 */
 
-#include "EmulationDevice.h"
+#include "EmulationDevice.hh"
 
-#include "EmulationRegion.h"
-#include "accel-shared.h"
+#include "EmulationRegion.hh"
+#include "accel-shared.hh"
 #include "pocl_timing.h"
 
 #include <iostream>

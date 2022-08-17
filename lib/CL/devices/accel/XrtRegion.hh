@@ -1,4 +1,4 @@
-/* XrtDevice.hh - basic way of accessing accelerator memory.
+/* MMAPRegion.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,16 +22,29 @@
    IN THE SOFTWARE.
 */
 
-#ifndef XrtDevice_H
-#define XrtDevice_H
+#ifndef XRTREGION_H
+#define XRTREGION_H
 
-#include "Device.h"
+#include <stdlib.h>
 
-class XrtDevice : public Device
-{
+#include "pocl_types.h"
+
+#include "Region.hh"
+
+class XrtRegion : public Region {
 public:
-  XrtDevice (char *xrt_kernel_name);
-  ~XrtDevice () override;
+  XrtRegion(size_t Address, size_t RegionSize, void *kernel);
+  XrtRegion(size_t Address, size_t RegionSize, void *kernel, char *init_file);
+
+  uint32_t Read32(size_t offset) override;
+  void Write32(size_t offset, uint32_t value) override;
+  void Write16(size_t offset, uint16_t value) override;
+  uint64_t Read64(size_t offset) override;
+
+  void CopyToMMAP(size_t destination, const void *source,
+                  size_t bytes) override;
+  void CopyFromMMAP(void *destination, size_t source, size_t bytes) override;
+  void CopyInMem(size_t source, size_t destination, size_t bytes) override;
 
 private:
   void *Kernel;

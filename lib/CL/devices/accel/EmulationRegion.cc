@@ -21,7 +21,7 @@
    IN THE SOFTWARE.
 */
 
-#include "EmulationRegion.h"
+#include "EmulationRegion.hh"
 
 // Used in emulator to hack the MMAP to work with just virtually contiguous
 // memory

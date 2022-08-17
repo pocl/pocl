@@ -29,7 +29,7 @@
 
 #include "pocl_util.h"
 
-#include "MMAPRegion.h"
+#include "MMAPRegion.hh"
 
 MMAPRegion::MMAPRegion() {}
 

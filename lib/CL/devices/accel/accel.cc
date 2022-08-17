@@ -23,21 +23,21 @@
 */
 
 #include "accel.h"
-#include "MMAPDevice.h"
-#include "Region.h"
+#include "MMAPDevice.hh"
+#include "Region.hh"
 #include "config.h"
 #ifdef HAVE_XRT
-#include "XrtDevice.h"
+#include "XrtDevice.hh"
 #endif
-#include "EmulationDevice.h"
+#include "EmulationDevice.hh"
 
 #ifdef TCEMC_AVAILABLE
-#include "TTASimDevice.h"
+#include "TTASimDevice.hh"
 #endif
 
-#include "accel-shared.h"
-#include "almaif-compile-tce.h"
-#include "almaif-compile.h"
+#include "accel-shared.hh"
+#include "almaif-compile-tce.hh"
+#include "almaif-compile.hh"
 #include "bufalloc.h"
 #include "common.h"
 #include "common_driver.h"

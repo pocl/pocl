@@ -1,4 +1,4 @@
-/* EmulationDevice.hh - basic way of accessing accelerator memory.
+/* MMAPRegion.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,44 +22,38 @@
    IN THE SOFTWARE.
 */
 
-#ifndef EMULATIONDEVICE_H
-#define EMULATIONDEVICE_H
+#ifndef TTASIMREGION_H
+#define TTASIMREGION_H
 
-#include <pthread.h>
+#include "Region.hh"
 
-#include "Device.h"
+#include <Memory.hh>
+#include <MemorySystem.hh>
 
-#define EMULATING_ADDRESS 0xE
-#define EMULATING_MAX_SIZE (256 * 1024 * 1024)
-//#define EMULATING_MAX_SIZE 4 * 4096
+#include <stdlib.h>
 
-struct emulation_data_t
-{
-  void *emulating_address;
-  volatile int emulate_exit_called;
-  volatile int emulate_init_done;
-};
+class Memory;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+// namespace MemorySystem{
+// class MemoryPtr;
+//}
 
-  void *emulate_accel (void *E_void);
-
-#ifdef __cplusplus
-}
-#endif
-
-class EmulationDevice : public Device
-{
+class TTASimRegion : public Region {
 public:
-  EmulationDevice ();
-  ~EmulationDevice ();
+  TTASimRegion(size_t Address, size_t RegionSize, MemorySystem::MemoryPtr mem);
+
+  uint32_t Read32(size_t offset) override;
+  void Write32(size_t offset, uint32_t value) override;
+  void Write16(size_t offset, uint16_t value) override;
+  uint64_t Read64(size_t offset) override;
+
+  void CopyToMMAP(size_t destination, const void *source,
+                  size_t bytes) override;
+  void CopyFromMMAP(void *destination, size_t source, size_t bytes) override;
+  void CopyInMem(size_t source, size_t destination, size_t bytes) override;
 
 private:
-  struct emulation_data_t E;
-  pthread_t emulate_thread;
+  MemorySystem::MemoryPtr mem_;
 };
 
 #endif

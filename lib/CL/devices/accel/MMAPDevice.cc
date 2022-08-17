@@ -21,10 +21,10 @@
    IN THE SOFTWARE.
 */
 
-#include "MMAPDevice.h"
+#include "MMAPDevice.hh"
 
-#include "MMAPRegion.h"
-#include "accel-shared.h"
+#include "MMAPRegion.hh"
+#include "accel-shared.hh"
 
 #include "pocl_file_util.h"
 

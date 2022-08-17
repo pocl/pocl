@@ -1,8 +1,8 @@
 
-#include "TTASimDevice.h"
-#include "TTASimControlRegion.h"
-#include "TTASimRegion.h"
-#include "accel-shared.h"
+#include "TTASimDevice.hh"
+#include "TTASimControlRegion.hh"
+#include "TTASimRegion.hh"
+#include "accel-shared.hh"
 
 #include <AddressSpace.hh>
 #include <Application.hh>

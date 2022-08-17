@@ -1,4 +1,4 @@
-/* Region.hh - basic way of accessing accelerator memory.
+/* XrtDevice.hh - basic way of accessing accelerator memory.
  *                 as a memory mapped region
 
    Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
@@ -22,33 +22,19 @@
    IN THE SOFTWARE.
 */
 
-#ifndef Region_H
-#define Region_H
+#ifndef XrtDevice_H
+#define XrtDevice_H
 
-#include "pocl_types.h"
+#include "Device.hh"
 
-#include <stdlib.h>
-
-class Region
-{
+class XrtDevice : public Device {
 public:
-  virtual ~Region ();
-  virtual uint32_t Read32 (size_t offset) = 0;
-  virtual void Write32 (size_t offset, uint32_t value) = 0;
-  virtual void Write16 (size_t offset, uint16_t value) = 0;
-  virtual uint64_t Read64 (size_t offset) = 0;
+  XrtDevice(char *xrt_kernel_name);
+  ~XrtDevice() override;
 
-  virtual void CopyToMMAP (size_t destination, const void *source,
-                           size_t bytes)
-      = 0;
-  virtual void CopyFromMMAP (void *destination, size_t source, size_t bytes)
-      = 0;
-  virtual void CopyInMem (size_t source, size_t destination, size_t bytes) = 0;
-
-  virtual bool isInRange (size_t dst);
-
-  size_t PhysAddress;
-  size_t Size;
+private:
+  void *Kernel;
+  void *DeviceHandle;
 };
 
 #endif

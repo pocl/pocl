@@ -21,10 +21,10 @@
    IN THE SOFTWARE.
 */
 
-#include "Device.h"
+#include "Device.hh"
 
-#include "accel-shared.h"
-#include "almaif-compile.h"
+#include "accel-shared.hh"
+#include "almaif-compile.hh"
 
 #include "bufalloc.h"
 #include "pocl_cache.h"

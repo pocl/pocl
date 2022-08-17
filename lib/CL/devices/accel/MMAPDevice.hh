@@ -25,15 +25,14 @@
 #ifndef MMAPDevice_H
 #define MMAPDevice_H
 
-#include "Device.h"
+#include "Device.hh"
 
-class MMAPDevice : public Device
-{
+class MMAPDevice : public Device {
 private:
-  ~MMAPDevice ();
+  ~MMAPDevice();
 
 public:
-  MMAPDevice (size_t base_address, char *kernel_name);
+  MMAPDevice(size_t base_address, char *kernel_name);
 };
 
 #endif
