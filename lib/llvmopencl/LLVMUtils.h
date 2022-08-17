@@ -140,4 +140,8 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #define getValueType getType()->getElementType
 #endif /* LLVM_OPAQUE_POINTERS */
 
+#ifdef LLVM_OLDER_THAN_14_0
+#define LLVMBuildGEP2(A, B, C, D, E, F) LLVMBuildGEP(A, C, D, E, F)
+#endif
+
 #endif
