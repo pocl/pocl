@@ -94,9 +94,9 @@ void *emulate_accel(void *E_void) {
   uintptr_t dmem_start = cqmem_start + cqmem_size;
 
   volatile uint32_t *Control = (uint32_t *)base_address;
-  volatile uint8_t *Instruction = (uint8_t *)imem_start;
+  //volatile uint8_t *Instruction = (uint8_t *)imem_start;
   volatile uint32_t *CQ = (uint32_t *)cqmem_start;
-  volatile uint8_t *Data = (uint8_t *)dmem_start;
+  //volatile uint8_t *Data = (uint8_t *)dmem_start;
 
   // Set initial values for info registers:
   Control[ACCEL_INFO_DEV_CLASS / 4] = 0xE; // Unused
@@ -199,7 +199,7 @@ void *emulate_accel(void *E_void) {
         uint8_t values[3 * PTR_SIZE];
       } args;
       for (int i = 0; i < 3; i++) {
-        for (int k = 0; k < PTR_SIZE; k++) {
+        for (unsigned k = 0; k < PTR_SIZE; k++) {
           args.values[PTR_SIZE * i + k] =
               *(uint8_t *)(packet->kernarg_address + PTR_SIZE * i + k);
         }
@@ -209,8 +209,8 @@ void *emulate_accel(void *E_void) {
       uint32_t *arg2 = args.ptrs[2];
 
       POCL_MSG_PRINT_ACCEL(
-          "accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n", arg0, arg1,
-          arg2);
+          "accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n", (void*)arg0,
+          (void*) arg1, (void*)arg2);
 
       // Check how many dimensions are in use, and set the unused ones to 1.
       int dim_x = packet->grid_size_x;

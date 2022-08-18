@@ -44,7 +44,6 @@ extern int pocl_offline_compile;
 
 int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   AccelData *d = (AccelData *)dev->data;
-  unsigned device_number = j;
 
   d->compilationData = (compilation_data_t *)pocl_aligned_malloc(
       HOST_CPU_CACHELINE_SIZE, sizeof(compilation_data_t));
@@ -174,7 +173,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   unsigned dev_i = cmd->program_device_i;
 
   POCL_MSG_PRINT_ACCEL("Current kernel %p, new kernel %p\n",
-                       d->compilationData->current_kernel, kernel);
+                       (void*)d->compilationData->current_kernel, (void*)kernel);
 
   /* if (d->compilationData->current_kernel == kernel) {
      POCL_MSG_PRINT_ACCEL(

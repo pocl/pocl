@@ -231,7 +231,7 @@ cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
 void pocl_accel_free(cl_device_id device, cl_mem mem) {
 
   pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
-  AccelData *data = (AccelData *)device->data;
+  //AccelData *data = (AccelData *)device->data;
 
   chunk_info_t *chunk =
       (chunk_info_t *)p->mem_ptr;
@@ -337,7 +337,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   bool enable_compilation = false;
 
-  while (paramToken = strtok_r(NULL, ",", &savePtr)) {
+  while ((paramToken = strtok_r(NULL, ",", &savePtr))) {
     auto token = strtoul(paramToken, NULL, 0);
     BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
 
@@ -432,10 +432,10 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
     std::cout << "Offline compilation device initialized" << std::endl;
     return CL_SUCCESS;
   }
-  for (int i = 0; i < (D->Dev->DataMemory->Size >> 2); i++) {
+  for (unsigned i = 0; i < (D->Dev->DataMemory->Size >> 2); i++) {
     //    D->Dev->DataMemory->Write32(4 * i, 0);
   }
-  for (int i = 0; i < (D->Dev->CQMemory->Size >> 2); i++) {
+  for (unsigned i = 0; i < (D->Dev->CQMemory->Size >> 2); i++) {
     //    D->Dev->CQMemory->Write32(4 * i, 0);
   }
   // Initialize AQL queue by setting all headers to invalid
@@ -1021,7 +1021,6 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {}
 
 void submit_kernel_packet(AccelData *D, _cl_command_node *cmd) {
   struct pocl_argument *al;
-  size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;

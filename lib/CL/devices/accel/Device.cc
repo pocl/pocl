@@ -208,7 +208,7 @@ void Device::preread_images(const char *kernel_cachedir,
     assert(size > 0);
 
     uint32_t kernel_address = 0;
-    sscanf(content, "kernel address = %d", &kernel_address);
+    sscanf(content, "kernel address = %u", &kernel_address);
     assert(kernel_address != 0);
     kd->kernel_address = kernel_address;
     content = NULL;
@@ -241,12 +241,12 @@ void Device::preread_images(const char *kernel_cachedir,
 }
 
 void Device::printMemoryDump() {
-  for (int k = 0; k < CQMemory->Size; k += 4) {
+  for (unsigned k = 0; k < CQMemory->Size; k += 4) {
     uint32_t value = CQMemory->Read32(k);
     std::cerr << "CQ at " << k << "=" << value << "\n";
   }
 
-  for (int k = 0; k < DataMemory->Size; k += 4) {
+  for (unsigned k = 0; k < DataMemory->Size; k += 4) {
     uint32_t value = DataMemory->Read32(k);
     std::cerr << "Data at " << k << "=" << value << "\n";
   }

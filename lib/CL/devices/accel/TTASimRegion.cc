@@ -36,7 +36,7 @@ TTASimRegion::TTASimRegion(size_t Address, size_t RegionSize,
   POCL_MSG_PRINT_ACCEL_MMAP(
       "TTASim: Initializing TTASimRegion with Address %zu "
       "and Size %zu and memptr %p\n",
-      Address, RegionSize, mem.get());
+      Address, RegionSize, (void*)mem.get());
   PhysAddress = Address;
   Size = RegionSize;
   mem_ = mem;

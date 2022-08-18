@@ -218,7 +218,7 @@ main ()
           uint32_t sc_l = control_region[ACCEL_STATUS_REG_SC_LOW / 4];
           // uint32_t sc_h = control_region[ACCEL_STATUS_REG_SC_HIGH/4];
           __buffer__ struct CommandMetadata *cmd_meta
-              = packet->completion_signal_low;
+              = (__buffer__ struct CommandMetadata*)packet->completion_signal_low;
           cmd_meta->start_timestamp_l = cc_l + sc_l;
           // cmd_meta->start_timestamp_h = cc_h + sc_h;
 #endif
