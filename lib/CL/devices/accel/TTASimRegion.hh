@@ -1,7 +1,6 @@
-/* MMAPRegion.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* TTASimRegion.hh - TTASim device pretending to be mmapped device
 
-   Copyright (c) 2019-2021 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2022 Topi Leppänen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
