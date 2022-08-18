@@ -1,4 +1,4 @@
-/* almaif-compile-tce.hh - compiler support for custom devices
+/* AccelCompileTCE.hh - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -25,8 +25,8 @@
 #define POCL_ALMAIFCOMPILETCE_H
 
 #include "pocl_util.h"
-//#include "accel-shared.hh"
-//#include "almaif-compile.hh"
+//#include "AccelShared.hh"
+//#include "AccelCompile.hh"
 
 int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters);
 int pocl_almaif_tce_cleanup(cl_device_id device);

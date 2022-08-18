@@ -24,7 +24,7 @@
 #include "XrtDevice.hh"
 
 #include "XrtRegion.hh"
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 
 #include "experimental/xrt_kernel.h"
 

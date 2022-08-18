@@ -1,4 +1,4 @@
-/* accel-shared.hh - Shared definitions for accel-drivers internal use
+/* AccelShared.hh - Shared definitions for accel-drivers internal use
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 

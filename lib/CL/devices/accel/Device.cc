@@ -23,8 +23,8 @@
 
 #include "Device.hh"
 
-#include "accel-shared.hh"
-#include "almaif-compile.hh"
+#include "AccelShared.hh"
+#include "AccelCompile.hh"
 
 #include "bufalloc.h"
 #include "pocl_cache.h"

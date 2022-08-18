@@ -1,4 +1,4 @@
-/* almaif-compile-tce.cc - compiler support for custom devices
+/* AccelCompileTCE.cc - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -47,9 +47,9 @@
 #include <Program.hh>
 */
 
-#include "accel-shared.hh"
-#include "almaif-compile-tce.hh"
-#include "almaif-compile.hh"
+#include "AccelShared.hh"
+#include "AccelCompileTCE.hh"
+#include "AccelCompile.hh"
 
 #include "TTASimDevice.hh"
 

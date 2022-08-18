@@ -26,7 +26,7 @@
 
 #include "Region.hh"
 
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 
 class TTASimDevice;
 namespace TTAMachine {

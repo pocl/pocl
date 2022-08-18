@@ -1,4 +1,4 @@
-/* almaif-compile.cc - compiler support for custom devices
+/* AccelCompile.cc - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -25,9 +25,9 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 #include "accel.h"
-#include "almaif-compile.hh"
+#include "AccelCompile.hh"
 
 #include "common_driver.h"
 
@@ -37,7 +37,7 @@
 #endif
 
 #ifdef ENABLE_COMPILER
-#include "almaif-compile-tce.hh"
+#include "AccelCompileTCE.hh"
 #endif
 
 extern int pocl_offline_compile;

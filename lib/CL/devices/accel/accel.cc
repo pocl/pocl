@@ -36,9 +36,9 @@
 #include "TTASimDevice.hh"
 #endif
 
-#include "accel-shared.hh"
-#include "almaif-compile-tce.hh"
-#include "almaif-compile.hh"
+#include "AccelShared.hh"
+#include "AccelCompileTCE.hh"
+#include "AccelCompile.hh"
 #include "bufalloc.h"
 #include "common.h"
 #include "common_driver.h"

@@ -26,7 +26,7 @@
 #define Device_H
 
 #include "Region.hh"
-#include "almaif-compile.hh"
+#include "AccelCompile.hh"
 
 #include "bufalloc.h"
 #include "pocl_types.h"

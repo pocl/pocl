@@ -24,7 +24,7 @@
 #include "TTASimControlRegion.hh"
 #include "TTASimDevice.hh"
 
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 
 #include <SimpleSimulatorFrontend.hh>
 //#include <SimulatorFrontend.hh>

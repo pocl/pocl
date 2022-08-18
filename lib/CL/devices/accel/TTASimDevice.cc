@@ -26,7 +26,7 @@
 #include "TTASimDevice.hh"
 #include "TTASimControlRegion.hh"
 #include "TTASimRegion.hh"
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 
 #include <AddressSpace.hh>
 #include <Application.hh>

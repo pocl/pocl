@@ -28,7 +28,7 @@ add_compile_options("-std=c++14")
 
 add_compile_options(${TCE_INCLUDES})
 
-set(ACCEL_SOURCES "accel-shared.hh"
+set(ACCEL_SOURCES "AccelShared.hh"
                   "accel.cc"
                   "accel.h"
                   "Region.cc"
@@ -44,9 +44,9 @@ set(ACCEL_SOURCES "accel-shared.hh"
                   "EmulationDevice.cc"
                   "EmulationDevice.hh"
                   "XrtDevice.hh"
-                  "almaif-compile.cc"
-                  "almaif-compile.hh"
-                  "almaif-compile-tce.hh"
+                  "AccelCompile.cc"
+                  "AccelCompile.hh"
+                  "AccelCompileTCE.hh"
                   )
 
 if(HAVE_XRT)
@@ -66,7 +66,7 @@ if(ENABLE_TCE)
                       "TTASimRegion.hh"
                       "TTASimControlRegion.cc"
                       "TTASimControlRegion.hh"
-                      "almaif-compile-tce.cc"
+                      "AccelCompileTCE.cc"
                       )
 endif()
 

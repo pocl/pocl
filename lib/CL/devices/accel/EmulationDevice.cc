@@ -24,7 +24,7 @@
 #include "EmulationDevice.hh"
 
 #include "EmulationRegion.hh"
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 #include "pocl_timing.h"
 
 #include <iostream>

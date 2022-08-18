@@ -24,7 +24,7 @@
 #include "MMAPDevice.hh"
 
 #include "MMAPRegion.hh"
-#include "accel-shared.hh"
+#include "AccelShared.hh"
 
 #include "pocl_file_util.h"
 

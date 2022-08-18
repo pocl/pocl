@@ -1,4 +1,4 @@
-/* almaif-compile.hh - compiler support for custom devices
+/* AccelCompile.hh - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -26,7 +26,7 @@
 
 #include "bufalloc.h"
 #include "pocl_util.h"
-//#include "accel-shared.hh"
+//#include "AccelShared.hh"
 
 // TODO copied from TCE
 /* The address space ids in the ADFs. */
