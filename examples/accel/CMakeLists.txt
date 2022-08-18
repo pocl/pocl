@@ -47,7 +47,7 @@ target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 add_custom_target(bitstreams)
 
-if(ENABLE_TCE)
+if(ENABLE_TCEMC)
   #add_subdirectory(gen_accel)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bitstreams)

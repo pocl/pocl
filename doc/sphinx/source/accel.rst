@@ -58,7 +58,7 @@ execution of the accelerator:
   * - 0x308
     - INTERFACE_TYPE
     - Version number of the interface. This describes interface
-      version 2.
+      version 3.
   * - 0x30C
     - CORE_COUNT
     - Core count of the accelerator. Multicore devices are currently not
@@ -90,18 +90,20 @@ execution of the accelerator:
   * - 0x340
     - FEATURE_FLAGS (64b)
     - Bitmap of various features.
+
       Bit 0: HAS_MASTER_INTERFACE. If set to 1, the accelerator can access outside
-      of it's AlmaIF address space with master interface. This also means that the
-      above X_STARTING_ADDRESS values are absolute values (otherwise they would be
-      relative to the base address of the accelerator.) Also, any data buffers,
+      of its AlmaIF address space with a master interface. This also means that the
+      above X_STARTING_ADDRESS values are absolute values. Also, any pointers to data buffers,
       completion signals etc. are given to the accelerator as absolute addresses and
-      the accelerator must decode the address to determine whether its own buffer mem
-      region is being accessed or external devices or memories.
+      the accelerator needs to decode the address to determine whether the pointer
+      points to its own buffermem region or external devices or memories.
       If set to 0, the data buffers, completion signals etc. are given as pointers
       relative to the beginning of the buffer mem region, and the device is assumed
       to not being able to access external devices or memories.
+
       Bits: 1-63: Reserved, should be set to 0
 
+The other three regions are used for the following:
 The instruction memory can be used to configure the accelerator. PoCL looks for
 <device_name>.img-binary file and if it exists, writes it to the region at the initialization time.
 In case of compiled kernels, PoCL will overwrite this region with the new program.
@@ -116,7 +118,7 @@ As a practical example, enqueuing a kernel dispatch packet proceeds as follows:
 
   - The driver allocates and populates the OpenCL buffers and the argument
     buffer for the kernel, as well as space for a 32-bit completion signal.
-  - The driver writes the kernel packet, excluding the header, to the device.
+  - The driver writes the kernel packet to the device.
     Its position depends on the value of the write index. The completion signal
     address as well as the argument buffer address and pointers to buffer
     arguments are given as physical addresses in the accelerator's address
@@ -133,14 +135,8 @@ Usage
 
 To enable this driver, simply add ``-DENABLE_ACCEL_DEVICE=1`` to the cmake
 arguments. On small FPGA SoCs and other relatively low performance hosts, you
-may wish to follow the instructions in :ref:`pocl-without-llvm`. In fact, to
-build a version of pocl that is only capable of launching fixed-function
-accelerators, we can give a dummy value for the HOST_DEVICE_BUILD_HASH
-because we are never compiling any kernels. Therefore we also don't have to
-build pocl with LLVM on any machine. So minimal CMake
-arguments would look like this:
-``DENABLE_ACCEL_DEVICE=1 DOCS_AVAILABLE=0 DHOST_DEVICE_BUILD_HASH=dummy``
-(Tested on Zynq-7020 SoC).
+may wish to follow the instructions in :ref:`pocl-without-llvm`.
+(Recommended for Zynq-7020 SoC).
 
 The fixed-function accelerators need to be told what kernel to execute. For
 this, the accel driver has a list of builtin kernels that can be referred to
@@ -168,6 +164,8 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
     - Special flag to communicate that device supports compiled kernels.
 
 This list will be expanded in the future.
+The full list of currently supported built-in kernels is maintained in
+lib/CL/devices/builtin_kernels.{cc,hh}
 
 There is an example program using the accel driver in ``examples/accel`` which
 also includes the VHDL code for synthesizing the accelerator. The accelerator
@@ -177,14 +175,17 @@ instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf>`_,
 in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
 to check the accelerator base address from Vivado.
 
-Alternativaly, you can rapidly generate both TTA and High-level synthesis (HLS)
-based accelerators for PYNQ-Z1 device by enabling few variables in CMAKE configuration.
+Alternativaly, to run tests that generate both TTA and High-level synthesis
+(HLS) based accelerators for PYNQ-Z1 device you need to enable few variables
+in the CMAKE configuration.
 First, set CMAKE variable VIVADO_PATH to point to the directory with the
 'vivado' executable. (E.g. at Xilinx/Vivado/2021.2/bin/)
+
 1. If you have TCEMC toolset installed, you can set ENABLE_TCE to 1 to enable
 RTL and firmware generation of various TTA cores with different memory configurations.
 Then, you can simulate them with ttasim instruction set simulator by running
-../tools/scripts/run_accel_tests from the build directory.
+``../tools/scripts/run_accel_tests`` from the build directory.
+
 2. If you have Vitis HLS installed, set VITIS_HLS_PATH to point to the directory
 with the vitis_hls executable.
 This enables the generation of fixed-function accelerator from C description.
@@ -196,7 +197,7 @@ Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
 (You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH) on it.
 Copy the bistreams directories (and in case of TTA, also the firmware_imgs directories)
 to their correct PoCL build directories on PYNQ.
-Finally, run ../tools/scripts/run_accel_tests --pynq to run the test programn
+Finally, run ``../tools/scripts/run_accel_tests --pynq`` to run the test programn
 on the FPGA device.
 
 
@@ -230,3 +231,49 @@ mapping, you may need to execute the application with elevated privileges. In
 this case, note that ``sudo`` by default overrides your environment variables.
 You can either assign them in the same command, or use ``sudo`` with the
 ``--preserve-env`` switch.
+
+
+
+Wrapping new hardware component
+-------------------------------
+
+This section will walk through the addition of new implementation for an existing
+built-in kernel.
+The component can be any hardware component, as long as it supports the AlmaIF
+interface specification described above.
+The following section presents an example method of generating the accelerator
+with HLS. However, other methods of generating the accelerator exists, the only
+requirement is that it implements the AlmaIF specification described above.
+
+
+High-level synthesis
+^^^^^^^^^^^^^^^^^^^^
+Template for HLS-accelerator is in examples/accel/hls/poclAccel.cpp-file.
+It can be generated with 'make hls_vecadd_bs', which generates the biststream
+file to examples/accel/hls/bitstreams/. To enable the target, you need to add
+VITIS_HLS_PATH and VIVADO_PATH as CMAKE variables that point to the directory
+containing the 'vitis_hls' and 'vivado' binaries.
+
+The build process of HLS accelerator consists of two parts:
+
+1. Generating accelerator RTL from C++ input (With Vitis HLS using script
+generate_hls_core.tcl)
+
+2. Generating block design with the accelerator and block memory for AlmaIF
+regions (With Vivado using script generate_hls_project.tcl)
+
+To run the vector addition on HLS generated core, the bitstream needs to
+be copied to PYNQ-Z1.
+The generate_hls_project.tcl file sets the base address of the accelerator
+to a physical address 0x40000000. This base address is given to PoCL through
+an environment variable::
+  export POCL_DEVICES=accel
+  export POCL_ACCEL0_PARAMETERS="0x40000000,dummy,1,2"
+
+The bitstream can be loaded on the FPGA with various ways. PYNQ-Z1 image
+includes a python library to do it, which can be used with a following one-liner::
+  sudo -E python -c "from pynq import Overlay;Overlay('examples/accel/hls/bitstreams/vecadd_1.bit')"
+
+After that, it's possible to run the examples/accel/accel_example tests.
+The ctest that runs vector addition and multiplication is the following::
+  sudo -E ctest -R "examples/accel/.*i32"
