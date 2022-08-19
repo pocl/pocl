@@ -1,3 +1,62 @@
+3.0 June 2022
+=============
+
+Notable User Facing Changes
+---------------------------
+
+- OpenCL 3.0 support:
+   * OpenCL 3.0 is enabled at platform level, all API calls
+     up to 3.0 are implemented
+   * The CPU device reports OpenCL 3.0 if LLVM is recent enough
+     (LLVM 14+), otherwise it reports OpenCL 1.2
+   * The Conformance Test Suite was updated to a version that supports
+     OpenCL 3.0; the CTS should also work with devices that report 1.2
+   * For the list of supported features & more details,
+     see doc/sphinx/source/conformance.rst
+- Support for Clang/LLVM 14.0
+- Text tracing improved - a few new command types traced,
+  event dependencies are now also recorded
+- There are now two scripts, which let the user parse & convert the
+  outputs of LTTNG and Text tracer into a JSON format, suitable
+  for loading into Chromium's trace visualizer (chrome://tracing)
+- Support for generating specialized work-group functions and include them
+  in the PoCL kernel program binaries.
+- SPIR-V input: printf fixed
+
+Notable Bug Fixes
+-----------------
+
+- Fixed poclbin for non-SPMD targets. The generic size WG function generation
+  was completely broken and the breakage was hidden by the WG specialization
+  recompilation, if online compiler was available.
+- Fixed a race condidion in clBuildProgram
+- Fixed uninitialized variables and other issues in tests
+- Fixed the post-event-finish-cleanup process in the drivers,
+  this should improve reliability
+- Few more fixes for Android
+- Fixed loss of precision in CUDA event times due to type conversion
+
+Other
+-----
+
+- lib/kernel/libclc has received a number of new math library function
+  implementations. These are useful for some drivers which can't
+  use SLEEF and want to avoid libm calls or simple expression
+  implementations.
+- TCE driver significantly improved, it now uses argbuffer launcher,
+  handles multithreaded user programs properly, uses the new libclc
+  math library functions, and has fixed some filesystem race conditions.
+  Should be able to run the TCE testsuite in parallel without random errors.
+- A new proxy driver that lets PoCL proxy to another OpenCL implementation.
+  if a user creates a cl_context with multiple devices including one via
+  the proxy driver, PoCL will automatically manage buffer memory within
+  the context.
+- A new experimental Vulkan driver, using clspv and Vulkan API to run
+  OpenCL code on Vulkan-enabled devices. To learn about the limitations,
+  please read the documentation at doc/sphinx/source/vulkan.rst.
+- Handling whitespace chars in build options (lib/CL/pocl_build.c)
+- Migrated from the deprecated cl2.hpp to opencl.hpp
+
 1.8 October 2021
 ================
 
@@ -67,6 +126,12 @@ Notable User Facing Changes
   - clGetDeviceInfo queries
     - CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES (Minimal implementation)
     - CL_DEVICE_ATOMIC_FENCE_CAPABILITIES (Minimal implementation)
+
+Notable Bug Fixes
+-----------------
+
+- Added support for arm CUDA platforms without cuMemHostRegister
+  support.
 
 1.6 December 2020
 =================

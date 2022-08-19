@@ -1016,6 +1016,9 @@ struct _cl_device_id {
   /* relative path to file with OpenCL sources of the builtin kernels */
   const char* builtins_sources_path;
 
+  const char **serialize_entries;
+  unsigned num_serialize_entries;
+
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
   unsigned local_as_id;

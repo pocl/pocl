@@ -21,17 +21,19 @@ should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
 
-<h2>2021-10-12: <a href="pocl-1.8.html">Portable Computing Language (PoCL) v1.8 released</a></h2>
+<h2>2022-06-10: <a href="pocl-3.0.html">Portable Computing Language (PoCL) v3.0 released</a></h2>
 
-<h2>2021-05-19: <a href="pocl-1.7.html">Portable Computing Language (PoCL) v1.7 released</a></h2>
+##<h2>2021-10-12: <a href="pocl-1.8.html">Portable Computing Language (PoCL) v1.8 released</a></h2>
 
-<h2>2020-12-16: <a href="pocl-1.6.html">Portable Computing Language (PoCL) v1.6 released</a></h2>
+##<h2>2021-05-19: <a href="pocl-1.7.html">Portable Computing Language (PoCL) v1.7 released</a></h2>
+
+##<h2>2020-12-16: <a href="pocl-1.6.html">Portable Computing Language (PoCL) v1.6 released</a></h2>
 
 <h2>2020-08-14: <a href="http://portablecl.org/docs/html/debug.html">Debugging OpenCL applications with PoCL</a></h2>
 
-<h2>2020-04-03: <a href="pocl-1.5.html">Portable Computing Language (pocl) v1.5 released</a></h2>
+##<h2>2020-04-03: <a href="pocl-1.5.html">Portable Computing Language (pocl) v1.5 released</a></h2>
 
-<h2>2019-10-14: <a href="pocl-1.4.html">Portable Computing Language (pocl) v1.4 released</a></h2>
+##<h2>2019-10-14: <a href="pocl-1.4.html">Portable Computing Language (pocl) v1.4 released</a></h2>
 
 <h2>2019-07-15: Hardware Accelerators in POCL</h2>
 

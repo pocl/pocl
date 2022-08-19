@@ -71,8 +71,8 @@ if(UNIX)
 
 endif()
 
-set(MAJOR_VERSION 1)
-set(MINOR_VERSION 9)
+set(MAJOR_VERSION 3)
+set(MINOR_VERSION 1)
 set(VERSION_SUFFIX_FIXED_TEXT "-pre")
 set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT}")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
@@ -888,7 +888,7 @@ else()
   endif()
 
   if (NOT OCL_ICD_FOUND)
-    find_path(OCL_ICD_INCLUDE_DIR
+    find_path(OCL_ICD_INCLUDE_DIRS
       NAMES
         ocl_icd.h
     )
@@ -896,11 +896,10 @@ else()
       NAMES
         OpenCL
     )
-    if(OCL_ICD_INCLUDE_DIR AND OCL_ICD_LIBRARIES)
+    if(OCL_ICD_INCLUDE_DIRS AND OCL_ICD_LIBRARIES)
       set(OCL_ICD_FOUND 1)
     endif()
   endif()
-
 
   if(OCL_ICD_FOUND)
 
@@ -974,10 +973,8 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 
 ######################################################################################
 
-if(APPLE)
-  find_file(OPENCL_H opencl.h PATH_SUFFIXES OpenCL CL)
-  find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES OpenCL CL)
-else()
+# Apple's OpenCL headers are too old for building PoCL, always use our own
+if(NOT APPLE)
   find_file(OPENCL_H opencl.h PATH_SUFFIXES CL)
   find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
 endif()
@@ -1713,7 +1710,7 @@ if(ENABLE_TESTS)
 
     # make check & make check_tier1
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|CLBlast|shoc'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)

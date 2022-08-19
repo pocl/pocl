@@ -545,6 +545,7 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
 
   const char *BasePath[] = {
     pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
+    pocl_get_string_option("CUDA_HOME", "/usr/local/cuda"),
     "/usr/local/lib/cuda",
     "/usr/local/lib",
     "/usr/lib",
@@ -762,8 +763,8 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
       llvm::ArrayType::get(llvm::Type::getInt8Ty(Module->getContext()),
                            65536 - TotalAutoConstantSize);
   llvm::GlobalVariable *ConstantMemBase = new llvm::GlobalVariable(
-      *Module, ByteArrayType, false, llvm::GlobalValue::InternalLinkage,
-      llvm::Constant::getNullValue(ByteArrayType), "_constant_memory_region_",
+      *Module, ByteArrayType, false, llvm::GlobalValue::ExternalLinkage,
+      NULL, "_constant_memory_region_",
       NULL, llvm::GlobalValue::NotThreadLocal, 4, false);
 
   convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase);

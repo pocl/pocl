@@ -163,6 +163,11 @@
 #undef LLVM_14_0
 #define LLVM_14_0
 
+#elif (__clang_major__ == 15)
+
+#undef LLVM_15_0
+#define LLVM_15_0
+
 #else
 
 #error Unsupported Clang/LLVM version.

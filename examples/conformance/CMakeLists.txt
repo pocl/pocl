@@ -51,6 +51,12 @@ if(ENABLE_ICD AND HAVE_OCL_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
   return()
 endif()
 
+# if ENABLE_CONFORMANCE is OFF (default), the CTS reports a lot of failures with CPU driver
+if(ENABLE_HOST_CPU_DEVICES AND (NOT ENABLE_CONFORMANCE))
+  message(WARNING "OpenCL-CTS + CPU driver need ENABLE_CONFORMANCE=ON, disabling CTS")
+  return()
+endif()
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)

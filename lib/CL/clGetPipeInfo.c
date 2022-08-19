@@ -30,3 +30,4 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetPipeInfo) (
 {
   return CL_INVALID_MEM_OBJECT;
 }
+POsym(clGetPipeInfo)

@@ -23,12 +23,17 @@
 #
 #=============================================================================
 
-if(Hwloc_FOUND)
-  include_directories(${Hwloc_INCLUDE_DIRS})
-endif()
 
 if(MSVC)
   set_source_files_properties( pocl_topology.c pocl_topology.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_library("pocl-devices-topology" OBJECT pocl_topology.c pocl_topology.h)
 harden("pocl-devices-topology")
+
+if(${OCL_ICD_INCLUDE_DIRS})
+  target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+endif()
+
+if(Hwloc_FOUND)
+        target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${Hwloc_INCLUDE_DIRS})
+endif()
