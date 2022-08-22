@@ -195,7 +195,8 @@ with a separate 'make bitstreams' command. This generates the bitstreams to
 build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams directories. 
 Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
 (You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH) on it.
-Copy the bistreams directories (and in case of TTA, also the firmware_imgs directories)
+Copy the bistreams directories (and in case of TTA, also the firmware_imgs
+directories and hashes.txt)
 to their correct PoCL build directories on PYNQ.
 Finally, run ``../tools/scripts/run_accel_tests --pynq`` to run the test programn
 on the FPGA device.

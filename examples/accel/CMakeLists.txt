@@ -98,6 +98,7 @@ if(ENABLE_TCEMC)
     
     
     add_custom_command(OUTPUT rtls/rtl_${core_name}
+      COMMAND rm -rf rtls/rtl_${core_name}
       COMMAND generateprocessor --prefer-generation -o rtls/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal,fpga-optimized:yes
       --hdb-list=generate_lsu_32.hdb,generate_rf_iu.hdb,xilinx_series7.hdb,generate_base32.hdb
       -f onchip -d onchip -g AlmaIFIntegrator -p ${TPEF} ${ADF}
