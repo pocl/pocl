@@ -808,59 +808,6 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 
   cl_device_id dev = program->devices[device_i];
 
-  if (dev->compiler_available == CL_FALSE)
-    return 0;
-
-  if (dev->builtins_sources_path == NULL)
-    return 0;
-
-
-// TODO this should probably be outside
-#ifdef ENABLE_LLVM
-  POCL_MSG_PRINT_LLVM ("building builtin kernels for %s\n", dev->short_name);
-
-  assert (program->build_status == CL_BUILD_NONE);
-
-  uint64_t builtins_file_len = 0;
-  char* builtins_file = NULL;
-  char builtin_path[POCL_FILENAME_LENGTH];
-  char filename[64];
-  filename[0] = '/';
-  pocl_str_tolower (filename+1, dev->ops->device_name);
-  strcat(filename, "/");
-  strcat(filename, dev->builtins_sources_path);
-
-  /* filename is now e.g. "/cuda/builtins.cl";
-   * loads either
-   * <srcdir>/lib/CL/devices/cuda/builtins.cl
-   * or
-   * <private_datadir>/cuda/builtins.cl
-   */
-  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices", "", filename);
-
-  POCL_RETURN_ERROR_ON( (pocl_read_file (builtin_path, &builtins_file, &builtins_file_len)),
-                         CL_BUILD_PROGRAM_FAILURE,
-                         "failed to open source for builtins: \n%s\n", builtin_path);
-
-  program->source = builtins_file;
-
-  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
-  POCL_RETURN_ERROR_ON( (err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                        "failed to build OpenCL builtins for %s\n", dev->short_name);
-  return 0;
-#else
-  return -1;
-#endif
-
-}
-
-int
-pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
-{
-  int err;
-
-  cl_device_id dev = program->devices[device_i];
-
   if (dev->compiler_available == CL_FALSE || dev->llvm_cpu == NULL)
     return 0;
 
