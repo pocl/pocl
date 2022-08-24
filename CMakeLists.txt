@@ -466,7 +466,10 @@ if(ENABLE_LLVM)
     set(WITH_TCE ENV PATH)
   endif()
 
-  find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
+  find_program(TCE_CONFIG NAMES "openasip-config" HINTS ${WITH_TCE})
+  if(NOT TCE_CONFIG)
+    find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
+  endif()
   find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
   find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
 
@@ -1300,7 +1303,7 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
   if(TCE_CONFIG AND TCECC AND TTASIM)
 
-    message(STATUS "Found tcecc + tce-config + ttasim, testing setup")
+    message(STATUS "Found tcecc + openasip-config + ttasim, testing setup")
 
     get_filename_component(TCE_BASEDIR "${TCE_CONFIG}" DIRECTORY)
     find_library(TCE_LIBS "tce" HINTS "${TCE_BASEDIR}/../lib" ENV PATH)
@@ -1316,11 +1319,11 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
 
     if(NOT (LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG))
-      message(WARNING "tce-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
+      message(WARNING "openasip-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
     endif()
 
     if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
-      message(WARNING "tce-config: Nonzero exit status, disabling TCE")
+      message(WARNING "openasip-config: Nonzero exit status, disabling TCE")
     elseif (RESV9)
       message(WARNING "ttasim: Nonzero exit status, disabling TCE")
     else()
@@ -1334,12 +1337,6 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     string(STRIP "${TCE_VERSION}" TCE_VERSION)
     string(STRIP "${TCE_PREFIX}" TCE_PREFIX)
 
-    set(TCE_LIBS "${TCE_LIBS}" CACHE INTERNAL "tce-config --libs")
-    set(TCE_INCLUDES "${TCE_INCLUDES}" CACHE INTERNAL "tce-config --includes")
-    set(TCE_VERSION "${TCE_VERSION}" CACHE INTERNAL "tce-config --version")
-    set(TCE_CXXFLAGS "${TCE_CXXFLAGS}" CACHE INTERNAL "tce-config --cxxflags")
-    set(TCE_PREFIX "${TCE_PREFIX}" CACHE INTERNAL "tce-config --prefix")
-
     set(HAVE_TCE 1)
     if(TCE_VERSION MATCHES "trunk")
       set(HAVE_TCEMC 1)
@@ -1348,7 +1345,7 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     endif()
 
   else()
-    message(STATUS "Failed to find tcecc or tce-config, disabling TCE")
+    message(STATUS "Failed to find tcecc or openasip-config, disabling TCE")
   endif()
 
   set(DEFAULT_ENABLE_TCE ${HAVE_TCE} CACHE INTERNAL "TCE available")

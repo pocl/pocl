@@ -447,23 +447,8 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
       POCL_ABORT("Error while running generatebits.\n");
   }
 
-  // with TCEMC, "data" is empty, "param" contains the kernel_cmd struct
-  char data_img[POCL_FILENAME_LENGTH];
-  snprintf(data_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
-           "/parallel_local.img");
-  char param_img[POCL_FILENAME_LENGTH];
-  snprintf(param_img, POCL_FILENAME_LENGTH, "%s%s", cachedir,
-           "/parallel_param.img");
-
   error = pocl_exists(imem_file);
   assert(error != 0 && "parallel.img does not exist!");
-  /*
-    error = pocl_exists(data_img);
-    assert(error != 0 && "parallel_local.img does not exist!");
-  */
-  /* error = pocl_exists(param_img);
-   assert(error != 0 && "parallel_param.img does not exist!");
- */
 
   delete mach;
   delete prog;

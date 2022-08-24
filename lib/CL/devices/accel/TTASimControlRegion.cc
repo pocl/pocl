@@ -177,7 +177,7 @@ void TTASimControlRegion::setupControlRegisters(
   ControlRegisters_[ACCEL_INFO_DEV_CLASS / 4] = 0;
   ControlRegisters_[ACCEL_INFO_DEV_ID / 4] = 0;
   ControlRegisters_[ACCEL_INFO_IF_TYPE / 4] = 3;
-  ControlRegisters_[ACCEL_INFO_CORE_COUNT / 4] = mach.coreCount();
+  ControlRegisters_[ACCEL_INFO_CORE_COUNT / 4] = 1;
   ControlRegisters_[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
   ControlRegisters_[ACCEL_INFO_IMEM_SIZE / 4] = imem_size;
   ControlRegisters_[ACCEL_INFO_IMEM_START_LOW / 4] = imem_start;

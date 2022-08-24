@@ -32,7 +32,7 @@
 #endif
 #include "EmulationDevice.hh"
 
-#ifdef TCEMC_AVAILABLE
+#ifdef TCE_AVAILABLE
 #include "TTASimDevice.hh"
 #endif
 
@@ -383,7 +383,7 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       D->Dev = new XrtDevice(xrt_kernel_name);
     }
 #endif
-#ifdef TCEMC_AVAILABLE
+#ifdef TCE_AVAILABLE
     else if (D->BaseAddress == 0xB) {
       D->Dev = new TTASimDevice(xrt_kernel_name);
       enable_compilation = true;
