@@ -196,7 +196,7 @@ build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams director
 Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
 (You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH) on it.
 Copy the bistreams directories (and in case of TTA, also the firmware_imgs
-directories and hashes.txt)
+directory, hashes.txt and example0_*.poclbins)
 to their correct PoCL build directories on PYNQ.
 Finally, run ``../tools/scripts/run_accel_tests --pynq`` to run the test programn
 on the FPGA device.
@@ -244,7 +244,7 @@ The component can be any hardware component, as long as it supports the AlmaIF
 interface specification described above.
 The following section presents an example method of generating the accelerator
 with HLS. However, other methods of generating the accelerator exists, the only
-requirement is that it implements the AlmaIF specification described above.
+requirement is that it implements the AlmaIF specification as described above.
 
 
 High-level synthesis
