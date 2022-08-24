@@ -153,7 +153,7 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   const char *poclIncludePathSwitch;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s", SRCDIR,
-             "/lib/CL/devices/tce/", mainC);
+             "/lib/CL/devices/accel/", mainC);
     assert(access(deviceMainSrc, R_OK) == 0);
     poclIncludePathSwitch = " -I " SRCDIR "/include";
   } else {
