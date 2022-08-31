@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -36,55 +37,34 @@ POname (clCommandCopyBufferToImageKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
-  /* pass src_origin through in a format pocl_record_rect_copy understands */
-  const size_t src_origin[3] = { src_offset, 0, 0 };
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
-                          CL_INVALID_MEM_OBJECT);
+  errcode = pocl_copy_buffer_to_image_common (
+      command_buffer, command_queue, src_buffer, dst_image, src_offset,
+      dst_origin, region, num_sync_points_in_wait_list, NULL, NULL,
+      sync_point_wait_list, sync_point, mutable_handle, &cmd);
 
-  if (IS_IMAGE1D_BUFFER (dst_image))
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  if (cmd)
     {
-      /* If src_image is a 1D image or 1D image buffer object, src_origin[1]
-       * and src_origin[2] must be 0 If src_image is a 1D image or 1D image
-       * buffer object, region[1] and region[2] must be 1. */
-      IMAGE1D_ORIG_REG_TO_BYTES (dst_image, dst_origin, region);
-      return POname (clCommandCopyBufferRectKHR) (
-          command_buffer, command_queue, src_buffer, dst_image->buffer,
-          src_origin, i1d_origin, i1d_region, dst_image->image_row_pitch, 0,
-          dst_image->image_row_pitch, 0, num_sync_points_in_wait_list,
-          sync_point_wait_list, sync_point, mutable_handle);
+      errcode = pocl_command_record (command_buffer, cmd, sync_point);
+      if (errcode != CL_SUCCESS)
+        goto ERROR;
     }
 
-  POCL_RETURN_ON_SUB_MISALIGN (src_buffer, command_queue);
-
-  errcode = pocl_record_rect_copy (
-      command_buffer->queues[0], CL_COMMAND_COPY_BUFFER_TO_IMAGE, src_buffer,
-      CL_FALSE, dst_image, CL_TRUE, src_origin, dst_origin, region, 0, 0, 0, 0,
-      num_sync_points_in_wait_list, sync_point_wait_list, &cmd,
-      command_buffer);
-
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
-
-  POCL_RETURN_ERROR_ON (
-      (src_buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  POCL_FILL_COMMAND_COPY_BUFFER_TO_IMAGE;
-
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
+  POname (clRetainMemObject) (cmd->command.write_image.src);
+  POname (clRetainMemObject) (cmd->command.write_image.dst);
+  if (cmd->command.write_image.src->size_buffer != NULL)
+    POname (clRetainMemObject) (cmd->command.write_image.src->size_buffer);
 
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandCopyBufferToImageKHR)

@@ -23,11 +23,12 @@
 
 #include "pocl_cl.h"
 #include "pocl_local_size.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 
 #include <assert.h>
 
-cl_int
+static cl_int
 pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
                           cl_uint work_dim, const size_t *global_work_offset,
                           const size_t *global_work_size,
@@ -195,7 +196,7 @@ SKIP_WG_SIZE_CALCULATION:
   return CL_SUCCESS;
 }
 
-cl_int
+static cl_int
 pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
                               cl_uint *memobj_count, cl_mem *memobj_list,
                               char *readonly_flag_list)
@@ -291,4 +292,119 @@ pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command)
     }
 
   return CL_SUCCESS;
+}
+
+cl_int
+pocl_ndrange_kernel_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_ndrange_kernel_command_properties_khr *properties,
+    cl_kernel kernel, cl_uint work_dim, const size_t *global_work_offset,
+    const size_t *global_work_size, const size_t *local_work_size,
+    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
+    cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point_p, _cl_command_node **cmd)
+{
+  size_t offset[3] = { 0, 0, 0 };
+  size_t num_groups[3] = { 0, 0, 0 };
+  size_t local[3] = { 0, 0, 0 };
+  /* cached values for max_work_item_sizes,
+   * since we are going to access them repeatedly */
+  size_t max_local_x, max_local_y, max_local_z;
+  /* cached values for max_work_group_size,
+   * since we are going to access them repeatedly */
+  size_t max_group_size;
+
+  int errcode = 0;
+
+  /* no need for malloc, pocl_create_event will memcpy anyway.
+   * num_args is the absolute max needed */
+  cl_uint memobj_count = 0;
+  cl_mem memobj_list[kernel->meta->num_args];
+  char readonly_flag_list[kernel->meta->num_args];
+
+  assert (command_buffer == NULL
+          || (event_wait_list == NULL && event_p == NULL));
+  assert (command_buffer != NULL
+          || (sync_point_wait_list == NULL && sync_point_p == NULL));
+
+  if (command_queue != NULL && command_buffer == NULL)
+    {
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                              CL_INVALID_COMMAND_QUEUE);
+    }
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
+
+  POCL_RETURN_ERROR_ON (
+      (command_queue->context != kernel->context), CL_INVALID_CONTEXT,
+      "kernel and command_queue are not from the same context\n");
+
+  errcode = pocl_kernel_calc_wg_size (
+      command_queue, kernel, work_dim, global_work_offset, global_work_size,
+      local_work_size, offset, local, num_groups);
+  POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
+                        "Error calculating wg size\n");
+
+  errcode = pocl_kernel_collect_mem_objs (command_queue, kernel, &memobj_count,
+                                          memobj_list, readonly_flag_list);
+  POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
+                        "Error collecting mem objects for kernel arguments\n");
+
+  if (command_buffer == NULL)
+    {
+      errcode = pocl_create_command (
+          cmd, command_queue, CL_COMMAND_NDRANGE_KERNEL, event_p,
+          num_items_in_wait_list, event_wait_list, memobj_count, memobj_list,
+          readonly_flag_list);
+    }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, CL_COMMAND_NDRANGE_KERNEL,
+          num_items_in_wait_list, sync_point_wait_list, memobj_count,
+          memobj_list, readonly_flag_list);
+    }
+
+  POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
+                        "Error constructing command struct\n");
+
+  cl_uint program_dev_i = CL_UINT_MAX;
+  cl_device_id realdev = pocl_real_dev (command_queue->device);
+  for (unsigned i = 0; i < kernel->program->num_devices; ++i)
+    {
+      if (kernel->program->devices[i] == realdev)
+        program_dev_i = i;
+    }
+  assert (program_dev_i < CL_UINT_MAX);
+  _cl_command_node *c = *cmd;
+  c->program_device_i = program_dev_i;
+  c->next = NULL;
+
+  c->command.run.kernel = kernel;
+  c->command.run.hash = kernel->meta->build_hash[program_dev_i];
+  c->command.run.pc.local_size[0] = local[0];
+  c->command.run.pc.local_size[1] = local[1];
+  c->command.run.pc.local_size[2] = local[2];
+  c->command.run.pc.work_dim = work_dim;
+  c->command.run.pc.num_groups[0] = num_groups[0];
+  c->command.run.pc.num_groups[1] = num_groups[1];
+  c->command.run.pc.num_groups[2] = num_groups[2];
+  c->command.run.pc.global_offset[0] = offset[0];
+  c->command.run.pc.global_offset[1] = offset[1];
+  c->command.run.pc.global_offset[2] = offset[2];
+
+  errcode = POname (clRetainKernel) (kernel);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  errcode = pocl_kernel_copy_args (kernel, &(*cmd)->command.run);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  return CL_SUCCESS;
+
+ERROR:
+  pocl_ndrange_node_cleanup (*cmd);
+  pocl_mem_manager_free_command (*cmd);
+  return errcode;
 }

@@ -70,6 +70,78 @@ pocl_validate_fill_buffer (cl_command_queue command_queue, cl_mem buffer,
 }
 
 cl_int
+pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
+                         cl_command_queue command_queue, cl_mem buffer,
+                         const void *pattern, size_t pattern_size,
+                         size_t offset, size_t size,
+                         cl_uint num_items_in_wait_list,
+                         const cl_event *event_wait_list, cl_event *event,
+                         const cl_sync_point_khr *sync_point_wait_list,
+                         cl_sync_point_khr *sync_point, _cl_command_node **cmd)
+{
+  cl_int errcode;
+  if (command_buffer == NULL)
+    {
+      assert (sync_point_wait_list == NULL);
+      POCL_RETURN_ERROR_COND (
+          (event_wait_list == NULL && num_items_in_wait_list > 0),
+          CL_INVALID_EVENT_WAIT_LIST);
+      POCL_RETURN_ERROR_COND (
+          (event_wait_list != NULL && num_items_in_wait_list == 0),
+          CL_INVALID_EVENT_WAIT_LIST);
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+    }
+  else
+    {
+      assert (event_wait_list == NULL && event == NULL);
+      /* sync point wait list is validated in pocl_create_recorded_command */
+    }
+
+  errcode = pocl_validate_fill_buffer (command_queue, buffer, pattern,
+                                       pattern_size, offset, size);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
+  POCL_RETURN_ERROR_ON (
+      (buffer->size > command_queue->device->max_mem_alloc_size),
+      CL_OUT_OF_RESOURCES,
+      "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
+  char rdonly = 0;
+  if (command_buffer == NULL)
+    {
+      errcode = pocl_create_command (
+          cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
+          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+    }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
+          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+    }
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  _cl_command_node *c = *cmd;
+  c->command.memfill.dst_mem_id
+      = &buffer->device_ptrs[command_queue->device->global_mem_id];
+  c->command.memfill.size = size;
+  c->command.memfill.offset = offset;
+  void *p = pocl_aligned_malloc (pattern_size, pattern_size);
+  memcpy (p, pattern, pattern_size);
+  c->command.memfill.pattern = p;
+  c->command.memfill.pattern_size = pattern_size;
+
+  return CL_SUCCESS;
+}
+
+cl_int
 pocl_validate_fill_image (cl_command_queue command_queue, cl_mem image,
                           const void *fill_color, const size_t *origin,
                           const size_t *region)
@@ -91,4 +163,113 @@ pocl_validate_fill_image (cl_command_queue command_queue, cl_mem image,
   POCL_RETURN_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 
   return pocl_check_image_origin_region (image, origin, region);
+}
+
+cl_int
+pocl_fill_image_common (cl_command_buffer_khr command_buffer,
+                        cl_command_queue command_queue, cl_mem image,
+                        const void *fill_color, const size_t *origin,
+                        const size_t *region, cl_uint num_items_in_wait_list,
+                        const cl_event *event_wait_list, cl_event *event,
+                        const cl_sync_point_khr *sync_point_wait_list,
+                        cl_sync_point_khr *sync_point,
+                        cl_mutable_command_khr *mutable_handle,
+                        _cl_command_node **cmd)
+{
+  cl_int errcode;
+  if (command_buffer == NULL)
+    {
+      assert (sync_point_wait_list == NULL);
+      POCL_RETURN_ERROR_COND (
+          (event_wait_list == NULL && num_items_in_wait_list > 0),
+          CL_INVALID_EVENT_WAIT_LIST);
+      POCL_RETURN_ERROR_COND (
+          (event_wait_list != NULL && num_items_in_wait_list == 0),
+          CL_INVALID_EVENT_WAIT_LIST);
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+    }
+  else
+    {
+      assert (event_wait_list == NULL && event == NULL);
+      /* sync point wait list is validated in pocl_create_recorded_command */
+    }
+
+  errcode = pocl_validate_fill_image (command_queue, image, fill_color, origin,
+                                      region);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
+
+  size_t px = image->image_elem_size * image->image_channels;
+  char fill_pattern[16];
+  pocl_write_pixel_zero (fill_pattern, fill_color_vec,
+                         image->image_channel_order, image->image_elem_size,
+                         image->image_channel_data_type);
+
+  /* The fill color is:
+   *
+   * a four component RGBA floating-point color value if the image channel
+   * data type is NOT an unnormalized signed and unsigned integer type,
+   *
+   * a four component signed integer value if the image channel data type
+   * is an unnormalized signed integer type and
+   *
+   * a four component unsigned integer value if the image channel data type
+   * is an unormalized unsigned integer type.
+   *
+   * The fill color will be converted to the appropriate
+   * image channel format and order associated with image.
+   */
+
+  if (IS_IMAGE1D_BUFFER (image))
+    {
+      if (command_buffer == NULL)
+        {
+          return POname (clEnqueueFillBuffer) (
+              command_queue, image->buffer, fill_pattern, px, origin[0] * px,
+              region[0] * px, num_items_in_wait_list, event_wait_list, event);
+        }
+      else
+        {
+          return POname (clCommandFillBufferKHR) (
+              command_buffer, command_queue, image->buffer, fill_pattern, px,
+              origin[0] * px, region[0] * px, num_items_in_wait_list,
+              sync_point_wait_list, sync_point, mutable_handle);
+        }
+    }
+
+  char rdonly = 0;
+  if (command_buffer == NULL)
+    {
+      errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_FILL_IMAGE,
+                                     event, num_items_in_wait_list,
+                                     event_wait_list, 1, &image, &rdonly);
+    }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
+          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+    }
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  _cl_command_node *c = *cmd;
+  memcpy (c->command.fill_image.fill_pixel, fill_pattern, 16);
+  c->command.fill_image.orig_pixel = fill_color_vec;
+  c->command.fill_image.pixel_size = px;
+  c->command.fill_image.mem_id
+      = &image->device_ptrs[command_queue->device->global_mem_id];
+  c->command.fill_image.origin[0] = origin[0];
+  c->command.fill_image.origin[1] = origin[1];
+  c->command.fill_image.origin[2] = origin[2];
+  c->command.fill_image.region[0] = region[0];
+  c->command.fill_image.region[1] = region[1];
+  c->command.fill_image.region[2] = region[2];
+
+  return CL_SUCCESS;
 }

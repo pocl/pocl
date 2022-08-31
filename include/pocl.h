@@ -426,26 +426,7 @@ typedef union
   _cl_command_svm_migrate svm_migrate;
 } _cl_command_t;
 
-typedef struct _cl_recorded_command _cl_recorded_command;
-struct _cl_recorded_command
-{
-  _cl_command_t command;
-  cl_command_type type;
-
-  _cl_recorded_command *next;
-  _cl_recorded_command *prev;
-
-  cl_uint queue_idx;
-
-  cl_uint num_sync_points_in_wait_list;
-  cl_sync_point_khr *sync_point_wait_list;
-
-  cl_uint memobj_count;
-  cl_mem *memobj_list;
-  char *readonly_flag_list;
-};
-
-// one item in the command queue
+// one item in the command queue or command buffer
 typedef struct _cl_command_node _cl_command_node;
 struct _cl_command_node
 {
@@ -453,12 +434,42 @@ struct _cl_command_node
   cl_command_type type;
   _cl_command_node *next; // for linked-list storage
   _cl_command_node *prev;
-  cl_event event;
-  const cl_event *event_wait_list;
+  cl_int buffered;
+
+  /***
+   * Command buffers use sync points as a template for synchronizing commands
+   * within the buffer. Commands outside the buffer can't depend on sync points
+   * and individual commands in the buffer can't depend on events. Because this
+   * struct is used both for recorded and immediately enqueued commands, the
+   * two synchronization mechanisms are made mutually exclusive here.
+   * */
+  union
+  {
+    struct
+    {
+      cl_event event;
+    } event;
+    struct
+    {
+      cl_sync_point_khr sync_point;
+      cl_uint num_sync_points_in_wait_list;
+      cl_sync_point_khr *sync_point_wait_list;
+    } syncpoint;
+  } sync;
   cl_device_id device;
   /* The index of the targeted device in the **program** device list. */
   unsigned program_device_i;
   cl_int ready;
+
+  /* fields needed by buffered commands only */
+
+  /* Which of the command queues in the command buffer's queue list
+   * this command was recorded for. */
+  cl_uint queue_idx;
+  /* List of buffers this command accesses, used for inserting migrations */
+  cl_uint memobj_count;
+  cl_mem *memobj_list;
+  char *readonly_flag_list;
 };
 
 #define CLANG_MAJOR LLVM_MAJOR

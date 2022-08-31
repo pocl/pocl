@@ -43,7 +43,8 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_event_double_wait test_buffer_migration test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback
-  test_cl_pocl_content_size test_deviceside_enqueue test_command_buffer)
+  test_cl_pocl_content_size test_deviceside_enqueue
+  test_command_buffer test_command_buffer_images)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -120,6 +121,8 @@ add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_en
 
 add_test(NAME "runtime/test_command_buffer" COMMAND "test_command_buffer")
 
+add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_images")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -134,7 +137,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_buffer_ping_pong"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
-  "runtime/test_command_buffer"
+  "runtime/test_command_buffer" "runtime/test_command_buffer_images"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -149,6 +152,8 @@ set_tests_properties(
   "runtime/test_buffer-image-copy"
   "runtime/clGetSupportedImageFormats"
   "runtime/clEnqueueNativeKernel"
+  "runtime/test_command_buffer"
+  "runtime/test_command_buffer_images"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(NOT ENABLE_ANYSAN)

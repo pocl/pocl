@@ -42,7 +42,7 @@ buffer_finished_callback (cl_event event, cl_int event_command_status,
 }
 
 static cl_command_buffer_properties_khr
-get_property (cl_command_buffer_khr command_buffer,
+get_cmdbuf_property (cl_command_buffer_khr command_buffer,
               cl_command_buffer_properties_khr name)
 {
   for (unsigned i = 0; i < command_buffer->num_properties; ++i)
@@ -128,7 +128,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
     return errcode;
 
   cl_command_buffer_flags_khr flags
-      = (cl_command_buffer_flags_khr)get_property (
+      = (cl_command_buffer_flags_khr)get_cmdbuf_property (
           command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
   POCL_LOCK (command_buffer->mutex);
   int is_ready
@@ -153,7 +153,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   else
     {
       /* Submit individual commands manually */
-      _cl_recorded_command *cmd;
+      _cl_command_node *cmd;
 
       cl_event syncpoints[command_buffer->num_syncpoints];
       cl_event *deps = (cl_event *)alloca (
@@ -167,9 +167,11 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
         assert (cmd->queue_idx == 0);
 
         /* Add events from syncpoints to waitlist */
-        for (j = 0; j < cmd->num_sync_points_in_wait_list; ++j)
+        for (j = 0; j < cmd->sync.syncpoint.num_sync_points_in_wait_list; ++j)
           {
-            deps[j] = syncpoints[cmd->sync_point_wait_list[j]];
+            // sync point ids start at 1
+            deps[j]
+                = syncpoints[cmd->sync.syncpoint.sync_point_wait_list[j] - 1];
           }
         /* Add events from command buffer dependencies to waitlist */
         for (k = 0; k < num_events_in_wait_list; ++k, ++j)
@@ -193,18 +195,42 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
 
         memcpy (&node->command, &cmd->command, sizeof (_cl_command_t));
 
-        if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
+        // Copy variables that are freed when the command finishes
+        switch (cmd->type)
           {
-            POname (clRetainKernel) (cmd->command.run.kernel);
-            errcode = pocl_kernel_copy_args (cmd->command.run.kernel,
-                                             &cmd->command.run);
+          case CL_COMMAND_NDRANGE_KERNEL:
+            POname (clRetainKernel) (node->command.run.kernel);
+            errcode = pocl_kernel_copy_args (node->command.run.kernel,
+                                             &node->command.run);
             if (errcode != CL_SUCCESS)
               {
-                POCL_MSG_ERR (
-                    "Not enough memory for temporary kernel arguments\n");
-                pocl_mem_manager_free_command (node);
-                return errcode;
+                errcode = CL_OUT_OF_HOST_MEMORY;
+                break;
               }
+            break;
+          case CL_COMMAND_FILL_BUFFER:
+            node->command.memfill.pattern
+                = pocl_aligned_malloc (cmd->command.memfill.pattern_size,
+                                       cmd->command.memfill.pattern_size);
+            if (node->command.memfill.pattern == NULL)
+              {
+                errcode = CL_OUT_OF_HOST_MEMORY;
+                break;
+              }
+            memcpy (node->command.memfill.pattern,
+                    cmd->command.memfill.pattern,
+                    cmd->command.memfill.pattern_size);
+            break;
+
+          default:
+            break;
+          }
+
+        if (errcode != CL_SUCCESS)
+          {
+            POCL_MSG_ERR ("Failed to allocate temporary command parameters\n");
+            pocl_mem_manager_free_command (node);
+            return errcode;
           }
 
         pocl_command_enqueue (q, node);
@@ -223,8 +249,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           pocl_mem_manager_free_command (node);
           return errcode;
         }
-      pocl_command_enqueue (q, node);
       POname (clRetainCommandBufferKHR) (command_buffer);
+      pocl_command_enqueue (q, node);
       return POname (clSetEventCallback) (*event, CL_COMPLETE,
                                           buffer_finished_callback,
                                           (void *)command_buffer);

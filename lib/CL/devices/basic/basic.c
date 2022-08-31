@@ -439,7 +439,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
-  cl_event ev = cmd->event;
+  cl_event ev = cmd->sync.event.event;
   cl_device_id dev = cmd->device;
   size_t i;
   for (i = 0; i < ev->num_buffers; i++)
@@ -495,8 +495,8 @@ static void basic_command_scheduler (struct data *d)
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
-      assert (pocl_command_is_ready(node->event));
-      assert (node->event->status == CL_SUBMITTED);
+      assert (pocl_command_is_ready (node->sync.event.event));
+      assert (node->sync.event.event->status == CL_SUBMITTED);
       CDL_DELETE (d->ready_list, node);
       POCL_UNLOCK (d->cq_lock);
       pocl_exec_command (node);
@@ -518,7 +518,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 

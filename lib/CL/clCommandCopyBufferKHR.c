@@ -24,6 +24,7 @@
 #include <CL/cl_ext.h>
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -37,63 +38,30 @@ POname (clCommandCopyBufferKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_validate_copy_buffer (command_queue, src_buffer, dst_buffer,
-                                       src_offset, dst_offset, size);
+  errcode = pocl_copy_buffer_common (command_buffer, command_queue, src_buffer,
+                                     dst_buffer, src_offset, dst_offset, size,
+                                     num_sync_points_in_wait_list, NULL, NULL,
+                                     sync_point_wait_list, sync_point, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
-  POCL_RETURN_ERROR_ON (
-      (src_buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-  if (pocl_buffers_boundcheck (src_buffer, dst_buffer, src_offset, dst_offset,
-                               size)
-      != CL_SUCCESS)
-    return CL_INVALID_VALUE;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
-  POCL_RETURN_ERROR_ON (
-      (dst_buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-  if (pocl_buffers_overlap (src_buffer, dst_buffer, src_offset, dst_offset,
-                            size)
-      != CL_SUCCESS)
-    return CL_MEM_COPY_OVERLAP;
-
-  cl_mem buffers[3] = { src_buffer, dst_buffer, NULL };
-  char rdonly[] = { 1, 0, 1 };
-  int n_bufs = 2;
-  if (src_buffer->size_buffer != NULL)
-    {
-      n_bufs = 3;
-      buffers[2] = src_buffer->size_buffer;
-    }
-
-  errcode = pocl_create_recorded_command (
-      &cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
-      num_sync_points_in_wait_list, sync_point_wait_list, n_bufs, buffers,
-      rdonly);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  POCL_FILL_COMMAND_COPY_BUFFER;
 
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  for (unsigned i = 0; i < n_bufs; ++i)
-    {
-      POname (clRetainMemObject) (buffers[i]);
-    }
+  POname (clRetainMemObject) (cmd->command.copy.src);
+  POname (clRetainMemObject) (cmd->command.copy.dst);
+  if (cmd->command.copy.src->size_buffer != NULL)
+    POname (clRetainMemObject) (cmd->command.copy.src->size_buffer);
 
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandCopyBufferKHR)

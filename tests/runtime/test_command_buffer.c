@@ -1,3 +1,26 @@
+/* Test basic cl_khr_command_buffer functionality minus image-related functions
+
+   Copyright (c) 2022 Jan Solanti / Tampere University
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
+*/
+
 #include <stdio.h>
 #include <string.h>
 
@@ -6,16 +29,21 @@
 #define STR(x) #x
 
 int
-main ()
+main (int _argc, char **_argv)
 {
+#if defined(cl_khr_command_buffer) && cl_khr_command_buffer == 1
   struct
   {
     clCreateCommandBufferKHR_fn clCreateCommandBufferKHR;
     clCommandCopyBufferKHR_fn clCommandCopyBufferKHR;
+    clCommandCopyBufferRectKHR_fn clCommandCopyBufferRectKHR;
+    clCommandFillBufferKHR_fn clCommandFillBufferKHR;
     clCommandNDRangeKernelKHR_fn clCommandNDRangeKernelKHR;
+    clCommandBarrierWithWaitListKHR_fn clCommandBarrierWithWaitListKHR;
     clFinalizeCommandBufferKHR_fn clFinalizeCommandBufferKHR;
     clEnqueueCommandBufferKHR_fn clEnqueueCommandBufferKHR;
     clReleaseCommandBufferKHR_fn clReleaseCommandBufferKHR;
+    clGetCommandBufferInfoKHR_fn clGetCommandBufferInfoKHR;
   } ext;
 
   cl_platform_id platform;
@@ -28,21 +56,30 @@ main ()
       platform, "clCreateCommandBufferKHR");
   ext.clCommandCopyBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clCommandCopyBufferKHR");
+  ext.clCommandCopyBufferRectKHR = clGetExtensionFunctionAddressForPlatform (
+      platform, "clCommandCopyBufferRectKHR");
+  ext.clCommandFillBufferKHR = clGetExtensionFunctionAddressForPlatform (
+      platform, "clCommandFillBufferKHR");
   ext.clCommandNDRangeKernelKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clCommandNDRangeKernelKHR");
+  ext.clCommandBarrierWithWaitListKHR
+      = clGetExtensionFunctionAddressForPlatform (
+          platform, "clCommandBarrierWithWaitListKHR");
   ext.clFinalizeCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clFinalizeCommandBufferKHR");
   ext.clEnqueueCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clEnqueueCommandBufferKHR");
   ext.clReleaseCommandBufferKHR = clGetExtensionFunctionAddressForPlatform (
       platform, "clReleaseCommandBufferKHR");
+  ext.clGetCommandBufferInfoKHR = clGetExtensionFunctionAddressForPlatform (
+      platform, "clGetCommandBufferInfoKHR");
 
   cl_int error;
   cl_context context = clCreateContext (NULL, 1, &device, NULL, NULL, &error);
   CHECK_CL_ERROR (error);
 
   const char *code = STR (kernel void vector_addition (
-      global int *tile1, global int *tile2, global int *res) {
+      global const int *tile1, global const int *tile2, global int *res) {
     size_t index = get_global_id (0);
     res[index] = tile1[index] + tile2[index];
   });
@@ -107,24 +144,51 @@ main ()
           tile_index * tile_size, 0, tile_size, tile_sync_point ? 1 : 0,
           tile_sync_point ? &tile_sync_point : NULL, &copy_sync_points[0],
           NULL));
-      CHECK_CL_ERROR (ext.clCommandCopyBufferKHR (
-          command_buffer, NULL, buffer_src2, buffer_tile2,
-          tile_index * tile_size, 0, tile_size, tile_sync_point ? 1 : 0,
-          tile_sync_point ? &tile_sync_point : NULL, &copy_sync_points[1],
-          NULL));
+      /* For the sake of testing, pretend we are working with a vertical stack
+       * of 8x8 tiles */
+      size_t src_origin[3] = { 0, tile_index * 8, 0 };
+      size_t dst_origin[3] = { 0, 0, 0 };
+      size_t tile_region[3] = { 8 * sizeof (cl_int), 8, 1 };
+      CHECK_CL_ERROR (ext.clCommandCopyBufferRectKHR (
+          command_buffer, NULL, buffer_src2, buffer_tile2, src_origin,
+          dst_origin, tile_region, tile_region[0], 0, tile_region[0], 0,
+          tile_sync_point ? 1 : 0, tile_sync_point ? &tile_sync_point : NULL,
+          &copy_sync_points[1], NULL));
 
       cl_sync_point_khr nd_sync_point;
       CHECK_CL_ERROR (ext.clCommandNDRangeKernelKHR (
           command_buffer, NULL, NULL, kernel, 1, NULL, &tile_elements, NULL, 2,
-          &copy_sync_points[0], &nd_sync_point, NULL));
+          copy_sync_points, &nd_sync_point, NULL));
 
+      cl_sync_point_khr res_copy_sync_point;
       CHECK_CL_ERROR (ext.clCommandCopyBufferKHR (
           command_buffer, NULL, buffer_res, buffer_dst, 0,
           tile_index * tile_size, tile_size, 1, &nd_sync_point,
-          &tile_sync_point, NULL));
+          &res_copy_sync_point, NULL));
+
+      char zero = 0;
+      cl_sync_point_khr fill_sync_points[2];
+      CHECK_CL_ERROR (ext.clCommandFillBufferKHR (
+          command_buffer, NULL, buffer_tile1, &zero, sizeof (zero), 0,
+          tile_size, 1, &nd_sync_point, &fill_sync_points[0], NULL));
+      CHECK_CL_ERROR (ext.clCommandFillBufferKHR (
+          command_buffer, NULL, buffer_tile2, &zero, sizeof (zero), 0,
+          tile_size, 1, &nd_sync_point, &fill_sync_points[1], NULL));
+
+      cl_sync_point_khr barrier_deps[4]
+          = { nd_sync_point, res_copy_sync_point, fill_sync_points[0],
+              fill_sync_points[1] };
+      CHECK_CL_ERROR (ext.clCommandBarrierWithWaitListKHR (
+          command_buffer, NULL, 4, barrier_deps, &tile_sync_point, NULL));
     }
 
   CHECK_CL_ERROR (ext.clFinalizeCommandBufferKHR (command_buffer));
+
+  cl_command_buffer_state_khr cmdbuf_state;
+  CHECK_CL_ERROR (ext.clGetCommandBufferInfoKHR (
+      command_buffer, CL_COMMAND_BUFFER_STATE_KHR,
+      sizeof (cl_command_buffer_state_khr), &cmdbuf_state, NULL));
+  TEST_ASSERT (cmdbuf_state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR);
 
   cl_int src1[frame_elements];
   cl_int src2[frame_elements];
@@ -183,4 +247,7 @@ main ()
 
   printf ("OK\n");
   return EXIT_SUCCESS;
+#else
+  return 77;
+#endif
 }

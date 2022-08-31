@@ -294,16 +294,15 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-
 /**
- * executes given command. Call with node->event UNLOCKED.
+ * executes given command. Call with node->sync.event.event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
   cl_mem mem = NULL;

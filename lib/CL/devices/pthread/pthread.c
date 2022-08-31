@@ -292,12 +292,12 @@ void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->ready = 1;
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       pthread_scheduler_push_command (node);
     }
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   return;
 }
 
@@ -341,7 +341,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       if (event->status == CL_QUEUED)
         {

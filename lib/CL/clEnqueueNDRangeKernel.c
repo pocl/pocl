@@ -58,83 +58,21 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                        const cl_event *event_wait_list,
                        cl_event *event) CL_API_SUFFIX__VERSION_1_0
 {
-  size_t offset[3] = { 0, 0, 0 };
-  size_t num_groups[3] = { 0, 0, 0 };
-  size_t local[3] = { 0, 0, 0 };
-  /* cached values for max_work_item_sizes,
-   * since we are going to access them repeatedly */
-  size_t max_local_x, max_local_y, max_local_z;
-  /* cached values for max_work_group_size,
-   * since we are going to access them repeatedly */
-  size_t max_group_size;
-
   int errcode = 0;
 
-  /* no need for malloc, pocl_create_event will memcpy anyway.
-   * num_args is the absolute max needed */
-  cl_uint memobj_count = 0;
-  cl_mem memobj_list[kernel->meta->num_args];
-  char readonly_flag_list[kernel->meta->num_args];
   _cl_command_node *cmd;
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
-                          CL_INVALID_COMMAND_QUEUE);
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
-
-
-  POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
-    CL_INVALID_CONTEXT,
-    "kernel and command_queue are not from the same context\n");
-
-  errcode = pocl_kernel_calc_wg_size (
-      command_queue, kernel, work_dim, global_work_offset, global_work_size,
-      local_work_size, offset, local, num_groups);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-  errcode = pocl_kernel_collect_mem_objs (command_queue, kernel, &memobj_count,
-                                          memobj_list, readonly_flag_list);
-
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode
-      = pocl_create_command (&cmd, command_queue, CL_COMMAND_NDRANGE_KERNEL,
-                             event, num_events_in_wait_list, event_wait_list,
-                             memobj_count, memobj_list, readonly_flag_list);
-
-  if (errcode != CL_SUCCESS)
-    {
-      POCL_MSG_ERR ("Failed to create command: %i\n", errcode);
-      return errcode;
-    }
-
-  cl_uint program_dev_i = CL_UINT_MAX;
-  POCL_FILL_COMMAND_NDRANGEKERNEL;
-
-  cmd->program_device_i = program_dev_i;
-  cmd->next = NULL;
-
-  POname (clRetainKernel) (kernel);
-
-  errcode = pocl_kernel_copy_args (kernel, &cmd->command.run);
-  if (errcode != CL_SUCCESS)
-    {
-      pocl_ndrange_node_cleanup (cmd);
-      pocl_mem_manager_free_command (cmd);
-      return errcode;
-    }
+  errcode = pocl_ndrange_kernel_common (
+      NULL, command_queue, NULL, kernel, work_dim, global_work_offset,
+      global_work_size, local_work_size, num_events_in_wait_list,
+      event_wait_list, event, NULL, NULL, &cmd);
+  POCL_RETURN_ERROR_COND (errcode != CL_SUCCESS, errcode);
 
   if (pocl_cq_profiling_enabled)
     {
-      pocl_cq_profiling_register_event (cmd->event);
+      pocl_cq_profiling_register_event (cmd->sync.event.event);
       POname(clRetainKernel) (kernel);
-      cmd->event->meta_data->kernel = kernel;
+      cmd->sync.event.event->meta_data->kernel = kernel;
     }
 
   pocl_command_enqueue (command_queue, cmd);

@@ -45,54 +45,11 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
+  errcode = pocl_fill_image_common (
+      NULL, command_queue, image, fill_color, origin, region,
+      num_events_in_wait_list, event_wait_list, event, NULL, NULL, NULL, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  errcode = pocl_validate_fill_image (command_queue, image, fill_color, origin,
-                                      region);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
-
-  size_t px = image->image_elem_size * image->image_channels;
-  char fill_pattern[16];
-  pocl_write_pixel_zero (fill_pattern, fill_color_vec,
-                         image->image_channel_order, image->image_elem_size,
-                         image->image_channel_data_type);
-
-  /* The fill color is:
-   *
-   * a four component RGBA floating-point color value if the image channel
-   * data type is NOT an unnormalized signed and unsigned integer type,
-   *
-   * a four component signed integer value if the image channel data type
-   * is an unnormalized signed integer type and
-   *
-   * a four component unsigned integer value if the image channel data type
-   * is an unormalized unsigned integer type.
-   *
-   * The fill color will be converted to the appropriate
-   * image channel format and order associated with image.
-   */
-
-  if (IS_IMAGE1D_BUFFER (image))
-    {
-      return POname (clEnqueueFillBuffer) (
-          command_queue, image->buffer, fill_pattern, px, origin[0] * px,
-          region[0] * px, num_events_in_wait_list, event_wait_list, event);
-    }
-
-  char rdonly = 0;
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &image, &rdonly);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  POCL_FILL_COMMAND_FILL_IMAGE;
 
   pocl_command_enqueue(command_queue, cmd);
 

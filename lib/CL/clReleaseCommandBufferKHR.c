@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -70,7 +71,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
           freed_devs[num_freed++] = q->device;
         }
 
-      _cl_recorded_command *cmd = command_buffer->cmds;
+      _cl_command_node *cmd = command_buffer->cmds;
       while (cmd != NULL)
         {
           switch (cmd->type)
@@ -111,8 +112,8 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
             {
               POname (clReleaseMemObject) (cmd->memobj_list[i]);
             }
-          _cl_recorded_command *next = cmd->next;
-          pocl_free_recorded_command (cmd);
+          _cl_command_node *next = cmd->next;
+          pocl_mem_manager_free_command (cmd);
           cmd = next;
         }
 

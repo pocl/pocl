@@ -415,7 +415,7 @@ struct pocl_device_ops {
 
   /* submit gives the command for the device. The command may be left in the cq
      or stored to the device driver owning the cq. submit is called
-     with node->event locked, and must return with it unlocked. */
+     with node->sync.event.event locked, and must return with it unlocked. */
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
   /* join is called by clFinish and this function blocks until all the enqueued
@@ -1228,24 +1228,33 @@ struct _cl_command_buffer_khr
 {
   POCL_ICD_OBJECT;
   POCL_OBJECT;
+  POCL_FAST_LOCK_T mutex;
 
-  /* Queues that this command buffer uses */
+  /* Queues that this command buffer was created for */
   cl_uint num_queues;
   cl_command_queue *queues;
 
+  /* List of flags that this command buffer was created with */
   cl_uint num_properties;
   cl_command_buffer_properties_khr *properties;
 
+  /* recording / ready / pending (executing) / invalid */
   cl_command_buffer_state_khr state;
+  /* Number of currently in-flight instances of this command buffer */
   cl_uint pending;
 
+  /* Number of currently allocated sync points in this command buffer.
+   * Used for generating the next sync point id and for validating sync point
+   * wait lists when recording commands. */
   cl_uint num_syncpoints;
-  _cl_recorded_command *cmds;
-  POCL_FAST_LOCK_T mutex;
+
+  _cl_command_node *cmds;
 };
 
 struct _cl_mutable_command_khr
 {
+  /* Unused in cl_khr_command_buffer but required in public API and used by
+   * follow-up extensions. */
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \

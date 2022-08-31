@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -37,39 +38,31 @@ POname (clCommandCopyBufferRectKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_record_rect_copy (
-      command_buffer->queues[0], CL_COMMAND_COPY_BUFFER_RECT, src_buffer,
-      CL_FALSE, dst_buffer, CL_FALSE, src_origin, dst_origin, region,
-      src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
-      num_sync_points_in_wait_list, sync_point_wait_list, &cmd,
-      command_buffer);
-
-  size_t src_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
-  POCL_RETURN_ERROR_ON (
-      (src_buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  size_t dst_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
-  POCL_RETURN_ERROR_ON (
-      (dst_buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  POCL_FILL_COMMAND_COPY_BUFFER_RECT;
+  errcode = pocl_copy_buffer_rect_common (
+      command_buffer, command_queue, src_buffer, dst_buffer, src_origin,
+      dst_origin, region, src_row_pitch, src_slice_pitch, dst_row_pitch,
+      dst_slice_pitch, num_sync_points_in_wait_list, NULL, NULL,
+      sync_point_wait_list, sync_point, &cmd);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
+  POname (clRetainMemObject) (cmd->command.copy_rect.src);
+  POname (clRetainMemObject) (cmd->command.copy_rect.dst);
+  if (cmd->command.copy_rect.src->size_buffer != NULL)
+    POname (clRetainMemObject) (cmd->command.copy_rect.src->size_buffer);
+
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandCopyBufferRectKHR)

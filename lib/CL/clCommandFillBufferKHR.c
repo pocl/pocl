@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -35,30 +36,17 @@ POname (clCommandFillBufferKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_validate_fill_buffer (command_queue, buffer, pattern,
-                                       pattern_size, offset, size);
+  errcode = pocl_fill_buffer_common (command_buffer, command_queue, buffer,
+                                     pattern, pattern_size, offset, size,
+                                     num_sync_points_in_wait_list, NULL, NULL,
+                                     sync_point_wait_list, sync_point, &cmd);
+
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
-  POCL_RETURN_ERROR_ON (
-      (buffer->size > command_queue->device->max_mem_alloc_size),
-      CL_OUT_OF_RESOURCES,
-      "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  char rdonly = 0;
-  errcode = pocl_create_recorded_command (
-      &cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
-      num_sync_points_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  POCL_FILL_COMMAND_FILL_BUFFER;
 
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
@@ -69,7 +57,7 @@ POname (clCommandFillBufferKHR) (
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandFillBufferKHR)

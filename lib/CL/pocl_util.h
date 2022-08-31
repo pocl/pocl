@@ -111,11 +111,11 @@ cl_int pocl_create_command_migrate (_cl_command_node **cmd,
                                     char *readonly_flags);
 
 cl_int pocl_command_record (cl_command_buffer_khr command_buffer,
-                            _cl_recorded_command *cmd,
+                            _cl_command_node *cmd,
                             cl_sync_point_khr *sync_point);
 
 cl_int pocl_create_recorded_command (
-    _cl_recorded_command **cmd, cl_command_buffer_khr command_buffer,
+    _cl_command_node **cmd, cl_command_buffer_khr command_buffer,
     cl_command_queue command_queue, cl_command_type command_type,
     cl_uint num_sync_points_in_wait_list,
     const cl_sync_point_khr *sync_point_wait_list, size_t num_buffers,
@@ -123,8 +123,6 @@ cl_int pocl_create_recorded_command (
 
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
-
-void pocl_free_recorded_command (_cl_recorded_command *cmd);
 
 cl_int
 pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,

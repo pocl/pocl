@@ -1135,7 +1135,6 @@ else()
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
-<<<<<<< HEAD
 #
 # LLVM_OPAQUE_POINTERS
 #

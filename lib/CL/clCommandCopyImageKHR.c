@@ -24,6 +24,7 @@
 #include <CL/cl_ext.h>
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -38,32 +39,30 @@ POname (clCommandCopyImageKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_validate_copy_image (src_image, dst_image);
+  errcode = pocl_copy_image_common (command_buffer, command_queue, src_image,
+                                    dst_image, src_origin, dst_origin, region,
+                                    num_sync_points_in_wait_list, NULL, NULL,
+                                    sync_point_wait_list, sync_point, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  errcode = pocl_record_rect_copy (command_queue, CL_COMMAND_COPY_IMAGE,
-                                   src_image, CL_TRUE, dst_image, CL_FALSE,
-                                   src_origin, dst_origin, region, 0, 0, 0, 0,
-                                   num_sync_points_in_wait_list,
-                                   sync_point_wait_list, &cmd, command_buffer);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  POCL_FILL_COMMAND_COPY_IMAGE;
 
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
+  POname (clRetainMemObject) (cmd->command.copy_image.src);
+  POname (clRetainMemObject) (cmd->command.copy_image.dst);
+  if (cmd->command.copy_image.src->size_buffer != NULL)
+    POname (clRetainMemObject) (cmd->command.copy_image.src->size_buffer);
+
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandCopyImageKHR)

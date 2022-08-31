@@ -24,6 +24,7 @@
 #include <CL/cl_ext.h>
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int
@@ -35,7 +36,7 @@ POname (clCommandBarrierWithWaitListKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
@@ -45,7 +46,7 @@ POname (clCommandBarrierWithWaitListKHR) (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.barrier.has_wait_list = num_sync_points_in_wait_list;
+  cmd->command.barrier.has_wait_list = num_sync_points_in_wait_list != 0;
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
     goto ERROR;
@@ -53,7 +54,7 @@ POname (clCommandBarrierWithWaitListKHR) (
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandBarrierWithWaitListKHR)

@@ -25,6 +25,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -38,54 +39,16 @@ POname (clCommandFillImageKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
-  _cl_recorded_command *cmd = NULL;
+  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_validate_fill_image (command_queue, image, fill_color, origin,
-                                      region);
+  errcode = pocl_fill_image_common (
+      command_buffer, command_queue, image, fill_color, origin, region,
+      num_sync_points_in_wait_list, NULL, NULL, sync_point_wait_list,
+      sync_point, mutable_handle, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
-
-  size_t px = image->image_elem_size * image->image_channels;
-  char fill_pattern[16];
-  pocl_write_pixel_zero (fill_pattern, fill_color_vec,
-                         image->image_channel_order, image->image_elem_size,
-                         image->image_channel_data_type);
-
-  /* The fill color is:
-   *
-   * a four component RGBA floating-point color value if the image channel
-   * data type is NOT an unnormalized signed and unsigned integer type,
-   *
-   * a four component signed integer value if the image channel data type
-   * is an unnormalized signed integer type and
-   *
-   * a four component unsigned integer value if the image channel data type
-   * is an unormalized unsigned integer type.
-   *
-   * The fill color will be converted to the appropriate
-   * image channel format and order associated with image.
-   */
-
-  if (IS_IMAGE1D_BUFFER (image))
-    {
-      return POname (clCommandFillBufferKHR) (
-          command_buffer, command_queue, image->buffer, fill_pattern, px,
-          origin[0] * px, region[0] * px, num_sync_points_in_wait_list,
-          sync_point_wait_list, sync_point, mutable_handle);
-    }
-
-  char rdonly = 0;
-  errcode = pocl_create_recorded_command (
-      &cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
-      num_sync_points_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  POCL_FILL_COMMAND_FILL_IMAGE;
 
   errcode = pocl_command_record (command_buffer, cmd, sync_point);
   if (errcode != CL_SUCCESS)
@@ -96,7 +59,7 @@ POname (clCommandFillImageKHR) (
   return CL_SUCCESS;
 
 ERROR:
-  pocl_free_recorded_command (cmd);
+  pocl_mem_manager_free_command (cmd);
   return errcode;
 }
 POsym (clCommandFillImageKHR)

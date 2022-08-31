@@ -14,53 +14,16 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
                            cl_event *        event ) CL_API_SUFFIX__VERSION_1_0
 {
   _cl_command_node *cmd = NULL;
-  /* pass dst_origin through in a format pocl_rect_copy understands */
-  const size_t dst_origin[3] = { dst_offset, 0, 0};
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  if (IS_IMAGE1D_BUFFER (src_image))
-    {
-      /* If src_image is a 1D image or 1D image buffer object, src_origin[1]
-       * and src_origin[2] must be 0 If src_image is a 1D image or 1D image
-       * buffer object, region[1] and region[2] must be 1. */
-      IMAGE1D_ORIG_REG_TO_BYTES (src_image, src_origin, region);
-      return POname (clEnqueueCopyBufferRect (
-          command_queue, src_image->buffer, dst_buffer,
-          i1d_origin, dst_origin, i1d_region,
-          src_image->image_row_pitch, 0,
-          src_image->image_row_pitch, 0,
-          num_events_in_wait_list, event_wait_list, event));
-    }
-
-  POCL_RETURN_ON_SUB_MISALIGN (dst_buffer, command_queue);
-
-  cl_int err = pocl_rect_copy(
-    command_queue,
-    CL_COMMAND_COPY_IMAGE_TO_BUFFER,
-    src_image, CL_TRUE,
-    dst_buffer, CL_FALSE,
-    src_origin, dst_origin, region,
-    0, 0,
-    0, 0,
-    num_events_in_wait_list, event_wait_list,
-    event,
-    &cmd);
-
-  if (err != CL_SUCCESS)
-    return err;
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
-
-  POCL_RETURN_ERROR_ON((dst_buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  POCL_FILL_COMMAND_COPY_IMAGE_TO_BUFFER;
+  cl_int errcode = pocl_copy_image_to_buffer_common (
+      NULL, command_queue, src_image, dst_buffer, src_origin, region,
+      dst_offset, num_events_in_wait_list, event_wait_list, event, NULL, NULL,
+      NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   pocl_command_enqueue (command_queue, cmd);
 
