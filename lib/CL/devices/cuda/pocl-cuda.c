@@ -49,6 +49,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+
+void pocl_cuda_svm_copy_async (CUstream, void * restrict, const void * restrict, size_t);
+
 typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
@@ -256,7 +259,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
   ops->svm_copy = pocl_cuda_svm_copy;
-  ops->svm_fill = pocl_driver_svm_fill;
+  ops->svm_fill = pocl_cuda_svm_fill;
 }
 
 cl_int
@@ -1462,7 +1465,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       break;
 
     case CL_COMMAND_SVM_MEMCPY:
-      pocl_cuda_svm_copy (dev, cmd->svm_memcpy.dst, cmd->svm_memcpy.src,
+      pocl_cuda_svm_copy_async (stream, cmd->svm_memcpy.dst, cmd->svm_memcpy.src,
                           cmd->svm_memcpy.size);
       break;
     case CL_COMMAND_SVM_MEMFILL:
@@ -1901,4 +1904,27 @@ pocl_cuda_svm_copy (cl_device_id dev, void *__restrict__ dst,
   CUresult res;
   res = cuMemcpy ((CUdeviceptr)dst, (CUdeviceptr)src, size);
   CUDA_CHECK (res, "cuMemcpy");
+}
+
+void
+pocl_cuda_svm_copy_async (CUstream stream, void *__restrict__ dst,
+                    const void *__restrict__ src, size_t size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM cuMemcpyAsync %p -> %p, %lu bytes\n", src, dst, size);
+
+  CUresult res;
+  res = cuMemcpyAsync ((CUdeviceptr)dst, (CUdeviceptr)src, size, stream);
+  CUDA_CHECK (res, "cuMemcpyAsync");
+}
+
+void
+pocl_cuda_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr,
+                      size_t size, void *__restrict__ pattern,
+                      size_t pattern_size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM MEMFILL %p \n", svm_ptr);
+
+  pocl_cuda_submit_memfill (0, svm_ptr, size,
+                                0, pattern,
+                                pattern_size);
 }
