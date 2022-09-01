@@ -1499,11 +1499,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
               // Leads to 'undefined symbol: POclReleaseContext'
               // POname (clReleaseContext) (event->context);
 
-              // Instead of calling svm_free (which frees the memory
-              // immediately), enqueue the free.
-              CUDA_CHECK (cuMemFreeAsync ((CUdeviceptr)ptr, stream),
-                          "cuMemFreeAsync");
-              // dev->ops->svm_free (dev, ptr);
+              dev->ops->svm_free (dev, ptr);
             }
         }
       break;
