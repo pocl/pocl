@@ -32,7 +32,8 @@ POname(clRetainDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
 
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (device, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Device %p  : %d\n", device, refc);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Device %d (%p), Refcount: %d\n",
+                            device->dev_id, device, refc);
   return CL_SUCCESS;
 }
 POsym(clRetainDevice)

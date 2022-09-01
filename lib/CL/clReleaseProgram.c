@@ -47,7 +47,9 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_RELEASE_OBJECT (program, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("Release program %p, new refcount: %d, kernel #: %zu \n", program, new_refcount, program->num_kernels);
+  POCL_MSG_PRINT_REFCOUNTS (
+      "Release Program %" PRId64 " (%p), Refcount: %d, Kernel #: %zu \n",
+      program->id, program, new_refcount, program->num_kernels);
 
   if (new_refcount == 0)
     {
@@ -56,7 +58,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_ATOMIC_DEC (program_c);
 
       cl_context context = program->context;
-      POCL_MSG_PRINT_REFCOUNTS ("Free program %p\n", program);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Program %" PRId64 " (%p)\n", program->id,
+                                program);
       TP_FREE_PROGRAM (context->id, program->id);
 
       /* there should be no kernels left when we're releasing the program */
