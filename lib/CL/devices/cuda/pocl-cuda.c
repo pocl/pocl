@@ -1593,11 +1593,12 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
        * only the elapsed time between two events. We use the elapsed
        * time from the epoch event enqueued on device creation to get
        * the actual timestamps.
-       *
-       * Since the CUDA timer resolution is lower than the host timer,
-       * this can sometimes result in the start time being before the
-       * submit time, so we use max() to ensure the timestamps are
-       * sane. */
+       * More specifically, we measure the time between the epoch event
+       * and the start event. This results in the start time. Then we
+       * take the elapsed time between the start and end event to
+       * compute the end time. Measuring the end time relative to the
+       * epoch event may result in unprecise measurements due to the
+       * usage of float by CUDA. */
 
       float diff;
       CUresult result;
@@ -1610,14 +1611,11 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
           event_data->start);
       CUDA_CHECK (result, "cuEventElapsedTime");
       event->time_start = epoch + (cl_ulong)(diff * 1e6);
-      event->time_start = max (event->time_start, epoch + 1);
 
       result = cuEventElapsedTime (
-          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
-          event_data->end);
+          &diff, event_data->start, event_data->end);
       CUDA_CHECK (result, "cuEventElapsedTime");
-      event->time_end = epoch + (cl_ulong)(diff * 1e6);
-      event->time_end = max (event->time_end, event->time_start + 1);
+      event->time_end = event->time_start + (cl_ulong)(diff * 1e6);
     }
 }
 
