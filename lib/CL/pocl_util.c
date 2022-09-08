@@ -2005,7 +2005,7 @@ static void pocl_free_event_node (cl_event event)
       break;
 
     case CL_COMMAND_SVM_FREE:
-      POCL_MEM_FREE(node->command.svm_free.svm_pointers);
+      POCL_MEM_FREE (node->command.svm_free.svm_pointers);
       break;
     }
   pocl_mem_manager_free_command (node);
