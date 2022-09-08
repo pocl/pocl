@@ -551,7 +551,7 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
     return CL_OUT_OF_HOST_MEMORY;
-    
+
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;
   LL_PREPEND (notifier_event->notify_list, notify_target);
@@ -2002,6 +2002,10 @@ static void pocl_free_event_node (cl_event event)
     case CL_COMMAND_SVM_MIGRATE_MEM:
       POCL_MEM_FREE (node->command.svm_migrate.sizes);
       POCL_MEM_FREE (node->command.svm_migrate.svm_pointers);
+      break;
+
+    case CL_COMMAND_SVM_FREE:
+      POCL_MEM_FREE(node->command.svm_free.svm_pointers);
       break;
     }
   pocl_mem_manager_free_command (node);
