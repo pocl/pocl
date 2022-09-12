@@ -37,7 +37,3 @@
 #if CLANG_MAJOR < 7
 #define LLVM_OLDER_THAN_7_0 1
 #endif
-
-#if CLANG_MAJOR < 6
-#define LLVM_OLDER_THAN_6_0 1
-#endif
