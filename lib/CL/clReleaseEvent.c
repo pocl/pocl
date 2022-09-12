@@ -35,7 +35,9 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
 
   POCL_RELEASE_OBJECT (event, new_refcount);
-  
+  POCL_MSG_PRINT_REFCOUNTS ("Release Event %" PRIu64 " (%p), Refcount: %d\n",
+                            event->id, event, new_refcount);
+
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (event);
@@ -57,8 +59,8 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
       else
         POCL_ATOMIC_DEC (event_c);
 
-      POCL_MSG_PRINT_REFCOUNTS ("Free event %" PRIu64 " | %p\n",
-                                event->id, event);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Event %" PRIu64 " (%p)\n", event->id,
+                                event);
       if (event->command_type != CL_COMMAND_USER &&
           event->queue->device->ops->free_event_data)
         event->queue->device->ops->free_event_data(event);

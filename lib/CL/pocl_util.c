@@ -511,8 +511,8 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
   else
     POCL_ATOMIC_INC (event_c);
 
-  POCL_MSG_PRINT_EVENTS ("Created event %p / ID %" PRIu64 " / Command %s\n",
-                         (*event), (*event)->id,
+  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) Command %s\n",
+                         (*event)->id, (*event),
                          pocl_command_to_str (command_type));
 
   return CL_SUCCESS;
@@ -648,8 +648,8 @@ pocl_create_command_struct (_cl_command_node **cmd,
       pocl_create_event_sync ((*event), wle);
     }
   POCL_MSG_PRINT_EVENTS (
-      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n", *cmd,
-      (*event)->id, *event, pocl_command_to_str (command_type));
+      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n",
+      *cmd, (*event)->id, *event, pocl_command_to_str (command_type));
   return CL_SUCCESS;
 }
 

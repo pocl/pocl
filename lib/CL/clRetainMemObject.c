@@ -29,7 +29,9 @@ POname(clRetainMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (memobj)),
                           CL_INVALID_MEM_OBJECT);
   POCL_RETAIN_OBJECT(memobj);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain MemObj %p  : %d\n", memobj, memobj->pocl_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Memory Object %" PRId64
+                            " (%p), Refcount: %d\n",
+                            memobj->id, memobj, memobj->pocl_refcount);
   return CL_SUCCESS;
 }
 POsym(clRetainMemObject)

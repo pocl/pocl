@@ -28,6 +28,7 @@
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
+#include <unistd.h>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -376,8 +377,6 @@ static unsigned GlobalLLVMContextRefcount = 0;
 
 void pocl_llvm_create_context(cl_context ctx) {
 
-  POCL_MSG_PRINT_LLVM("creating LLVM context\n");
-
 #ifdef GLOBAL_LLVM_CONTEXT
   if (GlobalLLVMContext != nullptr) {
     ctx->llvm_context_data = GlobalLLVMContext;
@@ -410,6 +409,8 @@ void pocl_llvm_create_context(cl_context ctx) {
   GlobalLLVMContext = data;
   ++GlobalLLVMContextRefcount;
 #endif
+
+  POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
 
 void pocl_llvm_release_context(cl_context ctx) {

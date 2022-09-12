@@ -42,9 +42,7 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   POCL_GOTO_ERROR_ON ((device->available != CL_TRUE), CL_INVALID_DEVICE,
-                        "device is not available\n");
-
-  POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
+                      "Device %d is not available\n", device->dev_id);
 
   /* validate flags */
   cl_command_queue_properties all_properties
@@ -63,8 +61,10 @@ POname(clCreateCommandQueue)(cl_context context,
         found = CL_TRUE;
     }
 
-  POCL_GOTO_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE,
-                                "Could not find device in the context\n");
+  POCL_GOTO_ERROR_ON (
+      (found == CL_FALSE), CL_INVALID_DEVICE,
+      "Could not find real device of device %d in the context\n",
+      device->dev_id);
 
   cl_command_queue command_queue
       = (cl_command_queue)calloc (1, sizeof (struct _cl_command_queue));
@@ -94,6 +94,9 @@ POname(clCreateCommandQueue)(cl_context context,
 
   if (errcode_ret != NULL)
     *errcode_ret = errcode;
+
+  POCL_MSG_PRINT_INFO ("Created Command Queue %" PRId64 " (%p) on device %d\n",
+                       command_queue->id, command_queue, device->dev_id);
 
   return command_queue;
 
