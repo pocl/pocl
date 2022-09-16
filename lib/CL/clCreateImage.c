@@ -210,8 +210,9 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
         /* Retain the buffer we're referencing */
         POname (clRetainMemObject) (b);
 
-        POCL_MSG_PRINT_MEMORY ("CREATED IMAGE: %p REF BUFFER: %p \n\n", mem,
-                               b);
+        POCL_MSG_PRINT_MEMORY ("Created Image:  %" PRId64
+                               " (%p), Refbuffer: %" PRId64 " (%p) \n\n",
+                               mem->id, mem, b->id, b);
       }
     else
       {
@@ -266,8 +267,9 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     POCL_RETAIN_OBJECT (context);
 
     POCL_MSG_PRINT_MEMORY (
-        "Created Image %p, HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
-        mem, mem->mem_host_ptr, size, mem->image_row_pitch,
+        "Created Image %" PRId64
+        " (%p), HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
+        mem->id, mem, mem->mem_host_ptr, size, mem->image_row_pitch,
         mem->image_slice_pitch, (unsigned)flags);
 
     POCL_ATOMIC_INC (image_c);

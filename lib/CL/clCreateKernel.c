@@ -135,6 +135,7 @@ ERROR:
   kernel = NULL;
 
 SUCCESS:
+  POCL_MSG_PRINT_GENERAL ("Created Kernel %s (%p)\n", kernel->name, kernel);
   if(errcode_ret != NULL)
   {
     *errcode_ret = errcode;

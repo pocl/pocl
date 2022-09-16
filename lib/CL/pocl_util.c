@@ -511,8 +511,8 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
   else
     POCL_ATOMIC_INC (event_c);
 
-  POCL_MSG_PRINT_EVENTS ("Created event %p / ID %" PRIu64 " / Command %s\n",
-                         (*event), (*event)->id,
+  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) Command %s\n",
+                         (*event)->id, (*event),
                          pocl_command_to_str (command_type));
 
   return CL_SUCCESS;
@@ -551,7 +551,7 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
     return CL_OUT_OF_HOST_MEMORY;
-    
+
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;
   LL_PREPEND (notifier_event->notify_list, notify_target);
@@ -648,8 +648,8 @@ pocl_create_command_struct (_cl_command_node **cmd,
       pocl_create_event_sync ((*event), wle);
     }
   POCL_MSG_PRINT_EVENTS (
-      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n", *cmd,
-      (*event)->id, *event, pocl_command_to_str (command_type));
+      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n",
+      *cmd, (*event)->id, *event, pocl_command_to_str (command_type));
   return CL_SUCCESS;
 }
 
@@ -2002,6 +2002,10 @@ static void pocl_free_event_node (cl_event event)
     case CL_COMMAND_SVM_MIGRATE_MEM:
       POCL_MEM_FREE (node->command.svm_migrate.sizes);
       POCL_MEM_FREE (node->command.svm_migrate.svm_pointers);
+      break;
+
+    case CL_COMMAND_SVM_FREE:
+      POCL_MEM_FREE (node->command.svm_free.svm_pointers);
       break;
     }
   pocl_mem_manager_free_command (node);
