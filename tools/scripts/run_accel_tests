@@ -57,7 +57,7 @@ declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_privat
 "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
 
 
-#figure out if ENABLE_TCEMC=1, then run tests on ttasim
+#figure out if ENABLE_TCE=1, then run tests on ttasim
 if grep ^ENABLE_TCE CMakeCache.txt | cut -d '=' -f 2 | grep -q 1
 then
   echo "Running Accel tests on TTASim with different TTA configurations"
