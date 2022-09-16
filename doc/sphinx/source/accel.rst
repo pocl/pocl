@@ -169,9 +169,9 @@ lib/CL/devices/builtin_kernels.{cc,hh}
 
 There is an example program using the accel driver in ``examples/accel`` which
 also includes the VHDL code for synthesizing the accelerator. The accelerator
-has been developed with the `TCE toolset <http://openasip.org/>`_. In order to
+has been developed with the `OpenASIP toolset <http://openasip.org/>`_. In order to
 synthesize the accelerator for a Xilinx FPGA SoC, you can follow the
-instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf>`_,
+instructions in the `OpenASIP manual <http://openasip.org/user_manual/TCE.pdf>`_,
 in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
 to check the accelerator base address from Vivado.
 
@@ -181,8 +181,8 @@ in the CMAKE configuration.
 First, set CMAKE variable VIVADO_PATH to point to the directory with the
 'vivado' executable. (E.g. at Xilinx/Vivado/2021.2/bin/)
 
-1. If you have TCEMC toolset installed, you can set ENABLE_TCE to 1 to enable
-RTL and firmware generation of various TTA cores with different memory configurations.
+1. If you have the OpenASIP/TCEMC toolset installed, you can set ENABLE_TCE to 1 to enable
+RTL and firmware generation of various OpenASIP TTA cores with different memory configurations.
 Then, you can simulate them with ttasim instruction set simulator by running
 ``../tools/scripts/run_accel_tests`` from the build directory.
 
