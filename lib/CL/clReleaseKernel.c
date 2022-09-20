@@ -35,7 +35,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   POCL_RELEASE_OBJECT (kernel, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("Release kernel %p  %d\n", kernel, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Kernel %s (%p), Refcount: %d\n",
+                            kernel->name, kernel, new_refcount);
 
   if (new_refcount == 0)
     {
@@ -45,7 +46,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
       TP_FREE_KERNEL (kernel->context->id, kernel->id, kernel->name);
 
-      POCL_MSG_PRINT_REFCOUNTS ("Free kernel %p\n", kernel);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Kernel %s (%p)\n", kernel->name, kernel);
       cl_program program = kernel->program;
       assert (program != NULL);
 

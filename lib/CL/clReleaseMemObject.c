@@ -45,7 +45,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RELEASE_OBJECT(memobj, new_refcount);
 
-  POCL_MSG_PRINT_REFCOUNTS ("Release mem obj %p  %d\n", memobj, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Memory Object %" PRId64
+                            " (%p), Refcount: %d\n",
+                            memobj->id, memobj, new_refcount);
 
   /* OpenCL 1.2 Page 118:
 
@@ -85,8 +87,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           assert (memobj->mappings == NULL);
           assert (memobj->map_count == 0);
 
-          POCL_MSG_PRINT_REFCOUNTS ("Free mem obj %p FLAGS %" PRIu64 "\n",
-                                    memobj, memobj->flags);
+          POCL_MSG_PRINT_REFCOUNTS ("Free Memory Object %" PRId64
+                                    " (%p), Flags: %" PRIu64 "\n",
+                                    memobj->id, memobj, memobj->flags);
 
           for (i = 0; i < context->num_devices; ++i)
             {
