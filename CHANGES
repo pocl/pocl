@@ -22,6 +22,13 @@ Notable User Facing Changes
 - Switch from __sync_*() to __atomic_*() (compiler builtins).
 - Link with -latomic (compiler library) in case that is needed for using
   64-bit atomic operations, e.g. on mipsel.
+- Basic support for cl_khr_command_buffer. Command parameters are validated
+  at recording time and the command data is stored. When the command buffer
+  is enqueued to a device, the recorded commands are submitted to the device
+  as if their respective immediate clEnqueue* functions had been called just
+  then, but without the overhead from validating and computing the arguments.
+- Command buffer support is only reported for CPU devices for now. All drivers
+  technically have the same capability but only CPU has been tested so far.
 
 Notable Bug Fixes
 -----------------
