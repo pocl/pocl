@@ -1,22 +1,25 @@
 #!/usr/bin/python3
 #
-# A script to generate functions (SPIR-mangled with SPIR AS) that will call
-# target-specific kernel library functions (with OpenCL-mangled names and AS).
+# A script to generate wrapping functions (SPIR-mangled with SPIR AS) that will wrap
+# calls to target-specific kernel library functions (with OpenCL-mangled names and AS).
 #
-# e.g. _Z5frexpfPU3AS3i(float %x, i32 addrspace(1)* %y)
+# e.g. with x86-64 CPU target,
+#    _Z5frexpfPU3AS3i(float %x, i32 addrspace(1)* %y)
 # would call
-# _Z9_cl_frexpfPU7CLlocali(float %x, i32 * %1)
+#    _Z9_cl_frexpfPU7CLlocali(float %x, i32 * %1)
 #
-# output is LLVM IR text format
+# output is LLVM IR text format.
 #
-# Usage: python3 generate_spir_wrapper.py >POCL_DIR/lib/kernel/spir_wrapper.ll
+# Usage: python3 generate_spir_wrapper.py >spir_wrapper.ll
+# ... rename & place the file in the target-specific lib/kernel subdirectory.
 #
 # Notes for CPU SPIR wrapper:
 # 1) this expects the target kernel library to have a single AS (the default);
 #    it inserts addrspace casts.
-# 2) almost all vector variants of OpenCL functions are ignored
-# 3) some library functions are missing (geometric)
-# 4) target kernel library is expected to prefix functions. This is required
+# 2) the X86-64 ABI complicates things by coercing arguments and byval passing,
+#    which means we need different wrappers for different CPU groups
+#    (depending on largest register size available)
+# 3) target kernel library is expected to prefix functions. This is required
 #    even if the mangled names are the same, because the calling conv
 #    is different for SPIR and some LLVM pass will remove the calls
 #    with mismatched calling conv.
@@ -26,7 +29,7 @@
 # 2) address space casting is not required for CUDA
 # 3) prefixing and SPIR calling convention are still required
 #
-# set the boolean variables below to correct values before calling
+# set the boolean variables below to correct values before calling this script
 
 import sys
 
