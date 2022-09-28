@@ -28,6 +28,76 @@
 #include "pocl_util.h"
 #include "pocl_shared.h"
 
+#ifdef ENABLE_SPIRV
+static int
+get_program_spec_constants (cl_program program, char *program_bc_spirv)
+{
+  char *args[] = { LLVM_SPIRV, "--spec-const-info", program_bc_spirv, NULL };
+  char captured_output[8192];
+  size_t captured_bytes = 8192;
+  int errcode = CL_SUCCESS;
+
+  errcode = pocl_run_command_capture_output (captured_output, &captured_bytes,
+                                             args);
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_INVALID_BINARY,
+                        "External command (llvm-spirv translator) failed!\n");
+
+  captured_output[captured_bytes] = 0;
+  char *lines[4096];
+  unsigned num_lines = 0;
+  char delim[2] = { 0x0A, 0x0 };
+  char *token = strtok (captured_output, delim);
+  while (num_lines < 4096 && token != NULL)
+    {
+      lines[num_lines++] = strdup (token);
+      token = strtok (NULL, delim);
+    }
+  POCL_GOTO_ERROR_ON ((num_lines == 0 || num_lines >= 4096), CL_INVALID_BINARY,
+                      "Invalid output from llvm-spirv\n");
+
+  unsigned num_const = 0;
+  int r = sscanf (
+      lines[0], "Number of scalar specialization constants in the module = %u",
+      &num_const);
+  POCL_GOTO_ERROR_ON ((r < 1 || num_const > num_lines), CL_INVALID_BINARY,
+                      "Can't parse first line of output");
+
+  program->num_spec_consts = num_const;
+  if (num_const > 0)
+    {
+      program->spec_const_ids = calloc (num_const, sizeof (cl_uint));
+      program->spec_const_sizes = calloc (num_const, sizeof (cl_uint));
+      program->spec_const_values = calloc (num_const, sizeof (uint64_t));
+      program->spec_const_is_set = calloc (num_const, sizeof (char));
+      for (unsigned i = 0; i < program->num_spec_consts; ++i)
+        {
+          unsigned spec_id, spec_size;
+          int r
+              = sscanf (lines[i + 1], "Spec const id = %u, size in bytes = %u",
+                        &spec_id, &spec_size);
+          POCL_GOTO_ERROR_ON ((r < 2), CL_INVALID_BINARY,
+                              "Can't parse %u-th line of output\n", i+1);
+          POCL_MSG_PRINT_INFO ("@@@ SPEC CONSTANT FOUND ID %u SIZE %u\n",
+                               spec_id, spec_size);
+          program->spec_const_ids[i] = spec_id;
+          program->spec_const_sizes[i] = spec_size;
+          program->spec_const_values[i] = 0;
+          program->spec_const_is_set[i] = CL_FALSE;
+        }
+    }
+  errcode = CL_SUCCESS;
+ERROR:
+  for (unsigned i = 0; i < num_lines; ++i)
+    free (lines[i]);
+  if (errcode != CL_SUCCESS)
+    {
+      program->num_spec_consts = 0;
+    }
+  return errcode;
+}
+#endif
+
+
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithIL)(cl_context context,
                               const void *il,
@@ -72,14 +142,16 @@ CL_API_SUFFIX__VERSION_2_1
       "is not recognized as SPIR-V!\n");
 
 #ifdef ENABLE_SPIRV
+  char program_bc_spirv[POCL_FILENAME_LENGTH];
+  program_bc_spirv[0] = 0;
+  char program_bc_temp[POCL_FILENAME_LENGTH];
+  program_bc_temp[0] = 0;
   if (is_spirv_kernel)
     {
-      /* convert and the SPIR-V to LLVM IR with spir triple */
+      /* convert the SPIR-V to LLVM IR with spir triple */
       POCL_MSG_PRINT_LLVM (
           "SPIR-V binary detected, converting to LLVM SPIR\n");
 
-      char program_bc_spirv[POCL_FILENAME_LENGTH];
-      char program_bc_temp[POCL_FILENAME_LENGTH];
       pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
                               (uint64_t)length);
       pocl_cache_tempname (program_bc_temp, ".bc", NULL);
@@ -97,7 +169,6 @@ CL_API_SUFFIX__VERSION_2_1
                       &converted_spir_file_size);
       POCL_GOTO_ERROR_ON ((converted_spir_file == NULL), CL_INVALID_VALUE,
                           "Can't read converted bitcode file\n");
-      pocl_remove (program_bc_temp);
     }
 #endif
 
@@ -156,6 +227,9 @@ CL_API_SUFFIX__VERSION_2_1
       program->program_il = (char *)malloc (length);
       memcpy (program->program_il, il, length);
       program->program_il_size = length;
+#ifdef ENABLE_SPIRV
+      get_program_spec_constants (program, program_bc_spirv);
+#endif
       POCL_UNLOCK_OBJ (program);
     }
 
@@ -163,6 +237,13 @@ ERROR:
   if (errcode_ret)
     *errcode_ret = errcode;
 #ifdef ENABLE_SPIRV
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
+    {
+      if (program_bc_spirv[0] != 0)
+        pocl_remove (program_bc_spirv);
+      if (program_bc_temp[0] != 0)
+        pocl_remove (program_bc_temp);
+    }
   POCL_MEM_FREE (converted_spir_file);
 #endif
   return program;

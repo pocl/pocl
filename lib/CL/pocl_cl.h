@@ -1486,6 +1486,12 @@ struct _cl_program {
   /* Store SPIR-V binary from clCreateProgramWithIL() */
   char *program_il;
   size_t program_il_size;
+  /* for SPIR-V store also specialization constants */
+  size_t num_spec_consts;
+  cl_uint *spec_const_ids;
+  cl_uint *spec_const_sizes;
+  uint64_t *spec_const_values;
+  char *spec_const_is_set;
 };
 
 struct _cl_kernel {
