@@ -116,11 +116,6 @@ OLD_ATOMICS_INT_ONLY = [
 	"atomic_max",
 ]
 
-OLD_ATOMICS_ALL = [
-	"atomic_xchg",
-	"atomic_cmpxchg",
-]
-
 
 SVM_ATOMICS_INT_ONLY = [
 	"atomic_fetch_add",
@@ -849,6 +844,11 @@ for mang_type in ['i', 'j', "l", "m"]:
 	# dec, inc take only 1 argument
 	generate_function("atomic_inc", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
 	generate_function("atomic_dec", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
+
+for mang_type in ['i', 'j', "l", "m", "f", "d"]:
+	generate_function("atomic_xchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
+	generate_function("atomic_cmpxchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, mang_type)
+
 
 for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PVA'+mang_type, mang_type)
