@@ -25,16 +25,29 @@
 # 1) mangling is not required for CUDA
 # 2) address space casting is not required for CUDA
 # 3) prefixing and SPIR calling convention are still required
-# ... set the two variables below to False before running to get CUDA wrapper
+#
+# set the boolean variables below to correct values before calling
 
 import sys
 
 POCL_LIB_PREFIX = "_cl_"
 
+# CUDA uses the same pointer AS-mangling as SPIR
 # set to False for CUDA wrapper, True for CPU wrapper
 MANGLE_OCL = True
+
+# if True, creates AS casts of pointer arguments (all are cast to AS 0)
 # set to False for CUDA wrapper, True for CPU wrapper
 AS_CASTS_REQUIRED = True
+
+# if set to True, does target specific (x86-64 CPU) hacks
+# like argument coercing (2xfloat -> double), byval passing
+# (for args that don't fit into registers)
+X86_CALLING_ABI = True
+
+# size of the largest CPU (SIMD) register. Values larger than this
+# will be passed with byval
+X86_ABI_REG_SIZE = 128
 
 SINGLE_ARG = [
 	"acos", "acosh", "acospi",
@@ -152,22 +165,119 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv2_f": "<2 x float>",
 	"Dv2_d": "<2 x double>",
+	"Dv2_c": "<2 x i8>",
+	"Dv2_h": "<2 x i8>",
+	"Dv2_s": "<2 x i16>",
+	"Dv2_t": "<2 x i16>",
+	"Dv2_i": "<2 x i32>",
+	"Dv2_j": "<2 x i32>",
+	"Dv2_l": "<2 x i64>",
+	"Dv2_m": "<2 x i64>",
 
 	"Dv3_f": "<3 x float>",
 	"Dv3_d": "<3 x double>",
+	"Dv3_c": "<3 x i8>",
+	"Dv3_h": "<3 x i8>",
+	"Dv3_s": "<3 x i16>",
+	"Dv3_t": "<3 x i16>",
+	"Dv3_i": "<3 x i32>",
+	"Dv3_j": "<3 x i32>",
+	"Dv3_l": "<3 x i64>",
+	"Dv3_m": "<3 x i64>",
 
 	"Dv4_f": "<4 x float>",
 	"Dv4_d": "<4 x double>",
+	"Dv4_c": "<4 x i8>",
+	"Dv4_h": "<4 x i8>",
+	"Dv4_s": "<4 x i16>",
+	"Dv4_t": "<4 x i16>",
+	"Dv4_i": "<4 x i32>",
+	"Dv4_j": "<4 x i32>",
+	"Dv4_l": "<4 x i64>",
+	"Dv4_m": "<4 x i64>",
 
 	"Dv8_f": "<8 x float>",
 	"Dv8_d": "<8 x double>",
+	"Dv8_c": "<8 x i8>",
+	"Dv8_h": "<8 x i8>",
+	"Dv8_s": "<8 x i16>",
+	"Dv8_t": "<8 x i16>",
+	"Dv8_i": "<8 x i32>",
+	"Dv8_j": "<8 x i32>",
+	"Dv8_l": "<8 x i64>",
+	"Dv8_m": "<8 x i64>",
 
 	"Dv16_f": "<16 x float>",
 	"Dv16_d": "<16 x double>",
+	"Dv16_c": "<16 x i8>",
+	"Dv16_h": "<16 x i8>",
+	"Dv16_s": "<16 x i16>",
+	"Dv16_t": "<16 x i16>",
+	"Dv16_i": "<16 x i32>",
+	"Dv16_j": "<16 x i32>",
+	"Dv16_l": "<16 x i64>",
+	"Dv16_m": "<16 x i64>",
 
 	"12memory_order": "i32",
 	"12memory_scope": "i32",
 }
+
+COERCE_VECTOR_MAP = {
+	"<2 x float>": "double",
+
+	"<2 x i8>": "i16",
+	"<2 x i16>": "i32",
+	"<2 x i32>": "double",
+
+	"<3 x i8>": "i32",
+	"<3 x i16>": "double",
+
+	"<4 x i8>": "i32",
+	"<4 x i16>": "double",
+
+	"<8 x i8>": "double",
+}
+
+if X86_ABI_REG_SIZE == 128:
+	BYVAL_VECTOR_MAP = {
+		"<4 x i64>":"<4 x i64>* byval(<4 x i64>) align 32",
+		"<4 x double>": "<4 x double>* byval(<4 x double>) align 32",
+		"<8 x i32>":"<8 x i32>* byval(<8 x i32>) align 32",
+		"<8 x float>": "<8 x float>* byval(<8 x float>) align 32",
+		"<16 x i16>": "<16 x i16>* byval(<16 x i16>) align 32",
+
+		"<8 x i64>":"<8 x i64>* byval(<8 x i64>) align 64",
+		"<8 x double>": "<8 x double>* byval(<8 x double>) align 64",
+
+		"<16 x i32>": "<16 x i32>* byval(<16 x i32>) align 64",
+		"<16 x float>": "<16 x float>* byval(<16 x float>) align 64",
+
+		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+	}
+
+elif X86_ABI_REG_SIZE == 256:
+	BYVAL_VECTOR_MAP = {
+		"<8 x i64>":"<8 x i64>* byval(<8 x i64>) align 64",
+		"<8 x double>": "<8 x double>* byval(<8 x double>) align 64",
+
+		"<16 x i32>": "<16 x i32>* byval(<16 x i32>) align 64",
+		"<16 x float>": "<16 x float>* byval(<16 x float>) align 64",
+
+		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+	}
+
+elif X86_ABI_REG_SIZE == 512:
+	BYVAL_VECTOR_MAP = {
+		"<16 x i64>":"<16 x i64>* byval(<16 x i64>) align 128",
+		"<16 x double>": "<16 x double>* byval(<16 x double>) align 128",
+	}
+
+else:
+	print("Error, X86_ABI_REG_SIZE must be one of 128, 256, 512")
+	exit(2)
+
 
 SIG_TO_TYPE_NAME_MAP = {
 	"f": "float",
@@ -184,6 +294,62 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"l": "long",
 	"m": "ulong",
+
+	"Dv2_f": "float2",
+	"Dv2_d": "double2",
+	"Dv2_c": "char2",
+	"Dv2_h": "uchar2",
+	"Dv2_s": "short2",
+	"Dv2_t": "ushort2",
+	"Dv2_i": "int2",
+	"Dv2_j": "uint2",
+	"Dv2_l": "long2",
+	"Dv2_m": "ulong2",
+
+	"Dv3_f": "float3",
+	"Dv3_d": "double3",
+	"Dv3_c": "char3",
+	"Dv3_h": "uchar3",
+	"Dv3_s": "short3",
+	"Dv3_t": "ushort3",
+	"Dv3_i": "int3",
+	"Dv3_j": "uint3",
+	"Dv3_l": "long3",
+	"Dv3_m": "ulong3",
+
+	"Dv4_f": "float4",
+	"Dv4_d": "double4",
+	"Dv4_c": "char4",
+	"Dv4_h": "uchar4",
+	"Dv4_s": "short4",
+	"Dv4_t": "ushort4",
+	"Dv4_i": "int4",
+	"Dv4_j": "uint4",
+	"Dv4_l": "long4",
+	"Dv4_m": "ulong4",
+
+	"Dv8_f": "float8",
+	"Dv8_d": "double8",
+	"Dv8_c": "char8",
+	"Dv8_h": "uchar8",
+	"Dv8_s": "short8",
+	"Dv8_t": "ushort8",
+	"Dv8_i": "int8",
+	"Dv8_j": "uint8",
+	"Dv8_l": "long8",
+	"Dv8_m": "ulong8",
+
+	"Dv16_f": "float16",
+	"Dv16_d": "double16",
+	"Dv16_c": "char16",
+	"Dv16_h": "uchar16",
+	"Dv16_s": "short16",
+	"Dv16_t": "ushort16",
+	"Dv16_i": "int16",
+	"Dv16_j": "uint16",
+	"Dv16_l": "long16",
+	"Dv16_m": "ulong16",
+
 }
 
 LLVM_TYPE_EXT_MAP = {
@@ -237,10 +403,8 @@ LLVM_SPIR_AS = {
 	"none": " "
 }
 
-#		if argtype[1] == 'V':
-#			return "volatile " +SIG_TO_LLVM_TYPE_MAP[argtype[2]] + AS + "*"
-#		else:
-
+# returns a LLVM argument type with addrspace
+# e.g. for argtype=="Pi" returns "i32 *"
 def llvm_arg_type(argtype, AS):
 	if argtype[0] == 'P':
 		idx = 1
@@ -248,30 +412,71 @@ def llvm_arg_type(argtype, AS):
 			idx = 2
 			if argtype[2] == 'A':
 				idx = 3
-		return SIG_TO_LLVM_TYPE_MAP[argtype[idx]] + AS + "*"
+		return SIG_TO_LLVM_TYPE_MAP[argtype[idx:]] + AS + "*"
 	else:
 		return SIG_TO_LLVM_TYPE_MAP[argtype]
 
-
+# mangles a type for mangled function name
+# e.g. for ("Pi", "PU3AS3") returns "PU3AS3i"
 def mang_suffix(argtype, AS_prefix):
 	if argtype[0] == 'P':
 		if argtype[1] == 'V':
 			if argtype[2] == 'A':
-				return AS_prefix + "VU7_Atomic" + argtype[3]
+				return AS_prefix + "VU7_Atomic" + argtype[3:]
 			else:
-				return AS_prefix + "V" + argtype[2]
+				return AS_prefix + "V" + argtype[2:]
 		else:
-			return AS_prefix + argtype[1]
+			return AS_prefix + argtype[1:]
 	else:
 		return argtype
 
+# arg type without qualifiers
+def pure_arg_type(argtype):
+	if argtype[0] == 'P':
+		idx = 1
+		if argtype[1] == 'V':
+			idx = 2
+			if argtype[2] == 'A':
+				idx = 3
+		return argtype[idx:]
+	else:
+		return argtype
 
-def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
+# replace type keep qualifiers
+def replace_arg_type(argtype, replacement):
+	if argtype[0] == 'P':
+		idx = 1
+		if argtype[1] == 'V':
+			idx = 2
+			if argtype[2] == 'A':
+				idx = 3
+		return argtype[0:idx] + replacement
+	else:
+		return replacement
+
+def coerce_llvm_vector_type(type):
+	if not X86_CALLING_ABI:
+		return type
+	if type in COERCE_VECTOR_MAP:
+		return COERCE_VECTOR_MAP[type]
+	else:
+		return type
+
+def byval_llvm_vector_type(type):
+	if not X86_CALLING_ABI:
+		return type
+	if type in BYVAL_VECTOR_MAP:
+		return BYVAL_VECTOR_MAP[type]
+	else:
+		return type
+
+
+def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 	"""
 
 	:param name: function name
-	:param arg_type: LLVM type ("i32", "float" etc) of retval
-	:param arg_type_ext: retval's attributes ("signext" where required etc)
+	:param ret_type: LLVM type ("i32", "float" etc) of retval
+	:param ret_type_ext: retval's attributes ("signext" where required etc)
 	:param multiAS: True = generate for all three SPIR AddrSpaces
 	:param args: function arguments as mangled type names (i,j,m,f,d etc), not LLVM types
 	"""
@@ -293,34 +498,105 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 		callee_args = []
 		caller_args = []
 		decl_args = []
-		addrspace_casts = []
+		all_instr = []
 
 		arg_i = 0
-		# LLVM IR expects instructions to be numbered from 1
+		# instr index, LLVM IR expects instructions to be numbered from 1
 		llvm_i = 1
-		for cast in args:
-			spir_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_SPIR[AS]))
-			if MANGLE_OCL:
-				ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_OCL[AS]))
-			else:
-				ocl_mangled_func_suffix.append(mang_suffix(cast, MANGLING_AS_SPIR[AS]))
 
-			spir_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS[AS])
-			ocl_mangled_type = spir_mangled_type
+		# arg without qualifiers, saved for mangling name compression
+		last_pure_arg = None
+
+		####### process args
+		for cast in args:
+
+			####### generate mangled arg type name for the mangled function name
+			# convert repeated vectors into compressed names, e.g.
+			#   Dv2_cDv2_c -> Dv2_cS_
+			# this is also done for pointers to vectors, e.g.
+			#   Dv2_cPULocalDv2_c -> Dv2_cPULocalS_
+			pure_arg = pure_arg_type(cast)
+			actual_arg = cast
+			if pure_arg == last_pure_arg and last_pure_arg.startswith("D"):
+				actual_arg = replace_arg_type(actual_arg, "S_")
+			last_pure_arg = pure_arg
+
+			# convert arg type to mangled type with AS
+			# e.g. "Pi" -> "PU3AS3i"
+			spir_cast_arg = mang_suffix(actual_arg, MANGLING_AS_SPIR[AS])
+			spir_mangled_func_suffix.append(spir_cast_arg)
+
+			# mangle OpenCL differently if required by target
+			# e.g. "Pi" -> "PU8CLglobali"
+			if MANGLE_OCL:
+				ocl_cast_arg = mang_suffix(actual_arg, MANGLING_AS_OCL[AS])
+			else:
+				ocl_cast_arg = spir_cast_arg
+			ocl_mangled_func_suffix.append(ocl_cast_arg)
+
+			####### generate caller (SPIR wrapper function) llvm arg types
+			# get LLVM type name (e.g. <2 x i32>) for arg
+			spir_arg_type = llvm_arg_type(cast, LLVM_SPIR_AS[AS])
+			# get coerced type
+			coerced_arg_type = coerce_llvm_vector_type(spir_arg_type)
+			# get byval type
+			byval_arg_type = byval_llvm_vector_type(spir_arg_type)
+			# get type with OpenCL AS
+			ocl_arg_type = spir_arg_type
 			if AS_CASTS_REQUIRED:
-				ocl_mangled_type = llvm_arg_type(cast, LLVM_SPIR_AS["none"])
-			# caller_arg = spir_mangled_type + arg_type_ext + " %" + chr(97+arg_i)
-			noext_caller_arg = spir_mangled_type + " %" + chr(97+arg_i)
+				ocl_arg_type = llvm_arg_type(cast, LLVM_SPIR_AS["none"])
+
+			# arg type + arg-index, e.g. "<2 x i32> %2"
+			# SPIR wrapper (=caller) arg. This one is always non-coerced with SPIR AS
+			noext_caller_arg = spir_arg_type + " %" + chr(97+arg_i)
 			caller_args.append(noext_caller_arg)
-			decl_args.append(ocl_mangled_type)
-			if spir_mangled_type != ocl_mangled_type:
-				addrspace_casts.append("  %%%u = addrspacecast %s to %s" % (llvm_i, noext_caller_arg, ocl_mangled_type))
-				callee_args.append(ocl_mangled_type + " %" + chr(48+llvm_i))
+
+			####### generate arg types for callee (wrapped target function) and its declaration
+			# handle coerced args. Pointer args are not coerced so
+			# this shouldn't interact with addrspace casts.
+			if coerced_arg_type != spir_arg_type:
+				# handle 3-sized vectors
+				if spir_arg_type.startswith("<3"):
+					four_vec = "<4" + spir_arg_type[2:]
+					all_instr.append("  %%%u = shufflevector %s, %s undef, <4 x i32> <i32 0, i32 1, i32 2, i32 undef>" % (llvm_i, noext_caller_arg, spir_arg_type))
+					bitcasted_arg = four_vec + " %" + chr(48+llvm_i)
+					llvm_i += 1
+				else:
+					bitcasted_arg = noext_caller_arg
+
+				all_instr.append("  %%%u = bitcast %s to %s" % (llvm_i, bitcasted_arg, coerced_arg_type))
+				callee_args.append(coerced_arg_type + " %" + chr(48+llvm_i))
+				decl_args.append(coerced_arg_type)
 				llvm_i += 1
 			else:
-				callee_args.append(ocl_mangled_type + " %" + chr(97+arg_i))
+				# handle pointer args. insert addrspace casts if required by target
+				if spir_arg_type != ocl_arg_type:
+					all_instr.append("  %%%u = addrspacecast %s to %s" % (llvm_i, noext_caller_arg, ocl_arg_type))
+					callee_args.append(ocl_arg_type + " %" + chr(48+llvm_i))
+					decl_args.append(ocl_arg_type)
+					llvm_i += 1
+				else:
+					# handle byval args. insert store / loads as necessary
+					if byval_arg_type != spir_arg_type:
+						# add alloca & store
+						alignment = byval_arg_type.find("align")
+						if alignment > 0:
+							align = byval_arg_type[alignment:]
+						else:
+							align = "align 8"
+						all_instr.append("  %%%u = alloca %s, %s" % (llvm_i, spir_arg_type, align))
+						alloca_inst = "%" + chr(48+llvm_i)
+						all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
+						callee_args.append(ocl_arg_type + "* " + alloca_inst)
+						decl_args.append(byval_arg_type)
+						llvm_i += 1
+					else:
+						# nothing to do, just pass plain arg
+						callee_args.append(ocl_arg_type + " %" + chr(97+arg_i))
+						decl_args.append(ocl_arg_type)
 			arg_i += 1
 
+		######## generate final mangled function names
 		spir_mangled_func_suffix = "".join(spir_mangled_func_suffix)
 		ocl_mangled_func_suffix = "".join(ocl_mangled_func_suffix)
 		caller_args = ", ".join(caller_args)
@@ -330,18 +606,34 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 		spir_mangled_name = "@_Z%u%s%s" % (len(spir_func_name), spir_func_name, spir_mangled_func_suffix)
 		ocl_mangled_name = "@_Z%u%s%s" % (len(ocl_func_name), ocl_func_name, ocl_mangled_func_suffix)
 
-		print("declare %s %s(%s) local_unnamed_addr #0" % (arg_type_ext + arg_type, ocl_mangled_name, decl_args))
+		####### generate function body
+		coerced_ret_type = coerce_llvm_vector_type(ret_type)
+
+		print("declare %s %s(%s) local_unnamed_addr #0" % (coerced_ret_type, ocl_mangled_name, decl_args))
 		print("")
-		print("define spir_func %s %s(%s) local_unnamed_addr #0 {" % (arg_type_ext + arg_type, spir_mangled_name, caller_args))
-		if addrspace_casts:
-			for cast in addrspace_casts:
+		print("define spir_func %s %s(%s) local_unnamed_addr #0 {" % (ret_type_ext + ret_type, spir_mangled_name, caller_args))
+
+		if all_instr:
+			for cast in all_instr:
 				print(cast)
-		if arg_type == 'void':
-			print("  tail call %s %s(%s)" % (arg_type, ocl_mangled_name, callee_args))
+
+		if ret_type == 'void':
+			print("  tail call %s %s(%s)" % (ret_type, ocl_mangled_name, callee_args))
 			print("  ret void" )
 		else:
-			print("  %%call = tail call %s %s %s(%s)" % (arg_type_ext, arg_type, ocl_mangled_name, callee_args))
-			print("  ret %s %%call" % arg_type)
+			if ret_type != coerced_ret_type:
+				print("  %%coerced_call = tail call %s %s(%s)" % (coerced_ret_type, ocl_mangled_name, callee_args))
+				if ret_type.startswith("<3"):
+					four_vec = "<4" + ret_type[2:]
+					print("  %%bc_ret = bitcast %s %%coerced_call to %s" % (coerced_ret_type, four_vec))
+					print("  %%final_ret = shufflevector %s %%bc_ret, %s undef, <3 x i32> <i32 0, i32 1, i32 2>" % (four_vec, four_vec))
+				else:
+					print("  %%final_ret = bitcast %s %%coerced_call to %s" % (coerced_ret_type, ret_type))
+
+				print("  ret %s %%final_ret" % ret_type)
+			else:
+				print("  %%call = tail call %s %s(%s)" % (ret_type, ocl_mangled_name, callee_args))
+				print("  ret %s %%call" % ret_type)
 		print("}\n\n")
 
 
@@ -385,56 +677,81 @@ MANG_TYPES_64 = {
 	'u': "m"
 }
 
-# FP
+# math funcs, vectorized
 for llvm_type in ["float", "double"]:
-	if llvm_type == "float":
-		MANG_TYPE_MAP = MANG_TYPES_32
-	else:
-		MANG_TYPE_MAP = MANG_TYPES_64
+	for vector_size in [1,2,3,4,8,16]:
 
-	for f in SINGLE_ARG:
-		generate_function(f, llvm_type, '', False, MANG_TYPE_MAP['f'])
-	for f in DUAL_ARG:
-		generate_function(f, llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	for f in DUAL_ARG_PTR:
-		generate_function(f, llvm_type, '', True, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['Pf'])
-	for f in TRIPLE_ARG:
-		generate_function(f, llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+		if llvm_type == "float":
+			arg_Pf = 'Pf'
+			arg_f = 'f'
+			arg_li = 'i'
+			arg_lu = 'j'
+		else:
+			arg_Pf = 'Pd'
+			arg_f = 'd'
+			arg_li = 'l'
+			arg_lu = 'm'
+		arg_i = 'i'
+		arg_Pi = 'Pi'
+		ret_type = llvm_type
+		rel_rettype = 'i32'
 
-	# other signatures
-	generate_function("ilogb", "i32", '', False, MANG_TYPE_MAP['f'])
+		if vector_size > 1:
+			s = str(vector_size)
+			arg_Pi = "PDv" + s + "_i"
+			arg_i = "Dv" + s + "_i"
+			arg_Pf = "PDv" + s + "_"+arg_f
+			arg_f = "Dv" + s + "_"+arg_f
+			arg_li = "Dv" + s + "_"+arg_li
+			arg_lu = "Dv" + s + "_"+arg_lu
+			ret_type = "<" + s + " x " + llvm_type + ">"
+			if llvm_type == "float":
+				rel_rettype = "<" + s + " x i32>"
+			else:
+				rel_rettype = "<" + s + " x i64>"
 
-	generate_function("ldexp", llvm_type, '', False, MANG_TYPE_MAP['f'], 'i')
-	generate_function("pown", llvm_type, '', False, MANG_TYPE_MAP['f'], 'i')
-	generate_function("rootn", llvm_type, '', False, MANG_TYPE_MAP['f'], 'i')
+		for f in SINGLE_ARG:
+			generate_function(f, ret_type, '', False, arg_f)
+		for f in DUAL_ARG:
+			generate_function(f, ret_type, '', False, arg_f, arg_f)
+		for f in DUAL_ARG_PTR:
+			generate_function(f, ret_type, '', True, arg_f, arg_Pf)
+		for f in TRIPLE_ARG:
+			generate_function(f, ret_type, '', False, arg_f, arg_f, arg_f)
 
-	generate_function("remquo", llvm_type, '', True, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], 'Pi')
+		# math funcs with other / special signatures
+		generate_function("ilogb", "i32", '', False, arg_f)
 
-	generate_function("nan", llvm_type, '', False, MANG_TYPE_MAP['u'])
+		generate_function("ldexp", ret_type, '', False, arg_f, arg_i)
+		generate_function("pown", ret_type, '', False, arg_f, arg_i)
+		generate_function("rootn", ret_type, '', False, arg_f, arg_i)
 
-	generate_function("lgamma_r", llvm_type, '', True, MANG_TYPE_MAP['f'], 'Pi')
-	generate_function("frexp", llvm_type, '', True, MANG_TYPE_MAP['f'], 'Pi')
+		generate_function("remquo", ret_type, '', True, arg_f, arg_f, arg_Pi)
 
-	generate_function("select", llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], MANG_TYPE_MAP['i'])
-	generate_function("select", llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], MANG_TYPE_MAP['u'])
+		generate_function("nan", ret_type, '', False, arg_lu)
 
-	RET = SIG_TO_LLVM_TYPE_MAP['i']
-	generate_function("signbit", RET, '', False, MANG_TYPE_MAP['f'])
+		generate_function("lgamma_r", ret_type, '', True, arg_f, arg_Pi)
+		generate_function("frexp", ret_type, '', True, arg_f, arg_Pi)
 
-	generate_function("isequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("isnotequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("isgreater", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("isgreaterequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("isless", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("islessequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("islessgreater", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_li)
+		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_lu)
 
-	generate_function("isfinite", RET, '', False, MANG_TYPE_MAP['f'])
-	generate_function("isinf", RET, '', False, MANG_TYPE_MAP['f'])
-	generate_function("isnan", RET, '', False, MANG_TYPE_MAP['f'])
-	generate_function("isnormal", RET, '', False, MANG_TYPE_MAP['f'])
-	generate_function("isordered", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
-	generate_function("isunordered", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+		generate_function("signbit", rel_rettype, '', False, arg_f)
+
+		generate_function("isequal", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("isnotequal", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("isgreater", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("isgreaterequal", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("isless", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("islessequal", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("islessgreater", rel_rettype, '', False, arg_f, arg_f)
+
+		generate_function("isfinite", rel_rettype, '', False, arg_f)
+		generate_function("isinf", rel_rettype, '', False, arg_f)
+		generate_function("isnan", rel_rettype, '', False, arg_f)
+		generate_function("isnormal", rel_rettype, '', False, arg_f)
+		generate_function("isordered", rel_rettype, '', False, arg_f, arg_f)
+		generate_function("isunordered", rel_rettype, '', False, arg_f, arg_f)
 
 
 # geometric functions
@@ -483,22 +800,40 @@ for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
 
 
 # Integer
-for mang_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
-	for f in SINGLE_ARG_I:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type)
-	for f in DUAL_ARG_I:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type)
-	for f in TRIPLE_ARG_I:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type, mang_type)
-	generate_function("any", "i32", '', False, mang_type)
-	generate_function("all", "i32", '', False, mang_type)
+for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
+	for vector_size in [1,2,3,4,8,16]:
+
+		arg_i = arg_type
+		signext = LLVM_TYPE_EXT_MAP[arg_type]
+		if vector_size > 1:
+			s = str(vector_size)
+			arg_i = "Dv" + s + "_" + arg_type
+			signext = ''
+
+		for f in SINGLE_ARG_I:
+			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i)
+		for f in DUAL_ARG_I:
+			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i)
+		for f in TRIPLE_ARG_I:
+			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i, arg_i)
+		generate_function("any", "i32", '', False, arg_i)
+		generate_function("all", "i32", '', False, arg_i)
 
 # convert
 for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 	for src_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 		for sat in ['', '_sat']:
 			for rounding in ['','_rtp','_rtn','_rte','_rtz']:
-				generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_type]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_type], LLVM_TYPE_EXT_MAP[dst_type], False, src_type)
+				for vector_size in [1,2,3,4,8,16]:
+					dst_t = dst_type
+					src_t = src_type
+					signext = LLVM_TYPE_EXT_MAP[dst_type]
+					if vector_size > 1:
+						s = str(vector_size)
+						dst_t = "Dv" + s + "_" + dst_t
+						src_t = "Dv" + s + "_" + src_t
+						signext = ''
+					generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_t]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_t], signext, False, src_t)
 
 # Atomics
 for mang_type in ['i', 'j', "l", "m"]:
