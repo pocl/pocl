@@ -138,10 +138,11 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
 endfunction()
 
 
-function(compile_ll_to_bc FILENAME SUBDIR BC_FILE_LIST)
+function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
-    set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
+    list(APPEND ${BCLIST} "${BC_FILE}")
+    set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
     add_custom_command( OUTPUT "${BC_FILE}"
