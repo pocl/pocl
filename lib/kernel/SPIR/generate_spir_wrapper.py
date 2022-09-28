@@ -46,7 +46,7 @@ SINGLE_ARG = [
 	"exp", "exp2","exp10", "expm1",
 	"fabs", "floor",
 	"lgamma",
-	"log", "log10", "log2", "log1p",
+	"log", "log10", "log2", "log1p", "logb",
 	"rint", "round", "rsqrt",
 	"sin", "sinh", "sinpi",
 	"sqrt",
@@ -74,8 +74,8 @@ DUAL_ARG = [
 ]
 
 DUAL_ARG_I = [
-	"abs_diff", "add_sat", "hadd", "rhadd",
-	"max", "min", "mul_hi", "rotate", "sub_sat"
+	"abs_diff", "add_sat", "hadd",
+	"max", "min", "mul_hi", "rhadd", "rotate", "sub_sat"
 ]
 
 DUAL_ARG_PTR = [
@@ -83,11 +83,11 @@ DUAL_ARG_PTR = [
 ]
 
 TRIPLE_ARG = [
-	"fma", "mad", "clamp", "mix", "smoothstep"
+	"bitselect", "clamp", "fma", "mad", "mix", "smoothstep"
 ]
 
 TRIPLE_ARG_I = [
-	"clamp", "mad_hi", "mad_sat"
+	"bitselect", "clamp", "mad_hi", "mad_sat"
 ]
 
 OLD_ATOMICS_INT_ONLY = [
@@ -103,18 +103,18 @@ OLD_ATOMICS_INT_ONLY = [
 ]
 
 OLD_ATOMICS_ALL = [
-        "atomic_xchg",
-        "atomic_cmpxchg",
+	"atomic_xchg",
+	"atomic_cmpxchg",
 ]
 
 
 SVM_ATOMICS_INT_ONLY = [
-        "atomic_fetch_add",
-        "atomic_fetch_sub",
-        "atomic_fetch_or",
-        "atomic_fetch_xor",
-        "atomic_fetch_and",
-        "atomic_fetch_min",
+	"atomic_fetch_add",
+	"atomic_fetch_sub",
+	"atomic_fetch_or",
+	"atomic_fetch_xor",
+	"atomic_fetch_and",
+	"atomic_fetch_min",
 	"atomic_fetch_max"
 ]
 
@@ -150,8 +150,20 @@ SIG_TO_LLVM_TYPE_MAP = {
 	"l": "i64",
 	"m": "i64",
 
+	"Dv2_f": "<2 x float>",
+	"Dv2_d": "<2 x double>",
+
+	"Dv3_f": "<3 x float>",
+	"Dv3_d": "<3 x double>",
+
 	"Dv4_f": "<4 x float>",
 	"Dv4_d": "<4 x double>",
+
+	"Dv8_f": "<8 x float>",
+	"Dv8_d": "<8 x double>",
+
+	"Dv16_f": "<16 x float>",
+	"Dv16_d": "<16 x double>",
 
 	"12memory_order": "i32",
 	"12memory_scope": "i32",
@@ -175,7 +187,7 @@ SIG_TO_TYPE_NAME_MAP = {
 }
 
 LLVM_TYPE_EXT_MAP = {
-        "b": " zeroext ",
+	"b": " zeroext ",
 	"v": "",
 
 	"f": "",
@@ -362,12 +374,14 @@ print(triple)
 MANG_TYPES_32 = {
 	"f": "f",
 	"Pf": "Pf",
+	'i': "i",
 	'u': "j"
 }
 
 MANG_TYPES_64 = {
 	"f": "d",
 	"Pf": "Pd",
+	'i': "l",
 	'u': "m"
 }
 
@@ -401,10 +415,72 @@ for llvm_type in ["float", "double"]:
 	generate_function("lgamma_r", llvm_type, '', True, MANG_TYPE_MAP['f'], 'Pi')
 	generate_function("frexp", llvm_type, '', True, MANG_TYPE_MAP['f'], 'Pi')
 
+	generate_function("select", llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], MANG_TYPE_MAP['i'])
+	generate_function("select", llvm_type, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'], MANG_TYPE_MAP['u'])
 
-# vectors
-generate_function("length", "<4 x float>", '', False, "Dv4_f")
-generate_function("length", "<4 x double>", '', False, "Dv4_d")
+	RET = SIG_TO_LLVM_TYPE_MAP['i']
+	generate_function("signbit", RET, '', False, MANG_TYPE_MAP['f'])
+
+	generate_function("isequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("isnotequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("isgreater", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("isgreaterequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("isless", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("islessequal", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("islessgreater", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+
+	generate_function("isfinite", RET, '', False, MANG_TYPE_MAP['f'])
+	generate_function("isinf", RET, '', False, MANG_TYPE_MAP['f'])
+	generate_function("isnan", RET, '', False, MANG_TYPE_MAP['f'])
+	generate_function("isnormal", RET, '', False, MANG_TYPE_MAP['f'])
+	generate_function("isordered", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+	generate_function("isunordered", RET, '', False, MANG_TYPE_MAP['f'], MANG_TYPE_MAP['f'])
+
+
+# geometric functions
+generate_function("cross", "<4 x float>", '', False, "Dv4_f", "Dv4_f")
+generate_function("cross", "<4 x double>", '', False, "Dv4_d", "Dv4_d")
+generate_function("cross", "<3 x float>", '', False, "Dv3_f", "Dv3_f")
+generate_function("cross", "<3 x double>", '', False, "Dv3_d", "Dv3_d")
+
+for W in ["2","3","4","8","16"]:
+	generate_function("dot", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
+	generate_function("dot", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
+	generate_function("distance", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
+	generate_function("distance", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
+	generate_function("length", "float", '', False, "Dv"+W+"_f")
+	generate_function("length", "double", '', False, "Dv"+W+"_d")
+	generate_function("normalize", "float", '', False, "Dv"+W+"_f")
+	generate_function("normalize", "double", '', False, "Dv"+W+"_d")
+	generate_function("fast_distance", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
+	generate_function("fast_distance", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
+	generate_function("fast_length", "float", '', False, "Dv"+W+"_f")
+	generate_function("fast_length", "double", '', False, "Dv"+W+"_d")
+	generate_function("fast_normalize", "float", '', False, "Dv"+W+"_f")
+	generate_function("fast_normalize", "double", '', False, "Dv"+W+"_d")
+
+# upsample has special arguments
+UPSAMPLE_1ST_ARG = {
+	's': 'c',
+	't': 'h',
+	'i': 's',
+	'j': 't',
+	'l': 'i',
+	'm': 'j'
+}
+
+UPSAMPLE_2ND_ARG = {
+	's': 'h',
+	't': 'h',
+	'i': 't',
+	'j': 't',
+	'l': 'j',
+	'm': 'j'
+}
+
+for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
+	generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[mang_type], '', False, UPSAMPLE_1ST_ARG[mang_type], UPSAMPLE_2ND_ARG[mang_type])
+
 
 # Integer
 for mang_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
@@ -414,6 +490,8 @@ for mang_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type)
 	for f in TRIPLE_ARG_I:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], False, mang_type, mang_type, mang_type)
+	generate_function("any", "i32", '', False, mang_type)
+	generate_function("all", "i32", '', False, mang_type)
 
 # convert
 for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
@@ -422,6 +500,7 @@ for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 			for rounding in ['','_rtp','_rtn','_rte','_rtz']:
 				generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_type]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_type], LLVM_TYPE_EXT_MAP[dst_type], False, src_type)
 
+# Atomics
 for mang_type in ['i', 'j', "l", "m"]:
 	for f in SVM_ATOMICS_INT_ONLY:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type)
