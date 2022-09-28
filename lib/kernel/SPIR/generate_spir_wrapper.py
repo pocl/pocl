@@ -114,8 +114,6 @@ OLD_ATOMICS_INT_ONLY = [
 	"atomic_and",
 	"atomic_min",
 	"atomic_max",
-	"atomic_inc",
-	"atomic_dec",
 ]
 
 OLD_ATOMICS_ALL = [
@@ -848,6 +846,9 @@ for mang_type in ['i', 'j', "l", "m"]:
 for mang_type in ['i', 'j', "l", "m"]:
 	for f in OLD_ATOMICS_INT_ONLY:
 		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
+	# dec, inc take only 1 argument
+	generate_function("atomic_inc", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
+	generate_function("atomic_dec", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
 
 for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PVA'+mang_type, mang_type)
