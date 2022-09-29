@@ -27,9 +27,9 @@
    kernel lib which is so big, that it takes seconds to clone it,  even on
    top-of-the line current processors. */
 
-#include <list>
 #include <iostream>
 #include <set>
+#include <random>
 
 #include "config.h"
 #include "pocl.h"
@@ -44,6 +44,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/ADT/StringSet.h"
 #include "pocl_cl.h"
 
 #include "LLVMUtils.h"
@@ -55,26 +56,6 @@ using namespace llvm;
 // #include <cstdio>
 // #define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
-
-/*
- * Find needle in haystack. O(n) implementation, but n should be
- * small in our usecases.
- * Return true if found
- */
-static bool
-find_from_list(llvm::StringRef             needle,
-               std::list<llvm::StringRef> &haystack)
-{
-    std::list<llvm::StringRef>::iterator li,le;
-    for (li=haystack.begin(), le=haystack.end();
-         li != le;
-         li++) {
-        if (needle == *li) {
-            return true;
-        }
-    }
-    return false;
-}
 
 /* Fixes address space on opencl.imageX_t arguments to be global.
  * Note this does not change the types in Function->FunctionType
@@ -161,10 +142,10 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
 }
 
 // Find all functions in the calltree of F, append their
-// name to list.
+// name to function name set.
 static inline void
 find_called_functions(llvm::Function *F,
-                      std::list<llvm::StringRef> &list)
+                      llvm::StringSet<> &FNameSet)
 {
   if (F->isDeclaration()) {
     DB_PRINT("it's a declaration.\n");
@@ -192,13 +173,14 @@ find_called_functions(llvm::Function *F,
       }
       DB_PRINT("search: %s calls %s\n",
                F->getName().data(), Callee->getName().data());
-      if (find_from_list(Callee->getName(), list))
+      if (FNameSet.contains(Callee->getName()))
         continue;
       else {
-        list.push_back(Callee->getName());
+        DB_PRINT("inserting %s\n", Callee->getName().data());
+        FNameSet.insert(Callee->getName());
         DB_PRINT("search: recursing into %s\n",
                  Callee->getName().data());
-        find_called_functions(Callee, list);
+        find_called_functions(Callee, FNameSet);
       }
     }
   }
@@ -264,7 +246,7 @@ copy_func_callgraph(const llvm::StringRef func_name,
                     llvm::Module *        to,
                     ValueToValueMapTy &   vvm,
                     unsigned AS) {
-    std::list<llvm::StringRef> callees;
+    llvm::StringSet<> callees;
     llvm::Function *RootFunc = from->getFunction(func_name);
     if (RootFunc == NULL)
       return -1;
@@ -275,31 +257,19 @@ copy_func_callgraph(const llvm::StringRef func_name,
     // First copy the callees of func, then the function itself.
     // Recurse into callees to handle the case where kernel library
     // functions call other kernel library functions.
-    std::list<llvm::StringRef>::iterator ci,ce;
+    llvm::StringSet<>::iterator ci,ce;
     for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
-      llvm::Function *SrcFunc = from->getFunction(*ci);
+      llvm::Function *SrcFunc = from->getFunction(ci->getKey());
       if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(*ci, from, to, vvm, AS);
+        copy_func_callgraph(ci->getKey(), from, to, vvm, AS);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
 		 SrcFunc->getName().str().c_str());
       }
-      CopyFunc(*ci, from, to, vvm, AS);
+      CopyFunc(ci->getKey(), from, to, vvm, AS);
     }
     CopyFunc(func_name, from, to, vvm, AS);
     return 0;
-}
-
-static inline bool
-stringref_equal(llvm::StringRef a, llvm::StringRef b)
-{
-    return a.equals(b);
-}
-
-static inline bool
-stringref_cmp(llvm::StringRef a, llvm::StringRef b)
-{
-    return a.str() < b.str();
 }
 
 static void shared_copy(llvm::Module *program, const llvm::Module *lib,
@@ -414,7 +384,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   assert(Program);
   assert(Lib);
   ValueToValueMapTy vvm;
-  std::list<llvm::StringRef> declared;
+  llvm::StringSet<> DeclaredFunctions;
 
 #ifndef LLVM_OLDER_THAN_10_0
   // LLVM 9 misses some of the APIs needed by this function. We don't support
@@ -426,7 +396,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      declared.push_back(*Func++);
+      DeclaredFunctions.insert(*Func++);
     }
   }
 
@@ -445,18 +415,16 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
 
   // Inspect the program, find undefined functions
   for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    if ((*fi).isDeclaration()) {
+    if (fi->isDeclaration()) {
       DB_PRINT("%s is not defined\n", fi->getName().data());
-      declared.push_back(fi->getName());
+      DeclaredFunctions.insert(fi->getName());
       continue;
     }
 
     // Find all functions the program source calls
     // TODO: is there no direct way?
-    find_called_functions(&*fi, declared);
+    find_called_functions(&*fi, DeclaredFunctions);
   }
-  declared.sort(stringref_cmp);
-  declared.unique(stringref_equal);
 
   // some global variables can have external linkage. Set it to private
   // otherwise these end up in ELF relocation tables and cause link
@@ -493,10 +461,10 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   StringRef pocl_sampler_handler("__translate_sampler_initializer");
   // ignore undefined llvm intrinsics
   StringRef llvm_intrins("llvm.");
-  std::list<llvm::StringRef>::iterator di,de;
-  for (di = declared.begin(), de = declared.end();
+  llvm::StringSet<>::iterator di,de;
+  for (di = DeclaredFunctions.begin(), de = DeclaredFunctions.end();
        di != de; di++) {
-      llvm::StringRef r = *di;
+      llvm::StringRef r = di->getKey();
       if (copy_func_callgraph(r, Lib, Program, vvm, global_AS)) {
         Function *f = Program->getFunction(r);
         if ((f == NULL) ||
