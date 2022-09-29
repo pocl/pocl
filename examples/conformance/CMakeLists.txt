@@ -114,8 +114,10 @@ if(HAVE_SPIRV_TOOLS)
                          "-l" "${SPIRV_VAL}"
                     DEPENDS "${TS_SRCDIR}/spirv_new/spirv_asm/atomic_inc_global.spvasm64"
                     VERBATIM)
-  add_custom_target(opencl_cts_spirv_binaries DEPENDS "${TS_BUILDDIR}/spirv_new/spirv_bin/atomic_inc_global.spv64")
-  add_dependencies(${TS_NAME} opencl_cts_spirv_binaries)
+  add_custom_target(${TS_NAME}_spirv_binaries DEPENDS "${TS_BUILDDIR}/spirv_new/spirv_bin/atomic_inc_global.spv64")
+  # ^^ must depend on the CTS because we need the sources checked out
+  add_dependencies(${TS_NAME}_spirv_binaries ${TS_NAME})
+  add_dependencies(prepare_examples ${TS_NAME}_spirv_binaries)
 endif()
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
