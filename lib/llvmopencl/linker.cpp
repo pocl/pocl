@@ -385,6 +385,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   assert(Lib);
   ValueToValueMapTy vvm;
   llvm::StringSet<> DeclaredFunctions;
+  std::random_device RandomDevice;
+  std::mt19937 Mersenne{RandomDevice()};
+  std::uniform_int_distribution<unsigned long> UniDist{(1UL<<30), (1UL<<31)};
 
 #ifndef LLVM_OLDER_THAN_10_0
   // LLVM 9 misses some of the APIs needed by this function. We don't support
@@ -421,6 +424,15 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
       continue;
     }
 
+    // anonymous functions have no name, which breaks the algorithm later
+    // when it searches for undefined functions in the kernel library.
+    // assign a randomized name here
+    std::string temp = std::to_string(UniDist(Mersenne));
+    if (!fi->hasName()) {
+      fi->setName(Twine("__anonymous_internal_func__",
+                        StringRef(temp)));
+    }
+    DB_PRINT("Function '%s' is defined\n", fi->getName().data());
     // Find all functions the program source calls
     // TODO: is there no direct way?
     find_called_functions(&*fi, DeclaredFunctions);
