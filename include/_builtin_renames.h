@@ -70,6 +70,7 @@
 #define cosh           _cl_cosh
 #define cospi          _cl_cospi
 #define cross          _cl_cross
+#define ctz            _cl_ctz
 #define degrees        _cl_degrees
 #define distance       _cl_distance
 #define dot            _cl_dot
@@ -985,5 +986,21 @@
 #define  atomic_fetch_min    _cl_atomic_fetch_min
 #define  atomic_fetch_max_explicit    _cl_atomic_fetch_max_explicit
 #define  atomic_fetch_max    _cl_atomic_fetch_max
+
+#define  atomic_work_item_fence _cl_atomic_work_item_fence
+
+#define get_image_array_size _cl_get_image_array_size
+#define get_image_channel_data_type _cl_get_image_channel_data_type
+#define get_image_channel_order _cl_get_image_channel_order
+#define get_image_dim _cl_get_image_dim
+#define get_image_depth _cl_get_image_depth
+#define get_image_height _cl_get_image_height
+#define get_image_width _cl_get_image_width
+#define read_imageui _cl_read_imageui
+#define read_imagei _cl_read_imagei
+#define read_imagef _cl_read_imagef
+#define write_imageui _cl_write_imageui
+#define write_imagei _cl_write_imagei
+#define write_imagef _cl_write_imagef
 
 #endif
