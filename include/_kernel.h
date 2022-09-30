@@ -245,3 +245,12 @@
 #include "pocl_image_types.h"
 
 #pragma OPENCL EXTENSION all : disable
+
+/****************************************************************************/
+/* PoCL-implemented extensions */
+
+#ifdef cl_ext_device_side_abort
+
+void abort_platform ();
+
+#endif

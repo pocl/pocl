@@ -27,6 +27,7 @@
 #include "printf_base.h"
 
 #include <stdarg.h>
+#include <unistd.h>
 
 #define OCL_C_AS
 
@@ -711,6 +712,17 @@ extern char *_printf_buffer;
 extern uint32_t *_printf_buffer_position;
 extern uint32_t _printf_buffer_capacity;
 
+void
+__pocl_flush_printf_buffer (char *restrict buffer, uint32_t *buffer_index,
+                            uint32_t buffer_capacity)
+{
+  if (*buffer_index > 0 && buffer_capacity > 0)
+    {
+      write (STDOUT_FILENO, buffer, *buffer_index);
+      *buffer_index = 0;
+    }
+}
+
 /* This is a placeholder printf function that will be replaced by calls
  * to __pocl_printf(), after an LLVM pass handles the hidden arguments.
  * both __pocl_printf and __pocl_printf_format_simple must be referenced
@@ -734,6 +746,7 @@ printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
                  _printf_buffer_capacity, NULL);
 
   *_printf_buffer_position = p.printf_buffer_index;
+
   return r;
 }
 

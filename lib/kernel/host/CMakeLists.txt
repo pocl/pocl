@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2022 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -293,6 +293,8 @@ else()
   list(APPEND KERNEL_SOURCES svm_atomics_host.cl svm_atomics.cl)
 endif()
 endif()
+
+list(APPEND KERNEL_SOURCES abort_platform.c)
 
 set(HOST_DEVICE_CL_VERSION_3DIGIT "${HOST_DEVICE_CL_VERSION_MAJOR}${HOST_DEVICE_CL_VERSION_MINOR}0")
 set(HOST_DEVICE_CL_VERSION_STD  "${HOST_DEVICE_CL_VERSION_MAJOR}.${HOST_DEVICE_CL_VERSION_MINOR}")
