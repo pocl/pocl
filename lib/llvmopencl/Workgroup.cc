@@ -445,6 +445,17 @@ Workgroup::createLoadFromContext(
   return Load;
 }
 
+// Returns true in case the function should be treated as a printf (variation).
+static bool isPrintf(Function *F) {
+  return (F->getName().equals("printf") ||
+          F->getName().equals("__pocl_printf") ||
+          // The address space overloaded versions from
+          // cl_ext_relaxed_printf_address_space
+          F->getName().equals("_Z6printfPU7CLlocalKcz") ||
+          F->getName().equals("_Z6printfPU8CLglobalKcz") ||
+          F->getName().equals("_Z6printfPU9CLprivateKcz"));
+}
+
 // TODO we should use printf users instead of searching the call tree
 static bool callsPrintf(Function *F) {
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
@@ -459,9 +470,7 @@ static bool callsPrintf(Function *F) {
 
       if (callee->getName().startswith("llvm."))
         continue;
-      if (callee->getName().equals("printf"))
-        return true;
-      if (callee->getName().equals("__pocl_printf"))
+      if (isPrintf(callee))
         return true;
       if (callsPrintf(callee))
         return true;
@@ -558,7 +567,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName().equals("printf")) {
+      if (isPrintf(oldF)) {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);

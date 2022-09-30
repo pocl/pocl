@@ -1,0 +1,26 @@
+global address space str arg through a global format str
+constant address space str arg through a constant format str
+local address space str arg through a local format str
+private address space str arg through a private format str
+
+private address space str arg through a global format str
+constant address space str arg through a global format str
+local address space str arg through a global format str
+global address space str arg through a global format str
+
+private address space str arg through a constant format str
+global address space str arg through a constant format str
+local address space str arg through a constant format str
+constant address space str arg through a constant format str
+
+private address space str arg through a local format str
+global address space str arg through a local format str
+constant address space str arg through a local format str
+local address space str arg through a local format str
+
+local address space str arg through a private format str
+global address space str arg through a private format str
+constant address space str arg through a private format str
+private address space str arg through a private format str
+IO == 0
+

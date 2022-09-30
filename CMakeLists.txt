@@ -1097,7 +1097,7 @@ endif()
 # These are mandatory for OpenCL 1.1 (except for 3D writes but those are CPU-independent)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
   cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_ext_relaxed_printf_address_space")
 
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \

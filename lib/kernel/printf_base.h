@@ -22,6 +22,7 @@
 */
 
 #include "pocl_types.h"
+#include "pocl_spir.h"
 
 /* printing largest double with %f formatter requires about ~1024 digits for
  * integral part, plus precision digits for decimal part, plus some space for
@@ -35,7 +36,7 @@
 /* Produce a SPIR-V compliant bitcode where the format string is
    in the constant address space (2 in SPIR-V). Address space cast
    in Workgroup.cc in case of native compilation. */
-#define PRINTF_FMT_STR_AS __attribute__ ((address_space (2)))
+#define PRINTF_FMT_STR_AS SPIR_ADDRESS_SPACE_CONSTANT
 #else
 /* Use the default address space with the older LLVMs. No SPIR-V
    support. */
