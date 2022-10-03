@@ -466,10 +466,7 @@ if(ENABLE_LLVM)
     set(WITH_TCE ENV PATH)
   endif()
 
-  find_program(TCE_CONFIG NAMES "openasip-config" HINTS ${WITH_TCE})
-  if(NOT TCE_CONFIG)
-    find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
-  endif()
+  find_program(TCE_CONFIG NAMES "openasip-config" "tce-config" HINTS ${WITH_TCE})
   find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
   find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
 
