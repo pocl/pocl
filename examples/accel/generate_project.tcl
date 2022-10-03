@@ -1,3 +1,28 @@
+# generate_project.tcl - Vivado script for generating Pynq-z1 bitstreams from tta cores
+#
+#   Copyright (c) 2022 Topi Leppänen / Tampere University
+#
+#   Permission is hereby granted, free of charge, to any person obtaining a copy
+#   of this software and associated documentation files (the "Software"), to
+#   deal in the Software without restriction, including without limitation the
+#   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+#   sell copies of the Software, and to permit persons to whom the Software is
+#   furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in
+#   all copies or substantial portions of the Software.
+#
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+#   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+#   IN THE SOFTWARE.
+
+
+
+
 
 set mem_setup [lindex $argv 0]
 set device_count [lindex $argv 1]
@@ -20,13 +45,6 @@ add_files [list $rtl_path/platform $rtl_path/gcu_ic $rtl_path/vhdl]
 create_bd_design "toplevel"
 create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0
 create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0
-
-puts "USE_AXIM"
-puts use_axim
-puts "222"
-puts ${use_axim}
-
-
 
 apply_bd_automation -rule xilinx.com:bd_rule:processing_system7 -config {make_external "FIXED_IO, DDR" apply_board_preset "1" Master "Disable" Slave "Disable" }  [get_bd_cells processing_system7_0]
 set_property -dict [list CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {10.000} CONFIG.RESET_TYPE {ACTIVE_LOW} CONFIG.MMCM_DIVCLK_DIVIDE {2} CONFIG.MMCM_CLKFBOUT_MULT_F {15.625} CONFIG.MMCM_CLKOUT0_DIVIDE_F {78.125} CONFIG.RESET_PORT {resetn} CONFIG.CLKOUT1_JITTER {290.478} CONFIG.CLKOUT1_PHASE_ERROR {133.882}] [get_bd_cells clk_wiz_0]
