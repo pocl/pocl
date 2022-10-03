@@ -1360,6 +1360,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               {
                 size_t size = arguments[i].size;
                 size_t align = kdata->alignments[i];
+                if (align < 1)
+                    align = 1;
 
                 /* Pad offset to align memory */
                 if (sharedMemBytes % align)
@@ -1448,6 +1450,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
         {
           size_t size = meta->local_sizes[i];
           size_t align = kdata->alignments[arg_index];
+          if (align < 1)
+              align = 1;
 
           /* Pad offset to align memory */
           if (sharedMemBytes % align)
