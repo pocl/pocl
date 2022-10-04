@@ -718,6 +718,8 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->mem_base_addr_align = 128;
   dev->min_data_type_align_size = 128;
 
+  dev->max_parameter_size = 1024;
+
   return CL_SUCCESS;
 }
 
