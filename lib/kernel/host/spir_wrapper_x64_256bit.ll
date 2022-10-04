@@ -4,6 +4,33 @@ source_filename = "generate_spir_wrapper.py"
 target datalayout = "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
 target triple = "spir64-unknown-unknown"
 
+%opencl.sampler_t = type opaque
+%opencl.event_t = type opaque
+
+%opencl.image1d_ro_t = type opaque
+%opencl.image2d_ro_t = type opaque
+%opencl.image3d_ro_t = type opaque
+
+%opencl.image1d_wo_t = type opaque
+%opencl.image2d_wo_t = type opaque
+%opencl.image3d_wo_t = type opaque
+
+%opencl.image1d_rw_t = type opaque
+%opencl.image2d_rw_t = type opaque
+%opencl.image3d_rw_t = type opaque
+
+%opencl.image1d_array_ro_t = type opaque
+%opencl.image1d_array_wo_t = type opaque
+%opencl.image1d_array_rw_t = type opaque
+%opencl.image2d_array_ro_t = type opaque
+%opencl.image2d_array_wo_t = type opaque
+%opencl.image2d_array_rw_t = type opaque
+
+%opencl.image1d_buffer_ro_t = type opaque
+%opencl.image1d_buffer_rw_t = type opaque
+%opencl.image1d_buffer_wo_t = type opaque
+
+
 declare float @_Z8_cl_acosf(float) local_unnamed_addr #0
 
 define spir_func float @_Z4acosf(float %a) local_unnamed_addr #0 {
@@ -75932,6 +75959,2043 @@ define spir_func <16 x double> @_Z24convert_double16_sat_rtzDv16_d(<16 x double>
 }
 
 
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_roi(%opencl.image1d_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_roi(%opencl.image1d_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_roi(%opencl.image1d_ro_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_roi(%opencl.image1d_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_roi(%opencl.image1d_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_roi(%opencl.image1d_ro_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_ro11ocl_samplerf(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_ro11ocl_sampleri(%opencl.image1d_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_roi(%opencl.image1d_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_roi(%opencl.image1d_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_roi(%opencl.image1d_ro_t * %1, i32 %b)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_ro(%opencl.image1d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image1d_ro(%opencl.image1d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_ro(%opencl.image1d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image1d_ro(%opencl.image1d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image1d_ro(%opencl.image1d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image1d_ro(%opencl.image1d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image1d_ro(%opencl.image1d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image1d_ro(%opencl.image1d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_ro_t addrspace(1)* %a to %opencl.image1d_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image1d_ro(%opencl.image1d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image1d_woiDv4_i(%opencl.image1d_wo_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image1d_woiDv4_i(%opencl.image1d_wo_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  tail call void @_Z16_cl_write_imagei14ocl_image1d_woiDv4_i(%opencl.image1d_wo_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image1d_woiDv4_j(%opencl.image1d_wo_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image1d_woiDv4_j(%opencl.image1d_wo_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  tail call void @_Z17_cl_write_imageui14ocl_image1d_woiDv4_j(%opencl.image1d_wo_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image1d_woiDv4_f(%opencl.image1d_wo_t *, i32, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image1d_woiDv4_f(%opencl.image1d_wo_t addrspace(1)* %a, i32 %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  tail call void @_Z16_cl_write_imagef14ocl_image1d_woiDv4_f(%opencl.image1d_wo_t * %1, i32 %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_wo(%opencl.image1d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image1d_wo(%opencl.image1d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_wo(%opencl.image1d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image1d_wo(%opencl.image1d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image1d_wo(%opencl.image1d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image1d_wo(%opencl.image1d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image1d_wo(%opencl.image1d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image1d_wo(%opencl.image1d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_wo_t addrspace(1)* %a to %opencl.image1d_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image1d_wo(%opencl.image1d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rwi(%opencl.image1d_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image1d_rwi(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image1d_rwi(%opencl.image1d_rw_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image1d_rwiDv4_i(%opencl.image1d_rw_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image1d_rwiDv4_i(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  tail call void @_Z16_cl_write_imagei14ocl_image1d_rwiDv4_i(%opencl.image1d_rw_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rwi(%opencl.image1d_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image1d_rwi(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image1d_rwi(%opencl.image1d_rw_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image1d_rwiDv4_j(%opencl.image1d_rw_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image1d_rwiDv4_j(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  tail call void @_Z17_cl_write_imageui14ocl_image1d_rwiDv4_j(%opencl.image1d_rw_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rw11ocl_samplerf(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rw11ocl_sampleri(%opencl.image1d_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rwi(%opencl.image1d_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image1d_rwi(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image1d_rwi(%opencl.image1d_rw_t * %1, i32 %b)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image1d_rwiDv4_f(%opencl.image1d_rw_t *, i32, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image1d_rwiDv4_f(%opencl.image1d_rw_t addrspace(1)* %a, i32 %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  tail call void @_Z16_cl_write_imagef14ocl_image1d_rwiDv4_f(%opencl.image1d_rw_t * %1, i32 %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_rw(%opencl.image1d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image1d_rw(%opencl.image1d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image1d_rw(%opencl.image1d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image1d_rw(%opencl.image1d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image1d_rw(%opencl.image1d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image1d_rw(%opencl.image1d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image1d_rw(%opencl.image1d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image1d_rw(%opencl.image1d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_rw_t addrspace(1)* %a to %opencl.image1d_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image1d_rw(%opencl.image1d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_roDv2_i(%opencl.image2d_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_roDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_roDv2_i(%opencl.image2d_ro_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_roDv2_i(%opencl.image2d_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_roDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_roDv2_i(%opencl.image2d_ro_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_ro11ocl_samplerDv2_f(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_ro11ocl_samplerDv2_i(%opencl.image2d_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_roDv2_i(%opencl.image2d_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_roDv2_i(%opencl.image2d_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_roDv2_i(%opencl.image2d_ro_t * %1, double %2)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_ro(%opencl.image2d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image2d_ro(%opencl.image2d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_ro(%opencl.image2d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image2d_ro(%opencl.image2d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image2d_ro(%opencl.image2d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image2d_ro(%opencl.image2d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image2d_ro(%opencl.image2d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image2d_ro(%opencl.image2d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image2d_ro(%opencl.image2d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image2d_ro(%opencl.image2d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image2d_ro(%opencl.image2d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_ro_t addrspace(1)* %a to %opencl.image2d_ro_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image2d_ro(%opencl.image2d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image2d_woDv2_iDv4_i(%opencl.image2d_wo_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image2d_woDv2_iDv4_i(%opencl.image2d_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagei14ocl_image2d_woDv2_iDv4_i(%opencl.image2d_wo_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image2d_woDv2_iDv4_j(%opencl.image2d_wo_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image2d_woDv2_iDv4_j(%opencl.image2d_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z17_cl_write_imageui14ocl_image2d_woDv2_iDv4_j(%opencl.image2d_wo_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image2d_woDv2_iDv4_f(%opencl.image2d_wo_t *, double, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image2d_woDv2_iDv4_f(%opencl.image2d_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagef14ocl_image2d_woDv2_iDv4_f(%opencl.image2d_wo_t * %1, double %2, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_wo(%opencl.image2d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image2d_wo(%opencl.image2d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_wo(%opencl.image2d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image2d_wo(%opencl.image2d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image2d_wo(%opencl.image2d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image2d_wo(%opencl.image2d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image2d_wo(%opencl.image2d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image2d_wo(%opencl.image2d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image2d_wo(%opencl.image2d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image2d_wo(%opencl.image2d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image2d_wo(%opencl.image2d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_wo_t addrspace(1)* %a to %opencl.image2d_wo_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image2d_wo(%opencl.image2d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image2d_rwDv2_iDv4_i(%opencl.image2d_rw_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image2d_rwDv2_iDv4_i(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagei14ocl_image2d_rwDv2_iDv4_i(%opencl.image2d_rw_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image2d_rwDv2_iDv4_j(%opencl.image2d_rw_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image2d_rwDv2_iDv4_j(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z17_cl_write_imageui14ocl_image2d_rwDv2_iDv4_j(%opencl.image2d_rw_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rw11ocl_samplerDv2_f(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rw11ocl_samplerDv2_i(%opencl.image2d_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image2d_rwDv2_i(%opencl.image2d_rw_t * %1, double %2)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image2d_rwDv2_iDv4_f(%opencl.image2d_rw_t *, double, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image2d_rwDv2_iDv4_f(%opencl.image2d_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagef14ocl_image2d_rwDv2_iDv4_f(%opencl.image2d_rw_t * %1, double %2, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_rw(%opencl.image2d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image2d_rw(%opencl.image2d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image2d_rw(%opencl.image2d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image2d_rw(%opencl.image2d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image2d_rw(%opencl.image2d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image2d_rw(%opencl.image2d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image2d_rw(%opencl.image2d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image2d_rw(%opencl.image2d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image2d_rw(%opencl.image2d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image2d_rw(%opencl.image2d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image2d_rw(%opencl.image2d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_rw_t addrspace(1)* %a to %opencl.image2d_rw_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image2d_rw(%opencl.image2d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_roDv4_i(%opencl.image3d_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_roDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_roDv4_i(%opencl.image3d_ro_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_roDv4_i(%opencl.image3d_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_roDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_roDv4_i(%opencl.image3d_ro_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_ro11ocl_samplerDv4_f(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_ro11ocl_samplerDv4_i(%opencl.image3d_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_roDv4_i(%opencl.image3d_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_roDv4_i(%opencl.image3d_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_roDv4_i(%opencl.image3d_ro_t * %1, <4 x i32> %b)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_depth14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_depth14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_depth14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_ro(%opencl.image3d_ro_t *) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z13get_image_dim14ocl_image3d_ro(%opencl.image3d_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_ro_t addrspace(1)* %a to %opencl.image3d_ro_t *
+  %call = tail call <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_ro(%opencl.image3d_ro_t * %1)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image3d_woDv4_iS_(%opencl.image3d_wo_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image3d_woDv4_iS_(%opencl.image3d_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  tail call void @_Z16_cl_write_imagei14ocl_image3d_woDv4_iS_(%opencl.image3d_wo_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image3d_woDv4_iDv4_j(%opencl.image3d_wo_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image3d_woDv4_iDv4_j(%opencl.image3d_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  tail call void @_Z17_cl_write_imageui14ocl_image3d_woDv4_iDv4_j(%opencl.image3d_wo_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image3d_woDv4_iDv4_f(%opencl.image3d_wo_t *, <4 x i32>, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image3d_woDv4_iDv4_f(%opencl.image3d_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  tail call void @_Z16_cl_write_imagef14ocl_image3d_woDv4_iDv4_f(%opencl.image3d_wo_t * %1, <4 x i32> %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_depth14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_depth14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_depth14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_wo(%opencl.image3d_wo_t *) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z13get_image_dim14ocl_image3d_wo(%opencl.image3d_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_wo_t addrspace(1)* %a to %opencl.image3d_wo_t *
+  %call = tail call <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_wo(%opencl.image3d_wo_t * %1)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei14ocl_image3d_rwDv4_iS_(%opencl.image3d_rw_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei14ocl_image3d_rwDv4_iS_(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  tail call void @_Z16_cl_write_imagei14ocl_image3d_rwDv4_iS_(%opencl.image3d_rw_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui14ocl_image3d_rwDv4_iDv4_j(%opencl.image3d_rw_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui14ocl_image3d_rwDv4_iDv4_j(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  tail call void @_Z17_cl_write_imageui14ocl_image3d_rwDv4_iDv4_j(%opencl.image3d_rw_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rw11ocl_samplerDv4_f(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rw11ocl_samplerDv4_i(%opencl.image3d_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef14ocl_image3d_rwDv4_i(%opencl.image3d_rw_t * %1, <4 x i32> %b)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef14ocl_image3d_rwDv4_iDv4_f(%opencl.image3d_rw_t *, <4 x i32>, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef14ocl_image3d_rwDv4_iDv4_f(%opencl.image3d_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  tail call void @_Z16_cl_write_imagef14ocl_image3d_rwDv4_iDv4_f(%opencl.image3d_rw_t * %1, <4 x i32> %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call i32 @_Z20_cl_get_image_height14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_depth14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_depth14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_depth14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_rw(%opencl.image3d_rw_t *) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z13get_image_dim14ocl_image3d_rw(%opencl.image3d_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image3d_rw_t addrspace(1)* %a to %opencl.image3d_rw_t *
+  %call = tail call <4 x i32> @_Z17_cl_get_image_dim14ocl_image3d_rw(%opencl.image3d_rw_t * %1)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_f(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_ro11ocl_samplerDv2_i(%opencl.image1d_array_ro_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_roDv2_i(%opencl.image1d_array_ro_t * %1, double %2)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_ro(%opencl.image1d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image1d_array_ro(%opencl.image1d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_ro(%opencl.image1d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_ro(%opencl.image1d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image1d_array_ro(%opencl.image1d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_ro(%opencl.image1d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image1d_array_ro(%opencl.image1d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image1d_array_ro(%opencl.image1d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_ro_t addrspace(1)* %a to %opencl.image1d_array_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image1d_array_ro(%opencl.image1d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare void @_Z16_cl_write_imagei20ocl_image1d_array_woDv2_iDv4_i(%opencl.image1d_array_wo_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei20ocl_image1d_array_woDv2_iDv4_i(%opencl.image1d_array_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagei20ocl_image1d_array_woDv2_iDv4_i(%opencl.image1d_array_wo_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui20ocl_image1d_array_woDv2_iDv4_j(%opencl.image1d_array_wo_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui20ocl_image1d_array_woDv2_iDv4_j(%opencl.image1d_array_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z17_cl_write_imageui20ocl_image1d_array_woDv2_iDv4_j(%opencl.image1d_array_wo_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef20ocl_image1d_array_woDv2_iDv4_f(%opencl.image1d_array_wo_t *, double, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef20ocl_image1d_array_woDv2_iDv4_f(%opencl.image1d_array_wo_t addrspace(1)* %a, <2 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagef20ocl_image1d_array_woDv2_iDv4_f(%opencl.image1d_array_wo_t * %1, double %2, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_wo(%opencl.image1d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image1d_array_wo(%opencl.image1d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_wo(%opencl.image1d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_wo(%opencl.image1d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image1d_array_wo(%opencl.image1d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_wo(%opencl.image1d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image1d_array_wo(%opencl.image1d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image1d_array_wo(%opencl.image1d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_wo_t addrspace(1)* %a to %opencl.image1d_array_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image1d_array_wo(%opencl.image1d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei20ocl_image1d_array_rwDv2_iDv4_i(%opencl.image1d_array_rw_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei20ocl_image1d_array_rwDv2_iDv4_i(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagei20ocl_image1d_array_rwDv2_iDv4_i(%opencl.image1d_array_rw_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t * %1, double %2)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui20ocl_image1d_array_rwDv2_iDv4_j(%opencl.image1d_array_rw_t *, double, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui20ocl_image1d_array_rwDv2_iDv4_j(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z17_cl_write_imageui20ocl_image1d_array_rwDv2_iDv4_j(%opencl.image1d_array_rw_t * %1, double %2, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x float> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_f(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t *, %opencl.sampler_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <2 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %3 = bitcast <2 x i32> %c to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rw11ocl_samplerDv2_i(%opencl.image1d_array_rw_t * %1, %opencl.sampler_t * %2, double %3)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t *, double) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image1d_array_rwDv2_i(%opencl.image1d_array_rw_t * %1, double %2)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef20ocl_image1d_array_rwDv2_iDv4_f(%opencl.image1d_array_rw_t *, double, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef20ocl_image1d_array_rwDv2_iDv4_f(%opencl.image1d_array_rw_t addrspace(1)* %a, <2 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %2 = bitcast <2 x i32> %b to double
+  tail call void @_Z16_cl_write_imagef20ocl_image1d_array_rwDv2_iDv4_f(%opencl.image1d_array_rw_t * %1, double %2, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_rw(%opencl.image1d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image1d_array_rw(%opencl.image1d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image1d_array_rw(%opencl.image1d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_rw(%opencl.image1d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image1d_array_rw(%opencl.image1d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image1d_array_rw(%opencl.image1d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image1d_array_rw(%opencl.image1d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image1d_array_rw(%opencl.image1d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_array_rw_t addrspace(1)* %a to %opencl.image1d_array_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image1d_array_rw(%opencl.image1d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_f(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_ro11ocl_samplerDv4_i(%opencl.image2d_array_ro_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_roDv4_i(%opencl.image2d_array_ro_t * %1, <4 x i32> %b)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_ro(%opencl.image2d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image2d_array_ro(%opencl.image2d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_ro(%opencl.image2d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_ro(%opencl.image2d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image2d_array_ro(%opencl.image2d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_ro(%opencl.image2d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image2d_array_ro(%opencl.image2d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image2d_array_ro(%opencl.image2d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image2d_array_ro(%opencl.image2d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height20ocl_image2d_array_ro(%opencl.image2d_array_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height20ocl_image2d_array_ro(%opencl.image2d_array_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_ro_t addrspace(1)* %a to %opencl.image2d_array_ro_t *
+  %call = tail call i32 @_Z20_cl_get_image_height20ocl_image2d_array_ro(%opencl.image2d_array_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare void @_Z16_cl_write_imagei20ocl_image2d_array_woDv4_iS_(%opencl.image2d_array_wo_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei20ocl_image2d_array_woDv4_iS_(%opencl.image2d_array_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  tail call void @_Z16_cl_write_imagei20ocl_image2d_array_woDv4_iS_(%opencl.image2d_array_wo_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui20ocl_image2d_array_woDv4_iDv4_j(%opencl.image2d_array_wo_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui20ocl_image2d_array_woDv4_iDv4_j(%opencl.image2d_array_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  tail call void @_Z17_cl_write_imageui20ocl_image2d_array_woDv4_iDv4_j(%opencl.image2d_array_wo_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef20ocl_image2d_array_woDv4_iDv4_f(%opencl.image2d_array_wo_t *, <4 x i32>, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef20ocl_image2d_array_woDv4_iDv4_f(%opencl.image2d_array_wo_t addrspace(1)* %a, <4 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  tail call void @_Z16_cl_write_imagef20ocl_image2d_array_woDv4_iDv4_f(%opencl.image2d_array_wo_t * %1, <4 x i32> %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_wo(%opencl.image2d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image2d_array_wo(%opencl.image2d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_wo(%opencl.image2d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_wo(%opencl.image2d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image2d_array_wo(%opencl.image2d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_wo(%opencl.image2d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image2d_array_wo(%opencl.image2d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image2d_array_wo(%opencl.image2d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image2d_array_wo(%opencl.image2d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height20ocl_image2d_array_wo(%opencl.image2d_array_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height20ocl_image2d_array_wo(%opencl.image2d_array_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_wo_t addrspace(1)* %a to %opencl.image2d_array_wo_t *
+  %call = tail call i32 @_Z20_cl_get_image_height20ocl_image2d_array_wo(%opencl.image2d_array_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei20ocl_image2d_array_rwDv4_iS_(%opencl.image2d_array_rw_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei20ocl_image2d_array_rwDv4_iS_(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  tail call void @_Z16_cl_write_imagei20ocl_image2d_array_rwDv4_iS_(%opencl.image2d_array_rw_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t * %1, <4 x i32> %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui20ocl_image2d_array_rwDv4_iDv4_j(%opencl.image2d_array_rw_t *, <4 x i32>, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui20ocl_image2d_array_rwDv4_iDv4_j(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  tail call void @_Z17_cl_write_imageui20ocl_image2d_array_rwDv4_iDv4_j(%opencl.image2d_array_rw_t * %1, <4 x i32> %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x float>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_f(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x float> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t *, %opencl.sampler_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rw11ocl_samplerDv4_i(%opencl.image2d_array_rw_t * %1, %opencl.sampler_t * %2, <4 x i32> %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t *, <4 x i32>) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef20ocl_image2d_array_rwDv4_i(%opencl.image2d_array_rw_t * %1, <4 x i32> %b)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef20ocl_image2d_array_rwDv4_iDv4_f(%opencl.image2d_array_rw_t *, <4 x i32>, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef20ocl_image2d_array_rwDv4_iDv4_f(%opencl.image2d_array_rw_t addrspace(1)* %a, <4 x i32> %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  tail call void @_Z16_cl_write_imagef20ocl_image2d_array_rwDv4_iDv4_f(%opencl.image2d_array_rw_t * %1, <4 x i32> %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_rw(%opencl.image2d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type20ocl_image2d_array_rw(%opencl.image2d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type20ocl_image2d_array_rw(%opencl.image2d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_rw(%opencl.image2d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order20ocl_image2d_array_rw(%opencl.image2d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order20ocl_image2d_array_rw(%opencl.image2d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width20ocl_image2d_array_rw(%opencl.image2d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width20ocl_image2d_array_rw(%opencl.image2d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width20ocl_image2d_array_rw(%opencl.image2d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z20_cl_get_image_height20ocl_image2d_array_rw(%opencl.image2d_array_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z16get_image_height20ocl_image2d_array_rw(%opencl.image2d_array_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image2d_array_rw_t addrspace(1)* %a to %opencl.image2d_array_rw_t *
+  %call = tail call i32 @_Z20_cl_get_image_height20ocl_image2d_array_rw(%opencl.image2d_array_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_ro11ocl_samplerf(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_ro11ocl_sampleri(%opencl.image1d_buffer_ro_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_roi(%opencl.image1d_buffer_ro_t * %1, i32 %b)
+  ret <4 x float> %call
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_ro_t addrspace(1)* %a to %opencl.image1d_buffer_ro_t *
+  %call = tail call i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_ro(%opencl.image1d_buffer_ro_t * %1)
+  ret i32 %call
+}
+
+
+declare void @_Z16_cl_write_imagei21ocl_image1d_buffer_woiDv4_i(%opencl.image1d_buffer_wo_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei21ocl_image1d_buffer_woiDv4_i(%opencl.image1d_buffer_wo_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  tail call void @_Z16_cl_write_imagei21ocl_image1d_buffer_woiDv4_i(%opencl.image1d_buffer_wo_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z17_cl_write_imageui21ocl_image1d_buffer_woiDv4_j(%opencl.image1d_buffer_wo_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui21ocl_image1d_buffer_woiDv4_j(%opencl.image1d_buffer_wo_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  tail call void @_Z17_cl_write_imageui21ocl_image1d_buffer_woiDv4_j(%opencl.image1d_buffer_wo_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare void @_Z16_cl_write_imagef21ocl_image1d_buffer_woiDv4_f(%opencl.image1d_buffer_wo_t *, i32, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef21ocl_image1d_buffer_woiDv4_f(%opencl.image1d_buffer_wo_t addrspace(1)* %a, i32 %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  tail call void @_Z16_cl_write_imagef21ocl_image1d_buffer_woiDv4_f(%opencl.image1d_buffer_wo_t * %1, i32 %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_wo_t addrspace(1)* %a to %opencl.image1d_buffer_wo_t *
+  %call = tail call i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_wo(%opencl.image1d_buffer_wo_t * %1)
+  ret i32 %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z11read_imagei21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call <4 x i32> @_Z15_cl_read_imagei21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z16_cl_write_imagei21ocl_image1d_buffer_rwiDv4_i(%opencl.image1d_buffer_rw_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagei21ocl_image1d_buffer_rwiDv4_i(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  tail call void @_Z16_cl_write_imagei21ocl_image1d_buffer_rwiDv4_i(%opencl.image1d_buffer_rw_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x i32> %call
+}
+
+
+declare <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x i32> @_Z12read_imageui21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call <4 x i32> @_Z16_cl_read_imageui21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t * %1, i32 %b)
+  ret <4 x i32> %call
+}
+
+
+declare void @_Z17_cl_write_imageui21ocl_image1d_buffer_rwiDv4_j(%opencl.image1d_buffer_rw_t *, i32, <4 x i32>) local_unnamed_addr #0
+
+define spir_func void @_Z13write_imageui21ocl_image1d_buffer_rwiDv4_j(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b, <4 x i32> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  tail call void @_Z17_cl_write_imageui21ocl_image1d_buffer_rwiDv4_j(%opencl.image1d_buffer_rw_t * %1, i32 %b, <4 x i32> %c)
+  ret void
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, float) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, float %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rw11ocl_samplerf(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, float %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t *, %opencl.sampler_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t addrspace(1)* %a, %opencl.sampler_t addrspace(1)* %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %2 = addrspacecast %opencl.sampler_t addrspace(1)* %b to %opencl.sampler_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rw11ocl_sampleri(%opencl.image1d_buffer_rw_t * %1, %opencl.sampler_t * %2, i32 %c)
+  ret <4 x float> %call
+}
+
+
+declare <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t *, i32) local_unnamed_addr #0
+
+define spir_func <4 x float> @_Z11read_imagef21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call <4 x float> @_Z15_cl_read_imagef21ocl_image1d_buffer_rwi(%opencl.image1d_buffer_rw_t * %1, i32 %b)
+  ret <4 x float> %call
+}
+
+
+declare void @_Z16_cl_write_imagef21ocl_image1d_buffer_rwiDv4_f(%opencl.image1d_buffer_rw_t *, i32, <4 x float>) local_unnamed_addr #0
+
+define spir_func void @_Z12write_imagef21ocl_image1d_buffer_rwiDv4_f(%opencl.image1d_buffer_rw_t addrspace(1)* %a, i32 %b, <4 x float> %c) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  tail call void @_Z16_cl_write_imagef21ocl_image1d_buffer_rwiDv4_f(%opencl.image1d_buffer_rw_t * %1, i32 %b, <4 x float> %c)
+  ret void
+}
+
+
+declare i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z27get_image_channel_data_type21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call i32 @_Z31_cl_get_image_channel_data_type21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z23get_image_channel_order21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call i32 @_Z27_cl_get_image_channel_order21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t *) local_unnamed_addr #0
+
+define spir_func i32 @_Z15get_image_width21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast %opencl.image1d_buffer_rw_t addrspace(1)* %a to %opencl.image1d_buffer_rw_t *
+  %call = tail call i32 @_Z19_cl_get_image_width21ocl_image1d_buffer_rw(%opencl.image1d_buffer_rw_t * %1)
+  ret i32 %call
+}
+
+
 declare i32 @_Z20_cl_atomic_fetch_addPU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z16atomic_fetch_addPU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
@@ -78326,60 +80390,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicii(i32 addrspace(3)* %a, i
 }
 
 
-declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
 declare i32 @_Z16_cl_atomic_storePU8CLglobalVU7_Atomicii(i32 *, i32) local_unnamed_addr #0
 
 define spir_func i32 @_Z12atomic_storePU3AS1VU7_Atomicii(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
@@ -78608,6 +80618,60 @@ define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomici
 }
 
 
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomici(i32 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomici(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomici(i32 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomici(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomici12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomici12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicjj(i32 *, i32) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicjj(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
@@ -78623,60 +80687,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicjj(i32 addrspace(3)* %a, i
   %1 = addrspacecast i32 addrspace(3)* %a to i32 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicjj(i32 * %1, i32 %b)
   ret void
-}
-
-
-declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomicj(i32 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
-
-define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomicj(i32 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
-}
-
-
-declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
-  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
-  ret i32 %call
 }
 
 
@@ -78908,6 +80918,60 @@ define spir_func i32 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicj
 }
 
 
+declare i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS1VU7_Atomicj(i32 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicj(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 *) local_unnamed_addr #0
+
+define spir_func i32 @_Z11atomic_loadPU3AS3VU7_Atomicj(i32 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicj(i32 * %1)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order(i32 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 *, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order(i32 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order(i32 * %1, i32 %b)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS1VU7_Atomicj12memory_order12memory_scope(i32 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(1)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
+declare i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i32 @_Z20atomic_load_explicitPU3AS3VU7_Atomicj12memory_order12memory_scope(i32 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i32 addrspace(3)* %a to i32 *
+  %call = tail call i32 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicj12memory_order12memory_scope(i32 * %1, i32 %b, i32 %c)
+  ret i32 %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicll(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicll(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
@@ -78923,60 +80987,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicll(i64 addrspace(3)* %a, i
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicll(i64 * %1, i64 %b)
   ret void
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicl(i64 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicl(i64 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
 }
 
 
@@ -79208,6 +81218,60 @@ define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicl
 }
 
 
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicl(i64 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicl(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicl(i64 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicl(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicl12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicl12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicl12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicmm(i64 *, i64) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicmm(i64 addrspace(1)* %a, i64 %b) local_unnamed_addr #0 {
@@ -79223,60 +81287,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicmm(i64 addrspace(3)* %a, i
   %1 = addrspacecast i64 addrspace(3)* %a to i64 *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicmm(i64 * %1, i64 %b)
   ret void
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicm(i64 addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
-
-define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicm(i64 addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
-}
-
-
-declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
-
-define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
-  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
-  ret i64 %call
 }
 
 
@@ -79508,6 +81518,60 @@ define spir_func i64 @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomicm
 }
 
 
+declare i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS1VU7_Atomicm(i64 addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicm(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 *) local_unnamed_addr #0
+
+define spir_func i64 @_Z11atomic_loadPU3AS3VU7_Atomicm(i64 addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicm(i64 * %1)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order(i64 addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 *, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order(i64 addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order(i64 * %1, i32 %b)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS1VU7_Atomicm12memory_order12memory_scope(i64 addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(1)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
+declare i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 *, i32, i32) local_unnamed_addr #0
+
+define spir_func i64 @_Z20atomic_load_explicitPU3AS3VU7_Atomicm12memory_order12memory_scope(i64 addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast i64 addrspace(3)* %a to i64 *
+  %call = tail call i64 @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicm12memory_order12memory_scope(i64 * %1, i32 %b, i32 %c)
+  ret i64 %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicff(float *, float) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicff(float addrspace(1)* %a, float %b) local_unnamed_addr #0 {
@@ -79523,60 +81587,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicff(float addrspace(3)* %a,
   %1 = addrspacecast float addrspace(3)* %a to float *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicff(float * %1, float %b)
   ret void
-}
-
-
-declare float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
-
-define spir_func float @_Z11atomic_loadPU3AS1VU7_Atomicf(float addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
-  ret float %call
-}
-
-
-declare float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
-
-define spir_func float @_Z11atomic_loadPU3AS3VU7_Atomicf(float addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order(float addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order(float addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order12memory_scope(float addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(1)* %a to float *
-  %call = tail call float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
-  ret float %call
-}
-
-
-declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
-
-define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order12memory_scope(float addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast float addrspace(3)* %a to float *
-  %call = tail call float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
-  ret float %call
 }
 
 
@@ -79808,6 +81818,60 @@ define spir_func float @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atomi
 }
 
 
+declare float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float *) local_unnamed_addr #0
+
+define spir_func float @_Z11atomic_loadPU3AS1VU7_Atomicf(float addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call float @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicf(float * %1)
+  ret float %call
+}
+
+
+declare float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float *) local_unnamed_addr #0
+
+define spir_func float @_Z11atomic_loadPU3AS3VU7_Atomicf(float addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call float @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicf(float * %1)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order(float addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float *, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order(float addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order(float * %1, i32 %b)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS1VU7_Atomicf12memory_order12memory_scope(float addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(1)* %a to float *
+  %call = tail call float @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  ret float %call
+}
+
+
+declare float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float *, i32, i32) local_unnamed_addr #0
+
+define spir_func float @_Z20atomic_load_explicitPU3AS3VU7_Atomicf12memory_order12memory_scope(float addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast float addrspace(3)* %a to float *
+  %call = tail call float @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicf12memory_order12memory_scope(float * %1, i32 %b, i32 %c)
+  ret float %call
+}
+
+
 declare void @_Z15_cl_atomic_initPU8CLglobalVU7_Atomicdd(double *, double) local_unnamed_addr #0
 
 define spir_func void @_Z11atomic_initPU3AS1VU7_Atomicdd(double addrspace(1)* %a, double %b) local_unnamed_addr #0 {
@@ -79823,60 +81887,6 @@ define spir_func void @_Z11atomic_initPU3AS3VU7_Atomicdd(double addrspace(3)* %a
   %1 = addrspacecast double addrspace(3)* %a to double *
   tail call void @_Z15_cl_atomic_initPU7CLlocalVU7_Atomicdd(double * %1, double %b)
   ret void
-}
-
-
-declare double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
-
-define spir_func double @_Z11atomic_loadPU3AS1VU7_Atomicd(double addrspace(1)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
-  ret double %call
-}
-
-
-declare double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
-
-define spir_func double @_Z11atomic_loadPU3AS3VU7_Atomicd(double addrspace(3)* %a) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order(double addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order(double addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order12memory_scope(double addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(1)* %a to double *
-  %call = tail call double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
-  ret double %call
-}
-
-
-declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
-
-define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order12memory_scope(double addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
-  %1 = addrspacecast double addrspace(3)* %a to double *
-  %call = tail call double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
-  ret double %call
 }
 
 
@@ -80104,6 +82114,60 @@ define spir_func double @_Z37atomic_compare_exchange_weak_explicitPU3AS3VU7_Atom
   %1 = addrspacecast double addrspace(3)* %a to double *
   %2 = addrspacecast double addrspace(3)* %b to double *
   %call = tail call double @_Z41_cl_atomic_compare_exchange_weak_explicitPU7CLlocalVU7_AtomicdPU7CLlocaldd12memory_order12memory_order12memory_scope(double * %1, double * %2, double %c, i32 %d, i32 %e, i32 %f)
+  ret double %call
+}
+
+
+declare double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double *) local_unnamed_addr #0
+
+define spir_func double @_Z11atomic_loadPU3AS1VU7_Atomicd(double addrspace(1)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call double @_Z15_cl_atomic_loadPU8CLglobalVU7_Atomicd(double * %1)
+  ret double %call
+}
+
+
+declare double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double *) local_unnamed_addr #0
+
+define spir_func double @_Z11atomic_loadPU3AS3VU7_Atomicd(double addrspace(3)* %a) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call double @_Z15_cl_atomic_loadPU7CLlocalVU7_Atomicd(double * %1)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order(double addrspace(1)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double *, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order(double addrspace(3)* %a, i32 %b) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order(double * %1, i32 %b)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS1VU7_Atomicd12memory_order12memory_scope(double addrspace(1)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(1)* %a to double *
+  %call = tail call double @_Z24_cl_atomic_load_explicitPU8CLglobalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
+  ret double %call
+}
+
+
+declare double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double *, i32, i32) local_unnamed_addr #0
+
+define spir_func double @_Z20atomic_load_explicitPU3AS3VU7_Atomicd12memory_order12memory_scope(double addrspace(3)* %a, i32 %b, i32 %c) local_unnamed_addr #0 {
+  %1 = addrspacecast double addrspace(3)* %a to double *
+  %call = tail call double @_Z24_cl_atomic_load_explicitPU7CLlocalVU7_Atomicd12memory_order12memory_scope(double * %1, i32 %b, i32 %c)
   ret double %call
 }
 
