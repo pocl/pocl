@@ -57,90 +57,6 @@ using namespace llvm;
 // #define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
 
-/* Fixes address space on opencl.imageX_t arguments to be global.
- * Note this does not change the types in Function->FunctionType
- * so it's only used inside CopyFunc on kernel library functions */
-static void fixOpenCLimageArguments(llvm::Function *Func, unsigned AS) {
-    Function::arg_iterator b = Func->arg_begin();
-    Function::arg_iterator e = Func->arg_end();
-    for (; b != e; b++)  {
-        Argument *j = &*b;
-        Type *t = j->getType();
-        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-            Type *pe_type = t->getPointerElementType();
-            if (pe_type->getStructName().startswith("opencl.image"))  {
-              Type *new_t =
-                PointerType::get(pe_type, AS);
-              j->mutateType(new_t);
-            }
-        }
-    }
-}
-
-/* Fixes opencl.imageX_t type arguments which miss address space global
- * returns F if no changes are required, or a new cloned F if the arguments
- * require a fix. To be used on user's kernel code itself, not on kernel library.
- */
-static llvm::Function *
-CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
-{
-    assert(F && "No function to copy");
-    assert(!F->isDeclaration());
-
-    int changed = 0;
-    ValueToValueMapTy VVMap;
-    SmallVector<Type *, 8> sv;
-    for (Function::arg_iterator i = F->arg_begin(), e = F->arg_end();
-          i != e; ++i) {
-        Argument *j = &*i;
-        Type *t = j->getType();
-        Type *new_t = t;
-        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-          Type *pe_type = t->getPointerElementType();
-          if (pe_type->getStructName().startswith("opencl.image")) {
-
-            if (t->getPointerAddressSpace() != AS) {
-              new_t = PointerType::get(pe_type, AS);
-              changed = 1;
-            }
-          }
-        }
-        sv.push_back(new_t);
-    }
-
-    if (!changed)
-      return F;
-
-    FunctionType *NewFT = FunctionType::get(F->getReturnType(),
-                                         ArrayRef<Type *> (sv),
-                                         false);
-    assert(NewFT);
-    llvm::Function *DstFunc = nullptr;
-
-    DstFunc = Function::Create(NewFT, F->getLinkage(), "temporary", Mod);
-    DstFunc->takeName(F);
-
-    Function::arg_iterator j = DstFunc->arg_begin();
-    for (Function::const_arg_iterator i = F->arg_begin(),
-         e = F->arg_end();
-         i != e; ++i) {
-        j->setName(i->getName());
-        VVMap[&*i] = &*j;
-        ++j;
-    }
-
-    DstFunc->copyAttributesFrom(F);
-
-    SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
-    CloneFunctionIntoAbs(DstFunc, F, VVMap, RI);
-
-    F->removeFromParent();
-
-    delete F;
-
-    return DstFunc;
-}
-
 // Find all functions in the calltree of F, append their
 // name to function name set.
 static inline void
@@ -229,7 +145,6 @@ CopyFunc(const llvm::StringRef Name,
         DB_PRINT("  cloning %s\n", Name.data());
 
         CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
-        fixOpenCLimageArguments(DstFunc, AS);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",
                  Name.data());
@@ -404,17 +319,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   }
 
   llvm::Module::iterator fi, fe;
-
-  // Find and fix opencl.imageX_t arguments
-  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    llvm::Function *f = &*fi;
-    if (f->isDeclaration())
-      continue;
-    // need to restart iteration if we replace a function
-    if (CloneFuncFixOpenCLImageT(Program, f, global_AS) != f) {
-      fi = Program->begin();
-    }
-  }
 
   // Inspect the program, find undefined functions
   for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
