@@ -34,11 +34,7 @@ POname (clCreateCommandBufferKHR) (
   int errcode = 0;
   cl_command_buffer_khr cmdbuf = NULL;
 
-  /* cl_khr_command_buffer_multi_device supports multiple queues but the basic
-   * extension does not, keep this check as is until we support that extension
-   */
-  POCL_GOTO_ERROR_COND ((num_queues != 1), CL_INVALID_VALUE);
-
+  POCL_GOTO_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
 
   /* All queues must have the same OpenCL context */
