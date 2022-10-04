@@ -110,7 +110,7 @@ POCL_EXPORT
 int pocl_sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name);
 
 POCL_EXPORT
-int restore_builtin_kernel_name(cl_kernel kernel, char *saved_name);
+int pocl_restore_builtin_kernel_name(cl_kernel kernel, char *saved_name);
 
 #ifdef __cplusplus
 }

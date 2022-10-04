@@ -182,7 +182,7 @@ int pocl_sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
   return 0;
 }
 
-int restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
+int pocl_restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
   if (kernel->program->num_builtin_kernels) {
     std::free((void *)kernel->name);
     kernel->meta->name = saved_name;

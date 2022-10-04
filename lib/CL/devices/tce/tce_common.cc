@@ -514,7 +514,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     }
   }
 
-  restore_builtin_kernel_name(Kernel, Save);
+  pocl_restore_builtin_kernel_name(Kernel, Save);
 
   POCL_UNLOCK(Dev->tce_compile_lock);
 }

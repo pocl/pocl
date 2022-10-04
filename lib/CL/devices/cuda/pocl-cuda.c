@@ -1316,7 +1316,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                   module = has_offsets ? kdata->module_offsets : kdata->module;
                   function
                       = has_offsets ? kdata->kernel_offsets : kdata->kernel;
-                  restore_builtin_kernel_name (kernel, saved_name);
+                  pocl_restore_builtin_kernel_name (kernel, saved_name);
                 }
             }
         }
