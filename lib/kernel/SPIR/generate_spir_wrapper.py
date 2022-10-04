@@ -216,6 +216,29 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"12memory_order": "i32",
 	"12memory_scope": "i32",
+
+	'14ocl_image1d_ro': '%opencl.image1d_ro_t',
+	'14ocl_image2d_ro': '%opencl.image2d_ro_t',
+	'14ocl_image3d_ro': '%opencl.image3d_ro_t',
+	'20ocl_image1d_array_ro': '%opencl.image1d_array_ro_t',
+	'20ocl_image2d_array_ro': '%opencl.image2d_array_ro_t',
+	'21ocl_image1d_buffer_ro': '%opencl.image1d_buffer_ro_t',
+
+	'14ocl_image1d_rw': '%opencl.image1d_rw_t',
+	'14ocl_image2d_rw': '%opencl.image2d_rw_t',
+	'14ocl_image3d_rw': '%opencl.image3d_rw_t',
+	'20ocl_image1d_array_rw': '%opencl.image1d_array_rw_t',
+	'20ocl_image2d_array_rw': '%opencl.image2d_array_rw_t',
+	'21ocl_image1d_buffer_rw': '%opencl.image1d_buffer_rw_t',
+
+	'14ocl_image1d_wo': '%opencl.image1d_wo_t',
+	'14ocl_image2d_wo': '%opencl.image2d_wo_t',
+	'14ocl_image3d_wo': '%opencl.image3d_wo_t',
+	'20ocl_image1d_array_wo': '%opencl.image1d_array_wo_t',
+	'20ocl_image2d_array_wo': '%opencl.image2d_array_wo_t',
+	'21ocl_image1d_buffer_wo': '%opencl.image1d_buffer_wo_t',
+
+	'11ocl_sampler': '%opencl.sampler_t'
 }
 
 COERCE_VECTOR_MAP = {
@@ -402,6 +425,8 @@ LLVM_SPIR_AS = {
 # returns a LLVM argument type with addrspace
 # e.g. for argtype=="Pi" returns "i32 *"
 def llvm_arg_type(argtype, AS):
+	if argtype.count("ocl_image")>0 or argtype.count("ocl_sampler")>0 :
+		return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
 	if argtype[0] == 'P':
 		idx = 1
 		if argtype[1] == 'V':
@@ -484,6 +509,8 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 	else:
 		if name.startswith("atomic"): # TODO
 			addr_spaces = ["global", "local"]  # , "generic"]
+		elif name.count("image")>0:
+			addr_spaces = ["global"]
 		else:
 			addr_spaces = ["global", "local", "private"]
 
@@ -642,13 +669,69 @@ SPIR_MODULE_PREFIX = {
 source_filename = "generate_spir_wrapper.py"
 target datalayout = "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
 target triple = "spir64-unknown-unknown"
+
+%opencl.sampler_t = type opaque
+%opencl.event_t = type opaque
+
+%opencl.image1d_ro_t = type opaque
+%opencl.image2d_ro_t = type opaque
+%opencl.image3d_ro_t = type opaque
+
+%opencl.image1d_wo_t = type opaque
+%opencl.image2d_wo_t = type opaque
+%opencl.image3d_wo_t = type opaque
+
+%opencl.image1d_rw_t = type opaque
+%opencl.image2d_rw_t = type opaque
+%opencl.image3d_rw_t = type opaque
+
+%opencl.image1d_array_ro_t = type opaque
+%opencl.image1d_array_wo_t = type opaque
+%opencl.image1d_array_rw_t = type opaque
+%opencl.image2d_array_ro_t = type opaque
+%opencl.image2d_array_wo_t = type opaque
+%opencl.image2d_array_rw_t = type opaque
+
+%opencl.image1d_buffer_ro_t = type opaque
+%opencl.image1d_buffer_rw_t = type opaque
+%opencl.image1d_buffer_wo_t = type opaque
+
 """,
+
+
 32:
 """
 ; ModuleID = 'spir_wrapper.bc'
 source_filename = "generate_spir_wrapper.py"
 target datalayout = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
 target triple = "spir-unknown-unknown"
+
+%opencl.sampler_t = type opaque
+%opencl.event_t = type opaque
+
+%opencl.image1d_ro_t = type opaque
+%opencl.image2d_ro_t = type opaque
+%opencl.image3d_ro_t = type opaque
+
+%opencl.image1d_wo_t = type opaque
+%opencl.image2d_wo_t = type opaque
+%opencl.image3d_wo_t = type opaque
+
+%opencl.image1d_rw_t = type opaque
+%opencl.image2d_rw_t = type opaque
+%opencl.image3d_rw_t = type opaque
+
+%opencl.image1d_array_ro_t = type opaque
+%opencl.image1d_array_wo_t = type opaque
+%opencl.image1d_array_rw_t = type opaque
+%opencl.image2d_array_ro_t = type opaque
+%opencl.image2d_array_wo_t = type opaque
+%opencl.image2d_array_rw_t = type opaque
+
+%opencl.image1d_buffer_ro_t = type opaque
+%opencl.image1d_buffer_rw_t = type opaque
+%opencl.image1d_buffer_wo_t = type opaque
+
 """
 }
 
@@ -830,6 +913,59 @@ for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 						src_t = "Dv" + s + "_" + src_t
 						signext = ''
 					generate_function('convert_'+SIG_TO_TYPE_NAME_MAP[dst_t]+sat+rounding, SIG_TO_LLVM_TYPE_MAP[dst_t], signext, False, src_t)
+
+IMG_COLOR_TYPE_MAP = {
+	'i' : 'Dv4_i',
+	'ui' : 'Dv4_j',
+	'f' : 'Dv4_f',
+}
+
+IMG_COORD_SIZE = {
+	'image1d': 1,
+	'image2d': 2,
+	'image3d': 4,
+	'image1d_array': 2,
+	'image2d_array': 4,
+	'image1d_buffer': 1
+}
+
+
+# images
+for img_type in ['image1d', 'image2d', 'image3d', 'image1d_array', 'image2d_array', 'image1d_buffer']:
+	coord_float_type = 'f'
+	coord_int_type = 'i'
+	size = IMG_COORD_SIZE[img_type]
+	if size > 1:
+		coord_float_type = "Dv" + str(size) + "_f"
+		coord_int_type = "Dv" + str(size) + "_i"
+	for access in ['ro', 'wo', 'rw']:
+		img_type_llvm = 'ocl_' + img_type + "_" + access
+		img_type_llvm = str(len(img_type_llvm)) + img_type_llvm
+
+		for color_type in ['i', 'ui', 'f']:
+			# return value for read_image or input value for write_image
+			mang_color_type = IMG_COLOR_TYPE_MAP[color_type]
+
+			if access != 'wo':
+				generate_function('read_image'+color_type, SIG_TO_LLVM_TYPE_MAP[mang_color_type], '', True, img_type_llvm, '11ocl_sampler', coord_float_type)
+				generate_function('read_image'+color_type, SIG_TO_LLVM_TYPE_MAP[mang_color_type], '', True, img_type_llvm, '11ocl_sampler', coord_int_type)
+				generate_function('read_image'+color_type, SIG_TO_LLVM_TYPE_MAP[mang_color_type], '', True, img_type_llvm, coord_int_type)
+			if access != 'ro':
+				generate_function('write_image'+color_type, 'void', '', True, img_type_llvm, coord_int_type, mang_color_type)
+
+		generate_function('get_image_channel_data_type', 'i32', '', True, img_type_llvm)
+		generate_function('get_image_channel_order', 'i32', '', True, img_type_llvm)
+		generate_function('get_image_width', 'i32', '', True, img_type_llvm)
+		if img_type.startswith('image2') or img_type.startswith('image3'):
+			generate_function('get_image_height', 'i32', '', True, img_type_llvm)
+		if img_type in ['image2d_t','image2d_array_t','image2d_depth_t', 'image2d_array_depth_t']:
+			generate_function('get_image_dim', '<2 x i32>', '', True, img_type_llvm)
+		if img_type == 'image3d':
+			generate_function('get_image_depth', 'i32', '', True, img_type_llvm)
+			generate_function('get_image_dim', '<4 x i32>', '', True, img_type_llvm)
+		if img_type in ['image2d_array_t', 'image2d_array_depth_t', 'image1d_array_t']:
+			generate_function('get_image_array_size', 'i64', '', True, img_type_llvm)
+
 
 # Atomics
 for mang_type in ['i', 'j', "l", "m"]:
