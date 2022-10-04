@@ -265,3 +265,5 @@
 
 
 #cmakedefine USE_POCL_MEMMANAGER
+
+#cmakedefine LLVM_OPAQUE_POINTERS

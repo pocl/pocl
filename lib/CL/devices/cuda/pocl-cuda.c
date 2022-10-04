@@ -49,7 +49,6 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <nvPTXCompiler.h>
 
 #ifdef ENABLE_CUDNN
 #include <cudnn.h>
@@ -1165,9 +1164,6 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   cl_device_id dev = program->devices[device_i];
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
   int have_sm70 = (ddata->sm_maj >= 7);
-
-  nvPTXCompilerHandle compiler = NULL;
-  nvPTXCompileResult result;
 
   uint64_t builtins_file_len = 0;
   char *builtins_file = NULL;

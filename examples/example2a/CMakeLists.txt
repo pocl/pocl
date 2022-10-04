@@ -57,7 +57,7 @@ set_tests_properties( "examples/example2a" ${SPIREX}
     ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    LABELS "internal;cuda"
+    LABELS "internal;"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR

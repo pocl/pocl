@@ -335,7 +335,6 @@ set_property(TEST
   "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
   "regression/vector_kernel_arguments"
-  "regression/autolocals_in_constexprs"
   APPEND PROPERTY LABELS "cuda")
 
 if(LLVM_VERSION_MAJOR GREATER 7)

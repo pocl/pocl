@@ -222,8 +222,7 @@ CopyFunc(const llvm::StringRef Name,
         DB_PRINT("   %s not found in destination module, creating\n",
                  Name.data());
         DstFunc =
-          Function::Create(cast<FunctionType>(
-                             SrcFunc->getType()->getElementType()),
+        Function::Create(cast<FunctionType>(SrcFunc->getValueType()),
                            SrcFunc->getLinkage(),
                            SrcFunc->getName(),
                            To);
@@ -477,7 +476,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   for (gi = Lib->global_begin(), ge = Lib->global_end(); gi != ge; gi++) {
     DB_PRINT(" %s\n", gi->getName().data());
     GlobalVariable *GV = new GlobalVariable(
-      *Program, gi->getType()->getElementType(), gi->isConstant(),
+      *Program, gi->getValueType(), gi->isConstant(),
       gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
       gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*gi);
@@ -536,7 +535,7 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   for (gi=program->global_begin(), ge=program->global_end(); gi != ge; gi++) {
     DB_PRINT(" %s\n", gi->getName().data());
     GlobalVariable *GV = new GlobalVariable(
-      *parallel_bc, gi->getType()->getElementType(), gi->isConstant(),
+      *parallel_bc, gi->getValueType(), gi->isConstant(),
       gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
       gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*gi);

@@ -303,7 +303,6 @@ set_property(TEST
   "kernel/test_frexp_modf"
   "kernel/test_convert_sat_regression"
   "kernel/test_short16"
-  "kernel/test_local_struct_array"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"

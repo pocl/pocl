@@ -886,7 +886,7 @@ Workgroup::privatizeContext(Function *F)
     LocalIdGlobals[i] = M->getGlobalVariable(TempStr);
     if (LocalIdGlobals[i] != NULL) {
       LocalIdAllocas[i] =
-        Builder.CreateAlloca(LocalIdGlobals[i]->getType()->getElementType(), 0,
+        Builder.CreateAlloca(LocalIdGlobals[i]->getValueType(), 0,
                              TempStr);
       if (LocalIdGlobals[i]->hasInitializer()) {
         Constant *C = LocalIdGlobals[i]->getInitializer();
@@ -911,7 +911,7 @@ Workgroup::privatizeContext(Function *F)
     LocalSizeGlobals[i] = M->getGlobalVariable(TempStr);
     if (LocalSizeGlobals[i] != NULL) {
       LocalSizeAllocas[i] =
-        Builder.CreateAlloca(LocalSizeGlobals[i]->getType()->getElementType(),
+        Builder.CreateAlloca(LocalSizeGlobals[i]->getValueType(),
                              0, TempStr);
       if (LocalSizeGlobals[i]->hasInitializer()) {
         Constant *C = LocalSizeGlobals[i]->getInitializer();
@@ -1055,7 +1055,11 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
     if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
       // Generate allocas for the local buffer arguments.
       PointerType *ParamType = dyn_cast<PointerType>(ArgType);
+#ifdef LLVM_OPAQUE_POINTERS
+      Type *ArgElementType = ii->getParamByValType();
+#else
       Type *ArgElementType = ParamType->getElementType();
+#endif
       if (ArgElementType->isArrayTy()) {
         // Known static local size (converted automatic local).
         Arg =
@@ -1276,7 +1280,8 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
   LLVMValueRef Offs =
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
   LLVMValueRef ArgByteOffset =
-      LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
+      LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBufferPtr)),
+                    ArgBufferPtr, &Offs, 1, "arg_byte_offset");
 
   llvm::Argument &Arg = cast<Argument>(*unwrap(Param));
 
@@ -1412,7 +1417,8 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         uint64_t ArgPos = ArgBufferOffsets[i];
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
         LLVMValueRef SizeByteOffset =
-            LLVMBuildGEP(Builder, ArgBuffer, &Offs, 1, "size_byte_offset");
+            LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBuffer)),
+                          ArgBuffer, &Offs, 1, "size_byte_offset");
         LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
         LLVMValueRef SizeOffsetBitcast =
             LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
