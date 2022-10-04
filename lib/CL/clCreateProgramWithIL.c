@@ -105,8 +105,8 @@ POname(clCreateProgramWithIL)(cl_context context,
                               cl_int *errcode_ret)
 CL_API_SUFFIX__VERSION_2_1
 {
-  /* SPIR is disabled when building with conformance */
-#ifdef ENABLE_CONFORMANCE
+  /* if SPIR-V is disabled, return error early */
+#if defined(ENABLE_CONFORMANCE) && !defined(ENABLE_SPIRV)
   if (errcode_ret)
     *errcode_ret = CL_INVALID_OPERATION;
   return NULL;

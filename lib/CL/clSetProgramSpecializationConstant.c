@@ -30,8 +30,8 @@ POname(clSetProgramSpecializationConstant)
                                    size_t      spec_size,
                                    const void* spec_value) CL_API_SUFFIX__VERSION_2_2
 {
-  /* SPIR is disabled when building with conformance */
-#ifdef ENABLE_CONFORMANCE
+  /* if SPIR-V is disabled, return early */
+#if defined(ENABLE_CONFORMANCE) && !defined(ENABLE_SPIRV)
   return CL_INVALID_OPERATION;
 #endif
 
