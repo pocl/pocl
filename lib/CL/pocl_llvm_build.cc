@@ -977,6 +977,8 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
     kernellib += getX86KernelLibName();
+#elif defined(HOST_CPU_FORCED)
+    kernellib += OCL_KERNEL_TARGET_CPU;
 #else
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;
@@ -996,7 +998,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     }
   else
     {
-#ifndef KERNELLIB_HOST_DISTRO_VARIANTS
+#if !defined(KERNELLIB_HOST_DISTRO_VARIANTS) && !defined(HOST_CPU_FORCED)
       if (is_host && pocl_exists(kernellib_fallback.c_str()))
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",

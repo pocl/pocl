@@ -38,6 +38,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "BreakConstantGEPs.h"
 #include "Workgroup.h"
 
+using namespace llvm;
+
 // Identifier variable for the pass
 char BreakConstantGEPs::ID = 0;
 

@@ -19,8 +19,8 @@ git show -U0 --no-color >$PATCHY
 SCRIPTPATH=$( realpath "$0"  )
 RELPATH=$(dirname "$SCRIPTPATH")
 
+$RELPATH/clang-format-diff.py -regex '(.*(\.hpp$|\.cc$))|(lib/llvmopencl/.*\.h)' -i -p1 -style LLVM <$PATCHY
 $RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style GNU <$PATCHY
-$RELPATH/clang-format-diff.py -regex '(.*(\.hh$|\.cc$))|(lib/llvmopencl/.*\.h)' -i -p1 -style LLVM <$PATCHY
 
 if [ -z "$(git diff)" ]; then
   echo "No changes."

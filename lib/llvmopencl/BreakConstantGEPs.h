@@ -24,8 +24,6 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 
-using namespace llvm;
-
 //
 // Pass: BreakConstantGEPs
 //
@@ -33,7 +31,8 @@ using namespace llvm;
 //  This pass modifies a function so that it uses GEP instructions instead of
 //  GEP constant expressions.
 //
-struct BreakConstantGEPs : public FunctionPass {
+struct BreakConstantGEPs : public llvm::FunctionPass
+{
   private:
     // Private methods
 
@@ -43,8 +42,8 @@ struct BreakConstantGEPs : public FunctionPass {
     static char ID;
     BreakConstantGEPs() : FunctionPass(ID) {}
     llvm::StringRef getPassName() const override {return "Remove Constant GEP Expressions";}
-    virtual bool runOnFunction (Function & F) override;
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  virtual bool runOnFunction (llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
       // This pass does not modify the control-flow graph of the function
       AU.setPreservesCFG();
     }
