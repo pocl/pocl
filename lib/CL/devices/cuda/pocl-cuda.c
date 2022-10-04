@@ -1307,7 +1307,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                   meta->data[cmd->program_device_i]
                       = &OpenclBuiltinKernelsData[i];
                   char *saved_name = NULL;
-                  sanitize_builtin_kernel_name (kernel, &saved_name);
+                  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
                   kdata = load_or_generate_kernel (kernel, device, has_offsets,
                                                    cmd->program_device_i, cmd,
                                                    1);

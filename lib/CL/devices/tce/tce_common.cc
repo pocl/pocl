@@ -461,7 +461,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     Device = Command->device;
 
   char *Save;
-  sanitize_builtin_kernel_name(Kernel, &Save);
+  pocl_sanitize_builtin_kernel_name(Kernel, &Save);
 
   POCL_LOCK(Dev->tce_compile_lock);
   int Error = pocl_llvm_generate_workgroup_function(

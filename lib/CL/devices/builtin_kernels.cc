@@ -165,7 +165,7 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
   return 1;
 }
 
-int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
+int pocl_sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
   *saved_name = nullptr;
   if (kernel->program->num_builtin_kernels) {
     *saved_name = kernel->meta->name;
