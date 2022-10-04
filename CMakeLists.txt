@@ -776,8 +776,7 @@ endif()
 
 set(SPIRV OFF)
 
-if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
-   AND (NOT ENABLE_CONFORMANCE))
+if(ENABLE_LLVM AND X86 AND ENABLE_HOST_CPU_DEVICES)
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
 else()
   set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
@@ -798,10 +797,6 @@ if(ENABLE_SPIR)
 endif()
 
 set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
-
-if(ENABLE_CONFORMANCE AND (ENABLE_SPIR OR ENABLE_SPIRV))
-  message(FATAL_ERROR "conformance needs SPIR AND SPIR-V support disabled")
-endif()
 
 ######################################################################################
 
