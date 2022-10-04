@@ -233,34 +233,6 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
            "uint32_t, uint32_t, uint32_t);\n",
            meta->name, meta->name, meta->name, device->global_as_id,
            device->global_as_id);
-  /*
-    size_t content_len = strlen(content);
-    assert (content_len < content_size);
-    content += content_len;
-    content_size -= content_len;
-
-    if (device->global_as_id != 0)
-      snprintf(content, content_size, "__attribute__((address_space(%u)))\n",
-      device->global_as_id);
-
-    content_len = strlen(content);
-    assert (content_len < content_size);
-    content += content_len;
-    content_size -= content_len;
-
-    snprintf(content, content_size,
-             "__kernel_metadata _%s_md = {\n"
-            "     \"%s\",\n"
-            "     %u,\n"
-            "     %u,\n"
-            "     %s_workgroup_argbuffer\n"
-            " };\n",
-            meta->name,
-            meta->name,
-            meta->num_args,
-            meta->num_locals,
-            meta->name);
-  */
   size_t content_len = strlen(content);
   assert(content_len < content_size);
   content += content_len;

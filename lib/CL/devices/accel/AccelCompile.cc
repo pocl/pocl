@@ -132,17 +132,6 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->ops->compile_kernel = pocl_almaif_tce_compile;
   dev->ops->init_build = pocl_tce_init_build;
 #endif
-  /*
-    // must be run AFTER initialize, since it changes little_endian
-  #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
-    d->requires_bswap = dev->endian_little;
-  #else
-    d->requires_bswap = !dev->endian_little;
-  #endif
-
-  //  POCL_MSG_PRINT_ACCEL ("LITTLE_ENDIAN: %u, requires BSWAP: %u
-  \n",dev->endian_little,  d->requires_bswap);
-  */
   return CL_SUCCESS;
 }
 
