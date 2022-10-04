@@ -1024,6 +1024,19 @@ add_test(NAME "${TS_NAME}_spirv_new_9"
 add_test(NAME "${TS_NAME}_spirv_new_0"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_undef_true_simple  op_undef_false_simple  op_undef_int_simple  op_undef_uint_simple  op_undef_char_simple  op_undef_uchar_simple  op_undef_ushort_simple  op_undef_long_simple  op_undef_ulong_simple  op_undef_short_simple  op_undef_float_simple  op_undef_double_simple  op_undef_int4_simple  op_undef_int3_simple  op_undef_struct_int_float_simple  op_undef_struct_int_char_simple  op_undef_struct_struct_simple  op_undef_half_simple  op_vector_int4_extract  op_vector_float4_extract  op_vector_long2_extract  op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert  op_vector_float4_insert  op_vector_long2_insert  op_vector_double2_insert  op_vector_char16_insert  op_vector_times_scalar_float  op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
+add_test(NAME "${TS_NAME}_spirv_new_micro_0"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked  decorate_saturated_conversion_char   decorate_saturated_conversion_ushort  decorate_saturated_conversion_int  decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
+         WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
+add_test(NAME "${TS_NAME}_spirv_new_micro_1"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" op_constant_false_simple  op_constant_int_simple  op_constant_uchar_simple op_constant_long_simple op_constant_float_simple         op_constant_struct_int_char_simple  op_constant_struct_struct_simple op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple  op_copy_half_simple op_fadd_float_regular  op_fmul_float_regular  op_frem_float_regular  op_fadd_float_fast  op_fadd_double_regular  op_frem_double_regular op_fsub_double_fast  op_fdiv_double_fast  op_fadd_float4_regular  op_fmul_float4_regular  op_fsub_float4_fast  op_fadd_double2_regular  op_fsub_double2_fast  op_fmod_double2_fast
+         WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
+add_test(NAME "${TS_NAME}_spirv_new_micro_2"
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple op_spec_constant_double_simple  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
+         WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
 endif()
 
 add_test(NAME "${TS_NAME}_subgroups_1"
@@ -1109,16 +1122,6 @@ set(OCL_30_TESTS_FULL
 "${TS_NAME}_pipes"
 "${TS_NAME}_select_float_uint"
 "${TS_NAME}_select_float_int"
-"${TS_NAME}_spirv_new_0"
-"${TS_NAME}_spirv_new_1"
-"${TS_NAME}_spirv_new_2"
-"${TS_NAME}_spirv_new_3"
-"${TS_NAME}_spirv_new_4"
-"${TS_NAME}_spirv_new_5"
-"${TS_NAME}_spirv_new_6"
-"${TS_NAME}_spirv_new_7"
-"${TS_NAME}_spirv_new_8"
-"${TS_NAME}_spirv_new_9"
 "${TS_NAME}_subgroups_1"
 "${TS_NAME}_subgroups_2"
 "${TS_NAME}_SVM_1"
@@ -1140,14 +1143,32 @@ set(OCL_30_TESTS_MICRO
 "${TS_NAME}_integer_ops_ocl_30"
 "${TS_NAME}_non_uniform_work_group"
 "${TS_NAME}_pipes"
-"${TS_NAME}_spirv_new_0"
 "${TS_NAME}_subgroups_1"
 "${TS_NAME}_SVM_1"
 "${TS_NAME}_SVM_2"
 )
 
-set(OCL_30_TESTS_MINI ${OCL_30_TESTS_MICRO})
 
+if(HAVE_SPIRV_TOOLS)
+  list(APPEND OCL_30_TESTS_FULL
+    "${TS_NAME}_spirv_new_0"
+    "${TS_NAME}_spirv_new_1"
+    "${TS_NAME}_spirv_new_2"
+    "${TS_NAME}_spirv_new_3"
+    "${TS_NAME}_spirv_new_4"
+    "${TS_NAME}_spirv_new_5"
+    "${TS_NAME}_spirv_new_6"
+    "${TS_NAME}_spirv_new_7"
+    "${TS_NAME}_spirv_new_8"
+    "${TS_NAME}_spirv_new_9")
+
+  list(APPEND OCL_30_TESTS_MICRO
+    "${TS_NAME}_spirv_new_micro_0"
+    "${TS_NAME}_spirv_new_micro_1"
+    "${TS_NAME}_spirv_new_micro_2")
+endif()
+
+set(OCL_30_TESTS_MINI ${OCL_30_TESTS_MICRO})
 
 set_tests_properties(
     "${TS_NAME}_allocations_buffer"
