@@ -19,7 +19,7 @@
       CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
 #define POD_ARG_32b POD_ARG, 4
 
-BIKD BIDescriptors[BIKERNELS] = {
+BIKD pocl_BIDescriptors[BIKERNELS] = {
     BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
          {BIArg("char*", "input", READ_BUF),
           BIArg("char*", "output", WRITE_BUF)}),
@@ -116,7 +116,7 @@ static cl_int pocl_get_builtin_kernel_metadata(cl_device_id dev,
 
   BIKD *Desc = nullptr;
   for (size_t i = 0; i < BIKERNELS; ++i) {
-    Desc = &BIDescriptors[i];
+    Desc = &pocl_BIDescriptors[i];
     if (std::string(Desc->name) == kernel_name) {
       memcpy(target, (pocl_kernel_metadata_t *)Desc,
              sizeof(pocl_kernel_metadata_t));
@@ -165,12 +165,12 @@ int pocl_setup_builtin_metadata(cl_device_id device, cl_program program,
   return 1;
 }
 
-int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
+int pocl_sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
   *saved_name = nullptr;
   if (kernel->program->num_builtin_kernels) {
     *saved_name = kernel->meta->name;
     std::string name(kernel->name);
-    for (BIKD &BI : BIDescriptors) {
+    for (BIKD &BI : pocl_BIDescriptors) {
       if (name.compare(BI.name) == 0) {
         std::replace(name.begin(), name.end(), '.', '_');
         kernel->meta->name = strdup(name.c_str());
@@ -182,7 +182,7 @@ int sanitize_builtin_kernel_name(cl_kernel kernel, char **saved_name) {
   return 0;
 }
 
-int restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
+int pocl_restore_builtin_kernel_name(cl_kernel kernel, char *saved_name) {
   if (kernel->program->num_builtin_kernels) {
     std::free((void *)kernel->name);
     kernel->meta->name = saved_name;
