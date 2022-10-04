@@ -1315,8 +1315,8 @@ set(HOST_DEVICE_CL_VERSION_MINOR 0)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
-cl_khr_command_buffer cl_khr_subgroups cl_intel_unified_shared_memory \
-cl_ext_buffer_device_address")
+cl_khr_command_buffer cl_khr_command_buffer_multi_device cl_khr_subgroups \
+cl_intel_unified_shared_memory cl_ext_buffer_device_address")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others

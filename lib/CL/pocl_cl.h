@@ -1758,6 +1758,7 @@ struct _cl_event {
    * lowered and memory freed if it's 0 */
   short release_mem_host_ptr_after;
 
+  short profiling_available;
 
   _cl_event *next;
   _cl_event *prev;

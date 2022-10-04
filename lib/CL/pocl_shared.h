@@ -1,12 +1,13 @@
 /* OpenCL runtime library: shared functions
 
    Copyright (c) 2016 Michal Babej / Tampere University of Technology
+                 2017-2024 PoCL Developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #ifndef POCL_SHARED_H
@@ -84,13 +85,35 @@ cl_int pocl_kernel_copy_args (cl_kernel kernel,
                               _cl_command_run *command);
 
 cl_int pocl_ndrange_kernel_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    const cl_ndrange_kernel_command_properties_khr *properties,
-    cl_kernel kernel, cl_uint work_dim, const size_t *global_work_offset,
-    const size_t *global_work_size, const size_t *local_work_size,
-    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
-    cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point_p, _cl_command_node **cmd);
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_event *event_wait_list,
+  cl_event *event_p,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p,
+  _cl_command_node **cmd);
+
+cl_int pocl_record_ndrange_kernel (
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p);
 
 cl_int pocl_rect_copy (cl_command_buffer_khr command_buffer,
                        cl_command_queue command_queue,

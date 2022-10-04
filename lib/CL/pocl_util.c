@@ -1,6 +1,7 @@
 /* OpenCL runtime library: pocl_util utility functions
 
    Copyright (c) 2012-2019 Pekka Jääskeläinen
+                 2020-2024 PoCL Developers
                  2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -503,6 +504,9 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
   (*event)->context = context;
   (*event)->queue = command_queue;
+  if (command_queue)
+    (*event)->profiling_available
+      = (command_queue->properties & CL_QUEUE_PROFILING_ENABLE) ? 1 : 0;
 
   /* user events have a NULL command queue, don't retain it */
   if (command_queue)
@@ -1226,6 +1230,18 @@ pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
   return CL_SUCCESS;
 }
 
+cl_command_buffer_properties_khr
+pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
+                          cl_command_buffer_properties_khr name)
+{
+  for (unsigned i = 0; i < command_buffer->num_properties; ++i)
+    {
+      if (command_buffer->properties[2 * i] == name)
+        return command_buffer->properties[2 * i + 1];
+    }
+  return 0;
+}
+
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_buffer_khr command_buffer,
@@ -1240,6 +1256,10 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  POCL_RETURN_ERROR_COND (
+    (can_run_command (command_queue->device, num_buffers, buffers) != CL_TRUE),
+    CL_OUT_OF_RESOURCES);
+
   *cmd = pocl_mem_manager_new_command ();
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
   (*cmd)->type = command_type;
@@ -1251,7 +1271,7 @@ pocl_create_recorded_command (_cl_command_node **cmd,
    * index again here */
   for (unsigned i = 0; i < command_buffer->num_queues; ++i)
     {
-      if (command_buffer->queues[i])
+      if (command_buffer->queues[i] == command_queue)
         (*cmd)->queue_idx = i;
     }
 
