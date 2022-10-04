@@ -170,17 +170,18 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
 #define PTR_ARG POCL_ARG_TYPE_POINTER
 #define GLOBAL_AS CL_KERNEL_ARG_ADDRESS_GLOBAL
 
-BIKD BIDescriptors[] = {BIKD(POCL_CDBI_COPY, "pocl.copy",
-                             {BIArg("char*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("char*", "output", PTR_ARG, GLOBAL_AS)}),
-                        BIKD(POCL_CDBI_ADD32, "pocl.add32",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)}),
-                        BIKD(POCL_CDBI_MUL32, "pocl.mul32",
-                             {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
-                              BIArg("int*", "output", PTR_ARG, GLOBAL_AS)})};
+BIKD pocl_BIDescriptors[] = {
+    BIKD(POCL_CDBI_COPY, "pocl.copy",
+         {BIArg("char*", "input", PTR_ARG, GLOBAL_AS),
+          BIArg("char*", "output", PTR_ARG, GLOBAL_AS)}),
+    BIKD(POCL_CDBI_ADD32, "pocl.add32",
+         {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+          BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+          BIArg("int*", "output", PTR_ARG, GLOBAL_AS)}),
+    BIKD(POCL_CDBI_MUL32, "pocl.mul32",
+         {BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+          BIArg("int*", "input", PTR_ARG, GLOBAL_AS),
+          BIArg("int*", "output", PTR_ARG, GLOBAL_AS)})};
 
 class MMAPRegion {
 public:
@@ -470,15 +471,15 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   while (paramToken = strtok_r(NULL, ",", &savePtr)) {
     auto token = strtoul(paramToken, NULL, 0);
     BuiltinKernelId kernelId = static_cast<BuiltinKernelId>(token);
-    size_t numBIKDs = sizeof(BIDescriptors) / sizeof(*BIDescriptors);
+    size_t numBIKDs = sizeof(pocl_BIDescriptors) / sizeof(*pocl_BIDescriptors);
 
     bool found = false;
     for (size_t i = 0; i < numBIKDs; ++i) {
-      if (BIDescriptors[i].KernelId == kernelId) {
+      if (pocl_BIDescriptors[i].KernelId == kernelId) {
         if (supportedList.size() > 0)
           supportedList += ";";
-        supportedList += BIDescriptors[i].name;
-        D->SupportedKernels.insert(&BIDescriptors[i]);
+        supportedList += pocl_BIDescriptors[i].name;
+        D->SupportedKernels.insert(&pocl_BIDescriptors[i]);
         found = true;
         break;
       }
@@ -577,9 +578,9 @@ pocl_accel_get_builtin_kernel_metadata(void *data, const char *kernel_name,
                                        pocl_kernel_metadata_t *target) {
   AccelData *D = (AccelData *)data;
   BIKD *Desc = nullptr;
-  for (size_t i = 0; i < sizeof(BIDescriptors) / sizeof(BIDescriptors[0]);
-       ++i) {
-    Desc = &BIDescriptors[i];
+  for (size_t i = 0;
+       i < sizeof(pocl_BIDescriptors) / sizeof(pocl_BIDescriptors[0]); ++i) {
+    Desc = &pocl_BIDescriptors[i];
     if (std::string(Desc->name) == kernel_name) {
       memcpy(target, (pocl_kernel_metadata_t *)Desc,
              sizeof(pocl_kernel_metadata_t));

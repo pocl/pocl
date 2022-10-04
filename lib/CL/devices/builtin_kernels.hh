@@ -6,7 +6,7 @@
 
   1) add it to the end of BuiltinKernelId enum in this file
 
-  2) open builtin_kernels.cc and edit BIDescriptors, add a new struct
+  2) open builtin_kernels.cc and edit pocl_BIDescriptors, add a new struct
      for the new kernel, with argument metadata
 
   3) make sure that devices where you want to support this builtin kernel,
@@ -94,7 +94,7 @@ struct BIKD : public pocl_kernel_metadata_t {
 };
 
 #define BIKERNELS POCL_CDBI_LAST
-POCL_EXPORT extern BIKD BIDescriptors[BIKERNELS];
+POCL_EXPORT extern BIKD pocl_BIDescriptors[BIKERNELS];
 
 #endif // #ifdef __cplusplus
 

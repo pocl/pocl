@@ -1834,5 +1834,5 @@ pocl_setup_features_with_version (cl_device_id dev)
 void
 pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 {
-  /* implementation should use BIDescriptors */
+  /* implementation should use pocl_BIDescriptors */
 }
