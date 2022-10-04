@@ -1280,8 +1280,8 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
   LLVMValueRef Offs =
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
   LLVMValueRef ArgByteOffset =
-      LLVMBuildGEP2(Builder, LLVMTypeOf(ArgBufferPtr), ArgBufferPtr, &Offs, 1,
-                    "arg_byte_offset");
+      LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBufferPtr)),
+                    ArgBufferPtr, &Offs, 1, "arg_byte_offset");
 
   llvm::Argument &Arg = cast<Argument>(*unwrap(Param));
 
@@ -1417,8 +1417,8 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         uint64_t ArgPos = ArgBufferOffsets[i];
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
         LLVMValueRef SizeByteOffset =
-            LLVMBuildGEP2(Builder, LLVMTypeOf(ArgBuffer), ArgBuffer, &Offs, 1,
-                          "size_byte_offset");
+            LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBuffer)),
+                          ArgBuffer, &Offs, 1, "size_byte_offset");
         LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
         LLVMValueRef SizeOffsetBitcast =
             LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
