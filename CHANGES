@@ -14,6 +14,12 @@ Notable User Facing Changes
 - All device names used to control the platform setup via
   POCL_DEVICES are now lower case (as documented in the user manual).
 
+Notable Bug Fixes
+-----------------
+
+- Fixed loss of precision with CUDA event timers due to limited resolution
+  of the epoch event timer
+
 3.0 June 2022
 =============
 
