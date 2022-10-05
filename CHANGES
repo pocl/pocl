@@ -17,6 +17,12 @@ Notable User Facing Changes
 - Link with -latomic (compiler library) in case that is needed for using
   64-bit atomic operations, e.g. on mipsel.
 
+Notable Bug Fixes
+-----------------
+
+- Fixed loss of precision with CUDA event timers due to limited resolution
+  of the epoch event timer
+
 3.0 June 2022
 =============
 
