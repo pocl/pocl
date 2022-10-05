@@ -115,6 +115,7 @@ endmacro()
 find_program(BASH "bash")
 find_program(MAKE_PROGRAM NAMES "make")
 find_program(GIT_CMD "git")
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set_expr(HAVE_GIT GIT_CMD)
 
 if(HAVE_GIT)

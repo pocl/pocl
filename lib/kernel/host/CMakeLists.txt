@@ -441,7 +441,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
       if(NOT SPIR_WRAPPER_FILE)
-        set(SPIR_WRAPPER_FILE "host/spir_wrapper_x64_${VECSIZE}bit.ll")
+        generate_x86_64_spir_wrapper(${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
       endif()
     else()
       message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")

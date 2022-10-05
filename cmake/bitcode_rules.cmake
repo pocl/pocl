@@ -141,16 +141,19 @@ endfunction()
 # BCLIST is the name of a list variable; the path of the generated BC file will be
 # appended to this variable is the caller's scope
 function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
     add_custom_command( OUTPUT "${BC_FILE}"
-        DEPENDS ""
-        COMMAND "${LLVM_AS}" "-o" "${BC_FILE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/../${FILENAME}"
+        DEPENDS "${FULL_F_PATH}"
+        COMMAND "${LLVM_AS}" "-o" "${BC_FILE}" "${FULL_F_PATH}"
         COMMENT "Building LL to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
@@ -172,6 +175,27 @@ macro(compile_to_bc SUBDIR OUTPUT_FILE_LIST EXTRA_CONFIG)
   endforeach()
 endmacro()
 
+function(generate_cuda_spir_wrapper OUTPUT)
+  set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/spir_wrapper.ll")
+  set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+
+  add_custom_command( OUTPUT "${FNAME}"
+      DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-d" "cuda" "${FNAME}"
+      COMMENT "Generating CUDA SPIR wrapper to ${FNAME}"
+      VERBATIM)
+endfunction()
+
+function(generate_x86_64_spir_wrapper SUBDIR SIZE OUTPUT)
+  set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/spir_wrapper_${SIZE}bit.ll")
+  set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+
+  add_custom_command( OUTPUT "${FNAME}"
+      DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-d" "cpu" "-r" "${SIZE}" "${FNAME}"
+      COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
+      VERBATIM)
+endfunction()
 
 
 function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
