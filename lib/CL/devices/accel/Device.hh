@@ -61,6 +61,11 @@ public:
 
   void printMemoryDump();
 
+  virtual void writeDataToDevice(size_t dst, const char *__restrict__ const src,
+                                 size_t size);
+  virtual void readDataFromDevice(char *__restrict__ const dst, size_t src,
+                                  size_t size);
+
 protected:
   virtual void discoverDeviceParameters();
   uintptr_t imem_start;

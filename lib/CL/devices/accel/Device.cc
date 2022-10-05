@@ -252,3 +252,31 @@ void Device::printMemoryDump() {
   }
   std::cerr << std::endl;
 }
+
+void Device::writeDataToDevice(size_t dst, const char *__restrict__ const src,
+                               size_t size) {
+  if (DataMemory->isInRange(dst)) {
+    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to 0x%zx\n", size, dst);
+    DataMemory->CopyToMMAP(dst, src, size);
+  } else if (ExternalMemory && ExternalMemory->isInRange(dst)) {
+    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to external 0x%zx\n", size,
+                         dst);
+    ExternalMemory->CopyToMMAP(dst, src, size);
+  } else {
+    POCL_ABORT("Attempt to write data to outside the device memories\n");
+  }
+}
+
+void Device::readDataFromDevice(char *__restrict__ const dst, size_t src,
+                                size_t size) {
+  if (DataMemory->isInRange(src)) {
+    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes from 0x%zx\n", size, src);
+    DataMemory->CopyFromMMAP(dst, src, size);
+  } else if (ExternalMemory && ExternalMemory->isInRange(src)) {
+    POCL_MSG_PRINT_ACCEL("accel: Copying 0x%zu bytes from external 0x%zx\n",
+                         size, src);
+    ExternalMemory->CopyFromMMAP(dst, src, size);
+  } else {
+    POCL_ABORT("Attempt to write data to outside the device memories\n");
+  }
+}

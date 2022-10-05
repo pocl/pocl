@@ -121,16 +121,12 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->build_builtin = pocl_driver_build_opencl_builtins;
   ops->free_program = pocl_driver_free_program;
 
-#if 0
-    ops->copy_rect = pocl_accel_copy_rect;
-    ops->read_rect = pocl_accel_read_rect;
-    ops->write_rect = pocl_accel_write_rect;
-    ops->unmap_mem = pocl_accel_unmap_mem;
-    ops->memfill = pocl_accel_memfill;
+  ops->copy_rect = pocl_accel_copy_rect;
+  ops->read_rect = pocl_accel_read_rect;
+  ops->write_rect = pocl_accel_write_rect;
 
-    // new driver api (out-of-order): TODO implement these for accel
-    ops->init_target_machine = NULL;
-    ops->init_build = pocl_accel_init_build;
+#if 0
+  ops->memfill = pocl_accel_memfill;
 #endif
 }
 
@@ -141,16 +137,7 @@ void pocl_accel_write(void *data, const void *__restrict__ src_host_ptr,
   size_t dst = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
 
-  if (d->Dev->DataMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to 0x%zx\n", size, dst);
-    d->Dev->DataMemory->CopyToMMAP(dst, src_host_ptr, size);
-  } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to external 0x%zx\n", size,
-                         dst);
-    d->Dev->ExternalMemory->CopyToMMAP(dst, src_host_ptr, size);
-  } else {
-    POCL_ABORT("Attempt to write data to outside the device memories\n");
-  }
+  d->Dev->writeDataToDevice(dst, (const char *__restrict)src_host_ptr, size);
 }
 
 void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
@@ -160,16 +147,7 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
   size_t src = chunk->start_address + offset;
   AccelData *d = (AccelData *)data;
 
-  if (d->Dev->DataMemory->isInRange(src)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes from 0x%zx\n", size, src);
-    d->Dev->DataMemory->CopyFromMMAP(dst_host_ptr, src, size);
-  } else if (d->Dev->ExternalMemory && d->Dev->ExternalMemory->isInRange(src)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying 0x%zu bytes from external 0x%zx\n",
-                         size, src);
-    d->Dev->ExternalMemory->CopyFromMMAP(dst_host_ptr, src, size);
-  } else {
-    POCL_ABORT("Attempt to write data to outside the device memories\n");
-  }
+  d->Dev->readDataFromDevice((char *__restrict__)dst_host_ptr, src, size);
 }
 
 void pocl_accel_copy(void *data, pocl_mem_identifier *dst_mem_id,
@@ -383,13 +361,15 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
       D->Dev = new XrtDevice(xrt_kernel_name);
     }
 #endif
-#ifdef TCE_AVAILABLE
     else if (D->BaseAddress == 0xB) {
+#ifdef TCE_AVAILABLE
       D->Dev = new TTASimDevice(xrt_kernel_name);
       enable_compilation = true;
-    }
+#else
+      POCL_ABORT("accel: Tried enabling TTASim device, but it's not available. "
+                 "Did you set ENABLE_TCE=1?\n");
 #endif
-    else {
+    } else {
       D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
     }
 
@@ -1123,4 +1103,109 @@ void *runningThreadFunc(void *) {
     usleep(ACCEL_DRIVER_SLEEP);
   }
   return NULL;
+}
+
+void pocl_accel_copy_rect(void *data, pocl_mem_identifier *dst_mem_id,
+                          cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
+                          cl_mem src_buf,
+                          const size_t *__restrict__ const dst_origin,
+                          const size_t *__restrict__ const src_origin,
+                          const size_t *__restrict__ const region,
+                          size_t const dst_row_pitch,
+                          size_t const dst_slice_pitch,
+                          size_t const src_row_pitch,
+                          size_t const src_slice_pitch) {
+  AccelData *d = (AccelData *)data;
+  chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
+  chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
+
+  size_t src_offset = src_origin[0] + src_row_pitch * src_origin[1] +
+                      src_slice_pitch * src_origin[2];
+  size_t dst_offset = dst_origin[0] + dst_row_pitch * dst_origin[1] +
+                      dst_slice_pitch * dst_origin[2];
+
+  size_t j, k, i;
+
+  /* TODO: handle overlaping regions */
+
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      for (i = 0; i < region[0]; i++) {
+        char val;
+        d->Dev->readDataFromDevice(&val,
+                                   src_chunk->start_address + src_offset +
+                                       src_row_pitch * j + src_slice_pitch * k +
+                                       i,
+                                   1);
+        d->Dev->writeDataToDevice(dst_chunk->start_address + dst_offset +
+                                      dst_row_pitch * j + dst_slice_pitch * k +
+                                      i,
+                                  &val, 1);
+      }
+}
+
+void pocl_accel_write_rect(void *data, const void *__restrict__ src_host_ptr,
+                           pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                           const size_t *__restrict__ const buffer_origin,
+                           const size_t *__restrict__ const host_origin,
+                           const size_t *__restrict__ const region,
+                           size_t const buffer_row_pitch,
+                           size_t const buffer_slice_pitch,
+                           size_t const host_row_pitch,
+                           size_t const host_slice_pitch) {
+  AccelData *d = (AccelData *)data;
+  chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
+  size_t adjusted_dst_ptr = dst_chunk->start_address + buffer_origin[0] +
+                            buffer_row_pitch * buffer_origin[1] +
+                            buffer_slice_pitch * buffer_origin[2];
+
+  char const *__restrict__ const adjusted_host_ptr =
+      (char const *)src_host_ptr + host_origin[0] +
+      host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
+
+  size_t j, k;
+
+  /* TODO: handle overlapping regions */
+
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j) {
+      size_t s_offset = host_row_pitch * j + host_slice_pitch * k;
+
+      size_t d_offset = buffer_row_pitch * j + buffer_slice_pitch * k;
+
+      d->Dev->writeDataToDevice(adjusted_dst_ptr + d_offset,
+                                adjusted_host_ptr + s_offset, region[0]);
+    }
+}
+
+void pocl_accel_read_rect(void *data, void *__restrict__ dst_host_ptr,
+                          pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                          const size_t *__restrict__ const buffer_origin,
+                          const size_t *__restrict__ const host_origin,
+                          const size_t *__restrict__ const region,
+                          size_t const buffer_row_pitch,
+                          size_t const buffer_slice_pitch,
+                          size_t const host_row_pitch,
+                          size_t const host_slice_pitch) {
+  AccelData *d = (AccelData *)data;
+  chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
+  size_t adjusted_src_ptr = src_chunk->start_address + buffer_origin[0] +
+                            buffer_row_pitch * buffer_origin[1] +
+                            buffer_slice_pitch * buffer_origin[2];
+
+  char *__restrict__ const adjusted_host_ptr =
+      (char *)dst_host_ptr + host_origin[0] + host_row_pitch * host_origin[1] +
+      host_slice_pitch * host_origin[2];
+
+  size_t j, k;
+
+  /* TODO: handle overlaping regions */
+
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j) {
+      size_t d_offset = host_row_pitch * j + host_slice_pitch * k;
+      size_t s_offset = buffer_row_pitch * j + buffer_slice_pitch * k;
+      d->Dev->readDataFromDevice(adjusted_host_ptr + d_offset,
+                                 adjusted_src_ptr + s_offset, region[0]);
+    }
 }
