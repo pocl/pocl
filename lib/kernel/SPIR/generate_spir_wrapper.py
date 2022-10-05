@@ -32,25 +32,47 @@
 # set the boolean variables below to correct values before calling this script
 
 import sys
+import argparse
 
+parser = argparse.ArgumentParser(description='SPIR wrapper generator.')
+
+parser.add_argument('-d', '--driver',
+                    dest='driver',
+                    default="cpu", choices=["cpu", "cuda"],
+                    help='driver to generate wrapper for')
+
+parser.add_argument('-r', '--register-size',
+                    dest='reg_size',
+                    default=128, type=int, choices=[128,256,512],
+                    help='largest register size (cpu driver only)')
+
+parser.add_argument('output',
+                    type=argparse.FileType('w', encoding='utf-8'),
+                    help='output file')
+
+args = parser.parse_args()
+
+# function prefix used by PoCL's kernel library
 POCL_LIB_PREFIX = "_cl_"
 
 # CUDA uses the same pointer AS-mangling as SPIR
 # set to False for CUDA wrapper, True for CPU wrapper
-MANGLE_OCL = True
+MANGLE_OCL = True if args.driver == 'cpu' else False
 
 # if True, creates AS casts of pointer arguments (all are cast to AS 0)
 # set to False for CUDA wrapper, True for CPU wrapper
-AS_CASTS_REQUIRED = True
+AS_CASTS_REQUIRED = True if args.driver == 'cpu' else False
 
 # if set to True, does target specific (x86-64 CPU) hacks
 # like argument coercing (2xfloat -> double), byval passing
 # (for args that don't fit into registers)
-X86_CALLING_ABI = True
+X86_CALLING_ABI = True if args.driver == 'cpu' else False
 
 # size of the largest CPU (SIMD) register. Values larger than this
 # will be passed with byval
-X86_ABI_REG_SIZE = 128
+X86_ABI_REG_SIZE = args.reg_size
+
+sys.stdout = args.output
 
 SINGLE_ARG = [
 	"acos", "acosh", "acospi",
