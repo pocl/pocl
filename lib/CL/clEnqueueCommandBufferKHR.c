@@ -119,6 +119,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
     }
   else
     {
+      num_queues = command_buffer->num_queues;
       used_queues = command_buffer->queues;
     }
 
@@ -144,9 +145,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
   POCL_RETURN_ERROR_COND ((!is_ready), CL_INVALID_OPERATION);
 
   /* Submit to queue(s) */
-  /* TODO: figure out how submitting should work with multiple queues */
   cl_command_queue q = used_queues[0];
-  if (q->device->ops->run_command_buffer)
+  if (num_queues == 1 && q->device->ops->run_command_buffer)
     {
       return q->device->ops->run_command_buffer (q->device, command_buffer);
     }
@@ -163,8 +163,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       unsigned sync_id = 0;
       LL_FOREACH (command_buffer->cmds, cmd)
       {
+        q = used_queues[cmd->queue_idx];
         unsigned j, k;
-        assert (cmd->queue_idx == 0);
 
         /* Add events from syncpoints to waitlist */
         for (j = 0; j < cmd->sync.syncpoint.num_sync_points_in_wait_list; ++j)
@@ -219,10 +219,10 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
         pocl_command_enqueue (q, node);
       }
 
-      /* We need an event for the completion of the command buffer as a whole.
-       * TODO: grab start timestamp before submitting any of the constituent
-       * commands
-       */
+      /* We need an event for the completion of the command buffer as a whole. */
+      /* TODO: grab start timestamp before submitting any of the constituent
+       * commands */
+      /* TODO: which queue should be managing the buffer completion event? */
       _cl_command_node *node = NULL;
       cl_event final_ev;
       errcode = pocl_create_command (&node, q, CL_COMMAND_COMMAND_BUFFER_KHR,
