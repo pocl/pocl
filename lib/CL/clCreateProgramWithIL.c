@@ -28,32 +28,38 @@
 #include "pocl_util.h"
 #include "pocl_shared.h"
 
+/* max number of lines in output of 'llvm-spirv --spec-const-info' */
+#define MAX_SPEC_CONSTANT_LINES 4096
+/* max bytes in output of 'llvm-spirv --spec-const-info' */
+#define MAX_OUTPUT_BYTES 65536
+
 #ifdef ENABLE_SPIRV
 static int
 get_program_spec_constants (cl_program program, char *program_bc_spirv)
 {
   char *args[] = { LLVM_SPIRV, "--spec-const-info", program_bc_spirv, NULL };
-  char captured_output[8192];
-  size_t captured_bytes = 8192;
+  char captured_output[MAX_OUTPUT_BYTES];
+  size_t captured_bytes = MAX_OUTPUT_BYTES;
   int errcode = CL_SUCCESS;
 
   errcode = pocl_run_command_capture_output (captured_output, &captured_bytes,
                                              args);
-  POCL_RETURN_ERROR_ON ((errcode != 0), CL_INVALID_BINARY,
-                        "External command (llvm-spirv translator) failed!\n");
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_INVALID_BINARY, "External command "
+                        "(llvm-spirv --spec-const-info) failed!\n");
 
   captured_output[captured_bytes] = 0;
-  char *lines[4096];
+  char *lines[MAX_SPEC_CONSTANT_LINES];
   unsigned num_lines = 0;
   char delim[2] = { 0x0A, 0x0 };
   char *token = strtok (captured_output, delim);
-  while (num_lines < 4096 && token != NULL)
+  while (num_lines < MAX_SPEC_CONSTANT_LINES && token != NULL)
     {
       lines[num_lines++] = strdup (token);
       token = strtok (NULL, delim);
     }
-  POCL_GOTO_ERROR_ON ((num_lines == 0 || num_lines >= 4096), CL_INVALID_BINARY,
-                      "Invalid output from llvm-spirv\n");
+  POCL_GOTO_ERROR_ON ((num_lines == 0 || num_lines >= MAX_SPEC_CONSTANT_LINES),
+                      CL_INVALID_BINARY,
+                      "Can't parse output from llvm-spirv\n");
 
   unsigned num_const = 0;
   int r = sscanf (
@@ -76,9 +82,8 @@ get_program_spec_constants (cl_program program, char *program_bc_spirv)
               = sscanf (lines[i + 1], "Spec const id = %u, size in bytes = %u",
                         &spec_id, &spec_size);
           POCL_GOTO_ERROR_ON ((r < 2), CL_INVALID_BINARY,
-                              "Can't parse %u-th line of output\n", i+1);
-          POCL_MSG_PRINT_INFO ("@@@ SPEC CONSTANT FOUND ID %u SIZE %u\n",
-                               spec_id, spec_size);
+                              "Can't parse %u-th line of output:\n%s\n",
+                              i+1, lines[i+1]);
           program->spec_const_ids[i] = spec_id;
           program->spec_const_sizes[i] = spec_size;
           program->spec_const_values[i] = 0;

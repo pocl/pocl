@@ -137,7 +137,9 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
         VERBATIM)
 endfunction()
 
-
+# compiles LLVM IR in text-format (an .ll file) to LLVM IR bitcode (binary format, .bc)
+# BCLIST is the name of a list variable; the path of the generated BC file will be
+# appended to this variable is the caller's scope
 function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")

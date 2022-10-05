@@ -407,13 +407,17 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
 
-  # for X86-64, SPIR wrapper is compiled based on largest supported vector size
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
     if(NOT X86)
+      # for other than X86-64, use a generic 64bit wrapper
+      # this doesn't support vectors and misses some
+      # functions, but otherwise should mostly work
       set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")
     else()
+      # for X86-64, SPIR wrapper is decided later
+      # based on CPU's largest supported vector size
       set(SPIR_WRAPPER_FILE "")
     endif()
   endif()
