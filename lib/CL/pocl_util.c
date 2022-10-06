@@ -1214,6 +1214,16 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   (*cmd)->type = command_type;
   (*cmd)->buffered = 1;
 
+  /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
+   * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
+   * but at that time *cmd was not allocated at that time, so find the queue
+   * index again here */
+  for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+    {
+      if (command_buffer->queues[i])
+        (*cmd)->queue_idx = i;
+    }
+
   (*cmd)->sync.syncpoint.num_sync_points_in_wait_list = num_deps;
   if (num_deps > 0)
     {
