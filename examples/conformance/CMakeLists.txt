@@ -72,6 +72,9 @@ message(STATUS "enabling OpenCL-CTS version 3")
 
 # new CTS (3.0)
 if(ENABLE_ICD)
+  if(OPENCL_LIBRARIES AND (NOT OPENCL_LIBDIR))
+    get_filename_component(OPENCL_LIBDIR "${OPENCL_LIBRARIES}" DIRECTORY)
+  endif()
   set(CTS_OPENCL_LIBDIR "-DCL_LIB_DIR=${OPENCL_LIBDIR}")
   set(CTS_OPENCL_LIBRARY "-DOPENCL_LIBRARIES=${OPENCL_LIBRARIES}")
 else()
@@ -118,6 +121,8 @@ if(HAVE_SPIRV_TOOLS)
   # ^^ must depend on the CTS because we need the sources checked out
   add_dependencies(${TS_NAME}_spirv_binaries ${TS_NAME})
   add_dependencies(prepare_examples ${TS_NAME}_spirv_binaries)
+else()
+  message(WARNING "spirv tools not found - disabling SPIRV tests in CTS")
 endif()
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)

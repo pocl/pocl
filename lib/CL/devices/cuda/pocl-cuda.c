@@ -393,6 +393,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->local_mem_type = CL_LOCAL;
 
+#ifdef ENABLE_SPIRV
+  dev->supported_spir_v_versions = "SPIR-V_1.2";
+#else
+  dev->supported_spir_v_versions = "";
+#endif
+  pocl_setup_ils_with_version (dev);
+
+  pocl_setup_opencl_c_with_version (dev, 0);
+
   /* Get GPU architecture name */
   int sm_maj = 0, sm_min = 0;
   if (ret != CL_INVALID_DEVICE)
