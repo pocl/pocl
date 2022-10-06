@@ -98,7 +98,7 @@ SINGLE_ARG = [
 ]
 
 SINGLE_ARG_I = [
-	"abs", "clz", "popcount"
+	"abs", "clz", "ctz", "popcount"
 ]
 
 DUAL_ARG = [
@@ -422,6 +422,7 @@ LLVM_TYPE_EXT_MAP = {
 
 MANGLING_AS_SPIR = {
 	"global": "PU3AS1",
+	"constant": "PU3AS2",
 	"local": "PU3AS3",
 	"generic": "PU3AS4",
 	"private": "P",
@@ -430,6 +431,7 @@ MANGLING_AS_SPIR = {
 
 MANGLING_AS_OCL = {
 	"global": "PU8CLglobal",
+	"constant": "PU10CLconstant",
 	"local": "PU7CLlocal",
 	"private": "PU9CLprivate",
 	"generic": "PU9CLgeneric",
@@ -438,6 +440,7 @@ MANGLING_AS_OCL = {
 
 LLVM_SPIR_AS = {
 	"global": " addrspace(1)",
+	"constant": " addrspace(2)",
 	"local": " addrspace(3)",
 	"generic": " addrspace(4)",
 	"private": " ",
@@ -451,7 +454,7 @@ def llvm_arg_type(argtype, AS):
 		return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
 	if argtype[0] == 'P':
 		idx = 1
-		if argtype[1] == 'V':
+		if argtype[1] == 'V' or argtype[1] == 'K':
 			idx = 2
 			if argtype[2] == 'A':
 				idx = 3
@@ -468,6 +471,8 @@ def mang_suffix(argtype, AS_prefix):
 				return AS_prefix + "VU7_Atomic" + argtype[3:]
 			else:
 				return AS_prefix + "V" + argtype[2:]
+		elif argtype[1] == 'K':
+			return AS_prefix + "K" + argtype[2:]
 		else:
 			return AS_prefix + argtype[1:]
 	else:
@@ -477,7 +482,7 @@ def mang_suffix(argtype, AS_prefix):
 def pure_arg_type(argtype):
 	if argtype[0] == 'P':
 		idx = 1
-		if argtype[1] == 'V':
+		if argtype[1] == 'V' or argtype[1] == 'K':
 			idx = 2
 			if argtype[2] == 'A':
 				idx = 3
@@ -489,7 +494,7 @@ def pure_arg_type(argtype):
 def replace_arg_type(argtype, replacement):
 	if argtype[0] == 'P':
 		idx = 1
-		if argtype[1] == 'V':
+		if argtype[1] == 'V' or argtype[1] == 'K':
 			idx = 2
 			if argtype[2] == 'A':
 				idx = 3
@@ -531,8 +536,10 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 	else:
 		if name.startswith("atomic"): # TODO
 			addr_spaces = ["global", "local"]  # , "generic"]
-		elif name.count("image")>0:
+		elif name.count("image")>0 or name.startswith("prefetch"):
 			addr_spaces = ["global"]
+		elif name.startswith("vload"):
+			addr_spaces = ["global", "local", "private", "constant"]
 		else:
 			addr_spaces = ["global", "local", "private"]
 
@@ -564,6 +571,8 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			actual_arg = cast
 			if pure_arg == last_pure_arg and last_pure_arg.startswith("D"):
 				actual_arg = replace_arg_type(actual_arg, "S_")
+			if pure_arg == last_pure_arg and last_pure_arg == '12memory_order':
+				actual_arg = replace_arg_type(actual_arg, "S4_")
 			last_pure_arg = pure_arg
 
 			# convert arg type to mangled type with AS
@@ -834,9 +843,6 @@ for llvm_type in ["float", "double"]:
 		generate_function("lgamma_r", ret_type, '', True, arg_f, arg_Pi)
 		generate_function("frexp", ret_type, '', True, arg_f, arg_Pi)
 
-		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_li)
-		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_lu)
-
 		generate_function("signbit", rel_rettype, '', False, arg_f)
 
 		generate_function("isequal", rel_rettype, '', False, arg_f, arg_f)
@@ -861,21 +867,26 @@ generate_function("cross", "<4 x double>", '', False, "Dv4_d", "Dv4_d")
 generate_function("cross", "<3 x float>", '', False, "Dv3_f", "Dv3_f")
 generate_function("cross", "<3 x double>", '', False, "Dv3_d", "Dv3_d")
 
-for W in ["2","3","4","8","16"]:
-	generate_function("dot", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
-	generate_function("dot", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
-	generate_function("distance", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
-	generate_function("distance", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
-	generate_function("length", "float", '', False, "Dv"+W+"_f")
-	generate_function("length", "double", '', False, "Dv"+W+"_d")
-	generate_function("normalize", "float", '', False, "Dv"+W+"_f")
-	generate_function("normalize", "double", '', False, "Dv"+W+"_d")
-	generate_function("fast_distance", "float", '', False, "Dv"+W+"_f", "Dv"+W+"_f")
-	generate_function("fast_distance", "double", '', False, "Dv"+W+"_d", "Dv"+W+"_d")
-	generate_function("fast_length", "float", '', False, "Dv"+W+"_f")
-	generate_function("fast_length", "double", '', False, "Dv"+W+"_d")
-	generate_function("fast_normalize", "float", '', False, "Dv"+W+"_f")
-	generate_function("fast_normalize", "double", '', False, "Dv"+W+"_d")
+for W in ["1", "2","3","4"]:
+	arg_f = "f"
+	arg_d = "d"
+	if W != '1':
+		arg_f = "Dv" + W + "_"+arg_f
+		arg_d = "Dv" + W + "_"+arg_d
+	generate_function("dot", "float", '', False, arg_f, arg_f)
+	generate_function("dot", "double", '', False, arg_d, arg_d)
+	generate_function("distance", "float", '', False, arg_f, arg_f)
+	generate_function("distance", "double", '', False, arg_d, arg_d)
+	generate_function("length", "float", '', False, arg_f)
+	generate_function("length", "double", '', False, arg_d)
+	generate_function("normalize", "float", '', False, arg_f)
+	generate_function("normalize", "double", '', False, arg_d)
+	generate_function("fast_distance", "float", '', False, arg_f, arg_f)
+	generate_function("fast_distance", "double", '', False, arg_d, arg_d)
+	generate_function("fast_length", "float", '', False, arg_f)
+	generate_function("fast_length", "double", '', False, arg_d)
+	generate_function("fast_normalize", "float", '', False, arg_f)
+	generate_function("fast_normalize", "double", '', False, arg_d)
 
 # upsample has special arguments
 UPSAMPLE_1ST_ARG = {
@@ -896,19 +907,57 @@ UPSAMPLE_2ND_ARG = {
 	'm': 'j'
 }
 
+# upsample
 for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
-	generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[mang_type], '', False, UPSAMPLE_1ST_ARG[mang_type], UPSAMPLE_2ND_ARG[mang_type])
+	for vector_size in [1,2,3,4,8,16]:
+		arg_1st = UPSAMPLE_1ST_ARG[mang_type]
+		arg_2nd = UPSAMPLE_2ND_ARG[mang_type]
+		if vector_size > 1:
+			s = str(vector_size)
+			arg_1st = "Dv" + s + "_" + arg_1st
+			arg_2nd = "Dv" + s + "_" + arg_2nd
+		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[mang_type], '', False, arg_1st, arg_2nd)
 
+# vload / vstore
+for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+	for vector_size in [2,3,4,8,16]:
+		arg = arg_type
+		PConstArg = 'PK' + arg_type
+		PArg = 'P' + arg_type
+		if vector_size > 1:
+			s = str(vector_size)
+#			PConstArg = "PDv" + s + "_" + arg_type
+			arg = "Dv" + s + "_" + arg_type
+
+		generate_function("vload"+str(vector_size), SIG_TO_LLVM_TYPE_MAP[arg], '', True, 'm', PConstArg)
+		generate_function("vstore"+str(vector_size), SIG_TO_LLVM_TYPE_MAP['v'], '', True, arg, 'm', PArg)
+		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, arg, PConstArg, 'm')
+
+INVERT_SIGN = {
+	"c": "h",
+	"h": "c",
+
+	"s": "t",
+	"t": "s",
+
+	"i": "j",
+	"j": "i",
+
+	"l": "m",
+	"m": "l",
+}
 
 # Integer
 for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 	for vector_size in [1,2,3,4,8,16]:
 
 		arg_i = arg_type
+		arg_inv = INVERT_SIGN[arg_type]
 		signext = LLVM_TYPE_EXT_MAP[arg_type]
 		if vector_size > 1:
 			s = str(vector_size)
-			arg_i = "Dv" + s + "_" + arg_type
+			arg_i = "Dv" + s + "_" + arg_i
+			arg_inv = "Dv" + s + "_" + arg_inv
 			signext = ''
 
 		for f in SINGLE_ARG_I:
@@ -917,13 +966,34 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i)
 		for f in TRIPLE_ARG_I:
 			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i, arg_i)
+		# TODO unsigned ??
 		generate_function("any", "i32", '', False, arg_i)
 		generate_function("all", "i32", '', False, arg_i)
+		# must generate with last arg un/signed types too
+		generate_function("select", SIG_TO_LLVM_TYPE_MAP[arg_i], '', False, arg_i, arg_i, arg_i)
+		generate_function("select", SIG_TO_LLVM_TYPE_MAP[arg_i], '', False, arg_i, arg_i, arg_inv)
+
+# shuffle / shuffle2
+for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
+	if arg_type in ['c', 's', 'i', 'l']:
+		uarg_type = INVERT_SIGN[arg_type]
+	else:
+		uarg_type = arg_type
+
+	for vector_size in [2,3,4,8,16]:
+		for perm_size in [2,3,4,8,16]:
+			ret_type = "Dv" + str(perm_size) + "_" + arg_type
+			in_type = "Dv" + str(vector_size) + "_" + arg_type
+			mask_type = "Dv" + str(perm_size) + "_" + uarg_type
+			generate_function("shuffle", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, in_type, mask_type)
+			generate_function("shuffle2", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, in_type, in_type, mask_type)
 
 # convert
 for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 	for src_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 		for sat in ['', '_sat']:
+			if (sat == '_sat') and (dst_type in ['f','d']):
+				continue
 			for rounding in ['','_rtp','_rtn','_rte','_rtz']:
 				for vector_size in [1,2,3,4,8,16]:
 					dst_t = dst_type
