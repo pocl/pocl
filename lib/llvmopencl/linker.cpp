@@ -89,7 +89,7 @@ find_called_functions(llvm::Function *F,
       }
       DB_PRINT("search: %s calls %s\n",
                F->getName().data(), Callee->getName().data());
-      if (FNameSet.contains(Callee->getName()))
+      if (FNameSet.count(Callee->getName()) > 0)
         continue;
       else {
         DB_PRINT("inserting %s\n", Callee->getName().data());
