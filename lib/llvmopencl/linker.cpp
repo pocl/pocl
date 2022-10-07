@@ -29,7 +29,6 @@
 
 #include <iostream>
 #include <set>
-#include <random>
 
 #include "config.h"
 #include "pocl.h"
@@ -87,15 +86,17 @@ find_called_functions(llvm::Function *F,
         Callee->setCallingConv(llvm::CallingConv::C);
         CI->setCallingConv(llvm::CallingConv::C);
       }
+      if (!Callee->hasName())
+        Callee->setName("__anonymous_internal_func__");
+      const char* Name = Callee->getName().data();
       DB_PRINT("search: %s calls %s\n",
-               F->getName().data(), Callee->getName().data());
+               F->getName().data(), Name);
       if (FNameSet.count(Callee->getName()) > 0)
         continue;
       else {
-        DB_PRINT("inserting %s\n", Callee->getName().data());
+        DB_PRINT("inserting %s\n", Name);
         FNameSet.insert(Callee->getName());
-        DB_PRINT("search: recursing into %s\n",
-                 Callee->getName().data());
+        DB_PRINT("search: recursing into %s\n", Name);
         find_called_functions(Callee, FNameSet);
       }
     }
@@ -300,9 +301,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   assert(Lib);
   ValueToValueMapTy vvm;
   llvm::StringSet<> DeclaredFunctions;
-  std::random_device RandomDevice;
-  std::mt19937 Mersenne{RandomDevice()};
-  std::uniform_int_distribution<unsigned long> UniDist{(1UL<<30), (1UL<<31)};
 
 #ifndef LLVM_OLDER_THAN_10_0
   // LLVM 9 misses some of the APIs needed by this function. We don't support
@@ -330,11 +328,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
 
     // anonymous functions have no name, which breaks the algorithm later
     // when it searches for undefined functions in the kernel library.
-    // assign a randomized name here
-    std::string temp = std::to_string(UniDist(Mersenne));
+    // assign a name here, this should be made unique by setName()
     if (!fi->hasName()) {
-      fi->setName(Twine("__anonymous_internal_func__",
-                        StringRef(temp)));
+      fi->setName("__anonymous_internal_func__");
     }
     DB_PRINT("Function '%s' is defined\n", fi->getName().data());
     // Find all functions the program source calls
