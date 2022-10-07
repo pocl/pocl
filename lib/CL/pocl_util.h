@@ -135,6 +135,9 @@ cl_int
 pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
                                     cl_command_queue *command_queue);
 
+cl_int pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
+                                        const cl_command_queue *queues);
+
 POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
 

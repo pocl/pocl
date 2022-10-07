@@ -1168,12 +1168,43 @@ pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
 }
 
 cl_int
+pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
+                                 const cl_command_queue *queues)
+{
+  POCL_RETURN_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
+
+  /* All queues must have the same OpenCL context */
+  cl_context ref_ctx = queues[0]->context;
+
+  for (unsigned i = 0; i < num_queues; ++i)
+    {
+      /* All queues must be valid Command queue objects */
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (queues[i])),
+                              CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->device == NULL),
+                              CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->context == NULL),
+                              CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->context != ref_ctx),
+                              CL_INVALID_COMMAND_QUEUE);
+    }
+
+  return CL_SUCCESS;
+}
+
+cl_int
 pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
                                     cl_command_queue *command_queue)
 {
   assert (command_queue != NULL);
   cl_command_queue q = *command_queue;
-  POCL_RETURN_ERROR_COND ((q != NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND ((q == NULL && command_buffer->num_queues != 1),
+                          CL_INVALID_COMMAND_QUEUE);
 
   if (q)
     {
