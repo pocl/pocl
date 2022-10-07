@@ -453,3 +453,18 @@ pocl_cpuinfo_detect_device_info(cl_device_id device)
 
   pocl_cpuinfo_get_cpu_name_and_vendor(device);
 }
+
+void
+fix_local_mem_size (cl_device_id device)
+{
+  /* OpenCL 3.0 mandates at least 64KB for CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE
+   * and 32KB for CL_DEVICE_LOCAL_MEM_SIZE. pocl_topology tries to use size of
+   * largest non-shared cache (usually L2), but some CPUs don't have L3
+   * and the only non-shared cache is L1, which can be too small. */
+#if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
+  if (device->local_mem_size < 32 * 1024)
+    device->local_mem_size = 32 * 1024;
+  if (device->max_constant_buffer_size < 64 * 1024)
+    device->max_constant_buffer_size = 64 * 1024;
+#endif
+}

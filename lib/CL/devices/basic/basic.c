@@ -263,6 +263,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
+  fix_local_mem_size (device);
+
   return ret;
 }
 
