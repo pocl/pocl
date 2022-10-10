@@ -11,6 +11,12 @@ Notable User Facing Changes
   * implement WG sizes larger than vulkan limits with global offsets
   * fix module constants
   * and other small fixes and improvements
+- SPIR-V support: much improved support for both CPU driver and CUDA
+  * vectorized versions of kernel library functions now supported
+  * fixed some atomic related functions
+  * SPIR-V tests from OpenCL-CTS now pass (with sufficiently recent
+    llvm-spirv translator)
+  * specialization constants are supported via clSetProgramSpecializationConstant
 - All device names used to control the platform setup via
   POCL_DEVICES are now lower case (as documented in the user manual).
 - Switch from __sync_*() to __atomic_*() (compiler builtins).

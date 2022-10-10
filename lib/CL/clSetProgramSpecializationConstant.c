@@ -30,17 +30,10 @@ POname(clSetProgramSpecializationConstant)
                                    size_t      spec_size,
                                    const void* spec_value) CL_API_SUFFIX__VERSION_2_2
 {
-  /* SPIR is disabled when building with conformance */
-#ifdef ENABLE_CONFORMANCE
+  /* if SPIR-V is disabled, return early */
+#if defined(ENABLE_CONFORMANCE) && !defined(ENABLE_SPIRV)
   return CL_INVALID_OPERATION;
 #endif
-
-#ifdef ENABLE_VULKAN
-  /* TODO implement for Vulkan + possibly CPU devices */
-#endif
-
-  int errcode = CL_SUCCESS;
-  size_t i;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
@@ -50,6 +43,24 @@ POname(clSetProgramSpecializationConstant)
       (program->program_il == NULL || program->program_il_size == 0),
       CL_INVALID_PROGRAM, "The program does not contain IL\n");
 
-  return CL_INVALID_OPERATION;
+  for (unsigned i = 0; i < program->num_spec_consts; ++i)
+    {
+      if (program->spec_const_ids[i] == spec_id)
+        {
+          POCL_RETURN_ERROR_ON ((program->spec_const_sizes[i] != spec_size),
+                                CL_INVALID_VALUE,
+                                "Given spec constant size (%zu)"
+                                "doesn't match the expected (%u)\n",
+                                spec_size, program->spec_const_sizes[i]);
+          program->spec_const_values[i] = 0;
+          memcpy ((char *)&program->spec_const_values[i], spec_value,
+                  spec_size);
+          program->spec_const_is_set[i] = CL_TRUE;
+          return CL_SUCCESS;
+        }
+    }
+
+  POCL_RETURN_ERROR_ON (1, CL_INVALID_SPEC_ID,
+                        "Unknown specialization constant ID %u\n", spec_id);
 }
 POsym (clSetProgramSpecializationConstant)

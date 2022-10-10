@@ -63,6 +63,10 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clGetPlatformInfo") == 0)
     return (void *)&POname(clGetPlatformInfo);
 
+  if (strcmp (func_name, "clCreateProgramWithILKHR") == 0)
+    return (void *)&POname(clCreateProgramWithIL);
+
+  POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;
 }
 POsymAlways (clGetExtensionFunctionAddressForPlatform)

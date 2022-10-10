@@ -27,7 +27,6 @@
    kernel lib which is so big, that it takes seconds to clone it,  even on
    top-of-the line current processors. */
 
-#include <list>
 #include <iostream>
 #include <set>
 
@@ -44,6 +43,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/ADT/StringSet.h"
 #include "pocl_cl.h"
 
 #include "LLVMUtils.h"
@@ -56,115 +56,11 @@ using namespace llvm;
 // #define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
 
-/*
- * Find needle in haystack. O(n) implementation, but n should be
- * small in our usecases.
- * Return true if found
- */
-static bool
-find_from_list(llvm::StringRef             needle,
-               std::list<llvm::StringRef> &haystack)
-{
-    std::list<llvm::StringRef>::iterator li,le;
-    for (li=haystack.begin(), le=haystack.end();
-         li != le;
-         li++) {
-        if (needle == *li) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/* Fixes address space on opencl.imageX_t arguments to be global.
- * Note this does not change the types in Function->FunctionType
- * so it's only used inside CopyFunc on kernel library functions */
-static void fixOpenCLimageArguments(llvm::Function *Func, unsigned AS) {
-    Function::arg_iterator b = Func->arg_begin();
-    Function::arg_iterator e = Func->arg_end();
-    for (; b != e; b++)  {
-        Argument *j = &*b;
-        Type *t = j->getType();
-        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-            Type *pe_type = t->getPointerElementType();
-            if (pe_type->getStructName().startswith("opencl.image"))  {
-              Type *new_t =
-                PointerType::get(pe_type, AS);
-              j->mutateType(new_t);
-            }
-        }
-    }
-}
-
-/* Fixes opencl.imageX_t type arguments which miss address space global
- * returns F if no changes are required, or a new cloned F if the arguments
- * require a fix. To be used on user's kernel code itself, not on kernel library.
- */
-static llvm::Function *
-CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F, unsigned AS)
-{
-    assert(F && "No function to copy");
-    assert(!F->isDeclaration());
-
-    int changed = 0;
-    ValueToValueMapTy VVMap;
-    SmallVector<Type *, 8> sv;
-    for (Function::arg_iterator i = F->arg_begin(), e = F->arg_end();
-          i != e; ++i) {
-        Argument *j = &*i;
-        Type *t = j->getType();
-        Type *new_t = t;
-        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-          Type *pe_type = t->getPointerElementType();
-          if (pe_type->getStructName().startswith("opencl.image")) {
-
-            if (t->getPointerAddressSpace() != AS) {
-              new_t = PointerType::get(pe_type, AS);
-              changed = 1;
-            }
-          }
-        }
-        sv.push_back(new_t);
-    }
-
-    if (!changed)
-      return F;
-
-    FunctionType *NewFT = FunctionType::get(F->getReturnType(),
-                                         ArrayRef<Type *> (sv),
-                                         false);
-    assert(NewFT);
-    llvm::Function *DstFunc = nullptr;
-
-    DstFunc = Function::Create(NewFT, F->getLinkage(), "temporary", Mod);
-    DstFunc->takeName(F);
-
-    Function::arg_iterator j = DstFunc->arg_begin();
-    for (Function::const_arg_iterator i = F->arg_begin(),
-         e = F->arg_end();
-         i != e; ++i) {
-        j->setName(i->getName());
-        VVMap[&*i] = &*j;
-        ++j;
-    }
-
-    DstFunc->copyAttributesFrom(F);
-
-    SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
-    CloneFunctionIntoAbs(DstFunc, F, VVMap, RI);
-
-    F->removeFromParent();
-
-    delete F;
-
-    return DstFunc;
-}
-
 // Find all functions in the calltree of F, append their
-// name to list.
+// name to function name set.
 static inline void
 find_called_functions(llvm::Function *F,
-                      std::list<llvm::StringRef> &list)
+                      llvm::StringSet<> &FNameSet)
 {
   if (F->isDeclaration()) {
     DB_PRINT("it's a declaration.\n");
@@ -190,15 +86,18 @@ find_called_functions(llvm::Function *F,
         Callee->setCallingConv(llvm::CallingConv::C);
         CI->setCallingConv(llvm::CallingConv::C);
       }
+      if (!Callee->hasName())
+        Callee->setName("__anonymous_internal_func__");
+      const char* Name = Callee->getName().data();
       DB_PRINT("search: %s calls %s\n",
-               F->getName().data(), Callee->getName().data());
-      if (find_from_list(Callee->getName(), list))
+               F->getName().data(), Name);
+      if (FNameSet.count(Callee->getName()) > 0)
         continue;
       else {
-        list.push_back(Callee->getName());
-        DB_PRINT("search: recursing into %s\n",
-                 Callee->getName().data());
-        find_called_functions(Callee, list);
+        DB_PRINT("inserting %s\n", Name);
+        FNameSet.insert(Callee->getName());
+        DB_PRINT("search: recursing into %s\n", Name);
+        find_called_functions(Callee, FNameSet);
       }
     }
   }
@@ -246,7 +145,6 @@ CopyFunc(const llvm::StringRef Name,
         DB_PRINT("  cloning %s\n", Name.data());
 
         CloneFunctionIntoAbs(DstFunc, SrcFunc, VVMap, RI, false);
-        fixOpenCLimageArguments(DstFunc, AS);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",
                  Name.data());
@@ -263,7 +161,7 @@ copy_func_callgraph(const llvm::StringRef func_name,
                     llvm::Module *        to,
                     ValueToValueMapTy &   vvm,
                     unsigned AS) {
-    std::list<llvm::StringRef> callees;
+    llvm::StringSet<> callees;
     llvm::Function *RootFunc = from->getFunction(func_name);
     if (RootFunc == NULL)
       return -1;
@@ -274,31 +172,19 @@ copy_func_callgraph(const llvm::StringRef func_name,
     // First copy the callees of func, then the function itself.
     // Recurse into callees to handle the case where kernel library
     // functions call other kernel library functions.
-    std::list<llvm::StringRef>::iterator ci,ce;
+    llvm::StringSet<>::iterator ci,ce;
     for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
-      llvm::Function *SrcFunc = from->getFunction(*ci);
+      llvm::Function *SrcFunc = from->getFunction(ci->getKey());
       if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(*ci, from, to, vvm, AS);
+        copy_func_callgraph(ci->getKey(), from, to, vvm, AS);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
 		 SrcFunc->getName().str().c_str());
       }
-      CopyFunc(*ci, from, to, vvm, AS);
+      CopyFunc(ci->getKey(), from, to, vvm, AS);
     }
     CopyFunc(func_name, from, to, vvm, AS);
     return 0;
-}
-
-static inline bool
-stringref_equal(llvm::StringRef a, llvm::StringRef b)
-{
-    return a.equals(b);
-}
-
-static inline bool
-stringref_cmp(llvm::StringRef a, llvm::StringRef b)
-{
-    return a.str() < b.str();
 }
 
 static void shared_copy(llvm::Module *program, const llvm::Module *lib,
@@ -413,7 +299,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   assert(Program);
   assert(Lib);
   ValueToValueMapTy vvm;
-  std::list<llvm::StringRef> declared;
+  llvm::StringSet<> DeclaredFunctions;
 
 #ifndef LLVM_OLDER_THAN_10_0
   // LLVM 9 misses some of the APIs needed by this function. We don't support
@@ -425,37 +311,31 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      declared.push_back(*Func++);
+      DeclaredFunctions.insert(*Func++);
     }
   }
 
   llvm::Module::iterator fi, fe;
 
-  // Find and fix opencl.imageX_t arguments
-  for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    llvm::Function *f = &*fi;
-    if (f->isDeclaration())
-      continue;
-    // need to restart iteration if we replace a function
-    if (CloneFuncFixOpenCLImageT(Program, f, global_AS) != f) {
-      fi = Program->begin();
-    }
-  }
-
   // Inspect the program, find undefined functions
   for (fi = Program->begin(), fe = Program->end(); fi != fe; fi++) {
-    if ((*fi).isDeclaration()) {
+    if (fi->isDeclaration()) {
       DB_PRINT("%s is not defined\n", fi->getName().data());
-      declared.push_back(fi->getName());
+      DeclaredFunctions.insert(fi->getName());
       continue;
     }
 
+    // anonymous functions have no name, which breaks the algorithm later
+    // when it searches for undefined functions in the kernel library.
+    // assign a name here, this should be made unique by setName()
+    if (!fi->hasName()) {
+      fi->setName("__anonymous_internal_func__");
+    }
+    DB_PRINT("Function '%s' is defined\n", fi->getName().data());
     // Find all functions the program source calls
     // TODO: is there no direct way?
-    find_called_functions(&*fi, declared);
+    find_called_functions(&*fi, DeclaredFunctions);
   }
-  declared.sort(stringref_cmp);
-  declared.unique(stringref_equal);
 
   // some global variables can have external linkage. Set it to private
   // otherwise these end up in ELF relocation tables and cause link
@@ -492,10 +372,10 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   StringRef pocl_sampler_handler("__translate_sampler_initializer");
   // ignore undefined llvm intrinsics
   StringRef llvm_intrins("llvm.");
-  std::list<llvm::StringRef>::iterator di,de;
-  for (di = declared.begin(), de = declared.end();
+  llvm::StringSet<>::iterator di,de;
+  for (di = DeclaredFunctions.begin(), de = DeclaredFunctions.end();
        di != de; di++) {
-      llvm::StringRef r = *di;
+      llvm::StringRef r = di->getKey();
       if (copy_func_callgraph(r, Lib, Program, vvm, global_AS)) {
         Function *f = Program->getFunction(r);
         if ((f == NULL) ||
