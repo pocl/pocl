@@ -162,6 +162,11 @@ if(NOT ENABLE_ANYSAN)
   "function 1.*first include.*function 2.*second include")
 endif()
 
+if(NOT HAVE_WORKING_IMAGES_WITH_SPIR)
+  set_tests_properties("runtime/clGetKernelArgInfo"
+    PROPERTIES DISABLED 1)
+endif()
+
 # Label tests that work with CUDA backend
 set_property(TEST
   "runtime/clGetDeviceInfo"

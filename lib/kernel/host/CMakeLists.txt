@@ -407,6 +407,9 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
 
+  # the "runtime/clGetKernelArgInfo" requires working images with spir,
+  # that only works if we're using the new (generated) wrappers
+  set(HAVE_WORKING_IMAGES_WITH_SPIR OFF CACHE BOOL "image functions work with SPIR" FORCE)
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
@@ -442,6 +445,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
       if(NOT SPIR_WRAPPER_FILE)
         generate_x86_64_spir_wrapper(${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        set(HAVE_WORKING_IMAGES_WITH_SPIR ON CACHE BOOL "image functions work with SPIR" FORCE)
       endif()
     else()
       message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")
