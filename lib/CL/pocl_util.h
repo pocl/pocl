@@ -139,6 +139,10 @@ cl_int
 pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
                                  const cl_command_queue *queues);
 
+cl_command_buffer_properties_khr
+pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
+                          cl_command_buffer_properties_khr name);
+
 POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
 

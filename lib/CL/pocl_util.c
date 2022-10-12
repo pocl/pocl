@@ -1228,6 +1228,18 @@ pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
   return CL_SUCCESS;
 }
 
+cl_command_buffer_properties_khr
+pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
+              cl_command_buffer_properties_khr name)
+{
+  for (unsigned i = 0; i < command_buffer->num_properties; ++i)
+    {
+      if (command_buffer->properties[2 * i] == name)
+        return command_buffer->properties[2 * i + 1];
+    }
+  return 0;
+}
+
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_buffer_khr command_buffer,

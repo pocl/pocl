@@ -41,18 +41,6 @@ buffer_finished_callback (cl_event event, cl_int event_command_status,
   POname (clReleaseCommandBufferKHR) (command_buffer);
 }
 
-static cl_command_buffer_properties_khr
-get_cmdbuf_property (cl_command_buffer_khr command_buffer,
-              cl_command_buffer_properties_khr name)
-{
-  for (unsigned i = 0; i < command_buffer->num_properties; ++i)
-    {
-      if (command_buffer->properties[2 * i] == name)
-        return command_buffer->properties[2 * i + 1];
-    }
-  return 0;
-}
-
 CL_API_ENTRY cl_int
 POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
                                     cl_command_queue *queues,
@@ -165,6 +153,8 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       unsigned sync_id = 0;
       LL_FOREACH (command_buffer->cmds, cmd)
       {
+        /* Per spec the given list of queues MUST be same length as the list
+         * that command_buffer was created with, this is checked earlier. */
         q = used_queues[cmd->queue_idx];
         unsigned j, k;
 
