@@ -43,6 +43,20 @@ POname(clGetEventProfilingInfo)(cl_event event,
       "is disabled on the queue\n");
   POCL_RETURN_ERROR_ON((event->status != CL_COMPLETE), CL_PROFILING_INFO_NOT_AVAILABLE,
     "Cannot return profiling info on events not CL_COMPLETE yet\n");
+  
+  if (event->command_type == CL_COMMAND_COMMAND_BUFFER_KHR)
+    {
+      cl_command_buffer_khr buf = event->command->command.replay.buffer;
+      if (buf->num_queues > 1)
+        {
+           for (unsigned i = 0; i < buf->num_queues; ++i)
+                POCL_RETURN_ERROR_ON (
+                        ((buf->queues[i]->properties & CL_QUEUE_PROFILING_ENABLE) == 0),
+                        CL_PROFILING_INFO_NOT_AVAILABLE,
+                        "Profiling info from command buffers is only available if "
+                        "profiling is enabled on all queues used in the buffer.\n");
+        }
+    }
 
   if (param_value)
   {
