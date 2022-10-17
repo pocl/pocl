@@ -303,7 +303,7 @@ main (int _argc, char **_argv)
       CHECK_CL_ERROR (clReleaseEvent (command_buf_event));
     }
 
-  /* Remap from 2 to 1 queues & run */
+  /* Remap from N to 1 queues & run */
   cl_command_buffer_khr remapped_cmdbuf = ext.clRemapCommandBufferKHR (command_buffer, 1, queues, 0, NULL, NULL, &error);
   CHECK_CL_ERROR (error);
   CHECK_CL_ERROR (ext.clGetCommandBufferInfoKHR (

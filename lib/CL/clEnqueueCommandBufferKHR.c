@@ -156,17 +156,17 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
         /* Per spec the given list of queues MUST be same length as the list
          * that command_buffer was created with, this is checked earlier. */
         q = used_queues[cmd->queue_idx];
-        unsigned j, k;
+        unsigned j = 0, k = 0;
 
         /* Add events from syncpoints to waitlist */
-        for (j = 0; j < cmd->sync.syncpoint.num_sync_points_in_wait_list; ++j)
+        for (; j < cmd->sync.syncpoint.num_sync_points_in_wait_list; ++j)
           {
             // sync point ids start at 1
             deps[j]
                 = syncpoints[cmd->sync.syncpoint.sync_point_wait_list[j] - 1];
           }
         /* Add events from command buffer dependencies to waitlist */
-        for (k = 0; k < num_events_in_wait_list; ++k, ++j)
+        for (; k < num_events_in_wait_list; ++k, ++j)
           {
             deps[j] = event_wait_list[k];
           }

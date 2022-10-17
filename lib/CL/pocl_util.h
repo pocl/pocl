@@ -444,8 +444,14 @@ while (0)
     {                                                                         \
       POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),         \
                               CL_INVALID_COMMAND_BUFFER_KHR);                 \
-      POCL_RETURN_ERROR_COND ((command_queue != NULL),                        \
+      POCL_RETURN_ERROR_COND ((command_queue == NULL && command_buffer->num_queues > 1), \
                               CL_INVALID_COMMAND_QUEUE);                      \
+      int queue_in_buffer = 0;                                                \
+      for (int ii = 0; ii < command_buffer->num_queues; ++ii)                 \
+        {                                                                     \
+            queue_in_buffer |= (command_queue == command_buffer->queues[ii]); \
+        }                                                                     \
+      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);  \
       POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);    \
       errcode = pocl_cmdbuf_choose_recording_queue (command_buffer,           \
                                                     &command_queue);          \

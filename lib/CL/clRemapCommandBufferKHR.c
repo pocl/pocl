@@ -59,23 +59,29 @@ POname (clRemapCommandBufferKHR) (
   cl_command_buffer_properties_khr universal_sync = pocl_cmdbuf_get_property(command_buffer, CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR);
   POCL_GOTO_ERROR_COND((universal_sync == 0 && num_queues > 1), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
 
-  POname (clCreateCommandBufferKHR) (num_queues, queues, command_buffer->properties, &errcode);
+  new_cmdbuf = POname (clCreateCommandBufferKHR) (num_queues, queues, command_buffer->properties, &errcode);
   if (errcode != CL_SUCCESS)
     {
       *errcode_ret = errcode;
       return NULL;
     }
+  new_cmdbuf->num_syncpoints = command_buffer->num_syncpoints;
 
   _cl_command_node *cmd;
   LL_FOREACH(command_buffer->cmds, cmd)
   {
+    assert(cmd->buffered);
+
     _cl_command_node *new_cmd = pocl_mem_manager_new_command ();
     POCL_GOTO_ERROR_COND ((new_cmd == NULL), CL_OUT_OF_HOST_MEMORY);
     memcpy(new_cmd, cmd, sizeof(_cl_command_node));
+    new_cmd->next = NULL;
+    new_cmd->prev = NULL;
 
     /* TODO: be smarter about this */
     new_cmd->queue_idx = new_cmd->queue_idx % new_cmdbuf->num_queues;
-    
+ 
+    CMD_NODE_COPY_ARRAY(cl_sync_point_khr, new_cmd->sync.syncpoint.num_sync_points_in_wait_list, sync.syncpoint.sync_point_wait_list);
     CMD_NODE_COPY_ARRAY(cl_mem, new_cmd->memobj_count, memobj_list);
     CMD_NODE_COPY_ARRAY(char, new_cmd->memobj_count, readonly_flag_list);
 
@@ -87,6 +93,7 @@ POname (clRemapCommandBufferKHR) (
     switch (new_cmd->type)
       {
         case CL_COMMAND_NDRANGE_KERNEL:
+        POname (clRetainKernel) (new_cmd->command.run.kernel);
         pocl_kernel_copy_args(new_cmd->command.run.kernel, &new_cmd->command.run);
         for (unsigned i = 0; i < new_cmd->command.run.kernel->meta->num_args; ++i)
           {
