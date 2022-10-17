@@ -443,7 +443,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       set(STR "#define SLEEF_VEC_${VECSIZE}_AVAILABLE\n")
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
-      if(NOT SPIR_WRAPPER_FILE)
+      if(ENABLE_SPIR AND NOT SPIR_WRAPPER_FILE)
         generate_x86_64_spir_wrapper(${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
         set(HAVE_WORKING_IMAGES_WITH_SPIR ON CACHE BOOL "image functions work with SPIR" FORCE)
       endif()
@@ -463,7 +463,9 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   endforeach()
 
-  compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
+  if(ENABLE_SPIR)
+    compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
+  endif()
 
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}")
   set(SLEEF_BC "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/sleef.bc")

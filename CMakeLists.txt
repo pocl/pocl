@@ -119,7 +119,6 @@ endmacro()
 find_program(BASH "bash")
 find_program(MAKE_PROGRAM NAMES "make")
 find_program(GIT_CMD "git")
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set_expr(HAVE_GIT GIT_CMD)
 
 if(HAVE_GIT)
@@ -830,6 +829,13 @@ if(ENABLE_SPIR)
       "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
       "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
     set(SPIRV ON)
+  endif()
+
+  # required for the wrapper generator
+  if(CMAKE_VERSION VERSION_LESS 3.12.0)
+    find_program(Python3_EXECUTABLE NAMES "python3" REQUIRED)
+  else()
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
   endif()
 
 endif()
