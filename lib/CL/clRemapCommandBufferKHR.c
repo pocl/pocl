@@ -125,4 +125,4 @@ ERROR:
     *errcode_ret = errcode;
   return NULL;
 }
-POsym (clCreateCommandBufferKHR)
+POsym (clRemapCommandBufferKHR)
