@@ -107,9 +107,13 @@ POname (clRemapCommandBufferKHR) (
     LL_APPEND(new_cmdbuf->cmds, new_cmd);
   }
 
-  errcode = POname (clFinalizeCommandBufferKHR) (new_cmdbuf);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
+  if (command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR
+        || command_buffer->state == CL_COMMAND_BUFFER_STATE_PENDING_KHR)
+    {
+      errcode = POname (clFinalizeCommandBufferKHR) (new_cmdbuf);
+      if (errcode != CL_SUCCESS)
+        goto ERROR;
+    }
 
   if (errcode_ret != NULL)
     *errcode_ret = errcode;
