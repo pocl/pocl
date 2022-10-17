@@ -413,15 +413,16 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
-    if((NOT X86) OR (LLVM_VERSION_MAJOR LESS 10))
-      # for older LLVMs and non-X86 CPUs, use a generic 64bit wrapper
-      # this doesn't support vectors and misses some
-      # functions, but otherwise should mostly work
-      set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")
-    else()
-      # for X86-64, SPIR wrapper is decided later
+    if((X86 AND LLVM_VERSION_MAJOR GREATER 9) OR
+       (ARM AND LLVM_VERSION_MAJOR GREATER 11))
+      # for X86-64 & ARM, use the generated SPIR wrapper,
       # based on CPU's largest supported vector size
       set(SPIR_WRAPPER_FILE "")
+    else()
+      # for older LLVMs or other CPUs, use a generic
+      # 64bit wrapper, this doesn't support vectors and misses
+      # some functions, but otherwise should mostly work
+      set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")
     endif()
   endif()
 
@@ -444,7 +445,12 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
       if(ENABLE_SPIR AND NOT SPIR_WRAPPER_FILE)
-        generate_x86_64_spir_wrapper(${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        if (ARM)
+          generate_cpu_spir_wrapper(cpu_arm ${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        endif()
+        if(X86)
+          generate_cpu_spir_wrapper(cpu_x86 ${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        endif()
         set(HAVE_WORKING_IMAGES_WITH_SPIR ON CACHE BOOL "image functions work with SPIR" FORCE)
       endif()
     else()

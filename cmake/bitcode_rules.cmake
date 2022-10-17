@@ -181,18 +181,18 @@ function(generate_cuda_spir_wrapper OUTPUT)
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-d" "cuda" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "cuda" "${FNAME}"
       COMMENT "Generating CUDA SPIR wrapper to ${FNAME}"
       VERBATIM)
 endfunction()
 
-function(generate_x86_64_spir_wrapper SUBDIR SIZE OUTPUT)
+function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/spir_wrapper_${SIZE}bit.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-d" "cpu" "-r" "${SIZE}" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
 endfunction()
