@@ -117,7 +117,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
     return errcode;
 
   cl_command_buffer_flags_khr flags
-      = (cl_command_buffer_flags_khr)get_cmdbuf_property (
+      = (cl_command_buffer_flags_khr)pocl_cmdbuf_get_property (
           command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
   POCL_LOCK (command_buffer->mutex);
   int is_ready
