@@ -15,7 +15,7 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y libpython3-dev python3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DKERNELLIB_HOST_CPU_VARIANTS=distro -DPOCL_ICD_ABSOLUTE_PATH=OFF -DENABLE_POCL_BUILDING=OFF -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -43,7 +43,7 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-6.0-dev clang-6.0 llvm-6.0 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y libpython3-dev python3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-6.0-dev clang-6.0 llvm-6.0 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -71,7 +71,7 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-9-dev clang-9 llvm-9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y libpython3-dev python3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-9-dev clang-9 llvm-9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -99,7 +99,7 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-10-dev libclang-cpp10-dev clang-10 llvm-10-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y libpython3-dev python3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-10-dev libclang-cpp10-dev clang-10 llvm-10-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -127,7 +127,7 @@ steps:
   commands:
   - apt update
   - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+  - apt install -y libpython3-dev python3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-12-dev libclang-cpp12-dev clang-12 llvm-12-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
   - mkdir build
   - cd build
   - cmake -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=thunderx -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
@@ -135,31 +135,3 @@ steps:
   - ninja install
   - clinfo
   - ctest -j32 --output-on-failure -L internal
-
----
-kind: pipeline
-name: arm32_ub1804_llvm9
-
-platform:
-  os: linux
-  arch: arm
-
-steps:
-- name: build_and_test
-  image: arm32v7/ubuntu:18.04
-  environment:
-    POCL_BUILDING: 1
-    POCL_CACHE_DIR: /tmp/cache
-    POCL_MAX_PTHREAD_COUNT: 2
-    DEBIAN_FRONTEND: noninteractive
-  commands:
-  - apt update
-  - apt upgrade -y
-  - apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-9-dev clang-9 llvm-9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
-  - mkdir build
-  - cd build
-  - cmake -DENABLE_FP64=OFF -DDEVELOPER_MODE=ON -DLLC_HOST_CPU=cortex-a15 -DLLC_TRIPLE=armv7l-unknown-linux-gnueabihf -DEXTRA_KERNEL_FLAGS="-mfloat-abi=hard -mfpu=neon" -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
-  - ninja
-  - ninja install
-  - clinfo
-  - ctest -j32 --output-on-failure -L internal -E test_issue_757
