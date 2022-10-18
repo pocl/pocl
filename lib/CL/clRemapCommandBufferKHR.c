@@ -56,8 +56,9 @@ POname (clRemapCommandBufferKHR) (
     return NULL;
   }
 
-  cl_command_buffer_properties_khr universal_sync = pocl_cmdbuf_get_property(command_buffer, CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR);
-  POCL_GOTO_ERROR_COND((universal_sync == 0 && num_queues > 1), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
+  cl_command_buffer_properties_khr flags = pocl_cmdbuf_get_property(command_buffer, CL_COMMAND_BUFFER_FLAGS_KHR);
+  int universal_sync_enabled = (flags & CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR) != 0;
+  POCL_GOTO_ERROR_COND((num_queues > 1 && !pocl_cmdbuf_can_queues_sync(num_queues, queues, universal_sync_enabled)), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
 
   new_cmdbuf = POname (clCreateCommandBufferKHR) (num_queues, queues, command_buffer->properties, &errcode);
   if (errcode != CL_SUCCESS)

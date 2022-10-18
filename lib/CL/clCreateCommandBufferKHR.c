@@ -24,6 +24,7 @@
 #include <CL/cl_ext.h>
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_command_buffer_khr CL_API_CALL
 POname (clCreateCommandBufferKHR) (
@@ -57,6 +58,7 @@ POname (clCreateCommandBufferKHR) (
     }
 
   cl_uint num_properties = 0;
+  int universal_sync_enabled = 0;
   if (properties != NULL)
     {
       const cl_command_buffer_properties_khr *key = 0;
@@ -77,17 +79,23 @@ POname (clCreateCommandBufferKHR) (
             }
 
           const cl_command_buffer_properties_khr *val = key + 1;
+          cl_command_buffer_properties_khr tmp = *val;
           switch (*key)
             {
             case CL_COMMAND_BUFFER_FLAGS_KHR:
-              /* For now only CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR is a known
-               * allowed value */
-              POCL_GOTO_ERROR_COND (
-                  ((*val & ~(CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR)) != 0),
-                  CL_INVALID_VALUE);
+              if ((tmp & CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR))
+                universal_sync_enabled = 1;
+              tmp &= ~CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR;
+
+              /* Simultaneous use is always supported, no action needed */
+              tmp &= ~CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR;
+
               /* If any of the devices associated with 'queues' does not
                * support a requested capability, error out with
                * CL_INVALID_PROPERTY */
+
+              /* Any flag bits not handled above are invalid */
+              POCL_GOTO_ERROR_COND ((tmp != 0), CL_INVALID_VALUE);
               break;
             default:
               errcode = CL_INVALID_VALUE;
@@ -95,6 +103,8 @@ POname (clCreateCommandBufferKHR) (
             }
         }
     }
+
+  POCL_GOTO_ERROR_COND ((num_queues > 1 && !pocl_cmdbuf_can_queues_sync(num_queues, queues, universal_sync_enabled)), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
 
   cmdbuf = calloc (1, sizeof (struct _cl_command_buffer_khr));
   if (cmdbuf == NULL)

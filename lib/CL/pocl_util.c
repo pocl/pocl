@@ -1240,6 +1240,43 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
   return 0;
 }
 
+int
+pocl_cmdbuf_can_queues_sync(cl_uint num_queues, const cl_command_queue *queues, int universal_sync_enabled)
+{
+  int syncable = 1;
+  if (num_queues > 1 && !universal_sync_enabled)
+    {
+      for (unsigned i = 0; i < num_queues; ++i)
+        {
+          /* XXX: should this look at physical devices instead of logical? */
+          cl_device_id dev = queues[i]->device;
+
+          cl_uint num_sync_devices;
+          POCL_RETURN_ERROR_COND ((POname(clGetDeviceInfo)(queues[i]->device, CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR, sizeof (cl_uint), &num_sync_devices, NULL)), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
+          cl_device_id sync_devices[num_sync_devices];
+          POCL_RETURN_ERROR_COND ((POname(clGetDeviceInfo)(queues[i]->device, CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR, sizeof (cl_device_id) * num_sync_devices, &sync_devices, NULL)), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
+          for (unsigned j = 0; j < num_queues; ++j)
+            {
+              if (j != i)
+                {
+                  int dev_is_syncable = 0;
+                  for (unsigned k = 0; k < num_sync_devices; ++k)
+                    {
+                      dev_is_syncable |= (queues[j]->device == sync_devices[k]);
+                    }
+                  /* If any device does not appear in sync_devices of another the devices can't sync */
+                  syncable &= dev_is_syncable;
+                }
+            }
+
+          /* PoCL advertises platform-wide support for syncing between queues on the same device */
+          syncable |= (dev == queues[0]->device);
+        }
+    }
+
+  return syncable | universal_sync_enabled;
+}
+
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_buffer_khr command_buffer,
