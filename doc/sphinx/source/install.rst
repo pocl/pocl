@@ -13,11 +13,13 @@ tools:
   * Latest released version of LLVM & Clang
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
+  * CMake
   * GNU make or ninja
+  * pkg-config
   * pthread (should be installed by default)
   * Optional: hwloc v1.0 or newer (e.g. libhwloc-dev)
-  * pkg-config
-  * cmake
+  * Optional: python3 (optional but enabled by default; for support of LLVM BC with SPIR target)
+  * Optional: python3, llvm-spirv and spirv-tools (optional; for SPIR-V support)
 
 Installing requirements for Ubuntu::
 
@@ -26,7 +28,7 @@ Note: The binary packages from https://apt.llvm.org/ are recommended
 the packages included in the distribution. The following assumes
 apt.llvm.org is added to your apt repos::
 
-    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
+    apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
 Installing requirements for Arch Linux::
 
