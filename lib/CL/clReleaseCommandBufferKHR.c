@@ -129,4 +129,4 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
 
   return errcode_ret;
 }
-POsym (clRetainCommandBufferKHR)
+POsym (clReleaseCommandBufferKHR)
