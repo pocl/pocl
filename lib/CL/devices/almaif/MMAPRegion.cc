@@ -39,8 +39,8 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   if (Size == 0) {
     return;
   }
-  POCL_MSG_PRINT_ACCEL_MMAP(
-      "accel: mmap'ing from address 0x%zx with size %zu\n", Address,
+  POCL_MSG_PRINT_ALMAIF_MMAP(
+      "almaif: mmap'ing from address 0x%zx with size %zu\n", Address,
       RegionSize);
   // In case of unaligned Address, align the mmap call
   long page_size = sysconf(_SC_PAGESIZE);
@@ -51,7 +51,7 @@ MMAPRegion::MMAPRegion(size_t Address, size_t RegionSize, int mem_fd) {
   assert(Data != MAP_FAILED && "MMAPRegion mapping failed");
   // Increment back to the unaligned address user asked for
   Data = (void *)((char *)Data + difference);
-  POCL_MSG_PRINT_ACCEL_MMAP("accel: got address %p\n", Data);
+  POCL_MSG_PRINT_ALMAIF_MMAP("almaif: got address %p\n", Data);
 }
 
 void MMAPRegion::initRegion(char *init_file) {
@@ -65,11 +65,11 @@ void MMAPRegion::initRegion(char *init_file) {
     i += 4;
   }
 
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Initialized region with %i bytes \n", i - 4);
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Initialized region with %i bytes \n", i - 4);
 }
 
 MMAPRegion::~MMAPRegion() {
-  POCL_MSG_PRINT_ACCEL_MMAP("accel: munmap'ing from address 0x%zx\n",
+  POCL_MSG_PRINT_ALMAIF_MMAP("almaif: munmap'ing from address 0x%zx\n",
                             PhysAddress);
   if (Data) {
     // Align unmap to page_size
@@ -83,7 +83,7 @@ MMAPRegion::~MMAPRegion() {
 }
 
 uint32_t MMAPRegion::Read32(size_t offset) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; read before mapping?");
@@ -94,7 +94,7 @@ uint32_t MMAPRegion::Read32(size_t offset) {
 }
 
 void MMAPRegion::Write32(size_t offset, uint32_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; write before mapping?");
@@ -103,7 +103,7 @@ void MMAPRegion::Write32(size_t offset, uint32_t value) {
 }
 
 void MMAPRegion::Write16(size_t offset, uint16_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; write before mapping?");
@@ -112,7 +112,7 @@ void MMAPRegion::Write16(size_t offset, uint16_t value) {
 }
 
 uint64_t MMAPRegion::Read64(size_t offset) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; read before mapping?");
@@ -123,7 +123,7 @@ uint64_t MMAPRegion::Read64(size_t offset) {
 }
 
 void MMAPRegion::Write64(size_t offset, uint64_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Data && "No pointer to MMAP'd region; write before mapping?");
@@ -133,7 +133,7 @@ void MMAPRegion::Write64(size_t offset, uint64_t value) {
 
 void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
                             size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
                             "address 0x%zx\n",
                             bytes, PhysAddress, destination);
   auto src = (char *)source;
@@ -144,7 +144,7 @@ void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
 }
 
 void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading 0x%zx bytes from buffer at 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading 0x%zx bytes from buffer at 0x%zx "
                             "with address 0x%zx\n",
                             bytes, PhysAddress, source);
   auto dst = (char *)destination;
@@ -155,7 +155,7 @@ void MMAPRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
 }
 
 void MMAPRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Copying 0x%zx bytes from 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Copying 0x%zx bytes from 0x%zx "
                             "to 0x%zx\n",
                             bytes, source, destination);
   size_t src_offset = source - PhysAddress;

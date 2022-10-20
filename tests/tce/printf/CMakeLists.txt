@@ -35,7 +35,7 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_test_pocl(NAME "tcele/printf" COMMAND "printf_host" run)
 
-add_test_pocl(NAME "accel/printf" COMMAND "printf_host" run)
+add_test_pocl(NAME "almaif/printf" COMMAND "printf_host" run)
 
 # Big-endian printf seems broken for now.
 # Debug later if needed
@@ -59,11 +59,11 @@ set_tests_properties( "tcele/printf"
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     DEPENDS "pocl_version_check")
 
-set_tests_properties( "accel/printf"
+set_tests_properties( "almaif/printf"
   PROPERTIES
     COST 40.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "accel_ttasim"
-    ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
+    LABELS "almaif_ttasim"
+    ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
     DEPENDS "pocl_version_check")

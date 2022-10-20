@@ -26,7 +26,7 @@
 
 #include "Region.hh"
 
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 
 class TTASimDevice;
 namespace TTAMachine {
@@ -50,7 +50,7 @@ public:
                          size_t bytes) override;
 
 private:
-  uint32_t ControlRegisters_[ACCEL_DEFAULT_CTRL_SIZE / 4];
+  uint32_t ControlRegisters_[ALMAIF_DEFAULT_CTRL_SIZE / 4];
   void setupControlRegisters(const TTAMachine::Machine &mach);
   TTASimDevice *parent_;
 };

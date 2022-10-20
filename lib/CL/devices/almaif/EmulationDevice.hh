@@ -1,8 +1,7 @@
-/* accel.h - generic/example driver for hardware accelerators with memory
-   mapped control.
+/* EmulationDevice.hh - basic way of accessing accelerator memory.
+ *                 as a memory mapped region
 
-   Copyright (c) 2019 Pekka Jääskeläinen / Tampere University
-                 2022 Topi Leppänen / Tampere University
+   Copyright (c) 2022 Topi Leppänen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,21 +22,41 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_ACCEL_H
-#define POCL_ACCEL_H
+#ifndef EMULATIONDEVICE_H
+#define EMULATIONDEVICE_H
 
-#include "pocl_cl.h"
-#include "prototypes.inc"
+#include <pthread.h>
+
+#include "Device.hh"
+
+#define EMULATING_ADDRESS 0xE
+#define EMULATING_MAX_SIZE (256 * 1024 * 1024)
+//#define EMULATING_MAX_SIZE 4 * 4096
+
+struct emulation_data_t {
+  void *emulating_address;
+  volatile int emulate_exit_called;
+  volatile int emulate_init_done;
+};
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
-  GEN_PROTOTYPES (accel)
+void *emulate_almaif(void *E_void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* POCL_ACCEL_H */
+class EmulationDevice : public Device {
+public:
+  EmulationDevice();
+  ~EmulationDevice();
+
+private:
+  struct emulation_data_t E;
+  pthread_t emulate_thread;
+};
+
+#endif

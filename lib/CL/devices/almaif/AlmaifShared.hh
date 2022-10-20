@@ -1,4 +1,4 @@
-/* AccelShared.hh - Shared definitions for accel-drivers internal use
+/* AlmaifShared.hh - Shared definitions for almaif-drivers internal use
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -21,8 +21,8 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_ACCELSHARED_H
-#define POCL_ACCELSHARED_H
+#ifndef POCL_ALMAIFSHARED_H
+#define POCL_ALMAIFSHARED_H
 
 #include <set>
 #include <vector>
@@ -34,61 +34,61 @@
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
 
-#define ACCEL_DEFAULT_PRIVATE_MEM_SIZE (2048)
+#define ALMAIF_DEFAULT_PRIVATE_MEM_SIZE (2048)
 
-#define ACCEL_DEFAULT_CTRL_SIZE (1024)
+#define ALMAIF_DEFAULT_CTRL_SIZE (1024)
 
-#define ACCEL_DEFAULT_CONSTANT_MEM_SIZE (4096)
+#define ALMAIF_DEFAULT_CONSTANT_MEM_SIZE (4096)
 
 #define ALMAIF_VERSION_2 (2)
 #define ALMAIF_VERSION_3 (3)
 
-#define ACCEL_STATUS_REG (0x00)
-#define ACCEL_STATUS_REG_PC (0x04)
-#define ACCEL_STATUS_REG_CC_LOW (0x08)
-#define ACCEL_STATUS_REG_CC_HIGH (0x0C)
-#define ACCEL_STATUS_REG_SC_LOW (0x10)
-#define ACCEL_STATUS_REG_SC_HIGH (0x14)
+#define ALMAIF_STATUS_REG (0x00)
+#define ALMAIF_STATUS_REG_PC (0x04)
+#define ALMAIF_STATUS_REG_CC_LOW (0x08)
+#define ALMAIF_STATUS_REG_CC_HIGH (0x0C)
+#define ALMAIF_STATUS_REG_SC_LOW (0x10)
+#define ALMAIF_STATUS_REG_SC_HIGH (0x14)
 
-#define ACCEL_CONTROL_REG_COMMAND (0x200)
+#define ALMAIF_CONTROL_REG_COMMAND (0x200)
 
-#define ACCEL_RESET_CMD (1)
-#define ACCEL_CONTINUE_CMD (2)
-#define ACCEL_BREAK_CMD (4)
+#define ALMAIF_RESET_CMD (1)
+#define ALMAIF_CONTINUE_CMD (2)
+#define ALMAIF_BREAK_CMD (4)
 
-#define ACCEL_INFO_DEV_CLASS (0x300)
-#define ACCEL_INFO_DEV_ID (0x304)
-#define ACCEL_INFO_IF_TYPE (0x308)
-#define ACCEL_INFO_CORE_COUNT (0x30C)
-#define ACCEL_INFO_CTRL_SIZE (0x310)
+#define ALMAIF_INFO_DEV_CLASS (0x300)
+#define ALMAIF_INFO_DEV_ID (0x304)
+#define ALMAIF_INFO_IF_TYPE (0x308)
+#define ALMAIF_INFO_CORE_COUNT (0x30C)
+#define ALMAIF_INFO_CTRL_SIZE (0x310)
 
-#define ACCEL_INFO_IMEM_SIZE (0x314)
-#define ACCEL_INFO_IMEM_START_LOW (0x318)
-#define ACCEL_INFO_IMEM_START_HIGH (0x31C)
+#define ALMAIF_INFO_IMEM_SIZE (0x314)
+#define ALMAIF_INFO_IMEM_START_LOW (0x318)
+#define ALMAIF_INFO_IMEM_START_HIGH (0x31C)
 
-#define ACCEL_INFO_CQMEM_SIZE_LOW (0x320)
-#define ACCEL_INFO_CQMEM_SIZE_HIGH (0x324)
-#define ACCEL_INFO_CQMEM_START_LOW (0x328)
-#define ACCEL_INFO_CQMEM_START_HIGH (0x32C)
+#define ALMAIF_INFO_CQMEM_SIZE_LOW (0x320)
+#define ALMAIF_INFO_CQMEM_SIZE_HIGH (0x324)
+#define ALMAIF_INFO_CQMEM_START_LOW (0x328)
+#define ALMAIF_INFO_CQMEM_START_HIGH (0x32C)
 
-#define ACCEL_INFO_DMEM_SIZE_LOW (0x330)
-#define ACCEL_INFO_DMEM_SIZE_HIGH (0x334)
-#define ACCEL_INFO_DMEM_START_LOW (0x338)
-#define ACCEL_INFO_DMEM_START_HIGH (0x33C)
+#define ALMAIF_INFO_DMEM_SIZE_LOW (0x330)
+#define ALMAIF_INFO_DMEM_SIZE_HIGH (0x334)
+#define ALMAIF_INFO_DMEM_START_LOW (0x338)
+#define ALMAIF_INFO_DMEM_START_HIGH (0x33C)
 
-#define ACCEL_INFO_FEATURE_FLAGS_LOW (0x340)
-#define ACCEL_INFO_FEATURE_FLAGS_HIGH (0x344)
+#define ALMAIF_INFO_FEATURE_FLAGS_LOW (0x340)
+#define ALMAIF_INFO_FEATURE_FLAGS_HIGH (0x344)
 
-#define ACCEL_INFO_PTR_SIZE (0x348)
+#define ALMAIF_INFO_PTR_SIZE (0x348)
 
-#define ACCEL_FF_BIT_AXI_MASTER (1 << 0)
-#define ACCEL_FF_BIT_W_IMEM_START (1 << 1)
-#define ACCEL_FF_BIT_W_DMEM_START (1 << 2)
-#define ACCEL_FF_BIT_PAUSE (1 << 3)
+#define ALMAIF_FF_BIT_AXI_MASTER (1 << 0)
+#define ALMAIF_FF_BIT_W_IMEM_START (1 << 1)
+#define ALMAIF_FF_BIT_W_DMEM_START (1 << 2)
+#define ALMAIF_FF_BIT_PAUSE (1 << 3)
 
-#define ACCEL_INFO_DMEM_SIZE_LEGACY (0x314)
-#define ACCEL_INFO_IMEM_SIZE_LEGACY (0x318)
-#define ACCEL_INFO_PMEM_SIZE_LEGACY (0x31C)
+#define ALMAIF_INFO_DMEM_SIZE_LEGACY (0x314)
+#define ALMAIF_INFO_IMEM_SIZE_LEGACY (0x318)
+#define ALMAIF_INFO_PMEM_SIZE_LEGACY (0x31C)
 
 #define AQL_PACKET_INVALID (1)
 #define AQL_PACKET_KERNEL_DISPATCH (2)
@@ -121,11 +121,11 @@ struct AQLQueueInfo {
   uint64_t reserved1;
 };
 
-#define ACCEL_CQ_READ (offsetof(AQLQueueInfo, read_index))
-#define ACCEL_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
-#define ACCEL_CQ_LENGTH (offsetof(AQLQueueInfo, size))
+#define ALMAIF_CQ_READ (offsetof(AQLQueueInfo, read_index))
+#define ALMAIF_CQ_WRITE (offsetof(AQLQueueInfo, write_index))
+#define ALMAIF_CQ_LENGTH (offsetof(AQLQueueInfo, size))
 
-#define ACCEL_DRIVER_SLEEP 200
+#define ALMAIF_DRIVER_SLEEP 200
 
 struct CommandMetadata {
   uint32_t completion_signal;
@@ -174,7 +174,7 @@ struct AQLAndPacket {
 // declaration to resolve circular dependency
 typedef struct compilation_data_s compilation_data_t;
 
-struct AccelData {
+struct AlmaifData {
   size_t BaseAddress;
 
   Device *Dev;
@@ -199,9 +199,9 @@ struct AccelData {
   compilation_data_t *compilationData;
 };
 
-bool isEventDone(AccelData *data, cl_event event);
-void submit_kernel_packet(AccelData *D, _cl_command_node *cmd);
-void submit_and_barrier(AccelData *D, _cl_command_node *cmd);
+bool isEventDone(AlmaifData *data, cl_event event);
+void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd);
+void submit_and_barrier(AlmaifData *D, _cl_command_node *cmd);
 
 /* The address space ids in the ADFs. */
 #define TTA_ASID_PRIVATE 0

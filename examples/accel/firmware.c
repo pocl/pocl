@@ -38,12 +38,12 @@
 
 #define AQL_MAX_SIGNAL_COUNT (5)
 
-#define ACCEL_STATUS_REG (0x00)
-#define ACCEL_STATUS_REG_PC (0x04)
-#define ACCEL_STATUS_REG_CC_LOW (0x08)
-#define ACCEL_STATUS_REG_CC_HIGH (0x0C)
-#define ACCEL_STATUS_REG_SC_LOW (0x10)
-#define ACCEL_STATUS_REG_SC_HIGH (0x14)
+#define ALMAIF_STATUS_REG (0x00)
+#define ALMAIF_STATUS_REG_PC (0x04)
+#define ALMAIF_STATUS_REG_CC_LOW (0x08)
+#define ALMAIF_STATUS_REG_CC_HIGH (0x0C)
+#define ALMAIF_STATUS_REG_SC_LOW (0x10)
+#define ALMAIF_STATUS_REG_SC_HIGH (0x14)
 
 #define SLEEP_CYCLES 400
 
@@ -213,10 +213,10 @@ main ()
 #ifdef BASE_ADDRESS
           __buffer__ uint32_t *control_region
               = (__buffer__ uint32_t *)BASE_ADDRESS;
-          uint32_t cc_l = control_region[ACCEL_STATUS_REG_CC_LOW / 4];
-          // uint32_t cc_h = control_region[ACCEL_STATUS_REG_CC_HIGH/4];
-          uint32_t sc_l = control_region[ACCEL_STATUS_REG_SC_LOW / 4];
-          // uint32_t sc_h = control_region[ACCEL_STATUS_REG_SC_HIGH/4];
+          uint32_t cc_l = control_region[ALMAIF_STATUS_REG_CC_LOW / 4];
+          // uint32_t cc_h = control_region[ALMAIF_STATUS_REG_CC_HIGH/4];
+          uint32_t sc_l = control_region[ALMAIF_STATUS_REG_SC_LOW / 4];
+          // uint32_t sc_h = control_region[ALMAIF_STATUS_REG_SC_HIGH/4];
           __buffer__ struct CommandMetadata *cmd_meta
               = (__buffer__ struct CommandMetadata*)packet->completion_signal_low;
           cmd_meta->start_timestamp_l = cc_l + sc_l;
@@ -255,10 +255,10 @@ main ()
                 }
             }
 #ifdef BASE_ADDRESS
-          cc_l = control_region[ACCEL_STATUS_REG_CC_LOW / 4];
-          // cc_h = control_region[ACCEL_STATUS_REG_CC_HIGH/4];
-          sc_l = control_region[ACCEL_STATUS_REG_SC_LOW / 4];
-          // sc_h = control_region[ACCEL_STATUS_REG_SC_HIGH/4];
+          cc_l = control_region[ALMAIF_STATUS_REG_CC_LOW / 4];
+          // cc_h = control_region[ALMAIF_STATUS_REG_CC_HIGH/4];
+          sc_l = control_region[ALMAIF_STATUS_REG_SC_LOW / 4];
+          // sc_h = control_region[ALMAIF_STATUS_REG_SC_HIGH/4];
           cmd_meta->finish_timestamp_l = cc_l + sc_l;
           // cmd_meta->finish_timestamp_h = cc_h + sc_h;
 #endif

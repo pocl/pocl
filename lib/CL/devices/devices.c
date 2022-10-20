@@ -75,8 +75,8 @@
 #include "cuda/pocl-cuda.h"
 #endif
 
-#if defined(BUILD_ACCEL)
-#include "accel/accel.h"
+#if defined(BUILD_ALMAIF)
+#include "almaif/almaif.h"
 #endif
 
 #ifdef BUILD_PROXY
@@ -140,8 +140,8 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_CUDA
   INIT_DEV (cuda),
 #endif
-#ifdef BUILD_ACCEL
-  INIT_DEV (accel),
+#ifdef BUILD_ALMAIF
+  INIT_DEV (almaif),
 #endif
 #ifdef BUILD_PROXY
   INIT_DEV (proxy),
@@ -169,8 +169,8 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #ifdef BUILD_CUDA
   "cuda",
 #endif
-#ifdef BUILD_ACCEL
-  "accel",
+#ifdef BUILD_ALMAIF
+  "almaif",
 #endif
 #ifdef BUILD_PROXY
   "proxy",

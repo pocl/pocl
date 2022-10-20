@@ -1,7 +1,8 @@
-/* EmulationDevice.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* almaif.h - generic/example driver for hardware accelerators with memory
+   mapped control.
 
-   Copyright (c) 2022 Topi Leppänen / Tampere University
+   Copyright (c) 2019 Pekka Jääskeläinen / Tampere University
+                 2022 Topi Leppänen / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,41 +23,21 @@
    IN THE SOFTWARE.
 */
 
-#ifndef EMULATIONDEVICE_H
-#define EMULATIONDEVICE_H
+#ifndef POCL_ALMAIF_H
+#define POCL_ALMAIF_H
 
-#include <pthread.h>
-
-#include "Device.hh"
-
-#define EMULATING_ADDRESS 0xE
-#define EMULATING_MAX_SIZE (256 * 1024 * 1024)
-//#define EMULATING_MAX_SIZE 4 * 4096
-
-struct emulation_data_t {
-  void *emulating_address;
-  volatile int emulate_exit_called;
-  volatile int emulate_init_done;
-};
+#include "pocl_cl.h"
+#include "prototypes.inc"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void *emulate_accel(void *E_void);
+  GEN_PROTOTYPES (almaif)
 
 #ifdef __cplusplus
 }
 #endif
 
-class EmulationDevice : public Device {
-public:
-  EmulationDevice();
-  ~EmulationDevice();
-
-private:
-  struct emulation_data_t E;
-  pthread_t emulate_thread;
-};
-
-#endif
+#endif /* POCL_ALMAIF_H */

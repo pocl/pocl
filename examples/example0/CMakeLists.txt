@@ -66,7 +66,7 @@ set_tests_properties( "examples/example0" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/example0"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan;accel_LLVM")
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan;almaif_LLVM")
 
 add_test(NAME "examples/example0_poclbin" COMMAND "example0" "b")
 set_tests_properties("examples/example0_poclbin"

@@ -23,8 +23,8 @@
 */
 
 #include "TTASimDevice.hh"
-#include "AccelCompile.hh"
-#include "AccelShared.hh"
+#include "AlmaifCompile.hh"
+#include "AlmaifShared.hh"
 #include "TTASimControlRegion.hh"
 #include "TTASimRegion.hh"
 
@@ -72,8 +72,8 @@ private:
 
 TTASimDevice::TTASimDevice(char *adf_name) {
 
-#ifdef ACCEL_TTASimMMAP_DEBUG
-  POCL_MSG_PRINT_ACCEL("TTASimMMAP: Initializing TTASimMMAPregion with Address "
+#ifdef ALMAIF_TTASimMMAP_DEBUG
+  POCL_MSG_PRINT_ALMAIF("TTASimMMAP: Initializing TTASimMMAPregion with Address "
                        "%zu and Size %zu\n",
                        Address, RegionSize);
 #endif
@@ -136,18 +136,18 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   char tpef_file[120];
   snprintf(tpef_file, sizeof(tpef_file), "%s.tpef", adf_name);
   if (pocl_exists(tpef_file)) {
-    POCL_MSG_PRINT_ACCEL(
-        "Accel: Found built-in kernel firmware for ttasim. Loading it in.\n");
+    POCL_MSG_PRINT_ALMAIF(
+        "Almaif: Found built-in kernel firmware for ttasim. Loading it in.\n");
     loadProgram(tpef_file);
   } else {
-    POCL_MSG_PRINT_ACCEL("File %s not found. Skipping program initialization\n",
+    POCL_MSG_PRINT_ALMAIF("File %s not found. Skipping program initialization\n",
                          tpef_file);
   }
 
   if (!RelativeAddressing) {
-    if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
+    if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {
       char *region_params =
-          strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION", "0,0"));
+          strdup(pocl_get_string_option("POCL_ALMAIF_EXTERNALREGION", "0,0"));
       char *save_ptr;
       char *param_token = strtok_r(region_params, ",", &save_ptr);
       size_t region_address = strtoul(param_token, NULL, 0);
@@ -160,8 +160,8 @@ TTASimDevice::TTASimDevice(char *adf_name) {
         pocl_init_mem_region(ext_region, region_address, region_size);
         LL_APPEND(AllocRegions, ext_region);
 
-        POCL_MSG_PRINT_ACCEL(
-            "Accel: initialized external alloc region at %zx with size %zx\n",
+        POCL_MSG_PRINT_ALMAIF(
+            "Almaif: initialized external alloc region at %zx with size %zx\n",
             region_address, region_size);
         ExternalMemory = new TTASimRegion(region_address, region_size, mem);
       }
@@ -191,7 +191,7 @@ TTASimDevice::~TTASimDevice() {
 
 void TTASimDevice::loadProgram(char *tpef_file) {
   if (simulator_->isRunning())
-    ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
+    ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_RESET_CMD);
   while (simulator_->isRunning())
     ;
   /* Save the cycle count to maintain a global running cycle count
@@ -228,7 +228,7 @@ void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
                                       "/parallel.tpef", &cmd_copy, 0);
     }
   }
-  POCL_MSG_PRINT_ACCEL("Loading kernel from file %s\n", tpef_file);
+  POCL_MSG_PRINT_ALMAIF("Loading kernel from file %s\n", tpef_file);
 
   loadProgram(tpef_file);
 
@@ -245,12 +245,12 @@ void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
   }
 
   /*  for (int i=0; i<prog->procedureCount(); i++){
-      POCL_MSG_PRINT_ACCEL("procedurename=%s\n",
+      POCL_MSG_PRINT_ALMAIF("procedurename=%s\n",
   prog->procedure(i).name().c_str());
   }*/
   // TODO Figure out kernel addres
 
-  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
+  ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_CONTINUE_CMD);
   //  //currentProgram = &simulator_->program();
 }
 
@@ -291,7 +291,7 @@ void TTASimDevice::restartProgram() {
     POCL_SIGNAL_COND(simulation_start_cond);
     POCL_UNLOCK(lock);
   } else {
-    POCL_MSG_PRINT_ACCEL("Trying to start simulator without initialization\n");
+    POCL_MSG_PRINT_ALMAIF("Trying to start simulator without initialization\n");
   }
 }
 

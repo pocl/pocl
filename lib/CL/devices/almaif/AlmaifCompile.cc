@@ -1,4 +1,4 @@
-/* AccelCompile.cc - compiler support for custom devices
+/* AlmaifCompile.cc - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -25,9 +25,9 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 
-#include "AccelShared.hh"
-#include "accel.h"
-#include "AccelCompile.hh"
+#include "AlmaifShared.hh"
+#include "almaif.h"
+#include "AlmaifCompile.hh"
 
 #include "common_driver.h"
 
@@ -37,13 +37,13 @@
 #endif
 
 #ifdef ENABLE_COMPILER
-#include "AccelCompileTCE.hh"
+#include "AlmaifCompileTCE.hh"
 #endif
 
 extern int pocl_offline_compile;
 
-int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
-  AccelData *d = (AccelData *)dev->data;
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameters) {
+  AlmaifData *d = (AlmaifData *)dev->data;
 
   d->compilationData = (compilation_data_t *)pocl_aligned_malloc(
       HOST_CPU_CACHELINE_SIZE, sizeof(compilation_data_t));
@@ -100,20 +100,20 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   adi->compile_kernel = pocl_almaif_tce_compile;
 
   // backend specific init
-  POCL_MSG_PRINT_ACCEL("Starting device specific initializion\n");
+  POCL_MSG_PRINT_ALMAIF("Starting device specific initializion\n");
   adi->initialize_device(dev, parameters);
 
-  POCL_MSG_PRINT_ACCEL("Device specific initializion done\n");
+  POCL_MSG_PRINT_ALMAIF("Device specific initializion done\n");
 
   SHA1_digest_t digest;
   pocl_almaif_tce_device_hash(parameters, dev->llvm_target_triplet,
                               (char *)digest);
-  POCL_MSG_PRINT_ACCEL("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
+  POCL_MSG_PRINT_ALMAIF("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
   adi->build_hash = strdup((char *)digest);
 
 #else
   char option_str[256];
-  snprintf(option_str, 256, "POCL_ACCEL%u_HASH", j);
+  snprintf(option_str, 256, "POCL_ALMAIF%u_HASH", j);
   if (pocl_is_option_set(option_str)) {
     adi->build_hash = (char *)pocl_get_string_option(option_str, NULL);
     assert(adi->build_hash);
@@ -121,7 +121,7 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     adi->build_hash = strdup(DEFAULT_BUILD_HASH);
 #endif
 
-  dev->ops->build_hash = pocl_almaif_build_hash;
+  dev->ops->build_hash = pocl_almaif_compile_build_hash;
   dev->ops->build_source = pocl_driver_build_source;
   dev->ops->setup_metadata = pocl_driver_setup_metadata;
   dev->ops->create_kernel = pocl_almaif_create_kernel;
@@ -135,8 +135,8 @@ int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   return CL_SUCCESS;
 }
 
-cl_int pocl_almaif_uninit(unsigned j, cl_device_id dev) {
-  AccelData *d = (AccelData *)dev->data;
+cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev) {
+  AlmaifData *d = (AlmaifData *)dev->data;
 
 #ifdef ENABLE_COMPILER
   d->compilationData->cleanup_device(dev);
@@ -158,14 +158,14 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
     kernel = cmd->command.run.kernel;
   cl_program program = kernel->program;
   cl_device_id dev = (device ? device : cmd->device);
-  AccelData *d = (AccelData *)dev->data;
+  AlmaifData *d = (AlmaifData *)dev->data;
   unsigned dev_i = cmd->program_device_i;
 
-  POCL_MSG_PRINT_ACCEL("Current kernel %p, new kernel %p\n",
+  POCL_MSG_PRINT_ALMAIF("Current kernel %p, new kernel %p\n",
                        (void*)d->compilationData->current_kernel, (void*)kernel);
 
   /* if (d->compilationData->current_kernel == kernel) {
-     POCL_MSG_PRINT_ACCEL(
+     POCL_MSG_PRINT_ALMAIF(
          "kernel %s is the currently loaded kernel, nothing to do\n",
          kernel->name);
      return;
@@ -173,7 +173,7 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 
 #ifdef ENABLE_COMPILER
   if (!program->pocl_binaries[dev_i]) {
-    POCL_MSG_PRINT_ACCEL("Compiling kernel %s to poclbinary\n", kernel->name);
+    POCL_MSG_PRINT_ALMAIF("Compiling kernel %s to poclbinary\n", kernel->name);
 
     d->compilationData->compile_kernel(cmd, kernel, device, specialize);
   }
@@ -185,10 +185,10 @@ void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   almaif_kernel_data_t *kd =
       (almaif_kernel_data_t *)kernel->data[cmd->program_device_i];
 
-  POCL_MSG_PRINT_ACCEL("Loading program to device\n");
+  POCL_MSG_PRINT_ALMAIF("Loading program to device\n");
   d->Dev->loadProgramToDevice(kd, kernel, cmd);
 
-  POCL_MSG_PRINT_ACCEL("Loaded program to device\n");
+  POCL_MSG_PRINT_ALMAIF("Loaded program to device\n");
   d->compilationData->current_kernel = kernel;
 }
 
@@ -228,8 +228,8 @@ int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
   return CL_SUCCESS;
 }
 
-char *pocl_almaif_build_hash(cl_device_id device) {
-  AccelData *d = (AccelData *)device->data;
+char *pocl_almaif_compile_build_hash(cl_device_id device) {
+  AlmaifData *d = (AlmaifData *)device->data;
   assert(d->compilationData->build_hash);
   return d->compilationData->build_hash;
 }

@@ -23,9 +23,9 @@
      How to do this, depends on device:
        * CUDA has OpenCL-source builtins in lib/CL/devices/cuda/builtins.cl,
          it also has CUDA-source builtins in lib/CL/devices/cuda/builtins.cu
-       * accel driver with TTASIM backend has opencl-source builtins in
-         lib/CL/devices/accel/tce_builtins.cl
-       * accel driver with other backends has builtin kernels in binary format
+       * almaif driver with TTASIM backend has opencl-source builtins in
+         lib/CL/devices/almaif/tce_builtins.cl
+       * almaif driver with other backends has builtin kernels in binary format
   (bitstream)
 
 

@@ -60,10 +60,10 @@ if(BUILD_PTHREAD)
     "$<TARGET_OBJECTS:pocl-devices-pthread>")
 endif()
 
-if(BUILD_ACCEL)
-  add_subdirectory("accel")
+if(BUILD_ALMAIF)
+  add_subdirectory("almaif")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-    "$<TARGET_OBJECTS:pocl-devices-accel>")
+    "$<TARGET_OBJECTS:pocl-devices-almaif>")
 endif()
 
 # for these drivers, use HWLOC if found

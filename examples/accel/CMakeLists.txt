@@ -130,8 +130,8 @@ if(ENABLE_TCE)
                           "examples/example0/ttasim_${core_name}"
         PROPERTIES
             PASS_REGULAR_EXPRESSION "OK"
-            LABELS "custom_device;accel_ttasim;accel_LLVM"
-            ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535"
+            LABELS "custom_device;almaif_ttasim;almaif_LLVM"
+            ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535"
             DEPENDS "pocl_version_check" "examples/example0" "examples/example1_dot_product")
 
     if (PYNQ_AVAILABLE)
@@ -143,8 +143,8 @@ if(ENABLE_TCE)
          "examples/example0/pynq_${core_name}"
         PROPERTIES
             PASS_REGULAR_EXPRESSION "OK"
-            LABELS "custom_device;accel_pynq"
-            ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0x43C00000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2"
+            LABELS "custom_device;almaif_pynq"
+            ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0x43C00000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2"
             DEPENDS "pocl_version_check" "examples/example0")
     endif()
   endfunction()
@@ -181,5 +181,5 @@ set_tests_properties( "examples/accel/countred" "examples/accel/add.i32"
   "examples/accel/mul.i32"  "examples/accel/abs.f32"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "custom_device;accel_no_LLVM"
+    LABELS "custom_device;almaif_no_LLVM"
     DEPENDS "pocl_version_check")

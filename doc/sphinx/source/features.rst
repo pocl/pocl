@@ -12,6 +12,6 @@ NVidia GPUs via CUDA backend, HSA devices, TCE devices and fixed-function accele
    extensions
    hsa
    cuda
-   accel
+   almaif
    proxy
    vulkan

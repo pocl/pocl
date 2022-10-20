@@ -1,4 +1,4 @@
-/* AccelCompileTCE.cc - compiler support for custom devices
+/* AlmaifCompileTCE.cc - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -47,14 +47,14 @@
 #include <Program.hh>
 */
 
-#include "AccelShared.hh"
-#include "AccelCompileTCE.hh"
-#include "AccelCompile.hh"
+#include "AlmaifShared.hh"
+#include "AlmaifCompileTCE.hh"
+#include "AlmaifCompile.hh"
 
 #include "TTASimDevice.hh"
 
 int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
-  AccelData *d = (AccelData *)(device->data);
+  AlmaifData *d = (AlmaifData *)(device->data);
 
   tce_backend_data_t *bd = (tce_backend_data_t *)pocl_aligned_malloc(
       HOST_CPU_CACHELINE_SIZE, sizeof(tce_backend_data_t));
@@ -95,13 +95,13 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
       device->max_compute_units = cores;
     } else
       bd->core_count = 1;
-    POCL_MSG_PRINT_ACCEL("Multicore: %u Cores: %u \n", bd->core_count > 1,
+    POCL_MSG_PRINT_ALMAIF("Multicore: %u Cores: %u \n", bd->core_count > 1,
                          bd->core_count);
     POCL_MEM_FREE(content);
   } else {
     bd->machine_file = NULL;
     device->max_compute_units =
-        d->Dev->ControlMemory->Read32(ACCEL_INFO_CORE_COUNT);
+        d->Dev->ControlMemory->Read32(ALMAIF_INFO_CORE_COUNT);
   }
 
   device->long_name = device->short_name = "ALMAIF TCE";
@@ -120,17 +120,17 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   chunk_info_t *chunk = NULL;
   chunk = pocl_alloc_buffer(d->Dev->AllocRegions, device->printf_buffer_size);
   if (chunk == NULL) {
-    POCL_ABORT("Accel: Can't allocate %d bytes for printf buffer\n",
+    POCL_ABORT("Almaif: Can't allocate %d bytes for printf buffer\n",
                device->printf_buffer_size);
   } else {
-    POCL_MSG_PRINT_ACCEL("Allocated printf buffer of size %d from %d\n",
+    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %d from %d\n",
                          device->printf_buffer_size, chunk->start_address);
     d->printf_buffer = chunk;
   }
 
   d->printf_position = pocl_alloc_buffer(d->Dev->AllocRegions, 4);
   if (d->printf_position == NULL) {
-    POCL_ABORT("Accel: Can't allocate 4 bytes for printf index\n");
+    POCL_ABORT("Almaif: Can't allocate 4 bytes for printf index\n");
   }
 
   return 0;
@@ -138,7 +138,7 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
 
 int pocl_almaif_tce_cleanup(cl_device_id device) {
   void *data = device->data;
-  AccelData *d = (AccelData *)data;
+  AlmaifData *d = (AlmaifData *)data;
 
   pocl_free_chunk((chunk_info_t *)d->printf_buffer);
   pocl_free_chunk((chunk_info_t *)d->printf_position);
@@ -174,7 +174,7 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   const char *poclIncludePathSwitch;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s", SRCDIR,
-             "/lib/CL/devices/accel/", mainC);
+             "/lib/CL/devices/almaif/", mainC);
     assert(access(deviceMainSrc, R_OK) == 0);
     poclIncludePathSwitch = " -I " SRCDIR "/include";
   } else {
@@ -272,11 +272,11 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                              cl_device_id device, int specialize) {
 
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
-    POCL_ABORT("Accel: trying to compile non-ndrange command\n");
+    POCL_ABORT("Almaif: trying to compile non-ndrange command\n");
   }
 
   void *data = cmd->device->data;
-  AccelData *d = (AccelData *)data;
+  AlmaifData *d = (AlmaifData *)data;
   tce_backend_data_t *bd =
       (tce_backend_data_t *)d->compilationData->backend_data;
 
@@ -286,12 +286,12 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     device = cmd->device;
   assert(kernel);
   assert(device);
-  POCL_MSG_PRINT_ACCEL("COMPILATION BEFORE WG FUNC\n");
+  POCL_MSG_PRINT_ALMAIF("COMPILATION BEFORE WG FUNC\n");
   POCL_LOCK(bd->tce_compile_lock);
   int error = pocl_llvm_generate_workgroup_function(
       cmd->program_device_i, device, kernel, cmd, specialize);
 
-  POCL_MSG_PRINT_ACCEL("COMPILATION AFTER WG FUNC\n");
+  POCL_MSG_PRINT_ALMAIF("COMPILATION AFTER WG FUNC\n");
   if (error) {
     POCL_UNLOCK(bd->tce_compile_lock);
     POCL_ABORT("TCE: pocl_llvm_generate_workgroup_function()"
@@ -362,7 +362,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                  AQL_queue_length);
     if (!separatePrivateMem) {
       int fallback_mem_size = pocl_get_int_option(
-          "POCL_ACCEL_PRIVATE_MEM_SIZE", ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
+          "POCL_ALMAIF_PRIVATE_MEM_SIZE", ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
       unsigned initsp = dmem_size + fallback_mem_size;
       unsigned private_mem_start = dmem_size;
       if (!separateCQMem) {
@@ -391,7 +391,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                      assemblyFileName, bd->machine_file, bd->core_count > 1,
                      device->endian_little, extraParams);
 
-    POCL_MSG_PRINT_ACCEL("build command: \n%s", commandLine);
+    POCL_MSG_PRINT_ALMAIF("build command: \n%s", commandLine);
 
     error = system(commandLine);
     if (error != 0)
@@ -434,7 +434,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
              "--piformat=bin2n --diformat=bin2n --program "
              "parallel.tpef %s ; cd $SAVEDIR",
              cachedir, bd->machine_file);
-    POCL_MSG_PRINT_ACCEL("running genbits: \n %s \n", genbits_command);
+    POCL_MSG_PRINT_ALMAIF("running genbits: \n %s \n", genbits_command);
     error = system(genbits_command);
     if (error != 0)
       POCL_ABORT("Error while running generatebits.\n");
@@ -489,7 +489,7 @@ int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
 }
 
 char *pocl_tce_init_build(void *data) {
-  AccelData *D = (AccelData *)data;
+  AlmaifData *D = (AlmaifData *)data;
   tce_backend_data_t *bd =
       (tce_backend_data_t *)D->compilationData->backend_data;
   assert(bd);

@@ -37,11 +37,11 @@ void poclAccel(volatile uint32_t Control[MEM_MAX_SIZE_WORD],
 #pragma HLS INTERFACE ap_ctrl_none port = return
 
   // Set initial values for info registers:
-  Control[ACCEL_INFO_DEV_CLASS / 4] = 0xE; // Unused
-  Control[ACCEL_INFO_DEV_ID / 4] = 0;      // Unused
-  Control[ACCEL_INFO_IF_TYPE / 4] = 3;
-  Control[ACCEL_INFO_CORE_COUNT / 4] = 1;
-  Control[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
+  Control[ALMAIF_INFO_DEV_CLASS / 4] = 0xE; // Unused
+  Control[ALMAIF_INFO_DEV_ID / 4] = 0;      // Unused
+  Control[ALMAIF_INFO_IF_TYPE / 4] = 3;
+  Control[ALMAIF_INFO_CORE_COUNT / 4] = 1;
+  Control[ALMAIF_INFO_CTRL_SIZE / 4] = 1024;
 
   // The accelerator can choose the size of the queue (must be a power-of-two)
   // Can be even 1, to make the packet handling easiest with static offsets
@@ -54,37 +54,37 @@ void poclAccel(volatile uint32_t Control[MEM_MAX_SIZE_WORD],
   // address spaces are equally sized, the actual memory region sizes
   // don't have to be that big.The driver will adjust to these values.
 
-  Control[ACCEL_INFO_CQMEM_SIZE_LOW / 4] =
+  Control[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] =
       AQL_PACKET_LENGTH * (queue_length + 1);
-  Control[ACCEL_INFO_CQMEM_SIZE_HIGH / 4] = 0;
+  Control[ALMAIF_INFO_CQMEM_SIZE_HIGH / 4] = 0;
 
-  Control[ACCEL_INFO_IMEM_SIZE / 4] = 0;
+  Control[ALMAIF_INFO_IMEM_SIZE / 4] = 0;
 
-  Control[ACCEL_INFO_DMEM_SIZE_LOW / 4] =
+  Control[ALMAIF_INFO_DMEM_SIZE_LOW / 4] =
       MEM_MAX_SIZE_BYTES - 1024 - AQL_PACKET_LENGTH * (queue_length + 1);
-  Control[ACCEL_INFO_DMEM_SIZE_HIGH / 4] = 0;
+  Control[ALMAIF_INFO_DMEM_SIZE_HIGH / 4] = 0;
 
-  Control[ACCEL_INFO_IMEM_START_LOW / 4] = 0;
-  Control[ACCEL_INFO_IMEM_START_HIGH / 4] = 0;
+  Control[ALMAIF_INFO_IMEM_START_LOW / 4] = 0;
+  Control[ALMAIF_INFO_IMEM_START_HIGH / 4] = 0;
 
-  Control[ACCEL_INFO_CQMEM_START_LOW / 4] = BASE_ADDRESS + 1024;
-  Control[ACCEL_INFO_CQMEM_START_HIGH / 4] = 0;
+  Control[ALMAIF_INFO_CQMEM_START_LOW / 4] = BASE_ADDRESS + 1024;
+  Control[ALMAIF_INFO_CQMEM_START_HIGH / 4] = 0;
 
-  Control[ACCEL_INFO_DMEM_START_LOW / 4] =
+  Control[ALMAIF_INFO_DMEM_START_LOW / 4] =
       BASE_ADDRESS + 1024 + AQL_PACKET_LENGTH * (queue_length + 1);
-  Control[ACCEL_INFO_DMEM_START_HIGH / 4] = 0;
+  Control[ALMAIF_INFO_DMEM_START_HIGH / 4] = 0;
 
-  Control[ACCEL_INFO_FEATURE_FLAGS_LOW / 4] = 1;
-  Control[ACCEL_INFO_PTR_SIZE / 4] = 4;
-  Control[ACCEL_CONTROL_REG_COMMAND / 4] = ACCEL_RESET_CMD;
+  Control[ALMAIF_INFO_FEATURE_FLAGS_LOW / 4] = 1;
+  Control[ALMAIF_INFO_PTR_SIZE / 4] = 4;
+  Control[ALMAIF_CONTROL_REG_COMMAND / 4] = ALMAIF_RESET_CMD;
 
   const uint32_t CQInfoOffset = 1024 / 4;
   const uint32_t CQOffset = 1024 / 4 + AQL_PACKET_LENGTH / 4;
 
   while (1) {
     // Don't start computing anything before hw reset is lifted.
-    int reset = Control[ACCEL_CONTROL_REG_COMMAND / 4];
-    if (reset != ACCEL_CONTINUE_CMD) {
+    int reset = Control[ALMAIF_CONTROL_REG_COMMAND / 4];
+    if (reset != ALMAIF_CONTINUE_CMD) {
       continue;
     }
     int read_iter = Control[CQInfoOffset + 12];

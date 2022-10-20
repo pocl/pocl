@@ -33,7 +33,7 @@
 TTASimRegion::TTASimRegion(size_t Address, size_t RegionSize,
                            MemorySystem::MemoryPtr mem) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP(
+  POCL_MSG_PRINT_ALMAIF_MMAP(
       "TTASim: Initializing TTASimRegion with Address %zu "
       "and Size %zu and memptr %p\n",
       Address, RegionSize, (void*)mem.get());
@@ -45,7 +45,7 @@ TTASimRegion::TTASimRegion(size_t Address, size_t RegionSize,
 
 uint32_t TTASimRegion::Read32(size_t offset) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(mem_ != nullptr && "No memory handle; read before mapping?");
@@ -58,7 +58,7 @@ uint32_t TTASimRegion::Read32(size_t offset) {
 
 void TTASimRegion::Write32(size_t offset, uint32_t value) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
@@ -67,7 +67,7 @@ void TTASimRegion::Write32(size_t offset, uint32_t value) {
 }
 
 void TTASimRegion::Write16(size_t offset, uint16_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
@@ -77,7 +77,7 @@ void TTASimRegion::Write16(size_t offset, uint16_t value) {
 }
 
 uint64_t TTASimRegion::Read64(size_t offset) {
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
 
@@ -91,7 +91,7 @@ uint64_t TTASimRegion::Read64(size_t offset) {
 
 void TTASimRegion::Write64(size_t offset, uint64_t value) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
@@ -101,7 +101,7 @@ void TTASimRegion::Write64(size_t offset, uint64_t value) {
 
 void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
                               size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP(
+  POCL_MSG_PRINT_ALMAIF_MMAP(
       "TTASim: Writing 0x%zx bytes to buffer at 0x%zx with "
       "address 0x%zx\n",
       bytes, PhysAddress, destination);
@@ -116,7 +116,7 @@ void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
 
 void TTASimRegion::CopyFromMMAP(void *destination, size_t source,
                                 size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Reading 0x%zx bytes from buffer at 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading 0x%zx bytes from buffer at 0x%zx "
                             "with address 0x%zx\n",
                             bytes, PhysAddress, source);
   auto dst = (uint8_t *)destination;
@@ -129,7 +129,7 @@ void TTASimRegion::CopyFromMMAP(void *destination, size_t source,
 }
 
 void TTASimRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Copying 0x%zx bytes from 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Copying 0x%zx bytes from 0x%zx "
                             "to 0x%zx\n",
                             bytes, source, destination);
   size_t src_offset = source - PhysAddress;

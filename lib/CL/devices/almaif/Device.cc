@@ -23,8 +23,8 @@
 
 #include "Device.hh"
 
-#include "AccelShared.hh"
-#include "AccelCompile.hh"
+#include "AlmaifShared.hh"
+#include "AlmaifCompile.hh"
 
 #include "bufalloc.h"
 #include "pocl_cache.h"
@@ -46,13 +46,13 @@ Device::~Device() {
 
 void Device::discoverDeviceParameters() {
   // Reset accelerator
-  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
+  ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_RESET_CMD);
 
-  if (ControlMemory->Read32(ACCEL_INFO_CORE_COUNT) != 1) {
+  if (ControlMemory->Read32(ALMAIF_INFO_CORE_COUNT) != 1) {
     POCL_ABORT_UNIMPLEMENTED("Multicore accelerators");
   }
 
-  uint32_t interface_version = ControlMemory->Read32(ACCEL_INFO_IF_TYPE);
+  uint32_t interface_version = ControlMemory->Read32(ALMAIF_INFO_IF_TYPE);
 
   if (interface_version == ALMAIF_VERSION_2) {
     /*Only AamuDSP should be using the old interface, if somethine else is,
@@ -65,14 +65,14 @@ void Device::discoverDeviceParameters() {
     BaseAddress + 3*segment_size + Dmem_size - PRIVATE_MEM_SIZE        --> Local
     scratchpad memory for stack etc Where segment_size = 0x10000 (size of imem)
     */
-    imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE_LEGACY);
-    // cq_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
+    imem_size = ControlMemory->Read32(ALMAIF_INFO_IMEM_SIZE_LEGACY);
+    // cq_size = ControlMemory->Read32(ALMAIF_INFO_PMEM_SIZE_LEGACY);
     cq_size = 4 * 64;
-    // dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY);
+    // dmem_size = ControlMemory->Read32(ALMAIF_INFO_PMEM_SIZE_LEGACY);
     int private_mem_size =
-        pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE", 1024);
+        pocl_get_int_option("POCL_ALMAIF_PRIVATE_MEM_SIZE", 1024);
 
-    dmem_size = ControlMemory->Read32(ACCEL_INFO_PMEM_SIZE_LEGACY) -
+    dmem_size = ControlMemory->Read32(ALMAIF_INFO_PMEM_SIZE_LEGACY) -
                 private_mem_size - cq_size;
     PointerSize = 4;
     RelativeAddressing = false;
@@ -86,23 +86,23 @@ void Device::discoverDeviceParameters() {
     dmem_start += ControlMemory->PhysAddress;
   } else if (interface_version == ALMAIF_VERSION_3) {
     uint64_t feature_flags =
-        ControlMemory->Read64(ACCEL_INFO_FEATURE_FLAGS_LOW);
+        ControlMemory->Read64(ALMAIF_INFO_FEATURE_FLAGS_LOW);
 
-    PointerSize = ControlMemory->Read32(ACCEL_INFO_PTR_SIZE);
+    PointerSize = ControlMemory->Read32(ALMAIF_INFO_PTR_SIZE);
     // Turn on the relative addressing if the target has no axi master.
     RelativeAddressing =
-        (feature_flags & ACCEL_FF_BIT_AXI_MASTER) ? (false) : (true);
+        (feature_flags & ALMAIF_FF_BIT_AXI_MASTER) ? (false) : (true);
 
-    imem_size = ControlMemory->Read32(ACCEL_INFO_IMEM_SIZE);
-    cq_size = ControlMemory->Read32(ACCEL_INFO_CQMEM_SIZE_LOW);
-    dmem_size = ControlMemory->Read32(ACCEL_INFO_DMEM_SIZE_LOW);
+    imem_size = ControlMemory->Read32(ALMAIF_INFO_IMEM_SIZE);
+    cq_size = ControlMemory->Read32(ALMAIF_INFO_CQMEM_SIZE_LOW);
+    dmem_size = ControlMemory->Read32(ALMAIF_INFO_DMEM_SIZE_LOW);
 
-    imem_start = ControlMemory->Read64(ACCEL_INFO_IMEM_START_LOW);
-    cq_start = ControlMemory->Read64(ACCEL_INFO_CQMEM_START_LOW);
-    dmem_start = ControlMemory->Read64(ACCEL_INFO_DMEM_START_LOW);
+    imem_start = ControlMemory->Read64(ALMAIF_INFO_IMEM_START_LOW);
+    cq_start = ControlMemory->Read64(ALMAIF_INFO_CQMEM_START_LOW);
+    dmem_start = ControlMemory->Read64(ALMAIF_INFO_DMEM_START_LOW);
 
     if (RelativeAddressing) {
-      POCL_MSG_PRINT_ACCEL("Accel: Enabled relative addressing\n");
+      POCL_MSG_PRINT_ALMAIF("Almaif: Enabled relative addressing\n");
       cq_start += ControlMemory->PhysAddress;
       imem_start += ControlMemory->PhysAddress;
       dmem_start += ControlMemory->PhysAddress;
@@ -111,20 +111,20 @@ void Device::discoverDeviceParameters() {
   } else {
     POCL_ABORT_UNIMPLEMENTED("Unsupported AlmaIF version\n");
   }
-  POCL_MSG_PRINT_ACCEL("cq_start=%p imem_start=%p dmem_start=%p\n",
+  POCL_MSG_PRINT_ALMAIF("cq_start=%p imem_start=%p dmem_start=%p\n",
                        (void *)cq_start, (void *)imem_start,
                        (void *)dmem_start);
-  POCL_MSG_PRINT_ACCEL("cq_size=%u imem_size=%u dmem_size=%u\n", cq_size,
+  POCL_MSG_PRINT_ALMAIF("cq_size=%u imem_size=%u dmem_size=%u\n", cq_size,
                        imem_size, dmem_size);
-  POCL_MSG_PRINT_ACCEL("ControlMemory->PhysAddress=%zu\n",
+  POCL_MSG_PRINT_ALMAIF("ControlMemory->PhysAddress=%zu\n",
                        ControlMemory->PhysAddress);
   AllocRegions = (memory_region_t *)calloc(1, sizeof(memory_region_t));
   pocl_init_mem_region(AllocRegions,
-                       dmem_start + ACCEL_DEFAULT_CONSTANT_MEM_SIZE,
-                       dmem_size - ACCEL_DEFAULT_CONSTANT_MEM_SIZE);
-  POCL_MSG_PRINT_ACCEL(
+                       dmem_start + ALMAIF_DEFAULT_CONSTANT_MEM_SIZE,
+                       dmem_size - ALMAIF_DEFAULT_CONSTANT_MEM_SIZE);
+  POCL_MSG_PRINT_ALMAIF(
       "Reserved %d bytes at the start of global memory for constant data\n",
-      ACCEL_DEFAULT_CONSTANT_MEM_SIZE);
+      ALMAIF_DEFAULT_CONSTANT_MEM_SIZE);
 }
 
 void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
@@ -163,7 +163,7 @@ void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
                                         cmd->program_device_i, kernel, "",
                                         &cmd_copy, 0);
       }
-      POCL_MSG_PRINT_ACCEL("Specialized kernel not found, using %s\n",
+      POCL_MSG_PRINT_ALMAIF("Specialized kernel not found, using %s\n",
                            cachedir);
       preread_images(cachedir, kd);
     }
@@ -171,20 +171,20 @@ void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
 
   assert(kd->imem_img_size > 0);
 
-  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_RESET_CMD);
+  ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_RESET_CMD);
 
   InstructionMemory->CopyToMMAP(InstructionMemory->PhysAddress, kd->imem_img,
                                 kd->imem_img_size);
-  POCL_MSG_PRINT_ACCEL("IMEM image written: %zu / %zu B\n",
+  POCL_MSG_PRINT_ALMAIF("IMEM image written: %zu / %zu B\n",
                        InstructionMemory->PhysAddress, kd->imem_img_size);
 
-  ControlMemory->Write32(ACCEL_CONTROL_REG_COMMAND, ACCEL_CONTINUE_CMD);
+  ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_CONTINUE_CMD);
   HwClockStart = pocl_gettimemono_ns();
 }
 
 void Device::preread_images(const char *kernel_cachedir,
                             almaif_kernel_data_s *kd) {
-  POCL_MSG_PRINT_ACCEL("Reading image files\n");
+  POCL_MSG_PRINT_ALMAIF("Reading image files\n");
   uint64_t temp = 0;
   size_t size = 0;
   char *content = NULL;
@@ -237,7 +237,7 @@ void Device::preread_images(const char *kernel_cachedir,
         uint32_t *up = (uint32_t *)p;
         kernel_addr = *up;
      }
-      POCL_MSG_PRINT_ACCEL("Kernel address (%0x) found\n", kernel_addr);
+      POCL_MSG_PRINT_ALMAIF("Kernel address (%0x) found\n", kernel_addr);
       kd->kernel_address = kernel_addr;
       content = NULL;
     } else
@@ -261,10 +261,10 @@ void Device::printMemoryDump() {
 void Device::writeDataToDevice(size_t dst, const char *__restrict__ const src,
                                size_t size) {
   if (DataMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to 0x%zx\n", size, dst);
+    POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes to 0x%zx\n", size, dst);
     DataMemory->CopyToMMAP(dst, src, size);
   } else if (ExternalMemory && ExternalMemory->isInRange(dst)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes to external 0x%zx\n", size,
+    POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes to external 0x%zx\n", size,
                          dst);
     ExternalMemory->CopyToMMAP(dst, src, size);
   } else {
@@ -275,10 +275,10 @@ void Device::writeDataToDevice(size_t dst, const char *__restrict__ const src,
 void Device::readDataFromDevice(char *__restrict__ const dst, size_t src,
                                 size_t size) {
   if (DataMemory->isInRange(src)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying %zu bytes from 0x%zx\n", size, src);
+    POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes from 0x%zx\n", size, src);
     DataMemory->CopyFromMMAP(dst, src, size);
   } else if (ExternalMemory && ExternalMemory->isInRange(src)) {
-    POCL_MSG_PRINT_ACCEL("accel: Copying 0x%zu bytes from external 0x%zx\n",
+    POCL_MSG_PRINT_ALMAIF("almaif: Copying 0x%zu bytes from external 0x%zx\n",
                          size, src);
     ExternalMemory->CopyFromMMAP(dst, src, size);
   } else {

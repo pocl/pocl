@@ -24,7 +24,7 @@
 #include "MMAPDevice.hh"
 
 #include "MMAPRegion.hh"
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 
 #include "pocl_file_util.h"
 
@@ -38,7 +38,7 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
   if (mem_fd == -1) {
     POCL_ABORT("Could not open /dev/mem\n");
   }
-  ControlMemory = new MMAPRegion(base_address, ACCEL_DEFAULT_CTRL_SIZE, mem_fd);
+  ControlMemory = new MMAPRegion(base_address, ALMAIF_DEFAULT_CTRL_SIZE, mem_fd);
 
   discoverDeviceParameters();
 
@@ -50,16 +50,16 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
   snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
 
   if (pocl_exists(file_name)) {
-    POCL_MSG_PRINT_ACCEL(
-        "Accel: Found built-in kernel firmaware. Loading it in\n");
+    POCL_MSG_PRINT_ALMAIF(
+        "Almaif: Found built-in kernel firmaware. Loading it in\n");
     ((MMAPRegion *)InstructionMemory)->initRegion(file_name);
   } else {
-    POCL_MSG_PRINT_ACCEL("Accel: No default firmware found. Skipping\n");
+    POCL_MSG_PRINT_ALMAIF("Almaif: No default firmware found. Skipping\n");
   }
 
-  if (pocl_is_option_set("POCL_ACCEL_EXTERNALREGION")) {
+  if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {
     char *region_params =
-        strdup(pocl_get_string_option("POCL_ACCEL_EXTERNALREGION", "0,0"));
+        strdup(pocl_get_string_option("POCL_ALMAIF_EXTERNALREGION", "0,0"));
     char *save_ptr;
     char *param_token = strtok_r(region_params, ",", &save_ptr);
     size_t region_address = strtoul(param_token, NULL, 0);
@@ -72,8 +72,8 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
       pocl_init_mem_region(ext_region, region_address, region_size);
       LL_APPEND(AllocRegions, ext_region);
 
-      POCL_MSG_PRINT_ACCEL(
-          "Accel: initialized external alloc region at %zx with size %zx\n",
+      POCL_MSG_PRINT_ALMAIF(
+          "Almaif: initialized external alloc region at %zx with size %zx\n",
           region_address, region_size);
       ExternalMemory = new MMAPRegion(region_address, region_size, mem_fd);
     }

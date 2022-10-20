@@ -244,7 +244,7 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
-option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
+option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
@@ -1250,9 +1250,9 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(BUILD_PTHREAD 1)
 endif()
 
-# The accel device could be built by default, but it's implemented in C++,
+# The almaif device could be built by default, but it's implemented in C++,
 # thus requires a C++ compiler, so let's not.
-if(ENABLE_ACCEL_DEVICE)
+if(ENABLE_ALMAIF_DEVICE)
 
   if(NOT HAVE_XRT AND DEFINED ENV{XILINX_XRT})
     set(XRT $ENV{XILINX_XRT})
@@ -1278,8 +1278,8 @@ if(ENABLE_ACCEL_DEVICE)
     endif()
   endif()
 
-  set(BUILD_ACCEL 1)
-  set(OCL_DRIVERS "${OCL_DRIVERS} accel")
+  set(BUILD_ALMAIF 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} almaif")
 endif()
 
 if(DEFINED EXTRA_OCL_TARGETS)
@@ -1911,7 +1911,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
-MESSAGE(STATUS "ENABLE_ACCEL_DEVICE: ${ENABLE_ACCEL_DEVICE}")
+MESSAGE(STATUS "ENABLE_ALMAIF_DEVICE: ${ENABLE_ALMAIF_DEVICE}")
 MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
 MESSAGE(STATUS "ENABLE_CUDNN: ${ENABLE_CUDNN}")
 MESSAGE(STATUS "ENABLE_HOST_CPU_DEVICES: ${ENABLE_HOST_CPU_DEVICES}")

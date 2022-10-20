@@ -24,7 +24,7 @@
 #include "XrtDevice.hh"
 
 #include "XrtRegion.hh"
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 
 #include "experimental/xrt_kernel.h"
 
@@ -50,7 +50,7 @@ XrtDevice::XrtDevice(char *xrt_kernel_name) {
   Kernel = (void *)kernel;
   DeviceHandle = (void *)devicehandle;
 
-  ControlMemory = new XrtRegion(0, ACCEL_DEFAULT_CTRL_SIZE, Kernel);
+  ControlMemory = new XrtRegion(0, ALMAIF_DEFAULT_CTRL_SIZE, Kernel);
 
   discoverDeviceParameters();
 

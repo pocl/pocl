@@ -24,7 +24,7 @@
 #include "EmulationDevice.hh"
 
 #include "EmulationRegion.hh"
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 #include "pocl_timing.h"
 
 #include <iostream>
@@ -34,7 +34,7 @@ EmulationDevice::EmulationDevice() {
 
   // The principle of the emulator is that instead of mmapping a real
   // accelerator, we just allocate a regular array, which corresponds
-  // to the mmap. The accel_emulate function is working in another thread
+  // to the mmap. The almaif_emulate function is working in another thread
   // and will fill that array and respond to the driver asynchronously.
   // The driver doesn't really need to know about emulating except
   // in the initial mapping of the accelerator
@@ -44,13 +44,13 @@ EmulationDevice::EmulationDevice() {
   // Create emulator thread
   E.emulate_exit_called = 0;
   E.emulate_init_done = 0;
-  pthread_create(&emulate_thread, NULL, emulate_accel, &E);
+  pthread_create(&emulate_thread, NULL, emulate_almaif, &E);
   while (!E.emulate_init_done)
     ; // Wait for the thread to initialize
-  POCL_MSG_PRINT_ACCEL("accel: started emulating\n");
+  POCL_MSG_PRINT_ALMAIF("almaif: started emulating\n");
 
   ControlMemory =
-      new EmulationRegion((size_t)E.emulating_address, ACCEL_DEFAULT_CTRL_SIZE);
+      new EmulationRegion((size_t)E.emulating_address, ALMAIF_DEFAULT_CTRL_SIZE);
 
   discoverDeviceParameters();
 
@@ -60,7 +60,7 @@ EmulationDevice::EmulationDevice() {
 }
 
 EmulationDevice::~EmulationDevice() {
-  POCL_MSG_PRINT_ACCEL("accel: freeing emulated accel");
+  POCL_MSG_PRINT_ALMAIF("almaif: freeing emulated almaif");
   E.emulate_exit_called = 1; // signal for the emulator to stop
   pthread_join(emulate_thread, NULL);
   free((void *)E.emulating_address); // from
@@ -68,12 +68,12 @@ EmulationDevice::~EmulationDevice() {
 }
 
 /*
- * AlmaIF v1 based accel emulator
+ * AlmaIF v1 based almaif emulator
  * Base_address is a preallocated emulation array that corresponds to the
  * memory map of the accelerator
  * Does operations 0,1,2,3,4
  * */
-void *emulate_accel(void *E_void) {
+void *emulate_almaif(void *E_void) {
 
   emulation_data_t *E = (emulation_data_t *)E_void;
   void *base_address = E->emulating_address;
@@ -99,43 +99,43 @@ void *emulate_accel(void *E_void) {
   //volatile uint8_t *Data = (uint8_t *)dmem_start;
 
   // Set initial values for info registers:
-  Control[ACCEL_INFO_DEV_CLASS / 4] = 0xE; // Unused
-  Control[ACCEL_INFO_DEV_ID / 4] = 0;      // Unused
-  Control[ACCEL_INFO_IF_TYPE / 4] = 3;
-  Control[ACCEL_INFO_CORE_COUNT / 4] = 1;
-  Control[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
+  Control[ALMAIF_INFO_DEV_CLASS / 4] = 0xE; // Unused
+  Control[ALMAIF_INFO_DEV_ID / 4] = 0;      // Unused
+  Control[ALMAIF_INFO_IF_TYPE / 4] = 3;
+  Control[ALMAIF_INFO_CORE_COUNT / 4] = 1;
+  Control[ALMAIF_INFO_CTRL_SIZE / 4] = 1024;
 
 #define PTR_SIZE sizeof(uint32_t *)
-  Control[ACCEL_INFO_PTR_SIZE / 4] = PTR_SIZE;
+  Control[ALMAIF_INFO_PTR_SIZE / 4] = PTR_SIZE;
 
   // The emulation doesn't use Instruction/Configuration memory. This memory
   // space is a place to write accelerator specific configuration values
   // that are written BEFORE hw reset is deasserted.
   // E.g. program binaries of a processor-based accelerator
-  Control[ACCEL_INFO_IMEM_SIZE / 4] = 0;
-  Control[ACCEL_INFO_IMEM_START_LOW / 4] = (uint32_t)imem_start;
-  Control[ACCEL_INFO_IMEM_START_HIGH / 4] = (uint32_t)(imem_start >> 32);
+  Control[ALMAIF_INFO_IMEM_SIZE / 4] = 0;
+  Control[ALMAIF_INFO_IMEM_START_LOW / 4] = (uint32_t)imem_start;
+  Control[ALMAIF_INFO_IMEM_START_HIGH / 4] = (uint32_t)(imem_start >> 32);
 
-  Control[ACCEL_INFO_CQMEM_SIZE_LOW / 4] = cqmem_size;
-  Control[ACCEL_INFO_CQMEM_START_LOW / 4] = (uint32_t)cqmem_start;
-  Control[ACCEL_INFO_CQMEM_START_HIGH / 4] = (uint32_t)(cqmem_start >> 32);
+  Control[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] = cqmem_size;
+  Control[ALMAIF_INFO_CQMEM_START_LOW / 4] = (uint32_t)cqmem_start;
+  Control[ALMAIF_INFO_CQMEM_START_HIGH / 4] = (uint32_t)(cqmem_start >> 32);
 
-  Control[ACCEL_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
-  Control[ACCEL_INFO_DMEM_START_LOW / 4] = (uint32_t)dmem_start;
-  Control[ACCEL_INFO_DMEM_START_HIGH / 4] = (uint32_t)(dmem_start >> 32);
+  Control[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
+  Control[ALMAIF_INFO_DMEM_START_LOW / 4] = (uint32_t)dmem_start;
+  Control[ALMAIF_INFO_DMEM_START_HIGH / 4] = (uint32_t)(dmem_start >> 32);
 
-  uint32_t feature_flags_low = ACCEL_FF_BIT_AXI_MASTER;
-  Control[ACCEL_INFO_FEATURE_FLAGS_LOW / 4] = feature_flags_low;
+  uint32_t feature_flags_low = ALMAIF_FF_BIT_AXI_MASTER;
+  Control[ALMAIF_INFO_FEATURE_FLAGS_LOW / 4] = feature_flags_low;
 
   // Signal the driver that the initial values are set
   // (in hardware this signal is probably not needed, since the values are
   // initialized in hw reset)
   E->emulate_init_done = 1;
-  POCL_MSG_PRINT_ACCEL("accel emulate: Emulator initialized");
+  POCL_MSG_PRINT_ALMAIF("almaif emulate: Emulator initialized");
 
   int read_iter = 0;
-  CQ[ACCEL_CQ_READ / 4] = read_iter;
-  CQ[ACCEL_CQ_LENGTH / 4] = queue_length;
+  CQ[ALMAIF_CQ_READ / 4] = read_iter;
+  CQ[ALMAIF_CQ_LENGTH / 4] = queue_length;
 
   // Accelerator is in infinite loop to process the commands
   // For emulating purposes we include the exit signal that the driver can
@@ -145,9 +145,9 @@ void *emulate_accel(void *E_void) {
 
     // Don't start computing anything before soft reset is lifted.
     // (This could probably be outside of the loop)
-    int reset = Control[ACCEL_CONTROL_REG_COMMAND / 4];
-    if (reset != ACCEL_CONTINUE_CMD) {
-      usleep(ACCEL_DRIVER_SLEEP);
+    int reset = Control[ALMAIF_CONTROL_REG_COMMAND / 4];
+    if (reset != ALMAIF_CONTINUE_CMD) {
+      usleep(ALMAIF_DRIVER_SLEEP);
       continue;
     }
 
@@ -159,7 +159,7 @@ void *emulate_accel(void *E_void) {
     // The driver will mark the packet as not INVALID when it wants us to
     // compute it
     if (packet->header == AQL_PACKET_INVALID) {
-      usleep(ACCEL_DRIVER_SLEEP);
+      usleep(ALMAIF_DRIVER_SLEEP);
       continue;
     }
 
@@ -170,25 +170,25 @@ void *emulate_accel(void *E_void) {
     uint16_t header = packet->header;
     if (header & (1 << AQL_PACKET_BARRIER_AND)) {
       struct AQLAndPacket *andPacket = (struct AQLAndPacket *)packet;
-      POCL_MSG_PRINT_ACCEL(
-          "accel emulate: Found valid AND packet from location "
+      POCL_MSG_PRINT_ALMAIF(
+          "almaif emulate: Found valid AND packet from location "
           "%u, starting parsing:",
           packet_loc);
       for (int i = 0; i < AQL_MAX_SIGNAL_COUNT; i++) {
         uint32_t *signal = (uint32_t *)(andPacket->dep_signals[i]);
         if (signal != NULL) {
           while (*signal == 0) {
-            usleep(ACCEL_DRIVER_SLEEP);
+            usleep(ALMAIF_DRIVER_SLEEP);
           }
         }
       }
-      POCL_MSG_PRINT_ACCEL("accel emulate: And packet done\n");
+      POCL_MSG_PRINT_ALMAIF("almaif emulate: And packet done\n");
     } else if (header & (1 << AQL_PACKET_KERNEL_DISPATCH)) {
-      POCL_MSG_PRINT_ACCEL(
-          "accel emulate: Found valid kernel dispatch packet from location "
+      POCL_MSG_PRINT_ALMAIF(
+          "almaif emulate: Found valid kernel dispatch packet from location "
           "%u, starting parsing:\n",
           packet_loc);
-      POCL_MSG_PRINT_ACCEL("accel emulate: kernargs are at 0x%zx\n",
+      POCL_MSG_PRINT_ALMAIF("almaif emulate: kernargs are at 0x%zx\n",
                            packet->kernarg_address);
       // Find the 3 pointers
       // Pointer size can be different on different systems
@@ -208,8 +208,8 @@ void *emulate_accel(void *E_void) {
       uint32_t *arg1 = args.ptrs[1];
       uint32_t *arg2 = args.ptrs[2];
 
-      POCL_MSG_PRINT_ACCEL(
-          "accel emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n", (void*)arg0,
+      POCL_MSG_PRINT_ALMAIF(
+          "almaif emulate: FOUND args arg0=%p, arg1=%p, arg2=%p\n", (void*)arg0,
           (void*) arg1, (void*)arg2);
 
       // Check how many dimensions are in use, and set the unused ones to 1.
@@ -218,8 +218,8 @@ void *emulate_accel(void *E_void) {
       int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
 
       int red_count = 0;
-      POCL_MSG_PRINT_ACCEL(
-          "accel emulate: Parsing done: starting loops with dims (%i,%i,%i)\n",
+      POCL_MSG_PRINT_ALMAIF(
+          "almaif emulate: Parsing done: starting loops with dims (%i,%i,%i)\n",
           dim_x, dim_y, dim_z);
       for (int x = 0; x < dim_x; x++) {
         for (int y = 0; y < dim_y; y++) {
@@ -261,7 +261,7 @@ void *emulate_accel(void *E_void) {
         arg1[0] = red_count;
       }
 
-      POCL_MSG_PRINT_ACCEL("accel emulate: Kernel done\n");
+      POCL_MSG_PRINT_ALMAIF("almaif emulate: Kernel done\n");
     }
 
     cmd->finish_timestamp = pocl_gettimemono_ns();
@@ -269,7 +269,7 @@ void *emulate_accel(void *E_void) {
     packet->header = AQL_PACKET_INVALID;
 
     read_iter++; // move on to the next AQL packet
-    CQ[ACCEL_CQ_READ / 4] = read_iter;
+    CQ[ALMAIF_CQ_READ / 4] = read_iter;
   }
 
   return NULL;

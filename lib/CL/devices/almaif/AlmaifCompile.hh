@@ -1,4 +1,4 @@
-/* AccelCompile.hh - compiler support for custom devices
+/* AlmaifCompile.hh - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -24,7 +24,7 @@
 #ifndef POCL_ALMAIFCOMPILE_H
 #define POCL_ALMAIFCOMPILE_H
 
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 #include "bufalloc.h"
 #include "pocl_util.h"
 
@@ -66,8 +66,8 @@ typedef struct almaif_kernel_data_s {
   uint32_t kernel_md_offset;
 } almaif_kernel_data_t;
 
-int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters);
-cl_int pocl_almaif_uninit(unsigned j, cl_device_id dev);
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameters);
+cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev);
 
 extern "C" {
 void pocl_almaif_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
@@ -83,6 +83,6 @@ int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
 
 void preread_images(const char *kernel_cachedir, void *d_void,
                     almaif_kernel_data_t *kd);
-char *pocl_almaif_build_hash(cl_device_id device);
+char *pocl_almaif_compile_build_hash(cl_device_id device);
 
 #endif

@@ -24,7 +24,7 @@
 #include "TTASimControlRegion.hh"
 #include "TTASimDevice.hh"
 
-#include "AccelShared.hh"
+#include "AlmaifShared.hh"
 
 #include <SimpleSimulatorFrontend.hh>
 //#include <SimulatorFrontend.hh>
@@ -36,9 +36,9 @@
 TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine &mach,
                                          TTASimDevice *parent) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Initializing TTASimControlRegion\n");
+  POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Initializing TTASimControlRegion\n");
   PhysAddress = 0;
-  Size = ACCEL_DEFAULT_CTRL_SIZE;
+  Size = ALMAIF_DEFAULT_CTRL_SIZE;
   parent_ = parent;
   assert(parent_ != nullptr &&
          "simulator parent handle NULL, is the sim opened properly?");
@@ -48,7 +48,7 @@ TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine &mach,
 
 uint32_t TTASimControlRegion::Read32(size_t offset) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
@@ -57,16 +57,16 @@ uint32_t TTASimControlRegion::Read32(size_t offset) {
 }
 
 void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
 
-  if (offset == ACCEL_CONTROL_REG_COMMAND) {
+  if (offset == ALMAIF_CONTROL_REG_COMMAND) {
     switch (value) {
-    case ACCEL_RESET_CMD:
+    case ALMAIF_RESET_CMD:
       parent_->stopProgram();
       break;
-    case ACCEL_CONTINUE_CMD:
+    case ALMAIF_CONTINUE_CMD:
       parent_->restartProgram();
       break;
     }
@@ -83,7 +83,7 @@ void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
 
 uint64_t TTASimControlRegion::Read64(size_t offset) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
@@ -154,11 +154,11 @@ void TTASimControlRegion::setupControlRegisters(
 
   if (!hasPrivateMem) {
     // No private mem, so the latter half of the dmem is reserved for it
-    int fallback_mem_size = pocl_get_int_option("POCL_ACCEL_PRIVATE_MEM_SIZE",
-                                                ACCEL_DEFAULT_PRIVATE_MEM_SIZE);
+    int fallback_mem_size = pocl_get_int_option("POCL_ALMAIF_PRIVATE_MEM_SIZE",
+                                                ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
     dmem_size -= fallback_mem_size;
-    POCL_MSG_PRINT_ACCEL(
-        "Accel: No separate private mem found. Setting it to %d\n",
+    POCL_MSG_PRINT_ALMAIF(
+        "Almaif: No separate private mem found. Setting it to %d\n",
         fallback_mem_size);
   }
   if (sharedDataAndCq) {
@@ -176,20 +176,20 @@ void TTASimControlRegion::setupControlRegisters(
     dmem_start += default_baseaddress;
   }
 
-  memset(ControlRegisters_, 0, ACCEL_DEFAULT_CTRL_SIZE);
+  memset(ControlRegisters_, 0, ALMAIF_DEFAULT_CTRL_SIZE);
 
-  ControlRegisters_[ACCEL_INFO_DEV_CLASS / 4] = 0;
-  ControlRegisters_[ACCEL_INFO_DEV_ID / 4] = 0;
-  ControlRegisters_[ACCEL_INFO_IF_TYPE / 4] = 3;
-  ControlRegisters_[ACCEL_INFO_CORE_COUNT / 4] = 1;
-  ControlRegisters_[ACCEL_INFO_CTRL_SIZE / 4] = 1024;
-  ControlRegisters_[ACCEL_INFO_IMEM_SIZE / 4] = imem_size;
-  ControlRegisters_[ACCEL_INFO_IMEM_START_LOW / 4] = imem_start;
-  ControlRegisters_[ACCEL_INFO_CQMEM_SIZE_LOW / 4] = cq_size;
-  ControlRegisters_[ACCEL_INFO_CQMEM_START_LOW / 4] = cq_start;
-  ControlRegisters_[ACCEL_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
-  ControlRegisters_[ACCEL_INFO_DMEM_START_LOW / 4] = dmem_start;
-  ControlRegisters_[ACCEL_INFO_FEATURE_FLAGS_LOW / 4] =
+  ControlRegisters_[ALMAIF_INFO_DEV_CLASS / 4] = 0;
+  ControlRegisters_[ALMAIF_INFO_DEV_ID / 4] = 0;
+  ControlRegisters_[ALMAIF_INFO_IF_TYPE / 4] = 3;
+  ControlRegisters_[ALMAIF_INFO_CORE_COUNT / 4] = 1;
+  ControlRegisters_[ALMAIF_INFO_CTRL_SIZE / 4] = 1024;
+  ControlRegisters_[ALMAIF_INFO_IMEM_SIZE / 4] = imem_size;
+  ControlRegisters_[ALMAIF_INFO_IMEM_START_LOW / 4] = imem_start;
+  ControlRegisters_[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] = cq_size;
+  ControlRegisters_[ALMAIF_INFO_CQMEM_START_LOW / 4] = cq_start;
+  ControlRegisters_[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
+  ControlRegisters_[ALMAIF_INFO_DMEM_START_LOW / 4] = dmem_start;
+  ControlRegisters_[ALMAIF_INFO_FEATURE_FLAGS_LOW / 4] =
       (relativeAddressing) ? 0 : 1;
-  ControlRegisters_[ACCEL_INFO_PTR_SIZE / 4] = 4;
+  ControlRegisters_[ALMAIF_INFO_PTR_SIZE / 4] = 4;
 }

@@ -29,9 +29,9 @@ add_compile_options("-std=c++14")
 add_compile_options(${TCE_INCLUDES})
 add_compile_options(${TCE_CXXFLAGS})
 
-set(ACCEL_SOURCES "AccelShared.hh"
-                  "accel.cc"
-                  "accel.h"
+set(ALMAIF_SOURCES "AlmaifShared.hh"
+                  "almaif.cc"
+                  "almaif.h"
                   "Region.cc"
                   "Region.hh"
                   "Device.cc"
@@ -45,14 +45,14 @@ set(ACCEL_SOURCES "AccelShared.hh"
                   "EmulationDevice.cc"
                   "EmulationDevice.hh"
                   "XrtDevice.hh"
-                  "AccelCompile.cc"
-                  "AccelCompile.hh"
-                  "AccelCompileTCE.hh"
+                  "AlmaifCompile.cc"
+                  "AlmaifCompile.hh"
+                  "AlmaifCompileTCE.hh"
                   )
 
 if(HAVE_XRT)
     add_compile_options(-I${XRT_INCLUDEDIR})
-    set(ACCEL_SOURCES ${ACCEL_SOURCES}
+    set(ALMAIF_SOURCES ${ALMAIF_SOURCES}
                       "XrtDevice.cc"
                       "XrtRegion.cc"
                       "XrtRegion.hh"
@@ -60,31 +60,31 @@ if(HAVE_XRT)
 endif()
 
 if(ENABLE_TCE)
-    set(ACCEL_SOURCES ${ACCEL_SOURCES}
+    set(ALMAIF_SOURCES ${ALMAIF_SOURCES}
                       "TTASimDevice.hh"
                       "TTASimDevice.cc"
                       "TTASimRegion.cc"
                       "TTASimRegion.hh"
                       "TTASimControlRegion.cc"
                       "TTASimControlRegion.hh"
-                      "AccelCompileTCE.cc"
+                      "AlmaifCompileTCE.cc"
                       )
 endif()
 
 
 if(MSVC)
-  set_source_files_properties( ${ACCEL_SOURCES} PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( ${ALMAIF_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library(pocl-devices-accel ${ACCEL_SOURCES})
+add_pocl_device_library(pocl-devices-almaif ${ALMAIF_SOURCES})
 
 if(HAVE_XRT})
-    target_link_libraries(pocl-devices-accel PRIVATE "${XRT_LIBDIR}/libxrt_coreutil.so")
+    target_link_libraries(pocl-devices-almaif PRIVATE "${XRT_LIBDIR}/libxrt_coreutil.so")
 endif()
 
 if(ENABLE_TCE)
-    target_link_libraries(pocl-devices-accel PRIVATE ${TCE_LIBS})
+    target_link_libraries(pocl-devices-almaif PRIVATE ${TCE_LIBS})
 endif()
 
 install(FILES "tce_builtins.cl"
-        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/accel" COMPONENT "lib")
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/almaif" COMPONENT "lib")

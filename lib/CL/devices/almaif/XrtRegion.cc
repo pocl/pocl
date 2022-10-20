@@ -34,7 +34,7 @@
 
 XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel) {
 
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initializing XrtRegion with Address %zu "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Initializing XrtRegion with Address %zu "
                             "and Size %zu and kernel %p\n",
                             Address, RegionSize, kernel);
   PhysAddress = Address;
@@ -51,7 +51,7 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
   if (RegionSize == 0) {
     return; // don't try to write to empty region
   }
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initializing XrtRegion with file %s\n",
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Initializing XrtRegion with file %s\n",
                             init_file);
   std::ifstream inFile;
   inFile.open(init_file, std::ios::binary);
@@ -64,12 +64,12 @@ XrtRegion::XrtRegion(size_t Address, size_t RegionSize, void *kernel,
     i += 4;
   }
 
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Initialized region with %i bytes \n",
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Initialized region with %i bytes \n",
                             i - 4);
 }
 
 uint32_t XrtRegion::Read32(size_t offset) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE && "No kernel handle; read before mapping?");
@@ -79,7 +79,7 @@ uint32_t XrtRegion::Read32(size_t offset) {
 }
 
 void XrtRegion::Write32(size_t offset, uint32_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
@@ -89,7 +89,7 @@ void XrtRegion::Write32(size_t offset, uint32_t value) {
 }
 
 void XrtRegion::Write16(size_t offset, uint16_t value) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Writing to physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
@@ -110,7 +110,7 @@ void XrtRegion::Write16(size_t offset, uint16_t value) {
 }
 
 uint64_t XrtRegion::Read64(size_t offset) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Reading from physical address 0x%zx with "
                             "offset 0x%zx\n",
                             PhysAddress, offset);
   assert(Kernel != XRT_NULL_HANDLE &&
@@ -126,7 +126,7 @@ uint64_t XrtRegion::Read64(size_t offset) {
 
 void XrtRegion::CopyToMMAP(size_t destination, const void *source,
                            size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP(
+  POCL_MSG_PRINT_ALMAIF_MMAP(
       "XRTMMAP: Writing 0x%zx bytes to buffer at 0x%zx with "
       "address 0x%zx\n",
       bytes, PhysAddress, destination);
@@ -146,7 +146,7 @@ void XrtRegion::CopyToMMAP(size_t destination, const void *source,
 }
 
 void XrtRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Reading 0x%zx bytes from buffer at 0x%zx "
                             "with address 0x%zx\n",
                             bytes, PhysAddress, source);
   auto dst = (uint32_t *)destination;
@@ -165,7 +165,7 @@ void XrtRegion::CopyFromMMAP(void *destination, size_t source, size_t bytes) {
 }
 
 void XrtRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
-  POCL_MSG_PRINT_ACCEL_MMAP("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
+  POCL_MSG_PRINT_ALMAIF_MMAP("XRTMMAP: Copying 0x%zx bytes from 0x%zx "
                             "to 0x%zx\n",
                             bytes, source, destination);
   size_t src_offset = source - PhysAddress;

@@ -2,7 +2,7 @@
 Fixed-Function Accelerators
 ===========================
 
-The ``accel`` driver can be used for easy integration of custom fixed-function
+The ``almaif`` driver can be used for easy integration of custom fixed-function
 accelerators through a standardized hardware interface and a standardized
 procedure for enqueuing commands.
 
@@ -133,13 +133,13 @@ As a practical example, enqueuing a kernel dispatch packet proceeds as follows:
 Usage
 -----
 
-To enable this driver, simply add ``-DENABLE_ACCEL_DEVICE=1`` to the cmake
+To enable this driver, simply add ``-DENABLE_ALMAIF_DEVICE=1`` to the cmake
 arguments. On small FPGA SoCs and other relatively low performance hosts, you
 may wish to follow the instructions in :ref:`pocl-without-llvm`.
 (Recommended for Zynq-7020 SoC).
 
 The fixed-function accelerators need to be told what kernel to execute. For
-this, the accel driver has a list of builtin kernels that can be referred to
+this, the almaif driver has a list of builtin kernels that can be referred to
 in the ``clCreateProgramWithBuiltInKernels`` call:
 
 .. list-table::
@@ -167,7 +167,7 @@ This list will be expanded in the future.
 The full list of currently supported built-in kernels is maintained in
 lib/CL/devices/builtin_kernels.{cc,hh}
 
-There is an example program using the accel driver in ``examples/accel`` which
+There is an example program using the almaif driver in ``examples/accel`` which
 also includes the VHDL code for synthesizing the accelerator. The accelerator
 has been developed with the `OpenASIP toolset <http://openasip.org/>`_. In order to
 synthesize the accelerator for a Xilinx FPGA SoC, you can follow the
@@ -184,7 +184,7 @@ First, set CMAKE variable VIVADO_PATH to point to the directory with the
 1. If you have the OpenASIP/TCEMC toolset installed, you can set ENABLE_TCE to 1 to enable
 RTL and firmware generation of various OpenASIP TTA cores with different memory configurations.
 Then, you can simulate them with ttasim instruction set simulator by running
-``../tools/scripts/run_accel_tests`` from the build directory.
+``../tools/scripts/run_almaif_tests`` from the build directory.
 
 2. If you have Vitis HLS installed, set VITIS_HLS_PATH to point to the directory
 with the vitis_hls executable.
@@ -198,7 +198,7 @@ Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
 Copy the bistreams directories (and in case of TTA, also the firmware_imgs
 directory, hashes.txt and example0_*.poclbins)
 to their correct PoCL build directories on PYNQ.
-Finally, run ``../tools/scripts/run_accel_tests --pynq`` to run the test programn
+Finally, run ``../tools/scripts/run_almaif_tests --pynq`` to run the test programn
 on the FPGA device.
 
 
@@ -207,7 +207,7 @@ on the FPGA device.
 Driver arguments are used to tell pocl where the accelerator is and what
 functions it supports. To run this example manually, execute::
 
-  POCL_DEVICES=accel POCL_ACCEL0_PARAMETERS=0x43C00000,<device_name>,1,2 ./accel_example
+  POCL_DEVICES=almaif POCL_ALMAIF0_PARAMETERS=0x43C00000,<device_name>,1,2 ./accel_example
 
 The environment variables define an accelerator with base physical address of
 0x43C0_0000 that can execute pocl.add.i32 and pocl.mul.i32. If the device requires
@@ -224,7 +224,7 @@ start up the simulation with <device_name>.adf and, if it exists, <device_name>.
 
 There's an alternative way to emulate the accelerator in software by
 setting the base physical address to 0xE. This directs the driver to instead
-use a software emulating function from accel.cc. No changes to accel_example.cpp
+use a software emulating function from almaif.cc. No changes to accel_example.cpp
 are needed to run the emulation.
 
 Note that as the driver requires write access to ``/dev/mem`` for memory
@@ -268,8 +268,8 @@ be copied to PYNQ-Z1.
 The generate_hls_project.tcl file sets the base address of the accelerator
 to a physical address 0x40000000. This base address is given to PoCL through
 an environment variable::
-  export POCL_DEVICES=accel
-  export POCL_ACCEL0_PARAMETERS="0x40000000,dummy,1,2"
+  export POCL_DEVICES=almaif
+  export POCL_ALMAIF0_PARAMETERS="0x40000000,dummy,1,2"
 
 The bitstream can be loaded on the FPGA with various ways. PYNQ-Z1 image
 includes a python library to do it, which can be used with a following one-liner::

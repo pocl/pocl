@@ -35,7 +35,7 @@ add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy")
 
 add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy")
 
-add_test_pocl(NAME "accel/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "almaif/multi_AS_copy" COMMAND "multi_AS_copy")
 
 set_tests_properties( "tce/multi_AS_copy"
   PROPERTIES
@@ -55,12 +55,12 @@ set_tests_properties( "tcele/multi_AS_copy"
     ENVIRONMENT "POCL_DEVICES=pthread ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     DEPENDS "pocl_version_check")
 
-set_tests_properties( "accel/multi_AS_copy"
+set_tests_properties( "almaif/multi_AS_copy"
   PROPERTIES
     COST 40.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "accel_ttasim"
-    ENVIRONMENT "POCL_DEVICES=pthread accel;POCL_ACCEL0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
+    LABELS "almaif_ttasim"
+    ENVIRONMENT "POCL_DEVICES=pthread almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
     DEPENDS "pocl_version_check")
 
