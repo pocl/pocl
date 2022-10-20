@@ -29,14 +29,16 @@
 
 //#include "pocl_util.h"
 
+#include "Device.hh"
 #include "EmulationDevice.hh"
-#include "MMAPDevice.hh"
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
 
 #define ACCEL_DEFAULT_PRIVATE_MEM_SIZE (2048)
 
 #define ACCEL_DEFAULT_CTRL_SIZE (1024)
+
+#define ACCEL_DEFAULT_CONSTANT_MEM_SIZE (4096)
 
 #define ALMAIF_VERSION_2 (2)
 #define ALMAIF_VERSION_3 (3)
@@ -188,6 +190,9 @@ struct AccelData {
   // Lock for device-side command queue manipulation
   pocl_lock_t AQLQueueLock;
 
+  void *printf_buffer;
+  void *printf_position;
+
   emulation_data_t EmulationData;
 
   // Backend-agnostic compilation data
@@ -203,5 +208,6 @@ void submit_and_barrier(AccelData *D, _cl_command_node *cmd);
 #define TTA_ASID_GLOBAL 1
 #define TTA_ASID_LOCAL 3
 #define TTA_ASID_CONSTANT 2
+#define TTA_ASID_CQ 5
 
 #endif

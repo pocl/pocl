@@ -40,6 +40,7 @@ public:
   virtual void Write32(size_t offset, uint32_t value) override;
   virtual void Write16(size_t offset, uint16_t value) override;
   virtual uint64_t Read64(size_t offset) override;
+  virtual void Write64(size_t offset, uint64_t value) override;
 
   virtual void CopyToMMAP(size_t destination, const void *source,
                           size_t bytes) override;

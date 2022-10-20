@@ -24,16 +24,9 @@
 #ifndef POCL_ALMAIFCOMPILE_H
 #define POCL_ALMAIFCOMPILE_H
 
+#include "AccelShared.hh"
 #include "bufalloc.h"
 #include "pocl_util.h"
-//#include "AccelShared.hh"
-
-// TODO copied from TCE
-/* The address space ids in the ADFs. */
-#define TTA_ASID_PRIVATE 0
-#define TTA_ASID_GLOBAL 1
-#define TTA_ASID_LOCAL 3
-#define TTA_ASID_CONSTANT 2
 
 typedef struct compilation_data_s {
   /* used in pocl_llvm_build_program */

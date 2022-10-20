@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<adf version="2.1">
+<adf version="1.10">
 
   <little-endian/>
 
@@ -680,6 +680,7 @@
     <numerical-id>1</numerical-id>
     <numerical-id>2</numerical-id>
     <numerical-id>3</numerical-id>
+    <numerical-id>5</numerical-id>
   </address-space>
 
   <address-space name="instructions">

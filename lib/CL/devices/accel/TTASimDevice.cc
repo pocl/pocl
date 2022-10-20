@@ -22,11 +22,11 @@
    IN THE SOFTWARE.
 */
 
-
 #include "TTASimDevice.hh"
+#include "AccelCompile.hh"
+#include "AccelShared.hh"
 #include "TTASimControlRegion.hh"
 #include "TTASimRegion.hh"
-#include "AccelShared.hh"
 
 #include <AddressSpace.hh>
 #include <Application.hh>
@@ -112,7 +112,7 @@ TTASimDevice::TTASimDevice(char *adf_name) {
     if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
       global_as = as;
     }
-    if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+    if (as->hasNumericalId(TTA_ASID_CQ)) {
       cq_as = as;
     }
   }
@@ -201,7 +201,7 @@ void TTASimDevice::loadProgram(char *tpef_file) {
   simulator_->loadProgram(tpef_file);
 }
 
-void TTASimDevice::loadProgramToDevice(almaif_kernel_data_t *kd,
+void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
                                        cl_kernel kernel,
                                        _cl_command_node *cmd) {
   assert(kd);

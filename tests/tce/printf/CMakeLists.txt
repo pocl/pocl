@@ -23,34 +23,47 @@
 #
 #=============================================================================
 
-add_executable("ttasim_host" host.cpp)
+add_executable("printf_host" host.cpp)
 
-target_link_libraries("ttasim_host" ${POCLU_LINK_OPTIONS})
+target_link_libraries("printf_host" ${POCLU_LINK_OPTIONS})
 
 add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/ttasim" COMMAND "ttasim_host")
+#add_test_pocl(NAME "tce/printf" COMMAND "printf_host" run)
 
-#add_test_pocl(NAME "tcele/ttasim" COMMAND "ttasim_host")
+add_test_pocl(NAME "tcele/printf" COMMAND "printf_host" run)
 
-set_tests_properties( "tce/ttasim"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "tce;tta;ttasim"
-    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
-    DEPENDS "pocl_version_check")
+add_test_pocl(NAME "accel/printf" COMMAND "printf_host" run)
 
-# TODO little-endian version is currently broken, needs more investigation.
-#
-#set_tests_properties( "tcele/ttasim"
+# Big-endian printf seems broken for now.
+# Debug later if needed
+
+#AT_SETUP([A basic printf test])
+#set_tests_properties( "tce/printf"
 #  PROPERTIES
 #    COST 40.0
 #    PROCESSORS 1
 #    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-#    LABELS "tce;tta;ttasim"
-#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
+#    LABELS "tce;tta;ttasim;tcemc"
+#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
 #    DEPENDS "pocl_version_check")
+
+set_tests_properties( "tcele/printf"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
+    LABELS "tce;tta;ttasim;tcemc"
+    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
+    DEPENDS "pocl_version_check")
+
+set_tests_properties( "accel/printf"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
+    LABELS "accel_ttasim"
+    ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
+    DEPENDS "pocl_version_check")

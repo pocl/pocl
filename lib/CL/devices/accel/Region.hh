@@ -36,6 +36,7 @@ public:
   virtual void Write32(size_t offset, uint32_t value) = 0;
   virtual void Write16(size_t offset, uint16_t value) = 0;
   virtual uint64_t Read64(size_t offset) = 0;
+  virtual void Write64(size_t offset, uint64_t value) = 0;
 
   virtual void CopyToMMAP(size_t destination, const void *source,
                           size_t bytes) = 0;

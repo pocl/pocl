@@ -244,7 +244,7 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   if (isMultiCoreMachine())
     extraFlags += " -ldthread -lsync-lu -llockunit";
 
-  // extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
+  extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
 
   std::string kernelObjSrc = "";
   kernelObjSrc += tempDir;
@@ -256,14 +256,6 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   if (parent->endian_little) {
     extraFlags += " --little-endian";
   }
-
-  const int mem_size = 2048;
-  const int aql_queue_len = 2;
-  const int aql_packet_size = 64;
-  extraFlags += " -DMEM_SIZE=" + std::to_string(mem_size);
-  extraFlags += " -DQUEUE_LENGTH=" + std::to_string(aql_queue_len);
-  extraFlags += " --init-sp=" +
-                std::to_string(mem_size - aql_packet_size * aql_queue_len);
 
   std::string kernelMdSymbolName = "_";
   kernelMdSymbolName += run_cmd->kernel->name;
@@ -734,10 +726,20 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
         cmd->command.run.pc.local_size[1], d->needsByteSwap);
     temp_ctx.local_size[2] = pocl_byteswap_uint32_t(
         cmd->command.run.pc.local_size[2], d->needsByteSwap);
-    // currently unused by TCE
-    temp_ctx.printf_buffer = 0x11223344;
-    temp_ctx.printf_buffer_position = 0x9900ccaa;
-    temp_ctx.printf_buffer_capacity = 0x88776655;
+
+    temp_ctx.printf_buffer = pocl_byteswap_uint32_t(
+        d->printf_buffer->start_address, d->needsByteSwap);
+    temp_ctx.printf_buffer_capacity = pocl_byteswap_uint32_t(
+        cmd->device->printf_buffer_size, d->needsByteSwap);
+    temp_ctx.printf_buffer_position = pocl_byteswap_uint32_t(
+        d->printf_position_chunk->start_address, d->needsByteSwap);
+    d->writeWordToDevice(d->printf_position_chunk->start_address, 0);
+    POCL_MSG_PRINT_TCE(
+        "Device side printf buffer=%d, position: %d and capacity %d \n",
+        d->printf_buffer->start_address,
+        d->printf_position_chunk->start_address,
+        cmd->device->printf_buffer_size);
+
     POCL_MSG_PRINT_TCE("COPYING %u bytes to CONTEXT: %u \n",
                        (uint32_t)sizeof(struct pocl_context32),
                        (uint32_t)context->start_address);
@@ -810,6 +812,20 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 #endif
   /* We are done with this kernel, free the command queue entry. */
   d->writeWordToDevice(d->statusAddr, POCL_KST_FREE);
+
+  unsigned printf_position =
+      d->readWordFromDevice(d->printf_position_chunk->start_address);
+  POCL_MSG_PRINT_TCE(
+      "Device wrote %u bytes to printf, passing them to stdout now:\n",
+      printf_position);
+  if (printf_position > 0) {
+    char *tmp_printf_buf = new char[printf_position];
+    assert(tmp_printf_buf);
+    d->copyDeviceToHost(d->printf_buffer->start_address, tmp_printf_buf,
+                        printf_position);
+    write(STDOUT_FILENO, tmp_printf_buf, printf_position);
+    delete[] tmp_printf_buf;
+  }
 
   for (ChunkVector::iterator i = tempChunks.begin();
        i != tempChunks.end(); ++i) 

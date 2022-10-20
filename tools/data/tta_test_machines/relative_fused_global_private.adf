@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<adf version="2.1">
+<adf version="1.10">
 
   <little-endian/>
 
@@ -693,7 +693,7 @@
     <min-address>0</min-address>
     <max-address>1023</max-address>
     <shared-memory>0</shared-memory>
-    <numerical-id>3</numerical-id>
+    <numerical-id>5</numerical-id>
   </address-space>
 
   <global-control-unit name="gcu">

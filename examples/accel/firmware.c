@@ -51,7 +51,7 @@
 #define QUEUE_START 0
 #endif
 
-#define __cq__ __attribute__ ((address_space (3)))
+#define __cq__ __attribute__ ((address_space (5)))
 #define __buffer__ __attribute__ ((address_space (1)))
 
 enum BuiltinKernelId : uint16_t

@@ -135,6 +135,9 @@ class TCEDevice {
   pocl_cond_t wakeup_cond;
   pocl_lock_t tce_compile_lock;
   _cl_command_node *work_queue;
+
+  chunk_info_t *printf_buffer;
+  chunk_info_t *printf_position_chunk;
 };
 
 void *pocl_tce_driver_thread (void *cldev);

@@ -35,7 +35,7 @@ public:
   TTASimDevice(char *adf_name);
   ~TTASimDevice() override;
 
-  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
+  virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
                                    _cl_command_node *cmd) override;
 
   pocl_thread_t ttasim_thread;

@@ -270,6 +270,9 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   // kernel param size. this is a bit arbitrary
   dev->max_parameter_size = 64;
   dev->address_bits = 32;
+
+  dev->device_side_printf = 0;
+
   // This would be more logical as a per builtin kernel value?
   // there is a way to query it: clGetKernelWorkGroupInfo
   /*
@@ -535,6 +538,26 @@ void pocl_accel_update_event(cl_device_id device, cl_event event) {
 
         double EndNs = (double)event->time_end * NsPerClock;
         event->time_end = D->Dev->HwClockStart + (uint64_t)EndNs;
+      }
+
+      if (device->device_side_printf) {
+        chunk_info_t *printf_buffer_chunk = (chunk_info_t *)D->printf_buffer;
+        assert(printf_buffer_chunk);
+        chunk_info_t *printf_position_chunk =
+            (chunk_info_t *)D->printf_position;
+        assert(printf_position_chunk);
+        unsigned position = 0;
+        D->Dev->readDataFromDevice((char *)&position,
+                                   printf_position_chunk->start_address, 4);
+        POCL_MSG_PRINT_ACCEL(
+            "Device wrote %u bytes to stdout. Printing them now:\n", position);
+        if (position > 0) {
+          char *tmp_printf_buf = (char *)malloc(position);
+          D->Dev->readDataFromDevice(
+              tmp_printf_buf, printf_buffer_chunk->start_address, position);
+          write(STDOUT_FILENO, tmp_printf_buf, position);
+          free(tmp_printf_buf);
+        }
       }
     }
   }
@@ -804,6 +827,23 @@ void scheduleNDRange(AccelData *data, _cl_command_node *cmd, size_t arg_size,
     pc.global_offset[0] = run->pc.global_offset[0];
     pc.global_offset[1] = run->pc.global_offset[1];
     pc.global_offset[2] = run->pc.global_offset[2];
+
+    if (cmd->device->device_side_printf) {
+      pc.printf_buffer = ((chunk_info_t *)data->printf_buffer)->start_address;
+      pc.printf_buffer_capacity = cmd->device->printf_buffer_size;
+      assert(pc.printf_buffer_capacity);
+
+      pc.printf_buffer_position =
+          ((chunk_info_t *)data->printf_position)->start_address;
+      POCL_MSG_PRINT_ACCEL(
+          "Device side printf buffer=%d, position: %d and capacity %d \n",
+          pc.printf_buffer, pc.printf_buffer_position,
+          pc.printf_buffer_capacity);
+
+      data->Dev->DataMemory->Write32(
+          pc.printf_buffer_position - data->Dev->DataMemory->PhysAddress, 0);
+    }
+
     size_t pc_start_addr = data->compilationData->pocl_context->start_address;
     data->Dev->DataMemory->CopyToMMAP(pc_start_addr, &pc,
                                       sizeof(pocl_context32));

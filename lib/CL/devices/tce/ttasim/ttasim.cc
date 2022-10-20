@@ -722,6 +722,17 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->mem_base_addr_align = 128;
   dev->min_data_type_align_size = 128;
 
+  dev->device_side_printf = 1;
+  dev->printf_buffer_size = PRINTF_BUFFER_SIZE;
+  TTASimDevice *d = (TTASimDevice *)dev->data;
+  d->printf_buffer =
+      pocl_alloc_buffer_from_region(&d->global_mem, dev->printf_buffer_size);
+  assert(d->printf_buffer);
+  d->printf_position_chunk = pocl_alloc_buffer_from_region(&d->global_mem, 4);
+  if (d->printf_position_chunk == NULL) {
+    POCL_ABORT("TTASIM: Can't allocate 4 bytes for printf index\n");
+  }
+
   return CL_SUCCESS;
 }
 

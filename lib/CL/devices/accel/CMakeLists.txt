@@ -27,6 +27,7 @@
 add_compile_options("-std=c++14")
 
 add_compile_options(${TCE_INCLUDES})
+add_compile_options(${TCE_CXXFLAGS})
 
 set(ACCEL_SOURCES "AccelShared.hh"
                   "accel.cc"

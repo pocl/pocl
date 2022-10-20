@@ -122,6 +122,15 @@ uint64_t MMAPRegion::Read64(size_t offset) {
   return value;
 }
 
+void MMAPRegion::Write64(size_t offset, uint64_t value) {
+  POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing to physical address 0x%zx with "
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
+  assert(Data && "No pointer to MMAP'd region; write before mapping?");
+  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  static_cast<volatile uint64_t *>(Data)[offset / sizeof(uint64_t)] = value;
+}
+
 void MMAPRegion::CopyToMMAP(size_t destination, const void *source,
                             size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP("MMAP: Writing 0x%zx bytes to buffer at 0x%zx with "

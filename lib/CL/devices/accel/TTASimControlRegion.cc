@@ -73,6 +73,10 @@ void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
   }
 }
 
+void TTASimControlRegion::Write64(size_t offset, uint64_t value) {
+  POCL_ABORT("64b writes to ttasimcontrolregion unimplemented\n");
+}
+
 void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
   POCL_ABORT("Unimplemented 16bit writes to ttasimcontrolregion\n");
 }
@@ -124,10 +128,10 @@ void TTASimControlRegion::setupControlRegisters(
       } else {
         dmem_size = as->end() + 1;
       }
-      if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+      if (as->hasNumericalId(TTA_ASID_CQ)) {
         sharedDataAndCq = true;
       }
-    } else if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+    } else if (as->hasNumericalId(TTA_ASID_CQ)) {
       cq_size = as->end() + 1;
     } else if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
       hasPrivateMem = true;

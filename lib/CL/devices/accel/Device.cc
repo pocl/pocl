@@ -119,10 +119,15 @@ void Device::discoverDeviceParameters() {
   POCL_MSG_PRINT_ACCEL("ControlMemory->PhysAddress=%zu\n",
                        ControlMemory->PhysAddress);
   AllocRegions = (memory_region_t *)calloc(1, sizeof(memory_region_t));
-  pocl_init_mem_region(AllocRegions, dmem_start, dmem_size);
+  pocl_init_mem_region(AllocRegions,
+                       dmem_start + ACCEL_DEFAULT_CONSTANT_MEM_SIZE,
+                       dmem_size - ACCEL_DEFAULT_CONSTANT_MEM_SIZE);
+  POCL_MSG_PRINT_ACCEL(
+      "Reserved %d bytes at the start of global memory for constant data\n",
+      ACCEL_DEFAULT_CONSTANT_MEM_SIZE);
 }
 
-void Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
+void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
                                  _cl_command_node *cmd) {
   assert(kd);
 
@@ -178,7 +183,7 @@ void Device::loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
 }
 
 void Device::preread_images(const char *kernel_cachedir,
-                            almaif_kernel_data_t *kd) {
+                            almaif_kernel_data_s *kd) {
   POCL_MSG_PRINT_ACCEL("Reading image files\n");
   uint64_t temp = 0;
   size_t size = 0;

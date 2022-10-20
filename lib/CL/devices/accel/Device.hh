@@ -26,19 +26,20 @@
 #define Device_H
 
 #include "Region.hh"
-#include "AccelCompile.hh"
 
 #include "bufalloc.h"
 #include "pocl_types.h"
 
 #include <stdlib.h>
 
+struct almaif_kernel_data_s;
+
 class Device {
 public:
   Device();
   virtual ~Device();
 
-  virtual void loadProgramToDevice(almaif_kernel_data_t *kd, cl_kernel kernel,
+  virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
                                    _cl_command_node *cmd);
 
   Region *ControlMemory;
@@ -76,7 +77,7 @@ protected:
   uint32_t dmem_size;
 
 private:
-  void preread_images(const char *kernel_cachedir, almaif_kernel_data_t *kd);
+  void preread_images(const char *kernel_cachedir, almaif_kernel_data_s *kd);
 };
 
 #endif

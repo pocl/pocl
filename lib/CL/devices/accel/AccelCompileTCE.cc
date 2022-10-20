@@ -106,7 +106,7 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
 
   device->long_name = device->short_name = "ALMAIF TCE";
   device->vendor = "pocl";
-  device->extensions = "";
+  device->extensions = TCE_DEVICE_EXTENSIONS;
   if (device->endian_little)
     device->llvm_target_triplet = "tcele-tut-llvm";
   else
@@ -115,12 +115,33 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   d->compilationData->backend_data = (void *)bd;
   device->builtins_sources_path = "tce_builtins.cl";
 
+  device->device_side_printf = 1;
+  device->printf_buffer_size = PRINTF_BUFFER_SIZE;
+  chunk_info_t *chunk = NULL;
+  chunk = pocl_alloc_buffer(d->Dev->AllocRegions, device->printf_buffer_size);
+  if (chunk == NULL) {
+    POCL_ABORT("Accel: Can't allocate %d bytes for printf buffer\n",
+               device->printf_buffer_size);
+  } else {
+    POCL_MSG_PRINT_ACCEL("Allocated printf buffer of size %d from %d\n",
+                         device->printf_buffer_size, chunk->start_address);
+    d->printf_buffer = chunk;
+  }
+
+  d->printf_position = pocl_alloc_buffer(d->Dev->AllocRegions, 4);
+  if (d->printf_position == NULL) {
+    POCL_ABORT("Accel: Can't allocate 4 bytes for printf index\n");
+  }
+
   return 0;
 }
 
 int pocl_almaif_tce_cleanup(cl_device_id device) {
   void *data = device->data;
   AccelData *d = (AccelData *)data;
+
+  pocl_free_chunk((chunk_info_t *)d->printf_buffer);
+  pocl_free_chunk((chunk_info_t *)d->printf_position);
 
   tce_backend_data_t *bd =
       (tce_backend_data_t *)d->compilationData->backend_data;
@@ -322,7 +343,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     for (int i = 0; i < nav.count(); i++) {
       TTAMachine::AddressSpace *as = nav.item(i);
       if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
-        if (as->hasNumericalId(TTA_ASID_LOCAL)) {
+        if (as->hasNumericalId(TTA_ASID_CQ)) {
           separateCQMem = false;
         }
         if (as->hasNumericalId(TTA_ASID_PRIVATE)) {

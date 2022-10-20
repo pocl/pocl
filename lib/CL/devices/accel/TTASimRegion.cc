@@ -89,6 +89,16 @@ uint64_t TTASimRegion::Read64(size_t offset) {
   return result;
 }
 
+void TTASimRegion::Write64(size_t offset, uint64_t value) {
+
+  POCL_MSG_PRINT_ACCEL_MMAP("TTASim: Writing to physical address 0x%zx with "
+                            "offset 0x%zx\n",
+                            PhysAddress, offset);
+  assert(mem_ != nullptr && "No memory handle; write before mapping?");
+  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  mem_->writeDirectlyLE(PhysAddress + offset, 8, value);
+}
+
 void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
                               size_t bytes) {
   POCL_MSG_PRINT_ACCEL_MMAP(

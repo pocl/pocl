@@ -79,16 +79,13 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_GPU, cprops);
-
+        cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
         
         assert (devices.size() == 1);
 
         cl::Device device = devices.at(0);
-
-        assert (strncmp(device.getInfo<CL_DEVICE_NAME>().c_str(), "tta", 3) == 0);
 
         a = poclu_bswap_cl_float (device(), a);
         b = poclu_bswap_cl_int (device(), b);
