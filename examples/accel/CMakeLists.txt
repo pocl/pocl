@@ -120,6 +120,33 @@ if(ENABLE_TCE)
 
     add_dependencies(bitstreams ${core_name}_bs)
 
+
+    add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32")
+    add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
+    #Bit clunky to add test from different directory. However, this file contains the different tta configurations
+    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0")
+
+    set_tests_properties( "examples/accel/add.i32/ttasim_${core_name}" "examples/accel/mul.i32/ttasim_${core_name}"
+                          "examples/example0/ttasim_${core_name}"
+        PROPERTIES
+            PASS_REGULAR_EXPRESSION "OK"
+            LABELS "custom_device;accel_ttasim;accel_LLVM"
+            ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535"
+            DEPENDS "pocl_version_check" "examples/example0" "examples/example1_dot_product")
+
+    if (PYNQ_AVAILABLE)
+     add_test_pocl(NAME "examples/accel/add.i32/pynq_${core_name}" COMMAND "accel_example" "pocl.add.i32")
+     add_test_pocl(NAME "examples/accel/mul.i32/pynq_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
+     add_test_pocl(NAME "examples/example0/pynq_${core_name}" COMMAND "../example0/example0")
+     
+     set_tests_properties( "examples/accel/add.i32/pynq_${core_name}" "examples/accel/mul.i32/pynq_${core_name}"
+         "examples/example0/pynq_${core_name}"
+        PROPERTIES
+            PASS_REGULAR_EXPRESSION "OK"
+            LABELS "custom_device;accel_pynq"
+            ENVIRONMENT "POCL_DEVICES=accel;POCL_ACCEL0_PARAMETERS=0x43C00000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2"
+            DEPENDS "pocl_version_check" "examples/example0")
+    endif()
   endfunction()
 
   
