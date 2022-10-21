@@ -204,8 +204,9 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   parent->global_mem_size = global_size;
   parent->max_mem_alloc_size = global_size;
 
-  pocl_init_mem_region
-    (&local_mem, (memory_address_t)local_as->start(), parent->local_mem_size);
+  pocl_init_mem_region(&local_mem,
+                       (memory_address_t)local_as->end() - local_size,
+                       parent->local_mem_size);
   pocl_init_mem_region
     (&global_mem, (memory_address_t)global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE + sizeof(__kernel_exec_cmd),
      parent->global_mem_size);
