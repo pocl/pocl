@@ -279,9 +279,9 @@ pocl_topology_detect_device_info (cl_device_id device)
     {
       assert (content);
       assert (filesize > 0);
-      unsigned long start, end;
+      unsigned long start = 0, end = 0;
       int items = sscanf (content, "%lu-%lu", &start, &end);
-      assert (items == 2);
+      assert (items == 2 || (items == 1 && start == 0));
       device->max_compute_units = (unsigned)end + 1;
       POCL_MEM_FREE (content);
     }
