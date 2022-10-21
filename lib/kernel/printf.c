@@ -369,6 +369,8 @@ __pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
               if (vector_length == 0)
                 vector_length = 1;
 
+// TODO: This hack can be removed once TTA backend can handle
+// va_arg with vector types
 #ifdef DISABLE_VECTOR_PRINTF
               vector_length = 1;
 #endif

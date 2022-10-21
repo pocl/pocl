@@ -279,7 +279,7 @@ set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" 
 
 set(TCE_TARGET_TRIPLE "tce-tut-llvm")
 
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-DDISABLE_VECTOR_PRINTF=1" "-DPRINTF_BUFFER_AS_ID=1" "-emit-llvm" "-mllvm" "--disable-loop-idiom-memcpy" "-mllvm" "--disable-loop-idiom-memset" "-fno-vectorize" "-fno-slp-vectorize" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
 
 make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${TCE_SOURCES})
 

@@ -31,19 +31,19 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-#add_test_pocl(NAME "tce/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
+add_test_pocl(NAME "tce/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
 add_test_pocl(NAME "tcele/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
 
 add_test_pocl(NAME "almaif/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
 
 #AT_SETUP([Half-precision floats on ttasim])
-#set_tests_properties( "tce/fp16"
-#  PROPERTIES
-#    COST 40.0
-#    PROCESSORS 1
-#    LABELS "tce;tta;ttasim;half"
-#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf"
-#    DEPENDS "pocl_version_check")
+set_tests_properties( "tce/fp16"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    LABELS "tce;tta;ttasim;half"
+    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf"
+    DEPENDS "pocl_version_check")
 
 set_tests_properties( "tcele/fp16"
   PROPERTIES
