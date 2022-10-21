@@ -24,6 +24,8 @@
 #ifndef POCLU_H
 #define POCLU_H
 
+#include <stdlib.h>
+
 #include "pocl_opencl.h"
 
 #ifdef _WIN32

@@ -82,3 +82,6 @@ CMakeLists.txt.user
 #clion related files
 .idea/
 cmake-build-*/
+
+# vim related files
+compile_commands.json
