@@ -176,7 +176,7 @@ tta_opencl_wg_launch (__cq__ volatile struct AQLDispatchPacket *packet)
   const int num_groups_y = (work_dim >= 2) ? (context->num_groups[1]) : 1;
   const int num_groups_z = (work_dim == 3) ? (context->num_groups[2]) : 1;
 
-  for (unsigned gid_x = 0; gid_x <= num_groups_x; gid_x++)
+  for (unsigned gid_x = 0; gid_x < num_groups_x; gid_x++)
   {
     for (unsigned gid_y = 0; gid_y < num_groups_y; gid_y++)
     {
