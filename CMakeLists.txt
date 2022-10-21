@@ -1527,9 +1527,11 @@ if(NOT CMAKE_CROSSCOMPILING)
   # AC_C_BIGENDIAN
   include(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+  set(CROSSCOMPILING 0)
 else()
   # Set default as little-endian
   set(WORDS_BIGENDIAN 0)
+  set(CROSSCOMPILING 1)
 endif()
 
 ##########################################################

@@ -648,10 +648,6 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   llvm::Triple Triple(Device->llvm_target_triplet);
   llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
 
-  // First try direct object code generation from LLVM, if supported by the
-  // LLVM backend for the target.
-  bool LLVMGeneratesObjectFiles = true;
-
   SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream SOS(Data);
   bool cannotEmitFile;
@@ -662,7 +658,11 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
 #endif
                                   CODEGEN_FILE_TYPE_NS::CGFT_ObjectFile);
 
-  LLVMGeneratesObjectFiles = !cannotEmitFile;
+// Doesn't work well when cross-compiling with llvm
+#if !CROSSCOMPILING
+  // First try direct object code generation from LLVM, if supported by the
+  // LLVM backend for the target.
+  bool LLVMGeneratesObjectFiles = !cannotEmitFile;
 
   if (LLVMGeneratesObjectFiles) {
     POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
@@ -681,6 +681,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
     memcpy(*Output, Cstr, S);
     return 0;
   }
+#endif  // !CROSSCOMPILING
 
   PassManager PMAsm;
   initPassManagerForCodeGen(PMAsm, Device);
