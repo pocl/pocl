@@ -454,7 +454,7 @@ while (0)
         {                                                                     \
             queue_in_buffer |= (command_queue == command_buffer->queues[ii]); \
         }                                                                     \
-      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);  \
+      POCL_RETURN_ERROR_COND ((command_queue != NULL && !queue_in_buffer), CL_INVALID_COMMAND_QUEUE);  \
       POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);    \
       errcode = pocl_cmdbuf_choose_recording_queue (command_buffer,           \
                                                     &command_queue);          \
