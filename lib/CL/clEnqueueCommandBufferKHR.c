@@ -47,7 +47,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
                                     cl_command_buffer_khr command_buffer,
                                     cl_uint num_events_in_wait_list,
                                     const cl_event *event_wait_list,
-                                    cl_event *event) CL_API_SUFFIX__VERSION_1_2
+                                    cl_event *event_p) CL_API_SUFFIX__VERSION_1_2
 {
   int errcode = CL_SUCCESS;
 
@@ -147,7 +147,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
 
       cl_event syncpoints[command_buffer->num_syncpoints];
       cl_event *deps = (cl_event *)alloca (
-          sizeof (event)
+          sizeof (cl_event)
           * (command_buffer->num_syncpoints + num_events_in_wait_list));
 
       unsigned sync_id = 0;
@@ -225,12 +225,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           pocl_mem_manager_free_command (node);
           return errcode;
         }
-      POname (clRetainCommandBufferKHR) (command_buffer);
-      pocl_command_enqueue (q, node);
-      for (unsigned i = 0; i < command_buffer->num_syncpoints; ++i)
-        {
-          POname (clReleaseEvent) (syncpoints[i]);
-        }
+
       errcode = POname (clSetEventCallback) (final_ev, CL_COMPLETE,
                                              buffer_finished_callback,
                                              (void *)command_buffer);
@@ -242,10 +237,17 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           return errcode;
         }
 
-      if (event != NULL)
-        *event = final_ev;
+      if (event_p != NULL)
+        *event_p = final_ev;
       else
         POname (clReleaseEvent) (final_ev);
+
+      for (unsigned i = 0; i < command_buffer->num_syncpoints; ++i)
+        {
+          POname (clReleaseEvent) (syncpoints[i]);
+        }
+      POname (clRetainCommandBufferKHR) (command_buffer);
+      pocl_command_enqueue (q, node);
 
       return CL_SUCCESS;
     }
