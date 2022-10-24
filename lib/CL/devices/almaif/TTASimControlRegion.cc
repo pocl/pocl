@@ -171,7 +171,7 @@ void TTASimControlRegion::setupControlRegisters(
   int imem_start = 0;
 
   if (!relativeAddressing) {
-    unsigned default_baseaddress = 0x43C00000; // TODO get from env variable
+    unsigned default_baseaddress = 0x40000000; // TODO get from env variable
     cq_start += default_baseaddress;
     dmem_start += default_baseaddress;
   }

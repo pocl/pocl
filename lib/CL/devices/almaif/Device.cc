@@ -70,7 +70,7 @@ void Device::discoverDeviceParameters() {
     cq_size = 4 * 64;
     // dmem_size = ControlMemory->Read32(ALMAIF_INFO_PMEM_SIZE_LEGACY);
     int private_mem_size =
-        pocl_get_int_option("POCL_ALMAIF_PRIVATE_MEM_SIZE", 1024);
+        pocl_get_int_option("POCL_ALMAIF_PRIVATE_MEM_SIZE", ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
 
     dmem_size = ControlMemory->Read32(ALMAIF_INFO_PMEM_SIZE_LEGACY) -
                 private_mem_size - cq_size;

@@ -60,7 +60,7 @@ set_tests_properties( "almaif/multi_AS_copy"
     COST 40.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "almaif_ttasim"
+    LABELS "almaif_LLVM;almaif_ttasim"
     ENVIRONMENT "POCL_DEVICES=pthread almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
     DEPENDS "pocl_version_check")
 

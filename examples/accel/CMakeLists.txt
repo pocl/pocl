@@ -47,7 +47,26 @@ target_link_libraries(accel_countred ${POCLU_LINK_OPTIONS})
 
 add_custom_target(bitstreams)
 
-if(ENABLE_TCE)
+find_program(VIVADO vivado
+    HINTS ${VIVADO_PATH})
+if(VIVADO)
+    MESSAGE(STATUS "Vivado: ${VIVADO}")
+else()
+    MESSAGE(STATUS "No vivado found: given vivado path was:${VIVADO_PATH}")
+endif()
+
+find_program(VITIS_HLS vitis_hls
+    HINTS ${VITIS_HLS_PATH})
+if(VITIS_HLS)
+    MESSAGE(STATUS "Vitis HLS: ${VITIS_HLS}")
+endif()
+
+find_program(PYNQ_AVAILABLE pynq)
+if(PYNQ_AVAILABLE)
+    MESSAGE(STATUS "Pynq installation found")
+endif ()
+
+
   #add_subdirectory(gen_accel)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
   file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bitstreams)
@@ -67,7 +86,9 @@ if(ENABLE_TCE)
 
   configure_file(firmware.c ${CMAKE_CURRENT_BINARY_DIR})
 
-  function(generate_firmware core_name base_address queue_length queue_start init_sp data_start use_axim)
+  function(generate_firmware core_name base_address queue_length queue_start init_sp data_start use_axim tta_device_hash)
+
+    if(ENABLE_TCE)
     set(ADF ${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/${core_name}.adf)
     set(TPEF ${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name}.tpef)
 
@@ -109,7 +130,7 @@ if(ENABLE_TCE)
 
     add_custom_command(OUTPUT bitstreams/${core_name}.bit
       COMMAND rm -rf vivado_${core_name}_1
-      COMMAND ${VIVADO_PATH}vivado -mode batch -source ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl
+      COMMAND ${VIVADO} -mode batch -source ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl
        -tclargs ${core_name} -tclargs 1 -tclargs ${use_axim}
        COMMAND cp vivado_${core_name}_1/vivado_${core_name}_1.runs/impl_1/toplevel_wrapper.bit
         bitstreams/${core_name}.bit
@@ -120,52 +141,80 @@ if(ENABLE_TCE)
 
     add_dependencies(bitstreams ${core_name}_bs)
 
+    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin
+        COMMAND
+        POCL_BUILDING=1
+        OCL_ICD_VENDORS=${CMAKE_BINARY_DIR}/ocl-vendors/
+        POCL_DEVICES=almaif
+        POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/${core_name},65535
+        POCL_DEBUG=almaif
+        ${CMAKE_BINARY_DIR}/bin/poclcc -o ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin ${CMAKE_CURRENT_SOURCE_DIR}/../example0/example0.cl 2>&1
+        | grep "TCE DEVICE HASH"
+        | cut -d "=" -f 2
+        | cut -d "[" -f 1
+        )
+
+    add_custom_target(${core_name}_poclbin ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin)
+    add_test_pocl(NAME "examples/example0/ttasim_poclbin_${core_name}"
+        COMMAND "../example0/example0" "b" "../example0/${core_name}_example0.poclbin")
+
+
 
     add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32")
     add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
-    #Bit clunky to add test from different directory. However, this file contains the different tta configurations
+
+    #Bit clunky to add test from different directory. However, this file contains the list of different tta configurations
     add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0")
 
     set_tests_properties( "examples/accel/add.i32/ttasim_${core_name}" "examples/accel/mul.i32/ttasim_${core_name}"
-                          "examples/example0/ttasim_${core_name}"
+                          "examples/example0/ttasim_${core_name}" "examples/example0/ttasim_poclbin_${core_name}"
         PROPERTIES
             PASS_REGULAR_EXPRESSION "OK"
             LABELS "custom_device;almaif_ttasim;almaif_LLVM"
-            ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535"
-            DEPENDS "pocl_version_check" "examples/example0" "examples/example1_dot_product")
-
+            ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535;POCL_ALMAIF0_HASH=${tta_device_hash}"
+            DEPENDS "pocl_version_check;examples/example0")
+    endif()
     if (PYNQ_AVAILABLE)
-     add_test_pocl(NAME "examples/accel/add.i32/pynq_${core_name}" COMMAND "accel_example" "pocl.add.i32")
-     add_test_pocl(NAME "examples/accel/mul.i32/pynq_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
-     add_test_pocl(NAME "examples/example0/pynq_${core_name}" COMMAND "../example0/example0")
-     
-     set_tests_properties( "examples/accel/add.i32/pynq_${core_name}" "examples/accel/mul.i32/pynq_${core_name}"
-         "examples/example0/pynq_${core_name}"
-        PROPERTIES
-            PASS_REGULAR_EXPRESSION "OK"
-            LABELS "custom_device;almaif_pynq"
-            ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0x43C00000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2"
-            DEPENDS "pocl_version_check" "examples/example0")
+	    add_test(NAME "upload_bitstream/pynq_${core_name}" COMMAND sudo -E python -c "from pynq import Overlay;Overlay(\'${CMAKE_CURRENT_BINARY_DIR}/bitstreams/${core_name}.bit\')" )
+	    add_test(NAME "examples/accel/add.i32/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/accel_example pocl.add.i32)
+	    add_test(NAME "examples/accel/mul.i32/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/accel_example pocl.mul.i32)
+	    add_test(NAME "examples/example0/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/../example0/example0 b ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin)
+
+        set_tests_properties( "examples/accel/add.i32/pynq_${core_name}" "examples/accel/mul.i32/pynq_${core_name}"
+            "examples/example0/pynq_${core_name}"
+            PROPERTIES
+                PASS_REGULAR_EXPRESSION "OK"
+                LABELS "custom_device;almaif_pynq;almaif_no_LLVM"
+                ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0x40000000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2,65535;POCL_ALMAIF0_HASH=${tta_device_hash}"
+                DEPENDS "pocl_version_check;examples/example0"
+                RESOURCE_LOCK fpga
+                FIXTURES_REQUIRED upload_${core_name}_bitstream
+                )
+        set_tests_properties( "upload_bitstream/pynq_${core_name}"
+            PROPERTIES
+                RESOURCE_LOCK fpga
+                FIXTURES_SETUP upload_${core_name}_bitstream)
     endif()
   endfunction()
 
   
-  generate_firmware("axim_sep"                         "0x43C00000" "1023" ""           ""           ""           "1")
-  generate_firmware("axim_fused_global_cq"             "0x43C00000" "3"    "0x43C1FF00" ""           ""           "1")
-  generate_firmware("axim_fused_global_private"        "0x43C00000" "1023" ""           "0x43C20000" "0x43C1F800" "1")
-  generate_firmware("axim_fused_global_cq_private"     "0x43C00000" "3"    "0x43C1F700" "0x43C20000" "0x43C1F800" "1")
-  generate_firmware("relative_sep"                     ""           "1023" ""           ""           ""           "0")
-  generate_firmware("relative_fused_global_cq"         ""           "3"    "0x7F00"     ""           ""           "0")
-  generate_firmware("relative_fused_global_private"    ""           "1023" ""           "0x8000"     "0x7800"     "0")
-  generate_firmware("relative_fused_global_cq_private" ""           "3"    "0x7700"     "0x8000"     "0x7800"     "0")
+  generate_firmware("axim_sep"                         "0x40000000" "1023" ""           ""           ""           "1"
+      "AIABJEBHGIEFBLDHPHBFGPKMBNAOFJDEPBBFAIPI")
+  generate_firmware("axim_fused_global_cq"             "0x40000000" "3"    "0x4001FF00" ""           ""           "1"
+      "FHDGLEPJNNDDHJEICNEJPOIFAKMNOIHMAHGCPMHB")
+  generate_firmware("axim_fused_global_private"        "0x40000000" "1023" ""           "0x40020000" "0x4001F800" "1"
+      "LLNMEKFGBMLHFNKIANINLCLFBBGIOGIKOBAPAJLB")
+  generate_firmware("axim_fused_global_cq_private"     "0x40000000" "3"    "0x4001F700" "0x40020000" "0x4001F800" "1"
+      "CMEFCAPIADJJBCHJJPAJOODAHDBJCKALCODIMDBC")
+  generate_firmware("relative_sep"                     ""           "1023" ""           ""           ""           "0"
+      "EAHMOKCOIHNPCLHMDOKFIKNGHHINIFJFFHCEGEPO")
+  generate_firmware("relative_fused_global_cq"         ""           "3"    "0x7F00"     ""           ""           "0"
+      "PLFLNAIIJAKNAGMOHBNNCMPJGKPBCFMGMBOOAKGA")
+  generate_firmware("relative_fused_global_private"    ""           "1023" ""           "0x8000"     "0x7800"     "0"
+      "AHBBGGJJPOKEALHPEPNEICDMGLJEPFLEJDHKPEAA")
+  generate_firmware("relative_fused_global_cq_private" ""           "3"    "0x7700"     "0x8000"     "0x7800"     "0"
+      "KKBLIOOBODNCIGAIMAAKFBOIGAMEJJCEKJCJCBOC")
 
-
-
-endif()
-
-if(DEFINED VITIS_HLS_PATH)
-  add_subdirectory(hls)
-endif()
 
 ######################################################################
 
@@ -183,3 +232,5 @@ set_tests_properties( "examples/accel/countred" "examples/accel/add.i32"
     PASS_REGULAR_EXPRESSION "OK"
     LABELS "custom_device;almaif_no_LLVM"
     DEPENDS "pocl_version_check")
+
+add_subdirectory(hls)

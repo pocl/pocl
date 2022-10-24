@@ -28,7 +28,7 @@ set mem_setup [lindex $argv 0]
 set device_count [lindex $argv 1]
 set use_axim [lindex $argv 2]
 set project_postfix ${mem_setup}_${device_count}
-set device0_offset 1136656384
+set device0_offset 1073741824
 set device_mmap_size 131072
 
 

@@ -62,6 +62,6 @@ set_tests_properties( "almaif/autolocal"
     COST 40.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
-    LABELS "almaif_ttasim"
+    LABELS "almaif_LLVM;almaif_ttasim"
     ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
     DEPENDS "pocl_version_check")
