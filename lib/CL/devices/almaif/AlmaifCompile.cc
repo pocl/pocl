@@ -231,5 +231,5 @@ int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
 char *pocl_almaif_compile_build_hash(cl_device_id device) {
   AlmaifData *d = (AlmaifData *)device->data;
   assert(d->compilationData->build_hash);
-  return d->compilationData->build_hash;
+  return strdup(d->compilationData->build_hash);
 }
