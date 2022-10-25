@@ -1,3 +1,4 @@
+
 #!/usr/bin/python3
 #
 # A script to generate wrapping functions (SPIR-mangled with SPIR AS) that will wrap
@@ -157,17 +158,11 @@ SVM_ATOMICS_FLAGS = [
 	"atomic_flag_clear"
 ]
 
-SVM_ATOMICS_ALL = {
-	"atomic_store",
-	"atomic_load",
-	"atomic_exchange",
-	"atomic_compare_exchange_strong",
-	"atomic_compare_exchange_weak",
-}
 
 SIG_TO_LLVM_TYPE_MAP = {
 	"f": "float",
 	"d": "double",
+	"Dh": "half",
 
 	"b": "i1",
 	"v": "void",
@@ -263,7 +258,8 @@ SIG_TO_LLVM_TYPE_MAP = {
 	'20ocl_image2d_array_wo': '%opencl.image2d_array_wo_t',
 	'21ocl_image1d_buffer_wo': '%opencl.image1d_buffer_wo_t',
 
-	'11ocl_sampler': '%opencl.sampler_t'
+	'11ocl_sampler': '%opencl.sampler_t',
+	'9ocl_event': '%opencl.event_t'
 }
 
 if X86_CALLING_ABI:
@@ -525,7 +521,7 @@ def shuffle_coerced_arg(llvm_i, input_type, input_arg, all_instr):
 # returns a LLVM argument type with addrspace
 # e.g. for argtype=="Pi" returns "i32 *"
 def llvm_arg_type(argtype, AS):
-	if argtype.count("ocl_image")>0 or argtype.count("ocl_sampler")>0 :
+	if argtype.count("ocl_image")>0 or argtype.count("ocl_sampler")>0 or argtype.count("ocl_event")>0:
 		return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
 	if argtype[0] == 'P':
 		idx = 1
@@ -612,14 +608,19 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 	:param name: function name
 	:param ret_type: LLVM type ("i32", "float" etc) of retval
 	:param ret_type_ext: retval's attributes ("signext" where required etc)
-	:param multiAS: True = generate for all three SPIR AddrSpaces
+	:param multiAS: True = generate for all multiple SPIR AddrSpaces
+	                (tuple) = explicit addrspaces for each arg, as a tuple
 	:param args: function arguments as mangled type names (i,j,m,f,d etc), not LLVM types
 	"""
 	ocl_func_name = POCL_LIB_PREFIX + name
 	spir_func_name = name
 
+	arg_addr_spaces = None
 	if not multiAS:
 		addr_spaces = ["none"]
+	elif type(multiAS) is tuple:
+		addr_spaces = ["none"]
+		arg_addr_spaces = multiAS
 	else:
 		if name.startswith("atomic"): # TODO
 			addr_spaces = ["global", "local"]  # , "generic"]
@@ -673,6 +674,8 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		####### process args
 		for cast in args:
 
+			if arg_addr_spaces:
+				AS = arg_addr_spaces[arg_i]
 			####### generate mangled arg type name for the mangled function name
 			# convert repeated vectors into compressed names, e.g.
 			#   Dv2_cDv2_c -> Dv2_cS_
@@ -717,7 +720,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			caller_args.append(noext_caller_arg)
 
 			####### generate arg types for callee (wrapped target function) and its declaration
-			# handle coerced args. Pointer args are not coerced so
+			# handle coerced args. Pointer args are not coerced or used with byval, so
 			# this shouldn't interact with addrspace casts.
 			if coerced_arg_type != spir_arg_type:
 				# some vectors require a shuffle
@@ -726,33 +729,31 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 				callee_args.append(coerced_arg_type + " %" + chr(48+llvm_i))
 				decl_args.append(coerced_arg_type)
 				llvm_i += 1
-			else:
+			elif spir_arg_type != ocl_arg_type:
 				# handle pointer args. insert addrspace casts if required by target
-				if spir_arg_type != ocl_arg_type:
-					all_instr.append("  %%%u = addrspacecast %s to %s" % (llvm_i, noext_caller_arg, ocl_arg_type))
-					callee_args.append(ocl_arg_type + " %" + chr(48+llvm_i))
-					decl_args.append(ocl_arg_type)
-					llvm_i += 1
+				all_instr.append("  %%%u = addrspacecast %s to %s" % (llvm_i, noext_caller_arg, ocl_arg_type))
+				callee_args.append(ocl_arg_type + " %" + chr(48+llvm_i))
+				decl_args.append(ocl_arg_type)
+				llvm_i += 1
+			elif byval_sret_arg_type != spir_arg_type:
+				# handle byval args. insert alloca & store as necessary
+				alignment = byval_sret_arg_type.find("align")
+				if alignment > 0:
+					align = byval_sret_arg_type[alignment:]
 				else:
-					# handle byval args. insert store / loads as necessary
-					if byval_sret_arg_type != spir_arg_type:
-						# add alloca & store
-						alignment = byval_sret_arg_type.find("align")
-						if alignment > 0:
-							align = byval_sret_arg_type[alignment:]
-						else:
-							align = "align 8"
-						all_instr.append("  %%%u = alloca %s, %s" % (llvm_i, spir_arg_type, align))
-						alloca_inst = "%" + chr(48+llvm_i)
-						all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
-						callee_args.append(ocl_arg_type + "* " + alloca_inst)
-						decl_args.append(byval_sret_arg_type)
-						llvm_i += 1
-					else:
-						# nothing to do, just pass plain arg
-						callee_args.append(ocl_arg_type + " %" + chr(97+arg_i))
-						decl_args.append(ocl_arg_type)
+					align = "align 8"
+				all_instr.append("  %%%u = alloca %s, %s" % (llvm_i, spir_arg_type, align))
+				alloca_inst = "%" + chr(48+llvm_i)
+				all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
+				callee_args.append(ocl_arg_type + "* " + alloca_inst)
+				decl_args.append(byval_sret_arg_type)
+				llvm_i += 1
+			else:
+				# nothing to do, just pass plain arg
+				callee_args.append(ocl_arg_type + " %" + chr(97+arg_i))
+				decl_args.append(ocl_arg_type)
 			arg_i += 1
+
 
 		######## generate final mangled function names
 		spir_mangled_func_suffix = "".join(spir_mangled_func_suffix)
@@ -900,6 +901,20 @@ MANG_TYPES_64 = {
 	'u': "m"
 }
 
+INVERT_SIGN = {
+	"c": "h",
+	"h": "c",
+
+	"s": "t",
+	"t": "s",
+
+	"i": "j",
+	"j": "i",
+
+	"l": "m",
+	"m": "l",
+}
+
 # math funcs, vectorized
 for llvm_type in ["float", "double"]:
 	for vector_size in [1,2,3,4,8,16]:
@@ -918,6 +933,9 @@ for llvm_type in ["float", "double"]:
 		arg_Pi = 'Pi'
 		ret_type = llvm_type
 		rel_rettype = 'i32'
+		novec_type = arg_f
+		novec_type_i = arg_i
+		arg_inv = INVERT_SIGN[arg_li]
 
 		if vector_size > 1:
 			s = str(vector_size)
@@ -926,6 +944,7 @@ for llvm_type in ["float", "double"]:
 			arg_Pf = "PDv" + s + "_"+arg_f
 			arg_f = "Dv" + s + "_"+arg_f
 			arg_li = "Dv" + s + "_"+arg_li
+			arg_inv = "Dv" + s + "_"+arg_inv
 			arg_lu = "Dv" + s + "_"+arg_lu
 			ret_type = "<" + s + " x " + llvm_type + ">"
 			if llvm_type == "float":
@@ -941,6 +960,17 @@ for llvm_type in ["float", "double"]:
 			generate_function(f, ret_type, '', True, arg_f, arg_Pf)
 		for f in TRIPLE_ARG:
 			generate_function(f, ret_type, '', False, arg_f, arg_f, arg_f)
+
+		if vector_size > 1:
+			generate_function("clamp", ret_type, '', False, arg_f, novec_type, novec_type)
+			generate_function("min", ret_type, '', False, arg_f, novec_type)
+			generate_function("max", ret_type, '', False, arg_f, novec_type)
+			generate_function("fmin", ret_type, '', False, arg_f, novec_type)
+			generate_function("fmax", ret_type, '', False, arg_f, novec_type)
+			generate_function("mix", ret_type, '', False, arg_f, arg_f, novec_type)
+			generate_function("ldexp", ret_type, '', False, arg_f, novec_type_i)
+			generate_function("smoothstep", ret_type, '', False, novec_type, novec_type, arg_f)
+			generate_function("step", ret_type, '', False, novec_type, arg_f)
 
 		# math funcs with other / special signatures
 		generate_function("ilogb", rel_rettype, '', False, arg_f)
@@ -973,6 +1003,9 @@ for llvm_type in ["float", "double"]:
 		generate_function("isordered", rel_rettype, '', False, arg_f, arg_f)
 		generate_function("isunordered", rel_rettype, '', False, arg_f, arg_f)
 
+		# must generate with last arg un/signed types too
+		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_li)
+		generate_function("select", ret_type, '', False, arg_f, arg_f, arg_inv)
 
 # geometric functions
 generate_function("cross", "<4 x float>", '', False, "Dv4_f", "Dv4_f")
@@ -1031,34 +1064,59 @@ for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
 			arg_2nd = "Dv" + s + "_" + arg_2nd
 		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[mang_type], '', False, arg_1st, arg_2nd)
 
-# vload / vstore
+# vload / vstore / prefetch / async
 for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
-	for vector_size in [2,3,4,8,16]:
+	for vector_size in [1,2,3,4,8,16]:
 		arg = arg_type
 		PConstArg = 'PK' + arg_type
 		PArg = 'P' + arg_type
 		if vector_size > 1:
 			s = str(vector_size)
-#			PConstArg = "PDv" + s + "_" + arg_type
 			arg = "Dv" + s + "_" + arg_type
 
-		generate_function("vload"+str(vector_size), SIG_TO_LLVM_TYPE_MAP[arg], '', True, 'm', PConstArg)
-		generate_function("vstore"+str(vector_size), SIG_TO_LLVM_TYPE_MAP['v'], '', True, arg, 'm', PArg)
-		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, arg, PConstArg, 'm')
+		if vector_size > 1:
+			generate_function("vload"+str(vector_size), SIG_TO_LLVM_TYPE_MAP[arg], '', True, 'm', PConstArg)
+			generate_function("vstore"+str(vector_size), SIG_TO_LLVM_TYPE_MAP['v'], '', True, arg, 'm', PArg)
 
-INVERT_SIGN = {
-	"c": "h",
-	"h": "c",
+		if vector_size > 1:
+			PConstArg = 'PK' + arg
+			PArg = 'P' + arg
 
-	"s": "t",
-	"t": "s",
+		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, PConstArg, 'm')
 
-	"i": "j",
-	"j": "i",
+		generate_function("async_work_group_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+											("global", "local", "none", "none", "none"),
+											PArg, PConstArg, 'm', '9ocl_event')
+		generate_function("async_work_group_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+											("local", "global", "none", "none", "none"),
+											PArg, PConstArg, 'm', '9ocl_event')
 
-	"l": "m",
-	"m": "l",
-}
+		generate_function("async_work_group_strided_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+											("global", "local", "none", "none", "none"),
+											PArg, PConstArg, 'm', 'm', '9ocl_event')
+		generate_function("async_work_group_strided_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+											("local", "global", "none", "none", "none"),
+											PArg, PConstArg, 'm', 'm', '9ocl_event')
+
+
+# vload_half / vstore_half
+for ret_type in ['f','d']:
+	for vector_size in [1,2,3,4,8,16]:
+		ret = ret_type
+		arg = 'h'
+		PConstArg = 'PKDh'
+		PArg = 'PDh'
+		suffix = 'half'
+		if vector_size > 1:
+			s = str(vector_size)
+			suffix = 'half' + s
+			ret = "Dv" + s + "_" + ret
+		if ret_type == 'f':
+			generate_function("vload_"+suffix, SIG_TO_LLVM_TYPE_MAP[ret], '', True, 'm', PConstArg)
+			generate_function("vloada_"+suffix, SIG_TO_LLVM_TYPE_MAP[ret], '', True, 'm', PConstArg)
+		for rounding in ['', '_rte', '_rtn', '_rtp', '_rtz']:
+			generate_function("vstore_"+suffix+rounding, SIG_TO_LLVM_TYPE_MAP['v'], '', True, ret, 'm', PArg)
+			generate_function("vstorea_"+suffix+rounding, SIG_TO_LLVM_TYPE_MAP['v'], '', True, ret, 'm', PArg)
 
 # Integer
 for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
@@ -1067,28 +1125,43 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
 		arg_i = arg_type
 		arg_inv = INVERT_SIGN[arg_type]
 		signext = LLVM_TYPE_EXT_MAP[arg_type]
+		novec_type = arg_i
 		if vector_size > 1:
 			s = str(vector_size)
 			arg_i = "Dv" + s + "_" + arg_i
 			arg_inv = "Dv" + s + "_" + arg_inv
 			signext = ''
+		ret_type = SIG_TO_LLVM_TYPE_MAP[arg_i]
 
 		for f in SINGLE_ARG_I:
-			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i)
+			generate_function(f, ret_type, signext, False, arg_i)
 		for f in DUAL_ARG_I:
-			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i)
+			generate_function(f, ret_type, signext, False, arg_i, arg_i)
 		for f in TRIPLE_ARG_I:
-			generate_function(f, SIG_TO_LLVM_TYPE_MAP[arg_i], signext, False, arg_i, arg_i, arg_i)
+			generate_function(f, ret_type, signext, False, arg_i, arg_i, arg_i)
 		# TODO unsigned ??
 		generate_function("any", "i32", '', False, arg_i)
 		generate_function("all", "i32", '', False, arg_i)
 		# must generate with last arg un/signed types too
-		generate_function("select", SIG_TO_LLVM_TYPE_MAP[arg_i], '', False, arg_i, arg_i, arg_i)
-		generate_function("select", SIG_TO_LLVM_TYPE_MAP[arg_i], '', False, arg_i, arg_i, arg_inv)
+		generate_function("select", ret_type, '', False, arg_i, arg_i, arg_i)
+		generate_function("select", ret_type, '', False, arg_i, arg_i, arg_inv)
+		if vector_size > 1:
+			generate_function("clamp", ret_type, '', False, arg_i, novec_type, novec_type)
+			generate_function("min", ret_type, '', False, arg_i, novec_type)
+			generate_function("max", ret_type, '', False, arg_i, novec_type)
+			generate_function("mix", ret_type, '', False, arg_i, arg_i, novec_type)
+		if arg_type in ['i', 'j']:
+			# "mul24", "mad24" only take an i32
+			generate_function("mul24", ret_type, signext, False, arg_i, arg_i)
+			generate_function("mad24", ret_type, signext, False, arg_i, arg_i, arg_i)
 
 # shuffle / shuffle2
-for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm']:
-	if arg_type in ['c', 's', 'i', 'l']:
+for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+	if arg_type == 'd':
+		uarg_type = 'm'
+	elif arg_type == 'f':
+		uarg_type = 'j'
+	elif arg_type in ['c', 's', 'i', 'l']:
 		uarg_type = INVERT_SIGN[arg_type]
 	else:
 		uarg_type = arg_type
@@ -1163,57 +1236,59 @@ for img_type in ['image1d', 'image2d', 'image3d', 'image1d_array', 'image2d_arra
 		generate_function('get_image_width', 'i32', '', True, img_type_llvm)
 		if img_type.startswith('image2') or img_type.startswith('image3'):
 			generate_function('get_image_height', 'i32', '', True, img_type_llvm)
-		if img_type in ['image2d_t','image2d_array_t','image2d_depth_t', 'image2d_array_depth_t']:
+		if img_type in ['image2d','image2d_array','image2d_depth', 'image2d_array_depth']:
 			generate_function('get_image_dim', '<2 x i32>', '', True, img_type_llvm)
 		if img_type == 'image3d':
 			generate_function('get_image_depth', 'i32', '', True, img_type_llvm)
 			generate_function('get_image_dim', '<4 x i32>', '', True, img_type_llvm)
-		if img_type in ['image2d_array_t', 'image2d_array_depth_t', 'image1d_array_t']:
+		if img_type in ['image2d_array', 'image2d_array_depth', 'image1d_array']:
 			generate_function('get_image_array_size', 'i64', '', True, img_type_llvm)
 
 
 # Atomics
 for mang_type in ['i', 'j', "l", "m"]:
+	ret_type = SIG_TO_LLVM_TYPE_MAP[mang_type]
+	ret_ext = LLVM_TYPE_EXT_MAP[mang_type]
 	for f in SVM_ATOMICS_INT_ONLY:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type)
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type, "12memory_order")
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PVA'+mang_type, mang_type, "12memory_order", "12memory_scope")
-
-for mang_type in ['i', 'j', "l", "m"]:
+		generate_function(f, ret_type, ret_ext, True, 'PVA'+mang_type, mang_type)
+		generate_function(f+"_explicit", ret_type, ret_ext, True, 'PVA'+mang_type, mang_type, "12memory_order")
+		generate_function(f+"_explicit", ret_type, ret_ext, True, 'PVA'+mang_type, mang_type, "12memory_order", "12memory_scope")
 	for f in OLD_ATOMICS_INT_ONLY:
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
+		generate_function(f, ret_type, ret_ext, True, 'PV'+mang_type, mang_type)
 	# dec, inc take only 1 argument
-	generate_function("atomic_inc", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
-	generate_function("atomic_dec", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type)
+	generate_function("atomic_inc", ret_type, ret_ext, True, 'PV'+mang_type)
+	generate_function("atomic_dec", ret_type, ret_ext, True, 'PV'+mang_type)
 
 for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 	generate_function("atomic_xchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
 	generate_function("atomic_cmpxchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, mang_type)
 
 
+
+def gen_three_variants(f, ret_type, ret_ext, AS, args, orders):
+	generate_function(f, ret_type, ret_ext, AS, *args)
+	generate_function(f+"_explicit", ret_type, ret_ext, AS, *args, *orders)
+	generate_function(f+"_explicit", ret_type, ret_ext, AS, *args, *orders, "12memory_scope")
+
+
 for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 	generate_function("atomic_init", SIG_TO_LLVM_TYPE_MAP['v'], LLVM_TYPE_EXT_MAP['v'], True, 'PVA'+mang_type, mang_type)
-	for f in SVM_ATOMICS_ALL:
-		args = None
-		cmpxchg = False
-		orders = ["12memory_order"]
-		if f == "atomic_store":
-			args = ['PVA'+mang_type, mang_type]
-			ret = "v"
-		if f == "atomic_load":
-			args = ['PVA'+mang_type]
-			ret = mang_type
-		if f == "atomic_exchange":
-			args = ['PVA'+mang_type, mang_type]
-			ret = mang_type
-		if f == "atomic_compare_exchange_strong" or f == "atomic_compare_exchange_weak":
-			args = ['PVA'+mang_type, 'P'+mang_type, mang_type]
-			ret = "b"
-			orders = ["12memory_order", "12memory_order"]
+	ret_type = SIG_TO_LLVM_TYPE_MAP[mang_type]
+	ret_ext = LLVM_TYPE_EXT_MAP[mang_type]
+	gen_three_variants("atomic_store", 'void', '', True, ['PVA'+mang_type, mang_type], ["12memory_order"])
+	gen_three_variants("atomic_load", ret_type, ret_ext, True, ['PVA'+mang_type], ["12memory_order"])
+	gen_three_variants("atomic_exchange", ret_type, ret_ext, True, ['PVA'+mang_type, mang_type], ["12memory_order"])
 
-		generate_function(f, SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args)
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args, *orders)
-		generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, *args, *orders, "12memory_scope")
+	for AS in ["global", "local"]:
+		gen_three_variants("atomic_compare_exchange_strong", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											(AS, "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											(AS, "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+
 
 for f in SVM_ATOMICS_FLAGS:
 	generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi')
@@ -1222,11 +1297,6 @@ for f in SVM_ATOMICS_FLAGS:
 
 
 
-# "mul24", "mad24" only take an i32
-generate_function("mul24", SIG_TO_LLVM_TYPE_MAP['i'], LLVM_TYPE_EXT_MAP['i'], False, 'i', 'i')
-generate_function("mul24", SIG_TO_LLVM_TYPE_MAP['j'], LLVM_TYPE_EXT_MAP['j'], False, 'j', 'j')
-generate_function("mad24", SIG_TO_LLVM_TYPE_MAP['i'], LLVM_TYPE_EXT_MAP['i'], False, 'i', 'i', 'i')
-generate_function("mad24", SIG_TO_LLVM_TYPE_MAP['j'], LLVM_TYPE_EXT_MAP['j'], False, 'j', 'j', 'j')
 
 print("""
 
