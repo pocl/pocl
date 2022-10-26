@@ -203,9 +203,9 @@ endif ()
   generate_firmware("axim_fused_global_cq"             "0x40000000" "3"    "0x4001FF00" ""           ""           "1"
       "FHDGLEPJNNDDHJEICNEJPOIFAKMNOIHMAHGCPMHB")
   generate_firmware("axim_fused_global_private"        "0x40000000" "1023" ""           "0x40020000" "0x4001F800" "1"
-      "LLNMEKFGBMLHFNKIANINLCLFBBGIOGIKOBAPAJLB")
+      "NJIDHFMAAAKJLALCOMLBFBHDHADBMLCIJKDMPCLL")
   generate_firmware("axim_fused_global_cq_private"     "0x40000000" "3"    "0x4001F700" "0x40020000" "0x4001F800" "1"
-      "CMEFCAPIADJJBCHJJPAJOODAHDBJCKALCODIMDBC")
+      "FGKACOBAEPKBCNPFKHAKMMBAJLLIDCFOMICIOELN")
   generate_firmware("relative_sep"                     ""           "1023" ""           ""           ""           "0"
       "EAHMOKCOIHNPCLHMDOKFIKNGHHINIFJFFHCEGEPO")
   generate_firmware("relative_fused_global_cq"         ""           "3"    "0x7F00"     ""           ""           "0"

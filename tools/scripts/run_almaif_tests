@@ -90,10 +90,7 @@ fi
 if [ "$LLVM" -eq "0" ]; then
   echo "running almaif emulation tests without LLVM"
   export POCL_ALMAIF0_PARAMETERS="0xE,1,2,4,9"
-  # TODO: Figure out why the two exluded tests don't work, and fix them
-  # They seem to work with --sequential-schedule, so could be a hardware issue
-  # that only affects certain program patterns
-  ctest -L almaif_no_LLVM -E "example0/pynq_axim_fused_global_private$|example0/pynq_axim_fused_global_cq_private$" $@
+  ctest -L almaif_no_LLVM $@
 else
   echo "running almaif tests with LLVM"
   export POCL_ALMAIF0_PARAMETERS="0xB,$PWD/../tools/data/test_machine_LE,65535"

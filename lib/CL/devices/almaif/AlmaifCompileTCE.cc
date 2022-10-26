@@ -396,6 +396,13 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     error = system(commandLine);
     if (error != 0)
       POCL_ABORT("Error while running tcecc.\n");
+
+    // Dump disassembled tpef for debugging
+    char tcedisasmCmd[MAX_CMDLINE_LEN];
+    snprintf(tcedisasmCmd, MAX_CMDLINE_LEN, "tcedisasm -n %s %s", bd->machine_file, assemblyFileName);
+    error = system(tcedisasmCmd);
+    if (error != 0)
+        POCL_MSG_WARN("Error while running tcedisasm.\n");
   }
 
   TTAProgram::Program *prog = NULL;
