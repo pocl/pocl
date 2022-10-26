@@ -104,8 +104,11 @@ struct BIKD : public pocl_kernel_metadata_t
         const std::vector<pocl_argument_info> &ArgInfos,
         unsigned local_mem_size = 0);
 
-  ~BIKD ()
-  {
+  ~BIKD() {
+    for (size_t i = 0; i < num_args; ++i) {
+      free(arg_info[i].name);
+      free(arg_info[i].type_name);
+    }
     delete[] arg_info;
     free (name);
   }
