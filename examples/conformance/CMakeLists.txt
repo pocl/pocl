@@ -1175,7 +1175,7 @@ endif()
 
 set(OCL_30_TESTS_MINI ${OCL_30_TESTS_MICRO})
 
-set_tests_properties(
+set(CTS_FULL_LIST
     "${TS_NAME}_allocations_buffer"
     "${TS_NAME}_allocations_image"
     "${TS_NAME}_api"
@@ -1464,10 +1464,16 @@ set_tests_properties(
     "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
-    ${OCL_30_TESTS_FULL}
-  PROPERTIES
-    LABELS "conformance_suite_full"
+    ${OCL_30_TESTS_FULL})
+
+foreach(CTSTEST IN LISTS CTS_FULL_LIST)
+  set_property(TEST ${CTSTEST}
+    APPEND PROPERTY
+    LABELS "conformance_suite_full")
+  set_property(TEST ${CTSTEST}
+    PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+endforeach()
 
 #***************************************************************************
 
@@ -1698,7 +1704,76 @@ add_test(NAME "${TS_NAME}_math_mini_tanpi"
 add_test(NAME "${TS_NAME}_math_mini_trunc"
          COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -d trunc)
 
-set_tests_properties(
+set(CTS_MINI_LIST
+    "${TS_NAME}_allocations_buffer"
+    "${TS_NAME}_allocations_image"
+    "${TS_NAME}_api"
+    "${TS_NAME}_atomics"
+    "${TS_NAME}_basic_math"
+    "${TS_NAME}_basic_s2v"
+    "${TS_NAME}_basic_memory"
+    "${TS_NAME}_basic_image"
+    "${TS_NAME}_basic_other"
+    "${TS_NAME}_buffers_read"
+    "${TS_NAME}_buffers_write"
+    "${TS_NAME}_buffers_fill"
+    "${TS_NAME}_buffers_var1"
+    "${TS_NAME}_buffers_var2"
+    "${TS_NAME}_buffers_map_read"
+    "${TS_NAME}_buffers_map_write"
+    "${TS_NAME}_commonfns"
+    "${TS_NAME}_compiler"
+    "${TS_NAME}_computeinfo"
+    "${TS_NAME}_contractions"
+    "${TS_NAME}_device_partition"
+    "${TS_NAME}_events"
+    "${TS_NAME}_events_ooo"
+    "${TS_NAME}_events_other"
+    "${TS_NAME}_geometrics"
+    "${TS_NAME}_images_cl_copy_images"
+    "${TS_NAME}_images_cl_fill_images"
+    "${TS_NAME}_images_cl_get_info"
+    "${TS_NAME}_images_cl_read_write_images"
+    "${TS_NAME}_images_kernel_image_methods_1D"
+    "${TS_NAME}_images_kernel_image_methods_2D"
+    "${TS_NAME}_images_kernel_image_methods_1Darray"
+    "${TS_NAME}_images_image_streams_1D"
+    "${TS_NAME}_images_image_streams_2D"
+    "${TS_NAME}_images_image_streams_1Darray"
+    "${TS_NAME}_images_samplerless_reads_1D"
+    "${TS_NAME}_images_samplerless_reads_2D"
+    "${TS_NAME}_images_samplerless_reads_1Darray"
+    "${TS_NAME}_integer_ops_basic"
+    "${TS_NAME}_integer_ops_unary"
+    "${TS_NAME}_integer_ops_i24"
+    "${TS_NAME}_integer_ops_long"
+    "${TS_NAME}_integer_ops_ulong"
+    "${TS_NAME}_integer_ops_int"
+    "${TS_NAME}_integer_ops_uint"
+    "${TS_NAME}_integer_ops_short"
+    "${TS_NAME}_integer_ops_ushort"
+    "${TS_NAME}_integer_ops_char"
+    "${TS_NAME}_integer_ops_uchar"
+    "${TS_NAME}_integer_ops_other"
+    "${TS_NAME}_mem_host_flags"
+    "${TS_NAME}_multiples"
+    "${TS_NAME}_printf"
+    "${TS_NAME}_profiling"
+    "${TS_NAME}_relationals"
+    "${TS_NAME}_relationals_shuffle"
+    "${TS_NAME}_select_char_char"
+    "${TS_NAME}_select_short_short"
+    "${TS_NAME}_select_int_int"
+    "${TS_NAME}_select_long_long"
+    "${TS_NAME}_thread_dimensions_quick"
+    "${TS_NAME}_thread_dimensions_full_12_im"
+    "${TS_NAME}_thread_dimensions_full_12_ex"
+    "${TS_NAME}_thread_dimensions_full_3_im"
+    "${TS_NAME}_thread_dimensions_full_3_ex"
+    "${TS_NAME}_vecstep"
+
+    ${OCL_30_TESTS_MINI}
+
     "${TS_NAME}_mini_half"
     "${TS_NAME}_math_mini_add"
     "${TS_NAME}_math_mini_assignment"
@@ -1773,83 +1848,16 @@ set_tests_properties(
     "${TS_NAME}_conversion_mini_int_float"
     "${TS_NAME}_conversion_mini_double_short"
     "${TS_NAME}_conversion_mini_double_ulong"
-    "${TS_NAME}_conversion_mini_long_double"
-  PROPERTIES
-    LABELS "conformance_suite_mini"
-    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+    "${TS_NAME}_conversion_mini_long_double")
 
-
-set_tests_properties(
-    "${TS_NAME}_allocations_buffer"
-    "${TS_NAME}_allocations_image"
-    "${TS_NAME}_api"
-    "${TS_NAME}_atomics"
-    "${TS_NAME}_basic_math"
-    "${TS_NAME}_basic_s2v"
-    "${TS_NAME}_basic_memory"
-    "${TS_NAME}_basic_image"
-    "${TS_NAME}_basic_other"
-    "${TS_NAME}_buffers_read"
-    "${TS_NAME}_buffers_write"
-    "${TS_NAME}_buffers_fill"
-    "${TS_NAME}_buffers_var1"
-    "${TS_NAME}_buffers_var2"
-    "${TS_NAME}_buffers_map_read"
-    "${TS_NAME}_buffers_map_write"
-    "${TS_NAME}_commonfns"
-    "${TS_NAME}_compiler"
-    "${TS_NAME}_computeinfo"
-    "${TS_NAME}_contractions"
-    "${TS_NAME}_device_partition"
-    "${TS_NAME}_events"
-    "${TS_NAME}_events_ooo"
-    "${TS_NAME}_events_other"
-    "${TS_NAME}_geometrics"
-    ${HEADER_TESTS}
-    "${TS_NAME}_images_cl_copy_images"
-    "${TS_NAME}_images_cl_fill_images"
-    "${TS_NAME}_images_cl_get_info"
-    "${TS_NAME}_images_cl_read_write_images"
-    "${TS_NAME}_images_kernel_image_methods_1D"
-    "${TS_NAME}_images_kernel_image_methods_2D"
-    "${TS_NAME}_images_kernel_image_methods_1Darray"
-    "${TS_NAME}_images_image_streams_1D"
-    "${TS_NAME}_images_image_streams_2D"
-    "${TS_NAME}_images_image_streams_1Darray"
-    "${TS_NAME}_images_samplerless_reads_1D"
-    "${TS_NAME}_images_samplerless_reads_2D"
-    "${TS_NAME}_images_samplerless_reads_1Darray"
-    "${TS_NAME}_integer_ops_basic"
-    "${TS_NAME}_integer_ops_unary"
-    "${TS_NAME}_integer_ops_i24"
-    "${TS_NAME}_integer_ops_long"
-    "${TS_NAME}_integer_ops_ulong"
-    "${TS_NAME}_integer_ops_int"
-    "${TS_NAME}_integer_ops_uint"
-    "${TS_NAME}_integer_ops_short"
-    "${TS_NAME}_integer_ops_ushort"
-    "${TS_NAME}_integer_ops_char"
-    "${TS_NAME}_integer_ops_uchar"
-    "${TS_NAME}_integer_ops_other"
-    "${TS_NAME}_mem_host_flags"
-    "${TS_NAME}_multiples"
-    "${TS_NAME}_printf"
-    "${TS_NAME}_profiling"
-    "${TS_NAME}_relationals"
-    "${TS_NAME}_relationals_shuffle"
-    "${TS_NAME}_select_char_char"
-    "${TS_NAME}_select_short_short"
-    "${TS_NAME}_select_int_int"
-    "${TS_NAME}_select_long_long"
-    "${TS_NAME}_thread_dimensions_quick"
-    "${TS_NAME}_thread_dimensions_full_12_im"
-    "${TS_NAME}_thread_dimensions_full_12_ex"
-    "${TS_NAME}_thread_dimensions_full_3_im"
-    "${TS_NAME}_thread_dimensions_full_3_ex"
-    "${TS_NAME}_vecstep"
-  PROPERTIES
-    LABELS "conformance_suite_full;conformance_suite_mini"
+foreach(CTSTEST IN LISTS CTS_MINI_LIST)
+  set_property(TEST ${CTSTEST}
+    APPEND PROPERTY
+    LABELS "conformance_suite_mini")
+  set_property(TEST ${CTSTEST}
+    PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+endforeach()
 
 ######################################################################
 
@@ -2142,7 +2150,45 @@ add_test(NAME "${TS_NAME}_math_micro_tanpi"
 add_test(NAME "${TS_NAME}_math_micro_trunc"
          COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce"  -4 -w trunc)
 
-set_tests_properties(
+set(CTS_MICRO_LIST
+    "${TS_NAME}_allocations_buffer"
+    "${TS_NAME}_allocations_image"
+    "${TS_NAME}_api"
+    "${TS_NAME}_atomics"
+    "${TS_NAME}_basic_math"
+    "${TS_NAME}_basic_s2v"
+    "${TS_NAME}_basic_image"
+    "${TS_NAME}_buffers_read"
+    "${TS_NAME}_buffers_write"
+    "${TS_NAME}_buffers_fill"
+    "${TS_NAME}_buffers_var1"
+    "${TS_NAME}_buffers_var2"
+    "${TS_NAME}_buffers_map_read"
+    "${TS_NAME}_buffers_map_write"
+    "${TS_NAME}_commonfns"
+    "${TS_NAME}_compiler_micro"
+    "${TS_NAME}_computeinfo"
+    "${TS_NAME}_contractions"
+    "${TS_NAME}_device_partition"
+    "${TS_NAME}_events"
+    "${TS_NAME}_events_ooo"
+    "${TS_NAME}_events_other"
+    "${TS_NAME}_geometrics"
+    "${TS_NAME}_images_cl_copy_images"
+    "${TS_NAME}_images_cl_fill_images"
+    "${TS_NAME}_images_cl_get_info"
+    "${TS_NAME}_images_cl_read_write_images"
+
+    "${TS_NAME}_mem_host_flags"
+    "${TS_NAME}_multiples"
+    "${TS_NAME}_printf"
+    "${TS_NAME}_profiling"
+    "${TS_NAME}_relationals"
+    "${TS_NAME}_thread_dimensions_quick"
+    "${TS_NAME}_vecstep"
+
+    ${OCL_30_TESTS_MICRO}
+
     "${TS_NAME}_basic_micro_memory"
     "${TS_NAME}_basic_micro_other"
 
@@ -2242,69 +2288,25 @@ set_tests_properties(
     "${TS_NAME}_integer_ops_micro_1"
     "${TS_NAME}_integer_ops_micro_3"
 
+    "${TS_NAME}_mini_half"
+
     "${TS_NAME}_select_micro_char_char"
     "${TS_NAME}_select_micro_ushort_ushort"
     "${TS_NAME}_select_micro_int_int"
-    "${TS_NAME}_select_micro_ulong_ulong"
+    "${TS_NAME}_select_micro_ulong_ulong")
 
-  PROPERTIES
-    LABELS "conformance_suite_micro"
+foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
+  set_property(TEST ${CTSTEST}
+    APPEND PROPERTY
+    LABELS "conformance_suite_micro")
+  set_property(TEST ${CTSTEST}
+    PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+endforeach()
 
 
-set_tests_properties(
-    "${TS_NAME}_mini_half"
-  PROPERTIES
-    LABELS "conformance_suite_micro;conformance_suite_mini"
-    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+set_property(TEST ${OCL_30_TESTS_FULL}
+             APPEND PROPERTY LABELS "conformance_30_only")
 
-set_tests_properties(
-    "${TS_NAME}_allocations_buffer"
-    "${TS_NAME}_allocations_image"
-    "${TS_NAME}_api"
-    "${TS_NAME}_atomics"
-    "${TS_NAME}_basic_math"
-    "${TS_NAME}_basic_s2v"
-    "${TS_NAME}_basic_image"
-    "${TS_NAME}_buffers_read"
-    "${TS_NAME}_buffers_write"
-    "${TS_NAME}_buffers_fill"
-    "${TS_NAME}_buffers_var1"
-    "${TS_NAME}_buffers_var2"
-    "${TS_NAME}_buffers_map_read"
-    "${TS_NAME}_buffers_map_write"
-    "${TS_NAME}_commonfns"
-    "${TS_NAME}_compiler_micro"
-    "${TS_NAME}_computeinfo"
-    "${TS_NAME}_contractions"
-    "${TS_NAME}_device_partition"
-    "${TS_NAME}_events"
-    "${TS_NAME}_events_ooo"
-    "${TS_NAME}_events_other"
-    "${TS_NAME}_geometrics"
-    ${HEADER_TESTS}
-    "${TS_NAME}_images_cl_copy_images"
-    "${TS_NAME}_images_cl_fill_images"
-    "${TS_NAME}_images_cl_get_info"
-    "${TS_NAME}_images_cl_read_write_images"
-
-    "${TS_NAME}_mem_host_flags"
-    "${TS_NAME}_multiples"
-    "${TS_NAME}_printf"
-    "${TS_NAME}_profiling"
-    "${TS_NAME}_relationals"
-    "${TS_NAME}_thread_dimensions_quick"
-    "${TS_NAME}_vecstep"
-    ${OCL_30_TESTS_MICRO}
-  PROPERTIES
-    LABELS "conformance_suite_full;conformance_suite_mini;conformance_suite_micro"
-    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
-
-set_property(TEST
-    ${OCL_30_TESTS_FULL}
-    APPEND PROPERTY LABELS "conformance_30_only")
-
-set_tests_properties(
-  "${TS_NAME}_non_uniform_work_group"
-  PROPERTIES
-    ENVIRONMENT "POCL_MEMORY_LIMIT=4")
+set_property(TEST "${TS_NAME}_non_uniform_work_group"
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
