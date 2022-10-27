@@ -308,17 +308,36 @@ else()
 endif()
 message(STATUS "Host CPU cores: ${CORECOUNT}")
 
+
 ######################################################################################
 
-function(rename_if_different SRC DST)
+function(chmod FILE EXEC)
+  if(EXEC)
+    set(PERMS FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  else()
+    #set(PERMS FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+    return()
+  endif()
+  if(CMAKE_VERSION VERSION_LESS 3.19.0)
+    find_program(CHMOD_PROG chmod)
+    execute_process(COMMAND "${CHMOD_PROG}" "0755" ${FILE})
+  else()
+    file(CHMOD "${FILE}" ${PERMS})
+  endif()
+endfunction()
+
+
+function(rename_if_different SRC DST EXEC)
   if(EXISTS "${DST}")
     file(MD5 "${SRC}" OLD_MD5)
     file(MD5 "${DST}" NEW_MD5)
     if(NOT OLD_MD5 STREQUAL NEW_MD5)
       file(RENAME "${SRC}" "${DST}")
+      chmod("${DST}" ${EXEC})
     endif()
   else()
     file(RENAME "${SRC}" "${DST}")
+    chmod("${DST}" ${EXEC})
   endif()
 endfunction()
 
@@ -1682,13 +1701,16 @@ set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 
 configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
-rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
+rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h" 0)
 
 configure_file("config2.h.in.cmake" "config2.h.new")
-rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h")
+rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h" 0)
 
 configure_file("pocl_opencl.h.in.cmake" "pocl_opencl.h.new")
-rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h")
+rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h" 0)
+
+configure_file("cl_offline_compiler.sh.in.cmake" "cl_offline_compiler.sh.in.new" @ONLY)
+rename_if_different("${CMAKE_BINARY_DIR}/cl_offline_compiler.sh.in.new" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh" 1)
 
 include_directories("${CMAKE_BINARY_DIR}")
 
