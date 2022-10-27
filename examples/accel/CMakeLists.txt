@@ -226,8 +226,14 @@ add_test_pocl(NAME "examples/accel/mul.i32" COMMAND "accel_example" "pocl.mul.i3
 
 add_test_pocl(NAME "examples/accel/abs.f32" COMMAND "accel_example" "pocl.abs.f32")
 
-set_tests_properties( "examples/accel/countred" "examples/accel/add.i32"
+set_tests_properties( "examples/accel/add.i32"
   "examples/accel/mul.i32"  "examples/accel/abs.f32"
+  PROPERTIES
+    PASS_REGULAR_EXPRESSION "OK"
+    LABELS "custom_device;almaif_no_LLVM;cuda"
+    DEPENDS "pocl_version_check")
+
+set_tests_properties( "examples/accel/countred"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
     LABELS "custom_device;almaif_no_LLVM"
