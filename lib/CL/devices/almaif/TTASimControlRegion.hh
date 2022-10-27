@@ -24,7 +24,7 @@
 #ifndef TTASIMCONTROLREGION_H
 #define TTASIMCONTROLREGION_H
 
-#include "Region.hh"
+#include "AlmaIFRegion.hh"
 
 #include "AlmaifShared.hh"
 
@@ -33,7 +33,7 @@ namespace TTAMachine {
 class Machine;
 }
 
-class TTASimControlRegion : public Region {
+class TTASimControlRegion : public AlmaIFRegion {
 public:
   TTASimControlRegion(const TTAMachine::Machine &mach, TTASimDevice *parent);
 

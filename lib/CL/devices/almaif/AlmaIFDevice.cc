@@ -1,4 +1,6 @@
-/* Device.cc - accessing accelerator memory as memory mapped region.
+/* AlmaIFDevice.cc - Interface class for accessing AlmaIF device.
+ * Responsible for setting up AlmaIF regions and device-backend specific
+ * init (e.g. initializing a simulator or mmapping physical accelerator.)
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -21,7 +23,7 @@
    IN THE SOFTWARE.
 */
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 
 #include "AlmaifShared.hh"
 #include "AlmaifCompile.hh"
@@ -33,9 +35,9 @@
 
 #include <iostream>
 
-Device::Device() {}
+AlmaIFDevice::AlmaIFDevice() {}
 
-Device::~Device() {
+AlmaIFDevice::~AlmaIFDevice() {
   delete ControlMemory;
   delete InstructionMemory;
   delete CQMemory;
@@ -44,7 +46,7 @@ Device::~Device() {
   LL_FOREACH_SAFE(AllocRegions, el, tmp) { free(el); }
 }
 
-void Device::discoverDeviceParameters() {
+void AlmaIFDevice::discoverDeviceParameters() {
   // Reset accelerator
   ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_RESET_CMD);
 
@@ -127,8 +129,9 @@ void Device::discoverDeviceParameters() {
       ALMAIF_DEFAULT_CONSTANT_MEM_SIZE);
 }
 
-void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
-                                 _cl_command_node *cmd) {
+void AlmaIFDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
+                                       cl_kernel kernel,
+                                       _cl_command_node *cmd) {
   assert(kd);
 
   if (kd->imem_img_size == 0) {
@@ -182,8 +185,8 @@ void Device::loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
   HwClockStart = pocl_gettimemono_ns();
 }
 
-void Device::preread_images(const char *kernel_cachedir,
-                            almaif_kernel_data_s *kd) {
+void AlmaIFDevice::preread_images(const char *kernel_cachedir,
+                                  almaif_kernel_data_s *kd) {
   POCL_MSG_PRINT_ALMAIF("Reading image files\n");
   uint64_t temp = 0;
   size_t size = 0;
@@ -245,7 +248,7 @@ void Device::preread_images(const char *kernel_cachedir,
   */
 }
 
-void Device::printMemoryDump() {
+void AlmaIFDevice::printMemoryDump() {
   for (unsigned k = 0; k < CQMemory->Size; k += 4) {
     uint32_t value = CQMemory->Read32(k);
     std::cerr << "CQ at " << k << "=" << value << "\n";
@@ -258,8 +261,9 @@ void Device::printMemoryDump() {
   std::cerr << std::endl;
 }
 
-void Device::writeDataToDevice(size_t dst, const char *__restrict__ const src,
-                               size_t size) {
+void AlmaIFDevice::writeDataToDevice(size_t dst,
+                                     const char *__restrict__ const src,
+                                     size_t size) {
   if (DataMemory->isInRange(dst)) {
     POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes to 0x%zx\n", size, dst);
     DataMemory->CopyToMMAP(dst, src, size);
@@ -272,8 +276,8 @@ void Device::writeDataToDevice(size_t dst, const char *__restrict__ const src,
   }
 }
 
-void Device::readDataFromDevice(char *__restrict__ const dst, size_t src,
-                                size_t size) {
+void AlmaIFDevice::readDataFromDevice(char *__restrict__ const dst, size_t src,
+                                      size_t size) {
   if (DataMemory->isInRange(src)) {
     POCL_MSG_PRINT_ALMAIF("almaif: Copying %zu bytes from 0x%zx\n", size, src);
     DataMemory->CopyFromMMAP(dst, src, size);

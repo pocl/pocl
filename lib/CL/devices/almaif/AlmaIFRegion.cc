@@ -1,4 +1,5 @@
-/* Region.cc - Interface class for accessing mmapped devices
+/* AlmaIFRegion.cc - Interface class for raw memory operations
+ * (read and write operations to backend-specific memory)
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -21,11 +22,10 @@
    IN THE SOFTWARE.
 */
 
+#include "AlmaIFRegion.hh"
 
-#include "Region.hh"
+AlmaIFRegion::~AlmaIFRegion() {}
 
-Region::~Region() {}
-
-bool Region::isInRange(size_t dst) {
+bool AlmaIFRegion::isInRange(size_t dst) {
   return ((dst >= PhysAddress) && (dst < (PhysAddress + Size)));
 }

@@ -1,5 +1,6 @@
-/* Device.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* AlmaIFDevice.hh - Interface class for accessing AlmaIF device.
+ * Responsible for setting up AlmaIF regions and device-backend specific
+ * init (e.g. initializing a simulator or mmapping physical accelerator.)
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -22,10 +23,10 @@
    IN THE SOFTWARE.
 */
 
-#ifndef Device_H
-#define Device_H
+#ifndef AlmaIFDevice_H
+#define AlmaIFDevice_H
 
-#include "Region.hh"
+#include "AlmaIFRegion.hh"
 
 #include "bufalloc.h"
 #include "pocl_types.h"
@@ -34,19 +35,19 @@
 
 struct almaif_kernel_data_s;
 
-class Device {
+class AlmaIFDevice {
 public:
-  Device();
-  virtual ~Device();
+  AlmaIFDevice();
+  virtual ~AlmaIFDevice();
 
   virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
                                    _cl_command_node *cmd);
 
-  Region *ControlMemory;
-  Region *InstructionMemory;
-  Region *CQMemory;
-  Region *DataMemory;
-  Region *ExternalMemory = nullptr;
+  AlmaIFRegion *ControlMemory;
+  AlmaIFRegion *InstructionMemory;
+  AlmaIFRegion *CQMemory;
+  AlmaIFRegion *DataMemory;
+  AlmaIFRegion *ExternalMemory = nullptr;
   memory_region_t *AllocRegions;
 
   bool RelativeAddressing;

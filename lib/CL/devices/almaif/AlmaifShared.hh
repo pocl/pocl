@@ -29,7 +29,7 @@
 
 //#include "pocl_util.h"
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 #include "EmulationDevice.hh"
 #include "bufalloc.h"
 #include "builtin_kernels.hh"
@@ -177,7 +177,7 @@ typedef struct compilation_data_s compilation_data_t;
 struct AlmaifData {
   size_t BaseAddress;
 
-  Device *Dev;
+  AlmaIFDevice *Dev;
 
   std::set<BIKD *> SupportedKernels;
   // List of commands ready to be executed.

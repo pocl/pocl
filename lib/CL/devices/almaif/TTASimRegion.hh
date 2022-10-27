@@ -24,7 +24,7 @@
 #ifndef TTASIMREGION_H
 #define TTASIMREGION_H
 
-#include "Region.hh"
+#include "AlmaIFRegion.hh"
 
 #include <Memory.hh>
 #include <MemorySystem.hh>
@@ -37,7 +37,7 @@ class Memory;
 // class MemoryPtr;
 //}
 
-class TTASimRegion : public Region {
+class TTASimRegion : public AlmaIFRegion {
 public:
   TTASimRegion(size_t Address, size_t RegionSize, MemorySystem::MemoryPtr mem);
 

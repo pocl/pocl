@@ -29,9 +29,9 @@
 
 #include "pocl_types.h"
 
-#include "Region.hh"
+#include "AlmaIFRegion.hh"
 
-class XrtRegion : public Region {
+class XrtRegion : public AlmaIFRegion {
 public:
   XrtRegion(size_t Address, size_t RegionSize, void *kernel);
   XrtRegion(size_t Address, size_t RegionSize, void *kernel, char *init_file);

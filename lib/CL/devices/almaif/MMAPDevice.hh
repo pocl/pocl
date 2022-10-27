@@ -25,9 +25,9 @@
 #ifndef MMAPDevice_H
 #define MMAPDevice_H
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 
-class MMAPDevice : public Device {
+class MMAPDevice : public AlmaIFDevice {
 private:
   ~MMAPDevice();
 

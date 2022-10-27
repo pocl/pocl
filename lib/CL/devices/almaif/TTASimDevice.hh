@@ -25,12 +25,12 @@
 #ifndef TTASIMDEVICE_H
 #define TTASIMDEVICE_H
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 
 class SimpleSimulatorFrontend;
 class SimulatorCLI;
 
-class TTASimDevice : public Device {
+class TTASimDevice : public AlmaIFDevice {
 public:
   TTASimDevice(char *adf_name);
   ~TTASimDevice() override;

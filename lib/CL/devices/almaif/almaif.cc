@@ -24,8 +24,8 @@
 */
 
 #include "almaif.h"
+#include "AlmaIFRegion.hh"
 #include "MMAPDevice.hh"
-#include "Region.hh"
 #include "config.h"
 #ifdef HAVE_XRT
 #include "XrtDevice.hh"

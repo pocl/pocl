@@ -1,5 +1,5 @@
-/* Region.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* AlmaIFRegion.hh - Interface class for raw memory operations
+ * (read and write operations to backend-specific memory)
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -22,16 +22,16 @@
    IN THE SOFTWARE.
 */
 
-#ifndef Region_H
-#define Region_H
+#ifndef AlmaIFRegion_H
+#define AlmaIFRegion_H
 
 #include "pocl_types.h"
 
 #include <stdlib.h>
 
-class Region {
+class AlmaIFRegion {
 public:
-  virtual ~Region();
+  virtual ~AlmaIFRegion();
   virtual uint32_t Read32(size_t offset) = 0;
   virtual void Write32(size_t offset, uint32_t value) = 0;
   virtual void Write16(size_t offset, uint16_t value) = 0;

@@ -29,9 +29,9 @@
 
 #include "pocl_types.h"
 
-#include "Region.hh"
+#include "AlmaIFRegion.hh"
 
-class MMAPRegion : public Region {
+class MMAPRegion : public AlmaIFRegion {
 public:
   MMAPRegion(size_t Address, size_t RegionSize, int mem_fd);
   virtual ~MMAPRegion() override;

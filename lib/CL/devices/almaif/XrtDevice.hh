@@ -25,9 +25,9 @@
 #ifndef XrtDevice_H
 #define XrtDevice_H
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 
-class XrtDevice : public Device {
+class XrtDevice : public AlmaIFDevice {
 public:
   XrtDevice(char *xrt_kernel_name);
   ~XrtDevice() override;

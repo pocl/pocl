@@ -27,7 +27,7 @@
 
 #include <pthread.h>
 
-#include "Device.hh"
+#include "AlmaIFDevice.hh"
 
 #define EMULATING_ADDRESS 0xE
 #define EMULATING_MAX_SIZE (256 * 1024 * 1024)
@@ -49,7 +49,7 @@ void *emulate_almaif(void *E_void);
 }
 #endif
 
-class EmulationDevice : public Device {
+class EmulationDevice : public AlmaIFDevice {
 public:
   EmulationDevice();
   ~EmulationDevice();
