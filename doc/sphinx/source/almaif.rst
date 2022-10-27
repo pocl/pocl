@@ -6,6 +6,19 @@ The ``almaif`` driver can be used for easy integration of custom fixed-function
 accelerators through a standardized hardware interface and a standardized
 procedure for enqueuing commands.
 
+More information behind the principles of this driver can be found from the
+following two publications:
+T. Leppänen, P. Mousouliotis, G. Keramidas, J. Multanen and P. Jääskeläinen,
+"Unified OpenCL Integration Methodology for FPGA Designs,"
+2021 IEEE Nordic Circuits and Systems Conference (NorCAS), 2021, pp. 1-7,
+https://doi.org/10.1109/NorCAS53631.2021.9599861
+
+T. Leppänen, A. Lotvonen, P. Jääskeläinen, 2022
+"Cross-vendor programming abstraction for diverse heterogeneous platforms,"
+Frontiers in Computer Science, vol. 4,
+https://doi.org/10.3389/fcomp.2022.945652
+
+
 
 Interface
 ---------
@@ -163,7 +176,6 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
     - 65535
     - Special flag to communicate that device supports compiled kernels.
 
-This list will be expanded in the future.
 The full list of currently supported built-in kernels is maintained in
 lib/CL/devices/builtin_kernels.{cc,hh}
 
@@ -175,7 +187,7 @@ instructions in the `OpenASIP manual <http://openasip.org/user_manual/TCE.pdf>`_
 in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
 to check the accelerator base address from Vivado.
 
-Alternativaly, to run tests that generate both TTA and High-level synthesis
+Additionally, to run tests that generate both TTA and High-level synthesis
 (HLS) based accelerators for PYNQ-Z1 device you need to enable few variables
 in the CMAKE configuration.
 First, set CMAKE variable VIVADO_PATH to point to the directory with the
@@ -194,9 +206,10 @@ The bitstreams themselves are not automatically built with PoCL build process, b
 with a separate 'make bitstreams' command. This generates the bitstreams to
 build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams directories. 
 Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
-(You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH) on it.
+Set the environment variable PYNQ_AVAILABLE=1 to enable the FPGA tests.
+(You don't need to set ENABLE_TCE or VITIS/VIVADO_HLS_PATH).
 Copy the bistreams directories (and in case of TTA, also the firmware_imgs
-directory, hashes.txt and example0_*.poclbins)
+directory and example0_*.poclbins)
 to their correct PoCL build directories on PYNQ.
 Finally, run ``../tools/scripts/run_almaif_tests --pynq`` to run the test programn
 on the FPGA device.
@@ -205,15 +218,25 @@ on the FPGA device.
 
 
 Driver arguments are used to tell pocl where the accelerator is and what
-functions it supports. To run this example manually, execute::
+functions it supports. To run examples manually, after programming the
+fpga, execute::
 
-  POCL_DEVICES=almaif POCL_ALMAIF0_PARAMETERS=0x43C00000,<device_name>,1,2 ./accel_example
+  POCL_DEVICES=almaif POCL_ALMAIF0_PARAMETERS=0x40000000,<device_name>,1,2 ./accel_example
 
 The environment variables define an accelerator with base physical address of
-0x43C0_0000 that can execute pocl.add.i32 and pocl.mul.i32. If the device requires
+0x4000_0000 that can execute pocl.add.i32 and pocl.mul.i32. If the device requires
 firmware to be loaded in, pocl will attempt to load it from <device_name>.img.
 When running the example, verify that the address given in the parameter matches
 the base address of the accelerator.
+
+
+Note that as the driver requires write access to ``/dev/mem`` for memory
+mapping, you may need to execute the application with elevated privileges. In
+this case, note that ``sudo`` by default overrides your environment variables.
+You can either assign them in the same command, or use ``sudo`` with the
+``--preserve-env`` switch.
+
+
 
 The driver supports instruction-set simulation for TTA devices. To enable it,
 set the base address to 0xB, and set the <device_name> to point to a TTA
@@ -224,16 +247,9 @@ start up the simulation with <device_name>.adf and, if it exists, <device_name>.
 
 There's an alternative way to emulate the accelerator in software by
 setting the base physical address to 0xE. This directs the driver to instead
-use a software emulating function from almaif.cc. No changes to accel_example.cpp
-are needed to run the emulation.
-
-Note that as the driver requires write access to ``/dev/mem`` for memory
-mapping, you may need to execute the application with elevated privileges. In
-this case, note that ``sudo`` by default overrides your environment variables.
-You can either assign them in the same command, or use ``sudo`` with the
-``--preserve-env`` switch.
-
-
+use a software emulating function from almaif/EmulationDevice.cc.
+No changes to the source OpenCL host program (e.g. accel_example.cpp)
+when switching between emulation, instruction-set simulation or FPGA execution
 
 Wrapping new hardware component
 -------------------------------
@@ -268,13 +284,39 @@ be copied to PYNQ-Z1.
 The generate_hls_project.tcl file sets the base address of the accelerator
 to a physical address 0x40000000. This base address is given to PoCL through
 an environment variable::
-  export POCL_DEVICES=almaif
-  export POCL_ALMAIF0_PARAMETERS="0x40000000,dummy,1,2"
+
+    export POCL_DEVICES=almaif
+    export POCL_ALMAIF0_PARAMETERS="0x40000000,dummy,1,2"
 
 The bitstream can be loaded on the FPGA with various ways. PYNQ-Z1 image
 includes a python library to do it, which can be used with a following one-liner::
-  sudo -E python -c "from pynq import Overlay;Overlay('examples/accel/hls/bitstreams/vecadd_1.bit')"
 
-After that, it's possible to run the examples/accel/accel_example tests.
-The ctest that runs vector addition and multiplication is the following::
-  sudo -E ctest -R "examples/accel/.*i32"
+    sudo -E python -c "from pynq import Overlay;Overlay('examples/accel/hls/bitstreams/vecadd_1.bit')"
+
+After that, it's possible to run the examples/accel/accel_example program.
+
+Using this work
+---------------
+
+If you are utilizing, further developing or comparing to the AlmaIF driver of POCL
+in your academic work, please cite one of the relevant publications::
+
+    @INPROCEEDINGS{leppanen2021,
+      AUTHOR={Leppänen, Topi and Mousouliotis, Panagiotis and Keramidas, Georgios and Multanen, Joonas and Jääskeläinen, Pekka},
+      BOOKTITLE={2021 IEEE Nordic Circuits and Systems Conference (NorCAS)},
+      TITLE={Unified OpenCL Integration Methodology for FPGA Designs},
+      YEAR={2021},
+      PAGES={1-7},
+      DOI={10.1109/NorCAS53631.2021.9599861}
+    }
+
+    @ARTICLE{leppanen2022,
+      AUTHOR={Leppänen, Topi and Lotvonen, Atro and Jääskeläinen, Pekka},
+      TITLE={Cross-vendor programming abstraction for diverse heterogeneous platforms},
+      JOURNAL={Frontiers in Computer Science},
+      VOLUME={4},
+      YEAR={2022},
+      URL={https://www.frontiersin.org/articles/10.3389/fcomp.2022.945652},
+      DOI={10.3389/fcomp.2022.945652},
+      ISSN={2624-9898},
+    }

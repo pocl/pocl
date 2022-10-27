@@ -13,7 +13,21 @@ Notable User Facing Changes
   * and other small fixes and improvements
 - All device names used to control the platform setup via
   POCL_DEVICES are now lower case (as documented in the user manual).
-
+- Built-in kernel support for CPU, CUDA and Accel-devices
+  * The .cl files in the driver directories are compiled to built-in kernels.
+  * Experimental CUDNN support for Cuda-driver through built-in kernels.
+- Major update to the custom device driver (Accel -> Now renamed to AlmaIF)
+  * Support more device types implementing AlmaIF
+    + Memory-mapped accelerator (for SoC FPGAs)
+    + Experimental XRT backend (for PCIe FPGAs)
+    + Instruction-set simulator (TTASim)
+    + Emulation device on host CPU
+- TTASim-driver will be deprecated as soon as all of its functionality
+  can be achieved with the almaif-driver. Most of it has already been
+  ported to almaif/TTASimDevice.cc
+  * This move allows controlling TTASIM simulator and FPGA device 
+    (and in future, RTL simulator) with the same runtime driver,
+    which reduces code duplication.
 3.0 June 2022
 =============
 
