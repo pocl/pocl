@@ -241,12 +241,6 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
-if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
-  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper32.ll")
-else()
-  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper64.ll")
-endif()
-
 if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
 endif()
@@ -413,7 +407,25 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
 
-  foreach(VECSIZE "128" "256" "512")
+  # the "runtime/clGetKernelArgInfo" requires working images with spir,
+  # that only works if we're using the new (generated) wrappers
+  set(HAVE_WORKING_IMAGES_WITH_SPIR OFF CACHE BOOL "image functions work with SPIR" FORCE)
+  if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
+    set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
+  else()
+    if((NOT X86) OR (LLVM_VERSION_MAJOR LESS 10))
+      # for older LLVMs and non-X86 CPUs, use a generic 64bit wrapper
+      # this doesn't support vectors and misses some
+      # functions, but otherwise should mostly work
+      set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")
+    else()
+      # for X86-64, SPIR wrapper is decided later
+      # based on CPU's largest supported vector size
+      set(SPIR_WRAPPER_FILE "")
+    endif()
+  endif()
+
+  foreach(VECSIZE "512" "256" "128")
 
     set(EXTRA_FLAGS "-DDORENAME;-DVEC${VECSIZE}")
     custom_try_compile_any(1 "${CLANG}" "c" "${TEST_SRC}" RES
@@ -431,6 +443,10 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       set(STR "#define SLEEF_VEC_${VECSIZE}_AVAILABLE\n")
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
+      if(NOT SPIR_WRAPPER_FILE)
+        generate_x86_64_spir_wrapper(${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        set(HAVE_WORKING_IMAGES_WITH_SPIR ON CACHE BOOL "image functions work with SPIR" FORCE)
+      endif()
     else()
       message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")
     endif()
@@ -446,6 +462,8 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     endif()
 
   endforeach()
+
+  compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
 
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}")
   set(SLEEF_BC "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/sleef.bc")

@@ -359,7 +359,8 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_release_dlhandle_cache (k->cmd);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
+  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
+                                  "NDRange Kernel        ");
 
   POCL_FAST_DESTROY (k->lock);
   free_kernel_run_command (k);
@@ -373,17 +374,18 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   struct pocl_context *pc = &cmd->command.run.pc;
 
   char *saved_name = NULL;
-  sanitize_builtin_kernel_name (kernel, &saved_name);
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
-  restore_builtin_kernel_name (kernel, saved_name);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   if (num_groups == 0)
     {
-      pocl_update_event_running (cmd->event);
+      pocl_update_event_running (cmd->sync.event.event);
 
-      POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->event, "NDRange Kernel        ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
+                                      "NDRange Kernel        ");
 
       return;
     }
@@ -409,7 +411,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   setup_kernel_arg_array (run_cmd);
 
-  pocl_update_event_running (cmd->event);
+  pocl_update_event_running (cmd->sync.event.event);
 
   pthread_scheduler_push_kernel (run_cmd);
 }
@@ -504,7 +506,7 @@ RETRY:
     {
       POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
-      assert (pocl_command_is_ready (cmd->event));
+      assert (pocl_command_is_ready (cmd->sync.event.event));
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {

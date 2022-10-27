@@ -21,8 +21,8 @@
    THE SOFTWARE.
 */
 
+#include "pocl_shared.h"
 #include "pocl_util.h"
-#include <string.h>
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueFillBuffer)(cl_command_queue  command_queue,
@@ -42,65 +42,11 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
-                          CL_INVALID_MEM_OBJECT);
-
-  POCL_RETURN_ERROR_ON((buffer->type != CL_MEM_OBJECT_BUFFER), CL_INVALID_MEM_OBJECT,
-                       "buffer is not a CL_MEM_OBJECT_BUFFER\n");
-
-  POCL_RETURN_ERROR_ON((command_queue->context != buffer->context), CL_INVALID_CONTEXT,
-                       "buffer and command_queue are not from the same context\n");
-
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
+  errcode = pocl_fill_buffer_common (
+      NULL, command_queue, buffer, pattern, pattern_size, offset, size,
+      num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  errcode = pocl_buffer_boundcheck(buffer, offset, size);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  /* CL_INVALID_VALUE if pattern is NULL or if pattern_size is 0
-   * or if pattern_size is not one of {1, 2, 4, 8, 16, 32, 64, 128}. */
-  POCL_RETURN_ERROR_COND((pattern == NULL), CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND((pattern_size == 0), CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND((pattern_size > 128), CL_INVALID_VALUE);
-
-  POCL_RETURN_ERROR_ON((__builtin_popcount(pattern_size) > 1), CL_INVALID_VALUE,
-                       "pattern_size(%zu) must be a power-of-two value", pattern_size);
-
-  /* CL_INVALID_VALUE if offset and size are not a multiple of pattern_size.  */
-  POCL_RETURN_ERROR_ON((offset % pattern_size), CL_INVALID_VALUE,
-                       "offset(%zu) must be a multiple of pattern_size(%zu)\n",
-                       offset, pattern_size);
-  POCL_RETURN_ERROR_ON((size % pattern_size), CL_INVALID_VALUE,
-                       "size(%zu) must be a multiple of pattern_size(%zu)\n",
-                       size, pattern_size);
-
-  POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
-  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
-
-  char rdonly = 0;
-
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &buffer, &rdonly);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  cmd->command.memfill.dst_mem_id
-      = &buffer->device_ptrs[command_queue->device->global_mem_id];
-  cmd->command.memfill.size = size;
-  cmd->command.memfill.offset = offset;
-  void *p = pocl_aligned_malloc(pattern_size, pattern_size);
-  memcpy(p, pattern, pattern_size);
-  cmd->command.memfill.pattern = p;
-  cmd->command.memfill.pattern_size = pattern_size;
 
   pocl_command_enqueue(command_queue, cmd);
 

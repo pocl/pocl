@@ -2854,12 +2854,12 @@ void
 pocl_vulkan_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->ready = 1;
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       vulkan_push_command (cq->device, node);
     }
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   return;
 }
 
@@ -2950,7 +2950,7 @@ pocl_vulkan_notify (cl_device_id device, cl_event event, cl_event finished)
 
   POCL_MSG_PRINT_VULKAN ("notify on event %zu \n", event->id);
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (event);
       vulkan_push_command (device, node);
@@ -3371,8 +3371,7 @@ void pocl_vulkan_memfill(void *data,
   cmd.device = d->dev;
   cmd.program_device_i = 0;
   cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-  cmd.event = NULL;
-  cmd.event_wait_list = NULL;
+  cmd.sync.event.event = NULL;
   cmd.next = NULL;
   cmd.prev = NULL;
   cmd.ready = 1;
@@ -4278,8 +4277,8 @@ RETRY:
       DL_DELETE (d->work_queue, cmd);
       POCL_FAST_UNLOCK (d->wq_lock_fast);
 
-      assert (pocl_command_is_ready (cmd->event));
-      assert (cmd->event->status == CL_SUBMITTED);
+      assert (pocl_command_is_ready (cmd->sync.event.event));
+      assert (cmd->sync.event.event->status == CL_SUBMITTED);
 
       pocl_exec_command (cmd);
 

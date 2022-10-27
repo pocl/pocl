@@ -732,6 +732,8 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   if (d->printf_position_chunk == NULL) {
     POCL_ABORT("TTASIM: Can't allocate 4 bytes for printf index\n");
   }
+  
+  dev->max_parameter_size = 1024;
 
   return CL_SUCCESS;
 }

@@ -1475,7 +1475,7 @@ pocl_proxy_free_sampler (cl_device_id device, cl_sampler samp,
 static void
 proxy_push_command (_cl_command_node *node)
 {
-  cl_command_queue cq = node->event->queue;
+  cl_command_queue cq = node->sync.event.event->queue;
   proxy_queue_data_t *qd = (proxy_queue_data_t *)cq->data;
 
   POCL_FAST_LOCK (qd->wq_lock);
@@ -1487,7 +1487,7 @@ proxy_push_command (_cl_command_node *node)
 void
 pocl_proxy_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  cl_event e = node->event;
+  cl_event e = node->sync.event.event;
   assert (e->data == NULL);
 
   pocl_proxy_event_data_t *e_d = NULL;
@@ -1556,7 +1556,7 @@ pocl_proxy_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       assert (event->status == CL_QUEUED);
       pocl_update_event_submitted (event);
@@ -2176,7 +2176,7 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
                     proxy_device_data_t *d, proxy_queue_data_t *qd)
 {
   _cl_command_t *cmd = &node->command;
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   const char *cstr = NULL;
   cl_command_queue cq_id = qd->proxied_id;
   unsigned context_device_i = qd->context_device_i;
@@ -2448,8 +2448,8 @@ pocl_proxy_queue_pthread (void *ptr)
           DL_DELETE (qd->work_queue, cmd);
           POCL_FAST_UNLOCK (qd->wq_lock);
 
-          assert (pocl_command_is_ready (cmd->event));
-          assert (cmd->event->status == CL_SUBMITTED);
+          assert (pocl_command_is_ready (cmd->sync.event.event));
+          assert (cmd->sync.event.event->status == CL_SUBMITTED);
 
           proxy_exec_command (cmd, device, d, qd);
           /* if the proxy_exec_command called proxy_free_cmd_queue(),

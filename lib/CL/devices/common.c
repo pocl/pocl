@@ -294,16 +294,15 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-
 /**
- * executes given command. Call with node->event UNLOCKED.
+ * executes given command. Call with node->sync.event.event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
   cl_mem mem = NULL;
@@ -706,6 +705,11 @@ pocl_exec_command (_cl_command_node *node)
                                cmd->svm_migrate.svm_pointers,
                                cmd->svm_migrate.sizes);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
+      break;
+
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      pocl_update_event_running (event);
+      POCL_UPDATE_EVENT_COMPLETE (event);
       break;
 
     default:
@@ -1720,7 +1724,9 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
 
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
-        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" } };
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
+
+        { CL_MAKE_VERSION (0, 9, 0), "cl_khr_command_buffer" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);
@@ -1841,5 +1847,5 @@ pocl_setup_features_with_version (cl_device_id dev)
 void
 pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 {
-  /* implementation should use BIDescriptors */
+  /* implementation should use pocl_BIDescriptors */
 }

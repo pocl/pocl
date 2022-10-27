@@ -432,6 +432,15 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->local_mem_type = CL_LOCAL;
 
+#ifdef ENABLE_SPIRV
+  dev->supported_spir_v_versions = "SPIR-V_1.2";
+#else
+  dev->supported_spir_v_versions = "";
+#endif
+  pocl_setup_ils_with_version (dev);
+
+  pocl_setup_opencl_c_with_version (dev, 0);
+
   /* Get GPU architecture name */
   int sm_maj = 0, sm_min = 0;
   if (ret != CL_INVALID_DEVICE)
@@ -1477,7 +1486,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                   meta->data[cmd->program_device_i]
                       = &OpenclBuiltinKernelsData[i];
                   char *saved_name = NULL;
-                  sanitize_builtin_kernel_name (kernel, &saved_name);
+                  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
                   kdata = load_or_generate_kernel (kernel, device, has_offsets,
                                                    cmd->program_device_i, cmd,
                                                    1);
@@ -1486,7 +1495,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                   module = has_offsets ? kdata->module_offsets : kdata->module;
                   function
                       = has_offsets ? kdata->kernel_offsets : kdata->kernel;
-                  restore_builtin_kernel_name (kernel, saved_name);
+                  pocl_restore_builtin_kernel_name (kernel, saved_name);
                 }
             }
         }
@@ -1662,45 +1671,45 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
   CUstream stream = ((pocl_cuda_queue_data_t *)cq->data)->stream;
 
   if (!locked)
-  POCL_LOCK_OBJ (node->event);
+    POCL_LOCK_OBJ (node->sync.event.event);
 
   pocl_cuda_event_data_t *event_data
-      = (pocl_cuda_event_data_t *)node->event->data;
+      = (pocl_cuda_event_data_t *)node->sync.event.event->data;
 
   /* Process event dependencies */
   event_node *dep = NULL;
-  LL_FOREACH (node->event->wait_list, dep)
-    {
-      /* If it is in the process of completing, just skip it */
-      if (dep->event->status <= CL_COMPLETE)
-        continue;
+  LL_FOREACH (node->sync.event.event->wait_list, dep)
+  {
+    /* If it is in the process of completing, just skip it */
+    if (dep->event->status <= CL_COMPLETE)
+      continue;
 
-      /* Add CUDA event dependency */
-      if (dep->event->command_type != CL_COMMAND_USER
-          && dep->event->queue->device->ops == cq->device->ops)
-        {
-          /* Block stream on event, but only for different queues */
-          if (dep->event->queue != node->event->queue)
-            {
-              pocl_cuda_event_data_t *dep_data
-                  = (pocl_cuda_event_data_t *)dep->event->data;
+    /* Add CUDA event dependency */
+    if (dep->event->command_type != CL_COMMAND_USER
+        && dep->event->queue->device->ops == cq->device->ops)
+      {
+        /* Block stream on event, but only for different queues */
+        if (dep->event->queue != node->sync.event.event->queue)
+          {
+            pocl_cuda_event_data_t *dep_data
+                = (pocl_cuda_event_data_t *)dep->event->data;
 
-              /* Wait until dependency has finished being submitted */
-              while (!dep_data->events_ready)
-                ;
+            /* Wait until dependency has finished being submitted */
+            while (!dep_data->events_ready)
+              ;
 
-              result = cuStreamWaitEvent (stream, dep_data->end, 0);
-              CUDA_CHECK (result, "cuStreamWaitEvent");
-            }
-        }
-      else
-        {
-          if (!((pocl_cuda_queue_data_t *)cq->data)->use_threads)
-            POCL_ABORT (
-                "Can't handle non-CUDA dependencies without queue threads\n");
+            result = cuStreamWaitEvent (stream, dep_data->end, 0);
+            CUDA_CHECK (result, "cuStreamWaitEvent");
+          }
+      }
+    else
+      {
+        if (!((pocl_cuda_queue_data_t *)cq->data)->use_threads)
+          POCL_ABORT (
+              "Can't handle non-CUDA dependencies without queue threads\n");
 
-          event_data->num_ext_events++;
-        }
+        event_data->num_ext_events++;
+      }
     }
 
   /* Wait on flag for external events */
@@ -1730,11 +1739,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       CUDA_CHECK (result, "cuEventRecord");
     }
 
-  pocl_update_event_submitted (node->event);
+  pocl_update_event_submitted (node->sync.event.event);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
 
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
 
@@ -1820,7 +1829,8 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         break;
       }
     case CL_COMMAND_NDRANGE_KERNEL:
-      pocl_cuda_submit_kernel (stream, node, node->device, node->event);
+      pocl_cuda_submit_kernel (stream, node, node->device,
+                               node->sync.event.event);
       break;
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
@@ -1899,14 +1909,14 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   /* Allocate CUDA event data */
   pocl_cuda_event_data_t *p
       = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
-  node->event->data = p;
+  node->sync.event.event->data = p;
 
   if (((pocl_cuda_queue_data_t *)cq->data)->use_threads)
     {
 
       PTHREAD_CHECK (pthread_cond_init (&p->event_cond, NULL));
       /* Add command to work queue */
-      POCL_UNLOCK_OBJ (node->event);
+      POCL_UNLOCK_OBJ (node->sync.event.event);
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
       PTHREAD_CHECK (pthread_mutex_lock (&queue_data->lock));
       DL_APPEND (queue_data->pending_queue, node);
@@ -2016,11 +2026,12 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
        * only the elapsed time between two events. We use the elapsed
        * time from the epoch event enqueued on device creation to get
        * the actual timestamps.
-       *
-       * Since the CUDA timer resolution is lower than the host timer,
-       * this can sometimes result in the start time being before the
-       * submit time, so we use max() to ensure the timestamps are
-       * sane. */
+       * More specifically, we measure the time between the epoch event
+       * and the start event. This results in the start time. Then we
+       * take the elapsed time between the start and end event to
+       * compute the end time. Measuring the end time relative to the
+       * epoch event may result in unprecise measurements due to the
+       * usage of float by CUDA. */
 
       float diff;
       CUresult result;
@@ -2033,14 +2044,11 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
           event_data->start);
       CUDA_CHECK (result, "cuEventElapsedTime");
       event->time_start = epoch + (cl_ulong)(diff * 1e6);
-      event->time_start = max (event->time_start, epoch + 1);
 
       result = cuEventElapsedTime (
-          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
-          event_data->end);
+          &diff, event_data->start, event_data->end);
       CUDA_CHECK (result, "cuEventElapsedTime");
-      event->time_end = epoch + (cl_ulong)(diff * 1e6);
-      event->time_end = max (event->time_end, event->time_start + 1);
+      event->time_end = event->time_start + (cl_ulong)(diff * 1e6);
     }
 }
 
@@ -2213,7 +2221,7 @@ pocl_cuda_finalize_thread (void *data)
 
       /* Wait for command to finish, if we found one */
       if (node)
-        pocl_cuda_finalize_command (queue->device, node->event);
+        pocl_cuda_finalize_command (queue->device, node->sync.event.event);
     }
 
   return NULL;

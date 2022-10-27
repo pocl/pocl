@@ -242,12 +242,13 @@ if (NOT ENABLE_POCL_FLOAT_CONVERSION)
   # on most platforms, the printf tests for vector types expose bugs in the
   # pocl printf implementation (passing of variadic arguments containing OpenCL
   # vector types) and maybe also related bugs in llvm (issue #682, #1007)
-  if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
-          CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
+  if(NOT (CMAKE_LIBRARY_ARCHITECTURE STREQUAL "aarch64-linux-gnu" OR
+          CMAKE_LIBRARY_ARCHITECTURE STREQUAL "s390x-linux-gnu"))
     set_tests_properties("kernel/test_printf_vectors"
                         "kernel/test_printf_vectors_ulongn"
       PROPERTIES WILL_FAIL 1)
   endif()
+
 endif()
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"

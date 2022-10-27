@@ -81,6 +81,10 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->source);
 
       POCL_MEM_FREE (program->program_il);
+      POCL_MEM_FREE (program->spec_const_ids);
+      POCL_MEM_FREE (program->spec_const_is_set);
+      POCL_MEM_FREE (program->spec_const_sizes);
+      POCL_MEM_FREE (program->spec_const_values);
 
       POCL_MEM_FREE(program->binary_sizes);
       if (program->binaries)

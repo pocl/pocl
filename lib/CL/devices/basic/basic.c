@@ -145,13 +145,8 @@ char *
 pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
@@ -446,7 +441,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
-  cl_event ev = cmd->event;
+  cl_event ev = cmd->sync.event.event;
   cl_device_id dev = cmd->device;
   size_t i;
   for (i = 0; i < ev->num_buffers; i++)
@@ -502,8 +497,8 @@ static void basic_command_scheduler (struct data *d)
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
-      assert (pocl_command_is_ready(node->event));
-      assert (node->event->status == CL_SUBMITTED);
+      assert (pocl_command_is_ready (node->sync.event.event));
+      assert (node->sync.event.event->status == CL_SUBMITTED);
       CDL_DELETE (d->ready_list, node);
       POCL_UNLOCK (d->cq_lock);
       pocl_exec_command (node);
@@ -525,7 +520,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 
@@ -588,10 +583,10 @@ pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
   char *saved_name = NULL;
-  sanitize_builtin_kernel_name (kernel, &saved_name);
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
-  restore_builtin_kernel_name (kernel, saved_name);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 
 /*********************** IMAGES ********************************/

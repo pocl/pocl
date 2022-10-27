@@ -48,6 +48,7 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
+#include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
@@ -617,24 +618,20 @@ pocl_create_command_struct (_cl_command_node **cmd,
                             size_t num_buffers, const cl_mem *buffers)
 {
   unsigned i;
-  int err;
   cl_event *event = NULL;
+  cl_int errcode = CL_SUCCESS;
 
   *cmd = pocl_mem_manager_new_command ();
-  if (*cmd == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
 
   (*cmd)->type = command_type;
 
-  event = &((*cmd)->event);
-  err = pocl_create_event (event, command_queue, command_type, num_buffers,
-                           buffers, command_queue->context);
+  event = &((*cmd)->sync.event.event);
+  errcode = pocl_create_event (event, command_queue, command_type, num_buffers,
+                               buffers, command_queue->context);
 
-  if (err != CL_SUCCESS)
-    {
-      POCL_MEM_FREE(*cmd);
-      return err;
-    }
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
   (*event)->command_type = command_type;
 
   /* if host application wants this commands event
@@ -653,7 +650,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
     }
 
   (*cmd)->device = command_queue->device;
-  (*cmd)->event->command = (*cmd);
+  (*cmd)->sync.event.event->command = (*cmd);
 
   /* Form event synchronizations based on the given wait list */
   for (i = 0; i < num_events; ++i)
@@ -662,9 +659,14 @@ pocl_create_command_struct (_cl_command_node **cmd,
       pocl_create_event_sync ((*event), wle);
     }
   POCL_MSG_PRINT_EVENTS (
-      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n",
+      "Created immediate command struct: CMD %p (event %" PRIu64
+      " / %p, type: %s)\n",
       *cmd, (*event)->id, *event, pocl_command_to_str (command_type));
   return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (*cmd);
+  return errcode;
 }
 
 static int
@@ -1015,7 +1017,7 @@ pocl_create_command_full (_cl_command_node **cmd,
                                     buffers);
   if (err)
     return err;
-  cl_event final_event = (*cmd)->event;
+  cl_event final_event = (*cmd)->sync.event.event;
 
   /* retain once for every buffer; this is because we set every buffer's
    * "last event" to this, and then some next command enqueue
@@ -1060,7 +1062,109 @@ pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
                                    readonly_flags, 0);
 }
 
-/* call with node->event UNLOCKED */
+cl_int
+pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
+                                    cl_command_queue *command_queue)
+{
+  assert (command_queue != NULL);
+  cl_command_queue q = *command_queue;
+  POCL_RETURN_ERROR_COND ((q != NULL), CL_INVALID_COMMAND_QUEUE);
+
+  if (q)
+    {
+      POCL_RETURN_ERROR_COND (
+          (command_buffer->queues[0]->context != q->context),
+          CL_INVALID_CONTEXT);
+      int queue_in_buffer = 0;
+      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+        {
+          if (q == command_buffer->queues[i])
+            queue_in_buffer = 1;
+        }
+      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);
+    }
+  else
+    q = command_buffer->queues[0];
+
+  *command_queue = q;
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_create_recorded_command (_cl_command_node **cmd,
+                              cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_command_type command_type, cl_uint num_deps,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              size_t num_buffers, cl_mem *buffers,
+                              char *readonly_flags)
+{
+  cl_int errcode = pocl_check_syncpoint_wait_list (command_buffer, num_deps,
+                                                   sync_point_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  *cmd = pocl_mem_manager_new_command ();
+  POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
+  (*cmd)->type = command_type;
+  (*cmd)->buffered = 1;
+
+  (*cmd)->sync.syncpoint.num_sync_points_in_wait_list = num_deps;
+  if (num_deps > 0)
+    {
+      cl_sync_point_khr *wait_list
+          = malloc (sizeof (cl_sync_point_khr) * num_deps);
+      if (wait_list == NULL)
+        {
+          POCL_MEM_FREE (*cmd);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
+      memcpy (wait_list, sync_point_wait_list,
+              sizeof (cl_sync_point_khr) * num_deps);
+      (*cmd)->sync.syncpoint.sync_point_wait_list = wait_list;
+    }
+
+  (*cmd)->memobj_count = num_buffers;
+  if (num_buffers > 0)
+    {
+      cl_mem *memobjs = (cl_mem *)malloc (sizeof (cl_mem) * num_buffers);
+      (*cmd)->memobj_list = memobjs;
+      POCL_GOTO_ERROR_COND ((memobjs == NULL), CL_OUT_OF_HOST_MEMORY);
+
+      char *flags = (char *)malloc (sizeof (char) * num_buffers);
+      (*cmd)->readonly_flag_list = flags;
+      POCL_GOTO_ERROR_COND ((flags == NULL), CL_OUT_OF_HOST_MEMORY);
+
+      memcpy (memobjs, buffers, sizeof (cl_mem) * num_buffers);
+      memcpy (flags, readonly_flags, sizeof (char) * num_buffers);
+    }
+
+  return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (*cmd);
+  return errcode;
+}
+
+cl_int
+pocl_command_record (cl_command_buffer_khr command_buffer,
+                     _cl_command_node *cmd, cl_sync_point_khr *sync_point)
+{
+  POCL_LOCK (command_buffer->mutex);
+  if (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR)
+    {
+      POCL_UNLOCK (command_buffer->mutex);
+      return CL_INVALID_OPERATION;
+    }
+  LL_APPEND (command_buffer->cmds, cmd);
+  if (sync_point != NULL)
+    *sync_point = command_buffer->num_syncpoints + 1;
+  command_buffer->num_syncpoints++;
+  POCL_UNLOCK (command_buffer->mutex);
+  return CL_SUCCESS;
+}
+
+/* call with node->sync.event.event UNLOCKED */
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
 {
@@ -1075,7 +1179,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("In-order Q; adding event syncs\n");
       if (command_queue->last_event.event)
         {
-          pocl_create_event_sync (node->event,
+          pocl_create_event_sync (node->sync.event.event,
                                   command_queue->last_event.event);
         }
     }
@@ -1087,7 +1191,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->last_event.event)
         {
-          pocl_create_event_sync (node->event,
+          pocl_create_event_sync (node->sync.event.event,
                                   command_queue->last_event.event);
         }
     }
@@ -1101,33 +1205,33 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("Barrier; adding event syncs\n");
       DL_FOREACH (command_queue->events, event)
         {
-          pocl_create_event_sync (node->event, event);
+          pocl_create_event_sync (node->sync.event.event, event);
         }
     }
 
   if (node->type == CL_COMMAND_BARRIER)
-    command_queue->barrier = node->event;
+    command_queue->barrier = node->sync.event.event;
   else
     {
       if (command_queue->barrier)
         {
-          pocl_create_event_sync (node->event, command_queue->barrier);
+          pocl_create_event_sync (node->sync.event.event,
+                                  command_queue->barrier);
         }
     }
-  DL_APPEND (command_queue->events, node->event);
+  DL_APPEND (command_queue->events, node->sync.event.event);
 
   POCL_MSG_PRINT_EVENTS ("Pushed Event %" PRIu64 " to CQ %" PRIu64 ".\n",
-                         node->event->id, command_queue->id);
-  command_queue->last_event.event = node->event;
+                         node->sync.event.event->id, command_queue->id);
+  command_queue->last_event.event = node->sync.event.event;
   POCL_UNLOCK_OBJ (command_queue);
 
-  POCL_LOCK_OBJ (node->event);
-  assert (node->event->status == CL_QUEUED);
-  assert (command_queue == node->event->queue);
-  pocl_update_event_queued (node->event);
+  POCL_LOCK_OBJ (node->sync.event.event);
+  assert (node->sync.event.event->status == CL_QUEUED);
+  assert (command_queue == node->sync.event.event->queue);
+  pocl_update_event_queued (node->sync.event.event);
   command_queue->device->ops->submit(node, command_queue);
-  /* node->event is unlocked by device_ops->submit */
-
+  /* node->sync.event.event is unlocked by device_ops->submit */
 }
 
 int
@@ -1160,7 +1264,7 @@ pocl_release_mem_host_ptr (cl_mem mem)
   return 0;
 }
 
-/* call (and return) with node->event locked */
+/* call (and return) with node->sync.event.event locked */
 void
 pocl_command_push (_cl_command_node *node,
                    _cl_command_node **ready_list,
@@ -1177,9 +1281,9 @@ pocl_command_push (_cl_command_node *node,
       CDL_PREPEND ((*pending_list), node);
       return;
     }
-  if (pocl_command_is_ready(node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       CDL_PREPEND ((*ready_list), node);
     }
   else
@@ -1208,7 +1312,7 @@ pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
   POCL_UNLOCK_OBJ (mem);
 }
 
-static void
+void
 pocl_ndrange_node_cleanup (_cl_command_node *node)
 {
   cl_uint i;
@@ -1693,6 +1797,36 @@ pocl_check_event_wait_list (cl_command_queue command_queue,
   return CL_SUCCESS;
 }
 
+int
+pocl_check_syncpoint_wait_list (cl_command_buffer_khr command_buffer,
+                                cl_uint num_sync_points_in_wait_list,
+                                const cl_sync_point_khr *sync_point_wait_list)
+{
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list > 0 && sync_point_wait_list == NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list == 0 && sync_point_wait_list != NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+
+  POCL_LOCK (command_buffer->mutex);
+  cl_uint next_syncpoint = command_buffer->num_syncpoints + 1;
+  POCL_UNLOCK (command_buffer->mutex);
+
+  POCL_RETURN_ERROR_ON ((next_syncpoint == 0), CL_OUT_OF_RESOURCES,
+                        "Too many commands in buffer\n");
+
+  for (unsigned i = 0; i < num_sync_points_in_wait_list; ++i)
+    {
+      POCL_RETURN_ERROR_COND ((sync_point_wait_list[i] == 0),
+                              CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+      POCL_RETURN_ERROR_COND ((sync_point_wait_list[i] >= next_syncpoint),
+                              CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+    }
+
+  return CL_SUCCESS;
+}
+
 const char*
 pocl_status_to_str (int status)
 {
@@ -1781,6 +1915,8 @@ pocl_command_to_str (cl_command_type cmd)
       return "svm_map";
     case CL_COMMAND_SVM_UNMAP:
       return "svm_unmap";
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      return "command_buffer_khr";
     }
 
   return "unknown";

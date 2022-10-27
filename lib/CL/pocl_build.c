@@ -649,7 +649,8 @@ compile_and_link_program(int compile_program,
       "to call clCreateProgramWith{Binary|Source|BuiltinKernels} first\n");
 
   POCL_GOTO_LABEL_ON (FINISH,
-                      ((program->source == NULL) && (link_program == 0)),
+                      ((program->source == NULL) &&
+                        (program->program_il == NULL) && (link_program == 0)),
                       CL_INVALID_OPERATION,
                       "Cannot clCompileProgram when program has no source\n");
 
@@ -757,9 +758,8 @@ compile_and_link_program(int compile_program,
                                           device->long_name);
             }
         }
-      else
-          /* only link the program/library */
-          if (!compile_program && link_program)
+      /* only link the program/library */
+      else if (!compile_program && link_program)
         {
           assert (num_input_programs > 0);
 

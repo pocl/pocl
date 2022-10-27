@@ -29,6 +29,10 @@ cmake_policy(SET CMP0067 OLD)
 project(pocl)
 set(CMAKE_PROJECT_DESCRIPTION "pocl is a portable OpenCl runtime.")
 
+MESSAGE(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+MESSAGE(STATUS "CMAKE_SYSTEM_PROCESSOR: ${CMAKE_SYSTEM_PROCESSOR}")
+MESSAGE(STATUS "CMAKE_LIBRARY_ARCHITECTURE: ${CMAKE_LIBRARY_ARCHITECTURE}")
+
 set(LATEST_KNOWN_CXX_STD_VERSION "20")
 set(SUPPORTED_CXX_STD_VERSION "11")
 
@@ -115,6 +119,7 @@ endmacro()
 find_program(BASH "bash")
 find_program(MAKE_PROGRAM NAMES "make")
 find_program(GIT_CMD "git")
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set_expr(HAVE_GIT GIT_CMD)
 
 if(HAVE_GIT)
@@ -477,11 +482,7 @@ if(ENABLE_LLVM)
 
   if(ENABLE_HOST_CPU_DEVICES)
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
-    if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
       set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
-    else()
-      set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
-    endif()
   endif()
 
   if(INTEL_SDE_AVX512)
@@ -648,6 +649,37 @@ endif()
 
 ######################################################################################
 
+function(check_64bit_atomics varname)
+    check_c_source_compiles("
+#include <stdint.h>
+uint64_t x = 0;
+int main()
+{
+  __atomic_add_fetch(&x, 1, __ATOMIC_SEQ_CST);
+  __atomic_sub_fetch(&x, 1, __ATOMIC_SEQ_CST);
+  return x;
+}
+" ${varname})
+endfunction(check_64bit_atomics)
+
+# platforms w/o lockfree 64bit atomics need to link with -latomic
+if(UNIX)
+    check_64bit_atomics(HAVE_64BIT_ATOMICS_WITHOUT_LIB)
+    if(HAVE_64BIT_ATOMICS_WITHOUT_LIB)
+        set(HAVE_64BIT_ATOMICS_WITH_LIB FALSE)
+    else()
+        set(OLD_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
+        list(APPEND CMAKE_REQUIRED_LIBRARIES "atomic")
+        check_64bit_atomics(HAVE_64BIT_ATOMICS_WITH_LIB)
+        set(CMAKE_REQUIRED_LIBRARIES ${OLD_CMAKE_REQUIRED_LIBRARIES})
+        if(NOT HAVE_64BIT_ATOMICS_WITH_LIB)
+            message(SEND_ERROR "Missing 64-bit atomic increment")
+        endif()
+    endif()
+endif()
+
+######################################################################################
+
 if(UNIX AND ENABLE_LLVM AND HAVE_DLADDR)
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
@@ -778,8 +810,7 @@ endif()
 
 set(SPIRV OFF)
 
-if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
-   AND (NOT ENABLE_CONFORMANCE))
+if(ENABLE_LLVM)
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
 else()
   set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
@@ -800,10 +831,6 @@ if(ENABLE_SPIR)
 endif()
 
 set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
-
-if(ENABLE_CONFORMANCE AND (ENABLE_SPIR OR ENABLE_SPIRV))
-  message(FATAL_ERROR "conformance needs SPIR AND SPIR-V support disabled")
-endif()
 
 ######################################################################################
 
@@ -979,15 +1006,26 @@ if(NOT APPLE)
   find_file(OPENCL_HPP opencl.hpp PATH_SUFFIXES CL)
 endif()
 
-# if ICD is disabled, we might as well compile with our own headers
-if(OPENCL_H AND ENABLE_ICD)
-  message(STATUS "OpenCL.h found (${OPENCL_H}) and ICD enabled, NOT installing our headers")
+if(OPENCL_H AND ENABLE_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
+  # if system-wide headers are present, ICD is enabled and older than 3.0 -> use the system-wide headers
+  # TBD we're assuming a sane combination of header & ICD versions
+  message(STATUS "OpenCL.h found (${OPENCL_H}) and ICD <3.0 enabled, using system headers")
   set(HAVE_OPENCL_H ON)
+  set_expr(HAVE_OPENCL_HPP OPENCL_HPP)
   set(IOH OFF)
 else()
-  message(STATUS "OpenCL.h not found or ICD disabled, installing our headers")
+  # if system-wide OpenCL headers are not found, we must use PoCL's
+  # if ICD is disabled, we might as well compile with our own headers
+  # if ICD is 3.0, force the use of PoCL's own 3.0 headers -> enables some additional tests
+  message(STATUS "OpenCL.h not found or ICD disabled or ICD >= 3.0, using our headers")
   set(HAVE_OPENCL_H OFF)
-  set(IOH ON)
+  set(HAVE_OPENCL_HPP OFF)
+  # install headers only if system-wide headers not found
+  if(OPENCL_H)
+    set(IOH OFF)
+  else()
+    set(IOH ON)
+  endif()
 endif()
 
 if(NOT DEFINED INSTALL_OPENCL_HEADERS)
@@ -998,6 +1036,7 @@ add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1
                 -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS -DCL_USE_DEPRECATED_OPENCL_2_2_APIS)
 
+# check the highest supported OpenCL version in the headers
 if(HAVE_OPENCL_H)
   include(CheckSymbolExists)
   check_symbol_exists(CL_VERSION_3_0 ${OPENCL_H} HAVE_OPECL_3_0)
@@ -1019,16 +1058,19 @@ if(HAVE_OPENCL_H)
     message(FATAL_ERROR "Couldn't find OpenCL header with version at least 1.2")
   endif()
 else()
+  # PoCL's internal headers are OpenCL 3.0
   set(OPENCL_HEADER_VERSION 300)
 endif()
 
+# sets a target-version macro
+# sets the include directories to point either to system-wide OpenCL headers, or PoCL's own
 macro(set_opencl_header_includes)
   add_definitions(-DCL_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION}
                   -DCL_HPP_TARGET_OPENCL_VERSION=${OPENCL_HEADER_VERSION})
   if(NOT HAVE_OPENCL_H)
     include_directories("${CMAKE_SOURCE_DIR}/include")
   endif()
-  if(NOT OPENCL_CL2_HPP)
+  if(NOT HAVE_OPENCL_HPP)
     include_directories("${CMAKE_SOURCE_DIR}/include/hpp")
   endif()
   include_directories("${CMAKE_SOURCE_DIR}/poclu")
@@ -1045,7 +1087,7 @@ endif()
 
 set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
-string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
+string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S" UTC)
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ####################################################################
@@ -1129,10 +1171,11 @@ if (ENABLE_LLVM_OPAQUE_POINTERS)
   set(LLVM_OPAQUE_POINTERS 1)
 endif()
 
-# These are mandatory for OpenCL 1.1 (except for 3D writes but those are CPU-independent)
+# These are mandatory for OpenCL 1.1 (except for 3D writes and command buffers
+# but those are CPU-independent)
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
   cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+  cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
 
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
@@ -1491,6 +1534,9 @@ if(ENABLE_CUDA)
   endif()
   if(ENABLE_CUDNN)
     add_definitions(-DENABLE_CUDNN=1)
+  endif()
+  if(ENABLE_SPIRV)
+    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program")
   endif()
   set(CUDA_DEVICE_CL_VERSION "120")
   set(CUDA_DEVICE_CL_STD "1.2")

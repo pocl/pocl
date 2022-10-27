@@ -158,4 +158,21 @@ POdeclsym(clCreateImageWithProperties)
 POdeclsym(clCloneKernel)
 POdeclsym(clEnqueueSVMMigrateMem)
 
+/* cl_khr_command_buffer */
+POdeclsym(clCreateCommandBufferKHR)
+POdeclsym(clRetainCommandBufferKHR)
+POdeclsym(clReleaseCommandBufferKHR)
+POdeclsym(clFinalizeCommandBufferKHR)
+POdeclsym(clEnqueueCommandBufferKHR)
+POdeclsym(clCommandBarrierWithWaitListKHR)
+POdeclsym(clCommandNDRangeKernelKHR)
+POdeclsym(clCommandCopyBufferKHR)
+POdeclsym(clCommandCopyBufferRectKHR)
+POdeclsym(clCommandCopyBufferToImageKHR)
+POdeclsym(clCommandCopyImageKHR)
+POdeclsym(clCommandCopyImageToBufferKHR)
+POdeclsym(clCommandFillBufferKHR)
+POdeclsym(clCommandFillImageKHR)
+POdeclsym(clGetCommandBufferInfoKHR)
+
 #endif

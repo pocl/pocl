@@ -324,11 +324,11 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
     bool found = false;
     for (size_t i = 0; i < BIKERNELS; ++i) {
-      if (BIDescriptors[i].KernelId == kernelId) {
+      if (pocl_BIDescriptors[i].KernelId == kernelId) {
         if (supportedList.size() > 0)
           supportedList += ";";
-        supportedList += BIDescriptors[i].name;
-        D->SupportedKernels.insert(&BIDescriptors[i]);
+        supportedList += pocl_BIDescriptors[i].name;
+        D->SupportedKernels.insert(&pocl_BIDescriptors[i]);
         found = true;
         break;
       }
@@ -568,10 +568,10 @@ static void scheduleCommands(AlmaifData &D) {
   _cl_command_node *Node;
   // Execute commands from ready list.
   while ((Node = D.ReadyList)) {
-    assert(Node->event->status == CL_SUBMITTED);
+    assert(Node->sync.event.event->status == CL_SUBMITTED);
 
     if (Node->type == CL_COMMAND_NDRANGE_KERNEL) {
-      pocl_update_event_running(Node->event);
+      pocl_update_event_running(Node->sync.event.event);
 
       submit_and_barrier((AlmaifData *)Node->device->data, Node);
       submit_kernel_packet((AlmaifData *)Node->device->data, Node);
@@ -581,7 +581,7 @@ static void scheduleCommands(AlmaifData &D) {
       DL_PREPEND(runningList, Node);
       POCL_UNLOCK(runningLock);
     } else {
-      assert(pocl_command_is_ready(Node->event));
+      assert(pocl_command_is_ready(Node->sync.event.event));
 
       CDL_DELETE(D.ReadyList, Node);
       POCL_UNLOCK(D.CommandListLock);
@@ -627,7 +627,7 @@ void pocl_almaif_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
   Node->ready = 1;
 
   struct AlmaifData *D = (AlmaifData *)Node->device->data;
-  cl_event E = Node->event;
+  cl_event E = Node->sync.event.event;
 
   if (E->data == nullptr) {
     E->data = calloc(1, sizeof(almaif_event_data_t));
@@ -710,9 +710,9 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
         CDL_DELETE(D.CommandList, Node);
         CDL_PREPEND(D.ReadyList, Node);
 
-        POCL_UNLOCK_OBJ(Node->event);
+        POCL_UNLOCK_OBJ(Node->sync.event.event);
         scheduleCommands(D);
-        POCL_LOCK_OBJ(Node->event);
+        POCL_LOCK_OBJ(Node->sync.event.event);
         POCL_UNLOCK(D.CommandListLock);
       }
     }
@@ -723,9 +723,9 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
       CDL_DELETE(D.CommandList, Node);
       CDL_PREPEND(D.ReadyList, Node);
 
-      POCL_UNLOCK_OBJ(Node->event);
+      POCL_UNLOCK_OBJ(Node->sync.event.event);
       scheduleCommands(D);
-      POCL_LOCK_OBJ(Node->event);
+      POCL_LOCK_OBJ(Node->sync.event.event);
       POCL_UNLOCK(D.CommandListLock);
     }
   }
@@ -736,7 +736,7 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
   _cl_command_run *run = &cmd->command.run;
   cl_kernel k = run->kernel;
   cl_program p = k->program;
-  cl_event e = cmd->event;
+  cl_event e = cmd->sync.event.event;
   almaif_event_data_t *event_data = (almaif_event_data_t *)e->data;
   int32_t kernelID = -1;
   bool SanitizeKernelName = false;
@@ -762,12 +762,12 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
       POCL_MSG_PRINT_ALMAIF("almaif: compiling kernel\n");
       char *SavedName = nullptr;
       if (SanitizeKernelName)
-        sanitize_builtin_kernel_name(k, &SavedName);
+        pocl_sanitize_builtin_kernel_name(k, &SavedName);
 
       pocl_almaif_compile_kernel(cmd, k, cmd->device, 1);
 
       if (SanitizeKernelName)
-        restore_builtin_kernel_name(k, SavedName);
+        pocl_restore_builtin_kernel_name(k, SavedName);
     }
   }
 
@@ -979,7 +979,7 @@ int pocl_almaif_free_queue(cl_device_id device, cl_command_queue queue) {
 
 void submit_and_barrier(AlmaifData *D, _cl_command_node *cmd) {
 
-  event_node *dep_event = cmd->event->wait_list;
+  event_node *dep_event = cmd->sync.event.event->wait_list;
   if (dep_event == NULL) {
     POCL_MSG_PRINT_ALMAIF("Almaif: no events to wait for\n");
     return;
@@ -1126,9 +1126,9 @@ void *runningThreadFunc(void *) {
       _cl_command_node *tmp = NULL;
       DL_FOREACH_SAFE(runningList, Node, tmp) {
         AlmaifData *AD = (AlmaifData *)Node->device->data;
-        if (isEventDone(AD, Node->event)) {
+        if (isEventDone(AD, Node->sync.event.event)) {
           DL_DELETE(runningList, Node);
-          cl_event E = Node->event;
+          cl_event E = Node->sync.event.event;
 #ifdef ALMAIF_DUMP_MEMORY
           POCL_MSG_PRINT_ALMAIF("FINAL MEMORY DUMP\n");
           AD->Dev->printMemoryDump();

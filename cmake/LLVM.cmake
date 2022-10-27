@@ -680,10 +680,9 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
-  # WTF, ^^ has return value 1
-  #if(RES_VAR)
-  #  message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
-  #endif()
+  if(RES_VAR)
+    message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
+  endif()
 
   if(OUTPUT_VAR MATCHES "Host CPU: ([^ ]*)")
     # sigh... STRING(STRIP is to workaround regexp bug in cmake

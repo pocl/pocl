@@ -459,8 +459,8 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   if (!Device)
     Device = Command->device;
 
-  char* Save;
-  sanitize_builtin_kernel_name(Kernel, &Save);
+  char *Save;
+  pocl_sanitize_builtin_kernel_name(Kernel, &Save);
 
   POCL_LOCK(Dev->tce_compile_lock);
   int Error = pocl_llvm_generate_workgroup_function(
@@ -513,7 +513,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     }
   }
 
-  restore_builtin_kernel_name(Kernel, Save);
+  pocl_restore_builtin_kernel_name(Kernel, Save);
 
   POCL_UNLOCK(Dev->tce_compile_lock);
 }
@@ -1099,7 +1099,7 @@ static void tce_push_command(_cl_command_node *node) {
 }
 
 void pocl_tce_submit(_cl_command_node *node, cl_command_queue cq) {
-  cl_event e = node->event;
+  cl_event e = node->sync.event.event;
   assert(e->data == NULL);
 
   pocl_tce_event_data_t *e_d = NULL;
@@ -1110,12 +1110,12 @@ void pocl_tce_submit(_cl_command_node *node, cl_command_queue cq) {
   e->data = (void *)e_d;
 
   node->ready = 1;
-  if (pocl_command_is_ready(node->event)) {
-    pocl_update_event_submitted(node->event);
+  if (pocl_command_is_ready(node->sync.event.event)) {
+    pocl_update_event_submitted(node->sync.event.event);
     tce_push_command(node);
   }
 
-  POCL_UNLOCK_OBJ(node->event);
+  POCL_UNLOCK_OBJ(node->sync.event.event);
   return;
 }
 
@@ -1158,7 +1158,7 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready(node->event)) {
+  if (pocl_command_is_ready(node->sync.event.event)) {
     assert(event->status == CL_QUEUED);
     pocl_update_event_submitted(event);
     tce_push_command(node);
@@ -1218,8 +1218,8 @@ void *pocl_tce_driver_thread(void *cldev) {
       DL_DELETE(d->work_queue, cmd);
       POCL_FAST_UNLOCK(d->wq_lock);
 
-      assert(pocl_command_is_ready(cmd->event));
-      assert(cmd->event->status == CL_SUBMITTED);
+      assert(pocl_command_is_ready(cmd->sync.event.event));
+      assert(cmd->sync.event.event->status == CL_SUBMITTED);
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         pocl_tce_compile_kernel(cmd, cmd->command.run.kernel, cmd->device, 1);

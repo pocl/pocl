@@ -372,6 +372,17 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO_ARRAY (cl_name_version,
                                device->num_opencl_features_with_version,
                                device->opencl_features_with_version);
+
+  /** cl_khr_command_buffer queries **/
+  case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
+    POCL_RETURN_GETINFO (
+        cl_device_command_buffer_capabilities_khr,
+        CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+            | CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
+            | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR);
+
+  case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
+    POCL_RETURN_GETINFO (cl_command_queue_properties, 0);
   }
 
   if(device->ops->get_device_info_ext != NULL) {

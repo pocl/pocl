@@ -333,16 +333,8 @@ main(int argc, char **argv)
   if (err != CL_SUCCESS)
     {
       printf ("Compilation failed\n");
-      char build_log[4096];
-      size_t actual_size = 0;
-      err = clGetProgramBuildInfo (program, device_ids[opencl_device_id],
-                                   CL_PROGRAM_BUILD_LOG, 4095, build_log,
-                                   &actual_size);
-      if (err == CL_SUCCESS)
-        {
-          build_log[actual_size] = 0;
-          printf ("Error log: \n\n%s\n", build_log);
-        }
+      poclu_show_program_build_log (program);
+      CHECK_OPENCL_ERROR_IN ("clBuildProgram");
     }
 
   size_t binary_sizes;

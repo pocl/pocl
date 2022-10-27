@@ -146,6 +146,8 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_cl.h" "pocl_util.h" "pocl_util.c"
                    "pocl_image_util.c" "pocl_image_util.h"
                    "pocl_img_buf_cpy.c"
+                   "pocl_fill_memobj.c"
+                   "pocl_ndrange_kernel.c"
                    "pocl_icd.h" "pocl_llvm.h"
                    "pocl_tracing.h" "pocl_tracing.c"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
@@ -157,7 +159,23 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
                    "clSetDefaultDeviceCommandQueue.c"
-                   "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c")
+                   "pocl_binary.c" "pocl_opengl.c" "pocl_cq_profiling.c"
+                   "clCommandBarrierWithWaitListKHR.c"
+                   "clCommandCopyBufferKHR.c"
+                   "clCommandCopyBufferRectKHR.c"
+                   "clCommandCopyBufferToImageKHR.c"
+                   "clCommandCopyImageKHR.c"
+                   "clCommandCopyImageToBufferKHR.c"
+                   "clCommandFillBufferKHR.c"
+                   "clCommandFillImageKHR.c"
+                   "clCommandNDRangeKernelKHR.c"
+                   "clCreateCommandBufferKHR.c"
+                   "clEnqueueCommandBufferKHR.c"
+                   "clFinalizeCommandBufferKHR.c"
+                   "clGetCommandBufferInfoKHR.c"
+                   "clReleaseCommandBufferKHR.c"
+                   "clRetainCommandBufferKHR.c"
+)
 
 if(ANDROID)
   list(APPEND POCL_LIB_SOURCES "pocl_mkstemp.c")
@@ -246,6 +264,10 @@ endif()
 # -lrt is required for glibc < 2.17
 if(HAVE_CLOCK_GETTIME AND CMAKE_SYSTEM_NAME MATCHES "Linux")
   list(APPEND POCL_PRIVATE_LINK_LIST "rt")
+endif()
+
+if(HAVE_64BIT_ATOMICS_WITH_LIB)
+  list(APPEND POCL_PRIVATE_LINK_LIST "atomic")
 endif()
 
 list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})

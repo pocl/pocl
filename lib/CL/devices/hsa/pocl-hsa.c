@@ -1513,19 +1513,20 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   PTHREAD_CHECK (pthread_mutex_lock (&d->list_mutex));
 
   node->ready = 1;
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
-      PN_ADD(d->ready_list, node->event);
+      pocl_update_event_submitted (node->sync.event.event);
+      PN_ADD (d->ready_list, node->sync.event.event);
       added_to_readylist = 1;
     }
   else
-    PN_ADD(d->wait_list, node->event);
+    PN_ADD (d->wait_list, node->sync.event.event);
 
-  POCL_MSG_PRINT_INFO("After Event %" PRIu64 " submit: WL : %li, RL: %li\n",
-                      node->event->id, d->wait_list_size, d->ready_list_size);
+  POCL_MSG_PRINT_INFO ("After Event %" PRIu64 " submit: WL : %li, RL: %li\n",
+                       node->sync.event.event->id, d->wait_list_size,
+                       d->ready_list_size);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
 
   PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
 

@@ -63,8 +63,9 @@ typedef pthread_t pocl_thread_t;
 #  include "pocl_icd.h"
 #endif
 
-#include <CL/cl_gl.h>
 #include <CL/cl_egl.h>
+#include <CL/cl_ext.h>
+#include <CL/cl_gl.h>
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -77,17 +78,13 @@ typedef pthread_t pocl_thread_t;
 #if defined(__GNUC__) || defined(__clang__)
 
 /* These return the new value. */
-/* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
-#define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
-#define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  __sync_val_compare_and_swap (ptr, oldval, newval)
+/* See: https://gcc.gnu.org/onlinedocs/gcc-4.7.4/gcc/_005f_005fatomic-Builtins.html */
+#define POCL_ATOMIC_INC(x) __atomic_add_fetch (&x, 1, __ATOMIC_SEQ_CST)
+#define POCL_ATOMIC_DEC(x) __atomic_sub_fetch (&x, 1, __ATOMIC_SEQ_CST)
 
 #elif defined(_WIN32)
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  InterlockedCompareExchange64 (ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif
@@ -418,7 +415,7 @@ struct pocl_device_ops {
 
   /* submit gives the command for the device. The command may be left in the cq
      or stored to the device driver owning the cq. submit is called
-     with node->event locked, and must return with it unlocked. */
+     with node->sync.event.event locked, and must return with it unlocked. */
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
   /* join is called by clFinish and this function blocks until all the enqueued
@@ -822,6 +819,15 @@ struct pocl_device_ops {
    * the GL context described in properties. */
   cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
                                   const cl_context_properties *properties);
+
+  /* cl_khr_command_buffer extension */
+  cl_int (*create_finalized_command_buffer) (
+      cl_device_id device, cl_command_buffer_khr command_buffer);
+
+  cl_int (*free_command_buffer) (cl_device_id device,
+                                 cl_command_buffer_khr command_buffer);
+
+  cl_int (*run_command_buffer) (void *data, cl_command_buffer_khr cmd);
 };
 
 typedef struct pocl_global_mem_t {
@@ -1220,6 +1226,39 @@ struct _cl_command_queue {
   void *data;
 };
 
+struct _cl_command_buffer_khr
+{
+  POCL_ICD_OBJECT;
+  POCL_OBJECT;
+  POCL_FAST_LOCK_T mutex;
+
+  /* Queues that this command buffer was created for */
+  cl_uint num_queues;
+  cl_command_queue *queues;
+
+  /* List of flags that this command buffer was created with */
+  cl_uint num_properties;
+  cl_command_buffer_properties_khr *properties;
+
+  /* recording / ready / pending (executing) / invalid */
+  cl_command_buffer_state_khr state;
+  /* Number of currently in-flight instances of this command buffer */
+  cl_uint pending;
+
+  /* Number of currently allocated sync points in this command buffer.
+   * Used for generating the next sync point id and for validating sync point
+   * wait lists when recording commands. */
+  cl_uint num_syncpoints;
+
+  _cl_command_node *cmds;
+};
+
+struct _cl_mutable_command_khr
+{
+  /* Unused in cl_khr_command_buffer but required in public API and used by
+   * follow-up extensions. */
+};
+
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \
   do                                                                          \
     {                                                                         \
@@ -1488,6 +1527,12 @@ struct _cl_program {
   /* Store SPIR-V binary from clCreateProgramWithIL() */
   char *program_il;
   size_t program_il_size;
+  /* for SPIR-V store also specialization constants */
+  size_t num_spec_consts;
+  cl_uint *spec_const_ids;
+  cl_uint *spec_const_sizes;
+  uint64_t *spec_const_values;
+  char *spec_const_is_set;
 };
 
 struct _cl_kernel {
