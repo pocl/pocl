@@ -456,11 +456,11 @@ public:
           << ";\n";
 
       out << "\tchar* kernargs = (char*)kernel_command.args;\n";
-      out << "\tchar* temp = 0;\n\tuint32_t *tmp = 0;\n";
+      out << "\tchar* temp = 0;\n\t__global__ uint32_t *tmp = 0;\n";
       for (size_t i = 0; i < gmem_count; ++i) {
         out << "\ttemp = kernargs + " << std::dec << gmem_ptr_positions[i]
             << ";\n";
-        out << "\ttmp = (uint32_t*)temp;\n";
+        out << "\ttmp = (__global__ uint32_t*)temp;\n";
         out << "\t*tmp = (uint32_t)&buffer_" << std::hex << gmem_startaddrs[i]
             << "[0]";
         out << ";" << std::endl;
