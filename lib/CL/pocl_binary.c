@@ -224,7 +224,7 @@ pocl_binary_get_device_id(cl_device_id device)
   /* FNV-1A with whatever device returns
    * as its build hash string */
   uint64_t result = FNV_OFFSET;
-  const char *dev_hash = device->ops->build_hash(device);
+  char *dev_hash = device->ops->build_hash(device);
 
   int i, length = strlen(dev_hash);
   for (i=0; i<length; i++)
@@ -232,7 +232,7 @@ pocl_binary_get_device_id(cl_device_id device)
       result *= FNV_PRIME;
       result ^= dev_hash[i];
     }
-  //free(dev_hash);
+  free(dev_hash);
 
   return result;
 }
