@@ -36,7 +36,7 @@ fi
 echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 echo "Using ALMAIF0 params: $POCL_ALMAIF0_PARAMETERS"
 
-if [ "$1" = "--pynq" ]
+if command -v pynq &> /dev/null
 then
   PYNQ_AVAILABLE=1
 fi
@@ -44,8 +44,6 @@ fi
 # Preliminary checks only
 if ! [ -z ${PYNQ_AVAILABLE} ]
 then
-  echo "Running Almaif tests on PYNQ with different TTA configurations"
-
   declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
         "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
   #Sanity check to ensure everything has been moved correctly to the FPGA device
