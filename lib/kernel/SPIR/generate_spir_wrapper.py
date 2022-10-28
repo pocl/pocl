@@ -767,11 +767,16 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 
 		####### generate function body
 
+		if SPIR_CALLING_ABI:
+			func_attr = "spir_func"
+		else:
+			func_attr = ""
+
 		if retval_alloca_inst:
 			decl_ret_type = 'void'
 		else:
 			decl_ret_type = coerced_ret_type
-		print("declare %s %s(%s) local_unnamed_addr #0" % (decl_ret_type, ocl_mangled_name, decl_args))
+		print("declare %s %s %s(%s) local_unnamed_addr #0" % (func_attr, decl_ret_type, ocl_mangled_name, decl_args))
 		print("")
 		print("define spir_func %s %s(%s) local_unnamed_addr #0 {" % (ret_type_ext + ret_type, spir_mangled_name, caller_args))
 
@@ -780,11 +785,11 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 				print(cast)
 
 		if ret_type == 'void':
-			print("  tail call void %s(%s)" % (ocl_mangled_name, callee_args))
+			print("  tail call %s void %s(%s)" % (func_attr, ocl_mangled_name, callee_args))
 			print("  ret void" )
 		else:
 			if ret_type != coerced_ret_type:
-				print("  %%coerced_ret = call %s %s(%s)" % (coerced_ret_type, ocl_mangled_name, callee_args))
+				print("  %%coerced_ret = call %s %s %s(%s)" % (func_attr, coerced_ret_type, ocl_mangled_name, callee_args))
 				if ret_type.startswith("<3"):
 					four_vec = "<4" + ret_type[2:]
 					print("  %%bc_ret = bitcast %s %%coerced_ret to %s" % (coerced_ret_type, four_vec))
@@ -794,13 +799,13 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 
 				print("  ret %s %%final_ret" % ret_type)
 			elif ARM_CALLING_ABI and (ret_type != sret_ret_type):
-				print("  call void %s(%s)" % (ocl_mangled_name, callee_args))
+				print("  call %s void %s(%s)" % (func_attr, ocl_mangled_name, callee_args))
 				# add load from alloca
 				print("  %%%u = load %s, %s* %s, %s" % (llvm_i, ret_type, ret_type, retval_alloca_inst, retval_align))
 				print("  ret %s %%%u" % (ret_type, llvm_i))
 
 			else:
-				print("  %%call = tail call %s %s(%s)" % (ret_type, ocl_mangled_name, callee_args))
+				print("  %%call = tail call %s %s %s(%s)" % (func_attr, ret_type, ocl_mangled_name, callee_args))
 				print("  ret %s %%call" % ret_type)
 		print("}\n\n")
 
@@ -1300,7 +1305,7 @@ for f in SVM_ATOMICS_FLAGS:
 
 print("""
 
-attributes #0 = { nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "denorms-are-zero"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
+attributes #0 = { alwaysinline nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "denorms-are-zero"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 
 !opencl.ocl.version = !{!0}
 !opencl.spir.version = !{!0}
@@ -1308,7 +1313,7 @@ attributes #0 = { nounwind "correctly-rounded-divide-sqrt-fp-math"="false" "deno
 !llvm.module.flags = !{!2, !3}
 
 !0 = !{i32 1, i32 2}
-!1 = !{!"clang version 6.0.0"}
+!1 = !{!"clang version 12.0.0"}
 !2 = !{i32 1, !"wchar_size", i32 4}
 !3 = !{i32 7, !"PIC Level", i32 2}
 
