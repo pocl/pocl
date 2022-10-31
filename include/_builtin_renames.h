@@ -945,17 +945,17 @@
 #define atomic_or      _cl_atomic_or
 #define atomic_xor     _cl_atomic_xor
 
-#define atom_add     _cl_atomic_add
-#define atom_sub     _cl_atomic_sub
-#define atom_xchg    _cl_atomic_xchg
-#define atom_inc     _cl_atomic_inc
-#define atom_dec     _cl_atomic_dec
-#define atom_cmpxchg _cl_atomic_cmpxchg
-#define atom_min     _cl_atomic_min
-#define atom_max     _cl_atomic_max
-#define atom_and     _cl_atomic_and
-#define atom_or      _cl_atomic_or
-#define atom_xor     _cl_atomic_xor
+#define atom_add     _cl_atom_add
+#define atom_sub     _cl_atom_sub
+#define atom_xchg    _cl_atom_xchg
+#define atom_inc     _cl_atom_inc
+#define atom_dec     _cl_atom_dec
+#define atom_cmpxchg _cl_atom_cmpxchg
+#define atom_min     _cl_atom_min
+#define atom_max     _cl_atom_max
+#define atom_and     _cl_atom_and
+#define atom_or      _cl_atom_or
+#define atom_xor     _cl_atom_xor
 
 #define  atomic_init    _cl_atomic_init
 #define  atomic_flag_test_and_set_explicit    _cl_atomic_flag_test_and_set_explicit
