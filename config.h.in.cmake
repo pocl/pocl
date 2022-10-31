@@ -237,6 +237,8 @@
 
 #define TCE_DEVICE_EXTENSIONS "@TCE_DEVICE_EXTENSIONS@"
 
+#define OACC_EXECUTABLE "@TCECC@"
+
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
