@@ -182,6 +182,26 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
         std::cout << "UNKNOWN opencl metadata class for: " << meta_name
                   << std::endl;
     }
+
+#ifndef LLVM_OLDER_THAN_10_0
+    bool has_name_metadata = true;
+    if ((kernel_meta->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME) == 0) {
+      for (unsigned j = 0; j < arg_num; ++j) {
+        struct pocl_argument_info *current_arg = &kernel_meta->arg_info[j];
+        Argument* Arg = Kernel->getArg(j);
+        if (Arg->hasName()) {
+          const char *ArgName = Arg->getName().data();
+          current_arg->name = strdup(ArgName);
+        } else {
+          has_name_metadata = false;
+          break;
+        }
+      }
+      if (has_name_metadata)
+        kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
+    }
+#endif
+
   }
   return 0;
 }

@@ -409,7 +409,15 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
       BUFFER_STORE(ai->type_qualifier, cl_kernel_arg_type_qualifier);
       BUFFER_STORE(ai->type, uint32_t);
       BUFFER_STORE (ai->type_size, uint32_t);
-      BUFFER_STORE_STR(ai->name);
+      if (meta->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME)
+        BUFFER_STORE_STR(ai->name);
+      else
+      {
+        char temp[2];
+        temp[0] = 'a' + i;
+        temp[1] = 0;
+        BUFFER_STORE_STR(temp);
+      }
       if (ai->type_name)
         BUFFER_STORE_STR(ai->type_name);
       else
