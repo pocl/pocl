@@ -132,7 +132,7 @@ TRIPLE_ARG_I = [
 	"bitselect", "clamp", "mad_hi", "mad_sat"
 ]
 
-OLD_ATOMICS_INT_ONLY = [
+OLD_ATOMICS_INT32_ONLY = [
 	"atomic_add",
 	"atomic_sub",
 	"atomic_or",
@@ -140,6 +140,16 @@ OLD_ATOMICS_INT_ONLY = [
 	"atomic_and",
 	"atomic_min",
 	"atomic_max",
+]
+
+OLD_ATOMICS_INT64_ONLY = [
+	"atom_add",
+	"atom_sub",
+	"atom_or",
+	"atom_xor",
+	"atom_and",
+	"atom_min",
+	"atom_max",
 ]
 
 
@@ -622,7 +632,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		addr_spaces = ["none"]
 		arg_addr_spaces = multiAS
 	else:
-		if name.startswith("atomic"): # TODO
+		if name.startswith("atom"): # TODO
 			addr_spaces = ["global", "local"]  # , "generic"]
 		elif name.count("image")>0 or name.startswith("prefetch"):
 			addr_spaces = ["global"]
@@ -938,6 +948,7 @@ for llvm_type in ["float", "double"]:
 		arg_Pi = 'Pi'
 		ret_type = llvm_type
 		rel_rettype = 'i32'
+		i32_rettype = 'i32'
 		novec_type = arg_f
 		novec_type_i = arg_i
 		arg_inv = INVERT_SIGN[arg_li]
@@ -952,6 +963,7 @@ for llvm_type in ["float", "double"]:
 			arg_inv = "Dv" + s + "_"+arg_inv
 			arg_lu = "Dv" + s + "_"+arg_lu
 			ret_type = "<" + s + " x " + llvm_type + ">"
+			i32_rettype = "<" + s + " x i32>"
 			if llvm_type == "float":
 				rel_rettype = "<" + s + " x i32>"
 			else:
@@ -978,7 +990,7 @@ for llvm_type in ["float", "double"]:
 			generate_function("step", ret_type, '', False, novec_type, arg_f)
 
 		# math funcs with other / special signatures
-		generate_function("ilogb", rel_rettype, '', False, arg_f)
+		generate_function("ilogb", i32_rettype, '', False, arg_f)
 
 		generate_function("ldexp", ret_type, '', False, arg_f, arg_i)
 		generate_function("pown", ret_type, '', False, arg_f, arg_i)
@@ -1030,14 +1042,14 @@ for W in ["1", "2","3","4"]:
 	generate_function("distance", "double", '', False, arg_d, arg_d)
 	generate_function("length", "float", '', False, arg_f)
 	generate_function("length", "double", '', False, arg_d)
-	generate_function("normalize", "float", '', False, arg_f)
-	generate_function("normalize", "double", '', False, arg_d)
+	generate_function("normalize", SIG_TO_LLVM_TYPE_MAP[arg_f], '', False, arg_f)
+	generate_function("normalize", SIG_TO_LLVM_TYPE_MAP[arg_d], '', False, arg_d)
 	generate_function("fast_distance", "float", '', False, arg_f, arg_f)
 	generate_function("fast_distance", "double", '', False, arg_d, arg_d)
 	generate_function("fast_length", "float", '', False, arg_f)
 	generate_function("fast_length", "double", '', False, arg_d)
-	generate_function("fast_normalize", "float", '', False, arg_f)
-	generate_function("fast_normalize", "double", '', False, arg_d)
+	generate_function("fast_normalize", SIG_TO_LLVM_TYPE_MAP[arg_f], '', False, arg_f)
+	generate_function("fast_normalize", SIG_TO_LLVM_TYPE_MAP[arg_d], '', False, arg_d)
 
 # upsample has special arguments
 UPSAMPLE_1ST_ARG = {
@@ -1258,16 +1270,26 @@ for mang_type in ['i', 'j', "l", "m"]:
 		generate_function(f, ret_type, ret_ext, True, 'PVA'+mang_type, mang_type)
 		generate_function(f+"_explicit", ret_type, ret_ext, True, 'PVA'+mang_type, mang_type, "12memory_order")
 		generate_function(f+"_explicit", ret_type, ret_ext, True, 'PVA'+mang_type, mang_type, "12memory_order", "12memory_scope")
-	for f in OLD_ATOMICS_INT_ONLY:
-		generate_function(f, ret_type, ret_ext, True, 'PV'+mang_type, mang_type)
-	# dec, inc take only 1 argument
-	generate_function("atomic_inc", ret_type, ret_ext, True, 'PV'+mang_type)
-	generate_function("atomic_dec", ret_type, ret_ext, True, 'PV'+mang_type)
+	if mang_type in ['i', 'j']:
+		for f in OLD_ATOMICS_INT32_ONLY:
+			generate_function(f, ret_type, ret_ext, True, 'PV'+mang_type, mang_type)
+		# dec, inc take only 1 argument
+		generate_function("atomic_inc", ret_type, ret_ext, True, 'PV'+mang_type)
+		generate_function("atomic_dec", ret_type, ret_ext, True, 'PV'+mang_type)
+	if mang_type in ['l', 'm']:
+		for f in OLD_ATOMICS_INT64_ONLY:
+			generate_function(f, ret_type, ret_ext, True, 'PV'+mang_type, mang_type)
+		# dec, inc take only 1 argument
+		generate_function("atom_inc", ret_type, ret_ext, True, 'PV'+mang_type)
+		generate_function("atom_dec", ret_type, ret_ext, True, 'PV'+mang_type)
 
-for mang_type in ['i', 'j', "l", "m", "f", "d"]:
+for mang_type in ['i', 'j', "f", ]:
 	generate_function("atomic_xchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
 	generate_function("atomic_cmpxchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, mang_type)
 
+for mang_type in ["l", "m", "d"]:
+	generate_function("atom_xchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type)
+	generate_function("atom_cmpxchg", SIG_TO_LLVM_TYPE_MAP[mang_type], LLVM_TYPE_EXT_MAP[mang_type], True, 'PV'+mang_type, mang_type, mang_type)
 
 
 def gen_three_variants(f, ret_type, ret_ext, AS, args, orders):
