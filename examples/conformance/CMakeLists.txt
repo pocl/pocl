@@ -186,10 +186,19 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_write_async"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_read_array_barrier"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_array_barrier_int  buffer_read_array_barrier_uint  buffer_read_array_barrier_long  buffer_read_array_barrier_ulong  buffer_read_array_barrier_short  buffer_read_array_barrier_ushort  buffer_read_array_barrier_char  buffer_read_array_barrier_uchar  buffer_read_array_barrier_float)
 
+if(CL_DISABLE_HALF)
+  unset(HALF_READ)
+  unset(HALF_WRITE)
+else()
+  set(HALF_READ buffer_read_half)
+  set(HALF_WRITE buffer_write_half)
+endif()
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_read"
-         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_int  buffer_read_uint  buffer_read_long  buffer_read_ulong  buffer_read_short  buffer_read_ushort  buffer_read_float  buffer_read_half  buffer_read_char  buffer_read_uchar  buffer_read_struct  buffer_read_random_size)
+         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_int  buffer_read_uint  buffer_read_long  buffer_read_ulong  buffer_read_short  buffer_read_ushort  buffer_read_float  buffer_read_char  buffer_read_uchar  buffer_read_struct  buffer_read_random_size ${HALF_READ})
+
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_write"
-         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_write_int  buffer_write_uint  buffer_write_short  buffer_write_ushort  buffer_write_char  buffer_write_uchar  buffer_write_float  buffer_write_half  buffer_write_long  buffer_write_ulong  buffer_write_struct)
+         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_write_int  buffer_write_uint  buffer_write_short  buffer_write_ushort  buffer_write_char  buffer_write_uchar  buffer_write_float  buffer_write_long  buffer_write_ulong  buffer_write_struct ${HALF_WRITE})
+
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_fill"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS}   buffer_fill_int  buffer_fill_uint  buffer_fill_short  buffer_fill_ushort  buffer_fill_char  buffer_fill_uchar  buffer_fill_long  buffer_fill_ulong  buffer_fill_float  buffer_fill_struct)
 
@@ -579,21 +588,34 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_address_space"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_geometrics"
          COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" ${EXTRA_ARGS} )
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_1"
-         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vload_half vloada_half vstore_half)
+if(CL_DISABLE_HALF)
+  unset(OCL_FULL_TESTS_FP16)
+  unset(OCL_MINI_TESTS_FP16)
+else()
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_1"
+           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vload_half vloada_half vstore_half)
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_2"
-         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half vstore_half_rte vstorea_half_rte)
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_2"
+           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half vstore_half_rte vstorea_half_rte)
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_3"
-         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstore_half_rtz vstore_half_rtn vstore_half_rtp)
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_3"
+           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstore_half_rtz vstore_half_rtn vstore_half_rtp)
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_4"
-         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_4"
+           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_mini_half"
-         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} -w)
 
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_mini_half"
+           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} -w)
+  set(OCL_FULL_TESTS_FP16
+      "${TS_NAME}${TS_SUFFIX}_half_1"
+      "${TS_NAME}${TS_SUFFIX}_half_2"
+      "${TS_NAME}${TS_SUFFIX}_half_3"
+      "${TS_NAME}${TS_SUFFIX}_half_4")
+  set(OCL_MINI_TESTS_FP16
+      "${TS_NAME}${TS_SUFFIX}_mini_half")
+
+endif()
 
 #***************************************************************************
 
@@ -1030,15 +1052,15 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_3"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_4"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_constant_true_simple  op_constant_false_simple  op_constant_int_simple  op_constant_uint_simple  op_constant_char_simple  op_constant_uchar_simple  op_constant_ushort_simple  op_constant_long_simple  op_constant_ulong_simple  op_constant_short_simple  op_constant_float_simple  op_constant_double_simple  op_constant_int4_simple  op_constant_int3_simple  op_constant_struct_int_float_simple  op_constant_struct_int_char_simple  op_constant_struct_struct_simple  op_constant_half_simple
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_constant_true_simple  op_constant_false_simple  op_constant_int_simple  op_constant_uint_simple  op_constant_char_simple  op_constant_uchar_simple  op_constant_ushort_simple  op_constant_long_simple  op_constant_ulong_simple  op_constant_short_simple  op_constant_float_simple  op_constant_double_simple  op_constant_int4_simple  op_constant_int3_simple  op_constant_struct_int_float_simple  op_constant_struct_int_char_simple  op_constant_struct_struct_simple
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_5"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_copy_int_simple  op_copy_uint_simple  op_copy_char_simple  op_copy_uchar_simple  op_copy_ushort_simple  op_copy_long_simple  op_copy_ulong_simple  op_copy_short_simple  op_copy_float_simple  op_copy_double_simple  op_copy_int4_simple  op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple  op_copy_half_simple
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_copy_int_simple  op_copy_uint_simple  op_copy_char_simple  op_copy_uchar_simple  op_copy_ushort_simple  op_copy_long_simple  op_copy_ulong_simple  op_copy_short_simple  op_copy_float_simple  op_copy_double_simple  op_copy_int4_simple  op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_6"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_fadd_float_regular  op_fsub_float_regular  op_fmul_float_regular  op_fdiv_float_regular  op_frem_float_regular  op_fmod_float_regular  op_fadd_float_fast  op_fsub_float_fast  op_fmul_float_fast  op_fdiv_float_fast  op_frem_float_fast  op_fmod_float_fast  op_fadd_double_regular  op_fsub_double_regular  op_fmul_double_regular  op_fdiv_double_regular  op_frem_double_regular  op_fmod_double_regular  op_fadd_double_fast  op_fsub_double_fast  op_fmul_double_fast  op_fdiv_double_fast  op_frem_double_fast  op_fmod_double_fast  op_fadd_float4_regular  op_fsub_float4_regular  op_fmul_float4_regular  op_fdiv_float4_regular  op_frem_float4_regular  op_fmod_float4_regular  op_fadd_float4_fast  op_fsub_float4_fast  op_fmul_float4_fast  op_fdiv_float4_fast  op_frem_float4_fast  op_fmod_float4_fast  op_fadd_double2_regular  op_fsub_double2_regular  op_fmul_double2_regular  op_fdiv_double2_regular  op_frem_double2_regular  op_fmod_double2_regular  op_fadd_double2_fast  op_fsub_double2_fast  op_fmul_double2_fast  op_fdiv_double2_fast  op_frem_double2_fast  op_fmod_double2_fast  op_fadd_half_regular  op_fsub_half_regular  op_fmul_half_regular  op_fdiv_half_regular  op_frem_half_regular  op_fmod_half_regular  op_fadd_half_fast  op_fsub_half_fast  op_fmul_half_fast  op_fdiv_half_fast  op_frem_half_fast  op_fmod_half_fast
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_fadd_float_regular  op_fsub_float_regular  op_fmul_float_regular  op_fdiv_float_regular  op_frem_float_regular  op_fmod_float_regular  op_fadd_float_fast  op_fsub_float_fast  op_fmul_float_fast  op_fdiv_float_fast  op_frem_float_fast  op_fmod_float_fast  op_fadd_double_regular  op_fsub_double_regular  op_fmul_double_regular  op_fdiv_double_regular  op_frem_double_regular  op_fmod_double_regular  op_fadd_double_fast  op_fsub_double_fast  op_fmul_double_fast  op_fdiv_double_fast  op_frem_double_fast  op_fmod_double_fast  op_fadd_float4_regular  op_fsub_float4_regular  op_fmul_float4_regular  op_fdiv_float4_regular  op_frem_float4_regular  op_fmod_float4_regular  op_fadd_float4_fast  op_fsub_float4_fast  op_fmul_float4_fast  op_fdiv_float4_fast  op_frem_float4_fast  op_fmod_float4_fast  op_fadd_double2_regular  op_fsub_double2_regular  op_fmul_double2_regular  op_fdiv_double2_regular  op_frem_double2_regular  op_fmod_double2_regular  op_fadd_double2_fast  op_fsub_double2_fast  op_fmul_double2_fast  op_fdiv_double2_fast  op_frem_double2_fast  op_fmod_double2_fast
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_7"
@@ -1050,12 +1072,18 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_8"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_9"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}  op_selection_merge_if_none  op_selection_merge_if_flatten  op_selection_merge_if_dont_flatten  op_selection_merge_swith_none  op_selection_merge_swith_flatten  op_selection_merge_swith_dont_flatten  op_spec_constant_uint_simple  op_spec_constant_uchar_simple  op_spec_constant_ushort_simple  op_spec_constant_ulong_simple  op_spec_constant_float_simple  op_spec_constant_half_simple  ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple  op_spec_constant_false_simple
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}  op_selection_merge_if_none  op_selection_merge_if_flatten  op_selection_merge_if_dont_flatten  op_selection_merge_swith_none  op_selection_merge_swith_flatten  op_selection_merge_swith_dont_flatten  op_spec_constant_uint_simple  op_spec_constant_uchar_simple  op_spec_constant_ushort_simple  op_spec_constant_ulong_simple  op_spec_constant_float_simple   ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple  op_spec_constant_false_simple
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_0"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}  op_undef_true_simple  op_undef_false_simple  op_undef_int_simple  op_undef_uint_simple  op_undef_char_simple  op_undef_uchar_simple  op_undef_ushort_simple  op_undef_long_simple  op_undef_ulong_simple  op_undef_short_simple  op_undef_float_simple  op_undef_double_simple  op_undef_int4_simple  op_undef_int3_simple  op_undef_struct_int_float_simple  op_undef_struct_int_char_simple  op_undef_struct_struct_simple  op_undef_half_simple  op_vector_int4_extract  op_vector_float4_extract  op_vector_long2_extract  op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert  op_vector_float4_insert  op_vector_long2_insert  op_vector_double2_insert  op_vector_char16_insert  op_vector_times_scalar_float  op_vector_times_scalar_double
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}  op_undef_true_simple  op_undef_false_simple  op_undef_int_simple  op_undef_uint_simple  op_undef_char_simple  op_undef_uchar_simple  op_undef_ushort_simple  op_undef_long_simple  op_undef_ulong_simple  op_undef_short_simple  op_undef_float_simple  op_undef_double_simple  op_undef_int4_simple  op_undef_int3_simple  op_undef_struct_int_float_simple  op_undef_struct_int_char_simple  op_undef_struct_struct_simple   op_vector_int4_extract  op_vector_float4_extract  op_vector_long2_extract  op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert  op_vector_float4_insert  op_vector_long2_insert  op_vector_double2_insert  op_vector_char16_insert  op_vector_times_scalar_float  op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+
+if(NOT CL_DISABLE_HALF)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_half"
+        COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}   op_fadd_half_regular  op_fsub_half_regular  op_fmul_half_regular  op_fdiv_half_regular  op_frem_half_regular  op_fmod_half_regular  op_fadd_half_fast  op_fsub_half_fast  op_fmul_half_fast  op_fdiv_half_fast  op_frem_half_fast  op_fmod_half_fast op_constant_half_simple op_copy_half_simple  op_spec_constant_half_simple op_undef_half_simple
+        WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
+endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked  decorate_saturated_conversion_char   decorate_saturated_conversion_ushort  decorate_saturated_conversion_int  decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
@@ -1176,6 +1204,10 @@ if(HAVE_SPIRV_TOOLS)
     "${TS_NAME}${TS_SUFFIX}_spirv_new_7"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_8"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_9")
+  if(NOT CL_DISABLE_HALF)
+    list(APPEND OCL_30_TESTS_FULL
+      "${TS_NAME}${TS_SUFFIX}_spirv_new_half")
+  endif()
 endif()
 
 set(CTS_FULL_LIST
@@ -1307,10 +1339,7 @@ set(CTS_FULL_LIST
     "${TS_NAME}${TS_SUFFIX}_events_ooo"
     "${TS_NAME}${TS_SUFFIX}_events_other"
     "${TS_NAME}${TS_SUFFIX}_geometrics"
-    "${TS_NAME}${TS_SUFFIX}_half_1"
-    "${TS_NAME}${TS_SUFFIX}_half_2"
-    "${TS_NAME}${TS_SUFFIX}_half_3"
-    "${TS_NAME}${TS_SUFFIX}_half_4"
+    ${OCL_FULL_TESTS_FP16}
 
 
     "${TS_NAME}${TS_SUFFIX}_images_cl_copy_images"
@@ -1823,10 +1852,9 @@ set(CTS_MINI_LIST
     "${TS_NAME}${TS_SUFFIX}_thread_dimensions_full_3_im"
     "${TS_NAME}${TS_SUFFIX}_thread_dimensions_full_3_ex"
     "${TS_NAME}${TS_SUFFIX}_vecstep"
-
+    ${OCL_MINI_TESTS_FP16}
     ${OCL_30_TESTS_MINI}
 
-    "${TS_NAME}${TS_SUFFIX}_mini_half"
     "${TS_NAME}${TS_SUFFIX}_math_mini_add"
     "${TS_NAME}${TS_SUFFIX}_math_mini_assignment"
     "${TS_NAME}${TS_SUFFIX}_math_mini_cbrt"
@@ -2381,8 +2409,6 @@ set(CTS_MICRO_LIST
 
     "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_1"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_micro_3"
-
-    "${TS_NAME}${TS_SUFFIX}_mini_half"
 
     "${TS_NAME}${TS_SUFFIX}_select_micro_char_char"
     "${TS_NAME}${TS_SUFFIX}_select_micro_ushort_ushort"
