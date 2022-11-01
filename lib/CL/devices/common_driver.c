@@ -489,6 +489,9 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i,
   concated_spec_const_option[0] = 0;
   char program_bc_spirv[POCL_FILENAME_LENGTH];
   program_bc_spirv[0] = 0;
+  /* using --spirv-target-env=CL2.0 here would enable proper OpenCL 2.0
+   * atomics, unfortunately it also enables generic ptrs which PoCL doesn't
+   * support */
   char *args[8] = { LLVM_SPIRV,
                     concated_spec_const_option,
                     "-r", "-o",

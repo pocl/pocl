@@ -68,10 +68,7 @@ device-scope.
 #  undef T
 #endif
 
-
-
-
-// xchg is also supported for float as a special case
+// add & xchg is also supported for float & double as a special case
 __attribute__((overloadable))
 float atomic_xchg(volatile Q float *p, float val)
 {
@@ -79,7 +76,82 @@ float atomic_xchg(volatile Q float *p, float val)
   return as_float(retval);
 }
 
+__attribute__ ((overloadable)) float
+atomic_add (volatile Q float *p, float val)
+{
+  union
+  {
+    uint u32;
+    float f32;
+  } next, expected, current;
+  current.f32 = *p;
 
+  do
+    {
+      expected.f32 = current.f32;
+      next.f32 = expected.f32 + val;
+      current.u32
+          = atomic_cmpxchg ((volatile Q unsigned *)p, expected.u32, next.u32);
+    }
+  while (current.u32 != expected.u32);
+  return current.f32;
+}
+
+__attribute__ ((overloadable)) float
+atom_xchg (volatile Q float *p, float val)
+{
+  return atomic_xchg (p, val);
+}
+
+__attribute__ ((overloadable)) float
+atom_add (volatile Q float *p, float val)
+{
+  return atomic_add (p, val);
+}
+
+#ifdef cl_khr_int64_base_atomics
+
+__attribute__ ((overloadable)) double
+atomic_xchg (volatile Q double *p, double val)
+{
+  ulong retval = atomic_xchg ((volatile Q ulong *)p, as_ulong (val));
+  return as_double (retval);
+}
+
+__attribute__ ((overloadable)) double
+atomic_add (volatile Q double *p, double val)
+{
+  union
+  {
+    ulong u64;
+    double f64;
+  } next, expected, current;
+  current.f64 = *p;
+
+  do
+    {
+      expected.f64 = current.f64;
+      next.f64 = expected.f64 + val;
+      current.u64
+          = atomic_cmpxchg ((volatile Q ulong *)p, expected.u64, next.u64);
+    }
+  while (current.u64 != expected.u64);
+  return current.f64;
+}
+
+__attribute__ ((overloadable)) double
+atom_xchg (volatile Q double *p, double val)
+{
+  return atomic_xchg (p, val);
+}
+
+__attribute__ ((overloadable)) double
+atom_add (volatile Q double *p, double val)
+{
+  return atomic_add (p, val);
+}
+
+#endif
 
 #else
 
