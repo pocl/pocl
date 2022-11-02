@@ -708,8 +708,12 @@ if(NOT DEFINED DEFAULT_ENABLE_IPO)
 
   if(NOT CMAKE_VERSION VERSION_LESS "3.9")
 
-    include(CheckIPOSupported)
-    check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
+    if(DEVELOPER_MODE)
+      set(IPO 0)
+    else()
+      include(CheckIPOSupported)
+      check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
+    endif()
     set(DEFAULT_ENABLE_IPO ${IPO} CACHE BOOL "IPO" FORCE)
 
     message(STATUS "Compiler supports IPO: ${DEFAULT_ENABLE_IPO}")
