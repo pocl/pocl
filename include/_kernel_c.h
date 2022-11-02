@@ -109,13 +109,13 @@ typedef uint uint16 __attribute__((__ext_vector_type__(16)));
    it might produce invalid code at least with half vectors.
    Using the native 'half' type in OpenCL C mode works better. */
 typedef __fp16 half;
-#endif
 
 typedef half half2  __attribute__((__ext_vector_type__(2)));
 typedef half half3  __attribute__((__ext_vector_type__(3)));
 typedef half half4  __attribute__((__ext_vector_type__(4)));
 typedef half half8  __attribute__((__ext_vector_type__(8)));
 typedef half half16 __attribute__((__ext_vector_type__(16)));
+#endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
 typedef float float3  __attribute__((__ext_vector_type__(3)));
