@@ -965,9 +965,6 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_multiples"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
          COMMAND "${TS_BUILDDIR}/non_uniform_work_group/test_non_uniform_work_group" ${EXTRA_ARGS} )
 
-set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
-            PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
-
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_pipes"
          COMMAND "${TS_BUILDDIR}/pipes/test_pipes" ${EXTRA_ARGS} )
 
@@ -1509,6 +1506,8 @@ endforeach()
 
 set_property(TEST ${OCL_30_TESTS_FULL}
              APPEND PROPERTY LABELS "conformance_30_only")
+set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
 endfunction()
 
 add_cts_full_tests("conformance_suite_full_main" "_main")
@@ -1939,12 +1938,16 @@ foreach(CTSTEST IN LISTS CTS_MINI_LIST)
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 endforeach()
 
+set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
+
 endfunction()
 
 add_cts_mini_tests("conformance_suite_mini_main" "_main")
 
 set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_MINI_CACHE")
 file(MAKE_DIRECTORY "${CACHE_DIR}")
+
 
 add_cts_mini_tests("conformance_suite_mini_spirv" "_spirv"
                    "--compilation-mode" "spir-v"
@@ -2423,6 +2426,9 @@ foreach(CTSTEST IN LISTS CTS_MICRO_LIST)
     PROPERTY
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 endforeach()
+
+set_property(TEST "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
+             PROPERTY ENVIRONMENT "POCL_MEMORY_LIMIT=4")
 
 endfunction()
 
