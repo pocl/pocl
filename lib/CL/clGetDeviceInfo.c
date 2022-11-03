@@ -359,8 +359,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
                                device->ils_with_version);
 
   case CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION:
-    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
-                               device->num_builtin_kernels_with_version,
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version, device->num_builtin_kernels,
                                device->builtin_kernels_with_version);
 
   case CL_DEVICE_OPENCL_C_ALL_VERSIONS:

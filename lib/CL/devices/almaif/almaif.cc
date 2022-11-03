@@ -349,6 +349,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   dev->builtin_kernel_list = strdup(supportedList.c_str());
   dev->num_builtin_kernels = D->SupportedKernels.size();
+  pocl_setup_builtin_kernels_with_version(dev);
 
   if (!pocl_offline_compile) {
 

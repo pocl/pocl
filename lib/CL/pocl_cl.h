@@ -1095,8 +1095,7 @@ struct _cl_device_id {
 
   /* list of builtin kernels as in device->builtin_kernel_list,
    * but with their versions */
-  size_t num_builtin_kernels_with_version;
-  const cl_name_version *builtin_kernels_with_version;
+  cl_name_version *builtin_kernels_with_version;
 
   /* OpenCL C language versions supported by the device compiler */
   size_t num_opencl_c_with_version;

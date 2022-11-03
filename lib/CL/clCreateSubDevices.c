@@ -143,8 +143,15 @@ POname(clCreateSubDevices)(cl_device_id in_device,
 
        new_devs[i]->parent_device = in_device;
        if (in_device->builtin_kernel_list)
-         new_devs[i]->builtin_kernel_list
-             = strdup (in_device->builtin_kernel_list);
+         {
+           new_devs[i]->builtin_kernel_list
+               = strdup (in_device->builtin_kernel_list);
+           new_devs[i]->builtin_kernels_with_version = malloc (
+               in_device->num_builtin_kernels * sizeof (cl_name_version));
+           memcpy (new_devs[i]->builtin_kernels_with_version,
+                   in_device->builtin_kernels_with_version,
+                   in_device->num_builtin_kernels * sizeof (cl_name_version));
+         }
 
        new_devs[i]->max_sub_devices = new_devs[i]->max_compute_units
            = (properties[0] == CL_DEVICE_PARTITION_EQUALLY

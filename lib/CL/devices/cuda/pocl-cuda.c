@@ -502,6 +502,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
     }
 
+  pocl_setup_builtin_kernels_with_version (dev);
+
   dev->device_side_printf = 0;
 
   /* Create context */

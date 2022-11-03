@@ -1611,12 +1611,11 @@ pocl_init_default_device_infos (cl_device_id dev)
 
   if (dev->llvm_cpu != NULL)
     {
-      dev->builtin_kernel_list = strdup (
-      "pocl.add.i8;"
-      "org.khronos.openvx.scale_image.nn.u8;"
-      "org.khronos.openvx.scale_image.bl.u8"
-      "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32"
-      );
+      dev->builtin_kernel_list
+          = strdup ("pocl.add.i8;"
+                    "org.khronos.openvx.scale_image.nn.u8;"
+                    "org.khronos.openvx.scale_image.bl.u8;"
+                    "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32");
       dev->num_builtin_kernels = 4;
     }
 }
@@ -1847,5 +1846,46 @@ pocl_setup_features_with_version (cl_device_id dev)
 void
 pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 {
-  /* implementation should use pocl_BIDescriptors */
+  if (dev->num_builtin_kernels == 0)
+    return;
+
+  assert (dev->builtin_kernel_list != NULL);
+
+  dev->builtin_kernels_with_version
+      = malloc (dev->num_builtin_kernels * sizeof (cl_name_version));
+  assert (dev->builtin_kernels_with_version);
+
+  char *temp = strdup (dev->builtin_kernel_list);
+  char *token;
+  char *rest = temp;
+
+  unsigned i = 0;
+  while ((token = strtok_r (rest, ";", &rest)))
+    {
+      // The builtin kernel name stored here can only be the
+      // maximum of CL_NAME_VERSION_MAX_NAME_SIZE - 1.
+      if (strlen (token) >= CL_NAME_VERSION_MAX_NAME_SIZE)
+        {
+          POCL_MSG_WARN ("Built-in kernel name cannot fit in to the "
+                         "cl_name_version array. Length of built-in kernel "
+                         "name is %u, and the concatenated length is %u\n",
+                         strlen (token), CL_NAME_VERSION_MAX_NAME_SIZE - 1);
+          token[CL_NAME_VERSION_MAX_NAME_SIZE - 1] = '\0';
+        }
+      strncpy (dev->builtin_kernels_with_version[i].name, token,
+               CL_NAME_VERSION_MAX_NAME_SIZE);
+
+      /* proper versioning could use pocl_BIDescriptors.
+       * For now, hardcode the version to 1.2 */
+      dev->builtin_kernels_with_version[i].version = CL_MAKE_VERSION (1, 2, 0);
+      i++;
+    }
+  free (temp);
+
+  if (i != dev->num_builtin_kernels)
+    {
+      POCL_ABORT ("Builtin kernels with version list construction failed. "
+                  "There are %u built-in kernels, but only %u were found\n",
+                  dev->num_builtin_kernels, i);
+    }
 }
