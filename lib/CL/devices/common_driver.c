@@ -455,110 +455,129 @@ pocl_driver_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr,
 
 #ifdef ENABLE_LLVM
 
+#define MAX_SPEC_CONST_CMDLINE_LEN 8192
+#define MAX_SPEC_CONST_OPT_LEN 256
+
+/* load LLVM IR binary from disk, deletes existing in-memory IR */
+static int
+pocl_reload_program_bc (char *program_bc_path, cl_program program,
+                      cl_uint device_i)
+{
+  char *temp_binary = NULL;
+  uint64_t temp_size = 0;
+  int errcode = pocl_read_file (program_bc_path, &temp_binary, &temp_size);
+  if (errcode != 0 || temp_size == 0)
+    return -1;
+  if (program->binaries[device_i])
+    POCL_MEM_FREE (program->binaries[device_i]);
+  program->binaries[device_i] = temp_binary;
+  program->binary_sizes[device_i] = temp_size;
+  return 0;
+}
+
 /* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
  * to generate new LLVM bitcode from SPIR-V */
 static int
-pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
+pocl_regen_spirv_binary (cl_program program, cl_uint device_i,
+                         char *program_bc_path)
 {
 #ifdef LLVM_SPIRV
   int errcode = CL_SUCCESS;
 
   int spec_constants_changed = 0;
+  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
+  concated_spec_const_option[0] = 0;
+  char program_bc_spirv[POCL_FILENAME_LENGTH];
+  program_bc_spirv[0] = 0;
+  char *args[8] = { LLVM_SPIRV,
+                    concated_spec_const_option,
+                    "-r", "-o",
+                    program_bc_path,
+                    program_bc_spirv,
+                    NULL };
+  char **final_args = args;
+
+  pocl_cache_write_spirv (program_bc_spirv, (const char *)program->program_il,
+                          (uint64_t)program->program_il_size);
 
   for (unsigned i = 0; i < program->num_spec_consts; ++i)
     spec_constants_changed += program->spec_const_is_set[i];
 
   if (spec_constants_changed)
     {
-      char program_bc_spirv[POCL_FILENAME_LENGTH];
-      char program_bc_temp[POCL_FILENAME_LENGTH];
-      program_bc_temp[0] = 0;
-      program_bc_spirv[0] = 0;
-      pocl_cache_write_spirv (program_bc_spirv,
-                              (const char *)program->program_il,
-                              (uint64_t)program->program_il_size);
-      char concated_spec_const_option[8192];
       strcpy (concated_spec_const_option, "--spec-const=");
       for (unsigned i = 0; i < program->num_spec_consts; ++i)
         {
           if (program->spec_const_is_set[i])
             {
-              char opt[256];
-              snprintf (opt, 256, "%u:i%u:%zu ", program->spec_const_ids[i],
+              char opt[MAX_SPEC_CONST_OPT_LEN];
+              snprintf (opt, MAX_SPEC_CONST_OPT_LEN, "%u:i%u:%zu ",
+                        program->spec_const_ids[i],
                         program->spec_const_sizes[i] * 8,
                         program->spec_const_values[i]);
               strcat (concated_spec_const_option, opt);
             }
         }
-      pocl_cache_tempname (program_bc_temp, ".bc", NULL);
-
-      char *args[] = { LLVM_SPIRV,
-                       "-r",
-                       concated_spec_const_option,
-                       "-o",
-                       program_bc_temp,
-                       program_bc_spirv,
-                       NULL };
-
-      errcode = pocl_run_command (args);
-      POCL_GOTO_ERROR_ON (
-          (errcode != 0), CL_INVALID_VALUE,
-          "External command (llvm-spirv translator) failed!\n");
-
-      /* load LLVM SPIR binary. */
-      char *temp_binary = NULL;
-      uint64_t temp_size = 0;
-      errcode = pocl_read_file (program_bc_temp, &temp_binary, &temp_size);
-      POCL_GOTO_ERROR_ON ((errcode != 0 || temp_size == 0), CL_INVALID_VALUE,
-                          "Can't read llvm-spirv converted bitcode file\n");
-      if (program->binaries[device_i])
-        POCL_MEM_FREE(program->binaries[device_i]);
-      program->binaries[device_i] = temp_binary;
-      program->binary_sizes[device_i] = temp_size;
-
-    ERROR:
-      if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)
-          == 0)
-        {
-          if (program_bc_temp[0])
-            pocl_remove (program_bc_temp);
-          if (program_bc_spirv[0])
-            pocl_remove (program_bc_spirv);
-        }
-      return errcode;
     }
   else
     {
-      return CL_SUCCESS;
+      /* skip concated_spec_const_option */
+      args[0] = NULL;
+      args[1] = LLVM_SPIRV;
+      final_args = args + 1;
     }
+
+  errcode = pocl_run_command (final_args);
+  POCL_GOTO_ERROR_ON ((errcode != 0), CL_INVALID_VALUE,
+                      "External command (llvm-spirv translator) failed!\n");
+
+  POCL_GOTO_ERROR_ON (
+      (pocl_reload_program_bc (program_bc_path, program, device_i)),
+      CL_INVALID_VALUE, "Can't read llvm-spirv converted bitcode file\n");
+  return CL_SUCCESS;
+
+ERROR:
+  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
+    {
+      if (program_bc_spirv[0])
+        pocl_remove (program_bc_spirv);
+    }
+  return errcode;
 #else
-  // no llvm-spirv = there shouldn't be any spec consts
-  assert (program->num_spec_consts == 0);
-  return 0;
+  return -1;
 #endif
 }
 
-/* Converts SPIR to LLVM IR, and links it to pocl's kernel library. */
+/* Converts SPIR-V / SPIR to LLVM IR, and links it to pocl's kernel library */
 static int
-pocl_llvm_link_and_convert_spir (cl_program program, cl_uint device_i,
-                                 int link_program, int spir_build)
+pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
+                               int link_builtin_lib, int spir_build)
 {
   cl_device_id device = program->devices[device_i];
   int errcode;
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
-  /* SPIR-V was handled; bitcode is now either plain LLVM IR or SPIR IR */
-  int spir_binary
-      = bitcode_is_triple ((char *)program->binaries[device_i],
-                           program->binary_sizes[device_i], "spir");
-  if (spir_binary)
-    POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
-  else
-    POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
-                         device_i);
-
-  if (spir_binary)
+  if (program->binaries[device_i])
     {
-#ifdef ENABLE_SPIR
+      int spir_binary
+          = bitcode_is_triple ((char *)program->binaries[device_i],
+                               program->binary_sizes[device_i], "spir");
+      if (spir_binary)
+        {
+          POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
+          if (!spir_build)
+            POCL_MSG_WARN (
+                "SPIR binary provided, but no spir in build options\n");
+        }
+      else
+        POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
+                             device_i);
+    }
+
+  // SPIR-V requires special handling because of spec constants
+  if (program->program_il && program->program_il_size > 0)
+    {
+#ifdef ENABLE_SPIRV
       if (!strstr (device->extensions, "cl_khr_spir"))
         {
           APPEND_TO_BUILD_LOG_RET (CL_LINK_PROGRAM_FAILURE,
@@ -566,41 +585,105 @@ pocl_llvm_link_and_convert_spir (cl_program program, cl_uint device_i,
                                    "for device %s\n",
                                    device->short_name);
         }
-      if (!spir_build)
-        POCL_MSG_WARN ("SPIR binary provided, but no spir in build options\n");
 
-      /* LLVM IR binaries need to be regenerated from SPIR-V
-       * if Specialization Constants change. */
-      errcode = pocl_regen_spirv_binary (program, device_i);
+      /* the hash created here should now reflect the source (SPIR-V),
+       * PoCL build, LLVM version, the compiler options, the device's
+       * LLVM triple, and the Spec Constants */
+      errcode = pocl_cache_create_program_cachedir (
+          program, device_i, (char *)program->program_il,
+          program->program_il_size, program_bc_path);
       POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
-                            "Failed to generate SPIR from SPIR-V "
-                            "with specialization constants\n");
+                            "Failed to create cachedir for program.bc\n");
 
-      /* SPIR binaries need to be explicitly linked to the kernel
-       * library. For non-SPIR binaries this happens as part of build
-       * process when program.bc is generated. */
-      errcode = pocl_llvm_link_program (
-          program, device_i, 1, &program->binaries[device_i],
-          &program->binary_sizes[device_i], NULL, link_program, 1);
+      if (pocl_exists (program_bc_path))
+        {
+          POCL_MSG_PRINT_LLVM ("Found cached compiled SPIRV binary at %s, "
+                               "skipping compilation\n",
+                               program_bc_path);
+          POCL_RETURN_ERROR_ON (
+              (pocl_reload_program_bc (program_bc_path, program, device_i)),
+              CL_LINK_PROGRAM_FAILURE,
+              "Can't read llvm-spirv converted bitcode file\n");
 
-      POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
-                            "Failed to link SPIR program.bc\n");
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          return CL_SUCCESS;
+        }
+      else
+        {
+          POCL_MSG_PRINT_LLVM ("Cached compiled SPIRV binary not found, "
+                               "generating SPIR IR to %s\n",
+                               program_bc_path);
+
+          /* SPIR IR binaries need to be regenerated from SPIR-V
+           * if specialization constants change. */
+          errcode
+              = pocl_regen_spirv_binary (program, device_i, program_bc_path);
+          POCL_RETURN_ERROR_ON ((errcode != CL_SUCCESS),
+                                CL_LINK_PROGRAM_FAILURE,
+                                "Failed to generate SPIR from SPIR-V "
+                                "with specialization constants\n");
+
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          // can't return here yet, we need to also link the builtin library
+        }
+
 #else
       APPEND_TO_BUILD_LOG_RET (CL_LINK_PROGRAM_FAILURE,
-                               "SPIR support is not available"
+                               "SPIR-V support is not available"
                                "for device %s\n",
                                device->short_name);
 #endif
+      // target-specific IR binaries & SPIR (not SPIRV) binaries handled here
     }
+  else
+    {
+      /* the hash created here should now reflect the source (LLVM IR),
+       * PoCL build, LLVM version, the compiler options, the device's
+       * LLVM triple */
+      errcode = pocl_cache_create_program_cachedir (
+          program, device_i, (char *)program->binaries[device_i],
+          program->binary_sizes[device_i], program_bc_path);
+      POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                            "Failed to create cachedir for program.bc\n");
+
+      if (pocl_exists (program_bc_path))
+        {
+          POCL_MSG_PRINT_LLVM (
+              "Found cached binary at %s, skipping compilation\n",
+              program_bc_path);
+
+          POCL_RETURN_ERROR_ON (
+              (pocl_reload_program_bc (program_bc_path, program, device_i)),
+              CL_LINK_PROGRAM_FAILURE,
+              "Can't read llvm-spirv converted bitcode file\n");
+
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          return CL_SUCCESS;
+        }
+    }
+
+  /* convert module from SPIR to Target triple, and if requested
+   * link the resulting binary to the builtin library */
+  errcode = pocl_llvm_link_program (
+      program, device_i, 1, &program->binaries[device_i],
+      &program->binary_sizes[device_i], NULL, link_builtin_lib, CL_FALSE);
+  POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                        "Failed to link program.bc\n");
   return CL_SUCCESS;
 }
+
+
 #endif
 
 int
 pocl_driver_build_source (cl_program program, cl_uint device_i,
                           cl_uint num_input_headers,
                           const cl_program *input_headers,
-                          const char **header_include_names, int link_program)
+                          const char **header_include_names,
+                          int link_builtin_lib)
 {
   assert (program->devices[device_i]->compiler_available == CL_TRUE);
   assert (program->devices[device_i]->linker_available == CL_TRUE);
@@ -611,7 +694,7 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
   return pocl_llvm_build_program (program, device_i, num_input_headers,
                                   input_headers, header_include_names,
-                                  link_program);
+                                  link_builtin_lib);
 
 #else
   POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
@@ -621,7 +704,7 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
 int
 pocl_driver_build_binary (cl_program program, cl_uint device_i,
-                          int link_program, int spir_build)
+                          int link_builtin_lib, int spir_build)
 {
 
 #ifdef ENABLE_LLVM
@@ -635,11 +718,11 @@ pocl_driver_build_binary (cl_program program, cl_uint device_i,
       else
         pocl_llvm_read_program_llvm_irs (program, device_i, NULL);
     }
-  else /* program->binaries but not poclbinary */
+  else /* has program->binaries or SPIR-V, but not poclbinary */
     {
-      assert (program->binaries[device_i]);
-      int err = pocl_llvm_link_and_convert_spir (program, device_i,
-                                                 link_program, spir_build);
+      assert (program->binaries[device_i] || program->program_il);
+      int err = pocl_llvm_convert_and_link_ir (program, device_i,
+                                               link_builtin_lib, spir_build);
       if (err != CL_SUCCESS)
         return err;
       pocl_llvm_read_program_llvm_irs (program, device_i, NULL);
