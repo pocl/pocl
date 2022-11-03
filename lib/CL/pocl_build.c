@@ -812,7 +812,8 @@ compile_and_link_program(int compile_program,
                                       device->long_name);
 
           if ((program->binary_sizes[device_i] == 0)
-              && (program->pocl_binary_sizes[device_i] == 0))
+              && (program->pocl_binary_sizes[device_i] == 0)
+              && (program->program_il_size == 0))
             APPEND_TO_BUILD_LOG_GOTO (CL_INVALID_BINARY,
                                       "No poclbinaries nor binaries "
                                       "for device %s - can't build "

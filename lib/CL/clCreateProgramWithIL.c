@@ -118,10 +118,8 @@ CL_API_SUFFIX__VERSION_2_1
 #endif
   cl_program program = NULL;
   int errcode = CL_SUCCESS;
-#ifdef ENABLE_SPIRV
-  uint64_t converted_spir_file_size = 0;
-  char *converted_spir_file = NULL;
-#endif
+  char program_bc_spirv[POCL_FILENAME_LENGTH];
+  program_bc_spirv[0] = 0;
 
   POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
 
@@ -146,37 +144,6 @@ CL_API_SUFFIX__VERSION_2_1
       "The IL provided to clCreateProgramWithIL "
       "is not recognized as SPIR-V!\n");
 
-#ifdef ENABLE_SPIRV
-  char program_bc_spirv[POCL_FILENAME_LENGTH];
-  program_bc_spirv[0] = 0;
-  char program_bc_temp[POCL_FILENAME_LENGTH];
-  program_bc_temp[0] = 0;
-  if (is_spirv_kernel)
-    {
-      /* convert the SPIR-V to LLVM IR with spir triple */
-      POCL_MSG_PRINT_LLVM (
-          "SPIR-V binary detected, converting to LLVM SPIR\n");
-
-      pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
-                              (uint64_t)length);
-      pocl_cache_tempname (program_bc_temp, ".bc", NULL);
-
-      char *args[] = { LLVM_SPIRV,       "-r", "-o", program_bc_temp,
-                       program_bc_spirv, NULL };
-
-      errcode = pocl_run_command (args);
-      POCL_GOTO_ERROR_ON (
-          (errcode != 0), CL_INVALID_VALUE,
-          "External command (llvm-spirv translator) failed!\n");
-
-      /* load LLVM SPIR binary. */
-      pocl_read_file (program_bc_temp, &converted_spir_file,
-                      &converted_spir_file_size);
-      POCL_GOTO_ERROR_ON ((converted_spir_file == NULL), CL_INVALID_VALUE,
-                          "Can't read converted bitcode file\n");
-    }
-#endif
-
   /* TODO should we create a program for all devices ?
    * should we fail if we can't create for all devices ?
    * this seems to be unspecified.
@@ -185,12 +152,8 @@ CL_API_SUFFIX__VERSION_2_1
    * and fail if there's no such device in context. */
   unsigned num = context->num_devices;
   unsigned num_devices_with_spir = 0;
-
   cl_device_id *devices_with_spir
       = (cl_device_id *)alloca (num * sizeof (cl_device_id));
-  size_t *devices_with_spir_lens = (size_t *)alloca (num * sizeof (size_t));
-  const unsigned char **devices_with_spir_bins
-      = (const unsigned char **)alloca (num * sizeof (unsigned char *));
 
   for (unsigned i = 0; i < num; ++i)
     {
@@ -200,43 +163,28 @@ CL_API_SUFFIX__VERSION_2_1
       if (dev->ops->supports_binary (dev, length, il))
         {
           devices_with_spir[num_devices_with_spir] = dev;
-          devices_with_spir_lens[num_devices_with_spir] = length;
-          devices_with_spir_bins[num_devices_with_spir] = il;
           ++num_devices_with_spir;
         }
-#ifdef ENABLE_SPIRV
-      else if (dev->ops->supports_binary (dev, converted_spir_file_size,
-                                          converted_spir_file))
-        {
-          devices_with_spir[num_devices_with_spir] = dev;
-          devices_with_spir_lens[num_devices_with_spir]
-              = (size_t)converted_spir_file_size;
-          devices_with_spir_bins[num_devices_with_spir]
-              = (const unsigned char *)converted_spir_file;
-          ++num_devices_with_spir;
-        }
-#endif
     }
 
   POCL_GOTO_ERROR_ON ((num_devices_with_spir == 0), CL_INVALID_OPERATION,
                       "No device in context supports SPIR\n");
-  POCL_MSG_PRINT_GENERAL ("Creating context from IL for %u devices\n",
-                          num_devices_with_spir);
 
-  program = POname (clCreateProgramWithBinary) (
-      context, num_devices_with_spir, devices_with_spir,
-      devices_with_spir_lens, devices_with_spir_bins, NULL, &errcode);
-  if (errcode == CL_SUCCESS)
-    {
-      POCL_LOCK_OBJ (program);
-      program->program_il = (char *)malloc (length);
-      memcpy (program->program_il, il, length);
-      program->program_il_size = length;
+  program = create_program_skeleton (context, num_devices_with_spir,
+                                     devices_with_spir, NULL, NULL, NULL,
+                                     &errcode, CL_TRUE);
+  if (program == NULL)
+    goto ERROR;
+
+  /* save the IL into cl_program, and find out spec constants */
+  program->program_il = (char *)malloc (length);
+  memcpy (program->program_il, il, length);
+  program->program_il_size = length;
 #ifdef ENABLE_SPIRV
-      get_program_spec_constants (program, program_bc_spirv);
+  errcode = pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
+                                    (uint64_t)length);
+  get_program_spec_constants (program, program_bc_spirv);
 #endif
-      POCL_UNLOCK_OBJ (program);
-    }
 
 ERROR:
   if (errcode_ret)
@@ -246,10 +194,7 @@ ERROR:
     {
       if (program_bc_spirv[0] != 0)
         pocl_remove (program_bc_spirv);
-      if (program_bc_temp[0] != 0)
-        pocl_remove (program_bc_temp);
     }
-  POCL_MEM_FREE (converted_spir_file);
 #endif
   return program;
 }

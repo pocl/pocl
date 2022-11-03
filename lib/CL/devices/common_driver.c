@@ -744,6 +744,13 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 {
 #ifdef ENABLE_LLVM
 
+  /* SPIR-V binaries are supported if we have llvm-spirv */
+#ifdef ENABLE_SPIRV
+  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length))
+    return 1;
+#endif
+
+#ifdef ENABLE_SPIR
   /* SPIR binary is supported */
   if (bitcode_is_triple (binary, length, "spir"))
     {
@@ -753,6 +760,7 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
           "SPIR binary provided, but device has no SPIR support");
       return 1;
     }
+#endif
 
   /* LLVM IR can be supported by the driver, if the triple matches */
   if (device->llvm_target_triplet
