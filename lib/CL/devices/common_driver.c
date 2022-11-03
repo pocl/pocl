@@ -691,14 +691,14 @@ pocl_driver_link_program (cl_program program, cl_uint device_i,
 
   int err = pocl_llvm_link_program (
       program, device_i, num_input_programs, cur_device_binaries,
-      cur_device_binary_sizes, cur_device_llvm_irs, !create_library, 0);
+      cur_device_binary_sizes, cur_device_llvm_irs, !create_library, CL_TRUE);
 
   POCL_RETURN_ERROR_ON ((err != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
-                        "This device requires LLVM to link binaries\n");
+                        "Linking of program failed\n");
   return CL_SUCCESS;
 #else
   POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device cannot link anything\n");
+                        "This device requires LLVM to link binaries\n");
 
 #endif
 }

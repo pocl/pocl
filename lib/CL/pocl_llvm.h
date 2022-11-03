@@ -119,7 +119,9 @@ extern "C" {
                               cl_uint num_input_programs,
                               unsigned char **cur_device_binaries,
                               size_t *cur_device_binary_sizes,
-                              void **cur_llvm_irs, int link_program, int spir);
+                              void **cur_llvm_irs,
+                              int link_device_builtin_library,
+                              int linking_into_new_cl_program);
 
   int pocl_invoke_clang (cl_device_id Device, const char **Args);
 

@@ -38,6 +38,8 @@ extern "C" {
 
 int pocl_cache_init_topdir ();
 
+unsigned pocl_cache_buildhash_is_valid(cl_program program, unsigned device_i);
+
 POCL_EXPORT
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
