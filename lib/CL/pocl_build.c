@@ -712,6 +712,21 @@ compile_and_link_program(int compile_program,
       program->devices = unique_devlist;
     }
 
+  /* if program will be compiled using clCompileProgram its binary_type
+   * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
+   *
+   * if program was created by clLinkProgram which is called
+   * with the –createlibrary link option its binary_type will be set to
+   * CL_PROGRAM_BINARY_TYPE_LIBRARY.
+   */
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+  if (create_library)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+  if (compile_program && !link_program)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+  if (program->num_builtin_kernels > 0)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
+
   POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
                        num_devices, program->compiler_options);
 
@@ -845,26 +860,12 @@ compile_and_link_program(int compile_program,
       ++actually_built;
     }
   assert (actually_built == program->num_devices);
-
-  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-  /* if program will be compiled using clCompileProgram its binary_type
-   * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
-   *
-   * if program was created by clLinkProgram which is called
-   * with the –createlibrary link option its binary_type will be set to
-   * CL_PROGRAM_BINARY_TYPE_LIBRARY.
-   */
-  if (create_library)
-    program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
-  if (compile_program && !link_program)
-    program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
-  if (program->num_builtin_kernels > 0)
-    program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
-
   assert(program->num_kernels == 0);
 
   /* for executables & programs with builtin kernels,
    * setup the kernel metadata */
+  /* if the program is not a finished executable, we don't need
+   * to setup kernel metadata */
   if (program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE
       || program->binary_type == CL_PROGRAM_BINARY_TYPE_NONE)
     {

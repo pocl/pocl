@@ -386,6 +386,10 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options,
                          strlen(program->compiler_options));
 
+    pocl_SHA1_Update (&hash_ctx,
+                      (uint8_t *)&program->binary_type,
+                      sizeof(cl_program_binary_type));
+
 #ifdef ENABLE_LLVM
     /* The kernel compiler work-group function method affects the
        produced binary heavily. */
@@ -396,6 +400,21 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         if (wg_method)
           pocl_SHA1_Update (&hash_ctx, (uint8_t *)wg_method,
                             strlen (wg_method));
+      }
+#endif
+
+#ifdef ENABLE_SPIR
+    for (size_t i = 0; i < program->num_spec_consts; ++i)
+      {
+        if (program->spec_const_is_set[i])
+          {
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_ids[i],
+                              sizeof (cl_uint));
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_values[i],
+                              program->spec_const_sizes[i]);
+          }
       }
 #endif
 
