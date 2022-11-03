@@ -751,14 +751,19 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 #endif
 
 #ifdef ENABLE_SPIR
-  /* SPIR binary is supported */
+  /* SPIR binary is supported if the device has cl_khr_spir */
   if (bitcode_is_triple (binary, length, "spir"))
     {
-      POCL_RETURN_ERROR_ON (
-          (strstr (device->extensions, "cl_khr_spir") == NULL),
-          CL_BUILD_PROGRAM_FAILURE,
-          "SPIR binary provided, but device has no SPIR support");
-      return 1;
+      if (strstr (device->extensions, "cl_khr_spir") == NULL)
+        {
+          POCL_MSG_WARN ("SPIR binary provided, but "
+                         "this device has no SPIR support\n");
+          return 0;
+        }
+      else
+        {
+          return 1;
+        }
     }
 #endif
 
