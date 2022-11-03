@@ -33,11 +33,6 @@ if(NOT HAVE_GIT)
   return()
 endif()
 
-if(NOT MAKE_PROGRAM)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
-  return()
-endif()
-
 if(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
   message(STATUS "Disabling ${TS_NAME}, can't find OpenCL library")
   return()
@@ -208,8 +203,20 @@ add_test(NAME "${TS_NAME}_compiler"
          COMMAND "${TS_BUILDDIR}/compiler/test_compiler"
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
-add_test(NAME "${TS_NAME}_c11_atomics_micro"
-         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_store atomic_exchange atomic_fetch_max atomic_fetch_add atomic_fetch_xor)
+add_test(NAME "${TS_NAME}_c11_atomics_micro_1"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_store)
+
+add_test(NAME "${TS_NAME}_c11_atomics_micro_2"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_load)
+
+add_test(NAME "${TS_NAME}_c11_atomics_micro_3"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_max)
+
+add_test(NAME "${TS_NAME}_c11_atomics_micro_4"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_xor)
+
+add_test(NAME "${TS_NAME}_c11_atomics_micro_5"
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_fetch_add)
 
 add_test(NAME "${TS_NAME}_c11_atomics_init_store_load_exchange"
          COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" atomic_init atomic_store atomic_load atomic_exchange atomic_compare_exchange_weak atomic_compare_exchange_strong)
@@ -990,6 +997,15 @@ add_test(NAME "${TS_NAME}_select_long_long"
 #         COMMAND "${TS_BUILDDIR}/spir/test_spir")
 
 if(HAVE_SPIRV_TOOLS)
+
+# this test requires a fix in llvm-spirv
+# https://github.com/KhronosGroup/SPIRV-LLVM-Translator/pull/1630
+option(LLVM_SPIRV_SPEC_CONST "llvm-spirv has working --spec-const option" OFF)
+unset(SPIRV_OCL_30_EXTRA_TEST)
+if(LLVM_SPIRV_SPEC_CONST OR (LLVM_VERSION VERSION_GREATER_EQUAL 16.0))
+  set(SPIRV_OCL_30_EXTRA_TEST op_spec_constant_double_simple)
+endif()
+
 add_test(NAME "${TS_NAME}_spirv_new_1"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fnegate_int  ext_cl_khr_spirv_no_integer_wrap_decoration_fadd_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fsub_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fmul_uint  ext_cl_khr_spirv_no_integer_wrap_decoration_fshiftleft_uint
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
@@ -1023,7 +1039,7 @@ add_test(NAME "${TS_NAME}_spirv_new_8"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}_spirv_new_9"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_selection_merge_if_none  op_selection_merge_if_flatten  op_selection_merge_if_dont_flatten  op_selection_merge_swith_none  op_selection_merge_swith_flatten  op_selection_merge_swith_dont_flatten  op_spec_constant_uint_simple  op_spec_constant_uchar_simple  op_spec_constant_ushort_simple  op_spec_constant_ulong_simple  op_spec_constant_float_simple  op_spec_constant_half_simple  op_spec_constant_double_simple  op_spec_constant_true_simple  op_spec_constant_false_simple
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new"  op_selection_merge_if_none  op_selection_merge_if_flatten  op_selection_merge_if_dont_flatten  op_selection_merge_swith_none  op_selection_merge_swith_flatten  op_selection_merge_swith_dont_flatten  op_spec_constant_uint_simple  op_spec_constant_uchar_simple  op_spec_constant_ushort_simple  op_spec_constant_ulong_simple  op_spec_constant_float_simple  op_spec_constant_half_simple  ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple  op_spec_constant_false_simple
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}_spirv_new_0"
@@ -1039,7 +1055,7 @@ add_test(NAME "${TS_NAME}_spirv_new_micro_1"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}_spirv_new_micro_2"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple op_spec_constant_double_simple  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" function_none  function_inline  function_noinline op_lifetime_simple  op_loop_merge_branch_none op_neg_float  op_neg_double op_not_int4  op_type_opaque_simple  op_phi_2_blocks op_selection_merge_if_none  op_selection_merge_if_flatten op_spec_constant_uchar_simple  op_spec_constant_ushort_simple ${SPIRV_OCL_30_EXTRA_TEST}  op_spec_constant_true_simple op_undef_true_simple op_undef_uint_simple  op_undef_char_simple op_undef_float_simple  op_undef_double_simple op_vector_int4_extract  op_vector_float4_extract op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 endif()
@@ -1141,7 +1157,11 @@ set(OCL_30_TESTS_FULL
 set(OCL_30_TESTS_MICRO
 "${TS_NAME}_api_ocl_30"
 "${TS_NAME}_basic_other_ocl_30"
-"${TS_NAME}_c11_atomics_micro"
+"${TS_NAME}_c11_atomics_micro_1"
+"${TS_NAME}_c11_atomics_micro_2"
+"${TS_NAME}_c11_atomics_micro_3"
+"${TS_NAME}_c11_atomics_micro_4"
+"${TS_NAME}_c11_atomics_micro_5"
 "${TS_NAME}_device_execution"
 "${TS_NAME}_device_timer"
 "${TS_NAME}_generic_address_space"
