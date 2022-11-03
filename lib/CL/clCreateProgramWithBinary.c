@@ -216,10 +216,12 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
   if (program->pocl_binaries)
     for (i = 0; i < num_devices; ++i)
       POCL_MEM_FREE(program->pocl_binaries[i]);
-  POCL_MEM_FREE(program->pocl_binaries);
+  POCL_MEM_FREE (program->pocl_binaries);
+  POCL_MEM_FREE (program->pocl_binary_sizes);
   POCL_MEM_FREE (program->data);
-  POCL_MEM_FREE(program->pocl_binary_sizes);
-  POCL_MEM_FREE(program);
+  POCL_MEM_FREE (program->build_log);
+  POCL_MEM_FREE (program->build_hash);
+  POCL_MEM_FREE (program);
 ERROR:
   POCL_MEM_FREE(unique_devlist);
   if (errcode_ret != NULL)
