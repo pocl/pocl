@@ -51,12 +51,23 @@ if [ "$MODE" != "spir-v" ]; then
 fi
 
 CL_IS_30=false
+CL_FAST_MATH=false
+CL_UNSAFE_MATH=false
 BUILD_OPTIONS=""
 CL_STD="-cl-std=CL1.2"
+
 for i in "$@"; do
   case $i in
     -cl-std=*)
       CL_STD="$i"
+      shift
+      ;;
+    -cl-fast-relaxed-math)
+      CL_FAST_MATH=true
+      shift
+      ;;
+    -cl-unsafe-math)
+      CL_UNSAFE_MATH=true
       shift
       ;;
     *)
@@ -88,6 +99,16 @@ if [ -e "${CL_DEV_INFO}" ]; then
       CL_EXTS="${CL_EXTS},+__opencl_c_images"
     fi
   fi
+
+  if [ "$CL_FAST_MATH" = "true" ]; then
+    CL_EXT_DEFS="${CL_EXT_DEFS} -cl-finite-math-only"
+    CL_UNSAFE_MATH=true
+  fi
+
+  if [ "$CL_UNSAFE_MATH" = "true" ]; then
+    CL_EXT_DEFS="${CL_EXT_DEFS} -cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast"
+  fi
+
 
   if [[ "$CL_DEVICE_VERSION" =~ "PoCL" ]] && [ "$CL_IS_30" = "true" ]; then
     if [[ "$CL_DEVICE_VERSION" =~ "basic" ]] || [[ "$CL_DEVICE_VERSION" =~ "pthread" ]]; then
