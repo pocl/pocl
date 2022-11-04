@@ -85,7 +85,7 @@ fi
 TARGET=none
 DEV_VER=100
 DEV_C_VER=100
-CL_EXT_DEFS=""
+CL_EXT_DEFS="-D__ENDIAN_LITTLE__=1"
 # TODO __opencl_c_int64 && atomics might not be supported by all PoCL devices
 CL_EXTS="-Xclang -cl-ext=-all"
 
@@ -94,10 +94,11 @@ if [ -e "${CL_DEV_INFO}" ]; then
   echo "CL_DEV_INFO: ${CL_DEV_INFO}"
   source ${CL_DEV_INFO}
 
-  if [ "$CL_IS_30" = "true" ]; then
-    if [ "$CL_DEVICE_IMAGE_SUPPORT" -eq 1 ]; then
+  if [ "$CL_DEVICE_IMAGE_SUPPORT" -eq 1 ]; then
+    if [ "$CL_IS_30" = "true" ]; then
       CL_EXTS="${CL_EXTS},+__opencl_c_images"
     fi
+    CL_EXT_DEFS="${CL_EXT_DEFS} -D__IMAGE_SUPPORT__=1"
   fi
 
   if [ "$CL_FAST_MATH" = "true" ]; then
