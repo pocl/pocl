@@ -237,8 +237,8 @@
    be unified to avoid failing tests. */
 #undef FP_ILOGBNAN
 #undef FP_ILOGB0
-#define FP_ILOGBNAN INT_MIN
-#define FP_ILOGB0 INT_MIN
+#define FP_ILOGB0    INT_MIN
+#define FP_ILOGBNAN  INT_MAX
 
 /****************************************************************************/
 
