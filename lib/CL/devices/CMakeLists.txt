@@ -54,6 +54,12 @@ if(BUILD_BASIC)
     "$<TARGET_OBJECTS:pocl-devices-basic>")
 endif()
 
+if(BUILD_VENTUS)
+  add_subdirectory("ventus")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-ventus>")
+endif()
+
 if(BUILD_PTHREAD)
   add_subdirectory("pthread")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
