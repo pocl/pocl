@@ -21,7 +21,6 @@ int main(int argc, char **argv)
   size_t srcdir_length, name_length, filename_size;
   char *filename = NULL;
   char *source = NULL;
-  cl_device_id devices[1];
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
@@ -74,8 +73,15 @@ int main(int argc, char **argv)
       context, CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateSampler");
 
-  CHECK_CL_ERROR (clGetContextInfo (context, CL_CONTEXT_DEVICES,
-                                    sizeof (cl_device_id), devices, NULL));
+  size_t device_id_size = 0;
+  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL,
+                          &device_id_size);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
+  cl_device_id *devices = malloc (device_id_size);
+  TEST_ASSERT (devices != NULL && "out of host memory\n");
+  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size, devices,
+                          NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
 
   queue = clCreateCommandQueue (context, devices[0], 0, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
@@ -137,6 +143,7 @@ int main(int argc, char **argv)
   free (source);
   free (filename);
   free (imageData);
+  free (devices);
 
   printf("OK\n");
   return EXIT_SUCCESS;

@@ -18,7 +18,6 @@ int call_test(const char *name)
   size_t srcdir_length, name_length, filename_size;
   char *filename = NULL;
   char *source = NULL;
-  cl_device_id devices[1];
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
@@ -51,8 +50,18 @@ int call_test(const char *name)
     goto error;
   }
 
-  result = clGetContextInfo(context, CL_CONTEXT_DEVICES,
-      sizeof(cl_device_id), devices, NULL);
+  size_t device_id_size = 0;
+  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL,
+                             &device_id_size);
+  if (result != CL_SUCCESS)
+    {
+      puts ("clGetContextInfo call failed while fetching size\n");
+      goto error;
+    }
+  cl_device_id *devices = malloc (device_id_size);
+  TEST_ASSERT (devices != NULL && "out of host memory\n");
+  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size,
+                             devices, NULL);
   if (result != CL_SUCCESS) {
     puts("clGetContextInfo call failed\n");
     goto error;
@@ -118,6 +127,7 @@ error:
   if (filename) {
     free(filename);
   }
+  free (devices);
 
   return retval;
 }
