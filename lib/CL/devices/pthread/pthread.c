@@ -383,6 +383,8 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
 
       PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *) e_d;
+
+      VG_ASSOC_COND_VAR (e_d->event_cond, event->pocl_lock);
     }
 }
 
@@ -413,6 +415,11 @@ pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   PTHREAD_CHECK (pthread_cond_init (cond, NULL));
+
+  POCL_LOCK_OBJ (queue);
+  VG_ASSOC_COND_VAR ((*cond), queue->pocl_lock);
+  POCL_UNLOCK_OBJ (queue);
+
   return CL_SUCCESS;
 }
 

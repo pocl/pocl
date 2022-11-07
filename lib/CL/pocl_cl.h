@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_VALGRIND
+#ifdef ENABLE_VALGRIND
 #include <valgrind/helgrind.h>
 #endif
 
@@ -89,7 +89,7 @@ typedef pthread_t pocl_thread_t;
 #error Need atomic_inc() builtin for this compiler
 #endif
 
-#ifdef HAVE_VALGRIND
+#ifdef ENABLE_VALGRIND
 #define VG_REFC_ZERO(var)                                                     \
   ANNOTATE_HAPPENS_AFTER (&var->pocl_refcount);                               \
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL (&var->pocl_refcount)
@@ -97,6 +97,42 @@ typedef pthread_t pocl_thread_t;
 #else
 #define VG_REFC_ZERO(var) (void)0
 #define VG_REFC_NONZERO(var) (void)0
+#endif
+
+/*
+ * a workaround for a detection problem in Valgrind, which causes
+ * false positives. Valgrind manual states:
+ *
+ * Helgrind only partially correctly handles POSIX condition variables. This is
+ * because Helgrind can see inter-thread dependencies between a
+ * pthread_cond_wait call and a pthread_cond_signal/ pthread_cond_broadcast
+ * call only if the waiting thread actually gets to the rendezvous first (so
+ * that it actually calls pthread_cond_wait). It can't see dependencies between
+ * the threads if the signaller arrives first. In the latter case, POSIX
+ * guidelines imply that the associated boolean condition still provides an
+ * inter-thread synchronisation event, but one which is invisible to Helgrind.
+ *
+ * ... this macro explicitly associates the cond var with the mutex, by
+ * calling pthread_cond_wait with a short timeout (100 usec)
+ */
+
+#ifdef ENABLE_VALGRIND
+#define VG_ASSOC_COND_VAR(cond_var, mutex)                                    \
+  do                                                                          \
+    {                                                                         \
+      struct timespec time_to_wait;                                           \
+      clock_gettime (CLOCK_MONOTONIC, &time_to_wait);                         \
+      time_to_wait.tv_nsec += 100000;                                         \
+      if (time_to_wait.tv_nsec > 1000000000)                                  \
+        {                                                                     \
+          time_to_wait.tv_nsec -= 1000000000;                                 \
+          time_to_wait.tv_sec += 1;                                           \
+        }                                                                     \
+      POCL_TIMEDWAIT_COND (cond_var, mutex, time_to_wait);                    \
+    }                                                                         \
+  while (0)
+#else
+#define VG_ASSOC_COND_VAR(var, mutex) (void)0
 #endif
 
 #ifdef __linux__

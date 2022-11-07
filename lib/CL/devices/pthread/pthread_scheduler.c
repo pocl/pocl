@@ -100,6 +100,10 @@ pthread_scheduler_init (cl_device_id device)
 
   PTHREAD_CHECK (pthread_cond_init (&(scheduler.wake_pool), NULL));
 
+  POCL_LOCK (scheduler.wq_lock_fast);
+  VG_ASSOC_COND_VAR (scheduler.wake_pool, scheduler.wq_lock_fast);
+  POCL_UNLOCK (scheduler.wq_lock_fast);
+
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
       num_worker_threads * sizeof (struct pool_thread_data));

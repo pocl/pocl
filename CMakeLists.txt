@@ -743,6 +743,12 @@ setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building 
   "Requested build with IPO, but IPO is not available"
   "IPO available, but requested build without it")
 
+if(HAVE_VALGRIND)
+  option(ENABLE_VALGRIND "Enable valgrind support (this may slow down PoCL)" OFF)
+else()
+  set(ENABLE_VALGRIND OFF CACHE BOOL "valgrind is not available" FORCE)
+endif()
+
 ######################################################################################
 
 option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)

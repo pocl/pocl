@@ -51,6 +51,8 @@
 
 #cmakedefine ENABLE_SPIRV
 
+#cmakedefine ENABLE_VALGRIND
+
 #cmakedefine HAVE_DLFCN_H
 
 #cmakedefine HAVE_FORK
@@ -83,8 +85,6 @@
 #cmakedefine HAVE_SLEEP
 
 #cmakedefine HAVE_UTIME
-
-#cmakedefine HAVE_VALGRIND
 
 #cmakedefine HAVE_XRT
 
