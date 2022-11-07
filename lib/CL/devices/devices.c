@@ -62,6 +62,10 @@
 #include "pthread/pocl-pthread.h"
 #endif
 
+#ifdef BUILD_VENTUS
+#include "ventus/ventus.h"
+#endif
+
 #ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
 #endif
@@ -130,6 +134,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_PTHREAD
   INIT_DEV (pthread),
 #endif
+#ifdef BUILD_VENTUS
+  INIT_DEV (ventus),
+#endif
 #ifdef TCE_AVAILABLE
   INIT_DEV (ttasim),
 #endif
@@ -158,6 +165,9 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #endif
 #ifdef BUILD_PTHREAD
   "pthread",
+#endif
+#ifdef BUILD_VENTUS
+  "ventus",
 #endif
 #ifdef TCE_AVAILABLE
   "ttasim",
