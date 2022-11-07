@@ -31,6 +31,6 @@
 GEN_PROTOTYPES (pthread)
 
 #include "prototypes.inc"
-GEN_PROTOTYPES (basic)
+GEN_PROTOTYPES (ventus)
 
 #endif /* POCL_PTHREAD_H */
