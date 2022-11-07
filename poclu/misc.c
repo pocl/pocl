@@ -393,8 +393,6 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   int from_source = (!spir && !spirv && !poclbin);
   TEST_ASSERT (num_devices > 0);
   cl_device_id device = devices[0];
-  if (num_devices > 1)
-    TEST_ASSERT (from_source);
 
   *p = NULL;
   final_opts[0] = 0;
