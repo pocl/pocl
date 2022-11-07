@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2021 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,6 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( ventus.h ventus.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-set(SOURCES pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c)
-if(APPLE)
-  list(APPEND SOURCES pthread_barrier.c)
-endif(APPLE)
-add_pocl_device_library(pocl-devices-pthread ${SOURCES})
-if(ENABLE_LOADABLE_DRIVERS)
-target_link_libraries(pocl-devices-pthread PRIVATE pocl-devices-ventus ${PTHREAD_LIBRARY})
-endif()
+add_pocl_device_library("pocl-devices-ventus" ventus.h ventus.c)

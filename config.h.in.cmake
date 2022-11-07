@@ -5,7 +5,7 @@
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
 #cmakedefine BUILD_VULKAN
-
+#cmakedefine BUILD_VENTUS
 #cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
