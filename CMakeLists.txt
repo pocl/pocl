@@ -1206,13 +1206,14 @@ set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
 if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_TARGETS "host")
-  set(OCL_DRIVERS "basic pthreads")
+  set(OCL_DRIVERS "basic pthreads ventus")
   # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
   # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
   set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
   set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
   set(BUILD_BASIC 1)
   set(BUILD_PTHREAD 1)
+  set(BUILD_VENTUS 1)
 endif()
 
 # The accel device could be built by default, but it's implemented in C++,
