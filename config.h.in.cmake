@@ -8,6 +8,8 @@
 
 #cmakedefine BUILD_PROXY
 
+#cmakedefine BUILD_VENTUS
+
 #define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */
