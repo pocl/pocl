@@ -593,18 +593,26 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
 
   for (i = 0; i < num_objs; ++i)
     {
+      POCL_LOCK_OBJ (objs[i]);
       pocl_mem_identifier *p = &objs[i]->device_ptrs[dev->global_mem_id];
       // skip already allocated
-      if (p->mem_ptr)
+      if (p->mem_ptr) {
+        POCL_UNLOCK_OBJ (objs[i]);
         continue;
+      }
 
       assert (dev->ops->alloc_mem_obj);
       errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
-      POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS),
-                           CL_OUT_OF_RESOURCES,
-                           "Failed to allocate %zx bytes on device %s\n",
-                           objs[i]->size,
-                           dev->short_name);
+      if (errcode != CL_SUCCESS) {
+        POCL_UNLOCK_OBJ (objs[i]);
+        POCL_MSG_ERR("Failed to allocate %zx bytes on device %s\n",
+                     objs[i]->size, dev->short_name);
+        return CL_OUT_OF_RESOURCES;
+      }
+
+      POCL_UNLOCK_OBJ (objs[i]);
+      if (errcode != CL_SUCCESS)
+        return CL_FALSE;
     }
 
   return CL_TRUE;
