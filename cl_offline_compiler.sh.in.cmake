@@ -1,8 +1,45 @@
 #!/bin/bash
 
+#=============================================================================
+#   cl_offline_compiler.sh script
+#
+#   Copyright (c) 2017 Michal Babej / Intel Finland Oy
+#
+#   Permission is hereby granted, free of charge, to any person obtaining a copy
+#   of this software and associated documentation files (the "Software"), to deal
+#   in the Software without restriction, including without limitation the rights
+#   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#   copies of the Software, and to permit persons to whom the Software is
+#   furnished to do so, subject to the following conditions:
+#
+#   The above copyright notice and this permission notice shall be included in
+#   all copies or substantial portions of the Software.
+#
+#   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#   THE SOFTWARE.
+#
+#=============================================================================
+
+# Takes an OpenCL C source file and uses Clang + LLVM-SPIRV to convert it to
+# a SPIR-V binary. Used by OpenCL-CTS in offline compilation mode. Unlike
+# poclcc, this does not return a poclbinary, but a SPIR-V binary, and is
+# somewhat independent of PoCL (there is some option / extension processing
+# that is PoCL-specific)
+
+# Likely requires recent Clang (14 tested, 13 and older untested).
+# Might work with -cl-std < 3.0 with older Clangs, but 3.0 requires 14+
+
+# mandatory arguments:
 #     --source FILE          OpenCL C source file to compile
 #     --output FILE          SPIR-V or binary file to create
 #     --cl-device-info FILE  OpenCL device info file
+#
+# optional arguments:
 #     --debug                Enable some debugging output
 #     --mode                 compilation mode (spir-v or binary)
 
@@ -109,7 +146,6 @@ if [ -e "${CL_DEV_INFO}" ]; then
   if [ "$CL_UNSAFE_MATH" = "true" ]; then
     CL_EXT_DEFS="${CL_EXT_DEFS} -cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast"
   fi
-
 
   if [[ "$CL_DEVICE_VERSION" =~ "PoCL" ]] && [ "$CL_IS_30" = "true" ]; then
     if [[ "$CL_DEVICE_VERSION" =~ "basic" ]] || [[ "$CL_DEVICE_VERSION" =~ "pthread" ]]; then
