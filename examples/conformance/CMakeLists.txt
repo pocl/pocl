@@ -1512,6 +1512,7 @@ endfunction()
 
 add_cts_full_tests("conformance_suite_full_main" "_main")
 
+if(HAVE_SPIRV_TOOLS)
 set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_FULL_CACHE")
 file(MAKE_DIRECTORY "${CACHE_DIR}")
 
@@ -1519,6 +1520,7 @@ add_cts_full_tests("conformance_suite_full_spirv" "_spirv"
                    "--compilation-mode" "spir-v"
                    "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
                    "--compilation-cache-path" "${CACHE_DIR}")
+endif()
 
 #################################################################################
 #################################################################################
@@ -1945,14 +1947,15 @@ endfunction()
 
 add_cts_mini_tests("conformance_suite_mini_main" "_main")
 
+if(HAVE_SPIRV_TOOLS)
 set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_MINI_CACHE")
 file(MAKE_DIRECTORY "${CACHE_DIR}")
-
 
 add_cts_mini_tests("conformance_suite_mini_spirv" "_spirv"
                    "--compilation-mode" "spir-v"
                    "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
                    "--compilation-cache-path" "${CACHE_DIR}")
+endif()
 
 #################################################################################
 #################################################################################
@@ -2434,13 +2437,14 @@ endfunction()
 
 add_cts_micro_tests("conformance_suite_micro_main" "_main")
 
+if(HAVE_SPIRV_TOOLS)
 set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_MICRO_CACHE")
 file(MAKE_DIRECTORY "${CACHE_DIR}")
-
 add_cts_micro_tests("conformance_suite_micro_spirv" "_spirv"
                    "--compilation-mode" "spir-v"
                    "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
                    "--compilation-cache-path" "${CACHE_DIR}")
+endif()
 
 #################################################################################
 
