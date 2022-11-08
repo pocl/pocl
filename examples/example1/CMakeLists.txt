@@ -70,8 +70,12 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
 
 # devices which don't support SPIR
 set_property(TEST "examples/example1_dot_product"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan;almaif_LLVM")
+  APPEND PROPERTY LABELS "hsa;hsa-native;vulkan")
 
+if (ENABLE_TCE)
+  set_property(TEST "examples/example1_dot_product"
+    APPEND PROPERTY LABELS "tce;almaif")
+endif()
 
 add_test(NAME "examples/example1_poclbin"
          COMMAND ${CMAKE_COMMAND}

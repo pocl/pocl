@@ -58,7 +58,7 @@ set_tests_properties( "almaif/fp16"
   PROPERTIES
     COST 40.0
     PROCESSORS 1
-    LABELS "almaif_LLVM;almaif_ttasim"
+    LABELS "almaif"
     ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16_LE"
     DEPENDS "pocl_version_check")
 

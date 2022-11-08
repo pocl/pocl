@@ -170,7 +170,7 @@ endif ()
                           "examples/example0/ttasim_${core_name}" "examples/example0/ttasim_poclbin_${core_name}"
         PROPERTIES
             PASS_REGULAR_EXPRESSION "OK"
-            LABELS "custom_device;almaif_ttasim;almaif_LLVM"
+            LABELS "custom_device;almaif"
             ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535;POCL_ALMAIF0_HASH=${tta_device_hash}"
             DEPENDS "pocl_version_check;examples/example0")
     endif()
@@ -184,7 +184,7 @@ endif ()
             "examples/example0/pynq_${core_name}"
             PROPERTIES
                 PASS_REGULAR_EXPRESSION "OK"
-                LABELS "custom_device;almaif_pynq;almaif_no_LLVM"
+                LABELS "custom_device;almaif"
                 ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0x40000000,${CMAKE_CURRENT_BINARY_DIR}/firmware_imgs/${core_name},1,2,65535;POCL_ALMAIF0_HASH=${tta_device_hash}"
                 DEPENDS "pocl_version_check;examples/example0"
                 RESOURCE_LOCK fpga
@@ -230,13 +230,13 @@ set_tests_properties( "examples/accel/add.i32"
   "examples/accel/mul.i32"  "examples/accel/abs.f32"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "custom_device;almaif_no_LLVM;cuda"
+    LABELS "internal;custom_device;cuda"
     DEPENDS "pocl_version_check")
 
 set_tests_properties( "examples/accel/countred"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "custom_device;almaif_no_LLVM"
+    LABELS "internal;custom_device"
     DEPENDS "pocl_version_check")
 
 add_subdirectory(hls)

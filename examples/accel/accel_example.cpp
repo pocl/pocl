@@ -72,10 +72,13 @@ main(int argc, char** argv)
     }
 
     platform = all_platforms[0];
-    platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
+    platform.getDevices(CL_DEVICE_TYPE_CUSTOM, &devices);
     if(devices.size() == 0) {
-        std::cerr << "No OpenCL devices available!\n";
-        return 2;
+        platform.getDevices(CL_DEVICE_TYPE_ALL, &devices);
+        if(devices.size() == 0) {
+            std::cerr << "No OpenCL devices available!\n";
+            return 2;
+        }
     }
 
     const char* kernel_name = "pocl.add.i32";

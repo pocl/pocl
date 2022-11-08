@@ -59,7 +59,7 @@ if (PYNQ_AVAILABLE)
     set_tests_properties( "examples/accel/add.i32/pynq_hls" "examples/accel/mul.i32/pynq_hls"
             PROPERTIES
                 PASS_REGULAR_EXPRESSION "OK"
-                LABELS "custom_device;almaif_pynq;almaif_no_LLVM"
+                LABELS "custom_device;almaif"
                 ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0x40000000,dummy,1,2;POCL_ALMAIF0_HASH=${tta_device_hash}"
                 DEPENDS "pocl_version_check;examples/example0"
                 RESOURCE_LOCK fpga

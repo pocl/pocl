@@ -80,17 +80,6 @@ then
   done
 fi
 
-
-if [ -z "$LLVM" ]; then
-  LLVM=0
-fi
-
-if [ "$LLVM" -eq "0" ]; then
-  echo "running almaif emulation tests without LLVM"
-  export POCL_ALMAIF0_PARAMETERS="0xE,1,2,4,9"
-  ctest -L almaif_no_LLVM $@
-else
-  echo "running almaif tests with LLVM"
-  export POCL_ALMAIF0_PARAMETERS="0xB,$PWD/../tools/data/test_machine_LE,65535"
-  ctest -L almaif_LLVM $@
-fi
+echo "Running AlmaIF tests on ttasim"
+export POCL_ALMAIF0_PARAMETERS="0xB,$PWD/../tools/data/test_machine_LE,65535"
+ctest -L almaif $@
