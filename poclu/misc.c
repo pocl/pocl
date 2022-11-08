@@ -393,6 +393,38 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   int from_source = (!spir && !spirv && !poclbin);
   TEST_ASSERT (num_devices > 0);
   cl_device_id device = devices[0];
+  if (!from_source)
+    {
+      // Check that all the devices have the same name.
+      // This is to prevent loading the same binary to
+      // different device types.
+      size_t device0_name_length = 0;
+      err = clGetDeviceInfo (devices[0], CL_DEVICE_NAME, 0, NULL,
+                             &device0_name_length);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name size");
+      char *device0_name = malloc (device0_name_length);
+      TEST_ASSERT (device0_name);
+      err = clGetDeviceInfo (devices[0], CL_DEVICE_NAME, device0_name_length,
+                             device0_name, NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name");
+      for (unsigned i = 1; i < num_devices; i++)
+        {
+          size_t deviceN_name_length = 0;
+          err = clGetDeviceInfo (devices[i], CL_DEVICE_NAME, 0, NULL,
+                                 &deviceN_name_length);
+          CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name size");
+          char *deviceN_name = malloc (deviceN_name_length);
+          TEST_ASSERT (deviceN_name);
+          err = clGetDeviceInfo (devices[i], CL_DEVICE_NAME,
+                                 deviceN_name_length, deviceN_name, NULL);
+          CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name");
+
+          TEST_ASSERT (!strcmp (device0_name, deviceN_name)
+                       && "Trying to load the same binary/IL for different types of devices");
+          free (deviceN_name);
+        }
+      free (device0_name);
+    }
 
   *p = NULL;
   final_opts[0] = 0;
