@@ -14,22 +14,26 @@ Conformance related CMake options
 
   Changes when ENABLE_CONFORMANCE is ON:
 
-    * SPIR and SPIR-V support are disabled (they are incomplete)
     * read-write images are disabled (some 1D/2D image array tests fail),
       even though compiler support is indicated (__opencl_c_read_write_images)
 
+  If ENABLE_CONFORMANCE is OFF, and ENABLE_HOST_CPU_DEVICES is ON,
+  the conformance testsuite is disabled in CMake. This is because
+  some CTS tests will fail on such build.
 
 Supported & Unsupported optional OpenCL 3.0 features
 ------------------------------------------------------
 
 This list is only related to CPU devices (basic & pthread drivers).
 Other drivers (CUDA, TCE etc) only support 1.2 partially.
+Note that 3.0 support on CPU devices requires LLVM 14 or newer.
 
 Supported 3.0 features:
 
   * Shared Virtual Memory
   * C11 atomics
   * 3D Image Writes
+  * SPIR-V
 
 Unsupported 3.0 features:
 
@@ -52,20 +56,30 @@ How to run the OpenCL 3.0 conformance test suite
 ------------------------------------------------
 
 First you need to enable the suite in the pocl's external test suite set.
-This is done by adding switch ``-DENABLE_TESTSUITES=conformance``
+This is done by adding ``-DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON``
 to the cmake command line. After this ``make prepare_examples`` fetches and
-prepares the conformance suite for testing.
+prepares the conformance suite for testing. After building pocl with ``make``,
+the CTS can be run with ``ctest -L <LABEL>`` where ``<LABEL>`` is a CTest label.
 
-To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_mini``
-This might take a few hours on slow hardware. There is also a ``conformance_suite_micro``
-label, which takes about 20-30 minutes on slow hardware.
+There are three different CTest labels for using CTS, one label covers the full
+set tests in CTS, the other two contain a smaller subset of CTS tests. The fastest
+is ``conformance_suite_micro_main`` label, which takes approx 10-30 minutes on
+current (desktop) hardware. The medium sized ``conformance_suite_mini_main``
+can take 1-2 hours on current hardware. The full sized CTS is available
+with label ``conformance_suite_full_main``. This can take 10-30 hrs on current
+hardware.
 
-To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
-Note that this can take a week to finish on slow hardware, and about a day
-on relatively fast hardware (6C/12T Intel or equivalent).
+If PoCL is compiled with SPIR-V support, three more labels are available, where
+``_main`` suffix is replaced by ``_spirv`` (e.g. ``conformance_suite_mini_spirv``)
+These labels will run the same tests as the _main variant, but use offline
+compilation to produce SPIR-V and use that to create programs,
+instead of default creating from OpenCL C source.
 
-In addition to conformance_suite_{mini,micro,full}, there is a new cmake label,
-"conformance_30_only" - to run tests which are only relevant to 3.0.
+Note that running ``ctest -L conformance_suite_micro`` will run *both* variants
+(the online and offline compilation) since the -L option takes a regexp.
+
+Additionally, there is a new cmake label, ``conformance_30_only``
+to run tests which are only relevant to OpenCL 3.0.
 
 CPU device version 1.2 should also work with CTS 3.0 (tests will be skipped).
 

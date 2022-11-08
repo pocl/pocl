@@ -17,9 +17,10 @@ tools:
   * GNU make or ninja
   * pkg-config
   * pthread (should be installed by default)
-  * Optional: hwloc v1.0 or newer (e.g. libhwloc-dev)
-  * Optional: python3 (optional but enabled by default; for support of LLVM BC with SPIR target)
-  * Optional: python3, llvm-spirv and spirv-tools (optional; for SPIR-V support)
+  * hwloc v1.0 or newer (e.g. libhwloc-dev) - optional
+  * python3 (for support of LLVM bitcode with SPIR target; optional but enabled by default)
+  * python3, llvm-spirv (version-compatible with LLVM) and spirv-tools (optional;
+    required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
 Installing requirements for Ubuntu::
 
@@ -44,8 +45,11 @@ distributions in ``tools/docker``, looking into them might be helpful.
 OpenCL 3.0 support
 ------------------
 
-If you want PoCL built with ICD and OpenCL 3.0 support, you will need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
-
+If you want PoCL built with ICD and OpenCL 3.0 support at platform level, you will
+need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from
+this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
+Additionally, if you want the CPU device to report as 3.0 OpenCL,
+you will need LLVM 14 or newer.
 
 Clang / LLVM Notes
 ------------------
