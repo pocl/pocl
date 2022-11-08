@@ -296,12 +296,15 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   AlmaifData *D = new AlmaifData;
   dev->data = (void *)D;
 
-  if (!parameters) {
-    POCL_ABORT("almaif: parameters were not given\n");
+  char *scanParams;
+  if (parameters) {
+    // strtok_r() modifies string, copy it to be nice
+    scanParams = strdup(parameters);
+  } else {
+    POCL_MSG_PRINT_ALMAIF("Parameters were not given. Creating emulation "
+                          "device with built-in kernels 0,1,2,4,9.\n");
+    scanParams = strdup("0xE,0,1,2,4,9");
   }
-
-  // strtok_r() modifies string, copy it to be nice
-  char *scanParams = strdup(parameters);
 
   char *savePtr;
   char *paramToken = strtok_r(scanParams, ",", &savePtr);
@@ -484,7 +487,12 @@ cl_int pocl_almaif_uninit(unsigned j, cl_device_id device) {
 
 unsigned int pocl_almaif_probe(struct pocl_device_ops *ops) {
   int env_count = pocl_device_get_env_count(ops->device_name);
-  return env_count;
+
+  if (env_count < 0) {
+    return 1;
+  } else {
+    return env_count;
+  }
 }
 
 char *pocl_almaif_build_hash(cl_device_id /*device*/) {
@@ -610,11 +618,12 @@ bool only_custom_device_events_left(cl_event event) {
   while (dep_event) {
     POCL_MSG_PRINT_ALMAIF("Looking at event id=%" PRIu64 "\n",
                          dep_event->event->id);
-    cl_device_type dev_type = dep_event->event->queue->device->type;
-    if (dev_type != CL_DEVICE_TYPE_CUSTOM ||
-        (dep_event->event->command->type != CL_COMMAND_NDRANGE_KERNEL)) {
+    const char *dep_dev_name = dep_event->event->queue->device->short_name;
+    const char *dev_name = event->queue->device->short_name;
+    if ((dep_event->event->command->type != CL_COMMAND_NDRANGE_KERNEL) ||
+        strcmp(dep_dev_name, dev_name)) {
       POCL_MSG_PRINT_ALMAIF(
-          "Found a dependent non-custom event, have to wait on this cmd\n");
+          "Found a dependent non-almaif event, have to wait on this cmd\n");
       return false;
     }
     dep_event = dep_event->next;

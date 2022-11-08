@@ -61,6 +61,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   /**********************************************************/
 
   /* setup device info */
+  dev->type = CL_DEVICE_TYPE_ACCELERATOR;
   dev->image_support = CL_FALSE;
   dev->half_fp_config = CL_FP_ROUND_TO_ZERO;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
