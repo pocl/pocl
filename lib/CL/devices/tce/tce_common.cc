@@ -266,12 +266,12 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   /* Compile in steps to save the program.bc for automated exploration 
      use case when producing the kernel capture scripts. */
   TCEString cmdLine;
-  cmdLine << "tcecc -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc +
+  cmdLine << OACC_EXECUTABLE << " -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc +
                  " " + " " + kernelObjSrc + " " + inputSrc + " -k " +
                  kernelMdSymbolName + " -g -O2 --emit-llvm -o " +
                  programBcFile + " " + extraFlags + ";";
 
-  cmdLine << "tcecc -a " << machine_file << " " << programBcFile << " -O1 -o "
+  cmdLine << OACC_EXECUTABLE << " -a " << machine_file << " " << programBcFile << " -O1 -o "
           << outputTpef << +" " + extraFlags + "\n";
   return cmdLine;
 }
