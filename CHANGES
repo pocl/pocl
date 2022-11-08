@@ -13,10 +13,13 @@ Notable User Facing Changes
   * and other small fixes and improvements
 - SPIR-V support: much improved support for both CPU driver and CUDA
   * vectorized versions of kernel library functions now supported
-  * fixed some atomic related functions
-  * SPIR-V tests from OpenCL-CTS now pass (with sufficiently recent
+  * much improved support on ARM64 & x86-64 with recent LLVMs
+  * fixed some atomic builtin functions
+  * SPIR-V new subtests from OpenCL-CTS now pass (with sufficiently recent
     llvm-spirv translator)
+  * most of the CTS passes with offline-compile=spirv option
   * specialization constants are supported via clSetProgramSpecializationConstant
+- improved Valgrind/Helgrind support
 - All device names used to control the platform setup via
   POCL_DEVICES are now lower case (as documented in the user manual).
 - Switch from __sync_*() to __atomic_*() (compiler builtins).
