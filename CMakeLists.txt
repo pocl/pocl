@@ -846,14 +846,10 @@ endif()
 
 if(ENABLE_SPIR)
 
-  message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
-
   if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
-    message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
-      "converter that produces bitcode FOR YOUR LLVM VERSION. "
-      "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
-      "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
-    set(SPIRV ON)
+    option(ENABLE_SPIRV "Enable SPIR-V support (default ON when available)" ON)
+  else()
+    set(ENABLE_SPIRV OFF CACHE INTERNAL "SPIR-V enabled" FORCE)
   endif()
 
   # required for the wrapper generator
@@ -865,7 +861,6 @@ if(ENABLE_SPIR)
 
 endif()
 
-set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 
 ######################################################################################
 
