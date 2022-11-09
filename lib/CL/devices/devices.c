@@ -283,19 +283,25 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
 {
   unsigned int i, dev_added = 0;
 
+  cl_device_type device_type_tmp = device_type;
+  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
+    {
+      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
+    }
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
-      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         {
           devices[dev_added] = &pocl_devices[i];
           ++dev_added;
           break;
         }
 
-      if (pocl_devices[i].type & device_type)
+      if (pocl_devices[i].type & device_type_tmp)
         {
             if (dev_added < num_devices)
               {
@@ -317,15 +323,21 @@ pocl_get_device_type_count(cl_device_type device_type)
   unsigned int count = 0;
   unsigned int i;
 
+  cl_device_type device_type_tmp = device_type;
+  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
+    {
+      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
+    }
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
-      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         return 1;
 
-      if (pocl_devices[i].type & device_type)
+      if (pocl_devices[i].type & device_type_tmp)
         {
            ++count;
         }
