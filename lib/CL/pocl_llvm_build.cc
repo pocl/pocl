@@ -29,16 +29,17 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "config.h"
 
+#include "clang/Lex/PreprocessorOptions.h"
 #include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/LangOptions.h>
+#include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Driver/Compilation.h>
 #include <clang/Driver/Driver.h>
-#include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/CompilerInvocation.h>
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
-#include "clang/Lex/PreprocessorOptions.h"
 
 #ifdef LLVM_OLDER_THAN_10_0
 #include "llvm/ADT/ArrayRef.h"
@@ -439,6 +440,10 @@ int pocl_llvm_build_program(cl_program program,
   LangOptions *la = pocl_build.getLangOpts();
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
+#ifndef LLVM_OLDER_THAN_15_0
+  LangOptions::setLangDefaults(*la, clang::Language::OpenCL, triple,
+                               po.Includes, clang::LangStandard::lang_opencl12);
+#else
   pocl_build.setLangDefaults(*la,
 #ifndef LLVM_OLDER_THAN_10_0
                              clang::InputKind(clang::Language::OpenCL),
@@ -452,6 +457,7 @@ int pocl_llvm_build_program(cl_program program,
                              po,
 #endif
                              clang::LangStandard::lang_opencl12);
+#endif
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).

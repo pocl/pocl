@@ -75,29 +75,6 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
   return false;
 }
 
-inline bool
-is_image_type(const llvm::Type& t) 
-{
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
-    llvm::StringRef name = t.getPointerElementType()->getStructName();
-    if (name.startswith("opencl.image2d_") || name.startswith("opencl.image3d_") ||
-        name.startswith("opencl.image1d_") || name.startswith("struct._pocl_image"))
-      return true;
-  }
-  return false;
-}
-
-inline bool
-is_sampler_type(const llvm::Type& t)
-{
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy())
-    {
-      llvm::StringRef name = t.getPointerElementType()->getStructName();
-      if (name.startswith("opencl.sampler_t")) return true;
-    }
-  return false;
-}
-
 // Checks if the given argument of Func is a local buffer.
 bool isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);
 
@@ -135,7 +112,7 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #endif
 }
 
-#ifndef LLVM_OPAQUE_POINTERS
+#ifdef LLVM_OLDER_THAN_15_0
 // Globals
 #define getValueType getType()->getElementType
 #endif /* LLVM_OPAQUE_POINTERS */
