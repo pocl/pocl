@@ -34,7 +34,6 @@ async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
 addrspace_operators.ll
-barrier.ll
 bitselect.cl
 clamp.cl
 clamp_int.cl
@@ -240,6 +239,12 @@ sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
+
+if(ENABLE_LLVM_OPAQUE_POINTERS)
+  list(APPEND SOURCES_WITH_SLEEF "barrier_opaq.ll")
+else()
+  list(APPEND SOURCES_WITH_SLEEF "barrier.ll")
+endif()
 
 if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
@@ -469,7 +474,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   endforeach()
 
-  if(ENABLE_SPIR)
+  if(ENABLE_SPIR AND (NOT ENABLE_LLVM_OPAQUE_POINTERS))
     compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
   endif()
 
