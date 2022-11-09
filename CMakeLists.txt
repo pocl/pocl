@@ -166,12 +166,7 @@ endif()
 
 ##################################################################################
 
-if(DEFINED OCS_AVAILABLE)
-  message(WARNING "The OCS_AVAILABLE option is deprecated, since it actually meant 'LLVM available', but LLVM is not the only way to get compiler support in a device. Please use ENABLE_LLVM in future if you want to enable/disable building pocl against LLVM.")
-  set(ENABLE_LLVM ${OCS_AVAILABLE} CACHE BOOL "build against LLVM" FORCE)
-else()
-  option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
-endif()
+option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
 
 option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." OFF)
 
