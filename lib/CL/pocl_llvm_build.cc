@@ -262,6 +262,14 @@ int pocl_llvm_build_program(cl_program program,
 
   size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
 
+#if (CLANG_MAJOR == 15)
+#ifdef LLVM_OPAQUE_POINTERS
+  ss << "-opaque-pointers ";
+#else
+  ss << "-no-opaque-pointers ";
+#endif
+#endif
+
   if (fastmath_flag != std::string::npos) {
 #ifdef ENABLE_CONFORMANCE
     user_options.replace(fastmath_flag, 21,

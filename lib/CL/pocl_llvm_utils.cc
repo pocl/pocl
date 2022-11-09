@@ -390,6 +390,13 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
+#if (CLANG_MAJOR == 15)
+#ifdef LLVM_OPAQUE_POINTERS
+  data->Context->setOpaquePointers(true);
+#else
+  data->Context->setOpaquePointers(false);
+#endif
+#endif
   data->number_of_IRs = 0;
   data->poclDiagString = new std::string;
   data->poclDiagStream = new llvm::raw_string_ostream(*data->poclDiagString);
