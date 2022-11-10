@@ -250,7 +250,6 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
             readonly_flag_list[*memobj_count] = 0;
 
           memobj_list[(*memobj_count)++] = buf;
-          POname (clRetainMemObject) (buf);
         }
     }
 

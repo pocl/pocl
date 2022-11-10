@@ -1145,6 +1145,10 @@ pocl_create_recorded_command (_cl_command_node **cmd,
 
       memcpy (memobjs, buffers, sizeof (cl_mem) * num_buffers);
       memcpy (flags, readonly_flags, sizeof (char) * num_buffers);
+      for (unsigned i = 0; i < num_buffers; ++i)
+        {
+          POname (clRetainMemObject) (memobjs[i]);
+        }
     }
 
   return CL_SUCCESS;

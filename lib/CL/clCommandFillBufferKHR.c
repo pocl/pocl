@@ -52,8 +52,6 @@ POname (clCommandFillBufferKHR) (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POname (clRetainMemObject) (buffer);
-
   return CL_SUCCESS;
 
 ERROR:

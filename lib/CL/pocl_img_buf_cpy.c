@@ -186,7 +186,6 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
                 cl_sync_point_khr *sync_point, _cl_command_node **cmd)
 {
   cl_int errcode;
-  cl_mem buffers[2] = { src, dst };
 
   if (command_buffer == NULL)
     {
@@ -216,7 +215,14 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  char rdonly[] = { 1, 0 };
+  cl_mem buffers[3] = { src, dst, NULL };
+  char rdonly[] = { 1, 0, 1 };
+  int n_bufs = 2;
+  if (src->size_buffer != NULL)
+    {
+      n_bufs = 3;
+      buffers[2] = src->size_buffer;
+    }
 
   if (command_buffer == NULL)
     {
@@ -227,13 +233,14 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
 
       errcode = pocl_create_command (cmd, command_queue, command_type, event,
                                      num_items_in_wait_list, event_wait_list,
-                                     2, buffers, rdonly);
+                                     n_bufs, buffers, rdonly);
     }
   else
     {
       errcode = pocl_create_recorded_command (
           cmd, command_buffer, command_queue, command_type,
-          num_items_in_wait_list, sync_point_wait_list, 2, buffers, rdonly);
+          num_items_in_wait_list, sync_point_wait_list, n_bufs, buffers,
+          rdonly);
     }
 
   return errcode;

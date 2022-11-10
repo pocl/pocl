@@ -56,11 +56,6 @@ POname (clCommandCopyBufferToImageKHR) (
         goto ERROR;
     }
 
-  POname (clRetainMemObject) (cmd->command.write_image.src);
-  POname (clRetainMemObject) (cmd->command.write_image.dst);
-  if (cmd->command.write_image.src->size_buffer != NULL)
-    POname (clRetainMemObject) (cmd->command.write_image.src->size_buffer);
-
   return CL_SUCCESS;
 
 ERROR:
