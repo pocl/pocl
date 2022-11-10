@@ -474,7 +474,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   endforeach()
 
-  if(ENABLE_SPIR AND (NOT ENABLE_LLVM_OPAQUE_POINTERS))
+  if(ENABLE_SPIR)
     compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
   endif()
 

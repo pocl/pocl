@@ -51,6 +51,10 @@ parser.add_argument('output',
 	type=argparse.FileType('w', encoding='utf-8'),
 	help='output file')
 
+parser.add_argument('-q', '--opaque-pointers',
+	dest='opaque_ptrs',
+	action='store_true')
+
 args = parser.parse_args()
 
 # function prefix used by PoCL's kernel library
@@ -75,6 +79,7 @@ SPIR_CALLING_ABI = (args.target == 'cuda')
 # will be passed with byval/sret
 CPU_ABI_REG_SIZE = args.reg_size
 
+OPAQUE_POINTERS = args.opaque_ptrs
 
 sys.stdout = args.output
 
@@ -526,18 +531,24 @@ def shuffle_coerced_arg(llvm_i, input_type, input_arg, all_instr):
 		shuffled_arg = input_arg
 	return (shuffled_arg, llvm_i)
 
-# returns a LLVM argument type with addrspace
+# returns a LLVM type with addrspace
 # e.g. for argtype=="Pi" returns "i32 *"
 def llvm_arg_type(argtype, AS):
 	if argtype.count("ocl_image")>0 or argtype.count("ocl_sampler")>0 or argtype.count("ocl_event")>0:
-		return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
+		if OPAQUE_POINTERS:
+			return "ptr " + AS
+		else:
+			return SIG_TO_LLVM_TYPE_MAP[argtype] + AS + "*"
 	if argtype[0] == 'P':
 		idx = 1
 		if argtype[1] == 'V' or argtype[1] == 'K':
 			idx = 2
 			if argtype[2] == 'A':
 				idx = 3
-		return SIG_TO_LLVM_TYPE_MAP[argtype[idx:]] + AS + "*"
+		if OPAQUE_POINTERS:
+			return "ptr " + AS
+		else:
+			return SIG_TO_LLVM_TYPE_MAP[argtype[idx:]] + AS + "*"
 	else:
 		return SIG_TO_LLVM_TYPE_MAP[argtype]
 
@@ -752,7 +763,10 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 					align = "align 8"
 				all_instr.append("  %%%u = alloca %s, %s" % (llvm_i, spir_arg_type, align))
 				alloca_inst = "%" + chr(48+llvm_i)
-				all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
+				if OPAQUE_POINTERS:
+					all_instr.append("  store %s, ptr %s, %s" % (noext_caller_arg, alloca_inst, align))
+				else:
+					all_instr.append("  store %s, %s* %s, %s" % (noext_caller_arg, spir_arg_type, alloca_inst, align))
 				callee_args.append(ocl_arg_type + "* " + alloca_inst)
 				decl_args.append(byval_sret_arg_type)
 				llvm_i += 1
@@ -804,7 +818,10 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			elif ARM_CALLING_ABI and (ret_type != sret_ret_type):
 				print("  call void %s(%s)" % (ocl_mangled_name, callee_args))
 				# add load from alloca
-				print("  %%%u = load %s, %s* %s, %s" % (llvm_i, ret_type, ret_type, retval_alloca_inst, retval_align))
+				if OPAQUE_POINTERS:
+					print("  %%%u = load %s, ptr %s, %s" % (llvm_i, ret_type, retval_alloca_inst, retval_align))
+				else:
+					print("  %%%u = load %s, %s* %s, %s" % (llvm_i, ret_type, ret_type, retval_alloca_inst, retval_align))
 				print("  ret %s %%%u" % (ret_type, llvm_i))
 
 			else:

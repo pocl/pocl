@@ -178,10 +178,15 @@ endmacro()
 function(generate_cuda_spir_wrapper OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/spir_wrapper.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+  if(ENABLE_LLVM_OPAQUE_POINTERS)
+    set(EXTRA_OPT "--opaque-pointers")
+  else()
+    unset(EXTRA_OPT)
+  endif()
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "cuda" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "cuda" "${FNAME}"
       COMMENT "Generating CUDA SPIR wrapper to ${FNAME}"
       VERBATIM)
 endfunction()
@@ -189,10 +194,15 @@ endfunction()
 function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/spir_wrapper_${SIZE}bit.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+  if(ENABLE_LLVM_OPAQUE_POINTERS)
+    set(EXTRA_OPT "--opaque-pointers")
+  else()
+    unset(EXTRA_OPT)
+  endif()
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
 endfunction()
