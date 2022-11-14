@@ -33,7 +33,11 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
@@ -51,7 +55,11 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
@@ -66,7 +74,11 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     get_filename_component(FNAME_WE "${FILENAME}" NAME_WE)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     set(DEPENDLIST
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
@@ -123,7 +135,11 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${EXT}_${FNAME}.bc")
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
