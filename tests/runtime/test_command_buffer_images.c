@@ -223,6 +223,8 @@ main (int _argc, char **_argv)
 
   CHECK_CL_ERROR (clReleaseContext (context));
 
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   printf ("OK\n");
   return EXIT_SUCCESS;
 #else
