@@ -973,24 +973,18 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
 #ifdef LLVM_OLDER_THAN_15_0
     unsigned Alignment = InstCast->getAlignment();
 #else
-    // TODO:
-
-    /// This is a hole in the type system and should not be abused.
-    /// Needed to interact with C for instance.
-
     unsigned Alignment = InstCast->getAlign().value();
 #endif
-    uint64_t StoreSize = Layout.getTypeStoreSize(InstCast->getAllocatedType());
-    uint64_t AllocSize = Layout.getTypeAllocSize(InstCast->getAllocatedType());
+    uint64_t StoreSize =
+        Layout.getTypeStoreSize(InstCast->getAllocatedType());
 
-    if (StoreSize != AllocSize) {
+    if ((Alignment > 1) && (StoreSize & (Alignment - 1))) {
       uint64_t AlignedSize = (StoreSize & (~(Alignment - 1))) + Alignment;
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### unaligned type found: aligning " << StoreSize << " to "
                 << AlignedSize << "\n";
 #endif
       assert(AlignedSize > StoreSize);
-      assert(AllocSize == AlignedSize);
       uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
 
       if (isa<ArrayType>(elementType)) {
@@ -1104,11 +1098,7 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
 #ifdef LLVM_OLDER_THAN_15_0
       size_t alignBits = Alloca->getAlignment() * 8;
 #else
-      // TODO:
-      /// This is a hole in the type system and should not be abused.
-      /// Needed to interact with C for instance.
-
-      unsigned alignBits = Alloca->getAlign().value() * 8;
+      size_t alignBits = Alloca->getAlign().value() * 8;
 #endif
 
       Metadata *VariableDebugMeta =
