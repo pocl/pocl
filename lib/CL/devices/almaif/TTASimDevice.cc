@@ -77,25 +77,23 @@ TTASimDevice::TTASimDevice(char *adf_name) {
                        "%zu and Size %zu\n",
                        Address, RegionSize);
 #endif
-  char adf_char[120];
-  snprintf(adf_char, sizeof(adf_char), "%s.adf", adf_name);
+  unsigned adf_name_length = strlen(adf_name) + 5;
+  char *adf_char = (char *)malloc(adf_name_length);
+  assert(adf_char);
+  snprintf(adf_char, adf_name_length, "%s.adf", adf_name);
 
   simulator_ = new SimpleSimulatorFrontend(adf_char, false);
   assert(simulator_ != NULL && "simulator null\n");
+
+  free(adf_char);
+
   simulatorCLI_ = new SimulatorCLI(simulator_->frontend());
 
   SigINTHandler *ctrlcHandler = new SigINTHandler(this);
   Application::setSignalHandler(SIGINT, *ctrlcHandler);
 
   const TTAMachine::Machine &mach = simulator_->machine();
-  /*  try {
-      mach = TTAMachine::Machine::loadFromADF(adf_char);
-    } catch (Exception &e) {
-      POCL_MSG_WARN("Error: %s\n",e.errorMessage().c_str());
-      POCL_ABORT("Couldn't open mach\n");
-    }
-    mach->writeToADF("temp.adf");
-  */
+
   ControlMemory = new TTASimControlRegion(mach, this);
 
   discoverDeviceParameters();
@@ -133,8 +131,11 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   DataMemory = new TTASimRegion(dmem_start, dmem_size, mem);
 
   // For built-in kernel use-case. If the firmware.tpef exists, load it in
-  char tpef_file[120];
-  snprintf(tpef_file, sizeof(tpef_file), "%s.tpef", adf_name);
+
+  int tpef_file_length = strlen(adf_name) + 6;
+  char *tpef_file = (char *)malloc(tpef_file_length);
+  assert(tpef_file);
+  snprintf(tpef_file, tpef_file_length, "%s.tpef", adf_name);
   if (pocl_exists(tpef_file)) {
     POCL_MSG_PRINT_ALMAIF(
         "Almaif: Found built-in kernel firmware for ttasim. Loading it in.\n");
@@ -143,6 +144,7 @@ TTASimDevice::TTASimDevice(char *adf_name) {
     POCL_MSG_PRINT_ALMAIF("File %s not found. Skipping program initialization\n",
                          tpef_file);
   }
+  free(tpef_file);
 
   if (!RelativeAddressing) {
     if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {

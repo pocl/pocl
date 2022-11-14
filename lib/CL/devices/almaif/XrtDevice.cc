@@ -30,19 +30,29 @@
 
 XrtDevice::XrtDevice(char *xrt_kernel_name) {
 
-  char xclbin_char[120];
-  snprintf(xclbin_char, sizeof(xclbin_char), "%s.xclbin", xrt_kernel_name);
+  unsigned xclbin_char_length = strlen(xrt_kernel_name) + 8;
+  char *xclbin_char = (char *)malloc(xclbin_char_length);
+  assert(xclbin_char);
+  snprintf(xclbin_char, xclbin_char_length, "%s.xclbin", xrt_kernel_name);
 
-  char kernel_char[120];
-  snprintf(kernel_char, sizeof(kernel_char), "%s:{%s_1}", xrt_kernel_name,
-           xrt_kernel_name);
+  // TODO: Fix the case when the kernel name contains a path
+  // Needs to tokenize the last part of the path and use that
+  // as the kernel name
+  unsigned xrt_kernel_name_length = 2 * strlen(xrt_kernel_name) + 6;
+  char *xrt_kernel_name = (char *)malloc(xrt_kernel_name_length);
+  assert(xrt_kernel_name);
+  snprintf(xrt_kernel_name, xrt_kernel_name_length, "%s:{%s_1}",
+           xrt_kernel_name, xrt_kernel_name);
 
   auto devicehandle = new xrt::device(0);
   assert(devicehandle != NULL && "devicehandle null\n");
 
   auto uuid = devicehandle->load_xclbin(xclbin_char);
-  auto kernel = new xrt::kernel(*devicehandle, uuid, kernel_char,
+  auto kernel = new xrt::kernel(*devicehandle, uuid, xrt_kernel_name,
                                 xrt::kernel::cu_access_mode::exclusive);
+
+  free(xclbin_char);
+  free(xrt_kernel_name);
 
   assert(kernel != XRT_NULL_HANDLE &&
          "xrtKernelHandle NULL, is the kernel opened properly?");

@@ -46,8 +46,10 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
   CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
   DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
 
-  char file_name[120];
-  snprintf(file_name, sizeof(file_name), "%s.img", kernel_name);
+  unsigned img_file_name_length = strlen(kernel_name) + 5;
+  char *file_name = (char *)malloc(img_file_name_length);
+  assert(file_name);
+  snprintf(file_name, img_file_name_length, "%s.img", kernel_name);
 
   if (pocl_exists(file_name)) {
     POCL_MSG_PRINT_ALMAIF(
@@ -56,6 +58,7 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
   } else {
     POCL_MSG_PRINT_ALMAIF("Almaif: No default firmware found. Skipping\n");
   }
+  free(file_name);
 
   if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {
     char *region_params =

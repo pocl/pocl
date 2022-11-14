@@ -311,12 +311,15 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   D->BaseAddress = strtoull(paramToken, NULL, 0);
 
   std::string supportedList;
-  char xrt_kernel_name[100];
+  char *device_init_file = NULL;
   if (D->BaseAddress != 0xE) {
     paramToken = strtok_r(NULL, ",", &savePtr);
-    strcpy(xrt_kernel_name, paramToken);
-    POCL_MSG_PRINT_ALMAIF("almaif: enabling device with device kernel name %s",
-                         xrt_kernel_name);
+    assert(paramToken);
+    device_init_file = (char *)malloc(strlen(paramToken) + 1);
+    assert(device_init_file);
+    strcpy(device_init_file, paramToken);
+    POCL_MSG_PRINT_ALMAIF("Enabling device with device init file name %s",
+                          device_init_file);
   }
 
   bool enable_compilation = false;
@@ -365,19 +368,19 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
     }
 #ifdef HAVE_XRT
     else if (D->BaseAddress == 0xA) {
-      D->Dev = new XrtDevice(xrt_kernel_name);
+      D->Dev = new XrtDevice(device_init_file);
     }
 #endif
     else if (D->BaseAddress == 0xB) {
 #ifdef TCE_AVAILABLE
-      D->Dev = new TTASimDevice(xrt_kernel_name);
+      D->Dev = new TTASimDevice(device_init_file);
       enable_compilation = true;
 #else
       POCL_ABORT("almaif: Tried enabling TTASim device, but it's not available. "
                  "Did you set ENABLE_TCE=1?\n");
 #endif
     } else {
-      D->Dev = new MMAPDevice(D->BaseAddress, xrt_kernel_name);
+      D->Dev = new MMAPDevice(D->BaseAddress, device_init_file);
     }
 
     if (!(D->Dev->RelativeAddressing)) {
@@ -404,15 +407,20 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
     dev->compiler_available = CL_TRUE;
     dev->linker_available = CL_TRUE;
-    char adf_file[200];
-    snprintf(adf_file, 200, "%s.adf", xrt_kernel_name);
+    unsigned adf_file_length = strlen(device_init_file) + 5;
+    char *adf_file = (char *)malloc(adf_file_length);
+    assert(adf_file);
+    snprintf(adf_file, adf_file_length, "%s.adf", device_init_file);
     pocl_almaif_compile_init(j, dev, adf_file);
+    free(adf_file);
 
   } else {
     D->compilationData = NULL;
     dev->compiler_available = CL_FALSE;
     dev->linker_available = CL_FALSE;
   }
+
+  free(device_init_file);
 
   POCL_MSG_PRINT_ALMAIF("almaif: mmap done\n");
   if (pocl_offline_compile) {
