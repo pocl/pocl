@@ -166,10 +166,15 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
+    if(ENABLE_LLVM_OPAQUE_POINTERS)
+      set(EXTRA_OPT "-opaque-pointers")
+    else()
+      set(EXTRA_OPT)
+    endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND "${LLVM_AS}" "-o" "${BC_FILE}" "${FULL_F_PATH}"
+        COMMAND "${LLVM_AS}" ${EXTRA_OPT} "-o" "${BC_FILE}" "${FULL_F_PATH}"
         COMMENT "Building LL to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
@@ -221,6 +226,26 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
       COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
+endfunction()
+
+function(generate_opaque_ptr_ll FILENAME SUBDIR OUTPUT)
+  get_filename_component(FNAME "${FILENAME}" NAME)
+  set(LL_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}")
+  set(${OUTPUT} "${LL_FILE}" PARENT_SCOPE)
+  if(IS_ABSOLUTE "${FILENAME}")
+    set(FULL_F_PATH "${FILENAME}")
+  else()
+    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+  endif()
+
+  add_custom_command( OUTPUT "${LL_FILE}"
+      DEPENDS "${FULL_F_PATH}"
+      COMMAND "${CMAKE_COMMAND}"
+      "-DINPUT_FILE=${FULL_F_PATH}" "-DOUTPUT_FILE=${LL_FILE}"
+      -P "${CMAKE_SOURCE_DIR}/cmake/make_opaque_ptr.cmake"
+      COMMENT "Generating opaque-pointer version of ${FNAME}"
+      VERBATIM)
+
 endfunction()
 
 
