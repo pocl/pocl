@@ -166,10 +166,16 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
-    if(ENABLE_LLVM_OPAQUE_POINTERS)
-      set(EXTRA_OPT "-opaque-pointers")
-    else()
-      set(EXTRA_OPT)
+
+    if(LLVM_VERSION VERSION_EQUAL 15.0)
+      # both of these are necesssary. some of the files (like barrier.ll)
+      # don't contain any pointers and thus cannot be guessed; if llvm-as
+      # produces the wrong opaque-type file, later llvm-link will fail
+      if(ENABLE_LLVM_OPAQUE_POINTERS)
+        set(EXTRA_OPT "-opaque-pointers=1")
+      else()
+        set(EXTRA_OPT "-opaque-pointers=0")
+      endif()
     endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"

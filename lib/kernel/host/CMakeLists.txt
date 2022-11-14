@@ -33,7 +33,7 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
-addrspace_operators.ll
+barrier.ll
 bitselect.cl
 clamp.cl
 clamp_int.cl
@@ -240,11 +240,16 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
-if(ENABLE_LLVM_OPAQUE_POINTERS)
-  list(APPEND SOURCES_WITH_SLEEF "barrier_opaq.ll")
-else()
-  list(APPEND SOURCES_WITH_SLEEF "barrier.ll")
-endif()
+include("bitcode_rules")
+
+foreach(FILE addrspace_operators.ll)
+  if(LLVM_OPAQUE_POINTERS)
+    generate_opaque_ptr_ll("${FILE}" "opaque" OPAQ_PTR_FILE)
+    list(APPEND SOURCES_WITH_SLEEF "${OPAQ_PTR_FILE}")
+  else()
+    list(APPEND SOURCES_WITH_SLEEF "${FILE}")
+  endif()
+endforeach()
 
 if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
@@ -276,7 +281,6 @@ endforeach()
 
 #=============================================================================
 
-include("bitcode_rules")
 
 if(ENABLE_SLEEF)
   set(KERNEL_SOURCES ${SOURCES_WITH_SLEEF})
