@@ -141,22 +141,23 @@ endif ()
 
     add_dependencies(bitstreams ${core_name}_bs)
 
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin
+    add_custom_command(OUTPUT ${core_name}_example0.poclbin
+        DEPENDS ${CMAKE_SOURCE_DIR}/examples/example0/example0.cl poclcc ${POCL_LIBRARY_NAME} pocl-devices-almaif
         COMMAND
         POCL_BUILDING=1
         OCL_ICD_VENDORS=${CMAKE_BINARY_DIR}/ocl-vendors/
         POCL_DEVICES=almaif
         POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/${core_name},65535
         POCL_DEBUG=almaif
-        ${CMAKE_BINARY_DIR}/bin/poclcc -o ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin ${CMAKE_CURRENT_SOURCE_DIR}/../example0/example0.cl 2>&1
+        ${CMAKE_BINARY_DIR}/bin/poclcc -o ${core_name}_example0.poclbin ${CMAKE_SOURCE_DIR}/examples/example0/example0.cl 2>&1
         | grep "TCE DEVICE HASH"
         | cut -d "=" -f 2
         | cut -d "[" -f 1
         )
 
-    add_custom_target(${core_name}_poclbin ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin)
-    add_test_pocl(NAME "examples/example0/ttasim_poclbin_${core_name}"
-        COMMAND "../example0/example0" "b" "../example0/${core_name}_example0.poclbin")
+    add_custom_target(${core_name}_poclbin ALL DEPENDS ${core_name}_example0.poclbin)
+    add_test(NAME "examples/example0/ttasim_poclbin_${core_name}"
+        COMMAND "${CMAKE_BINARY_DIR}/examples/example0/example0" "b" "${CMAKE_BINARY_DIR}/examples/accel/${core_name}_example0.poclbin")
 
 
 

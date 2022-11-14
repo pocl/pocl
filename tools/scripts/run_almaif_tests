@@ -72,8 +72,8 @@ then
     fi
 
     # Files needed for the cross-compilation example0
-    if [ ! -f $PWD/examples/example0/${val}_example0.poclbin ]; then
-      echo "$PWD/examples/example0/${val}_example0.poclbin doesn't exist.\
+    if [ ! -f $PWD/examples/accel/${val}_example0.poclbin ]; then
+      echo "$PWD/examples/accel/${val}_example0.poclbin doesn't exist.\
             Please copy it from the host machine"
       exit 1
     fi
