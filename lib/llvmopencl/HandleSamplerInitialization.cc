@@ -74,11 +74,12 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
   }
 
   bool Changed = false;
-  for (auto C : Calls) {
+  for (CallInst *C : Calls) {
     llvm::IRBuilder<> Builder(C);
 
     // get the type of the return value of __translate_sampler
     // this may not always be opencl.sampler_t, it could be a remapped type.
+#ifdef LLVM_OLDER_THAN_15_0
 #ifdef LLVM_OLDER_THAN_11_0
     Type *type = C->getCalledValue()->getType();
 #else
@@ -87,6 +88,11 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
     PointerType *pt = dyn_cast<PointerType>(type);
     FunctionType *ft = dyn_cast<FunctionType>(pt->getPointerElementType());
     Type *rettype = ft->getReturnType();
+#else
+    Function *SF = C->getCalledFunction();
+    assert(SF);
+    Type *rettype = SF->getReturnType();
+#endif
 
     ConstantInt *SamplerValue = dyn_cast<ConstantInt>(C->arg_begin()->get());
 

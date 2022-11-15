@@ -44,6 +44,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #endif
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
@@ -356,8 +357,13 @@ void fixPrintF(llvm::Module *Module) {
 
       // Cast pointers to the generic address space.
       if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() != 0) {
+#ifdef LLVM_OPAQUE_POINTERS
+        llvm::CastInst *AddrSpaceCast = llvm::CastInst::CreatePointerCast(
+            Arg, llvm::PointerType::get(Context, 0));
+#else
         llvm::CastInst *AddrSpaceCast =llvm::CastInst::CreatePointerCast(
           Arg, ArgType->getPointerElementType()->getPointerTo());
+#endif
         AddrSpaceCast->insertBefore(Call);
         Arg = AddrSpaceCast;
         ArgType = Arg->getType();
@@ -370,6 +376,7 @@ void fixPrintF(llvm::Module *Module) {
           llvm::GetElementPtrInst::Create(I64, Args, {ArgIndex});
       ArgPtr->insertBefore(Call);
 
+#ifndef LLVM_OPAQUE_POINTERS
       // Cast pointer to correct type if necessary.
       if (ArgPtr->getType()->getPointerElementType() != ArgType) {
         llvm::BitCastInst *ArgPtrBC =
@@ -377,7 +384,7 @@ void fixPrintF(llvm::Module *Module) {
         ArgPtrBC->insertAfter(ArgPtr);
         ArgPtr = ArgPtrBC;
       }
-
+#endif
       // Store argument to i64 array.
 #ifdef LLVM_OLDER_THAN_11_0
       llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr);
@@ -438,8 +445,12 @@ void fixPrintF(llvm::Module *Module) {
     llvm::Type *FormatType = Format->getType();
     if (FormatType->getPointerAddressSpace() != 0) {
       // Cast address space to generic.
+#ifdef LLVM_OPAQUE_POINTERS
+      llvm::Type *NewFormatType = llvm::PointerType::get(Context, 0);
+#else
       llvm::Type *NewFormatType =
           FormatType->getPointerElementType()->getPointerTo(0);
+#endif
       llvm::AddrSpaceCastInst *FormatASC =
           new llvm::AddrSpaceCastInst(Format, NewFormatType);
       FormatASC->insertBefore(Call);
@@ -689,9 +700,13 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
+#ifdef LLVM_OPAQUE_POINTERS
+      llvm::GetElementPtrInst *GEP = llvm::GetElementPtrInst::Create(
+          Base->getValueType(), Base, {Zero, Offset});
+#else
       llvm::GetElementPtrInst *GEP =
           llvm::GetElementPtrInst::Create(Base->getType()->getPointerElementType(), Base, {Zero, Offset});
-
+#endif
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
 
@@ -700,6 +715,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Map the old local memory argument to the result of this cast.
       VV[&Arg] = Cast;
+
     } else {
       // No change to other arguments.
       Arguments.push_back(&Arg);
@@ -935,11 +951,31 @@ int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
   for (auto &Arg : Kernel->args()) {
     unsigned i = Arg.getArgNo();
     llvm::Type *Type = Arg.getType();
-    if (!Type->isPointerTy())
-      Alignments[i] = 0;
-    else {
-      llvm::Type *ElemType = Type->getPointerElementType();
-      Alignments[i] = DL.getTypeAllocSize(ElemType);
+    Alignments[i] = 0;
+    // TODO test this
+    if (Type->isPointerTy()) {
+      // try to figure out alignment from uses
+      for (auto U : Arg.users()) {
+        if (llvm::GetElementPtrInst *GEP =
+                llvm::dyn_cast<llvm::GetElementPtrInst>(U)) {
+          for (auto UU : GEP->users()) {
+            if (llvm::StoreInst *SI = llvm::dyn_cast<llvm::StoreInst>(UU)) {
+              Alignments[i] = SI->getAlign().value();
+              break;
+            }
+            if (llvm::LoadInst *LI = llvm::dyn_cast<llvm::LoadInst>(UU)) {
+              Alignments[i] = LI->getAlign().value();
+              break;
+            }
+          }
+          if (Alignments[i])
+            break;
+        }
+      }
+      if (Alignments[i] == 0)
+        Alignments[i] = MAX_EXTENDED_ALIGNMENT;
+    } else {
+      Alignments[i] = Arg.getParamAlignment();
     }
   }
 

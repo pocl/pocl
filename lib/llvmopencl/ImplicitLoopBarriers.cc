@@ -34,6 +34,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Dominators.h"
 
+#include "llvm/Analysis/LoopInfo.h"
+
 #include "ImplicitLoopBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"

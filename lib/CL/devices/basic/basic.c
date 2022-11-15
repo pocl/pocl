@@ -363,15 +363,30 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        size_t s = meta->local_sizes[i];
-        size_t j = meta->num_args + i;
-        arguments[j] = malloc (sizeof (void *));
-        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-        *(void **)(arguments[j]) = pp;
-      }
+  if (cmd->device->device_alloca_locals)
+    {
+      /* Local buffers are allocated in the device side work-group
+         launcher. Let's pass only the sizes of the local args in
+         the arg buffer. */
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          assert (sizeof (size_t) == sizeof (void *));
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          *(size_t *)(arguments[j]) = s;
+        }
+    }
+  else
+    {
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          arguments[j] = malloc (sizeof (void *));
+          void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+          *(void **)(arguments[j]) = pp;
+        }
+    }
 
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);

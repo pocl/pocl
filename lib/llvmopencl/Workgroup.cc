@@ -406,9 +406,8 @@ Workgroup::createLoadFromContext(
   IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex=-1) {
 
   Value *GEP, *Ptr;
-  Type *ContextType = ContextArg->getType()->getPointerElementType();
-  GEP = Builder.CreateStructGEP(ContextType, ContextArg, StructFieldIndex);
-  Type *GEPType = GEP->getType()->getPointerElementType();
+  GEP = Builder.CreateStructGEP(PoclContextT, ContextArg, StructFieldIndex);
+  Type *GEPType = PoclContextT->getStructElementType(StructFieldIndex);
 
   llvm::LoadInst *Load = nullptr;
   if (SizeTWidth == 64) {
@@ -436,11 +435,22 @@ Workgroup::createLoadFromContext(
           GEPType,
           GEP, 0, FieldIndex);
   }
+
+#ifndef LLVM_OLDER_THAN_13_0
+  Type *FinalType = GEPType;
+  if (FieldIndex >= 0) {
+    ArrayType *AT = nullptr;
+    AT = dyn_cast<ArrayType>(GEPType);
+    assert(AT);
+    FinalType = AT->getArrayElementType();
+  }
+#endif
+
   Load = Builder.CreateLoad(
 #ifndef LLVM_OLDER_THAN_13_0
-	  Ptr->getType()->getPointerElementType(),
+      FinalType,
 #endif
-	  Ptr);
+      Ptr);
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
 }
@@ -1035,6 +1045,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   Builder.SetInsertPoint(Block);
 
   Function::arg_iterator ai = WorkGroup->arg_begin();
+  Argument *AI = &*ai;
 
   SmallVector<Value *, 8> Arguments;
   size_t i = 0;
@@ -1046,25 +1057,42 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
     Type *ArgType = ii->getType();
     Type* I32Ty = Type::getInt32Ty(M->getContext());
-    Value *AI = &*ai;
+
+#ifndef LLVM_OPAQUE_POINTERS
     Value *GEP = Builder.CreateGEP(AI->getType()->getPointerElementType(),
         AI, ConstantInt::get(I32Ty, i));
     Value *Pointer = Builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
+#else
+    Type *I8Ty = Type::getInt8Ty(M->getContext());
+    Type *I8PtrTy = I8Ty->getPointerTo(0);
+    Value *GEP = Builder.CreateGEP(I8PtrTy, AI, ConstantInt::get(I32Ty, i));
+    Value *Pointer = Builder.CreateLoad(I8PtrTy, GEP);
+#endif
 
     Value *Arg;
     if (DeviceAllocaLocals && isLocalMemFunctionArg(F, i)) {
       // Generate allocas for the local buffer arguments.
+      // The size is passed directly instead of the pointer.
       PointerType *ParamType = dyn_cast<PointerType>(ArgType);
+      assert(ParamType != nullptr);
+      const DataLayout &DL = M->getDataLayout();
+
+      uint64_t ParamByteSize = DL.getTypeStoreSize(ParamType);
+      Type *SizeIntType = IntegerType::get(*C, ParamByteSize * 8);
+      Value *LocalArgByteSize = Builder.CreatePointerCast(Pointer, SizeIntType);
+
 #ifdef LLVM_OPAQUE_POINTERS
-      Type *ArgElementType = ii->getParamByValType();
+      Type *ArgElementType = I8Ty;
+      Value *ElementCount = LocalArgByteSize;
 #else
-      Type *ArgElementType = ParamType->getElementType();
+      Type *ArgElementType = ArgType->getPointerElementType();
+      uint64_t ElementSize = DL.getTypeStoreSize(ArgElementType);
+      Value *ElementCount = Builder.CreateUDiv(
+          LocalArgByteSize, ConstantInt::get(SizeIntType, ElementSize));
 #endif
-      if (ArgElementType->isArrayTy()) {
-        // Known static local size (converted automatic local).
-        Arg =
-            new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
-                                 ConstantInt::get(IntegerType::get(*C, 32), 1),
+
+      Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
+                                 ElementCount,
 #ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
                                  llvm::Align(
@@ -1077,35 +1105,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
                                      )
 #endif
                                      ,
-                                 "local_auto", Block);
-      } else {
-        // Dynamic (runtime-set) size local argument.
-
-        const DataLayout &DL = M->getDataLayout();
-        // The size is passed directly instead of the pointer.
-        uint64_t ParamByteSize = DL.getTypeStoreSize(ParamType);
-        uint64_t ElementSize = DL.getTypeStoreSize(ArgElementType);
-        Type *SizeIntType = IntegerType::get(*C, ParamByteSize * 8);
-        Value *LocalArgByteSize =
-            Builder.CreatePointerCast(Pointer, SizeIntType);
-        Value *ElementCount = Builder.CreateUDiv(
-            LocalArgByteSize, ConstantInt::get(SizeIntType, ElementSize));
-        Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
-                                   ElementCount,
-#ifndef LLVM_OLDER_THAN_10_0
-#ifndef LLVM_OLDER_THAN_11_0
-                                   llvm::Align(
-#else
-                                   llvm::MaybeAlign(
-#endif
-#endif
-                                       MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                                       )
-#endif
-                                       ,
-                                   "local_arg", Block);
-      }
+                                 "local_arg", Block);
     } else {
       // If it's a pass by value pointer argument, we just pass the pointer
       // as is to the function, no need to load from it first.
@@ -1148,7 +1148,11 @@ static size_t getArgumentSize(llvm::Argument &Arg) {
   llvm::Type *TypeInBuf = nullptr;
   if (Arg.getType()->isPointerTy()) {
     if (Arg.hasByValAttr()) {
+#ifdef LLVM_OLDER_THAN_15_0
       TypeInBuf = Arg.getType()->getPointerElementType();
+#else
+      TypeInBuf = Arg.getParamByValType();
+#endif
     } else {
       TypeInBuf = Arg.getType();
     }
@@ -1211,7 +1215,12 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
   LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
 
+#ifdef LLVM_OLDER_THAN_15_0
   llvm::Type *TypeInArg = Arg.getType()->getPointerElementType();
+#else
+  assert(isByValPtrArgument(Arg));
+  llvm::Type *TypeInArg = Arg.getParamByValType();
+#endif
   const DataLayout &DL = Arg.getParent()->getParent()->getDataLayout();
   unsigned alignment = DL.getABITypeAlignment(TypeInArg);
   uint64_t StoreSize = DL.getTypeStoreSize(TypeInArg);
@@ -1598,7 +1607,7 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
 void
 Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
 
-  IRBuilder<> builder(M->getContext());
+  IRBuilder<> Builder(M->getContext());
 
   std::string funcName = "";
   funcName = F->getName().str();
@@ -1614,9 +1623,10 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
 #endif
   assert(WorkGroup != NULL);
 
-  builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));
+  Builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));
 
   Function::arg_iterator ai = WorkGroup->arg_begin();
+  Argument *AI = &*ai;
 
   SmallVector<Value*, 8> arguments;
   size_t i = 0;
@@ -1626,24 +1636,36 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
     if (i == F->arg_size() - 4)
       break;
 
+    Value *V;
     Type *T = ii->getType();
     Type* I32Ty = Type::getInt32Ty(M->getContext());
-    Value *AI = &*ai;
-    Value *GEP = builder.CreateGEP(AI->getType()->getPointerElementType(),
-        AI, ConstantInt::get(I32Ty, i));
-    Value *Pointer = builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
-    Value *V;
+
+#ifndef LLVM_OPAQUE_POINTERS
+    Value *GEP = Builder.CreateGEP(AI->getType()->getPointerElementType(), AI,
+                                   ConstantInt::get(I32Ty, i));
+    Value *Pointer =
+        Builder.CreateLoad(GEP->getType()->getPointerElementType(), GEP);
+#else
+    Type *I8Ty = Type::getInt8Ty(M->getContext());
+    Type *I8PtrTy = I8Ty->getPointerTo(AI->getType()->getPointerAddressSpace());
+    Value *GEP = Builder.CreateGEP(I8PtrTy, AI, ConstantInt::get(I32Ty, i));
+    Value *Pointer = Builder.CreateLoad(I8PtrTy, GEP);
+#endif
 
     if (T->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         // Assume the pointer is directly in the arg array.
-        V = builder.CreatePointerCast(Pointer, T);
+        V = Builder.CreatePointerCast(Pointer, T);
         arguments.push_back(V);
         continue;
       } else {
         // It's a pass by value pointer argument, use the underlying
         // element type in subsequent load.
+#ifdef LLVM_OLDER_THAN_15_0
         T = T->getPointerElementType();
+#else
+        T = ii->getParamByValType();
+#endif
       }
     }
 
@@ -1651,14 +1673,13 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
     // as is to the function, no need to load from it first.
 
     if (ii->hasByValAttr() && (((PointerType *)T)->getAddressSpace() != DeviceGlobalASid)) {
-      V = builder.CreatePointerCast(Pointer, T->getPointerTo());
+      V = Builder.CreatePointerCast(Pointer, T->getPointerTo());
     } else {
-      V =
-          builder.CreatePointerCast(Pointer, T->getPointerTo(DeviceGlobalASid));
+      V = Builder.CreatePointerCast(Pointer, T->getPointerTo(DeviceGlobalASid));
     }
 
     if (!ii->hasByValAttr()) {
-      V = builder.CreateLoad(T, V);
+      V = Builder.CreateLoad(T, V);
     }
 
     arguments.push_back(V);
@@ -1673,8 +1694,8 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
   ++ai;
   arguments.push_back(&*ai);
 
-  builder.CreateCall(F, ArrayRef<Value*>(arguments));
-  builder.CreateRetVoid();
+  Builder.CreateCall(F, ArrayRef<Value *>(arguments));
+  Builder.CreateRetVoid();
 }
 
 // Returns true in case the given function is a kernel that

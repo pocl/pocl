@@ -33,7 +33,11 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
@@ -51,7 +55,11 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
@@ -66,7 +74,11 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     get_filename_component(FNAME_WE "${FILENAME}" NAME_WE)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     set(DEPENDLIST
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
@@ -123,7 +135,11 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${EXT}_${FNAME}.bc")
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
-    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    if(IS_ABSOLUTE "${FILENAME}")
+      set(FULL_F_PATH "${FILENAME}")
+    else()
+      set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+    endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
@@ -151,9 +167,20 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
 
+    if(LLVM_VERSION VERSION_EQUAL 15.0)
+      # both of these are necesssary. some of the files (like barrier.ll)
+      # don't contain any pointers and thus cannot be guessed; if llvm-as
+      # produces the wrong opaque-type file, later llvm-link will fail
+      if(ENABLE_LLVM_OPAQUE_POINTERS)
+        set(EXTRA_OPT "-opaque-pointers=1")
+      else()
+        set(EXTRA_OPT "-opaque-pointers=0")
+      endif()
+    endif()
+
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND "${LLVM_AS}" "-o" "${BC_FILE}" "${FULL_F_PATH}"
+        COMMAND "${LLVM_AS}" ${EXTRA_OPT} "-o" "${BC_FILE}" "${FULL_F_PATH}"
         COMMENT "Building LL to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
@@ -178,10 +205,15 @@ endmacro()
 function(generate_cuda_spir_wrapper OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/spir_wrapper.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+  if(ENABLE_LLVM_OPAQUE_POINTERS)
+    set(EXTRA_OPT "--opaque-pointers")
+  else()
+    unset(EXTRA_OPT)
+  endif()
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "cuda" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "cuda" "${FNAME}"
       COMMENT "Generating CUDA SPIR wrapper to ${FNAME}"
       VERBATIM)
 endfunction()
@@ -189,12 +221,37 @@ endfunction()
 function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/spir_wrapper_${SIZE}bit.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+  if(ENABLE_LLVM_OPAQUE_POINTERS)
+    set(EXTRA_OPT "--opaque-pointers")
+  else()
+    unset(EXTRA_OPT)
+  endif()
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
+endfunction()
+
+function(generate_opaque_ptr_ll FILENAME SUBDIR OUTPUT)
+  get_filename_component(FNAME "${FILENAME}" NAME)
+  set(LL_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}")
+  set(${OUTPUT} "${LL_FILE}" PARENT_SCOPE)
+  if(IS_ABSOLUTE "${FILENAME}")
+    set(FULL_F_PATH "${FILENAME}")
+  else()
+    set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
+  endif()
+
+  add_custom_command( OUTPUT "${LL_FILE}"
+      DEPENDS "${FULL_F_PATH}"
+      COMMAND "${CMAKE_COMMAND}"
+      "-DINPUT_FILE=${FULL_F_PATH}" "-DOUTPUT_FILE=${LL_FILE}"
+      -P "${CMAKE_SOURCE_DIR}/cmake/make_opaque_ptr.cmake"
+      COMMENT "Generating opaque-pointer version of ${FNAME}"
+      VERBATIM)
+
 endfunction()
 
 

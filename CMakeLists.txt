@@ -166,12 +166,7 @@ endif()
 
 ##################################################################################
 
-if(DEFINED OCS_AVAILABLE)
-  message(WARNING "The OCS_AVAILABLE option is deprecated, since it actually meant 'LLVM available', but LLVM is not the only way to get compiler support in a device. Please use ENABLE_LLVM in future if you want to enable/disable building pocl against LLVM.")
-  set(ENABLE_LLVM ${OCS_AVAILABLE} CACHE BOOL "build against LLVM" FORCE)
-else()
-  option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
-endif()
+option(ENABLE_LLVM "Build pocl with LLVM. Default is ON." ON)
 
 option(STATIC_LLVM "If ON, link to static LLVM libraries. OFF (default) = link to shared LLVM libraries." OFF)
 
@@ -509,6 +504,41 @@ if(ENABLE_LLVM)
   endif()
   endif()
 
+  #
+  # LLVM_OPAQUE_POINTERS
+  #
+  # llvm has changed from typed pointers to opaque pointers, their guidance is
+  #
+  # From https://llvm.org/docs/OpaquePointers.html, version support
+  # LLVM 14: Supports all necessary APIs for migrating to opaque pointers and deprecates/removes
+  #          incompatible APIs. However, using opaque pointers in the optimization pipeline is not fully
+  #          supported. This release can be used to make out-of-tree code compatible with opaque
+  #          pointers, but opaque pointers should not be enabled in production.
+  #
+  # LLVM 15: Opaque pointers are enabled by default. Typed pointers are still available, but only
+  #          supported on a best-effort basis and may be untested.
+  #
+  # LLVM 16: Only opaque pointers will be supported. Typed pointers will not be supported.
+  #
+  # Up to llvm 14 including, ENABLE_LLVM_OPAQUE_POINTERS is force-set to OFF
+  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON
+  # For llvm 15 ENABLE_LLVM_OPAQUE_POINTERS is a CMake option, defaulting to OFF,
+  # reason is that 1) it's unfinished 2) for properly handling images, we need opaque types,
+  # which will only be available in LLVM 16+
+  # TODO: This should be temporary. After the opaque pointer conversion in PoCL is finished,
+  # we should remove this macro and use LLVM_OLDER_THAN_X macros only, like in the rest
+  # of the code, since this macro adds another layer of complexity.
+  if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
+    set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
+  elseif(LLVM_VERSION VERSION_EQUAL 15.0)
+    option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." OFF)
+  else()
+    set(ENABLE_LLVM_OPAQUE_POINTERS ON CACHE INTERNAL "llvm opaque pointers" FORCE)
+  endif()
+  if (ENABLE_LLVM_OPAQUE_POINTERS)
+    set(LLVM_OPAQUE_POINTERS 1)
+  endif()
+
 else()
 
   if(ENABLE_HOST_CPU_DEVICES AND (NOT DEFINED HOST_DEVICE_BUILD_HASH))
@@ -779,6 +809,15 @@ if(ENABLE_POCL_FLOAT_CONVERSION)
   set(FLOATCONV_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
 endif()
 
+unset(OPAQUE_PTR_FLAGS)
+if(LLVM_VERSION VERSION_EQUAL 15.0)
+  if(LLVM_OPAQUE_POINTERS)
+    set(OPAQUE_PTR_FLAGS "-Xclang -opaque-pointers")
+  else()
+    set(OPAQUE_PTR_FLAGS "-Xclang -no-opaque-pointers")
+  endif()
+endif()
+
 ######################################################################################
 
 # for kernel code, disable PIC & stack protector
@@ -788,9 +827,10 @@ endif()
 # constant addrspace variables, and stack protector likely slows
 # down the kernels, so it needs to be determined whether it's worth
 # the trouble.
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
+set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
@@ -1165,40 +1205,6 @@ if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
 else()
   set(HOST_DEVICE_CL_VERSION_MAJOR 1)
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
-endif()
-
-#
-# LLVM_OPAQUE_POINTERS
-#
-# llvm has changed from typed pointers to opaque pointers, their guidance is
-#
-# From https://llvm.org/docs/OpaquePointers.html, version support
-# LLVM 14: Supports all necessary APIs for migrating to opaque pointers and deprecates/removes
-#          incompatible APIs. However, using opaque pointers in the optimization pipeline is not fully
-#          supported. This release can be used to make out-of-tree code compatible with opaque
-#          pointers, but opaque pointers should not be enabled in production.
-#
-# LLVM 15: Opaque pointers are enabled by default. Typed pointers are still available, but only
-#          supported on a best-effort basis and may be untested.
-#
-# LLVM 16: Only opaque pointers will be supported. Typed pointers will not be supported.
-#
-# Pre llvm 14, ENABLE_LLVM_OPAQUE_POINTERS will not be defined and the legacy typed pointers will be used.
-# Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS will not be defined and opaque pointers will be used.
-# For llvm 14 and 15 this macro will be controlled by the build parameter ENABLE_LLVM_OPAQUE_POINTERS
-# For llvm 14 it will default to OFF
-# For llvm 15 it will default to  ON
-if(LLVM_VERSION VERSION_LESS_EQUAL 13.0)
-  set(ENABLE_LLVM_OPAQUE_POINTERS 0)
-elseif(LLVM_VERSION VERSION_EQUAL 14.0)
-  option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." OFF)
-elseif(LLVM_VERSION VERSION_EQUAL 15.0)
-  option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." ON)
-else()
-  set(ENABLE_LLVM_OPAQUE_POINTERS 1)
-endif()
-if (ENABLE_LLVM_OPAQUE_POINTERS)
-  set(LLVM_OPAQUE_POINTERS 1)
 endif()
 
 # These are mandatory for OpenCL 1.1 (except for 3D writes and command buffers
