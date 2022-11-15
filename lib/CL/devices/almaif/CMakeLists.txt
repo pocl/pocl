@@ -24,10 +24,6 @@
 #
 #=============================================================================
 
-add_compile_options("-std=c++14")
-
-add_compile_options(${TCE_INCLUDES})
-add_compile_options(${TCE_CXXFLAGS})
 
 set(ALMAIF_SOURCES "AlmaifShared.hh"
                   "almaif.cc"
@@ -84,6 +80,9 @@ endif()
 
 if(ENABLE_TCE)
     target_link_libraries(pocl-devices-almaif PRIVATE ${TCE_LIBS})
+
+    target_compile_options(pocl-devices-almaif PRIVATE ${TCE_INCLUDES})
+    target_compile_options(pocl-devices-almaif PRIVATE ${TCE_CXXFLAGS})
 endif()
 
 install(FILES "tce_builtins.cl"
