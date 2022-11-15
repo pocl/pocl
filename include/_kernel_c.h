@@ -33,6 +33,10 @@
 
 #include "pocl_types.h"
 
+/* cannot include "_builtin_renames.h" because it overrides some C/C++ macros,
+   but we need the prefixed functions in the builtin library */
+#define POCL_BUILTIN_PREFIX(FUNC) _cl_##FUNC
+
 #include "_kernel_constants.h"
 
 /* Function/type attributes supported by Clang/SPIR */

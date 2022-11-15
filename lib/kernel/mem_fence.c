@@ -25,17 +25,17 @@
 /* Empty implementation should work on CPU devices. */
 
 void _CL_OVERLOADABLE
-read_mem_fence (cl_mem_fence_flags flags)
+POCL_BUILTIN_PREFIX(read_mem_fence) (cl_mem_fence_flags flags)
 {
 }
 
 void _CL_OVERLOADABLE
-write_mem_fence (cl_mem_fence_flags flags)
+POCL_BUILTIN_PREFIX(write_mem_fence) (cl_mem_fence_flags flags)
 {
 }
 
 void _CL_OVERLOADABLE
-mem_fence (cl_mem_fence_flags flags)
+POCL_BUILTIN_PREFIX(mem_fence) (cl_mem_fence_flags flags)
 {
 }
 
@@ -80,20 +80,20 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags)
     __attribute__ ((noduplicate));
 
 void _CL_OVERLOADABLE
-work_group_barrier (cl_mem_fence_flags flags) __attribute__ ((noduplicate))
+POCL_BUILTIN_PREFIX(work_group_barrier) (cl_mem_fence_flags flags) __attribute__ ((noduplicate))
 {
   barrier (flags);
 }
 
 void _CL_OVERLOADABLE
-work_group_barrier (cl_mem_fence_flags flags, memory_scope scope)
+POCL_BUILTIN_PREFIX(work_group_barrier) (cl_mem_fence_flags flags, memory_scope scope)
     __attribute__ ((noduplicate))
 {
   barrier (flags);
 }
 
 void _CL_OVERLOADABLE
-atomic_work_item_fence (cl_mem_fence_flags flags, memory_order order,
+POCL_BUILTIN_PREFIX(atomic_work_item_fence) (cl_mem_fence_flags flags, memory_order order,
                         memory_scope scope) __attribute__ ((noduplicate))
 {
   __c11_atomic_thread_fence (order);

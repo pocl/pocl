@@ -166,11 +166,6 @@ SVM_ATOMICS_INT_ONLY = [
 	"atomic_fetch_max"
 ]
 
-SVM_ATOMICS_FLAGS = [
-	"atomic_flag_test_and_set",
-	"atomic_flag_clear"
-]
-
 
 SIG_TO_LLVM_TYPE_MAP = {
 	"f": "float",
@@ -272,7 +267,8 @@ SIG_TO_LLVM_TYPE_MAP = {
 	'21ocl_image1d_buffer_wo': '%opencl.image1d_buffer_wo_t',
 
 	'11ocl_sampler': '%opencl.sampler_t',
-	'9ocl_event': '%opencl.event_t'
+	'9ocl_event': '%opencl.event_t',
+	'P9ocl_event': '%opencl.event_t*',
 }
 
 if X86_CALLING_ABI:
@@ -1085,11 +1081,13 @@ for mang_type in ['s', 't', 'i', 'j', 'l', 'm']:
 	for vector_size in [1,2,3,4,8,16]:
 		arg_1st = UPSAMPLE_1ST_ARG[mang_type]
 		arg_2nd = UPSAMPLE_2ND_ARG[mang_type]
+		ret_type = mang_type
 		if vector_size > 1:
 			s = str(vector_size)
 			arg_1st = "Dv" + s + "_" + arg_1st
 			arg_2nd = "Dv" + s + "_" + arg_2nd
-		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[mang_type], '', False, arg_1st, arg_2nd)
+			ret_type = "Dv" + s + "_" + ret_type
+		generate_function("upsample", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, arg_1st, arg_2nd)
 
 # vload / vstore / prefetch / async
 for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
@@ -1111,17 +1109,17 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 
 		generate_function("prefetch", SIG_TO_LLVM_TYPE_MAP['v'], '', True, PConstArg, 'm')
 
-		generate_function("async_work_group_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+		generate_function("async_work_group_copy", '%opencl.event_t*', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
-		generate_function("async_work_group_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+		generate_function("async_work_group_copy", '%opencl.event_t*', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', '9ocl_event')
 
-		generate_function("async_work_group_strided_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
 											("global", "local", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
-		generate_function("async_work_group_strided_copy", SIG_TO_LLVM_TYPE_MAP['9ocl_event'], '',
+		generate_function("async_work_group_strided_copy", '%opencl.event_t*', '',
 											("local", "global", "none", "none", "none"),
 											PArg, PConstArg, 'm', 'm', '9ocl_event')
 
@@ -1333,14 +1331,22 @@ for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 											['PVA'+mang_type, 'P'+mang_type, mang_type],
 											["12memory_order", "12memory_order"])
 
+f = "atomic_flag_test_and_set"
+generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi')
+generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order")
+generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order", "12memory_scope")
 
-for f in SVM_ATOMICS_FLAGS:
-	generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi')
-	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order")
-	generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi', "12memory_order", "12memory_scope")
+f = "atomic_flag_clear"
+generate_function(f, SIG_TO_LLVM_TYPE_MAP['v'], '', True, 'PVAi')
+generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['v'], '', True, 'PVAi', "12memory_order")
+generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['v'], '', True, 'PVAi', "12memory_order", "12memory_scope")
 
 
-
+generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'private'), 'i', 'P9ocl_event')
+generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'generic'), 'i', 'P9ocl_event')
+generate_function("atomic_work_item_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_order', '12memory_scope')
+generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_scope')
+generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
 
 print("""
 
