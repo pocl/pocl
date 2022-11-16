@@ -52,7 +52,7 @@
 #include "pocl_llvm.h"
 #endif
 
-struct data {
+struct ventus_device_data_t {
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
   /* List of commands not yet ready to be executed */
@@ -514,7 +514,7 @@ static void ventus_command_scheduler (struct data *d)
 void
 pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  struct data *d = node->device->data;
+  struct ventus_device_data_t *d = (struct ventus_device_data_t *)node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (node, 1, 1);
@@ -532,7 +532,7 @@ pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq)
 
 void pocl_ventus_flush (cl_device_id device, cl_command_queue cq)
 {
-  struct data *d = (struct data*)device->data;
+  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   ventus_command_scheduler (d);
@@ -542,7 +542,7 @@ void pocl_ventus_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_ventus_join (cl_device_id device, cl_command_queue cq)
 {
-  struct data *d = (struct data*)device->data;
+  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   ventus_command_scheduler (d);
@@ -554,7 +554,7 @@ pocl_ventus_join (cl_device_id device, cl_command_queue cq)
 void
 pocl_ventus_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  struct data *d = (struct data*)device->data;
+  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
   _cl_command_node * volatile node = event->command;
 
   if (finished->status < CL_COMPLETE)
