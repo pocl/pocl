@@ -88,6 +88,8 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
                   if (ai->type == POCL_ARG_TYPE_SAMPLER)
                     POname (clReleaseSampler) (
                         cmd->command.run.arguments[i].value);
+                  if (cmd->command.run.arguments[i].value != NULL)
+                    POCL_MEM_FREE (cmd->command.run.arguments[i].value);
                 }
               POCL_MEM_FREE (cmd->command.run.arguments);
               break;
