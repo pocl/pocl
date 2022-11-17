@@ -252,6 +252,10 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
         }
       POname (clRetainCommandBufferKHR) (command_buffer);
       pocl_command_enqueue (q, node);
+      for (unsigned i = 0; i < command_buffer->num_syncpoints; ++i)
+        {
+          POname (clReleaseEvent) (syncpoints[i]);
+        }
       errcode = POname (clSetEventCallback) (final_ev, CL_COMPLETE,
                                              buffer_finished_callback,
                                              (void *)command_buffer);
