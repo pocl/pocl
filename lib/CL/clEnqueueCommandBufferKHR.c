@@ -241,8 +241,9 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
        * commands
        */
       _cl_command_node *node = NULL;
+      cl_event final_ev;
       errcode = pocl_create_command (&node, q, CL_COMMAND_COMMAND_BUFFER_KHR,
-                                     event, command_buffer->num_syncpoints,
+                                     &final_ev, command_buffer->num_syncpoints,
                                      syncpoints, 0, NULL, NULL);
       if (errcode != CL_SUCCESS)
         {
@@ -251,9 +252,23 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
         }
       POname (clRetainCommandBufferKHR) (command_buffer);
       pocl_command_enqueue (q, node);
-      return POname (clSetEventCallback) (*event, CL_COMPLETE,
-                                          buffer_finished_callback,
-                                          (void *)command_buffer);
+      errcode = POname (clSetEventCallback) (final_ev, CL_COMPLETE,
+                                             buffer_finished_callback,
+                                             (void *)command_buffer);
+      if (errcode != CL_SUCCESS)
+        {
+          POCL_MSG_ERR ("Failed to set command buffer cleanup callback\n");
+          POname (clReleaseEvent) (final_ev);
+          pocl_mem_manager_free_command (node);
+          return errcode;
+        }
+
+      if (event != NULL)
+        *event = final_ev;
+      else
+        POname (clReleaseEvent) (final_ev);
+
+      return CL_SUCCESS;
     }
 }
 POsym (clEnqueueCommandBufferKHR)
