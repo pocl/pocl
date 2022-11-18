@@ -35,7 +35,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
   int refc;
   int errcode_ret = CL_SUCCESS;
   POCL_RELEASE_OBJECT (command_buffer, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Command Buffer %p  : %d\n", command_buffer,
+  POCL_MSG_PRINT_REFCOUNTS ("Release Command Buffer %p  : %d\n", command_buffer,
                             refc);
 
   if (refc == 0)
