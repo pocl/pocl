@@ -108,6 +108,7 @@ POname (clCreateCommandBufferKHR) (
   POCL_INIT_OBJECT (cmdbuf);
 
   cmdbuf->state = CL_COMMAND_BUFFER_STATE_RECORDING_KHR;
+  cmdbuf->num_queues = num_queues;
   cmdbuf->queues
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
