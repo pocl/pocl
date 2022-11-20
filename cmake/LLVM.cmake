@@ -239,10 +239,6 @@ endif()
 
 run_llvm_config(LLVM_HAS_RTTI --has-rtti)
 
-if(DEFINED SINGLE_LLVM_LIB)
-   message(AUTHOR_WARNING "SINGLE_LLVM_LIB option was removed; pocl now uses only llvm-config to get the libraries. Use STATIC_LLVM=ON/OFF to affect which libraries pocl requests from llvm-config")
-endif()
-
 if(STATIC_LLVM)
   set(LLVM_LIB_MODE --link-static)
 else()

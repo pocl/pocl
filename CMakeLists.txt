@@ -948,12 +948,7 @@ endif()
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
-
-if(CMAKE_VERSION VERSION_GREATER "3.0.99")
-  set(PTHREAD_LIBRARY Threads::Threads)
-else()
-  set(PTHREAD_LIBRARY ${CMAKE_THREAD_LIBS_INIT})
-endif()
+set(PTHREAD_LIBRARY Threads::Threads)
 
 ######################################################################################
 # LTTNG
