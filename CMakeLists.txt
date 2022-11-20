@@ -478,16 +478,6 @@ endif()
 
 if(ENABLE_LLVM)
 
-  # this must be done before including LLVM,
-  # so we can check that TCE's LLVM and the found LLVM is the same.
-  if(NOT WITH_TCE)
-    set(WITH_TCE ENV PATH)
-  endif()
-
-  find_program(TCE_CONFIG NAMES "openasip-config" "tce-config" HINTS ${WITH_TCE})
-  find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
-  find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
-
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
     message(FATAL_ERROR "Could not load LLVM.cmake")
@@ -1405,6 +1395,14 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
   set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
   set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
 
+  if(NOT WITH_TCE)
+    set(WITH_TCE ENV PATH)
+  endif()
+
+  find_program(TCE_CONFIG NAMES "openasip-config" "tce-config" HINTS ${WITH_TCE})
+  find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
+  find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
+
   if(TCE_CONFIG AND TCECC AND TTASIM)
 
     message(STATUS "Found tcecc + openasip-config + ttasim, testing setup")
@@ -1421,16 +1419,14 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     execute_process(COMMAND "${TCE_CONFIG}" --llvm-config OUTPUT_VARIABLE TCE_LLVM_CONFIG RESULT_VARIABLE RESV6 OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND "${TTASIM}" --help OUTPUT_VARIABLE TTASIM_HELP RESULT_VARIABLE RESV9)
 
-
-    if(NOT (LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG))
-      message(WARNING "openasip-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG given to pocl is ${LLVM_CONFIG}")
-    endif()
-
     if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
       message(WARNING "openasip-config: Nonzero exit status, disabling TCE")
     elseif (RESV9)
       message(WARNING "ttasim: Nonzero exit status, disabling TCE")
     else()
+
+    set(TCE_LLVM_CONFIG "unknown")
+    execute_process(COMMAND "${TCE_CONFIG}" --llvm-config RESULT_VARIABLE RES OUTPUT_VARIABLE TCE_LLVM_CONFIG OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     string(STRIP "${TCE_LIBS}" TCE_LIBS)
     separate_arguments(TCE_LIBS)
@@ -1474,6 +1470,13 @@ if(ENABLE_TCE)
     set(ENABLE_TCEMC 1)
     set(OCL_DRIVERS "${OCL_DRIVERS} tcemc") # TCEMC is a "superset" of TCE (lp:tce) features.
   endif()
+
+  if(TCE_LLVM_CONFIG AND LLVM_CONFIG)
+    if(NOT (LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG))
+      message(FATAL_ERROR "openasip-config returned llvm-config is ${TCE_LLVM_CONFIG} but LLVM_CONFIG used by PoCL is ${LLVM_CONFIG}")
+    endif()
+  endif()
+
   set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_fp16 cl_khr_spir")
   set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
   set(TCE_DEVICE_EXTENSION_DEFINES "")

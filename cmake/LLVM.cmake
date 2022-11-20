@@ -24,22 +24,6 @@
 #
 #=============================================================================
 
-if(TCE_CONFIG AND ((NOT DEFINED ENABLE_TCE) OR (ENABLE_TCE)) )
-  execute_process(COMMAND "${TCE_CONFIG}" --llvm-config
-                  RESULT_VARIABLE RES
-                  OUTPUT_VARIABLE TCE_LLVM_CONFIG
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(RES EQUAL 0)
-    if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
-      if(NOT WITH_LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG)
-        message(FATAL_ERROR "TCE is not disabled, and the llvm-config in WITH_LLVM_CONFIG (${WITH_LLVM_CONFIG}) is different from llvm-config used by TCE (${TCE_LLVM_CONFIG})")
-      endif()
-    else()
-      set(WITH_LLVM_CONFIG "${TCE_LLVM_CONFIG}")
-    endif()
-  endif()
-endif()
-
 if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   # search for preferred version
   if(IS_ABSOLUTE "${WITH_LLVM_CONFIG}")
