@@ -145,8 +145,6 @@ run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
-run_llvm_config(LLVM_SYSLIBS --system-libs)
-string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
@@ -272,6 +270,7 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 
 ####################################################################
 
+# this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
