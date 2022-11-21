@@ -85,10 +85,11 @@ namespace pocl {
                                              llvm::Argument &Arg,
                                              LLVMValueRef ArgByteOffset);
 
-    LLVMValueRef createArgBufferLoad(LLVMBuilderRef Builder,
-                                     LLVMValueRef ArgBufferPtr,
-                                     uint64_t *ArgBufferOffsets, LLVMValueRef F,
-                                     unsigned ParamIndex);
+    LLVMValueRef createArgBufferLoad (LLVMBuilderRef Builder,
+                                      LLVMValueRef ArgBufferPtr,
+                                      uint64_t *ArgBufferOffsets,
+                                      LLVMContextRef Ctx, LLVMValueRef F,
+                                      unsigned ParamIndex);
 
     llvm::Module *M;
     llvm::LLVMContext *C;

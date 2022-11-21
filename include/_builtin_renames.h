@@ -987,7 +987,12 @@
 #define  atomic_fetch_max_explicit    _cl_atomic_fetch_max_explicit
 #define  atomic_fetch_max    _cl_atomic_fetch_max
 
-#define  atomic_work_item_fence _cl_atomic_work_item_fence
+#define read_mem_fence     _cl_read_mem_fence
+#define write_mem_fence    _cl_write_mem_fence
+#define mem_fence          _cl_mem_fence
+#define work_group_barrier _cl_work_group_barrier
+#define atomic_work_item_fence _cl_atomic_work_item_fence
+#define wait_group_events  _cl_wait_group_events
 
 #define get_image_array_size _cl_get_image_array_size
 #define get_image_channel_data_type _cl_get_image_channel_data_type

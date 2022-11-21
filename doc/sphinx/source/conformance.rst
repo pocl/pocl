@@ -102,6 +102,11 @@ Known issues with the conformance testsuite
 Known issues in pocl / things to be aware of
 --------------------------------------------
 
+- some of the tests in CTS fail to run with SPIR-V offline compilation mode.
+  In some cases, llvm-spirv fails to translate SPIR-V to LLVM IR, or the SPIR-V
+  fails to validate, and in some cases (e.g. async_copy) unsolved SPIR-V issues
+  in PoCL.
+
 - Integer division by zero. OpenCL 1.2 specification requires that division by
   zero on integers results in undefined values, instead of raising exceptions.
   This requires pocl to install a handler of SIGFPE. Unfortunately signal
@@ -116,8 +121,7 @@ Known issues in pocl / things to be aware of
 - Many of ``native_`` and ``half_`` variants of kernel library functions are mapped
   to the "full" variants.
 
-- the optional OpenGL / D3D extensions are not supported. There is experimental
-  support for SPIR
+- the optional OpenGL / D3D extensions are not supported.
 
 - clUnloadCompiler() only actually unload LLVM after all programs & kernels
   have been released.

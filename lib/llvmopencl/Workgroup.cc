@@ -1276,7 +1276,7 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
 LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
                                             LLVMValueRef ArgBufferPtr,
                                             uint64_t *ArgBufferOffsets,
-                                            LLVMValueRef F,
+                                            LLVMContextRef Ctx, LLVMValueRef F,
                                             unsigned ParamIndex) {
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
@@ -1288,9 +1288,17 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
   uint64_t ArgPos = ArgBufferOffsets[ParamIndex];
   LLVMValueRef Offs =
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
+  LLVMTypeRef Int8Type = LLVMInt8TypeInContext(Ctx);
+
+#ifndef LLVM_OPAQUE_POINTERS
   LLVMValueRef ArgByteOffset =
       LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBufferPtr)),
                     ArgBufferPtr, &Offs, 1, "arg_byte_offset");
+#else
+
+  LLVMValueRef ArgByteOffset =
+      LLVMBuildGEP2(Builder, Int8Type, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
+#endif
 
   llvm::Argument &Arg = cast<Argument>(*unwrap(Param));
 
@@ -1315,7 +1323,7 @@ LLVMValueRef Workgroup::createArgBufferLoad(LLVMBuilderRef Builder,
 #ifdef LLVM_OLDER_THAN_14_0
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
 #else
-    LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
+    LLVMTypeRef LoadTy = ParamType;
     return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
 #endif
   }
@@ -1388,67 +1396,58 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
     if (DeviceAllocaLocals && isLocalMemFunctionArg(Func, i)) {
 
       // Generate allocas for the local buffer arguments.
-
+      // The size is passed directly instead of the pointer.
       LLVMValueRef Param = LLVMGetParam(F, i);
       LLVMTypeRef ParamType = LLVMTypeOf(Param);
-
+      assert(ParamType != nullptr);
       LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
 
-      LLVMTypeRef ArgElementType = LLVMGetElementType(ParamType);
-      LLVMValueRef LocalArgAlloca = nullptr;
+      uint64_t ParamByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
+      LLVMTypeRef SizeIntType = (ParamByteSize == 4) ? Int32Type : Int64Type;
 
-      if (LLVMGetTypeKind(ArgElementType) == LLVMArrayTypeKind) {
+      uint64_t ArgPos = ArgBufferOffsets[i];
+      LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
 
-        // Known static local size (converted automatic local).
-        LocalArgAlloca = wrap(new llvm::AllocaInst(
-            unwrap(ArgElementType), LLVMGetPointerAddressSpace(ParamType),
-            unwrap(LLVMConstInt(Int32Type, 1, 0)),
-#ifndef LLVM_OLDER_THAN_10_0
-#ifndef LLVM_OLDER_THAN_11_0
-            llvm::Align(
+#ifndef LLVM_OPAQUE_POINTERS
+      LLVMValueRef SizeByteOffset =
+          LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBuffer)),
+                        ArgBuffer, &Offs, 1, "size_byte_offset");
 #else
-            llvm::MaybeAlign(
+      LLVMValueRef SizeByteOffset = LLVMBuildGEP2(Builder, Int8Type, ArgBuffer,
+                                                  &Offs, 1, "size_byte_offset");
 #endif
-#endif
-                MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                )
-#endif
-                ,
-            "local_auto", unwrap(Block)));
-      } else {
+      LLVMTypeRef DestTy = LLVMPointerType(SizeIntType, 0);
+      LLVMValueRef SizeOffsetBitcast =
+          LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
 
-        // Dynamic (runtime-set) size local argument.
-
-        uint64_t ParamByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
-        LLVMTypeRef ParamIntType = ParamByteSize == 4 ? Int32Type : Int64Type;
-
-        uint64_t ArgPos = ArgBufferOffsets[i];
-        LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
-        LLVMValueRef SizeByteOffset =
-            LLVMBuildGEP2(Builder, LLVMGetElementType(LLVMTypeOf(ArgBuffer)),
-                          ArgBuffer, &Offs, 1, "size_byte_offset");
-        LLVMTypeRef DestTy = LLVMPointerType(ParamIntType, 0);
-        LLVMValueRef SizeOffsetBitcast =
-            LLVMBuildPointerCast(Builder, SizeByteOffset, DestTy, "size_ptr");
-
-        // The buffer size passed from the runtime is a byte size, we
-        // need to convert it to an element count for the alloca.
+#ifndef LLVM_OPAQUE_POINTERS
+      LLVMTypeRef AllocaType = LLVMGetElementType(ParamType);
+      // The buffer size passed from the runtime is a byte size, we
+      // need to convert it to an element count for the alloca.
 #ifdef LLVM_OLDER_THAN_14_0
         LLVMValueRef LocalArgByteSize =
             LLVMBuildLoad(Builder, SizeOffsetBitcast, "byte_size");
 #else
-        LLVMTypeRef LoadTy = LLVMGetElementType(DestTy);
-        LLVMValueRef LocalArgByteSize =
-            LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
+      LLVMTypeRef LoadTy = SizeIntType;
+      LLVMValueRef LocalArgByteSize =
+          LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
 #endif
-        uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, ArgElementType);
-        LLVMValueRef ElementCount =
-            LLVMBuildUDiv(Builder, LocalArgByteSize,
-                          LLVMConstInt(ParamIntType, ElementSize, 0), "");
-        LocalArgAlloca = wrap(new llvm::AllocaInst(
-            unwrap(LLVMGetElementType(ParamType)),
-            LLVMGetPointerAddressSpace(ParamType), unwrap(ElementCount),
+      uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, AllocaType);
+      LLVMValueRef ElementCount =
+          LLVMBuildUDiv(Builder, LocalArgByteSize,
+                        LLVMConstInt(SizeIntType, ElementSize, 0), "");
+#else
+      LLVMTypeRef AllocaType = Int8Type;
+
+      LLVMTypeRef LoadTy = SizeIntType;
+      LLVMValueRef LocalArgByteSize =
+          LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
+      LLVMValueRef ElementCount = LocalArgByteSize;
+#endif
+
+      LLVMValueRef LocalArgAlloca = wrap(new llvm::AllocaInst(
+            unwrap(AllocaType), LLVMGetPointerAddressSpace(ParamType),
+            unwrap(ElementCount),
 #ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
             llvm::Align(
@@ -1462,10 +1461,10 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
 #endif
                 ,
             "local_arg", unwrap(Block)));
-      }
       Args[i] = LocalArgAlloca;
     } else {
-      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets, F, i);
+      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets,
+                                    LLVMContext, F, i);
     }
   }
 
@@ -1566,8 +1565,8 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
   // Load the pointer to the pocl context (in global memory),
   // assuming it is stored as the 4th last argument in the kernel.
   LLVMValueRef PoclCtx =
-    createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, Kernel,
-                        KernArgCount - HiddenArgs);
+      createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, LLVMContext,
+                          Kernel, KernArgCount - HiddenArgs);
 
   LLVMValueRef Args[4] = {
       LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),

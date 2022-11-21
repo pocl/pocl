@@ -478,8 +478,7 @@ pocl_reload_program_bc (char *program_bc_path, cl_program program,
 /* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
  * to generate new LLVM bitcode from SPIR-V */
 static int
-pocl_regen_spirv_binary (cl_program program, cl_uint device_i,
-                         char *program_bc_path)
+pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
 {
 #ifdef LLVM_SPIRV
   int errcode = CL_SUCCESS;
@@ -488,20 +487,29 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i,
   char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
   concated_spec_const_option[0] = 0;
   char program_bc_spirv[POCL_FILENAME_LENGTH];
+  char unlinked_program_bc_temp[POCL_FILENAME_LENGTH];
   program_bc_spirv[0] = 0;
+  unlinked_program_bc_temp[0] = 0;
   /* using --spirv-target-env=CL2.0 here would enable proper OpenCL 2.0
    * atomics, unfortunately it also enables generic ptrs which PoCL doesn't
    * support */
   char *args[8] = { LLVM_SPIRV,
                     concated_spec_const_option,
                     "-r", "-o",
-                    program_bc_path,
+                    unlinked_program_bc_temp,
                     program_bc_spirv,
                     NULL };
   char **final_args = args;
 
-  pocl_cache_write_spirv (program_bc_spirv, (const char *)program->program_il,
-                          (uint64_t)program->program_il_size);
+  errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to create tmpfile in pocl cache\n");
+
+  errcode = pocl_cache_write_spirv (program_bc_spirv,
+                                    (const char *)program->program_il,
+                                    (uint64_t)program->program_il_size);
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to write into pocl cache\n");
 
   for (unsigned i = 0; i < program->num_spec_consts; ++i)
     spec_constants_changed += program->spec_const_is_set[i];
@@ -535,13 +543,16 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i,
                       "External command (llvm-spirv translator) failed!\n");
 
   POCL_GOTO_ERROR_ON (
-      (pocl_reload_program_bc (program_bc_path, program, device_i)),
+      (pocl_reload_program_bc (unlinked_program_bc_temp, program, device_i)),
       CL_INVALID_VALUE, "Can't read llvm-spirv converted bitcode file\n");
-  return CL_SUCCESS;
+
+  errcode = CL_SUCCESS;
 
 ERROR:
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
     {
+      if (unlinked_program_bc_temp[0])
+        pocl_remove (unlinked_program_bc_temp);
       if (program_bc_spirv[0])
         pocl_remove (program_bc_spirv);
     }
@@ -621,7 +632,7 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
           /* SPIR IR binaries need to be regenerated from SPIR-V
            * if specialization constants change. */
           errcode
-              = pocl_regen_spirv_binary (program, device_i, program_bc_path);
+              = pocl_regen_spirv_binary (program, device_i);
           POCL_RETURN_ERROR_ON ((errcode != CL_SUCCESS),
                                 CL_LINK_PROGRAM_FAILURE,
                                 "Failed to generate SPIR from SPIR-V "
