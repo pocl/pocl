@@ -54,8 +54,6 @@ POname (clCommandFillImageKHR) (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POname (clRetainMemObject) (image);
-
   return CL_SUCCESS;
 
 ERROR:

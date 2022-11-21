@@ -35,7 +35,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
   int refc;
   int errcode_ret = CL_SUCCESS;
   POCL_RELEASE_OBJECT (command_buffer, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Command Buffer %p  : %d\n", command_buffer,
+  POCL_MSG_PRINT_REFCOUNTS ("Release Command Buffer %p  : %d\n", command_buffer,
                             refc);
 
   if (refc == 0)
@@ -58,17 +58,18 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
               if (freed_devs[j] == q->device)
                 is_freed = 1;
             }
-          if (is_freed)
-            continue;
+          if (!is_freed)
+            {
+              int errcode = CL_SUCCESS;
+              if (q->device->ops->free_command_buffer)
+                errcode = q->device->ops->free_command_buffer (q->device,
+                                                               command_buffer);
+              if (errcode != CL_SUCCESS)
+                errcode_ret = errcode;
 
-          int errcode = CL_SUCCESS;
-          if (q->device->ops->free_command_buffer)
-            errcode = q->device->ops->free_command_buffer (q->device,
-                                                           command_buffer);
-          if (errcode != CL_SUCCESS)
-            errcode_ret = errcode;
-
-          freed_devs[num_freed++] = q->device;
+              freed_devs[num_freed++] = q->device;
+            }
+          POname (clReleaseCommandQueue) (q);
         }
 
       _cl_command_node *cmd = command_buffer->cmds;
@@ -88,6 +89,8 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
                   if (ai->type == POCL_ARG_TYPE_SAMPLER)
                     POname (clReleaseSampler) (
                         cmd->command.run.arguments[i].value);
+                  if (cmd->command.run.arguments[i].value != NULL)
+                    POCL_MEM_FREE (cmd->command.run.arguments[i].value);
                 }
               POCL_MEM_FREE (cmd->command.run.arguments);
               break;
@@ -118,10 +121,6 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
         }
 
       POCL_DESTROY_OBJECT (command_buffer);
-      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
-        {
-          POname (clReleaseCommandQueue) (command_buffer->queues[i]);
-        }
       POCL_MEM_FREE (command_buffer->queues);
       POCL_MEM_FREE (command_buffer->properties);
       POCL_MEM_FREE (command_buffer);

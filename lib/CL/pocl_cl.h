@@ -266,6 +266,9 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
     }                                                                         \
   while (0)
 
+#define POCL_RELEASE_OBJECT_UNLOCKED(__OBJ__, __NEW_REFCOUNT__)               \
+      __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;
+
 #define POCL_RETAIN_OBJECT_UNLOCKED(__OBJ__)    \
     ++((__OBJ__)->pocl_refcount)
 

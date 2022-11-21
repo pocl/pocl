@@ -54,11 +54,6 @@ POname (clCommandCopyImageKHR) (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POname (clRetainMemObject) (cmd->command.copy_image.src);
-  POname (clRetainMemObject) (cmd->command.copy_image.dst);
-  if (cmd->command.copy_image.src->size_buffer != NULL)
-    POname (clRetainMemObject) (cmd->command.copy_image.src->size_buffer);
-
   return CL_SUCCESS;
 
 ERROR:
