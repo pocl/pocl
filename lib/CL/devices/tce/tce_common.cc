@@ -362,6 +362,25 @@ pocl_tce_write (void *data,
   d->copyHostToDevice(src_host_ptr, chunk->start_address + offset, size);
 }
 
+void pocl_tce_memfill(void *data, pocl_mem_identifier *dst_mem_id,
+                      cl_mem dst_buf, size_t size, size_t offset,
+                      const void *__restrict__ pattern, size_t pattern_size) {
+  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
+  TCEDevice *d = (TCEDevice *)data;
+  chunk_info_t *chunk = (chunk_info_t *)device_ptr;
+
+  void *tmp_memfill_buf = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size);
+  assert(tmp_memfill_buf);
+  pocl_fill_aligned_buf_with_pattern(tmp_memfill_buf, 0, size, pattern,
+                                     pattern_size);
+
+  POCL_MSG_PRINT_TCE("MEMFILL %u + %u | %zu B\n",
+                     (unsigned)chunk->start_address, (unsigned)offset, size);
+  d->copyHostToDevice(tmp_memfill_buf, chunk->start_address + offset, size);
+
+  POCL_MEM_FREE(tmp_memfill_buf);
+}
+
 void pocl_tce_read(void *data, void *__restrict__ dst_host_ptr,
                    pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                    size_t offset, size_t size) {

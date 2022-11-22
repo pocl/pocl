@@ -196,6 +196,12 @@ set_property(TEST
   "runtime/test_deviceside_enqueue"
   APPEND PROPERTY LABELS "cuda")
 
+# Label tests that work with TCE backend
+set_property(TEST
+  "runtime/test_fill-buffer"
+  APPEND PROPERTY LABELS "tce")
+
+
 set_property(TEST
   "runtime/clGetDeviceInfo"
   "runtime/clGetEventInfo"
