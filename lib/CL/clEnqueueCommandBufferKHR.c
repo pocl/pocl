@@ -180,9 +180,13 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           }
 
         _cl_command_node *node = NULL;
+        char readonly_flag_list[cmd->memobj_count];
+        memcpy(readonly_flag_list, cmd->readonly_flag_list, cmd->memobj_count);
+        cl_mem memobj_list[cmd->memobj_count];
+        memcpy(memobj_list, cmd->memobj_list, sizeof(cl_mem) * cmd->memobj_count);
         errcode = pocl_create_command (
             &node, q, cmd->type, &syncpoints[sync_id], j, deps,
-            cmd->memobj_count, cmd->memobj_list, cmd->readonly_flag_list);
+            cmd->memobj_count, memobj_list, readonly_flag_list);
         ++sync_id;
 
         if (errcode != CL_SUCCESS)
