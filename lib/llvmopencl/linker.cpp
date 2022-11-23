@@ -330,16 +330,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
     find_called_functions(&*fi, DeclaredFunctions);
   }
 
-  // some global variables can have external linkage. Set it to private
-  // otherwise these end up in ELF relocation tables and cause link
-  // failures when linking with -fPIC/PIE
-  llvm::Module::global_iterator gi1, ge1;
-  for (gi1 = Program->global_begin(), ge1 = Program->global_end(); gi1 != ge1;
-       gi1++) {
-    GlobalValue::LinkageTypes linkage = gi1->getLinkage();
-    if (linkage == GlobalValue::LinkageTypes::ExternalLinkage)
-      gi1->setLinkage(GlobalValue::LinkageTypes::PrivateLinkage);
-  }
 
   // Copy all the globals from lib to program.
   // It probably is faster to just copy them all, than to inspect

@@ -462,11 +462,7 @@ int pocl_llvm_build_program(cl_program program,
   la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
 
   la->PICLevel = PICLevel::BigPIC;
-#ifdef __PPC64__
   la->PIE = 0;
-#else
-  la->PIE = 1;
-#endif
 
   std::string IncludeRoot;
   std::string KernelH;
@@ -642,10 +638,6 @@ int pocl_llvm_build_program(cl_program program,
 
   if (mod->getModuleFlag("PIC Level") == nullptr)
     mod->setPICLevel(PICLevel::BigPIC);
-#ifndef __PPC64__
-  if (mod->getModuleFlag("PIE Level") == nullptr)
-    mod->setPIELevel(PIELevel::Large);
-#endif
 
   // link w kernel lib, but not if we're called from clCompileProgram()
   // Later this should be replaced with indexed linking of source code
@@ -722,10 +714,6 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
 
     if (p->getModuleFlag("PIC Level") == nullptr)
       p->setPICLevel(PICLevel::BigPIC);
-#ifndef __PPC64__
-    if (p->getModuleFlag("PIE Level") == nullptr)
-      p->setPIELevel(PIELevel::Large);
-#endif
   }
   return CL_SUCCESS;
 #else
@@ -758,6 +746,10 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
       new llvm::Module(StringRef("linked_program"), *llvm_ctx->Context));
   llvm::Module *LinkedModule = nullptr;
   std::unique_ptr<llvm::Module> TempModule;
+  mod->setTargetTriple(libmodule->getTargetTriple());
+  mod->setDataLayout(libmodule->getDataLayout());
+  mod->setPICLevel(PICLevel::BigPIC);
+
 
   // link the provided modules together into a single module
   for (i = 0; i < num_input_programs; i++) {
