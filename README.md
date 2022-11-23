@@ -23,7 +23,7 @@ tools:
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. `libclang-dev`, `libclang-cpp-dev`, `libllvm-dev`, `zlib1g-dev`,
     `libtinfo-dev`...)
-  * CMake
+  * CMake 3.9 or newer
   * GNU make or ninja
   * pkg-config
   * pthread (should be installed by default)
@@ -35,8 +35,8 @@ tools:
     supports SPIR-V through clspv)
 
 On Ubuntu or Debian based distros you can install the relevant packages with
-```
-export LLVM_VERSION=<major LLVM version, latest and previous are supported>
+```bash
+export LLVM_VERSION=<major LLVM version>
 apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 \
     cmake git pkg-config libclang-${LLVM_VERSION}-dev clang \
     llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev \
@@ -49,11 +49,24 @@ If your distro does not package the version of LLVM you wish to build against
 you might want to set up the
 [upstream LLVM package repository](https://apt.llvm.org/).
 
-Building on ARM platforms is possible but lacks a maintainer and there are
-[some gotchas](./README.ARM).
+### Configure & Build
 
-If you are a distro maintainer, check [README.packaging](./README.packaging) for
-recommendations on build settings for packaged builds.
+Building PoCL follows the usual CMake workflow, i.e.:
+```bash
+cd <directory-with-pocl-sources>
+mkdir build
+cd build
+cmake ..
+make
+# and optionally
+make install
+```
+
+### Supported LLVM Versions
+
+PoCL aims to support **the latest LLVM version** at the time of PoCL release, **plus the previous** LLVM version. All older LLVM versions are supported on a
+"best effort" basis; there might not be build bots continuously testing the code
+base nor anyone fixing their possible breakage.
 
 ### OpenCL 3.0 support
 
@@ -74,3 +87,11 @@ in Visual Studio and let it work its magic.
 
 Contributions for improving compatibility with Windows and more detailed and up
 to date build steps are welcome!
+
+### Notes
+
+Building on ARM platforms is possible but lacks a maintainer and there are
+[some gotchas](./README.ARM).
+
+If you are a distro maintainer, check [README.packaging](./README.packaging) for
+recommendations on build settings for packaged builds.
