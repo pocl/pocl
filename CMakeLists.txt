@@ -2038,3 +2038,40 @@ MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 MESSAGE(STATUS "Use pocl custom memory allocator: ${USE_POCL_MEMMANAGER}")
 MESSAGE(STATUS "L1d cacheline size: ${HOST_CPU_CACHELINE_SIZE}")
+
+
+# generate doxygen using make targets
+option(BUILD_DOXYGEN "Generate internal developer documentation with doxygen" OFF)
+MESSAGE(STATUS "Build doxygen documentation: ${BUILD_DOXYGEN}")
+
+if(BUILD_DOXYGEN)
+  find_package(Doxygen REQUIRED)
+
+  add_custom_target(gen_doc
+          COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          VERBATIM)
+
+  # os specific ways of opening browsers
+  set(DOXY_INDEX doxygen/html/index.xhtml)
+  set(HTML_VIEWER_COMMAND)
+  if(UNIX)
+    if(APPLE)
+      set(HTML_VIEWER_COMMAND open)
+    else()
+      set(HTML_VIEWER_COMMAND xdg-open)
+    endif()
+  elseif(WIN32)
+    set(HTML_VIEWER_COMMAND explorer.exe)
+  endif()
+  add_custom_target(open_doc
+    COMMAND ${HTML_VIEWER_COMMAND} ${DOXY_INDEX}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    VERBATIM
+    ${COMMAND_USES_TERMINAL}
+    DEPENDS gen_doc)
+
+  unset(DOXY_INDEX)
+  unset(HTML_VIEWER_COMMAND)
+
+endif()

@@ -30,7 +30,6 @@ config/missing
 configure
 
 doc/sphinx/build/
-doc/doxygen/html/
 
 examples/EinsteinToolkit/EinsteinToolkit
 examples/example1/example1
