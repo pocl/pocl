@@ -95,6 +95,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->write_rect = pocl_tce_write_rect;
   ops->copy = pocl_tce_copy;
   ops->copy_rect = pocl_tce_copy_rect;
+  ops->memfill = pocl_tce_memfill;
   ops->map_mem = pocl_tce_map_mem;
   ops->unmap_mem = pocl_tce_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
