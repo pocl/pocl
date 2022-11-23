@@ -95,3 +95,9 @@ Building on ARM platforms is possible but lacks a maintainer and there are
 
 If you are a distro maintainer, check [README.packaging](./README.packaging) for
 recommendations on build settings for packaged builds.
+
+## License
+
+PoCL is distributed under the terms of the MIT license. Contributions are expected
+to be made with the same terms.
+
