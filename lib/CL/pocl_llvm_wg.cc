@@ -74,12 +74,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 // each work-group IR function generation. Requires LLVM > 7.
 // #define DUMP_LLVM_PASS_TIMINGS
 
-#ifndef LLVM_OLDER_THAN_10_0
 #include <llvm/IR/PassTimingInfo.h>
 #define CODEGEN_FILE_TYPE_NS llvm
-#else
-#define CODEGEN_FILE_TYPE_NS TargetMachine
-#endif
 
 using namespace llvm;
 

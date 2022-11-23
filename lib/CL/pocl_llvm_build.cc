@@ -41,10 +41,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 
-#ifdef LLVM_OLDER_THAN_10_0
-#include "llvm/ADT/ArrayRef.h"
-#endif
-
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Linker/Linker.h"
 
@@ -422,12 +418,8 @@ int pocl_llvm_build_program(cl_program program,
 
   if (!CompilerInvocation::CreateFromArgs(
           pocl_build,
-#ifndef LLVM_OLDER_THAN_10_0
           ArrayRef<const char *>(itemcstrs.data(),
                                  itemcstrs.data() + itemcstrs.size()),
-#else
-          itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
-#endif
           diags)) {
     pocl_cache_create_program_cachedir(program, device_i, program->source,
                                        strlen(program->source),
@@ -445,11 +437,7 @@ int pocl_llvm_build_program(cl_program program,
                                po.Includes, clang::LangStandard::lang_opencl12);
 #else
   pocl_build.setLangDefaults(*la,
-#ifndef LLVM_OLDER_THAN_10_0
                              clang::InputKind(clang::Language::OpenCL),
-#else
-                             clang::InputKind::OpenCL,
-#endif
                              triple,
 #ifndef LLVM_OLDER_THAN_12_0
                              po.Includes,
@@ -501,13 +489,7 @@ int pocl_llvm_build_program(cl_program program,
 #endif
   }
   if (ClangResourceDir.empty()) {     
-#ifndef LLVM_OLDER_THAN_9_0
     ClangResourceDir = driver::Driver::GetResourcesPath(CLANG);
-#else
-    DiagnosticsEngine Diags{new DiagnosticIDs, new DiagnosticOptions};
-    driver::Driver TheDriver(CLANG, "", Diags);
-    ClangResourceDir = TheDriver.ResourceDir;
-#endif
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
@@ -516,9 +498,7 @@ int pocl_llvm_build_program(cl_program program,
   po.Includes.push_back(PoclTypesH);
   po.Includes.push_back(BuiltinRenamesH);
   // Use Clang's opencl-c.h header.
-#ifndef LLVM_OLDER_THAN_9_0
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
-#endif
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
@@ -545,11 +525,7 @@ int pocl_llvm_build_program(cl_program program,
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
   fe.Inputs.push_back(
       FrontendInputFile(source_file,
-#ifndef LLVM_OLDER_THAN_10_0
                         clang::InputKind(clang::Language::OpenCL)
-#else
-                        clang::InputKind::OpenCL
-#endif
                             ));
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();

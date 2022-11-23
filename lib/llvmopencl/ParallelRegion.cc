@@ -440,11 +440,7 @@ ParallelRegion::Verify()
   return true;
 }
 
-#ifdef LLVM_OLDER_THAN_8_0
-#define PARALLEL_MD_NAME "llvm.mem.parallel_loop_access"
-#else
 #define PARALLEL_MD_NAME "llvm.access.group"
-#endif
 
 /**
  * Adds metadata to all the memory instructions to denote

@@ -238,8 +238,6 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
 }
 
 
-#ifndef LLVM_OLDER_THAN_10_0
-
 // Printf requires special treatment at bitcode link time for seamless SPIR-V
 // import support: The printf we link in might be SPIR-V compliant with the format
 // string address space in the constant space or the other way around. The calls to
@@ -291,7 +289,6 @@ void unifyPrintfFingerPrint(llvm::Module *Program, const llvm::Module *Lib) {
   }
   CalledPrintf->eraseFromParent();
 }
-#endif
 
 int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
          unsigned global_AS, const char **DevAuxFuncs) {
@@ -301,11 +298,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   ValueToValueMapTy vvm;
   llvm::StringSet<> DeclaredFunctions;
 
-#ifndef LLVM_OLDER_THAN_10_0
-  // LLVM 9 misses some of the APIs needed by this function. We don't support
-  // SPIR-V with LLVMs older than 10 anyhow.
   unifyPrintfFingerPrint(Program, Lib);
-#endif
 
   // Include auxiliary functions required by the device at hand.
   if (DevAuxFuncs) {

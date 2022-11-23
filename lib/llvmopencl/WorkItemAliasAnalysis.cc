@@ -117,16 +117,9 @@ WorkItemAAResult WorkItemAA::run(Function &F, AnalysisManager<Function> *AM) {
 }
 
 bool WorkItemAliasAnalysis::runOnFunction(
-#ifdef LLVM_OLDER_THAN_10_0
-    IGNORE_UNUSED
-#endif
     llvm::Function &f) {
   auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
-#ifndef LLVM_OLDER_THAN_10_0
   auto tli = TLIWP.getTLI(f);
-#else
-  auto tli = TLIWP.getTLI();
-#endif
   Result.reset(new WorkItemAAResult(tli));
   return false;
 }

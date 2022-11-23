@@ -60,10 +60,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/LegacyPassManager.h>
 #define PassManager legacy::PassManager
 
-#ifndef LLVM_OLDER_THAN_10_0
-  #include <llvm/InitializePasses.h>
-  #include <llvm/Support/CommandLine.h>
-#endif
+#include <llvm/InitializePasses.h>
+#include <llvm/Support/CommandLine.h>
 #include <llvm-c/Core.h>
 
 using namespace llvm;

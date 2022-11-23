@@ -496,7 +496,6 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         unsigned j = CallInstr->getNumOperands() - 1;
         for (unsigned i = 0; i < j; ++i) {
           auto *Operand = CallInstr->getOperand(i);
-#ifndef LLVM_OLDER_THAN_10_0
           // The printf decl might have the format string in the constant AS
           // in order to support compilation from SPIR-V where the calls adhere
           // to the SPIR-V/OpenCL standard in terms of the argument type.
@@ -507,7 +506,6 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
             Operand = llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
                 Operand, poclPrintf->getArg(3)->getType(),
                 "printf_fmt_str_as_cast", CallInstr);
-#endif
           ops.push_back(Operand);
         }
 
@@ -950,14 +948,8 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   std::string FuncName = "";
   FuncName = F->getName().str();
 
-#ifdef LLVM_OLDER_THAN_9_0
-  Function *WorkGroup =
-    dyn_cast<Function>(M->getOrInsertFunction(
-                         FuncName + "_workgroup", LauncherFuncT));
-#else
   FunctionCallee fc = M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
-#endif
 
   assert(WorkGroup != nullptr);
   BasicBlock *Block = BasicBlock::Create(M->getContext(), "", WorkGroup);
@@ -1012,18 +1004,12 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
       Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
                                  ElementCount,
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
                                  llvm::Align(
 #else
                                  llvm::MaybeAlign(
 #endif
-#endif
-                                     MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                                     )
-#endif
-                                     ,
+                                 MAX_EXTENDED_ALIGNMENT),
                                  "local_arg", Block);
     } else {
       // If it's a pass by value pointer argument, we just pass the pointer
@@ -1367,19 +1353,13 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
       LLVMValueRef LocalArgAlloca = wrap(new llvm::AllocaInst(
             unwrap(AllocaType), LLVMGetPointerAddressSpace(ParamType),
             unwrap(ElementCount),
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
             llvm::Align(
 #else
             llvm::MaybeAlign(
 #endif
-#endif
-                MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                )
-#endif
-                ,
-            "local_arg", unwrap(Block)));
+                MAX_EXTENDED_ALIGNMENT),
+                "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
     } else {
       Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets,
@@ -1530,15 +1510,9 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
   std::string funcName = "";
   funcName = F->getName().str();
 
-#ifdef LLVM_OLDER_THAN_9_0
-  Function *WorkGroup =
-    dyn_cast<Function>(M->getOrInsertFunction(
-                         funcName + "_workgroup_fast", LauncherFuncT));
-#else
   FunctionCallee fc = M->getOrInsertFunction(
                          funcName + "_workgroup_fast", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
-#endif
   assert(WorkGroup != NULL);
 
   Builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));

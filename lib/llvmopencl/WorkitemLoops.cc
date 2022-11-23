@@ -301,15 +301,11 @@ WorkitemLoops::CreateLoopAround
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
 
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-#ifdef LLVM_OLDER_THAN_8_0
-  MDNode *Root = MDNode::get(C, Dummy);
-#else
   MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
   MDNode *ParallelAccessMD = MDNode::get(
       C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
 
   MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
-#endif
 
   // At this point we have
   //   !0 = metadata !{}            <- dummy
@@ -328,11 +324,7 @@ WorkitemLoops::CreateLoopAround
       return dominatesExitBB.count(insn->getParent());
     };
 
-#ifdef LLVM_OLDER_THAN_8_0
-  region.AddParallelLoopMetadata(Root, IsLoadUnconditionallySafe);
-#else
   region.AddParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
-#endif
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -902,17 +894,15 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
   const llvm::DataLayout &Layout = M->getDataLayout();
   DICompileUnit *CU = nullptr;
   std::unique_ptr<DIBuilder> DB;
-#ifndef LLVM_OLDER_THAN_7_0
   if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
     CU = *M->debug_compile_units_begin();
     DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
   }
-#endif
 
   // find the debug metadata corresponding to this variable
   Value *DebugVal = nullptr;
   IntrinsicInst *DebugCall = nullptr;
-#ifndef LLVM_OLDER_THAN_7_0
+
   if (CU) {
     for (BasicBlock &BB : (*FF)) {
       for (Instruction &I : BB) {
@@ -932,7 +922,6 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       }
     }
   }
-#endif
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
   if (DebugVal && DebugCall) {
@@ -1056,17 +1045,12 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
      code at least with Core i5 when aligned only at the element
      size. */
     Alloca->setAlignment(
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
         llvm::Align(
 #else
         llvm::MaybeAlign(
 #endif
-#endif
-            CONTEXT_ARRAY_ALIGN
-#ifndef LLVM_OLDER_THAN_10_0
-            )
-#endif
+            CONTEXT_ARRAY_ALIGN)
     );
 
     if (DebugVal && DebugCall && !WGDynamicLocalSize) {
@@ -1078,7 +1062,6 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
 
       size_t sizeBits;
-#ifndef LLVM_OLDER_THAN_7_0
       sizeBits = Alloca
                      ->getAllocationSizeInBits(M->getDataLayout())
 #if !defined(LLVM_OLDER_THAN_15_0)
@@ -1092,7 +1075,7 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
 #endif
 
       assert(sizeBits != 0);
-#endif
+
       // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
       // Alloca->getAllocatedType()->getScalarSizeInBits();
 #ifdef LLVM_OLDER_THAN_15_0
@@ -1114,13 +1097,8 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       assert(LocalVar);
       if (LocalVar) {
 
-#ifdef LLVM_OLDER_THAN_9_0
-        DICompositeType *CT = DB->createArrayType(
-            sizeBits, alignBits, LocalVar->getType().resolve(), SubscriptArray);
-#else
         DICompositeType *CT = DB->createArrayType(
             sizeBits, alignBits, LocalVar->getType(), SubscriptArray);
-#endif
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
         std::cerr << "### DICompositeType:\n";

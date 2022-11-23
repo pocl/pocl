@@ -324,11 +324,7 @@ void fixPrintF(llvm::Module *Module) {
     if (!Call)
       continue;
 
-#ifndef LLVM_OLDER_THAN_8_0
     unsigned NumArgs = Call->arg_size() - 1;
-#else
-    unsigned NumArgs = Call->getNumArgOperands() - 1;
-#endif
 
     llvm::Value *Format = Call->getArgOperand(0);
 

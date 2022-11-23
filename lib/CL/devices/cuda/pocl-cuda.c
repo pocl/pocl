@@ -2235,9 +2235,5 @@ pocl_cuda_finalize_thread (void *data)
 
 char* pocl_cuda_init_build(void *data)
 {
-#ifdef LLVM_OLDER_THAN_7_0
-    return strdup("");
-#else
     return strdup("-mllvm --nvptx-short-ptr");
-#endif
 }

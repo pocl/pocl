@@ -240,6 +240,8 @@ if(STATIC_LLVM)
      list(APPEND CLANG_LIBNAMES clangSupport)
   endif()
 else()
+  # For non-static builds, link against a single shared library
+  # instead of multiple component shared libraries.
   if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
     set(CLANG_LIBNAMES clangTCE-cpp)
   else()
@@ -762,7 +764,5 @@ execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOUR
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
 
-set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h")
-if(NOT LLVM_OLDER_THAN_9_0)
-  list(APPEND CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")
-endif()
+set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+                         "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")

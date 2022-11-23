@@ -337,11 +337,9 @@ set_property(TEST
   "regression/vector_kernel_arguments"
   APPEND PROPERTY LABELS "cuda")
 
-if(LLVM_VERSION_MAJOR GREATER 7)
- set_property(TEST
+set_property(TEST
    "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   APPEND PROPERTY LABELS "cuda")
-endif()
 
 # Label tests that work with HSA runtime with native kernel compilation
 set_property(TEST

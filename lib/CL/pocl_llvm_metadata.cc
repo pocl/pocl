@@ -233,7 +233,6 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
                   << std::endl;
     }
 
-#ifndef LLVM_OLDER_THAN_10_0
     bool has_name_metadata = true;
     if ((kernel_meta->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME) == 0) {
       for (unsigned j = 0; j < arg_num; ++j) {
@@ -250,7 +249,6 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
       if (has_name_metadata)
         kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
     }
-#endif
 
   }
   return 0;
