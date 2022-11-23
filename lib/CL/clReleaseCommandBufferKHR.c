@@ -78,7 +78,6 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
           switch (cmd->type)
             {
             case CL_COMMAND_NDRANGE_KERNEL:
-              POname (clReleaseKernel) (cmd->command.run.kernel);
               for (unsigned i = 0; i < cmd->command.run.kernel->meta->num_args;
                    ++i)
                 {
@@ -92,6 +91,7 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
                   if (cmd->command.run.arguments[i].value != NULL)
                     POCL_MEM_FREE (cmd->command.run.arguments[i].value);
                 }
+              POname (clReleaseKernel) (cmd->command.run.kernel);
               POCL_MEM_FREE (cmd->command.run.arguments);
               break;
             case CL_COMMAND_COPY_BUFFER:
