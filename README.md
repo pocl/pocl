@@ -1,5 +1,4 @@
 # Portable Computing Language (PoCL)
-------------------------------------
 
 PoCL is being developed towards an efficient implementation of the OpenCL
 standard which can be easily adapted for new targets.
@@ -9,7 +8,6 @@ standard which can be easily adapted for new targets.
 [Full documentation](http://portablecl.org/docs/html/)
 
 ## Building
------------
 
 This section contains instructions for building PoCL in its default
 configuration and a subset of driver backends. You can find the full build
