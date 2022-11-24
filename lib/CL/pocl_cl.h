@@ -224,26 +224,26 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 #define IS_CL_OBJECT_VALID(__OBJ__)                                           \
   (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
    && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
-#define CHECK_VALIDITY_MARKERS                                                \
+#define CHECK_VALIDITY_MARKERS(__OBJ__)                                       \
       assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
       assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);
-#define SET_VALIDITY_MARKERS                                                  \
+#define SET_VALIDITY_MARKERS(__OBJ__)                                         \
       (__OBJ__)->magic_1 = POCL_MAGIC_1;                                      \
       (__OBJ__)->magic_2 = POCL_MAGIC_2;
-#define UNSET_VALIDITY_MARKERS                                               \
+#define UNSET_VALIDITY_MARKERS(__OBJ__)                                       \
       (__OBJ__)->magic_1 = 0;                                                 \
       (__OBJ__)->magic_2 = 0;
 #else
 #define IS_CL_OBJECT_VALID(__OBJ__)   ((__OBJ__) != NULL)
-#define CHECK_VALIDITY_MARKERS
-#define SET_VALIDITY_MARKERS
-#define UNSET_VALIDITY_MARKERS
+#define CHECK_VALIDITY_MARKERS(__OBJ__)
+#define SET_VALIDITY_MARKERS(__OBJ__)
+#define UNSET_VALIDITY_MARKERS(__OBJ__)
 #endif
 
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS;                                                 \
+      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
       POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
       assert ((__OBJ__)->pocl_refcount > 0);                                  \
     }                                                                         \
@@ -251,7 +251,7 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS;                                                 \
+      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
@@ -294,7 +294,7 @@ extern uint64_t last_object_id;
 #define POCL_INIT_OBJECT_NO_ICD(__OBJ__)                                      \
   do                                                                          \
     {                                                                         \
-      SET_VALIDITY_MARKERS;                                                   \
+      SET_VALIDITY_MARKERS(__OBJ__);                                          \
       (__OBJ__)->pocl_refcount = 1;                                           \
       POCL_INIT_LOCK ((__OBJ__)->pocl_lock);                                  \
       (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id);                       \
@@ -322,18 +322,25 @@ extern uint64_t last_object_id;
 #define POCL_DESTROY_OBJECT(__OBJ__)                                          \
   do                                                                          \
     {                                                                         \
-      UNSET_VALIDITY_MARKERS;                                                \
+      UNSET_VALIDITY_MARKERS(__OBJ__);                                        \
       POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock);                               \
     }                                                                         \
   while (0)
 
 /* Declares the generic pocl object attributes inside a struct. */
+#ifdef ENABLE_EXTRA_VALIDITY_CHECKS
 #define POCL_OBJECT                                                           \
   uint64_t magic_1;                                                           \
   uint64_t id;                                                                \
   pocl_lock_t pocl_lock;                                                      \
   uint64_t magic_2;                                                           \
   int pocl_refcount
+#else
+#define POCL_OBJECT                                                           \
+  uint64_t id;                                                                \
+  pocl_lock_t pocl_lock;                                                      \
+  int pocl_refcount
+#endif
 
 #ifdef __APPLE__
 /* Note: OSX doesn't support aliases because it doesn't use ELF */
