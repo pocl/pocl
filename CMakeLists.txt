@@ -2047,8 +2047,11 @@ MESSAGE(STATUS "Build doxygen documentation: ${BUILD_DOXYGEN}")
 if(BUILD_DOXYGEN)
   find_package(Doxygen REQUIRED)
 
+  # configure placeholders in doxyfile
+  configure_file(${CMAKE_SOURCE_DIR}/CMakeDoxyfile ConfiguredDoxyfile @ONLY)
+
   add_custom_target(gen_doc
-          COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Doxyfile
+          COMMAND ${DOXYGEN_EXECUTABLE} ConfiguredDoxyfile
           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
           VERBATIM)
 
