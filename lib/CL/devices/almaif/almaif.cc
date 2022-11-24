@@ -1073,7 +1073,8 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
     if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
       arg_size += D->Dev->PointerSize;
     } else {
-      arg_size += meta->arg_info[i].type_size;
+      al = &(cmd->command.run.arguments[i]);
+      arg_size += al->size;
     }
   }
   void *arguments = malloc(arg_size);
@@ -1113,10 +1114,8 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
       POCL_ABORT_UNIMPLEMENTED("almaif: sampler arguments");
     } else {
-      size_t size = meta->arg_info[i].type_size;
-      memcpy(current_arg, al->value, size);
-
-      current_arg += size;
+      memcpy(current_arg, al->value, al->size);
+      current_arg += al->size;
     }
   }
 
