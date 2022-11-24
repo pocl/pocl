@@ -239,3 +239,10 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   APPEND PROPERTY LABELS "vulkan")
+
+if (ENABLE_TCE)
+    # Label tests that work with Almaif (with compiler) backend
+    set_property(TEST
+        "runtime/test_fill-buffer"
+        APPEND PROPERTY LABELS "almaif")
+endif()

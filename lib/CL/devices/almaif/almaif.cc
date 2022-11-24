@@ -125,9 +125,7 @@ void pocl_almaif_init_device_ops(struct pocl_device_ops *ops) {
   ops->read_rect = pocl_almaif_read_rect;
   ops->write_rect = pocl_almaif_write_rect;
 
-#if 0
   ops->memfill = pocl_almaif_memfill;
-#endif
 }
 
 void pocl_almaif_write(void *data, const void *__restrict__ src_host_ptr,
@@ -179,6 +177,19 @@ void pocl_almaif_copy(void *data, pocl_mem_identifier *dst_mem_id,
     POCL_ABORT("Attempt to copy data outside the device memories\n");
   }
 }
+
+void pocl_almaif_memfill(void *data, pocl_mem_identifier *dst_mem_id,
+                      cl_mem dst_buf, size_t size, size_t offset,
+                      const void *__restrict__ pattern, size_t pattern_size) {
+  void *tmp_memfill_buf = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size);
+  assert(tmp_memfill_buf);
+  pocl_fill_aligned_buf_with_pattern(tmp_memfill_buf, 0, size, pattern,
+                                     pattern_size);
+  pocl_almaif_write(data, tmp_memfill_buf, dst_mem_id, dst_buf, offset, size);
+
+  POCL_MEM_FREE(tmp_memfill_buf);
+}
+
 
 cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
                                 void *host_ptr) {
