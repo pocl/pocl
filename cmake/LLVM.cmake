@@ -270,6 +270,9 @@ else()
       clangParse clangSema clangRewrite clangRewriteFrontend
       clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
       clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
+  if(LLVM_MAJOR GREATER 14)
+     list(APPEND CLANG_LIBNAMES clangSupport)
+  endif()
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
