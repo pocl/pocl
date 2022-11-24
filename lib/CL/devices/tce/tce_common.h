@@ -129,6 +129,10 @@ class TCEDevice {
   size_t curLocalY;
   size_t curLocalZ;
 
+  size_t curGoffsX;
+  size_t curGoffsY;
+  size_t curGoffsZ;
+
   uint64_t globalCycleCount;
 
   pocl_lock_t wq_lock;

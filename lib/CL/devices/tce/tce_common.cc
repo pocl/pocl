@@ -283,7 +283,10 @@ bool TCEDevice::isNewKernel(const _cl_command_run *runCmd) {
   bool newKernel = true;
   if (runCmd->pc.local_size[0] != curLocalX ||
       runCmd->pc.local_size[1] != curLocalY ||
-      runCmd->pc.local_size[2] != curLocalZ)
+      runCmd->pc.local_size[2] != curLocalZ ||
+      runCmd->pc.global_offset[0] != curGoffsX ||
+      runCmd->pc.global_offset[1] != curGoffsY ||
+      runCmd->pc.global_offset[2] != curGoffsZ)
     newKernel = true;
   else
     newKernel = false;
@@ -297,6 +300,9 @@ void TCEDevice::updateCurrentKernel(const _cl_command_run *runCmd,
   curLocalX = runCmd->pc.local_size[0];
   curLocalY = runCmd->pc.local_size[1];
   curLocalZ = runCmd->pc.local_size[2];
+  curGoffsX = runCmd->pc.global_offset[0];
+  curGoffsY = runCmd->pc.global_offset[1];
+  curGoffsZ = runCmd->pc.global_offset[2];
 }
 
 cl_int
