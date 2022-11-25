@@ -52,7 +52,21 @@
 #include "pocl_llvm.h"
 #endif
 
+// from driver/include/ventus.h
+#if !defined(ENABLE_LLVM)
+#include <ventus.h>
+#endif
+
 struct ventus_device_data_t {
+	
+#if !defined(ENABLE_LLVM)
+  ventus_device_h ventus_device;
+  size_t ventus_print_buf_d;
+  ventus_buffer_h ventus_print_buf_h;
+  uint32_t printf_buffer;
+  uint32_t printf_buffer_position;   
+#endif
+	
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
   /* List of commands not yet ready to be executed */
@@ -168,7 +182,7 @@ pocl_ventus_probe(struct pocl_device_ops *ops)
 cl_int
 pocl_ventus_init (unsigned j, cl_device_id device, const char* parameters)
 {
-  struct data *d;
+  struct ventus_device_data_t *d;
   cl_int ret = CL_SUCCESS;
   int err;
   static int first_ventus_init = 1;
@@ -180,7 +194,7 @@ pocl_ventus_init (unsigned j, cl_device_id device, const char* parameters)
       first_ventus_init = 0;
     }
 
-  d = (struct data *) calloc (1, sizeof (struct data));
+  d = (struct ventus_device_data_t *) calloc (1, sizeof (struct ventus_device_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -273,7 +287,7 @@ pocl_ventus_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
-  struct data *d;
+  struct ventus_device_data_t *d;
   struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;
@@ -285,7 +299,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     return;
 
   assert (data != NULL);
-  d = (struct data *) data;
+  d = (struct ventus_device_data_t *) data;
 
   d->current_kernel = kernel;
 
@@ -465,7 +479,7 @@ pocl_ventus_run_native (void *data, _cl_command_node *cmd)
 cl_int
 pocl_ventus_uninit (unsigned j, cl_device_id device)
 {
-  struct data *d = (struct data*)device->data;
+  struct ventus_device_data_t *d = (struct ventus_device_data_t*)device->data;
   POCL_DESTROY_LOCK (d->cq_lock);
   pocl_aligned_free (d->printf_buffer);
   POCL_MEM_FREE(d);
@@ -476,7 +490,7 @@ pocl_ventus_uninit (unsigned j, cl_device_id device)
 cl_int
 pocl_ventus_reinit (unsigned j, cl_device_id device)
 {
-  struct data *d = (struct data *)calloc (1, sizeof (struct data));
+  struct ventus_device_data_t *d = (struct ventus_device_data_t *)calloc (1, sizeof (struct ventus_device_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -493,7 +507,7 @@ pocl_ventus_reinit (unsigned j, cl_device_id device)
 }
 
 
-static void ventus_command_scheduler (struct data *d) 
+static void ventus_command_scheduler (struct ventus_device_data_t *d) 
 {
   _cl_command_node *node;
   
