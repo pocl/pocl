@@ -141,6 +141,10 @@ typedef struct _cl_image_desc {
 #pragma warning( push )
 #pragma warning( disable : 4201 )   /* Prevents warning about nameless struct/union in /W4 builds */
 #endif
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc11-extensions" /* Prevents warning about nameless union being C11 extension*/
+#endif
 #if defined(_MSC_VER) && defined(__STDC__)
     /* Anonymous unions are not supported in /Za builds */
 #else
@@ -157,6 +161,9 @@ typedef struct _cl_image_desc {
 #endif
 #if defined(_MSC_VER) && !defined(__STDC__)
 #pragma warning( pop )
+#endif
+#ifdef __clang__
+#pragma clang diagnostic pop
 #endif
 #endif
 } cl_image_desc;
