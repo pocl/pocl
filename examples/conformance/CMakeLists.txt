@@ -80,8 +80,8 @@ endif()
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}" # TODO pocl/CTS
-  GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
-  GIT_TAG "cl30"
+  GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-CTS"
+        GIT_TAG "v2022-10-27-00"
   CONFIGURE_COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DD3D10_IS_SUPPORTED=0 -DD3D11_IS_SUPPORTED=0
