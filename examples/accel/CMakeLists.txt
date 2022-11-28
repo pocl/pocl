@@ -179,7 +179,7 @@ endif ()
 	    add_test(NAME "upload_bitstream/pynq_${core_name}" COMMAND sudo -E python -c "from pynq import Overlay;Overlay(\'${CMAKE_CURRENT_BINARY_DIR}/bitstreams/${core_name}.bit\')" )
 	    add_test(NAME "examples/accel/add.i32/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/accel_example pocl.add.i32)
 	    add_test(NAME "examples/accel/mul.i32/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/accel_example pocl.mul.i32)
-	    add_test(NAME "examples/example0/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/../example0/example0 b ${CMAKE_CURRENT_BINARY_DIR}/../example0/${core_name}_example0.poclbin)
+	    add_test(NAME "examples/example0/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/../example0/example0 b ${CMAKE_CURRENT_BINARY_DIR}/../accel/${core_name}_example0.poclbin)
 
         set_tests_properties( "examples/accel/add.i32/pynq_${core_name}" "examples/accel/mul.i32/pynq_${core_name}"
             "examples/example0/pynq_${core_name}"
