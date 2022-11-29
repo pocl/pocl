@@ -1834,6 +1834,43 @@ if(ENABLE_EXAMPLES)
     add_subdirectory("examples")
 endif()
 
+# generate doxygen using make targets
+option(ENABLE_DOXYGEN "Generate internal developer documentation with doxygen" OFF)
+if(ENABLE_DOXYGEN)
+  find_package(Doxygen REQUIRED)
+
+  # configure placeholders in doxyfile
+  configure_file(${CMAKE_SOURCE_DIR}/CMakeDoxyfile ConfiguredDoxyfile @ONLY)
+
+  add_custom_target(gen_doc
+          COMMAND ${DOXYGEN_EXECUTABLE} ConfiguredDoxyfile
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          VERBATIM)
+
+  # os specific ways of opening browsers
+  set(DOXY_INDEX doxygen/html/index.xhtml)
+  set(HTML_VIEWER_COMMAND)
+  if(UNIX)
+    if(APPLE)
+      set(HTML_VIEWER_COMMAND open)
+    else()
+      set(HTML_VIEWER_COMMAND xdg-open)
+    endif()
+  elseif(WIN32)
+    set(HTML_VIEWER_COMMAND explorer.exe)
+  endif()
+  add_custom_target(open_doc
+          COMMAND ${HTML_VIEWER_COMMAND} ${DOXY_INDEX}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+          VERBATIM
+          ${COMMAND_USES_TERMINAL}
+          DEPENDS gen_doc)
+
+  unset(DOXY_INDEX)
+  unset(HTML_VIEWER_COMMAND)
+
+endif()
+
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
 set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png")
 set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/pocl/pocl")
@@ -2033,6 +2070,7 @@ MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Disabled testsuites: ${DISABLED_TESTSUITES}")
 MESSAGE(STATUS "Testsuites are built from git master: ${EXAMPLES_USE_GIT_MASTER}")
+MESSAGE(STATUS "Enable internal doxygen documentation: ${ENABLE_DOXYGEN}")
 MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
