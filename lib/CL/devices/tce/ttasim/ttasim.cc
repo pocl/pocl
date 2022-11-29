@@ -196,6 +196,7 @@ public:
 
     const char *adf = strrchr(adfName, '/');
     if (adf != NULL) adf++;
+    else adf = adfName; //name does not contain a slash, use as-is
     if (snprintf (dev_name, 256, "ttasim-%s", adf) < 0)
       POCL_ABORT("Unable to generate the device name string.\n");
     dev->long_name = strdup(dev_name);  
