@@ -6,7 +6,7 @@ OpenCL standard. It likely supports the minimal v3.0 feature set (official
 conformance stamp not yet applied for).
 
 In addition to being an easily portable multi-device (truly
-heterogeneous) open-source OpenCL implementation, a major goal of this
+heterogeneous) open-source OpenCL implementation, a major goal of the
 project is improving interoperability for diversity of OpenCL-capable
 devices by integrating them to a single centrally orchestrated platform.
 Another key goal is to enhance performance portability of OpenCL
@@ -20,16 +20,11 @@ adaptations in active production use.
 Release Highlights
 ------------------
 
-* Support for Clang/LLVM 15.0.
-* Major rework of the custom device driver (formerly named Accel, now AlmaIF)
-  with support for more device types implementing AlmaIF
-* All device names used to control the platform setup via POCL_DEVICES are now
-  lowercase (as documented in the user manual)
-* Major rework of the custom device driver (formerly named Accel, now AlmaIF)
-  with support for more device types implementing AlmaIF
+* Support for Clang/LLVM 15.0
 * Much improved SPIR-V support for CPU and CUDA drivers
-* Various improvements to & more steps towards implementing the complete API in
-  the WIP Vulkan driver
+* Major rework of the custom device driver (formerly named Accel, now AlmaIF)
+  with support for more device types implementing AlmaIF
+* Various improvements to the work-in-progress Vulkan driver
 * Basic implementation of cl_khr_command_buffer
 
 Misc. Notes
@@ -40,13 +35,15 @@ place. This text describes the policy and how you can get your favourite
 project that uses OpenCL to remain regression free in the future PoCL
 releases: http://portablecl.org/docs/html/maintainer-policy.html
 
-* We are still looking for ARM CPU and RISC-V CPU maintainers (and
-any other target of your interest). If you are interested in ensuring
-PoCL stays stable for these processor architectures in the future,
-please contact us.
+* We are looking for ARM CPU and RISC-V CPU maintainers (and any other
+target of your interest). If you are interested in ensuring PoCL stays
+stable for these processor architectures in the future, please contact us.
 
 * The dedicated TTASim driver will be deprecated once the AlmaIF driver
 reaches feature parity with it.
+
+* Support for LLVM versions below 10 will be removed in the next
+release. If you rely on these versions, please let us know.
 
 Acknowledgements
 ----------------
