@@ -32,7 +32,19 @@ typedef cl_uint             cl_dx9_media_adapter_type_khr;
 typedef cl_uint             cl_dx9_media_adapter_set_khr;
     
 #if defined(_WIN32)
+#if defined(_MSC_VER)
+#if _MSC_VER >=1500
+#pragma warning( push )
+#pragma warning( disable : 4201 )
+#pragma warning( disable : 5105 )
+#endif
+#endif
 #include <d3d9.h>
+#if defined(_MSC_VER)
+#if _MSC_VER >=1500
+#pragma warning( pop )
+#endif
+#endif
 typedef struct _cl_dx9_surface_info_khr
 {
     IDirect3DSurface9 *resource;
