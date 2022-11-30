@@ -49,6 +49,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_flatten_barrier_subs test_alignment_with_dynamic_wg
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
   test_issue_893 test_builtin_args
+  test_workitem_func_outside_kernel
 )
 
 if (MSVC)
