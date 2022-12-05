@@ -64,7 +64,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
-#include "linker.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "LLVMUtils.h"
@@ -75,7 +74,8 @@ using namespace llvm;
 
 POP_COMPILER_DIAGS
 
-
+#include "UnifyPrintf.h"
+#include "linker.h"
 
 //#define DEBUG_POCL_LLVM_API
 
@@ -149,6 +149,23 @@ static void get_build_log(cl_program program,
 
 static llvm::Module *getKernelLibrary(cl_device_id device,
                                       PoclLLVMContextData *llvm_ctx);
+
+static int generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
+                             cl_program Program, cl_device_id Device,
+                             unsigned device_i, std::string &Log) {
+
+  llvm::Module *BuiltinLib = getKernelLibrary(Device, Context);
+  assert(BuiltinLib != NULL);
+
+  if (unifyPrintfFingerPrint(Mod, BuiltinLib))
+    return -1;
+
+  if (link(Mod, BuiltinLib, Log, Device->global_as_id,
+           Device->device_aux_functions))
+    return -1;
+
+  return 0;
+}
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
@@ -643,11 +660,8 @@ int pocl_llvm_build_program(cl_program program,
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
   if (linking_program) {
-    llvm::Module *libmodule = getKernelLibrary(device, llvm_ctx);
-    assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
-    if (link(mod, libmodule, log, device->global_as_id,
-             device->device_aux_functions)) {
+    if (generateProgramBC(llvm_ctx, mod, program, device, device_i, log)) {
       appendToProgramBuildLog(program, device_i, log);
       std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
@@ -796,8 +810,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   if (link_device_builtin_library) {
     // linked all the programs together, now link in the kernel library
     std::string log("Error(s) while linking: \n");
-    if (link(LinkedModule, libmodule, log, device->global_as_id,
-             device->device_aux_functions)) {
+    if (generateProgramBC(llvm_ctx, LinkedModule, program, device, device_i,
+                          log)) {
       appendToProgramBuildLog(program, device_i, log);
       std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
