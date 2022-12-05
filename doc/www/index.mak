@@ -21,6 +21,8 @@ should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
 
+<h2>2022-12-05: <a href="pocl-3.1.html">Portable Computing Language (PoCL) v3.1 released</a></h2>
+
 <h2>2022-11-15: <a href="almaif.html">Advanced hardware accelerator support through AlmaIF</a></h2>
 
 <h2>2022-06-10: <a href="pocl-3.0.html">Portable Computing Language (PoCL) v3.0 released</a></h2>

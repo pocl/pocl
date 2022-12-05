@@ -61,6 +61,3 @@ source project going!
 Links
 -----
 Release web page:  http://portablecl.org/pocl-3.1.html
-This announcement: http://portablecl.org/downloads/ANNOUNCEMENT
-Change log:        http://portablecl.org/downloads/CHANGES
-Download:          http://portablecl.org/download.html
