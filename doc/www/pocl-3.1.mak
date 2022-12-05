@@ -3,20 +3,20 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>December 5, 2022: pocl v3.1 released</h2>
+<h1>December 5, 2022: pocl v3.1 released</h1>
 
 <h2>Release Highlights</h2>
 
 <ul>
-<li>Support for Clang/LLVM 15.0</li1>
+<li>Support for Clang/LLVM 15.0
 <li>Much improved <a href="http://portablecl.org/docs/html/opencl_status.html#spir-and-spir-v-support">SPIR-V support</a>
-for CPU and CUDA drivers</li>
+for CPU and CUDA drivers
 <li>Major <a href="/almaif.html">rework of the custom device driver</a>. The driver was formerly named Accel, now AlmaIF.
-</li>
-<li>Various improvements to the work-in-progress <a href="http://portablecl.org/docs/html/vulkan.html">Vulkan driver</a></li>
-<li>Basic implementation of cl_khr_command_buffer</li>
+<li>Various improvements to the work-in-progress <a href="http://portablecl.org/docs/html/vulkan.html">Vulkan driver</a>
+<li><a href="http://portablecl.org/docs/html/extensions.html#cl-khr-command-buffer">Basic implementation</a> of cl_khr_command_buffer
+</ul>
 
-You can <p><a href="download.html">download it from here</a>.</p>
+<p>You can <a href="download.html">download it from here</a>.</p>
 
 <h2>Notes</h2>
 
