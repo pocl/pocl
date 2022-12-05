@@ -567,53 +567,6 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   }
 }
 
-/* writes fresh program.bc and program->binaries[i] from LLVM IR module. */
-int pocl_llvm_update_binaries(cl_program program, cl_uint device_i) {
-
-  cl_context ctx = program->context;
-  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
-
-  char program_bc_path[POCL_FILENAME_LENGTH];
-  int error;
-
-  // Dump the LLVM IR Modules to memory buffers.
-  assert(program->data != NULL);
-#ifdef DEBUG_POCL_LLVM_API
-  printf("### refreshing the binaries of the program %p\n", program);
-#endif
-
-  cl_uint i = device_i;
-  // LLVM IR
-  assert(program->data[i] != NULL);
-
-  POCL_MEM_FREE(program->binaries[i]);
-
-  pocl_cache_program_bc_path(program_bc_path, program, i);
-  error =
-      pocl_write_module((llvm::Module *)program->data[i], program_bc_path, 1);
-  assert(error == 0);
-  if (error) {
-    POCL_MSG_ERR("pocl_write_module(%s) failed!\n", program_bc_path);
-    return error;
-  }
-
-  std::string content;
-  writeModuleIRtoString((llvm::Module *)program->data[i], content);
-
-  size_t n = content.size();
-  if (n < program->binary_sizes[i])
-    POCL_ABORT("binary size doesn't match the expected value\n");
-
-  program->binaries[i] = (unsigned char *)malloc(n);
-  std::memcpy(program->binaries[i], content.c_str(), n);
-
-#ifdef DEBUG_POCL_LLVM_API
-  printf("### binary for device %zi was of size %zu\n", i,
-         program->binary_sizes[i]);
-#endif
-  return CL_SUCCESS;
-}
 
 static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {
 
