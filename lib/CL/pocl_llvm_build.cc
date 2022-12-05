@@ -74,6 +74,7 @@ using namespace llvm;
 
 POP_COMPILER_DIAGS
 
+#include "ProgramScopeVariables.h"
 #include "UnifyPrintf.h"
 #include "linker.h"
 
@@ -159,6 +160,13 @@ static int generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 
   if (unifyPrintfFingerPrint(Mod, BuiltinLib))
     return -1;
+
+  if (Device->program_scope_variables_pass) {
+    size_t TotalGVarBytes = 0;
+    if (runProgramScopeVariablesPass(Mod, Device->global_as_id, TotalGVarBytes, Log))
+      return -1;
+    Program->global_var_total_size[device_i] = TotalGVarBytes;
+  }
 
   if (link(Mod, BuiltinLib, Log, Device->global_as_id,
            Device->device_aux_functions))

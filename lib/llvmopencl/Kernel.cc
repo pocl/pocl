@@ -283,7 +283,7 @@ Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalS
 
   llvm::Module* M = getParent();
 
-  unsigned long address_bits;
+  uint64_t address_bits;
   getModuleIntMetadata(*M, "device_address_bits", address_bits);
 
   llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);

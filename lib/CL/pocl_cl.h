@@ -987,6 +987,9 @@ struct _cl_device_id {
      loads from the context struct passed as a kernel argument. This flag
      enables or disables this pass. */
   cl_bool workgroup_pass;
+  /* The program scope variable pass takes program-scope variables and replaces
+     them by references into a buffer, and creates an initializer kernel. */
+  cl_bool program_scope_variables_pass;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;

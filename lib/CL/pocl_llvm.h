@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+  #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
+
   void InitializeLLVM ();
   void UnInitializeLLVM ();
 

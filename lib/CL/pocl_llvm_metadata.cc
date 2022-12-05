@@ -546,14 +546,15 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
       llvm::Value *meta =
           dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue();
       llvm::Function *kernel = llvm::cast<llvm::Function>(meta);
-      //kernel_names.push_back(kernel_prototype->getName().str());
-      kernels.push_back(kernel);
+      if (kernel->getName() != POCL_GVAR_INIT_KERNEL_NAME)
+        kernels.push_back(kernel);
     }
   }
   // LLVM 3.9 does not use opencl.kernels meta, but kernel_arg_* function meta
   else {
     for (llvm::Module::iterator i = input->begin(), e = input->end(); i != e; ++i) {
-      if (i->getMetadata("kernel_arg_access_qual")) {
+      if (i->getMetadata("kernel_arg_access_qual")
+          && i->getName() != POCL_GVAR_INIT_KERNEL_NAME) {
          kernels.push_back(&*i);
       }
     }
@@ -828,7 +829,8 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
   else {
     unsigned kernel_count = 0;
     for (llvm::Module::iterator i = mod->begin(), e = mod->end(); i != e; ++i) {
-      if (i->getMetadata("kernel_arg_access_qual")) {
+      if (i->getMetadata("kernel_arg_access_qual")
+          && i->getName() != POCL_GVAR_INIT_KERNEL_NAME) {
         ++kernel_count;
       }
     }
