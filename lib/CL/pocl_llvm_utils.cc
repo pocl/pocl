@@ -74,6 +74,22 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   return parseIRFile(path, Err, *c).release();
 }
 
+void parseModuleGVarSize(cl_program program, unsigned device_i,
+                         llvm::Module *ProgramBC) {
+
+  uint64_t TotalGVarBytes = 0;
+  if (!getModuleIntMetadata(*ProgramBC, PoclGVarMDName, TotalGVarBytes))
+    return;
+
+  if (TotalGVarBytes) {
+    if (program->global_var_total_size[device_i])
+      assert(program->global_var_total_size[device_i] == TotalGVarBytes);
+    else
+      program->global_var_total_size[device_i] = TotalGVarBytes;
+    POCL_MSG_PRINT_LLVM("Total Global Variable Bytes: %zu\n", TotalGVarBytes);
+  }
+}
+
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
   llvm::raw_string_ostream sos(dest);
   WriteBitcodeToFile(*mod, sos);
@@ -456,8 +472,7 @@ void pocl_llvm_release_context(cl_context ctx) {
 
 #define POCL_METADATA_ROOT "pocl_meta"
 
-void setModuleIntMetadata(llvm::Module *mod, const char *key,
-                          unsigned long data) {
+void setModuleIntMetadata(llvm::Module *mod, const char *key, uint64_t data) {
 
   llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
                             llvm::ConstantAsMetadata::get(ConstantInt::get(
@@ -493,9 +508,11 @@ void setModuleBoolMetadata(llvm::Module *mod, const char *key, bool data) {
 }
 
 bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
-                          unsigned long &data) {
+                          uint64_t &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {
@@ -520,7 +537,9 @@ bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
 bool getModuleStringMetadata(const llvm::Module &mod, const char *key,
                              std::string &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {

@@ -133,7 +133,8 @@ struct _build_program_callback
     void *user_data; /* user supplied data passed to callback function */
 };
 
-#define POCL_KERNEL_DIGEST_SIZE 16
+// same as SHA1_DIGEST_SIZE
+#define POCL_KERNEL_DIGEST_SIZE 20
 typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
 
 // clEnqueueNDRangeKernel

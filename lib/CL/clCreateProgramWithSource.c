@@ -127,6 +127,12 @@ POname(clCreateProgramWithSource)(cl_context context,
       || ((program->global_var_total_size = (size_t *)calloc (
                program->associated_num_devices, sizeof (size_t)))
           == NULL)
+      || ((program->llvm_irs
+           = (void *)calloc (program->associated_num_devices, sizeof (void *)))
+          == NULL)
+      || ((program->gvar_storage
+           = (void *)calloc (program->associated_num_devices, sizeof (void *)))
+          == NULL)
       || ((program->build_hash = (SHA1_digest_t *)calloc (
                program->associated_num_devices, sizeof (SHA1_digest_t)))
           == NULL))
@@ -150,6 +156,8 @@ ERROR:
     POCL_MEM_FREE(program->build_hash);
     POCL_MEM_FREE (program->data);
     POCL_MEM_FREE (program->global_var_total_size);
+    POCL_MEM_FREE (program->llvm_irs);
+    POCL_MEM_FREE (program->gvar_storage);
     POCL_MEM_FREE(program->build_log);
     POCL_MEM_FREE(program->binaries);
     POCL_MEM_FREE(program->binary_sizes);

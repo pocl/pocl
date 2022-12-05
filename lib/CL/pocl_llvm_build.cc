@@ -624,16 +624,19 @@ int pocl_llvm_build_program(cl_program program,
     program->binary_sizes[device_i] = (size_t)fsize;
     program->binaries[device_i] = (unsigned char *)binary;
 
-    mod = (llvm::Module *)program->data[device_i];
+    mod = (llvm::Module *)program->llvm_irs[device_i];
     if (mod != nullptr) {
       delete mod;
-      program->data[device_i] = nullptr;
+      program->llvm_irs[device_i] = nullptr;
       --llvm_ctx->number_of_IRs;
     }
 
-    program->data[device_i] = parseModuleIR(program_bc_path, llvm_ctx->Context);
-    assert(program->data[device_i]);
+    program->llvm_irs[device_i] = mod =
+        parseModuleIR(program_bc_path, llvm_ctx->Context);
+    assert(mod);
     ++llvm_ctx->number_of_IRs;
+
+    parseModuleGVarSize(program, device_i, mod);
 
     return CL_SUCCESS;
   }
@@ -649,9 +652,10 @@ int pocl_llvm_build_program(cl_program program,
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
 
-  mod = (llvm::Module *)program->data[device_i];
+  mod = (llvm::Module *)program->llvm_irs[device_i];
   if (mod != nullptr) {
     delete mod;
+    program->llvm_irs[device_i] = nullptr;
     --llvm_ctx->number_of_IRs;
   }
 
@@ -680,7 +684,7 @@ int pocl_llvm_build_program(cl_program program,
     }
   }
 
-  program->data[device_i] = mod;
+  program->llvm_irs[device_i] = mod;
 
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
@@ -711,9 +715,9 @@ int pocl_llvm_build_program(cl_program program,
 static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
                                                llvm::Module *libmodule,
                                                cl_device_id device) {
-#ifdef ENABLE_SPIR
   const std::string &ModTriple = p->getTargetTriple();
   if (ModTriple.find("spir") == 0) {
+#ifdef ENABLE_SPIR
     POCL_RETURN_ERROR_ON((device->endian_little == CL_FALSE),
                          CL_LINK_PROGRAM_FAILURE,
                          "SPIR is only supported on little-endian devices\n");
@@ -736,12 +740,13 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
 
     if (p->getModuleFlag("PIC Level") == nullptr)
       p->setPICLevel(PICLevel::BigPIC);
+    return CL_SUCCESS;
+#else
+    POCL_MSG_ERR("SPIR not supported\n");
+    return CL_LINK_PROGRAM_FAILURE;
+#endif
   }
   return CL_SUCCESS;
-#else
-  POCL_MSG_ERR("SPIR not supported\n");
-  return CL_LINK_PROGRAM_FAILURE;
-#endif
 }
 
 int pocl_llvm_link_program(cl_program program, unsigned device_i,
@@ -755,7 +760,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   std::string concated_binaries;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
-  llvm::Module **modptr = (llvm::Module **)&program->data[device_i];
+  llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
   int error;
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;

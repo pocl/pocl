@@ -524,8 +524,8 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   cl_device_id Device = program->devices[device_i];
   assert(Device->llvm_target_triplet && "Device has no target triple set");
 
-  if (program->data != nullptr && program->data[device_i] != nullptr)
-    input = static_cast<llvm::Module *>(program->data[device_i]);
+  if (program->llvm_irs[device_i] != nullptr)
+    input = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
   else {
     return CL_INVALID_PROGRAM_EXECUTABLE;
   }
@@ -817,9 +817,12 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   /* any device's module will do for metadata, just use first non-nullptr */
-  llvm::Module *mod = (llvm::Module *)program->data[device_i];
-  if (mod == nullptr)
-    return 0;
+  llvm::Module *mod = nullptr;
+  if (program->llvm_irs[device_i] != nullptr)
+    mod = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
+  else {
+    return CL_INVALID_PROGRAM_EXECUTABLE;
+  }
 
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {

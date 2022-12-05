@@ -367,9 +367,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
          "local_y %zu local_z %zu parallel_filename: %s\n",
          kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
-  assert(Program->data[DeviceI] != nullptr);
-
-  llvm::Module *ProgramBC = (llvm::Module *)Program->data[DeviceI];
+  llvm::Module *ProgramBC = (llvm::Module *)Program->llvm_irs[DeviceI];
 
   // Create an empty Module and copy only the kernel+callgraph from
   // program.bc.
@@ -530,27 +528,31 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
   return Error;
 }
 
-/* Reads LLVM IR module from program->binaries[i], if program->data[device_i] is
+/* Reads LLVM IR module from program->binaries[i], if prog_data->llvm_ir is
  * NULL */
 int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
                                     const char *program_bc_path) {
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
+  cl_device_id dev = program->devices[device_i];
 
-  if (program->data[device_i] != nullptr)
+  if (program->llvm_irs[device_i] != nullptr)
     return CL_SUCCESS;
 
+  llvm::Module *M;
   if (program->binaries[device_i])
-    program->data[device_i] =
-        parseModuleIRMem((char *)program->binaries[device_i],
+    M = parseModuleIRMem((char *)program->binaries[device_i],
                          program->binary_sizes[device_i], llvm_ctx->Context);
   else {
     // TODO
     assert(program_bc_path);
-    program->data[device_i] = parseModuleIR(program_bc_path, llvm_ctx->Context);
+    M = parseModuleIR(program_bc_path, llvm_ctx->Context);
   }
-  assert(program->data[device_i]);
+  assert(M);
+  program->llvm_irs[device_i] = M;
+  if (dev->program_scope_variables_pass)
+    parseModuleGVarSize(program, device_i, M);
   ++llvm_ctx->number_of_IRs;
   return CL_SUCCESS;
 }
@@ -559,11 +561,12 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
   cl_context ctx = program->context;
   PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
-  if (program->data[device_i]) {
-    llvm::Module *mod = (llvm::Module *)program->data[device_i];
+
+  if (program->llvm_irs[device_i]) {
+    llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
     delete mod;
     --llvm_ctx->number_of_IRs;
-    program->data[device_i] = nullptr;
+    program->llvm_irs[device_i] = nullptr;
   }
 }
 

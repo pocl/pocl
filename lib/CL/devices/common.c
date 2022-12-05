@@ -44,7 +44,6 @@
 #include "common.h"
 #include "pocl_shared.h"
 
-#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -56,6 +55,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "common_driver.h"
 
 #ifdef HAVE_GETRLIMIT
 #include <sys/time.h>
@@ -1827,6 +1827,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
 };
 
 const size_t OPENCL_FEATURES_NUM

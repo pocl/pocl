@@ -449,8 +449,6 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
-/* represents a single buffer to host memory mapping */
-
 struct pocl_device_ops {
   const char *device_name;
 
@@ -1017,6 +1015,7 @@ struct _cl_device_id {
   cl_version opencl_c_version_as_cl;
 
   void *data;
+
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
   /* A running number (starting from zero) across all the device instances.
@@ -1574,6 +1573,13 @@ struct _cl_program {
   /* total size of program-scope variables. This depends on alignments
    * & type sizes, hence it is device-dependent */
   size_t *global_var_total_size;
+  /* per-device pointer to a llmv::Module instance;
+   * optional - for devices which use PoCL's LLVM passes */
+  void** llvm_irs;
+  /* per-device buffers for storing program-scope vars. Allocated lazily.
+   * these are not cl_mem because the Specs explicitly say these are not
+   * migrated between devices. */
+  void** gvar_storage;
 
   /* Store SPIR-V binary from clCreateProgramWithIL() */
   char *program_il;
