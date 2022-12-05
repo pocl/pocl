@@ -1093,6 +1093,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   /* TODO: When can we unload the module? */
   CUmodule module;
 
+#ifdef POCL_DEBUG_MESSAGES
   if (!(pocl_debug_messages_filter & POCL_DEBUG_FLAG_CUDA))
     {
       result = cuModuleLoad (&module, ptx_filename);
@@ -1100,6 +1101,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
     }
   else
     {
+#endif
       struct stat st;
       stat (ptx_filename, &st);
 
@@ -1132,7 +1134,9 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
       free (log);
       free (buffer);
+#ifdef POCL_DEBUG_MESSAGES
     }
+#endif
 
   /* Get kernel function */
   CUfunction function;
