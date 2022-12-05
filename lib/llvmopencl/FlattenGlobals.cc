@@ -36,6 +36,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 
+#include "pocl_llvm_api.h"
+
 #include "Workgroup.h"
 
 POP_COMPILER_DIAGS
@@ -76,6 +78,7 @@ static const char *workgroup_variables[] = {"_local_id_x",
                                             "_global_offset_x",
                                             "_global_offset_y",
                                             "_global_offset_z",
+                                            PoclGVarBufferName,
                                             NULL};
 
 bool FlattenGlobals::runOnModule(Module &M) {

@@ -22,9 +22,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <cstdio>
-#include <map>
 #include <iostream>
+#include <map>
+#include <sstream>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -57,13 +57,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
 #include "LLVMUtils.h"
+#include "ProgramScopeVariables.h"
 #include "Workgroup.h"
 #include "WorkitemReplication.h"
-
-#include <cstdio>
-#include <map>
-#include <iostream>
-#include <sstream>
 
 #if _MSC_VER
 #  include "vccompat.hpp"
@@ -87,6 +83,7 @@ enum PoclContextStructFields {
   PC_PRINTF_BUFFER,
   PC_PRINTF_BUFFER_POSITION,
   PC_PRINTF_BUFFER_CAPACITY,
+  PC_GLOBAL_VAR_BUFFER,
   PC_WORK_DIM
 };
 
@@ -138,14 +135,14 @@ Workgroup::runOnModule(Module &M) {
   llvm::Type *Int32T = Type::getInt32Ty(*C);
   llvm::Type *Int8T = Type::getInt8Ty(*C);
   PoclContextT =
-    StructType::get(
-      ArrayType::get(SizeT, 3), // NUM_GROUPS
-      ArrayType::get(SizeT, 3), // GLOBAL_OFFSET
-      ArrayType::get(SizeT, 3), // LOCAL_SIZE
-      PointerType::get(Int8T, 0), // PRINTF_BUFFER
-      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
-      Int32T, // PRINTF_BUFFER_CAPACITY
-      Int32T); // WORK_DIM
+      StructType::get(ArrayType::get(SizeT, 3),    // NUM_GROUPS
+                      ArrayType::get(SizeT, 3),    // GLOBAL_OFFSET
+                      ArrayType::get(SizeT, 3),    // LOCAL_SIZE
+                      PointerType::get(Int8T, 0),  // PRINTF_BUFFER
+                      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
+                      Int32T,                      // PRINTF_BUFFER_CAPACITY
+                      PointerType::get(Int8T, 0),  // GLOBAL_VAR_BUFFER
+                      Int32T);                     // WORK_DIM
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
@@ -911,6 +908,10 @@ Workgroup::privatizeContext(Function *F)
   privatizeGlobals(
     F, Builder, {"_work_dim"},
     globalHandlesToContextStructLoads(Builder, {"_work_dim"}, PC_WORK_DIM));
+
+  privatizeGlobals(F, Builder, {PoclGVarBufferName},
+                   globalHandlesToContextStructLoads(
+                       Builder, {PoclGVarBufferName}, PC_GLOBAL_VAR_BUFFER));
 
   privatizeGlobals(
     F, Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
