@@ -1568,6 +1568,9 @@ struct _cl_program {
   cl_build_status build_status;
   /* Use to store binary type */
   cl_program_binary_type binary_type;
+  /* total size of program-scope variables. This depends on alignments
+   * & type sizes, hence it is device-dependent */
+  size_t *global_var_total_size;
 
   /* Store SPIR-V binary from clCreateProgramWithIL() */
   char *program_il;

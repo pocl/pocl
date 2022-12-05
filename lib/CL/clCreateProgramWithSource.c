@@ -115,14 +115,17 @@ POname(clCreateProgramWithSource)(cl_context context,
       || (program->pocl_binaries = (unsigned char **)calloc (
               program->associated_num_devices, sizeof (unsigned char *)))
              == NULL
-      || (program->pocl_binary_sizes
-          = (size_t *)calloc (program->associated_num_devices, sizeof (size_t)))
+      || (program->pocl_binary_sizes = (size_t *)calloc (
+              program->associated_num_devices, sizeof (size_t)))
              == NULL
       || (program->build_log
           = (char **)calloc (program->associated_num_devices, sizeof (char *)))
              == NULL
-      || ((program->data
-           = (void **)calloc (program->associated_num_devices, sizeof (void *)))
+      || ((program->data = (void **)calloc (program->associated_num_devices,
+                                            sizeof (void *)))
+          == NULL)
+      || ((program->global_var_total_size = (size_t *)calloc (
+               program->associated_num_devices, sizeof (size_t)))
           == NULL)
       || ((program->build_hash = (SHA1_digest_t *)calloc (
                program->associated_num_devices, sizeof (SHA1_digest_t)))
@@ -146,6 +149,7 @@ ERROR:
   if (program) {
     POCL_MEM_FREE(program->build_hash);
     POCL_MEM_FREE (program->data);
+    POCL_MEM_FREE (program->global_var_total_size);
     POCL_MEM_FREE(program->build_log);
     POCL_MEM_FREE(program->binaries);
     POCL_MEM_FREE(program->binary_sizes);

@@ -132,6 +132,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (program->build_hash);
       POCL_MEM_FREE (program->compiler_options);
       POCL_MEM_FREE (program->data);
+      POCL_MEM_FREE (program->global_var_total_size);
 
       for (i = 0; i < program->num_builtin_kernels; ++i)
         POCL_MEM_FREE (program->builtin_kernel_names[i]);

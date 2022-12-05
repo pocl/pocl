@@ -482,6 +482,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
           POCL_MEM_FREE (program->pocl_binaries[i]);
           program->pocl_binary_sizes[i] = 0;
         }
+      program->global_var_total_size[i] = 0;
     }
 
   if (!from_error)

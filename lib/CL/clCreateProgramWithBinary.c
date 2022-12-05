@@ -120,6 +120,9 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
              == NULL
       || ((program->data = (void **)calloc (num_devices, sizeof (void *)))
           == NULL)
+      || ((program->global_var_total_size
+           = (size_t *)calloc (num_devices, sizeof (size_t)))
+          == NULL)
       || ((program->build_hash
            = (SHA1_digest_t *)calloc (num_devices, sizeof (SHA1_digest_t)))
           == NULL))
@@ -219,6 +222,8 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
   POCL_MEM_FREE (program->pocl_binaries);
   POCL_MEM_FREE (program->pocl_binary_sizes);
   POCL_MEM_FREE (program->data);
+  POCL_MEM_FREE (program->global_var_total_size);
+
   POCL_MEM_FREE (program->build_log);
   POCL_MEM_FREE (program->build_hash);
   POCL_MEM_FREE (program);
