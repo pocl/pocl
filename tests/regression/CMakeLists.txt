@@ -83,6 +83,13 @@ add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 
+add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
+
+if(OPENCL_HEADER_VERSION GREATER 299)
+  add_test_pocl(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
+  set(OCL_30_TESTS "regression/test_program_scope_vars")
+endif()
+
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
 add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
@@ -297,6 +304,8 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
   "regression/test_llvm_segfault_issue_889"
   "regression/test_issue_893"
   "regression/test_flatten_barrier_subs"
+  "regression/test_workitem_func_outside_kernel"
+  ${OCL_30_TESTS}
   ${TCE_TESTS}
   PROPERTIES
     COST 1.5
