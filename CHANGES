@@ -11,6 +11,9 @@ Notable User Facing Changes
   subgroup that always executes the whole X-dimension's WIs.
 - Added initial (incomplete) support for 
   cl_intel_required_subgroup_size for CPUs
+- AlmaIF's OpenASIP backend now supports a standalone mode.
+  It generates a standalone C program from a kernel launch, which
+  can then be compiled and executed with ttasim or RTL simulation.
 
 3.1 December 2022
 =================

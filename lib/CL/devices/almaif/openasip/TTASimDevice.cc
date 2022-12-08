@@ -23,8 +23,8 @@
 */
 
 #include "TTASimDevice.hh"
-#include "AlmaifCompile.hh"
-#include "AlmaifShared.hh"
+#include "../AlmaifCompile.hh"
+#include "../AlmaifShared.hh"
 #include "TTASimControlRegion.hh"
 #include "TTASimRegion.hh"
 

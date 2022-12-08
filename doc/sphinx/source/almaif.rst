@@ -231,6 +231,22 @@ use a software emulating function from almaif/EmulationDevice.cc.
 No changes to the source OpenCL host program (e.g. accel_example.cpp)
 when switching between emulation, instruction-set simulation or FPGA execution.
 
+
+Standalone mode
+^^^^^^^^^^^^^^^
+
+Almaif driver's OpenASIP backend supports a standalone mode meant for executing
+kernels without the host runtime. The standalone mode generates a C program
+that contains the input data and pre-initialized command structures to run
+a single kernel with either ttasim or RTL simulation. The mode is enabled
+with an environment variable POCL_ALMAIF_STANDALONE=1. The mode generates
+helper scripts to the working directory, while outputting the standalone C program
+to the kernel CACHE directory.
+
+Example usage of the mode can be found in examples/accel/CMakelists.txt, which
+generates standalone tests using both ttasim and RTL simulator (ghdl) to run the
+example0 kernel on various TTA configurations.
+
 Wrapping new hardware component
 -------------------------------
 

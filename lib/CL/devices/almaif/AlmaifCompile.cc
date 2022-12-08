@@ -37,7 +37,7 @@
 #endif
 
 #ifdef ENABLE_COMPILER
-#include "AlmaifCompileTCE.hh"
+#include "openasip/AlmaifCompileTCE.hh"
 #endif
 
 extern int pocl_offline_compile;
@@ -93,13 +93,17 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   dev->linker_available = true;
 
   compilation_data_t *adi = (compilation_data_t *)d->compilationData;
+  adi->produce_standalone_program = NULL;
 
 #ifdef ENABLE_COMPILER
   // TODO tce specific
   adi->initialize_device = pocl_almaif_tce_initialize;
   adi->cleanup_device = pocl_almaif_tce_cleanup;
   adi->compile_kernel = pocl_almaif_tce_compile;
-
+  if (pocl_get_bool_option("POCL_ALMAIF_STANDALONE", 0)) {
+    adi->produce_standalone_program =
+        pocl_almaif_tce_produce_standalone_program;
+  }
   // backend specific init
   POCL_MSG_PRINT_ALMAIF("Starting device specific initializion\n");
   adi->initialize_device(dev, parameters);

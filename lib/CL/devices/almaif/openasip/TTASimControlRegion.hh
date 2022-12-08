@@ -24,9 +24,9 @@
 #ifndef TTASIMCONTROLREGION_H
 #define TTASIMCONTROLREGION_H
 
-#include "AlmaIFRegion.hh"
+#include "../AlmaIFRegion.hh"
 
-#include "AlmaifShared.hh"
+#include "../AlmaifShared.hh"
 
 class TTASimDevice;
 namespace TTAMachine {

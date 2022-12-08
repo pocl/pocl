@@ -43,7 +43,7 @@ set(ALMAIF_SOURCES "AlmaifShared.hh"
                   "XrtDevice.hh"
                   "AlmaifCompile.cc"
                   "AlmaifCompile.hh"
-                  "AlmaifCompileTCE.hh"
+                  "openasip/AlmaifCompileTCE.hh"
                   )
 
 if(HAVE_XRT)
@@ -57,13 +57,13 @@ endif()
 
 if(ENABLE_TCE)
     set(ALMAIF_SOURCES ${ALMAIF_SOURCES}
-                      "TTASimDevice.hh"
-                      "TTASimDevice.cc"
-                      "TTASimRegion.cc"
-                      "TTASimRegion.hh"
-                      "TTASimControlRegion.cc"
-                      "TTASimControlRegion.hh"
-                      "AlmaifCompileTCE.cc"
+                      "openasip/TTASimDevice.hh"
+                      "openasip/TTASimDevice.cc"
+                      "openasip/TTASimRegion.cc"
+                      "openasip/TTASimRegion.hh"
+                      "openasip/TTASimControlRegion.cc"
+                      "openasip/TTASimControlRegion.hh"
+                      "openasip/AlmaifCompileTCE.cc"
                       )
 endif()
 

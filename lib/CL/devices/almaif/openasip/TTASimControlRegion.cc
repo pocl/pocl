@@ -24,7 +24,7 @@
 #include "TTASimControlRegion.hh"
 #include "TTASimDevice.hh"
 
-#include "AlmaifShared.hh"
+#include "../AlmaifShared.hh"
 
 #include <SimpleSimulatorFrontend.hh>
 //#include <SimulatorFrontend.hh>

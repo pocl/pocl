@@ -33,16 +33,16 @@
 #include "EmulationDevice.hh"
 
 #ifdef TCE_AVAILABLE
-#include "TTASimDevice.hh"
+#include "openasip/TTASimDevice.hh"
 #endif
 
-#include "AlmaifShared.hh"
-#include "AlmaifCompileTCE.hh"
 #include "AlmaifCompile.hh"
+#include "AlmaifShared.hh"
 #include "bufalloc.h"
 #include "common.h"
 #include "common_driver.h"
 #include "devices.h"
+#include "openasip/AlmaifCompileTCE.hh"
 #include "pocl_cl.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
@@ -937,6 +937,12 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
   data->Dev->CQMemory->Write32(ALMAIF_CQ_WRITE, write_iter + 1);
 
   POCL_UNLOCK(data->AQLQueueLock);
+
+  if (kernelID == -1 && data->compilationData &&
+      data->compilationData->produce_standalone_program) {
+    data->compilationData->produce_standalone_program(data, cmd, &pc, arg_size,
+                                                      arguments);
+  }
 }
 
 bool isEventDone(AlmaifData *data, cl_event event) {
@@ -1140,6 +1146,8 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
   }
 
   scheduleNDRange(D, cmd, arg_size, arguments);
+
+  POCL_MEM_FREE(cmd->command.run.device_data);
   free(arguments);
 }
 

@@ -1,5 +1,4 @@
-/* TTASimDevice.hh - basic way of accessing accelerator memory.
- *                 as a memory mapped region
+/* TTASimRegion.hh - TTASim device pretending to be mmapped device
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -22,36 +21,39 @@
    IN THE SOFTWARE.
 */
 
-#ifndef TTASIMDEVICE_H
-#define TTASIMDEVICE_H
+#ifndef TTASIMREGION_H
+#define TTASIMREGION_H
 
-#include "AlmaIFDevice.hh"
+#include "../AlmaIFRegion.hh"
 
-class SimpleSimulatorFrontend;
-class SimulatorCLI;
+#include <Memory.hh>
+#include <MemorySystem.hh>
 
-class TTASimDevice : public AlmaIFDevice {
+#include <stdlib.h>
+
+class Memory;
+
+// namespace MemorySystem{
+// class MemoryPtr;
+//}
+
+class TTASimRegion : public AlmaIFRegion {
 public:
-  TTASimDevice(char *adf_name);
-  ~TTASimDevice() override;
+  TTASimRegion(size_t Address, size_t RegionSize, MemorySystem::MemoryPtr mem);
 
-  virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
-                                   _cl_command_node *cmd) override;
+  uint32_t Read32(size_t offset) override;
+  void Write32(size_t offset, uint32_t value) override;
+  void Write16(size_t offset, uint16_t value) override;
+  uint64_t Read64(size_t offset) override;
+  void Write64(size_t offset, uint64_t value) override;
 
-  pocl_thread_t ttasim_thread;
-  pocl_cond_t simulation_start_cond;
-  pocl_lock_t lock;
-  bool shutdownRequested = false;
-  bool debuggerRequested = false;
-
-  SimpleSimulatorFrontend *simulator_;
-  SimulatorCLI *simulatorCLI_;
-
-  void restartProgram();
-  void stopProgram();
+  void CopyToMMAP(size_t destination, const void *source,
+                  size_t bytes) override;
+  void CopyFromMMAP(void *destination, size_t source, size_t bytes) override;
+  void CopyInMem(size_t source, size_t destination, size_t bytes) override;
 
 private:
-  void loadProgram(char *loadProgram);
+  MemorySystem::MemoryPtr mem_;
 };
 
 #endif

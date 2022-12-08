@@ -50,6 +50,10 @@ typedef struct compilation_data_s {
   int (*initialize_device)(cl_device_id device, const char *parameters);
   int (*cleanup_device)(cl_device_id device);
 
+  void (*produce_standalone_program)(AlmaifData *D, _cl_command_node *cmd,
+                                     pocl_context32 *pc, size_t arg_size,
+                                     void *arguments);
+
   /* backend-specific data */
   void *backend_data;
 } compilation_data_t;

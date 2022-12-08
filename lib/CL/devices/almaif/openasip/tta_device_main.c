@@ -40,117 +40,7 @@
 #include "pocl_context.h"
 #include "pocl_workgroup_func.h"
 
-#define AQL_PACKET_INVALID (1)
-#define AQL_PACKET_KERNEL_DISPATCH (2)
-#define AQL_PACKET_BARRIER_AND (3)
-#define AQL_PACKET_AGENT_DISPATCH (4)
-#define AQL_PACKET_BARRIER_OR (5)
-#define AQL_PACKET_BARRIER (1 << 8)
-#define AQL_PACKET_LENGTH (64)
-
-#define AQL_MAX_SIGNAL_COUNT (5)
-
-#define __cq__ __attribute__ ((address_space (5)))
-#define __buffer__ __attribute__ ((address_space (1)))
-
-#ifndef QUEUE_START
-#define QUEUE_START 0
-#endif
-
-#ifndef _STANDALONE_MODE
-#define _STANDALONE_MODE 0
-#endif
-
-
-typedef void (*pocl_workgroup_func32_argb) (
-    void __buffer__ * /* args */, void __buffer__ * /* pocl_context */,
-    uint /* group_x */, uint /* group_y */, uint /* group_z */);
-
-
-struct CommandMetadata {
-  uint32_t completion_signal;
-  uint32_t reserved0;
-  uint32_t start_timestamp_low;
-  uint32_t start_timestamp_high;
-  uint32_t finish_timestamp_low;
-  uint32_t finish_timestamp_high;
-  uint32_t reserved1;
-  uint32_t reserved2;
-};
-
-
-struct AQLQueueInfo
-{
-  uint32_t type;
-  uint32_t features;
-
-  uint32_t base_address_low;
-  uint32_t base_address_high;
-  uint32_t doorbell_signal_low;
-  uint32_t doorbell_signal_high;
-  
-  uint32_t size;
-  uint32_t reserved0;
-
-  uint32_t id_low;
-  uint32_t id_high;
-
-  volatile uint32_t write_index_low;
-  volatile uint32_t write_index_high;
-
-  uint32_t read_index_low;
-  uint32_t read_index_high;
-
-  uint32_t reserved1;
-  uint32_t reserved2;
-};
-
-struct AQLDispatchPacket
-{
-  uint16_t header;
-  uint16_t dimensions;
-
-  uint16_t workgroup_size_x;
-  uint16_t workgroup_size_y;
-  uint16_t workgroup_size_z;
-
-  uint16_t reserved0;
-
-  uint32_t grid_size_x;
-  uint32_t grid_size_y;
-  uint32_t grid_size_z;
-
-  uint32_t private_segment_size;
-  uint32_t group_segment_size;
-  uint32_t kernel_object_low;
-  uint32_t kernel_object_high;
-  uint32_t kernarg_address_low;
-  uint32_t kernarg_address_high;
-
-  uint32_t reserved1;
-  uint32_t reserved2;
-
-  uint32_t cmd_metadata_low;
-  uint32_t cmd_metadata_high;
-};
-
-struct AQLAndPacket
-{
-  uint16_t header;
-  uint16_t reserved0;
-  uint32_t reserved1;
-
-  uint32_t dep_signals[10];
-
-  uint32_t signal_count_low;
-  uint32_t signal_count_high;
-
-  uint32_t completion_signal_low;
-  uint32_t completion_signal_high;
-};
-
-
-
+#include "almaif-tce-device-defs.h"
 
 /**
  * Prepares a work group for execution and launches it.
@@ -169,8 +59,8 @@ tta_opencl_wg_launch (__cq__ volatile struct AQLDispatchPacket *packet)
 #endif
 
   const int work_dim = packet->dimensions;
-  struct pocl_context32 __buffer__ *context
-    = (struct pocl_context32 __buffer__ *)(packet->reserved1);
+  struct pocl_context32 __global__ *context
+      = (struct pocl_context32 __global__ *)(packet->reserved1);
 
   const int num_groups_x = context->num_groups[0];
   const int num_groups_y = (work_dim >= 2) ? (context->num_groups[1]) : 1;
@@ -194,8 +84,8 @@ tta_opencl_wg_launch (__cq__ volatile struct AQLDispatchPacket *packet)
         lwpr_newline ();
 #endif
         ((pocl_workgroup_func32_argb)packet->kernel_object_low) (
-          (__buffer__ void *)(packet->kernarg_address_low), context, gid_x,
-          gid_y, gid_z);
+            (__global__ void *)(packet->kernarg_address_low), context, gid_x,
+            gid_y, gid_z);
       }
     }
   }
@@ -204,11 +94,14 @@ tta_opencl_wg_launch (__cq__ volatile struct AQLDispatchPacket *packet)
   lwpr_print_str ("\ntta: ------------------- kernel finished\n");
 #endif
 
-  ((__buffer__ struct CommandMetadata *)packet->cmd_metadata_low)->completion_signal = 1;
+  ((__global__ struct CommandMetadata *)packet->cmd_metadata_low)
+      ->completion_signal
+      = 1;
 }
 
 #if _STANDALONE_MODE == 1
 void initialize_kernel_launch();
+extern __cq__ struct AQLDispatchPacket standalone_packet;
 #endif
 
 int main() {
@@ -236,9 +129,15 @@ int main() {
 
  
   do {
+#if _STANDALONE_MODE == 1
+    // Standalone mode will only process the single packet generated
+    // by the external standalone.c-file
+    uint32_t packet_loc = (uint32_t)&standalone_packet;
+#else
     uint32_t packet_loc
       = QUEUE_START + AQL_PACKET_LENGTH
       + ((read_iter % QUEUE_LENGTH) * AQL_PACKET_LENGTH);
+#endif
     __cq__ volatile struct AQLDispatchPacket *packet
       = (__cq__ volatile struct AQLDispatchPacket *)packet_loc;
 
@@ -255,7 +154,8 @@ int main() {
 
       for (int i = 0; i < AQL_MAX_SIGNAL_COUNT; i++)
       {
-        volatile __buffer__ uint32_t *signal = (volatile __buffer__ uint32_t *)(andPacket->dep_signals[2 * i]);
+        volatile __global__ uint32_t *signal
+            = (volatile __global__ uint32_t *)(andPacket->dep_signals[2 * i]);
         if (signal != NULL)
         {
           while (*signal == 0)

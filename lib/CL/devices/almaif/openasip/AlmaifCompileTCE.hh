@@ -32,6 +32,11 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters);
 int pocl_almaif_tce_cleanup(cl_device_id device);
 void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                              cl_device_id device, int specialize);
+void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
+                                                _cl_command_node *cmd,
+                                                pocl_context32 *pc,
+                                                size_t arg_size,
+                                                void *arguments);
 
 char *pocl_tce_init_build(void *data);
 
@@ -43,10 +48,11 @@ typedef struct tce_backend_data_s {
 } tce_backend_data_t;
 
 void tceccCommandLine(char *commandline, size_t max_cmdline_len,
-                      _cl_command_run *run_cmd, const char *tempDir,
-                      const char *inputSrc, const char *outputTpef,
-                      const char *machine_file, int is_multicore,
-                      int little_endian, const char *extraParams);
+                      _cl_command_run *run_cmd, AlmaifData *D,
+                      const char *tempDir, const char *inputSrc,
+                      const char *outputTpef, const char *machine_file,
+                      int is_multicore, int little_endian,
+                      const char *extraParams);
 void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
                                       _cl_command_node *command,
                                       cl_kernel kernel, cl_device_id device,
@@ -54,5 +60,7 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
 
 int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
                                 char *output);
+
+void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf);
 
 #endif
