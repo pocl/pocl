@@ -130,13 +130,12 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
       Type *I64Ty = Type::getInt64Ty(C->getContext());
       SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
                                       ConstantInt::get(I64Ty, GVOffset)};
-      Value *GVarPtrWithOffset = Builder.CreateGEP(
-          GVarBufferTy, GVarBuffer,
-          Indices,
-          Twine{"_pocl_gvar_with_offset_", GVarName});
+      Value *GVarPtrWithOffset =
+          Builder.CreateGEP(GVarBufferTy, GVarBuffer, Indices,
+                            Twine{"_pocl_gvar_with_offset_", GVarName});
       // TODO addrspacecast
       GVarPtrWithOffset =
-         Builder.CreateBitCast(GVarPtrWithOffset, GVar->getType());
+          Builder.CreateBitCast(GVarPtrWithOffset, GVar->getType());
       Instruction *I = cast<Instruction>(GVarPtrWithOffset);
       InsnCache[GVar] = I;
       return I;
@@ -147,22 +146,22 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
   }
 
   if (auto *CE = dyn_cast<ConstantExpr>(C)) {
-    SmallVector<Value *, 4> Ops;  // Collect potentially expanded operands.
+    SmallVector<Value *, 4> Ops; // Collect potentially expanded operands.
     bool AnyOpExpanded = false;
     for (Value *Op : CE->operand_values()) {
-      Value *V =
-          expandConstant(cast<Constant>(Op), Builder,
-                         GVarBuffer, GVarBufferTy,
-                         GVarSet, GVarOffsets, InsnCache);
+      Value *V = expandConstant(cast<Constant>(Op), Builder, GVarBuffer,
+                                GVarBufferTy, GVarSet, GVarOffsets, InsnCache);
       Ops.push_back(V);
       AnyOpExpanded |= !isa<Constant>(V);
     }
 
-    if (!AnyOpExpanded) return CE;
+    if (!AnyOpExpanded)
+      return CE;
 
     auto *AsInsn = Builder.Insert(CE->getAsInstruction());
     // Replace constant operands with expanded ones.
-    for (auto &U : AsInsn->operands()) U.set(Ops[U.getOperandNo()]);
+    for (auto &U : AsInsn->operands())
+      U.set(Ops[U.getOperandNo()]);
     InsnCache[CE] = AsInsn;
     return AsInsn;
   }
@@ -190,8 +189,7 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
                                   ConstantInt::get(I64Ty, GVarBufferOffset)};
   Value *GVarPtrWithOffset = Builder.CreateGEP(
-      GVarBufferTy, GVarBuffer,
-      Indices,
+      GVarBufferTy, GVarBuffer, Indices,
       Twine{"_pocl_gvar_with_offset_", OriginalGVarDef->getName()});
 
   // gvar is alvays pointer
@@ -200,22 +198,20 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   // AScast from DeviceGlobalAS to use's AS
   // %0 = addrspacecast ptr %_pocl_gvar_with_offset_GVAR to ptr addrspace(1)
   if (OrigGVarPTy->getAddressSpace() != DeviceGlobalAS)
-    GVarPtrWithOffset =
-        Builder.CreateAddrSpaceCast(GVarPtrWithOffset,
-                                    PointerType::get(GVarBufferTy,
-                                                     OrigGVarPTy->getAddressSpace()));
-  // bitcast to final pointer type if needed
-  #ifndef LLVM_OPAQUE_POINTERS
-  GVarPtrWithOffset =
-      Builder.CreateBitCast(GVarPtrWithOffset, OrigGVarPTy);
-  #endif
+    GVarPtrWithOffset = Builder.CreateAddrSpaceCast(
+        GVarPtrWithOffset,
+        PointerType::get(GVarBufferTy, OrigGVarPTy->getAddressSpace()));
+// bitcast to final pointer type if needed
+#ifndef LLVM_OPAQUE_POINTERS
+  GVarPtrWithOffset = Builder.CreateBitCast(GVarPtrWithOffset, OrigGVarPTy);
+#endif
 
   // Initializers are constant expressions. If they have references to a global
   // variables we are going to replace with load instructions we need to rewrite
   // the constant expression as instructions.
-  Value *Init = expandConstant(OriginalGVarDef->getInitializer(),
-                               Builder, GVarBuffer, GVarBufferTy,
-                               GVarSet, GVarOffsets, Cache);
+  Value *Init =
+      expandConstant(OriginalGVarDef->getInitializer(), Builder, GVarBuffer,
+                     GVarBufferTy, GVarSet, GVarOffsets, Cache);
 
   // store [Z x i8] initializer, ptr addrspace(1) %0, align 1
   Builder.CreateStore(Init, GVarPtrWithOffset);
@@ -299,9 +295,9 @@ static bool areAllGvarsDefined(Module *Program, std::string &log,
         FoundAllReferences = false;
       } else {
         GVarSet.insert(&GVar);
-//        std::cerr << "**************************\n";
-//        GVar.dump();
-//        std::cerr << "**************************\n";
+        // std::cerr << "**************************\n";
+        // GVar.dump();
+        // std::cerr << "**************************\n";
       }
     }
   }
@@ -357,7 +353,7 @@ static void emitInitializeKernel(Module *Program, LLVMContext &Ctx,
   GVarInitF->setMetadata("kernel_arg_type_qual", EmptyMD);
   GVarInitF->setMetadata("kernel_arg_name", EmptyMD);
 
-//  GVarInitF->dump();
+  // GVarInitF->dump();
 }
 
 // for a set of program scope variables,
@@ -415,11 +411,11 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
 
     // AScast from DeviceGlobalAS to use's AS
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
-      V = Builder.CreateAddrSpaceCast(V,  PointerType::get(GVar->getType(),
-                                                       GVarPTy->getAddressSpace()));
-    #ifndef LLVM_OPAQUE_POINTERS
+      V = Builder.CreateAddrSpaceCast(
+          V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
+#ifndef LLVM_OPAQUE_POINTERS
     V = Builder.CreateBitCast(V, GVar->getType());
-    #endif
+#endif
     return V;
   } else {
     SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
@@ -434,11 +430,11 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
 
     // AScast from DeviceGlobalAS to use's AS
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
-      V = Builder.CreateAddrSpaceCast(V,  PointerType::get(GVar->getType(),
-                                                       GVarPTy->getAddressSpace()));
-    #ifndef LLVM_OPAQUE_POINTERS
+      V = Builder.CreateAddrSpaceCast(
+          V, PointerType::get(GVar->getType(), GVarPTy->getAddressSpace()));
+#ifndef LLVM_OPAQUE_POINTERS
     V = Builder.CreateBitCast(V, GVar->getType());
-    #endif
+#endif
 
     return V;
   }
