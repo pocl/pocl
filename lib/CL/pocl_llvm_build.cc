@@ -151,7 +151,22 @@ static void get_build_log(cl_program program,
 static llvm::Module *getKernelLibrary(cl_device_id device,
                                       PoclLLVMContextData *llvm_ctx);
 
-static int generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
+/**
+* \brief  This function runs various LLVM "passes" on the program.bc LLVM module;
+* the passes are not real LLVM passes, but perhaps it will make sense
+* to convert at some point. Note that this should only run passes which
+* for some reason must be run at program.bc stage rather than parallel.bc
+*
+* \param [in] Context the pocl LLVM context
+* \param [in] Mod is the LLVM module
+* \param [in] Program the cl_program corresponding to Mod
+* \param [in] Device the device used for the LLVM passes
+* \param [in] device_i index into program->devices[] corresponding to Device
+* \param [out] Log a std::string containing the error/warning log
+* \returns true if there is an error
+*
+*/
+static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
                              cl_program Program, cl_device_id Device,
                              unsigned device_i, std::string &Log) {
 
@@ -159,20 +174,20 @@ static int generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   assert(BuiltinLib != NULL);
 
   if (unifyPrintfFingerPrint(Mod, BuiltinLib))
-    return -1;
+    return true;
 
   if (Device->program_scope_variables_pass) {
     size_t TotalGVarBytes = 0;
     if (runProgramScopeVariablesPass(Mod, Device->global_as_id, TotalGVarBytes, Log))
-      return -1;
+      return true;
     Program->global_var_total_size[device_i] = TotalGVarBytes;
   }
 
   if (link(Mod, BuiltinLib, Log, Device->global_as_id,
            Device->device_aux_functions))
-    return -1;
+    return true;
 
-  return 0;
+  return false;
 }
 
 int pocl_llvm_build_program(cl_program program,

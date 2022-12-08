@@ -1094,7 +1094,24 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
 #endif
 }
 
-
+/**
+* \brief  Since the ProgramScopeVariables pass creates a hidden kernel
+* for variable initialization, we need to compile (and run) that kernel
+* somehow. This creates a temporary _cl_command_node and _cl_kernel structs
+* on stack, fills them with data, and calls device->ops->compile_kernel().
+* Then, optionally, runs the provided callback with these on-stack structs
+* as arguments.
+*
+* Can be used either to compile the hidden initialization kernel for
+* a poclbinary, or to compile & run program-scope initialization before
+* kernel execution. Should work with all devices that use PoCL's LLVM
+* compilation.
+*
+* \param [in] program the cl_program used
+* \param [in] device the device used
+* \param [in] dev_i index into program->devices[] corresponding to device
+* \param [in] callback either NULL or a callback
+*/
 void
 pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
                                     cl_device_id device, gvar_init_callback_t callback)
@@ -1160,6 +1177,16 @@ pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
 #endif
 }
 
+
+/**
+* \brief  Callback (for CPU devices only), to be used with
+* pocl_driver_build_gvar_init_kernel, to actually run the program-scope
+* initialization kernel.
+*
+* \param [in] Program the cl_program used
+* \param [in] dev_i index into program->devices[]
+* \param [in] fake_cmd temporary _cl_command_node for the
+*/
 void
 pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
                             _cl_command_node *fake_cmd)
