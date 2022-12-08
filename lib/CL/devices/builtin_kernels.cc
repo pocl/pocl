@@ -205,6 +205,15 @@ BIKD pocl_BIDescriptors[BIKERNELS] = {
              BIArg("float", "norm", POD_ARG_32b),
              BIArg("float", "offset", POD_ARG_32b),
          }),
+    BIKD(POCL_CDBI_OPENVX_MINMAXLOC_R1_U8,
+         "org.khronos.openvx.minmaxloc.r1.u8",
+         {
+             BIArg("unsigned char*", "input", READ_BUF),
+             BIArg("unsigned char*", "min", WRITE_BUF),
+             BIArg("unsigned char*", "max", WRITE_BUF),
+             BIArg("unsigned int*", "minloc", WRITE_BUF),
+             BIArg("unsigned int*", "maxloc", WRITE_BUF),
+         }),
 };
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
