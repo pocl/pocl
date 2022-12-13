@@ -81,6 +81,26 @@ struct ventus_device_data_t {
   void *printf_buffer;
 };
 
+struct ventus_buffer_data_t {
+#if !defined(ENABLE_LLVM)
+  ventus_device_h ventus_device;
+  ventus_buffer_h staging_buf;
+#endif
+  size_t dev_mem_addr;
+};
+
+struct kernel_context_t {
+  uint32_t num_groups[3];
+  uint32_t global_offset[3];
+  uint32_t local_size[3];  
+  uint32_t printf_buffer;
+  uint32_t printf_buffer_position;
+  uint32_t printf_buffer_capacity;  
+  uint32_t work_dim;
+};
+
+static size_t ALIGNED_CTX_SIZE = 4 * ((sizeof(kernel_context_t) + 3) / 4);
+
 void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 {
