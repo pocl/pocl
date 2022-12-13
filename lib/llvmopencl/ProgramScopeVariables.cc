@@ -239,10 +239,9 @@ static bool isProgramScopeVariable(GlobalVariable &GVar) {
   // global variables from SPIR-V have internal linkage with SPIR AS numbers
   if (GVar.getLinkage() == GlobalValue::LinkageTypes::InternalLinkage) {
     LLVM_DEBUG(dbgs() << "checking internal linkage\n";);
-    int AddrSpace = -1;
-    if (PointerType *GVarT = dyn_cast<PointerType>(GVar.getValueType())) {
-      AddrSpace = GVarT->getAddressSpace();
-    }
+    PointerType *GVarT = GVar.getType();
+    int AddrSpace = GVarT->getAddressSpace();
+
     if (AddrSpace < 0) {
       LLVM_DEBUG(dbgs() << "not a pointer\n";);
       goto END;
