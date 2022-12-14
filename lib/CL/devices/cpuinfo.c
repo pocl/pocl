@@ -400,9 +400,12 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 #endif
 
   /* create the descriptive long_name for device */
-  int len = strlen (device->short_name) + (end-start) + 2;
+  int len = strlen (device->short_name) + 1
+            + (device->llvm_cpu ? strlen (device->llvm_cpu) : 0) + 1
+            + (end - start) + 1;
   char *new_name = (char*)malloc (len);
-  snprintf (new_name, len, "%s-%s", device->short_name, start);
+  snprintf (new_name, len, "%s-%s-%s", device->short_name,
+            (device->llvm_cpu ? device->llvm_cpu : ""), start);
   device->long_name = new_name;
 
   /* If the vendor_id field is still empty, we should get the PCI ID associated
