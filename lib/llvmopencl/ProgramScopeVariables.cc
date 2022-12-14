@@ -248,17 +248,11 @@ static bool isProgramScopeVariable(GlobalVariable &GVar) {
     }
 
     if (AddrSpace == SPIR_ADDRESS_SPACE_GLOBAL) {
-      GVar.setName("__anonymous_global_as");
+      if (!GVar.hasName()) {
+        GVar.setName("__anonymous_global_as");
+      }
       retval = true;
     }
-    if (AddrSpace == SPIR_ADDRESS_SPACE_CONSTANT) {
-      GVar.setName("__anonymous_constant_as");
-    }
-    if (AddrSpace == SPIR_ADDRESS_SPACE_LOCAL)
-      GVar.setName("__anonymous_local_as");
-
-    if (AddrSpace == SPIR_ADDRESS_SPACE_GENERIC)
-      GVar.setName("__anonymous_generic_as");
   }
 
 END:
