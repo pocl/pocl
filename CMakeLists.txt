@@ -494,9 +494,11 @@ if(ENABLE_LLVM)
   endif()
 
   if(ENABLE_HOST_CPU_DEVICES)
-  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
-      set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
-  endif()
+
+#    TODO: remove this since it's not being used anywhere
+#  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
+#      set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
+#  endif()
 
   if(INTEL_SDE_AVX512)
     set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user" FORCE)

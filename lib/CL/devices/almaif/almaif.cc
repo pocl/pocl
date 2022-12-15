@@ -505,7 +505,7 @@ unsigned int pocl_almaif_probe(struct pocl_device_ops *ops) {
 
 char *pocl_almaif_build_hash(cl_device_id /*device*/) {
   char *res = (char *)calloc(1000, sizeof(char));
-  snprintf(res, 1000, "almaif-%s", HOST_DEVICE_BUILD_HASH);
+  snprintf(res, 1000, "almaif-%s", OCL_KERNEL_TARGET);
   return res;
 }
 

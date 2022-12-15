@@ -1590,9 +1590,23 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
 #endif
 
-#else /* No compiler, no CPU info */
+#else
+  /* No compiler, so no CPU info
+   * however, if they are set in cmake, use those.
+   */
+
+#ifdef OCL_KERNEL_TARGET_CPU
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+#else
   dev->llvm_cpu = NULL;
+#endif
+
+#ifdef OCL_KERNEL_TARGET
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+#else
   dev->llvm_target_triplet = "";
+#endif
+
 #endif
 
 #ifdef ENABLE_SPIRV
@@ -1608,7 +1622,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                     | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                     | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
-
+#ifdef ENABLE_LLVM
   if (dev->llvm_cpu != NULL)
     {
       dev->builtin_kernel_list
@@ -1618,6 +1632,8 @@ pocl_init_default_device_infos (cl_device_id dev)
                     "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32");
       dev->num_builtin_kernels = 4;
     }
+#endif
+
 }
 
 /*

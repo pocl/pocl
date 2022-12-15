@@ -101,7 +101,7 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH,
+  snprintf (res, 1000, "pthread-%s-%s", device->llvm_target_triplet,
             device->llvm_cpu);
   return res;
 }
