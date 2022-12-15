@@ -31,4 +31,4 @@
 GEN_PROTOTYPES (basic)
 GEN_PROTOTYPES (hsa)
 
-#endif /* POCL_BASIC_H */
+#endif /* POCL_HSA_H */

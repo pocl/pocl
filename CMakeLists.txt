@@ -1099,7 +1099,7 @@ endif()
 if(OPENCL_H AND ENABLE_ICD AND (NOT HAVE_OCL_ICD_30_COMPATIBLE))
   # if system-wide headers are present, ICD is enabled and older than 3.0 -> use the system-wide headers
   # TBD we're assuming a sane combination of header & ICD versions
-  message(STATUS "OpenCL.h found (${OPENCL_H}) and ICD <3.0 enabled, using system headers")
+  message(STATUS "opencl.h found (${OPENCL_H}) and ICD <3.0 enabled, using system headers")
   set(HAVE_OPENCL_H ON)
   set_expr(HAVE_OPENCL_HPP OPENCL_HPP)
   set(IOH OFF)
@@ -1107,7 +1107,7 @@ else()
   # if system-wide OpenCL headers are not found, we must use PoCL's
   # if ICD is disabled, we might as well compile with our own headers
   # if ICD is 3.0, force the use of PoCL's own 3.0 headers -> enables some additional tests
-  message(STATUS "OpenCL.h not found or ICD disabled or ICD >= 3.0, using our headers")
+  message(STATUS "opencl.h not found or ICD disabled or ICD >= 3.0, using our headers")
   set(HAVE_OPENCL_H OFF)
   set(HAVE_OPENCL_HPP OFF)
   # install headers only if system-wide headers not found
