@@ -1200,7 +1200,8 @@ set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_ba
 
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
-  __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables")
+  __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
+  __opencl_c_generic_address_space")
 
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
 # for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it

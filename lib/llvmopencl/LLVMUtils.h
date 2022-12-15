@@ -70,8 +70,11 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
 
   // handle SPIR local AS (3)
   if (Var.getParent() && Var.getParent()->getNamedMetadata("spirv.Source") &&
-      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL))
+      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL)) {
+    if (!Var.hasName())
+      Var.setName(llvm::Twine(FuncName, ".__anon_local"));
     return true;
+  }
 
   return false;
 }

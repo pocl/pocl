@@ -1863,6 +1863,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_generic_address_space" },
 };
 
 const size_t OPENCL_FEATURES_NUM
