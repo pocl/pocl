@@ -11,7 +11,7 @@
 #
 # output is LLVM IR text format.
 #
-# Usage: python3 generate_spir_wrapper.py [-t <target>] [-r <register_size>] OUTPUT
+# Usage: python3 generate_spir_wrapper.py [-q] [-g] [-t <target>] [-r <register_size>] OUTPUT
 # ... place the file in the target-specific lib/kernel subdirectory.
 #
 # Notes for CPU SPIR wrapper:
@@ -55,6 +55,10 @@ parser.add_argument('-q', '--opaque-pointers',
 	dest='opaque_ptrs',
 	action='store_true')
 
+parser.add_argument('-g', '--generic-as',
+	dest='generic_as',
+	action='store_true')
+
 args = parser.parse_args()
 
 # function prefix used by PoCL's kernel library
@@ -80,6 +84,8 @@ SPIR_CALLING_ABI = (args.target == 'cuda')
 CPU_ABI_REG_SIZE = args.reg_size
 
 OPAQUE_POINTERS = args.opaque_ptrs
+
+GENERIC_AS = args.generic_as
 
 sys.stdout = args.output
 
@@ -638,13 +644,15 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 		arg_addr_spaces = multiAS
 	else:
 		if name.startswith("atom"): # TODO
-			addr_spaces = ["global", "local"]  # , "generic"]
+			addr_spaces = ["global", "local"]
 		elif name.count("image")>0 or name.startswith("prefetch"):
 			addr_spaces = ["global"]
 		elif name.startswith("vload"):
 			addr_spaces = ["global", "local", "private", "constant"]
 		else:
 			addr_spaces = ["global", "local", "private"]
+		if GENERIC_AS and "local" in addr_spaces:
+			addr_spaces.append("generic")
 
 	for AS in addr_spaces:
 
@@ -1330,6 +1338,16 @@ for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 											(AS, "private", "none", "none", "none", "none"),
 											['PVA'+mang_type, 'P'+mang_type, mang_type],
 											["12memory_order", "12memory_order"])
+	if GENERIC_AS:
+		gen_three_variants("atomic_compare_exchange_strong", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "generic", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "generic", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+
 
 f = "atomic_flag_test_and_set"
 generate_function(f, SIG_TO_LLVM_TYPE_MAP['b'], LLVM_TYPE_EXT_MAP['b'], True, 'PVAi')
@@ -1343,7 +1361,8 @@ generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['v'], '', True, 'PVAi', "1
 
 
 generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'private'), 'i', 'P9ocl_event')
-generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'generic'), 'i', 'P9ocl_event')
+if GENERIC_AS:
+	generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'generic'), 'i', 'P9ocl_event')
 generate_function("atomic_work_item_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_order', '12memory_scope')
 generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_scope')
 generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
