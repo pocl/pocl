@@ -210,8 +210,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
-  fix_local_mem_size (device);
-
   /* in case hwloc doesn't provide a PCI ID, let's generate
      a vendor id that hopefully is unique across vendors. */
   const char *magic = "pocl";

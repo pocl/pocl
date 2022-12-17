@@ -1220,6 +1220,28 @@ pocl_set_buffer_image_limits(cl_device_id device)
       device->max_constant_buffer_size = s;
     }
 
+  /* OpenCL 3.0 mandates at least 64KB for CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE
+   * and 32KB for CL_DEVICE_LOCAL_MEM_SIZE. pocl_topology tries to use size of
+   * largest non-shared cache (usually L2), but some CPUs don't have L3
+   * and the only non-shared cache is L1, which can be too small. */
+  if (device->version_as_int > 299)
+    {
+      if (device->local_mem_size < 32 * 1024)
+        device->local_mem_size = 32 * 1024;
+      if (device->max_constant_buffer_size < 64 * 1024)
+        device->max_constant_buffer_size = 64 * 1024;
+    }
+
+  /* set program scope variable device limits.
+   * only the max_size is an actual limit.
+   * for CPU devices there is no hardware limit.
+   * TODO what should we set them to ? */
+  if (device->program_scope_variables_pass)
+    {
+      device->global_var_max_size = device->max_constant_buffer_size;
+      device->global_var_pref_size = device->max_constant_buffer_size;
+    }
+
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
    * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,

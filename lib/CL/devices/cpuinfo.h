@@ -35,6 +35,4 @@
 POCL_EXPORT
 void pocl_cpuinfo_detect_device_info(cl_device_id device);
 
-POCL_EXPORT
-void fix_local_mem_size (cl_device_id device);
 #endif /* POCL_TOPOLOGY_H */
