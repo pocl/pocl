@@ -1115,7 +1115,13 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
         size_t buffer = (size_t)chunk->start_address;
         buffer += al->offset;
         if (D->Dev->RelativeAddressing) {
-          buffer -= D->Dev->DataMemory->PhysAddress;
+          if (D->Dev->DataMemory->isInRange(buffer)) {
+            buffer -= D->Dev->DataMemory->PhysAddress;
+          } else if (D->Dev->ExternalMemory->isInRange(buffer)) {
+            buffer -= D->Dev->ExternalMemory->PhysAddress;
+          } else {
+            POCL_ABORT("almaif: buffer outside of memory");
+          }
         }
         *(size_t *)current_arg = buffer;
       }
