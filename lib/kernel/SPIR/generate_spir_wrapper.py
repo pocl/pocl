@@ -1363,7 +1363,12 @@ generate_function(f+"_explicit", SIG_TO_LLVM_TYPE_MAP['v'], '', True, 'PVAi', "1
 generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'private'), 'i', 'P9ocl_event')
 if GENERIC_AS:
 	generate_function("wait_group_events", SIG_TO_LLVM_TYPE_MAP['v'], '', ('none', 'generic'), 'i', 'P9ocl_event')
+
+generate_function("read_mem_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
+generate_function("write_mem_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
+generate_function("mem_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
 generate_function("atomic_work_item_fence", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_order', '12memory_scope')
+
 generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j', '12memory_scope')
 generate_function("work_group_barrier", SIG_TO_LLVM_TYPE_MAP['v'], '', None, 'j')
 
