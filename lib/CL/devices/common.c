@@ -1235,11 +1235,12 @@ pocl_set_buffer_image_limits(cl_device_id device)
   /* set program scope variable device limits.
    * only the max_size is an actual limit.
    * for CPU devices there is no hardware limit.
-   * TODO what should we set them to ? */
+   * TODO what should we set them to ?
+   * setting this to >= 2^16 causes LLVM to crash in SDNode */
   if (device->program_scope_variables_pass)
     {
-      device->global_var_max_size = device->max_constant_buffer_size;
-      device->global_var_pref_size = device->max_constant_buffer_size;
+      device->global_var_max_size = 64 * 1000;
+      device->global_var_pref_size = max(64 * 1000, device->max_constant_buffer_size);
     }
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
