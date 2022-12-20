@@ -42,6 +42,8 @@
 #define STRINGIFY(X, Y) X #Y
 #define BUILD_OPTION(NUM) STRINGIFY("-DBUFFER_SIZE=", NUM)
 
+#define TEST_STRUCT
+
 static char
 programOneSourceCode[] = R"raw(
 
@@ -94,6 +96,27 @@ programTwoSourceCode[] = R"raw(
 
 )raw";
 
+static char
+programThreeSourceCode[] = R"raw(
+
+  typedef struct { char c; int i; long l; } mystruct_t;
+  global mystruct_t testGlobalStruct;
+
+  __kernel void test4w (char c, int i, long l) {
+    testGlobalStruct.c = c;
+    testGlobalStruct.i = i;
+    testGlobalStruct.l = l;
+  }
+
+  __kernel void test5r (char c, int i, long l, __global int *out) {
+    int res = 0;
+    if (testGlobalStruct.c == c) ++res;
+    if (testGlobalStruct.i == i) ++res;
+    if (testGlobalStruct.l == l) ++res;
+    *out = res;
+  }
+
+)raw";
 
 int
 main(void)
@@ -122,6 +145,9 @@ main(void)
 
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
+        cl::CommandQueue queue(context, devices[0], 0);
+
+#ifndef TEST_STRUCT
         cl::Program::Sources sources1({programOneSourceCode});
         cl::Program program1(context, sources1);
         program1.build(devices, "-cl-std=CL3.0 " BUILD_OPTION(BUFFER_SIZE_1));
@@ -177,8 +203,6 @@ main(void)
         test2_2.setArg(0, aBuffer2);
         test3_2.setArg(0, outBuffer2);
 
-        cl::CommandQueue queue(context, devices[0], 0);
-
         queue.enqueueNDRangeKernel(
             test1_1,
             cl::NullRange,
@@ -230,10 +254,59 @@ main(void)
             0,
             BUFFER_SIZE_2 * sizeof(float),
             (void*) &TwoB[0]);
+#else
+
+        cl::Program::Sources sources3({programThreeSourceCode});
+        cl::Program program3(context, sources3);
+        program3.build(devices, "-cl-std=CL3.0 " BUILD_OPTION(BUFFER_SIZE_1));
+
+        size_t numKernels3 = program3.getInfo<CL_PROGRAM_NUM_KERNELS>();
+        if (numKernels3 != 2)
+          throw std::runtime_error("program3 kernel count incorrect");
+        cl::Kernel test4w(program3, "test4w");
+        cl::Kernel test5r(program3, "test5r");
+
+        cl::Buffer outBuffer3 = cl::Buffer(
+            context, CL_MEM_READ_WRITE, 128, nullptr);
+
+        char c = 42;
+        int i = 0x3838292;
+        long l = 0x283849239423;
+        int matching_res = 0;
+        test4w.setArg(0, c);
+        test4w.setArg(1, i);
+        test4w.setArg(2, l);
+
+        test5r.setArg(0, c);
+        test5r.setArg(1, i);
+        test5r.setArg(2, l);
+        test5r.setArg(3, outBuffer3);
+
+        queue.enqueueNDRangeKernel(
+            test4w,
+            cl::NullRange,
+            cl::NDRange(1),
+            cl::NullRange);
+
+        queue.enqueueNDRangeKernel(
+            test5r,
+            cl::NullRange,
+            cl::NDRange(1),
+            cl::NullRange);
+
+        queue.enqueueReadBuffer(
+            outBuffer3,
+            CL_TRUE, // block
+            0,
+            sizeof(int),
+            (void*) &matching_res);
+
+#endif
 
         queue.finish();
         platformList[0].unloadCompiler();
 
+#ifndef TEST_STRUCT
         for (int i = 0; i < BUFFER_SIZE_1; ++i) {
             float expected = OneA[i] * 19.0f + 2.0f * OneConstantVar[i % 8];
             if (std::abs(OneB[i] - expected) > 1e-3f) {
@@ -249,6 +322,10 @@ main(void)
               ++errors;
             }
         }
+#else
+        std::cout << "TEST_STRUCT matching res: " << matching_res << "\n";
+        errors = 3 - matching_res;
+#endif
 
         if (errors) {
           std::cout << "FAILED, errors: " << errors << "\n";
