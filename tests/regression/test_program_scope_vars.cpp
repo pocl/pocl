@@ -145,7 +145,27 @@ main(void)
 
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
-        cl::CommandQueue queue(context, devices[0], 0);
+        std::vector<cl::Device> SuitableDevices;
+
+        std::string ProgramScopeFeature("__opencl_c_program_scope_global_variables");
+        for (cl::Device &Dev : devices) {
+          std::string DevVer = Dev.getInfo<CL_DEVICE_VERSION>();
+          if (DevVer.find("OpenCL 3.0") == 0) {
+            std::vector<cl_name_version> Features = Dev.getInfo<CL_DEVICE_OPENCL_C_FEATURES>();
+            for (auto &Item : Features) {
+              if (ProgramScopeFeature == Item.name) {
+                SuitableDevices.push_back(Dev);
+              }
+            }
+          }
+        }
+
+        if (SuitableDevices.empty()) {
+          std::cout << "No devices with OpenCL 3.0 + "
+                       "program scope variables found.\n";
+          return 77;
+        }
+        cl::CommandQueue queue(context, SuitableDevices[0], 0);
 
 #ifndef TEST_STRUCT
         cl::Program::Sources sources1({programOneSourceCode});
