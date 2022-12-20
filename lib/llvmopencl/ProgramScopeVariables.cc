@@ -45,13 +45,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/Verifier.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ReplaceConstant.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #pragma GCC diagnostic pop
 
 #define DEBUG_TYPE "pocl-program-scope-vars"
+
+// #define POCL_DEBUG_PROGVARS
 
 #include "ProgramScopeVariables.h"
 
@@ -169,7 +172,7 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
   llvm_unreachable("Unexpected constant kind.");
 }
 
-// creates a [GEP+store initializer] that for the hidden initializer kernel
+// creates a [GEP+store initializer] for the hidden initializer kernel
 static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
                                   LLVMContext &Ctx, IRBuilder<> &Builder,
                                   Value *GVarBuffer,  // ptr %_pocl_gvar_buffer_load
@@ -183,6 +186,14 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   //    <GVar> = <GVarBufferPtr + offset>
   //    *<GVar> = <initializer>;
   assert(OriginalGVarDef->hasInitializer());
+
+#ifdef POCL_DEBUG_PROGVARS
+  std::cerr << "@@@ addGlobalVarInitInstr FOR: "
+            << OriginalGVarDef->getName().str() << "\n";
+  std::cerr << "@@@ addGlobalVarInitInstr INITIALIZER: ";
+  OriginalGVarDef->getInitializer()->dump();
+  std::cerr << "\n";
+#endif
 
   // %_pocl_gvar_with_offset_GVAR = getelementptr [N x i8], ptr %_pocl_gvar_buffer_load, i64 0, i64 GVAR_OFFSET
   Type *I64Ty = Type::getInt64Ty(Ctx);
@@ -216,7 +227,6 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   // store [Z x i8] initializer, ptr addrspace(1) %0, align 1
   Builder.CreateStore(Init, GVarPtrWithOffset);
 }
-
 
 // determines if GVar is OpenCL program-scope variable
 static bool isProgramScopeVariable(GlobalVariable &GVar) {
@@ -382,6 +392,12 @@ static size_t calculateOffsetsSizes(GVarUlongMapT &GVarOffsets,
     assert(GVSize.isScalable() == false);
     GVarSizes[GVar] = GVSize.getFixedSize();
     CurrentOffset += GVarSizes[GVar];
+
+#ifdef POCL_DEBUG_PROGVARS
+    std::cerr << "@@@ GlobalVar: " << GVar->getName().str()
+              << "\n   OFFSET: " << GVarOffsets[GVar]
+              << "\n   SIZE: " << GVarSizes[GVar] << "\n";
+#endif
   }
 
   size_t TotalSize = CurrentOffset;
@@ -398,9 +414,10 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
   Type *I64Ty = Type::getInt64Ty(GVarBuffer->getContext());
   // gvar is alvays pointer
   PointerType *GVarPTy = GVar->getType();
+  Value *V;
 
   if (Offset == 0) {
-    Value *V = GVarBuffer;
+    V = GVarBuffer;
 
     // AScast from DeviceGlobalAS to use's AS
     if (GVarPTy->getAddressSpace() != DeviceGlobalAS)
@@ -409,11 +426,10 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
 #ifndef LLVM_OPAQUE_POINTERS
     V = Builder.CreateBitCast(V, GVar->getType());
 #endif
-    return V;
   } else {
     SmallVector<Value *, 2> Indices{ConstantInt::get(I64Ty, 0),
                                     ConstantInt::get(I64Ty, Offset)};
-    Value *V = Builder.CreateGEP(GVarBufferArrayTy, GVarBuffer, Indices);
+    V = Builder.CreateGEP(GVarBufferArrayTy, GVarBuffer, Indices);
 
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
       Instruction *VI = CE->getAsInstruction();
@@ -428,8 +444,41 @@ static Value *loadGVarFromBuffer(Instruction *GVarBuffer,
 #ifndef LLVM_OPAQUE_POINTERS
     V = Builder.CreateBitCast(V, GVar->getType());
 #endif
+  }
 
-    return V;
+#ifdef POCL_DEBUG_PROGVARS
+  std::cerr << "@@@ LOAD of GlobalVar: " << GVar->getName().str()
+            << " REPLACED WITH: \n";
+  V->dump();
+#endif
+
+  return V;
+}
+
+static void getInstUsers(ConstantExpr *CE,
+                         SmallVector<Instruction *, 4> &Users) {
+  for (Value *U : CE->users()) {
+    if (Instruction *I = dyn_cast<Instruction>(U)) {
+      Users.push_back(I);
+    }
+    if (ConstantExpr *SubCE = dyn_cast<ConstantExpr>(U)) {
+      getInstUsers(SubCE, Users);
+    }
+  }
+}
+
+static void breakConstantExprs(const GVarSetT &GVars) {
+  for (GlobalVariable *GV : GVars) {
+    for (Value *U : GV->users()) {
+      ConstantExpr *CE = dyn_cast<ConstantExpr>(U);
+      if (!CE)
+        continue;
+      SmallVector<Instruction *, 4> IUsers;
+      getInstUsers(CE, IUsers);
+      for (Instruction *I : IUsers) {
+        convertConstantExprsToInstructions(I, CE);
+      }
+    }
   }
 }
 
@@ -468,10 +517,16 @@ static void replaceGlobalVariableUses(GVarSetT &GVarSet,
     uint64_t Offset = GVarOffsets[GVar];
 
     for (auto *U : findInstructionUses(GVar)) {
+
       auto *IUser = cast<Instruction>(U->getUser());
       Function *FnUser = IUser->getParent()->getParent();
       IRBuilder<> &Builder = getBuilder(FnUser);
       LLVM_DEBUG(dbgs() << "in user: "; IUser->print(dbgs()); dbgs() << "\n";);
+
+#ifdef POCL_DEBUG_PROGVARS
+      std::cerr << " REPLACING GVAR USE: " << GVar->getName().str() << "\n";
+      IUser->dump();
+#endif
 
       Instruction *GVarBuffer = GVarBufferCache[FnUser];
       if (!GVarBuffer) {
@@ -533,6 +588,8 @@ int runProgramScopeVariablesPass(Module *Program,
   if (GVarSet.empty()) {
     return 0;
   }
+
+  breakConstantExprs(GVarSet);
 
   TotalGVarSize = calculateOffsetsSizes(GVarOffsets, DL, GVarSet);
 
