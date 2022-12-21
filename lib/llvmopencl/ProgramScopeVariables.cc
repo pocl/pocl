@@ -356,7 +356,13 @@ static void emitInitializeKernel(Module *Program, LLVMContext &Ctx,
   GVarInitF->setMetadata("kernel_arg_type_qual", EmptyMD);
   GVarInitF->setMetadata("kernel_arg_name", EmptyMD);
 
-  // GVarInitF->dump();
+  // at this point, the initializers have been copied into the kernel;
+  // remove the initializers from GVars. Doing this prevents the later
+  // replaceGVarUses getting confused if a GVar references other GVar
+  // in its initializer value
+  for (GlobalVariable *GVar : GVarSet) {
+    GVar->setInitializer(UndefValue::get(GVar->getValueType()));
+  }
 }
 
 // for a set of program scope variables,
