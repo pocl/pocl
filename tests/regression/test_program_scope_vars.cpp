@@ -42,8 +42,6 @@
 #define STRINGIFY(X, Y) X #Y
 #define BUILD_OPTION(NUM) STRINGIFY("-DBUFFER_SIZE=", NUM)
 
-#define TEST_STRUCT
-
 static char
 programOneSourceCode[] = R"raw(
 
@@ -118,6 +116,40 @@ programThreeSourceCode[] = R"raw(
 
 )raw";
 
+static char programFourSourceCode[] = R"raw(
+
+float2 from_buf(float2 a) { return a; }
+
+float2 to_buf(float2 a) { return a; }
+
+#define INIT_VAR(a) ((float2)(a))
+
+float2 var = INIT_VAR(0);
+
+global float2 g_var = INIT_VAR(1);
+
+float2 a_var[2] = { INIT_VAR(1), INIT_VAR(1) };
+
+volatile global float2* p_var = &a_var[1];
+
+kernel void writer( global const float2* src, uint idx ) {
+  var = from_buf(src[0]);
+  g_var = from_buf(src[1]);
+  a_var[0] = from_buf(src[2]);
+  a_var[1] = from_buf(src[3]);
+  p_var = a_var + idx;
+}
+
+kernel void reader( global float2* dest, float2 ptr_write_val ) {
+  *p_var = from_buf(ptr_write_val);
+  dest[0] = to_buf(var);
+  dest[1] = to_buf(g_var);
+  dest[2] = to_buf(a_var[0]);
+  dest[3] = to_buf(a_var[1]);
+}
+
+)raw";
+
 int
 main(void)
 {
@@ -167,7 +199,6 @@ main(void)
         }
         cl::CommandQueue queue(context, SuitableDevices[0], 0);
 
-#ifndef TEST_STRUCT
         cl::Program::Sources sources1({programOneSourceCode});
         cl::Program program1(context, sources1);
         program1.build(devices, "-cl-std=CL3.0 " BUILD_OPTION(BUFFER_SIZE_1));
@@ -274,11 +305,30 @@ main(void)
             0,
             BUFFER_SIZE_2 * sizeof(float),
             (void*) &TwoB[0]);
-#else
+
+        queue.finish();
+
+        for (int i = 0; i < BUFFER_SIZE_1; ++i) {
+            float expected = OneA[i] * 19.0f + 2.0f * OneConstantVar[i % 8];
+            if (std::abs(OneB[i] - expected) > 1e-3f) {
+            std::cout << "ONE N " << i << " expected " << expected << " got "
+                      << OneB[i] << "\n";
+            ++errors;
+            }
+        }
+
+        for (int i = 0; i < BUFFER_SIZE_2; ++i) {
+            float expected = TwoA[i] * 26.0f + 2.0f * TwoConstantVar[i % 8];
+            if (std::abs(TwoB[i] - expected) > 1e-3f) {
+            std::cout << "TWO N " << i << " expected " << expected << " got "
+                      << TwoB[i] << "\n";
+            ++errors;
+            }
+        }
 
         cl::Program::Sources sources3({programThreeSourceCode});
         cl::Program program3(context, sources3);
-        program3.build(devices, "-cl-std=CL3.0 " BUILD_OPTION(BUFFER_SIZE_1));
+        program3.build(devices, "-cl-std=CL3.0");
 
         size_t numKernels3 = program3.getInfo<CL_PROGRAM_NUM_KERNELS>();
         if (numKernels3 != 2)
@@ -321,32 +371,83 @@ main(void)
             sizeof(int),
             (void*) &matching_res);
 
-#endif
+        queue.finish();
+
+        std::cout << "TEST_STRUCT matching res: " << matching_res << "\n";
+        errors += (matching_res != 3 ? 1 : 0);
+
+        cl::Program::Sources sources4({programFourSourceCode});
+        cl::Program program4(context, sources4);
+        program4.build(devices, "-cl-std=CL3.0");
+
+        size_t numKernels4 = program4.getInfo<CL_PROGRAM_NUM_KERNELS>();
+        if (numKernels4 != 2)
+          throw std::runtime_error("program4 kernel count incorrect");
+        cl::Kernel reader4(program4, "reader");
+        cl::Kernel writer4(program4, "writer");
+
+        for (int i = 0; i < BUFFER_SIZE_1; ++i) {
+          OneA[i] = UniDist(Mersenne);
+          OneB[i] = 0.0f;
+        }
+
+        cl::Buffer inBuffer4 = cl::Buffer(
+            context,
+            CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+            BUFFER_SIZE_1 * sizeof(float),
+            (void *) &OneA[0]);
+
+        cl::Buffer outBuffer4 = cl::Buffer(
+            context, CL_MEM_READ_WRITE,
+            BUFFER_SIZE_1 * sizeof(float), nullptr);
+
+        int in1 = 1;
+        writer4.setArg(0, inBuffer4);
+        writer4.setArg(1, in1);
+
+        cl_float2 out1;
+        out1.s0 = 0.5f;
+        out1.s1 = 2.0f;
+        reader4.setArg(0, outBuffer4);
+        reader4.setArg(1, out1);
+
+        queue.enqueueNDRangeKernel(
+            writer4,
+            cl::NullRange,
+            cl::NDRange(1),
+            cl::NullRange);
+
+        queue.enqueueNDRangeKernel(
+            reader4,
+            cl::NullRange,
+            cl::NDRange(1),
+            cl::NullRange);
+
+        queue.enqueueReadBuffer(
+            outBuffer4,
+            CL_TRUE, // block
+            0,
+            BUFFER_SIZE_1 * sizeof(float),
+            (void*) &OneB[0]);
 
         queue.finish();
+
+        OneA[6] = out1.s0;
+        OneA[7] = out1.s1;
+        matching_res = 0;
+        for (unsigned i = 0; i < 8; ++i) {
+          if (OneA[i] == OneB[i]) {
+            ++matching_res;
+          } else {
+            std::cout << "FAIL at " << i << " OneA: " << OneA[i]
+                      << " OneB: " << OneB[i] << "\n";
+          }
+        }
+
+        std::cout << "TEST_GVAR_PTR matching res: " << matching_res << "\n";
+        errors += (matching_res != 8 ? 1 : 0);
+
         platformList[0].unloadCompiler();
-
-#ifndef TEST_STRUCT
-        for (int i = 0; i < BUFFER_SIZE_1; ++i) {
-            float expected = OneA[i] * 19.0f + 2.0f * OneConstantVar[i % 8];
-            if (std::abs(OneB[i] - expected) > 1e-3f) {
-              std::cout << "ONE N " << i << " expected " << expected << " got " << OneB[i] << "\n";
-              ++errors;
-            }
-        }
-
-        for (int i = 0; i < BUFFER_SIZE_2; ++i) {
-            float expected = TwoA[i] * 26.0f + 2.0f * TwoConstantVar[i % 8];
-            if (std::abs(TwoB[i] - expected) > 1e-3f) {
-              std::cout << "TWO N " << i << " expected " << expected << " got " << TwoB[i] << "\n";
-              ++errors;
-            }
-        }
-#else
-        std::cout << "TEST_STRUCT matching res: " << matching_res << "\n";
-        errors = 3 - matching_res;
-#endif
-
         if (errors) {
           std::cout << "FAILED, errors: " << errors << "\n";
           return EXIT_FAILURE;
