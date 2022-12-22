@@ -185,6 +185,10 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+
+  /* Just an arbitrary number here based on assumption of SG size 32. */
+  device->max_num_sub_groups = device->max_work_group_size / 32;
+
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 

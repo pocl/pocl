@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2018 pocl developers
+#   Copyright (c) 2014-2023 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -235,7 +235,7 @@ endif()
 
 option(ENABLE_EXTRA_VALIDITY_CHECKS "Enable extra checks on cl_* object validity" OFF)
 
-option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
+option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but speeds up its compilation for faster development-test cycles. Only turn on if you know what you're doing." OFF)
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
@@ -777,6 +777,9 @@ option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. \
   Enabling this option this does not guarantee conformance (depends on hardware), \
   but CMake will give errors if options that conflict with conformance are used" OFF)
 
+option(ENABLE_UNFINISHED_EXTENSIONS "Advertise extensions in device queries which \
+might work partially, but have known unfinished features." OFF)
+
 if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
@@ -1192,11 +1195,35 @@ else()
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
-# These are mandatory for OpenCL 1.1 (except for 3D writes and command buffers
-# but those are CPU-independent)
+# Extensions that are considered feature-complete (preferably CTS-tested).
+#
+# * cl_khr_subgroups: A simple implementation where SG is always the whole local
+# X-dimension. NOTE: Independent forward progress is not yet supported, but it's
+# not needed for compliance due to the corner case of only one SG in flight.
+# Passes the subgroups/test_subgroups CTS.
+
+
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
   cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
   cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
+
+if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups")
+endif()
+
+# Extensions that are work-in-progress with known unfinished aspects.
+# These are advertised through the device query only when explicitly enabled
+# for development purposes or when the implementation is complete enough for
+# the application's needs.
+#
+# * cl_khr_shuffle: Passes the CTS, but only because it doesn't test non-uniform
+# (lock-step) behavior: https://github.com/KhronosGroup/OpenCL-CTS/issues/1236
+#
+# * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
+# are unimplemented.
+if(ENABLE_UNFINISHED_EXTENSIONS)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot cl_khr_subgroup_shuffle")
+endif()
 
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
   __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
