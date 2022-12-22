@@ -133,9 +133,12 @@ ERROR:
     }
   POCL_MEM_FREE (kernel);
   kernel = NULL;
+  goto OUT;
 
 SUCCESS:
   POCL_MSG_PRINT_GENERAL ("Created Kernel %s (%p)\n", kernel->name, kernel);
+
+OUT:
   if(errcode_ret != NULL)
   {
     *errcode_ret = errcode;
