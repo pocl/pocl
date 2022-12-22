@@ -86,7 +86,7 @@ add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
 if(OPENCL_HEADER_VERSION GREATER 299)
-  add_test_pocl(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
+  add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
   set(OCL_30_TESTS "regression/test_program_scope_vars")
   set_tests_properties("regression/test_program_scope_vars" PROPERTIES
     SKIP_RETURN_CODE 77)
