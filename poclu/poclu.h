@@ -250,6 +250,16 @@ poclu_cl_half_to_float(cl_half value);
 POCLU_API char *POCLU_CALL poclu_read_file (const char *filename);
 
 /**
+ * \brief check if opencl device(s) support OpenCL 3.0
+ *
+ * @param devices [in] array of SAME devices for program to run on
+ * @param num_devices [in] number of devices in array of devices.
+ * @return 1 if all devices support opencl 30, 0 otherwise.
+ */
+POCLU_API int POCLU_CALL poclu_supports_opencl_30 (cl_device_id *devices,
+                                                   unsigned num_devices);
+
+/**
  * \brief read the contents of a file.
  *
  * filename can absolute or relative, according to the fopen
