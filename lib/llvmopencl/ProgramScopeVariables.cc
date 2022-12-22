@@ -26,6 +26,14 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
+const char *PoclGVarPrefix = "_pocl_gvar_";
+const char *PoclGVarBufferName = "_pocl_gvar_buffer";
+const char *PoclGVarMDName = "program.scope.var.size";
+
+#include "pocl.h"
+
+#ifndef LLVM_OLDER_THAN_14_0
+
 #include <iostream>
 #include <map>
 #include <random>
@@ -62,10 +70,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl_spir.h"
 
 using namespace llvm;
-
-const char *PoclGVarPrefix = "_pocl_gvar_";
-const char *PoclGVarBufferName = "_pocl_gvar_buffer";
-const char *PoclGVarMDName = "program.scope.var.size";
 
 namespace pocl {
 
@@ -624,3 +628,6 @@ int runProgramScopeVariablesPass(Module *Program,
 
   return 0;
 }
+
+
+#endif
