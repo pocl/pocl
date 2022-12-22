@@ -165,8 +165,8 @@ static cl_int
 process_options (const char *options, char *modded_options, char *link_options,
                  cl_program program, int compiling, int linking,
                  int *create_library, unsigned *flush_denorms,
-                 int *requires_correctly_rounded_sqrt_div,
-                 int *spir_build, size_t size)
+                 int *requires_correctly_rounded_sqrt_div, int *spir_build,
+                 cl_version *cl_c_version, size_t size)
 {
   cl_int error;
   char *token = NULL;
@@ -174,6 +174,7 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   *create_library = 0;
   *flush_denorms = 0;
+  *cl_c_version = 0;
   *requires_correctly_rounded_sqrt_div = 0;
   *spir_build = 0;
   int enable_link_options = 0;
@@ -248,7 +249,12 @@ process_options (const char *options, char *modded_options, char *link_options,
                 token = "-fdenormal-fp-math=positive-zero";
             }
 #endif
-
+            if (strncmp (token, "-cl-std=CL", 10) == 0)
+            {
+                unsigned major = token[10] - '0';
+                unsigned minor = token[12] - '0';
+                *cl_c_version = CL_MAKE_VERSION (major, minor, 0);
+            }
             }
           else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
             {
@@ -482,6 +488,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
           POCL_MEM_FREE (program->pocl_binaries[i]);
           program->pocl_binary_sizes[i] = 0;
         }
+      program->global_var_total_size[i] = 0;
     }
 
   if (!from_error)
@@ -590,6 +597,24 @@ setup_device_kernel_hashes (cl_program program)
     }
 }
 
+static int
+check_device_supports (cl_device_id device, cl_version cl_c_version)
+{
+  if (device->num_opencl_c_with_version > 0)
+    {
+      for (size_t i = 0; i < device->num_opencl_c_with_version; ++i)
+        {
+          if (device->opencl_c_with_version[i].version == cl_c_version)
+            return 0;
+        }
+      return -1;
+    }
+  else
+    {
+      return cl_c_version > device->opencl_c_version_as_cl;
+    }
+}
+
 cl_int
 compile_and_link_program(int compile_program,
                          int link_program,
@@ -611,6 +636,7 @@ compile_and_link_program(int compile_program,
   int create_library = 0;
   int requires_cr_sqrt_div = 0;
   int spir_build = 0;
+  cl_version cl_c_version = 0;
   unsigned flush_denorms = 0;
   cl_device_id *unique_devlist = NULL;
   unsigned device_i = 0, actually_built = 0;
@@ -682,10 +708,10 @@ compile_and_link_program(int compile_program,
       i = strlen (temp_options);
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
-      errcode = process_options (temp_options, program->compiler_options,
-                                 link_options, program, compile_program,
-                                 link_program, &create_library, &flush_denorms,
-                                 &requires_cr_sqrt_div, &spir_build, size);
+      errcode = process_options (
+          temp_options, program->compiler_options, link_options, program,
+          compile_program, link_program, &create_library, &flush_denorms,
+          &requires_cr_sqrt_div, &spir_build, &cl_c_version, size);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
@@ -753,6 +779,16 @@ compile_and_link_program(int compile_program,
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       cl_device_id device = program->devices[device_i];
+
+      if (cl_c_version && check_device_supports (device, cl_c_version))
+        {
+          APPEND_TO_BUILD_LOG_GOTO (
+              build_error_code,
+              "Build option -cl-std specified OpenCL C version %u.%u,"
+              "but device %s doesn't support that OpenCL C version.\n",
+              CL_VERSION_MAJOR (cl_c_version), CL_VERSION_MINOR (cl_c_version),
+              device->short_name);
+        }
 
       if (requires_cr_sqrt_div
           && !(device->single_fp_config & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT))

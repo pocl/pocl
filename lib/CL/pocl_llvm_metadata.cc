@@ -233,7 +233,6 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
                   << std::endl;
     }
 
-#ifndef LLVM_OLDER_THAN_10_0
     bool has_name_metadata = true;
     if ((kernel_meta->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME) == 0) {
       for (unsigned j = 0; j < arg_num; ++j) {
@@ -250,7 +249,6 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
       if (has_name_metadata)
         kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
     }
-#endif
 
   }
   return 0;
@@ -526,8 +524,8 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   cl_device_id Device = program->devices[device_i];
   assert(Device->llvm_target_triplet && "Device has no target triple set");
 
-  if (program->data != nullptr && program->data[device_i] != nullptr)
-    input = static_cast<llvm::Module *>(program->data[device_i]);
+  if (program->llvm_irs[device_i] != nullptr)
+    input = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
   else {
     return CL_INVALID_PROGRAM_EXECUTABLE;
   }
@@ -548,14 +546,15 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
       llvm::Value *meta =
           dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue();
       llvm::Function *kernel = llvm::cast<llvm::Function>(meta);
-      //kernel_names.push_back(kernel_prototype->getName().str());
-      kernels.push_back(kernel);
+      if (kernel->getName() != POCL_GVAR_INIT_KERNEL_NAME)
+        kernels.push_back(kernel);
     }
   }
   // LLVM 3.9 does not use opencl.kernels meta, but kernel_arg_* function meta
   else {
     for (llvm::Module::iterator i = input->begin(), e = input->end(); i != e; ++i) {
-      if (i->getMetadata("kernel_arg_access_qual")) {
+      if (i->getMetadata("kernel_arg_access_qual")
+          && i->getName() != POCL_GVAR_INIT_KERNEL_NAME) {
          kernels.push_back(&*i);
       }
     }
@@ -818,9 +817,12 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
   PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
 
   /* any device's module will do for metadata, just use first non-nullptr */
-  llvm::Module *mod = (llvm::Module *)program->data[device_i];
-  if (mod == nullptr)
-    return 0;
+  llvm::Module *mod = nullptr;
+  if (program->llvm_irs[device_i] != nullptr)
+    mod = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
+  else {
+    return CL_INVALID_PROGRAM_EXECUTABLE;
+  }
 
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {
@@ -830,7 +832,8 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
   else {
     unsigned kernel_count = 0;
     for (llvm::Module::iterator i = mod->begin(), e = mod->end(); i != e; ++i) {
-      if (i->getMetadata("kernel_arg_access_qual")) {
+      if (i->getMetadata("kernel_arg_access_qual")
+          && i->getName() != POCL_GVAR_INIT_KERNEL_NAME) {
         ++kernel_count;
       }
     }

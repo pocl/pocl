@@ -31,6 +31,8 @@
 extern "C" {
 #endif
 
+  #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
+
   void InitializeLLVM ();
   void UnInitializeLLVM ();
 
@@ -90,13 +92,6 @@ extern "C" {
 
   void pocl_llvm_create_context (cl_context ctx);
   void pocl_llvm_release_context (cl_context ctx);
-
-  /**
-   * Update the program->binaries[] representation of the kernels
-   * from the program->data[] LLVM IR representation.
-   * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
-   */
-  int pocl_llvm_update_binaries (cl_program program, cl_uint device_i);
 
   /**
    * Count the number of "__kernel" functions in 'program'.

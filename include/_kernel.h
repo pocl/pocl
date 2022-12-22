@@ -118,27 +118,7 @@
 
 /************************ setup Clang version macros ******************/
 
-#if (__clang_major__ == 6)
-
-# undef LLVM_6_0
-# define LLVM_6_0
-
-#elif (__clang_major__ == 7)
-
-# undef LLVM_7_0
-# define LLVM_7_0
-
-#elif (__clang_major__ == 8)
-
-# undef LLVM_8_0
-# define LLVM_8_0
-
-#elif (__clang_major__ == 9)
-
-# undef LLVM_9_0
-# define LLVM_9_0
-
-#elif (__clang_major__ == 10)
+#if (__clang_major__ == 10)
 
 # undef LLVM_10_0
 # define LLVM_10_0
@@ -181,7 +161,6 @@
 
 #define CLANG_MAJOR __clang_major__
 #include "_libclang_versions_checks.h"
-
 
 
 /****************************************************************************/

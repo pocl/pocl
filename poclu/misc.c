@@ -201,6 +201,27 @@ poclu_write_file (const char *filename, char *content, size_t size)
   return 0;
 }
 
+int
+poclu_supports_opencl_30 (cl_device_id *devices, unsigned num_devices)
+{
+  if (num_devices == 0)
+    return 0;
+
+  unsigned supported = 0;
+  char dev_version[256];
+  size_t string_len;
+  for (unsigned i = 0; i < num_devices; ++i)
+    {
+    int err = clGetDeviceInfo (devices[i], CL_DEVICE_VERSION,
+                               sizeof (dev_version), dev_version, &string_len);
+    TEST_ASSERT (err == CL_SUCCESS);
+    if ((string_len >= 15)
+        && (strncmp (dev_version, "OpenCL 3.0 PoCL", 15) == 0))
+        ++supported;
+    }
+  return (supported == num_devices);
+}
+
 cl_int
 poclu_show_program_build_log (cl_program program)
 {

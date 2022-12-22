@@ -77,11 +77,22 @@ else()
   set(CTS_OPENCL_LIBRARY "-DOPENCL_LIBRARIES=$<TARGET_FILE_NAME:${POCL_LIBRARY_NAME}>")
 endif()
 
+if(CUSTOM_CTS_GIT_REPO)
+  set(CTS_GIT_REPO "${CUSTOM_CTS_GIT_REPO}")
+else()
+  set(CTS_GIT_REPO "https://github.com/KhronosGroup/OpenCL-CTS")
+endif()
+if(CUSTOM_CTS_GIT_TAG)
+  set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
+else()
+  set(CTS_GIT_TAG "v2022-10-27-00")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
-  PREFIX "${TS_BASEDIR}" # TODO pocl/CTS
-  GIT_REPOSITORY "https://github.com/KhronosGroup/OpenCL-CTS"
-        GIT_TAG "v2022-10-27-00"
+  PREFIX "${TS_BASEDIR}"
+  GIT_REPOSITORY "${CTS_GIT_REPO}"
+        GIT_TAG "${CTS_GIT_TAG}"
   CONFIGURE_COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     -DD3D10_IS_SUPPORTED=0 -DD3D11_IS_SUPPORTED=0
@@ -173,9 +184,12 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_other_ocl_30"
           async_work_group_copy_fence_import_after_export_aliased_global_and_local
           async_work_group_copy_fence_import_after_export_aliased_local
           enqueued_local_size   get_linear_ids  global_linear_id  local_linear_id
-          progvar_func_scope    progvar_prog_scope_init   progvar_prog_scope_misc   progvar_prog_scope_uninit
           rw_image_access_qualifier   simple_read_image_pitch   simple_write_image_pitch    vector_swizzle    wg_barrier
           )
+# These should be added to basic_other_ocl_30:
+#    progvar_func_scope    progvar_prog_scope_init   progvar_prog_scope_misc   progvar_prog_scope_uninit
+# however the test itself has hardcoded -cl-std=CL2.0 build option,
+# this needs to be fixed upstream
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_read_async"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_async_int  buffer_read_async_uint  buffer_read_async_long  buffer_read_async_ulong  buffer_read_async_short  buffer_read_async_ushort  buffer_read_async_char  buffer_read_async_uchar  buffer_read_async_float)

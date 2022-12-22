@@ -103,7 +103,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_source = pocl_driver_build_source;
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
-  ops->free_program = pocl_driver_free_program;
+  ops->free_program = pocl_basic_free_program;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
@@ -193,6 +193,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -263,8 +264,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
-  fix_local_mem_size (device);
-
   return ret;
 }
 
@@ -276,8 +275,13 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
+  cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_uint dev_i = cmd->program_device_i;
+
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
 
   if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
     return;
@@ -394,6 +398,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   assert (pc->printf_buffer_capacity > 0);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
+  pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
   pocl_set_default_rm ();
@@ -605,6 +610,15 @@ pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
   pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 
+int
+pocl_basic_free_program (cl_device_id device, cl_program program,
+                          unsigned dev_i)
+{
+  pocl_driver_free_program (device, program, dev_i);
+  program->global_var_total_size[dev_i] = 0;
+  POCL_MEM_FREE (program->gvar_storage[dev_i]);
+  return 0;
+}
 /*********************** IMAGES ********************************/
 
 cl_int pocl_basic_copy_image_rect( void *data,

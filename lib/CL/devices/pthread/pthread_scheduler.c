@@ -34,6 +34,7 @@
 
 #include "builtin_kernels.hh"
 #include "common.h"
+#include "common_driver.h"
 #include "pocl-pthread.h"
 #include "pocl-pthread_scheduler.h"
 #include "pocl-pthread_utils.h"
@@ -376,6 +377,12 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   kernel_run_command *run_cmd;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_program program = kernel->program;
+  cl_uint dev_i = cmd->program_device_i;
+
+  /* initialize the program gvars if required */
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
 
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
@@ -405,6 +412,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->pc.printf_buffer = NULL;
   run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
   run_cmd->pc.printf_buffer_position = NULL;
+  run_cmd->pc.global_var_buffer = program->gvar_storage[dev_i];
   run_cmd->remaining_wgs = num_groups;
   run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = cmd->command.run.wg;

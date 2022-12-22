@@ -49,12 +49,17 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_flatten_barrier_subs test_alignment_with_dynamic_wg
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
   test_issue_893 test_builtin_args
+  test_workitem_func_outside_kernel
 )
+
+if(OPENCL_HEADER_VERSION GREATER 299)
+  list(APPEND PROGRAMS_TO_BUILD test_program_scope_vars)
+endif()
 
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
 else ()
-  add_compile_options("-std=c++11" "-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
+  add_compile_options("-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
 endif ()
  
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
@@ -77,6 +82,15 @@ add_test_pocl(NAME "regression/test_issue_553" COMMAND "test_issue_553")
 add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
+
+add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
+
+if(OPENCL_HEADER_VERSION GREATER 299)
+  add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
+  set(OCL_30_TESTS "regression/test_program_scope_vars")
+  set_tests_properties("regression/test_program_scope_vars" PROPERTIES
+    SKIP_RETURN_CODE 77)
+endif()
 
 add_test_pocl(NAME "regression/test_llvm_segfault_issue_889" COMMAND "test_llvm_segfault_issue_889")
 
@@ -292,6 +306,8 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
   "regression/test_llvm_segfault_issue_889"
   "regression/test_issue_893"
   "regression/test_flatten_barrier_subs"
+  "regression/test_workitem_func_outside_kernel"
+  ${OCL_30_TESTS}
   ${TCE_TESTS}
   PROPERTIES
     COST 1.5
@@ -337,11 +353,9 @@ set_property(TEST
   "regression/vector_kernel_arguments"
   APPEND PROPERTY LABELS "cuda")
 
-if(LLVM_VERSION_MAJOR GREATER 7)
- set_property(TEST
+set_property(TEST
    "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   APPEND PROPERTY LABELS "cuda")
-endif()
 
 # Label tests that work with HSA runtime with native kernel compilation
 set_property(TEST

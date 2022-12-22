@@ -22,9 +22,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <cstdio>
-#include <map>
 #include <iostream>
+#include <map>
+#include <sstream>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -41,9 +41,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/IRBuilder.h>
-#ifdef LLVM_OLDER_THAN_7_0
-#include <llvm/IR/TypeBuilder.h>
-#endif
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstrTypes.h>
@@ -52,9 +49,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#ifdef LLVM_OLDER_THAN_7_0
-#include <llvm/Transforms/Utils/Local.h>
-#endif
 
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
@@ -63,13 +57,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "BarrierTailReplication.h"
 #include "CanonicalizeBarriers.h"
 #include "LLVMUtils.h"
+#include "ProgramScopeVariables.h"
 #include "Workgroup.h"
 #include "WorkitemReplication.h"
-
-#include <cstdio>
-#include <map>
-#include <iostream>
-#include <sstream>
 
 #if _MSC_VER
 #  include "vccompat.hpp"
@@ -85,68 +75,6 @@ using namespace pocl;
 
 
 
-#ifdef LLVM_OLDER_THAN_7_0
-namespace llvm {
-
-  typedef struct _pocl_context PoclContext;
-
-  template<bool xcompile> class TypeBuilder<PoclContext, xcompile> {
-  public:
-    static StructType *get(LLVMContext &Context) {
-      if (size_t_width == 64)
-        {
-        SmallVector<Type *, 10> Elements;
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<8> *, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32> *, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-        return StructType::get(Context, Elements);
-        }
-      else if (size_t_width == 32)
-        {
-          SmallVector<Type *, 10> Elements;
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
-          Elements.push_back(
-              TypeBuilder<types::i<8> *, xcompile>::get(Context));
-          Elements.push_back(
-              TypeBuilder<types::i<32> *, xcompile>::get(Context));
-          Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>, xcompile>::get(Context));
-
-          return StructType::get(Context, Elements);
-        }
-      else
-        {
-          assert (false && "Unsupported size_t width.");
-          return NULL;
-        }
-    }
-
-    static void setSizeTWidth(int width) {
-      size_t_width = width;
-    }
-
-  private:
-    static int size_t_width;
-  };
-
-  template<bool xcompile>
-  int TypeBuilder<PoclContext, xcompile>::size_t_width = 0;
-}  // namespace llvm
-
-#endif
 
 enum PoclContextStructFields {
   PC_NUM_GROUPS,
@@ -155,6 +83,7 @@ enum PoclContextStructFields {
   PC_PRINTF_BUFFER,
   PC_PRINTF_BUFFER_POSITION,
   PC_PRINTF_BUFFER_CAPACITY,
+  PC_GLOBAL_VAR_BUFFER,
   PC_WORK_DIM
 };
 
@@ -201,31 +130,19 @@ Workgroup::runOnModule(Module &M) {
   SizeTWidth = address_bits;
   SizeT = IntegerType::get(*C, SizeTWidth);
 
-#ifdef LLVM_OLDER_THAN_7_0
-  TypeBuilder<PoclContext, true>::setSizeTWidth(SizeTWidth);
-  PoclContextT = TypeBuilder<PoclContext, true>::get(*C);
-  LauncherFuncT =
-      SizeTWidth == 32
-          ? TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<32>,
-                             types::i<32>, types::i<32>),
-                        true>::get(M.getContext())
-          : TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<64>,
-                             types::i<64>, types::i<64>),
-                        true>::get(M.getContext());
-#else
   // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
   // anyways as it builds the context type using the SizeT directly.
   llvm::Type *Int32T = Type::getInt32Ty(*C);
   llvm::Type *Int8T = Type::getInt8Ty(*C);
   PoclContextT =
-    StructType::get(
-      ArrayType::get(SizeT, 3), // NUM_GROUPS
-      ArrayType::get(SizeT, 3), // GLOBAL_OFFSET
-      ArrayType::get(SizeT, 3), // LOCAL_SIZE
-      PointerType::get(Int8T, 0), // PRINTF_BUFFER
-      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
-      Int32T, // PRINTF_BUFFER_CAPACITY
-      Int32T); // WORK_DIM
+      StructType::get(ArrayType::get(SizeT, 3),    // NUM_GROUPS
+                      ArrayType::get(SizeT, 3),    // GLOBAL_OFFSET
+                      ArrayType::get(SizeT, 3),    // LOCAL_SIZE
+                      PointerType::get(Int8T, 0),  // PRINTF_BUFFER
+                      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
+                      Int32T,                      // PRINTF_BUFFER_CAPACITY
+                      PointerType::get(Int8T, 0),  // GLOBAL_VAR_BUFFER
+                      Int32T);                     // WORK_DIM
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
@@ -233,7 +150,6 @@ Workgroup::runOnModule(Module &M) {
                         DeviceArgsASid),
        PointerType::get(PoclContextT, DeviceContextASid), SizeT, SizeT, SizeT},
       false);
-#endif
 
   assert ((SizeTWidth == 64 || SizeTWidth == 32) &&
           "Target has an unsupported pointer width.");
@@ -577,7 +493,6 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
         unsigned j = CallInstr->getNumOperands() - 1;
         for (unsigned i = 0; i < j; ++i) {
           auto *Operand = CallInstr->getOperand(i);
-#ifndef LLVM_OLDER_THAN_10_0
           // The printf decl might have the format string in the constant AS
           // in order to support compilation from SPIR-V where the calls adhere
           // to the SPIR-V/OpenCL standard in terms of the argument type.
@@ -588,7 +503,6 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
             Operand = llvm::CastInst::CreatePointerBitCastOrAddrSpaceCast(
                 Operand, poclPrintf->getArg(3)->getType(),
                 "printf_fmt_str_as_cast", CallInstr);
-#endif
           ops.push_back(Operand);
         }
 
@@ -995,6 +909,10 @@ Workgroup::privatizeContext(Function *F)
     F, Builder, {"_work_dim"},
     globalHandlesToContextStructLoads(Builder, {"_work_dim"}, PC_WORK_DIM));
 
+  privatizeGlobals(F, Builder, {PoclGVarBufferName},
+                   globalHandlesToContextStructLoads(
+                       Builder, {PoclGVarBufferName}, PC_GLOBAL_VAR_BUFFER));
+
   privatizeGlobals(
     F, Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
     globalHandlesToContextStructLoads(
@@ -1031,14 +949,8 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   std::string FuncName = "";
   FuncName = F->getName().str();
 
-#ifdef LLVM_OLDER_THAN_9_0
-  Function *WorkGroup =
-    dyn_cast<Function>(M->getOrInsertFunction(
-                         FuncName + "_workgroup", LauncherFuncT));
-#else
   FunctionCallee fc = M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
-#endif
 
   assert(WorkGroup != nullptr);
   BasicBlock *Block = BasicBlock::Create(M->getContext(), "", WorkGroup);
@@ -1093,18 +1005,12 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
       Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
                                  ElementCount,
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
                                  llvm::Align(
 #else
                                  llvm::MaybeAlign(
 #endif
-#endif
-                                     MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                                     )
-#endif
-                                     ,
+                                 MAX_EXTENDED_ALIGNMENT),
                                  "local_arg", Block);
     } else {
       // If it's a pass by value pointer argument, we just pass the pointer
@@ -1448,19 +1354,13 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
       LLVMValueRef LocalArgAlloca = wrap(new llvm::AllocaInst(
             unwrap(AllocaType), LLVMGetPointerAddressSpace(ParamType),
             unwrap(ElementCount),
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
             llvm::Align(
 #else
             llvm::MaybeAlign(
 #endif
-#endif
-                MAX_EXTENDED_ALIGNMENT
-#ifndef LLVM_OLDER_THAN_10_0
-                )
-#endif
-                ,
-            "local_arg", unwrap(Block)));
+                MAX_EXTENDED_ALIGNMENT),
+                "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
     } else {
       Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets,
@@ -1611,15 +1511,9 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
   std::string funcName = "";
   funcName = F->getName().str();
 
-#ifdef LLVM_OLDER_THAN_9_0
-  Function *WorkGroup =
-    dyn_cast<Function>(M->getOrInsertFunction(
-                         funcName + "_workgroup_fast", LauncherFuncT));
-#else
   FunctionCallee fc = M->getOrInsertFunction(
                          funcName + "_workgroup_fast", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
-#endif
   assert(WorkGroup != NULL);
 
   Builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));

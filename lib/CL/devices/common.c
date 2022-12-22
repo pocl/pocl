@@ -44,7 +44,6 @@
 #include "common.h"
 #include "pocl_shared.h"
 
-#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -56,6 +55,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "common_driver.h"
 
 #ifdef HAVE_GETRLIMIT
 #include <sys/time.h>
@@ -1220,6 +1220,29 @@ pocl_set_buffer_image_limits(cl_device_id device)
       device->max_constant_buffer_size = s;
     }
 
+  /* OpenCL 3.0 mandates at least 64KB for CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE
+   * and 32KB for CL_DEVICE_LOCAL_MEM_SIZE. pocl_topology tries to use size of
+   * largest non-shared cache (usually L2), but some CPUs don't have L3
+   * and the only non-shared cache is L1, which can be too small. */
+  if (device->version_as_int > 299)
+    {
+      if (device->local_mem_size < 32 * 1024)
+        device->local_mem_size = 32 * 1024;
+      if (device->max_constant_buffer_size < 64 * 1024)
+        device->max_constant_buffer_size = 64 * 1024;
+    }
+
+  /* set program scope variable device limits.
+   * only the max_size is an actual limit.
+   * for CPU devices there is no hardware limit.
+   * TODO what should we set them to ?
+   * setting this to >= 2^16 causes LLVM to crash in SDNode */
+  if (device->program_scope_variables_pass)
+    {
+      device->global_var_max_size = 64 * 1000;
+      device->global_var_pref_size = max(64 * 1000, device->max_constant_buffer_size);
+    }
+
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
    * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
@@ -1827,6 +1850,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
 };
 
 const size_t OPENCL_FEATURES_NUM

@@ -45,8 +45,9 @@ namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
-void
-regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
+void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
+
+void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func);
 
 // Remove a function from a module, along with all callsites.
 POCL_EXPORT

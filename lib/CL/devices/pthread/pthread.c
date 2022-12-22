@@ -146,6 +146,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -208,8 +209,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
-
-  fix_local_mem_size (device);
 
   /* in case hwloc doesn't provide a PCI ID, let's generate
      a vendor id that hopefully is unique across vendors. */

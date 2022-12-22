@@ -309,9 +309,7 @@ set(KERNEL_CL_FLAGS
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1657502
 # this *likely* shouldn't be a problem for PoCL, but needs testing
-if(LLVM_VERSION_MAJOR GREATER 10)
-  list(APPEND KERNEL_CL_FLAGS "-Wno-psabi")
-endif()
+list(APPEND KERNEL_CL_FLAGS "-Wno-psabi")
 
 set(HOST_DEVICE_VERSION_3DIGIT "${HOST_DEVICE_CL_VERSION_MAJOR}${HOST_DEVICE_CL_VERSION_MINOR}0")
 
@@ -422,8 +420,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
-    if((X86 AND LLVM_VERSION_MAJOR GREATER 9) OR
-       (ARM AND LLVM_VERSION_MAJOR GREATER 11))
+    if(X86 OR (ARM AND LLVM_VERSION_MAJOR GREATER 11))
       # for X86-64 & ARM, use the generated SPIR wrapper,
       # based on CPU's largest supported vector size
       set(SPIR_WRAPPER_FILE "")

@@ -146,14 +146,8 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   llvm::SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream PTXStream(Data);
   if (Machine->addPassesToEmitFile(Passes, PTXStream,
-#ifndef LLVM_OLDER_THAN_7_0
                                    nullptr,
-#endif
-#ifdef LLVM_OLDER_THAN_10_0
-                                   llvm::TargetMachine::CGFT_AssemblyFile)) {
-#else
                                    llvm::CGFT_AssemblyFile)) {
-#endif
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
   }
@@ -330,11 +324,7 @@ void fixPrintF(llvm::Module *Module) {
     if (!Call)
       continue;
 
-#ifndef LLVM_OLDER_THAN_8_0
     unsigned NumArgs = Call->arg_size() - 1;
-#else
-    unsigned NumArgs = Call->getNumArgOperands() - 1;
-#endif
 
     llvm::Value *Format = Call->getArgOperand(0);
 
@@ -899,14 +889,9 @@ void mapLibDeviceCalls(llvm::Module *Module) {
       if (Call) {
         // Create function declaration for libdevice version.
         llvm::FunctionType *FunctionType = Function->getFunctionType();
-#ifdef LLVM_OLDER_THAN_9_0
-        llvm::Constant *LibDeviceFunction = Module->getOrInsertFunction(
-            Entry.LibDeviceFunctionName, FunctionType);
-#else
         llvm::FunctionCallee FC = Module->getOrInsertFunction(
             Entry.LibDeviceFunctionName, FunctionType);
         llvm::Function *LibDeviceFunction = llvm::cast<llvm::Function>(FC.getCallee());
-#endif
         // Replace function with libdevice version.
         std::vector<llvm::Value *> Args(Call->arg_begin(), Call->arg_end());
         llvm::CallInst *NewCall =
