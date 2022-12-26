@@ -113,6 +113,7 @@ POname (clCreateCommandBufferKHR) (
       = (cl_command_queue *)calloc (num_queues, sizeof (cl_command_queue));
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
   cmdbuf->num_properties = num_properties;
+  POCL_FAST_INIT(cmdbuf->mutex);
   cmdbuf->properties = (cl_command_buffer_properties_khr *)calloc (
       num_properties,
       sizeof (cl_command_buffer_properties_khr) * 2 * num_properties + 1);
