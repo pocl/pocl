@@ -5,7 +5,7 @@
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
-
+#cmakedefine BUILD_LEVEL0
 #cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
@@ -150,6 +150,11 @@
 
 
 
+#define CLANG "@CLANG@"
+
+#define LLVM_SPIRV "@LLVM_SPIRV@"
+
+#define SPIRV_LINK "@SPIRV_LINK@"
 
 #ifdef ENABLE_LLVM
 
@@ -157,7 +162,6 @@
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
-#define CLANG "@CLANG@"
 
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
 
@@ -165,7 +169,6 @@
 
 #define LLVM_LLC "@LLVM_LLC@"
 
-#define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #cmakedefine LLVM_10_0
 

@@ -121,6 +121,17 @@ if(ENABLE_VULKAN)
   endif()
 endif()
 
+if(ENABLE_LEVEL0)
+  include_directories(AFTER "${LEVEL0_INCLUDE_DIRS}")
+  add_subdirectory("level0")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-level0>")
+
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${LEVEL0_LIBRARIES})
+  endif()
+endif()
+
 if(ENABLE_CUDA)
   add_subdirectory("cuda")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"

@@ -186,6 +186,8 @@ option(ENABLE_CUDNN "Enable the CUDNN for the CUDA device driver, requires CUDA"
 
 option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
+option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
+
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
@@ -1584,6 +1586,45 @@ endif()
 
 ##########################################################
 
+if (ENABLE_LEVEL0)
+  if(NOT PKG_CONFIG_EXECUTABLE)
+    message(FATAL_ERROR "building Level0 requires pkg-config")
+  endif()
+  pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
+
+  if (NOT LEVEL0_FOUND)
+    message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
+    find_library(LEVEL0_LIBRARIES NAMES ze_loader REQUIRED)
+    find_path(LEVEL0_INCLUDE_DIRS NAMES ze_api.h PATH_SUFFIXES level_zero)
+    if (LEVEL0_LIBRARIES AND LEVEL0_INCLUDE_DIRS)
+      set(LEVEL0_FOUND ON CACHE INTERNAL "Level0 found")
+    endif()
+  endif()
+
+  if(NOT CLANG)
+    find_program(CLANG NAMES clang-15 clang-14 clang-13 clang-12 clang-11 clang-10 clang REQUIRED)
+  endif()
+
+  if(NOT LLVM_SPIRV)
+    find_program(LLVM_SPIRV NAMES llvm-spirv-15 llvm-spirv-14 llvm-spirv-13 llvm-spirv-12 llvm-spirv-11 llvm-spirv-10 llvm-spirv REQUIRED)
+  endif()
+
+  if(NOT SPIRV_LINK)
+    find_program(SPIRV_LINK NAMES spirv-link REQUIRED)
+  endif()
+
+  if(NOT LEVEL0_FOUND)
+    message(FATAL_ERROR "Level Zero library/headers not found")
+  else()
+    message(STATUS "Using Level0 library: '${LEVEL0_LIBRARIES}' and Level0 headers: '${LEVEL0_INCLUDE_DIRS}'")
+    message(WARNING "Note: Level0 backend is highly experimental and very incomplete." )
+    set(OCL_DRIVERS "${OCL_DRIVERS} level0")
+    set(OCL_TARGETS "${OCL_TARGETS} level0")
+  endif()
+endif()
+
+##########################################################
+
 if(ENABLE_CUDA)
 
   if(NOT "${LLVM_ALL_TARGETS}" MATCHES "NVPTX")
@@ -1737,6 +1778,7 @@ set(KERNEL_COMPILER_LIB_VERSION "${KER_LIB_CURRENT_VERSION}.0.0")
 set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_HSA ${ENABLE_HSA})
 set(BUILD_VULKAN ${ENABLE_VULKAN})
+set(BUILD_LEVEL0 ${ENABLE_LEVEL0})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
