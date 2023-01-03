@@ -356,6 +356,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
       POCL_ABORT("almaif: Unknown Kernel ID (%lu) given\n", token);
     }
   }
+  free(scanParams);
 
   // almaif devices are little endian by default, but the emulation device is
   // host dependant
