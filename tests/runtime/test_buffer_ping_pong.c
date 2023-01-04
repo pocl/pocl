@@ -70,7 +70,7 @@ main (int argc, char **argv)
   cl_kernel kernel_a = NULL, kernel_b = NULL, kernel_c = NULL;
   const char *kernel_buffer = NULL;
 
-  err = poclu_get_multiple_devices (&platform, &context, &num_devices,
+  err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
                                     &devices, &queues);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 

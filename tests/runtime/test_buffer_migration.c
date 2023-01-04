@@ -53,7 +53,7 @@ main (int argc, char **argv)
   cl_program program = NULL;
   cl_kernel kernel = NULL;
 
-  err = poclu_get_multiple_devices (&platform, &context, &num_devices,
+  err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
                                     &devices, &queues);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 

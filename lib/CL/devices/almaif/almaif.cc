@@ -475,9 +475,9 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   POCL_UNLOCK(runningDeviceLock);
 
   if (D->BaseAddress == EMULATING_ADDRESS) {
-    POCL_MSG_PRINT_ALMAIF("Custom emulation device %d initialized", j);
+    POCL_MSG_PRINT_ALMAIF("Custom emulation device %d initialized \n", j);
   } else {
-    POCL_MSG_PRINT_ALMAIF("Custom device %d initialized", j);
+    POCL_MSG_PRINT_ALMAIF("Custom device %d initialized \n", j);
   }
   return CL_SUCCESS;
 }
