@@ -64,6 +64,10 @@ CL_API_SUFFIX__VERSION_1_2
            && (p->binary_type != CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT)),
           CL_INVALID_OPERATION,
           "clLinkProgram called for !library && !compiled_obj\n");
+      POCL_GOTO_LABEL_ON (
+          PFN_NOTIFY, (p->build_status != CL_BUILD_SUCCESS),
+          CL_INVALID_OPERATION,
+          "clLinkProgram called for a program that wasn't built\n");
     }
 
   if (num_devices == 0)

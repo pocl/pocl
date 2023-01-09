@@ -611,7 +611,6 @@ pocl_init_devices ()
           dev->driver_version = POCL_VERSION_FULL;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
-          dev->short_name = strdup (dev->ops->device_name);
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */

@@ -443,10 +443,13 @@ free_meta (cl_program program)
               POCL_MEM_FREE (meta->arg_info[j].type_name);
             }
           POCL_MEM_FREE (meta->arg_info);
-          for (j = 0; j < program->num_devices; ++j)
-            if (meta->data[j] != NULL)
-              meta->data[j] = NULL; // TODO free data in driver callback
-          POCL_MEM_FREE (meta->data);
+          if (meta->data)
+            {
+              for (j = 0; j < program->num_devices; ++j)
+                if (meta->data[j] != NULL)
+                  meta->data[j] = NULL; // TODO free data in driver callback
+              POCL_MEM_FREE (meta->data);
+            }
           POCL_MEM_FREE (meta->local_sizes);
         }
       POCL_MEM_FREE (program->kernel_meta);
@@ -471,6 +474,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
 
   program->num_kernels = 0;
   program->build_status = CL_BUILD_NONE;
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   for (i = 0; i < program->num_devices;
        ++i) // TODO associated_num_devices or not ???
@@ -754,7 +758,7 @@ compile_and_link_program(int compile_program,
     program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
-                       num_devices, program->compiler_options);
+                       program->num_devices, program->compiler_options);
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     POCL_MSG_PRINT_LLVM ("   BUILDING for device: %s\n",
