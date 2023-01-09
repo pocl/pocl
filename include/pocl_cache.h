@@ -117,6 +117,10 @@ void pocl_cache_program_bc_path(char*       program_bc_path,
                                unsigned     device_i);
 
 POCL_EXPORT
+void pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
+                                  unsigned device_i);
+
+POCL_EXPORT
 void pocl_cache_work_group_function_path (char *parallel_bc_path,
                                           cl_program program,
                                           unsigned device_i, cl_kernel kernel,

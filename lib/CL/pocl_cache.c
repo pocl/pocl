@@ -51,6 +51,7 @@
 /* The filename in which the program LLVM bc is stored in the program's temp
  * dir. */
 #define POCL_PROGRAM_BC_FILENAME "/program.bc"
+#define POCL_PROGRAM_SPV_FILENAME "/program.spv"
 
 static char cache_topdir[POCL_FILENAME_LENGTH];
 static char tempfile_pattern[POCL_FILENAME_LENGTH];
@@ -97,6 +98,14 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                                 unsigned     device_i) {
     program_device_dir(program_bc_path, program,
                        device_i, POCL_PROGRAM_BC_FILENAME);
+}
+
+void
+pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
+                             unsigned device_i)
+{
+  program_device_dir (program_bc_path, program, device_i,
+                      POCL_PROGRAM_SPV_FILENAME);
 }
 
 /* Return the cache directory for the given work-group function.
