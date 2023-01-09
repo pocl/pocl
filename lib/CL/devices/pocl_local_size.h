@@ -28,10 +28,11 @@
 /* The generic local size optimizer used by default, in case there's no target
  * specific one defined in the device driver. */
 POCL_EXPORT
-void pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
-                                        size_t global_y, size_t global_z,
-                                        size_t *local_x, size_t *local_y,
-                                        size_t *local_z);
+void pocl_default_local_size_optimizer (cl_device_id dev, cl_kernel kernel,
+                                        unsigned device_i,
+                                        size_t global_x, size_t global_y,
+                                        size_t global_z, size_t *local_x,
+                                        size_t *local_y, size_t *local_z);
 
 /* Can be used for devices which support only small work-groups and prefer
  * them to be maximally utilized to use as many of the SIMD lanes as possible.
@@ -40,8 +41,9 @@ void pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
  * search, thus should not be used with devices with a large work-group
  * support. */
 POCL_EXPORT
-void pocl_wg_utilization_maximizer (cl_device_id dev, size_t global_x,
-                                    size_t global_y, size_t global_z,
-                                    size_t *local_x, size_t *local_y,
-                                    size_t *local_z);
+void pocl_wg_utilization_maximizer (cl_device_id dev, cl_kernel kernel,
+                                    unsigned device_i,
+                                    size_t global_x, size_t global_y,
+                                    size_t global_z, size_t *local_x,
+                                    size_t *local_y, size_t *local_z);
 #endif
