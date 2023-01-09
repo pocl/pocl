@@ -92,7 +92,8 @@ int main(int argc, char *argv[])
   auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
 
   cl_int i = 0;
-  cl::Buffer buffer;
+  cl::Buffer buffer(CL_MEM_READ_WRITE, 4096);
+
   kernel(cl::EnqueueArgs(queue, cl::NDRange(16), cl::NDRange(16)),
          buffer, buffer, buffer, i, i, buffer);
 

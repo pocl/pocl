@@ -1,5 +1,7 @@
 // TESTING: as_TYPEn
 
+#include "common.cl"
+
 
 _CL_NOINLINE
 void clear_bytes(uchar* p, uchar c, size_t n)
