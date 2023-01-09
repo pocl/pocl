@@ -171,3 +171,13 @@ set_property(TEST
   "workgroup/switch_case"
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
   APPEND PROPERTY LABELS "vulkan")
+
+# broken:  "workgroup/for_with_divergent_return"
+set_property(TEST
+  "workgroup/different_implicit_barrier_injection_scenarios"
+  "workgroup/unbarriered_for_loops"
+  "workgroup/barriered_for_loops"
+  "workgroup/switch_case"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
+  "workgroup/cond_barriers_in_for"
+  APPEND PROPERTY LABELS "level0")

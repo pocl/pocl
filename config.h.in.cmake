@@ -149,6 +149,7 @@
 
 
 
+#ifdef BUILD_LEVEL0
 
 #define CLANG "@CLANG@"
 
@@ -156,12 +157,17 @@
 
 #define SPIRV_LINK "@SPIRV_LINK@"
 
+#endif
+
+
+
 #ifdef ENABLE_LLVM
 
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
+#define CLANG "@CLANG@"
 
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
 
@@ -169,16 +175,7 @@
 
 #define LLVM_LLC "@LLVM_LLC@"
 
-
-#cmakedefine LLVM_10_0
-
-#cmakedefine LLVM_11_0
-
-#cmakedefine LLVM_12_0
-
-#cmakedefine LLVM_13_0
-
-#cmakedefine LLVM_14_0
+#define LLVM_SPIRV "@LLVM_SPIRV@"
 
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
@@ -187,7 +184,6 @@
 #ifndef LLVM_VERSION
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
-
 
 #endif
 

@@ -252,3 +252,22 @@ if (ENABLE_TCE)
         "runtime/test_fill-buffer"
         APPEND PROPERTY LABELS "almaif")
 endif()
+
+# all except "runtime/test_command_buffer_images" "runtime/clGetKernelArgInfo"
+set_property(TEST
+  "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
+  "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
+  "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
+  "runtime/clGetSupportedImageFormats" "runtime/clCreateKernelsInProgram"
+  "runtime/clCreateKernel"
+  "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
+  "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
+  "runtime/test_fill-buffer"
+  "runtime/test_event_free" "runtime/test_event_double_wait" "runtime/clCreateSubDevices"
+  "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
+  "runtime/test_buffer_migration"
+  "runtime/test_buffer_ping_pong"
+  "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
+  "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
+  "runtime/test_command_buffer"
+  APPEND PROPERTY LABELS "level0")

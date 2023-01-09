@@ -990,6 +990,9 @@ struct _cl_device_id {
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
   cl_bool program_scope_variables_pass;
+  /* if true, pocl_llvm_build_program will ignore pocl's OpenCL headers
+   * and rely purely on Clang's OpenCL headers */
+  cl_bool disable_pocl_opencl_headers;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
@@ -1168,10 +1171,13 @@ struct _cl_device_id {
 #define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
 
 #define OPENCL_MAX_DIMENSION 3
+#ifndef HAVE_SIZE_T_3
+#define HAVE_SIZE_T_3
 typedef struct
 {
   size_t size[3];
 } size_t_3;
+#endif
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID

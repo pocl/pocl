@@ -64,7 +64,7 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
     PASS_REGULAR_EXPRESSION "OK"
     PROCESSORS 1
     SKIP_REGULAR_EXPRESSION "SKIPPED"
-    LABELS "matrix;internal"
+    LABELS "matrix;internal;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
