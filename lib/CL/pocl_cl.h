@@ -1407,6 +1407,7 @@ struct _cl_mem {
   /* reference count; when it reaches 0,
    * the mem_host_ptr is automatically freed */
   uint mem_host_ptr_refcount;
+  int mem_host_ptr_is_svm;
 
   /* array of device-specific memory bookkeeping structs.
      The location of some device's struct is determined by

@@ -75,8 +75,9 @@ int context_set_properties (cl_context context,
                             const cl_context_properties *properties);
 
 cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
-                              size_t size, cl_mem_object_type type, int *device_image_support, void *host_ptr,
-                              cl_int *errcode_ret);
+                              size_t size, cl_mem_object_type type,
+                              int *device_image_support, void *host_ptr,
+                              int host_ptr_is_svm, cl_int *errcode_ret);
 
 cl_int pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command);
 

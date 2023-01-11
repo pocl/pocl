@@ -219,10 +219,25 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
       {
         POCL_GOTO_ERROR_COND ((image_desc->buffer != NULL),
                               CL_INVALID_OPERATION);
+        int host_ptr_is_svm = CL_FALSE;
+
+        if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
+          {
+            pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
+            if (item) {
+              POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
+                                  "The provided host_ptr is SVM pointer, "
+                                  "but the allocated SVM size (%zu) is smaller "
+                                  "then requested size (%zu)",
+                                  item->size, size);
+              host_ptr_is_svm = CL_TRUE;
+            }
+          }
+
         mem = pocl_create_memobject (context, flags, size,
                                      image_desc->image_type,
                                      device_image_support,
-                                     host_ptr, &errcode);
+                                     host_ptr, host_ptr_is_svm, &errcode);
         if (mem == NULL)
           goto ERROR;
       }
