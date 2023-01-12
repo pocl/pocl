@@ -39,12 +39,14 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
       POCL_DESTROY_OBJECT (device);
       POCL_MEM_FREE (device->partition_type);
       POCL_MEM_FREE (device->builtin_kernel_list);
-      POCL_MSG_PRINT_REFCOUNTS ("Free Device %p\n", device);
+      POCL_MEM_FREE (device->builtin_kernels_with_version);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Device %d (%p)\n", device->dev_id,
+                                device);
       POCL_MEM_FREE (device);
     }
   else
-    POCL_MSG_PRINT_REFCOUNTS ("Release Device %p : %u\n", device,
-                              device->pocl_refcount);
+    POCL_MSG_PRINT_REFCOUNTS ("Release Device %d (%p), Refcount: %d\n",
+                              device->dev_id, device, device->pocl_refcount);
 
   return CL_SUCCESS;
 }

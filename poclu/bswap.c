@@ -1,4 +1,5 @@
-/* poclu - byte swap functions
+/**
+ * \brief byte swap functions
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
 
@@ -19,10 +20,16 @@
    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
+   \file
 */
 
 #include "pocl_opencl.h"
 
+/**
+ * \brief inplace endian byte swap macro
+ * \param __DTYPE [in] word datatype
+ * \param __WORD [in/out] data to be swapped in place
+ */
 #define GENERIC_BYTESWAP(__DTYPE, __WORD)                         \
   do {                                                            \
     unsigned __i;                                                 \
@@ -38,6 +45,12 @@
     __WORD = __neww.full_word;                                    \
   } while(0)
 
+
+/**
+ * \brief internal function to compare device- to host-endianness.
+ * @param device [in] device in question
+ * @return 1 if endianness is not the same.
+ */
 static int
 needs_swap(cl_device_id device)
 {

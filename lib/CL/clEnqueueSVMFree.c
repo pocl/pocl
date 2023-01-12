@@ -60,6 +60,12 @@ POname(clEnqueueSVMFree) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  const size_t svm_pointers_nbytes = sizeof (void *) * num_svm_pointers;
+  void *svm_pointers_copy = malloc (svm_pointers_nbytes);
+  if (svm_pointers_copy == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+  memcpy (svm_pointers_copy, svm_pointers, svm_pointers_nbytes);
+
   _cl_command_node *cmd = NULL;
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_FREE,
@@ -69,11 +75,12 @@ POname(clEnqueueSVMFree) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(cmd);
+      POCL_MEM_FREE (svm_pointers_copy);
       return errcode;
     }
 
   cmd->command.svm_free.num_svm_pointers = num_svm_pointers;
-  cmd->command.svm_free.svm_pointers = svm_pointers;
+  cmd->command.svm_free.svm_pointers = svm_pointers_copy;
   cmd->command.svm_free.queue = command_queue;
   cmd->command.svm_free.data = user_data;
   cmd->command.svm_free.pfn_free_func = pfn_free_func;

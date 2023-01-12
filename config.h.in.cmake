@@ -3,7 +3,7 @@
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
-#cmakedefine BUILD_ACCEL
+#cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
 #cmakedefine BUILD_VENTUS
 #cmakedefine BUILD_PROXY
@@ -51,6 +51,8 @@
 
 #cmakedefine ENABLE_SPIRV
 
+#cmakedefine ENABLE_VALGRIND
+
 #cmakedefine HAVE_DLFCN_H
 
 #cmakedefine HAVE_FORK
@@ -84,7 +86,7 @@
 
 #cmakedefine HAVE_UTIME
 
-#cmakedefine HAVE_VALGRIND
+#cmakedefine HAVE_XRT
 
 #cmakedefine ENABLE_LLVM
 
@@ -165,20 +167,15 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-/* "Using LLVM 6.0" */
-#cmakedefine LLVM_6_0
-
-/* "Using LLVM 7.0" */
-#cmakedefine LLVM_7_0
-
-/* "Using LLVM 8.0" */
-#cmakedefine LLVM_8_0
-
-#cmakedefine LLVM_9_0
-
 #cmakedefine LLVM_10_0
 
 #cmakedefine LLVM_11_0
+
+#cmakedefine LLVM_12_0
+
+#cmakedefine LLVM_13_0
+
+#cmakedefine LLVM_14_0
 
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
@@ -235,6 +232,8 @@
 
 #define TCE_DEVICE_EXTENSIONS "@TCE_DEVICE_EXTENSIONS@"
 
+#define OACC_EXECUTABLE "@TCECC@"
+
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
@@ -263,3 +262,5 @@
 
 
 #cmakedefine USE_POCL_MEMMANAGER
+
+#cmakedefine LLVM_OPAQUE_POINTERS

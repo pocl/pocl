@@ -59,7 +59,7 @@ static int cache_topdir_initialized = 0;
 static int use_kernel_cache = 0;
 
 /* sanity check on SHA1 digest emptiness */
-static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
+unsigned pocl_cache_buildhash_is_valid(cl_program program, unsigned device_i)
 {
   unsigned i, sum = 0;
   for(i=0; i<sizeof(SHA1_digest_t); i++)
@@ -75,7 +75,7 @@ static void program_device_dir(char *path,
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
-    assert(buildhash_is_valid(program, device_i));
+    assert(pocl_cache_buildhash_is_valid(program, device_i));
 
     int bytes_written = snprintf(path, POCL_FILENAME_LENGTH,
                                  "%s/%s%s", cache_topdir,
@@ -325,7 +325,7 @@ int pocl_cache_append_to_buildlog(cl_program  program,
                                   unsigned    device_i,
                                   const char *content,
                                   size_t      size) {
-    if (!buildhash_is_valid (program, device_i))
+    if (!pocl_cache_buildhash_is_valid (program, device_i))
       return -1;
 
     char buildlog_path[POCL_FILENAME_LENGTH];
@@ -386,6 +386,10 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options,
                          strlen(program->compiler_options));
 
+    pocl_SHA1_Update (&hash_ctx,
+                      (uint8_t *)&program->binary_type,
+                      sizeof(cl_program_binary_type));
+
 #ifdef ENABLE_LLVM
     /* The kernel compiler work-group function method affects the
        produced binary heavily. */
@@ -396,6 +400,21 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         if (wg_method)
           pocl_SHA1_Update (&hash_ctx, (uint8_t *)wg_method,
                             strlen (wg_method));
+      }
+#endif
+
+#ifdef ENABLE_SPIR
+    for (size_t i = 0; i < program->num_spec_consts; ++i)
+      {
+        if (program->spec_const_is_set[i])
+          {
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_ids[i],
+                              sizeof (cl_uint));
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_values[i],
+                              program->spec_const_sizes[i]);
+          }
       }
 #endif
 
@@ -542,12 +561,13 @@ pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
                                     char *program_bc_path)
 {
     assert(cache_topdir_initialized);
+    assert (program_bc_path);
 
     /* NULL is used only in one place, clCreateWithBinary,
      * and we want to keep the original hash value in that case */
     if (hash_source == NULL)
       {
-        assert (buildhash_is_valid (program, device_i));
+        assert (pocl_cache_buildhash_is_valid (program, device_i));
         program_device_dir (program_bc_path, program, device_i, "");
 
         if (pocl_mkdir_p (program_bc_path))
@@ -557,7 +577,7 @@ pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
       {
         build_program_compute_hash (program, device_i, hash_source,
                                     hash_source_len);
-        assert (buildhash_is_valid (program, device_i));
+        assert (pocl_cache_buildhash_is_valid (program, device_i));
 
         program_device_dir (program_bc_path, program, device_i, "");
 
@@ -590,7 +610,7 @@ void pocl_cache_cleanup_cachedir(cl_program program) {
 
   for (i = 0; i < program->num_devices; i++)
     {
-      if (!buildhash_is_valid (program, i))
+      if (!pocl_cache_buildhash_is_valid (program, i))
         continue;
 
       char cachedir[POCL_FILENAME_LENGTH];

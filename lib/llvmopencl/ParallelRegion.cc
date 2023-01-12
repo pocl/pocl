@@ -440,11 +440,7 @@ ParallelRegion::Verify()
   return true;
 }
 
-#ifdef LLVM_OLDER_THAN_8_0
-#define PARALLEL_MD_NAME "llvm.mem.parallel_loop_access"
-#else
 #define PARALLEL_MD_NAME "llvm.access.group"
-#endif
 
 /**
  * Adds metadata to all the memory instructions to denote
@@ -622,12 +618,15 @@ ParallelRegion::LocalIDZLoad()
 {
   if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
+  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
+      POCL_LOCAL_ID_Z_GLOBAL);
   return LocalIDZLoadInstr = builder.CreateLoad(
-#ifndef LLVM_OLDER_THAN_13_0
-    Ptr->getType()->getPointerElementType(),
+#if !defined(LLVM_OLDER_THAN_15_0)
+             Ptr->getValueType(),
+#elif !defined(LLVM_OLDER_THAN_13_0)
+             Ptr->getType()->getPointerElementType(),
 #endif
-    Ptr);
+             Ptr);
 }
 
 /**
@@ -639,12 +638,15 @@ ParallelRegion::LocalIDYLoad()
 {
   if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
+  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
+      POCL_LOCAL_ID_Y_GLOBAL);
   return LocalIDYLoadInstr = builder.CreateLoad(
-#ifndef LLVM_OLDER_THAN_13_0
-    Ptr->getType()->getPointerElementType(),
+#if !defined(LLVM_OLDER_THAN_15_0)
+             Ptr->getValueType(),
+#elif !defined(LLVM_OLDER_THAN_13_0)
+             Ptr->getType()->getPointerElementType(),
 #endif
-    Ptr);
+             Ptr);
 }
 
 /**
@@ -656,12 +658,15 @@ ParallelRegion::LocalIDXLoad()
 {
   if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  Value *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
+  GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
+      POCL_LOCAL_ID_X_GLOBAL);
   return LocalIDXLoadInstr = builder.CreateLoad(
-#ifndef LLVM_OLDER_THAN_13_0
-    Ptr->getType()->getPointerElementType(),
+#if !defined(LLVM_OLDER_THAN_15_0)
+             Ptr->getValueType(),
+#elif !defined(LLVM_OLDER_THAN_13_0)
+             Ptr->getType()->getPointerElementType(),
 #endif
-    Ptr);
+             Ptr);
 }
 
 void

@@ -13,11 +13,14 @@ tools:
   * Latest released version of LLVM & Clang
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
+  * CMake
   * GNU make or ninja
-  * pthread (should be installed by default)
-  * Optional: hwloc v1.0 or newer (e.g. libhwloc-dev)
   * pkg-config
-  * cmake
+  * pthread (should be installed by default)
+  * hwloc v1.0 or newer (e.g. libhwloc-dev) - optional
+  * python3 (for support of LLVM bitcode with SPIR target; optional but enabled by default)
+  * python3, llvm-spirv (version-compatible with LLVM) and spirv-tools (optional;
+    required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
 Installing requirements for Ubuntu::
 
@@ -26,7 +29,7 @@ Note: The binary packages from https://apt.llvm.org/ are recommended
 the packages included in the distribution. The following assumes
 apt.llvm.org is added to your apt repos::
 
-    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
+    apt install -y python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils libxml2-dev libclang-cpp${LLVM_VERSION}-dev libclang-cpp${LLVM_VERSION} llvm-${LLVM_VERSION}-dev
 
 Installing requirements for Arch Linux::
 
@@ -42,8 +45,11 @@ distributions in ``tools/docker``, looking into them might be helpful.
 OpenCL 3.0 support
 ------------------
 
-If you want PoCL built with ICD and OpenCL 3.0 support, you will need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
-
+If you want PoCL built with ICD and OpenCL 3.0 support at platform level, you will
+need sufficiently new ocl-icd (2.3.x). For Ubuntu, it can be installed from
+this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
+Additionally, if you want the CPU device to report as 3.0 OpenCL,
+you will need LLVM 14 or newer.
 
 Clang / LLVM Notes
 ------------------

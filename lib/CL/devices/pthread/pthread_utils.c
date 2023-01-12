@@ -212,19 +212,34 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
             }
         }
     }
-  if (!k->device->device_alloca_locals)
-    /* Allocate the automatic local buffers which are implemented as implicit
-       extra arguments at the end of the kernel argument list. */
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        cl_uint j = meta->num_args + i;
-        size_t size = meta->local_sizes[i];
-        arguments[j] = &arguments2[j];
-        arguments2[j] = start;
-        start += size;
-        start = align_ptr (start);
-        assert ((size_t) (start - local_mem) <= local_mem_size);
-      }
+  if (k->device->device_alloca_locals)
+    {
+      /* Local buffers are allocated in the device side work-group
+         launcher. Let's pass only the sizes of the local args in
+         the arg buffer. */
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          assert (sizeof (size_t) == sizeof (void *));
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          *(size_t *)(arguments[j]) = s;
+        }
+    }
+  else
+    {
+      /* Allocate the automatic local buffers which are implemented as implicit
+         extra arguments at the end of the kernel argument list. */
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          cl_uint j = meta->num_args + i;
+          size_t size = meta->local_sizes[i];
+          arguments[j] = &arguments2[j];
+          arguments2[j] = start;
+          start += size;
+          start = align_ptr (start);
+          assert ((size_t)(start - local_mem) <= local_mem_size);
+        }
+    }
 }
 
 /* called from kernel teardown code.

@@ -28,6 +28,7 @@
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
+#include <unistd.h>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -59,10 +60,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/LegacyPassManager.h>
 #define PassManager legacy::PassManager
 
-#ifndef LLVM_OLDER_THAN_10_0
-  #include <llvm/InitializePasses.h>
-  #include <llvm/Support/CommandLine.h>
-#endif
+#include <llvm/InitializePasses.h>
+#include <llvm/Support/CommandLine.h>
 #include <llvm-c/Core.h>
 
 using namespace llvm;
@@ -75,13 +74,25 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   return parseIRFile(path, Err, *c).release();
 }
 
+void parseModuleGVarSize(cl_program program, unsigned device_i,
+                         llvm::Module *ProgramBC) {
+
+  uint64_t TotalGVarBytes = 0;
+  if (!getModuleIntMetadata(*ProgramBC, PoclGVarMDName, TotalGVarBytes))
+    return;
+
+  if (TotalGVarBytes) {
+    if (program->global_var_total_size[device_i])
+      assert(program->global_var_total_size[device_i] == TotalGVarBytes);
+    else
+      program->global_var_total_size[device_i] = TotalGVarBytes;
+    POCL_MSG_PRINT_LLVM("Total Global Variable Bytes: %zu\n", TotalGVarBytes);
+  }
+}
+
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
   llvm::raw_string_ostream sos(dest);
-#ifdef LLVM_OLDER_THAN_7_0
-  WriteBitcodeToFile(mod, sos);
-#else
   WriteBitcodeToFile(*mod, sos);
-#endif
   sos.str(); // flush
 }
 
@@ -113,6 +124,9 @@ static int getModuleTriple(const char *input_stream, size_t size,
   StringRef input_stream_ref(input_stream, size);
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
+  if (!isBitcode((const unsigned char*)input_stream,
+                 (const unsigned char*)input_stream+size))
+    return -1;
 
   auto triple_e = getBitcodeTargetTriple(buffer->getMemBufferRef());
   if (!triple_e)
@@ -373,8 +387,6 @@ static unsigned GlobalLLVMContextRefcount = 0;
 
 void pocl_llvm_create_context(cl_context ctx) {
 
-  POCL_MSG_PRINT_LLVM("creating LLVM context\n");
-
 #ifdef GLOBAL_LLVM_CONTEXT
   if (GlobalLLVMContext != nullptr) {
     ctx->llvm_context_data = GlobalLLVMContext;
@@ -388,6 +400,13 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
+#if (CLANG_MAJOR == 15)
+#ifdef LLVM_OPAQUE_POINTERS
+  data->Context->setOpaquePointers(true);
+#else
+  data->Context->setOpaquePointers(false);
+#endif
+#endif
   data->number_of_IRs = 0;
   data->poclDiagString = new std::string;
   data->poclDiagStream = new llvm::raw_string_ostream(*data->poclDiagString);
@@ -407,6 +426,8 @@ void pocl_llvm_create_context(cl_context ctx) {
   GlobalLLVMContext = data;
   ++GlobalLLVMContextRefcount;
 #endif
+
+  POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
 
 void pocl_llvm_release_context(cl_context ctx) {
@@ -451,8 +472,7 @@ void pocl_llvm_release_context(cl_context ctx) {
 
 #define POCL_METADATA_ROOT "pocl_meta"
 
-void setModuleIntMetadata(llvm::Module *mod, const char *key,
-                          unsigned long data) {
+void setModuleIntMetadata(llvm::Module *mod, const char *key, uint64_t data) {
 
   llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
                             llvm::ConstantAsMetadata::get(ConstantInt::get(
@@ -488,9 +508,11 @@ void setModuleBoolMetadata(llvm::Module *mod, const char *key, bool data) {
 }
 
 bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
-                          unsigned long &data) {
+                          uint64_t &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {
@@ -515,7 +537,9 @@ bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
 bool getModuleStringMetadata(const llvm::Module &mod, const char *key,
                              std::string &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {

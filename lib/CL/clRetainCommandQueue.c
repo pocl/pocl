@@ -30,8 +30,9 @@ POname(clRetainCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERS
                           CL_INVALID_COMMAND_QUEUE);
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (command_queue, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %p  : %d\n",
-                            command_queue, refc);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %" PRId64
+                            " (%p), Refcount: %d\n",
+                            command_queue->id, command_queue, refc);
   return CL_SUCCESS;
 }
 POsym(clRetainCommandQueue)

@@ -65,10 +65,15 @@
 #include "common_driver.h"
 
 #define DEFAULT_WG_SIZE 64
+#define MAX_WG_SIZE 4096
 
 using namespace TTAMachine;
 
 static void *pocl_ttasim_thread (void *p);
+
+#define TCE_BUILTIN_KERNELS 4
+static const char* TCEBuiltinKernels[TCE_BUILTIN_KERNELS] = {
+  "pocl.mul.i32", "pocl.add.i32", "pocl.copy.i8", "pocl.abs.f32" };
 
 void
 pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
@@ -90,6 +95,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->write_rect = pocl_tce_write_rect;
   ops->copy = pocl_tce_copy;
   ops->copy_rect = pocl_tce_copy_rect;
+  ops->memfill = pocl_tce_memfill;
   ops->map_mem = pocl_tce_map_mem;
   ops->unmap_mem = pocl_tce_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -104,6 +110,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_tce_compile_kernel;
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
   // new driver api
   ops->join = pocl_tce_join;
@@ -117,6 +124,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->notify_event_finished = pocl_tce_notify_event_finished;
   ops->build_hash = pocl_tce_build_hash;
   ops->get_device_info_ext = NULL;
+  ops->update_event = pocl_ttasim_update_event;
 
   ops->init_queue = pocl_tce_init_queue;
   ops->free_queue = pocl_tce_free_queue;
@@ -188,6 +196,7 @@ public:
 
     const char *adf = strrchr(adfName, '/');
     if (adf != NULL) adf++;
+    else adf = adfName; //name does not contain a slash, use as-is
     if (snprintf (dev_name, 256, "ttasim-%s", adf) < 0)
       POCL_ABORT("Unable to generate the device name string.\n");
     dev->long_name = strdup(dev_name);  
@@ -451,11 +460,11 @@ public:
           << ";\n";
 
       out << "\tchar* kernargs = (char*)kernel_command.args;\n";
-      out << "\tchar* temp = 0;\n\tuint32_t *tmp = 0;\n";
+      out << "\tchar* temp = 0;\n\t__global__ uint32_t *tmp = 0;\n";
       for (size_t i = 0; i < gmem_count; ++i) {
         out << "\ttemp = kernargs + " << std::dec << gmem_ptr_positions[i]
             << ";\n";
-        out << "\ttmp = (uint32_t*)temp;\n";
+        out << "\ttmp = (__global__ uint32_t*)temp;\n";
         out << "\t*tmp = (uint32_t)&buffer_" << std::hex << gmem_startaddrs[i]
             << "[0]";
         out << ";" << std::endl;
@@ -620,10 +629,11 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 
   int max_wg
       = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
-  assert (max_wg > 0);
-  max_wg = std::min (max_wg, DEFAULT_WG_SIZE);
   if (max_wg < 0)
     max_wg = DEFAULT_WG_SIZE;
+  if (max_wg > MAX_WG_SIZE)
+    max_wg = DEFAULT_WG_SIZE;
+
 
   dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
       = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
@@ -656,6 +666,18 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->local_mem_type = CL_GLOBAL;
   dev->error_correction_support = CL_FALSE;
   dev->host_unified_memory = CL_FALSE;
+
+  dev->num_builtin_kernels = TCE_BUILTIN_KERNELS;
+  // TODO refactor to pocl_util
+  dev->builtin_kernel_list = (char*)malloc(1024);
+  dev->builtin_kernel_list[0] = 0;
+  for (unsigned i = 0; i < TCE_BUILTIN_KERNELS; ++i)
+     {
+       if (i>0)
+         strcat(dev->builtin_kernel_list, ";");
+       strcat(dev->builtin_kernel_list, TCEBuiltinKernels[i]);
+     }
+  dev->builtins_sources_path = "builtins.cl";
 
   dev->available = CL_TRUE;
 #ifdef ENABLE_LLVM
@@ -703,6 +725,19 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->mem_base_addr_align = 128;
   dev->min_data_type_align_size = 128;
 
+  dev->device_side_printf = 1;
+  dev->printf_buffer_size = PRINTF_BUFFER_SIZE;
+  TTASimDevice *d = (TTASimDevice *)dev->data;
+  d->printf_buffer =
+      pocl_alloc_buffer_from_region(&d->global_mem, dev->printf_buffer_size);
+  assert(d->printf_buffer);
+  d->printf_position_chunk = pocl_alloc_buffer_from_region(&d->global_mem, 4);
+  if (d->printf_position_chunk == NULL) {
+    POCL_ABORT("TTASIM: Can't allocate 4 bytes for printf index\n");
+  }
+  
+  dev->max_parameter_size = 1024;
+
   return CL_SUCCESS;
 }
 
@@ -718,4 +753,27 @@ cl_int pocl_ttasim_reinit(unsigned j, cl_device_id device) {
   POCL_MSG_PRINT_TCE("DEV REINIT \n");
   device->data = new TTASimDevice(device, tce_params[j]);
   return CL_SUCCESS;
+}
+
+void pocl_ttasim_update_event(cl_device_id device, cl_event event) {
+  TTASimDevice *d = (TTASimDevice *)device->data;
+  cl_int status = event->status;
+  switch (status) {
+  case CL_QUEUED:
+    if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+      event->time_queue = d->timeStamp();
+    break;
+  case CL_SUBMITTED:
+    if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+      event->time_submit = d->timeStamp();
+    break;
+  case CL_RUNNING:
+    if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+      event->time_start = d->timeStamp();
+    break;
+  case CL_COMPLETE:
+    POCL_MSG_PRINT_INFO("TTA: Command complete, event %zu\n", event->id);
+    if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+      event->time_end = d->timeStamp();
+  }
 }

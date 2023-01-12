@@ -31,3 +31,4 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clSetProgramReleaseCallback) (
 {
   return CL_INVALID_OPERATION;
 }
+POsym(clSetProgramReleaseCallback)

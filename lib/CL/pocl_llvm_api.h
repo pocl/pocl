@@ -68,19 +68,20 @@ public:
 };
 
 llvm::Module *parseModuleIR (const char *path, llvm::LLVMContext *c);
+void parseModuleGVarSize (cl_program program, unsigned device_i,
+                          llvm::Module *ProgramBC);
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest);
 llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
                                 llvm::LLVMContext *c);
 std::string getDiagString (cl_context ctx);
 
-void setModuleIntMetadata (llvm::Module *mod, const char *key,
-                           unsigned long data);
+void setModuleIntMetadata (llvm::Module *mod, const char *key, uint64_t data);
 void setModuleStringMetadata (llvm::Module *mod, const char *key,
                               const char *data);
 void setModuleBoolMetadata (llvm::Module *mod, const char *key, bool data);
 
 POCL_EXPORT bool getModuleIntMetadata (const llvm::Module &mod,
-                                       const char *key, unsigned long &data);
+                                       const char *key, uint64_t &data);
 POCL_EXPORT bool getModuleStringMetadata (const llvm::Module &mod,
                                           const char *key, std::string &data);
 POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
@@ -90,6 +91,10 @@ void clearKernelPasses();
 void clearTargetMachines();
 
 extern std::string currentWgMethod;
+
+extern const char *PoclGVarPrefix;
+extern const char *PoclGVarBufferName;
+extern const char *PoclGVarMDName;
 
 typedef std::map<cl_device_id, llvm::Module *> kernelLibraryMapTy;
 struct PoclLLVMContextData

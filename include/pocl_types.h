@@ -114,10 +114,6 @@ typedef uint64_t ulong;
 typedef uint32_t ulong;
 #endif
 
-#ifndef cl_khr_fp16
-typedef short half;
-#endif
-
 #endif
 
 /* The definitions below intentionally lead to errors if these types

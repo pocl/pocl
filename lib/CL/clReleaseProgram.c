@@ -47,7 +47,9 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_RELEASE_OBJECT (program, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("Release program %p, new refcount: %d, kernel #: %zu \n", program, new_refcount, program->num_kernels);
+  POCL_MSG_PRINT_REFCOUNTS (
+      "Release Program %" PRId64 " (%p), Refcount: %d, Kernel #: %zu \n",
+      program->id, program, new_refcount, program->num_kernels);
 
   if (new_refcount == 0)
     {
@@ -56,7 +58,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_ATOMIC_DEC (program_c);
 
       cl_context context = program->context;
-      POCL_MSG_PRINT_REFCOUNTS ("Free program %p\n", program);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Program %" PRId64 " (%p)\n", program->id,
+                                program);
       TP_FREE_PROGRAM (context->id, program->id);
 
       /* there should be no kernels left when we're releasing the program */
@@ -78,6 +81,10 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->source);
 
       POCL_MEM_FREE (program->program_il);
+      POCL_MEM_FREE (program->spec_const_ids);
+      POCL_MEM_FREE (program->spec_const_is_set);
+      POCL_MEM_FREE (program->spec_const_sizes);
+      POCL_MEM_FREE (program->spec_const_values);
 
       POCL_MEM_FREE(program->binary_sizes);
       if (program->binaries)
@@ -125,6 +132,9 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (program->build_hash);
       POCL_MEM_FREE (program->compiler_options);
       POCL_MEM_FREE (program->data);
+      POCL_MEM_FREE (program->global_var_total_size);
+      POCL_MEM_FREE (program->llvm_irs);
+      POCL_MEM_FREE (program->gvar_storage);
 
       for (i = 0; i < program->num_builtin_kernels; ++i)
         POCL_MEM_FREE (program->builtin_kernel_names[i]);

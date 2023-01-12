@@ -168,8 +168,6 @@ set_property(TEST
 set_property(TEST
   "workgroup/unbarriered_for_loops"
   "workgroup/barriered_for_loops"
-  "workgroup/range_md_small_grid"
-  "workgroup/range_md_large_grid"
   "workgroup/switch_case"
   "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
   APPEND PROPERTY LABELS "vulkan")

@@ -24,22 +24,6 @@
 #
 #=============================================================================
 
-if(TCE_CONFIG AND ((NOT DEFINED ENABLE_TCE) OR (ENABLE_TCE)) )
-  execute_process(COMMAND "${TCE_CONFIG}" --llvm-config
-                  RESULT_VARIABLE RES
-                  OUTPUT_VARIABLE TCE_LLVM_CONFIG
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(RES EQUAL 0)
-    if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
-      if(NOT WITH_LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG)
-        message(FATAL_ERROR "TCE is not disabled, and the llvm-config in WITH_LLVM_CONFIG (${WITH_LLVM_CONFIG}) is different from llvm-config used by TCE (${TCE_LLVM_CONFIG})")
-      endif()
-    else()
-      set(WITH_LLVM_CONFIG "${TCE_LLVM_CONFIG}")
-    endif()
-  endif()
-endif()
-
 if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   # search for preferred version
   if(IS_ABSOLUTE "${WITH_LLVM_CONFIG}")
@@ -55,15 +39,14 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-16.0" "llvm-config-16" "llvm-config160"
+      "llvm-config-mp-15.0" "llvm-config-15" "llvm-config150"
       "llvm-config-mp-14.0" "llvm-config-14" "llvm-config140"
       "llvm-config-mp-13.0" "llvm-config-13" "llvm-config130"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
-      "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
-      "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
-      "llvm-config-mp-7.0" "llvm-config-7" "llvm-config70"
-      "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
+      "llvm-config"
     DOC "llvm-config executable")
 endif()
 
@@ -143,8 +126,6 @@ run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
-run_llvm_config(LLVM_SYSLIBS --system-libs)
-string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
@@ -188,29 +169,7 @@ if(WIN32)
 endif(WIN32)
 
 # required for sources..
-if(LLVM_VERSION MATCHES "^6[.]0")
-  set(LLVM_MAJOR 6)
-  set(LLVM_6_0 1)
-  set(LLVM_OLDER_THAN_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^7[.]")
-  set(LLVM_MAJOR 7)
-  set(LLVM_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^8[.]")
-  set(LLVM_MAJOR 8)
-  set(LLVM_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^9[.]")
-  set(LLVM_MAJOR 9)
-  set(LLVM_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^10[.]")
+if(LLVM_VERSION MATCHES "^10[.]")
   set(LLVM_MAJOR 10)
   set(LLVM_10_0 1)
 elseif(LLVM_VERSION MATCHES "^11[.]")
@@ -225,17 +184,19 @@ elseif(LLVM_VERSION MATCHES "^13[.]")
 elseif(LLVM_VERSION MATCHES "^14[.]")
   set(LLVM_MAJOR 14)
   set(LLVM_14_0 1)
+elseif(LLVM_VERSION MATCHES "^15[.]")
+  set(LLVM_MAJOR 15)
+  set(LLVM_15_0 1)
+elseif(LLVM_VERSION MATCHES "^16[.]")
+  set(LLVM_MAJOR 16)
+  set(LLVM_16_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 14.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 10.0 and 16.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
 
 run_llvm_config(LLVM_HAS_RTTI --has-rtti)
-
-if(DEFINED SINGLE_LLVM_LIB)
-   message(AUTHOR_WARNING "SINGLE_LLVM_LIB option was removed; pocl now uses only llvm-config to get the libraries. Use STATIC_LLVM=ON/OFF to affect which libraries pocl requests from llvm-config")
-endif()
 
 if(STATIC_LLVM)
   set(LLVM_LIB_MODE --link-static)
@@ -264,25 +225,28 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 
 ####################################################################
 
+# this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 ####################################################################
 
-# llvm-config does not include clang libs
-if((9 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
-  # For Clang 10+, link against a single shared library instead of multiple component shared
-  # libraries.
+if(STATIC_LLVM)
+  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
+      clangParse clangSema clangRewrite clangRewriteFrontend
+      clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
+  if(LLVM_MAJOR GREATER 14)
+     list(APPEND CLANG_LIBNAMES clangSupport)
+  endif()
+else()
+  # For non-static builds, link against a single shared library
+  # instead of multiple component shared libraries.
   if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
     set(CLANG_LIBNAMES clangTCE-cpp)
   else()
     set(CLANG_LIBNAMES clang-cpp)
   endif()
-else()
-  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
-      clangParse clangSema clangRewrite clangRewriteFrontend
-      clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
@@ -672,10 +636,9 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
-  # WTF, ^^ has return value 1
-  #if(RES_VAR)
-  #  message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
-  #endif()
+  if(RES_VAR)
+    message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
+  endif()
 
   if(OUTPUT_VAR MATCHES "Host CPU: ([^ ]*)")
     # sigh... STRING(STRIP is to workaround regexp bug in cmake
@@ -801,7 +764,5 @@ execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOUR
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
 
-set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h")
-if(NOT LLVM_OLDER_THAN_9_0)
-  list(APPEND CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")
-endif()
+set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+                         "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")

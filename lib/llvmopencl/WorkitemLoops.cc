@@ -301,15 +301,11 @@ WorkitemLoops::CreateLoopAround
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
 
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-#ifdef LLVM_OLDER_THAN_8_0
-  MDNode *Root = MDNode::get(C, Dummy);
-#else
   MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
   MDNode *ParallelAccessMD = MDNode::get(
       C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
 
   MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
-#endif
 
   // At this point we have
   //   !0 = metadata !{}            <- dummy
@@ -328,11 +324,7 @@ WorkitemLoops::CreateLoopAround
       return dominatesExitBB.count(insn->getParent());
     };
 
-#ifdef LLVM_OLDER_THAN_8_0
-  region.AddParallelLoopMetadata(Root, IsLoadUnconditionallySafe);
-#else
   region.AddParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
-#endif
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -755,10 +747,8 @@ WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
                              "linear_xyz_idx");
 }
 
-llvm::Instruction *
-WorkitemLoops::AddContextSave
-(llvm::Instruction *instruction, llvm::Instruction *alloca)
-{
+llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
+                                                 llvm::AllocaInst *alloca) {
 
   if (isa<AllocaInst>(instruction))
     {
@@ -776,7 +766,7 @@ WorkitemLoops::AddContextSave
 
   IRBuilder<> builder(&*definition);
   std::vector<llvm::Value *> gepArgs;
-  
+
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
   ParallelRegion *region = RegionOfBlock(instruction->getParent());
@@ -796,33 +786,31 @@ WorkitemLoops::AddContextSave
       gepArgs.push_back(region->LocalIDXLoad());
     }
 
-  return builder.CreateStore(instruction,
-             builder.CreateGEP(alloca->getType()->getPointerElementType(),
-                               alloca, gepArgs));
+    return builder.CreateStore(
+        instruction,
+#ifdef LLVM_OLDER_THAN_15_0
+        builder.CreateGEP(alloca->getType()->getPointerElementType(), alloca,
+                          gepArgs));
+#else
+        builder.CreateGEP(alloca->getAllocatedType(), alloca, gepArgs));
+#endif
 }
 
-llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
-                                                    llvm::Instruction *alloca,
-                                                    llvm::Type *InstType,
-                                                    bool PoclWrapperStructAdded,
-                                                    llvm::Instruction *before,
-                                                    bool isAlloca) {
-  assert (val != NULL);
-  assert (alloca != NULL);
+llvm::Instruction *WorkitemLoops::AddContextRestore(
+    llvm::Value *val, llvm::AllocaInst *alloca, llvm::Type *InstType,
+    bool PoclWrapperStructAdded, llvm::Instruction *before, bool isAlloca) {
+
+  assert(val != NULL);
+  assert(alloca != NULL);
   IRBuilder<> builder(alloca);
-  if (before != NULL) 
-    {
-      builder.SetInsertPoint(before);
-    }
-  else if (isa<Instruction>(val))
-    {
-      builder.SetInsertPoint(dyn_cast<Instruction>(val));
-      before = dyn_cast<Instruction>(val);
-    }
-  else 
-    {
-      assert (false && "Unknown context restore location!");
-    }
+  if (before != NULL) {
+    builder.SetInsertPoint(before);
+  } else if (isa<Instruction>(val)) {
+    builder.SetInsertPoint(dyn_cast<Instruction>(val));
+    before = dyn_cast<Instruction>(val);
+  } else {
+    assert(false && "Unknown context restore location!");
+  }
 
   std::vector<llvm::Value *> gepArgs;
 
@@ -849,10 +837,13 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
       gepArgs.push_back(
           ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
 
-    llvm::Instruction *gep =
-        dyn_cast<Instruction>(builder.CreateGEP(
-            alloca->getType()->getPointerElementType(),
-            alloca, gepArgs));
+    llvm::Instruction *gep = dyn_cast<Instruction>(builder.CreateGEP(
+#ifdef LLVM_OLDER_THAN_15_0
+        alloca->getType()->getPointerElementType(), alloca, gepArgs));
+#else
+        alloca->getAllocatedType(), alloca, gepArgs));
+#endif
+
     if (isAlloca) {
       /* In case the context saved instruction was an alloca, we created a
          context array with pointed-to elements, and now want to return a
@@ -866,9 +857,8 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
  * Returns the context array (alloca) for the given Value, creates it if not
  * found.
  */
-llvm::Instruction *
-WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
-                               bool &PoclWrapperStructAdded) {
+llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
+                                                 bool &PoclWrapperStructAdded) {
   PoclWrapperStructAdded = false;
   /*
    * Unnamed temp instructions need a generated name for the
@@ -901,21 +891,18 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
   IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
   Function *FF = instruction->getParent()->getParent();
   Module *M = instruction->getParent()->getParent()->getParent();
-  LLVMContext &C = M->getContext();
   const llvm::DataLayout &Layout = M->getDataLayout();
   DICompileUnit *CU = nullptr;
   std::unique_ptr<DIBuilder> DB;
-#ifndef LLVM_OLDER_THAN_7_0
   if (M->debug_compile_units_begin() != M->debug_compile_units_end()) {
     CU = *M->debug_compile_units_begin();
     DB = std::unique_ptr<DIBuilder>{new DIBuilder(*M, true, CU)};
   }
-#endif
 
   // find the debug metadata corresponding to this variable
   Value *DebugVal = nullptr;
   IntrinsicInst *DebugCall = nullptr;
-#ifndef LLVM_OLDER_THAN_7_0
+
   if (CU) {
     for (BasicBlock &BB : (*FF)) {
       for (Instruction &I : BB) {
@@ -935,7 +922,6 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       }
     }
   }
-#endif
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
   if (DebugVal && DebugCall) {
@@ -958,7 +944,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
          unique stack space to all the work-items when its wiloop
          iteration is executed. */
       elementType = 
-        dyn_cast<AllocaInst>(instruction)->getType()->getElementType();
+        dyn_cast<AllocaInst>(instruction)->getAllocatedType();
     } 
   else 
     {
@@ -973,8 +959,11 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
   Type *AllocType = elementType;
   AllocaInst *InstCast = dyn_cast<AllocaInst>(instruction);
   if (InstCast) {
+#ifdef LLVM_OLDER_THAN_15_0
     unsigned Alignment = InstCast->getAlignment();
-
+#else
+    unsigned Alignment = InstCast->getAlign().value();
+#endif
     uint64_t StoreSize =
         Layout.getTypeStoreSize(InstCast->getAllocatedType());
 
@@ -1056,17 +1045,12 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
      code at least with Core i5 when aligned only at the element
      size. */
     Alloca->setAlignment(
-#ifndef LLVM_OLDER_THAN_10_0
 #ifndef LLVM_OLDER_THAN_11_0
         llvm::Align(
 #else
         llvm::MaybeAlign(
 #endif
-#endif
-            CONTEXT_ARRAY_ALIGN
-#ifndef LLVM_OLDER_THAN_10_0
-            )
-#endif
+            CONTEXT_ARRAY_ALIGN)
     );
 
     if (DebugVal && DebugCall && !WGDynamicLocalSize) {
@@ -1078,19 +1062,27 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       llvm::DINodeArray SubscriptArray = DB->getOrCreateArray(Subscripts);
 
       size_t sizeBits;
-#ifndef LLVM_OLDER_THAN_7_0
-      sizeBits = Alloca->getAllocationSizeInBits(M->getDataLayout())
-#ifndef LLVM_OLDER_THAN_12_0
+      sizeBits = Alloca
+                     ->getAllocationSizeInBits(M->getDataLayout())
+#if !defined(LLVM_OLDER_THAN_15_0)
+                     .value_or(TypeSize(0, false))
+                     .getFixedValue();
+#elif !defined(LLVM_OLDER_THAN_12_0)
                      .getValueOr(TypeSize(0, false))
                      .getFixedValue();
 #else
                      .getValueOr(0);
 #endif
+
       assert(sizeBits != 0);
-#endif
+
       // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
       // Alloca->getAllocatedType()->getScalarSizeInBits();
+#ifdef LLVM_OLDER_THAN_15_0
       size_t alignBits = Alloca->getAlignment() * 8;
+#else
+      size_t alignBits = Alloca->getAlign().value() * 8;
+#endif
 
       Metadata *VariableDebugMeta =
           cast<MetadataAsValue>(DebugCall->getOperand(1))->getMetadata();
@@ -1105,13 +1097,8 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
       assert(LocalVar);
       if (LocalVar) {
 
-#ifdef LLVM_OLDER_THAN_9_0
-        DICompositeType *CT = DB->createArrayType(
-            sizeBits, alignBits, LocalVar->getType().resolve(), SubscriptArray);
-#else
         DICompositeType *CT = DB->createArrayType(
             sizeBits, alignBits, LocalVar->getType(), SubscriptArray);
-#endif
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
         std::cerr << "### DICompositeType:\n";
@@ -1159,7 +1146,7 @@ WorkitemLoops::AddContextSaveRestore
 
   /* Allocate the context data array for the variable. */
   bool PoclWrapperStructAdded = false;
-  llvm::Instruction *alloca =
+  llvm::AllocaInst *alloca =
       GetContextArray(instruction, PoclWrapperStructAdded);
   llvm::Instruction *theStore = AddContextSave(instruction, alloca);
 

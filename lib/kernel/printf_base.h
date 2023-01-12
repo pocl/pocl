@@ -43,6 +43,12 @@
 
 #endif
 
+#ifdef PRINTF_BUFFER_AS_ID
+#define PRINTF_BUFFER_AS __attribute__ ((address_space (PRINTF_BUFFER_AS_ID)))
+#else
+#define PRINTF_BUFFER_AS
+#endif
+
 typedef intptr_t ssize_t;
 
 #ifdef cl_khr_int64
@@ -126,7 +132,7 @@ typedef struct
 typedef struct
 {
   char *bf;             /**  Buffer to output */
-  char *restrict printf_buffer;
+  PRINTF_BUFFER_AS char *restrict printf_buffer;
   uint printf_buffer_index;
   uint printf_buffer_capacity;
   int precision;       /**  field precision */

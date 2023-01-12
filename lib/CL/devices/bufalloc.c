@@ -251,7 +251,7 @@ pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 
 #ifndef BUFALLOC_NO_MULTIPLE_REGIONS 
 chunk_info_t *
-alloc_buffer (memory_region_t *regions, size_t size)
+pocl_alloc_buffer (memory_region_t *regions, size_t size)
 {
   chunk_info_t *chunk = NULL;
   memory_region_t *region = NULL;
@@ -308,6 +308,8 @@ coalesce_chunks (chunk_info_t* first,
      detect that here and do not merge first with the second. */
   if (first->start_address > second->start_address) return second;
 
+  if(first == second) return first;
+
 #ifdef DEBUG_BUFALLOC
   printf ("### coalescing chunks:\n");
   print_chunk (first);
@@ -331,7 +333,7 @@ coalesce_chunks (chunk_info_t* first,
 #endif
 
 memory_region_t *
-free_buffer (memory_region_t *regions, memory_address_t addr)
+pocl_free_buffer (memory_region_t *regions, memory_address_t addr)
 {
   memory_region_t *region = NULL;
 
@@ -379,7 +381,8 @@ pocl_free_chunk (chunk_info_t *chunk)
   BA_LOCK (region->lock);
   chunk->is_allocated = 0;
 #ifndef BUFALLOC_NO_CHUNK_COALESCING
-  coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+  chunk = coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+  chunk = coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
 #endif
   BA_UNLOCK (region->lock);
 

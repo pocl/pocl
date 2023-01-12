@@ -1,0 +1,85 @@
+#!/bin/bash
+# run_tta_tests - Runs tests against the tta device drivers.
+#
+# Copyright (c) 2021 Michal Babe / Tampere University
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
+export POCL_BUILDING=1
+export POCL_DEVICES=almaif
+
+if [ -z "$OCL_ICD_VENDORS" ]; then
+  export OCL_ICD_VENDORS=$PWD/ocl-vendors
+fi
+
+if [ ! -e "$OCL_ICD_VENDORS" ]; then
+  echo "OCL_ICD_VENDORS: $OCL_ICD_VENDORS doesn't exist"
+  exit 1
+fi
+
+echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
+echo "Using ALMAIF0 params: $POCL_ALMAIF0_PARAMETERS"
+
+if command -v pynq &> /dev/null
+then
+  PYNQ_AVAILABLE=1
+fi
+
+# Preliminary checks only
+if ! [ -z ${PYNQ_AVAILABLE} ]
+then
+  declare -a TTATests=("axim_sep" "axim_fused_global_cq" "axim_fused_global_private" "axim_fused_global_cq_private" \
+        "relative_sep" "relative_fused_global_cq" "relative_fused_global_private" "relative_fused_global_cq_private")
+  #Sanity check to ensure everything has been moved correctly to the FPGA device
+  for val in ${TTATests[@]}; do
+    # Check for existence of all the necessary files before launching the tests
+    # The files are generated during make and when running the above ttasim
+    # tests on the host machine
+
+    # Bitstream files needed by all tta configuration tests:
+    if [ ! -f $PWD/examples/accel/bitstreams/${val}.bit ]; then
+      echo "$PWD/examples/accel/bitstreams/${val}.bit doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+    if [ ! -f $PWD/examples/accel/bitstreams/${val}.hwh ]; then
+      echo "$PWD/examples/accel/bitstreams/${val}.hwh doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+
+    # Firmare file which implements pocl.add.i32 and pocl.mul.i32
+    if [ ! -f $PWD/examples/accel/firmware_imgs/${val}.img ]; then
+      echo "$PWD/examples/accel/firmware_imgs/${val}.img doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+
+    # Files needed for the cross-compilation example0
+    if [ ! -f $PWD/examples/accel/${val}_example0.poclbin ]; then
+      echo "$PWD/examples/accel/${val}_example0.poclbin doesn't exist.\
+            Please copy it from the host machine"
+      exit 1
+    fi
+  done
+fi
+
+echo "Running AlmaIF tests on ttasim"
+export POCL_ALMAIF0_PARAMETERS="0xB,$PWD/../tools/data/test_machine_LE,65535"
+ctest -L almaif $@

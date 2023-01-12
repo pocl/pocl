@@ -1,3 +1,53 @@
+Rizwan A. Ashraf and Roberto Gioiosa
+Exploring the Use of Novel Spatial Accelerators in Scientific Applications.
+https://doi.org/10.1145/3489525.3511690
+In Proceedings of the 2022 ACM/SPEC on International Conference on Performance Engineering (ICPE '22). ACM, New York, NY, USA, 47–58, 2022
+
+John A. Stratton, Jyothi Krishna V. S., Jeevitha Palanisamy, Karthikadevi Chinnaraju 
+Kernel Fusion in OpenCL
+https://doi.org/10.1007/978-3-031-06156-1_16
+Euro-Par 2021: Parallel Processing Workshops. Springer, Cham, 2022
+
+Tobias Baumann, Matthias Noack, Thomas Steinke
+Performance Evaluation and Improvements of the PoCL Open-Source OpenCL Implementation on Intel CPUs
+https://doi.org/10.1145/3456669.3456698
+International Workshop on OpenCL (IWOCL'21). ACM, New York, USA, Article 6, 1–12, 2021
+
+Fares Elsabbagh, Blaise Tine, Priyadarshini Roshan, Ethan Lyons, Euna Kim, Da Eun Shim, Lingjun Zhu, Sung Kyu Lim, Hyesoon Kim
+Vortex: OpenCL Compatible RISC-V GPGPU
+https://doi.org/10.48550/arxiv.2002.12151
+ArXiv preprint, 2020
+
+Kati Tervo, Samawat Malik, Topi Lepp&auml;nen, Pekka J&auml;&auml;skel&auml;inen
+TTA-SIMD Soft Core Processors
+https://www.researchgate.net/publication/346203698_TTA-SIMD_Soft_Core_Processors
+FPL2020: 30th International Conference on Field-Programmable Logic and Applications 2020
+
+Michal Babej and Pekka J&auml;&auml;skel&auml;inen
+HIPCL: Tool for Porting CUDA Applications to Advanced OpenCL Platforms Through HIP
+https://doi.org/10.1145/3388333.3388641
+Poster. Proceedings of the International Workshop on OpenCL (IWOCL '20). ACM, New York, USA, Article 18, 1–3. 2020
+
+Joost Hoozemans, Jeroen van Straten, Timo Viitanen, Aleksi Tervo, Jiri Kadlec, Zaid Al-Ars
+ALMARVI Execution Platform: Heterogeneous Video Processing SoC Platform on FPGA
+https://doi.org/10.1007/s11265-018-1424-1
+Journal of Signal Processing Systems, 91, 61–73, 2019
+
+Heikki Kultala, Timo Viitanen, Heikki Berg, Pekka J&auml;&auml;skel&auml;inen, Joonas Multanen, Mikko Kokkonen, Kalle Raiskila, Tommi Zetterman, Jarmo Takala
+LordCore: Energy-Efficient OpenCL-Programmable Software-Defined Radio Coprocessor
+http://urn.fi/URN:NBN:fi:tuni-202010297679
+IEEE Transactions on Very Large Scale Integration (VLSI) Systems, Volume 27, Issue 5, May 2019
+
+Peng Zhang, Jianbin Fang, Canqun Yang, Tao Tang, Chun Huang, Zheng Wang
+MOCL: An Efficient OpenCL implementation for the Matrix-2000 Architecture
+https://doi.org/10.1145/3203217.3203244
+Proceedings of the 15th ACM International Conference on Computing Frontiers (CF '18), ACM, New York, USA, 26–35, 2018
+
+Yuan-Ming Chang, Shao-Chung Wang, Chun-Chieh Yang, Yuan-Shin Hwang, Jenq-Kuen Lee
+Enabling PoCL-based runtime frameworks on the HSA for OpenCL 2.0 support
+https://doi.org/10.1016/j.sysarc.2017.10.004
+Journal of Systems Architecture, Volume 81, Pages 71-82, 2017
+
 Hosseinabady, M., Nunez-Yanez, J.L.
 Optimised OpenCL workgroup synthesis for hybrid ARM-FPGA devices
 http://dx.doi.org/10.1109/FPL.2015.7294016
@@ -10,7 +60,7 @@ Faculty of Electrical Engineering, Mathematics and Computer Science, Delft Unive
 
 Jianbin Fang, Henk Sips, Pekka J&auml;&auml;skel&auml;inen, Ana Lucia Varbanescu
 Grover: Looking for Performance Improvement by Disabling Local Memory Usage in OpenCL Kernels
-http://www.pds.ewi.tudelft.nl/fileadmin/pds/homepages/fang/papers/icpp2k14a214.pdf
+http://doi.org/10.1109/ICPP.2014.25
 The 43rd International Conference on Parallel Processing (ICPP-2014), Minneapolis, USA, September 9-12, 2014.
 
 

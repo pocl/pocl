@@ -32,14 +32,17 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "pocl-pthread_scheduler.h"
-#include "pocl_cl.h"
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "utlist.h"
-#include "pocl_util.h"
+#include "builtin_kernels.hh"
 #include "common.h"
+#include "common_driver.h"
+#include "pocl-pthread.h"
+#include "pocl-pthread_scheduler.h"
+#include "pocl-pthread_utils.h"
+#include "pocl_cl.h"
 #include "pocl_mem_management.h"
+#include "pocl_util.h"
+#include "utlist.h"
+
 #ifdef __APPLE__
 #include "pthread_barrier.h"
 #endif
@@ -97,6 +100,10 @@ pthread_scheduler_init (cl_device_id device)
   POCL_FAST_INIT (scheduler.wq_lock_fast);
 
   PTHREAD_CHECK (pthread_cond_init (&(scheduler.wake_pool), NULL));
+
+  POCL_LOCK (scheduler.wq_lock_fast);
+  VG_ASSOC_COND_VAR (scheduler.wake_pool, scheduler.wq_lock_fast);
+  POCL_UNLOCK (scheduler.wq_lock_fast);
 
   scheduler.thread_pool = pocl_aligned_malloc (
       HOST_CPU_CACHELINE_SIZE,
@@ -357,7 +364,8 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 
   pocl_release_dlhandle_cache (k->cmd);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
+  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
+                                  "NDRange Kernel        ");
 
   POCL_FAST_DESTROY (k->lock);
   free_kernel_run_command (k);
@@ -369,14 +377,26 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   kernel_run_command *run_cmd;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_program program = kernel->program;
+  cl_uint dev_i = cmd->program_device_i;
+
+  /* initialize the program gvars if required */
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
+
+  char *saved_name = NULL;
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
+  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   if (num_groups == 0)
     {
-      pocl_update_event_running (cmd->event);
+      pocl_update_event_running (cmd->sync.event.event);
 
-      POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->event, "NDRange Kernel        ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
+                                      "NDRange Kernel        ");
 
       return;
     }
@@ -392,6 +412,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->pc.printf_buffer = NULL;
   run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
   run_cmd->pc.printf_buffer_position = NULL;
+  run_cmd->pc.global_var_buffer = program->gvar_storage[dev_i];
   run_cmd->remaining_wgs = num_groups;
   run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = cmd->command.run.wg;
@@ -402,7 +423,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   setup_kernel_arg_array (run_cmd);
 
-  pocl_update_event_running (cmd->event);
+  pocl_update_event_running (cmd->sync.event.event);
 
   pthread_scheduler_push_kernel (run_cmd);
 }
@@ -497,7 +518,7 @@ RETRY:
     {
       POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
-      assert (pocl_command_is_ready (cmd->event));
+      assert (pocl_command_is_ready (cmd->sync.event.event));
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {

@@ -8,6 +8,9 @@ extern "C"
 {
 #endif
 
+  typedef void (*gvar_init_callback_t)(cl_program program, cl_uint dev_i,
+                                       _cl_command_node *fake_cmd);
+
 POCL_EXPORT
   void pocl_driver_read (void *data, void *__restrict__ dst_host_ptr,
                          pocl_mem_identifier *src_mem_id, cl_mem src_buf,
@@ -111,6 +114,17 @@ POCL_EXPORT
                                    const char *binary);
 POCL_EXPORT
   int pocl_driver_build_poclbinary (cl_program program, cl_uint device_i);
+
+POCL_EXPORT
+  int pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i);
+
+POCL_EXPORT
+  void pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
+                             cl_device_id device, gvar_init_callback_t callback);
+
+POCL_EXPORT
+  void pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
+                                   _cl_command_node *fake_cmd);
 
 #ifdef __cplusplus
 }

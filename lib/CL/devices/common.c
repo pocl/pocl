@@ -44,7 +44,6 @@
 #include "common.h"
 #include "pocl_shared.h"
 
-#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -56,6 +55,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "common_driver.h"
 
 #ifdef HAVE_GETRLIMIT
 #include <sys/time.h>
@@ -294,16 +294,15 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-
 /**
- * executes given command. Call with node->event UNLOCKED.
+ * executes given command. Call with node->sync.event.event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
   cl_mem mem = NULL;
@@ -617,12 +616,8 @@ pocl_exec_command (_cl_command_node *node)
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
-    case CL_COMMAND_MARKER:
-      pocl_update_event_running (event);
-      POCL_UPDATE_EVENT_COMPLETE(event);
-      break;
-
     case CL_COMMAND_BARRIER:
+    case CL_COMMAND_MARKER:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
@@ -709,7 +704,12 @@ pocl_exec_command (_cl_command_node *node)
         dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
                                cmd->svm_migrate.svm_pointers,
                                cmd->svm_migrate.sizes);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
+      break;
+
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      pocl_update_event_running (event);
+      POCL_UPDATE_EVENT_COMPLETE (event);
       break;
 
     default:
@@ -1220,6 +1220,29 @@ pocl_set_buffer_image_limits(cl_device_id device)
       device->max_constant_buffer_size = s;
     }
 
+  /* OpenCL 3.0 mandates at least 64KB for CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE
+   * and 32KB for CL_DEVICE_LOCAL_MEM_SIZE. pocl_topology tries to use size of
+   * largest non-shared cache (usually L2), but some CPUs don't have L3
+   * and the only non-shared cache is L1, which can be too small. */
+  if (device->version_as_int > 299)
+    {
+      if (device->local_mem_size < 32 * 1024)
+        device->local_mem_size = 32 * 1024;
+      if (device->max_constant_buffer_size < 64 * 1024)
+        device->max_constant_buffer_size = 64 * 1024;
+    }
+
+  /* set program scope variable device limits.
+   * only the max_size is an actual limit.
+   * for CPU devices there is no hardware limit.
+   * TODO what should we set them to ?
+   * setting this to >= 2^16 causes LLVM to crash in SDNode */
+  if (device->program_scope_variables_pass)
+    {
+      device->global_var_max_size = 64 * 1000;
+      device->global_var_pref_size = max(64 * 1000, device->max_constant_buffer_size);
+    }
+
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
    * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
@@ -1608,6 +1631,16 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                     | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                     | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+
+  if (dev->llvm_cpu != NULL)
+    {
+      dev->builtin_kernel_list
+          = strdup ("pocl.add.i8;"
+                    "org.khronos.openvx.scale_image.nn.u8;"
+                    "org.khronos.openvx.scale_image.bl.u8;"
+                    "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32");
+      dev->num_builtin_kernels = 4;
+    }
 }
 
 /*
@@ -1713,7 +1746,9 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
 
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
-        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" } };
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
+
+        { CL_MAKE_VERSION (0, 9, 0), "cl_khr_command_buffer" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);
@@ -1815,6 +1850,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
 };
 
 const size_t OPENCL_FEATURES_NUM
@@ -1834,5 +1870,46 @@ pocl_setup_features_with_version (cl_device_id dev)
 void
 pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 {
-  /* implementation should use BIDescriptors */
+  if (dev->num_builtin_kernels == 0)
+    return;
+
+  assert (dev->builtin_kernel_list != NULL);
+
+  dev->builtin_kernels_with_version
+      = malloc (dev->num_builtin_kernels * sizeof (cl_name_version));
+  assert (dev->builtin_kernels_with_version);
+
+  char *temp = strdup (dev->builtin_kernel_list);
+  char *token;
+  char *rest = temp;
+
+  unsigned i = 0;
+  while ((token = strtok_r (rest, ";", &rest)))
+    {
+      // The builtin kernel name stored here can only be the
+      // maximum of CL_NAME_VERSION_MAX_NAME_SIZE - 1.
+      if (strlen (token) >= CL_NAME_VERSION_MAX_NAME_SIZE)
+        {
+          POCL_MSG_WARN ("Built-in kernel name cannot fit in to the "
+                         "cl_name_version array. Length of built-in kernel "
+                         "name is %u, and the concatenated length is %u\n",
+                         strlen (token), CL_NAME_VERSION_MAX_NAME_SIZE - 1);
+          token[CL_NAME_VERSION_MAX_NAME_SIZE - 1] = '\0';
+        }
+      strncpy (dev->builtin_kernels_with_version[i].name, token,
+               CL_NAME_VERSION_MAX_NAME_SIZE);
+
+      /* proper versioning could use pocl_BIDescriptors.
+       * For now, hardcode the version to 1.2 */
+      dev->builtin_kernels_with_version[i].version = CL_MAKE_VERSION (1, 2, 0);
+      i++;
+    }
+  free (temp);
+
+  if (i != dev->num_builtin_kernels)
+    {
+      POCL_ABORT ("Builtin kernels with version list construction failed. "
+                  "There are %u built-in kernels, but only %u were found\n",
+                  dev->num_builtin_kernels, i);
+    }
 }

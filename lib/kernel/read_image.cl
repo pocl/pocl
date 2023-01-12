@@ -1540,17 +1540,11 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 
 /*************************************************************************/
 
-#if __clang_major__ > 3
 /* After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
  which we convert to int32 with the LLVM pass HandleSamplerInitialization. */
 #define READ_SAMPLER                                                          \
   const dev_sampler_t s                                                       \
-      = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));
-#else
-/* Before Clang 4.0, the sampler_t was passed as an int32. */
-#define READ_SAMPLER                                                          \
-  const dev_sampler_t s = (dev_sampler_t) (__builtin_astype (sampler, int));
-#endif
+      = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));              \
 
 /* Implementation for read_image with any image data type and int coordinates
    __IMGTYPE__ = image type (image2d_t, ...)
@@ -1568,7 +1562,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
     return as_##__RETVAL__ (color);                                           \
   }
@@ -1581,7 +1576,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
     return as_float4 (color);                                                 \
   }
@@ -1594,7 +1590,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
     return as_float4 (color);                                                 \
   }
@@ -1608,7 +1605,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
     return as_##__RETVAL__ (color);                                           \
   }

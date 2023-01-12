@@ -43,7 +43,7 @@ An ICD loader is an OpenCL library acting as a "proxy" to one of the various Ope
 implementations installed in the system. pocl does not provide an ICD loader itself,
 but NVidia, AMD, Intel, Khronos, and the free ocl-icd project each provides one.
 
-* `ocl-icd <https://forge.imag.fr/projects/ocl-icd/>`_
+* `ocl-icd <https://github.com/OCL-dev/ocl-icd>`_
 * `Khronos <http://www.khronos.org/opencl/>`_
 
 Linking your program directly with pocl

@@ -198,7 +198,7 @@ Downsides:
   * May report some leaks which are not ones (see below).
 
 Setup:
-  * Optional: build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
+  * Optional: build PoCL with ``-DENABLE_VALGRIND=ON -DCMAKE_BUILD_TYPE=Debug``
   * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
     or add these flags to the ``clBuildProgram`` call.
     This will cause all kernels to compile with debuginfo.

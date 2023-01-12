@@ -220,16 +220,13 @@ before submitting PRs. Thus, regressions on these suites should be detected
 early. The required testsuites can be enabled at buildtime with
 ``-DENABLE_TESTSUITES=tier1`` cmake option.
 
-Currently (2017-03-16) the following are included in the tier-1 test suites:
+Currently (2022-11-07) the following are included in the tier-1 test suites:
 
 * The standard test suite of pocl.
-* AMD SDK 3.0 test suite
 * PyOpenCL test suite
 * piglit test suite
 * conformance_suite_micro test suite
-* CLBlast tests (excluding the longest running ones)
-* HSA test suite (uses the LLVM 3.7 with an HSAIL backend and targets an AMD Kaveri GPU)
-* TCE short smoke test suite (against the latest TCE open source release)
+* OpenASIP short smoke test suite (against the latest OpenASIP open source release)
 
 Please note that not necessarily all the tests currently pass in the suites,
 we just ensure the currently passing ones do not regress with new

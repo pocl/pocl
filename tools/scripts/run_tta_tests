@@ -22,18 +22,22 @@
 # THE SOFTWARE.
 
 export POCL_BUILDING=1
-export POCL_DEVICES="ttasim"
+
+if [ -z "$POCL_TTASIM0_PARAMETERS" ]; then
+  export POCL_DEVICES="ttasim"
+  D=$(dirname "$(readlink -f "$0")")
+  export POCL_TTASIM0_PARAMETERS="$D/../data/test_machine_LE.adf"
+fi
+
 if [ -z "$OCL_ICD_VENDORS" ]; then
   export OCL_ICD_VENDORS=$PWD/ocl-vendors
 fi
+
 if [ ! -e "$OCL_ICD_VENDORS" ]; then
   echo "OCL_ICD_VENDORS: $OCL_ICD_VENDORS doesn't exist"
   exit 1
 fi
 echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
-
-D=$(dirname "$(readlink -f "$0")")
-export POCL_TTASIM0_PARAMETERS="$D/../data/test_machine.adf"
 
 if [ ! -f "CMakeCache.txt" ]; then
   make check TESTSUITEFLAGS="-k tce"

@@ -294,10 +294,11 @@ def generate_saturated_conversion(src, dst, size):
   elif src in float_types:
 
     # Conversion from float to int
-    print("""  {DST}{N} y = convert_{DST}{N}(x);
+    print("""  x = select(x, ({SRC}{N})(0), ({BOOL}{N})isnan(x));
+  {DST}{N} y = convert_{DST}{N}(x);
   y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN_FLT}){BS});
   y = select(y, ({DST}{N}){DST_MAX}, {BP}(x >= ({SRC}{N}){DST_MAX_FLT}){BS});
-  return y;""".format(SRC=src, DST=dst, N=size,
+  return y;""".format(SRC=src, DST=dst, N=size, BOOL=bool_type[src],
       DST_MIN=limit_min[dst], DST_MAX=limit_max[dst],
       DST_MIN_FLT=limit_min_float[dst], DST_MAX_FLT=limit_max_float[dst],
       BP=bool_prefix, BS=bool_suffix))

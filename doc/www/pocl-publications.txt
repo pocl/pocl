@@ -13,3 +13,18 @@ Exploiting Task Parallelism with OpenCL: A Case Study
 https://link.springer.com/article/10.1007%2Fs11265-018-1416-1
 Journal of Signal Processing Systems, Springer. January 2019, Volume 91, Issue 1.
 
+Jan Solanti, Michal Babej, Julius Ikkala, Vinod Kumar Malamal Vadakital, Pekka J&auml;&auml;skel&auml;inen
+PoCL-R: A Scalable Low Latency Distributed OpenCL Runtime
+https://urn.fi/URN:NBN:fi:tuni-202205044345
+SAMOS XXI: Embedded Computer Systems: Architectures, Modeling, and Simulation, July 2021.
+
+Topi Lepp&auml;nen, Panagiotis Mousouliotis, Georgios Keramidas, Joonas Multanen, Pekka J&auml;&auml;skel&auml;inen
+Unified OpenCL Integration Methodology for FPGA Designs
+https://urn.fi/URN:NBN:fi:tuni-202111298778
+NorCAS 2021: IEEE Nordic Circuits and Systems Conference, October 2021.
+
+Topi Lepp&auml;nen, Atro Lotvonen, Pekka J&auml;&auml;skel&auml;inen
+Cross-vendor programming abstraction for diverse heterogeneous platforms,
+https://doi.org/10.3389/fcomp.2022.945652
+Frontiers in Computer Science, vol. 4, 2022.
+

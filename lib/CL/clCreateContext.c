@@ -224,6 +224,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);
 
+  POCL_MSG_PRINT_GENERAL ("Created Context %" PRId64 " (%p)\n", context->id,
+                          context);
   return context;
   
 ERROR:

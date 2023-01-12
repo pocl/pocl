@@ -30,7 +30,9 @@ endif(MSVC)
 add_library("pocl-devices-topology" OBJECT pocl_topology.c pocl_topology.h)
 harden("pocl-devices-topology")
 
-target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+if(${OCL_ICD_INCLUDE_DIRS})
+  target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+endif()
 
 if(Hwloc_FOUND)
         target_include_directories("pocl-devices-topology" SYSTEM PUBLIC ${Hwloc_INCLUDE_DIRS})

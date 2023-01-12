@@ -136,4 +136,20 @@
 #define clEnqueueReleaseGLObjects POclEnqueueReleaseGLObjects
 #define clGetGLContextInfoKHR POclGetGLContextInfoKHR
 
+/* cl_khr_command_buffer */
+#define clCreateCommandBufferKHR POclCreateCommandBufferKHR
+#define clRetainCommandBufferKHR POclRetainCommandBufferKHR
+#define clReleaseCommandBufferKHR POclReleaseCommandBufferKHR
+#define clGetCommandBufferInfoKHR POclGetCommandBufferInfoKHR
+#define clEnqueueCommandBufferKHR POclEnqueueCommandBufferKHR
+#define clCommandBarrierWithWaitListKHR POclCommandBarrierWithWaitListKHR
+#define clCommandNDRangeKernelKHR POclCommandNDRangeKernelKHR
+#define clCommandCopyBufferKHR POclCommandCopyBufferKHR
+#define clCommandCopyBufferRectKHR POclCommandCopyBufferRectKHR
+#define clCommandCopyBufferToImageKHR POclCommandCopyBufferToImageKHR
+#define clCommandCopyImageKHR POclCommandCopyImageKHR
+#define clCommandCopyImageToBufferKHR POclCommandCopyImageToBufferKHR
+#define clCommandFillBufferKHR POclCommandFillBufferKHR
+#define clCommandFillImageKHR POclCommandFillImageKHR
+
 #endif

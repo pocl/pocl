@@ -70,6 +70,7 @@
 #define cosh           _cl_cosh
 #define cospi          _cl_cospi
 #define cross          _cl_cross
+#define ctz            _cl_ctz
 #define degrees        _cl_degrees
 #define distance       _cl_distance
 #define dot            _cl_dot
@@ -944,17 +945,17 @@
 #define atomic_or      _cl_atomic_or
 #define atomic_xor     _cl_atomic_xor
 
-#define atom_add     _cl_atomic_add
-#define atom_sub     _cl_atomic_sub
-#define atom_xchg    _cl_atomic_xchg
-#define atom_inc     _cl_atomic_inc
-#define atom_dec     _cl_atomic_dec
-#define atom_cmpxchg _cl_atomic_cmpxchg
-#define atom_min     _cl_atomic_min
-#define atom_max     _cl_atomic_max
-#define atom_and     _cl_atomic_and
-#define atom_or      _cl_atomic_or
-#define atom_xor     _cl_atomic_xor
+#define atom_add     _cl_atom_add
+#define atom_sub     _cl_atom_sub
+#define atom_xchg    _cl_atom_xchg
+#define atom_inc     _cl_atom_inc
+#define atom_dec     _cl_atom_dec
+#define atom_cmpxchg _cl_atom_cmpxchg
+#define atom_min     _cl_atom_min
+#define atom_max     _cl_atom_max
+#define atom_and     _cl_atom_and
+#define atom_or      _cl_atom_or
+#define atom_xor     _cl_atom_xor
 
 #define  atomic_init    _cl_atomic_init
 #define  atomic_flag_test_and_set_explicit    _cl_atomic_flag_test_and_set_explicit
@@ -985,5 +986,26 @@
 #define  atomic_fetch_min    _cl_atomic_fetch_min
 #define  atomic_fetch_max_explicit    _cl_atomic_fetch_max_explicit
 #define  atomic_fetch_max    _cl_atomic_fetch_max
+
+#define read_mem_fence     _cl_read_mem_fence
+#define write_mem_fence    _cl_write_mem_fence
+#define mem_fence          _cl_mem_fence
+#define work_group_barrier _cl_work_group_barrier
+#define atomic_work_item_fence _cl_atomic_work_item_fence
+#define wait_group_events  _cl_wait_group_events
+
+#define get_image_array_size _cl_get_image_array_size
+#define get_image_channel_data_type _cl_get_image_channel_data_type
+#define get_image_channel_order _cl_get_image_channel_order
+#define get_image_dim _cl_get_image_dim
+#define get_image_depth _cl_get_image_depth
+#define get_image_height _cl_get_image_height
+#define get_image_width _cl_get_image_width
+#define read_imageui _cl_read_imageui
+#define read_imagei _cl_read_imagei
+#define read_imagef _cl_read_imagef
+#define write_imageui _cl_write_imageui
+#define write_imagei _cl_write_imagei
+#define write_imagef _cl_write_imagef
 
 #endif

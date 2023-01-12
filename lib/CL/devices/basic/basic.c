@@ -23,6 +23,7 @@
 */
 
 #include "basic.h"
+#include "builtin_kernels.hh"
 #include "common.h"
 #include "config.h"
 #include "config2.h"
@@ -102,11 +103,12 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_source = pocl_driver_build_source;
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
-  ops->free_program = pocl_driver_free_program;
+  ops->free_program = pocl_basic_free_program;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_basic_compile_kernel;
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
@@ -143,13 +145,8 @@ char *
 pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
@@ -196,6 +193,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -205,8 +203,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_setup_extensions_with_version (device);
 
-  /* builtin kernels.. skip, basic/pthread doesn't have any
-  pocl_setup_builtin_kernels_with_version (device); */
+  pocl_setup_builtin_kernels_with_version (device);
 
   pocl_setup_ils_with_version (device);
 
@@ -278,8 +275,13 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
+  cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_uint dev_i = cmd->program_device_i;
+
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
 
   if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
     return;
@@ -365,15 +367,30 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        size_t s = meta->local_sizes[i];
-        size_t j = meta->num_args + i;
-        arguments[j] = malloc (sizeof (void *));
-        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-        *(void **)(arguments[j]) = pp;
-      }
+  if (cmd->device->device_alloca_locals)
+    {
+      /* Local buffers are allocated in the device side work-group
+         launcher. Let's pass only the sizes of the local args in
+         the arg buffer. */
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          assert (sizeof (size_t) == sizeof (void *));
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          *(size_t *)(arguments[j]) = s;
+        }
+    }
+  else
+    {
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          arguments[j] = malloc (sizeof (void *));
+          void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+          *(void **)(arguments[j]) = pp;
+        }
+    }
 
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);
@@ -381,6 +398,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   assert (pc->printf_buffer_capacity > 0);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
+  pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
   pocl_set_default_rm ();
@@ -444,7 +462,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
-  cl_event ev = cmd->event;
+  cl_event ev = cmd->sync.event.event;
   cl_device_id dev = cmd->device;
   size_t i;
   for (i = 0; i < ev->num_buffers; i++)
@@ -500,8 +518,8 @@ static void basic_command_scheduler (struct data *d)
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
-      assert (pocl_command_is_ready(node->event));
-      assert (node->event->status == CL_SUBMITTED);
+      assert (pocl_command_is_ready (node->sync.event.event));
+      assert (node->sync.event.event->status == CL_SUBMITTED);
       CDL_DELETE (d->ready_list, node);
       POCL_UNLOCK (d->cq_lock);
       pocl_exec_command (node);
@@ -523,7 +541,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 
@@ -585,10 +603,22 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
+  char *saved_name = NULL;
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 
+int
+pocl_basic_free_program (cl_device_id device, cl_program program,
+                          unsigned dev_i)
+{
+  pocl_driver_free_program (device, program, dev_i);
+  program->global_var_total_size[dev_i] = 0;
+  POCL_MEM_FREE (program->gvar_storage[dev_i]);
+  return 0;
+}
 /*********************** IMAGES ********************************/
 
 cl_int pocl_basic_copy_image_rect( void *data,

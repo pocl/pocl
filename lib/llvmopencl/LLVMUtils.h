@@ -45,8 +45,9 @@ namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
-void
-regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
+void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
+
+void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func);
 
 // Remove a function from a module, along with all callsites.
 POCL_EXPORT
@@ -72,29 +73,6 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
       (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL))
     return true;
 
-  return false;
-}
-
-inline bool
-is_image_type(const llvm::Type& t) 
-{
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
-    llvm::StringRef name = t.getPointerElementType()->getStructName();
-    if (name.startswith("opencl.image2d_") || name.startswith("opencl.image3d_") ||
-        name.startswith("opencl.image1d_") || name.startswith("struct._pocl_image"))
-      return true;
-  }
-  return false;
-}
-
-inline bool
-is_sampler_type(const llvm::Type& t)
-{
-  if (t.isPointerTy() && t.getPointerElementType()->isStructTy())
-    {
-      llvm::StringRef name = t.getPointerElementType()->getStructName();
-      if (name.startswith("opencl.sampler_t")) return true;
-    }
   return false;
 }
 
@@ -134,5 +112,14 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
                     Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
 #endif
 }
+
+#ifdef LLVM_OLDER_THAN_15_0
+// Globals
+#define getValueType getType()->getElementType
+#endif /* LLVM_OPAQUE_POINTERS */
+
+#ifdef LLVM_OLDER_THAN_14_0
+#define LLVMBuildGEP2(A, B, C, D, E, F) LLVMBuildGEP(A, C, D, E, F)
+#endif
 
 #endif

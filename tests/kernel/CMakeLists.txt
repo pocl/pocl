@@ -83,6 +83,7 @@ set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
 
 set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
   "kernel/test_convert_type_1" "kernel/test_convert_type_2"
+  "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
   PROPERTIES
     LABELS "internal;kernel")
 
@@ -242,12 +243,13 @@ if (NOT ENABLE_POCL_FLOAT_CONVERSION)
   # on most platforms, the printf tests for vector types expose bugs in the
   # pocl printf implementation (passing of variadic arguments containing OpenCL
   # vector types) and maybe also related bugs in llvm (issue #682, #1007)
-  if(NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR
-          CMAKE_SYSTEM_PROCESSOR STREQUAL "s390x"))
+  if(NOT (CMAKE_LIBRARY_ARCHITECTURE STREQUAL "aarch64-linux-gnu" OR
+          CMAKE_LIBRARY_ARCHITECTURE STREQUAL "s390x-linux-gnu"))
     set_tests_properties("kernel/test_printf_vectors"
                         "kernel/test_printf_vectors_ulongn"
       PROPERTIES WILL_FAIL 1)
   endif()
+
 endif()
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"
@@ -265,6 +267,7 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
   "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
   "kernel/test_shuffle_float"
+  "kernel/test_ucharn"
   "kernel/test_printf"
   "kernel/test_sizeof_uint"
   ${EXTRA_TESTS}
@@ -303,7 +306,6 @@ set_property(TEST
   "kernel/test_frexp_modf"
   "kernel/test_convert_sat_regression"
   "kernel/test_short16"
-  "kernel/test_local_struct_array"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"

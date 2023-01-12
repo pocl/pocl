@@ -25,7 +25,6 @@
 #define _GNU_SOURCE
 
 #include <string.h>
-#include <ctype.h>
 
 #ifdef __linux__
 #include <limits.h>
@@ -46,10 +45,12 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_debug.h"
+#include "pocl_export.h"
 #include "pocl_runtime_config.h"
 #include "pocl_shared.h"
 #include "pocl_tracing.h"
 #include "pocl_util.h"
+#include "pocl_export.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -78,8 +79,8 @@
 #include "cuda/pocl-cuda.h"
 #endif
 
-#if defined(BUILD_ACCEL)
-#include "accel/accel.h"
+#if defined(BUILD_ALMAIF)
+#include "almaif/almaif.h"
 #endif
 
 #ifdef BUILD_PROXY
@@ -146,8 +147,8 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_CUDA
   INIT_DEV (cuda),
 #endif
-#ifdef BUILD_ACCEL
-  INIT_DEV (accel),
+#ifdef BUILD_ALMAIF
+  INIT_DEV (almaif),
 #endif
 #ifdef BUILD_PROXY
   INIT_DEV (proxy),
@@ -178,8 +179,8 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #ifdef BUILD_CUDA
   "cuda",
 #endif
-#ifdef BUILD_ACCEL
-  "accel",
+#ifdef BUILD_ALMAIF
+  "almaif",
 #endif
 #ifdef BUILD_PROXY
   "proxy",
@@ -194,7 +195,7 @@ static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 extern pocl_lock_t pocl_runtime_config_lock;
 extern pocl_lock_t pocl_context_handling_lock;
 
-int pocl_offline_compile = 0;
+POCL_EXPORT int pocl_offline_compile = 0;
 
 // first setup
 static unsigned first_init_done = 0;
@@ -241,7 +242,6 @@ get_pocl_device_lib_path (char *result, char *device_name, int absolute_path)
                 {
                   strcat (result, device_name);
                 }
-              strcat (result, POCL_PATH_SEPARATOR);
             }
           else
 #endif
@@ -293,19 +293,25 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
 {
   unsigned int i, dev_added = 0;
 
+  cl_device_type device_type_tmp = device_type;
+  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
+    {
+      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
+    }
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
-      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         {
           devices[dev_added] = &pocl_devices[i];
           ++dev_added;
           break;
         }
 
-      if (pocl_devices[i].type & device_type)
+      if (pocl_devices[i].type & device_type_tmp)
         {
             if (dev_added < num_devices)
               {
@@ -327,15 +333,21 @@ pocl_get_device_type_count(cl_device_type device_type)
   unsigned int count = 0;
   unsigned int i;
 
+  cl_device_type device_type_tmp = device_type;
+  if (device_type_tmp == CL_DEVICE_TYPE_ALL)
+    {
+      device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
+    }
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
-      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         return 1;
 
-      if (pocl_devices[i].type & device_type)
+      if (pocl_devices[i].type & device_type_tmp)
         {
            ++count;
         }
@@ -344,16 +356,6 @@ pocl_get_device_type_count(cl_device_type device_type)
   return count;
 }
 
-
-static inline void
-str_toupper(char *out, const char *in)
-{
-  int i;
-
-  for (i = 0; in[i] != '\0'; i++)
-    out[i] = toupper(in[i]);
-  out[i] = '\0';
-}
 
 cl_int
 pocl_uninit_devices ()
@@ -564,11 +566,7 @@ pocl_init_devices ()
           strcat (init_device_ops_name, "_init_device_ops");
           pocl_devices_init_ops[i] = (init_device_ops)dlsym (
           pocl_device_handles[i], init_device_ops_name);
-          if (pocl_devices_init_ops[i] != NULL)
-            {
-              pocl_devices_init_ops[i](&pocl_device_ops[i]);
-            }
-          else
+          if (pocl_devices_init_ops[i] == NULL)
             {
               POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
                              init_device_ops_name, device_library,
@@ -607,7 +605,7 @@ pocl_init_devices ()
     {
       if (pocl_devices_init_ops[i] == NULL)
         continue;
-      str_toupper (dev_name, pocl_device_ops[i].device_name);
+      pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
@@ -633,9 +631,9 @@ pocl_init_devices ()
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
           errcode = pocl_devices[dev_index].ops->init (
               j, &pocl_devices[dev_index], getenv (env_name));
-          POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_DEVICE_NOT_AVAILABLE,
-                              "Device %i / %s initialization failed!", j,
-                              dev_name);
+          if (errcode != CL_SUCCESS)
+            POCL_MSG_ERR ("Device %i / %s initialization failed!", j,
+                          dev_name);
 
           ++dev_index;
         }

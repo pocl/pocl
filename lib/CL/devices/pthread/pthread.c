@@ -101,13 +101,8 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
@@ -151,6 +146,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -160,8 +156,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_setup_extensions_with_version (device);
 
-  /* builtin kernels.. skip, basic/pthread doesn't have any
-  pocl_setup_builtin_kernels_with_version (device); */
+  pocl_setup_builtin_kernels_with_version (device);
 
   pocl_setup_ils_with_version (device);
 
@@ -297,12 +292,12 @@ void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->ready = 1;
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       pthread_scheduler_push_command (node);
     }
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   return;
 }
 
@@ -346,7 +341,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       if (event->status == CL_QUEUED)
         {
@@ -387,6 +382,8 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
 
       PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *) e_d;
+
+      VG_ASSOC_COND_VAR (e_d->event_cond, event->pocl_lock);
     }
 }
 
@@ -417,6 +414,11 @@ pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   PTHREAD_CHECK (pthread_cond_init (cond, NULL));
+
+  POCL_LOCK_OBJ (queue);
+  VG_ASSOC_COND_VAR ((*cond), queue->pocl_lock);
+  POCL_UNLOCK_OBJ (queue);
+
   return CL_SUCCESS;
 }
 

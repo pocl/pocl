@@ -34,6 +34,18 @@
 
 // for pocl_aligned_malloc
 #include "pocl_util.h"
+#include "pocl_file_util.h"
+
+// for SPIR-V handling
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+
+// sanitize kernel name
+#include "builtin_kernels.hh"
+#include "pocl_workgroup_func.h"
+
+int pocl_setup_builtin_metadata (cl_device_id device, cl_program program,
+                                 unsigned program_device_i);
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -304,79 +316,8 @@ pocl_driver_memfill (void *data, pocl_mem_identifier *dst_mem_id,
                      const void *__restrict__ pattern, size_t pattern_size)
 {
   void *__restrict__ ptr = dst_mem_id->mem_ptr;
-  size_t i;
-  unsigned j;
-
-  /* memfill size is in bytes, we wanto make it into elements */
-  size /= pattern_size;
-  offset /= pattern_size;
-
-  switch (pattern_size)
-    {
-    case 1:
-      {
-        uint8_t *p = (uint8_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint8_t *)pattern;
-      }
-      break;
-    case 2:
-      {
-        uint16_t *p = (uint16_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint16_t *)pattern;
-      }
-      break;
-    case 4:
-      {
-        uint32_t *p = (uint32_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint32_t *)pattern;
-      }
-      break;
-    case 8:
-      {
-        uint64_t *p = (uint64_t *)ptr + offset;
-        for (i = 0; i < size; i++)
-          p[i] = *(uint64_t *)pattern;
-      }
-      break;
-    case 16:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 1);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 2; j++)
-            p[(i << 1) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 32:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 2);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 4; j++)
-            p[(i << 2) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 64:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 3);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 8; j++)
-            p[(i << 3) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    case 128:
-      {
-        uint64_t *p = (uint64_t *)ptr + (offset << 4);
-        for (i = 0; i < size; i++)
-          for (j = 0; j < 16; j++)
-            p[(i << 4) + j] = *((uint64_t *)pattern + j);
-      }
-      break;
-    default:
-      assert (0 && "Invalid pattern size");
-      break;
-    }
+  pocl_fill_aligned_buf_with_pattern (ptr, offset, size, pattern,
+                                      pattern_size);
 }
 
 cl_int
@@ -517,27 +458,145 @@ pocl_driver_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr,
  */
 
 #ifdef ENABLE_LLVM
-/* Converts SPIR to LLVM IR, and links it to pocl's kernel library. */
+
+#define MAX_SPEC_CONST_CMDLINE_LEN 8192
+#define MAX_SPEC_CONST_OPT_LEN 256
+
+/* load LLVM IR binary from disk, deletes existing in-memory IR */
 static int
-pocl_llvm_link_and_convert_spir (cl_program program, cl_uint device_i,
-                                 int link_program, int spir_build)
+pocl_reload_program_bc (char *program_bc_path, cl_program program,
+                      cl_uint device_i)
+{
+  char *temp_binary = NULL;
+  uint64_t temp_size = 0;
+  int errcode = pocl_read_file (program_bc_path, &temp_binary, &temp_size);
+  if (errcode != 0 || temp_size == 0)
+    return -1;
+  if (program->binaries[device_i])
+    POCL_MEM_FREE (program->binaries[device_i]);
+  program->binaries[device_i] = temp_binary;
+  program->binary_sizes[device_i] = temp_size;
+  return 0;
+}
+
+/* if some SPIR-V spec constants were changed, use llvm-spirv --spec-const=...
+ * to generate new LLVM bitcode from SPIR-V */
+static int
+pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
+{
+#ifdef LLVM_SPIRV
+  int errcode = CL_SUCCESS;
+
+  int spec_constants_changed = 0;
+  char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
+  concated_spec_const_option[0] = 0;
+  char program_bc_spirv[POCL_FILENAME_LENGTH];
+  char unlinked_program_bc_temp[POCL_FILENAME_LENGTH];
+  program_bc_spirv[0] = 0;
+  unlinked_program_bc_temp[0] = 0;
+  /* using --spirv-target-env=CL2.0 here would enable proper OpenCL 2.0
+   * atomics, unfortunately it also enables generic ptrs which PoCL doesn't
+   * support */
+  char *args[8] = { LLVM_SPIRV,
+                    concated_spec_const_option,
+                    "--spirv-target-env=CL1.2",
+                    "-r", "-o",
+                    unlinked_program_bc_temp,
+                    program_bc_spirv,
+                    NULL };
+  char **final_args = args;
+
+  errcode = pocl_cache_tempname(unlinked_program_bc_temp, ".bc", NULL);
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to create tmpfile in pocl cache\n");
+
+  errcode = pocl_cache_write_spirv (program_bc_spirv,
+                                    (const char *)program->program_il,
+                                    (uint64_t)program->program_il_size);
+  POCL_RETURN_ERROR_ON ((errcode != 0), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to write into pocl cache\n");
+
+  for (unsigned i = 0; i < program->num_spec_consts; ++i)
+    spec_constants_changed += program->spec_const_is_set[i];
+
+  if (spec_constants_changed)
+    {
+      strcpy (concated_spec_const_option, "--spec-const=");
+      for (unsigned i = 0; i < program->num_spec_consts; ++i)
+        {
+          if (program->spec_const_is_set[i])
+            {
+              char opt[MAX_SPEC_CONST_OPT_LEN];
+              snprintf (opt, MAX_SPEC_CONST_OPT_LEN, "%u:i%u:%zu ",
+                        program->spec_const_ids[i],
+                        program->spec_const_sizes[i] * 8,
+                        program->spec_const_values[i]);
+              strcat (concated_spec_const_option, opt);
+            }
+        }
+    }
+  else
+    {
+      /* skip concated_spec_const_option */
+      args[0] = NULL;
+      args[1] = LLVM_SPIRV;
+      final_args = args + 1;
+    }
+
+  errcode = pocl_run_command (final_args);
+  POCL_GOTO_ERROR_ON ((errcode != 0), CL_INVALID_VALUE,
+                      "External command (llvm-spirv translator) failed!\n");
+
+  POCL_GOTO_ERROR_ON (
+      (pocl_reload_program_bc (unlinked_program_bc_temp, program, device_i)),
+      CL_INVALID_VALUE, "Can't read llvm-spirv converted bitcode file\n");
+
+  errcode = CL_SUCCESS;
+
+ERROR:
+  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
+    {
+      if (unlinked_program_bc_temp[0])
+        pocl_remove (unlinked_program_bc_temp);
+      if (program_bc_spirv[0])
+        pocl_remove (program_bc_spirv);
+    }
+  return errcode;
+#else
+  return -1;
+#endif
+}
+
+/* Converts SPIR-V / SPIR to LLVM IR, and links it to pocl's kernel library */
+static int
+pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
+                               int link_builtin_lib, int spir_build)
 {
   cl_device_id device = program->devices[device_i];
-  int error;
+  int errcode;
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
-  /* SPIR-V was handled; bitcode is now either plain LLVM IR or SPIR IR */
-  int spir_binary
-      = bitcode_is_triple ((char *)program->binaries[device_i],
-                           program->binary_sizes[device_i], "spir");
-  if (spir_binary)
-    POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
-  else
-    POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
-                         device_i);
-
-  if (spir_binary)
+  if (program->binaries[device_i])
     {
-#ifdef ENABLE_SPIR
+      int spir_binary
+          = bitcode_is_triple ((char *)program->binaries[device_i],
+                               program->binary_sizes[device_i], "spir");
+      if (spir_binary)
+        {
+          POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
+          if (!spir_build)
+            POCL_MSG_WARN (
+                "SPIR binary provided, but no spir in build options\n");
+        }
+      else
+        POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
+                             device_i);
+    }
+
+  // SPIR-V requires special handling because of spec constants
+  if (program->program_il && program->program_il_size > 0)
+    {
+#ifdef ENABLE_SPIRV
       if (!strstr (device->extensions, "cl_khr_spir"))
         {
           APPEND_TO_BUILD_LOG_RET (CL_LINK_PROGRAM_FAILURE,
@@ -545,34 +604,105 @@ pocl_llvm_link_and_convert_spir (cl_program program, cl_uint device_i,
                                    "for device %s\n",
                                    device->short_name);
         }
-      if (!spir_build)
-        POCL_MSG_WARN ("SPIR binary provided, but no spir in build options\n");
 
-      /* SPIR binaries need to be explicitly linked to the kernel
-       * library. For non-SPIR binaries this happens as part of build
-       * process when program.bc is generated. */
-      error = pocl_llvm_link_program (
-          program, device_i, 1, &program->binaries[device_i],
-          &program->binary_sizes[device_i], NULL, link_program, 1);
+      /* the hash created here should now reflect the source (SPIR-V),
+       * PoCL build, LLVM version, the compiler options, the device's
+       * LLVM triple, and the Spec Constants */
+      errcode = pocl_cache_create_program_cachedir (
+          program, device_i, (char *)program->program_il,
+          program->program_il_size, program_bc_path);
+      POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                            "Failed to create cachedir for program.bc\n");
 
-      POCL_RETURN_ERROR_ON (error, CL_LINK_PROGRAM_FAILURE,
-                            "Failed to link SPIR program.bc\n");
+      if (pocl_exists (program_bc_path))
+        {
+          POCL_MSG_PRINT_LLVM ("Found cached compiled SPIRV binary at %s, "
+                               "skipping compilation\n",
+                               program_bc_path);
+          POCL_RETURN_ERROR_ON (
+              (pocl_reload_program_bc (program_bc_path, program, device_i)),
+              CL_LINK_PROGRAM_FAILURE,
+              "Can't read llvm-spirv converted bitcode file\n");
+
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          return CL_SUCCESS;
+        }
+      else
+        {
+          POCL_MSG_PRINT_LLVM ("Cached compiled SPIRV binary not found, "
+                               "generating SPIR IR to %s\n",
+                               program_bc_path);
+
+          /* SPIR IR binaries need to be regenerated from SPIR-V
+           * if specialization constants change. */
+          errcode
+              = pocl_regen_spirv_binary (program, device_i);
+          POCL_RETURN_ERROR_ON ((errcode != CL_SUCCESS),
+                                CL_LINK_PROGRAM_FAILURE,
+                                "Failed to generate SPIR from SPIR-V "
+                                "with specialization constants\n");
+
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          // can't return here yet, we need to also link the builtin library
+        }
+
 #else
       APPEND_TO_BUILD_LOG_RET (CL_LINK_PROGRAM_FAILURE,
-                               "SPIR support is not available"
+                               "SPIR-V support is not available"
                                "for device %s\n",
                                device->short_name);
 #endif
+      // target-specific IR binaries & SPIR (not SPIRV) binaries handled here
     }
+  else
+    {
+      /* the hash created here should now reflect the source (LLVM IR),
+       * PoCL build, LLVM version, the compiler options, the device's
+       * LLVM triple */
+      errcode = pocl_cache_create_program_cachedir (
+          program, device_i, (char *)program->binaries[device_i],
+          program->binary_sizes[device_i], program_bc_path);
+      POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                            "Failed to create cachedir for program.bc\n");
+
+      if (pocl_exists (program_bc_path))
+        {
+          POCL_MSG_PRINT_LLVM (
+              "Found cached binary at %s, skipping compilation\n",
+              program_bc_path);
+
+          POCL_RETURN_ERROR_ON (
+              (pocl_reload_program_bc (program_bc_path, program, device_i)),
+              CL_LINK_PROGRAM_FAILURE,
+              "Can't read llvm-spirv converted bitcode file\n");
+
+          pocl_llvm_free_llvm_irs (program, device_i);
+
+          return CL_SUCCESS;
+        }
+    }
+
+  /* convert module from SPIR to Target triple, and if requested
+   * link the resulting binary to the builtin library */
+  errcode = pocl_llvm_link_program (
+      program, device_i, 1, &program->binaries[device_i],
+      &program->binary_sizes[device_i], NULL, link_builtin_lib, CL_FALSE);
+  POCL_RETURN_ERROR_ON (errcode, CL_LINK_PROGRAM_FAILURE,
+                        "Failed to link program.bc\n");
   return CL_SUCCESS;
 }
+
+
 #endif
 
 int
 pocl_driver_build_source (cl_program program, cl_uint device_i,
                           cl_uint num_input_headers,
                           const cl_program *input_headers,
-                          const char **header_include_names, int link_program)
+                          const char **header_include_names,
+                          int link_builtin_lib)
 {
   assert (program->devices[device_i]->compiler_available == CL_TRUE);
   assert (program->devices[device_i]->linker_available == CL_TRUE);
@@ -583,7 +713,7 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
   return pocl_llvm_build_program (program, device_i, num_input_headers,
                                   input_headers, header_include_names,
-                                  link_program);
+                                  link_builtin_lib);
 
 #else
   POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
@@ -593,7 +723,7 @@ pocl_driver_build_source (cl_program program, cl_uint device_i,
 
 int
 pocl_driver_build_binary (cl_program program, cl_uint device_i,
-                          int link_program, int spir_build)
+                          int link_builtin_lib, int spir_build)
 {
 
 #ifdef ENABLE_LLVM
@@ -607,11 +737,11 @@ pocl_driver_build_binary (cl_program program, cl_uint device_i,
       else
         pocl_llvm_read_program_llvm_irs (program, device_i, NULL);
     }
-  else /* program->binaries but not poclbinary */
+  else /* has program->binaries or SPIR-V, but not poclbinary */
     {
-      assert (program->binaries[device_i]);
-      int err = pocl_llvm_link_and_convert_spir (program, device_i,
-                                                 link_program, spir_build);
+      assert (program->binaries[device_i] || program->program_il);
+      int err = pocl_llvm_convert_and_link_ir (program, device_i,
+                                               link_builtin_lib, spir_build);
       if (err != CL_SUCCESS)
         return err;
       pocl_llvm_read_program_llvm_irs (program, device_i, NULL);
@@ -656,31 +786,31 @@ pocl_driver_link_program (cl_program program, cl_uint device_i,
 
       pocl_llvm_read_program_llvm_irs (input_programs[i], device_i, NULL);
 
-      cur_device_llvm_irs[i] = input_programs[i]->data[device_i];
+      cur_device_llvm_irs[i] = input_programs[i]->llvm_irs[device_i];
       assert (cur_device_llvm_irs[i]);
       POCL_UNLOCK_OBJ (input_programs[i]);
     }
 
   int err = pocl_llvm_link_program (
       program, device_i, num_input_programs, cur_device_binaries,
-      cur_device_binary_sizes, cur_device_llvm_irs, !create_library, 0);
+      cur_device_binary_sizes, cur_device_llvm_irs, !create_library, CL_TRUE);
 
   POCL_RETURN_ERROR_ON ((err != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
-                        "This device requires LLVM to link binaries\n");
+                        "Linking of program failed\n");
   return CL_SUCCESS;
 #else
   POCL_RETURN_ERROR_ON (1, CL_BUILD_PROGRAM_FAILURE,
-                        "This device cannot link anything\n");
+                        "This device requires LLVM to link binaries\n");
 
 #endif
 }
 
 int
 pocl_driver_free_program (cl_device_id device, cl_program program,
-                          unsigned program_device_i)
+                          unsigned dev_i)
 {
 #ifdef ENABLE_LLVM
-  pocl_llvm_free_llvm_irs (program, program_device_i);
+  pocl_llvm_free_llvm_irs (program, dev_i);
 #endif
   return 0;
 }
@@ -689,6 +819,9 @@ int
 pocl_driver_setup_metadata (cl_device_id device, cl_program program,
                             unsigned program_device_i)
 {
+  if (program->num_builtin_kernels > 0)
+    return pocl_setup_builtin_metadata (device, program, program_device_i);
+
 #ifdef ENABLE_LLVM
   unsigned num_kernels
       = pocl_llvm_get_kernel_count (program, program_device_i);
@@ -713,22 +846,34 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 {
 #ifdef ENABLE_LLVM
 
-  /* SPIR binary is supported */
+  /* SPIR-V binaries are supported if we have llvm-spirv */
+#ifdef ENABLE_SPIRV
+  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length))
+    return 1;
+#endif
+
+#ifdef ENABLE_SPIR
+  /* SPIR binary is supported if the device has cl_khr_spir */
   if (bitcode_is_triple (binary, length, "spir"))
     {
-      POCL_RETURN_ERROR_ON (
-          (strstr (device->extensions, "cl_khr_spir") == NULL),
-          CL_BUILD_PROGRAM_FAILURE,
-          "SPIR binary provided, but device has no SPIR support");
-      return 1;
+      if (strstr (device->extensions, "cl_khr_spir") == NULL)
+        {
+          POCL_MSG_WARN ("SPIR binary provided, but "
+                         "this device has no SPIR support\n");
+          return 0;
+        }
+      else
+        {
+          return 1;
+        }
     }
+#endif
 
   /* LLVM IR can be supported by the driver, if the triple matches */
   if (device->llvm_target_triplet
       && bitcode_is_triple (binary, length, device->llvm_target_triplet))
     return 1;
 
-  POCL_MSG_ERR ("Unknown binary type.\n");
   return 0;
 #else
   POCL_MSG_ERR (
@@ -860,7 +1005,198 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
       free (temp);
     }
 
+  pocl_driver_build_gvar_init_kernel (program, device_i, device, NULL);
+
   POCL_UNLOCK_OBJ (program);
 
   return CL_SUCCESS;
 }
+
+
+int
+pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
+{
+  int err;
+
+  cl_device_id dev = program->devices[device_i];
+
+  if (dev->compiler_available == CL_FALSE || dev->llvm_cpu == NULL)
+    return 0;
+
+// TODO this should probably be outside
+#ifdef ENABLE_LLVM
+  POCL_MSG_PRINT_LLVM ("building builtin kernels for %s\n", dev->short_name);
+
+  assert (program->build_status == CL_BUILD_NONE);
+
+  uint64_t builtins_file_len = 0;
+  char builtin_path[POCL_FILENAME_LENGTH];
+  char *builtins_file = NULL;
+
+  uint64_t common_builtins_file_len = 0;
+  char common_builtin_path[POCL_FILENAME_LENGTH];
+  char *common_builtins_file = NULL;
+
+  char filename[64];
+  filename[0] = 0;
+  if (dev->builtins_sources_path)
+    {
+      filename[0] = '/';
+      pocl_str_tolower (filename + 1, dev->ops->device_name);
+      strcat (filename, "/");
+      strcat (filename, dev->builtins_sources_path);
+    }
+
+  /* filename is now e.g. "/cuda/builtins.cl";
+   * loads either
+   * <srcdir>/lib/CL/devices/cuda/builtins.cl
+   * or
+   * <private_datadir>/cuda/builtins.cl
+   */
+  pocl_get_srcdir_or_datadir (builtin_path, "/lib/CL/devices", "", filename);
+  pocl_read_file (builtin_path, &builtins_file, &builtins_file_len);
+
+  pocl_get_srcdir_or_datadir (common_builtin_path, "/lib/CL/devices", "",
+                              "/common_builtin_kernels.cl");
+  pocl_read_file (common_builtin_path, &common_builtins_file,
+                  &common_builtins_file_len);
+
+  POCL_RETURN_ERROR_ON (
+      (builtins_file == NULL && common_builtins_file == NULL),
+      CL_BUILD_PROGRAM_FAILURE,
+      "failed to open either of the sources for builtin kernels: \n%s\n%s\n",
+      common_builtin_path, builtin_path);
+
+  if (builtins_file != NULL)
+    program->source = builtins_file;
+  if (common_builtins_file != NULL)
+    program->source = common_builtins_file;
+
+  if (builtins_file != NULL && common_builtins_file != NULL)
+    {
+      program->source
+          = malloc (builtins_file_len + common_builtins_file_len + 1);
+      memcpy (program->source, common_builtins_file, common_builtins_file_len);
+      memcpy (program->source + common_builtins_file_len, builtins_file,
+              builtins_file_len);
+      program->source[common_builtins_file_len + builtins_file_len] = 0;
+      POCL_MEM_FREE (builtins_file);
+      POCL_MEM_FREE (common_builtins_file);
+    }
+
+  err = pocl_driver_build_source (program, device_i, 0, NULL, NULL, 1);
+  POCL_RETURN_ERROR_ON ((err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+                        "failed to build OpenCL builtins for %s\n",
+                        dev->short_name);
+  return 0;
+#else
+  return -1;
+#endif
+}
+
+/**
+* \brief  Since the ProgramScopeVariables pass creates a hidden kernel
+* for variable initialization, we need to compile (and run) that kernel
+* somehow. This creates a temporary _cl_command_node and _cl_kernel structs
+* on stack, fills them with data, and calls device->ops->compile_kernel().
+* Then, optionally, runs the provided callback with these on-stack structs
+* as arguments.
+*
+* Can be used either to compile the hidden initialization kernel for
+* a poclbinary, or to compile & run program-scope initialization before
+* kernel execution. Should work with all devices that use PoCL's LLVM
+* compilation.
+*
+* \param [in] program the cl_program used
+* \param [in] device the device used
+* \param [in] dev_i index into program->devices[] corresponding to device
+* \param [in] callback either NULL or a callback
+*/
+void
+pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
+                                    cl_device_id device, gvar_init_callback_t callback)
+{
+#ifdef ENABLE_HOST_CPU_DEVICES
+  if (device->program_scope_variables_pass == CL_FALSE)
+    return;
+
+  if (program->global_var_total_size[dev_i] > 0 && program->gvar_storage[dev_i] == NULL)
+    {
+      program->gvar_storage[dev_i] = pocl_aligned_malloc (
+          MAX_EXTENDED_ALIGNMENT, program->global_var_total_size[dev_i]);
+
+      pocl_kernel_metadata_t fake_meta;
+      memset (&fake_meta, 0, sizeof (fake_meta));
+      pocl_kernel_hash_t fake_build_hash;
+
+      SHA1_CTX hash_ctx;
+      pocl_SHA1_Init (&hash_ctx);
+      pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[dev_i],
+                        sizeof (SHA1_digest_t));
+      pocl_SHA1_Update (&hash_ctx, (uint8_t *)POCL_GVAR_INIT_KERNEL_NAME,
+                        strlen (POCL_GVAR_INIT_KERNEL_NAME));
+      pocl_SHA1_Final (&hash_ctx, fake_build_hash);
+
+      fake_meta.build_hash = &fake_build_hash;
+
+      struct _cl_kernel fake_kernel;
+      memset (&fake_kernel, 0, sizeof (fake_kernel));
+      fake_kernel.meta = &fake_meta;
+      fake_kernel.name = POCL_GVAR_INIT_KERNEL_NAME;
+      fake_kernel.context = program->context;
+      fake_kernel.program = program;
+
+      _cl_command_node fake_cmd;
+      memset (&fake_cmd, 0, sizeof (_cl_command_node));
+      fake_cmd.program_device_i = dev_i;
+      fake_cmd.device = device;
+      fake_cmd.type = CL_COMMAND_NDRANGE_KERNEL;
+      fake_cmd.command.run.kernel = &fake_kernel;
+      fake_cmd.command.run.hash = fake_meta.build_hash;
+      fake_cmd.command.run.pc.local_size[0] = 1;
+      fake_cmd.command.run.pc.local_size[1] = 1;
+      fake_cmd.command.run.pc.local_size[2] = 1;
+      fake_cmd.command.run.pc.work_dim = 3;
+      fake_cmd.command.run.pc.num_groups[0] = 1;
+      fake_cmd.command.run.pc.num_groups[1] = 1;
+      fake_cmd.command.run.pc.num_groups[2] = 1;
+      fake_cmd.command.run.pc.global_offset[0] = 0;
+      fake_cmd.command.run.pc.global_offset[1] = 0;
+      fake_cmd.command.run.pc.global_offset[2] = 0;
+      fake_cmd.command.run.pc.global_var_buffer = program->gvar_storage[dev_i];
+
+      char *saved_name = NULL;
+      pocl_sanitize_builtin_kernel_name (&fake_kernel, &saved_name);
+      device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0);
+      pocl_restore_builtin_kernel_name (&fake_kernel, saved_name);
+
+      if (callback) {
+        callback (program, dev_i, &fake_cmd);
+      }
+    }
+#endif
+}
+
+
+/**
+* \brief  Callback (for CPU devices only), to be used with
+* pocl_driver_build_gvar_init_kernel, to actually run the program-scope
+* initialization kernel.
+*
+* \param [in] Program the cl_program used
+* \param [in] dev_i index into program->devices[]
+* \param [in] fake_cmd temporary _cl_command_node for the
+*/
+void
+pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
+                            _cl_command_node *fake_cmd)
+{
+#ifdef ENABLE_HOST_CPU_DEVICES
+  uint8_t arguments[1];
+  pocl_workgroup_func gvar_init_wg
+      = (pocl_workgroup_func)fake_cmd->command.run.wg;
+  gvar_init_wg ((uint8_t *)arguments, (uint8_t *)&fake_cmd->command.run.pc,
+                0, 0, 0);
+#endif
+}
+

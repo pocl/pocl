@@ -1,4 +1,5 @@
-/* poclu_misc - misc generic OpenCL helper functions
+/**
+ * \brief poclu_misc - misc generic OpenCL helper functions
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
    Copyright (c) 2014 Kalle Raiskila
@@ -20,6 +21,8 @@
    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
+
+   \file
 */
 
 #include <stdio.h>
@@ -178,11 +181,11 @@ poclu_read_file (const char *filename)
 }
 
 int
-poclu_write_file (const char *filemane, char *content, size_t size)
+poclu_write_file (const char *filename, char *content, size_t size)
 {
   FILE *file;
 
-  file = fopen (filemane, "w");
+  file = fopen (filename, "w");
   if (file == NULL)
     return -1;
 
@@ -196,6 +199,27 @@ poclu_write_file (const char *filemane, char *content, size_t size)
     return -1;
 
   return 0;
+}
+
+int
+poclu_supports_opencl_30 (cl_device_id *devices, unsigned num_devices)
+{
+  if (num_devices == 0)
+    return 0;
+
+  unsigned supported = 0;
+  char dev_version[256];
+  size_t string_len;
+  for (unsigned i = 0; i < num_devices; ++i)
+    {
+    int err = clGetDeviceInfo (devices[i], CL_DEVICE_VERSION,
+                               sizeof (dev_version), dev_version, &string_len);
+    TEST_ASSERT (err == CL_SUCCESS);
+    if ((string_len >= 15)
+        && (strncmp (dev_version, "OpenCL 3.0 PoCL", 15) == 0))
+        ++supported;
+    }
+  return (supported == num_devices);
 }
 
 cl_int
@@ -264,6 +288,9 @@ fail:
   return err;
 }
 
+/**
+ * \brief private macro to check errors in check_cl_error function
+ */
 #define OPENCL_ERROR_CASE(ERR) \
   case ERR:                                                             \
   { fprintf (stderr, "" #ERR " in %s on line %i\n", func_name, line);   \
@@ -343,6 +370,20 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
     }
 }
 
+/**
+ * \brief get the path of a source file.
+ *
+ * can be either used by passing the explicit_binary option
+ * or using basename + ext arguments.
+ * if basename + ext is not found in current working directory,
+ * it will check the build or source directories for said file.
+ * @param path [out] the return string of the path.
+ * @param len [in] the lenght of the destination path.
+ * @param explicit_binary [in] string to the file.
+ * @param basename [in] relative name of the program c program running.
+ * @param ext [in] extension of the file.
+ * @return CL_SUCCESS or CL_BUILD_PROGRAM_FAILURE on error.
+ */
 static int
 pocl_getpath (char *path, size_t len, const char *explicit_binary,
               const char *basename, const char *ext)
@@ -393,8 +434,38 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   int from_source = (!spir && !spirv && !poclbin);
   TEST_ASSERT (num_devices > 0);
   cl_device_id device = devices[0];
-  if (num_devices > 1)
-    TEST_ASSERT (from_source);
+  if (!from_source)
+    {
+      // Check that all the devices have the same name.
+      // This is to prevent loading the same binary to
+      // different device types.
+      size_t device0_name_length = 0;
+      err = clGetDeviceInfo (devices[0], CL_DEVICE_NAME, 0, NULL,
+                             &device0_name_length);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name size");
+      char *device0_name = malloc (device0_name_length);
+      TEST_ASSERT (device0_name);
+      err = clGetDeviceInfo (devices[0], CL_DEVICE_NAME, device0_name_length,
+                             device0_name, NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name");
+      for (unsigned i = 1; i < num_devices; i++)
+        {
+          size_t deviceN_name_length = 0;
+          err = clGetDeviceInfo (devices[i], CL_DEVICE_NAME, 0, NULL,
+                                 &deviceN_name_length);
+          CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name size");
+          char *deviceN_name = malloc (deviceN_name_length);
+          TEST_ASSERT (deviceN_name);
+          err = clGetDeviceInfo (devices[i], CL_DEVICE_NAME,
+                                 deviceN_name_length, deviceN_name, NULL);
+          CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo name");
+
+          TEST_ASSERT (!strcmp (device0_name, deviceN_name)
+                       && "Trying to load the same binary/IL for different types of devices");
+          free (deviceN_name);
+        }
+      free (device0_name);
+    }
 
   *p = NULL;
   final_opts[0] = 0;

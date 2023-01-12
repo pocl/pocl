@@ -78,3 +78,7 @@ pocl.includes
 CMakeLists.txt.includes
 CMakeLists.txt.user
 /examples/CLBlast/CLBlast/
+
+#clion related files
+.idea/
+cmake-build-*/

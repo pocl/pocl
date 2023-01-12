@@ -351,6 +351,24 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
           break;
         }
       } else if (isa<llvm::LoadInst>(user) || isa<llvm::BitCastInst>(user)) {
+      } else if (isa<llvm::CallInst>(user)) {
+        CallInst *CallInstr = dyn_cast<CallInst>(user);
+        Function *Callee = CallInstr->getCalledFunction();
+        if (Callee != nullptr &&
+            (Callee->getName().startswith("llvm.lifetime.end") ||
+             Callee->getName().startswith("llvm.lifetime.start"))) {
+#ifdef DEBUG_UNIFORMITY_ANALYSIS
+          std::cerr << "### alloca is used by llvm.lifetime" << std::endl;
+          user->dump();
+#endif
+        } else {
+#ifdef DEBUG_UNIFORMITY_ANALYSIS
+          std::cerr << "### alloca has a suspicious user" << std::endl;
+          user->dump();
+#endif
+          isUniformAlloca = false;
+          break;
+        }
       } else {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
         std::cerr << "### alloca has a suspicious user" << std::endl;
