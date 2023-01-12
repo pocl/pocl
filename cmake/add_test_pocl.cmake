@@ -60,8 +60,11 @@ function(add_test_pocl)
   endif()
 
   if(POCL_TEST_EXPECTED_OUTPUT)
+    if (NOT IS_ABSOLUTE "${POCL_TEST_EXPECTED_OUTPUT}")
+      set(POCL_TEST_EXPECTED_OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_EXPECTED_OUTPUT}")
+    endif()
     list(APPEND POCL_TEST_ARGLIST
-      "-Doutput_blessed=${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_EXPECTED_OUTPUT}")
+      "-Doutput_blessed=${POCL_TEST_EXPECTED_OUTPUT}")
   endif()
   if(POCL_TEST_SORT_OUTPUT)
     list(APPEND POCL_TEST_ARGLIST "-Dsort_output=1")
