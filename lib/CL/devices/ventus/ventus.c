@@ -176,14 +176,8 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 char *
 pocl_ventus_build_hash (cl_device_id device)
 {
-  char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "ventus-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "ventus-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  char* res = (char *)calloc(1000, sizeof(char));
+  snprintf(res, 1000, "THU-%s", device->llvm_cpu);
   return res;
 }
 
@@ -200,106 +194,103 @@ pocl_ventus_probe(struct pocl_device_ops *ops)
 }
 
 cl_int
-pocl_ventus_init (unsigned j, cl_device_id device, const char* parameters)
+pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 {
   struct ventus_device_data_t *d;
   cl_int ret = CL_SUCCESS;
   int err;
-  static int first_ventus_init = 1;
-
-  if (first_ventus_init)
-    {
-      POCL_MSG_WARN ("INIT dlcache DOTO delete\n");
-      pocl_init_dlhandle_cache();
-      first_ventus_init = 0;
-    }
 
   d = (struct ventus_device_data_t *) calloc (1, sizeof (struct ventus_device_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
   d->current_kernel = NULL;
-  device->data = d;
 
-  pocl_init_default_device_infos (device);
-  /* 0 is the host memory shared with all drivers that use it */
-  device->global_mem_id = 0;
+  dev->data = d;
 
-  device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
-  device->extensions = HOST_DEVICE_EXTENSIONS;
+  SETUP_DEVICE_CL_VERSION(2, 2);
+  dev->type = CL_DEVICE_TYPE_GPU;
+  dev->long_name = "Ventus GPGPU device";
+  dev->vendor = "Ventus";
+  dev->vendor_id = 0x1234; // TODO: Update vendor id!
+  dev->version = "2.2";
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->linker_available = CL_TRUE;
+  dev->extensions = "";
+  dev->profile = "FULL_PROFILE";
 
-#if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
-  device->features = HOST_DEVICE_FEATURES_30;
+  dev->max_mem_alloc_size = 100 * 1024 * 1024;
+  dev->mem_base_addr_align = 4;
 
-  pocl_setup_opencl_c_with_version (device, CL_TRUE);
-  pocl_setup_features_with_version (device);
+  dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0
+  dev->local_mem_size = 131072;     // TODO: Update this to conformant to OCL 2.0
+  dev->global_mem_size = 1024 * 1024 * 1024; // 1G ram
+  dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
+  dev->global_mem_cacheline_size = 64; // FIXME: Is this accurate?
+  dev->global_mem_cache_size = 32768;  // FIXME: Is this accurate?
+  dev->image_max_buffer_size = dev->max_mem_alloc_size / 16;
+
+  dev->image2d_max_width = 1024; // TODO: Update
+  dev->image3d_max_width = 1024; // TODO: Update
+
+  dev->max_work_item_dimensions = 3;
+  dev->max_work_group_size = 1024;
+  dev->max_work_item_sizes[0] = 1024;
+  dev->max_work_item_sizes[1] = 1024;
+  dev->max_work_item_sizes[2] = 1024;
+  dev->max_parameter_size = 64;
+  dev->max_compute_units = 1;
+  dev->max_clock_frequency = 600; // TODO: This is frequency in MHz
+  dev->address_bits = 32;
+
+  // Supports device side printf
+  dev->device_side_printf = 1;
+  dev->printf_buffer_size = PRINTF_BUFFER_SIZE;
+
+  // Doesn't support partition
+  dev->max_sub_devices = 1;
+  dev->num_partition_properties = 1;
+  dev->num_partition_types = 0;
+  dev->partition_type = NULL;
+
+  // Doesn't support SVM
+  dev->svm_allocation_priority = 0;
+
+  // TODO: Do we have builtin kernels for Ventus?
+
+#ifdef ENABLE_LLVM
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
-  pocl_setup_opencl_c_with_version (device, CL_FALSE);
+  dev->llvm_target_triplet = "";
+  dev->llvm_cpu = "";
 #endif
 
-  pocl_setup_extensions_with_version (device);
 
-  /* builtin kernels.. skip, basic/pthread doesn't have any
-  pocl_setup_builtin_kernels_with_version (device); */
-
-  pocl_setup_ils_with_version (device);
-
-  device->on_host_queue_props
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
-
-#if (!defined(ENABLE_CONFORMANCE)                                             \
-     || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
+#if (!defined(ENABLE_CONFORMANCE))
   /* full memory consistency model for atomic memory and fence operations
   https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility */
-  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+  dev->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                        | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                        | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
                                        | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
                                        | CL_DEVICE_ATOMIC_SCOPE_DEVICE
                                        | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
-  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+  dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                        | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                        | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
                                        | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
                                        | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
                                        | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-
-  device->svm_allocation_priority = 1;
-
-  /* OpenCL 2.0 properties */
-  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_ATOMICS;
 #endif
-
-  /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout 
-     an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put 
-     a nonzero there for now. */
-  device->global_mem_size = 1;
-  err = pocl_topology_detect_device_info(device);
-  if (err)
-    ret = CL_INVALID_DEVICE;
 
   POCL_INIT_LOCK (d->cq_lock);
 
-  assert (device->printf_buffer_size > 0);
+  assert (dev->printf_buffer_size > 0);
   d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                          device->printf_buffer_size);
+                                          dev->printf_buffer_size);
   assert (d->printf_buffer != NULL);
-
-  pocl_cpuinfo_detect_device_info(device);
-  pocl_set_buffer_image_limits(device);
-
-  if (device->vendor_id == 0)
-    device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
-
-  /* The basic driver represents only one "compute unit" as
-     it doesn't exploit multiple hardware threads. Multiple
-     basic devices can be still used for task level parallelism 
-     using multiple OpenCL devices. */
-  device->max_compute_units = 1;
 
   return ret;
 }
@@ -527,10 +518,10 @@ pocl_ventus_reinit (unsigned j, cl_device_id device)
 }
 
 
-static void ventus_command_scheduler (struct ventus_device_data_t *d) 
+static void ventus_command_scheduler (struct ventus_device_data_t *d)
 {
   _cl_command_node *node;
-  
+ 
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {

@@ -245,6 +245,8 @@ option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthre
 
 option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
+option(ENABLE_VENTUS "Enable Ventus GPGPU device driver." OFF)
+
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
 option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
@@ -1305,13 +1307,20 @@ set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
 if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_TARGETS "host")
-  set(OCL_DRIVERS "basic pthreads ventus")
+  set(OCL_DRIVERS "basic pthreads")
   # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
   # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
   set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
   set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
   set(BUILD_BASIC 1)
   set(BUILD_PTHREAD 1)
+endif()
+
+if(ENABLE_VENTUS)
+  # Used by llvm
+  set(OCL_KERNEL_TARGET "riscv32")
+  set(OCL_KERNEL_TARGET_CPU "ventus-gpgpu")
+  set(OCL_DRIVERS "${OCL_DRIVERS} ventus")
   set(BUILD_VENTUS 1)
 endif()
 
@@ -2033,6 +2042,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
+MESSAGE(STATUS "ENABLE_VENTUS: ${ENABLE_VENTUS}")
 MESSAGE(STATUS "ENABLE_ALMAIF_DEVICE: ${ENABLE_ALMAIF_DEVICE}")
 MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
 MESSAGE(STATUS "ENABLE_CUDNN: ${ENABLE_CUDNN}")
