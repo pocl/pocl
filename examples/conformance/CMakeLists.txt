@@ -80,12 +80,15 @@ endif()
 if(CUSTOM_CTS_GIT_REPO)
   set(CTS_GIT_REPO "${CUSTOM_CTS_GIT_REPO}")
 else()
-  set(CTS_GIT_REPO "https://github.com/KhronosGroup/OpenCL-CTS")
+  # Use Pekka's fork which has pending-PR subgroup-related fixes.
+  set(CTS_GIT_REPO "https://github.com/pjaaskel/OpenCL-CTS")
+#  set(CTS_GIT_REPO "https://github.com/KhronosGroup/OpenCL-CTS")
 endif()
 if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
-  set(CTS_GIT_TAG "v2022-10-27-00")
+  set(CTS_GIT_TAG "HEAD")
+#  set(CTS_GIT_TAG "v2022-10-27-00")
 endif()
 
 ExternalProject_Add(
