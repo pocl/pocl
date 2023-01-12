@@ -432,25 +432,9 @@ free_meta (cl_program program)
       for (i = 0; i < program->num_kernels; i++)
         {
           pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
-          POCL_MEM_FREE (meta->build_hash);
           if (meta->builtin_kernel)
             continue;
-          POCL_MEM_FREE (meta->attributes);
-          POCL_MEM_FREE (meta->name);
-          for (j = 0; j < meta->num_args; ++j)
-            {
-              POCL_MEM_FREE (meta->arg_info[j].name);
-              POCL_MEM_FREE (meta->arg_info[j].type_name);
-            }
-          POCL_MEM_FREE (meta->arg_info);
-          if (meta->data)
-            {
-              for (j = 0; j < program->num_devices; ++j)
-                if (meta->data[j] != NULL)
-                  meta->data[j] = NULL; // TODO free data in driver callback
-              POCL_MEM_FREE (meta->data);
-            }
-          POCL_MEM_FREE (meta->local_sizes);
+          pocl_free_kernel_metadata (program, i);
         }
       POCL_MEM_FREE (program->kernel_meta);
     }

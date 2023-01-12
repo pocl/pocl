@@ -213,6 +213,7 @@ BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
     : KernelId(KernelIdentifier) {
 
   builtin_kernel = 1;
+  builtin_max_global_work = {0, 0, 0};
   name = strdup(KernelName);
   num_args = ArgInfos.size();
   arg_info = new pocl_argument_info[num_args];
@@ -258,7 +259,7 @@ static cl_int pocl_get_builtin_kernel_metadata(cl_device_id dev,
             target->arg_info[Arg].type == POCL_ARG_TYPE_IMAGE)
           target->arg_info[Arg].type_size = sizeof (cl_mem);
       }
-
+      target->builtin_max_global_work = Desc->builtin_max_global_work;
       target->has_arg_metadata =
         POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER |
         POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER  |

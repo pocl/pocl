@@ -1108,6 +1108,8 @@ struct _cl_device_id {
 
   cl_uint max_num_sub_groups;
   cl_bool sub_group_independent_forward_progress;
+  cl_uint num_subgroup_sizes;
+  size_t *subgroup_sizes;
 
   /* image formats supported by the device, per image type */
   const cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
@@ -1166,6 +1168,10 @@ struct _cl_device_id {
 #define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
 
 #define OPENCL_MAX_DIMENSION 3
+typedef struct
+{
+  size_t size[3];
+} size_t_3;
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
@@ -1503,12 +1509,33 @@ typedef struct pocl_kernel_metadata_s
    * the total size here. see struct _cl_kernel on why */
   size_t total_argument_storage_size;
 
-  /* array[program->num_devices] */
+  /****** subgroups *******/
+  /* per-device value for CL_KERNEL_MAX_NUM_SUB_GROUPS */
+  size_t *max_subgroups;
+  /* per-device value for CL_KERNEL_COMPILE_NUM_SUB_GROUPS */
+  size_t *compile_subgroups;
+
+  /****** workgroups *******/
+  /* per-device value for CL_KERNEL_WORK_GROUP_SIZE */
+  size_t *max_workgroup_size;
+  /* per-device value for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE */
+  size_t *preferred_wg_multiple;
+  /* per-device value for CL_KERNEL_LOCAL_MEM_SIZE */
+  cl_ulong *local_mem_size;
+  /* per-device value for CL_KERNEL_PRIVATE_MEM_SIZE */
+  cl_ulong *private_mem_size;
+  /* per-device value for CL_KERNEL_SPILL_MEM_SIZE_INTEL */
+  cl_ulong *spill_mem_size;
+
+  /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
   /* If this is a BI kernel descriptor, they are statically defined in
      the custom device driver, thus should not be freed. */
   cl_bitfield builtin_kernel;
+  /* maximum global work size usable with the kernel.
+   * Only applies to builtin kernels */
+  size_t_3 builtin_max_global_work;
 
   /* device-specific METAdata, void* array[program->num_devices] */
   void **data;

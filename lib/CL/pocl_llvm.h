@@ -60,6 +60,8 @@ extern "C" {
    */
   int pocl_llvm_get_kernels_metadata (cl_program program, unsigned device_i);
 
+  void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
+
   /* This function links the input kernel LLVM bitcode and the OpenCL kernel
    * runtime library into one LLVM module, then runs pocl's kernel compiler
    * passes on that module to produce a function that executes all work-items
