@@ -283,7 +283,8 @@ void InitializeLLVM() {
     initializeAnalysis(Registry);
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
-    initializeInstrumentation(Registry);
+    // Removed from llvm 16.
+    // initializeInstrumentation(Registry);
     initializeTarget(Registry);
   }
 

@@ -58,8 +58,8 @@ typedef llvm::AliasResult AliasResult;
 
 // LLVM 3.8+
 
-class WorkItemAAResult : public AAResultBase<WorkItemAAResult> {
-    friend AAResultBase<WorkItemAAResult>;
+class WorkItemAAResult : public AAResultBase {
+    friend AAResultBase;
 
 public:
     static char ID;
