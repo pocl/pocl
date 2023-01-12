@@ -165,7 +165,7 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
                       const char *tempDir, const char *inputSrc,
                       const char *outputTpef, const char *machine_file,
                       int is_multicore, int little_endian,
-                      const char *extraParams) {
+                      const char *extraParams, bool standalone_mode) {
 
   const char *mainC;
   if (is_multicore)
@@ -194,7 +194,8 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
     multicoreFlags = " -ldthread -lsync-lu -llockunit";
 
   char preprocessor_directives[MAX_CMDLINE_LEN];
-  set_preprocessor_directives(preprocessor_directives, D, machine_file);
+  set_preprocessor_directives(preprocessor_directives, D, machine_file,
+                              standalone_mode);
 
   const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
   const char *endianFlags = little_endian ? "--little-endian" : "";
@@ -337,7 +338,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                      tempDir,
                      inputBytecode, // inputSrc
                      assemblyFileName, bd->machine_file, bd->core_count > 1,
-                     device->endian_little, "");
+                     device->endian_little, "", false);
 
     POCL_MSG_PRINT_ALMAIF("build command: \n%s", commandLine);
 
@@ -674,18 +675,15 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
       << "\tstandalone_packet.workgroup_size_z = " << std::hex << "(uint32_t)0x"
       << run_cmd->pc.local_size[2] << ";\n"
 
-      << "\tstandalone_packet.reserved1 = "
-      << "(uint32_t)ctx_buffer"
+      << "\tstandalone_packet.reserved1 = (uint32_t)ctx_buffer"
       << ";\n"
-      << "\tstandalone_packet.kernarg_address_low = "
-      << "(uint32_t)arg_buffer"
+      << "\tstandalone_packet.kernarg_address_low = (uint32_t)arg_buffer"
       << ";\n"
 
       << "\tstandalone_packet.kernel_object_low = (uint32_t)&"
       << run_cmd->kernel->meta->name << "_workgroup_argbuffer;\n"
 
-      << "\tstandalone_packet.cmd_metadata_low = "
-      << "(uint32_t)&__completion_signal"
+      << "\tstandalone_packet.cmd_metadata_low = (uint32_t)&__completion_signal"
       << ";\n";
 
   out << "}" << std::endl;
@@ -698,7 +696,7 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   char commandLine[MAX_CMDLINE_LEN];
   tceccCommandLine(commandLine, MAX_CMDLINE_LEN, run_cmd, D, tempDir.c_str(),
                    inputFiles.c_str(), "standalone.tpef", bd->machine_file,
-                   bd->core_count > 1, 1, " -D_STANDALONE_MODE=1");
+                   bd->core_count > 1, 1, " -D_STANDALONE_MODE=1", true);
   scriptout << commandLine;
   scriptout.close();
 
@@ -708,6 +706,7 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   simScript << "mach " << bd->machine_file << ";" << std::endl;
   simScript << "prog standalone.tpef;" << std::endl;
   simScript << "run;" << std::endl;
+
   for (size_t i = 0; i < gmem_count; ++i) {
     simScript << "x /u w /n " << std::dec << gmem_sizes[i] / 4 << " buffer_"
               << std::hex << gmem_startaddrs[i] << ";" << std::endl;
@@ -717,7 +716,8 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   ++runCounter;
 }
 
-void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf) {
+void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf,
+                                 bool standalone_mode) {
   TTAMachine::Machine *mach = NULL;
   try {
     mach = TTAMachine::Machine::loadFromADF(adf);
@@ -725,6 +725,8 @@ void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf) {
     POCL_MSG_WARN("Error: %s\n", e.errorMessage().c_str());
     POCL_ABORT("Couldn't open mach\n");
   }
+  char private_as_name[MAX_CMDLINE_LEN] = "";
+  char global_as_name[MAX_CMDLINE_LEN] = "";
 
   bool separatePrivateMem = true;
   bool separateCQMem = true;
@@ -739,8 +741,19 @@ void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf) {
       if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
         separatePrivateMem = false;
       }
+      strcpy(global_as_name, as->name().c_str());
+    }
+    if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
+      strcpy(private_as_name, as->name().c_str());
     }
   }
+  if (private_as_name == "") {
+    POCL_ABORT("Couldn't find the private address space from machine\n");
+  }
+  if (global_as_name == "") {
+    POCL_ABORT("Couldn't find the global address space from machine\n");
+  }
+
   int AQL_queue_length = d->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
   unsigned dmem_size = d->Dev->DataMemory->Size;
   unsigned cq_size = d->Dev->CQMemory->Size;
@@ -749,28 +762,54 @@ void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf) {
   int i = 0;
   i = snprintf(output, MAX_CMDLINE_LEN, "-DQUEUE_LENGTH=%i ", AQL_queue_length);
   if (!separatePrivateMem) {
-    int fallback_mem_size = pocl_get_int_option(
-        "POCL_ALMAIF_PRIVATE_MEM_SIZE", ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
-    unsigned initsp = dmem_size + fallback_mem_size;
-    unsigned private_mem_start = dmem_size;
-    if (!separateCQMem) {
-      initsp += cq_size;
-      private_mem_start += cq_size;
+    unsigned initsp = dmem_size;
+    unsigned private_mem_start = 0;
+    if (!standalone_mode) {
+      // The standalone mode, cannot separate the automatic allocation of
+      // OpenCL buffers from the other use of the stack and heap.
+      // Therefore, only if we are not using the standalone mode
+      // we can separate the private_mem to an independent region of the data
+      // memory. Another alternative for this would be to change openasip to
+      // support multiple address spaces in a single LSU, and automatically
+      // connect the address spaces with a hardware decoder.
+      int private_mem_size = pocl_get_int_option(
+          "POCL_ALMAIF_PRIVATE_MEM_SIZE", ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
+      initsp += private_mem_size;
+      private_mem_start += dmem_size;
+      if (!separateCQMem) {
+        initsp += cq_size;
+        private_mem_start += cq_size;
+      }
     }
+
     if (!relativeAddressing) {
       initsp += d->Dev->DataMemory->PhysAddress;
       private_mem_start += d->Dev->DataMemory->PhysAddress;
     }
-    i += snprintf(output + i, MAX_CMDLINE_LEN, "--init-sp=%u --data-start=%u ",
-                  initsp, private_mem_start);
+    i +=
+        snprintf(output + i, MAX_CMDLINE_LEN, "--init-sp=%u --data-start=%s,%u",
+                 initsp, private_as_name, private_mem_start);
   }
+  if (!relativeAddressing && standalone_mode) {
+    // Appends to the data-start option
+    char data_start_option_string[MAX_CMDLINE_LEN];
+    if (!separatePrivateMem) {
+      strcpy(data_start_option_string, ",");
+    } else {
+      strcpy(data_start_option_string, " --data-start=");
+    }
+    i += snprintf(output + i, MAX_CMDLINE_LEN,
+                  "%s%s,${STANDALONE_GLOBAL_AS_OFFSET}",
+                  data_start_option_string, global_as_name);
+  }
+
   if (!separateCQMem) {
     unsigned queue_start = d->Dev->CQMemory->PhysAddress;
     if (relativeAddressing) {
       queue_start -= d->Dev->DataMemory->PhysAddress;
     }
-    i +=
-        snprintf(output + i, MAX_CMDLINE_LEN, "-DQUEUE_START=%u ", queue_start);
+    i += snprintf(output + i, MAX_CMDLINE_LEN, " -DQUEUE_START=%u ",
+                  queue_start);
   }
 
   delete mach;

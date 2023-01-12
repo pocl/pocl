@@ -85,6 +85,8 @@ endif ()
   configure_file(${CMAKE_SOURCE_DIR}/tools/data/tta_test_machines/relative_fused_global_cq_private.adf ${CMAKE_CURRENT_BINARY_DIR}/firmwares)
 
   configure_file(firmware.c ${CMAKE_CURRENT_BINARY_DIR})
+  configure_file(run_standalone_ttasim.sh ${CMAKE_CURRENT_BINARY_DIR} @ONLY)
+  configure_file(run_standalone_rtlsim.sh ${CMAKE_CURRENT_BINARY_DIR} @ONLY)
 
   function(generate_firmware core_name base_address queue_length queue_start init_sp data_start use_axim tta_device_hash)
 
@@ -120,7 +122,7 @@ endif ()
     
     add_custom_command(OUTPUT rtls/rtl_${core_name}
       COMMAND rm -rf rtls/rtl_${core_name}
-      COMMAND generateprocessor --prefer-generation -o rtls/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal
+      COMMAND generateprocessor -t --prefer-generation -o rtls/rtl_${core_name} -e tta_core --icd-arg-list=debugger:minimal
       --hdb-list=generate_lsu_32.hdb,generate_rf_iu.hdb,xilinx_series7.hdb,generate_base32.hdb
       -f onchip -d onchip -g AlmaIFIntegrator -p ${TPEF} ${ADF}
       COMMAND generatebits -x rtls/rtl_${core_name} -e tta_core ${ADF}
@@ -160,12 +162,11 @@ endif ()
         COMMAND "${CMAKE_BINARY_DIR}/examples/example0/example0" "b" "${CMAKE_BINARY_DIR}/examples/accel/${core_name}_example0.poclbin")
 
 
-
     add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32")
     add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
 
     #Bit clunky to add test from different directory. However, this file contains the list of different tta configurations
-    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0")
+    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0####o")
 
     set_tests_properties( "examples/accel/add.i32/ttasim_${core_name}" "examples/accel/mul.i32/ttasim_${core_name}"
                           "examples/example0/ttasim_${core_name}" "examples/example0/ttasim_poclbin_${core_name}"
@@ -174,7 +175,30 @@ endif ()
             LABELS "custom_device;almaif"
             ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_CURRENT_BINARY_DIR}/firmwares/${core_name},1,2,65535;POCL_ALMAIF0_HASH=${tta_device_hash}"
             DEPENDS "pocl_version_check;examples/example0")
-    endif()
+
+
+    # Setup the standalone tests. The regular test will generate the standalone files
+    set_property(TEST "examples/example0/ttasim_${core_name}"
+        APPEND PROPERTY ENVIRONMENT "POCL_ALMAIF_STANDALONE=1")
+    set_property(TEST "examples/example0/ttasim_${core_name}"
+        PROPERTY FIXTURES_SETUP standalone_${core_name})
+
+    # The actual standalone tests
+    add_test_pocl(NAME "examples/example0/ttasim_standalone_${core_name}"
+        COMMAND "run_standalone_ttasim.sh####${core_name}"
+        EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+
+    add_test_pocl(NAME "examples/example0/rtlsim_standalone_${core_name}"
+        COMMAND "run_standalone_rtlsim.sh####${core_name}"
+        EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+
+    set_tests_properties ("examples/example0/ttasim_standalone_${core_name}" "examples/example0/rtlsim_standalone_${core_name}"
+        PROPERTIES
+            LABELS "custom_device;almaif"
+            FIXTURES_REQUIRED standalone_${core_name})
+
+
+endif()
     if (PYNQ_AVAILABLE)
 	    add_test(NAME "upload_bitstream/pynq_${core_name}" COMMAND sudo -E python -c "from pynq import Overlay;Overlay(\'${CMAKE_CURRENT_BINARY_DIR}/bitstreams/${core_name}.bit\')" )
 	    add_test(NAME "examples/accel/add.i32/pynq_${core_name}" COMMAND sudo -E ${CMAKE_CURRENT_BINARY_DIR}/accel_example pocl.add.i32)

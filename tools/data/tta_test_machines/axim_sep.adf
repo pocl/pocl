@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<adf version="1.10">
+<adf version="1.20">
 
   <little-endian/>
 
@@ -45,53 +45,7 @@
     </segment>
     <short-immediate>
       <extension>zero</extension>
-      <width>31</width>
-    </short-immediate>
-  </bus>
-
-  <bus name="B1_1">
-    <width>32</width>
-    <guard>
-      <always-true/>
-    </guard>
-    <guard>
-      <simple-expr>
-        <bool>
-          <name>bool</name>
-          <index>0</index>
-        </bool>
-      </simple-expr>
-    </guard>
-    <guard>
-      <inverted-expr>
-        <bool>
-          <name>bool</name>
-          <index>0</index>
-        </bool>
-      </inverted-expr>
-    </guard>
-    <guard>
-      <simple-expr>
-        <bool>
-          <name>bool</name>
-          <index>1</index>
-        </bool>
-      </simple-expr>
-    </guard>
-    <guard>
-      <inverted-expr>
-        <bool>
-          <name>bool</name>
-          <index>1</index>
-        </bool>
-      </inverted-expr>
-    </guard>
-    <segment name="seg1">
-      <writes-to/>
-    </segment>
-    <short-immediate>
-      <extension>zero</extension>
-      <width>0</width>
+      <width>32</width>
     </short-immediate>
   </bus>
 
@@ -143,11 +97,11 @@
 
   <socket name="lsu_i1">
     <reads-from>
-      <bus>B1_1</bus>
+      <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
     <reads-from>
-      <bus>B1</bus>
+      <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>
@@ -155,10 +109,6 @@
   <socket name="lsu_o1">
     <writes-to>
       <bus>B1</bus>
-      <segment>seg1</segment>
-    </writes-to>
-    <writes-to>
-      <bus>B1_1</bus>
       <segment>seg1</segment>
     </writes-to>
     <writes-to>
@@ -173,7 +123,7 @@
       <segment>seg1</segment>
     </reads-from>
     <reads-from>
-      <bus>B1_1</bus>
+      <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>
@@ -185,10 +135,6 @@
     </reads-from>
     <reads-from>
       <bus>B1_2</bus>
-      <segment>seg1</segment>
-    </reads-from>
-    <reads-from>
-      <bus>B1_1</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>
@@ -217,11 +163,11 @@
 
   <socket name="RF_i1">
     <reads-from>
-      <bus>B1_1</bus>
+      <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
     <reads-from>
-      <bus>B1</bus>
+      <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>
@@ -238,10 +184,6 @@
   </socket>
 
   <socket name="bool_i1">
-    <reads-from>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </reads-from>
     <reads-from>
       <bus>B1</bus>
       <segment>seg1</segment>
@@ -272,17 +214,9 @@
       <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
-    <reads-from>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </reads-from>
   </socket>
 
   <socket name="gcu_i2">
-    <reads-from>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </reads-from>
     <reads-from>
       <bus>B1</bus>
       <segment>seg1</segment>
@@ -306,11 +240,11 @@
 
   <socket name="lsu_1_i1">
     <reads-from>
-      <bus>B1_1</bus>
+      <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
     <reads-from>
-      <bus>B1</bus>
+      <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>
@@ -335,10 +269,6 @@
       <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
-    <reads-from>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </reads-from>
   </socket>
 
   <socket name="scratchpad_i1">
@@ -350,17 +280,9 @@
       <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
-    <reads-from>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </reads-from>
   </socket>
 
   <socket name="scratchpad_o1">
-    <writes-to>
-      <bus>B1_1</bus>
-      <segment>seg1</segment>
-    </writes-to>
     <writes-to>
       <bus>B1_2</bus>
       <segment>seg1</segment>
@@ -373,11 +295,11 @@
 
   <socket name="scratchpad_i2">
     <reads-from>
-      <bus>B1_1</bus>
+      <bus>B1</bus>
       <segment>seg1</segment>
     </reads-from>
     <reads-from>
-      <bus>B1</bus>
+      <bus>B1_2</bus>
       <segment>seg1</segment>
     </reads-from>
   </socket>

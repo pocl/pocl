@@ -859,6 +859,7 @@ void scheduleNDRange(AlmaifData *data, _cl_command_node *cmd, size_t arg_size,
     pc.global_offset[0] = run->pc.global_offset[0];
     pc.global_offset[1] = run->pc.global_offset[1];
     pc.global_offset[2] = run->pc.global_offset[2];
+    pc.global_var_buffer = 0;
 
     if (cmd->device->device_side_printf) {
       pc.printf_buffer = ((chunk_info_t *)data->printf_buffer)->start_address;

@@ -52,7 +52,7 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
                       const char *tempDir, const char *inputSrc,
                       const char *outputTpef, const char *machine_file,
                       int is_multicore, int little_endian,
-                      const char *extraParams);
+                      const char *extraParams, bool standalone_mode);
 void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
                                       _cl_command_node *command,
                                       cl_kernel kernel, cl_device_id device,
@@ -61,6 +61,7 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
 int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
                                 char *output);
 
-void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf);
+void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf,
+                                 bool standalone_mode);
 
 #endif
