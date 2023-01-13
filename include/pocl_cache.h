@@ -101,7 +101,7 @@ int pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                          int specialize);
 
 // required by pocl_binary.c
-
+POCL_EXPORT
 void pocl_cache_program_path (char *path, cl_program program,
                               unsigned device_i);
 

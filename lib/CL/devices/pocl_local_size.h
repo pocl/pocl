@@ -25,6 +25,11 @@
 #define POCL_LOCAL_SIZE_H
 
 #include "pocl_cl.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The generic local size optimizer used by default, in case there's no target
  * specific one defined in the device driver. */
 POCL_EXPORT
@@ -46,4 +51,9 @@ void pocl_wg_utilization_maximizer (cl_device_id dev, cl_kernel kernel,
                                     size_t global_x, size_t global_y,
                                     size_t global_z, size_t *local_x,
                                     size_t *local_y, size_t *local_z);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
