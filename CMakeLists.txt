@@ -1592,6 +1592,10 @@ if (ENABLE_LEVEL0)
   endif()
   pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
 
+  if(NOT LLVM_VERSION LESS "15.0")
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang older than 15; llvm-spirv translator breaks often with 15+ ")
+  endif()
+
   if (NOT LEVEL0_FOUND)
     message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
     find_library(LEVEL0_LIBRARIES NAMES ze_loader REQUIRED)
