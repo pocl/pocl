@@ -75,13 +75,13 @@ llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
                                 llvm::LLVMContext *c);
 std::string getDiagString (cl_context ctx);
 
-void setModuleIntMetadata (llvm::Module *mod, const char *key, uint64_t data);
+void setModuleIntMetadata (llvm::Module *mod, const char *key, unsigned long data);
 void setModuleStringMetadata (llvm::Module *mod, const char *key,
                               const char *data);
 void setModuleBoolMetadata (llvm::Module *mod, const char *key, bool data);
 
 POCL_EXPORT bool getModuleIntMetadata (const llvm::Module &mod,
-                                       const char *key, uint64_t &data);
+                                       const char *key, unsigned long &data);
 POCL_EXPORT bool getModuleStringMetadata (const llvm::Module &mod,
                                           const char *key, std::string &data);
 POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
