@@ -1,5 +1,14 @@
 # Portable Computing Language (PoCL)
 
+## Ventus GPGPU port of PoCL
+
+See https://github.com/THU-DSP-LAB/llvm-project for detailed build guide with
+Ventus llvm based OpenCL Compiler and icd loader.
+
+Original PoCL build instruction doesn't work for Ventus GPGPU.
+
+============================================================================
+
 PoCL is being developed towards an efficient implementation of the OpenCL
 standard which can be easily adapted for new targets.
 
