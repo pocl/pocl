@@ -219,6 +219,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->linker_available = CL_TRUE;
   dev->extensions = "";
   dev->profile = "FULL_PROFILE";
+  dev->endian_little = CL_TRUE;
 
   dev->max_mem_alloc_size = 100 * 1024 * 1024;
   dev->mem_base_addr_align = 4;
