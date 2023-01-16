@@ -216,6 +216,12 @@ endif()
 
 #*********************************************************************
 
+if(OCL_TARGETS MATCHES "ventus")
+  add_subdirectory("ventus")
+endif()
+
+#*********************************************************************
+
 if(OCL_TARGETS MATCHES "cuda")
   add_subdirectory("cuda")
 endif()

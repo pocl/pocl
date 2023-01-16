@@ -172,9 +172,12 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 
   llvm::Module *BuiltinLib = getKernelLibrary(Device, Context);
   assert(BuiltinLib != NULL);
-
+  // FIXME: Disabled for Ventus for now (Re-enable after implementing printf
+  // in llvm libclc).
+#if 0
   if (unifyPrintfFingerPrint(Mod, BuiltinLib))
     return true;
+#endif
 
 #ifndef LLVM_OLDER_THAN_14_0
   if (Device->program_scope_variables_pass) {
@@ -967,7 +970,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   }
 #endif
 #ifdef AMDGCN_ENABLED
-  if (triple.getArch == Triple::amdgcn) {
+  if (triple.getArch() == Triple::amdgcn) {
     subdir = "amdgcn";
     is_host = false;
   }
@@ -976,6 +979,12 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   if (triple.getArch() == Triple::nvptx ||
       triple.getArch() == Triple::nvptx64) {
     subdir = "cuda";
+    is_host = false;
+  }
+#endif
+#ifdef BUILD_VENTUS
+  if (triple.getArch() == Triple::riscv32) {
+    subdir = "ventus";
     is_host = false;
   }
 #endif

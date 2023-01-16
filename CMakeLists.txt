@@ -1317,10 +1317,12 @@ if(ENABLE_HOST_CPU_DEVICES)
 endif()
 
 if(ENABLE_VENTUS)
-  # Used by llvm
+  # Use llvm libclc instead of pocl libclc
+  #set(OCL_TARGETS "${OCL_TARGETS} ventus")
+  set(OCL_DRIVERS "${OCL_DRIVERS} ventus")
+  # These 2 variables are used by llvm
   set(OCL_KERNEL_TARGET "riscv32")
   set(OCL_KERNEL_TARGET_CPU "ventus-gpgpu")
-  set(OCL_DRIVERS "${OCL_DRIVERS} ventus")
   set(BUILD_VENTUS 1)
 endif()
 
