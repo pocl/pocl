@@ -22,6 +22,8 @@
    THE SOFTWARE.
 */
 
+#define USING_ASTYPE_HELPERS
+
 #include "templates.h"
 
 DEFINE_EXPR_G_GGG(bitselect, (~c & a) | (c & b))
@@ -29,6 +31,9 @@ DEFINE_EXPR_G_GGG(bitselect, (~c & a) | (c & b))
 DEFINE_EXPR_V_VVV(bitselect,
                   ({
                     jtype result =
-                      bitselect(*(jtype*)&a, *(jtype*)&b, *(jtype*)&c);
-                    *(vtype*)&result;
+                      bitselect(
+                        _cl_bitselect_as_jtype(a),
+                        _cl_bitselect_as_jtype(b),
+                        _cl_bitselect_as_jtype(c));
+                    _cl_bitselect_as_vtype(result);
                   }))

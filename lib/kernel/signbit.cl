@@ -35,10 +35,17 @@
 #define IMPLEMENT_SIGNBIT_DIRECT                \
   ({                                            \
     int bits = CHAR_BIT * sizeof(stype);        \
-    *(jtype*)&a >> (jtype)(bits-1);             \
+    signbit_as_jtype(a) >> (jtype)(bits-1);             \
   })
 
 #define IMPLEMENT_DIRECT(NAME, VTYPE, STYPE, JTYPE, EXPR)       \
+  __IF_ASTYPE_HELPERS(                                          \
+  static _CL_OVERLOADABLE                                       \
+  JTYPE NAME##_as_jtype(VTYPE a)                                \
+  {                                                             \
+    return as_##JTYPE(a);                                       \
+  }                                                             \
+  )                                                             \
   JTYPE _CL_OVERLOADABLE NAME(VTYPE a)                          \
   {                                                             \
     typedef VTYPE vtype;                                        \
@@ -50,7 +57,9 @@
 
 
 #ifdef cl_khr_fp16
+#define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, half  , half, int    , IMPLEMENT_SIGNBIT_BUILTIN_HALF)
+#define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, half2 , half, short2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half3 , half, short3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half4 , half, short4 , IMPLEMENT_SIGNBIT_DIRECT)
@@ -58,7 +67,9 @@ IMPLEMENT_DIRECT(signbit, half8 , half, short8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half16, half, short16, IMPLEMENT_SIGNBIT_DIRECT)
 #endif
 
+#define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
+#define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
@@ -66,7 +77,9 @@ IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)
 
 #ifdef cl_khr_fp64
+#define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, double  , double, int   , IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE)
+#define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, double2 , double, long2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double3 , double, long3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double4 , double, long4 , IMPLEMENT_SIGNBIT_DIRECT)

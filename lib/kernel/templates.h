@@ -47,6 +47,11 @@
 #  define IF_GEN_AS(X)
 #endif
 
+#ifdef USING_ASTYPE_HELPERS
+#  define __IF_ASTYPE_HELPERS(X) X
+#else
+#  define __IF_ASTYPE_HELPERS(X)
+#endif
 
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \
@@ -549,6 +554,13 @@
   IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double, long16 , long ))
 
 #define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)    \
+  __IF_ASTYPE_HELPERS(                                                  \
+  static __attribute__ ((overloadable))                                 \
+  VTYPE NAME##_as_vtype(JTYPE a)                                        \
+  {                                                                     \
+    return as_##VTYPE(a);                                               \
+  }                                                                     \
+  )                                                                     \
   VTYPE __attribute__ ((overloadable))                                  \
   NAME(VTYPE a, VTYPE b)                                                \
   {                                                                     \
@@ -581,7 +593,19 @@
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16 , long ))
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)   \
-  VTYPE _CL_OVERLOADABLE _CL_READNONE                                  \
+  __IF_ASTYPE_HELPERS(                                                  \
+  static __attribute__ ((overloadable))                                 \
+  VTYPE NAME##_as_vtype(JTYPE a)                                        \
+  {                                                                     \
+    return as_##VTYPE(a);                                               \
+  }                                                                     \
+  static __attribute__ ((overloadable))                                 \
+  JTYPE NAME##_as_jtype(VTYPE a)                                        \
+  {                                                                     \
+    return as_##JTYPE(a);                                               \
+  }                                                                     \
+  )                                                                     \
+  VTYPE _CL_OVERLOADABLE _CL_READNONE                                   \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     typedef VTYPE vtype;                                                \
@@ -863,8 +887,14 @@
   IMPLEMENT_EXPR_V_VVJ(NAME, EXPR, double16, double, long16 , long ))
 
 #define IMPLEMENT_EXPR_V_U(NAME, EXPR, VTYPE, STYPE, UTYPE, SUTYPE)     \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(UTYPE a)                                                         \
+  __IF_ASTYPE_HELPERS(                                                  \
+  static __attribute__ ((overloadable))                                 \
+  VTYPE NAME##_as_vtype(UTYPE a)                                        \
+  {                                                                     \
+    return as_##VTYPE(a);                                               \
+  })                                                                    \
+  __attribute__ ((overloadable))                                        \
+  VTYPE NAME(UTYPE a)                                                   \
   {                                                                     \
     typedef VTYPE vtype;                                                \
     typedef STYPE stype;                                                \
