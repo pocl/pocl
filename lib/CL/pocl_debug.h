@@ -284,6 +284,7 @@ POCL_EXPORT
 
     #define POCL_MSG_PRINT_ALMAIF2(...)  do {} while (0)
     #define POCL_MSG_PRINT_ALMAIF(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ALMAIF_MMAP(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
     #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
