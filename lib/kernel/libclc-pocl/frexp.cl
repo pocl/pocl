@@ -41,6 +41,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -97,6 +103,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -152,6 +164,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -207,6 +225,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -262,6 +286,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -317,6 +347,12 @@
 #include "frexp_fp32.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp32.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef vtype
@@ -382,6 +418,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4
@@ -444,6 +486,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4
@@ -505,6 +553,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4
@@ -566,6 +620,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4
@@ -627,6 +687,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4
@@ -688,6 +754,12 @@
 #include "frexp_fp64.cl"
 #undef ADDRSPACE
 
+
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "frexp_fp64.cl"
+#undef ADDRSPACE
+#endif
 #undef v2type
 #undef itype4
 #undef utype4

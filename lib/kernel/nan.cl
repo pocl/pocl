@@ -22,6 +22,8 @@
    THE SOFTWARE.
 */
 
+#define USING_ASTYPE_HELPERS
+
 #include "templates.h"
 
 /* Fall-back implementation which ignores the nancode */
@@ -51,5 +53,5 @@ DEFINE_EXPR_V_U(nan,
                   nan_exp <<= mant_dig;
                   // combine exponent and nancode
                   utype val = nan_exp | nancode;
-                  *(vtype*)&val;
+                  _cl_nan_as_vtype(val);
                 }))

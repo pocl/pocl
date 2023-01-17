@@ -37,15 +37,31 @@
 
 #  define Q __global
 #  define QUAL(f) f ## __global
+#  define ARG2_AS private
 #  include "svm_atomics.cl"
+#  undef ARG2_AS
 #  undef Q
 #  undef QUAL
 
 #  define Q __local
 #  define QUAL(f) f ## __local
+#  define ARG2_AS private
 #  include "svm_atomics.cl"
+#  undef ARG2_AS
 #  undef Q
 #  undef QUAL
+
+#ifdef __opencl_c_generic_address_space
+
+#  define Q __generic
+#  define QUAL(f) f ## __generic
+#  define ARG2_AS generic
+#  include "svm_atomics.cl"
+#  undef ARG2_AS
+#  undef Q
+#  undef QUAL
+
+#endif
 
 #elif !defined(ATOMIC_TYPE)
 
@@ -212,7 +228,7 @@ atomic_exchange (volatile Q ATOMIC_TYPE *object, NONATOMIC_TYPE desired)
 
 bool _CL_OVERLOADABLE
 atomic_compare_exchange_strong_explicit (volatile Q ATOMIC_TYPE *object,
-                                         private NONATOMIC_TYPE *expected,
+                                         ARG2_AS NONATOMIC_TYPE *expected,
                                          NONATOMIC_TYPE desired,
                                          memory_order success,
                                          memory_order failure,
@@ -223,7 +239,7 @@ atomic_compare_exchange_strong_explicit (volatile Q ATOMIC_TYPE *object,
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
+  ARG2_AS NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure)
@@ -234,7 +250,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMI
 
 bool _CL_OVERLOADABLE
 atomic_compare_exchange_strong (volatile Q ATOMIC_TYPE *object,
-                                private NONATOMIC_TYPE *expected,
+                                ARG2_AS NONATOMIC_TYPE *expected,
                                 NONATOMIC_TYPE desired)
 {
   return atomic_compare_exchange_strong_explicit (
@@ -243,7 +259,7 @@ atomic_compare_exchange_strong (volatile Q ATOMIC_TYPE *object,
 
 bool _CL_OVERLOADABLE
 atomic_compare_exchange_weak_explicit (volatile Q ATOMIC_TYPE *object,
-                                       private NONATOMIC_TYPE *expected,
+                                       ARG2_AS NONATOMIC_TYPE *expected,
                                        NONATOMIC_TYPE desired,
                                        memory_order success,
                                        memory_order failure,
@@ -254,7 +270,7 @@ atomic_compare_exchange_weak_explicit (volatile Q ATOMIC_TYPE *object,
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_TYPE  *object,
-  private NONATOMIC_TYPE  *expected,
+  ARG2_AS NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure)
@@ -265,7 +281,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_
 
 bool _CL_OVERLOADABLE
 atomic_compare_exchange_weak (volatile Q ATOMIC_TYPE *object,
-                              private NONATOMIC_TYPE *expected,
+                              ARG2_AS NONATOMIC_TYPE *expected,
                               NONATOMIC_TYPE desired)
 {
   return atomic_compare_exchange_weak_explicit (

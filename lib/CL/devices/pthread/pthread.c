@@ -147,6 +147,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
   device->program_scope_variables_pass = CL_TRUE;
+  device->generic_as_support = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);

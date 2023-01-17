@@ -213,6 +213,7 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
   passes.push_back("remove-optnone");
   passes.push_back("optimize-wi-func-calls");
   passes.push_back("handle-samplers");
+  passes.push_back("infer-address-spaces");
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");

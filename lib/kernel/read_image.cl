@@ -50,6 +50,9 @@ map_channels (uint4 color, int order)
       return color.yzwx;
     case CLK_BGRA:
       return color.zyxw;
+    case CLK_RA:
+      return color.xwyz;
+    case CLK_RG:
     case CLK_RGBA:
     default:
       return color;
@@ -97,6 +100,47 @@ get_float4_pixel (void *data, size_t base_index, int type)
       return convert_float4 (((ushort4 *)data)[base_index]) * one_65535th;
     }
   return (float4) (123.0f);
+}
+
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
+_CL_READONLY static float2
+get_float2_pixel (void *data, size_t base_index, int type)
+{
+  if (type == CLK_FLOAT)
+    return ((float2 *)data)[base_index];
+  if (type == CLK_HALF_FLOAT)
+    {
+      return vloada_half2(base_index, data);
+    }
+  const float2 one_127th = (float2) (1.0f / 127.0f);
+  const float2 one_32767th = (float2) (1.0f / 32767.0f);
+  const float2 one_255th = ((float2) (1.0f / (float)UCHAR_MAX));
+  const float2 one_65535th = ((float2) (1.0f / (float)USHRT_MAX));
+  if (type == CLK_SNORM_INT8)
+    {
+      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
+      int2 color = convert_int2 (((char2 *)data)[base_index]);
+      float2 colorf = convert_float2 (color);
+      return max ((float2) (-1.0f), (one_127th * colorf));
+    }
+  if (type == CLK_SNORM_INT16)
+    {
+      int2 color = convert_int2 (((short2 *)data)[base_index]);
+      float2 colorf = convert_float2 (color);
+      return max ((float2) (-1.0f), (one_32767th * colorf));
+    }
+  if (type == CLK_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float2 (((uchar2 *)data)[base_index]) * one_255th;
+    }
+  if (type == CLK_UNORM_INT16)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float2 (((ushort2 *)data)[base_index]) * one_65535th;
+    }
+  return (float2) (123.0f);
 }
 
 /* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
@@ -174,6 +218,18 @@ pocl_read_pixel_fast_ui (size_t base_index, int order, int elem_size,
       return color;
     }
 
+  if (order == CLK_RG)
+    {
+      color = (uint4)0;
+      if (elem_size == 1)
+        color.xy = convert_uint2(((uchar2 *)data)[base_index]);
+      else if (elem_size == 2)
+        color.xy = convert_uint2(((ushort2 *)data)[base_index]);
+      else if (elem_size == 4)
+        color.xy = ((uint2 *)data)[base_index];
+      return color;
+    }
+
   if (elem_size == 1)
     {
       return convert_uint4 (((uchar4 *)data)[base_index]);
@@ -207,6 +263,11 @@ pocl_read_pixel_fast_f (size_t base_index, int channel_type, int order,
     {
       float p = get_float_pixel (data, base_index, channel_type);
       return (float4) (p, 0.0f, 0.0f, 1.0f);
+    }
+  else if (order == CLK_RG)
+    {
+      float2 p = get_float2_pixel (data, base_index, channel_type);
+      return (float4) (p.x, p.y, 0.0f, 1.0f);
     }
   else
     {
@@ -244,6 +305,18 @@ pocl_read_pixel_fast_i (size_t base_index, int order, int elem_size,
         color.x = ((short *)data)[base_index];
       else if (elem_size == 4)
         color.x = ((int *)data)[base_index];
+      return color;
+    }
+
+  if (order == CLK_RG)
+    {
+      color = (int4)0;
+      if (elem_size == 1)
+        color.xy = convert_int2(((char2 *)data)[base_index]);
+      else if (elem_size == 2)
+        color.xy = convert_int2(((short2 *)data)[base_index]);
+      else if (elem_size == 4)
+        color.xy = ((int2 *)data)[base_index];
       return color;
     }
 

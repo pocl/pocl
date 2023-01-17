@@ -919,6 +919,7 @@ struct _cl_device_id {
   size_t max_work_group_size;
   size_t preferred_wg_size_multiple;
   cl_bool non_uniform_work_group_support;
+  cl_bool generic_as_support;
   cl_uint preferred_vector_width_char;
   cl_uint preferred_vector_width_short;
   cl_uint preferred_vector_width_int;

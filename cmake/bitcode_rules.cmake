@@ -229,7 +229,7 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"
-      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
+      COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py" "-g" ${EXTRA_OPT} "-t" "${ARCH}" "-r" "${SIZE}" "${FNAME}"
       COMMENT "Generating x86-64 ${VECSIZE}-bit wrapper for ${SUBDIR} to ${FNAME}"
       VERBATIM)
 endfunction()

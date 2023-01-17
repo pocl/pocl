@@ -64,6 +64,13 @@ FILES.each do |name|
         f.puts %Q{#include "#{name}_fp32.cl"}
         f.puts "#undef ADDRSPACE\n\n"
       end
+        f.puts %Q{
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "#{name}_fp32.cl"
+#undef ADDRSPACE
+#endif
+}
     else
       f.puts %Q{#include "#{name}_fp32.cl"\n\n}
     end
@@ -140,6 +147,13 @@ FILES.each do |name|
         f.puts %Q{#include "#{name}_fp64.cl"}
         f.puts "#undef ADDRSPACE\n\n"
       end
+      f.puts %Q{
+#ifdef __opencl_c_generic_address_space
+#define ADDRSPACE generic
+#include "#{name}_fp64.cl"
+#undef ADDRSPACE
+#endif
+}
     else
       f.puts %Q{#include "#{name}_fp64.cl"\n\n}
     end

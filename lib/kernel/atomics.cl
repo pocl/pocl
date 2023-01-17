@@ -48,6 +48,13 @@ device-scope.
 #  include "atomics.cl"
 #  undef Q
 
+#ifdef __opencl_c_generic_address_space
+#  define Q __generic
+#  include "atomics.cl"
+#  undef Q
+#endif
+
+
 #elif !defined(T)
 
 #  define T int

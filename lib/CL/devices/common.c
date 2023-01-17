@@ -1386,6 +1386,18 @@ static const cl_image_format supported_image_formats[] = {
   { CL_R, CL_UNSIGNED_INT32 },
   { CL_R, CL_HALF_FLOAT },
   { CL_R, CL_FLOAT },
+  { CL_RG, CL_SNORM_INT8 },
+  { CL_RG, CL_SNORM_INT16 },
+  { CL_RG, CL_UNORM_INT8 },
+  { CL_RG, CL_UNORM_INT16 },
+  { CL_RG, CL_SIGNED_INT8 },
+  { CL_RG, CL_SIGNED_INT16 },
+  { CL_RG, CL_SIGNED_INT32 },
+  { CL_RG, CL_UNSIGNED_INT8 },
+  { CL_RG, CL_UNSIGNED_INT16 },
+  { CL_RG, CL_UNSIGNED_INT32 },
+  { CL_RG, CL_HALF_FLOAT },
+  { CL_RG, CL_FLOAT },
   { CL_RGBA, CL_SNORM_INT8 },
   { CL_RGBA, CL_SNORM_INT16 },
   { CL_RGBA, CL_UNORM_INT8 },
@@ -1851,6 +1863,7 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_generic_address_space" },
 };
 
 const size_t OPENCL_FEATURES_NUM

@@ -77,7 +77,7 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
 void parseModuleGVarSize(cl_program program, unsigned device_i,
                          llvm::Module *ProgramBC) {
 
-  uint64_t TotalGVarBytes = 0;
+  unsigned long TotalGVarBytes = 0;
   if (!getModuleIntMetadata(*ProgramBC, PoclGVarMDName, TotalGVarBytes))
     return;
 
@@ -472,7 +472,7 @@ void pocl_llvm_release_context(cl_context ctx) {
 
 #define POCL_METADATA_ROOT "pocl_meta"
 
-void setModuleIntMetadata(llvm::Module *mod, const char *key, uint64_t data) {
+void setModuleIntMetadata(llvm::Module *mod, const char *key, unsigned long data) {
 
   llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
                             llvm::ConstantAsMetadata::get(ConstantInt::get(
@@ -508,7 +508,7 @@ void setModuleBoolMetadata(llvm::Module *mod, const char *key, bool data) {
 }
 
 bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
-                          uint64_t &data) {
+                          unsigned long &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
   if (!Root)
     return false;

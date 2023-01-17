@@ -208,3 +208,6 @@ IMPLEMENT_VLOAD_HALF(__global)
 IMPLEMENT_VLOAD_HALF(__local)
 IMPLEMENT_VLOAD_HALF(__constant)
 IMPLEMENT_VLOAD_HALF(__private)
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_VLOAD_HALF(__generic)
+#endif
