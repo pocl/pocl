@@ -101,7 +101,8 @@ struct kernel_context_t {
 
 static size_t ALIGNED_CTX_SIZE = 4 * ((sizeof(struct kernel_context_t) + 3) / 4);
 
-static const char *ventus_final_ld_flags[] = {"-nodefaultlibs", NULL};
+// FIXME: Do not use hardcoded library search path!
+static const char *ventus_final_ld_flags[] = {"-nodefaultlibs", "-L"CLANG_RESOURCE_DIR"/../../", "-lworkitem", NULL};
 
 void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
