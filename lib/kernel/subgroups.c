@@ -1,4 +1,4 @@
-/* OpenCL built-in library: subgroup basic functionality
+/* OpenCL built-in library: subroups functionality
 
    Copyright (c) 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
 
@@ -21,17 +21,10 @@
    IN THE SOFTWARE.
 */
 
-/* The default implementation of subgroups is the simplest possible one of
-   always having one subgroup executing the innermost dimension.
-
-   Next, the plan is to allow the default to be changed explicitly by
-   means of the intel_reqd_sub_group_size annotation as described in
-   https://registry.khronos.org/OpenCL/extensions/intel/
-   cl_intel_required_subgroup_size.html
-
-   This forms a minimal viable feature set sufficient to emulate different
-   warp sizes for CUDA/HIP execution. Performance via efficient vectorization
-   is not a priority for now.
+/* The default implementation of subgroups for CPU drivers. It uses work-group
+   sized local buffers for exchanging the data. The subgroup size is by default
+   the local X dimension side, unless restricted with the
+   intel_reqd_sub_group_size metadata.
  */
 
 #include <math.h>
@@ -65,11 +58,13 @@ size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
 
 size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
 
+/* Magic variable that is expanded in Workgroup.cc */
+extern uint _pocl_sub_group_size;
+
 uint _CL_OVERLOADABLE
 get_sub_group_size (void)
 {
-  /* By default 1 SG per WG_x. */
-  return get_local_size (0);
+  return _pocl_sub_group_size;
 }
 
 uint _CL_OVERLOADABLE
@@ -81,7 +76,8 @@ get_max_sub_group_size (void)
 uint _CL_OVERLOADABLE
 get_num_sub_groups (void)
 {
-  return (uint)get_local_size (1) * get_local_size (2);
+  return (uint)get_local_size (0) * get_local_size (1) * get_local_size (2)
+         / get_max_sub_group_size ();
 }
 
 uint _CL_OVERLOADABLE
@@ -90,30 +86,43 @@ get_enqueued_num_sub_groups (void)
   return 1;
 }
 
+size_t _CL_OVERLOADABLE get_local_linear_id (void);
+
 uint _CL_OVERLOADABLE
 get_sub_group_id (void)
 {
-  return get_local_id (2) * get_local_size (1) + get_local_id (1);
+  return (uint)get_local_linear_id () / get_max_sub_group_size ();
 }
 
 uint _CL_OVERLOADABLE
 get_sub_group_local_id (void)
 {
-  return (uint)get_local_id (0);
+  return (uint)get_local_linear_id () % get_max_sub_group_size ();
+}
+
+static size_t _CL_OVERLOADABLE
+get_first_llid (void)
+{
+  return get_sub_group_id () * get_max_sub_group_size ();
 }
 
 void _CL_OVERLOADABLE sub_group_barrier (cl_mem_fence_flags flags);
 
-#define SUB_GROUP_SHUFFLE_T(TYPE)                                             \
-  __attribute__ ((always_inline)) TYPE _CL_OVERLOADABLE sub_group_shuffle (   \
-      TYPE val, uint index)                                                   \
+#define SUB_GROUP_SHUFFLE_PT(PREFIX, TYPE)                                    \
+  __attribute__ ((always_inline))                                             \
+  TYPE _CL_OVERLOADABLE PREFIX##sub_group_shuffle (TYPE val, uint index)      \
   {                                                                           \
     volatile TYPE *temp_storage                                               \
         = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
-    temp_storage[get_sub_group_local_id ()] = val;                            \
+    temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
-    return temp_storage[index % get_sub_group_size ()];                       \
+    return temp_storage[get_first_llid () + index % get_sub_group_size ()];   \
   }
+
+/* Define both the non-prefixed (khr) and Intel-prefixed shuffles. */
+#define SUB_GROUP_SHUFFLE_T(TYPE)                                             \
+  SUB_GROUP_SHUFFLE_PT (, TYPE)                                               \
+  SUB_GROUP_SHUFFLE_PT (intel_, TYPE)
 
 SUB_GROUP_SHUFFLE_T (char)
 SUB_GROUP_SHUFFLE_T (uchar)
@@ -126,17 +135,23 @@ SUB_GROUP_SHUFFLE_T (ulong)
 SUB_GROUP_SHUFFLE_T (float)
 SUB_GROUP_SHUFFLE_T (double)
 
-#define SUB_GROUP_SHUFFLE_XOR_T(TYPE)                                         \
+#define SUB_GROUP_SHUFFLE_XOR_PT(PREFIX, TYPE)                                \
   __attribute__ ((always_inline)) TYPE _CL_OVERLOADABLE                       \
-  sub_group_shuffle_xor (TYPE val, uint mask)                                 \
+  PREFIX##sub_group_shuffle_xor (TYPE val, uint mask)                         \
   {                                                                           \
     volatile TYPE *temp_storage                                               \
         = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
-    temp_storage[get_sub_group_local_id ()] = val;                            \
+    temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
-    return temp_storage[(get_sub_group_local_id () ^ mask)                    \
-                        % get_sub_group_size ()];                             \
+    return temp_storage[get_first_llid ()                                     \
+                        + (get_sub_group_local_id () ^ mask)                  \
+                              % get_sub_group_size ()];                       \
   }
+
+/* Define both the non-prefixed (khr) and Intel-prefixed shuffles. */
+#define SUB_GROUP_SHUFFLE_XOR_T(TYPE)                                         \
+  SUB_GROUP_SHUFFLE_XOR_PT (, TYPE)                                           \
+  SUB_GROUP_SHUFFLE_XOR_PT (intel_, TYPE)
 
 SUB_GROUP_SHUFFLE_XOR_T (char)
 SUB_GROUP_SHUFFLE_XOR_T (uchar)
@@ -169,18 +184,19 @@ SUB_GROUP_BROADCAST_T (double)
   {                                                                           \
     volatile TYPE *temp_storage                                               \
         = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
-    temp_storage[get_sub_group_local_id ()] = val;                            \
+    temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     if (get_sub_group_local_id () == 0)                                       \
       {                                                                       \
         for (uint i = 1; i < get_sub_group_size (); ++i)                      \
           {                                                                   \
-            TYPE a = temp_storage[0], b = temp_storage[i];                    \
-            temp_storage[0] = OPERATION;                                      \
+            TYPE a = temp_storage[get_first_llid ()],                         \
+                 b = temp_storage[get_first_llid () + i];                     \
+            temp_storage[get_first_llid ()] = OPERATION;                      \
           }                                                                   \
       }                                                                       \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
-    return temp_storage[0];                                                   \
+    return temp_storage[get_first_llid ()];                                   \
   }
 
 #define SUB_GROUP_REDUCE_T(OPNAME, OPERATION)                                 \
@@ -201,18 +217,19 @@ SUB_GROUP_REDUCE_T (max, a > b ? a : b)
   {                                                                           \
     volatile TYPE *data                                                       \
         = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
-    data[get_sub_group_local_id ()] = val;                                    \
+    data[get_local_linear_id ()] = val;                                       \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     if (get_sub_group_local_id () == 0)                                       \
       {                                                                       \
         for (uint i = 1; i < get_sub_group_size (); ++i)                      \
           {                                                                   \
-            TYPE a = data[i - 1], b = data[i];                                \
-            data[i] = OPERATION;                                              \
+            TYPE a = data[get_first_llid () + i - 1],                         \
+                 b = data[get_first_llid () + i];                             \
+            data[get_first_llid () + i] = OPERATION;                          \
           }                                                                   \
       }                                                                       \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
-    return data[get_sub_group_local_id ()];                                   \
+    return data[get_local_linear_id ()];                                      \
   }
 
 #define SUB_GROUP_SCAN_INCLUSIVE_T(OPNAME, OPERATION)                         \
@@ -233,19 +250,20 @@ SUB_GROUP_SCAN_INCLUSIVE_T (max, a > b ? a : b)
   {                                                                           \
     volatile TYPE *data                                                       \
         = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
-    data[get_sub_group_local_id () + 1] = val;                                \
-    data[0] = ID;                                                             \
+    data[get_local_linear_id () + 1] = val;                                   \
+    data[get_first_llid ()] = ID;                                             \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     if (get_sub_group_local_id () == 0)                                       \
       {                                                                       \
         for (uint i = 1; i < get_sub_group_size (); ++i)                      \
           {                                                                   \
-            TYPE a = data[i - 1], b = data[i];                                \
-            data[i] = OPERATION;                                              \
+            TYPE a = data[get_first_llid () + i - 1],                         \
+                 b = data[get_first_llid () + i];                             \
+            data[get_first_llid () + i] = OPERATION;                          \
           }                                                                   \
       }                                                                       \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
-    return data[get_sub_group_local_id ()];                                   \
+    return data[get_local_linear_id ()];                                      \
   }
 
 SUB_GROUP_SCAN_EXCLUSIVE_OT (add, a + b, int, 0)
@@ -272,19 +290,23 @@ SUB_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, double, -INFINITY)
 __attribute__ ((always_inline)) uint4 _CL_OVERLOADABLE
 sub_group_ballot (int predicate)
 {
-  uint *flags = __pocl_local_mem_alloca (sizeof (uint) * 4, sizeof (uint) * 4);
+  /* TODO: We actually would need only one per SG. */
+  uint *flags
+      = __pocl_work_group_alloca (sizeof (uint) * 4, sizeof (uint) * 4);
   char *res = __pocl_work_group_alloca (sizeof (char), 4);
-  if (get_sub_group_local_id () < 128)
-    res[get_sub_group_local_id ()] = !!predicate;
+  if (get_local_linear_id () < 128)
+    res[get_local_linear_id ()] = !!predicate;
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
   if (get_sub_group_local_id () == 0)
     {
-      flags[0] = flags[1] = flags[2] = flags[3] = ~0;
+      flags[get_first_llid ()] = flags[get_first_llid () + 1]
+          = flags[get_first_llid () + 2] = flags[get_first_llid () + 3] = ~0;
       for (uint i = 0; i < get_sub_group_size () && i < 128; ++i)
         {
-          flags[i / 32] |= res[i] << (i % 32);
+          flags[get_first_llid () * 4 + i / 32]
+              |= res[get_first_llid () * 4 + i] << (i % 32);
         }
     }
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
-  return *(uint4 *)flags;
+  return ((uint4 *)flags)[get_first_llid () * 4];
 }

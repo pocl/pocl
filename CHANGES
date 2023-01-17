@@ -9,6 +9,8 @@ Notable User Facing Changes
 - Added support for generic address spaces in the CPU drivers
 - Added basic support for cl_khr_subgroups for CPUs: A single
   subgroup that always executes the whole X-dimension's WIs.
+- Added initial (incomplete) support for 
+  cl_intel_required_subgroup_size for CPUs
 
 3.1 December 2022
 =================

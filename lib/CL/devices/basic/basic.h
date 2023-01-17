@@ -41,4 +41,9 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)
 
+cl_int pocl_basic_device_info_ext (cl_device_id device,
+                                   cl_device_info param_name,
+                                   size_t param_value_size, void *param_value,
+                                   size_t *param_value_size_ret);
+
 #endif /* POCL_BASIC_H */

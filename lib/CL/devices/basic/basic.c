@@ -2,6 +2,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
                  2011-2021 Pekka Jääskeläinen
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -118,7 +119,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_hash = pocl_basic_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
-  ops->get_device_info_ext = NULL;
+  ops->get_device_info_ext = pocl_basic_device_info_ext;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
@@ -855,4 +856,22 @@ pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
                      const void *__restrict__ src, size_t size)
 {
   memcpy (dst, src, size);
+}
+
+cl_int
+pocl_basic_device_info_ext (cl_device_id device, cl_device_info param_name,
+                            size_t param_value_size, void *param_value,
+                            size_t *param_value_size_ret)
+{
+  switch (param_name)
+    {
+    case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
+      /* We can basically support fixing any WG size with the CPU devices, but
+         let's report something semi-sensible here for vectorization aid. */
+      size_t sizes[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+      POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
+                                 sizes);
+    default:
+      return CL_INVALID_VALUE;
+    }
 }
