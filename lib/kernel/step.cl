@@ -22,20 +22,8 @@
    THE SOFTWARE.
 */
 
-#define USING_ASTYPE_HELPERS
 #include "templates.h"
 
-// This segfaults Clang 3.0, so we work around
-// DEFINE_EXPR_V_VV(step, b < a ? (vtype)0.0 : (vtype)1.0)
-
-DEFINE_EXPR_V_VV(step,
-                 ({
-                   jtype zero = 0;
-                   jtype one  = 1;
-                   jtype result = b < a ? zero : one;
-                   _cl_step_as_vtype(result);
-                 }))
-
-// DEFINE_EXPR_V_VV(step, (vtype)0.5 + copysign((vtype)0.5, b - a))
+DEFINE_EXPR_V_VV(step, ((b < a) ? (vtype)0.0 : (vtype)1.0))
 
 DEFINE_EXPR_V_SV(step, step((vtype)a, b))
