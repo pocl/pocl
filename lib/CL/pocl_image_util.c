@@ -254,15 +254,13 @@ pocl_get_image_information (cl_channel_order ch_order,
 
 /****************************************************/
 
-#define FOR4 unsigned i; for (i = 0; i < 4; i++)
-#define FOR2 unsigned i; for (i = 0; i < 2; i++)
-
 cl_char4
 convert_char4_sat (cl_float4 x)
 {
   cl_char4 r;
-  FOR4
-    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  unsigned i;
+  for (i = 0; i < 4; i++)
+      r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
 
@@ -270,7 +268,8 @@ cl_short4
 convert_short4_sat (cl_float4 x)
 {
   cl_short4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -279,7 +278,8 @@ cl_uchar4
 convert_uchar4_sat (cl_float4 x)
 {
   cl_uchar4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_uchar)max (0, min ((cl_long) (x.s[i]), CL_UCHAR_MAX));
   return r;
 }
@@ -288,7 +288,8 @@ cl_ushort4
 convert_ushort4_sat (cl_float4 x)
 {
   cl_ushort4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_ushort)max (0, min ((cl_long) (x.s[i]), CL_USHRT_MAX));
   return r;
 }
@@ -299,7 +300,8 @@ cl_char2
 convert_char2_sat (cl_float2 x)
 {
   cl_char2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
@@ -308,7 +310,8 @@ cl_short2
 convert_short2_sat (cl_float2 x)
 {
   cl_short2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -317,7 +320,8 @@ cl_uchar2
 convert_uchar2_sat (cl_float2 x)
 {
   cl_uchar2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_uchar)max (0, min ((cl_long) (x.s[i]), CL_UCHAR_MAX));
   return r;
 }
@@ -326,7 +330,8 @@ cl_ushort2
 convert_ushort2_sat (cl_float2 x)
 {
   cl_ushort2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_ushort)max (0, min ((cl_long) (x.s[i]), CL_USHRT_MAX));
   return r;
 }
@@ -367,7 +372,8 @@ cl_char4
 convert_char4_sat_int (cl_int4 x)
 {
   cl_char4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
@@ -376,7 +382,8 @@ cl_short4
 convert_short4_sat_int (cl_int4 x)
 {
   cl_short4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -385,7 +392,8 @@ cl_uchar4
 convert_uchar4_sat_int (cl_uint4 x)
 {
   cl_uchar4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_uchar)min (x.s[i], CL_UCHAR_MAX);
   return r;
 }
@@ -394,7 +402,8 @@ cl_ushort4
 convert_ushort4_sat_int (cl_uint4 x)
 {
   cl_ushort4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_ushort)min (x.s[i], CL_USHRT_MAX);
   return r;
 }
@@ -405,7 +414,8 @@ cl_char2
 convert_char2_sat_int (cl_int2 x)
 {
   cl_char2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
@@ -414,7 +424,8 @@ cl_short2
 convert_short2_sat_int (cl_int2 x)
 {
   cl_short2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -423,7 +434,8 @@ cl_uchar2
 convert_uchar2_sat_int (cl_uint2 x)
 {
   cl_uchar2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_uchar)min (x.s[i], CL_UCHAR_MAX);
   return r;
 }
@@ -432,7 +444,8 @@ cl_ushort2
 convert_ushort2_sat_int (cl_uint2 x)
 {
   cl_ushort2 r;
-  FOR2
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_ushort)min (x.s[i], CL_USHRT_MAX);
   return r;
 }
@@ -505,7 +518,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_FLOAT)
     {
       cl_float4 *p = (cl_float4 *)data;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         p->s[i] = color.s[i];
       return;
     }
@@ -526,7 +540,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f127;
       cl_char4 final_color = convert_char4_sat (colorf);
       *((cl_char4 *)data) = final_color;
@@ -535,7 +550,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_SNORM_INT16)
     {
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f32767;
       cl_short4 final_color = convert_short4_sat (colorf);
       *((cl_short4 *)data) = final_color;
@@ -546,7 +562,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f255;
       cl_uchar4 final_color = convert_uchar4_sat (colorf);
       *((cl_uchar4 *)data) = final_color;
@@ -555,7 +572,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_UNORM_INT16)
     {
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f65535;
       cl_ushort4 final_color = convert_ushort4_sat (colorf);
       *((cl_ushort4 *)data) = final_color;
