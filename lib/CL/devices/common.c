@@ -218,7 +218,10 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     {CLANG, "-o", tmp_module, tmp_objfile};
   const char **device_ld_arg = device->final_linkage_flags;
   const char **pos = &cmd_line[4];
-  while ((*pos++ = *device_ld_arg++)) {}
+  while (device_ld_arg) {
+    *pos = *device_ld_arg;
+    device_ld_arg++;
+  }
 
   error = pocl_invoke_clang (device, cmd_line);
 
