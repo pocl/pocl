@@ -734,13 +734,12 @@ pocl_write_pixel_fast_ui (cl_uint4 color, int order, int elem_size, void *data)
 
   if (order == CL_RG)
     {
-      cl_uint2 tmp = {color.s[0], color.s[1]};
+      cl_uint2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
       if (elem_size == 1)
         *((cl_uchar2 *)data) = convert_uchar2_sat_int (tmp);
       else if (elem_size == 2)
         *((cl_ushort2 *)data) = convert_ushort2_sat_int (tmp);
       else if (elem_size == 4) {
-        cl_uint2 tmp = { color.s[0], color.s[0] };
         *((cl_uint2 *)data) = tmp;
       }
       return;
@@ -779,7 +778,7 @@ pocl_write_pixel_fast_f (cl_float4 color, int channel_type, int order,
     }
   else if (order == CL_RG)
     {
-      cl_float2 tmp = { color.s[0], color.s[0] };
+      cl_float2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
       write_float2_pixel (tmp, data, channel_type);
     }
   else
@@ -820,13 +819,12 @@ pocl_write_pixel_fast_i (cl_int4 color, int order, int elem_size, void *data)
 
   if (order == CL_RG)
     {
-      cl_int2 tmp = {color.s[0], color.s[1]};
+      cl_int2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
       if (elem_size == 1)
         *((cl_char2 *)data) = convert_char2_sat_int (tmp);
       else if (elem_size == 2)
         *((cl_short2 *)data) = convert_short2_sat_int (tmp);
       else if (elem_size == 4) {
-        cl_int2 tmp = { color.s[0], color.s[0] };
         *((cl_int2 *)data) = tmp;
       }
       return;
