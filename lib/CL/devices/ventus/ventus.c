@@ -58,15 +58,15 @@
 #endif
 
 struct ventus_device_data_t {
-	
+
 #if !defined(ENABLE_LLVM)
   ventus_device_h ventus_device;
   size_t ventus_print_buf_d;
   ventus_buffer_h ventus_print_buf_h;
   uint32_t printf_buffer;
-  uint32_t printf_buffer_position;   
+  uint32_t printf_buffer_position;
 #endif
-	
+
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
   /* List of commands not yet ready to be executed */
@@ -92,14 +92,16 @@ struct ventus_buffer_data_t {
 struct kernel_context_t {
   uint32_t num_groups[3];
   uint32_t global_offset[3];
-  uint32_t local_size[3];  
+  uint32_t local_size[3];
   uint32_t printf_buffer;
   uint32_t printf_buffer_position;
-  uint32_t printf_buffer_capacity;  
+  uint32_t printf_buffer_capacity;
   uint32_t work_dim;
 };
 
 static size_t ALIGNED_CTX_SIZE = 4 * ((sizeof(struct kernel_context_t) + 3) / 4);
+
+static const char *ventus_final_ld_flags[] = {"-nodefaultlibs", NULL};
 
 void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
@@ -257,6 +259,8 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   // Doesn't support SVM
   dev->svm_allocation_priority = 0;
+
+  dev->final_linkage_flags = ventus_final_ld_flags;
 
   // TODO: Do we have builtin kernels for Ventus?
 
@@ -522,7 +526,7 @@ pocl_ventus_reinit (unsigned j, cl_device_id device)
 static void ventus_command_scheduler (struct ventus_device_data_t *d)
 {
   _cl_command_node *node;
- 
+
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
