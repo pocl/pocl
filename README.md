@@ -10,11 +10,11 @@ Original PoCL build instruction doesn't work for Ventus GPGPU.
 
 ## TODOs
 
-TODOs are divided into 2 parts, first part contains jobs required to make sure
+TODOs are divided into 3 parts, first part contains jobs required to make sure
 OpenCL tests can be tested with pocl+spike, second part contains jobs required
-to enable real Ventus GPGPU work flow.
+to enable real Ventus GPGPU work flow, third part contains generic TODOs.
 
-### TODOs(Part 1)
+### TODOs (Part 1)
 
   * Correctly report Ventus GPGPU virtual device after pocl is statically/dynamally
     linked with spike(Currently ventus device is hardcoded).
@@ -22,7 +22,8 @@ to enable real Ventus GPGPU work flow.
     from ventus-llvm, some extra work should to be done in ventus pocl driver,
     otherwise we need to redesign how workitem builtins are implemented.
   * Make sure pocl ventus driver is correctly initialized, such as `pocl_ventus_init`
-    is double checked.
+    is double checked, basically every items in `struct _cl_device_id` should be
+    properly initialized.
   * Make sure there is no native(host) device related code in ventus pocl driver,
     such as `kernel.so` in function `llvm_codegen` should be renamed to `kernel.elf`
     or something else(a static elf file). Also the native kernel execution
@@ -37,8 +38,13 @@ to enable real Ventus GPGPU work flow.
     examples and tests can be kicked off(may not run through) to spike(via spike elf
     loader).
 
-### TODOs(Part 2)
+### TODOs (Part 2)
 
   * Ventus GPGPU kernel mode driver(kmd) should be provided and bridged with pocl.
   * Correctly report Ventus GPGPU device after pocl(umd) can locate ventus kmd and
     read necessory information from the kmd(such as supported extensions etc).
+
+
+### TODOs (Part 3)
+
+  * Fix hardcoded library search path for libworkitem.a in ventus.c.
