@@ -1,7 +1,8 @@
 // LLVM function pass to create loops that run all the work items
 // in a work group while respecting barrier synchronization points.
 //
-// Copyright (c) 2012-2019 Pekka Jääskeläinen
+// Copyright (c) 2012-2019 Pekka Jääskeläinen / Tampere University
+//               2022-2023 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -68,12 +69,18 @@ using namespace llvm;
 using namespace pocl;
 
 namespace {
-  static
-  RegisterPass<WorkitemLoops> X("workitemloops", 
-                                "Workitem loop generation pass");
+static RegisterPass<WorkitemLoops> X("workitemloops",
+                                     "Workitem loop generation pass");
 }
 
 char WorkitemLoops::ID = 0;
+
+// Magic function used to allocate "local memory" dynamically. Used with SG/WG
+// shuffles as temporary storage.
+const char *POCL_LOCAL_MEM_ALLOCA_FUNC_NAME = "__pocl_local_mem_alloca";
+
+// Another, which multiplies the size by the number of WIs in the WG.
+const char *POCL_WORK_GROUP_ALLOCA_FUNC_NAME = "__pocl_work_group_alloca";
 
 void
 WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
@@ -91,13 +98,12 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 
 }
 
-bool
-WorkitemLoops::runOnFunction(Function &F)
-{
+bool WorkitemLoops::runOnFunction(Function &F) {
+
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
       pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
     return false;
 
@@ -107,35 +113,39 @@ WorkitemLoops::runOnFunction(Function &F)
 
   PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
 
+  WGSizeInstr = nullptr;
+
   tempInstructionIndex = 0;
 
-//  F.viewCFGOnly();
+  LocalMemAllocaFuncDecl =
+      F.getParent()->getFunction(POCL_LOCAL_MEM_ALLOCA_FUNC_NAME);
 
-  bool changed = ProcessFunction(F);
+  WorkGroupAllocaFuncDecl =
+      F.getParent()->getFunction(POCL_WORK_GROUP_ALLOCA_FUNC_NAME);
+
+  bool Changed = ProcessFunction(F);
+
+#if LLVM_MAJOR > 13
+  Changed |= handleLocalMemAllocas(cast<Kernel>(F));
+#endif
 
 #ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", 
+  dumpCFG(F, F.getName().str() + "_after_wiloops.dot",
           original_parallel_regions);
 #endif
 
-#if 0
-  std::cerr << "### after:" << std::endl;
-  F.viewCFG();
-#endif
-
-  changed |= fixUndominatedVariableUses(DTP, F);
+  Changed |= fixUndominatedVariableUses(DTP, F);
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
-  changed |= chopBBs(F, *this);
+  Changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
   contextArrays.clear();
   tempInstructionIds.clear();
 
   releaseParallelRegions();
-
-  return changed;
+  return Changed;
 }
 
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
@@ -364,7 +374,7 @@ bool
 WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
-  
+
   llvm::Module *M = K->getParent();
 
   Initialize(K);
@@ -421,9 +431,9 @@ WorkitemLoops::ProcessFunction(Function &F)
     ParallelRegion *region = (*i);
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### Adding context save/restore for PR: ";
-    region->dumpNames();    
+    region->dumpNames();
 #endif
-    FixMultiRegionVariables(region);
+    fixMultiRegionVariables(region);
     entryCounts[region->entryBB()]++;
   }
 
@@ -623,90 +633,123 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
 
-#if 0
-  F.viewCFG();
-#endif
-
   return true;
 }
 
-/*
- * Add context save/restore code to variables that are defined in 
- * the given region and are used outside the region.
- *
- * Each such variable gets a slot in the stack frame. The variable
- * is restored from the stack whenever it's used.
- *
- */
-void
-WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
-{
-  InstructionIndex instructionsInRegion;
-  InstructionVec instructionsToFix;
+// Add context save/restore code to variables that are defined in
+// the given region and are used outside the region.
+//
+// Each such variable gets a slot in the stack frame. The variable
+// is restored from the stack whenever it's used.
+void WorkitemLoops::fixMultiRegionVariables(ParallelRegion *Region) {
 
-  /* Construct an index of the region's instructions so it's
-     fast to figure out if the variable uses are all
-     in the region. */
-  for (BasicBlockVector::iterator i = region->begin();
-       i != region->end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      for (llvm::BasicBlock::iterator instr = bb->begin();
-           instr != bb->end(); ++instr) 
-        {
-          llvm::Instruction *instruction = &*instr;
-          instructionsInRegion.insert(instruction);
-        }
+  InstructionIndex InstructionsInRegion;
+  InstructionVec InstructionsToFix;
+
+  // Construct an index of the region's instructions so it's fast to figure
+  // out if the variable uses are all in the region.
+  for (BasicBlockVector::iterator I = Region->begin(); I != Region->end();
+       ++I) {
+    for (llvm::BasicBlock::iterator Instr = (*I)->begin(); Instr != (*I)->end();
+         ++Instr) {
+      InstructionsInRegion.insert(&*Instr);
     }
+  }
 
-  /* Find all the instructions that define new values and
-     check if they need to be context saved. */
-  for (BasicBlockVector::iterator i = region->begin();
-       i != region->end(); ++i)
-    {
-      llvm::BasicBlock *bb = *i;
-      for (llvm::BasicBlock::iterator instr = bb->begin();
-           instr != bb->end(); ++instr) 
-        {
-          llvm::Instruction *instruction = &*instr;
+  // Find all the instructions that define new values and check if they need
+  // to be context saved.
+  for (BasicBlockVector::iterator R = Region->begin(); R != Region->end();
+       ++R) {
+    for (llvm::BasicBlock::iterator I = (*R)->begin(); I != (*R)->end(); ++I) {
 
-          if (ShouldNotBeContextSaved(&*instr)) continue;
+      llvm::Instruction *Instr = &*I;
 
-          for (Instruction::use_iterator ui = instruction->use_begin(),
-                 ue = instruction->use_end();
-               ui != ue; ++ui) 
-            {
-              llvm::Instruction *user = dyn_cast<Instruction>(ui->getUser());
+      if (shouldNotBeContextSaved(&*Instr)) continue;
 
-              if (user == NULL) continue;
-              // If the instruction is used outside this region inside another
-              // region (not in a regionless BB like the B-loop construct BBs),
-              // need to context save it.
-              // Allocas (private arrays) should be privatized always. Otherwise
-              // we end up reading the same array, but replicating the GEP to that.
-              if (isa<AllocaInst>(instruction) || 
-                  (instructionsInRegion.find(user) == instructionsInRegion.end() &&
-                   RegionOfBlock(user->getParent()) != NULL))
-                {
-                  instructionsToFix.push_back(instruction);
-                  break;
-                }
-            }
+      for (Instruction::use_iterator UI = Instr->use_begin(),
+             UE = Instr->use_end();
+           UI != UE; ++UI) {
+        llvm::Instruction *User = dyn_cast<Instruction>(UI->getUser());
+
+        if (User == NULL)
+          continue;
+
+        // Allocas (originating from OpenCL C private arrays) should be
+        // privatized always. Otherwise we end up reading the same array,
+        // but replicating only the GEP pointing to it.
+        if (isa<AllocaInst>(Instr) ||
+            // If the instruction is used also inside another region (not
+            // in a regionless BB like the B-loop construct BBs), we need
+            // to context save it to pass the private data over.
+            (InstructionsInRegion.find(User) ==
+             InstructionsInRegion.end() &&
+             RegionOfBlock(User->getParent()) != NULL)) {
+          InstructionsToFix.push_back(Instr);
+          break;
         }
-    }  
+      }
+    }
+  }
 
-  /* Finally, fix the instructions. */
-  for (InstructionVec::iterator i = instructionsToFix.begin();
-       i != instructionsToFix.end(); ++i)
-    {
+  // Finally generate the context save/restore code for the instructions
+  // requiring it.
+  for (InstructionVec::iterator I = InstructionsToFix.begin();
+       I != InstructionsToFix.end(); ++I) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### adding context/save restore for" << std::endl;
-      (*i)->dump();
-#endif 
-      llvm::Instruction *instructionToFix = *i;
-      AddContextSaveRestore(instructionToFix);
-    }
+    std::cerr << "### adding context/save restore for" << std::endl;
+    (*I)->dump();
+#endif
+    addContextSaveRestore(*I);
+  }
 }
+
+#if LLVM_MAJOR > 13
+// Convert calls to the __pocl_{work_group,local_mem}_alloca() pseudo function
+// to allocas.
+bool WorkitemLoops::handleLocalMemAllocas(Kernel &K) {
+
+  std::vector<CallInst *> InstructionsToFix;
+
+  for (BasicBlock &BB : K) {
+    for (Instruction &I : BB) {
+
+      if (!isa<CallInst>(I)) continue;
+      CallInst &Call = cast<CallInst>(I);
+
+      if (Call.getCalledFunction() != LocalMemAllocaFuncDecl &&
+          Call.getCalledFunction() != WorkGroupAllocaFuncDecl) continue;
+      InstructionsToFix.push_back(&Call);
+    }
+  }
+
+  bool Changed = false;
+  for (CallInst *Call : InstructionsToFix) {
+    Value *Size = Call->getArgOperand(0);
+    Align Alignment =
+      cast<ConstantInt>(Call->getArgOperand(1))->getAlignValue();
+
+    IRBuilder<> Builder(K.getEntryBlock().getTerminator());
+
+    if (Call->getCalledFunction() == WorkGroupAllocaFuncDecl) {
+          Instruction *WGSize = getWorkGroupSizeInstr(K);
+          Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
+    }
+    AllocaInst *Alloca = new AllocaInst(
+        llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,
+        "__pocl_wg_alloca", K.getEntryBlock().getTerminator());
+#ifdef DEBUG_WORK_ITEM_LOOPS
+    std::cerr << "### fixing..." << std::endl;
+    Call->dump();
+    std::cerr << "### to..." << std::endl;
+    Alloca->dump();
+#endif
+    Call->replaceAllUsesWith(Alloca);
+    Call->eraseFromParent();
+    Changed = true;
+  }
+  return Changed;
+}
+#endif
 
 llvm::Value *
 WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
@@ -750,14 +793,13 @@ WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
 llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
                                                  llvm::AllocaInst *alloca) {
 
-  if (isa<AllocaInst>(instruction))
-    {
-      /* If the variable to be context saved is itself an alloca,
-         we have created one big alloca that stores the data of all the 
-         work-items and return pointers to that array. Thus, we need
-         no initialization code other than the context data alloca itself. */
-      return NULL;
-    }
+  if (isa<AllocaInst>(instruction)) {
+    // If the variable to be context saved is itself an alloca, we have created
+    // one big alloca that stores the data of all the work-items and return
+    // pointers to that array. Thus, we need no initialization code other than
+    // the context data alloca itself.
+    return NULL;
+  }
 
   /* Save the produced variable to the array. */
   BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction))->getIterator();
@@ -833,31 +875,36 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(
       gepArgs.push_back(region->LocalIDXLoad());
     }
 
-    if (PoclWrapperStructAdded)
-      gepArgs.push_back(
-          ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
+  if (PoclWrapperStructAdded)
+    gepArgs.push_back(
+      ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
 
-    llvm::Instruction *gep = dyn_cast<Instruction>(builder.CreateGEP(
 #ifdef LLVM_OLDER_THAN_15_0
-        alloca->getType()->getPointerElementType(), alloca, gepArgs));
+  llvm::Instruction *gep = dyn_cast<Instruction>(
+    builder.CreateGEP(
+      alloca->getType()->getPointerElementType(), alloca, gepArgs));
 #else
-        alloca->getAllocatedType(), alloca, gepArgs));
+  llvm::Instruction *gep = dyn_cast<Instruction>(
+    builder.CreateGEP(
+      alloca->getAllocatedType(), alloca, gepArgs));
 #endif
 
-    if (isAlloca) {
-      /* In case the context saved instruction was an alloca, we created a
-         context array with pointed-to elements, and now want to return a
-         pointer to the elements to emulate the original alloca. */
-      return gep;
+
+  if (isAlloca) {
+    /* In case the context saved instruction was an alloca, we created a
+       context array with pointed-to elements, and now want to return a
+       pointer to the elements to emulate the original alloca. */
+    return gep;
   }
   return builder.CreateLoad(InstType, gep);
 }
 
-/**
- * Returns the context array (alloca) for the given Value, creates it if not
- * found.
- */
-llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
+// Returns the context array (alloca) for the given Value, creates it if not
+// found.
+//
+// PoCLWrapperStructAdded will be set to true in case a wrapper struct was
+// added to enforce proper alignment to the elements of the array.
+llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
                                                  bool &PoclWrapperStructAdded) {
   PoclWrapperStructAdded = false;
   /*
@@ -1044,14 +1091,11 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element
      size. */
-    Alloca->setAlignment(
 #ifndef LLVM_OLDER_THAN_11_0
-        llvm::Align(
+  Alloca->setAlignment(llvm::Align(CONTEXT_ARRAY_ALIGN));
 #else
-        llvm::MaybeAlign(
+  Alloca->setAlignment(llvm::MaybeAlign(CONTEXT_ARRAY_ALIGN));
 #endif
-            CONTEXT_ARRAY_ALIGN)
-    );
 
     if (DebugVal && DebugCall && !WGDynamicLocalSize) {
 
@@ -1125,161 +1169,149 @@ llvm::AllocaInst *WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
     return Alloca;
 }
 
-/**
- * Adds context save/restore code for the value produced by the
- * given instruction.
- *
- * TODO: add only one restore per variable per region.
- * TODO: add only one load of the id variables per region. 
- * Could be done by having a context restore BB in the beginning of the
- * region and a context save BB at the end.
- * TODO: ignore work group variables completely (the iteration variables)
- * The LLVM should optimize these away but it would improve
- * the readability of the output during debugging.
- * TODO: rematerialize some values such as extended values of global 
- * variables (especially global id which is computed from local id) or kernel 
- * argument values instead of allocating stack space for them
- */
-void
-WorkitemLoops::AddContextSaveRestore
-(llvm::Instruction *instruction) {
+// Adds context save/restore code for the value produced by the
+// given instruction.
+//
+// TODO: add only one restore per variable per region.
+// TODO: add only one load of the id variables per region.
+// Could be done by having a context restore BB in the beginning of the
+// region and a context save BB at the end.
+// TODO: ignore work group variables completely (the iteration variables)
+// The LLVM should optimize these away but it would improve
+// the readability of the output during debugging.
+// TODO: rematerialize some values such as extended values of global
+// variables (especially global id which is computed from local id) or kernel
+// argument values instead of allocating stack space for them
+void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
 
-  /* Allocate the context data array for the variable. */
+  //
+
+  // Allocate the context data array for the variable.
   bool PoclWrapperStructAdded = false;
-  llvm::AllocaInst *alloca =
-      GetContextArray(instruction, PoclWrapperStructAdded);
-  llvm::Instruction *theStore = AddContextSave(instruction, alloca);
+  llvm::AllocaInst *Alloca = getContextArray(Instr, PoclWrapperStructAdded);
+  llvm::Instruction *TheStore = AddContextSave(Instr, Alloca);
 
-  InstructionVec uses;
-  /* Restore the produced variable before each use to ensure the correct context
-     copy is used.
-     
-     We could add the restore only to other regions outside the 
-     variable defining region and use the original variable in the defining
-     region due to the SSA virtual registers being unique. However,
-     alloca variables can be redefined also in the same region, thus we 
-     need to ensure the correct alloca context position is written, not
-     the original unreplicated one. These variables can be generated by
-     volatile variables, private arrays, and due to the PHIs to allocas
-     pass.
-  */
+  InstructionVec Uses;
+  // Restore the produced variable before each use to ensure the correct
+  // context copy is used.
 
-  /* Find out the uses to fix first as fixing them invalidates
-     the iterator. */
-  for (Instruction::use_iterator ui = instruction->use_begin(),
-         ue = instruction->use_end();
-       ui != ue; ++ui) 
-    {
-      llvm::Instruction *user = cast<Instruction>(ui->getUser());
-      if (user == NULL) continue;
-      if (user == theStore) continue;
-      uses.push_back(user);
-    }
+  // We could add the restore only to other regions outside the variable
+  // defining region and use the original variable in the defining region due
+  // to the SSA virtual registers being unique. However, alloca variables can
+  // be redefined also in the same region, thus we need to ensure the correct
+  // alloca context position is written, not the original unreplicated one.
+  // These variables can be generated by volatile variables, private arrays,
+  // and due to the PHIs to allocas pass.
 
-  for (InstructionVec::iterator i = uses.begin(); i != uses.end(); ++i)
-    {
-      Instruction *user = *i;
-      Instruction *contextRestoreLocation = user;
-      /* If the user is in a block that doesn't belong to a region,
-         the variable itself must be a "work group variable", that is,
-         not dependent on the work item. Most likely an iteration
-         variable of a for loop with a barrier. */
-      if (RegionOfBlock(user->getParent()) == NULL) continue;
+  // Find out the uses to fix first as fixing them invalidates the iterator.
+  for (Instruction::use_iterator UI = Instr->use_begin(),
+         UE = Instr->use_end(); UI != UE; ++UI) {
+    llvm::Instruction *User = cast<Instruction>(UI->getUser());
+    if (User == NULL || User == TheStore) continue;
+    Uses.push_back(User);
+  }
 
-      PHINode* phi = dyn_cast<PHINode>(user);
-      if (phi != NULL)
-        {
-          /* In case of PHI nodes, we cannot just insert the context 
-             restore code before it in the same basic block because it is 
-             assumed there are no non-phi Instructions before PHIs which 
-             the context restore code constitutes to. Add the context
-             restore to the incomingBB instead.
+  for (InstructionVec::iterator I = Uses.begin(); I != Uses.end(); ++I) {
+    Instruction *UserI = *I;
+    Instruction *ContextRestoreLocation = UserI;
+    // If the user is in a block that doesn't belong to a region, the variable
+    // itself must be a "work group variable", that is, not dependent on the
+    // work item. Most likely an iteration variable of a for loop with a
+    // barrier.
+    if (RegionOfBlock(UserI->getParent()) == NULL) continue;
 
-             There can be values in the PHINode that are incoming
-             from another region even though the decision BB is within the region. 
-             For those values we need to add the context restore code in the 
-             incoming BB (which is known to be inside the region due to the
-             assumption of not having to touch PHI nodes in PRentry BBs).
-          */          
+    PHINode* Phi = dyn_cast<PHINode>(UserI);
+    if (Phi != NULL) {
+      // In case of PHI nodes, we cannot just insert the context restore code
+      // before it in the same basic block because it is assumed there are no
+      // non-phi Instructions before PHIs which the context restore code
+      // constitutes to. Add the context restore to the incomingBB instead.
 
-          /* PHINodes at region entries are broken down earlier. */
-          assert ("Cannot add context restore for a PHI node at the region entry!" &&
-                  RegionOfBlock(phi->getParent())->entryBB() != phi->getParent());
+      // There can be values in the PHINode that are incoming from another
+      // region even though the decision BB is within the region. For those
+      // values we need to add the context restore code in the incoming BB
+      // (which is known to be inside the region due to the assumption of not
+      // having to touch PHI nodes in PRentry BBs).
+
+      // PHINodes at region entries are broken down earlier.
+      assert ("Cannot add context restore for a PHI node at the region entry!"
+              && RegionOfBlock(
+                Phi->getParent())->entryBB() != Phi->getParent());
 #ifdef DEBUG_WORK_ITEM_LOOPS
-          std::cerr << "### adding context restore code before PHI" << std::endl;
-          user->dump();
-          std::cerr << "### in BB:" << std::endl;
-          user->getParent()->dump();
+      std::cerr << "### adding context restore code before PHI" << std::endl;
+      UserI->dump();
+      std::cerr << "### in BB:" << std::endl;
+      UserI->getParent()->dump();
 #endif
-          BasicBlock *incomingBB = NULL;
-          for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
-               ++incoming)
-            {
-              Value *val = phi->getIncomingValue(incoming);
-              BasicBlock *bb = phi->getIncomingBlock(incoming);
-              if (val == instruction) incomingBB = bb;
-            }
-          assert (incomingBB != NULL);
-          contextRestoreLocation = incomingBB->getTerminator();
-        }
-        llvm::Value *loadedValue = AddContextRestore(
-            user, alloca, instruction->getType(),
-            PoclWrapperStructAdded, contextRestoreLocation,
-            isa<AllocaInst>(instruction));
-        user->replaceUsesOfWith(instruction, loadedValue);
+      BasicBlock *IncomingBB = NULL;
+      for (unsigned Incoming = 0; Incoming < Phi->getNumIncomingValues();
+           ++Incoming) {
+        Value *Val = Phi->getIncomingValue(Incoming);
+        BasicBlock *BB = Phi->getIncomingBlock(Incoming);
+        if (Val == Instr) IncomingBB = BB;
+      }
+      assert(IncomingBB != NULL);
+      ContextRestoreLocation = IncomingBB->getTerminator();
+    }
+    llvm::Value *LoadedValue = AddContextRestore(
+      UserI, Alloca, Instr->getType(),
+      PoclWrapperStructAdded, ContextRestoreLocation,
+      isa<AllocaInst>(Instr));
+    UserI->replaceUsesOfWith(Instr, LoadedValue);
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### done, the user was converted to:" << std::endl;
-      user->dump();
+    std::cerr << "### done, the user was converted to:" << std::endl;
+    UserI->dump();
 #endif
-    }
+  }
 }
 
-bool
-WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
-{
-    /*
-      _local_id loads should not be replicated as it leads to
-      problems in conditional branch case where the header node
-      of the region is shared across the branches and thus the
-      header node's ID loads might get context saved which leads
-      to egg-chicken problems.
-    */
-  if (isa<BranchInst>(instr)) return true;
+bool WorkitemLoops::shouldNotBeContextSaved(llvm::Instruction *Instr) {
 
-    llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
-    if (load != NULL &&
-        (load->getPointerOperand() == LocalIdZGlobal ||
-         load->getPointerOperand() == LocalIdYGlobal ||
-         load->getPointerOperand() == LocalIdXGlobal))
-      return true;
+  if (isa<BranchInst>(Instr)) return true;
 
-    VariableUniformityAnalysis &VUA =
-      getAnalysis<VariableUniformityAnalysis>();
+  // The local memory allocation call is uniform, the same pointer to the
+  // work-group shared memory area is returned to all work-items. It must
+  // not be replicated.
+  if (isa<CallInst>(Instr) &&
+      cast<CallInst>(Instr)->getCalledFunction() == LocalMemAllocaFuncDecl)
+    return true;
 
-    /* In case of uniform variables (same for all work-items),
-       there is no point to create a context array slot for them,
-       but just use the original value everywhere.
+  // _local_id loads should not be replicated as it leads to/ problems in
+  // conditional branch case where the header node of the region is shared
+  // across the branches and thus the header node's ID loads might get context
+  // saved which leads to egg-chicken problems.
 
-       Allocas are problematic: they include the de-phi induction
-       variables of the b-loops. In those case each work item
-       has a separate loop iteration variable in the LLVM IR but
-       which is really a parallel region loop invariant. But
-       because we cannot separate such loop invariant variables
-       at this point sensibly, let's just replicate the iteration
-       variable to each work item and hope the latter optimizations
-       reduce them back to a single induction variable outside the
-       parallel loop.
-    */
-    if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
+  llvm::LoadInst *Load = dyn_cast<llvm::LoadInst>(Instr);
+  if (Load != NULL &&
+      (Load->getPointerOperand() == LocalIdZGlobal ||
+       Load->getPointerOperand() == LocalIdYGlobal ||
+       Load->getPointerOperand() == LocalIdXGlobal))
+    return true;
+
+  VariableUniformityAnalysis &VUA =
+    getAnalysis<VariableUniformityAnalysis>();
+
+  // In case of uniform variables (same value for all work-items), there is no
+  // point to create a context array slot for them, but just use the original
+  // value everywhere.
+
+  // Allocas are problematic since they include the de-phi induction variables
+  // of the b-loops. In those case each work item has a separate loop iteration
+  // variable in LLVM IR but which is really a parallel region loop invariant.
+  // But because we cannot separate such loop invariant variables at this point
+  // sensibly, let's just replicate the iteration variable to each work item
+  // and hope the latter optimizations reduce them back to a single induction
+  // variable outside the parallel loop.
+  if (!VUA.shouldBePrivatized(Instr->getParent()->getParent(), Instr)) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
-      std::cerr << "### based on VUA, not context saving:";
-      instr->dump();
+    std::cerr << "### based on VUA, not context saving:";
+    Instr->dump();
 #endif
-      return true;
-    }
+    return true;
+  }
 
-    return false;
+  return false;
 }
 
 llvm::BasicBlock *
@@ -1308,4 +1340,37 @@ WorkitemLoops::AppendIncBlock
   builder.CreateBr(oldExit);
 
   return forIncBB;
+}
+
+llvm::Instruction *WorkitemLoops::getWorkGroupSizeInstr(llvm::Function &F) {
+
+  if (WGSizeInstr != nullptr)
+      return WGSizeInstr;
+
+  IRBuilder<> Builder(F.getEntryBlock().getTerminator());
+
+  llvm::Module *M = F.getParent();
+  GlobalVariable *GV = M->getGlobalVariable("_local_size_x");
+  if (GV != NULL) {
+    WGSizeInstr = Builder.CreateLoad(SizeT, GV);
+  }
+
+  GV = M->getGlobalVariable("_local_size_y");
+  if (GV != NULL) {
+    WGSizeInstr =
+      cast<llvm::Instruction>(
+        Builder.CreateBinOp(
+          Instruction::Mul, Builder.CreateLoad(SizeT, GV), WGSizeInstr));
+  }
+
+  GV = M->getGlobalVariable("_local_size_z");
+  if (GV != NULL) {
+    WGSizeInstr =
+      cast<llvm::Instruction>(
+        Builder.CreateBinOp(
+          Instruction::Mul, Builder.CreateLoad(SizeT, GV),
+          WGSizeInstr));
+  }
+
+  return WGSizeInstr;
 }

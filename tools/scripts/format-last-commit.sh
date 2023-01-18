@@ -19,7 +19,7 @@ git show -U0 --no-color >$PATCHY
 SCRIPTPATH=$( realpath "$0"  )
 RELPATH=$(dirname "$SCRIPTPATH")
 
-$RELPATH/clang-format-diff.py -regex '(.*(\.hpp$|\.cc$|\.cpp$))|(lib/llvmopencl/.*\.h)' -i -p1 -style LLVM <$PATCHY
+$RELPATH/clang-format-diff.py -regex '(.*(\.hpp$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)' -i -p1 -style LLVM <$PATCHY
 $RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style GNU <$PATCHY
 
 if [ -z "$(git diff)" ]; then
