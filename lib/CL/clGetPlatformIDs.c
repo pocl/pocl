@@ -174,7 +174,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POname(clCreateSamplerWithProperties),
   &POname(clSetKernelArgSVMPointer),
   &POname(clSetKernelExecInfo),
-  NULL, /* clGetKernelSubGroupInfoKHR */
+  &POname(clGetKernelSubGroupInfo),
   &POname(clCloneKernel),
   &POname(clCreateProgramWithIL),
   &POname(clEnqueueSVMMigrateMem),

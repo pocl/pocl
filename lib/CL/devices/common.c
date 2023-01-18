@@ -1614,7 +1614,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->global_var_pref_size = 0;
   dev->non_uniform_work_group_support = CL_FALSE;
   dev->max_num_sub_groups = 0;
-  dev->sub_group_independent_forward_progress = CL_FALSE;
 
 #ifdef ENABLE_LLVM
 
@@ -1749,17 +1748,15 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroups" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_nv_device_attribute_query" },
-
         { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
-
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
-
         { CL_MAKE_VERSION (0, 9, 0), "cl_khr_command_buffer" } };
 
 const size_t OPENCL_EXTENSIONS_NUM

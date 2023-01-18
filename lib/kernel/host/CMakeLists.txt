@@ -240,6 +240,11 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
+if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+  list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
+endif()
+
+
 include("bitcode_rules")
 
 foreach(FILE "host/addrspace_operators.ll")
