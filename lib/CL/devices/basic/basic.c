@@ -866,11 +866,13 @@ pocl_basic_device_info_ext (cl_device_id device, cl_device_info param_name,
   switch (param_name)
     {
     case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
+    {
       /* We can basically support fixing any WG size with the CPU devices, but
          let's report something semi-sensible here for vectorization aid. */
       size_t sizes[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
       POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
                                  sizes);
+    }
     default:
       return CL_INVALID_VALUE;
     }
