@@ -21,6 +21,14 @@ to enable real Ventus GPGPU work flow, third part contains generic TODOs.
   * Determine how we implement workitem builtins, if using workitem.S implementation
     from ventus-llvm, some extra work should to be done in ventus pocl driver,
     otherwise we need to redesign how workitem builtins are implemented.
+
+    1). Functions such as `insertPrologue` from ParallelRegion.cc inserts instructions
+    to get `local_id_x/y/z` which are preset by `WorkitemReplication::ProcessFunction`,
+    this behavior is weird.
+
+    2). Workitem variables local_size_x/y/z can have dynamic size which to be determined
+    at runtime, this is done in pocl `WorkitemHandler`.
+
   * Make sure pocl ventus driver is correctly initialized, such as `pocl_ventus_init`
     is double checked, basically every items in `struct _cl_device_id` should be
     properly initialized.
@@ -37,6 +45,9 @@ to enable real Ventus GPGPU work flow, third part contains generic TODOs.
     API implementations in common.c may not work for Ventus GPGPU), make sure all the
     examples and tests can be kicked off(may not run through) to spike(via spike elf
     loader).
+  * Device side printf support. A buffer with size PRINTF_BUFFER_SIZE on device side
+    should be reserved, and a CSR or event may be needed to notify OCL driver to copy
+    device side printf buffer to host side.
 
 ### TODOs (Part 2)
 
