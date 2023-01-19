@@ -4,20 +4,8 @@ Fixed-Function Accelerators
 
 The ``almaif`` driver can be used for easy integration of custom fixed-function
 accelerators through a standardized hardware interface and a standardized
-procedure for enqueuing commands.
-
-More information behind the principles of this driver can be found from the
-following two publications:
-T. Leppänen, P. Mousouliotis, G. Keramidas, J. Multanen and P. Jääskeläinen,
-"Unified OpenCL Integration Methodology for FPGA Designs,"
-2021 IEEE Nordic Circuits and Systems Conference (NorCAS), 2021, pp. 1-7,
-https://doi.org/10.1109/NorCAS53631.2021.9599861
-
-T. Leppänen, A. Lotvonen, P. Jääskeläinen, 2022
-"Cross-vendor programming abstraction for diverse heterogeneous platforms,"
-Frontiers in Computer Science, vol. 4,
-https://doi.org/10.3389/fcomp.2022.945652
-
+procedure for enqueuing commands. More information about the interface can
+be found from the publications at the end of this page.
 
 
 Interface
@@ -290,17 +278,21 @@ After that, it's possible to run the examples/accel/accel_example program.
 Using this work
 ---------------
 
-If you are utilizing, further developing or comparing to the AlmaIF driver of POCL
-in your academic work, please cite one of the relevant publications::
+If you are utilizing, further developing or comparing to the AlmaIF driver of PoCL
+in your academic work, please cite the following publication::
 
-    @INPROCEEDINGS{leppanen2021,
-      AUTHOR={Leppänen, Topi and Mousouliotis, Panagiotis and Keramidas, Georgios and Multanen, Joonas and Jääskeläinen, Pekka},
-      BOOKTITLE={2021 IEEE Nordic Circuits and Systems Conference (NorCAS)},
-      TITLE={Unified OpenCL Integration Methodology for FPGA Designs},
-      YEAR={2021},
-      PAGES={1-7},
-      DOI={10.1109/NorCAS53631.2021.9599861}
+    @ARTICLE{leppanen2023,
+      TITLE = {Efficient {OpenCL} system integration of non-blocking {FPGA} accelerators},
+      JOURNAL = {Microprocessors and Microsystems},
+      VOLUME = {97},
+      PAGES = {104772},
+      YEAR = {2023},
+      ISSN = {0141-9331},
+      DOI = {https://doi.org/10.1016/j.micpro.2023.104772},
+      AUTHOR = {Topi Leppänen and Atro Lotvonen and Panagiotis Mousouliotis and Joonas Multanen and Georgios Keramidas and Pekka Jääskeläinen},
     }
+
+The other relevant publications::
 
     @ARTICLE{leppanen2022,
       AUTHOR={Leppänen, Topi and Lotvonen, Atro and Jääskeläinen, Pekka},
@@ -311,4 +303,13 @@ in your academic work, please cite one of the relevant publications::
       URL={https://www.frontiersin.org/articles/10.3389/fcomp.2022.945652},
       DOI={10.3389/fcomp.2022.945652},
       ISSN={2624-9898},
+    }
+
+    @INPROCEEDINGS{leppanen2021,
+      AUTHOR={Leppänen, Topi and Mousouliotis, Panagiotis and Keramidas, Georgios and Multanen, Joonas and Jääskeläinen, Pekka},
+      BOOKTITLE={2021 IEEE Nordic Circuits and Systems Conference (NorCAS)},
+      TITLE={Unified OpenCL Integration Methodology for FPGA Designs},
+      YEAR={2021},
+      PAGES={1-7},
+      DOI={10.1109/NorCAS53631.2021.9599861}
     }

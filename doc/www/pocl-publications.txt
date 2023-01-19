@@ -28,3 +28,8 @@ Cross-vendor programming abstraction for diverse heterogeneous platforms,
 https://doi.org/10.3389/fcomp.2022.945652
 Frontiers in Computer Science, vol. 4, 2022.
 
+Topi Lepp&auml;nen, Atro Lotvonen, Panagiotis Mousouliotis, Joonas Multanen, Georgios Keramidas, Pekka J&auml;&auml;skel&auml;inen
+Efficient OpenCL system integration of non-blocking FPGA accelerators,
+https://doi.org/10.1016/j.micpro.2023.104772
+Microprocessors and Microsystems, vol. 97, 2023.
+
