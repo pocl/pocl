@@ -1212,16 +1212,14 @@ if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
 endif()
 
 # Extensions that are work-in-progress with known unfinished aspects.
-# These are advertised through the device query only when explicitly enabled
-# for development purposes or when the implementation is complete enough for
-# the application's needs.
+# These are not advertised with a conformant build.
 #
 # * cl_khr_shuffle: Passes the CTS, but only because it doesn't test non-uniform
 # (lock-step) behavior: https://github.com/KhronosGroup/OpenCL-CTS/issues/1236
 #
 # * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
 # are unimplemented.
-if(ENABLE_UNFINISHED_EXTENSIONS)
+if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot cl_khr_subgroup_shuffle")
 endif()
 

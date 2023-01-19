@@ -141,6 +141,11 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_init_default_device_infos (device);
 
+  /* In reality there is no independent SG progress implemented in this version
+     because we can only have one SG in flight at a time, but it's a corner
+     case which allows us to advertise it for full CTS compliance. */
+  device->sub_group_independent_forward_progress = CL_TRUE;
+
   /* Just an arbitrary number here based on assumption of SG size 32. */
   device->max_num_sub_groups = device->max_work_group_size / 32;
 

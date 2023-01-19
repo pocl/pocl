@@ -1614,10 +1614,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->global_var_pref_size = 0;
   dev->non_uniform_work_group_support = CL_FALSE;
   dev->max_num_sub_groups = 0;
-  /* In reality there is no independent SG progress implemented in this version
-     because we can only have one SG in flight at a time, but it's a corner
-     case which allows us to advertise it for full CTS compliance. */
-  dev->sub_group_independent_forward_progress = CL_TRUE;
 
 #ifdef ENABLE_LLVM
 

@@ -6,9 +6,9 @@ Notable User Facing Changes
 
 - Dropped support for Clang/LLVM versions 6.0 to 9.0 (inclusive)
 - Added support for program-scope variables in the CPU drivers
-- Added support for generic address space in the CPU drivers
+- Added support for generic address spaces in the CPU drivers
 - Added basic support for cl_khr_subgroups for CPUs: A single
-  subgroup that executes the whole X-dimension's WIs.
+  subgroup that always executes the whole X-dimension's WIs.
 
 3.1 December 2022
 =================
