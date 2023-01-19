@@ -2,7 +2,8 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2022 Pekka Jääskeläinen
+//               2012-2022 Pekka Jääskeläinen / Parform Oy
+//               2023 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -73,9 +74,6 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-
-
-
 enum PoclContextStructFields {
   PC_NUM_GROUPS,
   PC_GLOBAL_OFFSET,
@@ -130,8 +128,6 @@ Workgroup::runOnModule(Module &M) {
   SizeTWidth = address_bits;
   SizeT = IntegerType::get(*C, SizeTWidth);
 
-  // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
-  // anyways as it builds the context type using the SizeT directly.
   llvm::Type *Int32T = Type::getInt32Ty(*C);
   llvm::Type *Int8T = Type::getInt8Ty(*C);
   PoclContextT =
@@ -756,8 +752,8 @@ Workgroup::globalHandlesToContextStructLoads(
   return StructLoads;
 }
 
-// Converts uses of the given variable handles (external global variables) to
-// use the given function-private values instead.
+// Converts uses of the given pseudo variable handles (magic external global
+// variables) to use the given function-private values instead.
 void
 Workgroup::privatizeGlobals(llvm::Function *F, llvm::IRBuilder<> &Builder,
                             const std::vector<std::string> &&GlobalHandleNames,
@@ -918,6 +914,17 @@ Workgroup::privatizeContext(Function *F)
     globalHandlesToContextStructLoads(
       Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
       PC_NUM_GROUPS));
+
+  // Privatize the subgroup size (for CPUs), if referred.
+  if (M->getGlobalVariable("_pocl_sub_group_size") != nullptr) {
+    Value *SGSize = getRequiredSubgroupSize(*F);
+    if (SGSize == nullptr) {
+      SGSize = Builder.CreateLoad(LocalSizeAllocas[0]->getAllocatedType(),
+                                  LocalSizeAllocas[0]);
+    }
+    assert(SGSize != nullptr);
+    privatizeGlobals(F, Builder, {"_pocl_sub_group_size"}, {SGSize});
+  }
 
   if (DeviceSidePrintf) {
     // Privatize _printf_buffer
@@ -1651,4 +1658,19 @@ Workgroup::hasWorkgroupBarriers(const Function &F)
     }
   }
   return false;
+}
+
+// The subgroup size is currently defined for the CPU implementations
+// via the intel_reqd_subgroup_size metadata or the local dimension
+// x size (the default).
+llvm::Value *Workgroup::getRequiredSubgroupSize(llvm::Function &F) {
+
+  if (MDNode *SGSizeMD = F.getMetadata("intel_reqd_sub_group_size")) {
+    // Use the constant from the metadata.
+    ConstantAsMetadata *ConstMD =
+        cast<ConstantAsMetadata>(SGSizeMD->getOperand(0));
+    ConstantInt *Const = cast<ConstantInt>(ConstMD->getValue());
+    return Const;
+  }
+  return nullptr;
 }

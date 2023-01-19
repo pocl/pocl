@@ -3,6 +3,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
                  2011-2021 Pekka Jääskeläinen
+                 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -1741,7 +1742,9 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
 }
 
 static const cl_name_version OPENCL_EXTENSIONS[]
-    = { { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
+    = { { CL_MAKE_VERSION (1, 0, 0), "cl_intel_required_subgroup_size" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },
