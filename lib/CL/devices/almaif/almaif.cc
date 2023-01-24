@@ -356,6 +356,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
       POCL_ABORT("almaif: Unknown Kernel ID (%lu) given\n", token);
     }
   }
+  free(scanParams);
 
   // almaif devices are little endian by default, but the emulation device is
   // host dependant
@@ -739,9 +740,10 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
         CDL_DELETE(D.CommandList, Node);
         CDL_PREPEND(D.ReadyList, Node);
 
-        POCL_UNLOCK_OBJ(Node->sync.event.event);
+        POCL_UNLOCK_OBJ(Event);
         scheduleCommands(D);
-        POCL_LOCK_OBJ(Node->sync.event.event);
+        POCL_LOCK_OBJ(Event);
+
         POCL_UNLOCK(D.CommandListLock);
       }
     }
@@ -752,9 +754,10 @@ void pocl_almaif_notify(cl_device_id Device, cl_event Event, cl_event Finished) 
       CDL_DELETE(D.CommandList, Node);
       CDL_PREPEND(D.ReadyList, Node);
 
-      POCL_UNLOCK_OBJ(Node->sync.event.event);
+      POCL_UNLOCK_OBJ(Event);
       scheduleCommands(D);
-      POCL_LOCK_OBJ(Node->sync.event.event);
+      POCL_LOCK_OBJ(Event);
+
       POCL_UNLOCK(D.CommandListLock);
     }
   }
