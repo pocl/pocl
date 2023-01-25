@@ -42,13 +42,14 @@ typedef std::map<int32_t, std::shared_ptr<OCLFuncInfo>> OCLFuncInfoMap;
 const std::string OpenCLStd{"OpenCL.std"};
 
 class SPIRVtype {
+protected:
   int32_t Id_;
   size_t Size_;
 
 public:
   SPIRVtype(int32_t Id, size_t Size) : Id_(Id), Size_(Size) {}
   virtual ~SPIRVtype(){};
-  size_t size() { return Size_; }
+  virtual size_t size() { return Size_; }
   int32_t id() { return Id_; }
   virtual OCLType ocltype() = 0;
   virtual OCLSpace getAS() { return OCLSpace::Private; }
@@ -69,6 +70,19 @@ public:
   virtual ~SPIRVtypePOD(){};
   virtual OCLType ocltype() override { return OCLType::POD; }
 };
+
+class SPIRVtypePODStruct : public SPIRVtype {
+  size_t PackedSize_;
+  bool IsPacked_;
+public:
+  SPIRVtypePODStruct(int32_t Id, size_t Size, size_t PSize)
+      : SPIRVtype(Id, Size), PackedSize_(PSize), IsPacked_(false) {}
+  virtual size_t size() override { return IsPacked_ ? PackedSize_ : Size_; }
+  void setPacked(bool Val) { IsPacked_ = Val; }
+  virtual ~SPIRVtypePODStruct(){};
+  virtual OCLType ocltype() override { return OCLType::POD; }
+};
+
 
 class SPIRVtypeOpaque : public SPIRVtype {
   std::string Name;
@@ -362,6 +376,7 @@ public:
 
     if (Opcode_ == spv::Op::OpTypeStruct) {
       size_t TotalSize = 0;
+      size_t TotalPackedSize = 0;
       for (size_t i = 2; i < WordCount_; ++i) {
         int32_t MemberId = OrigStream_[i];
 
@@ -372,6 +387,7 @@ public:
         }
 
         size_t TypeSize = Type->size();
+        TotalPackedSize += TypeSize;
         if (TotalSize % TypeSize != 0) {
           size_t Count = TotalSize / TypeSize;
           TotalSize = (Count + 1) * TypeSize;
@@ -380,7 +396,7 @@ public:
         TotalSize += TypeSize;
       }
       // logTrace("TOTAL STRUCT SIZE: %zu\n", TotalSize);
-      return new SPIRVtypePOD(Word1_, TotalSize);
+      return new SPIRVtypePODStruct(Word1_, TotalSize, TotalPackedSize);
     }
 
     if (Opcode_ == spv::Op::OpTypeOpaque) {
@@ -442,6 +458,7 @@ public:
         int32_t TypeId = OrigStream_[i + 3];
         auto It = TypeMap.find(TypeId);
         assert(It != TypeMap.end());
+        Fi->ArgTypeInfo[i].TypeID = TypeId;
         Fi->ArgTypeInfo[i].Type = It->second->ocltype();
         Fi->ArgTypeInfo[i].Size = It->second->size();
         Fi->ArgTypeInfo[i].Space = It->second->getAS();
@@ -675,6 +692,14 @@ private:
               break;
             }
           }
+        }
+
+        if (AI.Attrs.CPacked) {
+          auto It = TypeMap_.find(AI.TypeID);
+          assert(It != TypeMap_.end());
+          SPIRVtypePODStruct *Str = static_cast<SPIRVtypePODStruct *>(It->second);
+          Str->setPacked(true);
+          AI.Size = Str->size();
         }
 
         ++CurrentKernelParam;

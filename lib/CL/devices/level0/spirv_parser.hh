@@ -69,6 +69,9 @@ struct OCLArgTypeInfo {
   std::string Name;
   ArgAttrs Attrs;
   uint32_t Alignment;
+  // this SPIRV type ID; for parsing only,
+  // but it has to be stored
+  int32_t TypeID;
 };
 
 struct OCLFuncInfo {
