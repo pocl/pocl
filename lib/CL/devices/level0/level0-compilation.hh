@@ -1,5 +1,26 @@
 /* level0-compilation.hh - multithreaded compilation for LevelZero Compute API devices.
 
+  Overall design:
+
+  A single Level0 driver can have:
+    any number of independent contexts
+    stable device handles that are valid across contexts
+
+  Level0Driver has a single instance of Level0CompilationJobScheduler.
+  Scheduler ows one Level0CompilerJobQueue and multiple instances of Level0CompilerThread,
+  which pick up jobs (Level0CompilationJob) from the queue.
+  The Level0CompilationJob holds an instance of Level0ProgramBuild (build with specialization),
+  which at the end of compilation is moved into its Level0Program.
+
+  Usage:
+  1) create Level0Program instance
+  2) use one of the createXYZ methods of JobScheduler with the program
+  3) use Program->getAnyHandle() for e.g. device->ops->setup_metadata
+  4) use the Program->getBestKernel() to get the best available Kernel to run
+
+*/
+
+/*
    Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,7 +42,6 @@
    IN THE SOFTWARE.
 */
 
-
 #ifndef LEVEL0COMPILATION_HH
 #define LEVEL0COMPILATION_HH
 
@@ -32,48 +52,82 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <thread>
 #include <vector>
 #include <queue>
 
+namespace pocl {
+
 class Level0ProgramBuild;
 
+/**
+* \brief Stores a map of ProgramBuilds to 'ze_kernel_handle_t' handles,
+*        for a particular cl_kernel + device (= kernel->data[device_i])
+*
+* New handles are dynamically created by getOrCreateForBuild() when they're needed.
+*
+*/
 class Level0Kernel {
   std::mutex Mutex;
-   // map of Builds (as void*) to Kernel handles
-  std::map<void*, ze_kernel_handle_t> KernelHandles;
+  /// map of ProgramBuilds to Kernel handles
+  std::map<Level0ProgramBuild*, ze_kernel_handle_t> KernelHandles;
   std::string Name;
+
   bool createForBuild(Level0ProgramBuild* Build);
+  /// returns (or creates a new) ze_kernel_handle_t for a particular ProgramBuild
+  ze_kernel_handle_t getOrCreateForBuild(Level0ProgramBuild* Build);
 
 public:
   Level0Kernel(const char* N) : Name(N) {}
   ~Level0Kernel();
-  // it is necessary for the queue's run function to lock the kernel
-  // while setting arguments & appending to command list
+  /// this is necessary for the Level0Queue's run() function to lock the kernel
   std::mutex &getMutex() { return Mutex; }
-  ze_kernel_handle_t getOrCreateForBuild(Level0ProgramBuild* Build);
-  ze_kernel_handle_t getAnyCreated();
-};
 
+  /** returns any existing handle.
+   *  Used only in pocl_level0_local_size_optimizer() for zeKernelSuggestGroupSize().
+   *  For getting a handle for running a kernel, use Level0Program->getBestKernel() */
+  ze_kernel_handle_t getAnyCreated();
+
+  /// for getOrCreateForBuild
+  friend class Level0Program;
+};
 
 typedef std::unique_ptr<Level0Kernel> Level0KernelUPtr;
 
 class Level0Program;
 
-// one build with a particular set of settings
+
+/**
+* \brief A single build of a SPIRV program (to a native binary) with a particular set of
+*        "specializations" / Level0 build options (e.g. +O2 -Debug +64bit-offsets)
+*
+* Current available specializations: Optimization, large (64bit) offsets, Debug info.
+*
+*/
 class Level0ProgramBuild {
+  /// compiled binary in ZE native format (ELF)
   std::vector<uint8_t> NativeBinary;
+  /// build log for failed builds
   std::string BuildLog;
-  // assumes this pointer is valid & alive during the whole build duration
+  /// assumes this pointer is valid & alive during the whole build duration
   Level0Program *Program;
 
-  // this handle is valid for the *target* (loadBinary) context,
-  // not the compilation context.
+  /** this handle is valid for the *target* (loadBinary) context,
+   *  not the compilation thread's context. */
   ze_module_handle_t ModuleH;
+
+  /* specialization flags */
+
+  /// true = -ze-opt-level=2, false = -ze-opt-disable
   bool Optimized;
+  /** adds -ze-opt-greater-than-4GB-buffer-required;
+   *  only meaningful if the device supports 64bit buffers */
   bool LargeOffsets;
+  /// true = "-g"
   bool Debug;
+
   bool BuildSuccessful;
 
 public:
@@ -82,10 +136,10 @@ public:
    : Program(Prog), ModuleH(nullptr), Optimized(Opt),
      LargeOffsets(LargeOfs), Debug(Dbg), BuildSuccessful(false) {}
   ~Level0ProgramBuild();
-  // loads the built Native Binary, in a particular context & device
+  /// loads the built Native Binary, in a particular context & device
   bool loadBinary(ze_context_handle_t Context,
                   ze_device_handle_t Device);
-  // builds the program's SPIRV to Native Binary, in a particular context & device
+  /// builds the program's SPIRV to Native Binary, in a particular context & device
   bool compile(ze_context_handle_t Context,
                ze_device_handle_t Device);
   ze_module_handle_t getHandle() { return ModuleH; }
@@ -100,31 +154,42 @@ typedef std::unique_ptr<Level0ProgramBuild> Level0ProgramBuildUPtr;
 
 class Level0CompilationJobScheduler;
 
-// a set of builds of a particular SPIRV+SpecConst
+/**
+* \brief Stores a set of specialized builds for a particular
+* cl_program + cl_device_id (=program->data[device_id]).
+*
+* Note that this takes SPIRV + compiler options + SpecConstants combination
+* as input, and these are considered constant, so if the cl_program is rebuilt,
+* the instance of this class needs to be destroyed & new one recreated.
+*
+* Since there might still be a compile job scheduled/running that will need
+* the instance, it needs to be handled properly (-> std::shared_ptr)
+*/
 class Level0Program {
-  // all data except Builds, Kernels & BuildLog are const
+  /// all data except Builds, Kernels & BuildLog are const
   std::mutex Mutex;
-  // vectors of multiple builds with different set of build settings,
-  // shared_ptr because outsiders can hold a build instance & wait for it to finish
+  /// builds with specializations
   std::list<Level0ProgramBuildUPtr> Builds;
   std::list<Level0KernelUPtr> Kernels;
   std::string BuildLog;
 
   ze_context_handle_t ContextH;
   ze_device_handle_t DeviceH;
+  /// cl_program's pocl cache dir
   std::string CacheDir;
+  /// UUID used to determine compatibility of native binaries in cache
   std::string CacheUUID;
 
-  // SPIR-V binary data
+  /// SPIR-V binary (= compilation input)
   std::vector<uint8_t> SPIRV;
-  // spec constants used for builds
+  /// spec constants used for compilation
   ze_module_constants_t SpecConstants;
-  // storage for actual data of ze_module_constants_t
+  /// storage for actual data of ze_module_constants_t
   std::vector<uint32_t> ConstantIds;
   std::vector<const void*> ConstantVoidPtrs;
   std::vector<std::vector<uint8_t>> ConstantValues;
 
-
+  /// setup the ze_module_constants_t from cl_program's Spec constant data.
   void setupSpecConsts(uint32_t NumSpecs, uint32_t* SpecIDs,
                       const void **SpecValues, size_t *SpecValSizes);
 
@@ -138,15 +203,29 @@ public:
                 const std::string &UUID);
   ~Level0Program();
 
+  /** called by Level0CompilationJob when finished,
+   *  to move Level0ProgramBuild into the program */
   void addFinishedBuild(Level0ProgramBuildUPtr Build);
 
   std::vector<uint8_t>& getSPIRV() { return SPIRV; }
   ze_module_constants_t getSpecConstants() { return SpecConstants; }
   ze_device_handle_t getDevice() { return DeviceH; }
-  ze_module_handle_t getAnyHandle(); // for setup_metadata
+  /// used by device->ops->setup_metadata to get kernel metadata
+  ze_module_handle_t getAnyHandle();
+  /// for cl_kernel creation device->ops callback
   Level0Kernel *createKernel(const char* Name);
+  /**
+  * \brief returns the best available specialization of a Kernel,
+  *        for the given set of specialization options (currently just one).
+  * \param [in] Kernel the Level0Kernel to search for
+  * \param [in] LargeOffset specialization option
+  * \param [out] Mod the ze_module_handle_t of the found specialization, or null
+  * \param [out] Ker the ze_kernel_handle_t of the found specialization, or null
+  * \returns false if can't find any build specialization
+  */
   bool getBestKernel(Level0Kernel *Kernel, bool LargeOffset,
-                        ze_module_handle_t &Mod, ze_kernel_handle_t &Ker);
+                     ze_module_handle_t &Mod, ze_kernel_handle_t &Ker);
+  /// for cl_kernel deletion device->ops callback
   bool releaseKernel(Level0Kernel *Kernel);
   std::string &&getBuildLog() { return std::move(BuildLog); }
   const std::string &getCacheDir() { return CacheDir; }
@@ -155,20 +234,28 @@ public:
 
 typedef std::shared_ptr<Level0Program> Level0ProgramSPtr;
 
+/**
+* \brief A compilation job for the background compiler threads
+*
+* The Leve0ProgramBuild instance will be moved into Program once build is finished.
+*
+*/
 class Level0CompilationJob {
-  bool HighPrio;
-  bool Finished;
-  bool Successful;
-  Level0ProgramSPtr Program;
-  Level0ProgramBuildUPtr Build;
-
   std::mutex Mutex;
   std::condition_variable Cond;
 
+  Level0ProgramSPtr Program;
+  Level0ProgramBuildUPtr Build;
+
+  /// true = high priority
+  bool HighPrio;
+  bool Finished;
+  bool Successful;
+
 public:
   Level0CompilationJob(bool HiP, Level0ProgramSPtr P, Level0ProgramBuildUPtr PB)
-    : HighPrio(HiP), Finished(false), Successful(false),
-      Program(P), Build(std::move(PB)) {}
+    : Program(P), Build(std::move(PB)),
+      HighPrio(HiP), Finished(false), Successful(false) {}
   ~Level0CompilationJob() = default;
   bool isHighPrio() { return HighPrio; }
   ze_device_handle_t getDevice() { return Program->getDevice(); }
@@ -181,14 +268,21 @@ public:
 
 typedef std::shared_ptr<Level0CompilationJob> Level0CompilationJobSPtr;
 
-/* A queue of compilation jobs with some extra features,
- * like high-priority jobs & cancellation of existing requests
- * (for when a program is rebuilt) */
+/**
+* \brief A compilation job queue for the background compiler threads
+*
+* A queue of compilation jobs with some extra features,
+* like priorities & cancellation of waiting jobs for a particular program
+* (for when a program is rebuilt).
+*
+*/
+
 class Level0CompilerJobQueue {
   std::list<Level0CompilationJobSPtr> LowPrioJobs;
   std::list<Level0CompilationJobSPtr> HighPrioJobs;
   std::mutex Mutex;
   std::condition_variable Cond;
+  /// signal to compilationThreads that program is exiting
   bool ExitRequested;
 
   Level0CompilationJobSPtr findJob(std::list<Level0CompilationJobSPtr> &Queue,
@@ -197,23 +291,44 @@ class Level0CompilerJobQueue {
 public:
   Level0CompilerJobQueue() = default;
   ~Level0CompilerJobQueue() = default;
+  /// push job into queue
   void pushWork(Level0CompilationJobSPtr Job);
+  /**
+  * \brief returns a job waiting to be compiled. Order of search:
+  *        1) high-priority job for PreferredDevice;
+  *        2) any high-priority job;
+  *        3) low-priority job for PreferredDevice;
+  *        4) any low-priority job.
+  * \param [in] PreferredDevice the device to prefer
+  * \param [out] ShouldExit true if ExitRequested==true
+  * \returns nullptr if ShouldExit==true, otherwise blocks
+  */
   Level0CompilationJobSPtr getWorkOrWait(ze_device_handle_t PreferredDevice,
                                          bool &ShouldExit);
-  // cancels jobs for a program which are *not* yet running
+  /// cancels jobs for a program which are *not* yet running
   void cancelAllJobsFor(Level0Program *Program);
+  /// cancel all jobs & signal an exit
   void clearAndExit();
 };
 
 
-/* A single CPU thread with its own context that picks up jobs from
- * Level0CompilerJobQueue & compiles them */
+/**
+* \brief A background compiler thread
+*
+* A single CPU thread with its own ZE context,
+* that picks up jobs from Level0CompilerJobQueue & compiles them.
+* Since ze_module_handle cannot be shared between contexts, but
+* native binaries can, native binaries are stored in Level0ProgramBuild instances.
+*
+*/
 class Level0CompilerThread {
   ze_driver_handle_t DriverH;
+  /// The thread will prefer jobs for this device. This is to avoid thread starvation.
   ze_device_handle_t PreferredDeviceH;
   std::thread Thread;
   Level0CompilerJobQueue* JobQueue;
   ze_context_handle_t ThreadContextH;
+  /// std::thread runs this method
   void run();
   void compileJob(Level0CompilationJobSPtr Job);
 
@@ -226,8 +341,13 @@ public:
   bool init();
 };
 
-/* main interface to the background compilation system. Owns a single
- * job queue, and manages NCPUTHREADS of compilation threads. */
+/**
+* \brief A compilation job scheduler
+*
+* main interface to the background compilation system. Owns a single
+* job queue, and manages NCPUTHREADS of background compilation threads.
+*
+*/
 
 class Level0CompilationJobScheduler {
   ze_driver_handle_t DriverH = nullptr;
@@ -240,18 +360,37 @@ public:
   Level0CompilationJobScheduler() = default;
   ~Level0CompilationJobScheduler();
   bool init(ze_driver_handle_t H, std::vector<ze_device_handle_t> &DevicesH);
+  /// cancel all unstarted jobs for this Program
   void cancelAllJobsFor(Level0Program *Program);
 
-/*
-  bool createAndWaitForO0Builds(Level0ProgramSPtr Program,
-                                std::string &BuildLog, bool DeviceSupports64bitBuffers);
-  void createO2Builds(Level0ProgramSPtr Program, bool DeviceSupports64bitBuffers);
-*/
+  /**
+  * \brief Creates a compilation job and waits for it to finish.
+  *
+  * If the DeviceSupports64bitBuffers is true, creates (and waits for) two jobs,
+  * the 2nd with the LargeOffset option.
+  *
+  * \param [in] Program the program to build for
+  * \param [out] BuildLog contains the build log, if the build is a failure
+  * \param [in] DeviceSupports64bitBuffers specialization option
+  * \param [in] Optimize specialization option
+  * \returns nullptr if ShouldExit==true, otherwise blocks
+  */
   bool createAndWaitForExactBuilds(Level0ProgramSPtr Program,
                                    std::string &BuildLog,
                                    bool DeviceSupports64bitBuffers,
                                    bool Optimize);
+
+  /// adds an -O0 build (two if DeviceSupports64bitBuffers) and waits for finish
+  bool createAndWaitForO0Builds(Level0ProgramSPtr Program,
+                                std::string &BuildLog,
+                                bool DeviceSupports64bitBuffers);
+
+  /// adds an -O2 build (or two) but does not wait for finish
+  void createO2Builds(Level0ProgramSPtr Program,
+                      bool DeviceSupports64bitBuffers);
+
 };
 
+} // namespace
 
 #endif // LEVEL0COMPILATION_HH

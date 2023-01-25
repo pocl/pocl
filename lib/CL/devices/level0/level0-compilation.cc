@@ -39,6 +39,8 @@
 #include <iomanip>
 #include <sstream>
 
+using namespace pocl;
+
 // ***********************************************************************
 // ***********************************************************************
 
@@ -331,6 +333,8 @@ bool Level0Program::getBestKernel(Level0Kernel *Kernel, bool LargeOffset,
     }
   }
   if (Build == nullptr) {
+    Mod = nullptr;
+    Ker = nullptr;
     return false;
   }
 
@@ -570,12 +574,12 @@ Level0CompilationJobScheduler::~Level0CompilationJobScheduler() {
 // ***********************************************************************
 // ***********************************************************************
 
-/*
 bool Level0CompilationJobScheduler::createAndWaitForO0Builds(Level0ProgramSPtr
 Program, std::string &BuildLog, bool DeviceSupports64bitBuffers) {
-  Level0ProgramBuildUPtr O0SmallOfsBuild(new Level0ProgramBuild(
-                                                 false, false, false,
-                                                 Program.get()));
+
+  Level0ProgramBuildUPtr O0SmallOfsBuild(
+              new Level0ProgramBuild(false, false, false,
+                                     Program.get()));
   Level0CompilationJobSPtr O0SmallOfsBuildJob(
               new Level0CompilationJob(true,
                     Program, std::move(O0SmallOfsBuild)));
@@ -590,16 +594,16 @@ Program, std::string &BuildLog, bool DeviceSupports64bitBuffers) {
 
   // TODO submit both & wait for both
   if (DeviceSupports64bitBuffers) {
-      Level0ProgramBuildUPtr O0LargeOfsBuild(new Level0ProgramBuild(
-                                                     false, true, false,
-                                                     Program.get()));
+      Level0ProgramBuildUPtr O0LargeOfsBuild(
+                  new Level0ProgramBuild(false, true, false,
+                                         Program.get()));
       Level0CompilationJobSPtr O0LargeOfsBuildJob(
                   new Level0CompilationJob(true,
                         Program, std::move(O0LargeOfsBuild)));
 
       addCompilationJob(O0LargeOfsBuildJob);
-
       O0LargeOfsBuildJob->waitForFinish();
+
       if (!O0LargeOfsBuildJob->isSuccessful()) {
         BuildLog.append(Program->getBuildLog());
         return false;
@@ -610,9 +614,10 @@ Program, std::string &BuildLog, bool DeviceSupports64bitBuffers) {
 }
 
 void Level0CompilationJobScheduler::createO2Builds(Level0ProgramSPtr Program,
-                                                   bool
-DeviceSupports64bitBuffers) { Level0ProgramBuildUPtr O2SmallOfsBuild(new
-Level0ProgramBuild( true, false, false, Program.get()));
+                                                   bool DeviceSupports64bitBuffers) {
+
+    Level0ProgramBuildUPtr O2SmallOfsBuild(
+                new Level0ProgramBuild( true, false, false, Program.get()));
     Level0CompilationJobSPtr O2SmallOfsBuildJob(
                 new Level0CompilationJob(true,
                       Program, std::move(O2SmallOfsBuild)));
@@ -620,9 +625,9 @@ Level0ProgramBuild( true, false, false, Program.get()));
     addCompilationJob(O2SmallOfsBuildJob);
 
     if (DeviceSupports64bitBuffers) {
-        Level0ProgramBuildUPtr O2LargeOfsBuild(new Level0ProgramBuild(
-                                                       true, true, false,
-                                                       Program.get()));
+        Level0ProgramBuildUPtr O2LargeOfsBuild(
+                    new Level0ProgramBuild(true, true, false,
+                                           Program.get()));
         Level0CompilationJobSPtr O2LargeOfsBuildJob(
                     new Level0CompilationJob(true,
                           Program, std::move(O2LargeOfsBuild)));
@@ -630,18 +635,19 @@ Level0ProgramBuild( true, false, false, Program.get()));
         addCompilationJob(O2LargeOfsBuildJob);
     }
 }
-*/
 
 bool Level0CompilationJobScheduler::createAndWaitForExactBuilds(
     Level0ProgramSPtr Program, std::string &BuildLog,
     bool DeviceSupports64bitBuffers, bool Optimize) {
 
-  Level0ProgramBuildUPtr SmallOfsBuild(new Level0ProgramBuild(Optimize, // Opt
-                                                              false, // largeOfs
-                                                              false, // Dbg
-                                                              Program.get()));
+  Level0ProgramBuildUPtr SmallOfsBuild(
+              new Level0ProgramBuild(Optimize, // Opt
+                                     false, // largeOfs
+                                     false, // Dbg
+                                     Program.get()));
   Level0CompilationJobSPtr SmallOfsBuildJob(
-      new Level0CompilationJob(true, Program, std::move(SmallOfsBuild)));
+              new Level0CompilationJob(true, Program,
+                                       std::move(SmallOfsBuild)));
 
   addCompilationJob(SmallOfsBuildJob);
   SmallOfsBuildJob->waitForFinish();
@@ -659,11 +665,12 @@ bool Level0CompilationJobScheduler::createAndWaitForExactBuilds(
                                false,    // Dbg
                                Program.get()));
     Level0CompilationJobSPtr LargeOfsBuildJob(
-        new Level0CompilationJob(true, Program, std::move(LargeOfsBuild)));
+        new Level0CompilationJob(true, Program,
+                                 std::move(LargeOfsBuild)));
 
     addCompilationJob(LargeOfsBuildJob);
-
     LargeOfsBuildJob->waitForFinish();
+
     if (!LargeOfsBuildJob->isSuccessful()) {
       BuildLog.append(Program->getBuildLog());
       return false;
