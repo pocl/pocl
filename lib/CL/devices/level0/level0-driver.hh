@@ -68,6 +68,7 @@ class Level0Queue {
   uint64_t DeviceTimingStart;
   double HostDeviceRate;
   uint32_t_3 DeviceMaxWGSizes;
+  bool DeviceHasGlobalOffsets;
 
   void read(void *__restrict__ HostPtr,
             pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
@@ -172,6 +173,7 @@ class Level0Queue {
   bool setupKernelArgs(ze_module_handle_t ModuleH, ze_kernel_handle_t KernelH,
                        cl_device_id Dev, unsigned DeviceI,
                        _cl_command_run *RunCmd);
+  void runWithOffsets(struct pocl_context *PoclCtx, ze_kernel_handle_t KernelH);
   void run(_cl_command_node *Cmd);
 
   void execCommand(_cl_command_node *Cmd);
@@ -186,10 +188,9 @@ class Level0Queue {
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
               ze_command_list_handle_t L, uint64_t *TimestampBuffer,
-              double HostDevRate,
-              uint64_t HostTimeStart,
-              uint64_t DeviceTimeStart,
-              uint32_t_3 DeviceMaxWGs);
+              double HostDevRate, uint64_t HostTimeStart,
+              uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
+              bool DeviceHasGOffsets);
   ~Level0Queue();
 
   void runThread();
@@ -209,14 +210,11 @@ class Level0QueueGroup : public Level0WorkQueueInterface {
 public:
   Level0QueueGroup(){};
   ~Level0QueueGroup();
-  bool init(unsigned Ordinal, unsigned Count,
-            ze_context_handle_t ContextH,
-            ze_device_handle_t DeviceH,
-            uint64_t *Buffer,
-            uint64_t HostTimingStart,
-            uint64_t DeviceTimingStart,
-            double HostDeviceRate,
-            uint32_t_3 DeviceMaxWGs);
+  bool init(unsigned Ordinal, unsigned Count, ze_context_handle_t ContextH,
+            ze_device_handle_t DeviceH, uint64_t *Buffer,
+            uint64_t HostTimingStart, uint64_t DeviceTimingStart,
+            double HostDeviceRate, uint32_t_3 DeviceMaxWGs,
+            bool DeviceHasGOffsets);
 
   virtual void pushWork(_cl_command_node *Command);
   virtual _cl_command_node *getWorkOrWait(bool &ShouldExit);
@@ -283,6 +281,7 @@ typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
 class Level0Driver {
   ze_driver_handle_t DriverH = nullptr;
   std::vector<ze_device_handle_t> DeviceHandles;
+  std::set<std::string> ExtensionSet;
   std::vector<Level0DeviceUPtr> Devices;
   ze_context_handle_t ContextH = nullptr;
   // TODO: doesn't seem reliably the same between runs
@@ -299,10 +298,13 @@ public:
   uint32_t getVersion() { return Version; }
   Level0Device *createDevice(unsigned Index, cl_device_id Dev, const char *Params);
   void releaseDevice(Level0Device *Dev);
+  bool hasExtension(const char *Name) {
+    return ExtensionSet.find(Name) != ExtensionSet.end();
+  }
   bool empty() { return NumDevices == 0; }
   Level0CompilationJobScheduler &getJobSched() { return JobSched; }
 };
 
-}
+} // namespace pocl
 
 #endif // LEVEL0DRIVER_HH

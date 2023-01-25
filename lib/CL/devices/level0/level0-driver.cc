@@ -853,6 +853,68 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   return false;
 }
 
+void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
+                                 ze_kernel_handle_t KernelH) {
+  ze_result_t Res;
+  uint32_t StartOffsetX = PoclCtx->global_offset[0];
+  uint32_t StartOffsetY = PoclCtx->global_offset[1];
+  uint32_t StartOffsetZ = PoclCtx->global_offset[2];
+
+  uint32_t WGSizeX = PoclCtx->local_size[0];
+  uint32_t WGSizeY = PoclCtx->local_size[1];
+  uint32_t WGSizeZ = PoclCtx->local_size[2];
+
+  uint32_t TotalWGsX = PoclCtx->num_groups[0];
+  uint32_t TotalWGsY = PoclCtx->num_groups[1];
+  uint32_t TotalWGsZ = PoclCtx->num_groups[2];
+
+  uint32_t CurrentWGsX = 0, CurrentWGsY = 0, CurrentWGsZ = 0;
+  uint32_t CurrentOffsetX = 0, CurrentOffsetY = 0, CurrentOffsetZ = 0;
+
+  for (uint32_t OffsetZ = 0; OffsetZ < TotalWGsZ;
+       OffsetZ += DeviceMaxWGSizes.s[2]) {
+    CurrentWGsZ = std::min(DeviceMaxWGSizes.s[2], TotalWGsZ - OffsetZ);
+    CurrentOffsetZ = StartOffsetZ + OffsetZ * WGSizeZ;
+    {
+      for (uint32_t OffsetY = 0; OffsetY < TotalWGsY;
+           OffsetY += DeviceMaxWGSizes.s[1]) {
+        CurrentWGsY = std::min(DeviceMaxWGSizes.s[1], TotalWGsY - OffsetY);
+        CurrentOffsetY = StartOffsetY + OffsetY * WGSizeY;
+        {
+          for (uint32_t OffsetX = 0; OffsetX < TotalWGsX;
+               OffsetX += DeviceMaxWGSizes.s[0]) {
+            CurrentWGsX = std::min(DeviceMaxWGSizes.s[0], TotalWGsX - OffsetX);
+            CurrentOffsetX = StartOffsetX + OffsetX * WGSizeX;
+            /*
+                          POCL_MSG_PRINT_LEVEL0(
+                              "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u |||
+               LOCAL X %u Y "
+                              "%u Z %u\n",
+                              TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX,
+               CurrentOffsetY, CurrentOffsetZ, CurrentWGsX, CurrentWGsY,
+               CurrentWGsZ);
+            */
+            Res = zeKernelSetGlobalOffsetExp(KernelH, CurrentOffsetX,
+                                             CurrentOffsetY, CurrentOffsetZ);
+            LEVEL0_CHECK_ABORT(Res);
+
+            ze_group_count_t LaunchFuncArgs = {CurrentWGsX, CurrentWGsY,
+                                               CurrentWGsZ};
+
+            Res = zeCommandListAppendLaunchKernel(
+                CmdListH, KernelH, &LaunchFuncArgs, nullptr, 0, nullptr);
+            LEVEL0_CHECK_ABORT(Res);
+
+            /* TODO find out if there is a limit on number of
+             * submitted commands in a single command list.
+             */
+          }
+        }
+      }
+    }
+  }
+}
+
 void Level0Queue::run(_cl_command_node *Cmd) {
   cl_event Event = Cmd->sync.event.event;
   _cl_command_run *RunCmd = &Cmd->command.run;
@@ -897,10 +959,10 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   }
 
   struct pocl_context *PoclCtx = &RunCmd->pc;
+
   uint32_t TotalWGsX = PoclCtx->num_groups[0];
   uint32_t TotalWGsY = PoclCtx->num_groups[1];
   uint32_t TotalWGsZ = PoclCtx->num_groups[2];
-
   size_t TotalWGs = TotalWGsX * TotalWGsY * TotalWGsZ;
   if (TotalWGs == 0)
     return;
@@ -913,47 +975,18 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t StartOffsetX = PoclCtx->global_offset[0];
   uint32_t StartOffsetY = PoclCtx->global_offset[1];
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
+  bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
-  uint32_t CurrentWGsX = 0, CurrentWGsY = 0, CurrentWGsZ = 0;
-  uint32_t CurrentOffsetX = 0, CurrentOffsetY = 0, CurrentOffsetZ = 0;
-
-  for (uint32_t OffsetZ = 0; OffsetZ < TotalWGsZ;
-       OffsetZ += DeviceMaxWGSizes.s[2]) {
-    CurrentWGsZ = std::min(DeviceMaxWGSizes.s[2], TotalWGsZ - OffsetZ);
-    CurrentOffsetZ = StartOffsetZ + OffsetZ * WGSizeZ;
-    {
-      for (uint32_t OffsetY = 0; OffsetY < TotalWGsY;
-           OffsetY += DeviceMaxWGSizes.s[1]) {
-        CurrentWGsY = std::min(DeviceMaxWGSizes.s[1], TotalWGsY - OffsetY);
-        CurrentOffsetY = StartOffsetY + OffsetY * WGSizeY;
-        {
-          for (uint32_t OffsetX = 0; OffsetX < TotalWGsX;
-               OffsetX += DeviceMaxWGSizes.s[0]) {
-            CurrentWGsX = std::min(DeviceMaxWGSizes.s[0], TotalWGsX - OffsetX);
-            CurrentOffsetX = StartOffsetX + OffsetX * WGSizeX;
-
-            POCL_MSG_PRINT_LEVEL0(
-                "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u ||| LOCAL X %u Y "
-                "%u Z %u\n",
-                TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX, CurrentOffsetY,
-                CurrentOffsetZ, CurrentWGsX, CurrentWGsY, CurrentWGsZ);
-
-            zeKernelSetGlobalOffsetExp(KernelH, CurrentOffsetX, CurrentOffsetY,
-                                       CurrentOffsetZ);
-
-            ze_group_count_t LaunchFuncArgs = {CurrentWGsX, CurrentWGsY,
-                                               CurrentWGsZ};
-
-            zeCommandListAppendLaunchKernel(CmdListH, KernelH, &LaunchFuncArgs,
-                                            nullptr, 0, nullptr);
-
-            /* TODO find out if there is a limit on number of
-             * submitted commands in a single command list.
-             */
-          }
-        }
-      }
-    }
+  if (DeviceHasGlobalOffsets && NeedsGlobalOffset) {
+    runWithOffsets(PoclCtx, KernelH);
+  } else {
+    assert(!NeedsGlobalOffset &&
+           "command needs "
+           "global offsets, but device doesn't support them");
+    ze_group_count_t LaunchFuncArgs = {TotalWGsX, TotalWGsY, TotalWGsZ};
+    ze_result_t ZeRes = zeCommandListAppendLaunchKernel(
+        CmdListH, KernelH, &LaunchFuncArgs, nullptr, 0, nullptr);
+    LEVEL0_CHECK_ABORT(ZeRes);
   }
 
   // zeKernelSetCacheConfig();
@@ -964,7 +997,8 @@ Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
                          ze_command_list_handle_t L, uint64_t *TimestampBuffer,
                          double HostDevRate, uint64_t HostTimeStart,
-                         uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs) {
+                         uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
+                         bool DeviceHasGOffsets) {
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
@@ -974,6 +1008,7 @@ Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
   HostTimingStart = HostTimeStart;
   DeviceTimingStart = DeviceTimeStart;
   DeviceMaxWGSizes = DeviceMaxWGs;
+  DeviceHasGlobalOffsets = DeviceHasGOffsets;
   Thread = std::thread(&Level0Queue::runThread, this);
 }
 
@@ -996,7 +1031,7 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
                             ze_device_handle_t DeviceH, uint64_t *Buffer,
                             uint64_t HostTimingStart,
                             uint64_t DeviceTimingStart, double HostDeviceRate,
-                            uint32_t_3 DeviceMaxWGs) {
+                            uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets) {
 
   ThreadExitRequested = false;
 
@@ -1035,7 +1070,7 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   for (unsigned i = 0; i < Count; ++i) {
     Queues.emplace_back(new Level0Queue(
         this, QHandles[i], LHandles[i], &Buffer[i * 8], HostDeviceRate,
-        HostTimingStart, DeviceTimingStart, DeviceMaxWGs));
+        HostTimingStart, DeviceTimingStart, DeviceMaxWGs, DeviceHasGOffsets));
   }
 
   return true;
@@ -1156,6 +1191,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   uint64_t DeviceTimestamp1, DeviceTimestamp2;
   double HostDeviceRate;
   uint64_t HostTimingStart, DeviceTimingStart;
+  bool HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
 
   Res =
       zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp1, &DeviceTimestamp1);
@@ -1661,14 +1697,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       ComputeTimestamps = static_cast<uint64_t *>(Ptr);
       ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
                          DeviceHandle, ComputeTimestamps, HostTimingStart,
-                         DeviceTimingStart, HostDeviceRate, DeviceMaxWGs);
+                         DeviceTimingStart, HostDeviceRate, DeviceMaxWGs,
+                         HasGOffsets);
     } else {
       uint32_t num = std::max(1U, NumUniversalQueues / 2);
       void *Ptr = allocSharedMem(64 * num);
       ComputeTimestamps = static_cast<uint64_t *>(Ptr);
       ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
                          ComputeTimestamps, HostTimingStart, DeviceTimingStart,
-                         HostDeviceRate, DeviceMaxWGs);
+                         HostDeviceRate, DeviceMaxWGs, HasGOffsets);
     }
 
     if (CopyQueueOrd != UINT32_MAX) {
@@ -1676,14 +1713,14 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       CopyTimestamps = static_cast<uint64_t *>(Ptr);
       CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
                       CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                      HostDeviceRate, DeviceMaxWGs);
+                      HostDeviceRate, DeviceMaxWGs, HasGOffsets);
     } else {
       uint32_t num = std::max(1U, NumUniversalQueues / 2);
       void *Ptr = allocSharedMem(64 * num);
       CopyTimestamps = static_cast<uint64_t *>(Ptr);
       CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
                       CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                      HostDeviceRate, DeviceMaxWGs);
+                      HostDeviceRate, DeviceMaxWGs, HasGOffsets);
     }
   }
 
@@ -2154,19 +2191,22 @@ Level0Driver::Level0Driver() {
     POCL_MSG_ERR("zeDriverGetExtensionProperties 1 FAILED\n");
     return;
   }
+
   std::vector<ze_driver_extension_properties_t> Extensions;
   if (ExtCount > 0) {
-    Extensions.reserve(ExtCount);
+    POCL_MSG_PRINT_LEVEL0("%u Level0 extensions found\n", ExtCount);
+    Extensions.resize(ExtCount);
     Res = zeDriverGetExtensionProperties(DriverH, &ExtCount, Extensions.data());
     if (Res != ZE_RESULT_SUCCESS) {
       POCL_MSG_ERR("zeDriverGetExtensionProperties 2 FAILED\n");
       return;
     }
     for (auto &E : Extensions) {
-      POCL_MSG_WARN("Driver EXT |||  %s || %u\n", E.name, E.version);
+      POCL_MSG_PRINT_LEVEL0("Level0 extension: %s\n", E.name);
+      ExtensionSet.insert(E.name);
     }
   } else {
-    POCL_MSG_WARN("Zero driver extensions found\n");
+    POCL_MSG_PRINT_LEVEL0("No Level0 extensions found\n");
   }
 
   ze_context_desc_t ContextDescription = {};
