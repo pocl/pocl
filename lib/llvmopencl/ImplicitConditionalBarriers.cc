@@ -41,6 +41,7 @@ POP_COMPILER_DIAGS
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
+#include "WorkitemHandlerChooser.h"
 
 
 //#define DEBUG_COND_BARRIERS
@@ -64,6 +65,8 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 /**
@@ -91,6 +94,10 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     return false;
 
   if (!Workgroup::hasWorkgroupBarriers(F))
+    return false;
+
+  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
+      WorkitemHandlerChooser::POCL_WIH_CBS)
     return false;
 
   PDT = &getAnalysis<PostDominatorTreeWrapperPass>();

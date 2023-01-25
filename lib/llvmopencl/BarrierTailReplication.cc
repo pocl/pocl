@@ -38,6 +38,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
+#include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
 
@@ -65,6 +66,8 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addPreserved<LoopInfoWrapperPass>();
 
   AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 bool
@@ -72,7 +75,9 @@ BarrierTailReplication::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
     return false;
-  
+  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
+      WorkitemHandlerChooser::POCL_WIH_CBS)
+    return false;
 #ifdef DEBUG_BARRIER_REPL
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif

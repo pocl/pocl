@@ -82,3 +82,5 @@ CMakeLists.txt.user
 #clion related files
 .idea/
 cmake-build-*/
+
+.cache

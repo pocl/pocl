@@ -62,6 +62,10 @@ add_test_pocl(NAME "workgroup/cond_barriers_in_for"
               EXPECTED_OUTPUT "cond_barriers_in_for_2_4_1_1.stdout"
               COMMAND "run_kernel" "cond_barriers_in_for.cl" 2 4 1 1)
 
+add_test_pocl(NAME "workgroup/cond_barrier_in_var_for"
+              EXPECTED_OUTPUT "cond_barrier_in_var_for_2_4_1_1.stdout"
+              COMMAND "run_kernel" "cond_barrier_in_var_for.cl" 2 4 1 1)
+
 # Cases which are not dependent on the work-group or work-item
 # execution (printout) order or the method (use the default method
 # for the device).

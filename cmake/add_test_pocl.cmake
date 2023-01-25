@@ -75,7 +75,8 @@ function(add_test_pocl)
   if(NOT ENABLE_ANYSAN)
     set_tests_properties("${POCL_TEST_NAME}" PROPERTIES
                          PASS_REGULAR_EXPRESSION "OK"
-                         FAIL_REGULAR_EXPRESSION "FAIL")
+                         FAIL_REGULAR_EXPRESSION "FAIL"
+                         ENVIRONMENT POCL_WORK_GROUP_METHOD=cbs)
   endif()
 
 endfunction()
