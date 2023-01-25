@@ -88,6 +88,8 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
         chosenHandler_ = POCL_WIH_FULL_REPLICATION;
       else if (method == "loops" || method == "workitemloops" || method == "loopvec")
         chosenHandler_ = POCL_WIH_LOOPS;
+      else if (method == "cbs")
+        chosenHandler_ = POCL_WIH_CBS;
       else if (method != "auto")
         {
           std::cerr << "Unknown work group generation method. Using 'auto'." << std::endl;

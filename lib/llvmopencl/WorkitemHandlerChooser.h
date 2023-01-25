@@ -34,7 +34,8 @@ namespace pocl {
     
     enum WorkitemHandlerType {
       POCL_WIH_FULL_REPLICATION,
-      POCL_WIH_LOOPS
+      POCL_WIH_LOOPS,
+      POCL_WIH_CBS
     };
 
   WorkitemHandlerChooser() : pocl::WorkitemHandler(ID), 

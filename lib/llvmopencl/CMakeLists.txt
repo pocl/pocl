@@ -27,6 +27,7 @@
 # usually contain their own setting of C++ standard, which may be in conflict
 # with pocl's default C++ standard.
 unset(CMAKE_CXX_STANDARD)
+set(CMAKE_CXX_STANDARD 17)
 
 set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "AllocasToEntry.h"
@@ -72,6 +73,8 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "RemoveBarrierCalls.h"
                        "RemoveOptnoneFromWIFunc.cc"
                        "RemoveOptnoneFromWIFunc.h"
+                       "SubCfgFormation.cc"
+                       "SubCfgFormation.h"
                        "UnifyPrintf.cc"
                        "UnifyPrintf.h"
                        "VariableUniformityAnalysis.cc"

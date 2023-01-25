@@ -37,6 +37,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
+#include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
 
@@ -55,7 +56,9 @@ void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<VariableUniformityAnalysis>();    
+  AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 bool
@@ -117,6 +120,8 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 bool
 CanonicalizeBarriers::ProcessFunction(Function &F) {
 
+  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
+
   bool changed = false;
 
   InstructionSet Barriers;
@@ -147,8 +152,10 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
     // they just start several parallel regions. Simplifies
     // loop handling.
 
-    const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER = 
-      t->getPrevNode() != *i;
+    const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER =
+        t->getPrevNode() != *i ||
+        (WIH == WorkitemHandlerChooser::POCL_WIH_CBS &&
+         t->getNumSuccessors() > 1);
 
     if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode());
