@@ -256,7 +256,7 @@ PoclCompilerMutexGuard::PoclCompilerMutexGuard(pocl_lock_t *ptr) {
 
 PoclCompilerMutexGuard::~PoclCompilerMutexGuard() { POCL_UNLOCK(*lock); }
 
-std::string currentWgMethod;
+std::string CurrentWgMethod;
 
 static bool LLVMInitialized = false;
 static bool LLVMOptionsInitialized = false;
@@ -299,10 +299,11 @@ void InitializeLLVM() {
 
     llvm::cl::Option *O = nullptr;
 
-    currentWgMethod =
+    CurrentWgMethod =
         pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
+    if(CurrentWgMethod == "auto") CurrentWgMethod = "loopvec";
 
-    if (currentWgMethod == "loopvec") {
+    if (CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") {
 
       O = opts["scalarize-load-store"];
       assert(O && "could not find LLVM option 'scalarize-load-store'");
