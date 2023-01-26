@@ -53,11 +53,10 @@ add_test_pocl(NAME "kernel/test_convert_type_16"
 add_test_pocl(NAME "kernel/test_bitselect"
               COMMAND "kernel" "test_bitselect")
 
-add_test_pocl(NAME "kernel/test_hadd_loopvec"
+add_test_pocl(NAME "kernel/test_hadd"
+              WORKITEM_HANDLER "loops;loopvec;cbs"
               COMMAND "kernel" "test_hadd")
 
-add_test_pocl(NAME "kernel/test_hadd_loops"
-              COMMAND "kernel" "test_hadd")
 
 set(PROPS "")
 if(NOT ENABLE_ANYSAN)
@@ -66,32 +65,39 @@ if(NOT ENABLE_ANYSAN)
     PASS_REGULAR_EXPRESSION "OK\n")
 endif()
 
-set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
-  "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8" "kernel/test_convert_type_16"
-  "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
+set(VARIANTS "loops;cbs")
+foreach(VARIANT ${VARIANTS})
+  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
+    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
+    "kernel/test_convert_type_8_${VARIANT}" "kernel/test_convert_type_16_${VARIANT}"
+    "kernel/test_hadd_${VARIANT}"
+    PROPERTIES
+      COST 40.0
+      ${PROPS}
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "kernel")
+endforeach()
+
+set_tests_properties( "kernel/test_hadd_loopvec"
   PROPERTIES
     COST 40.0
     ${PROPS}
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "kernel")
+    LABELS "internal;kernel")
 
 
 # convert_type_{4,8,16} on some machines takes >1 hour,
 # so only add convert_type_1/2 to internal tests to keep them reasonably fast.
 
-set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
-  "kernel/test_convert_type_1" "kernel/test_convert_type_2"
-  "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
-  PROPERTIES
-    LABELS "internal;kernel")
-
-set_tests_properties("kernel/test_hadd_loops"
-  PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loops")
-
-set_tests_properties("kernel/test_hadd_loopvec"
-  PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loopvec")
+foreach(VARIANT ${VARIANTS})
+  set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
+    "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}"
+    "kernel/test_hadd_${VARIANT}"
+    PROPERTIES
+      LABELS "internal;kernel")
+endforeach()
 
 add_test_pocl(NAME "kernel/test_min_max"
               COMMAND "kernel" "test_min_max")
@@ -132,18 +138,20 @@ add_test_pocl(NAME "kernel/test_short16"
 add_test_pocl(NAME "kernel/test_frexp_modf"
               COMMAND "kernel" "test_frexp_modf")
 
-set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
-  "kernel/test_fmin_fmax_fma" "kernel/test_local_struct_array"
-  "kernel/test_convert_sat_regression"   "kernel/test_fabs"
-  "kernel/test_rotate" "kernel/test_copy_signbit" "kernel/test_ilogb"
-  "kernel/test_ldexp" "kernel/test_isnan" "kernel/test_short16"
-  "kernel/test_frexp_modf"
-  PROPERTIES
-    COST 4.0
-    ${PROPS}
-    PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+foreach(VARIANT ${VARIANTS})
+  set_tests_properties("kernel/test_min_max_${VARIANT}" "kernel/test_length_distance_${VARIANT}"
+    "kernel/test_fmin_fmax_fma_${VARIANT}" "kernel/test_local_struct_array_${VARIANT}"
+    "kernel/test_convert_sat_regression_${VARIANT}"   "kernel/test_fabs_${VARIANT}"
+    "kernel/test_rotate_${VARIANT}" "kernel/test_copy_signbit_${VARIANT}" "kernel/test_ilogb_${VARIANT}"
+    "kernel/test_ldexp_${VARIANT}" "kernel/test_isnan_${VARIANT}" "kernel/test_short16_${VARIANT}"
+    "kernel/test_frexp_modf_${VARIANT}"
+    PROPERTIES
+      COST 4.0
+      ${PROPS}
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "internal;kernel")
+endforeach()
 
 ######################################################################
 if(MSVC)
@@ -165,7 +173,8 @@ add_test_pocl(NAME "kernel/test_image_query_funcs"
               COMMAND "image_query_funcs")
 
 
-set_tests_properties( "kernel/test_sampler_address_clamp"
+foreach(VARIANT ${VARIANTS})
+set_tests_properties( "kernel/test_sampler_address_clamp_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
@@ -173,14 +182,14 @@ set_tests_properties( "kernel/test_sampler_address_clamp"
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
 
-set_tests_properties( "kernel/test_image_query_funcs"
+set_tests_properties( "kernel/test_image_query_funcs_${VARIANT}"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "read imag1: 2,9,11,7\nread imag2: 2,9,11,7\n.*OK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
-
+endforeach()
 ######################################################################
 
 add_executable("test_shuffle" "test_shuffle.cc")
@@ -245,9 +254,11 @@ if (NOT ENABLE_POCL_FLOAT_CONVERSION)
   # vector types) and maybe also related bugs in llvm (issue #682, #1007)
   if(NOT (CMAKE_LIBRARY_ARCHITECTURE STREQUAL "aarch64-linux-gnu" OR
           CMAKE_LIBRARY_ARCHITECTURE STREQUAL "s390x-linux-gnu"))
-    set_tests_properties("kernel/test_printf_vectors"
-                        "kernel/test_printf_vectors_ulongn"
-      PROPERTIES WILL_FAIL 1)
+    foreach(VARIANT ${VARIANTS})
+      set_tests_properties("kernel/test_printf_vectors_${VARIANT}"
+                          "kernel/test_printf_vectors_ulongn_${VARIANT}"
+        PROPERTIES WILL_FAIL 1)
+    endforeach()
   endif()
 
 endif()
@@ -262,22 +273,27 @@ if(ENABLE_FP64)
   list(APPEND EXTRA_TESTS "kernel/test_shuffle_double")
 endif()
 
-set_tests_properties("kernel/test_shuffle_char"
-  "kernel/test_shuffle_short" "kernel/test_shuffle_ushort"
-  "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_float"
-  "kernel/test_ucharn"
-  "kernel/test_printf"
-  "kernel/test_sizeof_uint"
-  ${EXTRA_TESTS}
+foreach(VARIANT ${VARIANTS})
+  set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
+  list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_${VARIANT}")
 
-  PROPERTIES
-    COST 77
-    ${PROPS}
-    PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "internal;kernel")
+  set_tests_properties("kernel/test_shuffle_char_${VARIANT}"
+    "kernel/test_shuffle_short_${VARIANT}" "kernel/test_shuffle_ushort_${VARIANT}"
+    "kernel/test_shuffle_int_${VARIANT}" "kernel/test_shuffle_uint_${VARIANT}"
+    "kernel/test_shuffle_long_${VARIANT}" "kernel/test_shuffle_ulong_${VARIANT}"
+    "kernel/test_shuffle_float_${VARIANT}"
+    "kernel/test_ucharn_${VARIANT}"
+    "kernel/test_printf_${VARIANT}"
+    "kernel/test_sizeof_uint_${VARIANT}"
+    ${EXTRA_TEST_VARIANT}
+
+    PROPERTIES
+      COST 77
+      ${PROPS}
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "internal;kernel")
+endforeach()
 
 ######################################################################
 
@@ -296,75 +312,78 @@ set_tests_properties("kernel/test_shuffle_char"
 #    PROCESSORS 1
 #    DEPENDS "pocl_version_check")
 
+# For the backend labels, we only need one variant per non-CPU backend enabled, so use loops.
+
 # Label tests that work with CUDA backend
 if(ENABLE_CUDA)
 set_property(TEST
-  "kernel/test_min_max"
-  "kernel/test_ldexp"
-  "kernel/test_length_distance"
-  "kernel/test_fmin_fmax_fma"
-  "kernel/test_frexp_modf"
-  "kernel/test_convert_sat_regression"
-  "kernel/test_short16"
-  "kernel/test_shuffle_char"
-  "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"
-  "kernel/test_shuffle_int"
-  "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_float"
-  "kernel/test_shuffle_long"
-  "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_double"
-  "kernel/test_as_type"
-  "kernel/test_sizeof_uint"
+  "kernel/test_min_max_loops"
+  "kernel/test_ldexp_loops"
+  "kernel/test_length_distance_loops"
+  "kernel/test_fmin_fmax_fma_loops"
+  "kernel/test_frexp_modf_loops"
+  "kernel/test_convert_sat_regression_loops"
+  "kernel/test_short16_loops"
+  "kernel/test_shuffle_char_loops"
+  "kernel/test_shuffle_short_loops"
+  "kernel/test_shuffle_ushort_loops"
+  "kernel/test_shuffle_int_loops"
+  "kernel/test_shuffle_uint_loops"
+  "kernel/test_shuffle_float_loops"
+  "kernel/test_shuffle_long_loops"
+  "kernel/test_shuffle_ulong_loops"
+  "kernel/test_shuffle_double_loops"
+  "kernel/test_as_type_loops"
+  "kernel/test_sizeof_uint_loops"
   APPEND PROPERTY LABELS "cuda")
 
 if(LLVM_VERSION_MAJOR LESS 11)
-  set_property(TEST "kernel/test_rotate"
+  set_property(TEST "kernel/test_rotate_loops"
                APPEND PROPERTY LABELS "cuda")
 endif()
 endif()
 
+set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
+list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_loops")
+
 set_property(TEST
-  "kernel/test_local_struct_array"
-  "kernel/test_printf"
-  "kernel/test_shuffle_char"
-  "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"
-  "kernel/test_shuffle_int"
-  "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_float"
-  "kernel/test_shuffle_long"
-  "kernel/test_shuffle_ulong"
-  ${EXTRA_TESTS}
-  "kernel/test_as_type"
-  "kernel/test_convert_type_1"
-  "kernel/test_convert_type_2"
-  "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8"
-  "kernel/test_convert_type_16"
-  "kernel/test_bitselect"
-  "kernel/test_hadd_loopvec"
-  "kernel/test_hadd_loops"
-  "kernel/test_min_max"
-  "kernel/test_length_distance"
-  "kernel/test_fmin_fmax_fma"
-  "kernel/test_convert_sat_regression"
-  "kernel/test_rotate"
-  "kernel/test_fabs"
-  "kernel/test_copy_signbit"
-  "kernel/test_ldexp"
-  "kernel/test_isnan"
-  "kernel/test_short16"
+  "kernel/test_local_struct_array_loops"
+  "kernel/test_printf_loops"
+  "kernel/test_shuffle_char_loops"
+  "kernel/test_shuffle_short_loops"
+  "kernel/test_shuffle_ushort_loops"
+  "kernel/test_shuffle_int_loops"
+  "kernel/test_shuffle_uint_loops"
+  "kernel/test_shuffle_float_loops"
+  "kernel/test_shuffle_long_loops"
+  "kernel/test_shuffle_ulong_loops"
+  ${EXTRA_TEST_VARIANT}
+  "kernel/test_as_type_loops"
+  "kernel/test_convert_type_1_loops"
+  "kernel/test_convert_type_2_loops"
+  "kernel/test_convert_type_4_loops"
+  "kernel/test_convert_type_8_loops"
+  "kernel/test_convert_type_16_loops"
+  "kernel/test_bitselect_loops"
+  "kernel/test_min_max_loops"
+  "kernel/test_length_distance_loops"
+  "kernel/test_fmin_fmax_fma_loops"
+  "kernel/test_convert_sat_regression_loops"
+  "kernel/test_rotate_loops"
+  "kernel/test_fabs_loops"
+  "kernel/test_copy_signbit_loops"
+  "kernel/test_ldexp_loops"
+  "kernel/test_isnan_loops"
+  "kernel/test_short16_loops"
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST
-  "kernel/test_shuffle_char"
-  "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"
-  "kernel/test_shuffle_int"
-  "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_float"
-  "kernel/test_shuffle_long"
-  "kernel/test_shuffle_ulong"
+  "kernel/test_shuffle_char_loops"
+  "kernel/test_shuffle_short_loops"
+  "kernel/test_shuffle_ushort_loops"
+  "kernel/test_shuffle_int_loops"
+  "kernel/test_shuffle_uint_loops"
+  "kernel/test_shuffle_float_loops"
+  "kernel/test_shuffle_long_loops"
+  "kernel/test_shuffle_ulong_loops"
   APPEND PROPERTY LABELS "proxy")

@@ -42,10 +42,14 @@ if(NOT ENABLE_ANYSAN)
     PASS_REGULAR_EXPRESSION "Done.\n")
 endif()
 
-set_tests_properties( "examples/scalarwave"
+
+set(VARIANTS "loops;cbs")
+foreach(VARIANT ${VARIANTS})
+set_tests_properties( "examples/scalarwave_${VARIANT}"
   PROPERTIES
     COST 3.0
     ${PROPS}
     PROCESSORS 1
     LABELS "internal;cuda;hsa-native"
     DEPENDS "pocl_version_check")
+endforeach()
