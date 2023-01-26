@@ -1362,9 +1362,6 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   F.viewCFG();
 #endif
 
-  // const std::size_t Dim = getRangeDim(F);
-  // llvm::errs() << "[SubCFG] Kernel is " << Dim << "-dimensional\n";
-
   std::array<size_t, 3> LocalSizes;
   getModuleIntMetadata(*F.getParent(), "WGLocalSizeX", LocalSizes[0]);
   getModuleIntMetadata(*F.getParent(), "WGLocalSizeY", LocalSizes[1]);
@@ -1484,93 +1481,6 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   llvm::simplifyLoop(WhileLoop, &DT, &LI, nullptr, nullptr, nullptr, false);
 }
 
-void createLoopsAroundKernel(llvm::Function &F, llvm::DominatorTree &DT,
-                             llvm::LoopInfo &LI, llvm::PostDominatorTree &PDT) {
-#if LLVM_VERSION_MAJOR >= 13
-#define HIPSYCL_LLVM_BEFORE , true
-#else
-#define HIPSYCL_LLVM_BEFORE
-#endif
-
-  auto *Body = llvm::SplitBlock(&F.getEntryBlock(),
-                                &*F.getEntryBlock().getFirstInsertionPt(), &DT,
-                                &LI, nullptr, "wibody" HIPSYCL_LLVM_BEFORE);
-#ifdef DEBUG_SUBCFG_FORMATION
-  F.viewCFG();
-#endif
-
-#if LLVM_VERSION_MAJOR >= 13
-  Body = Body->getSingleSuccessor();
-#endif
-
-  llvm::BasicBlock *ExitBB = nullptr;
-  for (auto &BB : F) {
-    if (BB.getTerminator()->getNumSuccessors() == 0) {
-      ExitBB = llvm::SplitBlock(&BB, BB.getTerminator(), &DT, &LI, nullptr,
-                                "exit" HIPSYCL_LLVM_BEFORE);
-#if LLVM_VERSION_MAJOR >= 13
-      if (Body == &BB)
-        std::swap(Body, ExitBB);
-      ExitBB = &BB;
-#endif
-      break;
-    }
-  }
-#undef HIPSYCL_LLVM_BEFORE
-
-  llvm::SmallVector<llvm::BasicBlock *, 8> Blocks{};
-  Blocks.reserve(std::distance(F.begin(), F.end()));
-  std::transform(F.begin(), F.end(), std::back_inserter(Blocks),
-                 [](auto &BB) { return &BB; });
-
-  moveAllocasToEntry(F, Blocks);
-
-  std::array<size_t, 3> LocalSizes;
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeX", LocalSizes[0]);
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeY", LocalSizes[1]);
-  getModuleIntMetadata(*F.getParent(), "WGLocalSizeZ", LocalSizes[2]);
-  bool WGDynamicLocalSize{};
-  getModuleBoolMetadata(*F.getParent(), "WGDynamicLocalSize",
-                        WGDynamicLocalSize);
-
-  std::size_t Dim = 3;
-  if (LocalSizes[2] == 1 && !WGDynamicLocalSize) {
-    if (LocalSizes[1] == 1)
-      Dim = 1;
-    else
-      Dim = 2;
-  }
-
-  const auto LocalSize =
-      getLocalSizeValues(F, LocalSizes, WGDynamicLocalSize, Dim);
-
-  // insert dummy induction variable that can be easily identified and replaced
-  // later
-  llvm::IRBuilder Builder{F.getEntryBlock().getTerminator()};
-  auto *IndVarT =
-      getLoadForGlobalVariable(F, LocalIdGlobalNames[Dim - 1])->getType();
-  llvm::Value *Idx = Builder.CreateLoad(
-      IndVarT, llvm::UndefValue::get(llvm::PointerType::get(IndVarT, 0)));
-
-  llvm::ValueToValueMapTy VMap;
-  llvm::SmallVector<llvm::BasicBlock *, 3> Latches;
-  auto *LastHeader = Body;
-
-  createLoopsAround(F, ExitBB, LocalSize, 0, VMap, Latches, LastHeader, Idx);
-
-  F.getEntryBlock().getTerminator()->setSuccessor(0, LastHeader);
-  llvm::remapInstructionsInBlocks(Blocks, VMap);
-
-  // remove uses of the undefined global id variables
-  for (int D = 0; D < Dim; ++D)
-    if (auto *Load = llvm::cast_or_null<llvm::LoadInst>(
-            getLoadForGlobalVariable(F, LocalIdGlobalNames[D])))
-      Load->eraseFromParent();
-#ifdef DEBUG_SUBCFG_FORMATION
-  F.viewCFG();
-#endif
-}
-
 static llvm::RegisterPass<pocl::SubCfgFormationPassLegacy>
     X("subcfgformation", "Form SubCFGs according to CBS");
 } // namespace
@@ -1594,6 +1504,8 @@ bool SubCfgFormationPassLegacy::runOnFunction(llvm::Function &F) {
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
       pocl::WorkitemHandlerChooser::POCL_WIH_CBS)
     return false;
+  if (!Workgroup::hasWorkgroupBarriers(F))
+    return false;
 
   llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
 
@@ -1603,10 +1515,7 @@ bool SubCfgFormationPassLegacy::runOnFunction(llvm::Function &F) {
   auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
   auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>();
 
-  if (Workgroup::hasWorkgroupBarriers(F))
-    formSubCfgs(F, LI, DT, PDT, VUA);
-  else
-    createLoopsAroundKernel(F, DT, LI, PDT);
+  formSubCfgs(F, LI, DT, PDT, VUA);
 
   return false;
 }

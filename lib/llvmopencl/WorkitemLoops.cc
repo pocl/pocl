@@ -103,8 +103,9 @@ bool WorkitemLoops::runOnFunction(Function &F) {
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
-      pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
+  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+  if (WIH != pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS &&
+      !(WIH == pocl::WorkitemHandlerChooser::POCL_WIH_CBS && !Workgroup::hasWorkgroupBarriers(F)))
     return false;
 
   DTP = &getAnalysis<DominatorTreeWrapperPass>();

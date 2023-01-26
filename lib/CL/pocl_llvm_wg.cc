@@ -253,8 +253,11 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
     passes.push_back("wi-aa");
     passes.push_back("workitemrepl");
     //passes.push_back("print-module");
-    passes.push_back("workitemloops");
     passes.push_back("subcfgformation");
+    // subcfgformation before workitemloops, as wiloops creates the loops for
+    // kernels without barriers, but after the transformation the kernel looks
+    // like it has barriers, so subcfg would do its thing.
+    passes.push_back("workitemloops");
     // Remove the (pseudo) barriers.   They have no use anymore due to the
     // work-item loop control taking care of them.
     passes.push_back("remove-barriers");
