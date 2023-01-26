@@ -90,7 +90,7 @@ POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
 void clearKernelPasses();
 void clearTargetMachines();
 
-extern std::string currentWgMethod;
+extern std::string CurrentWgMethod;
 
 extern const char *PoclGVarPrefix;
 extern const char *PoclGVarBufferName;

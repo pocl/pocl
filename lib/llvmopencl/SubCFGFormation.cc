@@ -383,11 +383,10 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
     LastHeader = Header;
   }
 
-
   for (size_t D = 1; D < Dim; ++D) {
     Latches[D - 1]->getTerminator()->replaceSuccessorWith(AfterBB, Latches[D]);
     IndVars[D - 1]->replaceIncomingBlockWith(&F.getEntryBlock(),
-                                         IndVars[D]->getParent());
+                                             IndVars[D]->getParent());
   }
 
   auto *MDWorkItemLoop = llvm::MDNode::get(
@@ -399,8 +398,7 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
   VMap[AfterBB] = Latches[0];
 
   // add contiguous ind var calculation to load block
-  Builder.SetInsertPoint(IndVars[0]->getParent(),
-                         ++IndVars[0]->getIterator());
+  Builder.SetInsertPoint(IndVars[0]->getParent(), ++IndVars[0]->getIterator());
   llvm::Value *Idx = IndVars[Dim - 1];
   for (size_t D = Dim - 1; D > 0; --D) {
     size_t DD = D - 1;
@@ -415,7 +413,8 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
 
   // todo: replace `ret` with branch to innermost latch
 
-  VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[Dim - 1])] = IndVars[Dim - 1];
+  VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[Dim - 1])] =
+      IndVars[Dim - 1];
 
   VMap[ContiguousIdx] = Idx;
   ContiguousIdx = Idx;
@@ -1517,6 +1516,70 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   llvm::simplifyLoop(WhileLoop, &DT, &LI, nullptr, nullptr, nullptr, false);
 }
 
+void createParallelAccessesMdOrAddAccessGroup(const llvm::Function *F,
+                                              llvm::Loop *const &L,
+                                              llvm::MDNode *MDAccessGroup) {
+  // findOptionMDForLoopID also checks if there's a loop id, so this is fine
+  if (auto *ParAccesses = llvm::findOptionMDForLoopID(
+          L->getLoopID(), "llvm.loop.parallel_accesses")) {
+    llvm::SmallVector<llvm::Metadata *, 4> AccessGroups{
+        ParAccesses->op_begin(),
+        ParAccesses->op_end()}; // contains .parallel_accesses
+    AccessGroups.push_back(MDAccessGroup);
+    auto *NewParAccesses = llvm::MDNode::get(F->getContext(), AccessGroups);
+
+    const auto *const PIt = std::find(L->getLoopID()->op_begin(),
+                                      L->getLoopID()->op_end(), ParAccesses);
+    auto PIdx = std::distance(L->getLoopID()->op_begin(), PIt);
+    L->getLoopID()->replaceOperandWith(PIdx, NewParAccesses);
+  } else {
+    auto *NewParAccesses = llvm::MDNode::get(
+        F->getContext(),
+        {llvm::MDString::get(F->getContext(), "llvm.loop.parallel_accesses"),
+         MDAccessGroup});
+    L->setLoopID(llvm::makePostTransformationMetadata(
+        F->getContext(), L->getLoopID(), {}, {NewParAccesses}));
+  }
+}
+
+void addAccessGroupMD(llvm::Instruction *I, llvm::MDNode *MDAccessGroup) {
+  if (auto *PresentMD = I->getMetadata(llvm::LLVMContext::MD_access_group)) {
+    llvm::SmallVector<llvm::Metadata *, 4> MDs;
+    if (PresentMD->getNumOperands() == 0)
+      MDs.push_back(PresentMD);
+    else
+      MDs.append(PresentMD->op_begin(), PresentMD->op_end());
+    MDs.push_back(MDAccessGroup);
+    auto *CombinedMDAccessGroup =
+        llvm::MDNode::getDistinct(I->getContext(), MDs);
+    I->setMetadata(llvm::LLVMContext::MD_access_group, CombinedMDAccessGroup);
+  } else
+    I->setMetadata(llvm::LLVMContext::MD_access_group, MDAccessGroup);
+}
+
+void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
+#if LLVM_VERSION_MAJOR > 12 ||                                                 \
+    (LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR == 0 &&                    \
+     LLVM_VERSION_PATCH == 1)
+  // LLVM < 12.0.1 might miscompile if conditionals in "parallel" loop
+  // (https://llvm.org/PR46666)
+
+  // Mark memory accesses with access group
+  auto *MDAccessGroup = llvm::MDNode::getDistinct(F.getContext(), {});
+  for (auto *BB : L->blocks()) {
+    for (auto &I : *BB) {
+      if (I.mayReadOrWriteMemory() &&
+          !I.hasMetadata(llvm::LLVMContext::MD_access_group)) {
+        addAccessGroupMD(&I, MDAccessGroup);
+      }
+    }
+  }
+
+  // make the access group parallel w.r.t the WI loop
+  createParallelAccessesMdOrAddAccessGroup(&F, L, MDAccessGroup);
+#endif
+}
+
 static llvm::RegisterPass<pocl::SubCFGFormationPassLegacy>
     X("subcfgformation", "Form SubCFGs according to CBS");
 } // namespace
@@ -1555,7 +1618,11 @@ bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
 
   formSubCfgs(F, LI, DT, PDT, VUA);
 
-  return false;
+  for (auto *SL : LI.getLoopsInPreorder())
+    if (llvm::findOptionMDForLoop(SL, MDKind::WorkItemLoop))
+      markLoopParallel(F, SL);
+
+  return true;
 }
 
 char SubCFGFormationPassLegacy::ID = 0;
