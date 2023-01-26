@@ -1,4 +1,5 @@
 /*
+ * Adapted from https://github.com/illuhad/hipSYCL/blob/develop/include/hipSYCL/compiler/cbs/SubCfgFormation.hpp
  * This file is part of hipSYCL, a SYCL implementation based on CUDA/HIP
  *
  * Copyright (c) 2021 Aksel Alpay and contributors
@@ -39,11 +40,11 @@ constexpr size_t EntryBarrierId = 0;
 constexpr size_t ExitBarrierId = -1;
 
 // performs the main CBS transformation
-class SubCfgFormationPassLegacy : public llvm::FunctionPass {
+class SubCFGFormationPassLegacy : public llvm::FunctionPass {
 public:
   static char ID;
 
-  explicit SubCfgFormationPassLegacy() : llvm::FunctionPass(ID) {}
+  explicit SubCFGFormationPassLegacy() : llvm::FunctionPass(ID) {}
 
   llvm::StringRef getPassName() const override {
     return "pocl sub-CFG formation pass";
@@ -54,14 +55,18 @@ public:
   bool runOnFunction(llvm::Function &F) override;
 };
 
-class SubCfgFormationPass : public llvm::PassInfoMixin<SubCfgFormationPass> {
+// enable when using new pass manager infrastructure
+#if 0
+// performs the main CBS transformation
+class SubCFGFormationPass : public llvm::PassInfoMixin<SubCFGFormationPass> {
 public:
-  explicit SubCfgFormationPass() {}
+  explicit SubCFGFormationPass() {}
 
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
+#endif
 } // namespace pocl
 
 #endif // POCL_SUBCFGFORMATION_H

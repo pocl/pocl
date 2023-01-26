@@ -152,12 +152,12 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
     // they just start several parallel regions. Simplifies
     // loop handling.
 
-    const bool HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER =
+    const bool HasNonBranchInstructionsAfterBarrier =
         t->getPrevNode() != *i ||
         (WIH == WorkitemHandlerChooser::POCL_WIH_CBS &&
          t->getNumSuccessors() > 1);
 
-    if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER) {
+    if (HasNonBranchInstructionsAfterBarrier) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode());
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;
