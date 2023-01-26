@@ -1,25 +1,24 @@
-/* level0-driver.cc - driver for LevelZero Compute API devices.
-
-   Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
-
-   Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to
-   deal in the Software without restriction, including without limitation the
-   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-   sell copies of the Software, and to permit persons to whom the Software is
-   furnished to do so, subject to the following conditions:
-
-   The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
-
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-   IN THE SOFTWARE.
-*/
+/// level0-driver.cc - driver for LevelZero Compute API devices.
+///
+/// Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
+///
+/// Permission is hereby granted, free of charge, to any person obtaining a copy
+/// of this software and associated documentation files (the "Software"), to
+/// deal in the Software without restriction, including without limitation the
+/// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+/// sell copies of the Software, and to permit persons to whom the Software is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in
+/// all copies or substantial portions of the Software.
+///
+/// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+/// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+/// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+/// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+/// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+/// IN THE SOFTWARE.
 
 #include "level0-driver.hh"
 
@@ -593,7 +592,7 @@ void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
 
   POCL_MSG_PRINT_LEVEL0("UNMAP MEM: %p FLAGS %zu\n", DstPtr, map->map_flags);
 
-  /* for read mappings, don't copy anything */
+  // for read mappings, don't copy anything
   if (map->map_flags == CL_MAP_READ) {
     return;
   }
@@ -609,7 +608,6 @@ void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   LEVEL0_CHECK_ABORT(res);
 }
 
-/* copies image to image, on the same device (or same global memory). */
 void Level0Queue::copyImageRect(cl_mem SrcImage, cl_mem DstImage,
                                 pocl_mem_identifier *SrcMemId,
                                 pocl_mem_identifier *DstMemId,
@@ -643,12 +641,6 @@ void Level0Queue::copyImageRect(cl_mem SrcImage, cl_mem DstImage,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-/* copies a region from host OR device buffer to device image.
- * clEnqueueCopyBufferToImage: SrcMemId = buffer,
- *     src_HostPtr = NULL, SrcRowPitch = SrcSlicePitch = 0
- * clEnqueueWriteImage: SrcMemId = NULL,
- *     src_HostPtr = host pointer, src_offset = 0
- */
 void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
                                  const void *__restrict__ SrcHostPtr,
                                  pocl_mem_identifier *SrcMemId,
@@ -685,12 +677,6 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-/* copies a region from device image to host or device buffer
- * clEnqueueCopyImageToBuffer: DstMemId = buffer,
- *     dst_HostPtr = NULL, DstRowPitch = DstSlicePitch = 0
- * clEnqueueReadImage: DstMemId = NULL,
- *     dst_HostPtr = host pointer, dst_offset = 0
- */
 void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
                                 void *__restrict__ DstHostPtr,
                                 pocl_mem_identifier *DstMemId,
@@ -727,7 +713,6 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-/* maps the entire image from device to host */
 void Level0Queue::mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
                            mem_mapping_t *Map) {
 
@@ -744,7 +729,6 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
                 Map->row_pitch, Map->slice_pitch, Map->offset);
 }
 
-/* unmaps the entire image from host to device */
 void Level0Queue::unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
                              mem_mapping_t *Map) {
   char *DstImgPtr = static_cast<char *>(MemId->mem_ptr);
@@ -752,7 +736,7 @@ void Level0Queue::unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
   POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", DstImgPtr,
                         Map->map_flags);
 
-  /* for read mappings, don't copy anything */
+  // for read mappings, don't copy anything
   if (Map->map_flags == CL_MAP_READ) {
     return;
   }
@@ -763,7 +747,6 @@ void Level0Queue::unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
                  Map->row_pitch, Map->slice_pitch, Map->offset);
 }
 
-/* fill image with pattern */
 void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
                             const size_t *Origin, const size_t *Region,
                             cl_uint4 OrigPixel, pixel_t FillPixel,
@@ -799,7 +782,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   cl_kernel Kernel = RunCmd->kernel;
   struct pocl_argument *PoclArg = RunCmd->arguments;
 
-  /* static locals are taken care of in ZE compiler */
+  // static locals are taken care of in ZE compiler
   assert(Kernel->meta->num_locals == 0);
 
   cl_uint i = 0;
@@ -825,13 +808,15 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
       }
       LEVEL0_CHECK_ABORT(Res);
-      /*
+
+#if 0
+      // TODO finish: optimization for read-only buffers
       ze_memory_advice_t Adv = (pa[i].is_readonly ?
                                   ZE_MEMORY_ADVICE_SET_READ_MOSTLY :
                                   ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
       zeCommandListAppendMemAdvise(CmdList, DevHandle, MemPtr, memid->size,
       Adv);
-      */
+#endif
     } else if (Kernel->meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
       assert(PoclArg[i].value != NULL);
       assert(PoclArg[i].size == sizeof(void *));
@@ -852,14 +837,6 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &hSampler);
       LEVEL0_CHECK_ABORT(Res);
     } else {
-      /* Normally plain-old-data arguments are passed into the kernel via a
-       * storage buffer. Use option -pod-ubo to pass these parameters in
-       * via a uniform buffer. These can be faster to read in the shader.
-       * When option -pod-ubo is used, the descriptor map list the argKind
-       * of a plain-old-data argument as pod_ubo rather than the default of
-       * pod.
-       */
-
       assert(PoclArg[i].value != NULL);
       assert(PoclArg[i].size > 0);
       assert(PoclArg[i].size == Kernel->meta->arg_info[i].type_size);
@@ -908,15 +885,17 @@ void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
                OffsetX += DeviceMaxWGSizes.s[0]) {
             CurrentWGsX = std::min(DeviceMaxWGSizes.s[0], TotalWGsX - OffsetX);
             CurrentOffsetX = StartOffsetX + OffsetX * WGSizeX;
-            /*
-                          POCL_MSG_PRINT_LEVEL0(
-                              "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u |||
-               LOCAL X %u Y "
+
+#if 0
+            // debug code
+            POCL_MSG_PRINT_LEVEL0(
+               "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u |||
+                  LOCAL X %u Y "
                               "%u Z %u\n",
                               TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX,
                CurrentOffsetY, CurrentOffsetZ, CurrentWGsX, CurrentWGsY,
                CurrentWGsZ);
-            */
+#endif
             Res = zeKernelSetGlobalOffsetExp(KernelH, CurrentOffsetX,
                                              CurrentOffsetY, CurrentOffsetZ);
             LEVEL0_CHECK_ABORT(Res);
@@ -928,9 +907,8 @@ void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
                 CmdListH, KernelH, &LaunchFuncArgs, nullptr, 0, nullptr);
             LEVEL0_CHECK_ABORT(Res);
 
-            /* TODO find out if there is a limit on number of
-             * submitted commands in a single command list.
-             */
+            // TODO find out if there is a limit on number of
+            // submitted commands in a single command list.
           }
         }
       }
@@ -1419,8 +1397,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->max_work_item_sizes[1] = ComputeProperties.maxGroupSizeY;
     ClDev->max_work_item_sizes[2] = ComputeProperties.maxGroupSizeZ;
 
-    /* level0 devices typically don't have unlimited number of groups per
-     * command, unlike OpenCL */
+    // level0 devices typically don't have unlimited number of groups per
     MaxWGCount[0] = ComputeProperties.maxGroupCountX;
     MaxWGCount[1] = ComputeProperties.maxGroupCountY;
     MaxWGCount[2] = ComputeProperties.maxGroupCountZ;
@@ -1613,7 +1590,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
           CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
           CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
           CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-      /* OpenCL 2.0 properties */
+      // OpenCL 2.0 properties
       ClDev->svm_caps =
           CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
     } else {

@@ -355,7 +355,7 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
 
   std::string exts = device->extensions;
-  if (cl_std_major >= 3 && device->features) {
+  if (cl_std_major >= 3 && device->features != nullptr) {
     exts += ' ';
     exts += device->features;
   }
