@@ -41,14 +41,11 @@
 
 using namespace pocl;
 
-// ***********************************************************************
-// ***********************************************************************
-
 Level0Kernel::~Level0Kernel() {
   for (auto &Pair : KernelHandles) {
-    ze_kernel_handle_t K = Pair.second;
-    ze_result_t res = zeKernelDestroy(K);
-    assert(res == ZE_RESULT_SUCCESS);
+    ze_kernel_handle_t Kern = Pair.second;
+    ze_result_t Res = zeKernelDestroy(Kern);
+    assert(Res == ZE_RESULT_SUCCESS);
   }
 }
 
@@ -58,9 +55,10 @@ bool Level0Kernel::createForBuild(Level0ProgramBuild *Build) {
   ze_kernel_desc_t KernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC, nullptr,
                                  0, // flags
                                  Name.c_str()};
-  ze_result_t res = zeKernelCreate(hModule, &KernelDesc, &hKernel);
-  if (res != ZE_RESULT_SUCCESS)
+  ze_result_t Res = zeKernelCreate(hModule, &KernelDesc, &hKernel);
+  if (Res != ZE_RESULT_SUCCESS) {
     return false;
+  }
 
   KernelHandles[Build] = hKernel;
   return true;
@@ -79,10 +77,11 @@ Level0Kernel::getOrCreateForBuild(Level0ProgramBuild *Build) {
 
 ze_kernel_handle_t Level0Kernel::getAnyCreated() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
-  if (KernelHandles.empty())
+  if (KernelHandles.empty()) {
     return nullptr;
-  else
+  } else {
     return KernelHandles.begin()->second;
+  }
 }
 
 bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
@@ -114,8 +113,9 @@ bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
       BuildLog.append(Log);
       free(Log);
     }
-    if (TempModuleH)
+    if (TempModuleH != nullptr) {
       zeModuleDestroy(TempModuleH);
+    }
     return false;
   } else {
     zeModuleBuildLogDestroy(BuildLogH);
@@ -127,7 +127,7 @@ bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
 }
 
 Level0ProgramBuild::~Level0ProgramBuild() {
-  if (ModuleH) {
+  if (ModuleH != nullptr) {
     zeModuleDestroy(ModuleH);
   }
 }
@@ -175,7 +175,7 @@ bool Level0ProgramBuild::compile(ze_context_handle_t Context,
 
   char *Binary = nullptr;
   uint64_t BinarySize = 0;
-  if (pocl_exists(ProgCachePath.c_str()) &&
+  if (pocl_exists(ProgCachePath.c_str()) != 0 &&
       pocl_read_file(ProgCachePath.c_str(), &Binary, &BinarySize) == 0) {
 
     POCL_MSG_PRINT_LEVEL0("Reading native binary: | %s \n",
@@ -260,8 +260,9 @@ bool Level0ProgramBuild::compile(ze_context_handle_t Context,
   Res = true;
 
 FINISH:
-  if (ModuleH)
+  if (ModuleH != nullptr) {
     zeModuleDestroy(ModuleH);
+  }
 
   POCL_MSG_PRINT_LEVEL0("Measuring compilation of %s\n",
                         (isOptimized() ? "O2" : "O0"));
@@ -271,8 +272,6 @@ FINISH:
   return Res;
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 Level0Program::~Level0Program() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
@@ -319,14 +318,14 @@ bool Level0Program::getBestKernel(Level0Kernel *Kernel, bool LargeOffset,
   std::lock_guard<std::mutex> LockGuard(Mutex);
   Level0ProgramBuild *Build = nullptr;
   for (auto &B : Builds) {
-    if (B->isOptimized() == true && B->isLargeOffset() == LargeOffset) {
+    if (B->isOptimized() && B->isLargeOffset() == LargeOffset) {
       Build = B.get();
       break;
     }
   }
   if (Build == nullptr) {
     for (auto &B : Builds) {
-      if (B->isOptimized() == false && B->isLargeOffset() == LargeOffset) {
+      if (!B->isOptimized() && B->isLargeOffset() == LargeOffset) {
         Build = B.get();
         break;
       }
@@ -364,7 +363,7 @@ bool Level0Program::releaseKernel(Level0Kernel *Kernel) {
   return true;
 }
 
-void Level0Program::setupSpecConsts(uint32_t NumSpecs, uint32_t *SpecIDs,
+void Level0Program::setupSpecConsts(uint32_t NumSpecs, const uint32_t *SpecIDs,
                                     const void **SpecValues,
                                     size_t *SpecValSizes) {
   if (NumSpecs == 0) {
@@ -388,8 +387,6 @@ void Level0Program::setupSpecConsts(uint32_t NumSpecs, uint32_t *SpecIDs,
   SpecConstants.pConstantValues = ConstantVoidPtrs.data();
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 void Level0CompilationJob::signalFinished() {
   std::lock_guard<std::mutex> LockGuard(Mutex);
@@ -407,15 +404,14 @@ void Level0CompilationJob::waitForFinish() {
   }
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 void Level0CompilerJobQueue::pushWork(Level0CompilationJobSPtr Job) {
   std::unique_lock<std::mutex> UniqLock(Mutex);
-  if (Job->isHighPrio())
+  if (Job->isHighPrio()) {
     HighPrioJobs.push_back(Job);
-  else
+  } else {
     LowPrioJobs.push_back(Job);
+  }
   Cond.notify_all();
 }
 
@@ -423,8 +419,9 @@ Level0CompilationJobSPtr
 Level0CompilerJobQueue::findJob(std::list<Level0CompilationJobSPtr> &Queue,
                                 ze_device_handle_t PreferredDevice) {
 
-  if (Queue.empty())
+  if (Queue.empty()) {
     return Level0CompilationJobSPtr(nullptr);
+  }
 
   std::list<Level0CompilationJobSPtr>::iterator Iter =
       std::find_if(Queue.begin(), Queue.end(),
@@ -451,11 +448,12 @@ Level0CompilerJobQueue::getWorkOrWait(ze_device_handle_t PreferredDevice,
     ShouldExit = ExitRequested;
 
     Job = findJob(HighPrioJobs, PreferredDevice);
-    if (Job.get() == nullptr)
+    if (Job.get() == nullptr) {
       Job = findJob(LowPrioJobs, PreferredDevice);
-
-    if (ShouldExit)
+    }
+    if (ShouldExit) {
       break;
+    }
     if (Job.get() != nullptr) {
       UniqLock.unlock();
       return Job;
@@ -485,8 +483,6 @@ void Level0CompilerJobQueue::cancelAllJobsFor(Level0Program *Program) {
   });
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 bool Level0CompilerThread::init() {
   ze_context_desc_t ContextDescription = {};
@@ -511,7 +507,7 @@ void Level0CompilerThread::run() {
     if (Job.get() != nullptr) {
       compileJob(std::move(Job));
     }
-  } while (ShouldExit == false);
+  } while (!ShouldExit);
 }
 
 void Level0CompilerThread::compileJob(Level0CompilationJobSPtr Job) {
@@ -522,9 +518,10 @@ void Level0CompilerThread::compileJob(Level0CompilationJobSPtr Job) {
 }
 
 Level0CompilerThread::~Level0CompilerThread() {
-  if (Thread.joinable())
+  if (Thread.joinable()) {
     Thread.join();
-  if (ThreadContextH) {
+  }
+  if (ThreadContextH != nullptr) {
     ze_result_t Res = zeContextDestroy(ThreadContextH);
     if (Res != ZE_RESULT_SUCCESS) {
       POCL_MSG_ERR("Compiler thread: failed to destroy L0 Context\n");
@@ -532,8 +529,6 @@ Level0CompilerThread::~Level0CompilerThread() {
   }
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 bool Level0CompilationJobScheduler::init(
     ze_driver_handle_t H, std::vector<ze_device_handle_t> &DevicesH) {
@@ -571,8 +566,6 @@ Level0CompilationJobScheduler::~Level0CompilationJobScheduler() {
   CompilerThreads.clear();
 }
 
-// ***********************************************************************
-// ***********************************************************************
 
 bool Level0CompilationJobScheduler::createAndWaitForO0Builds(Level0ProgramSPtr
 Program, std::string &BuildLog, bool DeviceSupports64bitBuffers) {

@@ -54,29 +54,30 @@ static void pocl_level0_abort_on_ze_error(ze_result_t status, unsigned line,
 void Level0Queue::runThread() {
 
   bool ShouldExit = false;
-  _cl_command_node *cmd;
+  _cl_command_node *Command = nullptr;
   do {
-    cmd = WorkHandler->getWorkOrWait(ShouldExit);
-    if (cmd) {
-      assert(pocl_command_is_ready(cmd->sync.event.event));
-      assert(cmd->sync.event.event->status == CL_SUBMITTED);
+    Command = WorkHandler->getWorkOrWait(ShouldExit);
+    if (Command != nullptr) {
+      assert(pocl_command_is_ready(Command->sync.event.event));
+      assert(Command->sync.event.event->status == CL_SUBMITTED);
 
-      execCommand(cmd);
+      execCommand(Command);
     }
-  } while (ShouldExit == false);
+  } while (!ShouldExit);
 }
 
 void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
-  unsigned i;
+  unsigned i = 0;
   cl_event event = Cmd->sync.event.event;
   cl_device_id dev = Cmd->device;
   _cl_command_t *cmd = &Cmd->command;
-  cl_mem mem = NULL;
-  if (event->num_buffers > 0)
+  cl_mem mem = nullptr;
+  if (event->num_buffers > 0) {
     mem = event->mem_objs[0];
+  }
 
-  const char *Msg = NULL;
+  const char *Msg = nullptr;
   pocl_update_event_running(event);
   zeCommandListReset(CmdListH);
   zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventStart, nullptr, 0,
@@ -154,13 +155,15 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   case CL_COMMAND_MIGRATE_MEM_OBJECTS:
     switch (cmd->migrate.type) {
     case ENQUEUE_MIGRATE_TYPE_D2H: {
-      if (mem->is_image) {
+      if (mem->is_image != 0u) {
         size_t region[3] = {mem->image_width, mem->image_height,
                             mem->image_depth};
-        if (region[2] == 0)
+        if (region[2] == 0) {
           region[2] = 1;
-        if (region[1] == 0)
+        }
+        if (region[1] == 0) {
           region[1] = 1;
+        }
         size_t origin[3] = {0, 0, 0};
         readImageRect(mem, cmd->migrate.mem_id, mem->mem_host_ptr, nullptr,
                       origin, region, 0, 0, 0);
@@ -170,13 +173,15 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
       break;
     }
     case ENQUEUE_MIGRATE_TYPE_H2D: {
-      if (mem->is_image) {
+      if (mem->is_image != 0u) {
         size_t region[3] = {mem->image_width, mem->image_height,
                             mem->image_depth};
-        if (region[2] == 0)
+        if (region[2] == 0) {
           region[2] = 1;
-        if (region[1] == 0)
+        }
+        if (region[1] == 0) {
           region[1] = 1;
+        }
         size_t origin[3] = {0, 0, 0};
         writeImageRect(mem, cmd->migrate.mem_id, mem->mem_host_ptr, nullptr,
                        origin, region, 0, 0, 0);
@@ -273,15 +278,17 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   case CL_COMMAND_NDRANGE_KERNEL:
     run(Cmd);
     // synchronize content of writable USE_HOST_PTR buffers with the host
-    if (event->num_buffers) {
+    if (event->num_buffers != 0u) {
       zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
 
       for (size_t i = 0; i < event->num_buffers; ++i) {
         mem = event->mem_objs[i];
-        if (mem->flags & CL_MEM_READ_ONLY)
+        if ((mem->flags & CL_MEM_READ_ONLY) != 0u) {
           continue;
-        if (mem->flags & CL_MEM_HOST_NO_ACCESS)
+        }
+        if ((mem->flags & CL_MEM_HOST_NO_ACCESS) != 0u) {
           continue;
+        }
         pocl_mem_identifier *mem_id = &mem->device_ptrs[dev->global_mem_id];
         syncUseMemHostPtr(mem_id, mem, 0, mem->size);
       }
@@ -296,15 +303,16 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
   // SVM commands
   case CL_COMMAND_SVM_FREE:
-    if (cmd->svm_free.pfn_free_func)
+    if (cmd->svm_free.pfn_free_func != nullptr) {
       cmd->svm_free.pfn_free_func(
           cmd->svm_free.queue, cmd->svm_free.num_svm_pointers,
           cmd->svm_free.svm_pointers, cmd->svm_free.data);
-    else
+    } else {
       for (i = 0; i < cmd->svm_free.num_svm_pointers; i++) {
         void *ptr = cmd->svm_free.svm_pointers[i];
         POCL_LOCK_OBJ(event->context);
-        pocl_svm_ptr *tmp = NULL, *item = NULL;
+        pocl_svm_ptr *tmp = nullptr;
+        pocl_svm_ptr *item = nullptr;
         DL_FOREACH_SAFE(event->context->svm_ptrs, item, tmp) {
           if (item->svm_ptr == ptr) {
             DL_DELETE(event->context->svm_ptrs, item);
@@ -317,6 +325,7 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
         POname(clReleaseContext)(event->context);
         dev->ops->svm_free(dev, ptr);
       }
+    }
     Msg = "Event SVM Free              ";
     break;
 
@@ -371,7 +380,7 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 }
 
 void Level0Queue::calculateEventTimes(cl_event Event, uint64_t Start,
-                                      uint64_t Finish) {
+                                      uint64_t Finish) const {
   double Time = ((double)(Start - DeviceTimingStart) * HostDeviceRate);
   uint64_t NewStart = (uint64_t)Time + HostTimingStart;
   Time = ((double)(Finish - DeviceTimingStart) * HostDeviceRate);
@@ -384,11 +393,13 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                                     size_t Offset, size_t Size) {
   assert(Mem);
 
-  if ((Mem->flags & CL_MEM_USE_HOST_PTR) == 0)
+  if ((Mem->flags & CL_MEM_USE_HOST_PTR) == 0) {
     return;
+  }
 
-  if (Mem->mem_host_ptr == MemId->mem_ptr)
+  if (Mem->mem_host_ptr == MemId->mem_ptr) {
     return;
+  }
 
   char *DevPtr = static_cast<char *>(MemId->mem_ptr);
   char *MemHostPtr = static_cast<char *>(Mem->mem_host_ptr);
@@ -398,8 +409,9 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
 }
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
-                                    size_t Origin[3], size_t Region[3],
-                                    size_t RowPitch, size_t SlicePitch) {
+                                    const size_t Origin[3],
+                                    const size_t Region[3], size_t RowPitch,
+                                    size_t SlicePitch) {
   assert(Mem);
 
   size_t Start = Origin[2] * SlicePitch + Origin[1] * RowPitch + Origin[0];
@@ -456,7 +468,8 @@ void Level0Queue::copyRect(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
   POCL_MSG_PRINT_LEVEL0("COPY RECT | SRC %p | DST %p \n", SrcPtr, DstPtr);
 
-  ze_copy_region_t DstRegion, SrcRegion;
+  ze_copy_region_t DstRegion;
+  ze_copy_region_t SrcRegion;
   SrcRegion.originX = SrcOrigin[0];
   SrcRegion.originY = SrcOrigin[1];
   SrcRegion.originZ = SrcOrigin[2];
@@ -487,7 +500,8 @@ void Level0Queue::readRect(void *__restrict__ HostPtr,
                            size_t const HostSlicePitch) {
   const char *BufferPtr = static_cast<const char *>(SrcMemId->mem_ptr);
 
-  ze_copy_region_t HostRegion, BufferRegion;
+  ze_copy_region_t HostRegion;
+  ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
   BufferRegion.originY = BufferOrigin[1];
   BufferRegion.originZ = BufferOrigin[2];
@@ -518,7 +532,8 @@ void Level0Queue::writeRect(const void *__restrict__ HostPtr,
                             size_t const HostSlicePitch) {
   char *BufferPtr = static_cast<char *>(DstMemId->mem_ptr);
 
-  ze_copy_region_t HostRegion, BufferRegion;
+  ze_copy_region_t HostRegion;
+  ze_copy_region_t BufferRegion;
   BufferRegion.originX = BufferOrigin[0];
   BufferRegion.originY = BufferOrigin[1];
   BufferRegion.originZ = BufferOrigin[2];
@@ -558,18 +573,18 @@ void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
 
   POCL_MSG_PRINT_LEVEL0("MAP MEM: %p FLAGS %zu\n", SrcPtr, Map->map_flags);
 
-  if (Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
+  if ((Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) != 0u) {
     return;
-
-  if (Map->host_ptr == (SrcPtr + Map->offset))
-    return;
-  else {
-    // memcpy (map->HostPtr, src_device_ptr + map->offset, map->size);
-    ze_result_t res = zeCommandListAppendMemoryCopy(CmdListH, Map->host_ptr,
-                                                    SrcPtr + Map->offset,
-                                                    Map->size, NULL, 0, NULL);
-    LEVEL0_CHECK_ABORT(res);
   }
+
+  if (Map->host_ptr == (SrcPtr + Map->offset)) {
+    return;
+  }
+
+  // memcpy (map->HostPtr, src_device_ptr + map->offset, map->size);
+  ze_result_t res = zeCommandListAppendMemoryCopy(
+    CmdListH, Map->host_ptr, SrcPtr + Map->offset, Map->size, NULL, 0, NULL);
+  LEVEL0_CHECK_ABORT(res);
 }
 
 void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
@@ -579,18 +594,19 @@ void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   POCL_MSG_PRINT_LEVEL0("UNMAP MEM: %p FLAGS %zu\n", DstPtr, map->map_flags);
 
   /* for read mappings, don't copy anything */
-  if (map->map_flags == CL_MAP_READ)
+  if (map->map_flags == CL_MAP_READ) {
     return;
-
-  if (map->host_ptr == (DstPtr + map->offset))
-    return;
-  else {
-    // memcpy (dst_device_ptr + map->offset, map->HostPtr, map->size);
-    ze_result_t res =
-        zeCommandListAppendMemoryCopy(CmdListH, DstPtr + map->offset,
-                                      map->host_ptr, map->size, NULL, 0, NULL);
-    LEVEL0_CHECK_ABORT(res);
   }
+
+  if (map->host_ptr == (DstPtr + map->offset)) {
+    return;
+  }
+
+  // memcpy (dst_device_ptr + map->offset, map->HostPtr, map->size);
+  ze_result_t res =
+    zeCommandListAppendMemoryCopy(CmdListH, DstPtr + map->offset,
+                                  map->host_ptr, map->size, NULL, 0, NULL);
+  LEVEL0_CHECK_ABORT(res);
 }
 
 /* copies image to image, on the same device (or same global memory). */
@@ -607,7 +623,8 @@ void Level0Queue::copyImageRect(cl_mem SrcImage, cl_mem DstImage,
   POCL_MSG_PRINT_LEVEL0("COPY IMAGE RECT | SRC %p | DST %p \n", (void *)SrcImg,
                         (void *)DstImg);
 
-  ze_image_region_t DstRegion, SrcRegion;
+  ze_image_region_t DstRegion;
+  ze_image_region_t SrcRegion;
   SrcRegion.originX = SrcOrigin[0];
   SrcRegion.originY = SrcOrigin[1];
   SrcRegion.originZ = SrcOrigin[2];
@@ -639,10 +656,11 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
                                  size_t SrcRowPitch, size_t SrcSlicePitch,
                                  size_t SrcOffset) {
   const char *SrcPtr = nullptr;
-  if (SrcHostPtr)
+  if (SrcHostPtr != nullptr) {
     SrcPtr = static_cast<const char *>(SrcHostPtr) + SrcOffset;
-  else
+  } else {
     SrcPtr = static_cast<const char *>(SrcMemId->mem_ptr) + SrcOffset;
+  }
 
   ze_image_handle_t DstImg =
       static_cast<ze_image_handle_t>(DstMemId->extra_ptr);
@@ -680,10 +698,11 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
                                 size_t DstRowPitch, size_t DstSlicePitch,
                                 size_t DstOffset) {
   char *DstPtr = nullptr;
-  if (DstHostPtr)
+  if (DstHostPtr != nullptr) {
     DstPtr = static_cast<char *>(DstHostPtr) + DstOffset;
-  else
+  } else {
     DstPtr = static_cast<char *>(DstMemId->mem_ptr) + DstOffset;
+  }
 
   ze_image_handle_t SrcImg =
       static_cast<ze_image_handle_t>(SrcMemId->extra_ptr);
@@ -715,8 +734,9 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
   char *SrcImgPtr = static_cast<char *>(MemId->mem_ptr);
   POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", SrcImgPtr, Map->map_flags);
 
-  if (Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
+  if ((Map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) != 0u) {
     return;
+  }
 
   assert(Map->host_ptr == (SrcImgPtr + Map->offset));
 
@@ -733,8 +753,9 @@ void Level0Queue::unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
                         Map->map_flags);
 
   /* for read mappings, don't copy anything */
-  if (Map->map_flags == CL_MAP_READ)
+  if (Map->map_flags == CL_MAP_READ) {
     return;
+  }
 
   assert(Map->host_ptr == (DstImgPtr + Map->offset));
 
@@ -750,9 +771,9 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   POCL_ABORT_UNIMPLEMENTED("fillImage");
 }
 
-void Level0Queue::svmMap(void *Ptr) { return; }
+void Level0Queue::svmMap(void *Ptr) {}
 
-void Level0Queue::svmUnmap(void *Ptr) { return; }
+void Level0Queue::svmUnmap(void *Ptr) {}
 
 void Level0Queue::svmCopy(void *DstPtr, const void *SrcPtr, size_t Size) {
   POCL_MSG_PRINT_LEVEL0("SVM COPY | SRC %p | DST %p | SIZE %zu\n", SrcPtr,
@@ -778,13 +799,11 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   cl_kernel Kernel = RunCmd->kernel;
   struct pocl_argument *PoclArg = RunCmd->arguments;
 
-  /****************************************************************************************/
-
   /* static locals are taken care of in ZE compiler */
   assert(Kernel->meta->num_locals == 0);
 
-  cl_uint i;
-  ze_result_t Res;
+  cl_uint i = 0;
+  ze_result_t Res = ZE_RESULT_SUCCESS;
   for (i = 0; i < Kernel->meta->num_args; ++i) {
     if (ARG_IS_LOCAL(Kernel->meta->arg_info[i])) {
       assert(PoclArg[i].size > 0);
@@ -796,7 +815,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
 
       if (PoclArg[i].value == NULL) {
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), nullptr);
-      } else if (PoclArg[i].is_svm) {
+      } else if (PoclArg[i].is_svm != 0) {
         void *MemPtr = PoclArg[i].value;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
       } else {
@@ -855,7 +874,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
 
 void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
                                  ze_kernel_handle_t KernelH) {
-  ze_result_t Res;
+  ze_result_t Res = ZE_RESULT_SUCCESS;
   uint32_t StartOffsetX = PoclCtx->global_offset[0];
   uint32_t StartOffsetY = PoclCtx->global_offset[1];
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
@@ -868,8 +887,12 @@ void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
   uint32_t TotalWGsY = PoclCtx->num_groups[1];
   uint32_t TotalWGsZ = PoclCtx->num_groups[2];
 
-  uint32_t CurrentWGsX = 0, CurrentWGsY = 0, CurrentWGsZ = 0;
-  uint32_t CurrentOffsetX = 0, CurrentOffsetY = 0, CurrentOffsetZ = 0;
+  uint32_t CurrentWGsX = 0;
+  uint32_t CurrentWGsY = 0;
+  uint32_t CurrentWGsZ = 0;
+  uint32_t CurrentOffsetX = 0;
+  uint32_t CurrentOffsetY = 0;
+  uint32_t CurrentOffsetZ = 0;
 
   for (uint32_t OffsetZ = 0; OffsetZ < TotalWGsZ;
        OffsetZ += DeviceMaxWGSizes.s[2]) {
@@ -964,8 +987,9 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t TotalWGsY = PoclCtx->num_groups[1];
   uint32_t TotalWGsZ = PoclCtx->num_groups[2];
   size_t TotalWGs = TotalWGsX * TotalWGsY * TotalWGsZ;
-  if (TotalWGs == 0)
+  if (TotalWGs == 0) {
     return;
+  }
 
   uint32_t WGSizeX = PoclCtx->local_size[0];
   uint32_t WGSizeY = PoclCtx->local_size[1];
@@ -1013,8 +1037,9 @@ Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
 }
 
 Level0Queue::~Level0Queue() {
-  if (Thread.joinable())
+  if (Thread.joinable()) {
     Thread.join();
+  }
   if (CmdListH != nullptr) {
     zeCommandListDestroy(CmdListH);
   }
@@ -1023,8 +1048,7 @@ Level0Queue::~Level0Queue() {
   }
 }
 
-// ***********************************************************************
-// ***********************************************************************
+static constexpr unsigned CacheLineSize = 64;
 
 bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
                             ze_context_handle_t ContextH,
@@ -1040,9 +1064,9 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   assert(Count > 0);
   QHandles.resize(Count);
   LHandles.resize(Count);
-  ze_result_t r;
-  ze_command_queue_handle_t Queue;
-  ze_command_list_handle_t CmdList;
+  ze_result_t ZeRes = ZE_RESULT_SUCCESS;
+  ze_command_queue_handle_t Queue = nullptr;
+  ze_command_list_handle_t CmdList = nullptr;
 
   ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
                                           nullptr,
@@ -1059,18 +1083,21 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
 
   for (unsigned i = 0; i < Count; ++i) {
     cmdQueueDesc.index = i;
-    r = zeCommandQueueCreate(ContextH, DeviceH, &cmdQueueDesc, &Queue);
-    LEVEL0_CHECK_RET(false, r);
-    r = zeCommandListCreate(ContextH, DeviceH, &cmdListDesc, &CmdList);
-    LEVEL0_CHECK_RET(false, r);
+    ZeRes = zeCommandQueueCreate(ContextH, DeviceH, &cmdQueueDesc, &Queue);
+    LEVEL0_CHECK_RET(false, ZeRes);
+    ZeRes = zeCommandListCreate(ContextH, DeviceH, &cmdListDesc, &CmdList);
+    LEVEL0_CHECK_RET(false, ZeRes);
     QHandles[i] = Queue;
     LHandles[i] = CmdList;
   }
 
   for (unsigned i = 0; i < Count; ++i) {
     Queues.emplace_back(new Level0Queue(
-        this, QHandles[i], LHandles[i], &Buffer[i * 8], HostDeviceRate,
-        HostTimingStart, DeviceTimingStart, DeviceMaxWGs, DeviceHasGOffsets));
+        this, QHandles[i], LHandles[i],
+        // avoid having the timers of different queues stored in the same cacheline
+        &Buffer[i * CacheLineSize / sizeof(uint64_t)],
+        HostDeviceRate, HostTimingStart, DeviceTimingStart,
+        DeviceMaxWGs, DeviceHasGOffsets));
   }
 
   return true;
@@ -1091,50 +1118,29 @@ void Level0QueueGroup::pushWork(_cl_command_node *Command) {
 }
 
 _cl_command_node *Level0QueueGroup::getWorkOrWait(bool &ShouldExit) {
-  _cl_command_node *cmd = nullptr;
+  _cl_command_node *Cmd = nullptr;
   std::unique_lock<std::mutex> Lock(Mutex);
 
-RETRY:
-  ShouldExit = ThreadExitRequested;
-  if (!WorkQueue.empty()) {
-    cmd = WorkQueue.front();
-    WorkQueue.pop();
-  } else {
-    if (!ShouldExit) {
-      Cond.wait(Lock);
-      goto RETRY;
+  do {
+    ShouldExit = ThreadExitRequested;
+    if (!WorkQueue.empty()) {
+      Cmd = WorkQueue.front();
+      WorkQueue.pop();
+      break;
+    } else {
+      if (!ShouldExit) {
+        Cond.wait(Lock);
+      }
     }
-  }
+  } while (!ShouldExit);
+
   Lock.unlock();
-  return cmd;
+  return Cmd;
 }
 
-// ***********************************************************************
-// ***********************************************************************
-
+/// serialize SPIRV of the program since we might need
+/// to rebuild it with new Spec Constants
 const char *LEVEL0_SERIALIZE_ENTRIES[1] = {"/program.spv"};
-
-/*
-ZE_IMAGE_FORMAT_LAYOUT_8 = 0,                   ///< 8-bit single component
-layout ZE_IMAGE_FORMAT_LAYOUT_16 = 1,                  ///< 16-bit single
-component layout ZE_IMAGE_FORMAT_LAYOUT_32 = 2,                  ///< 32-bit
-single component layout
-
-ZE_IMAGE_FORMAT_LAYOUT_8_8 = 3,                 ///< 2-component 8-bit layout
-ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8 = 4,             ///< 4-component 8-bit layout
-
-ZE_IMAGE_FORMAT_LAYOUT_16_16 = 5,               ///< 2-component 16-bit layout
-ZE_IMAGE_FORMAT_LAYOUT_16_16_16_16 = 6,         ///< 4-component 16-bit layout
-
-ZE_IMAGE_FORMAT_LAYOUT_32_32 = 7,               ///< 2-component 32-bit layout
-ZE_IMAGE_FORMAT_LAYOUT_32_32_32_32 = 8,         ///< 4-component 32-bit layout
-
-ZE_IMAGE_FORMAT_LAYOUT_10_10_10_2 = 9,          ///< 4-component 10_10_10_2
-layout
-
-ZE_IMAGE_FORMAT_LAYOUT_5_6_5 = 11,              ///< 3-component 5_6_5 layout
-ZE_IMAGE_FORMAT_LAYOUT_5_5_5_1 = 12,            ///< 4-component 5_5_5_1 layout
-*/
 
 static const cl_image_format SupportedImageFormats[] = {
     {CL_R, CL_SIGNED_INT8},
@@ -1154,7 +1160,6 @@ static const cl_image_format SupportedImageFormats[] = {
     {CL_RGB, CL_UNORM_SHORT_565},
     {CL_RGBA, CL_UNORM_SHORT_555},
 
-    // ##########
     {CL_R, CL_UNSIGNED_INT8},
     {CL_R, CL_UNSIGNED_INT16},
     {CL_R, CL_UNSIGNED_INT32},
@@ -1173,8 +1178,7 @@ static const cl_image_format SupportedImageFormats[] = {
 static constexpr unsigned NumSupportedImageFormats =
     sizeof(SupportedImageFormats) / sizeof(SupportedImageFormats[0]);
 
-// ***********************************************************************
-// ***********************************************************************
+static constexpr unsigned MaxPropertyEntries = 32;
 
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                            ze_context_handle_t ContextH, cl_device_id dev,
@@ -1186,84 +1190,96 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->available = CL_FALSE;
   assert(DeviceHandle);
   assert(ContextHandle);
-  ze_result_t Res;
-  uint64_t HostTimestamp1, HostTimestamp2;
-  uint64_t DeviceTimestamp1, DeviceTimestamp2;
+  ze_result_t Res = ZE_RESULT_SUCCESS;
+  uint64_t HostTimestamp1;
+  uint64_t HostTimestamp2;
+  uint64_t DeviceTimestamp1;
+  uint64_t DeviceTimestamp2;
   double HostDeviceRate;
-  uint64_t HostTimingStart, DeviceTimingStart;
+  uint64_t HostTimingStart;
+  uint64_t DeviceTimingStart;
   bool HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
 
   Res =
       zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp1, &DeviceTimestamp1);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_properties_t DeviceProperties{};
   DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
   DeviceProperties.pNext = nullptr;
   Res = zeDeviceGetProperties(DeviceHandle, &DeviceProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_compute_properties_t ComputeProperties{};
   ComputeProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
   ComputeProperties.pNext = nullptr;
   Res = zeDeviceGetComputeProperties(DeviceHandle, &ComputeProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_module_properties_t ModuleProperties{};
   ModuleProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MODULE_PROPERTIES;
   ModuleProperties.pNext = nullptr;
   Res = zeDeviceGetModuleProperties(DeviceHandle, &ModuleProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
-  uint32_t QGroupPropCount = 32;
-  ze_command_queue_group_properties_t QGroupProps[32];
-  for (uint32_t i = 0; i < 32; ++i) {
+  uint32_t QGroupPropCount = MaxPropertyEntries;
+  ze_command_queue_group_properties_t QGroupProps[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
     QGroupProps[i].pNext = nullptr;
     QGroupProps[i].stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES;
   }
   Res = zeDeviceGetCommandQueueGroupProperties(DeviceHandle, &QGroupPropCount,
                                                QGroupProps);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
-  uint32_t MemPropCount = 32;
-  ze_device_memory_properties_t MemProps[32];
-  for (uint32_t i = 0; i < 32; ++i) {
+  uint32_t MemPropCount = MaxPropertyEntries;
+  ze_device_memory_properties_t MemProps[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
     MemProps[i].pNext = nullptr;
     MemProps[i].stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_PROPERTIES;
   }
   Res = zeDeviceGetMemoryProperties(DeviceHandle, &MemPropCount, MemProps);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_memory_access_properties_t MemAccessProperties{};
   MemAccessProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_ACCESS_PROPERTIES;
   MemAccessProperties.pNext = nullptr;
   Res = zeDeviceGetMemoryAccessProperties(DeviceHandle, &MemAccessProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
-  uint32_t CachePropCount = 32;
-  ze_device_cache_properties_t CacheProperties[32];
-  for (uint32_t i = 0; i < 32; ++i) {
+  uint32_t CachePropCount = MaxPropertyEntries;
+  ze_device_cache_properties_t CacheProperties[MaxPropertyEntries];
+  for (uint32_t i = 0; i < MaxPropertyEntries; ++i) {
     CacheProperties[i].pNext = nullptr;
     CacheProperties[i].stype = ZE_STRUCTURE_TYPE_DEVICE_CACHE_PROPERTIES;
   }
   Res = zeDeviceGetCacheProperties(DeviceHandle, &CachePropCount,
                                    CacheProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_image_properties_t ImageProperties{};
   ImageProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_IMAGE_PROPERTIES;
   ImageProperties.pNext = nullptr;
   Res = zeDeviceGetImageProperties(DeviceHandle, &ImageProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   ze_device_external_memory_properties_t ExternalMemProperties{};
   ExternalMemProperties.stype =
@@ -1271,12 +1287,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ExternalMemProperties.pNext = nullptr;
   Res =
       zeDeviceGetExternalMemoryProperties(DeviceHandle, &ExternalMemProperties);
-  if (Res != ZE_RESULT_SUCCESS)
+  if (Res != ZE_RESULT_SUCCESS) {
     return;
+  }
 
   POCL_MSG_PRINT_LEVEL0("all device info collected\n");
-
-  /**************************************************************************/
 
   // TODO
   ClDev->profiling_timer_resolution = 1;
@@ -1288,6 +1303,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->has_own_timer = CL_TRUE;
     ClDev->disable_pocl_opencl_headers = CL_TRUE;
 
+    // TODO the values here are copied from the Intel NEO.
+    // we need a way to figure out the suitable values for
+    // the real underlying device.
     ClDev->preferred_vector_width_char = 16;
     ClDev->preferred_vector_width_short = 8;
     ClDev->preferred_vector_width_int = 4;
@@ -1333,8 +1351,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
   }
 
-  /**************************************************************************/
-
   // deviceProperties
   {
     switch (DeviceProperties.type) {
@@ -1354,12 +1370,16 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     UUID = DeviceProperties.uuid;
 
     // ze_device_property_flags_t
-    if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED)
+    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) != 0u) {
       Integrated = true;
-    if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC)
+    }
+    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC) != 0u) {
       ClDev->error_correction_support = CL_TRUE;
-    if (DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING)
+    }
+    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) !=
+        0u) {
       OndemandPaging = true;
+    }
 
     ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
@@ -1380,16 +1400,16 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     TSBits = DeviceProperties.timestampValidBits;
     KernelTSBits = DeviceProperties.kernelTimestampValidBits;
 
-    /*
-      // deviceProperties.subdeviceId  ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE
-      uint32_t subDeviceCount = 0;
-      zeDeviceGetSubDevices(device, &subDeviceCount, nullptr);
-      ze_device_handle_t subDevices[2] = {};
-      zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
-    */
-  }
+#if 0
+  /// support for subdevices. Currently unimplemented
+  deviceProperties.subdeviceId  ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE
+  uint32_t subDeviceCount = 0;
+  zeDeviceGetSubDevices(device, &subDeviceCount, nullptr);
+  ze_device_handle_t subDevices[2] = {};
+  zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
+#endif
 
-  /**************************************************************************/
+  }
 
   // computeProperties
   {
@@ -1413,8 +1433,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     cl_uint Max = 0;
     if (ComputeProperties.numSubGroupSizes > 0) {
       for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
-        if (ComputeProperties.subGroupSizes[i] > Max)
+        if (ComputeProperties.subGroupSizes[i] > Max) {
           Max = ComputeProperties.subGroupSizes[i];
+        }
       }
       ClDev->max_num_sub_groups = Max;
 
@@ -1427,44 +1448,60 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     }
   }
 
-  /**************************************************************************/
-
   // moduleProperties
   {
-    if (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) {
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM)
+    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
         ClDev->double_fp_config |= CL_FP_DENORM;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
         ClDev->double_fp_config |= CL_FP_INF_NAN;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+          0u) {
         ClDev->double_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
         ClDev->double_fp_config |= CL_FP_ROUND_TO_INF;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+          0u) {
         ClDev->double_fp_config |= CL_FP_ROUND_TO_ZERO;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
         ClDev->double_fp_config |= CL_FP_FMA;
-      if (ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT)
+      }
+      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
         ClDev->double_fp_config |= CL_FP_SOFT_FLOAT;
+      }
     } else {
       ClDev->double_fp_config = 0;
     }
 
-    if (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) {
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_DENORM)
+    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0u) {
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
         ClDev->half_fp_config |= CL_FP_DENORM;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_INF_NAN)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
         ClDev->half_fp_config |= CL_FP_INF_NAN;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+          0u) {
         ClDev->half_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
         ClDev->half_fp_config |= CL_FP_ROUND_TO_INF;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+          0u) {
         ClDev->half_fp_config |= CL_FP_ROUND_TO_ZERO;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_FMA)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
         ClDev->half_fp_config |= CL_FP_FMA;
-      if (ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT)
+      }
+      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
         ClDev->half_fp_config |= CL_FP_SOFT_FLOAT;
+      }
     } else {
       ClDev->half_fp_config = 0;
     }
@@ -1472,20 +1509,29 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     // single FP config
     {
       ClDev->single_fp_config = 0;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM)
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
         ClDev->single_fp_config |= CL_FP_DENORM;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
         ClDev->single_fp_config |= CL_FP_INF_NAN;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+          0u) {
         ClDev->single_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
         ClDev->single_fp_config |= CL_FP_ROUND_TO_INF;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+          0u) {
         ClDev->single_fp_config |= CL_FP_ROUND_TO_ZERO;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
         ClDev->single_fp_config |= CL_FP_FMA;
-      if (ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT)
+      }
+      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
         ClDev->single_fp_config |= CL_FP_SOFT_FLOAT;
+      }
     }
 
     KernelUUID = ModuleProperties.nativeKernelSupported;
@@ -1506,15 +1552,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                                  " __opencl_c_program_scope_global_variables"
                                  " __opencl_c_generic_address_space");
 
-    if (ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) {
+    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u) {
       Extensions.append(" cl_khr_int64_base_atomics"
                         " cl_khr_int64_extended_atomics");
     }
-    if (ClDev->half_fp_config) {
+    if (ClDev->half_fp_config != 0u) {
       Extensions.append(" cl_khr_fp16");
       OpenCL30Features.append(" __opencl_c_fp16");
     }
-    if (ClDev->double_fp_config) {
+    if (ClDev->double_fp_config != 0u) {
       Extensions.append(" cl_khr_fp64");
       OpenCL30Features.append(" __opencl_c_fp64");
     }
@@ -1523,7 +1569,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       OpenCL30Features.append(" __opencl_c_subgroups");
       OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
     }
-    if (ClDev->has_64bit_long) {
+    if (ClDev->has_64bit_long != 0) {
       Extensions.append(" cl_khr_int64");
       OpenCL30Features.append(" __opencl_c_int64");
     }
@@ -1542,8 +1588,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
   }
 
-  /**************************************************************************/
-
   // memProps
   {
     for (uint32_t i = 0; i < MemPropCount; ++i) {
@@ -1557,8 +1601,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     }
 
     // memAccessProperties
-    if (MemAccessProperties.sharedSingleDeviceAllocCapabilities &
-        (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) {
+    if ((MemAccessProperties.sharedSingleDeviceAllocCapabilities &
+         (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) !=
+        0u) {
       ClDev->svm_allocation_priority = 2;
       ClDev->atomic_memory_capabilities =
           CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
@@ -1578,10 +1623,13 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     // cacheProperties
     for (uint32_t i = 0; i < CachePropCount; ++i) {
       // find largest cache that is not user-controlled
-      if (CacheProperties[i].flags & ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL)
+      if ((CacheProperties[i].flags &
+           ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) != 0u) {
         continue;
-      if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize)
+      }
+      if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize) {
         ClDev->global_mem_cache_size = CacheProperties[i].cacheSize;
+      }
     }
     ClDev->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
     ClDev->global_mem_cache_type = CL_READ_WRITE_CACHE;
@@ -1590,7 +1638,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
   }
 
-  /**************************************************************************/
 
   // imageProperties
   {
@@ -1615,16 +1662,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->image_support = CL_TRUE;
   }
 
-  /**************************************************************************/
-
   // timestamp setup
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(12));
 
     Res = zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp2,
                                       &DeviceTimestamp2);
-    if (Res != ZE_RESULT_SUCCESS)
+    if (Res != ZE_RESULT_SUCCESS) {
       return;
+    }
 
     uint64_t HostDiff = HostTimestamp2 - HostTimestamp1;
     uint64_t DeviceDiff = DeviceTimestamp2 - DeviceTimestamp1;
@@ -1633,7 +1679,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     DeviceTimingStart = DeviceTimestamp1;
   }
 
-  /**************************************************************************/
 
   // QGroupProps
   {
@@ -1693,7 +1738,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     uint32_t_3 DeviceMaxWGs = {MaxWGCount[0], MaxWGCount[1], MaxWGCount[2]};
 
     if (ComputeQueueOrd != UINT32_MAX) {
-      void *Ptr = allocSharedMem(64 * NumComputeQueues);
+      void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
       ComputeTimestamps = static_cast<uint64_t *>(Ptr);
       ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
                          DeviceHandle, ComputeTimestamps, HostTimingStart,
@@ -1701,7 +1746,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                          HasGOffsets);
     } else {
       uint32_t num = std::max(1U, NumUniversalQueues / 2);
-      void *Ptr = allocSharedMem(64 * num);
+      void *Ptr = allocSharedMem(CacheLineSize * num);
       ComputeTimestamps = static_cast<uint64_t *>(Ptr);
       ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
                          ComputeTimestamps, HostTimingStart, DeviceTimingStart,
@@ -1709,22 +1754,20 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     }
 
     if (CopyQueueOrd != UINT32_MAX) {
-      void *Ptr = allocSharedMem(64 * NumCopyQueues);
+      void *Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
       CopyTimestamps = static_cast<uint64_t *>(Ptr);
       CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
                       CopyTimestamps, HostTimingStart, DeviceTimingStart,
                       HostDeviceRate, DeviceMaxWGs, HasGOffsets);
     } else {
       uint32_t num = std::max(1U, NumUniversalQueues / 2);
-      void *Ptr = allocSharedMem(64 * num);
+      void *Ptr = allocSharedMem(CacheLineSize * num);
       CopyTimestamps = static_cast<uint64_t *>(Ptr);
       CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
                       CopyTimestamps, HostTimingStart, DeviceTimingStart,
                       HostDeviceRate, DeviceMaxWGs, HasGOffsets);
     }
   }
-
-  /**************************************************************************/
 
   // calculate KernelCacheHash
   {
@@ -1764,7 +1807,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     SStream.flush();
     KernelCacheHash = SStream.str();
   }
-  /**************************************************************************/
 
   ClDev->available = CL_TRUE;
 }
@@ -1823,8 +1865,8 @@ void Level0Device::freeMem(void *Ptr) {
 static void conventOpenclToZeImgFormat(cl_channel_type ChType,
                                        cl_channel_order ChOrder,
                                        ze_image_format_t &ZeFormat) {
-  ze_image_format_type_t ZeType;
-  ze_image_format_layout_t ZeLayout;
+  ze_image_format_type_t ZeType = {};
+  ze_image_format_layout_t ZeLayout = {};
 
   switch (ChType) {
   case CL_SNORM_INT8:
@@ -2003,8 +2045,10 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
   }
 
   ze_image_flags_t ZeFlags = 0;
-  if (ImgFlags & CL_MEM_READ_WRITE || ImgFlags & CL_MEM_WRITE_ONLY)
+  if (((ImgFlags & CL_MEM_READ_WRITE) != 0u) ||
+      ((ImgFlags & CL_MEM_WRITE_ONLY) != 0u)) {
     ZeFlags = ZE_IMAGE_FLAG_KERNEL_WRITE;
+  }
 
   ze_image_desc_t imageDesc = {
       ZE_STRUCTURE_TYPE_IMAGE_DESC,
@@ -2018,7 +2062,7 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
       0, // array levels
       0  // mip levels
   };
-  ze_image_handle_t ImageH;
+  ze_image_handle_t ImageH = nullptr;
   ze_result_t Res =
       zeImageCreate(ContextHandle, DeviceHandle, &imageDesc, &ImageH);
   LEVEL0_CHECK_RET(nullptr, Res);
@@ -2033,7 +2077,7 @@ void Level0Device::freeImage(ze_image_handle_t ImageH) {
 ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
                                                cl_filter_mode FilterMode,
                                                cl_bool NormalizedCoords) {
-  ze_sampler_address_mode_t ZeAddrMode;
+  ze_sampler_address_mode_t ZeAddrMode = {};
   switch (AddrMode) {
   case CL_ADDRESS_NONE:
     ZeAddrMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
@@ -2052,7 +2096,7 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
     break;
   }
 
-  ze_sampler_filter_mode_t ZeFilterMode;
+  ze_sampler_filter_mode_t ZeFilterMode = {};
   switch (FilterMode) {
   case CL_FILTER_LINEAR:
     ZeFilterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
@@ -2086,8 +2130,9 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
 
   std::vector<uint8_t> Spirv;
   Spirv.resize(Program->program_il_size);
-  for (size_t i = 0; i < Program->program_il_size; ++i)
+  for (size_t i = 0; i < Program->program_il_size; ++i) {
     Spirv[i] = static_cast<uint8_t>(Program->program_il[i]);
+  }
 
   assert(Program->data[DeviceI] == nullptr);
   char ProgramCacheDir[POCL_FILENAME_LENGTH];
@@ -2097,10 +2142,11 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   std::vector<const void *> SpecConstantPtrs;
   std::vector<size_t> SpecConstantSizes;
 
-  if (Program->num_spec_consts) {
+  if (Program->num_spec_consts != 0u) {
     for (size_t i = 0; i < Program->num_spec_consts; ++i) {
-      if (Program->spec_const_is_set[i] == CL_FALSE)
+      if (Program->spec_const_is_set[i] == CL_FALSE) {
         continue;
+      }
       SpecConstantIDs.push_back(Program->spec_const_ids[i]);
       SpecConstantPtrs.push_back(&Program->spec_const_values[i]);
       SpecConstantSizes.push_back(sizeof(uint64_t));
@@ -2108,7 +2154,7 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   }
 
   std::string CompilerOptions(
-      Program->compiler_options ? Program->compiler_options : "");
+      Program->compiler_options != nullptr ? Program->compiler_options : "");
   bool Optimize =
       (CompilerOptions.find("-cl-disable-opt") == std::string::npos);
 
@@ -2118,7 +2164,7 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
       Spirv, ProgramCacheDir, KernelCacheHash));
 
   std::string BuildLog;
-  /*
+#if 0
     if (!Driver->getJobSched().createAndWaitForO0Builds(ProgramData, BuildLog,
                                                         Supports64bitBuffers)) {
       // TODO  appendToBuildLog
@@ -2131,11 +2177,11 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
       program->data[device_i] = new Level0ProgramSPtr(std::move(ProgramData));
       return CL_SUCCESS;
     }
-  */
+#endif
 
   if (!Driver->getJobSched().createAndWaitForExactBuilds(
           ProgramData, BuildLog, Supports64bitBuffers, Optimize)) {
-    if (BuildLog.size() > 0) {
+    if (!BuildLog.empty()) {
       appendToBuildLog(Program, DeviceI, strdup(BuildLog.c_str()),
                        BuildLog.size());
     }
@@ -2148,8 +2194,9 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
 }
 
 int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
-  if (Program->data[DeviceI] == nullptr)
+  if (Program->data[DeviceI] == nullptr) {
     return CL_SUCCESS;
+  }
 
   Level0ProgramSPtr *ProgramData = (Level0ProgramSPtr *)Program->data[DeviceI];
   Driver->getJobSched().cancelAllJobsFor(ProgramData->get());
@@ -2158,8 +2205,7 @@ int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
   return CL_SUCCESS;
 }
 
-// ***********************************************************************
-// ***********************************************************************
+static constexpr unsigned MaxLevel0Devices = 1024;
 
 Level0Driver::Level0Driver() {
   ze_result_t Res = zeInit(ZE_INIT_FLAG_GPU_ONLY);
@@ -2221,9 +2267,10 @@ Level0Driver::Level0Driver() {
   }
 
   uint32_t DeviceCount = 0;
-  ze_device_handle_t DeviceArray[1024];
+  ze_device_handle_t DeviceArray[MaxLevel0Devices];
   Res = zeDeviceGet(DriverH, &DeviceCount, nullptr);
-  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0) {
+  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0
+          || DeviceCount > MaxLevel0Devices) {
     POCL_MSG_ERR("zeDeviceGet 1 FAILED\n");
     return;
   }
@@ -2251,15 +2298,16 @@ Level0Driver::Level0Driver() {
 Level0Driver::~Level0Driver() {
   Devices.clear();
   DeviceHandles.clear();
-  if (ContextH) {
+  if (ContextH != nullptr) {
     zeContextDestroy(ContextH);
   }
 }
 
 Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
                                          const char *Params) {
-  if (Index >= Devices.size())
+  if (Index >= Devices.size()) {
     return nullptr;
+  }
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
       new Level0Device(this, DeviceHandles[Index], ContextH, Dev, Params));
@@ -2268,8 +2316,9 @@ Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
 }
 
 void Level0Driver::releaseDevice(Level0Device *Dev) {
-  if (empty())
+  if (empty()) {
     return;
+  }
   for (auto &Device : Devices) {
     if (Device.get() == Dev) {
       Device.reset(nullptr);

@@ -1075,6 +1075,11 @@ struct _cl_device_id {
   /* relative path to file with OpenCL sources of the builtin kernels */
   const char* builtins_sources_path;
 
+  /* list of extra filenames or directories to serialize, from
+   * the program's directory in pocl cache. By default
+   * "program.bc" is serialized so that shouldn't be included here.
+   * Useful for adding extra files not related to any particular kernel
+   * (which have their own subdirectories in program's cache dir). */
   const char **serialize_entries;
   unsigned num_serialize_entries;
 

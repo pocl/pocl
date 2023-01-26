@@ -89,6 +89,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 
 enable_testing()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #####################################################
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")

@@ -21,37 +21,6 @@
    IN THE SOFTWARE.
 */
 
-/********** What works:
- * buffer read/write/map/unmap
- * kernel execution
- *
- ****** Implemented but lightly/not at all tested:
- * image support (except FillImage)
- * sampler support
- * Spec constants
- * subgroups
- * SVM
- * event timestamps
- * unlimited WG count execution
- * 64bit buffer support (specialization)
- *
- ********* implemented but unfinished / non-optimal:
- * kernel argument metadata parsing
- *   (type_name is not parsed ATM, the rest are OK)
- * CL_MEM_USE_HOST_PTR handling (works with buffers,
- *   but doesn't work with Images)
- * caching native binaries (L0 provides a UUID that's supposed to be usable,
- *   but appears to be just zeroes; possibly driver problem ?)
- *
- ******** missing
- * ZE_MEMORY_ADVICE_SET_READ_MOSTLY optimization
- * clEnqueueFillImage
- * support for row_pitch/slice_pitch arguments of Image APIs
- *   ... there are actually two Level0 APIs that should provide
- *   the required features, but they return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
- */
-
-/********************************************************************/
 
 #include "common.h"
 #include "common_driver.h"
@@ -170,14 +139,6 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *ops) {
   ops->free_sampler = pocl_level0_free_sampler;
 }
 
-/* level0 debug callback */
-/**** TODO validation layer */
-
-// ***********************************************************************
-// ***********************************************************************
-
-// ***********************************************************************
-// ***********************************************************************
 
 void appendToBuildLog(cl_program program, cl_uint device_i, char *Log,
                       size_t LogSize) {
@@ -220,9 +181,6 @@ static int readProgramSpv(cl_program program, cl_uint device_i,
 }
 
 static Level0Driver *DriverInstance = nullptr;
-
-// ***********************************************************************
-// ***********************************************************************
 
 char *pocl_level0_build_hash(cl_device_id device) {
   char *res = (char *)malloc(32);
@@ -946,7 +904,6 @@ int pocl_level0_build_poclbinary(cl_program program, cl_uint device_i) {
   return CL_SUCCESS;
 }
 
-/********************************************************************/
 
 void pocl_level0_submit(_cl_command_node *node, cl_command_queue cq) {
   node->ready = 1;
@@ -1061,8 +1018,6 @@ void pocl_level0_wait_event(cl_device_id device, cl_event event) {
   POCL_UNLOCK_OBJ(event);
 }
 
-/****************************************************************************************/
-/****************************************************************************************/
 
 int pocl_level0_alloc_mem_obj(cl_device_id device, cl_mem mem, void *host_ptr) {
   Level0Device *Device = (Level0Device *)device->data;
@@ -1212,7 +1167,6 @@ int pocl_level0_free_sampler(cl_device_id device, cl_sampler samp,
   return CL_SUCCESS;
 }
 
-/***************************************************************************/
 void pocl_level0_svm_free(cl_device_id dev, void *svm_ptr) {
   Level0Device *Device = (Level0Device *)dev->data;
   Device->freeMem(svm_ptr);

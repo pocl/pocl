@@ -42,8 +42,8 @@
    IN THE SOFTWARE.
 */
 
-#ifndef LEVEL0COMPILATION_HH
-#define LEVEL0COMPILATION_HH
+#ifndef POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_COMPILATION_HH
+#define POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_COMPILATION_HH
 
 #include <ze_api.h>
 
@@ -52,11 +52,11 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <set>
 #include <string>
 #include <thread>
 #include <vector>
-#include <queue>
 
 namespace pocl {
 
@@ -70,18 +70,16 @@ class Level0ProgramBuild;
 *
 */
 class Level0Kernel {
-  std::mutex Mutex;
-  /// map of ProgramBuilds to Kernel handles
-  std::map<Level0ProgramBuild*, ze_kernel_handle_t> KernelHandles;
-  std::string Name;
-
-  bool createForBuild(Level0ProgramBuild* Build);
-  /// returns (or creates a new) ze_kernel_handle_t for a particular ProgramBuild
-  ze_kernel_handle_t getOrCreateForBuild(Level0ProgramBuild* Build);
 
 public:
   Level0Kernel(const char* N) : Name(N) {}
   ~Level0Kernel();
+
+  Level0Kernel(Level0Kernel const &) = delete;
+  Level0Kernel& operator=(Level0Kernel const &) = delete;
+  Level0Kernel(Level0Kernel const &&) = delete;
+  Level0Kernel& operator=(Level0Kernel &&) = delete;
+
   /// this is necessary for the Level0Queue's run() function to lock the kernel
   std::mutex &getMutex() { return Mutex; }
 
@@ -92,6 +90,16 @@ public:
 
   /// for getOrCreateForBuild
   friend class Level0Program;
+
+private:
+  std::mutex Mutex;
+  /// map of ProgramBuilds to Kernel handles
+  std::map<Level0ProgramBuild*, ze_kernel_handle_t> KernelHandles;
+  std::string Name;
+
+  bool createForBuild(Level0ProgramBuild* Build);
+  /// returns (or creates a new) ze_kernel_handle_t for a particular ProgramBuild
+  ze_kernel_handle_t getOrCreateForBuild(Level0ProgramBuild* Build);
 };
 
 typedef std::unique_ptr<Level0Kernel> Level0KernelUPtr;
@@ -107,6 +115,33 @@ class Level0Program;
 *
 */
 class Level0ProgramBuild {
+
+public:
+  Level0ProgramBuild(bool Opt, bool LargeOfs, bool Dbg,
+                     Level0Program *Prog)
+   : Program(Prog), ModuleH(nullptr), Optimized(Opt),
+     LargeOffsets(LargeOfs), Debug(Dbg), BuildSuccessful(false) {}
+  ~Level0ProgramBuild();
+
+  Level0ProgramBuild(Level0ProgramBuild const &) = delete;
+  Level0ProgramBuild& operator=(Level0ProgramBuild const &) = delete;
+  Level0ProgramBuild(Level0ProgramBuild const &&) = delete;
+  Level0ProgramBuild& operator=(Level0ProgramBuild &&) = delete;
+
+  /// loads the built Native Binary, in a particular context & device
+  bool loadBinary(ze_context_handle_t Context,
+                  ze_device_handle_t Device);
+  /// builds the program's SPIRV to Native Binary, in a particular context & device
+  bool compile(ze_context_handle_t Context,
+               ze_device_handle_t Device);
+  ze_module_handle_t getHandle() { return ModuleH; }
+  bool isSuccessful() const { return BuildSuccessful; }
+  bool isDebug() const { return Debug; }
+  bool isOptimized() const { return Optimized; }
+  bool isLargeOffset() const { return LargeOffsets; }
+  std::string &&getBuildLog() { return std::move(BuildLog); }
+
+private:
   /// compiled binary in ZE native format (ELF)
   std::vector<uint8_t> NativeBinary;
   /// build log for failed builds
@@ -129,25 +164,6 @@ class Level0ProgramBuild {
   bool Debug;
 
   bool BuildSuccessful;
-
-public:
-  Level0ProgramBuild(bool Opt, bool LargeOfs, bool Dbg,
-                     Level0Program *Prog)
-   : Program(Prog), ModuleH(nullptr), Optimized(Opt),
-     LargeOffsets(LargeOfs), Debug(Dbg), BuildSuccessful(false) {}
-  ~Level0ProgramBuild();
-  /// loads the built Native Binary, in a particular context & device
-  bool loadBinary(ze_context_handle_t Context,
-                  ze_device_handle_t Device);
-  /// builds the program's SPIRV to Native Binary, in a particular context & device
-  bool compile(ze_context_handle_t Context,
-               ze_device_handle_t Device);
-  ze_module_handle_t getHandle() { return ModuleH; }
-  bool isSuccessful() { return BuildSuccessful; }
-  bool isDebug() { return Debug; }
-  bool isOptimized() { return Optimized; }
-  bool isLargeOffset() { return LargeOffsets; }
-  std::string &&getBuildLog() { return std::move(BuildLog); }
 };
 
 typedef std::unique_ptr<Level0ProgramBuild> Level0ProgramBuildUPtr;
@@ -166,32 +182,6 @@ class Level0CompilationJobScheduler;
 * the instance, it needs to be handled properly (-> std::shared_ptr)
 */
 class Level0Program {
-  /// all data except Builds, Kernels & BuildLog are const
-  std::mutex Mutex;
-  /// builds with specializations
-  std::list<Level0ProgramBuildUPtr> Builds;
-  std::list<Level0KernelUPtr> Kernels;
-  std::string BuildLog;
-
-  ze_context_handle_t ContextH;
-  ze_device_handle_t DeviceH;
-  /// cl_program's pocl cache dir
-  std::string CacheDir;
-  /// UUID used to determine compatibility of native binaries in cache
-  std::string CacheUUID;
-
-  /// SPIR-V binary (= compilation input)
-  std::vector<uint8_t> SPIRV;
-  /// spec constants used for compilation
-  ze_module_constants_t SpecConstants;
-  /// storage for actual data of ze_module_constants_t
-  std::vector<uint32_t> ConstantIds;
-  std::vector<const void*> ConstantVoidPtrs;
-  std::vector<std::vector<uint8_t>> ConstantValues;
-
-  /// setup the ze_module_constants_t from cl_program's Spec constant data.
-  void setupSpecConsts(uint32_t NumSpecs, uint32_t* SpecIDs,
-                      const void **SpecValues, size_t *SpecValSizes);
 
 public:
   Level0Program(ze_context_handle_t Ctx,
@@ -202,6 +192,11 @@ public:
                 const char* CDir,
                 const std::string &UUID);
   ~Level0Program();
+
+  Level0Program(Level0Program const &) = delete;
+  Level0Program& operator=(Level0Program const &) = delete;
+  Level0Program(Level0Program const &&) = delete;
+  Level0Program& operator=(Level0Program &&) = delete;
 
   /** called by Level0CompilationJob when finished,
    *  to move Level0ProgramBuild into the program */
@@ -230,6 +225,35 @@ public:
   std::string &&getBuildLog() { return std::move(BuildLog); }
   const std::string &getCacheDir() { return CacheDir; }
   const std::string &getCacheUUID() { return CacheUUID; }
+
+private:
+  /// all data except Builds, Kernels & BuildLog are const
+  std::mutex Mutex;
+  /// builds with specializations
+  std::list<Level0ProgramBuildUPtr> Builds;
+  std::list<Level0KernelUPtr> Kernels;
+  std::string BuildLog;
+
+  ze_context_handle_t ContextH;
+  ze_device_handle_t DeviceH;
+  /// cl_program's pocl cache dir
+  std::string CacheDir;
+  /// UUID used to determine compatibility of native binaries in cache
+  std::string CacheUUID;
+
+  /// SPIR-V binary (= compilation input)
+  std::vector<uint8_t> SPIRV;
+  /// spec constants used for compilation
+  ze_module_constants_t SpecConstants;
+  /// storage for actual data of ze_module_constants_t
+  std::vector<uint32_t> ConstantIds;
+  std::vector<const void*> ConstantVoidPtrs;
+  std::vector<std::vector<uint8_t>> ConstantValues;
+
+  /// setup the ze_module_constants_t from cl_program's Spec constant data.
+  void setupSpecConsts(uint32_t NumSpecs, const uint32_t *SpecIDs,
+                      const void **SpecValues, size_t *SpecValSizes);
+
 };
 
 typedef std::shared_ptr<Level0Program> Level0ProgramSPtr;
@@ -241,6 +265,27 @@ typedef std::shared_ptr<Level0Program> Level0ProgramSPtr;
 *
 */
 class Level0CompilationJob {
+
+public:
+  Level0CompilationJob(bool HiPrio, Level0ProgramSPtr Prog, Level0ProgramBuildUPtr ProgB)
+    : Program(Prog), Build(std::move(ProgB)),
+      HighPrio(HiPrio), Finished(false), Successful(false) {}
+  ~Level0CompilationJob() = default;
+
+  Level0CompilationJob(Level0CompilationJob const &) = delete;
+  Level0CompilationJob& operator=(Level0CompilationJob const &) = delete;
+  Level0CompilationJob(Level0CompilationJob const &&) = delete;
+  Level0CompilationJob& operator=(Level0CompilationJob &&) = delete;
+
+  bool isHighPrio() const { return HighPrio; }
+  ze_device_handle_t getDevice() { return Program->getDevice(); }
+  Level0ProgramBuild* getBuild() { return Build.get(); }
+  bool isForProgram(Level0Program *Prog) { return Program.get() == Prog; }
+  void signalFinished();
+  bool isSuccessful() const { return Successful; }
+  void waitForFinish();
+
+private:
   std::mutex Mutex;
   std::condition_variable Cond;
 
@@ -251,19 +296,6 @@ class Level0CompilationJob {
   bool HighPrio;
   bool Finished;
   bool Successful;
-
-public:
-  Level0CompilationJob(bool HiP, Level0ProgramSPtr P, Level0ProgramBuildUPtr PB)
-    : Program(P), Build(std::move(PB)),
-      HighPrio(HiP), Finished(false), Successful(false) {}
-  ~Level0CompilationJob() = default;
-  bool isHighPrio() { return HighPrio; }
-  ze_device_handle_t getDevice() { return Program->getDevice(); }
-  Level0ProgramBuild* getBuild() { return Build.get(); }
-  bool isForProgram(Level0Program *P) { return Program.get() == P; }
-  void signalFinished();
-  bool isSuccessful() { return Successful; }
-  void waitForFinish();
 };
 
 typedef std::shared_ptr<Level0CompilationJob> Level0CompilationJobSPtr;
@@ -278,19 +310,16 @@ typedef std::shared_ptr<Level0CompilationJob> Level0CompilationJobSPtr;
 */
 
 class Level0CompilerJobQueue {
-  std::list<Level0CompilationJobSPtr> LowPrioJobs;
-  std::list<Level0CompilationJobSPtr> HighPrioJobs;
-  std::mutex Mutex;
-  std::condition_variable Cond;
-  /// signal to compilationThreads that program is exiting
-  bool ExitRequested;
-
-  Level0CompilationJobSPtr findJob(std::list<Level0CompilationJobSPtr> &Queue,
-                                ze_device_handle_t PreferredDevice);
 
 public:
   Level0CompilerJobQueue() = default;
   ~Level0CompilerJobQueue() = default;
+
+  Level0CompilerJobQueue(Level0CompilerJobQueue const &) = delete;
+  Level0CompilerJobQueue& operator=(Level0CompilerJobQueue const &) = delete;
+  Level0CompilerJobQueue(Level0CompilerJobQueue const &&) = delete;
+  Level0CompilerJobQueue& operator=(Level0CompilerJobQueue &&) = delete;
+
   /// push job into queue
   void pushWork(Level0CompilationJobSPtr Job);
   /**
@@ -309,6 +338,18 @@ public:
   void cancelAllJobsFor(Level0Program *Program);
   /// cancel all jobs & signal an exit
   void clearAndExit();
+
+private:
+  std::list<Level0CompilationJobSPtr> LowPrioJobs;
+  std::list<Level0CompilationJobSPtr> HighPrioJobs;
+  std::mutex Mutex;
+  std::condition_variable Cond;
+  /// signal to compilationThreads that program is exiting
+  bool ExitRequested = false;
+
+  static Level0CompilationJobSPtr findJob(std::list<Level0CompilationJobSPtr> &Queue,
+                                ze_device_handle_t PreferredDevice);
+
 };
 
 
@@ -322,6 +363,22 @@ public:
 *
 */
 class Level0CompilerThread {
+
+public:
+  Level0CompilerThread(Level0CompilerJobQueue* Queue,
+                       ze_device_handle_t PrefDev,
+                       ze_driver_handle_t Drv)
+    : DriverH(Drv), PreferredDeviceH(PrefDev), JobQueue(Queue), ThreadContextH(nullptr) { }
+  ~Level0CompilerThread();
+
+  Level0CompilerThread(Level0CompilerThread const &) = delete;
+  Level0CompilerThread& operator=(Level0CompilerThread const &) = delete;
+  Level0CompilerThread(Level0CompilerThread const &&) = delete;
+  Level0CompilerThread& operator=(Level0CompilerThread &&) = delete;
+
+  bool init();
+
+private:
   ze_driver_handle_t DriverH;
   /// The thread will prefer jobs for this device. This is to avoid thread starvation.
   ze_device_handle_t PreferredDeviceH;
@@ -331,14 +388,6 @@ class Level0CompilerThread {
   /// std::thread runs this method
   void run();
   void compileJob(Level0CompilationJobSPtr Job);
-
-public:
-  Level0CompilerThread(Level0CompilerJobQueue* Queue,
-                       ze_device_handle_t PrefDev,
-                       ze_driver_handle_t Drv)
-    : DriverH(Drv), PreferredDeviceH(PrefDev), JobQueue(Queue), ThreadContextH(nullptr) { }
-  ~Level0CompilerThread();
-  bool init();
 };
 
 /**
@@ -350,15 +399,16 @@ public:
 */
 
 class Level0CompilationJobScheduler {
-  ze_driver_handle_t DriverH = nullptr;
-  std::vector<std::unique_ptr<Level0CompilerThread>> CompilerThreads;
-  std::unique_ptr<Level0CompilerJobQueue> JobQueue;
-
-  void addCompilationJob(Level0CompilationJobSPtr Job);
 
 public:
   Level0CompilationJobScheduler() = default;
   ~Level0CompilationJobScheduler();
+
+  Level0CompilationJobScheduler(Level0CompilationJobScheduler const &) = delete;
+  Level0CompilationJobScheduler& operator=(Level0CompilationJobScheduler const &) = delete;
+  Level0CompilationJobScheduler(Level0CompilationJobScheduler const &&) = delete;
+  Level0CompilationJobScheduler& operator=(Level0CompilationJobScheduler &&) = delete;
+
   bool init(ze_driver_handle_t H, std::vector<ze_device_handle_t> &DevicesH);
   /// cancel all unstarted jobs for this Program
   void cancelAllJobsFor(Level0Program *Program);
@@ -389,8 +439,14 @@ public:
   void createO2Builds(Level0ProgramSPtr Program,
                       bool DeviceSupports64bitBuffers);
 
+private:
+  ze_driver_handle_t DriverH = nullptr;
+  std::vector<std::unique_ptr<Level0CompilerThread>> CompilerThreads;
+  std::unique_ptr<Level0CompilerJobQueue> JobQueue;
+
+  void addCompilationJob(Level0CompilationJobSPtr Job);
 };
 
-} // namespace
+} // namespace pocl
 
-#endif // LEVEL0COMPILATION_HH
+#endif // POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_COMPILATION_HH

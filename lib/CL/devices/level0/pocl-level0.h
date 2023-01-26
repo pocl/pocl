@@ -1,6 +1,6 @@
 /* pocl-level0.h - LevelZero driver callback prototypes
 
-   Copyright (c) 2022 Michal Babej / Intel Finland Oy
+   Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to

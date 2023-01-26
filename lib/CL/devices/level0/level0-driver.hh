@@ -21,11 +21,11 @@
    IN THE SOFTWARE.
 */
 
-#ifndef LEVEL0DRIVER_HH
-#define LEVEL0DRIVER_HH
+#ifndef POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_DRIVER_HH
+#define POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_DRIVER_HH
 
-#include <ze_api.h>
 #include <pocl_cl.h>
+#include <ze_api.h>
 
 #include "level0-compilation.hh"
 
@@ -50,12 +50,31 @@ typedef struct
 #endif
 
 class Level0WorkQueueInterface {
+
 public:
   virtual void pushWork(_cl_command_node *Command) = 0;
   virtual _cl_command_node *getWorkOrWait(bool &ShouldExit) = 0;
+  virtual ~Level0WorkQueueInterface() {};
 };
 
 class Level0Queue {
+
+public:
+  Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
+              ze_command_list_handle_t L, uint64_t *TimestampBuffer,
+              double HostDevRate, uint64_t HostTimeStart,
+              uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
+              bool DeviceHasGOffsets);
+  ~Level0Queue();
+
+  Level0Queue(Level0Queue const &) = delete;
+  Level0Queue& operator=(Level0Queue const &) = delete;
+  Level0Queue(Level0Queue const &&) = delete;
+  Level0Queue& operator=(Level0Queue &&) = delete;
+
+  void runThread();
+
+private:
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
   uint64_t *EventStart = nullptr;
@@ -81,31 +100,23 @@ class Level0Queue {
             size_t SrcOffset, size_t Size);
   void copyRect(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                 pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
-                const size_t *__restrict__ const DstOrigin,
-                const size_t *__restrict__ const SrcOrigin,
-                const size_t *__restrict__ const Region,
-                size_t const DstRowPitch,
-                size_t const DstSlicePitch,
-                size_t const SrcRowPitch,
-                size_t const SrcSlicePitch);
-  void readRect(void *__restrict__ HostVoidPtr,
-                pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
-                const size_t *__restrict__ const BufferOrigin,
-                const size_t *__restrict__ const HostOrigin,
-                const size_t *__restrict__ const Region,
-                size_t const BufferRowPitch,
-                size_t const BufferSlicePitch,
-                size_t const HostRowPitch,
-                size_t const HostSlicePitch);
+                const size_t *__restrict__ DstOrigin,
+                const size_t *__restrict__ SrcOrigin,
+                const size_t *__restrict__ Region, size_t DstRowPitch,
+                size_t DstSlicePitch, size_t SrcRowPitch, size_t SrcSlicePitch);
+  void readRect(void *__restrict__ HostVoidPtr, pocl_mem_identifier *SrcMemId,
+                cl_mem SrcBuf, const size_t *__restrict__ BufferOrigin,
+                const size_t *__restrict__ HostOrigin,
+                const size_t *__restrict__ Region, size_t BufferRowPitch,
+                size_t BufferSlicePitch, size_t HostRowPitch,
+                size_t HostSlicePitch);
   void writeRect(const void *__restrict__ HostVoidPtr,
                  pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                 const size_t *__restrict__ const BufferOrigin,
-                 const size_t *__restrict__ const HostOrigin,
-                 const size_t *__restrict__ const Region,
-                 size_t const BufferRowPitch,
-                 size_t const BufferSlicePitch,
-                 size_t const HostRowPitch,
-                 size_t const HostSlicePitch);
+                 const size_t *__restrict__ BufferOrigin,
+                 const size_t *__restrict__ HostOrigin,
+                 const size_t *__restrict__ Region, size_t BufferRowPitch,
+                 size_t BufferSlicePitch, size_t HostRowPitch,
+                 size_t HostSlicePitch);
   void memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                size_t Size, size_t Offset,
                const void *__restrict__ Pattern,
@@ -115,7 +126,6 @@ class Level0Queue {
   void unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                 mem_mapping_t *map);
 
-  /* copies image to image, on the same device (or same global memory). */
   void copyImageRect(cl_mem SrcImage, cl_mem DstImage,
                      pocl_mem_identifier *SrcMemId,
                      pocl_mem_identifier *DstMemId,
@@ -123,12 +133,6 @@ class Level0Queue {
                      const size_t *DstOrigin,
                      const size_t *Region);
 
-  /* copies a region from host OR device buffer to device image.
-   * clEnqueueCopyBufferToImage: src_mem_id = buffer,
-   *     src_host_ptr = NULL, src_row_pitch = src_slice_pitch = 0
-   * clEnqueueWriteImage: src_mem_id = NULL,
-   *     src_host_ptr = host pointer, src_offset = 0
-   */
   void writeImageRect(cl_mem DstImage,
                       pocl_mem_identifier *DstMemId,
                       const void *__restrict__ src_HostPtr,
@@ -137,12 +141,6 @@ class Level0Queue {
                       size_t SrcRowPitch, size_t SrcSlicePitch,
                       size_t SrcOffset);
 
-  /* copies a region from device image to host or device buffer
-   * clEnqueueCopyImageToBuffer: dst_mem_id = buffer,
-   *     dst_host_ptr = NULL, dst_row_pitch = dst_slice_pitch = 0
-   * clEnqueueReadImage: dst_mem_id = NULL,
-   *     dst_host_ptr = host pointer, dst_offset = 0
-   */
   void readImageRect(cl_mem SrcImage,
                      pocl_mem_identifier *SrcMemId,
                      void *__restrict__ DstHostPtr,
@@ -151,28 +149,25 @@ class Level0Queue {
                      size_t DstRowPitch, size_t DstSlicePitch,
                      size_t DstOffset);
 
-  /* maps the entire image from device to host */
   void mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
                 mem_mapping_t *Map);
 
-  /* unmaps the entire image from host to device */
   void unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
                   mem_mapping_t *Map);
 
-  /* fill image with pattern */
-  void fillImage(cl_mem Image, pocl_mem_identifier *MemId,
-                 const size_t *Origin, const size_t *Region,
-                 cl_uint4 OrigPixel, pixel_t FillPixel,
-                 size_t PixelSize);
+  static void fillImage(cl_mem Image, pocl_mem_identifier *MemId,
+                        const size_t *Origin, const size_t *Region,
+                        cl_uint4 OrigPixel, pixel_t FillPixel,
+                        size_t PixelSize);
 
-  void svmMap(void* Ptr);
-  void svmUnmap(void* Ptr);
+  static void svmMap(void *Ptr);
+  static void svmUnmap(void *Ptr);
   void svmCopy(void* DstPtr, const void* SrcPtr, size_t Size);
   void svmFill(void *DstPtr, size_t Size, void* Pattern, size_t PatternSize);
 
-  bool setupKernelArgs(ze_module_handle_t ModuleH, ze_kernel_handle_t KernelH,
-                       cl_device_id Dev, unsigned DeviceI,
-                       _cl_command_run *RunCmd);
+  static bool setupKernelArgs(ze_module_handle_t ModuleH,
+                              ze_kernel_handle_t KernelH, cl_device_id Dev,
+                              unsigned DeviceI, _cl_command_run *RunCmd);
   void runWithOffsets(struct pocl_context *PoclCtx, ze_kernel_handle_t KernelH);
   void run(_cl_command_node *Cmd);
 
@@ -181,49 +176,82 @@ class Level0Queue {
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                          size_t Offset, size_t Size);
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
-                         size_t Origin[3], size_t Region[3],
+                         const size_t Origin[3], const size_t Region[3],
                          size_t RowPitch, size_t SlicePitch);
-  void calculateEventTimes(cl_event Event, uint64_t Start, uint64_t Finish);
+  void calculateEventTimes(cl_event Event, uint64_t Start,
+                           uint64_t Finish) const;
 
-public:
-  Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L, uint64_t *TimestampBuffer,
-              double HostDevRate, uint64_t HostTimeStart,
-              uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
-              bool DeviceHasGOffsets);
-  ~Level0Queue();
-
-  void runThread();
 };
 
 class Level0QueueGroup : public Level0WorkQueueInterface {
-  std::vector<std::unique_ptr<Level0Queue>> Queues;
-
-  std::condition_variable Cond __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
-  std::mutex Mutex  __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
-
-  std::queue<_cl_command_node *> WorkQueue __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
-  bool ThreadExitRequested;
-  uint64_t *TimeStampBuffer;
-
 
 public:
-  Level0QueueGroup(){};
-  ~Level0QueueGroup();
+  Level0QueueGroup() {};
+  ~Level0QueueGroup() override;
+
+  Level0QueueGroup(Level0QueueGroup const &) = delete;
+  Level0QueueGroup& operator=(Level0QueueGroup const &) = delete;
+  Level0QueueGroup(Level0QueueGroup const &&) = delete;
+  Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
+
   bool init(unsigned Ordinal, unsigned Count, ze_context_handle_t ContextH,
             ze_device_handle_t DeviceH, uint64_t *Buffer,
             uint64_t HostTimingStart, uint64_t DeviceTimingStart,
             double HostDeviceRate, uint32_t_3 DeviceMaxWGs,
             bool DeviceHasGOffsets);
 
-  virtual void pushWork(_cl_command_node *Command);
-  virtual _cl_command_node *getWorkOrWait(bool &ShouldExit);
+  void pushWork(_cl_command_node *Command) override;
+  _cl_command_node *getWorkOrWait(bool &ShouldExit) override;
+
+private:
+  std::vector<std::unique_ptr<Level0Queue>> Queues;
+
+  std::condition_variable Cond __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
+  std::mutex Mutex  __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
+
+  std::queue<_cl_command_node *> WorkQueue __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
+  bool ThreadExitRequested = false;
+  uint64_t *TimeStampBuffer = nullptr;
 };
 
 
 class Level0Driver;
 
 class Level0Device {
+
+public:
+  Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
+               ze_context_handle_t ContextH,
+               cl_device_id dev, const char *Parameters);
+  ~Level0Device();
+
+  Level0Device(Level0Device const &) = delete;
+  Level0Device& operator=(Level0Device const &) = delete;
+  Level0Device(Level0Device const &&) = delete;
+  Level0Device& operator=(Level0Device &&) = delete;
+
+  void pushCommand(_cl_command_node *Command);
+
+  void *allocSharedMem(uint64_t Size);
+  void *allocDeviceMem(uint64_t Size);
+  void freeMem(void *Ptr);
+
+  ze_image_handle_t allocImage(cl_channel_type ChType,
+                               cl_channel_order ChOrder,
+                               cl_mem_object_type ImgType,
+                               cl_mem_flags ImgFlags, size_t Width,
+                               size_t Height, size_t Depth);
+  static void freeImage(ze_image_handle_t ImageH);
+
+  ze_sampler_handle_t allocSampler(cl_addressing_mode AddrMode,
+                                   cl_filter_mode FilterMode,
+                                   cl_bool NormalizedCoords);
+  static void freeSampler(ze_sampler_handle_t SamplerH);
+
+  int createProgram(cl_program Program, cl_uint DeviceI);
+  int freeProgram(cl_program Program, cl_uint DeviceI);
+
+private:
   Level0QueueGroup CopyQueues;
   Level0QueueGroup ComputeQueues;
   // TODO check reliability
@@ -247,38 +275,33 @@ class Level0Device {
   uint32_t GlobalMemOrd = UINT32_MAX;
   uint64_t *CopyTimestamps;
   uint64_t *ComputeTimestamps;
-
-public:
-  Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-               ze_context_handle_t ContextH,
-               cl_device_id dev, const char *Parameters);
-  ~Level0Device();
-
-  void pushCommand(_cl_command_node *Command);
-
-  void *allocSharedMem(uint64_t Size);
-  void *allocDeviceMem(uint64_t Size);
-  void freeMem(void *Ptr);
-
-  ze_image_handle_t allocImage(cl_channel_type ChType,
-                               cl_channel_order ChOrder,
-                               cl_mem_object_type ImgType,
-                               cl_mem_flags ImgFlags, size_t Width,
-                               size_t Height, size_t Depth);
-  void freeImage(ze_image_handle_t ImageH);
-
-  ze_sampler_handle_t allocSampler(cl_addressing_mode AddrMode,
-                                   cl_filter_mode FilterMode,
-                                   cl_bool NormalizedCoords);
-  void freeSampler(ze_sampler_handle_t SamplerH);
-
-  int createProgram(cl_program Program, cl_uint DeviceI);
-  int freeProgram(cl_program Program, cl_uint DeviceI);
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
 
 class Level0Driver {
+
+public:
+  Level0Driver();
+  ~Level0Driver();
+
+  Level0Driver(Level0Driver const &) = delete;
+  Level0Driver& operator=(Level0Driver const &) = delete;
+  Level0Driver(Level0Driver const &&) = delete;
+  Level0Driver& operator=(Level0Driver &&) = delete;
+
+  unsigned getNumDevices() { return Devices.size(); }
+  const ze_driver_uuid_t &getUUID() { return UUID; }
+  uint32_t getVersion() const { return Version; }
+  Level0Device *createDevice(unsigned Index, cl_device_id Dev, const char *Params);
+  void releaseDevice(Level0Device *Dev);
+  bool hasExtension(const char *Name) {
+    return ExtensionSet.find(Name) != ExtensionSet.end();
+  }
+  bool empty() const { return NumDevices == 0; }
+  Level0CompilationJobScheduler &getJobSched() { return JobSched; }
+
+private:
   ze_driver_handle_t DriverH = nullptr;
   std::vector<ze_device_handle_t> DeviceHandles;
   std::set<std::string> ExtensionSet;
@@ -289,22 +312,8 @@ class Level0Driver {
   uint32_t Version = 0;
   unsigned NumDevices = 0;
   Level0CompilationJobScheduler JobSched;
-
-public:
-  Level0Driver();
-  ~Level0Driver();
-  unsigned getNumDevices() { return Devices.size(); }
-  const ze_driver_uuid_t &getUUID() { return UUID; }
-  uint32_t getVersion() { return Version; }
-  Level0Device *createDevice(unsigned Index, cl_device_id Dev, const char *Params);
-  void releaseDevice(Level0Device *Dev);
-  bool hasExtension(const char *Name) {
-    return ExtensionSet.find(Name) != ExtensionSet.end();
-  }
-  bool empty() { return NumDevices == 0; }
-  Level0CompilationJobScheduler &getJobSched() { return JobSched; }
 };
 
 } // namespace pocl
 
-#endif // LEVEL0DRIVER_HH
+#endif // POCL_LIB_CL_DEVICES_LEVEL0_LEVEL0_DRIVER_HH
