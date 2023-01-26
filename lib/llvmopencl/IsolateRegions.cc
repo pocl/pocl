@@ -103,7 +103,7 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
   llvm::BasicBlock *exit = R->getExit();
   if (exit == NULL) return false;
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
-      pocl::WorkitemHandlerChooser::POCL_WIH_CBS)
+      pocl::WorkitemHandlerChooser::POCL_WIH_CBS && Workgroup::hasWorkgroupBarriers(*exit->getParent()))
     return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
