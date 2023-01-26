@@ -11,6 +11,11 @@ Notable User Facing Changes
   subgroup that always executes the whole X-dimension's WIs.
 - Added initial (incomplete) support for 
   cl_intel_required_subgroup_size for CPUs
+- Pulled in alternative work-group function mode for non-SPMD from hipSYCL:
+  Continuation-based synchronization is slightly more general than POCL's
+  current kernel compiler, but allows for fewer hand-rolled optimizations.
+  CBS is expected to work for kernels that POCL's current kernel compiler
+  does not support. For most other kernels it is expected to perform slightly worse.
 
 3.1 December 2022
 =================
