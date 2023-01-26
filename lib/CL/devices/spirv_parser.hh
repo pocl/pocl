@@ -1,4 +1,7 @@
-/*
+/* spirv_parser.hh - interface to a light parser for SPIR-V binaries. Only
+ * parses enough to get kernel function signatures and their argument
+ * metadata (types, sizes, AS..)
+ *
  * Copyright (c) 2021-22 CHIP-SPV developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,6 +25,8 @@
 
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
+
+#include "pocl_export.h"
 
 #include <map>
 #include <memory>
@@ -85,8 +90,8 @@ struct OCLFuncInfo {
 typedef std::map<std::string, std::shared_ptr<OCLFuncInfo>>
     OpenCLFunctionInfoMap;
 
-bool filterSPIRV(const char *Bytes, size_t NumBytes, std::string &Dst);
-bool parseSPIR(int32_t *Stream, size_t NumWords,
+POCL_EXPORT
+bool poclParseSPIRV(int32_t *Stream, size_t NumWords,
                OpenCLFunctionInfoMap &FuncInfoMap);
 
 #endif

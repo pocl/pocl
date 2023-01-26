@@ -1,4 +1,7 @@
-/*
+/* spirv_parser.cc - a light parser for SPIR-V binaries. Only parses enough to
+ * get kernel function signatures and their argument metadata (types, sizes,
+ * address spaces..)
+ *
  * Copyright (c) 2021-22 CHIP-SPV developers
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -721,7 +724,7 @@ private:
   }
 };
 
-bool parseSPIR(int32_t *Stream, size_t NumWords,
+bool poclParseSPIRV(int32_t *Stream, size_t NumWords,
                OpenCLFunctionInfoMap &Output) {
   SPIRVmodule Mod;
   if (!Mod.parseSPIRV(Stream, NumWords))

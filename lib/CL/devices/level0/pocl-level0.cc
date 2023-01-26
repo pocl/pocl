@@ -668,7 +668,7 @@ int pocl_level0_setup_metadata(cl_device_id device, cl_program program,
   int32_t *Stream = (int32_t *)program->program_il;
   size_t StreamSize = program->program_il_size / 4;
   OpenCLFunctionInfoMap KernelInfoMap;
-  parseSPIR(Stream, StreamSize, KernelInfoMap);
+  poclParseSPIRV(Stream, StreamSize, KernelInfoMap);
 
   if (NameCount != KernelInfoMap.size()) {
     POCL_MSG_ERR("ZE reports %u kernel names, "

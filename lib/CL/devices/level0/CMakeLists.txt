@@ -25,7 +25,6 @@
 
 add_pocl_device_library(pocl-devices-level0
   pocl-level0.cc pocl-level0.h
-  spirv.cc  spirv.hh  spirv_parser.hh
   level0-compilation.cc level0-compilation.hh
   level0-driver.cc level0-driver.hh)
 

@@ -149,6 +149,7 @@ set(POCL_DEVICES_SOURCES
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   builtin_kernels.cc builtin_kernels.hh
+  spirv.hh  spirv_parser.hh  spirv_parser.cc
   cpuinfo.c  cpuinfo.h)
 
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
