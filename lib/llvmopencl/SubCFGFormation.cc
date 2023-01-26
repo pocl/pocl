@@ -289,6 +289,31 @@ llvm::Value *getLoadForGlobalVariable(llvm::Function &F,
       GV);
 }
 
+// init local id to 0
+void insertLocalIdInit(llvm::BasicBlock *Entry) {
+
+  llvm::IRBuilder<> Builder(Entry, Entry->getFirstInsertionPt());
+
+  llvm::Module *M = Entry->getParent()->getParent();
+
+  unsigned long address_bits;
+  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+
+  llvm::Type *SizeT = llvm::IntegerType::get(M->getContext(), address_bits);
+
+  llvm::GlobalVariable *GVX = M->getGlobalVariable(LocalIdGlobalNameX);
+  if (GVX != NULL)
+    Builder.CreateStore(llvm::ConstantInt::getNullValue(SizeT), GVX);
+
+  llvm::GlobalVariable *GVY = M->getGlobalVariable(LocalIdGlobalNameY);
+  if (GVY != NULL)
+    Builder.CreateStore(llvm::ConstantInt::getNullValue(SizeT), GVY);
+
+  llvm::GlobalVariable *GVZ = M->getGlobalVariable(LocalIdGlobalNameZ);
+  if (GVZ != NULL)
+    Builder.CreateStore(llvm::ConstantInt::getNullValue(SizeT), GVZ);
+}
+
 // get the wg size values for the loop bounds
 llvm::SmallVector<llvm::Value *, 3>
 getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<std::size_t> LocalSizes,
@@ -325,7 +350,7 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
   // from innermost to outermost: create loops around the LastHeader and use
   // AfterBB as dummy exit to be replaced by the outer latch later
   llvm::SmallVector<llvm::PHINode *, 3> IndVars;
-  for (int D = Dim - 1; D >= 0; --D) {
+  for (int D = 0; D < Dim; ++D) {
     const std::string Suffix =
         (llvm::Twine{DimName[D]} + ".subcfg." + llvm::Twine{EntryId}).str();
 
@@ -358,13 +383,11 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
     LastHeader = Header;
   }
 
-  std::reverse(Latches.begin(), Latches.end());
-  std::reverse(IndVars.begin(), IndVars.end());
 
   for (size_t D = 1; D < Dim; ++D) {
-    Latches[D]->getTerminator()->replaceSuccessorWith(AfterBB, Latches[D - 1]);
-    IndVars[D]->replaceIncomingBlockWith(&F.getEntryBlock(),
-                                         IndVars[D - 1]->getParent());
+    Latches[D - 1]->getTerminator()->replaceSuccessorWith(AfterBB, Latches[D]);
+    IndVars[D - 1]->replaceIncomingBlockWith(&F.getEntryBlock(),
+                                         IndVars[D]->getParent());
   }
 
   auto *MDWorkItemLoop = llvm::MDNode::get(
@@ -372,26 +395,27 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
       {llvm::MDString::get(F.getContext(), MDKind::WorkItemLoop)});
   auto *LoopID = llvm::makePostTransformationMetadata(F.getContext(), nullptr,
                                                       {}, {MDWorkItemLoop});
-  Latches[Dim - 1]->getTerminator()->setMetadata("llvm.loop", LoopID);
-  VMap[AfterBB] = Latches[Dim - 1];
+  Latches[0]->getTerminator()->setMetadata("llvm.loop", LoopID);
+  VMap[AfterBB] = Latches[0];
 
   // add contiguous ind var calculation to load block
-  Builder.SetInsertPoint(IndVars[Dim - 1]->getParent(),
-                         ++IndVars[Dim - 1]->getIterator());
-  llvm::Value *Idx = IndVars[0];
-  for (size_t D = 1; D < Dim; ++D) {
+  Builder.SetInsertPoint(IndVars[0]->getParent(),
+                         ++IndVars[0]->getIterator());
+  llvm::Value *Idx = IndVars[Dim - 1];
+  for (size_t D = Dim - 1; D > 0; --D) {
+    size_t DD = D - 1;
     const std::string Suffix =
-        (llvm::Twine{DimName[D]} + ".subcfg." + llvm::Twine{EntryId}).str();
+        (llvm::Twine{DimName[DD]} + ".subcfg." + llvm::Twine{EntryId}).str();
 
-    Idx = Builder.CreateMul(Idx, LocalSize[D], "idx.mul." + Suffix, true);
-    Idx = Builder.CreateAdd(IndVars[D], Idx, "idx.add." + Suffix, true);
+    Idx = Builder.CreateMul(Idx, LocalSize[DD], "idx.mul." + Suffix, true);
+    Idx = Builder.CreateAdd(IndVars[DD], Idx, "idx.add." + Suffix, true);
 
-    VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[D])] = IndVars[D];
+    VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[DD])] = IndVars[DD];
   }
 
   // todo: replace `ret` with branch to innermost latch
 
-  VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[0])] = IndVars[0];
+  VMap[getLoadForGlobalVariable(F, LocalIdGlobalNames[Dim - 1])] = IndVars[Dim - 1];
 
   VMap[ContiguousIdx] = Idx;
   ContiguousIdx = Idx;
@@ -643,7 +667,7 @@ void SubCFG::replicate(
   removeDeadPhiBlocks(BlocksToRemap);
 
   EntryBB_ = PreHeader_;
-  ExitBB_ = Latches[0];
+  ExitBB_ = Latches[Dim - 1];
   ContIdx_ = Idx;
 }
 
@@ -1388,6 +1412,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   const size_t ReqdArrayElements = pocl::NumArrayElements; // todo: specialize
 
   auto *Entry = &F.getEntryBlock();
+  insertLocalIdInit(Entry);
 
   std::vector<llvm::BasicBlock *> Blocks;
   Blocks.reserve(std::distance(F.begin(), F.end()));
