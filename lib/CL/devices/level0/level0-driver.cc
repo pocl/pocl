@@ -1340,7 +1340,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       break;
     default:
       ClDev->type = CL_DEVICE_TYPE_CUSTOM;
-      break;
+      // we don't know how to handle Custom devices yet
+      // returning here leaves ClDev->available = CL_FALSE;
+      return;
     }
 
     // ClDev->vendor_id = deviceProperties.vendorId;
