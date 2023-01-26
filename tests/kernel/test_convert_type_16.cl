@@ -4,11 +4,7 @@
    $ python3 test_convert_type.py > test_convert_type.cl
 */
 
-#if __clang_major__ == 3 && __clang_minor__ < 4
-typedef const char* string;     /* for backward compatibility */
-#else
-typedef constant char* string;
-#endif
+#include "common.cl"
 
 constant char char_values[6] = { 0, 1, CHAR_MIN, CHAR_MAX, CHAR_MIN / 2, CHAR_MAX / 2 };
 constant uchar uchar_values[6] = { 0, 1, 0, UCHAR_MAX, 0 / 2, UCHAR_MAX / 2 };
