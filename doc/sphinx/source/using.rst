@@ -342,6 +342,12 @@ pocl.
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
+    
+    cbs    -- Use continuation-based synchronization to execute work-items
+              on non-SPMD devices.
+              CBS is expected to work for kernels that 'loops' does not support.
+              For most other kernels it is expected to perform slightly worse.
+              Also enables the LLVM LoopVectorizer.
 
 - **POCL_WORK_GROUP_SPECIALIZATION**
 
