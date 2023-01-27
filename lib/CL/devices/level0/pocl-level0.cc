@@ -315,6 +315,9 @@ compileProgramBcToSpv(cl_program program, cl_uint device_i,
   // generate program.spv
   CompilationArgs.clear();
   CompilationArgs.push_back(LLVM_SPIRV);
+#ifdef LLVM_OPAQUE_POINTERS
+  CompilationArgs.push_back("--opaque-pointers");
+#endif
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramSpvPathTemp);
   CompilationArgs.push_back(ProgramBcPathTemp);
