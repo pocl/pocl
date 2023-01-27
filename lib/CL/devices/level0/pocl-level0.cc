@@ -137,6 +137,8 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *ops) {
 
   ops->create_sampler = pocl_level0_create_sampler;
   ops->free_sampler = pocl_level0_free_sampler;
+
+  ops->get_device_info_ext = pocl_level0_get_device_info_ext;
 }
 
 
@@ -1181,4 +1183,26 @@ void *pocl_level0_svm_alloc(cl_device_id dev, cl_svm_mem_flags flags,
 {
   Level0Device *Device = (Level0Device *)dev->data;
   return Device->allocSharedMem(size);
+}
+
+cl_int pocl_level0_get_device_info_ext(cl_device_id dev,
+                                       cl_device_info param_name,
+                                       size_t param_value_size,
+                                       void *param_value,
+                                       size_t *param_value_size_ret) {
+  Level0Device *Device = (Level0Device *)dev->data;
+  const std::vector<size_t> &SupportedSGSizes =
+      Device->getSupportedSubgroupSizes();
+
+  switch (param_name) {
+  case CL_DEVICE_SUB_GROUP_SIZES_INTEL: {
+    if (SupportedSGSizes.size() > 0)
+      POCL_RETURN_GETINFO_ARRAY(size_t, SupportedSGSizes.size(),
+                                SupportedSGSizes.data());
+    else
+      POCL_RETURN_GETINFO(size_t, 0);
+  }
+  default:
+    return CL_INVALID_VALUE;
+  }
 }

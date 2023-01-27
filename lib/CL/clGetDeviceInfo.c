@@ -317,12 +317,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       POCL_RETURN_GETINFO_STR ("");
   case CL_DEVICE_MAX_NUM_SUB_GROUPS:
     POCL_RETURN_GETINFO (cl_uint, device->max_num_sub_groups);
-  case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
-    if (device->num_subgroup_sizes > 0)
-      POCL_RETURN_GETINFO_ARRAY (size_t, device->num_subgroup_sizes,
-                                 device->subgroup_sizes);
-    else
-      POCL_RETURN_GETINFO (size_t, 0);
   case CL_DEVICE_SUB_GROUP_INDEPENDENT_FORWARD_PROGRESS:
     POCL_RETURN_GETINFO (cl_bool,
                          device->sub_group_independent_forward_progress);

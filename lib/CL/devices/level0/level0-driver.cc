@@ -1418,11 +1418,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       }
       ClDev->max_num_sub_groups = Max;
 
-      ClDev->num_subgroup_sizes = ComputeProperties.numSubGroupSizes;
-      ClDev->subgroup_sizes = (size_t *)calloc(
-          ComputeProperties.numSubGroupSizes, sizeof(size_t));
+      SupportedSubgroupSizes.resize(ComputeProperties.numSubGroupSizes);
       for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
-        ClDev->subgroup_sizes[i] = ComputeProperties.subGroupSizes[i];
+        SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
       }
     }
   }

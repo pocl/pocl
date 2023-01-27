@@ -250,6 +250,9 @@ public:
 
   int createProgram(cl_program Program, cl_uint DeviceI);
   int freeProgram(cl_program Program, cl_uint DeviceI);
+  const std::vector<size_t> &getSupportedSubgroupSizes() {
+    return SupportedSubgroupSizes;
+  }
 
 private:
   Level0QueueGroup CopyQueues;
@@ -275,6 +278,7 @@ private:
   uint32_t GlobalMemOrd = UINT32_MAX;
   uint64_t *CopyTimestamps;
   uint64_t *ComputeTimestamps;
+  std::vector<size_t> SupportedSubgroupSizes;
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;

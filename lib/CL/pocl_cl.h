@@ -1116,8 +1116,6 @@ struct _cl_device_id {
 
   cl_uint max_num_sub_groups;
   cl_bool sub_group_independent_forward_progress;
-  cl_uint num_subgroup_sizes;
-  size_t *subgroup_sizes;
 
   /* image formats supported by the device, per image type */
   const cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
