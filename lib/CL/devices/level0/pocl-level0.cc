@@ -572,7 +572,6 @@ int pocl_level0_link_program(cl_program program, cl_uint device_i,
                              cl_uint num_input_programs,
                              const cl_program *input_programs,
                              int create_library) {
-#ifdef SPIRV_LINK
   cl_device_id dev = program->devices[device_i];
   Level0Device *Device = (Level0Device *)dev->data;
   char ProgramBcPath[POCL_FILENAME_LENGTH];
@@ -628,11 +627,6 @@ int pocl_level0_link_program(cl_program program, cl_uint device_i,
     assert(program->data[device_i] == nullptr);
     return CL_SUCCESS;
   }
-
-#else
-  POCL_RETURN_ERROR_ON(1, CL_LINK_PROGRAM_FAILURE,
-                       "pocl-level0 was compiled without spirv-link\n");
-#endif
 }
 
 int pocl_level0_free_program(cl_device_id device, cl_program program,
