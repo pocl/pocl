@@ -59,68 +59,68 @@ endforeach()
 #######################################################################
 
 
-add_test_pocl(NAME "runtime/clGetDeviceInfo" COMMAND "test_clGetDeviceInfo" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clGetDeviceInfo" COMMAND "test_clGetDeviceInfo" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/clEnqueueNativeKernel" COMMAND "test_clEnqueueNativeKernel")
 
-add_test_pocl(NAME "runtime/clGetEventInfo" COMMAND "test_clGetEventInfo" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clGetEventInfo" COMMAND "test_clGetEventInfo" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/clCreateProgramWithBinary" COMMAND "test_clCreateProgramWithBinary" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clCreateProgramWithBinary" COMMAND "test_clCreateProgramWithBinary" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/clBuildProgram"
               WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
               COMMAND "test_clBuildProgram"
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/test_kernel_cache_includes"
               WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
               COMMAND "test_kernel_cache_includes"
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/clFinish" COMMAND "test_clFinish" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clFinish" COMMAND "test_clFinish" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_event_cycle" COMMAND "test_event_cycle" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_event_cycle" COMMAND "test_event_cycle" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_link_error" COMMAND "test_link_error" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_link_error" COMMAND "test_link_error" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy-write-buffer" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy-write-buffer" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_fill-buffer" COMMAND "test_fill-buffer" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_fill-buffer" COMMAND "test_fill-buffer" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/test_buffer-image-copy" COMMAND "test_buffer-image-copy")
 
-add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/clGetKernelArgInfo" COMMAND "test_clGetKernelArgInfo" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clGetKernelArgInfo" COMMAND "test_clGetKernelArgInfo" WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "runtime/clSetEventCallback"
               COMMAND "test_clSetEventCallback"
               EXPECTED_OUTPUT "test_clSetEventCallback_expout.txt"
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSupportedImageFormats")
 
-add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
 
-add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_event_double_wait" COMMAND  "test_event_double_wait" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_event_double_wait" COMMAND  "test_event_double_wait" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/test_buffer_migration" COMMAND "test_buffer_migration")
 
 add_test(NAME "runtime/test_buffer_ping_pong" COMMAND "test_buffer_ping_pong")
 
-add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clSetMemObjectDestructorCallback" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clSetMemObjectDestructorCallback" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/test_cl_pocl_content_size" COMMAND "test_cl_pocl_content_size")
 
-add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_enqueue" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "runtime/test_deviceside_enqueue" COMMAND "test_deviceside_enqueue" WORKITEM_HANDLER "loopvec")
 
 add_test(NAME "runtime/test_command_buffer" COMMAND "test_command_buffer")
 

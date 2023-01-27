@@ -31,10 +31,10 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loops")
-add_test_pocl(NAME "tcele/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "tce/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
+add_test_pocl(NAME "tcele/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "almaif/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "almaif/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
 
 #AT_SETUP([Half-precision floats on ttasim])
 set_tests_properties( "tce/fp16"

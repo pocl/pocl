@@ -33,7 +33,7 @@ add_executable("spirv_printf" printf.cc)
 
 target_link_libraries("spirv_printf" ${POCLU_LINK_OPTIONS})
 
-add_test_pocl(NAME "spirv/printf" COMMAND "spirv_printf" WORKITEM_HANDLER "loops")
+add_test_pocl(NAME "spirv/printf" COMMAND "spirv_printf" WORKITEM_HANDLER "loopvec")
 
 set_tests_properties( "spirv/printf"
   PROPERTIES
