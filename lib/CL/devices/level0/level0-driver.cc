@@ -889,10 +889,8 @@ void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
 #if 0
             // debug code
             POCL_MSG_PRINT_LEVEL0(
-               "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u |||
-                  LOCAL X %u Y "
-                              "%u Z %u\n",
-                              TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX,
+               "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u ||| LOCAL X %u Y "
+               "%u Z %u\n", TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX,
                CurrentOffsetY, CurrentOffsetZ, CurrentWGsX, CurrentWGsY,
                CurrentWGsZ);
 #endif
@@ -1279,7 +1277,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->compiler_available = CL_TRUE;
     ClDev->linker_available = CL_TRUE;
     ClDev->has_own_timer = CL_TRUE;
-    ClDev->disable_pocl_opencl_headers = CL_TRUE;
+    ClDev->use_only_clang_opencl_headers = CL_TRUE;
 
     // TODO the values here are copied from the Intel NEO.
     // we need a way to figure out the suitable values for

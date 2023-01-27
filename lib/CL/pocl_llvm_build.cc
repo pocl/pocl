@@ -286,7 +286,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
-  if (device->disable_pocl_opencl_headers == CL_FALSE) {
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
     ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
     ss << "-D__USE_CLANG_OPENCL_C_H ";
   }
@@ -534,14 +534,14 @@ int pocl_llvm_build_program(cl_program program,
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
   PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
-  if (device->disable_pocl_opencl_headers == CL_FALSE) {
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
     po.Includes.push_back(PoclTypesH);
     po.Includes.push_back(BuiltinRenamesH);
   }
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
-  if (device->disable_pocl_opencl_headers == CL_FALSE) {
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
     po.Includes.push_back(KernelH);
   }
   clang::TargetOptions &ta = pocl_build.getTargetOpts();

@@ -21,8 +21,8 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_LEVEL0_H
-#define POCL_LEVEL0_H
+#ifndef POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H
+#define POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H
 
 #include "pocl_cl.h"
 
@@ -39,4 +39,4 @@ extern "C"
 }
 #endif
 
-#endif /* POCL_LEVEL0_H */
+#endif // POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H
