@@ -43,7 +43,7 @@ if(NOT ENABLE_ANYSAN)
 endif()
 
 
-set(VARIANTS "loops;cbs")
+set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
 set_tests_properties( "examples/scalarwave_${VARIANT}"
   PROPERTIES

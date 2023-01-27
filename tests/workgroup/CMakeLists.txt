@@ -37,7 +37,7 @@ target_link_libraries("run_kernel" ${POCLU_LINK_OPTIONS})
 add_test_pocl(NAME "workgroup/different_implicit_barrier_injection_scenarios"
               EXPECTED_OUTPUT "implicit_barriers_1_2_1_1.stdout"
               COMMAND "run_kernel" "implicit_barriers.cl" 1 2 1 1
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "workgroup/unbarriered_for_loops"
               EXPECTED_OUTPUT "forloops_2_2_1_1.stdout"
@@ -71,7 +71,7 @@ add_test_pocl(NAME "workgroup/cond_barrier_in_var_for"
 # Cases which are not dependent on the work-group or work-item
 # execution (printout) order or the method (use the default method
 # for the device).
-set(VARIANTS "loops;cbs")
+set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
   set_tests_properties(
     "workgroup/unbarriered_for_loops_${VARIANT}"
@@ -100,19 +100,19 @@ add_test_pocl(NAME "workgroup/unconditional_barriers"
               EXPECTED_OUTPUT "basic_barriers_2_2_2_2.stdout"
               COMMAND "run_kernel" "basic_barriers.cl" 2 2 2 2)
 
-add_test_pocl(NAME "workgroup/conditional_barrier_loops"
-              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loops.stdout"
+add_test_pocl(NAME "workgroup/conditional_barrier_loopvec"
+              EXPECTED_OUTPUT "cond_barriers_1_2_1_1_loopvec.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 add_test_pocl(NAME "workgroup/conditional_barrier_cbs"
               EXPECTED_OUTPUT "cond_barriers_1_2_1_1_cbs.stdout"
               COMMAND "run_kernel" "conditional_barriers.cl" 1 2 1 1
               WORKITEM_HANDLER "cbs")
 
-add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
+add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
               EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
               COMMAND "run_kernel" "outerlooppar.cl" 2 2 1 1
-              WORKITEM_HANDLER "loops")
+              WORKITEM_HANDLER "loopvec")
 
 add_test_pocl(NAME "workgroup/loop_with_two_paths_to_the_latch"
               EXPECTED_OUTPUT "for_bug_1_2_1_1.stdout"
@@ -142,11 +142,11 @@ add_test_pocl(NAME "workgroup/range_md_large_grid"
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
-set(VARIANTS "loops;cbs")
+set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
   set(TEST_LIST     "workgroup/unconditional_barriers_${VARIANT}"
   "workgroup/conditional_barrier_${VARIANT}"
-  "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
+  "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
   "workgroup/loop_with_two_paths_to_the_latch_${VARIANT}"
   "workgroup/b_loop_with_two_latches_${VARIANT}"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_${VARIANT}"
@@ -166,29 +166,29 @@ foreach(VARIANT ${VARIANTS})
 endforeach()
 
 set_property(TEST
-  "workgroup/unconditional_barriers_loops"
-  "workgroup/unbarriered_for_loops_loops"
-  "workgroup/barriered_for_loops_loops"
-  "workgroup/conditional_barrier_loops"
-  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loops"
-  "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
-  "workgroup/loop_with_two_paths_to_the_latch_loops"
-  "workgroup/b_loop_with_two_latches_loops"
-  "workgroup/workgroup_sizes_work_items_get_wrong_ids_loops"
-  "workgroup/issue_548_convergent_propagation_loops"
+  "workgroup/unconditional_barriers_loopvec"
+  "workgroup/unbarriered_for_loops_loopvec"
+  "workgroup/barriered_for_loops_loopvec"
+  "workgroup/conditional_barrier_loopvec"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loopvec"
+  "workgroup/forcing_horizontal_parallelization_to_some_outer_loopvec"
+  "workgroup/loop_with_two_paths_to_the_latch_loopvec"
+  "workgroup/b_loop_with_two_latches_loopvec"
+  "workgroup/workgroup_sizes_work_items_get_wrong_ids_loopvec"
+  "workgroup/issue_548_convergent_propagation_loopvec"
   "workgroup/different_implicit_barrier_injection_scenarios"
   "workgroup/cond_barrier_in_var_for"
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST
-  "workgroup/unbarriered_for_loops_loops"
-  "workgroup/barriered_for_loops_loops"
-  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loops"
+  "workgroup/unbarriered_for_loops_loopvec"
+  "workgroup/barriered_for_loops_loopvec"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loopvec"
   APPEND PROPERTY LABELS "proxy")
 
 set_property(TEST
-  "workgroup/unbarriered_for_loops_loops"
-  "workgroup/barriered_for_loops_loops"
-  "workgroup/switch_case_loops"
-  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loops"
+  "workgroup/unbarriered_for_loops_loopvec"
+  "workgroup/barriered_for_loops_loopvec"
+  "workgroup/switch_case_loopvec"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_loopvec"
   APPEND PROPERTY LABELS "vulkan")

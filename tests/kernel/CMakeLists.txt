@@ -65,7 +65,7 @@ if(NOT ENABLE_ANYSAN)
     PASS_REGULAR_EXPRESSION "OK\n")
 endif()
 
-set(VARIANTS "loops;cbs")
+set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
   set_tests_properties( "kernel/test_as_type_${VARIANT}" "kernel/test_bitselect_${VARIANT}"
     "kernel/test_convert_type_1_${VARIANT}" "kernel/test_convert_type_2_${VARIANT}" "kernel/test_convert_type_4_${VARIANT}"
@@ -317,73 +317,73 @@ endforeach()
 # Label tests that work with CUDA backend
 if(ENABLE_CUDA)
 set_property(TEST
-  "kernel/test_min_max_loops"
-  "kernel/test_ldexp_loops"
-  "kernel/test_length_distance_loops"
-  "kernel/test_fmin_fmax_fma_loops"
-  "kernel/test_frexp_modf_loops"
-  "kernel/test_convert_sat_regression_loops"
-  "kernel/test_short16_loops"
-  "kernel/test_shuffle_char_loops"
-  "kernel/test_shuffle_short_loops"
-  "kernel/test_shuffle_ushort_loops"
-  "kernel/test_shuffle_int_loops"
-  "kernel/test_shuffle_uint_loops"
-  "kernel/test_shuffle_float_loops"
-  "kernel/test_shuffle_long_loops"
-  "kernel/test_shuffle_ulong_loops"
-  "kernel/test_shuffle_double_loops"
-  "kernel/test_as_type_loops"
-  "kernel/test_sizeof_uint_loops"
+  "kernel/test_min_max_loopvec"
+  "kernel/test_ldexp_loopvec"
+  "kernel/test_length_distance_loopvec"
+  "kernel/test_fmin_fmax_fma_loopvec"
+  "kernel/test_frexp_modf_loopvec"
+  "kernel/test_convert_sat_regression_loopvec"
+  "kernel/test_short16_loopvec"
+  "kernel/test_shuffle_char_loopvec"
+  "kernel/test_shuffle_short_loopvec"
+  "kernel/test_shuffle_ushort_loopvec"
+  "kernel/test_shuffle_int_loopvec"
+  "kernel/test_shuffle_uint_loopvec"
+  "kernel/test_shuffle_float_loopvec"
+  "kernel/test_shuffle_long_loopvec"
+  "kernel/test_shuffle_ulong_loopvec"
+  "kernel/test_shuffle_double_loopvec"
+  "kernel/test_as_type_loopvec"
+  "kernel/test_sizeof_uint_loopvec"
   APPEND PROPERTY LABELS "cuda")
 
 if(LLVM_VERSION_MAJOR LESS 11)
-  set_property(TEST "kernel/test_rotate_loops"
+  set_property(TEST "kernel/test_rotate_loopvec"
                APPEND PROPERTY LABELS "cuda")
 endif()
 endif()
 
 set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
-list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_loops")
+list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_loopvec")
 
 set_property(TEST
-  "kernel/test_local_struct_array_loops"
-  "kernel/test_printf_loops"
-  "kernel/test_shuffle_char_loops"
-  "kernel/test_shuffle_short_loops"
-  "kernel/test_shuffle_ushort_loops"
-  "kernel/test_shuffle_int_loops"
-  "kernel/test_shuffle_uint_loops"
-  "kernel/test_shuffle_float_loops"
-  "kernel/test_shuffle_long_loops"
-  "kernel/test_shuffle_ulong_loops"
+  "kernel/test_local_struct_array_loopvec"
+  "kernel/test_printf_loopvec"
+  "kernel/test_shuffle_char_loopvec"
+  "kernel/test_shuffle_short_loopvec"
+  "kernel/test_shuffle_ushort_loopvec"
+  "kernel/test_shuffle_int_loopvec"
+  "kernel/test_shuffle_uint_loopvec"
+  "kernel/test_shuffle_float_loopvec"
+  "kernel/test_shuffle_long_loopvec"
+  "kernel/test_shuffle_ulong_loopvec"
   ${EXTRA_TEST_VARIANT}
-  "kernel/test_as_type_loops"
-  "kernel/test_convert_type_1_loops"
-  "kernel/test_convert_type_2_loops"
-  "kernel/test_convert_type_4_loops"
-  "kernel/test_convert_type_8_loops"
-  "kernel/test_convert_type_16_loops"
-  "kernel/test_bitselect_loops"
-  "kernel/test_min_max_loops"
-  "kernel/test_length_distance_loops"
-  "kernel/test_fmin_fmax_fma_loops"
-  "kernel/test_convert_sat_regression_loops"
-  "kernel/test_rotate_loops"
-  "kernel/test_fabs_loops"
-  "kernel/test_copy_signbit_loops"
-  "kernel/test_ldexp_loops"
-  "kernel/test_isnan_loops"
-  "kernel/test_short16_loops"
+  "kernel/test_as_type_loopvec"
+  "kernel/test_convert_type_1_loopvec"
+  "kernel/test_convert_type_2_loopvec"
+  "kernel/test_convert_type_4_loopvec"
+  "kernel/test_convert_type_8_loopvec"
+  "kernel/test_convert_type_16_loopvec"
+  "kernel/test_bitselect_loopvec"
+  "kernel/test_min_max_loopvec"
+  "kernel/test_length_distance_loopvec"
+  "kernel/test_fmin_fmax_fma_loopvec"
+  "kernel/test_convert_sat_regression_loopvec"
+  "kernel/test_rotate_loopvec"
+  "kernel/test_fabs_loopvec"
+  "kernel/test_copy_signbit_loopvec"
+  "kernel/test_ldexp_loopvec"
+  "kernel/test_isnan_loopvec"
+  "kernel/test_short16_loopvec"
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST
-  "kernel/test_shuffle_char_loops"
-  "kernel/test_shuffle_short_loops"
-  "kernel/test_shuffle_ushort_loops"
-  "kernel/test_shuffle_int_loops"
-  "kernel/test_shuffle_uint_loops"
-  "kernel/test_shuffle_float_loops"
-  "kernel/test_shuffle_long_loops"
-  "kernel/test_shuffle_ulong_loops"
+  "kernel/test_shuffle_char_loopvec"
+  "kernel/test_shuffle_short_loopvec"
+  "kernel/test_shuffle_ushort_loopvec"
+  "kernel/test_shuffle_int_loopvec"
+  "kernel/test_shuffle_uint_loopvec"
+  "kernel/test_shuffle_float_loopvec"
+  "kernel/test_shuffle_long_loopvec"
+  "kernel/test_shuffle_ulong_loopvec"
   APPEND PROPERTY LABELS "proxy")
