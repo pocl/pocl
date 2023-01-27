@@ -31,11 +31,11 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/printf" COMMAND "printf_host" run)
+add_test_pocl(NAME "tce/printf" COMMAND "printf_host" run WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "tcele/printf" COMMAND "printf_host" run)
+add_test_pocl(NAME "tcele/printf" COMMAND "printf_host" run WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "almaif/printf" COMMAND "printf_host" run)
+add_test_pocl(NAME "almaif/printf" COMMAND "printf_host" run WORKITEM_HANDLER "loops")
 
 #AT_SETUP([A basic printf test])
 set_tests_properties( "tce/printf"

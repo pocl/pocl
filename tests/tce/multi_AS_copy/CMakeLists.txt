@@ -31,11 +31,11 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "almaif/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "almaif/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loops")
 
 set_tests_properties( "tce/multi_AS_copy"
   PROPERTIES
