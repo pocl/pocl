@@ -162,11 +162,11 @@ endif ()
         COMMAND "${CMAKE_BINARY_DIR}/examples/example0/example0" "b" "${CMAKE_BINARY_DIR}/examples/accel/${core_name}_example0.poclbin")
 
 
-    add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32")
-    add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32")
+    add_test_pocl(NAME "examples/accel/add.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.add.i32" WORKITEM_HANDLER "loops")
+    add_test_pocl(NAME "examples/accel/mul.i32/ttasim_${core_name}" COMMAND "accel_example" "pocl.mul.i32" WORKITEM_HANDLER "loops")
 
     #Bit clunky to add test from different directory. However, this file contains the list of different tta configurations
-    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0####o")
+    add_test_pocl(NAME "examples/example0/ttasim_${core_name}" COMMAND "../example0/example0####o" WORKITEM_HANDLER "loops")
 
     set_tests_properties( "examples/accel/add.i32/ttasim_${core_name}" "examples/accel/mul.i32/ttasim_${core_name}"
                           "examples/example0/ttasim_${core_name}" "examples/example0/ttasim_poclbin_${core_name}"
@@ -243,13 +243,13 @@ endif()
 
 ######################################################################
 
-add_test_pocl(NAME "examples/accel/countred" COMMAND "accel_example" "pocl.countred")
+add_test_pocl(NAME "examples/accel/countred" COMMAND "accel_example" "pocl.countred" WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "examples/accel/add.i32" COMMAND "accel_example" "pocl.add.i32")
+add_test_pocl(NAME "examples/accel/add.i32" COMMAND "accel_example" "pocl.add.i32" WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "examples/accel/mul.i32" COMMAND "accel_example" "pocl.mul.i32")
+add_test_pocl(NAME "examples/accel/mul.i32" COMMAND "accel_example" "pocl.mul.i32" WORKITEM_HANDLER "loops")
 
-add_test_pocl(NAME "examples/accel/abs.f32" COMMAND "accel_example" "pocl.abs.f32")
+add_test_pocl(NAME "examples/accel/abs.f32" COMMAND "accel_example" "pocl.abs.f32" WORKITEM_HANDLER "loops")
 
 set_tests_properties( "examples/accel/add.i32"
   "examples/accel/mul.i32"  "examples/accel/abs.f32"
