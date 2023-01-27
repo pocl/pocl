@@ -21,7 +21,8 @@ Notable User Facing Changes
   Continuation-based synchronization is slightly more general than POCL's
   current kernel compiler, but allows for fewer hand-rolled optimizations.
   CBS is expected to work for kernels that POCL's current kernel compiler
-  does not support.
+  does not support. Currently, CBS can be manually enabled by setting
+  the environment variable `POCL_WORK_GROUP_METHOD=cbs`.
 
 3.1 December 2022
 =================

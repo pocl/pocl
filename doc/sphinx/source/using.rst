@@ -349,6 +349,10 @@ pocl.
               For most other kernels it is expected to perform slightly worse.
               Also enables the LLVM LoopVectorizer.
 
+              An in-depth explanation of the implementation of CBS and how it
+              compares to the other approaches can be found in
+              [this thesis](https://joameyer.de/hipsycl/Thesis_JoachimMeyer.pdf).
+
 - **POCL_WORK_GROUP_SPECIALIZATION**
 
   PoCL specializes work-groups at kernel command launch time by default
