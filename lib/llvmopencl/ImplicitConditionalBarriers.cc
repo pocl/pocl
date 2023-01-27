@@ -37,12 +37,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
-#include "ImplicitConditionalBarriers.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "ImplicitConditionalBarriers.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
-
 
 //#define DEBUG_COND_BARRIERS
 

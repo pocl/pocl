@@ -34,10 +34,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 
-#include "BarrierTailReplication.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "BarrierTailReplication.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS

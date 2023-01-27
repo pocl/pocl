@@ -31,15 +31,16 @@ namespace pocl {
   class WorkitemHandlerChooser : public pocl::WorkitemHandler {
   public:
     static char ID;
-    
+
     enum WorkitemHandlerType {
       POCL_WIH_FULL_REPLICATION,
       POCL_WIH_LOOPS,
       POCL_WIH_CBS
     };
 
-  WorkitemHandlerChooser() : pocl::WorkitemHandler(ID), 
-      chosenHandler_(POCL_WIH_LOOPS) {}
+    WorkitemHandlerChooser ()
+        : pocl::WorkitemHandler (ID), chosenHandler_ (POCL_WIH_LOOPS)
+    {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);

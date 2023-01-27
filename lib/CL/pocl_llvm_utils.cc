@@ -301,7 +301,8 @@ void InitializeLLVM() {
 
     CurrentWgMethod =
         pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
-    if(CurrentWgMethod == "auto") CurrentWgMethod = "loopvec";
+    if (CurrentWgMethod == "auto")
+      CurrentWgMethod = "loopvec";
 
     if (CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") {
 

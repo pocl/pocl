@@ -36,10 +36,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/Analysis/LoopInfo.h"
 
-#include "ImplicitLoopBarriers.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "ImplicitLoopBarriers.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
 #include "pocl_runtime_config.h"

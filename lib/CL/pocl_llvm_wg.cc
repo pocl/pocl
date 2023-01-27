@@ -309,7 +309,8 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
       // to get the vectorizers initialized properly. Assume SPMD
       // devices do not want to vectorize intra work-item at this
       // stage.
-      if ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") && !SPMDDevice) {
+      if ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
+          !SPMDDevice) {
         Builder.LoopVectorize = true;
         Builder.SLPVectorize = true;
       } else {

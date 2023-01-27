@@ -33,10 +33,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Dominators.h"
 
-#include "CanonicalizeBarriers.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "CanonicalizeBarriers.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
