@@ -1116,7 +1116,8 @@ _cl_command_node *Level0QueueGroup::getWorkOrWait(bool &ShouldExit) {
 
 /// serialize SPIRV of the program since we might need
 /// to rebuild it with new Spec Constants
-const char *LEVEL0_SERIALIZE_ENTRIES[1] = {"/program.spv"};
+/// also serialize the directory with native binaries
+const char *LEVEL0_SERIALIZE_ENTRIES[2] = {"/program.spv", "/native" };
 
 static const cl_image_format SupportedImageFormats[] = {
     {CL_R, CL_SIGNED_INT8},
@@ -1317,7 +1318,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     ClDev->vendor_id = 0x8086;
     ClDev->profile = "FULL_PROFILE";
 
-    ClDev->num_serialize_entries = 1;
+    ClDev->num_serialize_entries = 2;
     ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
     ClDev->llvm_cpu = nullptr;
     ClDev->llvm_target_triplet = "spir64-unknown-unknown";

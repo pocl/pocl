@@ -147,7 +147,9 @@ bool Level0ProgramBuild::compile(ze_context_handle_t Context,
   ze_module_constants_t SpecConstants;
 
   std::string ProgCachePath(Program->getCacheDir());
-  ProgCachePath.append("/program_");
+  std::string ProgNativeDir(ProgCachePath);
+  ProgNativeDir.append("/native");
+  ProgCachePath.append("/native/program_");
   ProgCachePath.append(Program->getCacheUUID());
 
   std::string BuildFlags;
@@ -255,6 +257,7 @@ bool Level0ProgramBuild::compile(ze_context_handle_t Context,
     goto FINISH;
   }
 
+  pocl_mkdir_p(ProgNativeDir.c_str());
   pocl_write_file(ProgCachePath.c_str(), (char *)NativeBinary.data(),
                   (uint64_t)NativeSize, 0, 1);
   Res = true;
