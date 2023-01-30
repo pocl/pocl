@@ -119,7 +119,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_hash = pocl_basic_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
-  ops->get_device_info_ext = pocl_basic_device_info_ext;
+  ops->get_device_info_ext = pocl_basic_get_device_info_ext;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
@@ -859,7 +859,7 @@ pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
 }
 
 cl_int
-pocl_basic_device_info_ext (cl_device_id device, cl_device_info param_name,
+pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
                             size_t param_value_size, void *param_value,
                             size_t *param_value_size_ret)
 {
