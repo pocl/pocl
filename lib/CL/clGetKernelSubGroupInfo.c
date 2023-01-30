@@ -123,7 +123,7 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
           }
       }
 
-    /************ these are NOT dependend on NDRANGE ***********************/
+    /************ these are NOT dependent on NDRANGE ***********************/
     case CL_KERNEL_MAX_NUM_SUB_GROUPS:
       if (kernel->meta->max_subgroups)
         POCL_RETURN_GETINFO (size_t, kernel->meta->max_subgroups[dev_i]);

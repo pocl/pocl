@@ -1274,110 +1274,107 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->profiling_timer_resolution = 1;
 
   // Fixed props
-  {
-    ClDev->compiler_available = CL_TRUE;
-    ClDev->linker_available = CL_TRUE;
-    ClDev->has_own_timer = CL_TRUE;
-    ClDev->use_only_clang_opencl_headers = CL_TRUE;
+  ClDev->compiler_available = CL_TRUE;
+  ClDev->linker_available = CL_TRUE;
+  ClDev->has_own_timer = CL_TRUE;
+  ClDev->use_only_clang_opencl_headers = CL_TRUE;
 
-    // TODO the values here are copied from the Intel NEO.
-    // we need a way to figure out the suitable values for
-    // the real underlying device.
-    ClDev->preferred_vector_width_char = 16;
-    ClDev->preferred_vector_width_short = 8;
-    ClDev->preferred_vector_width_int = 4;
-    ClDev->preferred_vector_width_long = 1;
-    ClDev->preferred_vector_width_float = 1;
-    ClDev->preferred_vector_width_double = 1;
-    ClDev->preferred_vector_width_half = 8;
-    ClDev->native_vector_width_char = 16;
-    ClDev->native_vector_width_short = 8;
-    ClDev->native_vector_width_int = 4;
-    ClDev->native_vector_width_long = 1;
-    ClDev->native_vector_width_float = 1;
-    ClDev->native_vector_width_double = 1;
-    ClDev->native_vector_width_half = 8;
+  // TODO the values here are copied from the Intel NEO.
+  // we need a way to figure out the suitable values for
+  // the real underlying device.
+  ClDev->preferred_vector_width_char = 16;
+  ClDev->preferred_vector_width_short = 8;
+  ClDev->preferred_vector_width_int = 4;
+  ClDev->preferred_vector_width_long = 1;
+  ClDev->preferred_vector_width_float = 1;
+  ClDev->preferred_vector_width_double = 1;
+  ClDev->preferred_vector_width_half = 8;
+  ClDev->native_vector_width_char = 16;
+  ClDev->native_vector_width_short = 8;
+  ClDev->native_vector_width_int = 4;
+  ClDev->native_vector_width_long = 1;
+  ClDev->native_vector_width_float = 1;
+  ClDev->native_vector_width_double = 1;
+  ClDev->native_vector_width_half = 8;
 
-    ClDev->has_64bit_long = CL_TRUE;
+  ClDev->has_64bit_long = CL_TRUE;
 
-    ClDev->endian_little = CL_TRUE;
-    ClDev->parent_device = NULL;
-    ClDev->max_sub_devices = 0;
-    ClDev->num_partition_properties = 0;
-    ClDev->partition_properties = NULL;
-    ClDev->num_partition_types = 0;
-    ClDev->partition_type = NULL;
-    ClDev->max_constant_args = 8;
-    ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
-    ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
-    ClDev->global_var_max_size = 64 * 1024;
+  ClDev->endian_little = CL_TRUE;
+  ClDev->parent_device = NULL;
+  ClDev->max_sub_devices = 0;
+  ClDev->num_partition_properties = 0;
+  ClDev->partition_properties = NULL;
+  ClDev->num_partition_types = 0;
+  ClDev->partition_type = NULL;
+  ClDev->max_constant_args = 8;
+  ClDev->host_unified_memory = Integrated ? CL_TRUE : CL_FALSE;
+  ClDev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
+  ClDev->global_var_max_size = 64 * 1024;
 
-    ClDev->execution_capabilities = CL_EXEC_KERNEL;
-    ClDev->address_bits = 64;
-    ClDev->vendor = "Intel Corporation";
-    ClDev->vendor_id = 0x8086;
-    ClDev->profile = "FULL_PROFILE";
+  ClDev->execution_capabilities = CL_EXEC_KERNEL;
+  ClDev->address_bits = 64;
+  ClDev->vendor = "Intel Corporation";
+  ClDev->vendor_id = 0x8086;
+  ClDev->profile = "FULL_PROFILE";
 
-    ClDev->num_serialize_entries = 2;
-    ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
-    ClDev->llvm_cpu = nullptr;
-    ClDev->llvm_target_triplet = "spir64-unknown-unknown";
-    ClDev->generic_as_support = CL_TRUE;
-    ClDev->supported_spir_v_versions = "SPIR-V_1.2";
-    ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-    ClDev->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
-  }
+  ClDev->num_serialize_entries = 2;
+  ClDev->serialize_entries = LEVEL0_SERIALIZE_ENTRIES;
+  ClDev->llvm_cpu = nullptr;
+  ClDev->llvm_target_triplet = "spir64-unknown-unknown";
+  ClDev->generic_as_support = CL_TRUE;
+  ClDev->supported_spir_v_versions = "SPIR-V_1.2";
+  ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+  ClDev->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
 
   // deviceProperties
-  {
-    switch (DeviceProperties.type) {
-    case ZE_DEVICE_TYPE_CPU:
-      ClDev->type = CL_DEVICE_TYPE_CPU;
-      break;
-    case ZE_DEVICE_TYPE_GPU:
-      ClDev->type = CL_DEVICE_TYPE_GPU;
-      break;
-    default:
-      ClDev->type = CL_DEVICE_TYPE_CUSTOM;
-      // we don't know how to handle Custom devices yet
-      // returning here leaves ClDev->available = CL_FALSE;
-      return;
-    }
+  switch (DeviceProperties.type) {
+  case ZE_DEVICE_TYPE_CPU:
+    ClDev->type = CL_DEVICE_TYPE_CPU;
+    break;
+  case ZE_DEVICE_TYPE_GPU:
+    ClDev->type = CL_DEVICE_TYPE_GPU;
+    break;
+  default:
+    ClDev->type = CL_DEVICE_TYPE_CUSTOM;
+    // we don't know how to handle Custom devices yet
+    // returning here leaves ClDev->available = CL_FALSE;
+    return;
+  }
 
-    // ClDev->vendor_id = deviceProperties.vendorId;
-    ClDev->short_name = ClDev->long_name = strdup(DeviceProperties.name);
-    UUID = DeviceProperties.uuid;
+  // ClDev->vendor_id = deviceProperties.vendorId;
+  ClDev->short_name = ClDev->long_name = strdup(DeviceProperties.name);
+  UUID = DeviceProperties.uuid;
 
-    // ze_device_property_flags_t
-    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) != 0u) {
-      Integrated = true;
-    }
-    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC) != 0u) {
-      ClDev->error_correction_support = CL_TRUE;
-    }
-    if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) !=
-        0u) {
-      OndemandPaging = true;
-    }
+  // ze_device_property_flags_t
+  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED) != 0u) {
+    Integrated = true;
+  }
+  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ECC) != 0u) {
+    ClDev->error_correction_support = CL_TRUE;
+  }
+  if ((DeviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING) !=
+      0u) {
+    OndemandPaging = true;
+  }
 
-    ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
+  ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
-    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
-    Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
+  ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
+  Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
 
-    MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
+  MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
 
-    ClDev->max_compute_units = DeviceProperties.numSlices *
-                               DeviceProperties.numSubslicesPerSlice *
-                               DeviceProperties.numEUsPerSubslice;
+  ClDev->max_compute_units = DeviceProperties.numSlices *
+                             DeviceProperties.numSubslicesPerSlice *
+                             DeviceProperties.numEUsPerSubslice;
 
-    ClDev->preferred_wg_size_multiple =
-        64; // deviceProperties.physicalEUSimdWidth;
+  ClDev->preferred_wg_size_multiple =
+      64; // deviceProperties.physicalEUSimdWidth;
 
-    ClDev->profiling_timer_resolution = DeviceProperties.timerResolution;
-    TSBits = DeviceProperties.timestampValidBits;
-    KernelTSBits = DeviceProperties.kernelTimestampValidBits;
+  ClDev->profiling_timer_resolution = DeviceProperties.timerResolution;
+  TSBits = DeviceProperties.timestampValidBits;
+  KernelTSBits = DeviceProperties.kernelTimestampValidBits;
 
 #if 0
   /// support for subdevices. Currently unimplemented
@@ -1388,401 +1385,384 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   zeDeviceGetSubDevices(device, &subDeviceCount, subDevices);
 #endif
 
-  }
-
   // computeProperties
-  {
-    ClDev->max_work_group_size = ComputeProperties.maxTotalGroupSize;
-    ClDev->max_work_item_dimensions = 3;
-    ClDev->max_work_item_sizes[0] = ComputeProperties.maxGroupSizeX;
-    ClDev->max_work_item_sizes[1] = ComputeProperties.maxGroupSizeY;
-    ClDev->max_work_item_sizes[2] = ComputeProperties.maxGroupSizeZ;
+  ClDev->max_work_group_size = ComputeProperties.maxTotalGroupSize;
+  ClDev->max_work_item_dimensions = 3;
+  ClDev->max_work_item_sizes[0] = ComputeProperties.maxGroupSizeX;
+  ClDev->max_work_item_sizes[1] = ComputeProperties.maxGroupSizeY;
+  ClDev->max_work_item_sizes[2] = ComputeProperties.maxGroupSizeZ;
 
-    // level0 devices typically don't have unlimited number of groups per
-    MaxWGCount[0] = ComputeProperties.maxGroupCountX;
-    MaxWGCount[1] = ComputeProperties.maxGroupCountY;
-    MaxWGCount[2] = ComputeProperties.maxGroupCountZ;
-    POCL_MSG_PRINT_LEVEL0("Device Max WG counts: %u | %u | %u\n", MaxWGCount[0],
-                          MaxWGCount[1], MaxWGCount[2]);
+  // level0 devices typically don't have unlimited number of groups per
+  MaxWGCount[0] = ComputeProperties.maxGroupCountX;
+  MaxWGCount[1] = ComputeProperties.maxGroupCountY;
+  MaxWGCount[2] = ComputeProperties.maxGroupCountZ;
+  POCL_MSG_PRINT_LEVEL0("Device Max WG counts: %u | %u | %u\n", MaxWGCount[0],
+                        MaxWGCount[1], MaxWGCount[2]);
 
-    ClDev->local_mem_type = CL_LOCAL;
-    ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
+  ClDev->local_mem_type = CL_LOCAL;
+  ClDev->local_mem_size = ComputeProperties.maxSharedLocalMemory;
 
-    cl_uint Max = 0;
-    if (ComputeProperties.numSubGroupSizes > 0) {
-      for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
-        if (ComputeProperties.subGroupSizes[i] > Max) {
-          Max = ComputeProperties.subGroupSizes[i];
-        }
+  cl_uint Max = 0;
+  if (ComputeProperties.numSubGroupSizes > 0) {
+    for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
+      if (ComputeProperties.subGroupSizes[i] > Max) {
+        Max = ComputeProperties.subGroupSizes[i];
       }
-      ClDev->max_num_sub_groups = Max;
+    }
+    ClDev->max_num_sub_groups = Max;
 
-      SupportedSubgroupSizes.resize(ComputeProperties.numSubGroupSizes);
-      for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
-        SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
-      }
+    SupportedSubgroupSizes.resize(ComputeProperties.numSubGroupSizes);
+    for (unsigned i = 0; i < ComputeProperties.numSubGroupSizes; ++i) {
+      SupportedSubgroupSizes[i] = ComputeProperties.subGroupSizes[i];
     }
   }
 
   // moduleProperties
-  {
-    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-        ClDev->double_fp_config |= CL_FP_DENORM;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-        ClDev->double_fp_config |= CL_FP_INF_NAN;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-          0u) {
-        ClDev->double_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-        ClDev->double_fp_config |= CL_FP_ROUND_TO_INF;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-          0u) {
-        ClDev->double_fp_config |= CL_FP_ROUND_TO_ZERO;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-        ClDev->double_fp_config |= CL_FP_FMA;
-      }
-      if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-        ClDev->double_fp_config |= CL_FP_SOFT_FLOAT;
-      }
-    } else {
-      ClDev->double_fp_config = 0;
-    }
 
-    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0u) {
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-        ClDev->half_fp_config |= CL_FP_DENORM;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-        ClDev->half_fp_config |= CL_FP_INF_NAN;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-          0u) {
-        ClDev->half_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-        ClDev->half_fp_config |= CL_FP_ROUND_TO_INF;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-          0u) {
-        ClDev->half_fp_config |= CL_FP_ROUND_TO_ZERO;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-        ClDev->half_fp_config |= CL_FP_FMA;
-      }
-      if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-        ClDev->half_fp_config |= CL_FP_SOFT_FLOAT;
-      }
-    } else {
-      ClDev->half_fp_config = 0;
+  if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64) != 0u) {
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
+      ClDev->double_fp_config |= CL_FP_DENORM;
     }
-
-    // single FP config
-    {
-      ClDev->single_fp_config = 0;
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
-        ClDev->single_fp_config |= CL_FP_DENORM;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
-        ClDev->single_fp_config |= CL_FP_INF_NAN;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
-          0u) {
-        ClDev->single_fp_config |= CL_FP_ROUND_TO_NEAREST;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
-        ClDev->single_fp_config |= CL_FP_ROUND_TO_INF;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
-          0u) {
-        ClDev->single_fp_config |= CL_FP_ROUND_TO_ZERO;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
-        ClDev->single_fp_config |= CL_FP_FMA;
-      }
-      if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
-        ClDev->single_fp_config |= CL_FP_SOFT_FLOAT;
-      }
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
+      ClDev->double_fp_config |= CL_FP_INF_NAN;
     }
-
-    KernelUUID = ModuleProperties.nativeKernelSupported;
-
-    std::string Extensions("cl_khr_byte_addressable_store"
-                           " cl_khr_global_int32_base_atomics"
-                           " cl_khr_global_int32_extended_atomics"
-                           " cl_khr_local_int32_base_atomics"
-                           " cl_khr_local_int32_extended_atomics"
-                           " cl_khr_spir cl_khr_il_program"
-                           " cl_khr_3d_image_writes");
-    std::string OpenCL30Features("__opencl_c_images"
-                                 " __opencl_c_read_write_images"
-                                 " __opencl_c_3d_image_writes"
-                                 " __opencl_c_atomic_order_acq_rel"
-                                 " __opencl_c_atomic_order_seq_cst"
-                                 " __opencl_c_atomic_scope_device"
-                                 " __opencl_c_program_scope_global_variables"
-                                 " __opencl_c_generic_address_space");
-
-    if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u) {
-      Extensions.append(" cl_khr_int64_base_atomics"
-                        " cl_khr_int64_extended_atomics");
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+        0u) {
+      ClDev->double_fp_config |= CL_FP_ROUND_TO_NEAREST;
     }
-    if (ClDev->half_fp_config != 0u) {
-      Extensions.append(" cl_khr_fp16");
-      OpenCL30Features.append(" __opencl_c_fp16");
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
+      ClDev->double_fp_config |= CL_FP_ROUND_TO_INF;
     }
-    if (ClDev->double_fp_config != 0u) {
-      Extensions.append(" cl_khr_fp64");
-      OpenCL30Features.append(" __opencl_c_fp64");
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+        0u) {
+      ClDev->double_fp_config |= CL_FP_ROUND_TO_ZERO;
     }
-    if (ClDev->max_num_sub_groups > 0) {
-      Extensions.append(" cl_khr_subgroups");
-      OpenCL30Features.append(" __opencl_c_subgroups");
-      OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
+      ClDev->double_fp_config |= CL_FP_FMA;
     }
-    if (ClDev->has_64bit_long != 0) {
-      Extensions.append(" cl_khr_int64");
-      OpenCL30Features.append(" __opencl_c_int64");
+    if ((ModuleProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
+      ClDev->double_fp_config |= CL_FP_SOFT_FLOAT;
     }
-
-    ClDev->extensions = strdup(Extensions.c_str());
-    ClDev->features = strdup(OpenCL30Features.c_str());
-
-    pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
-    pocl_setup_features_with_version(ClDev);
-    pocl_setup_extensions_with_version(ClDev);
-    pocl_setup_builtin_kernels_with_version(ClDev);
-    pocl_setup_ils_with_version(ClDev);
-
-    ClDev->device_side_printf = 0;
-    ClDev->printf_buffer_size = ModuleProperties.printfBufferSize;
-    ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
+  } else {
+    ClDev->double_fp_config = 0;
   }
+
+  if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_FP16) != 0u) {
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
+      ClDev->half_fp_config |= CL_FP_DENORM;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
+      ClDev->half_fp_config |= CL_FP_INF_NAN;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+        0u) {
+      ClDev->half_fp_config |= CL_FP_ROUND_TO_NEAREST;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
+      ClDev->half_fp_config |= CL_FP_ROUND_TO_INF;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+        0u) {
+      ClDev->half_fp_config |= CL_FP_ROUND_TO_ZERO;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
+      ClDev->half_fp_config |= CL_FP_FMA;
+    }
+    if ((ModuleProperties.fp16flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
+      ClDev->half_fp_config |= CL_FP_SOFT_FLOAT;
+    }
+  } else {
+    ClDev->half_fp_config = 0;
+  }
+
+  // single FP config
+  {
+    ClDev->single_fp_config = 0;
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_DENORM) != 0u) {
+      ClDev->single_fp_config |= CL_FP_DENORM;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_INF_NAN) != 0u) {
+      ClDev->single_fp_config |= CL_FP_INF_NAN;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST) !=
+        0u) {
+      ClDev->single_fp_config |= CL_FP_ROUND_TO_NEAREST;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF) != 0u) {
+      ClDev->single_fp_config |= CL_FP_ROUND_TO_INF;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO) !=
+        0u) {
+      ClDev->single_fp_config |= CL_FP_ROUND_TO_ZERO;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_FMA) != 0u) {
+      ClDev->single_fp_config |= CL_FP_FMA;
+    }
+    if ((ModuleProperties.fp32flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT) != 0u) {
+      ClDev->single_fp_config |= CL_FP_SOFT_FLOAT;
+    }
+  }
+
+  KernelUUID = ModuleProperties.nativeKernelSupported;
+
+  std::string Extensions("cl_khr_byte_addressable_store"
+                         " cl_khr_global_int32_base_atomics"
+                         " cl_khr_global_int32_extended_atomics"
+                         " cl_khr_local_int32_base_atomics"
+                         " cl_khr_local_int32_extended_atomics"
+                         " cl_khr_spir cl_khr_il_program"
+                         " cl_khr_3d_image_writes");
+  std::string OpenCL30Features("__opencl_c_images"
+                               " __opencl_c_read_write_images"
+                               " __opencl_c_3d_image_writes"
+                               " __opencl_c_atomic_order_acq_rel"
+                               " __opencl_c_atomic_order_seq_cst"
+                               " __opencl_c_atomic_scope_device"
+                               " __opencl_c_program_scope_global_variables"
+                               " __opencl_c_generic_address_space");
+
+  if ((ModuleProperties.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS) != 0u) {
+    Extensions.append(" cl_khr_int64_base_atomics"
+                      " cl_khr_int64_extended_atomics");
+  }
+  if (ClDev->half_fp_config != 0u) {
+    Extensions.append(" cl_khr_fp16");
+    OpenCL30Features.append(" __opencl_c_fp16");
+  }
+  if (ClDev->double_fp_config != 0u) {
+    Extensions.append(" cl_khr_fp64");
+    OpenCL30Features.append(" __opencl_c_fp64");
+  }
+  if (ClDev->max_num_sub_groups > 0) {
+    Extensions.append(" cl_khr_subgroups");
+    OpenCL30Features.append(" __opencl_c_subgroups");
+    OpenCL30Features.append(" __opencl_c_work_group_collective_functions");
+  }
+  if (ClDev->has_64bit_long != 0) {
+    Extensions.append(" cl_khr_int64");
+    OpenCL30Features.append(" __opencl_c_int64");
+  }
+
+  ClDev->extensions = strdup(Extensions.c_str());
+  ClDev->features = strdup(OpenCL30Features.c_str());
+
+  pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
+  pocl_setup_features_with_version(ClDev);
+  pocl_setup_extensions_with_version(ClDev);
+  pocl_setup_builtin_kernels_with_version(ClDev);
+  pocl_setup_ils_with_version(ClDev);
+
+  ClDev->device_side_printf = 0;
+  ClDev->printf_buffer_size = ModuleProperties.printfBufferSize;
+  ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
 
   // memProps
-  {
-    for (uint32_t i = 0; i < MemPropCount; ++i) {
-      if (ClDev->global_mem_size < MemProps[i].totalSize) {
-        ClDev->global_mem_size = MemProps[i].totalSize;
-        GlobalMemOrd = i;
-      }
+  for (uint32_t i = 0; i < MemPropCount; ++i) {
+    if (ClDev->global_mem_size < MemProps[i].totalSize) {
+      ClDev->global_mem_size = MemProps[i].totalSize;
+      GlobalMemOrd = i;
     }
-    if (ClDev->global_mem_size > ClDev->max_mem_alloc_size * 4) {
-      ClDev->global_mem_size = ClDev->max_mem_alloc_size * 4;
-    }
-
-    // memAccessProperties
-    if ((MemAccessProperties.sharedSingleDeviceAllocCapabilities &
-         (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) !=
-        0u) {
-      ClDev->svm_allocation_priority = 2;
-      ClDev->atomic_memory_capabilities =
-          CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-          CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
-          CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-      ClDev->atomic_fence_capabilities =
-          CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
-          CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
-          CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-      // OpenCL 2.0 properties
-      ClDev->svm_caps =
-          CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
-    } else {
-      POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
-    }
-
-    // cacheProperties
-    for (uint32_t i = 0; i < CachePropCount; ++i) {
-      // find largest cache that is not user-controlled
-      if ((CacheProperties[i].flags &
-           ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) != 0u) {
-        continue;
-      }
-      if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize) {
-        ClDev->global_mem_cache_size = CacheProperties[i].cacheSize;
-      }
-    }
-    ClDev->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
-    ClDev->global_mem_cache_type = CL_READ_WRITE_CACHE;
-
-    // externalMemProperties
-    ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  }
+  if (ClDev->global_mem_size > ClDev->max_mem_alloc_size * 4) {
+    ClDev->global_mem_size = ClDev->max_mem_alloc_size * 4;
   }
 
+  // memAccessProperties
+  if ((MemAccessProperties.sharedSingleDeviceAllocCapabilities &
+       (ZE_MEMORY_ACCESS_CAP_FLAG_RW | ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)) !=
+      0u) {
+    ClDev->svm_allocation_priority = 2;
+    ClDev->atomic_memory_capabilities =
+        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP |
+        CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    ClDev->atomic_fence_capabilities =
+        CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+        CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM |
+        CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    // OpenCL 2.0 properties
+    ClDev->svm_caps =
+        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+  } else {
+    POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
+  }
+
+  // cacheProperties
+  for (uint32_t i = 0; i < CachePropCount; ++i) {
+    // find largest cache that is not user-controlled
+    if ((CacheProperties[i].flags &
+         ZE_DEVICE_CACHE_PROPERTY_FLAG_USER_CONTROL) != 0u) {
+      continue;
+    }
+    if (ClDev->global_mem_cache_size < CacheProperties[i].cacheSize) {
+      ClDev->global_mem_cache_size = CacheProperties[i].cacheSize;
+    }
+  }
+  ClDev->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  ClDev->global_mem_cache_type = CL_READ_WRITE_CACHE;
+
+  // externalMemProperties
+  ClDev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
 
   // imageProperties
-  {
-    ClDev->max_read_image_args = ImageProperties.maxReadImageArgs;
-    ClDev->max_read_write_image_args = ImageProperties.maxWriteImageArgs;
-    ClDev->max_write_image_args = ImageProperties.maxWriteImageArgs;
-    ClDev->max_samplers = ImageProperties.maxSamplers;
+  ClDev->max_read_image_args = ImageProperties.maxReadImageArgs;
+  ClDev->max_read_write_image_args = ImageProperties.maxWriteImageArgs;
+  ClDev->max_write_image_args = ImageProperties.maxWriteImageArgs;
+  ClDev->max_samplers = ImageProperties.maxSamplers;
 
-    ClDev->image_max_array_size = ImageProperties.maxImageArraySlices;
-    ClDev->image_max_buffer_size = ImageProperties.maxImageBufferSize;
+  ClDev->image_max_array_size = ImageProperties.maxImageArraySlices;
+  ClDev->image_max_buffer_size = ImageProperties.maxImageBufferSize;
 
-    ClDev->image2d_max_height = ClDev->image2d_max_width =
-        ImageProperties.maxImageDims2D;
-    ClDev->image3d_max_depth = ClDev->image3d_max_height =
-        ClDev->image3d_max_width = ImageProperties.maxImageDims3D;
+  ClDev->image2d_max_height = ClDev->image2d_max_width =
+      ImageProperties.maxImageDims2D;
+  ClDev->image3d_max_depth = ClDev->image3d_max_height =
+      ClDev->image3d_max_width = ImageProperties.maxImageDims3D;
 
-    for (unsigned i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i) {
-      ClDev->num_image_formats[i] = NumSupportedImageFormats;
-      ClDev->image_formats[i] = SupportedImageFormats;
-    }
-
-    ClDev->image_support = CL_TRUE;
+  for (unsigned i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i) {
+    ClDev->num_image_formats[i] = NumSupportedImageFormats;
+    ClDev->image_formats[i] = SupportedImageFormats;
   }
+
+  ClDev->image_support = CL_TRUE;
 
   // timestamp setup
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(12));
+  std::this_thread::sleep_for(std::chrono::milliseconds(12));
 
-    Res = zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp2,
-                                      &DeviceTimestamp2);
-    if (Res != ZE_RESULT_SUCCESS) {
-      return;
-    }
-
-    uint64_t HostDiff = HostTimestamp2 - HostTimestamp1;
-    uint64_t DeviceDiff = DeviceTimestamp2 - DeviceTimestamp1;
-    HostDeviceRate = (double)HostDiff / (double)DeviceDiff;
-    HostTimingStart = HostTimestamp1;
-    DeviceTimingStart = DeviceTimestamp1;
+  Res = zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp2,
+                                    &DeviceTimestamp2);
+  if (Res != ZE_RESULT_SUCCESS) {
+    return;
   }
 
+  uint64_t HostDiff = HostTimestamp2 - HostTimestamp1;
+  uint64_t DeviceDiff = DeviceTimestamp2 - DeviceTimestamp1;
+  HostDeviceRate = (double)HostDiff / (double)DeviceDiff;
+  HostTimingStart = HostTimestamp1;
+  DeviceTimingStart = DeviceTimestamp1;
 
   // QGroupProps
-  {
-    uint32_t UniversalQueueOrd = UINT32_MAX;
-    uint32_t CopyQueueOrd = UINT32_MAX;
-    uint32_t ComputeQueueOrd = UINT32_MAX;
-    uint32_t NumUniversalQueues = 0;
-    uint32_t NumCopyQueues = 0;
-    uint32_t NumComputeQueues = 0;
+  uint32_t UniversalQueueOrd = UINT32_MAX;
+  uint32_t CopyQueueOrd = UINT32_MAX;
+  uint32_t ComputeQueueOrd = UINT32_MAX;
+  uint32_t NumUniversalQueues = 0;
+  uint32_t NumCopyQueues = 0;
+  uint32_t NumComputeQueues = 0;
 
-    for (uint32_t i = 0; i < QGroupPropCount; ++i) {
-      bool IsCompute = ((QGroupProps[i].flags &
-                         ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) != 0);
-      bool IsCopy = ((QGroupProps[i].flags &
-                      ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) != 0);
-      if (IsCompute && IsCopy) {
-        UniversalQueueOrd = i;
-        NumUniversalQueues = QGroupProps[i].numQueues;
-        if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
-          POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
-                       "than supported max pattern size(%zu)\n",
-                       MAX_EXTENDED_ALIGNMENT,
-                       QGroupProps[i].maxMemoryFillPatternSize);
-        }
-      }
-
-      if (IsCompute && !IsCopy) {
-        ComputeQueueOrd = i;
-        NumComputeQueues = QGroupProps[i].numQueues;
-        if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
-          POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
-                       "than supported max pattern size(%zu)\n",
-                       MAX_EXTENDED_ALIGNMENT,
-                       QGroupProps[i].maxMemoryFillPatternSize);
-        }
-      }
-
-      if (!IsCompute && IsCopy) {
-        CopyQueueOrd = i;
-        NumCopyQueues = QGroupProps[i].numQueues;
-        if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
-          POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
-                       "than supported max pattern size(%zu)\n",
-                       MAX_EXTENDED_ALIGNMENT,
-                       QGroupProps[i].maxMemoryFillPatternSize);
-        }
+  for (uint32_t i = 0; i < QGroupPropCount; ++i) {
+    bool IsCompute = ((QGroupProps[i].flags &
+                       ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE) != 0);
+    bool IsCopy = ((QGroupProps[i].flags &
+                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) != 0);
+    if (IsCompute && IsCopy) {
+      UniversalQueueOrd = i;
+      NumUniversalQueues = QGroupProps[i].numQueues;
+      if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
+        POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
+                     "than supported max pattern size(%zu)\n",
+                     MAX_EXTENDED_ALIGNMENT,
+                     QGroupProps[i].maxMemoryFillPatternSize);
       }
     }
 
-    if (UniversalQueueOrd == UINT32_MAX &&
-        (ComputeQueueOrd == UINT32_MAX || CopyQueueOrd == UINT32_MAX)) {
-      POCL_MSG_ERR(
-          "No universal queue and either of copy/compute queue are missing\n");
-      return;
+    if (IsCompute && !IsCopy) {
+      ComputeQueueOrd = i;
+      NumComputeQueues = QGroupProps[i].numQueues;
+      if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
+        POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
+                     "than supported max pattern size(%zu)\n",
+                     MAX_EXTENDED_ALIGNMENT,
+                     QGroupProps[i].maxMemoryFillPatternSize);
+      }
     }
 
-    uint32_t_3 DeviceMaxWGs = {MaxWGCount[0], MaxWGCount[1], MaxWGCount[2]};
-
-    if (ComputeQueueOrd != UINT32_MAX) {
-      void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
-      ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-      ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
-                         DeviceHandle, ComputeTimestamps, HostTimingStart,
-                         DeviceTimingStart, HostDeviceRate, DeviceMaxWGs,
-                         HasGOffsets);
-    } else {
-      uint32_t num = std::max(1U, NumUniversalQueues / 2);
-      void *Ptr = allocSharedMem(CacheLineSize * num);
-      ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-      ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                         ComputeTimestamps, HostTimingStart, DeviceTimingStart,
-                         HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    if (!IsCompute && IsCopy) {
+      CopyQueueOrd = i;
+      NumCopyQueues = QGroupProps[i].numQueues;
+      if (QGroupProps[i].maxMemoryFillPatternSize < MAX_EXTENDED_ALIGNMENT) {
+        POCL_MSG_ERR("Memfill largest pattern size(%u) larger "
+                     "than supported max pattern size(%zu)\n",
+                     MAX_EXTENDED_ALIGNMENT,
+                     QGroupProps[i].maxMemoryFillPatternSize);
+      }
     }
+  }
 
-    if (CopyQueueOrd != UINT32_MAX) {
-      void *Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
-      CopyTimestamps = static_cast<uint64_t *>(Ptr);
-      CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
-                      CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                      HostDeviceRate, DeviceMaxWGs, HasGOffsets);
-    } else {
-      uint32_t num = std::max(1U, NumUniversalQueues / 2);
-      void *Ptr = allocSharedMem(CacheLineSize * num);
-      CopyTimestamps = static_cast<uint64_t *>(Ptr);
-      CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                      CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                      HostDeviceRate, DeviceMaxWGs, HasGOffsets);
-    }
+  if (UniversalQueueOrd == UINT32_MAX &&
+      (ComputeQueueOrd == UINT32_MAX || CopyQueueOrd == UINT32_MAX)) {
+    POCL_MSG_ERR(
+        "No universal queue and either of copy/compute queue are missing\n");
+    return;
+  }
+
+  uint32_t_3 DeviceMaxWGs = {MaxWGCount[0], MaxWGCount[1], MaxWGCount[2]};
+
+  if (ComputeQueueOrd != UINT32_MAX) {
+    void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
+    ComputeTimestamps = static_cast<uint64_t *>(Ptr);
+    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
+                       DeviceHandle, ComputeTimestamps, HostTimingStart,
+                       DeviceTimingStart, HostDeviceRate, DeviceMaxWGs,
+                       HasGOffsets);
+  } else {
+    uint32_t num = std::max(1U, NumUniversalQueues / 2);
+    void *Ptr = allocSharedMem(CacheLineSize * num);
+    ComputeTimestamps = static_cast<uint64_t *>(Ptr);
+    ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
+                       ComputeTimestamps, HostTimingStart, DeviceTimingStart,
+                       HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+  }
+
+  if (CopyQueueOrd != UINT32_MAX) {
+    void *Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
+    CopyTimestamps = static_cast<uint64_t *>(Ptr);
+    CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
+                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
+                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+  } else {
+    uint32_t num = std::max(1U, NumUniversalQueues / 2);
+    void *Ptr = allocSharedMem(CacheLineSize * num);
+    CopyTimestamps = static_cast<uint64_t *>(Ptr);
+    CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
+                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
+                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
   }
 
   // calculate KernelCacheHash
-  {
-    SHA1_CTX HashCtx;
-    uint8_t Digest[SHA1_DIGEST_SIZE];
-    pocl_SHA1_Init(&HashCtx);
+  SHA1_CTX HashCtx;
+  uint8_t Digest[SHA1_DIGEST_SIZE];
+  pocl_SHA1_Init(&HashCtx);
 
-    // not reliable
-    // const ze_driver_uuid_t DrvUUID = Driver->getUUID();
-    // pocl_SHA1_Update(&HashCtx, (const uint8_t*)&DrvUUID.id,
-    // sizeof(DrvUUID.id));
+  // not reliable
+  // const ze_driver_uuid_t DrvUUID = Driver->getUUID();
+  // pocl_SHA1_Update(&HashCtx, (const uint8_t*)&DrvUUID.id,
+  // sizeof(DrvUUID.id));
 
-    uint32_t DrvVersion = Driver->getVersion();
-    pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DrvVersion,
-                     sizeof(DrvVersion));
+  uint32_t DrvVersion = Driver->getVersion();
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DrvVersion,
+                   sizeof(DrvVersion));
 
-    pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.type,
-                     sizeof(DeviceProperties.type));
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.type,
+                   sizeof(DeviceProperties.type));
 
-    pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.vendorId,
-                     sizeof(DeviceProperties.vendorId));
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.vendorId,
+                   sizeof(DeviceProperties.vendorId));
 
-    // not reliable
-    // pocl_SHA1_Update(&HashCtx,
-    //                 (const uint8_t*)&deviceProperties.uuid,
-    //                 sizeof(deviceProperties.uuid));
-    pocl_SHA1_Update(&HashCtx, (const uint8_t *)ClDev->short_name,
-                     strlen(ClDev->short_name));
+  // not reliable
+  // pocl_SHA1_Update(&HashCtx,
+  //                 (const uint8_t*)&deviceProperties.uuid,
+  //                 sizeof(deviceProperties.uuid));
+  pocl_SHA1_Update(&HashCtx, (const uint8_t *)ClDev->short_name,
+                   strlen(ClDev->short_name));
 
-    pocl_SHA1_Final(&HashCtx, Digest);
+  pocl_SHA1_Final(&HashCtx, Digest);
 
-    std::stringstream SStream;
-    for (unsigned i = 0; i < sizeof(Digest); ++i) {
-      SStream << std::setfill('0') << std::setw(2) << std::hex
-              << (unsigned)Digest[i];
-    }
-    SStream.flush();
-    KernelCacheHash = SStream.str();
+  std::stringstream SStream;
+  for (unsigned i = 0; i < sizeof(Digest); ++i) {
+    SStream << std::setfill('0') << std::setw(2) << std::hex
+            << (unsigned)Digest[i];
   }
+  SStream.flush();
+  KernelCacheHash = SStream.str();
 
   ClDev->available = CL_TRUE;
 }
