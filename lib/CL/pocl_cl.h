@@ -408,6 +408,8 @@ extern uint64_t last_object_id;
 /* pocl specific flag, for "hidden" default queues allocated in each context */
 #define CL_QUEUE_HIDDEN (1 << 10)
 
+#define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
+
 typedef struct pocl_argument {
   uint64_t size;
   /* The "offset" is used to simplify subbuffer handling.

@@ -77,6 +77,6 @@ set_tests_properties( "examples/example2a_poclbin"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_CACHE_DIR=${CMAKE_BINARY_DIR}/Testing/Cache"
+    ENVIRONMENT "POCL_KERNEL_CACHE=0"
     LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")

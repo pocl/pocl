@@ -840,31 +840,3 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
     return kernel_count;
   }
 }
-
-void pocl_free_kernel_metadata(cl_program program, unsigned kernel_i) {
-  pocl_kernel_metadata_t *meta = &program->kernel_meta[kernel_i];
-  unsigned j;
-  POCL_MEM_FREE(meta->attributes);
-  POCL_MEM_FREE(meta->name);
-  for (j = 0; j < meta->num_args; ++j) {
-    POCL_MEM_FREE(meta->arg_info[j].name);
-    POCL_MEM_FREE(meta->arg_info[j].type_name);
-  }
-  POCL_MEM_FREE(meta->max_subgroups);
-  POCL_MEM_FREE(meta->compile_subgroups);
-  POCL_MEM_FREE(meta->max_workgroup_size);
-  POCL_MEM_FREE(meta->preferred_wg_multiple);
-  POCL_MEM_FREE(meta->local_mem_size);
-  POCL_MEM_FREE(meta->private_mem_size);
-  POCL_MEM_FREE(meta->spill_mem_size);
-  POCL_MEM_FREE(meta->arg_info);
-  if (meta->data != NULL)
-    for (j = 0; j < program->num_devices; ++j)
-      if (meta->data[j] != NULL) {
-        POCL_MSG_WARN("kernel metadata not freed\n");
-        meta->data[j] = NULL; // TODO free data in driver callback
-      }
-  POCL_MEM_FREE(meta->data);
-  POCL_MEM_FREE(meta->local_sizes);
-  POCL_MEM_FREE(meta->build_hash);
-}

@@ -31,7 +31,6 @@
 extern "C" {
 #endif
 
-  #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
 
   void InitializeLLVM ();
   void UnInitializeLLVM ();
@@ -61,8 +60,6 @@ extern "C" {
    * cl_kernel object.
    */
   int pocl_llvm_get_kernels_metadata (cl_program program, unsigned device_i);
-
-  void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
 
   /* This function links the input kernel LLVM bitcode and the OpenCL kernel
    * runtime library into one LLVM module, then runs pocl's kernel compiler

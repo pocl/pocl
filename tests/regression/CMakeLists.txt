@@ -89,6 +89,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
   add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
   set(OCL_30_TESTS "regression/test_program_scope_vars")
   set_tests_properties("regression/test_program_scope_vars" PROPERTIES
+    LABELS "internal;regression;level0"
     SKIP_RETURN_CODE 77)
 endif()
 
@@ -439,7 +440,6 @@ set_property(TEST
   "regression/vector_kernel_arguments"
 
   "regression/test_workitem_func_outside_kernel"
-  "regression/test_program_scope_vars"
   "regression/test_llvm_segfault_issue_889"
   "regression/test_issue_893"
   "regression/test_flatten_barrier_subs"

@@ -91,8 +91,8 @@ class SPIRVtypeOpaque : public SPIRVtype {
   std::string Name;
 
 public:
-  SPIRVtypeOpaque(int32_t Id, std::string &&Name)
-      : SPIRVtype(Id, 0), Name(Name) {} // Opaque types are unsized.
+  SPIRVtypeOpaque(int32_t Id, std::string &&N)
+      : SPIRVtype(Id, 0), Name(std::move(N)) {} // Opaque types are unsized.
   virtual ~SPIRVtypeOpaque(){};
   virtual OCLType ocltype() override { return OCLType::Opaque; }
 };
@@ -360,7 +360,7 @@ public:
     if (Opcode_ == spv::Op::OpTypeVector) {
       auto Type = TypeMap[Word2_];
       if (!Type) {
-        logWarn("SPIR-V Parser: Word2_ {} not found in type map", Word2_);
+        logWarn("SPIR-V Parser: Word2_ %i not found in type map", Word2_);
         return nullptr;
       }
       size_t TypeSize = Type->size();
@@ -370,7 +370,7 @@ public:
     if (Opcode_ == spv::Op::OpTypeArray) {
       auto Type = TypeMap[Word2_];
       if (!Type) {
-        logWarn("SPIR-V Parser: Word2_ {} not found in type map", Word2_);
+        logWarn("SPIR-V Parser: Word2_ %i not found in type map", Word2_);
         return nullptr;
       }
       size_t TypeSize = Type->size();
@@ -385,7 +385,7 @@ public:
 
         auto Type = TypeMap[MemberId];
         if (!Type) {
-          logWarn("SPIR-V Parser: MemberId {} not found in type map", MemberId);
+          logWarn("SPIR-V Parser: MemberId %i not found in type map", MemberId);
           continue;
         }
 
@@ -421,7 +421,7 @@ public:
         int32_t Pointee = Word3_;
         auto Type = TypeMap[Pointee];
         if (!Type) {
-          logError("SPIR-V Parser: Failed to find size for type id {}",
+          logError("SPIR-V Parser: Failed to find size for type id %i",
                    Pointee);
           return nullptr;
         }
