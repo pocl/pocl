@@ -89,6 +89,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
   add_test(NAME "regression/test_program_scope_vars" COMMAND "test_program_scope_vars")
   set(OCL_30_TESTS "regression/test_program_scope_vars")
   set_tests_properties("regression/test_program_scope_vars" PROPERTIES
+    LABELS "internal;regression;level0"
     SKIP_RETURN_CODE 77)
 endif()
 
@@ -412,6 +413,56 @@ set_property(TEST
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
   APPEND PROPERTY LABELS "vulkan")
 
+
+set_property(TEST
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
+  "regression/barrier_between_two_for_loops_LOOPS"
+  "regression/barrier_just_before_return_LOOPS"
+  "regression/early_return_before_a_barrier_region_LOOPS"
+  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
+  "regression/for-loop_with_a_variable_iteration_count_LOOPS"
+  "regression/id-dependent_computation_before_kernel_exit_LOOPS"
+  "regression/infinite_loop_LOOPS"
+  "regression/issues_with_local_pointers_LOOPS"
+  "regression/phi_nodes_not_replicated_LOOPS"
+  "regression/simple_for-loop_with_a_barrier_inside_LOOPS"
+  "regression/test_program_from_binary_with_local_1_1_1_LOOPS"
+  "regression/undominated_variable_from_conditional_barrier_handling_LOOPS"
+
+
+  "regression/autolocals_in_constexprs"
+  "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
+  "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
+  "regression/passing_a_constant_array_as_an_arg"
+  "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
+  "regression/struct_kernel_arguments"
+  "regression/vector_kernel_arguments"
+
+  "regression/test_workitem_func_outside_kernel"
+  "regression/test_llvm_segfault_issue_889"
+  "regression/test_issue_893"
+  "regression/test_flatten_barrier_subs"
+
+  "regression/test_alignment_with_dynamic_wg_114"
+  "regression/test_alignment_with_dynamic_wg_117"
+  "regression/test_alignment_with_dynamic_wg_225"
+  "regression/test_alignment_with_dynamic_wg_173"
+  "regression/test_alignment_with_dynamic_wg_183"
+  "regression/test_alignment_with_dynamic_wg_283"
+  "regression/test_alignment_with_dynamic_wg_332"
+  "regression/test_alignment_with_dynamic_wg_323"
+  "regression/test_alignment_with_dynamic_wg2"
+  "regression/test_alignment_with_dynamic_wg3"
+
+
+  "regression/test_issue_231"
+  "regression/test_issue_445"
+  "regression/test_issue_553"
+  "regression/test_issue_577"
+  "regression/test_issue_757"
+
+  APPEND PROPERTY LABELS "level0")
 
 ###################################################################
 

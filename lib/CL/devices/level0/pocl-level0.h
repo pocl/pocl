@@ -1,7 +1,6 @@
-/* basic.h - a minimalistic single core pocl device driver layer implementation
+/* pocl-level0.h - LevelZero driver callback prototypes
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012-2020 Pekka Jääskeläinen / Tampere University
+   Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -21,24 +20,23 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-/**
- * @file basic.h
- *
- * The purpose of the 'basic' device driver is to serve as an example of
- * a minimalistic (but still working) device driver for pocl.
- *
- * It is a "native device" without multithreading and uses the malloc
- * directly for buffer allocation etc. It also executes work groups in
- * their sequential (increasing) order, thus makes it useful as a test
- * device.
- */
 
-#ifndef POCL_BASIC_H
-#define POCL_BASIC_H
+#ifndef POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H
+#define POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H
 
 #include "pocl_cl.h"
 
 #include "prototypes.inc"
-GEN_PROTOTYPES (basic)
 
-#endif /* POCL_BASIC_H */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+  GEN_PROTOTYPES (level0)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // POCL_LIB_CL_DEVICES_LEVEL0_POCL_LEVEL0_H

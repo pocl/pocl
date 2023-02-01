@@ -55,10 +55,11 @@
                           add has_arg_metadata & kernel attributes */
 /* changes for version 8: compilation parameters are stored in module metadata
  * changes for version 9: support other than "program.bc" files in root dir
- * changes for version 10: support program scope variables */
+ * changes for version 10: support program scope variables
+ * changes for version 11: support extra subgroup & workgroup metadata */
 
 #define FIRST_SUPPORTED_POCLCC_VERSION 9
-#define POCLCC_VERSION 10
+#define POCLCC_VERSION 11
 
 /* pocl binary structures */
 
@@ -68,6 +69,9 @@
  * 3) char* strings are written as: | uint32_t strlen | strlen bytes of content |
  * 4) files are written as two strings: | uint32_t | relative filename | uint32_t | content |
  */
+
+#define POCL_KERNEL_HAS_WORKG_META (1 << 1)
+#define POCL_KERNEL_HAS_SUBG_META (1 << 2)
 
 typedef struct pocl_binary_kernel_s
 {
@@ -94,10 +98,24 @@ typedef struct pocl_binary_kernel_s
   /* number of kernel local variables */
   uint32_t num_locals;
 
+  /* per-device subgroup metadata */
+  uint32_t max_subgroups;
+  uint32_t compile_subgroups;
+
+  /* per-device workgroup metadata */
+  uint32_t max_wg_size;
+  uint32_t preferred_wg_multiple;
+  uint32_t local_mem_size;
+  uint32_t private_mem_size;
+  uint32_t spill_mem_size;
+
   /* required work-group size */
   uint64_t reqd_wg_size[OPENCL_MAX_DIMENSION];
 
-  uint64_t has_arg_metadata;
+  /* Stores: cl_bitfield kernel->meta->has_arg_metadata */
+  uint32_t has_arg_metadata;
+  /* Stores: extra flags (POCL_KERNEL_HAS) */
+  uint32_t flags;
 
   uint32_t sizeof_attributes;
   char* attributes;
@@ -128,6 +146,7 @@ typedef struct pocl_binary_s
   uint64_t program_scope_var_bytes;
 } pocl_binary;
 
+/* pocl_binary flags  */
 #define POCL_BINARY_FLAG_FLUSH_DENORMS (1 << 0)
 #define POCL_BINARY_HAS_PROG_SCOPE_VARS (1 << 1)
 
@@ -406,7 +425,57 @@ pocl_binary_serialize_kernel_to_buffer(cl_program program,
 
   uint32_t attrlen = meta->attributes ? strlen (meta->attributes) : 0;
   BUFFER_STORE_STR2(meta->attributes, attrlen);
-  BUFFER_STORE(meta->has_arg_metadata, uint64_t);
+  uint32_t has_meta = meta->has_arg_metadata;
+  BUFFER_STORE (has_meta, uint32_t);
+  uint32_t flags = 0;
+  if ((meta->max_subgroups && meta->max_subgroups[device_i])
+      || (meta->compile_subgroups && meta->compile_subgroups[device_i]))
+    flags |= POCL_KERNEL_HAS_SUBG_META;
+  if ((meta->local_mem_size && meta->local_mem_size[device_i])
+      || (meta->private_mem_size && meta->private_mem_size[device_i])
+      || (meta->spill_mem_size && meta->spill_mem_size[device_i])
+      || (meta->max_workgroup_size && meta->max_workgroup_size[device_i])
+      || (meta->preferred_wg_multiple
+          && meta->preferred_wg_multiple[device_i]))
+    flags |= POCL_KERNEL_HAS_WORKG_META;
+  BUFFER_STORE (flags, uint32_t);
+
+  if (flags & POCL_KERNEL_HAS_SUBG_META)
+    {
+      uint32_t tmp = 0;
+      if (meta->max_subgroups)
+        tmp = meta->max_subgroups[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+      tmp = 0;
+      if (meta->compile_subgroups)
+        tmp = meta->compile_subgroups[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+    }
+
+  if (flags & POCL_KERNEL_HAS_WORKG_META)
+    {
+      uint32_t tmp;
+      tmp = 0;
+      if (meta->max_workgroup_size)
+        tmp = meta->max_workgroup_size[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+      tmp = 0;
+      if (meta->preferred_wg_multiple)
+        tmp = meta->preferred_wg_multiple[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+      tmp = 0;
+      if (meta->local_mem_size)
+        tmp = meta->local_mem_size[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+      tmp = 0;
+      if (meta->private_mem_size)
+        tmp = meta->private_mem_size[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+      tmp = 0;
+      if (meta->spill_mem_size)
+        tmp = meta->spill_mem_size[device_i];
+      BUFFER_STORE (tmp, uint32_t);
+    }
 
   /***********************************************************************/
   unsigned char *start = buffer;
@@ -534,7 +603,6 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
 {
   unsigned i;
   unsigned char *buffer = *buf;
-  uint64_t *dynarg_sizes;
 
   memset(kernel, 0, sizeof(pocl_binary_kernel));
   BUFFER_READ(kernel->struct_size, uint64_t);
@@ -544,15 +612,12 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
   BUFFER_READ(kernel->num_args, uint32_t);
   BUFFER_READ(kernel->num_locals, uint32_t);
 
-  dynarg_sizes = alloca (sizeof(uint64_t) * kernel->num_args);
-
-  for (i = 0; i < OPENCL_MAX_DIMENSION; i++)
-    {
-      BUFFER_READ(kernel->reqd_wg_size[i], uint64_t);
-    }
-
   if (meta)
     {
+      for (i = 0; i < OPENCL_MAX_DIMENSION; i++)
+        {
+          BUFFER_READ (kernel->reqd_wg_size[i], uint64_t);
+        }
       kernel->local_sizes = calloc (kernel->num_locals, sizeof (size_t));
       for (i = 0; i < kernel->num_locals; i++)
         {
@@ -562,7 +627,23 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
         }
 
       BUFFER_READ_STR2(kernel->attributes, kernel->sizeof_attributes);
-      BUFFER_READ(kernel->has_arg_metadata, uint64_t);
+      BUFFER_READ (kernel->has_arg_metadata, uint32_t);
+      BUFFER_READ (kernel->flags, uint32_t);
+
+      if (kernel->flags & POCL_KERNEL_HAS_SUBG_META)
+        {
+          BUFFER_READ (kernel->max_subgroups, uint32_t);
+          BUFFER_READ (kernel->compile_subgroups, uint32_t);
+        }
+
+      if (kernel->flags & POCL_KERNEL_HAS_WORKG_META)
+        {
+          BUFFER_READ (kernel->max_wg_size, uint32_t);
+          BUFFER_READ (kernel->preferred_wg_multiple, uint32_t);
+          BUFFER_READ (kernel->local_mem_size, uint32_t);
+          BUFFER_READ (kernel->private_mem_size, uint32_t);
+          BUFFER_READ (kernel->spill_mem_size, uint32_t);
+        }
 
       meta->arg_info = calloc (kernel->num_args, sizeof (struct pocl_argument_info));
       POCL_RETURN_ERROR_COND ((!meta->arg_info), CL_OUT_OF_HOST_MEMORY);
@@ -820,6 +901,47 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       km->data
           = (void **)calloc (program->associated_num_devices, sizeof (void *));
       assert (km->name);
+
+      if (k.flags & POCL_KERNEL_HAS_SUBG_META)
+        {
+          if (km->max_subgroups == NULL)
+            km->max_subgroups = (size_t *)calloc (
+                program->associated_num_devices, sizeof (size_t));
+          km->max_subgroups[device_i] = k.max_subgroups;
+
+          if (km->compile_subgroups == NULL)
+            km->compile_subgroups = (size_t *)calloc (
+                program->associated_num_devices, sizeof (size_t));
+          km->compile_subgroups[device_i] = k.compile_subgroups;
+        }
+
+      if (k.flags & POCL_KERNEL_HAS_WORKG_META)
+        {
+          if (km->max_workgroup_size == NULL)
+            km->max_workgroup_size = (size_t *)calloc (
+                program->associated_num_devices, sizeof (size_t));
+          km->max_workgroup_size[device_i] = k.max_wg_size;
+
+          if (km->preferred_wg_multiple == NULL)
+            km->preferred_wg_multiple = (size_t *)calloc (
+                program->associated_num_devices, sizeof (size_t));
+          km->preferred_wg_multiple[device_i] = k.preferred_wg_multiple;
+
+          if (km->local_mem_size == NULL)
+            km->local_mem_size = (cl_ulong *)calloc (
+                program->associated_num_devices, sizeof (cl_ulong));
+          km->local_mem_size[device_i] = k.local_mem_size;
+
+          if (km->private_mem_size == NULL)
+            km->private_mem_size = (cl_ulong *)calloc (
+                program->associated_num_devices, sizeof (cl_ulong));
+          km->private_mem_size[device_i] = k.private_mem_size;
+
+          if (km->spill_mem_size == NULL)
+            km->spill_mem_size = (cl_ulong *)calloc (
+                program->associated_num_devices, sizeof (cl_ulong));
+          km->spill_mem_size[device_i] = k.spill_mem_size;
+        }
 
       unsigned l;
       for (l = 0; l < OPENCL_MAX_DIMENSION; l++)

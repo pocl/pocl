@@ -432,22 +432,9 @@ free_meta (cl_program program)
       for (i = 0; i < program->num_kernels; i++)
         {
           pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
-          POCL_MEM_FREE (meta->build_hash);
           if (meta->builtin_kernel)
             continue;
-          POCL_MEM_FREE (meta->attributes);
-          POCL_MEM_FREE (meta->name);
-          for (j = 0; j < meta->num_args; ++j)
-            {
-              POCL_MEM_FREE (meta->arg_info[j].name);
-              POCL_MEM_FREE (meta->arg_info[j].type_name);
-            }
-          POCL_MEM_FREE (meta->arg_info);
-          for (j = 0; j < program->num_devices; ++j)
-            if (meta->data[j] != NULL)
-              meta->data[j] = NULL; // TODO free data in driver callback
-          POCL_MEM_FREE (meta->data);
-          POCL_MEM_FREE (meta->local_sizes);
+          pocl_free_kernel_metadata (program, i);
         }
       POCL_MEM_FREE (program->kernel_meta);
     }
@@ -471,6 +458,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
 
   program->num_kernels = 0;
   program->build_status = CL_BUILD_NONE;
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   for (i = 0; i < program->num_devices;
        ++i) // TODO associated_num_devices or not ???
@@ -754,7 +742,7 @@ compile_and_link_program(int compile_program,
     program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
-                       num_devices, program->compiler_options);
+                       program->num_devices, program->compiler_options);
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     POCL_MSG_PRINT_LLVM ("   BUILDING for device: %s\n",

@@ -63,7 +63,8 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
     COST 8.0
     PASS_REGULAR_EXPRESSION "OK"
     PROCESSORS 1
-    LABELS "matrix;internal"
+    SKIP_REGULAR_EXPRESSION "SKIPPED"
+    LABELS "matrix;internal;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
@@ -81,6 +82,7 @@ set_tests_properties( "examples/matrix1_poclbin"
   PROPERTIES
     COST 8.0
     PASS_REGULAR_EXPRESSION "OK"
+    SKIP_REGULAR_EXPRESSION "SKIPPED"
     PROCESSORS 1
     LABELS "poclbin;internal"
     DEPENDS "pocl_version_check"

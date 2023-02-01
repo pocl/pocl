@@ -472,7 +472,7 @@ void setup(const char* program_source1, const char* program_source2)
   }
   assert(num_platforms > 0);
   
-  cl_device_type const want_device_types = CL_DEVICE_TYPE_CPU;
+  cl_device_type const want_device_types = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU;
   // CL_DEVICE_TYPE_GPU
   // CL_DEVICE_TYPE_ACCELERATOR
   // CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR

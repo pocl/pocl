@@ -65,7 +65,10 @@ void bzero_s (void *v, size_t n);
 /* Finds the next highest power of two of the given value. */
 POCL_EXPORT
 size_t pocl_size_ceil2 (size_t x);
+
+POCL_EXPORT
 uint64_t pocl_size_ceil2_64 (uint64_t x);
+
 POCL_EXPORT
 size_t pocl_align_value (size_t value, size_t alignment);
 
@@ -257,6 +260,8 @@ int pocl_run_command_capture_output (char *capture_string,
 uint16_t float_to_half (float value);
 
 float half_to_float (uint16_t value);
+
+void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
 
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
  * OpenCL-style bitcode produced by e.g. llvm-spirv */

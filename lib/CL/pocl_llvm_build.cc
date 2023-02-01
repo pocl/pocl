@@ -286,8 +286,10 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
-  ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
-  ss << "-D__USE_CLANG_OPENCL_C_H ";
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+    ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
+    ss << "-D__USE_CLANG_OPENCL_C_H ";
+  }
 
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
@@ -339,7 +341,6 @@ int pocl_llvm_build_program(cl_program program,
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
 
-
   ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 
   if (user_options.find("-cl-std=") == std::string::npos)
@@ -354,7 +355,7 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
 
   std::string exts = device->extensions;
-  if (cl_std_major >= 3) {
+  if (cl_std_major >= 3 && device->features != nullptr) {
     exts += ' ';
     exts += device->features;
   }
@@ -533,12 +534,16 @@ int pocl_llvm_build_program(cl_program program,
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
   PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
-  po.Includes.push_back(PoclTypesH);
-  po.Includes.push_back(BuiltinRenamesH);
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+    po.Includes.push_back(PoclTypesH);
+    po.Includes.push_back(BuiltinRenamesH);
+  }
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
-  po.Includes.push_back(KernelH);
+  if (device->use_only_clang_opencl_headers == CL_FALSE) {
+    po.Includes.push_back(KernelH);
+  }
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   ta.Triple = device->llvm_target_triplet;
   if (device->llvm_cpu != NULL)

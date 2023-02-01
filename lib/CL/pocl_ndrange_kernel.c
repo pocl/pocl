@@ -30,6 +30,7 @@
 
 static cl_int
 pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
+                          unsigned device_i,
                           cl_uint work_dim, const size_t *global_work_offset,
                           const size_t *global_work_size,
                           const size_t *local_work_size, size_t *global_offset,
@@ -156,11 +157,13 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
   else if (local_work_size == NULL)
     {
       if (realdev->ops->compute_local_size)
-        realdev->ops->compute_local_size (realdev, global_x, global_y,
+        realdev->ops->compute_local_size (realdev, kernel, device_i,
+                                          global_x, global_y,
                                           global_z, &local_x, &local_y,
                                           &local_z);
       else
-        pocl_default_local_size_optimizer (realdev, global_x, global_y,
+        pocl_default_local_size_optimizer (realdev, kernel, device_i,
+                                           global_x, global_y,
                                            global_z, &local_x, &local_y,
                                            &local_z);
     }
@@ -338,8 +341,18 @@ pocl_ndrange_kernel_common (
       (command_queue->context != kernel->context), CL_INVALID_CONTEXT,
       "kernel and command_queue are not from the same context\n");
 
+  cl_uint program_dev_i = CL_UINT_MAX;
+  cl_device_id realdev = pocl_real_dev (command_queue->device);
+  for (unsigned i = 0; i < kernel->program->num_devices; ++i)
+    {
+      if (kernel->program->devices[i] == realdev)
+        program_dev_i = i;
+    }
+  assert (program_dev_i < CL_UINT_MAX);
+
   errcode = pocl_kernel_calc_wg_size (
-      command_queue, kernel, work_dim, global_work_offset, global_work_size,
+      command_queue, kernel, program_dev_i, work_dim,
+      global_work_offset, global_work_size,
       local_work_size, offset, local, num_groups);
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error calculating wg size\n");
@@ -367,14 +380,6 @@ pocl_ndrange_kernel_common (
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error constructing command struct\n");
 
-  cl_uint program_dev_i = CL_UINT_MAX;
-  cl_device_id realdev = pocl_real_dev (command_queue->device);
-  for (unsigned i = 0; i < kernel->program->num_devices; ++i)
-    {
-      if (kernel->program->devices[i] == realdev)
-        program_dev_i = i;
-    }
-  assert (program_dev_i < CL_UINT_MAX);
   _cl_command_node *c = *cmd;
   c->program_device_i = program_dev_i;
   c->next = NULL;

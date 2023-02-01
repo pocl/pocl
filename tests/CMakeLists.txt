@@ -96,6 +96,12 @@ if(ENABLE_VULKAN)
   set_tests_properties("pocl_test_dlopen_device_vulkan" PROPERTIES LABELS "internal;dlopen;vulkan")
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
 endif()
+
+if(ENABLE_LEVEL0)
+  add_test(NAME pocl_test_dlopen_device_level0 COMMAND test_dlopen level0)
+  set_tests_properties("pocl_test_dlopen_device_level0" PROPERTIES LABELS "internal;dlopen;level0")
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_level0")
+endif()
 endif()
 
 endif()

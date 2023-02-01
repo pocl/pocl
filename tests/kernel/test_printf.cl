@@ -1,6 +1,7 @@
 kernel void test_printf()
 {
 
+  printf("");
   printf("INTEGERS\n\n");
 
   printf("1\n");
@@ -71,7 +72,8 @@ kernel void test_printf()
   printf("%0.3f\n", 0.0f);
 
   printf("%+8.2f\n",-10.3456);
-  printf("%f\n",sqrt(-1.0f));
+
+  printf("%f\n", NAN);
 
   printf ("\n%%e conversion\n\n");
 

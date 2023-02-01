@@ -32,7 +32,7 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   /* Check that kernel is associated with device, or that there is no
-     risk of confusion. */
+   risk of confusion. */
   if (device != NULL)
     {
       POCL_RETURN_ERROR_ON (
@@ -49,30 +49,38 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
     }
 
   /* Check device for subgroup support */
-  if (device->max_num_sub_groups == 0)
-    {
-      return CL_INVALID_OPERATION;
-    }
+  POCL_RETURN_ERROR_ON ((device->max_num_sub_groups == 0),
+                        CL_INVALID_OPERATION,
+                        "device does not support any subgroup sizes\n");
 
-  switch (param_name)
+  // find device index
+  cl_uint dev_i = CL_UINT_MAX;
+  cl_device_id realdev = pocl_real_dev (device);
+  for (unsigned i = 0; i < kernel->program->num_devices; ++i)
     {
-    case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
+      if (kernel->program->devices[i] == realdev)
+        dev_i = i;
+    }
+  POCL_RETURN_ERROR_ON ((dev_i == CL_UINT_MAX), CL_INVALID_KERNEL,
+                        "the kernel was not built for this device\n");
+
+  if (param_name == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE)
+    {
       POCL_RETURN_ERROR_ON ((input_value == NULL
                              || input_value_size < sizeof (size_t)
                              || input_value_size > sizeof (size_t) * 3),
                             CL_INVALID_VALUE, "NDRange not given.");
-      break;
-    default:
-      break;
     }
+
+  /************************************************************************/
 
   switch (param_name)
     {
+    /* TODO: this should be a device ops callback */
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE:
       {
         /* For now assume SG == WG_x. */
         POCL_RETURN_GETINFO (size_t, ((size_t *)input_value)[0]);
-        break;
       }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE:
       {
@@ -86,7 +94,6 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
                                       * (input_value_size > sizeof (size_t) * 2
                                              ? ((size_t *)input_value)[2]
                                              : 1)));
-        break;
       }
     case CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT:
       {
@@ -114,19 +121,26 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
                                        param_value_size / sizeof(size_t),
                                        nd);
           }
-        break;
       }
-    case CL_KERNEL_MAX_NUM_SUB_GROUPS:
-      POCL_RETURN_GETINFO (size_t, device->max_num_sub_groups);
-      break;
-    case CL_KERNEL_COMPILE_NUM_SUB_GROUPS:
-      POCL_RETURN_GETINFO (size_t, 0);
-      break;
-    default:
-      break;
-    }
 
-  POCL_ABORT_UNIMPLEMENTED ("clGetKernelSubGroupInfo unfinished");
-  return CL_INVALID_OPERATION;
+    /************ these are NOT dependent on NDRANGE ***********************/
+    case CL_KERNEL_MAX_NUM_SUB_GROUPS:
+      if (kernel->meta->max_subgroups)
+        POCL_RETURN_GETINFO (size_t, kernel->meta->max_subgroups[dev_i]);
+      else
+        POCL_RETURN_GETINFO (size_t, 0);
+
+    case CL_KERNEL_COMPILE_NUM_SUB_GROUPS:
+      if (kernel->meta->compile_subgroups)
+        POCL_RETURN_GETINFO (size_t, kernel->meta->compile_subgroups[dev_i]);
+      else
+        POCL_RETURN_GETINFO (size_t, 0);
+
+    default:
+      POCL_MSG_ERR ("clGetKernelSubGroupInfo for param_name value %u "
+                    "is not implemented\n",
+                    param_name);
+      return CL_INVALID_VALUE;
+    }
 }
 POsym(clGetKernelSubGroupInfo)

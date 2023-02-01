@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2018 pocl developers
+#   Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,27 +23,11 @@
 #
 #=============================================================================
 
-add_compile_options(${OPENCL_CFLAGS})
+add_pocl_device_library(pocl-devices-level0
+  pocl-level0.cc pocl-level0.h
+  level0-compilation.cc level0-compilation.hh
+  level0-driver.cc level0-driver.hh)
 
-if (MSVC)
-  set_source_files_properties( matadd.c matadd_exec.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-add_executable("matadd" matadd.c matadd_exec.c matadd.cl)
-
-target_link_libraries("matadd" ${POCLU_LINK_OPTIONS})
-
-add_test(NAME "examples/matadd" COMMAND "matadd")
-
-set(PROPS)
-if(NOT ENABLE_ANYSAN)
-  set(PROPS
-    PASS_REGULAR_EXPRESSION "OK")
+if(ENABLE_LOADABLE_DRIVERS)
+  target_link_libraries(pocl-devices-level0 PRIVATE ${LEVEL0_LIBRARIES} ${PTHREAD_LIBRARY})
 endif()
-
-set_tests_properties( "examples/matadd"
-  PROPERTIES
-    COST 3.0
-    ${PROPS}
-    PROCESSORS 1
-    LABELS "internal;vulkan;level0"
-    DEPENDS "pocl_version_check")

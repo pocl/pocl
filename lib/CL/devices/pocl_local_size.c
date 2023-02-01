@@ -64,10 +64,11 @@ divide_chain (size_t a, size_t b, size_t c)
 }
 
 void
-pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
-                                   size_t global_y, size_t global_z,
-                                   size_t *local_x, size_t *local_y,
-                                   size_t *local_z)
+pocl_default_local_size_optimizer (cl_device_id dev, cl_kernel kernel,
+                                   unsigned device_i,
+                                   size_t global_x, size_t global_y,
+                                   size_t global_z, size_t *local_x,
+                                   size_t *local_y, size_t *local_z)
 {
   /* Tries figure out a local size which utilizes all the device's resources
    * efficiently. Assume work-groups are scheduled to compute units, so
@@ -304,10 +305,11 @@ pocl_default_local_size_optimizer (cl_device_id dev, size_t global_x,
 }
 
 void
-pocl_wg_utilization_maximizer (cl_device_id dev, size_t global_x,
-                               size_t global_y, size_t global_z,
-                               size_t *local_x, size_t *local_y,
-                               size_t *local_z)
+pocl_wg_utilization_maximizer (cl_device_id dev, cl_kernel kernel,
+                               unsigned device_i,
+                               size_t global_x, size_t global_y,
+                               size_t global_z, size_t *local_x,
+                               size_t *local_y, size_t *local_z)
 {
   size_t max_group_size = dev->max_work_group_size;
   *local_x = *local_y = *local_z = 1;

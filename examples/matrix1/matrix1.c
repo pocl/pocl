@@ -296,7 +296,8 @@ main (int argc, char **argv)
       printf ("Binary local_wg: %u \n", local_wg);
       if (local_wg * local_wg > max_wg_size)
         {
-          printf ("local_wg exceeds this device's capabilities.\n");
+          printf ("Local WG size of the binary exceeds this "
+                  "device's capabilities.\nTest SKIPPED\n");
           return 0;
         }
     }

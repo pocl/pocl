@@ -5,7 +5,7 @@
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
-
+#cmakedefine BUILD_LEVEL0
 #cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
@@ -149,6 +149,16 @@
 
 
 
+#ifdef BUILD_LEVEL0
+
+#define CLANG "@CLANG@"
+
+#define LLVM_SPIRV "@LLVM_SPIRV@"
+
+#define SPIRV_LINK "@SPIRV_LINK@"
+
+#endif
+
 
 
 #ifdef ENABLE_LLVM
@@ -167,16 +177,6 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-#cmakedefine LLVM_10_0
-
-#cmakedefine LLVM_11_0
-
-#cmakedefine LLVM_12_0
-
-#cmakedefine LLVM_13_0
-
-#cmakedefine LLVM_14_0
-
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
 #cmakedefine LLVM_BUILD_MODE_DEBUG
@@ -184,7 +184,6 @@
 #ifndef LLVM_VERSION
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
-
 
 #endif
 

@@ -93,7 +93,7 @@ extern "C" {
 #define POCL_DEBUG_FLAG_ALMAIF 0x800
 #define POCL_DEBUG_FLAG_PROXY 0x1000
 #define POCL_DEBUG_FLAG_ALMAIF_MMAP 0x2000
-
+#define POCL_DEBUG_FLAG_LEVEL0 0x4000
 
 #define POCL_DEBUG_FLAG_VULKAN 0x80000
 
@@ -235,10 +235,9 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_ALMAIF2(errcode, ...) POCL_MSG_PRINT_INFO_F(ALMAIF, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_ALMAIF(...) POCL_MSG_PRINT_INFO_F(ALMAIF, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_ALMAIF_MMAP(...) POCL_MSG_PRINT_INFO_F(ALMAIF_MMAP, "", __VA_ARGS__)
-
-
     #define POCL_MSG_PRINT_PROXY2(errcode, ...) POCL_MSG_PRINT_INFO_F(PROXY, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_PROXY(...) POCL_MSG_PRINT_INFO_F(PROXY, "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_LEVEL0(...) POCL_MSG_PRINT_INFO_F(LEVEL0, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_VULKAN2(errcode, ...) POCL_MSG_PRINT_INFO_F(VULKAN, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_VULKAN(...) POCL_MSG_PRINT_INFO_F(VULKAN, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
@@ -287,6 +286,7 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_ALMAIF_MMAP(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
+    #define POCL_MSG_PRINT_LEVEL0(...) do {} while (0)
     #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
     #define POCL_MSG_PRINT_VULKAN(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)

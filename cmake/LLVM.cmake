@@ -296,6 +296,13 @@ if(NOT DEFINED LLVM_SPIRV)
   endif()
 endif()
 
+if(NOT DEFINED SPIRV_LINK)
+  find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  if(SPIRV_LINK)
+    message(STATUS "Found spirv-link: ${SPIRV_LINK}")
+  endif()
+endif()
+
 ####################################################################
 
 # try compile with any compiler (supplied as argument)

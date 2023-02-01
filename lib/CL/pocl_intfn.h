@@ -28,6 +28,10 @@
 #  error this file must be included through pocl_cl.h, not directly
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 POdeclsym(clBuildProgram)
 POdeclsym(clLinkProgram)
 POdeclsym(clCompileProgram)
@@ -98,6 +102,7 @@ POdeclsym(clGetSamplerInfo)
 POdeclsym(clGetSupportedImageFormats)
 POdeclsymICD(clIcdGetPlatformIDsKHR)
 POdeclsym(clReleaseCommandQueue)
+POCL_EXPORT
 POdeclsym(clReleaseContext)
 POCL_EXPORT
 POdeclsym(clReleaseDevice)
@@ -174,5 +179,9 @@ POdeclsym(clCommandCopyImageToBufferKHR)
 POdeclsym(clCommandFillBufferKHR)
 POdeclsym(clCommandFillImageKHR)
 POdeclsym(clGetCommandBufferInfoKHR)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

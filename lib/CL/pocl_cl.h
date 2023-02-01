@@ -408,6 +408,8 @@ extern uint64_t last_object_id;
 /* pocl specific flag, for "hidden" default queues allocated in each context */
 #define CL_QUEUE_HIDDEN (1 << 10)
 
+#define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
+
 typedef struct pocl_argument {
   uint64_t size;
   /* The "offset" is used to simplify subbuffer handling.
@@ -850,10 +852,11 @@ struct pocl_device_ops {
   /* The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
    * is left to the runtime. */
-  void (*compute_local_size) (cl_device_id dev, size_t global_x,
-                              size_t global_y, size_t global_z,
-                              size_t *local_x, size_t *local_y,
-                              size_t *local_z);
+  void (*compute_local_size) (cl_device_id dev, cl_kernel kernel,
+                              unsigned device_i,
+                              size_t global_x, size_t global_y,
+                              size_t global_z, size_t *local_x,
+                              size_t *local_y, size_t *local_z);
 
   cl_int (*get_device_info_ext) (cl_device_id dev, cl_device_info param_name,
                                  size_t param_value_size, void * param_value,
@@ -989,6 +992,10 @@ struct _cl_device_id {
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
   cl_bool program_scope_variables_pass;
+  /* if CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
+   * and rely purely on Clang's OpenCL headers. For most drivers,
+   * this should default to CL_FALSE. */
+  cl_bool use_only_clang_opencl_headers;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
@@ -1071,6 +1078,11 @@ struct _cl_device_id {
   /* relative path to file with OpenCL sources of the builtin kernels */
   const char* builtins_sources_path;
 
+  /* list of extra filenames or directories to serialize, from
+   * the program's directory in pocl cache. By default
+   * "program.bc" is serialized so that shouldn't be included here.
+   * Useful for adding extra files not related to any particular kernel
+   * (which have their own subdirectories in program's cache dir). */
   const char **serialize_entries;
   unsigned num_serialize_entries;
 
@@ -1165,6 +1177,13 @@ struct _cl_device_id {
 #define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
 
 #define OPENCL_MAX_DIMENSION 3
+#ifndef HAVE_SIZE_T_3
+#define HAVE_SIZE_T_3
+typedef struct
+{
+  size_t size[3];
+} size_t_3;
+#endif
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
@@ -1406,6 +1425,7 @@ struct _cl_mem {
   /* reference count; when it reaches 0,
    * the mem_host_ptr is automatically freed */
   uint mem_host_ptr_refcount;
+  int mem_host_ptr_is_svm;
 
   /* array of device-specific memory bookkeeping structs.
      The location of some device's struct is determined by
@@ -1501,12 +1521,33 @@ typedef struct pocl_kernel_metadata_s
    * the total size here. see struct _cl_kernel on why */
   size_t total_argument_storage_size;
 
-  /* array[program->num_devices] */
+  /****** subgroups *******/
+  /* per-device value for CL_KERNEL_MAX_NUM_SUB_GROUPS */
+  size_t *max_subgroups;
+  /* per-device value for CL_KERNEL_COMPILE_NUM_SUB_GROUPS */
+  size_t *compile_subgroups;
+
+  /****** workgroups *******/
+  /* per-device value for CL_KERNEL_WORK_GROUP_SIZE */
+  size_t *max_workgroup_size;
+  /* per-device value for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE */
+  size_t *preferred_wg_multiple;
+  /* per-device value for CL_KERNEL_LOCAL_MEM_SIZE */
+  cl_ulong *local_mem_size;
+  /* per-device value for CL_KERNEL_PRIVATE_MEM_SIZE */
+  cl_ulong *private_mem_size;
+  /* per-device value for CL_KERNEL_SPILL_MEM_SIZE_INTEL */
+  cl_ulong *spill_mem_size;
+
+  /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
   /* If this is a BI kernel descriptor, they are statically defined in
      the custom device driver, thus should not be freed. */
   cl_bitfield builtin_kernel;
+  /* maximum global work size usable with the kernel.
+   * Only applies to builtin kernels */
+  size_t_3 builtin_max_global_work;
 
   /* device-specific METAdata, void* array[program->num_devices] */
   void **data;

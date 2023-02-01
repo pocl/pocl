@@ -61,7 +61,8 @@ set_tests_properties( "examples/example0" ${SPIREX}
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "internal;cuda"
+    # devices which support SPIR
+    LABELS "internal;cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR

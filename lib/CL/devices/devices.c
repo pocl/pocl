@@ -87,6 +87,10 @@
 #include "vulkan/pocl-vulkan.h"
 #endif
 
+#ifdef BUILD_LEVEL0
+#include "level0/pocl-level0.h"
+#endif
+
 #define MAX_DEV_NAME_LEN 64
 
 #ifndef PATH_MAX
@@ -149,6 +153,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_VULKAN
   INIT_DEV (vulkan),
 #endif
+#ifdef BUILD_LEVEL0
+  INIT_DEV (level0),
+#endif
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
@@ -177,6 +184,9 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #endif
 #ifdef BUILD_VULKAN
   "vulkan",
+#endif
+#ifdef BUILD_LEVEL0
+  "level0",
 #endif
 };
 
@@ -611,7 +621,6 @@ pocl_init_devices ()
           dev->driver_version = POCL_VERSION_FULL;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
-          dev->short_name = strdup (dev->ops->device_name);
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */

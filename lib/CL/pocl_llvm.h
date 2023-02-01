@@ -31,7 +31,6 @@
 extern "C" {
 #endif
 
-  #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
 
   void InitializeLLVM ();
   void UnInitializeLLVM ();
@@ -42,6 +41,7 @@ extern "C" {
   /* Returns if the cpu supports FMA instruction (uses LLVM). */
   int cpu_has_fma ();
 
+  POCL_EXPORT
   int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
 
   /* Sets up the native/preferred vector widths at runtime (using LLVM). */
@@ -49,6 +49,7 @@ extern "C" {
 
   /* Compiles an .cl file into LLVM IR.
    */
+  POCL_EXPORT
   int pocl_llvm_build_program (cl_program program, unsigned device_i,
                                cl_uint num_input_headers,
                                const cl_program *input_headers,
@@ -83,9 +84,10 @@ extern "C" {
   /**
    * Free the LLVM IR of a program for a given device
    */
+  POCL_EXPORT
   void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
 
-  /* calls delete on the module. */
+  POCL_EXPORT
   void pocl_destroy_llvm_module (void *modp, cl_context ctx);
 
   int pocl_llvm_remove_file_on_signal (const char *file);

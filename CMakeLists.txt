@@ -89,6 +89,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie")
 
 enable_testing()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #####################################################
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
@@ -185,6 +187,8 @@ option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 option(ENABLE_CUDNN "Enable the CUDNN for the CUDA device driver, requires CUDA" OFF)
 
 option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
+
+option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
@@ -521,7 +525,11 @@ if(ENABLE_LLVM)
   if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
     set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
   elseif(LLVM_VERSION VERSION_EQUAL 15.0)
-    option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." ON)
+    if(ENABLE_LEVEL0)
+      set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
+    else()
+      option(ENABLE_LLVM_OPAQUE_POINTERS "Handle the change to llvm opaque pointers." ON)
+    endif()
   else()
     set(ENABLE_LLVM_OPAQUE_POINTERS ON CACHE INTERNAL "llvm opaque pointers" FORCE)
   endif()
@@ -1584,6 +1592,43 @@ endif()
 
 ##########################################################
 
+if (ENABLE_LEVEL0)
+  if(NOT PKG_CONFIG_EXECUTABLE)
+    message(FATAL_ERROR "building Level0 requires pkg-config")
+  endif()
+  pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
+
+  if(NOT ENABLE_LLVM)
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang")
+  endif()
+  if(NOT LLVM_SPIRV)
+    message(FATAL_ERROR "Level Zero requires llvm-spirv translator")
+  endif()
+  if(NOT SPIRV_LINK)
+    message(FATAL_ERROR "Level Zero requires spirv-link from SPIR-V tools")
+  endif()
+
+  if (NOT LEVEL0_FOUND)
+    message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
+    find_library(LEVEL0_LIBRARIES NAMES ze_loader REQUIRED)
+    find_path(LEVEL0_INCLUDE_DIRS NAMES ze_api.h PATH_SUFFIXES level_zero)
+    if (LEVEL0_LIBRARIES AND LEVEL0_INCLUDE_DIRS)
+      set(LEVEL0_FOUND ON CACHE INTERNAL "Level0 found")
+    endif()
+  endif()
+
+  if(NOT LEVEL0_FOUND)
+    message(FATAL_ERROR "Level Zero library/headers not found")
+  else()
+    message(STATUS "Using Level0 library: '${LEVEL0_LIBRARIES}' and Level0 headers: '${LEVEL0_INCLUDE_DIRS}'")
+    message(WARNING "Note: Level0 backend is highly experimental and very incomplete." )
+    set(OCL_DRIVERS "${OCL_DRIVERS} level0")
+    set(OCL_TARGETS "${OCL_TARGETS} level0")
+  endif()
+endif()
+
+##########################################################
+
 if(ENABLE_CUDA)
 
   if(NOT "${LLVM_ALL_TARGETS}" MATCHES "NVPTX")
@@ -1737,6 +1782,7 @@ set(KERNEL_COMPILER_LIB_VERSION "${KER_LIB_CURRENT_VERSION}.0.0")
 set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_HSA ${ENABLE_HSA})
 set(BUILD_VULKAN ${ENABLE_VULKAN})
+set(BUILD_LEVEL0 ${ENABLE_LEVEL0})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})

@@ -15,3 +15,4 @@ NVidia GPUs via CUDA backend, HSA devices, TCE devices and fixed-function accele
    almaif
    proxy
    vulkan
+   level0

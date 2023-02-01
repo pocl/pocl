@@ -188,4 +188,9 @@
   void pocl_##__DRV__##_svm_register (cl_device_id dev, void *host_ptr, size_t size);      \
   void pocl_##__DRV__##_svm_unregister (cl_device_id dev, void *host_ptr, size_t size);    \
   void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \
-  void pocl_##__DRV__##_notify_event_finished (cl_event event);
+  void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
+  cl_int pocl_##__DRV__##_get_device_info_ext(cl_device_id dev,               \
+                                         cl_device_info param_name,           \
+                                         size_t param_value_size,             \
+                                         void * param_value,                  \
+                                         size_t * param_value_size_ret);
