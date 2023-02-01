@@ -38,6 +38,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "LoopBarriers.h"
 #include "Barrier.h"
+#include "WorkitemHandlerChooser.h"
 #include "Workgroup.h"
 
 POP_COMPILER_DIAGS
@@ -75,6 +76,10 @@ bool
 LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
   bool isBLoop = false;
   bool changed = false;
+
+  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
+      WorkitemHandlerChooser::POCL_WIH_CBS)
+    return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
