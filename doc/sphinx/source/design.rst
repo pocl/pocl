@@ -11,3 +11,4 @@ to this part.
    kernel_compiler
    memory_management
    pocl_binary
+   driver_design
