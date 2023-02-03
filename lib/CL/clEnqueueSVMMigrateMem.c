@@ -40,8 +40,10 @@ POname (clEnqueueSVMMigrateMem) (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  cl_context context = command_queue->context;
+
   POCL_RETURN_ERROR_ON (
-      (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
+      (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND ((svm_pointers == NULL), CL_INVALID_VALUE);
@@ -56,6 +58,10 @@ POname (clEnqueueSVMMigrateMem) (cl_command_queue command_queue,
   for (i = 0; i < num_svm_pointers; ++i)
     {
       POCL_RETURN_ERROR_COND ((svm_pointers[i] == NULL), CL_INVALID_VALUE);
+      size_t size = sizes ? sizes[i] : 1;
+      errcode = pocl_svm_check_pointer (context, svm_pointers[i], size);
+      if (errcode != CL_SUCCESS)
+        return errcode;
     }
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
