@@ -1,6 +1,6 @@
-=========================================
-How to write a new device driver for Pocl
-=========================================
+=======================================================
+How to write a new user-space device driver for PoCL
+=======================================================
 
 The first required steps are adding the CMake infrastructure, and
 making the driver known to device initialization. Required CMake
@@ -62,8 +62,10 @@ The callbacks can be divided into several groups:
 
    these allocate & free device-side memory. See documentation on ``struct _cl_mem->device_ptrs``
    and ``pocl_mem_identifier``. If the device supports images, these must also allocate/free images.
-   Memory allocation in PoCL is done lazily, IOW a buffer is allocated only on devices will run
-   commands using those buffers.
+   Buffers (cl_mem objects) in OpenCL are per-context; the allocation of the backing storage
+   (device memory) in PoCL is done lazily. IOW a buffer is allocated only on devices which actually run
+   commands using those buffers. This happens at clEnqueueXYZ time (``clEnqueue -> pocl_create_command()
+    -> can_run_command() -> device->ops->alloc_mem_obj()``).
 
 3. memory mapping - ``get_mapping_ptr, free_mapping_ptr``
 
@@ -79,13 +81,13 @@ The callbacks can be divided into several groups:
 
 5. compilation callbacks - ``build_source, build_binary, link_program`` etc
 
-   the implementation of these depends on what is the device supposed to support.
+   the implementation of these depends on what the device intends to support.
 
    a. if the device will only support offline compilation, this requires only a minimal
       implementation of ``build_binary``; PoCL will automatically unpack pocl-binaries
       into the cache directory and setup kernel metadata.
 
-   b. if the device wants to support online (source) compilation using LLVM infrastructure,
+   b. if the device wants to support online (OpenCL C) compilation using LLVM infrastructure,
       it can use the generic ``pocl_driver_XYZ`` callback implementations from ``common_driver.c``.
       These will invoke Clang/LLVM compilation, optimization & linking steps.
       However, the device needs to setup its metadata like LLVM triple, whether it's SPMD,
@@ -98,18 +100,18 @@ The callbacks can be divided into several groups:
       kernel metadata extraction.
 
    ``build_source`` - required; but only if driver wants to support compilation from source.
-   Note that builds from SPIR-V input are (ATM) handled by the ``build_binary`` callback.
+   Note that builds from SPIR-V input are (currently) handled by the ``build_binary`` callback.
 
    ``build_binary`` - required; all drivers (except custom devices) are assumed to support
-   clCreateProgramWithBinary() with at least pocl-binaries as input. If the filed stored
+   clCreateProgramWithBinary() with at least pocl-binaries as input. If the files stored
    in pocl-binaries have everything required, then the implementation of this callback can be
    trivial; otherwise it needs to do the transformation of binaries to final device binaries.
 
    ``link_program`` - is required to support the ``clCompile/clLinkProgram`` combo; it's not
    *strictly* required for a useful driver, since most OpenCL programs don't use these.
 
-   ``supports_binary`` - optional; is called to check whether the driver supports a specific binary
-   note that pocl-binaries are always supported, so this is only called for other binaries.
+   ``supports_binary`` - optional; is called to check whether the driver supports a specific binary.
+   Note that pocl-binaries are always supported, so this is only called for other binaries.
 
    ``setup_metadata`` - required; after build, it's called to set up the
    program & kernel metadata like number of arguments, argument types and so on.
@@ -120,13 +122,13 @@ The callbacks can be divided into several groups:
    ``build_poclbinary`` & ``compile_kernel`` - optional; clGetProgramInfo() called
    with CL_PROGRAM_BINARIES will call these, if they're not NULL; the purpose is
    to do any extra steps necessary to have the program cache directory in a "useful"
-   state, when the cache directory can be serialized into a pocl binary.
+   state, when the cache directory can be serialized into a pocl-binary.
 
 6. command execution callbacks - ``read, copy, write, map_mem`` etc
 
    These are optional because command execution can be implemented in multiple ways.
 
-   a. there is a helper function in pocl for executing commands in the driver, called ``pocl_exec_command``.
+   a. there is a helper function in PoCL for executing commands in the driver, called ``pocl_exec_command``.
       This helper does some preparations, then calls the driver's callback for the command (e.g.
       ``device->ops->unmap`` for the EnqueUnmap type command), and then cleanups after the command.
       The advantage is that this is the simplest way to implement a command; the disadvantage is
