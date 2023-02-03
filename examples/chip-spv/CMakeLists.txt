@@ -74,8 +74,7 @@ ExternalProject_Add(
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  # workaround for a bug in the CHIP-SPV build system
-  INSTALL_COMMAND "${CMAKE_MAKE_PROGRAM}" ccompat
+  INSTALL_COMMAND "${CMAKE_MAKE_PROGRAM}" build_tests
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
