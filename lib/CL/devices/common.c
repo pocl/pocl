@@ -1743,6 +1743,8 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
   dev->num_opencl_c_with_version = supports_30 ? 4 : 3;
 }
 
+/* this is a list of recognized extensions, not a list of reported extensions;
+   the reported are stored in dev->extensions; this only for versioning */
 static const cl_name_version OPENCL_EXTENSIONS[]
     = { { CL_MAKE_VERSION (1, 0, 0), "cl_intel_required_subgroup_size" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups" },
@@ -1754,6 +1756,13 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroups" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_extended_types" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_vote" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_ballot" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_arithmetic" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle_relative" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_clustered_reduce" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
