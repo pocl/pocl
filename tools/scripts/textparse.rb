@@ -57,7 +57,7 @@ DEPS_TO = Array.new
 NANOS_IN_SEC = 1_000_000_000
 
 # 109287478675743 | EV ID 1 | DEV 1 | CQ 4 | ndrange_kernel | queued | KERNEL ID 6 | name=ML_BSSN_CL_RHS1
-COMMAND_REGEXP = /^(?<timestamp>\d+) \| EV ID (?<event_id>\d+) \| DEV (?<dev_id>\d+) \| CQ (?<queue_id>\d+) \| (?<command_type>\w+) \| (?<evt_status>\w+) \| (?<remainder>.*)/
+COMMAND_REGEXP = /^(?<timestamp>\d+) \| EV ID (?<event_id>\d+) \| DEV (?<dev_id>\d+) \| CQ (?<queue_id>\d+) \| (?<command_type>\w+) \| (?<evt_status>\w+) \|(?<remainder>.*)/
 
 # DEP | EV ID 1 -> EV ID 2
 DEP_REGEXP = /DEP \| EV ID (?<src_id>\d+) -> EV ID (?<dst_id>\d+)/
@@ -134,8 +134,10 @@ def parsecommand(timestamp, match)
         meta[:src_id] = match[:src_id]
         meta[:dst_id] = match[:dst_id]
         end
+      when "barrier", "svm_memcpy"
+        meta[:type] = "empty"
       else
-        puts "unknown command type: ${cmd_type}"
+        puts "unknown command type: #{cmd_type}"
     end
 
     h = EVENTS[event_id]
