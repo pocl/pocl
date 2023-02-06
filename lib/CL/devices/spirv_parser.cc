@@ -92,12 +92,12 @@ public:
   virtual OCLType ocltype() override { return OCLType::POD; }
 };
 
-/// the constructor expects both packed & unpacked sizes;
-/// setPacked() can be called later, and will affect
-/// the value returned by size().
-/// this is done deliberately, because the packed attribute
-/// is not accessible at the time of parsing the type,
-/// only later at function parameter declaration
+/// The constructor expects both packed & unpacked sizes;
+/// setPacked() can be called later, and will affect the value
+/// returned by size().
+/// This is done deliberately, because the packed attribute
+/// is not accessible at the time of parsing the type, only
+/// later at function parameter declaration
 class SPIRVtypePODStruct : public SPIRVtype {
   size_t PackedSize_;
   bool IsPacked_;
