@@ -161,6 +161,8 @@ process_opencl_device(int arg, char **argv, int argc)
   char *opencl_string = argv[arg];
   if (!strcmp(opencl_string, "CL_DEVICE_TYPE_CPU"))
     opencl_device = CL_DEVICE_TYPE_CPU;
+  else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_CUSTOM"))
+    opencl_device = CL_DEVICE_TYPE_CUSTOM;
   else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_GPU"))
     opencl_device = CL_DEVICE_TYPE_GPU;
   else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_ACCELERATOR"))

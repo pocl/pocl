@@ -83,14 +83,21 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
 
   err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, 1, device, NULL);
   if (err != CL_SUCCESS)
-    return err;
+    {
+
+      err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_CUSTOM, 1, device, NULL);
+      if (err != CL_SUCCESS)
+        {
+          return err;
+        }
+    }
 
   *context = clCreateContext (NULL, 1, device, NULL, NULL, &err);
   if (err != CL_SUCCESS)
     return err;
 
   *queue = clCreateCommandQueue (*context, *device,
-                                  CL_QUEUE_PROFILING_ENABLE, &err);
+                                 CL_QUEUE_PROFILING_ENABLE, &err);
   if (err != CL_SUCCESS)
     return err;
 
@@ -99,11 +106,13 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
 
 cl_int
 poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
+                            cl_char include_custom_dev,
                             cl_uint *num_devices, cl_device_id **devices,
                             cl_command_queue **queues)
 {
   cl_int err;
-  *num_devices = 0;
+  cl_uint num_dev_all = 0;
+  cl_uint num_dev_custom = 0;
   size_t i;
 
   if (context == NULL || devices == NULL || queues == NULL || platform == NULL)
@@ -113,19 +122,57 @@ poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
   if (err != CL_SUCCESS)
     return err;
 
-  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, 0, NULL, num_devices);
-  if (err != CL_SUCCESS)
-    return err;
+  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_dev_all);
+
+  // if custom devices are excluded, continue as normal
+  if (include_custom_dev != 1)
+    {
+      if (err != CL_SUCCESS)
+        return err;
+    }
+  else
+    {
+      cl_int err_custom;
+      err_custom = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_CUSTOM, 0, NULL, &num_dev_custom);
+
+      if (err != CL_SUCCESS && err_custom != CL_SUCCESS)
+        {
+          return err_custom;
+        }
+      if (err != CL_SUCCESS)
+        {
+          num_dev_all = 0;
+        }
+      if (err_custom != CL_SUCCESS)
+        {
+          num_dev_custom = 0;
+        }
+
+    }
+
+  *num_devices = num_dev_all + num_dev_custom;
 
   cl_device_id *devs
-      = (cl_device_id *)calloc (*num_devices, sizeof (cl_device_id));
+      = (cl_device_id *) calloc (*num_devices, sizeof (cl_device_id));
   cl_command_queue *ques
-      = (cl_command_queue *)calloc (*num_devices, sizeof (cl_command_queue));
+      = (cl_command_queue *) calloc (*num_devices, sizeof (cl_command_queue));
 
-  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, *num_devices, devs,
-                        NULL);
-  if (err != CL_SUCCESS)
-    return err;
+  if (num_dev_all != 0)
+    {
+      err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, num_dev_all, devs,
+                            NULL);
+      if (err != CL_SUCCESS)
+        return err;
+    }
+
+  if (num_dev_custom != 0)
+    {
+      // add devs to the end of the array
+      err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_CUSTOM, num_dev_custom, &devs[num_dev_all],
+                            NULL);
+      if (err != CL_SUCCESS)
+        return err;
+    }
 
   *context = clCreateContext (NULL, *num_devices, devs, NULL, NULL, &err);
   if (err != CL_SUCCESS)

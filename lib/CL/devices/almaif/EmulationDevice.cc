@@ -131,7 +131,7 @@ void *emulate_almaif(void *E_void) {
   // (in hardware this signal is probably not needed, since the values are
   // initialized in hw reset)
   E->emulate_init_done = 1;
-  POCL_MSG_PRINT_ALMAIF("almaif emulate: Emulator initialized");
+  POCL_MSG_PRINT_ALMAIF("almaif emulate: Emulator initialized \n");
 
   int read_iter = 0;
   CQ[ALMAIF_CQ_READ / 4] = read_iter;

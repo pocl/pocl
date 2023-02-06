@@ -217,7 +217,8 @@ POCLU_API cl_int POCLU_CALL poclu_get_any_device (cl_context *context,
  * @return CL_SUCCESS on success, or a descriptive OpenCL error code upon failure.
  */
 POCLU_API cl_int POCLU_CALL poclu_get_multiple_devices (
-    cl_platform_id *platform, cl_context *context, cl_uint *num_devices,
+    cl_platform_id *platform, cl_context *context,
+    cl_char include_custom_dev, cl_uint *num_devices,
     cl_device_id **devices, cl_command_queue **queues);
 
 /**

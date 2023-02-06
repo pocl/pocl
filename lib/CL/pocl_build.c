@@ -900,8 +900,7 @@ compile_and_link_program(int compile_program,
           goto ERROR;
         }
 
-      if (program->builtin_kernel_names == NULL)
-        setup_device_kernel_hashes (program);
+      setup_device_kernel_hashes (program);
     }
 
   for (device_i = 0; device_i < program->num_devices; device_i++)
