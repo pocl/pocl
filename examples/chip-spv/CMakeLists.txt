@@ -47,6 +47,16 @@ if(ENABLE_HOST_CPU_DEVICES AND (ENABLE_CONFORMANCE))
   message(WARNING "CHIP-SPV + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
 endif()
 
+find_package(Python3 3.8 COMPONENTS Interpreter Development)
+if(NOT Python3_FOUND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, can't find suitable python3")
+  return()
+else()
+  message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
+  set(PYTHON_INTERP "${Python3_EXECUTABLE}")
+endif()
+
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -62,7 +72,7 @@ else()
   set(CHIP_GIT_TAG "main")
 endif()
 
-# TODO: parallel test execution
+# TODO: hardcoded -j8
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -74,14 +84,16 @@ ExternalProject_Add(
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  INSTALL_COMMAND "${CMAKE_MAKE_PROGRAM}" build_tests
+  INSTALL_COMMAND "${CMAKE_MAKE_PROGRAM}" -j8 build_tests
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
+# TODO hardcoded -j8 and repeat 2
 add_test(NAME "${TS_NAME}"
-         COMMAND "${CMAKE_MAKE_PROGRAM}" check
+         COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
+           "${TS_BUILDDIR}" "cpu" "pocl"  8 2
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 set_tests_properties(${TS_NAME}
