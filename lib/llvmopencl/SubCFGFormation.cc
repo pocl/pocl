@@ -38,6 +38,8 @@
 #include "pocl_llvm_api.h"
 
 #include <cstddef>
+#include <functional>
+#include <numeric>
 
 #include <llvm/ADT/Twine.h>
 #include <llvm/Analysis/PostDominators.h>
@@ -99,70 +101,6 @@ bool anyOfUsers(llvm::Value *V, Func &&L) {
 }
 
 /// Arrayification of work item private values
-
-// Widens the allocas in the entry block to array allocas.
-// Replace uses of the original alloca with GEP that indexes the new alloca with
-// \a Idx.
-void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::Loop &L,
-                     llvm::Value *Idx, const llvm::DominatorTree &DT) {
-  assert(Idx && "Valid WI-Index required");
-
-  auto *MDAlloca = llvm::MDNode::get(
-      EntryBlock->getContext(),
-      {llvm::MDString::get(EntryBlock->getContext(), LoopStateMD)});
-
-  auto &LoopBlocks = L.getBlocksSet();
-  llvm::SmallVector<llvm::AllocaInst *, 8> WL;
-  for (auto &I : *EntryBlock) {
-    if (auto *Alloca = llvm::dyn_cast<llvm::AllocaInst>(&I)) {
-      if (llvm::MDNode *MD = Alloca->getMetadata(pocl::MDKind::Arrayified))
-        continue; // already arrayificated
-      if (!std::all_of(Alloca->user_begin(), Alloca->user_end(),
-                       [&LoopBlocks](llvm::User *User) {
-                         auto *Inst = llvm::dyn_cast<llvm::Instruction>(User);
-                         return Inst && LoopBlocks.contains(Inst->getParent());
-                       }))
-        continue;
-      WL.push_back(Alloca);
-    }
-  }
-
-  for (auto *I : WL) {
-    llvm::IRBuilder AllocaBuilder{I};
-    llvm::Type *T = I->getAllocatedType();
-    if (auto *ArrSizeC = llvm::dyn_cast<llvm::ConstantInt>(I->getArraySize())) {
-      auto ArrSize = ArrSizeC->getLimitedValue();
-      if (ArrSize > 1) {
-        T = llvm::ArrayType::get(T, ArrSize);
-        llvm::errs() << "Caution, alloca was array\n";
-      }
-    }
-
-    auto *Alloca = AllocaBuilder.CreateAlloca(
-        T, AllocaBuilder.getInt32(pocl::NumArrayElements),
-        I->getName() + "_alloca");
-    Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
-    Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
-
-    llvm::Instruction *GepIp = nullptr;
-    for (auto *U : I->users()) {
-      if (auto *UI = llvm::dyn_cast<llvm::Instruction>(U)) {
-        if (!GepIp || DT.dominates(UI, GepIp))
-          GepIp = UI;
-      }
-    }
-    if (GepIp) {
-      llvm::IRBuilder LoadBuilder{GepIp};
-      auto *GEP =
-          llvm::cast<llvm::GetElementPtrInst>(LoadBuilder.CreateInBoundsGEP(
-              Alloca->getAllocatedType(), Alloca, Idx, I->getName() + "_gep"));
-      GEP->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
-
-      I->replaceAllUsesWith(GEP);
-      I->eraseFromParent();
-    }
-  }
-}
 
 // Create a new alloca of size \a NumElements at \a IPAllocas.
 // The type is taken from \a ToArrayify.
@@ -1290,6 +1228,9 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
   return true;
 }
 
+// Widens the allocas in the entry block to array allocas.
+// Replace uses of the original alloca with GEP that indexes the new alloca with
+// \a Idx.
 void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
                      std::vector<SubCFG> &SubCfgs,
                      std::size_t ReqdArrayElements,
@@ -1408,7 +1349,10 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   const auto LocalSize =
       getLocalSizeValues(F, LocalSizes, WGDynamicLocalSize, Dim);
 
-  const size_t ReqdArrayElements = pocl::NumArrayElements; // todo: specialize
+  const size_t ReqdArrayElements =
+      WGDynamicLocalSize
+          ? NumArrayElements
+          : std::accumulate(LocalSizes.cbegin(), LocalSizes.cend(), 1, std::multiplies<>{});
 
   auto *Entry = &F.getEntryBlock();
   insertLocalIdInit(Entry);
