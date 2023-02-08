@@ -180,6 +180,20 @@ POdeclsym(clCommandFillBufferKHR)
 POdeclsym(clCommandFillImageKHR)
 POdeclsym(clGetCommandBufferInfoKHR)
 
+/* cl_intel_unified_shared_memory */
+POdeclsym(clHostMemAllocINTEL)
+POdeclsym(clDeviceMemAllocINTEL)
+POdeclsym(clSharedMemAllocINTEL)
+POdeclsym(clMemFreeINTEL)
+POdeclsym(clMemBlockingFreeINTEL)
+POdeclsym(clGetMemAllocInfoINTEL)
+POdeclsym(clSetKernelArgMemPointerINTEL)
+POdeclsym(clEnqueueMemFillINTEL)
+POdeclsym(clEnqueueMemcpyINTEL)
+POdeclsym(clEnqueueMemAdviseINTEL)
+POdeclsym(clEnqueueMigrateMemINTEL)
+
+
 #ifdef __cplusplus
 }
 #endif

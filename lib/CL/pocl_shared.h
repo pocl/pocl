@@ -150,6 +150,39 @@ cl_int pocl_fill_image_common (
     cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
     _cl_command_node **cmd);
 
+cl_int pocl_svm_memcpy_common (cl_command_type command_type,
+                               cl_command_queue command_queue,
+                               cl_bool blocking, void *dst_ptr,
+                               const void *src_ptr, size_t size,
+                               cl_uint num_events_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event);
+
+cl_int pocl_svm_memfill_common (cl_command_type command_type,
+                                cl_command_queue command_queue,
+                                void *svm_ptr,
+                                const void *pattern,
+                                size_t pattern_size,
+                                size_t size,
+                                cl_uint num_events_in_wait_list,
+                                const cl_event *event_wait_list,
+                                cl_event *event);
+
+cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
+                                    cl_command_queue command_queue,
+                                    cl_uint num_svm_pointers,
+                                    const void **svm_pointers,
+                                    const size_t *sizes,
+                                    cl_mem_migration_flags flags,
+                                    cl_uint num_events_in_wait_list,
+                                    const cl_event *event_wait_list,
+                                    cl_event *event);
+
+int
+pocl_set_kernel_arg_pointer(cl_kernel kernel,
+                            cl_uint arg_index,
+                            const void *arg_value);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

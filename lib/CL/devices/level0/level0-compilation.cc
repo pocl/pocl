@@ -84,6 +84,37 @@ ze_kernel_handle_t Level0Kernel::getAnyCreated() {
   }
 }
 
+void Level0Kernel::setIndirectAccess(
+    ze_kernel_indirect_access_flag_t AccessFlag, bool Value) {
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+  if (Value) { // set flag
+    switch (AccessFlag) {
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST:
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED:
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE:
+      IndirectAccessFlags |= AccessFlag;
+      break;
+    default:
+      break;
+    }
+  } else { // clear flag
+    switch (AccessFlag) {
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST:
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED:
+    case ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE:
+      IndirectAccessFlags &= (~AccessFlag);
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+void Level0Kernel::setAccessedPointers(const std::vector<void *> &Ptrs) {
+  std::lock_guard<std::mutex> LockGuard(Mutex);
+  AccessedPointers = Ptrs;
+}
+
 bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
                                     ze_device_handle_t Device) {
   POCL_MEASURE_START(load_binary);

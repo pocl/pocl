@@ -120,6 +120,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = pocl_basic_get_device_info_ext;
+  ops->set_kernel_exec_info_ext = pocl_basic_set_kernel_exec_info_ext;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
@@ -873,6 +874,24 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
       POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
                                  sizes);
     }
+    default:
+      return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
+                                     unsigned program_device_i,
+                                     cl_kernel Kernel, cl_uint param_name,
+                                     size_t param_value_size,
+                                     const void *param_value)
+{
+
+  switch (param_name)
+    {
+    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
+    case CL_KERNEL_EXEC_INFO_SVM_PTRS:
+      return CL_SUCCESS;
     default:
       return CL_INVALID_VALUE;
     }

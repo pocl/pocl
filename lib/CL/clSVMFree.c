@@ -44,7 +44,7 @@ POname(clSVMFree)(cl_context context,
 
   if (svm_pointer == NULL)
     {
-      POCL_MSG_ERR ("Invalid SVM pointer\n");
+      POCL_MSG_WARN ("NULL pointer passed\n");
       return;
     }
 

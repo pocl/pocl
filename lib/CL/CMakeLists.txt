@@ -175,6 +175,14 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clGetCommandBufferInfoKHR.c"
                    "clReleaseCommandBufferKHR.c"
                    "clRetainCommandBufferKHR.c"
+                   "clMemAllocINTEL.c"
+                   "clMemFreeINTEL.c"
+                   "clGetMemAllocInfoINTEL.c"
+                   "clSetKernelArgMemPointerINTEL.c"
+                   "clEnqueueMemFillINTEL.c"
+                   "clEnqueueMemcpyINTEL.c"
+                   "clEnqueueMemAdviseINTEL.c"
+                   "clEnqueueMigrateMemINTEL.c"
 )
 
 if(ANDROID)

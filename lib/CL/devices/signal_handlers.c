@@ -23,6 +23,7 @@
 
 extern unsigned long buffer_c;
 extern unsigned long svm_buffer_c;
+extern unsigned long usm_buffer_c;
 extern unsigned long queue_c;
 extern unsigned long context_c;
 extern unsigned long image_c;
@@ -74,6 +75,8 @@ sigusr2_signal_handler (int signo, siginfo_t *si, void *data)
       SIGNAL_HANDLER_PRINTF (context_c, "Contexts: \n");
       SIGNAL_HANDLER_PRINTF (queue_c, "Queues: \n");
       SIGNAL_HANDLER_PRINTF (buffer_c, "Buffers: \n");
+      SIGNAL_HANDLER_PRINTF (svm_buffer_c, "SVM Buffers: \n");
+      SIGNAL_HANDLER_PRINTF (usm_buffer_c, "USM Buffers: \n");
       SIGNAL_HANDLER_PRINTF (image_c, "Images: \n");
       SIGNAL_HANDLER_PRINTF (program_c, "Programs: \n");
       SIGNAL_HANDLER_PRINTF (kernel_c, "Kernels: \n");

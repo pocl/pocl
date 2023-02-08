@@ -406,6 +406,10 @@ public:
       return new SPIRVtypePOD(Word1_, ((size_t)Word2_ / 8));
     }
 
+    if (Opcode_ == spv::Op::OpTypeForwardPointer) {
+      return new SPIRVtypePointer(Word1_, Word2_, PointerSize);
+    }
+
     if (Opcode_ == spv::Op::OpTypeVector) {
       auto Type = TypeMap[Word2_];
       if (!Type) {

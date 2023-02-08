@@ -61,10 +61,10 @@ class Level0Queue {
 
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L, uint64_t *TimestampBuffer,
-              double HostDevRate, uint64_t HostTimeStart,
-              uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
-              bool DeviceHasGOffsets);
+              ze_command_list_handle_t L, ze_device_handle_t D,
+              uint64_t *TimestampBuffer, double HostDevRate,
+              uint64_t HostTimeStart, uint64_t DeviceTimeStart,
+              uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -77,6 +77,7 @@ public:
 private:
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
+  ze_device_handle_t DeviceH;
   uint64_t *EventStart = nullptr;
   uint64_t *EventFinish = nullptr;
 
@@ -164,6 +165,9 @@ private:
   static void svmUnmap(void *Ptr);
   void svmCopy(void* DstPtr, const void* SrcPtr, size_t Size);
   void svmFill(void *DstPtr, size_t Size, void* Pattern, size_t PatternSize);
+  void svmMigrate(unsigned num_svm_pointers, void **svm_pointers,
+                  size_t *sizes);
+  void svmAdvise(const void *ptr, size_t size, cl_mem_advice_intel advice);
 
   static bool setupKernelArgs(ze_module_handle_t ModuleH,
                               ze_kernel_handle_t KernelH, cl_device_id Dev,
@@ -232,9 +236,17 @@ public:
 
   void pushCommand(_cl_command_node *Command);
 
-  void *allocSharedMem(uint64_t Size);
-  void *allocDeviceMem(uint64_t Size);
+  void *allocSharedMem(uint64_t Size,
+                       ze_device_mem_alloc_flags_t DevFlags =
+                           ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
+                       ze_host_mem_alloc_flags_t HostFlags =
+                           ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED);
+  void *allocDeviceMem(uint64_t Size, ze_device_mem_alloc_flags_t DevFlags =
+                                          ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
+  void *allocHostMem(uint64_t Size, ze_device_mem_alloc_flags_t HostFlags =
+                                        ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED);
   void freeMem(void *Ptr);
+  bool freeMemBlocking(void *Ptr);
 
   ze_image_handle_t allocImage(cl_channel_type ChType,
                                cl_channel_order ChOrder,
@@ -253,6 +265,19 @@ public:
   const std::vector<size_t> &getSupportedSubgroupSizes() {
     return SupportedSubgroupSizes;
   }
+
+  cl_bitfield getMemCaps(cl_device_info Type);
+  cl_unified_shared_memory_type_intel getMemType(const void *USMPtr);
+  void *getMemBasePtr(const void *USMPtr);
+  size_t getMemSize(const void *USMPtr);
+  cl_device_id getMemAssoc(const void *USMPtr);
+  cl_mem_alloc_flags_intel getMemFlags(const void *USMPtr);
+
+  bool supportsHostUSM() { return HostMemCaps != 0; }
+  bool supportsDeviceUSM() { return DeviceMemCaps != 0; }
+  bool supportsSingleSharedUSM() { return SingleSharedCaps != 0; }
+  bool supportsCrossSharedUSM() { return CrossSharedCaps != 0; }
+  bool supportsSystemSharedUSM() { return SystemSharedCaps != 0; }
 
 private:
   Level0QueueGroup CopyQueues;
@@ -276,9 +301,14 @@ private:
   uint32_t MaxWGCount[3];
   uint32_t MaxMemoryFillPatternSize = 0;
   uint32_t GlobalMemOrd = UINT32_MAX;
-  uint64_t *CopyTimestamps;
-  uint64_t *ComputeTimestamps;
+  uint64_t *CopyTimestamps = nullptr;
+  uint64_t *ComputeTimestamps = nullptr;
   std::vector<size_t> SupportedSubgroupSizes;
+  cl_device_unified_shared_memory_capabilities_intel HostMemCaps = 0;
+  cl_device_unified_shared_memory_capabilities_intel DeviceMemCaps = 0;
+  cl_device_unified_shared_memory_capabilities_intel SingleSharedCaps = 0;
+  cl_device_unified_shared_memory_capabilities_intel CrossSharedCaps = 0;
+  cl_device_unified_shared_memory_capabilities_intel SystemSharedCaps = 0;
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;
@@ -304,12 +334,16 @@ public:
   }
   bool empty() const { return NumDevices == 0; }
   Level0CompilationJobScheduler &getJobSched() { return JobSched; }
+  cl_device_id getClDevForHandle(ze_device_handle_t H) {
+    return HandleToIDMap[H];
+  }
 
 private:
   ze_driver_handle_t DriverH = nullptr;
   std::vector<ze_device_handle_t> DeviceHandles;
   std::set<std::string> ExtensionSet;
   std::vector<Level0DeviceUPtr> Devices;
+  std::map<ze_device_handle_t, cl_device_id> HandleToIDMap;
   ze_context_handle_t ContextH = nullptr;
   // TODO: doesn't seem reliably the same between runs
   ze_driver_uuid_t UUID;
