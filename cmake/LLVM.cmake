@@ -857,12 +857,35 @@ endif()
 
 ####################################################################
 
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED ${CL_DISABLE_HALF})
-  set(CL_DISABLE_HALF 0)
-  message(STATUS "Checking fp16 support")
-  custom_try_compile_clang_silent("__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
-  if(RESV)
+# Clang documentation on Language Extensions:
+# __fp16 is supported on every target, as it is purely a storage format
+# _Float16 is currently only supported on the following targets... SPIR, x86
+# DIsabled for non-x86-64 because of limitations:
+#     The _Float16 type requires SSE2 feature and above due to the instruction
+#        limitations. When using it on i386 targets, you need to specify -msse2
+#        explicitly.
+#     For targets without F16C feature or above, please make sure:
+#     Use GCC 12.0 and above if you are using libgcc.
+#     If you are using compiler-rt, use the same version with the compiler.
+#        Early versions provided FP16 builtins in a different ABI. A workaround is
+#        to use a small code snippet to check the ABI if you cannot make sure of it.
+
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED CL_DISABLE_HALF)
+  # LLVM <15 doesn't support FP16 emulation
+  # LLVM 15 crashes on some code, with the FP16 emulation
+  # CONFORMANCE disables FP16 b/c it's incomplete
+  # enabled on x86-64 only for now
+  if((LLVM_VERSION_MAJOR LESS 16) OR ENABLE_CONFORMANCE OR (NOT X86_64))
+    message(STATUS "FP16 support disabled")
     set(CL_DISABLE_HALF 1)
+  else()
+    set(CL_DISABLE_HALF 0)
+    message(STATUS "Checking fp16 support")
+    custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
+      RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+    if(RESV)
+      set(CL_DISABLE_HALF 1)
+    endif()
   endif()
 endif()
 
