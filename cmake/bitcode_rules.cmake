@@ -227,6 +227,9 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   else()
     unset(EXTRA_OPT)
   endif()
+  if(NOT CL_DISABLE_HALF)
+    list(APPEND EXTRA_OPT "--fp16")
+  endif()
 
   add_custom_command( OUTPUT "${FNAME}"
       DEPENDS "${CMAKE_SOURCE_DIR}/lib/kernel/SPIR/generate_spir_wrapper.py"

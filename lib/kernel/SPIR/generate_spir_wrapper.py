@@ -53,11 +53,18 @@ parser.add_argument('output',
 
 parser.add_argument('-q', '--opaque-pointers',
 	dest='opaque_ptrs',
-	action='store_true')
+	action='store_true',
+	help="enable LLVM's opaque pointers")
 
 parser.add_argument('-g', '--generic-as',
 	dest='generic_as',
-	action='store_true')
+	action='store_true',
+	help="generate also Generic AS wrappers")
+
+parser.add_argument('--fp16',
+	dest='fp16',
+	action='store_true',
+	help="generate also FP16 wrappers")
 
 args = parser.parse_args()
 
@@ -86,6 +93,8 @@ CPU_ABI_REG_SIZE = args.reg_size
 OPAQUE_POINTERS = args.opaque_ptrs
 
 GENERIC_AS = args.generic_as
+
+FP16 = args.fp16
 
 sys.stdout = args.output
 
@@ -195,6 +204,7 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv2_f": "<2 x float>",
 	"Dv2_d": "<2 x double>",
+	"Dv2_Dh": "<2 x half>",
 	"Dv2_c": "<2 x i8>",
 	"Dv2_h": "<2 x i8>",
 	"Dv2_s": "<2 x i16>",
@@ -206,6 +216,7 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv3_f": "<3 x float>",
 	"Dv3_d": "<3 x double>",
+	"Dv3_Dh": "<3 x half>",
 	"Dv3_c": "<3 x i8>",
 	"Dv3_h": "<3 x i8>",
 	"Dv3_s": "<3 x i16>",
@@ -217,6 +228,7 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv4_f": "<4 x float>",
 	"Dv4_d": "<4 x double>",
+	"Dv4_Dh": "<4 x half>",
 	"Dv4_c": "<4 x i8>",
 	"Dv4_h": "<4 x i8>",
 	"Dv4_s": "<4 x i16>",
@@ -228,6 +240,7 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv8_f": "<8 x float>",
 	"Dv8_d": "<8 x double>",
+	"Dv8_Dh": "<8 x half>",
 	"Dv8_c": "<8 x i8>",
 	"Dv8_h": "<8 x i8>",
 	"Dv8_s": "<8 x i16>",
@@ -239,6 +252,7 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 	"Dv16_f": "<16 x float>",
 	"Dv16_d": "<16 x double>",
+	"Dv16_Dh": "<16 x half>",
 	"Dv16_c": "<16 x i8>",
 	"Dv16_h": "<16 x i8>",
 	"Dv16_s": "<16 x i16>",
@@ -279,6 +293,10 @@ SIG_TO_LLVM_TYPE_MAP = {
 
 if X86_CALLING_ABI:
 	COERCE_VECTOR_MAP = {
+		"<2 x half>": "i32",
+		"<3 x half>": "double",
+		"<4 x half>": "double",
+
 		"<2 x float>": "double",
 
 		"<2 x i8>": "i16",
@@ -324,6 +342,7 @@ if CPU_ABI_REG_SIZE == 128:
 		"<8 x i32>":"<8 x i32>* byval(<8 x i32>) align 32",
 		"<8 x float>": "<8 x float>* byval(<8 x float>) align 32",
 		"<16 x i16>": "<16 x i16>* byval(<16 x i16>) align 32",
+		"<16 x half>": "<16 x half>* byval(<16 x half>) align 32",
 
 		"<8 x i64>":"<8 x i64>* byval(<8 x i64>) align 64",
 		"<8 x double>": "<8 x double>* byval(<8 x double>) align 64",
@@ -342,7 +361,8 @@ if CPU_ABI_REG_SIZE == 128:
 		"<4 x double>": "<4 x double>* sret(<4 x double>) align 16",
 		"<8 x i32>":"<8 x i32>* sret(<8 x i32>) align 16",
 		"<8 x float>": "<8 x float>* sret(<8 x float>) align 16",
-		"<16 x i16>": "<16 x i16>* sret(<8 x float>) align 16",
+		"<16 x i16>": "<16 x i16>* sret(<16 x i16>) align 16",
+		"<16 x half>": "<16 x half>* sret(<16 x half>) align 16",
 
 		"<8 x i64>":"<8 x i64>* sret(<8 x i64>) align 16",
 		"<8 x double>": "<8 x double>* sret(<8 x double>) align 16",
@@ -393,6 +413,7 @@ else:
 SIG_TO_TYPE_NAME_MAP = {
 	"f": "float",
 	"d": "double",
+	"Dh": "half",
 
 	"c": "char",
 	"h": "uchar",
@@ -408,6 +429,7 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"Dv2_f": "float2",
 	"Dv2_d": "double2",
+	"Dv2_Dh": "half2",
 	"Dv2_c": "char2",
 	"Dv2_h": "uchar2",
 	"Dv2_s": "short2",
@@ -419,6 +441,7 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"Dv3_f": "float3",
 	"Dv3_d": "double3",
+	"Dv3_Dh": "half3",
 	"Dv3_c": "char3",
 	"Dv3_h": "uchar3",
 	"Dv3_s": "short3",
@@ -430,6 +453,7 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"Dv4_f": "float4",
 	"Dv4_d": "double4",
+	"Dv4_Dh": "half4",
 	"Dv4_c": "char4",
 	"Dv4_h": "uchar4",
 	"Dv4_s": "short4",
@@ -441,6 +465,7 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"Dv8_f": "float8",
 	"Dv8_d": "double8",
+	"Dv8_Dh": "half8",
 	"Dv8_c": "char8",
 	"Dv8_h": "uchar8",
 	"Dv8_s": "short8",
@@ -452,6 +477,7 @@ SIG_TO_TYPE_NAME_MAP = {
 
 	"Dv16_f": "float16",
 	"Dv16_d": "double16",
+	"Dv16_Dh": "half16",
 	"Dv16_c": "char16",
 	"Dv16_h": "uchar16",
 	"Dv16_s": "short16",
@@ -469,6 +495,7 @@ LLVM_TYPE_EXT_MAP = {
 
 	"f": "",
 	"d": "",
+	"Dh": "",
 
 	"c": " signext ",
 	"h": " zeroext ",
@@ -630,7 +657,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 	:param ret_type: LLVM type ("i32", "float" etc) of retval
 	:param ret_type_ext: retval's attributes ("signext" where required etc)
 	:param multiAS: True = generate for all multiple SPIR AddrSpaces
-	                (tuple) = explicit addrspaces for each arg, as a tuple
+					(tuple) = explicit addrspaces for each arg, as a tuple
 	:param args: function arguments as mangled type names (i,j,m,f,d etc), not LLVM types
 	"""
 	ocl_func_name = POCL_LIB_PREFIX + name
@@ -706,7 +733,7 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			#   Dv2_cPULocalDv2_c -> Dv2_cPULocalS_
 			pure_arg = pure_arg_type(cast)
 			actual_arg = cast
-			if pure_arg == last_pure_arg and last_pure_arg.startswith("D"):
+			if pure_arg == last_pure_arg and last_pure_arg.startswith("D") and (not last_pure_arg.startswith("Dh")):
 				actual_arg = replace_arg_type(actual_arg, "S_")
 			if pure_arg == last_pure_arg and last_pure_arg == '12memory_order':
 				actual_arg = replace_arg_type(actual_arg, "S4_")
@@ -916,18 +943,25 @@ if (len(sys.argv) > 1) and (sys.argv[1] == "32"):
 
 print(triple)
 
-MANG_TYPES_32 = {
-	"f": "f",
-	"Pf": "Pf",
-	'i': "i",
-	'u': "j"
-}
-
-MANG_TYPES_64 = {
-	"f": "d",
-	"Pf": "Pd",
-	'i': "l",
-	'u': "m"
+MANG_TYPES = {
+	"half": {
+		"f": "Dh",
+		"Pf": "PDh",
+		'i': "s",
+		'u': "t"
+	},
+	"float": {
+		"f": "f",
+		"Pf": "Pf",
+		'i': "i",
+		'u': "j"
+	},
+	"double": {
+		"f": "d",
+		"Pf": "Pd",
+		'i': "l",
+		'u': "m"
+	}
 }
 
 INVERT_SIGN = {
@@ -944,20 +978,20 @@ INVERT_SIGN = {
 	"m": "l",
 }
 
+if FP16:
+	FLOAT_TYPES = ["float", "double", "half"]
+else:
+	FLOAT_TYPES = ["float", "double"]
+
 # math funcs, vectorized
-for llvm_type in ["float", "double"]:
+for llvm_type in FLOAT_TYPES:
 	for vector_size in [1,2,3,4,8,16]:
 
-		if llvm_type == "float":
-			arg_Pf = 'Pf'
-			arg_f = 'f'
-			arg_li = 'i'
-			arg_lu = 'j'
-		else:
-			arg_Pf = 'Pd'
-			arg_f = 'd'
-			arg_li = 'l'
-			arg_lu = 'm'
+		TypeMap = MANG_TYPES[llvm_type]
+		arg_Pf = TypeMap['Pf']
+		arg_f = TypeMap['f']
+		arg_li = TypeMap['i']
+		arg_lu = TypeMap['u']
 		arg_i = 'i'
 		arg_Pi = 'Pi'
 		ret_type = llvm_type
@@ -980,6 +1014,8 @@ for llvm_type in ["float", "double"]:
 			i32_rettype = "<" + s + " x i32>"
 			if llvm_type == "float":
 				rel_rettype = "<" + s + " x i32>"
+			elif llvm_type == "half":
+				rel_rettype = "<" + s + " x i16>"
 			else:
 				rel_rettype = "<" + s + " x i64>"
 
@@ -1208,10 +1244,15 @@ for arg_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
 			generate_function("shuffle2", SIG_TO_LLVM_TYPE_MAP[ret_type], '', False, in_type, in_type, mask_type)
 
 # convert
-for dst_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
-	for src_type in ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']:
+if FP16:
+	CONVERT_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd', 'Dh']
+else:
+	CONVERT_TYPES = ['c', 'h', 's', 't', 'i', 'j', 'l', 'm', 'f', 'd']
+
+for dst_type in CONVERT_TYPES:
+	for src_type in CONVERT_TYPES:
 		for sat in ['', '_sat']:
-			if (sat == '_sat') and (dst_type in ['f','d']):
+			if (sat == '_sat') and (dst_type in ['f','d', 'Dh']):
 				continue
 			for rounding in ['','_rtp','_rtn','_rte','_rtz']:
 				for vector_size in [1,2,3,4,8,16]:
