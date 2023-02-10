@@ -1,6 +1,6 @@
 /*
  * Adapted from
- * https://github.com/illuhad/hipSYCL/blob/develop/include/hipSYCL/compiler/cbs/SubCfgFormation.hpp
+ * https://github.com/OpenSYCL/OpenSYCL/blob/develop/include/hipSYCL/compiler/cbs/SubCfgFormation.hpp
  * This file is part of hipSYCL, a SYCL implementation based on CUDA/HIP
  *
  * Copyright (c) 2021 Aksel Alpay and contributors

@@ -17,7 +17,7 @@ Notable User Facing Changes
 - Added a user env POCL_BITCODE_FINALIZER that can be used to
   call a custom script that manipulates the final bitcode before
   passing it to the code generation.
-- Pulled in alternative work-group function mode for non-SPMD from hipSYCL:
+- Pulled in alternative work-group function mode for non-SPMD from Open SYCL:
   Continuation-based synchronization is slightly more general than POCL's
   current kernel compiler, but allows for fewer hand-rolled optimizations.
   CBS is expected to work for kernels that POCL's current kernel compiler

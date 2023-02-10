@@ -1,6 +1,6 @@
 /*
  * Adapted from
- * https://github.com/illuhad/hipSYCL/blob/develop/src/compiler/cbs/SubCfgFormation.cpp
+ * https://github.com/OpenSYCL/OpenSYCL/blob/develop/src/compiler/cbs/SubCfgFormation.cpp
  * This file is part of hipSYCL, a SYCL implementation based on CUDA/HIP
  *
  * Copyright (c) 2021 Aksel Alpay and contributors
@@ -490,7 +490,7 @@ SubCFG::SubCFG(llvm::BasicBlock *EntryBarrier,
       EntryId_(BarrierIds.lookup(EntryBarrier)), EntryBarrier_(EntryBarrier),
       EntryBB_(EntryBarrier->getSingleSuccessor()), LoadBB_(nullptr),
       ContIdx_(IndVar), PreHeader_(nullptr), Dim(Dim) {
-  assert(ContIdx_ && "Must have found __hipsycl_local_id_{x,y,z}");
+  assert(ContIdx_ && "Must have found _local_id_{x,y,z}");
 
   llvm::SmallVector<llvm::BasicBlock *, 4> WL{EntryBarrier};
   while (!WL.empty()) {
@@ -742,7 +742,6 @@ void SubCFG::arrayifyMultiSubCfgValues(
             continue;
           }
 
-#ifndef HIPSYCL_NO_PHIS_IN_SPLIT
         // if value is uniform, just store to 1-wide alloca
         if (VecInfo.isUniform(I.getFunction(), &I)) {
 #ifdef DEBUG_SUBCFG_FORMATION
@@ -755,7 +754,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
           VecInfo.setUniform(I.getFunction(), Alloca);
           continue;
         }
-#endif
+
 // Requires a uniformity analysis that is able to determine contiguous values
 #if 0
         // if contiguous, and can be recalculated, don't arrayify but store
