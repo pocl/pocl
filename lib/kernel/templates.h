@@ -23,6 +23,40 @@
    THE SOFTWARE.
 */
 
+// name-value-element
+#define _NVE1(NAME, E) NAME(a.E)
+#define NAME1_2(N) (_NVE1(N,s0), _NVE1(N,s1))
+#define NAME1_3(N) (_NVE1(N,s0), _NVE1(N,s1), _NVE1(N,s2))
+#define NAME1_4(N) (_NVE1(N,s0), _NVE1(N,s1), _NVE1(N,s2), _NVE1(N,s3))
+#define NAME1_8(N) (_NVE1(N,s0), _NVE1(N,s1), _NVE1(N,s2), _NVE1(N,s3), \
+                    _NVE1(N,s4), _NVE1(N,s5), _NVE1(N,s6), _NVE1(N,s7))
+#define NAME1_16(N) (_NVE1(N,s0), _NVE1(N,s1), _NVE1(N,s2), _NVE1(N,s3), \
+                     _NVE1(N,s4), _NVE1(N,s5), _NVE1(N,s6), _NVE1(N,s7), \
+                     _NVE1(N,s8), _NVE1(N,s9), _NVE1(N,sa), _NVE1(N,sb), \
+                     _NVE1(N,sc), _NVE1(N,sd), _NVE1(N,se), _NVE1(N,sf))
+
+#define _NVE2(NAME, E) NAME(a.E, b.E)
+#define NAME2_2(N) (_NVE2(N,s0), _NVE2(N,s1))
+#define NAME2_3(N) (_NVE2(N,s0), _NVE2(N,s1), _NVE2(N,s2))
+#define NAME2_4(N) (_NVE2(N,s0), _NVE2(N,s1), _NVE2(N,s2), _NVE2(N,s3))
+#define NAME2_8(N) (_NVE2(N,s0), _NVE2(N,s1), _NVE2(N,s2), _NVE2(N,s3), \
+                    _NVE2(N,s4), _NVE2(N,s5), _NVE2(N,s6), _NVE2(N,s7))
+#define NAME2_16(N) (_NVE2(N,s0), _NVE2(N,s1), _NVE2(N,s2), _NVE2(N,s3), \
+                     _NVE2(N,s4), _NVE2(N,s5), _NVE2(N,s6), _NVE2(N,s7), \
+                     _NVE2(N,s8), _NVE2(N,s9), _NVE2(N,sa), _NVE2(N,sb), \
+                     _NVE2(N,sc), _NVE2(N,sd), _NVE2(N,se), _NVE2(N,sf))
+
+#define _NVE3(NAME, E) NAME(a.E, b.E, c.E)
+#define NAME3_2(N) (_NVE3(N,s0), _NVE3(N,s1))
+#define NAME3_3(N) (_NVE3(N,s0), _NVE3(N,s1), _NVE3(N,s2))
+#define NAME3_4(N) (_NVE3(N,s0), _NVE3(N,s1), _NVE3(N,s2), _NVE3(N,s3))
+#define NAME3_8(N) (_NVE3(N,s0), _NVE3(N,s1), _NVE3(N,s2), _NVE3(N,s3), \
+                    _NVE3(N,s4), _NVE3(N,s5), _NVE3(N,s6), _NVE3(N,s7))
+#define NAME3_16(N) (_NVE3(N,s0), _NVE3(N,s1), _NVE3(N,s2), _NVE3(N,s3), \
+                     _NVE3(N,s4), _NVE3(N,s5), _NVE3(N,s6), _NVE3(N,s7), \
+                     _NVE3(N,s8), _NVE3(N,s9), _NVE3(N,sa), _NVE3(N,sb), \
+                     _NVE3(N,sc), _NVE3(N,sd), _NVE3(N,se), _NVE3(N,sf))
+
 // Choose a constant with a particular precision
 #ifdef cl_khr_fp16
 #  define IF_HALF(TYPE, VAL, OTHER) \
@@ -53,148 +87,127 @@
 #  define __IF_ASTYPE_HELPERS(X)
 #endif
 
-#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
-  VTYPE __attribute__ ((overloadable))                  \
+
+#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, EVAL)        \
+  VTYPE _CL_OVERLOADABLE                                \
   NAME(VTYPE a)                                         \
   {                                                     \
-    return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
+    return (VTYPE)EVAL;                                 \
   }
-
-/* Defines an OpenCL builtin function for half precision floating point
-   types using Clang scalar builtins. */
-
-#define DEFINE_HALF_BUILTIN_V_V(NAME, FUNC)             \
+#define DEFINE_BUILTIN_V_V(NAME)                        \
   __IF_FP16(                                            \
-  half __attribute__ ((overloadable))                   \
+  half _CL_OVERLOADABLE                                 \
   NAME(half a)                                          \
   {                                                     \
-    return FUNC(a);                                     \
+    return __builtin_##NAME##f16(a);                    \
   }                                                     \
-  IMPLEMENT_BUILTIN_V_V(NAME, half2   , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, half3   , lo, s2)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, half4   , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, half8   , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, half16  , lo, hi))
-
-/* Defines an OpenCL builtin function for single precision floating point
-   types using a scalar function. */
-
-#define DEFINE_FLOAT_BUILTIN_V_V(NAME, FUNC)            \
-  float __attribute__ ((overloadable))                  \
+  IMPLEMENT_BUILTIN_V_V(NAME, half2   , NAME1_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, half3   , NAME1_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, half4   , NAME1_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, half8   , NAME1_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, half16  , NAME1_16(NAME)))\
+  float _CL_OVERLOADABLE                                \
   NAME(float a)                                         \
   {                                                     \
-    return FUNC(a);                                     \
+    return __builtin_##NAME##f(a);                      \
   }                                                     \
-  IMPLEMENT_BUILTIN_V_V(NAME, float2  , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, float4  , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, float3  , lo, s2)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, float8  , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi)
-
-/* Defines an OpenCL builtin function for double precision floating point
-   types using a scalar function. */
-
-#define DEFINE_DOUBLE_BUILTIN_V_V(NAME, FUNC)           \
+  IMPLEMENT_BUILTIN_V_V(NAME, float2  , NAME1_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, float3  , NAME1_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, float4  , NAME1_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, float8  , NAME1_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, float16 , NAME1_16(NAME)) \
   __IF_FP64(                                            \
-  double __attribute__ ((overloadable))                 \
+  double _CL_OVERLOADABLE                               \
   NAME(double a)                                        \
   {                                                     \
-    return FUNC(a);                                     \
+    return __builtin_##NAME(a);                         \
   }                                                     \
-  IMPLEMENT_BUILTIN_V_V(NAME, double2 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, double3 , lo, s2)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, double4 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, double8 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi))
+  IMPLEMENT_BUILTIN_V_V(NAME, double2 , NAME1_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, double3 , NAME1_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, double4 , NAME1_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, double8 , NAME1_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_V(NAME, double16, NAME1_16(NAME)))
 
-/* Defines an OpenCL builtin function for all floating point
-   gentypes using Clang scalar builtins. */
 
-#define DEFINE_BUILTIN_V_V(NAME)                        \
-  DEFINE_HALF_BUILTIN_V_V(NAME, __builtin_##NAME##f16)  \
-  DEFINE_FLOAT_BUILTIN_V_V(NAME, __builtin_##NAME##f)   \
-  DEFINE_DOUBLE_BUILTIN_V_V(NAME, __builtin_##NAME)
-
-#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
-  VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b)                                \
-  {                                                     \
-    return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
+#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, EVAL)         \
+  VTYPE _CL_OVERLOADABLE                                  \
+  NAME(VTYPE a, VTYPE b)                                  \
+  {                                                       \
+    return (VTYPE)EVAL;                                   \
   }
-#define DEFINE_BUILTIN_V_VV(NAME)                       \
-  __IF_FP16(                                            \
-  half _CL_OVERLOADABLE _CL_READNONE                    \
-  NAME(half a, half b)                                  \
-  {                                                     \
-    return __builtin_##NAME##f16(a, b);                 \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VV(NAME, half2   , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, half3   , lo, s2)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, half4   , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, half8   , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, half16  , lo, hi))       \
-  float _CL_OVERLOADABLE _CL_READNONE                   \
-  NAME(float a, float b)                                \
-  {                                                     \
-    return __builtin_##NAME##f(a, b);                   \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VV(NAME, float2  , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, float3  , lo, s2)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, float4  , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, float8  , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, float16 , lo, hi)        \
-  __IF_FP64(                                            \
-  double _CL_OVERLOADABLE _CL_READNONE                  \
-  NAME(double a, double b)                              \
-  {                                                     \
-    return __builtin_##NAME(a, b);                      \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VV(NAME, double2 , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, double3 , lo, s2)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, double4 , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, double8 , lo, hi)        \
-  IMPLEMENT_BUILTIN_V_VV(NAME, double16, lo, hi))
+#define DEFINE_BUILTIN_V_VV(NAME)                         \
+  __IF_FP16(                                              \
+  half _CL_OVERLOADABLE                                   \
+  NAME(half a, half b)                                    \
+  {                                                       \
+    return __builtin_##NAME##f16(a, b);                   \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VV(NAME, half2   , NAME2_2(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, half3   , NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, half4   , NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, half8   , NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, half16  , NAME2_16(NAME))) \
+  float _CL_OVERLOADABLE                                  \
+  NAME(float a, float b)                                  \
+  {                                                       \
+    return __builtin_##NAME##f(a, b);                     \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float2  , NAME2_2(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float3  , NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float4  , NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float8  , NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, float16 , NAME2_16(NAME))  \
+  __IF_FP64(                                              \
+  double _CL_OVERLOADABLE                                 \
+  NAME(double a, double b)                                \
+  {                                                       \
+    return __builtin_##NAME(a, b);                        \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double2 , NAME2_2(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double3 , NAME2_3(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double4 , NAME2_4(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double8 , NAME2_8(NAME))   \
+  IMPLEMENT_BUILTIN_V_VV(NAME, double16, NAME2_16(NAME)))
 
-#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, LO, HI)    \
-  VTYPE __attribute__ ((overloadable))                  \
-  NAME(VTYPE a, VTYPE b, VTYPE c)                       \
-  {                                                     \
-    return (VTYPE)(NAME(a.LO, b.LO, c.LO),              \
-     NAME(a.HI, b.HI, c.HI));                           \
+#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, EVAL)        \
+  VTYPE __attribute__ ((overloadable))                    \
+  NAME(VTYPE a, VTYPE b, VTYPE c)                         \
+  {                                                       \
+    return (VTYPE)EVAL;                                   \
   }
-#define DEFINE_BUILTIN_V_VVV(NAME)                      \
-  __IF_FP16(                                            \
-  half __attribute__ ((overloadable))                   \
-  NAME(half a, half b, half c)                          \
-  {                                                     \
-    return __builtin_##NAME##f16(a, b, c);              \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, half2   , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, half3   , lo, s2)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, half4   , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, half8   , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, half16  , lo, hi))      \
-  float __attribute__ ((overloadable))                  \
-  NAME(float a, float b, float c)                       \
-  {                                                     \
-    return __builtin_##NAME##f(a, b, c);                \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, float2  , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, float3  , lo, s2)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, float4  , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, float8  , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, float16 , lo, hi)       \
-  __IF_FP64(                                            \
-  double __attribute__ ((overloadable))                 \
-  NAME(double a, double b, double c)                    \
-  {                                                     \
-    return __builtin_##NAME(a, b, c);                   \
-  }                                                     \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, double2 , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, double3 , lo, s2)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, double4 , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, double8 , lo, hi)       \
-  IMPLEMENT_BUILTIN_V_VVV(NAME, double16, lo, hi))
+#define DEFINE_BUILTIN_V_VVV(NAME)                        \
+  __IF_FP16(                                              \
+  half __attribute__ ((overloadable))                     \
+  NAME(half a, half b, half c)                            \
+  {                                                       \
+    return __builtin_##NAME##f16(a, b, c);                \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, half2   , NAME3_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, half3   , NAME3_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, half4   , NAME3_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, half8   , NAME3_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, half16  , NAME3_16(NAME)))\
+  float __attribute__ ((overloadable))                    \
+  NAME(float a, float b, float c)                         \
+  {                                                       \
+    return __builtin_##NAME##f(a, b, c);                  \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float2  , NAME3_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float3  , NAME3_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float4  , NAME3_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float8  , NAME3_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, float16 , NAME3_16(NAME)) \
+  __IF_FP64(                                              \
+  double __attribute__ ((overloadable))                   \
+  NAME(double a, double b, double c)                      \
+  {                                                       \
+    return __builtin_##NAME(a, b, c);                     \
+  }                                                       \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double2 , NAME3_2(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double3 , NAME3_3(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double4 , NAME3_4(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double8 , NAME3_8(NAME))  \
+  IMPLEMENT_BUILTIN_V_VVV(NAME, double16, NAME3_16(NAME)))
 
 #define IMPLEMENT_BUILTIN_V_U(NAME, VTYPE, UTYPE, LO, HI)       \
   VTYPE __attribute__ ((overloadable))                          \
