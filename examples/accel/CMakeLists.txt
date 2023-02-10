@@ -185,12 +185,14 @@ endif ()
 
     # The actual standalone tests
     add_test_pocl(NAME "examples/example0/ttasim_standalone_${core_name}"
-        COMMAND "run_standalone_ttasim.sh####${core_name}"
-        EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+      COMMAND "run_standalone_ttasim.sh####${core_name}"
+      WORKITEM_HANDLER "loopvec"
+      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
 
     add_test_pocl(NAME "examples/example0/rtlsim_standalone_${core_name}"
-        COMMAND "run_standalone_rtlsim.sh####${core_name}"
-        EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
+      COMMAND "run_standalone_rtlsim.sh####${core_name}"
+      WORKITEM_HANDLER "loopvec"
+      EXPECTED_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/golden_output.txt")
 
     set_tests_properties ("examples/example0/ttasim_standalone_${core_name}" "examples/example0/rtlsim_standalone_${core_name}"
         PROPERTIES
