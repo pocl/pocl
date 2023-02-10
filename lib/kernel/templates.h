@@ -63,12 +63,12 @@
 /* Defines an OpenCL builtin function for half precision floating point
    types using Clang scalar builtins. */
 
-#define DEFINE_HALF_BUILTIN_V_V(NAME, FUNC)		\
+#define DEFINE_HALF_BUILTIN_V_V(NAME, FUNC)             \
   __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a)                                          \
   {                                                     \
-    return FUNC(a);					\
+    return FUNC(a);                                     \
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, half2   , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, half3   , lo, s2)         \
@@ -79,11 +79,11 @@
 /* Defines an OpenCL builtin function for single precision floating point
    types using a scalar function. */
 
-#define DEFINE_FLOAT_BUILTIN_V_V(NAME, FUNC)		\
+#define DEFINE_FLOAT_BUILTIN_V_V(NAME, FUNC)            \
   float __attribute__ ((overloadable))                  \
   NAME(float a)                                         \
   {                                                     \
-    return FUNC(a);					\
+    return FUNC(a);                                     \
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, float2  , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, float4  , lo, hi)         \
@@ -94,12 +94,12 @@
 /* Defines an OpenCL builtin function for double precision floating point
    types using a scalar function. */
 
-#define DEFINE_DOUBLE_BUILTIN_V_V(NAME, FUNC)		\
+#define DEFINE_DOUBLE_BUILTIN_V_V(NAME, FUNC)           \
   __IF_FP64(                                            \
   double __attribute__ ((overloadable))                 \
   NAME(double a)                                        \
   {                                                     \
-    return FUNC(a);					\
+    return FUNC(a);                                     \
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, double2 , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double3 , lo, s2)         \
@@ -111,8 +111,8 @@
    gentypes using Clang scalar builtins. */
 
 #define DEFINE_BUILTIN_V_V(NAME)                        \
-  DEFINE_HALF_BUILTIN_V_V(NAME, __builtin_##NAME##f)	\
-  DEFINE_FLOAT_BUILTIN_V_V(NAME, __builtin_##NAME##f)	\
+  DEFINE_HALF_BUILTIN_V_V(NAME, __builtin_##NAME##f16)  \
+  DEFINE_FLOAT_BUILTIN_V_V(NAME, __builtin_##NAME##f)   \
   DEFINE_DOUBLE_BUILTIN_V_V(NAME, __builtin_##NAME)
 
 #define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
@@ -123,18 +123,17 @@
   }
 #define DEFINE_BUILTIN_V_VV(NAME)                       \
   __IF_FP16(                                            \
-  half _CL_OVERLOADABLE _CL_READNONE                   \
+  half _CL_OVERLOADABLE _CL_READNONE                    \
   NAME(half a, half b)                                  \
   {                                                     \
-    /* use float builtin */                             \
-    return __builtin_##NAME##f(a, b);                   \
+    return __builtin_##NAME##f16(a, b);                 \
   }                                                     \
   IMPLEMENT_BUILTIN_V_VV(NAME, half2   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half3   , lo, s2)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half4   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half8   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half16  , lo, hi))       \
-  float _CL_OVERLOADABLE _CL_READNONE                  \
+  float _CL_OVERLOADABLE _CL_READNONE                   \
   NAME(float a, float b)                                \
   {                                                     \
     return __builtin_##NAME##f(a, b);                   \
@@ -145,7 +144,7 @@
   IMPLEMENT_BUILTIN_V_VV(NAME, float8  , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, float16 , lo, hi)        \
   __IF_FP64(                                            \
-  double _CL_OVERLOADABLE _CL_READNONE                 \
+  double _CL_OVERLOADABLE _CL_READNONE                  \
   NAME(double a, double b)                              \
   {                                                     \
     return __builtin_##NAME(a, b);                      \
@@ -156,19 +155,19 @@
   IMPLEMENT_BUILTIN_V_VV(NAME, double8 , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, double16, lo, hi))
 
-#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, LO, HI)                    \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
-  {                                                                     \
-    return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
+#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, LO, HI)    \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, VTYPE b, VTYPE c)                       \
+  {                                                     \
+    return (VTYPE)(NAME(a.LO, b.LO, c.LO),              \
+     NAME(a.HI, b.HI, c.HI));                           \
   }
 #define DEFINE_BUILTIN_V_VVV(NAME)                      \
   __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a, half b, half c)                          \
   {                                                     \
-    /* use float builtin */                             \
-    return __builtin_##NAME##f(a, b, c);                \
+    return __builtin_##NAME##f16(a, b, c);              \
   }                                                     \
   IMPLEMENT_BUILTIN_V_VVV(NAME, half2   , lo, hi)       \
   IMPLEMENT_BUILTIN_V_VVV(NAME, half3   , lo, s2)       \
@@ -208,8 +207,7 @@
   half __attribute__ ((overloadable))                           \
   NAME(ushort a)                                                \
   {                                                             \
-    /* use float builtin */                                     \
-    return __builtin_##NAME##f(a);                              \
+    return __builtin_##NAME##f16(a);                            \
   }                                                             \
   IMPLEMENT_BUILTIN_V_U(NAME, half2   , ushort2 , lo, hi)       \
   IMPLEMENT_BUILTIN_V_U(NAME, half3   , ushort3 , lo, s2)       \
@@ -249,8 +247,7 @@
   int __attribute__ ((overloadable))                            \
   NAME(half a, half b)                                          \
   {                                                             \
-    /* use float builtin */                                     \
-    return __builtin_##NAME##f(a, b);                           \
+    return __builtin_##NAME##f16(a, b);                         \
   }                                                             \
   IMPLEMENT_BUILTIN_J_VV(NAME, half2 , short2 , lo, hi)         \
   IMPLEMENT_BUILTIN_J_VV(NAME, half3 , short3 , lo, s2)         \
@@ -295,8 +292,7 @@
   int __attribute__ ((overloadable))                                    \
   NAME(half a, half b)                                                  \
   {                                                                     \
-    /* use float builtin */                                             \
-    return __builtin_##NAME##f(a, b);                                   \
+    return __builtin_##NAME##f16(a, b);                                 \
   }                                                                     \
   IMPLEMENT_BUILTIN_L_VV(NAME, half2 , half, short2 , lo, hi)           \
   IMPLEMENT_BUILTIN_L_VV(NAME, half3 , half, short3 , lo, s2)           \
@@ -336,8 +332,7 @@
   half __attribute__ ((overloadable))                           \
   NAME(half a, int b)                                           \
   {                                                             \
-    /* use float builtin */                                     \
-    return __builtin_##NAME##f(a, b);                           \
+    return __builtin_##NAME##f16(a, b);                         \
   }                                                             \
   IMPLEMENT_BUILTIN_V_VJ(NAME, half2 , int2 , lo, hi)           \
   IMPLEMENT_BUILTIN_V_VJ(NAME, half3 , int3 , lo, s2)           \
@@ -402,8 +397,7 @@
   int __attribute__ ((overloadable))                            \
   NAME(half a)                                                  \
   {                                                             \
-    /* use float builtin */                                     \
-    return __builtin_##NAME##f(a);                              \
+    return __builtin_##NAME##f16(a);                            \
   }                                                             \
   IMPLEMENT_BUILTIN_J_V(NAME, short2 , half2 , lo, hi)          \
   IMPLEMENT_BUILTIN_J_V(NAME, short3 , half3 , lo, s2)          \
@@ -443,8 +437,7 @@
   int __attribute__ ((overloadable))                    \
   NAME(half a)                                          \
   {                                                     \
-    /* use float builtin */                             \
-    return __builtin_##NAME##f(a);                      \
+    return __builtin_##NAME##f16(a);                    \
   }                                                     \
   IMPLEMENT_BUILTIN_K_V(NAME, int2 , half2 , lo, hi)    \
   IMPLEMENT_BUILTIN_K_V(NAME, int3 , half3 , lo, s2)    \
@@ -489,8 +482,7 @@
   int __attribute__ ((overloadable))                                    \
   NAME(half a)                                                          \
   {                                                                     \
-    /* use float builtin */                                             \
-    return __builtin_##NAME##f(a);                                      \
+    return __builtin_##NAME##f16(a);                                    \
   }                                                                     \
   IMPLEMENT_BUILTIN_L_V(NAME, short2 , half2 , half, lo, hi)            \
   IMPLEMENT_BUILTIN_L_V(NAME, short3 , half3 , half, lo, s2)            \
@@ -1933,9 +1925,8 @@
   __IF_FP16 (                                                                 \
   half _CL_OVERLOADABLE _CL_READNONE NAME (half a, __private half *b)         \
   {                                                                           \
-    /* use float builtin */                                                   \
     __private float c;                                                        \
-    __private float r = __builtin_##NAME##f (a, &c);                          \
+    __private float r = __builtin_##NAME##f16 (a, &c);                        \
     *b = c;                                                                   \
     return r;                                                                 \
   }                                                                           \
@@ -2003,9 +1994,8 @@
   __IF_FP16 (                                                                 \
   half _CL_OVERLOADABLE _CL_READNONE NAME (half a, half b, int __private *c)  \
   {                                                                           \
-    /* use float builtin */                                                   \
     __private int d;                                                          \
-    __private float r = __builtin_##NAME##f (a, b, &d);                       \
+    __private float r = __builtin_##NAME##f16 (a, b, &d);                     \
     *c = d;                                                                   \
     return r;                                                                 \
   }                                                                           \
@@ -2072,9 +2062,8 @@
   __IF_FP16 (                                                                 \
   half _CL_OVERLOADABLE _CL_READNONE NAME (half a, int __private *c)          \
   {                                                                           \
-    /* use float builtin */                                                   \
     __private int d;                                                          \
-    __private float r = __builtin_##NAME##f (a, &d);                          \
+    __private float r = __builtin_##NAME##f16 (a, &d);                        \
     *c = d;                                                                   \
     return r;                                                                 \
   }                                                                           \
