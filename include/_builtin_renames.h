@@ -934,6 +934,72 @@
 #define convert_float16_sat_rtn    _cl_convert_float16_sat_rtn
 #define convert_double16_sat_rtn    _cl_convert_double16_sat_rtn
 
+#define convert_half    _cl_convert_half
+#define convert_half_rte    _cl_convert_half_rte
+#define convert_half_rtz    _cl_convert_half_rtz
+#define convert_half_rtp    _cl_convert_half_rtp
+#define convert_half_rtn    _cl_convert_half_rtn
+#define convert_half_sat    _cl_convert_half._sat
+#define convert_half_sat_rte    _cl_convert_half_sat_rte
+#define convert_half_sat_rtz    _cl_convert_half_sat_rtz
+#define convert_half_sat_rtp    _cl_convert_half_sat_rtp
+#define convert_half_sat_rtn    _cl_convert_half_sat_rtn
+
+#define convert_half2    _cl_convert_half2
+#define convert_half2_rte    _cl_convert_half2_rte
+#define convert_half2_rtz    _cl_convert_half2_rtz
+#define convert_half2_rtp    _cl_convert_half2_rtp
+#define convert_half2_rtn    _cl_convert_half2_rtn
+#define convert_half2_sat    _cl_convert_half2._sat
+#define convert_half2_sat_rte    _cl_convert_half2_sat_rte
+#define convert_half2_sat_rtz    _cl_convert_half2_sat_rtz
+#define convert_half2_sat_rtp    _cl_convert_half2_sat_rtp
+#define convert_half2_sat_rtn    _cl_convert_half2_sat_rtn
+
+#define convert_half3    _cl_convert_half3
+#define convert_half3_rte    _cl_convert_half3_rte
+#define convert_half3_rtz    _cl_convert_half3_rtz
+#define convert_half3_rtp    _cl_convert_half3_rtp
+#define convert_half3_rtn    _cl_convert_half3_rtn
+#define convert_half3_sat    _cl_convert_half3._sat
+#define convert_half3_sat_rte    _cl_convert_half3_sat_rte
+#define convert_half3_sat_rtz    _cl_convert_half3_sat_rtz
+#define convert_half3_sat_rtp    _cl_convert_half3_sat_rtp
+#define convert_half3_sat_rtn    _cl_convert_half3_sat_rtn
+
+#define convert_half4    _cl_convert_half4
+#define convert_half4_rte    _cl_convert_half4_rte
+#define convert_half4_rtz    _cl_convert_half4_rtz
+#define convert_half4_rtp    _cl_convert_half4_rtp
+#define convert_half4_rtn    _cl_convert_half4_rtn
+#define convert_half4_sat    _cl_convert_half4._sat
+#define convert_half4_sat_rte    _cl_convert_half4_sat_rte
+#define convert_half4_sat_rtz    _cl_convert_half4_sat_rtz
+#define convert_half4_sat_rtp    _cl_convert_half4_sat_rtp
+#define convert_half4_sat_rtn    _cl_convert_half4_sat_rtn
+
+#define convert_half8    _cl_convert_half8
+#define convert_half8_rte    _cl_convert_half8_rte
+#define convert_half8_rtz    _cl_convert_half8_rtz
+#define convert_half8_rtp    _cl_convert_half8_rtp
+#define convert_half8_rtn    _cl_convert_half8_rtn
+#define convert_half8_sat    _cl_convert_half8._sat
+#define convert_half8_sat_rte    _cl_convert_half8_sat_rte
+#define convert_half8_sat_rtz    _cl_convert_half8_sat_rtz
+#define convert_half8_sat_rtp    _cl_convert_half8_sat_rtp
+#define convert_half8_sat_rtn    _cl_convert_half8_sat_rtn
+
+#define convert_half16    _cl_convert_half16
+#define convert_half16_rte    _cl_convert_half16_rte
+#define convert_half16_rtz    _cl_convert_half16_rtz
+#define convert_half16_rtp    _cl_convert_half16_rtp
+#define convert_half16_rtn    _cl_convert_half16_rtn
+#define convert_half16_sat    _cl_convert_half16._sat
+#define convert_half16_sat_rte    _cl_convert_half16_sat_rte
+#define convert_half16_sat_rtz    _cl_convert_half16_sat_rtz
+#define convert_half16_sat_rtp    _cl_convert_half16_sat_rtp
+#define convert_half16_sat_rtn    _cl_convert_half16_sat_rtn
+
 
 #define atomic_add     _cl_atomic_add
 #define atomic_sub     _cl_atomic_sub
