@@ -104,13 +104,15 @@ if(LLVM_VERSION_MAJOR GREATER 9 AND LLVM_VERSION_MAJOR LESS 13)
   # does not segfault on ODROID C2 & XU3 with Debian 10
   # segfaults on Cavium ThunderX
   if(ARM)
-    set_tests_properties("regression/test_llvm_segfault_issue_889" PROPERTIES DISABLED 1)
+    set_tests_properties("regression/test_llvm_segfault_issue_889_loopvec"
+                         "regression/test_llvm_segfault_issue_889_cbs" PROPERTIES DISABLED 1)
   endif()
   # (sporadically?) segfaults on AMD CPUs
   # in distro builds, we don't know whether we target a failing or a
   # passing CPU during the tests
   if(X86_64 AND (KERNELLIB_HOST_DISTRO_VARIANTS OR LLC_HOST_CPU MATCHES "^znver.*"))
-    set_tests_properties("regression/test_llvm_segfault_issue_889" PROPERTIES DISABLED 1)
+    set_tests_properties("regression/test_llvm_segfault_issue_889_loopvec"
+                         "regression/test_llvm_segfault_issue_889_cbs" PROPERTIES DISABLED 1)
   endif()
 endif()
 

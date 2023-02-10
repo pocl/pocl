@@ -61,11 +61,20 @@ PHIsToAllocas::runOnFunction(Function &F) {
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
+#ifdef CBS_NO_PHIS_IN_SPLIT
+  bool RunWithCBS = true;
+#else
+  bool RunWithCBS = false;
+#endif
+
   /* Skip PHIsToAllocas when we are not creating the work item loops,
      as it leads to worse code without benefits for the full replication method.
   */
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
-      pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
+          pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS &&
+      !(RunWithCBS &&
+        getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
+            pocl::WorkitemHandlerChooser::POCL_WIH_CBS))
     return false;
 
   typedef std::vector<llvm::Instruction* > InstructionVec;

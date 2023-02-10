@@ -84,7 +84,11 @@ static const std::array<char, 3> DimName{'x', 'y', 'z'};
 
 llvm::Loop *updateDtAndLi(llvm::LoopInfo &LI, llvm::DominatorTree &DT,
                           const llvm::BasicBlock *B, llvm::Function &F) {
+#if LLVM_VERSION_MAJOR < 11
+  DT.releaseMemory();
+#else
   DT.reset();
+#endif
   DT.recalculate(F);
   LI.releaseMemory();
   LI.analyze(DT);
@@ -127,9 +131,6 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
   if (NumElements > 1)
     Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
   Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
-
-  const llvm::DataLayout &Layout =
-      InsertionPoint->getParent()->getParent()->getParent()->getDataLayout();
 
   llvm::IRBuilder WriteBuilder{InsertionPoint};
   llvm::Value *StoreTarget = Alloca;
@@ -288,7 +289,7 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
   // from innermost to outermost: create loops around the LastHeader and use
   // AfterBB as dummy exit to be replaced by the outer latch later
   llvm::SmallVector<llvm::PHINode *, 3> IndVars;
-  for (int D = 0; D < Dim; ++D) {
+  for (size_t D = 0; D < Dim; ++D) {
     const std::string Suffix =
         (llvm::Twine{DimName[D]} + ".subcfg." + llvm::Twine{EntryId}).str();
 
@@ -486,10 +487,10 @@ SubCFG::SubCFG(llvm::BasicBlock *EntryBarrier,
                llvm::AllocaInst *LastBarrierIdStorage,
                const llvm::DenseMap<llvm::BasicBlock *, size_t> &BarrierIds,
                llvm::Value *IndVar, size_t Dim)
-    : LastBarrierIdStorage_(LastBarrierIdStorage),
-      EntryId_(BarrierIds.lookup(EntryBarrier)), EntryBarrier_(EntryBarrier),
+    : EntryId_(BarrierIds.lookup(EntryBarrier)), EntryBarrier_(EntryBarrier),
+      LastBarrierIdStorage_(LastBarrierIdStorage), ContIdx_(IndVar),
       EntryBB_(EntryBarrier->getSingleSuccessor()), LoadBB_(nullptr),
-      ContIdx_(IndVar), PreHeader_(nullptr), Dim(Dim) {
+      PreHeader_(nullptr), Dim(Dim) {
   assert(ContIdx_ && "Must have found _local_id_{x,y,z}");
 
   llvm::SmallVector<llvm::BasicBlock *, 4> WL{EntryBarrier};
@@ -559,7 +560,6 @@ void SubCFG::replicate(
     llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
         &RemappedInstAllocaMap,
     llvm::BasicBlock *AfterBB, llvm::ArrayRef<llvm::Value *> LocalSize) {
-  auto &DL = F.getParent()->getDataLayout();
   llvm::ValueToValueMapTy VMap;
 
   // clone blocks
@@ -617,10 +617,10 @@ void SubCFG::removeDeadPhiBlocks(
     for (auto &I : *BB) {
       if (auto *Phi = llvm::dyn_cast<llvm::PHINode>(&I)) {
         llvm::SmallVector<llvm::BasicBlock *, 4> IncomingBlocksToRemove;
-        for (int IncomingIdx = 0; IncomingIdx < Phi->getNumIncomingValues();
+        for (size_t IncomingIdx = 0; IncomingIdx < Phi->getNumIncomingValues();
              ++IncomingIdx) {
           auto *IncomingBB = Phi->getIncomingBlock(IncomingIdx);
-          if (!Predecessors.contains(IncomingBB))
+          if (Predecessors.find(IncomingBB) == Predecessors.end())
             IncomingBlocksToRemove.push_back(IncomingBB);
         }
         for (auto *IncomingBB : IncomingBlocksToRemove) {
@@ -723,11 +723,11 @@ void SubCFG::arrayifyMultiSubCfgValues(
       if (InstAllocaMap.lookup(&I))
         continue;
       // if any use is in another subcfg
-      if (anyOfUsers<llvm::Instruction>(
-              &I, [&OtherCFGBlocks, this, &I](auto *UI) {
-                return UI->getParent() != I.getParent() &&
-                       OtherCFGBlocks.contains(UI->getParent());
-              })) {
+      if (anyOfUsers<llvm::Instruction>(&I, [&OtherCFGBlocks, this,
+                                             &I](auto *UI) {
+            return UI->getParent() != I.getParent() &&
+                   OtherCFGBlocks.find(UI->getParent()) != OtherCFGBlocks.end();
+          })) {
         // load from an alloca, just widen alloca
         if (auto *LInst = llvm::dyn_cast<llvm::LoadInst>(&I))
           if (auto *Alloca = getLoopStateAllocaForLoad(*LInst)) {
@@ -742,6 +742,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
             continue;
           }
 
+#ifndef CBS_NO_PHIS_IN_SPLIT
         // if value is uniform, just store to 1-wide alloca
         if (VecInfo.isUniform(I.getFunction(), &I)) {
 #ifdef DEBUG_SUBCFG_FORMATION
@@ -754,6 +755,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
           VecInfo.setUniform(I.getFunction(), Alloca);
           continue;
         }
+#endif
 
 // Requires a uniformity analysis that is able to determine contiguous values
 #if 0
@@ -1052,14 +1054,30 @@ void SubCFG::fixSingleSubCfgValues(
                 arrayifyInstruction(AllocaIP, OPI, ContIdx_, ReqdArrayElements);
           }
 
+#ifdef CBS_NO_PHIS_IN_SPLIT
+          // in split loop, OPI might be used multiple times, get the user,
+          // dominating this user and insert load there
+          llvm::Instruction *NewIP = &I;
+          for (auto *U : OPI->users()) {
+            if (auto *UI = llvm::dyn_cast<llvm::Instruction>(U);
+                UI && DT.dominates(UI, NewIP)) {
+              NewIP = UI;
+            }
+          }
+#else
           // doesn't happen if we keep the PHIs
           auto *NewIP = LoadIP;
           if (!Alloca->isArrayAllocation())
             NewIP = UniLoadIP;
+#endif
 
           auto *Load = loadFromAlloca(Alloca, ContIdx_, NewIP, OPI->getName());
           copyDgbValues(OPI, Load, NewIP);
 
+#ifdef CBS_NO_PHIS_IN_SPLIT
+          I.replaceUsesOfWith(OPI, Load);
+          InstLoadMap.insert({OPI, Load});
+#else
           // if a loop is conditionally split, the first block in a subcfg might
           // have another incoming edge, need to insert a PHI node then
           const auto NumPreds =
@@ -1082,6 +1100,7 @@ void SubCFG::fixSingleSubCfgValues(
             I.replaceUsesOfWith(OPI, Load);
             InstLoadMap.insert({OPI, Load});
           }
+#endif
         }
       }
     }
@@ -1168,7 +1187,7 @@ void fillUserHull(llvm::AllocaInst *Alloca,
     Hull.push_back(I);
     for (auto *U : I->users()) {
       if (auto *UI = llvm::dyn_cast<llvm::Instruction>(U)) {
-        if (!AlreadySeen.contains(UI))
+        if (AlreadySeen.find(UI) == AlreadySeen.end())
           if (UI->mayReadOrWriteMemory() || UI->getType()->isPointerTy())
             WL.push_back(UI);
       }
@@ -1204,12 +1223,13 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
   for (auto &SubCfg : SubCfgs) {
     llvm::SmallPtrSet<llvm::BasicBlock *, 8> SubCfgSet{
         SubCfg.getNewBlocks().begin(), SubCfg.getNewBlocks().end()};
-    if (std::any_of(
-            UserBlocks.begin(), UserBlocks.end(),
-            [&SubCfgSet](auto *BB) { return SubCfgSet.contains(BB); }) &&
+    if (std::any_of(UserBlocks.begin(), UserBlocks.end(),
+                    [&SubCfgSet](auto *BB) {
+                      return SubCfgSet.find(BB) != SubCfgSet.end();
+                    }) &&
         !std::all_of(UserBlocks.begin(), UserBlocks.end(),
                      [&SubCfgSet, Alloca](auto *BB) {
-                       if (SubCfgSet.contains(BB)) {
+                       if (SubCfgSet.find(BB) != SubCfgSet.end()) {
                          return true;
                        }
 #ifdef DEBUG_SUBCFG_FORMATION
@@ -1248,10 +1268,10 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
     if (auto *Alloca = llvm::dyn_cast<llvm::AllocaInst>(&I)) {
       if (Alloca->hasMetadata(pocl::MDKind::Arrayified))
         continue; // already arrayified
-      if (anyOfUsers<llvm::Instruction>(
-              Alloca, [&SubCfgsBlocks](llvm::Instruction *UI) {
-                return !SubCfgsBlocks.contains(UI->getParent());
-              }))
+      if (anyOfUsers<llvm::Instruction>(Alloca, [&SubCfgsBlocks](
+                                                    llvm::Instruction *UI) {
+            return SubCfgsBlocks.find(UI->getParent()) == SubCfgsBlocks.end();
+          }))
         continue;
       if (!isAllocaSubCfgInternal(Alloca, SubCfgs, DT))
         WL.push_back(Alloca);
@@ -1351,7 +1371,8 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   const size_t ReqdArrayElements =
       WGDynamicLocalSize
           ? NumArrayElements
-          : std::accumulate(LocalSizes.cbegin(), LocalSizes.cend(), 1, std::multiplies<>{});
+          : std::accumulate(LocalSizes.cbegin(), LocalSizes.cend(), 1,
+                            std::multiplies<>{});
 
   auto *Entry = &F.getEntryBlock();
   insertLocalIdInit(Entry);
@@ -1500,10 +1521,10 @@ void addAccessGroupMD(llvm::Instruction *I, llvm::MDNode *MDAccessGroup) {
     I->setMetadata(llvm::LLVMContext::MD_access_group, MDAccessGroup);
 }
 
-void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
 #if LLVM_VERSION_MAJOR > 12 ||                                                 \
     (LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR == 0 &&                    \
      LLVM_VERSION_PATCH == 1)
+void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
   // LLVM < 12.0.1 might miscompile if conditionals in "parallel" loop
   // (https://llvm.org/PR46666)
 
@@ -1520,8 +1541,10 @@ void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
 
   // make the access group parallel w.r.t the WI loop
   createParallelAccessesMdOrAddAccessGroup(&F, L, MDAccessGroup);
-#endif
 }
+#else
+void markLoopParallel(llvm::Function &, llvm::Loop *) {}
+#endif
 
 static llvm::RegisterPass<pocl::SubCFGFormationPassLegacy>
     X("subcfgformation", "Form SubCFGs according to CBS");
