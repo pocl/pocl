@@ -79,6 +79,8 @@ The behavior of pocl can be controlled with multiple environment variables
 listed below. The variables are helpful both when using and when developing
 pocl.
 
+.. highlight:: bash
+
 - **POCL_AFFINITY**
 
   Linux-only, specific to pthread driver. If set to 1, each thread of
@@ -98,7 +100,7 @@ pocl.
 
   Example::
 
-    POCL_BINARY_SPECIALIZE_WG=2-1-1,0-0-0-goffs0,13-1-1-smallgrid,128-2-1-goffs0-smallgrid poclcc [...]
+    POCL_BINARY_SPECIALIZE_WG='2-1-1,0-0-0-goffs0,13-1-1-smallgrid,128-2-1-goffs0-smallgrid' poclcc [...]
 
   This makes poclcc generate a binary which contains the generic work-group
   function binary, a work-group function that is specialized for local size
@@ -107,6 +109,27 @@ pocl.
   for a "small grid" (size defined by the device driver), and finally one
   that is specialized for local size 128x2x1, an origo global offset and
   a small grid.
+
+- **POCL_BITCODE_FINALIZER**
+
+  Defines a custom command that can manipulate the final kernel work-group
+  function bitcode produced after all LLVM optimizations and before entering code
+  generation. This can be useful, for example, to add instrumentation to the LLVM
+  bitcode before proceeding to the backend.
+
+  Example::
+
+    POCL_BITCODE_FINALIZER='verificarlo %(bc) --emit-llvm -o %(bc)' examples/example1/example1
+
+  This results in running the above command with '%(bc)' strings replaced with
+  the path of the final bitcode's temporary file. Note that the modified
+  bitcode should be written over the same file for it to get picked to the
+  code generation.
+
+  Please note that setting the env doesn't force regeneration of the kernel
+  binaries if they are found in the kernel compiler cache. You can either
+  use POCL_KERNEL_CACHE=0 to disable the kernel cache, or wipe the kernel
+  cache directory manually to force kernel binary rebuild.
 
 - **POCL_BUILDING**
 
