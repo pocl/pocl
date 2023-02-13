@@ -342,3 +342,13 @@ pocl.
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
+
+- **POCL_WORK_GROUP_SPECIALIZATION**
+
+  PoCL specializes work-groups at kernel command launch time by default
+  to optimize the execution performance with the cost of cached variations
+  of the kernels with the different specialization values.
+
+  The kernel command parameters PoCL currently specializes with include
+  the local size, global offset zero or non-zero and maximum grid size.
+  The specialization can be disabled by setting this environment variable to 0.
