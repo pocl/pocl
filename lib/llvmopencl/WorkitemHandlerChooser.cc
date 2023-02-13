@@ -75,16 +75,11 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
      FunctionPass that delegates to other passes. */    
   Initialize(K);
 
-  if (WGDynamicLocalSize) {
-    chosenHandler_ = POCL_WIH_LOOPS;
-    return false;
-  }
-
   std::string method = "auto";
   if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
     {
       method = getenv("POCL_WORK_GROUP_METHOD");
-      if (method == "repl" || method == "workitemrepl")
+      if ((method == "repl" || method == "workitemrepl") && !WGDynamicLocalSize)
         chosenHandler_ = POCL_WIH_FULL_REPLICATION;
       else if (method == "loops" || method == "workitemloops" || method == "loopvec")
         chosenHandler_ = POCL_WIH_LOOPS;

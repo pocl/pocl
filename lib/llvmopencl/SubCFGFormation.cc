@@ -113,8 +113,7 @@ bool anyOfUsers(llvm::Value *V, Func &&L) {
 llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
                                 llvm::Value *ToArrayify,
                                 llvm::Instruction *InsertionPoint,
-                                llvm::Value *Idx,
-                                size_t NumElements = NumArrayElements,
+                                llvm::Value *Idx, llvm::Value *NumElements,
                                 llvm::MDTuple *MDAlloca = nullptr) {
   assert(Idx && "Valid WI-Index required");
 
@@ -125,16 +124,15 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
 
   auto *T = ToArrayify->getType();
   llvm::IRBuilder AllocaBuilder{IPAllocas};
-  auto *Alloca = AllocaBuilder.CreateAlloca(
-      T, NumElements == 1 ? nullptr : AllocaBuilder.getInt32(NumElements),
-      ToArrayify->getName() + "_alloca");
-  if (NumElements > 1)
+  auto *Alloca = AllocaBuilder.CreateAlloca(T, NumElements,
+                                            ToArrayify->getName() + "_alloca");
+  if (NumElements)
     Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
   Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
 
   llvm::IRBuilder WriteBuilder{InsertionPoint};
   llvm::Value *StoreTarget = Alloca;
-  if (NumElements != 1) {
+  if (NumElements) {
     auto *GEP = llvm::cast<llvm::GetElementPtrInst>(
         WriteBuilder.CreateInBoundsGEP(Alloca->getAllocatedType(), Alloca, Idx,
                                        ToArrayify->getName() + "_gep"));
@@ -149,7 +147,7 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
 llvm::AllocaInst *arrayifyInstruction(llvm::Instruction *IPAllocas,
                                       llvm::Instruction *ToArrayify,
                                       llvm::Value *Idx,
-                                      size_t NumElements = NumArrayElements,
+                                      llvm::Value *NumElements,
                                       llvm::MDTuple *MDAlloca = nullptr) {
   llvm::Instruction *InsertionPoint = &*(++ToArrayify->getIterator());
   if (llvm::isa<llvm::PHINode>(ToArrayify))
@@ -211,9 +209,12 @@ void copyDgbValues(llvm::Value *From, llvm::Value *To,
 }
 
 // gets the load inside F from the global variable called VarName
-llvm::Value *getLoadForGlobalVariable(llvm::Function &F,
-                                      llvm::StringRef VarName) {
-  auto *GV = F.getParent()->getGlobalVariable(VarName);
+llvm::Instruction *getLoadForGlobalVariable(llvm::Function &F,
+                                            llvm::StringRef VarName) {
+  auto SizeT =
+      F.getParent()->getDataLayout().getLargestLegalIntType(F.getContext());
+  auto *GV = F.getParent()->getOrInsertGlobal(
+      VarName, SizeT); // getGlobalVariable(VarName)
   for (auto &BB : F) {
     for (auto &I : BB) {
       if (auto *LoadI = llvm::dyn_cast<llvm::LoadInst>(&I)) {
@@ -223,9 +224,7 @@ llvm::Value *getLoadForGlobalVariable(llvm::Function &F,
     }
   }
   llvm::IRBuilder Builder{F.getEntryBlock().getTerminator()};
-  return Builder.CreateLoad(
-      F.getParent()->getDataLayout().getLargestLegalIntType(F.getContext()),
-      GV);
+  return Builder.CreateLoad(SizeT, GV);
 }
 
 // init local id to 0
@@ -258,13 +257,23 @@ llvm::SmallVector<llvm::Value *, 3>
 getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<std::size_t> LocalSizes,
                    bool DynSizes, int Dim) {
   auto &DL = F.getParent()->getDataLayout();
+  llvm::IRBuilder Builder{F.getEntryBlock().getTerminator()};
 
   llvm::SmallVector<llvm::Value *, 3> LocalSize(Dim);
   for (int D = 0; D < Dim; ++D) {
-    if (DynSizes)
-      LocalSize[D] =
+    if (DynSizes) {
+      auto I =
           getLoadForGlobalVariable(F, std::string{"_local_size_"} + DimName[D]);
-    else
+      LocalSize[D] = I;
+
+      if (I->getParent() != &F.getEntryBlock()) {
+        // must be in entry block. move.
+        if (F.getEntryBlock().size() == 1)
+          I->moveBefore(F.getEntryBlock().getFirstNonPHI());
+        else
+          I->moveAfter(F.getEntryBlock().getFirstNonPHI());
+      }
+    } else
       LocalSize[D] = llvm::ConstantInt::get(
           DL.getLargestLegalIntType(F.getContext()), LocalSizes[D]);
   }
@@ -443,12 +452,14 @@ public:
                      llvm::SmallVector<llvm::Instruction *, 8>>
           &ContInstReplicaMap,
       llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
-      size_t ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo);
+      llvm::Value *ReqdArrayElements,
+      pocl::VariableUniformityAnalysis &VecInfo);
   void fixSingleSubCfgValues(
       llvm::DominatorTree &DT,
       const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
           &RemappedInstAllocaMap,
-      std::size_t ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo);
+      llvm::Value *ReqdArrayElements,
+      pocl::VariableUniformityAnalysis &VecInfo);
 
   void print() const;
   void removeDeadPhiBlocks(
@@ -649,7 +660,7 @@ bool dontArrayifyContiguousValues(
     llvm::DenseMap<llvm::Instruction *,
                    llvm::SmallVector<llvm::Instruction *, 8>>
         &ContInstReplicaMap,
-    llvm::Instruction *AllocaIP, size_t ReqdArrayElements, llvm::Value *IndVar,
+    llvm::Instruction *AllocaIP, llvm::Value* ReqdArrayElements, llvm::Value *IndVar,
     pocl::VariableUniformityAnalysis &VecInfo) {
   // is cont indvar
   if (VecInfo.isPinned(I))
@@ -691,7 +702,7 @@ bool dontArrayifyContiguousValues(
     llvm::errs()
         << "[SubCFG] Store required uniform value to single element alloca "
         << I << "\n";
-    auto *Alloca = arrayifyInstruction(AllocaIP, UI, IndVar, 1);
+    auto *Alloca = arrayifyInstruction(AllocaIP, UI, IndVar, nullptr);
     BaseInstAllocaMap.insert({UI, Alloca});
     VecInfo.setVectorShape(*Alloca, pocl::VectorShape::uni());
   }
@@ -709,7 +720,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
                    llvm::SmallVector<llvm::Instruction *, 8>>
         &ContInstReplicaMap,
     llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
-    size_t ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
+    llvm::Value *ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
   llvm::SmallPtrSet<llvm::BasicBlock *, 16> OtherCFGBlocks;
   for (auto &Cfg : SubCFGs) {
     if (&Cfg != this)
@@ -750,7 +761,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
               << "[SubCFG] Value uniform, store to single element alloca " << I
               << "\n";
 #endif
-          auto *Alloca = arrayifyInstruction(AllocaIP, &I, ContIdx_, 1);
+          auto *Alloca = arrayifyInstruction(AllocaIP, &I, ContIdx_, nullptr);
           InstAllocaMap.insert({&I, Alloca});
           VecInfo.setUniform(I.getFunction(), Alloca);
           continue;
@@ -978,10 +989,9 @@ void SubCFG::fixSingleSubCfgValues(
     llvm::DominatorTree &DT,
     const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
         &RemappedInstAllocaMap,
-    std::size_t ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
+    llvm::Value *ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
 
-  auto *AllocaIP =
-      LoadBB_->getParent()->getEntryBlock().getFirstNonPHIOrDbgOrLifetime();
+  auto *AllocaIP = LoadBB_->getParent()->getEntryBlock().getTerminator();
   auto *LoadIP = LoadBB_->getTerminator();
   auto *UniLoadIP = PreHeader_->getTerminator();
   llvm::IRBuilder Builder{LoadIP};
@@ -1252,7 +1262,7 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
 // \a Idx.
 void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
                      std::vector<SubCFG> &SubCfgs,
-                     std::size_t ReqdArrayElements,
+                     llvm::Value *ReqdArrayElements,
                      pocl::VariableUniformityAnalysis &VecInfo) {
   auto *MDAlloca = llvm::MDNode::get(
       EntryBlock->getContext(),
@@ -1289,8 +1299,8 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
       }
     }
 
-    auto *Alloca = AllocaBuilder.CreateAlloca(
-        T, AllocaBuilder.getInt32(ReqdArrayElements), I->getName() + "_alloca");
+    auto *Alloca = AllocaBuilder.CreateAlloca(T, ReqdArrayElements,
+                                              I->getName() + "_alloca");
     Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
     Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
 
@@ -1318,10 +1328,7 @@ void moveAllocasToEntry(llvm::Function &F,
       if (auto *AllocaInst = llvm::dyn_cast<llvm::AllocaInst>(&I))
         AllocaWL.push_back(AllocaInst);
   for (auto *I : AllocaWL)
-    if (F.getEntryBlock().size() == 1)
-      I->moveBefore(F.getEntryBlock().getFirstNonPHI());
-    else
-      I->moveAfter(F.getEntryBlock().getFirstNonPHI());
+    I->moveBefore(F.getEntryBlock().getTerminator());
 }
 
 llvm::DenseMap<llvm::BasicBlock *, size_t>
@@ -1368,14 +1375,17 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   const auto LocalSize =
       getLocalSizeValues(F, LocalSizes, WGDynamicLocalSize, Dim);
 
-  const size_t ReqdArrayElements =
-      WGDynamicLocalSize
-          ? NumArrayElements
-          : std::accumulate(LocalSizes.cbegin(), LocalSizes.cend(), 1,
-                            std::multiplies<>{});
-
   auto *Entry = &F.getEntryBlock();
+
   insertLocalIdInit(Entry);
+  llvm::IRBuilder Builder{Entry->getTerminator()};
+  llvm::Value *ReqdArrayElements =
+      WGDynamicLocalSize
+          ? Builder.CreateMul(LocalSize[0],
+                              Builder.CreateMul(LocalSize[1], LocalSize[2]))
+          : Builder.getInt32(std::accumulate(LocalSizes.cbegin(),
+                                             LocalSizes.cend(), 1,
+                                             std::multiplies<>{}));
 
   std::vector<llvm::BasicBlock *> Blocks;
   Blocks.reserve(std::distance(F.begin(), F.end()));
@@ -1406,7 +1416,6 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   auto Barriers = getBarrierIds(Entry, ExitingBlocks, Blocks);
 
   const llvm::DataLayout &DL = F.getParent()->getDataLayout();
-  llvm::IRBuilder Builder{F.getEntryBlock().getFirstNonPHI()};
   auto *LastBarrierIdStorage = Builder.CreateAlloca(
       DL.getLargestLegalIntType(F.getContext()), nullptr, "LastBarrierId");
 
@@ -1441,7 +1450,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   for (auto &Cfg : SubCFGs)
     Cfg.arrayifyMultiSubCfgValues(
         InstAllocaMap, BaseInstAllocaMap, InstContReplicaMap, SubCFGs,
-        F.getEntryBlock().getFirstNonPHI(), ReqdArrayElements, VUA);
+        F.getEntryBlock().getTerminator(), ReqdArrayElements, VUA);
 
   llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *> RemappedInstAllocaMap;
   for (auto &Cfg : SubCFGs) {
