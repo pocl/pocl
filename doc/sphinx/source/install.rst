@@ -1,5 +1,3 @@
-.. _pocl-install:
-
 ============
 Installation
 ============
@@ -22,7 +20,7 @@ tools:
   * python3, llvm-spirv (version-compatible with LLVM) and spirv-tools (optional;
     required for SPIR-V support in CPU / CUDA; Vulkan driver supports SPIR-V through clspv)
 
-Installing requirements for Ubuntu::
+Installing requirements for Ubuntu:
 
 Note: The binary packages from https://apt.llvm.org/ are recommended
 (and tested for each release) instead of the binary tar balls or

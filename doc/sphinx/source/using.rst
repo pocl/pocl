@@ -80,11 +80,12 @@ listed below. The variables are helpful both when using and when developing
 pocl.
 
 - **POCL_AFFINITY**
- Linux-only, specific to pthread driver. If set to 1, each thread of
- the pthread CPU driver sets its affinity to its index. This may be
- useful with very long running kernels, or when using subdevices
- (lets any idle cores enter deeper sleep). Defaults to 0 (most
- people don't need this).
+
+  Linux-only, specific to pthread driver. If set to 1, each thread of
+  the pthread CPU driver sets its affinity to its index. This may be
+  useful with very long running kernels, or when using subdevices
+  (lets any idle cores enter deeper sleep). Defaults to 0 (most
+  people don't need this).
 
 - **POCL_BINARY_SPECIALIZE_WG**
 
@@ -134,12 +135,6 @@ pocl.
  error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,cuda,vulkan,proxy,all.
  Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
-- **POCL_SIGUSR2_HANDLER**
-
- When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print
- some debugging information. Currently it prints the count of live cl_* objects
- by type (buffers, events, etc).
-
 - **POCL_DEBUG_LLVM_PASSES**
 
  When set to 1, enables debug output from LLVM passes during optimization.
@@ -160,7 +155,7 @@ pocl.
 
  *         **vulkan**   An experimental driver that uses Vulkan and SPIR-V for executing on
 	                Vulkan supported devices.
- 
+
  *         **pthread**  Native kernel execution on the host CPU with
                         threaded execution of work groups using pthreads.
 
@@ -234,6 +229,54 @@ pocl.
  good for creating pocl binaries. Requires those drivers to be compiled with support
  for compilation for those devices.
 
+- **POCL_SIGFPE_HANDLER**
+
+ Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
+ See :ref:`sigfpe-handler`
+
+- **POCL_SIGUSR2_HANDLER**
+
+ When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print
+ some debugging information. Currently it prints the count of live cl_* objects
+ by type (buffers, events, etc).
+
+- **POCL_STARTUP_DELAY**
+
+  Default 0. If set to an integer N > 0, libpocl will make a pause of N seconds
+  once, when it's loading. Useful e.g. to set up a LTTNG tracing session.
+
+- **POCL_TRACING**, **POCL_TRACING_OPT** and **POCL_TRACING_FILTER**
+
+ If POCL_TRACING is set to some tracer name, then all events
+ will be traced automatically. Depending on the backend, traces
+ may be output in different formats and collected in a different way.
+ POCL_TRACING_FILTER is a comma separated list of string to
+ indicate which event status should be filtered. For instance to trace
+ complete and running events POCL_TRACING_FILTER should be set
+ to "complete,running". Default behavior is to trace all events.
+
+    cq -- Dumps a simple per-kernel execution time statistics at the
+          program exit time which is collected from command queue
+          start and finish time stamps. Useful for quick and easy profiling
+          purposes with accurate kernel execution time stamps produced
+          in a per device way. Currently only tracks kernel timings, and
+          POCL_TRACING_FILTER has no effect.
+    text   -- Basic text logger for each events state
+              Use POCL_TRACING_OPT=<file> to set the
+              output file. If not specified, it defaults to
+              pocl_trace_event.log
+    lttng  -- LTTNG tracepoint support. When activated, a lttng session
+              must be started. The following tracepoints are available:
+               - pocl_trace:ndrange_kernel -> Kernel execution
+               - pocl_trace:read_buffer    -> Read buffer
+               - pocl_trace:write_buffer   -> Write buffer
+               - pocl_trace:copy_buffer    -> Copy buffer
+               - pocl_trace:map            -> Map image/buffer
+               - pocl_trace:command        -> other commands
+
+              For more information, please see lttng documentation:
+              http://lttng.org/docs/#doc-tracing-your-own-user-application
+
 - **POCL_VECTORIZER_REMARKS**
 
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
@@ -276,46 +319,3 @@ pocl.
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
-
-- **POCL_SIGFPE_HANDLER**
-
- Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
- See :ref:`sigfpe-handler`
-
-- **POCL_STARTUP_DELAY**
-
-  Default 0. If set to an integer N > 0, libpocl will make a pause of N seconds
-  once, when it's loading. Useful e.g. to set up a LTTNG tracing session.
-
-- **POCL_TRACING**, **POCL_TRACING_OPT** and **POCL_TRACING_FILTER**
-
- If POCL_TRACING is set to some tracer name, then all events
- will be traced automatically. Depending on the backend, traces
- may be output in different formats and collected in a different way.
- POCL_TRACING_FILTER is a comma separated list of string to
- indicate which event status should be filtered. For instance to trace
- complete and running events POCL_TRACING_FILTER should be set
- to "complete,running". Default behavior is to trace all events.
-
-    cq -- Dumps a simple per-kernel execution time statistics at the
-          program exit time which is collected from command queue
-          start and finish time stamps. Useful for quick and easy profiling
-          purposes with accurate kernel execution time stamps produced
-          in a per device way. Currently only tracks kernel timings, and
-          POCL_TRACING_FILTER has no effect.
-    text   -- Basic text logger for each events state
-              Use POCL_TRACING_OPT=<file> to set the
-              output file. If not specified, it defaults to
-              pocl_trace_event.log
-    lttng  -- LTTNG tracepoint support. When activated, a lttng session
-              must be started. The following tracepoints are available:
-               - pocl_trace:ndrange_kernel -> Kernel execution
-               - pocl_trace:read_buffer    -> Read buffer
-               - pocl_trace:write_buffer   -> Write buffer
-               - pocl_trace:copy_buffer    -> Copy buffer
-               - pocl_trace:map            -> Map image/buffer
-               - pocl_trace:command        -> other commands
-
-              For more information, please see lttng documentation:
-              http://lttng.org/docs/#doc-tracing-your-own-user-application
-

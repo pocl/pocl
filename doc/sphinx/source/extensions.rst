@@ -1,6 +1,6 @@
-==================
+===================================
 OpenCL Extensions Supported by PoCL
-==================
+===================================
 
 PoCL supports a number of OpenCL extensions. The exact
 list of extensions depends on the driver backend in use
