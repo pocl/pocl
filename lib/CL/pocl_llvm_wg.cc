@@ -3,6 +3,7 @@
 
    Copyright (c) 2013 Kalle Raiskila
                  2013-2019 Pekka Jääskeläinen
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +31,11 @@
 #include "pocl_file_util.h"
 #include "pocl_llvm_api.h"
 
-#include <string>
-#include <map>
-#include <vector>
 #include <iostream>
+#include <map>
+#include <regex>
+#include <string>
+#include <vector>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -360,8 +362,10 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   _cl_command_run *RunCommand = &Command->command.run;
   cl_program Program = Kernel->program;
   cl_context ctx = Program->context;
-  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-  PoclCompilerMutexGuard lockHolder(&llvm_ctx->Lock);
+  PoclLLVMContextData *PoCLLLVMContext =
+      (PoclLLVMContextData *)ctx->llvm_context_data;
+  PoclCompilerMutexGuard lockHolder(&PoCLLLVMContext->Lock);
+  llvm::LLVMContext *LLVMContext = PoCLLLVMContext->Context;
 
 #ifdef DEBUG_POCL_LLVM_API
   printf("### calling the kernel compiler for kernel %s local_x %zu "
@@ -373,7 +377,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   // Create an empty Module and copy only the kernel+callgraph from
   // program.bc.
   llvm::Module *ParallelBC =
-      new llvm::Module(StringRef("parallel_bc"), *llvm_ctx->Context);
+      new llvm::Module(StringRef("parallel_bc"), *LLVMContext);
 
   ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
   ParallelBC->setDataLayout(ProgramBC->getDataLayout());
@@ -484,9 +488,28 @@ int pocl_llvm_generate_workgroup_function_nowrite(
     std::cout << getDiagString(ctx);
   }
 
+  std::string FinalizerCommand =
+      pocl_get_string_option("POCL_BITCODE_FINALIZER", "");
+  if (FinalizerCommand != "") {
+    // Run a user-defined command on the final bitcode.
+    char TempParallelBCFileName[POCL_FILENAME_LENGTH];
+    int FD = -1, Err = 0;
+
+    Err = pocl_mk_tempname(TempParallelBCFileName, "/tmp/pocl-parallel", ".bc",
+                           &FD);
+    pocl_write_module((char *)ParallelBC, TempParallelBCFileName, 0);
+
+    std::string Command = std::regex_replace(
+        FinalizerCommand, std::regex(R"(%\(bc\))"), TempParallelBCFileName);
+    system(Command.c_str());
+
+    delete ParallelBC;
+    ParallelBC = parseModuleIR(TempParallelBCFileName, LLVMContext);
+  }
+
   assert(Output != NULL);
   *Output = (void *)ParallelBC;
-  ++llvm_ctx->number_of_IRs;
+  ++PoCLLLVMContext->number_of_IRs;
   return 0;
 }
 
