@@ -23,6 +23,11 @@ Notable User Facing Changes
   CBS is expected to work for kernels that POCL's current kernel compiler
   does not support. Currently, CBS can be manually enabled by setting
   the environment variable `POCL_WORK_GROUP_METHOD=cbs`.
+- New device driver, using the Level Zero API. It supports many features,
+  however there are still a few missing. For the full
+  documentation, see doc/sphinx/source/level0.rst.
+- Support for cl_intel_unified_shared_memory (only with
+  the Level Zero driver).
   
 Notable Fixes
 -------------
