@@ -1,4 +1,4 @@
-3.2    unreleased
+4.0    unreleased
 =================
 
 Notable User Facing Changes
@@ -14,6 +14,9 @@ Notable User Facing Changes
 - AlmaIF's OpenASIP backend now supports a standalone mode.
   It generates a standalone C program from a kernel launch, which
   can then be compiled and executed with ttasim or RTL simulation.
+- Added a user env POCL_BITCODE_FINALIZER that can be used to
+  call a custom script that manipulates the final bitcode before
+  passing it to the code generation.
 
 3.1 December 2022
 =================
