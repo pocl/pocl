@@ -75,7 +75,9 @@ fdim.cl
 floor.cl
 fma.cl
 fmax.cl
+fmax_common.cl
 fmin.cl
+fmin_common.cl
 fmod.cl
 fract.cl
 frexp.cl

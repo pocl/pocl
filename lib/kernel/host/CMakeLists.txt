@@ -46,6 +46,8 @@ dot.cl
 fast_distance.cl
 fast_length.cl
 fast_normalize.cl
+fmax_common.cl
+fmin_common.cl
 fract.cl
 get_global_id.c
 get_linear_id.c
