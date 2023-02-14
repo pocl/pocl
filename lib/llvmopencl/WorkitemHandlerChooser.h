@@ -38,9 +38,8 @@ namespace pocl {
       POCL_WIH_CBS
     };
 
-    WorkitemHandlerChooser ()
-        : pocl::WorkitemHandler (ID), chosenHandler_ (POCL_WIH_LOOPS)
-    {}
+    WorkitemHandlerChooser()
+        : pocl::WorkitemHandler(ID), chosenHandler_(POCL_WIH_LOOPS) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);

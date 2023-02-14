@@ -304,7 +304,8 @@ void InitializeLLVM() {
     if (CurrentWgMethod == "auto")
       CurrentWgMethod = "loopvec";
 
-    if (CurrentWgMethod == "loopvec" || CurrentWgMethod == "loops" || CurrentWgMethod == "cbs") {
+    if (CurrentWgMethod == "loopvec" || CurrentWgMethod == "loops" ||
+        CurrentWgMethod == "cbs") {
 
       O = opts["scalarize-load-store"];
       assert(O && "could not find LLVM option 'scalarize-load-store'");
