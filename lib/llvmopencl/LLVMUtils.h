@@ -125,7 +125,7 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #define LLVMBuildGEP2(A, B, C, D, E, F) LLVMBuildGEP(A, C, D, E, F)
 #endif
 
-#ifdef LLVM_OLDER_THAN_12_0
+#ifdef LLVM_OLDER_THAN_11_0
 #define CBS_NO_PHIS_IN_SPLIT
 #endif
 
