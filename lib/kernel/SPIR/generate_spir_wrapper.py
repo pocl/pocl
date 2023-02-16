@@ -119,7 +119,7 @@ SINGLE_ARG_I = [
 DUAL_ARG = [
 	"atan2", "atan2pi",
 	"copysign",
-	"fdim", "fmax", "fmin", "fmod",
+	"fdim", "fmax", "fmax_common", "fmin", "fmin_common", "fmod",
 	"hypot", "nextafter", "pow", "powr",
 	"maxmag", "minmag", "remainder",
 	"native_divide", "native_powr",

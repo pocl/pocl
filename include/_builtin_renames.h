@@ -88,7 +88,9 @@
 #define floor          _cl_floor
 #define fma            _cl_fma
 #define fmax           _cl_fmax
+#define fmax_common    _cl_fmax_common
 #define fmin           _cl_fmin
+#define fmin_common    _cl_fmin_common
 #define fmod           _cl_fmod
 #define fract          _cl_fract
 #define frexp          _cl_frexp
