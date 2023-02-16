@@ -23,4 +23,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_F_FF(_cl_fmin_common, a < b ? a : b)
+DEFINE_EXPR_F_FF(fmin_common, a < b ? a : b)
