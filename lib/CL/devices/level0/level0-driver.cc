@@ -1390,7 +1390,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->generic_as_support = CL_TRUE;
   ClDev->supported_spir_v_versions = "SPIR-V_1.2";
   ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-  ClDev->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
+  ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
 
   // deviceProperties
   switch (DeviceProperties.type) {
