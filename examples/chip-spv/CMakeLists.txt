@@ -69,7 +69,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "main")
+  set(CHIP_GIT_TAG "e39a8490e872894bba395f1101658d3916b85688")
 endif()
 
 # TODO: hardcoded -j8
