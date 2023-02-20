@@ -57,14 +57,14 @@ public:
   virtual ~Level0WorkQueueInterface() {};
 };
 
+class Level0Device;
+
 class Level0Queue {
 
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L, ze_device_handle_t D,
-              uint64_t *TimestampBuffer, double HostDevRate,
-              uint64_t HostTimeStart, uint64_t DeviceTimeStart,
-              uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets);
+              ze_command_list_handle_t L, Level0Device *D,
+              uint64_t *TimestampBuffer);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -77,18 +77,22 @@ public:
 private:
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
-  ze_device_handle_t DeviceH;
+  Level0Device *Device;
   uint64_t *EventStart = nullptr;
   uint64_t *EventFinish = nullptr;
 
   std::thread Thread;
   Level0WorkQueueInterface *WorkHandler;
 
-  uint64_t HostTimingStart;
-  uint64_t DeviceTimingStart;
-  double HostDeviceRate;
+  double DeviceFrequency;
+  double DeviceNsPerCycle;
+  // maximum valid (kernel) timestamp value
+  uint64_t DeviceMaxValidTimestamp;
+  uint64_t DeviceMaxValidKernelTimestamp;
+  // Nanoseconds after which the device (kernel) timer wraps around
+  uint64_t DeviceTimerWrapTimeNs;
+  uint64_t DeviceKernelTimerWrapTimeNs;
   uint32_t_3 DeviceMaxWGSizes;
-  bool DeviceHasGlobalOffsets;
 
   void read(void *__restrict__ HostPtr,
             pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
@@ -182,9 +186,8 @@ private:
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                          const size_t Origin[3], const size_t Region[3],
                          size_t RowPitch, size_t SlicePitch);
-  void calculateEventTimes(cl_event Event, uint64_t Start,
-                           uint64_t Finish) const;
-
+  void calculateEventTimes(cl_event Event, uint64_t Start, uint64_t Finish,
+                           uint64_t HostStartTS, uint64_t HostFinishTS) const;
 };
 
 class Level0QueueGroup : public Level0WorkQueueInterface {
@@ -198,11 +201,8 @@ public:
   Level0QueueGroup(Level0QueueGroup const &&) = delete;
   Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
 
-  bool init(unsigned Ordinal, unsigned Count, ze_context_handle_t ContextH,
-            ze_device_handle_t DeviceH, uint64_t *Buffer,
-            uint64_t HostTimingStart, uint64_t DeviceTimingStart,
-            double HostDeviceRate, uint32_t_3 DeviceMaxWGs,
-            bool DeviceHasGOffsets);
+  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device,
+            uint64_t *Buffer);
 
   void pushWork(_cl_command_node *Command) override;
   _cl_command_node *getWorkOrWait(bool &ShouldExit) override;
@@ -225,7 +225,6 @@ class Level0Device {
 
 public:
   Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-               ze_context_handle_t ContextH,
                cl_device_id dev, const char *Parameters);
   ~Level0Device();
 
@@ -273,11 +272,18 @@ public:
   cl_device_id getMemAssoc(const void *USMPtr);
   cl_mem_alloc_flags_intel getMemFlags(const void *USMPtr);
 
+  ze_device_handle_t getDeviceHandle() { return DeviceHandle; }
+  ze_context_handle_t getContextHandle() { return ContextHandle; }
+  void getTimingInfo(uint32_t &TS, uint32_t &KernelTS, double &TimerFreq,
+                     double &NsPerCycle);
+  void getMaxWGs(uint32_t_3 *MaxWGs);
   bool supportsHostUSM() { return HostMemCaps != 0; }
   bool supportsDeviceUSM() { return DeviceMemCaps != 0; }
   bool supportsSingleSharedUSM() { return SingleSharedCaps != 0; }
   bool supportsCrossSharedUSM() { return CrossSharedCaps != 0; }
   bool supportsSystemSharedUSM() { return SystemSharedCaps != 0; }
+  bool supportsOndemandPaging() { return OndemandPaging; }
+  bool supportsGlobalOffsets() { return HasGOffsets; }
 
 private:
   Level0QueueGroup CopyQueues;
@@ -295,9 +301,12 @@ private:
   bool Integrated = false;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
+  bool HasGOffsets = false;
   uint32_t MaxCommandQueuePriority = 0;
   uint32_t TSBits = 0;
   uint32_t KernelTSBits = 0;
+  double TimerNsPerCycle = 0.0;
+  double TimerFrequency = 0.0;
   uint32_t MaxWGCount[3];
   uint32_t MaxMemoryFillPatternSize = 0;
   uint32_t GlobalMemOrd = UINT32_MAX;
@@ -324,6 +333,7 @@ public:
   Level0Driver(Level0Driver const &&) = delete;
   Level0Driver& operator=(Level0Driver &&) = delete;
 
+  ze_context_handle_t getContextHandle() { return ContextH; }
   unsigned getNumDevices() { return Devices.size(); }
   const ze_driver_uuid_t &getUUID() { return UUID; }
   uint32_t getVersion() const { return Version; }

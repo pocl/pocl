@@ -30,6 +30,7 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 
@@ -378,22 +379,45 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish, nullptr, 0,
                                           nullptr);
   zeCommandListClose(CmdListH);
+  uint64_t HostStartTS = pocl_gettimemono_ns();
   zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
   zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max());
-
-  calculateEventTimes(event, *EventStart, *EventFinish);
+  uint64_t HostFinishTS = pocl_gettimemono_ns();
+  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE) {
+    calculateEventTimes(event, *EventStart, *EventFinish, HostStartTS,
+                        HostFinishTS);
+  } else {
+    event->time_start = 0;
+    event->time_end = 0;
+  }
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
 
-void Level0Queue::calculateEventTimes(cl_event Event, uint64_t Start,
-                                      uint64_t Finish) const {
-  double Time = ((double)(Start - DeviceTimingStart) * HostDeviceRate);
-  uint64_t NewStart = (uint64_t)Time + HostTimingStart;
-  Time = ((double)(Finish - DeviceTimingStart) * HostDeviceRate);
-  uint64_t NewFinish = (uint64_t)Time + HostTimingStart;
-  Event->time_start = NewStart;
-  Event->time_end = NewFinish;
+void Level0Queue::calculateEventTimes(cl_event Event, uint64_t DeviceStart,
+                                      uint64_t DeviceFinish, uint64_t HostStart,
+                                      uint64_t HostFinish) const {
+  uint64_t HostTime = HostFinish - HostStart;
+  // depending on device's TSC bits and the kernel hangcheck timeout,
+  // the TSC can overflow more than once during command execution.
+  // IOW we cannot assume that (DeviceFinish < DeviceStart) means
+  // it wrapped only once. For now, a simple solution: if the
+  // elapsed host time is larger than the overflow limit, use
+  // the host timing values. This is less precise, but for long
+  // running kernels probably doesn't matter much.
+  if (HostTime > DeviceTimerWrapTimeNs) {
+    Event->time_start = HostStart;
+    Event->time_end = HostFinish;
+  } else {
+    uint64_t CommandTimeNs =
+        (DeviceFinish >= DeviceStart)
+            ? (uint64_t)((DeviceFinish - DeviceStart) * DeviceNsPerCycle)
+            : (uint64_t)(((DeviceMaxValidTimestamp - DeviceStart) +
+                          DeviceFinish + 1) *
+                         DeviceNsPerCycle);
+    Event->time_start = HostFinish - CommandTimeNs;
+    Event->time_end = HostFinish;
+  }
 }
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
@@ -803,8 +827,8 @@ void Level0Queue::svmAdvise(const void *ptr, size_t size,
   else
     POCL_MSG_ERR("svmAdvise: unknown advice value %zu\n", (size_t)advice);
   ze_memory_advice_t ZeAdvice = ZE_MEMORY_ADVICE_BIAS_UNCACHED;
-  ze_result_t Res =
-      zeCommandListAppendMemAdvise(CmdListH, DeviceH, ptr, size, ZeAdvice);
+  ze_result_t Res = zeCommandListAppendMemAdvise(
+      CmdListH, Device->getDeviceHandle(), ptr, size, ZeAdvice);
   LEVEL0_CHECK_ABORT(Res);
 }
 
@@ -1024,7 +1048,7 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
   bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
-  if (DeviceHasGlobalOffsets && NeedsGlobalOffset) {
+  if (Device->supportsGlobalOffsets() && NeedsGlobalOffset) {
     runWithOffsets(PoclCtx, KernelH);
   } else {
     assert(!NeedsGlobalOffset &&
@@ -1042,21 +1066,33 @@ void Level0Queue::run(_cl_command_node *Cmd) {
 
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
-                         ze_command_list_handle_t L, ze_device_handle_t D,
-                         uint64_t *TimestampBuffer, double HostDevRate,
-                         uint64_t HostTimeStart, uint64_t DeviceTimeStart,
-                         uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets) {
+                         ze_command_list_handle_t L, Level0Device *D,
+                         uint64_t *TimestampBuffer) {
+
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
-  DeviceH = D;
+  Device = D;
   EventStart = TimestampBuffer;
   EventFinish = TimestampBuffer + 1;
-  HostDeviceRate = HostDevRate;
-  HostTimingStart = HostTimeStart;
-  DeviceTimingStart = DeviceTimeStart;
-  DeviceMaxWGSizes = DeviceMaxWGs;
-  DeviceHasGlobalOffsets = DeviceHasGOffsets;
+
+  uint32_t TimeStampBits, KernelTimeStampBits;
+  Device->getTimingInfo(TimeStampBits, KernelTimeStampBits, DeviceFrequency,
+                        DeviceNsPerCycle);
+  DeviceMaxValidTimestamp = (1UL << TimeStampBits) - 1;
+  DeviceMaxValidKernelTimestamp = (1UL << KernelTimeStampBits) - 1;
+  // since the value will be in NS, and unavoidably there will be some noise,
+  // this slightly lowers the wrapping limit.
+  uint64_t TimeStampWrapLimit = DeviceMaxValidTimestamp * 15 / 16;
+  uint64_t KernelTimeStampWrapLimit = DeviceMaxValidKernelTimestamp * 15 / 16;
+  // convert to nanoseconds
+  DeviceTimerWrapTimeNs =
+      (uint64_t)((double)TimeStampWrapLimit * DeviceNsPerCycle);
+  DeviceKernelTimerWrapTimeNs =
+      (uint64_t)((double)KernelTimeStampWrapLimit * DeviceNsPerCycle);
+
+  Device->getMaxWGs(&DeviceMaxWGSizes);
+
   Thread = std::thread(&Level0Queue::runThread, this);
 }
 
@@ -1075,13 +1111,12 @@ Level0Queue::~Level0Queue() {
 static constexpr unsigned CacheLineSize = 64;
 
 bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
-                            ze_context_handle_t ContextH,
-                            ze_device_handle_t DeviceH, uint64_t *Buffer,
-                            uint64_t HostTimingStart,
-                            uint64_t DeviceTimingStart, double HostDeviceRate,
-                            uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets) {
+                            Level0Device *Device, uint64_t *Buffer) {
 
   ThreadExitRequested = false;
+
+  ze_context_handle_t ContextH = Device->getContextHandle();
+  ze_device_handle_t DeviceH = Device->getDeviceHandle();
 
   std::vector<ze_command_queue_handle_t> QHandles;
   std::vector<ze_command_list_handle_t> LHandles;
@@ -1116,12 +1151,11 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   }
 
   for (unsigned i = 0; i < Count; ++i) {
-    Queues.emplace_back(new Level0Queue(
-        this, QHandles[i], LHandles[i], DeviceH,
-        // avoid having the timers of different queues stored in the same
-        // cacheline
-        &Buffer[i * CacheLineSize / sizeof(uint64_t)], HostDeviceRate,
-        HostTimingStart, DeviceTimingStart, DeviceMaxWGs, DeviceHasGOffsets));
+    Queues.emplace_back(
+        new Level0Queue(this, QHandles[i], LHandles[i], Device,
+                        // avoid having the timers of different queues stored in
+                        // the same cacheline
+                        &Buffer[i * CacheLineSize / sizeof(uint64_t)]));
   }
 
   return true;
@@ -1224,33 +1258,20 @@ convertZeAllocCaps(ze_memory_access_cap_flags_t Flags) {
 }
 
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-                           ze_context_handle_t ContextH, cl_device_id dev,
-                           const char *Parameters)
-    : ClDev(dev), DeviceHandle(DeviceH), ContextHandle(ContextH), Driver(Drv) {
+                           cl_device_id dev, const char *Parameters)
+    : ClDev(dev), DeviceHandle(DeviceH), Driver(Drv) {
 
   SETUP_DEVICE_CL_VERSION(3, 0);
 
   ClDev->available = CL_FALSE;
+  ContextHandle = Drv->getContextHandle();
   assert(DeviceHandle);
   assert(ContextHandle);
   ze_result_t Res = ZE_RESULT_SUCCESS;
-  uint64_t HostTimestamp1;
-  uint64_t HostTimestamp2;
-  uint64_t DeviceTimestamp1;
-  uint64_t DeviceTimestamp2;
-  double HostDeviceRate;
-  uint64_t HostTimingStart;
-  uint64_t DeviceTimingStart;
-  bool HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
-
-  Res =
-      zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp1, &DeviceTimestamp1);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
+  HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
 
   ze_device_properties_t DeviceProperties{};
-  DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+  DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
   DeviceProperties.pNext = nullptr;
   Res = zeDeviceGetProperties(DeviceHandle, &DeviceProperties);
   if (Res != ZE_RESULT_SUCCESS) {
@@ -1438,7 +1459,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->preferred_wg_size_multiple =
       64; // deviceProperties.physicalEUSimdWidth;
 
-  ClDev->profiling_timer_resolution = DeviceProperties.timerResolution;
+  ClDev->profiling_timer_resolution = 1; // always one nanosecond
+
+  /// When stype==::ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES the
+  ///< units are in nanoseconds. When
+  ///< stype==::ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2 units are in
+  ///< cycles/sec
+  TimerFrequency = (double)DeviceProperties.timerResolution;
+  TimerNsPerCycle = 1000000000.0 / TimerFrequency;
+
   TSBits = DeviceProperties.timestampValidBits;
   KernelTSBits = DeviceProperties.kernelTimestampValidBits;
 
@@ -1705,21 +1734,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   ClDev->image_support = CL_TRUE;
 
-  // timestamp setup
-  std::this_thread::sleep_for(std::chrono::milliseconds(12));
-
-  Res = zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp2,
-                                    &DeviceTimestamp2);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  uint64_t HostDiff = HostTimestamp2 - HostTimestamp1;
-  uint64_t DeviceDiff = DeviceTimestamp2 - DeviceTimestamp1;
-  HostDeviceRate = (double)HostDiff / (double)DeviceDiff;
-  HostTimingStart = HostTimestamp1;
-  DeviceTimingStart = DeviceTimestamp1;
-
   // QGroupProps
   uint32_t UniversalQueueOrd = UINT32_MAX;
   uint32_t CopyQueueOrd = UINT32_MAX;
@@ -1779,32 +1793,24 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ComputeQueueOrd != UINT32_MAX) {
     void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
     ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
-                       DeviceHandle, ComputeTimestamps, HostTimingStart,
-                       DeviceTimingStart, HostDeviceRate, DeviceMaxWGs,
-                       HasGOffsets);
+    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this,
+                       ComputeTimestamps);
   } else {
     uint32_t num = std::max(1U, NumUniversalQueues / 2);
     void *Ptr = allocSharedMem(CacheLineSize * num);
     ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-    ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                       ComputeTimestamps, HostTimingStart, DeviceTimingStart,
-                       HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    ComputeQueues.init(UniversalQueueOrd, num, this, ComputeTimestamps);
   }
 
   if (CopyQueueOrd != UINT32_MAX) {
     void *Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
     CopyTimestamps = static_cast<uint64_t *>(Ptr);
-    CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
-                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this, CopyTimestamps);
   } else {
     uint32_t num = std::max(1U, NumUniversalQueues / 2);
     void *Ptr = allocSharedMem(CacheLineSize * num);
     CopyTimestamps = static_cast<uint64_t *>(Ptr);
-    CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    CopyQueues.init(UniversalQueueOrd, num, this, CopyTimestamps);
   }
 
   // calculate KernelCacheHash
@@ -2344,6 +2350,18 @@ cl_mem_alloc_flags_intel Level0Device::getMemFlags(const void *USMPtr) {
   return 0;
 }
 
+void Level0Device::getTimingInfo(uint32_t &TS, uint32_t &KernelTS,
+                                 double &TimerFreq, double &NsPerCycle) {
+  TS = TSBits;
+  KernelTS = KernelTSBits;
+  TimerFreq = TimerFrequency;
+  NsPerCycle = TimerNsPerCycle;
+}
+
+void Level0Device::getMaxWGs(uint32_t_3 *MaxWGs) {
+  std::memcpy(MaxWGs, MaxWGCount, sizeof(uint32_t_3));
+}
+
 static constexpr unsigned MaxLevel0Devices = 1024;
 
 Level0Driver::Level0Driver() {
@@ -2449,7 +2467,7 @@ Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
   }
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
-      new Level0Device(this, DeviceHandles[Index], ContextH, Dev, Params));
+      new Level0Device(this, DeviceHandles[Index], Dev, Params));
   ++NumDevices;
   HandleToIDMap[DeviceHandles[Index]] = Dev;
   return Devices[Index].get();
