@@ -351,7 +351,11 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
          i2 != e2; ++i2) {
       Instruction *i = i2->clone();
       reference_map.insert(std::make_pair(&*i2, i));
+#ifdef LLVM_OLDER_THAN_16_0
       new_b->getInstList().push_back(i);
+#else
+      i->insertInto(new_b, new_b->end());
+#endif
     }
 
     // Add predicates to PHINodes of basic blocks the replicated

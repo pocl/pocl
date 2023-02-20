@@ -119,8 +119,11 @@ string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LIBDIR "${LLVM_LIBDI
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}")
 
-run_llvm_config(LLVM_SRC_ROOT --src-root)
-run_llvm_config(LLVM_OBJ_ROOT --obj-root)
+if(LLVM_VERSION_MAJOR LESS 16)
+  run_llvm_config(LLVM_SRC_ROOT --src-root)
+  run_llvm_config(LLVM_OBJ_ROOT --obj-root)
+endif()
+
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)

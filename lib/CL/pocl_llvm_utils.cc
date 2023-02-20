@@ -283,7 +283,9 @@ void InitializeLLVM() {
     initializeAnalysis(Registry);
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
+#ifdef LLVM_OLDER_THAN_16_0
     initializeInstrumentation(Registry);
+#endif
     initializeTarget(Registry);
   }
 
@@ -403,7 +405,7 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
-#if (CLANG_MAJOR == 15)
+#if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   data->Context->setOpaquePointers(true);
 #else

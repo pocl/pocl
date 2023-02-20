@@ -303,7 +303,7 @@ int pocl_llvm_build_program(cl_program program,
 
   size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
 
-#if (CLANG_MAJOR == 15)
+#if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   ss << "-opaque-pointers ";
 #else

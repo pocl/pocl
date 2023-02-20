@@ -524,7 +524,8 @@ if(ENABLE_LLVM)
   # of the code, since this macro adds another layer of complexity.
   if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
     set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
-  elseif(LLVM_VERSION VERSION_EQUAL 15.0)
+  elseif(LLVM_VERSION VERSION_EQUAL 15.0
+         OR LLVM_VERSION VERSION_EQUAL 16.0)
     if(ENABLE_LEVEL0)
       set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
     else()

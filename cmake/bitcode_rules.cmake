@@ -167,7 +167,8 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
 
-    if(LLVM_VERSION VERSION_EQUAL 15.0)
+    if(LLVM_VERSION VERSION_EQUAL 15.0
+       OR LLVM_VERSION VERSION_EQUAL 16.0)
       # both of these are necesssary. some of the files (like barrier.ll)
       # don't contain any pointers and thus cannot be guessed; if llvm-as
       # produces the wrong opaque-type file, later llvm-link will fail
