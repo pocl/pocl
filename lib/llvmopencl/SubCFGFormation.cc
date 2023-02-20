@@ -58,12 +58,15 @@
 
 // #define DEBUG_SUBCFG_FORMATION
 
-namespace pocl {
-static constexpr size_t NumArrayElements = 1024;
-static constexpr size_t DefaultAlignment = 64;
+
+namespace {
+using namespace pocl;
+
+static size_t NumArrayElements = 1024;
+static size_t DefaultAlignment = 64;
 static constexpr const char LoopStateMD[] = "poclLoopState";
 
-struct MDKind {
+namespace PoclMDKind {
   static constexpr const char Arrayified[] = "pocl.arrayified";
   static constexpr const char InnerLoop[] = "pocl.loop.inner";
   static constexpr const char WorkItemLoop[] = "pocl.loop.workitem";
@@ -75,10 +78,6 @@ static constexpr const char LocalIdGlobalNameZ[] = "_local_id_z";
 static const std::array<const char *, 3> LocalIdGlobalNames{
     LocalIdGlobalNameX, LocalIdGlobalNameY, LocalIdGlobalNameZ};
 
-} // namespace pocl
-
-namespace {
-using namespace pocl;
 
 static const std::array<char, 3> DimName{'x', 'y', 'z'};
 
@@ -127,8 +126,8 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
   auto *Alloca = AllocaBuilder.CreateAlloca(T, NumElements,
                                             ToArrayify->getName() + "_alloca");
   if (NumElements)
-    Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
-  Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
+    Alloca->setAlignment(llvm::Align{DefaultAlignment});
+  Alloca->setMetadata(PoclMDKind::Arrayified, MDAlloca);
 
   llvm::IRBuilder<> WriteBuilder{InsertionPoint};
   llvm::Value *StoreTarget = Alloca;
@@ -136,7 +135,7 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
     auto *GEP = llvm::cast<llvm::GetElementPtrInst>(
         WriteBuilder.CreateInBoundsGEP(Alloca->getAllocatedType(), Alloca, Idx,
                                        ToArrayify->getName() + "_gep"));
-    GEP->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
+    GEP->setMetadata(PoclMDKind::Arrayified, MDAlloca);
     StoreTarget = GEP;
   }
   WriteBuilder.CreateStore(ToArrayify, StoreTarget);
@@ -163,7 +162,7 @@ llvm::LoadInst *loadFromAlloca(llvm::AllocaInst *Alloca, llvm::Value *Idx,
                                llvm::Instruction *InsertBefore,
                                const llvm::Twine &NamePrefix = "") {
   assert(Idx && "Valid WI-Index required");
-  auto *MDAlloca = Alloca->getMetadata(pocl::MDKind::Arrayified);
+  auto *MDAlloca = Alloca->getMetadata(PoclMDKind::Arrayified);
 
   llvm::IRBuilder<> LoadBuilder{InsertBefore};
   llvm::Value *LoadFrom = Alloca;
@@ -171,7 +170,7 @@ llvm::LoadInst *loadFromAlloca(llvm::AllocaInst *Alloca, llvm::Value *Idx,
     auto *GEP =
         llvm::cast<llvm::GetElementPtrInst>(LoadBuilder.CreateInBoundsGEP(
             Alloca->getAllocatedType(), Alloca, Idx, NamePrefix + "_lgep"));
-    GEP->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
+    GEP->setMetadata(PoclMDKind::Arrayified, MDAlloca);
     LoadFrom = GEP;
   }
   auto *Load = LoadBuilder.CreateLoad(Alloca->getAllocatedType(), LoadFrom,
@@ -188,7 +187,7 @@ llvm::AllocaInst *getLoopStateAllocaForLoad(llvm::LoadInst &LInst) {
   } else {
     Alloca = llvm::dyn_cast<llvm::AllocaInst>(LInst.getPointerOperand());
   }
-  if (Alloca && Alloca->hasMetadata(pocl::MDKind::Arrayified))
+  if (Alloca && Alloca->hasMetadata(PoclMDKind::Arrayified))
     return Alloca;
   return nullptr;
 }
@@ -339,7 +338,7 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
 
   auto *MDWorkItemLoop = llvm::MDNode::get(
       F.getContext(),
-      {llvm::MDString::get(F.getContext(), MDKind::WorkItemLoop)});
+      {llvm::MDString::get(F.getContext(), PoclMDKind::WorkItemLoop)});
   auto *LoopID = llvm::makePostTransformationMetadata(F.getContext(), nullptr,
                                                       {}, {MDWorkItemLoop});
   Latches[0]->getTerminator()->setMetadata("llvm.loop", LoopID);
@@ -748,7 +747,7 @@ void SubCFG::arrayifyMultiSubCfgValues(
           }
         // GEP from already widened alloca: reuse alloca
         if (auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(&I))
-          if (GEP->hasMetadata(pocl::MDKind::Arrayified)) {
+          if (GEP->hasMetadata(PoclMDKind::Arrayified)) {
             InstAllocaMap.insert(
                 {&I, llvm::cast<llvm::AllocaInst>(GEP->getPointerOperand())});
             continue;
@@ -831,12 +830,12 @@ void SubCFG::loadMultiSubCfgValues(
               })) {
         if (auto *GEP =
                 llvm::dyn_cast<llvm::GetElementPtrInst>(InstAllocaPair.first))
-          if (auto *MDArrayified = GEP->getMetadata(pocl::MDKind::Arrayified)) {
+          if (auto *MDArrayified = GEP->getMetadata(PoclMDKind::Arrayified)) {
             auto *NewGEP =
                 llvm::cast<llvm::GetElementPtrInst>(Builder.CreateInBoundsGEP(
                     GEP->getType(), GEP->getPointerOperand(), NewContIdx,
                     GEP->getName() + "c"));
-            NewGEP->setMetadata(pocl::MDKind::Arrayified, MDArrayified);
+            NewGEP->setMetadata(PoclMDKind::Arrayified, MDArrayified);
             VMap[InstAllocaPair.first] = NewGEP;
             continue;
           }
@@ -1041,12 +1040,12 @@ void SubCFG::fixSingleSubCfgValues(
 
           if (auto *GEP = llvm::dyn_cast<llvm::GetElementPtrInst>(OPI))
             if (auto *MDArrayified =
-                    GEP->getMetadata(pocl::MDKind::Arrayified)) {
+                    GEP->getMetadata(PoclMDKind::Arrayified)) {
               auto *NewGEP =
                   llvm::cast<llvm::GetElementPtrInst>(Builder.CreateInBoundsGEP(
                       GEP->getType(), GEP->getPointerOperand(), ContIdx_,
                       GEP->getName() + "c"));
-              NewGEP->setMetadata(pocl::MDKind::Arrayified, MDArrayified);
+              NewGEP->setMetadata(PoclMDKind::Arrayified, MDArrayified);
               I.replaceUsesOfWith(OPI, NewGEP);
               InstLoadMap.insert({OPI, NewGEP});
               continue;
@@ -1277,7 +1276,7 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
   llvm::SmallVector<llvm::AllocaInst *, 8> WL;
   for (auto &I : *EntryBlock) {
     if (auto *Alloca = llvm::dyn_cast<llvm::AllocaInst>(&I)) {
-      if (Alloca->hasMetadata(pocl::MDKind::Arrayified))
+      if (Alloca->hasMetadata(PoclMDKind::Arrayified))
         continue; // already arrayified
       if (anyOfUsers<llvm::Instruction>(Alloca, [&SubCfgsBlocks](
                                                     llvm::Instruction *UI) {
@@ -1302,8 +1301,8 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
 
     auto *Alloca = AllocaBuilder.CreateAlloca(T, ReqdArrayElements,
                                               I->getName() + "_alloca");
-    Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
-    Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
+    Alloca->setAlignment(llvm::Align{DefaultAlignment});
+    Alloca->setMetadata(PoclMDKind::Arrayified, MDAlloca);
 
     for (auto &SubCfg : SubCfgs) {
       auto *GepIp = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
@@ -1313,7 +1312,7 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
           llvm::cast<llvm::GetElementPtrInst>(LoadBuilder.CreateInBoundsGEP(
               Alloca->getAllocatedType(), Alloca, SubCfg.getContiguousIdx(),
               I->getName() + "_gep"));
-      GEP->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
+      GEP->setMetadata(PoclMDKind::Arrayified, MDAlloca);
 
       llvm::replaceDominatedUsesWith(I, GEP, DT, SubCfg.getLoadBB());
     }
@@ -1595,7 +1594,7 @@ bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
   formSubCfgs(F, LI, DT, PDT, VUA);
 
   for (auto *SL : LI.getLoopsInPreorder())
-    if (llvm::findOptionMDForLoop(SL, MDKind::WorkItemLoop))
+    if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))
       markLoopParallel(F, SL);
 
   return true;
