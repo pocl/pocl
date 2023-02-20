@@ -123,14 +123,14 @@ llvm::AllocaInst *arrayifyValue(llvm::Instruction *IPAllocas,
         {llvm::MDString::get(IPAllocas->getContext(), LoopStateMD)});
 
   auto *T = ToArrayify->getType();
-  llvm::IRBuilder AllocaBuilder{IPAllocas};
+  llvm::IRBuilder<> AllocaBuilder{IPAllocas};
   auto *Alloca = AllocaBuilder.CreateAlloca(T, NumElements,
                                             ToArrayify->getName() + "_alloca");
   if (NumElements)
     Alloca->setAlignment(llvm::Align{pocl::DefaultAlignment});
   Alloca->setMetadata(pocl::MDKind::Arrayified, MDAlloca);
 
-  llvm::IRBuilder WriteBuilder{InsertionPoint};
+  llvm::IRBuilder<> WriteBuilder{InsertionPoint};
   llvm::Value *StoreTarget = Alloca;
   if (NumElements) {
     auto *GEP = llvm::cast<llvm::GetElementPtrInst>(
@@ -165,7 +165,7 @@ llvm::LoadInst *loadFromAlloca(llvm::AllocaInst *Alloca, llvm::Value *Idx,
   assert(Idx && "Valid WI-Index required");
   auto *MDAlloca = Alloca->getMetadata(pocl::MDKind::Arrayified);
 
-  llvm::IRBuilder LoadBuilder{InsertBefore};
+  llvm::IRBuilder<> LoadBuilder{InsertBefore};
   llvm::Value *LoadFrom = Alloca;
   if (Alloca->isArrayAllocation()) {
     auto *GEP =
@@ -223,7 +223,7 @@ llvm::Instruction *getLoadForGlobalVariable(llvm::Function &F,
       }
     }
   }
-  llvm::IRBuilder Builder{F.getEntryBlock().getTerminator()};
+  llvm::IRBuilder<> Builder{F.getEntryBlock().getTerminator()};
   return Builder.CreateLoad(SizeT, GV);
 }
 
@@ -257,7 +257,7 @@ llvm::SmallVector<llvm::Value *, 3>
 getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<std::size_t> LocalSizes,
                    bool DynSizes, int Dim) {
   auto &DL = F.getParent()->getDataLayout();
-  llvm::IRBuilder Builder{F.getEntryBlock().getTerminator()};
+  llvm::IRBuilder<> Builder{F.getEntryBlock().getTerminator()};
 
   llvm::SmallVector<llvm::Value *, 3> LocalSize(Dim);
   for (int D = 0; D < Dim; ++D) {
@@ -291,7 +291,7 @@ void createLoopsAround(llvm::Function &F, llvm::BasicBlock *AfterBB,
                        llvm::Value *&ContiguousIdx) {
   const auto &DL = F.getParent()->getDataLayout();
   auto *LoadBB = LastHeader;
-  llvm::IRBuilder Builder{LoadBB, LoadBB->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{LoadBB, LoadBB->getFirstInsertionPt()};
 
   const size_t Dim = LocalSize.size();
 
@@ -483,7 +483,7 @@ llvm::BasicBlock *SubCFG::createExitWithID(
       After->getParent(), TargetBB);
 
   auto &DL = Exit->getParent()->getParent()->getDataLayout();
-  llvm::IRBuilder Builder{Exit, Exit->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{Exit, Exit->getFirstInsertionPt()};
   Builder.CreateStore(Builder.getIntN(DL.getLargestLegalIntTypeSizeInBits(),
                                       BarrierPair.second),
                       LastBarrierIdStorage_);
@@ -580,7 +580,8 @@ void SubCFG::replicate(
     VMap[BB] = NewBB;
     NewBlocks_.push_back(NewBB);
     for (auto *Succ : llvm::successors(BB)) {
-      if (auto ExitIt = ExitIds_.find(Succ); ExitIt != ExitIds_.end()) {
+      auto ExitIt = ExitIds_.find(Succ);
+      if (ExitIt != ExitIds_.end()) {
         NewBlocks_.push_back(createExitWithID(*ExitIt, NewBB, AfterBB));
       }
     }
@@ -817,7 +818,7 @@ void SubCFG::loadMultiSubCfgValues(
   llvm::Value *NewContIdx = VMap[ContIdx_];
   auto *LoadTerm = LoadBB_->getTerminator();
   auto *UniformLoadTerm = UniformLoadBB->getTerminator();
-  llvm::IRBuilder Builder{LoadTerm};
+  llvm::IRBuilder<> Builder{LoadTerm};
 
   for (auto &InstAllocaPair : InstAllocaMap) {
     // If def not in sub CFG but a use of it is in the sub CFG
@@ -940,9 +941,9 @@ llvm::SmallVector<llvm::Instruction *, 16> SubCFG::topoSortInstructions(
     }
     return false;
   };
-  for (int I = 0; I < OrderedInsts.size(); ++I) {
-    int InsertAt = I;
-    for (int J = OrderedInsts.size() - 1; J > I; --J) {
+  for (size_t I = 0; I < OrderedInsts.size(); ++I) {
+    size_t InsertAt = I;
+    for (size_t J = OrderedInsts.size() - 1; J > I; --J) {
       if (IsUsedBy(OrderedInsts[J], OrderedInsts[I])) {
         InsertAt = J;
         break;
@@ -950,7 +951,7 @@ llvm::SmallVector<llvm::Instruction *, 16> SubCFG::topoSortInstructions(
     }
     if (InsertAt != I) {
       auto *Tmp = OrderedInsts[I];
-      for (int J = I + 1; J <= InsertAt; ++J) {
+      for (size_t J = I + 1; J <= InsertAt; ++J) {
         OrderedInsts[J - 1] = OrderedInsts[J];
       }
       OrderedInsts[InsertAt] = Tmp;
@@ -966,7 +967,7 @@ SubCFG::createUniformLoadBB(llvm::BasicBlock *OuterMostHeader) {
       OuterMostHeader->getContext(),
       "uniloadblock.subcfg." + llvm::Twine{EntryId_} + "b",
       OuterMostHeader->getParent(), OuterMostHeader);
-  llvm::IRBuilder Builder{LoadBB, LoadBB->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{LoadBB, LoadBB->getFirstInsertionPt()};
   Builder.CreateBr(OuterMostHeader);
   return LoadBB;
 }
@@ -977,7 +978,7 @@ llvm::BasicBlock *SubCFG::createLoadBB(llvm::ValueToValueMapTy &VMap) {
   auto *LoadBB = llvm::BasicBlock::Create(
       NewEntry->getContext(), "loadblock.subcfg." + llvm::Twine{EntryId_} + "b",
       NewEntry->getParent(), NewEntry);
-  llvm::IRBuilder Builder{LoadBB, LoadBB->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{LoadBB, LoadBB->getFirstInsertionPt()};
   Builder.CreateBr(NewEntry);
   return LoadBB;
 }
@@ -994,7 +995,7 @@ void SubCFG::fixSingleSubCfgValues(
   auto *AllocaIP = LoadBB_->getParent()->getEntryBlock().getTerminator();
   auto *LoadIP = LoadBB_->getTerminator();
   auto *UniLoadIP = PreHeader_->getTerminator();
-  llvm::IRBuilder Builder{LoadIP};
+  llvm::IRBuilder<> Builder{LoadIP};
 
   llvm::DenseMap<llvm::Instruction *, llvm::Instruction *> InstLoadMap;
 
@@ -1007,8 +1008,8 @@ void SubCFG::fixSingleSubCfgValues(
       for (auto *OPV : I.operand_values()) {
         // check if all operands dominate the instruction -> otherwise we have
         // to fix it
-        if (auto *OPI = llvm::dyn_cast<llvm::Instruction>(OPV);
-            OPI && !DT.dominates(OPI, &I)) {
+        auto *OPI = llvm::dyn_cast<llvm::Instruction>(OPV);
+        if (OPI && !DT.dominates(OPI, &I)) {
           if (auto *Phi = llvm::dyn_cast<llvm::PHINode>(Inst)) {
             // if a PHI node, we have to check that the incoming values dominate
             // the terminators of the incoming block..
@@ -1120,7 +1121,7 @@ void SubCFG::fixSingleSubCfgValues(
 llvm::BasicBlock *createUnreachableBlock(llvm::Function &F) {
   auto *Default =
       llvm::BasicBlock::Create(F.getContext(), "cbs.while.default", &F);
-  llvm::IRBuilder Builder{Default, Default->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{Default, Default->getFirstInsertionPt()};
   Builder.CreateUnreachable();
   return Default;
 }
@@ -1139,7 +1140,7 @@ generateWhileSwitchAround(llvm::BasicBlock *PreHeader,
   auto *WhileHeader =
       llvm::BasicBlock::Create(PreHeader->getContext(), "cbs.while.header",
                                PreHeader->getParent(), OldEntry);
-  llvm::IRBuilder Builder{WhileHeader, WhileHeader->getFirstInsertionPt()};
+  llvm::IRBuilder<> Builder{WhileHeader, WhileHeader->getFirstInsertionPt()};
   auto *LastID =
       Builder.CreateLoad(LastBarrierIdStorage->getAllocatedType(),
                          LastBarrierIdStorage, "cbs.while.last_barr.load");
@@ -1289,7 +1290,7 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
   }
 
   for (auto *I : WL) {
-    llvm::IRBuilder AllocaBuilder{I};
+    llvm::IRBuilder<> AllocaBuilder{I};
     llvm::Type *T = I->getAllocatedType();
     if (auto *ArrSizeC = llvm::dyn_cast<llvm::ConstantInt>(I->getArraySize())) {
       auto ArrSize = ArrSizeC->getLimitedValue();
@@ -1307,7 +1308,7 @@ void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
     for (auto &SubCfg : SubCfgs) {
       auto *GepIp = SubCfg.getLoadBB()->getFirstNonPHIOrDbgOrLifetime();
 
-      llvm::IRBuilder LoadBuilder{GepIp};
+      llvm::IRBuilder<> LoadBuilder{GepIp};
       auto *GEP =
           llvm::cast<llvm::GetElementPtrInst>(LoadBuilder.CreateInBoundsGEP(
               Alloca->getAllocatedType(), Alloca, SubCfg.getContiguousIdx(),
@@ -1378,7 +1379,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   auto *Entry = &F.getEntryBlock();
 
   insertLocalIdInit(Entry);
-  llvm::IRBuilder Builder{Entry->getTerminator()};
+  llvm::IRBuilder<> Builder{Entry->getTerminator()};
   llvm::Value *ReqdArrayElements =
       WGDynamicLocalSize
           ? Builder.CreateMul(LocalSize[0],
@@ -1627,3 +1628,4 @@ SubCFGFormationPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 }
 #endif
 } // namespace pocl
+
