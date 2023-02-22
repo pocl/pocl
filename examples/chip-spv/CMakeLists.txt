@@ -72,6 +72,36 @@ else()
   set(CHIP_GIT_TAG "e39a8490e872894bba395f1101658d3916b85688")
 endif()
 
+# if we have disabled FP16, disable also the FP16 tests in chip-spv
+if(CL_DISABLE_HALF)
+  set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
+    "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests_fp16_disabled.txt"
+    "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
+else()
+  set(CHIP_SPV_INSTALL_COMMAND "echo" "INSTALLED")
+endif()
+
+# set up env variables. Unfortunately this is necessary even just to build chip-spv
+set(CMAKE_CALL_ENV "-E" "env" "OCL_ICD_VENDORS=${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd")
+list(APPEND CMAKE_CALL_ENV "CHIP_BE=opencl")
+list(APPEND CMAKE_CALL_ENV "CHIP_LOGLEVEL=warn")
+if(ENABLE_HOST_CPU_DEVICES)
+  list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=cpu")
+else()
+  list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=gpu")
+endif()
+
+# add llvm-spirv's directory to the PATH environment var. Necessary
+# for chip-spv; in theory passing -DLLVM_SPIRV=... should be enough,
+# but it doesn't pass that to Clang (yet) so the compilation fails.
+if(LLVM_SPIRV)
+  get_filename_component(LLVM_SPIRV_DIR "${LLVM_SPIRV}" DIRECTORY)
+  set(NEW_PATH "${LLVM_SPIRV_DIR}:$ENV{PATH}")
+  list(APPEND CMAKE_CALL_ENV "PATH=${NEW_PATH}")
+endif()
+
+list(APPEND CMAKE_CALL_ENV ${CMAKE_COMMAND})
+
 # TODO: hardcoded -j8
 ExternalProject_Add(
   ${TS_NAME}
@@ -79,12 +109,13 @@ ExternalProject_Add(
   GIT_REPOSITORY "${CHIP_GIT_REPO}"
   GIT_TAG "${CHIP_GIT_TAG}"
   GIT_SUBMODULES_RECURSE ON
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
+  CONFIGURE_COMMAND "${CMAKE_COMMAND}" ${CMAKE_CALL_ENV}
     "-DLLVM_CONFIG=${LLVM_CONFIG}"
     "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  INSTALL_COMMAND "${CMAKE_MAKE_PROGRAM}" -j8 build_tests
+  BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel 8 --target all build_tests
+  INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
@@ -99,4 +130,5 @@ add_test(NAME "${TS_NAME}"
 set_tests_properties(${TS_NAME}
   PROPERTIES
   ENVIRONMENT "POCL_MAX_PTHREAD_COUNT=1"
+  PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chip-spv")
