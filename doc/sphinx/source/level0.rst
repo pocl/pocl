@@ -10,10 +10,14 @@ Installation
 
 Required:
 
+ * Clang+LLVM: 14 and 15 should work, older may work but are untested
  * Level Zero ICD + development files (level-zero and level-zero-devel)
  * Level Zero drivers (on Ubuntu, intel-level-zero-gpu)
  * SPIRV-LLVM-Translator from Khronos (https://github.com/KhronosGroup/SPIRV-LLVM-Translator)
- * SPIR-V tools (in particular, spirv-link)
+   Must be built for the corresponding Clang/LLVM branch.
+   Preferably the `llvm-spirv` binary should be in the same path as `llvm-config`,
+   otherwise PoCL's CMake could pick up a different (wrong) `llvm-spirv`.
+ * SPIR-V tools (in particular, `spirv-link`)
 
 The ICD + headers must support at least Level Zero specification version 1.3;
 older may work but are untested.
@@ -22,9 +26,15 @@ To build the Level Zero driver driver::
 
     cmake -DENABLE_LEVEL0=1 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=/path/to/bin/llvm-config <path-to-pocl-source-dir>
 
-After build, libpocl can be tested with (run in the build directory)::
+For additional CMake variables see :ref:`pocl-cmake-variables`.
 
-     OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd POCL_BUILDING=1 POCL_DEVICES=level0 ./examples/example1/example1
+After build, it can be tested without installation (in the build directory)::
+
+    OCL_ICD_VENDORS=$PWD/ocl-vendors/pocl-tests.icd POCL_BUILDING=1 POCL_DEVICES=level0 ./examples/example1/example1
+
+This assumes that `libOpenCL.so` is the opensource ocl-icd loader; for other ICD loaders
+you will need to somehow point them to the built `libpocl.so`. For the meaning of environment
+variables, see :ref:`pocl-env-variables`.
 
 What's implemented (some were not tested)
 -------------------------------------------
