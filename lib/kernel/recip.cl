@@ -24,4 +24,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_F_F(half_recip, (stype)1/a)
+DEFINE_EXPR_F_F(recip, (stype)1/a)

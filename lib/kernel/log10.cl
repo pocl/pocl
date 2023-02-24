@@ -25,5 +25,3 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(log10)
-
-DEFINE_EXPR_F_F(half_log10, log10(a))

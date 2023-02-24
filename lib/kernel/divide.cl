@@ -24,4 +24,4 @@
 
 #include "templates.h"
 
-DEFINE_EXPR_F_FF(half_divide, a/b)
+DEFINE_EXPR_F_FF(divide, a/b)

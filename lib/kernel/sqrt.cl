@@ -25,5 +25,3 @@
 #include "templates.h"
 
 DEFINE_BUILTIN_V_V(sqrt)
-
-DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
