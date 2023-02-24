@@ -43,6 +43,11 @@ if(NOT ENABLE_LLVM)
   return()
 endif()
 
+if(NOT ENABLE_HOST_CPU_DEVICES)
+  message(STATUS "Disabling ${TS_NAME}, needs ENABLE_HOST_CPU_DEVICES=ON")
+  return()
+endif()
+
 if(ENABLE_HOST_CPU_DEVICES AND (ENABLE_CONFORMANCE))
   message(WARNING "CHIP-SPV + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
 endif()
@@ -55,7 +60,6 @@ else()
   message(STATUS "Using Python3: ${Python3_EXECUTABLE}")
   set(PYTHON_INTERP "${Python3_EXECUTABLE}")
 endif()
-
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
@@ -82,14 +86,14 @@ else()
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chip-spv
+# because the catch testsuite's "autodiscovery" feature requires
+# a working chip-spv (which requires a working backend)
 set(CMAKE_CALL_ENV "-E" "env" "OCL_ICD_VENDORS=${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd")
+list(APPEND CMAKE_CALL_ENV "POCL_BUILDING=1")
+list(APPEND CMAKE_CALL_ENV "POCL_KERNEL_CACHE=0")
 list(APPEND CMAKE_CALL_ENV "CHIP_BE=opencl")
 list(APPEND CMAKE_CALL_ENV "CHIP_LOGLEVEL=warn")
-if(ENABLE_HOST_CPU_DEVICES)
-  list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=cpu")
-else()
-  list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=gpu")
-endif()
+list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=cpu")
 
 # add llvm-spirv's directory to the PATH environment var. Necessary
 # for chip-spv; in theory passing -DLLVM_SPIRV=... should be enough,
@@ -119,6 +123,11 @@ ExternalProject_Add(
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
+# this ensures that libpocl is built before chip-spv testsuite build begins
+add_dependencies(${TS_NAME} ${POCL_LIBRARY_NAME})
+if(ENABLE_LOADABLE_DRIVERS)
+  add_dependencies(${TS_NAME} pocl-devices-basic pocl-devices-pthread pocl-devices-topology)
+endif()
 
 # TODO hardcoded -j8 and repeat 2
 add_test(NAME "${TS_NAME}"
