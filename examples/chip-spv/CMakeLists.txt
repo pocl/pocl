@@ -94,6 +94,10 @@ list(APPEND CMAKE_CALL_ENV "POCL_KERNEL_CACHE=0")
 list(APPEND CMAKE_CALL_ENV "CHIP_BE=opencl")
 list(APPEND CMAKE_CALL_ENV "CHIP_LOGLEVEL=warn")
 list(APPEND CMAKE_CALL_ENV "CHIP_DEVICE_TYPE=cpu")
+list(APPEND CMAKE_CALL_ENV "HIP_COMPILER=clang")
+list(APPEND CMAKE_CALL_ENV "HIP_RUNTIME=spirv")
+list(APPEND CMAKE_CALL_ENV "HIP_PLATFORM=spirv")
+list(APPEND CMAKE_CALL_ENV "HIP_ARCH=spirv")
 
 # add llvm-spirv's directory to the PATH environment var. Necessary
 # for chip-spv; in theory passing -DLLVM_SPIRV=... should be enough,
