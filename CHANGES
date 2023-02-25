@@ -23,6 +23,12 @@ Notable User Facing Changes
   CBS is expected to work for kernels that POCL's current kernel compiler
   does not support. Currently, CBS can be manually enabled by setting
   the environment variable `POCL_WORK_GROUP_METHOD=cbs`.
+  
+Notable Fixes
+-------------
+
+- Fix handling of clBuildProgram() -I directories given with quotes or
+  with leading/trailing white space.
 
 3.1 December 2022
 =================

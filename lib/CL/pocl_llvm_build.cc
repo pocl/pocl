@@ -330,7 +330,6 @@ int pocl_llvm_build_program(cl_program program,
   }
 #endif
 
-
   ss << user_options << " ";
 
   if (device->endian_little)
@@ -401,7 +400,9 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
 
-  POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
+  std::string AllBuildOpts = ss.str();
+
+  POCL_MSG_PRINT_LLVM("all build options: %s\n", AllBuildOpts.c_str());
 
   char WSReplacementChar = 0;
 
@@ -433,13 +434,15 @@ int pocl_llvm_build_program(cl_program program,
       }
     }
 
-    // if quoted, remove it to make compiler happy
-    if (s.find("\"") != std::string::npos)
-    {
-      std::regex Target("\"");
-      std::string Replacement = " ";
-      s = std::regex_replace(s, Target, Replacement);
-    }
+    // Remove the quotes, Clang doesn't parse them. Note: cannot
+    // replace with whitespace as Clang (at least v15) gets confused by
+    // the whitespace (perhaps thinks it's part of the dir).
+    s = std::regex_replace(s, std::regex("\""), "");
+
+    // Clang (at least v15) gets confused if there's space after -I and
+    // silently fails to add the include directory. Remove the space.
+    // There can be space even without quotes in the user input.
+    s = std::regex_replace(s, std::regex("-I(\\s+)"), "-I");
 
     itemstrs.push_back(s);
   }
@@ -453,10 +456,13 @@ int pocl_llvm_build_program(cl_program program,
   POCL_MEM_FREE (TempOptions);
 
 #ifdef DEBUG_POCL_LLVM_API
-  // TODO: for some reason the user_options are replicated,
-  // they appear twice in a row in the output
-  std::cerr << "### options: " << ss.str()
-            << "user_options: " << user_options << std::endl;
+  std::cerr << "### options: " << ss.str() << std::endl << std::endl
+            << "user_options: " << user_options << std::endl << std::endl
+            << "c_strs: ";
+  for (auto cstr : itemcstrs) {
+    std::cerr << cstr << " ";
+  }
+  std::cerr << std::endl;
 #endif
 
   if (!CompilerInvocation::CreateFromArgs(
@@ -527,7 +533,7 @@ int pocl_llvm_build_program(cl_program program,
     ClangResourceDir = IncludeRoot;
 #endif
   }
-  if (ClangResourceDir.empty()) {     
+  if (ClangResourceDir.empty()) {
     ClangResourceDir = driver::Driver::GetResourcesPath(CLANG);
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
