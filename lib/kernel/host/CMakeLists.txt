@@ -242,6 +242,57 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
+if(NOT CL_DISABLE_HALF)
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF
+    libclc-pocl/cos.cl
+    libclc-pocl/sin.cl
+    libclc-pocl/log2.cl
+    libclc-pocl/pow.cl
+    libclc-pocl/fmod.cl
+    sleef-pocl/scalars.cl
+    sleef-pocl/ceil.cl
+    sleef-pocl/copysign.cl
+    sleef-pocl/exp2.cl
+    sleef-pocl/exp.cl
+    sleef-pocl/fabs.cl
+    sleef-pocl/floor.cl
+    sleef-pocl/fma.cl
+    sleef-pocl/fmax.cl
+    sleef-pocl/fmin.cl
+    sleef-pocl/log10.cl
+    sleef-pocl/log.cl
+    sleef-pocl/ldexp.cl
+    sleef-pocl/rint.cl
+    sleef-pocl/round.cl
+    sleef-pocl/sqrt.cl
+    sleef-pocl/trunc.cl
+    )
+
+  list(APPEND SOURCES_WITH_SLEEF
+    fabs.cl
+    fma.cl
+    fmod.cl
+    copysign.cl
+    pow.cl
+    ceil.cl
+    cos.cl
+    exp.cl
+    exp2.cl
+    floor.cl
+    fmax.cl
+    fmin.cl
+    log10.cl
+    log2.cl
+    log.cl
+    ldexp.cl
+    rint.cl
+    round.cl
+    sin.cl
+    sqrt.cl
+    trunc.cl)
+endif()
+
+
 if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
   list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
 endif()
