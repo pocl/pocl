@@ -343,7 +343,8 @@ recursively_serialize_path (char* path,
                             unsigned char* buffer)
 {
   struct stat st;
-  stat (path, &st);
+  if (stat (path, &st) != 0)
+    return buffer;
 
   if (S_ISREG (st.st_mode))
     buffer = serialize_file (path, basedir_offset, buffer);
