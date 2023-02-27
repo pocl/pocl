@@ -73,7 +73,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "e39a8490e872894bba395f1101658d3916b85688")
+  set(CHIP_GIT_TAG "f1ff1ef4749392e5c656663c0c1be5a286c69cd4")
 endif()
 
 # if we have disabled FP16, disable also the FP16 tests in chip-spv
