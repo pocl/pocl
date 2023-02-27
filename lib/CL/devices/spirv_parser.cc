@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -35,25 +36,39 @@
 #include "spirv_parser.hh"
 
 #include "pocl_debug.h"
+#include "pocl_util.h"
 
 #define logWarn(...) POCL_MSG_WARN(__VA_ARGS__);
 #define logError(...) POCL_MSG_ERR(__VA_ARGS__);
 #define logTrace(...) POCL_MSG_PRINT_INFO(__VA_ARGS__);
 
-typedef std::map<int32_t, std::shared_ptr<OCLFuncInfo>> OCLFuncInfoMap;
+/// Reinterpret the pointed region, starting from BaseAddr +
+/// ByteOffset, as a value of the given type.
+template <class T>
+static T copyAs(const void *BaseAddr, size_t ByteOffset = 0) {
+  T Res;
+  std::memcpy(&Res, (const char *)BaseAddr + ByteOffset, sizeof(T));
+  return Res;
+}
 
 const std::string OpenCLStd{"OpenCL.std"};
 
 class SPIRVtype {
 protected:
   int32_t Id_;
+  uint32_t Alignment_;
   size_t Size_;
 
 public:
-  SPIRVtype(int32_t Id, size_t Size) : Id_(Id), Size_(Size) {}
+  SPIRVtype(int32_t Id, size_t Size, uint32_t Al)
+      : Id_(Id), Alignment_(Al), Size_(Size) {}
+  SPIRVtype(int32_t Id, size_t Size) : Id_(Id), Size_(Size) {
+    Alignment_ = pocl_size_ceil2(Size);
+  }
   virtual ~SPIRVtype(){};
   virtual size_t size() { return Size_; }
   int32_t id() { return Id_; }
+  uint32_t getAlign() { return Alignment_; }
   virtual OCLType ocltype() = 0;
   virtual OCLSpace getAS() { return OCLSpace::Private; }
   virtual spv::AccessQualifier getImgAccess() {
@@ -61,6 +76,7 @@ public:
   }
 };
 
+typedef std::map<int32_t, std::shared_ptr<OCLFuncInfo>> OCLFuncInfoMap;
 typedef std::map<int32_t, SPIRVtype *> SPIRTypeMap;
 typedef std::map<int32_t, std::string> ID2NameMap;
 typedef std::map<int32_t, size_t_3> ID2Size3Map;
@@ -69,17 +85,25 @@ typedef std::map<int32_t, int32_t> ID2IDMap;
 
 class SPIRVtypePOD : public SPIRVtype {
 public:
+  SPIRVtypePOD(int32_t Id, size_t Size, uint32_t Al)
+      : SPIRVtype(Id, Size, Al) {}
   SPIRVtypePOD(int32_t Id, size_t Size) : SPIRVtype(Id, Size) {}
   virtual ~SPIRVtypePOD(){};
   virtual OCLType ocltype() override { return OCLType::POD; }
 };
 
+/// The constructor expects both packed & unpacked sizes;
+/// setPacked() can be called later, and will affect the value
+/// returned by size().
+/// This is done deliberately, because the packed attribute
+/// is not accessible at the time of parsing the type, only
+/// later at function parameter declaration
 class SPIRVtypePODStruct : public SPIRVtype {
   size_t PackedSize_;
   bool IsPacked_;
 public:
-  SPIRVtypePODStruct(int32_t Id, size_t Size, size_t PSize)
-      : SPIRVtype(Id, Size), PackedSize_(PSize), IsPacked_(false) {}
+  SPIRVtypePODStruct(int32_t Id, size_t Size, size_t PSize, uint32_t Align)
+      : SPIRVtype(Id, Size, Align), PackedSize_(PSize), IsPacked_(false) {}
   virtual size_t size() override { return IsPacked_ ? PackedSize_ : Size_; }
   void setPacked(bool Val) { IsPacked_ = Val; }
   virtual ~SPIRVtypePODStruct(){};
@@ -157,6 +181,28 @@ public:
   virtual OCLType ocltype() override { return OCLType::Pointer; }
   OCLSpace getAS() override { return ASpace_; }
 };
+
+class SPIRVConstant {
+  std::vector<int32_t> ConstantWords_;
+
+public:
+  SPIRVConstant(SPIRVtype *Type, size_t NumConstWords,
+                const int32_t *ConstWords) {
+    ConstantWords_.insert(ConstantWords_.end(), ConstWords,
+                          ConstWords + NumConstWords);
+  }
+
+  uint64_t interpretAsUint64() const {
+    assert(ConstantWords_.size() > 0 && "Invalid constant word count.");
+    assert(ConstantWords_.size() <= 2 && "Constant may not fit to uint64_t.");
+    if (ConstantWords_.size() == 1)
+      return static_cast<uint64_t>(ConstantWords_[0]);
+    // Copy the value in order to satisfy alignment requirement of the type.
+    return copyAs<uint64_t>(ConstantWords_.data());
+  }
+};
+
+typedef std::map<int32_t, SPIRVConstant *> SPIRVConstMap;
 
 // Parses and checks SPIR-V header. Sets word buffer pointer to poin
 // past the header and updates NumWords count to exclude header words.
@@ -295,6 +341,7 @@ public:
     return ((int32_t)Opcode_ >= (int32_t)spv::Op::OpTypeVoid) &&
            ((int32_t)Opcode_ <= (int32_t)spv::Op::OpTypeForwardPointer);
   }
+  bool isConstant() const { return (Opcode_ == spv::Op::OpConstant); }
 
   std::string &&getName() { return std::move(Extra_); }
   int32_t nameID() { return Word1_; }
@@ -312,6 +359,7 @@ public:
   int32_t getFunctionTypeID() const { return OrigStream_[4]; }
   int32_t getFunctionRetType() const { return Word1_; }
   int32_t getDecorationID() const { return Word1_; }
+  int32_t getConstID() const { return Word2_; }
   int32_t getTypeID() const {
     assert(isType());
     return Word1_;
@@ -340,7 +388,8 @@ public:
   spv::Decoration getDecorationType() const { return (spv::Decoration)Word2_; }
   int32_t getDecorationExtraOper() const { return Word3_; }
 
-  SPIRVtype *decodeType(SPIRTypeMap &TypeMap, size_t PointerSize) {
+  SPIRVtype *decodeType(SPIRTypeMap &TypeMap, SPIRVConstMap &ConstMap,
+                        size_t PointerSize) {
     if (Opcode_ == spv::Op::OpTypeVoid) {
       return new SPIRVtypePOD(Word1_, 0);
     }
@@ -368,18 +417,30 @@ public:
     }
 
     if (Opcode_ == spv::Op::OpTypeArray) {
-      auto Type = TypeMap[Word2_];
-      if (!Type) {
+      auto EltType = TypeMap[Word2_];
+      if (!EltType) {
         logWarn("SPIR-V Parser: Word2_ %i not found in type map", Word2_);
         return nullptr;
       }
-      size_t TypeSize = Type->size();
-      return new SPIRVtypePOD(Word1_, TypeSize * Word3_);
+      // Compute actual element size due padding for meeting the
+      // alignment requirements.  C analogy as example: 'struct {int
+      // a; char b; }' takes 8 bytes per element in the array.
+      //
+      auto *EltCountOperand = ConstMap[Word3_];
+      if (EltCountOperand == nullptr) {
+        logWarn("SPIR-V Parser: Could not parse OpConstant operand.\n");
+        return nullptr;
+      }
+      auto EltCount = EltCountOperand->interpretAsUint64();
+      auto TypeSize = pocl_align_value(EltType->size(), EltType->getAlign());
+      // TODO: Should padding in the tail be discounted?
+      return new SPIRVtypePOD(Word1_, TypeSize * EltCount, EltType->getAlign());
     }
 
     if (Opcode_ == spv::Op::OpTypeStruct) {
       size_t TotalSize = 0;
       size_t TotalPackedSize = 0;
+      uint32_t MaxAlignment = 0;
       for (size_t i = 2; i < WordCount_; ++i) {
         int32_t MemberId = OrigStream_[i];
 
@@ -389,17 +450,22 @@ public:
           continue;
         }
 
+        // Compute actual size as in spv::Op::OpTypeArray branch
+        // except don't account the tail padding. C analogy as
+        // example: 'struct { char a; int b; char c}' takes 9 bytes.
+        /// TODO: currently doesn't handle correctly nested packed structs
         size_t TypeSize = Type->size();
         TotalPackedSize += TypeSize;
-        if (TotalSize % TypeSize != 0) {
-          size_t Count = TotalSize / TypeSize;
-          TotalSize = (Count + 1) * TypeSize;
-        }
 
+        size_t MemberAlignment = Type->getAlign();
+        TotalSize = pocl_align_value(TotalSize, MemberAlignment);
         TotalSize += TypeSize;
+        if (MemberAlignment > MaxAlignment)
+          MaxAlignment = MemberAlignment;
       }
-      // logTrace("TOTAL STRUCT SIZE: %zu\n", TotalSize);
-      return new SPIRVtypePODStruct(Word1_, TotalSize, TotalPackedSize);
+      logTrace("TOTAL STRUCT SIZE: %zu\n", TotalSize);
+      return new SPIRVtypePODStruct(Word1_, TotalSize, TotalPackedSize,
+                                    MaxAlignment);
     }
 
     if (Opcode_ == spv::Op::OpTypeOpaque) {
@@ -433,6 +499,17 @@ public:
         return new SPIRVtypePointer(Word1_, Word2_, PointerSize);
     }
 
+    return nullptr;
+  }
+
+  SPIRVConstant *decodeConstant(SPIRTypeMap &TypeMap) const {
+    assert(isConstant());
+    assert(WordCount_ >= 4 && "Invalid OpConstant word count!\n");
+
+    if (auto *Type = TypeMap[Word1_])
+      return new SPIRVConstant(Type, WordCount_ - 3, &OrigStream_[3]);
+
+    logWarn("SPIR-V Parser: Missing type declaration for a constant\n");
     return nullptr;
   }
 
@@ -510,6 +587,7 @@ class SPIRVmodule {
   std::map<int32_t, DecorSet> DecorationMap_;
   ID2IDMap EntryToFunctionTypeIDMap_;
   ID2IDMap AlignmentMap_;
+  SPIRVConstMap ConstMap_;
 
   bool MemModelCL_;
   bool KernelCapab_;
@@ -520,6 +598,9 @@ class SPIRVmodule {
 public:
   ~SPIRVmodule() {
     for (auto I : TypeMap_) {
+      delete I.second;
+    }
+    for (auto I : ConstMap_) {
       delete I.second;
     }
   }
@@ -637,7 +718,8 @@ private:
                                       VecTypeHintMap_, PointerSize)));
         else
           TypeMap_.emplace(std::make_pair(
-              Inst.getTypeID(), Inst.decodeType(TypeMap_, PointerSize)));
+              Inst.getTypeID(),
+              Inst.decodeType(TypeMap_, ConstMap_, PointerSize)));
       }
 
       if (Inst.isFunction() &&
@@ -651,6 +733,14 @@ private:
 
         EntryToFunctionTypeIDMap_.emplace(
             std::make_pair(Inst.getFunctionID(), Inst.getFunctionTypeID()));
+      }
+
+      if (Inst.isConstant()) {
+        auto *Const = Inst.decodeConstant(TypeMap_);
+        if (Const == nullptr) {
+          logWarn("failed to decode const\n");
+        }
+        ConstMap_.emplace(std::make_pair(Inst.getConstID(), Const));
       }
 
       if (Inst.isFunctionParam() && (CurrentKernelID != 0)) {

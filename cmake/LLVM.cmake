@@ -218,6 +218,9 @@ endforeach()
 
 foreach(LIBNAME ${LLVM_LIBNAMES})
   find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  if(NOT L_LIBFILE_${LIBNAME})
+    message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}")
+  endif()
   list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
 endforeach()
 
@@ -250,7 +253,11 @@ else()
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
+  list(APPEND CLANG_LIBS "-l${LIBNAME}")
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  if(NOT C_LIBFILE_${LIBNAME})
+    message(FATAL_ERROR "Could not find Clang library ${LIBNAME}")
+  endif()
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
   if(UNIX AND (NOT APPLE))
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
@@ -313,8 +320,8 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
 
   math(EXPR LSIZE "${ARGC} - 4")
 
-  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE ${RES_VAR} OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${${RES_VAR}} AND (NOT ${SILENT}))
+  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE RESV OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
+  if(${RESV} AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -328,6 +335,7 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
   endif()
   file(REMOVE "${RANDOM_FILENAME}")
 
+  set(${RES_VAR} ${RESV})
 endmacro()
 
 # convenience c/c++ source wrapper
@@ -703,7 +711,9 @@ endif()
 # This tests that we can actually link to the llvm libraries.
 # Mostly to catch issues like #295 - cannot find -ledit
 
-if(NOT DEFINED LLVM_LINK_TEST)
+if(NOT LLVM_LINK_TEST)
+
+  message(STATUS "Running LLVM link test")
 
   set(LLVM_LINK_TEST_SOURCE "
     #include <stdio.h>
@@ -746,6 +756,97 @@ if(NOT DEFINED LLVM_LINK_TEST)
   else()
     message(STATUS "LLVM link test output: ${_TRY_COMPILE_OUTPUT}")
     message(FATAL_ERROR "LLVM link test FAILED. This mostly happens when your LLVM installation does not have all dependencies installed.")
+  endif()
+
+endif()
+
+####################################################################
+
+# This tests that we can actually link to the Clang libraries.
+
+if(NOT CLANG_LINK_TEST)
+
+  message(STATUS "Running Clang link test")
+
+  set(CLANG_LINK_TEST_SOURCE "
+    #include <stdio.h>
+    #include <clang/Lex/PreprocessorOptions.h>
+    #include <clang/Basic/Diagnostic.h>
+    #include <clang/Basic/LangOptions.h>
+    #include <clang/CodeGen/CodeGenAction.h>
+    #include <clang/Driver/Compilation.h>
+    #include <clang/Driver/Driver.h>
+    #include <clang/Frontend/CompilerInstance.h>
+    #include <clang/Frontend/CompilerInvocation.h>
+    #include <clang/Frontend/FrontendActions.h>
+
+    using namespace clang;
+    using namespace llvm;
+
+    int main( int argc, char* argv[] )
+    {
+       if( argc < 2 )
+         exit(2);
+
+       CompilerInstance CI;
+       CompilerInvocation &pocl_build = CI.getInvocation();
+
+       LangOptions *la = pocl_build.getLangOpts();
+       PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+       po.Includes.push_back(\"/usr/include/test/path.h\");
+
+       la->OpenCLVersion = 300;
+       la->FakeAddressSpaceMap = false;
+       la->Blocks = true; //-fblocks
+       la->MathErrno = false; // -fno-math-errno
+       la->NoBuiltin = true;  // -fno-builtin
+       la->AsmBlocks = true;  // -fasm (?)
+
+       la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
+
+       la->PICLevel = PICLevel::BigPIC;
+       la->PIE = 0;
+
+       clang::TargetOptions &ta = pocl_build.getTargetOpts();
+       ta.Triple = \"x86_64-pc-linux-gnu\";
+       ta.CPU = \"haswell\";
+
+       FrontendOptions &fe = pocl_build.getFrontendOpts();
+       fe.Inputs.clear();
+
+       fe.Inputs.push_back(
+           FrontendInputFile(argv[1],
+                             clang::InputKind(clang::Language::OpenCL)));
+
+       CodeGenOptions &cg = pocl_build.getCodeGenOpts();
+       cg.EmitOpenCLArgMetadata = true;
+       cg.StackRealignment = true;
+       cg.VerifyModule = true;
+
+       bool success = true;
+       clang::PrintPreprocessedAction Preprocess;
+       success = CI.ExecuteAction(Preprocess);
+
+       return (success ? 0 : 11);
+    }")
+
+  string(RANDOM RNDNAME)
+  set(CLANG_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/clang_link_test_${RNDNAME}.cc")
+  file(WRITE "${CLANG_LINK_TEST_FILENAME}" "${CLANG_LINK_TEST_SOURCE}")
+
+  try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
+              CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
+              OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
+
+  if(CLANG_LINK_TEST)
+    message(STATUS "Clang link test OK")
+    set(CLANG_LINK_TEST 1 CACHE INTERNAL "Clang link test result")
+  else()
+    message(STATUS "Clang link test output: ${_TRY_COMPILE_OUTPUT}")
+    message(FATAL_ERROR "Clang link test FAILED. This mostly happens when your Clang installation does not have all dependencies and/or headers installed.")
   endif()
 
 endif()

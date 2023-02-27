@@ -2678,3 +2678,47 @@ pocl_free_kernel_metadata (cl_program program, unsigned kernel_i)
   POCL_MEM_FREE (meta->local_sizes);
   POCL_MEM_FREE (meta->build_hash);
 }
+
+int
+pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size)
+{
+
+  /* TODO we need a better data structure than linked list,
+   * right now it does a linear scan of all SVM allocations. */
+  POCL_LOCK_OBJ (context);
+  pocl_svm_ptr *found = NULL, *item = NULL;
+  char *svm_alloc_end = NULL;
+  char *svm_alloc_start = NULL;
+  DL_FOREACH (context->svm_ptrs, item)
+  {
+    svm_alloc_start = (char *)item->svm_ptr;
+    svm_alloc_end = svm_alloc_start + item->size;
+    if (((char *)svm_ptr >= svm_alloc_start)
+        && ((char *)svm_ptr < svm_alloc_end))
+      {
+        found = item;
+        break;
+      }
+  }
+  POCL_UNLOCK_OBJ (context);
+
+  /* if the device does not support system allocation,
+   * then the pointer must be found in the context's SVM alloc list */
+  if (found == NULL
+      && (context->svm_allocdev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
+             == 0)
+    {
+      POCL_MSG_ERR (
+          "Can't find the pointer %p in list of allocated SVM pointers\n",
+            svm_ptr);
+      return CL_INVALID_OPERATION;
+    }
+
+  if (found != NULL && (((char *)svm_ptr + size) > svm_alloc_end))
+    {
+      POCL_MSG_ERR ("The pointer+size exceeds the size of the allocation\n");
+      return CL_INVALID_OPERATION;
+    }
+
+  return CL_SUCCESS;
+}

@@ -208,7 +208,18 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
      -phistoallocas before -workitemloops as otherwise it cannot inject context
      restore code (PHIs need to be at the beginning of the BB and so one cannot
      context restore them with non-PHI code if the value is needed in another
-     PHI). */
+     PHI).
+
+     -automatic-locals after inline and always-inline; if we have a kernel
+     that calls a non-kernel, and the non-kernel uses an automatic local
+     (= GlobalVariable in LLVM), the 'automatic-locals' will skip processing
+     of the non-kernel function, and the kernel function appears to it as not
+     having any locals. Therefore the local variable remains a GV instead of
+     being transformed into a kernel argument. This can lead to surprising
+     result, as the final object ELF will contain a static variable, so the
+     program will work with single-threaded execution, but multiple CPU
+     threads will overwrite the static variable and produce garbage results.
+  */
 
   std::vector<std::string> passes;
   passes.push_back("inline-kernels");
@@ -219,7 +230,6 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
-  passes.push_back("automatic-locals");
 
   if (SPMDDevice) {
     passes.push_back("flatten-inline-all");
@@ -230,6 +240,9 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
     passes.push_back("always-inline");
     passes.push_back("inline");
   }
+
+  // this must be done AFTER inlining, see note above
+  passes.push_back("automatic-locals");
 
   // It should be now safe to run -O3 over the single work-item kernel
   // as the barrier has the attributes preventing illegal motions and

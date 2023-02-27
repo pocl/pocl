@@ -91,6 +91,21 @@ else()
   set(CTS_GIT_TAG "cl30")
 endif()
 
+set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
+set(TS_SRCDIR "${TS_SRCDIR}/test_conformance")
+
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
+  # build SPIR-V binary files required by the SPIR-V subtests
+  set(CTS_INSTALL_COMMAND "${TS_SRCDIR}/spirv_new/assemble_spirv.py"
+    "-s" "${TS_SRCDIR}/spirv_new/spirv_asm"
+    "-o" "${TS_BUILDDIR}/spirv_new/spirv_bin"
+    "-a" "${SPIRV_AS}"
+    "-l" "${SPIRV_VAL}")
+else()
+  message(WARNING "spirv tools not found - disabling SPIRV tests in CTS")
+  set(CTS_INSTALL_COMMAND echo "INSTALLED")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -106,33 +121,9 @@ ExternalProject_Add(
     -DENABLE_ASAN=${ENABLE_ASAN}
     -DENABLE_TSAN=${ENABLE_TSAN}
     "${TS_BASEDIR}/src/${TS_NAME}"
-  INSTALL_COMMAND /bin/true
+  INSTALL_COMMAND ${CTS_INSTALL_COMMAND}
 )
 
-set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
-set(TS_SRCDIR "${TS_SRCDIR}/test_conformance")
-
-if(HAVE_SPIRV_TOOLS)
-  # build SPIR-V binary files required by the SPIR-V subtests
-  #
-  # only lists atomic_inc_global.spvasm64 as dependency;
-  # there are many files in spirv_asm but one should be enough
-  # to get the command working
-  add_custom_command(OUTPUT "${TS_BUILDDIR}/spirv_new/spirv_bin/atomic_inc_global.spv64"
-                    COMMAND "${TS_SRCDIR}/spirv_new/assemble_spirv.py"
-                    ARGS "-s" "${TS_SRCDIR}/spirv_new/spirv_asm"
-                         "-o" "${TS_BUILDDIR}/spirv_new/spirv_bin"
-                         "-a" "${SPIRV_AS}"
-                         "-l" "${SPIRV_VAL}"
-                    DEPENDS "${TS_SRCDIR}/spirv_new/spirv_asm/atomic_inc_global.spvasm64"
-                    VERBATIM)
-  add_custom_target(${TS_NAME}_spirv_binaries DEPENDS "${TS_BUILDDIR}/spirv_new/spirv_bin/atomic_inc_global.spv64")
-  # ^^ must depend on the CTS because we need the sources checked out
-  add_dependencies(${TS_NAME}_spirv_binaries ${TS_NAME})
-  add_dependencies(prepare_examples ${TS_NAME}_spirv_binaries)
-else()
-  message(WARNING "spirv tools not found - disabling SPIRV tests in CTS")
-endif()
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})

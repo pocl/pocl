@@ -51,12 +51,12 @@ typedef unsigned int Id;
 #define SPV_REVISION 2
 
 static const unsigned int MagicNumber = 0x07230203;
-static const unsigned int Version10 = 0x00010000;
-static const unsigned int Version11 = 0x00010100;
-static const unsigned int Version12 = 0x00010200;
-static const unsigned int Version13 = 0x00010300;
-static const unsigned int Version14 = 0x00010400;
-static const unsigned int Version15 = 0x00010500;
+static const int Version10 = 0x00010000;
+static const int Version11 = 0x00010100;
+static const int Version12 = 0x00010200;
+static const int Version13 = 0x00010300;
+static const int Version14 = 0x00010400;
+static const int Version15 = 0x00010500;
 
 static const unsigned int Revision = 2;
 static const unsigned int OpCodeMask = 0xffff;

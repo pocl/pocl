@@ -1,0 +1,36 @@
+---
+# Use with clang-tidy to format C++ files which call C functions.
+#
+#
+# This config will convert lowercase+underscores names of Classes, Members, Methods,
+# Parameters, Variables and Constants to CamelCase. Macros are converted to UPPER_CASE.
+#
+# However, function *names* are NOT converted.
+#
+#
+# run with:
+# clang-tidy --config-file=/path/to/convert-names-to-camelcase.yaml  -p /path/to/pocl/build/dir --fix FILE.CC
+Checks:          'readability-identifier-naming'
+WarningsAsErrors: true
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle:     llvm
+CheckOptions:
+  - key:             readability-identifier-naming.AbstractClassCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.ClassCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.MemberCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.MethodCase
+    value:           'camelBack'
+  - key:             readability-identifier-naming.ParameterCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.PointerParameterCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.VariableCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.ConstantCase
+    value:           'CamelCase'
+  - key:             readability-identifier-naming.MacroDefinitionCase
+    value:           'UPPER_CASE'
