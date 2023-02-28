@@ -1,0 +1,64 @@
+---
+name: Weekly full CTS run
+
+on:
+  schedule:
+# at 2:17 every saturday
+    - cron: '17 2 * * 6'
+
+env:
+  POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
+  POCL_KERNEL_CACHE: "0"
+  POCL_MAX_WORK_GROUP_SIZE: "1024"
+  POCL_MEMORY_LIMIT: "2"
+  CCACHE_COMPRESS: "true"
+  CCACHE_COMPRESSLEVEL: "1"
+  CCACHE_MAXSIZE: "25000M"
+  CCACHE_BASEDIR: ${{ github.workspace }}
+  CCACHE_DIR: /home/github/ccache_storage
+
+jobs:
+  build:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64]
+    strategy:
+      fail-fast: false
+      matrix:
+        # for now, test only with LLVM 15
+        llvm: [15]
+        config: [cts_full]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+
+          BUILD_FLAGS="-O1 -march=native -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+          cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+          -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
+          -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
+          -B ${{ github.workspace }}/build ${{ github.workspace }}
+
+      - name: Run Build
+        id: build
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc) && make -j$(nproc) prepare_examples
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) "$@"
+          }
+          if [ "${{ matrix.config }}" == "cts_full" ]; then
+            runCTest -L conformance_suite_full_main
+          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
+            runCTest -L conformance_suite_full_spirv
+          else
+            echo "Unknown configuration" && exit 1
+          fi
