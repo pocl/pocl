@@ -1727,6 +1727,10 @@ pocl_setup_context (cl_context context)
                      < dev->svm_allocation_priority)
             {
               context->svm_allocdev = dev;
+              if (dev->ops->usm_alloc && dev->ops->usm_free)
+              {
+                  context->usm_allocdev = dev;
+              }
             }
         }
 

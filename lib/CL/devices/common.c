@@ -83,6 +83,7 @@ uint64_t last_object_id = 0;
 
 unsigned long buffer_c;
 unsigned long svm_buffer_c;
+unsigned long usm_buffer_c;
 unsigned long queue_c;
 unsigned long context_c;
 unsigned long image_c;
@@ -1748,6 +1749,7 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
 static const cl_name_version OPENCL_EXTENSIONS[]
     = { { CL_MAKE_VERSION (1, 0, 0), "cl_intel_required_subgroup_size" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_intel_unified_shared_memory" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },

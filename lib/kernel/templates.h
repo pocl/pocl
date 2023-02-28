@@ -1917,17 +1917,17 @@
   }
 
 #define IMPLEMENT_BUILTIN_V_VPV(NAME, VTYPE, LTYPE, HTYPE, LO, HI)            \
-  VTYPE __attribute__ ((overloadable)) NAME (VTYPE a, VTYPE *b)               \
+  VTYPE __attribute__ ((overloadable)) NAME (VTYPE a, VTYPE __private *b)     \
   {                                                                           \
     LTYPE c = b->LO;                                                          \
     HTYPE d = b->HI;                                                          \
-    VTYPE r = (VTYPE) (NAME (a.LO, &c), NAME (a.HI, &d));                     \
+    VTYPE r = (VTYPE)(NAME (a.LO, &c), NAME (a.HI, &d));                      \
     b->LO = c;                                                                \
     b->HI = d;                                                                \
     return r;                                                                 \
   }                                                                           \
   IMPLEMENT_BUILTIN_V_VPV_ADDRSPACE (NAME, VTYPE, __local)                    \
-  IF_GEN_AS(IMPLEMENT_BUILTIN_V_VPV_ADDRSPACE (NAME, VTYPE, __generic))       \
+  IF_GEN_AS (IMPLEMENT_BUILTIN_V_VPV_ADDRSPACE (NAME, VTYPE, __generic))      \
   IMPLEMENT_BUILTIN_V_VPV_ADDRSPACE (NAME, VTYPE, __global)
 #define DEFINE_BUILTIN_V_VPV(NAME)                                            \
   __IF_FP16 (                                                                 \
@@ -1984,21 +1984,24 @@
   }
 
 #define IMPLEMENT_BUILTIN_V_VVPJ(NAME, VTYPE, JTYPE, LTYPE, HTYPE, LO, HI)    \
-  VTYPE __attribute__ ((overloadable)) NAME (VTYPE a, VTYPE b, JTYPE *c)      \
+  VTYPE __attribute__ ((overloadable))                                        \
+  NAME (VTYPE a, VTYPE b, JTYPE __private *c)                                 \
   {                                                                           \
     LTYPE d = c->LO;                                                          \
     HTYPE e = c->HI;                                                          \
-    VTYPE r = (VTYPE) (NAME (a.LO, b.LO, &d), NAME (a.HI, b.HI, &e));         \
+    VTYPE r = (VTYPE)(NAME (a.LO, b.LO, &d), NAME (a.HI, b.HI, &e));          \
     c->LO = d;                                                                \
     c->HI = e;                                                                \
     return r;                                                                 \
   }                                                                           \
   IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __local)            \
-  IF_GEN_AS(IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __generic)) \
+  IF_GEN_AS (                                                                 \
+      IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __generic))     \
   IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __global)
+
 #define DEFINE_BUILTIN_V_VVPJ(NAME)                                           \
   __IF_FP16 (                                                                 \
-  half _CL_OVERLOADABLE _CL_READNONE NAME (half a, half b, int *c)            \
+  half _CL_OVERLOADABLE _CL_READNONE NAME (half a, half b, int __private *c)  \
   {                                                                           \
     /* use float builtin */                                                   \
     __private int d;                                                          \
@@ -2014,12 +2017,13 @@
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, half4, int4, int2, int2, lo, hi)            \
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, half8, int8, int4, int4, lo, hi)            \
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, half16, int16, int8, int8, lo, hi))         \
-  float _CL_OVERLOADABLE _CL_READNONE NAME (float a, float b, int *c)         \
+  float _CL_OVERLOADABLE _CL_READNONE NAME (float a, float b, int __private *c) \
   {                                                                           \
     return __builtin_##NAME##f (a, b, c);                                     \
   }                                                                           \
   IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, float, int, __local)              \
-  IF_GEN_AS(IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, float, int, __generic)) \
+  IF_GEN_AS (                                                                 \
+      IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, float, int, __generic))       \
   IMPLEMENT_BUILTIN_V_VVPJ_ADDRSPACE (NAME, float, int, __global)             \
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, float2, int2, int, int, lo, hi)             \
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, float3, int3, int2, int, lo, s2)            \
@@ -2027,7 +2031,7 @@
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, float8, int8, int4, int4, lo, hi)           \
   IMPLEMENT_BUILTIN_V_VVPJ (NAME, float16, int16, int8, int8, lo, hi)         \
   __IF_FP64 (                                                                 \
-  double _CL_OVERLOADABLE _CL_READNONE NAME (double a, double b, int *c)      \
+  double _CL_OVERLOADABLE _CL_READNONE NAME (double a, double b, int __private *c) \
   {                                                                           \
     return __builtin_##NAME (a, b, c);                                        \
   }                                                                           \
@@ -2050,22 +2054,23 @@
   }
 
 #define IMPLEMENT_BUILTIN_V_VPJ(NAME, VTYPE, JTYPE, LTYPE, HTYPE, LO, HI)     \
-  VTYPE __attribute__ ((overloadable)) NAME (VTYPE a, JTYPE *c)               \
+  VTYPE __attribute__ ((overloadable)) NAME (VTYPE a, JTYPE __private *c)     \
   {                                                                           \
     LTYPE d = c->LO;                                                          \
     HTYPE e = c->HI;                                                          \
-    VTYPE r = (VTYPE) (NAME (a.LO, &d), NAME (a.HI, &e));                     \
+    VTYPE r = (VTYPE)(NAME (a.LO, &d), NAME (a.HI, &e));                      \
     c->LO = d;                                                                \
     c->HI = e;                                                                \
     return r;                                                                 \
   }                                                                           \
   IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __local)             \
-  IF_GEN_AS(IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __generic)) \
+  IF_GEN_AS (                                                                 \
+      IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __generic))      \
   IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, VTYPE, JTYPE, __global)
 
-#define DEFINE_BUILTIN_V_VPJ(NAME)                                             \
+#define DEFINE_BUILTIN_V_VPJ(NAME)                                            \
   __IF_FP16 (                                                                 \
-  half _CL_OVERLOADABLE _CL_READNONE NAME (half a, int *c)                    \
+  half _CL_OVERLOADABLE _CL_READNONE NAME (half a, int __private *c)          \
   {                                                                           \
     /* use float builtin */                                                   \
     __private int d;                                                          \
@@ -2081,20 +2086,20 @@
   IMPLEMENT_BUILTIN_V_VPJ (NAME, half4, int4, int2, int2, lo, hi)             \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, half8, int8, int4, int4, lo, hi)             \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, half16, int16, int8, int8, lo, hi))          \
-  float _CL_OVERLOADABLE _CL_READNONE NAME (float a, int *c)                  \
+  float _CL_OVERLOADABLE _CL_READNONE NAME (float a, int __private *c)        \
   {                                                                           \
     return __builtin_##NAME##f (a, c);                                        \
   }                                                                           \
   IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, float, int, __local)               \
   IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, float, int, __global)              \
-  IF_GEN_AS(IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, float, int, __generic))  \
+  IF_GEN_AS (IMPLEMENT_BUILTIN_V_VPJ_ADDRSPACE (NAME, float, int, __generic)) \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, float2, int2, int, int, lo, hi)              \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, float3, int3, int2, int, lo, s2)             \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, float4, int4, int2, int2, lo, hi)            \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, float8, int8, int4, int4, lo, hi)            \
   IMPLEMENT_BUILTIN_V_VPJ (NAME, float16, int16, int8, int8, lo, hi)          \
   __IF_FP64 (                                                                 \
-  double _CL_OVERLOADABLE _CL_READNONE NAME (double a, int *c)                \
+  double _CL_OVERLOADABLE _CL_READNONE NAME (double a, int __private *c)      \
   {                                                                           \
     return __builtin_##NAME (a, c);                                           \
   }                                                                           \

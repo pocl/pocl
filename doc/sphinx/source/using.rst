@@ -72,6 +72,8 @@ wrapper library to expose the Apple OpenCL implementation as an ICD. Note that d
 ICD on Mac OS X, tests and examples might not build. Recommended is to build PoCL with
 either -DENABLE_TESTS=OFF or -DENABLE_ICD=OFF.
 
+.. _pocl-env-variables:
+
 Tuning pocl behavior with ENV variables
 ---------------------------------------
 

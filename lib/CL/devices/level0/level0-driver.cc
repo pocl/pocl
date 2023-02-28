@@ -30,6 +30,7 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
+#include <cstring>
 #include <iomanip>
 #include <sstream>
 
@@ -329,32 +330,40 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
     break;
 
   case CL_COMMAND_SVM_MAP:
-    // TODO (DEVICE_MMAP_IS_NOP (dev))
     svmMap(cmd->svm_map.svm_ptr);
     Msg = "Event SVM Map              ";
     break;
 
   case CL_COMMAND_SVM_UNMAP:
-    // TODO (DEVICE_MMAP_IS_NOP (dev))
     svmUnmap(cmd->svm_unmap.svm_ptr);
     Msg = "Event SVM Unmap             ";
     break;
 
   case CL_COMMAND_SVM_MEMCPY:
+  case CL_COMMAND_MEMCPY_INTEL:
     svmCopy(cmd->svm_memcpy.dst, cmd->svm_memcpy.src, cmd->svm_memcpy.size);
     Msg = "Event SVM Memcpy            ";
     break;
 
   case CL_COMMAND_SVM_MEMFILL:
+  case CL_COMMAND_MEMFILL_INTEL:
     svmFill(cmd->svm_fill.svm_ptr, cmd->svm_fill.size, cmd->svm_fill.pattern,
             cmd->svm_fill.pattern_size);
     Msg = "Event SVM MemFill           ";
     break;
 
   case CL_COMMAND_SVM_MIGRATE_MEM:
-    // TODO maybe prefetch memory ?
-    // the zeCommandListAppendMemoryPrefetch
+  case CL_COMMAND_MIGRATEMEM_INTEL:
+    svmMigrate(cmd->svm_migrate.num_svm_pointers,
+               cmd->svm_migrate.svm_pointers,
+               cmd->svm_migrate.sizes);
     Msg = "Event SVM Migrate_Mem       ";
+    break;
+
+  case CL_COMMAND_MEMADVISE_INTEL:
+    svmAdvise(cmd->mem_advise.ptr, cmd->mem_advise.size,
+              cmd->mem_advise.advice);
+    Msg = "Event SVM Mem_Advise        ";
     break;
 
   case CL_COMMAND_COMMAND_BUFFER_KHR:
@@ -370,22 +379,45 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish, nullptr, 0,
                                           nullptr);
   zeCommandListClose(CmdListH);
+  uint64_t HostStartTS = pocl_gettimemono_ns();
   zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
   zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max());
-
-  calculateEventTimes(event, *EventStart, *EventFinish);
+  uint64_t HostFinishTS = pocl_gettimemono_ns();
+  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE) {
+    calculateEventTimes(event, *EventStart, *EventFinish, HostStartTS,
+                        HostFinishTS);
+  } else {
+    event->time_start = 0;
+    event->time_end = 0;
+  }
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
 
-void Level0Queue::calculateEventTimes(cl_event Event, uint64_t Start,
-                                      uint64_t Finish) const {
-  double Time = ((double)(Start - DeviceTimingStart) * HostDeviceRate);
-  uint64_t NewStart = (uint64_t)Time + HostTimingStart;
-  Time = ((double)(Finish - DeviceTimingStart) * HostDeviceRate);
-  uint64_t NewFinish = (uint64_t)Time + HostTimingStart;
-  Event->time_start = NewStart;
-  Event->time_end = NewFinish;
+void Level0Queue::calculateEventTimes(cl_event Event, uint64_t DeviceStart,
+                                      uint64_t DeviceFinish, uint64_t HostStart,
+                                      uint64_t HostFinish) const {
+  uint64_t HostTime = HostFinish - HostStart;
+  // depending on device's TSC bits and the kernel hangcheck timeout,
+  // the TSC can overflow more than once during command execution.
+  // IOW we cannot assume that (DeviceFinish < DeviceStart) means
+  // it wrapped only once. For now, a simple solution: if the
+  // elapsed host time is larger than the overflow limit, use
+  // the host timing values. This is less precise, but for long
+  // running kernels probably doesn't matter much.
+  if (HostTime > DeviceTimerWrapTimeNs) {
+    Event->time_start = HostStart;
+    Event->time_end = HostFinish;
+  } else {
+    uint64_t CommandTimeNs =
+        (DeviceFinish >= DeviceStart)
+            ? (uint64_t)((DeviceFinish - DeviceStart) * DeviceNsPerCycle)
+            : (uint64_t)(((DeviceMaxValidTimestamp - DeviceStart) +
+                          DeviceFinish + 1) *
+                         DeviceNsPerCycle);
+    Event->time_start = HostFinish - CommandTimeNs;
+    Event->time_end = HostFinish;
+  }
 }
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
@@ -776,6 +808,30 @@ void Level0Queue::svmFill(void *DstPtr, size_t Size, void *Pattern,
   LEVEL0_CHECK_ABORT(Res);
 }
 
+void Level0Queue::svmMigrate(unsigned num_svm_pointers, void **svm_pointers,
+                             size_t *sizes) {
+  // TODO there is a "residency" API, but it seems windows-only
+  for (unsigned i = 0; i < num_svm_pointers; ++i) {
+    ze_result_t Res =
+        zeCommandListAppendMemoryPrefetch(CmdListH, svm_pointers[i], sizes[i]);
+    LEVEL0_CHECK_ABORT(Res);
+  }
+}
+
+void Level0Queue::svmAdvise(const void *ptr, size_t size,
+                            cl_mem_advice_intel advice) {
+  // TODO convert cl_advice to ZeAdvice. The current API doesn't
+  // seem to specify any valid values
+  if (advice == 0)
+    return;
+  else
+    POCL_MSG_ERR("svmAdvise: unknown advice value %zu\n", (size_t)advice);
+  ze_memory_advice_t ZeAdvice = ZE_MEMORY_ADVICE_BIAS_UNCACHED;
+  ze_result_t Res = zeCommandListAppendMemAdvise(
+      CmdListH, Device->getDeviceHandle(), ptr, size, ZeAdvice);
+  LEVEL0_CHECK_ABORT(Res);
+}
+
 bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
                                   ze_kernel_handle_t KernelH, cl_device_id Dev,
                                   unsigned DeviceI, _cl_command_run *RunCmd) {
@@ -940,6 +996,10 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   ze_module_handle_t ModuleH = nullptr;
   bool Res = L0Program->get()->getBestKernel(L0Kernel, Needs64bitPtrs, ModuleH,
                                              KernelH);
+  assert(Res == true);
+  assert(KernelH);
+  assert(ModuleH);
+
   // TODO this lock should be moved not re-locked
   // necessary to lock the kernel, since we're setting up kernel arguments
   // setting WG sizes and so on; this lock is released after
@@ -948,9 +1008,20 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   // zeQueueSubmit
   std::lock_guard<std::mutex> KernelLockGuard(L0Kernel->getMutex());
 
-  assert(Res == true);
-  assert(KernelH);
-  assert(ModuleH);
+  ze_kernel_indirect_access_flags_t Flags = L0Kernel->getIndirectFlags();
+  if (Flags != 0) {
+    ze_result_t Res = zeKernelSetIndirectAccess(KernelH, Flags);
+    LEVEL0_CHECK_ABORT(Res);
+  }
+  const std::vector<void *> &AccessedPointers = L0Kernel->getAccessedPointers();
+  for (void *Ptr : AccessedPointers) {
+    // TODO implement in some way.
+    // TODO there is a "residency" API, but it seems windows-only
+    POCL_MSG_ERR("CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL / "
+                 "CL_KERNEL_EXEC_INFO_SVM_PTRS not implemented\n");
+    // ze_result_t Res = zeContextMakeMemoryResident(ContextH, DeviceH, );
+    // assert(Res == ZE_RESULT_SUCCESS);
+  }
 
   if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {
     POCL_MSG_ERR("Level0: Failed to setup kernel arguments\n");
@@ -977,7 +1048,7 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   uint32_t StartOffsetZ = PoclCtx->global_offset[2];
   bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
-  if (DeviceHasGlobalOffsets && NeedsGlobalOffset) {
+  if (Device->supportsGlobalOffsets() && NeedsGlobalOffset) {
     runWithOffsets(PoclCtx, KernelH);
   } else {
     assert(!NeedsGlobalOffset &&
@@ -995,20 +1066,33 @@ void Level0Queue::run(_cl_command_node *Cmd) {
 
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
-                         ze_command_list_handle_t L, uint64_t *TimestampBuffer,
-                         double HostDevRate, uint64_t HostTimeStart,
-                         uint64_t DeviceTimeStart, uint32_t_3 DeviceMaxWGs,
-                         bool DeviceHasGOffsets) {
+                         ze_command_list_handle_t L, Level0Device *D,
+                         uint64_t *TimestampBuffer) {
+
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
+  Device = D;
   EventStart = TimestampBuffer;
   EventFinish = TimestampBuffer + 1;
-  HostDeviceRate = HostDevRate;
-  HostTimingStart = HostTimeStart;
-  DeviceTimingStart = DeviceTimeStart;
-  DeviceMaxWGSizes = DeviceMaxWGs;
-  DeviceHasGlobalOffsets = DeviceHasGOffsets;
+
+  uint32_t TimeStampBits, KernelTimeStampBits;
+  Device->getTimingInfo(TimeStampBits, KernelTimeStampBits, DeviceFrequency,
+                        DeviceNsPerCycle);
+  DeviceMaxValidTimestamp = (1UL << TimeStampBits) - 1;
+  DeviceMaxValidKernelTimestamp = (1UL << KernelTimeStampBits) - 1;
+  // since the value will be in NS, and unavoidably there will be some noise,
+  // this slightly lowers the wrapping limit.
+  uint64_t TimeStampWrapLimit = DeviceMaxValidTimestamp * 15 / 16;
+  uint64_t KernelTimeStampWrapLimit = DeviceMaxValidKernelTimestamp * 15 / 16;
+  // convert to nanoseconds
+  DeviceTimerWrapTimeNs =
+      (uint64_t)((double)TimeStampWrapLimit * DeviceNsPerCycle);
+  DeviceKernelTimerWrapTimeNs =
+      (uint64_t)((double)KernelTimeStampWrapLimit * DeviceNsPerCycle);
+
+  Device->getMaxWGs(&DeviceMaxWGSizes);
+
   Thread = std::thread(&Level0Queue::runThread, this);
 }
 
@@ -1027,13 +1111,12 @@ Level0Queue::~Level0Queue() {
 static constexpr unsigned CacheLineSize = 64;
 
 bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
-                            ze_context_handle_t ContextH,
-                            ze_device_handle_t DeviceH, uint64_t *Buffer,
-                            uint64_t HostTimingStart,
-                            uint64_t DeviceTimingStart, double HostDeviceRate,
-                            uint32_t_3 DeviceMaxWGs, bool DeviceHasGOffsets) {
+                            Level0Device *Device, uint64_t *Buffer) {
 
   ThreadExitRequested = false;
+
+  ze_context_handle_t ContextH = Device->getContextHandle();
+  ze_device_handle_t DeviceH = Device->getDeviceHandle();
 
   std::vector<ze_command_queue_handle_t> QHandles;
   std::vector<ze_command_list_handle_t> LHandles;
@@ -1068,12 +1151,11 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   }
 
   for (unsigned i = 0; i < Count; ++i) {
-    Queues.emplace_back(new Level0Queue(
-        this, QHandles[i], LHandles[i],
-        // avoid having the timers of different queues stored in the same cacheline
-        &Buffer[i * CacheLineSize / sizeof(uint64_t)],
-        HostDeviceRate, HostTimingStart, DeviceTimingStart,
-        DeviceMaxWGs, DeviceHasGOffsets));
+    Queues.emplace_back(
+        new Level0Queue(this, QHandles[i], LHandles[i], Device,
+                        // avoid having the timers of different queues stored in
+                        // the same cacheline
+                        &Buffer[i * CacheLineSize / sizeof(uint64_t)]));
   }
 
   return true;
@@ -1157,34 +1239,39 @@ static constexpr unsigned NumSupportedImageFormats =
 
 static constexpr unsigned MaxPropertyEntries = 32;
 
+static cl_device_unified_shared_memory_capabilities_intel
+convertZeAllocCaps(ze_memory_access_cap_flags_t Flags) {
+  cl_device_unified_shared_memory_capabilities_intel RetVal = 0;
+  if (Flags & ZE_MEMORY_ACCESS_CAP_FLAG_RW)
+    RetVal |= CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL;
+
+  if (Flags & ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC)
+    RetVal |= CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+  if (Flags & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT)
+    RetVal |= CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL;
+
+  if (Flags & ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC)
+    RetVal |= CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
+
+  return RetVal;
+}
+
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
-                           ze_context_handle_t ContextH, cl_device_id dev,
-                           const char *Parameters)
-    : ClDev(dev), DeviceHandle(DeviceH), ContextHandle(ContextH), Driver(Drv) {
+                           cl_device_id dev, const char *Parameters)
+    : ClDev(dev), DeviceHandle(DeviceH), Driver(Drv) {
 
   SETUP_DEVICE_CL_VERSION(3, 0);
 
   ClDev->available = CL_FALSE;
+  ContextHandle = Drv->getContextHandle();
   assert(DeviceHandle);
   assert(ContextHandle);
   ze_result_t Res = ZE_RESULT_SUCCESS;
-  uint64_t HostTimestamp1;
-  uint64_t HostTimestamp2;
-  uint64_t DeviceTimestamp1;
-  uint64_t DeviceTimestamp2;
-  double HostDeviceRate;
-  uint64_t HostTimingStart;
-  uint64_t DeviceTimingStart;
-  bool HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
-
-  Res =
-      zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp1, &DeviceTimestamp1);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
+  HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
 
   ze_device_properties_t DeviceProperties{};
-  DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES;
+  DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
   DeviceProperties.pNext = nullptr;
   Res = zeDeviceGetProperties(DeviceHandle, &DeviceProperties);
   if (Res != ZE_RESULT_SUCCESS) {
@@ -1324,7 +1411,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->generic_as_support = CL_TRUE;
   ClDev->supported_spir_v_versions = "SPIR-V_1.2";
   ClDev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-  ClDev->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
+  ClDev->version_of_latest_passed_cts = "v2000-00-00-00";
 
   // deviceProperties
   switch (DeviceProperties.type) {
@@ -1372,7 +1459,15 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->preferred_wg_size_multiple =
       64; // deviceProperties.physicalEUSimdWidth;
 
-  ClDev->profiling_timer_resolution = DeviceProperties.timerResolution;
+  ClDev->profiling_timer_resolution = 1; // always one nanosecond
+
+  /// When stype==::ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES the
+  ///< units are in nanoseconds. When
+  ///< stype==::ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2 units are in
+  ///< cycles/sec
+  TimerFrequency = (double)DeviceProperties.timerResolution;
+  TimerNsPerCycle = 1000000000.0 / TimerFrequency;
+
   TSBits = DeviceProperties.timestampValidBits;
   KernelTSBits = DeviceProperties.kernelTimestampValidBits;
 
@@ -1543,15 +1638,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     OpenCL30Features.append(" __opencl_c_int64");
   }
 
-  ClDev->extensions = strdup(Extensions.c_str());
-  ClDev->features = strdup(OpenCL30Features.c_str());
-
-  pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
-  pocl_setup_features_with_version(ClDev);
-  pocl_setup_extensions_with_version(ClDev);
-  pocl_setup_builtin_kernels_with_version(ClDev);
-  pocl_setup_ils_with_version(ClDev);
-
   ClDev->device_side_printf = 0;
   ClDev->printf_buffer_size = ModuleProperties.printfBufferSize;
   ClDev->max_parameter_size = ModuleProperties.maxArgumentsSize;
@@ -1586,6 +1672,29 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   } else {
     POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
   }
+
+  HostMemCaps = convertZeAllocCaps(MemAccessProperties.hostAllocCapabilities);
+  DeviceMemCaps =
+      convertZeAllocCaps(MemAccessProperties.deviceAllocCapabilities);
+  SingleSharedCaps = convertZeAllocCaps(
+      MemAccessProperties.sharedSingleDeviceAllocCapabilities);
+  CrossSharedCaps = convertZeAllocCaps(
+      MemAccessProperties.sharedCrossDeviceAllocCapabilities);
+  SystemSharedCaps =
+      convertZeAllocCaps(MemAccessProperties.sharedSystemAllocCapabilities);
+  // the minimum capability required for USM
+  if (DeviceMemCaps & ZE_MEMORY_ACCESS_CAP_FLAG_RW) {
+    Extensions.append(" cl_intel_unified_shared_memory");
+  }
+
+  ClDev->extensions = strdup(Extensions.c_str());
+  ClDev->features = strdup(OpenCL30Features.c_str());
+
+  pocl_setup_opencl_c_with_version(ClDev, CL_TRUE);
+  pocl_setup_features_with_version(ClDev);
+  pocl_setup_extensions_with_version(ClDev);
+  pocl_setup_builtin_kernels_with_version(ClDev);
+  pocl_setup_ils_with_version(ClDev);
 
   // cacheProperties
   for (uint32_t i = 0; i < CachePropCount; ++i) {
@@ -1624,21 +1733,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   }
 
   ClDev->image_support = CL_TRUE;
-
-  // timestamp setup
-  std::this_thread::sleep_for(std::chrono::milliseconds(12));
-
-  Res = zeDeviceGetGlobalTimestamps(DeviceH, &HostTimestamp2,
-                                    &DeviceTimestamp2);
-  if (Res != ZE_RESULT_SUCCESS) {
-    return;
-  }
-
-  uint64_t HostDiff = HostTimestamp2 - HostTimestamp1;
-  uint64_t DeviceDiff = DeviceTimestamp2 - DeviceTimestamp1;
-  HostDeviceRate = (double)HostDiff / (double)DeviceDiff;
-  HostTimingStart = HostTimestamp1;
-  DeviceTimingStart = DeviceTimestamp1;
 
   // QGroupProps
   uint32_t UniversalQueueOrd = UINT32_MAX;
@@ -1699,32 +1793,24 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (ComputeQueueOrd != UINT32_MAX) {
     void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
     ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, ContextHandle,
-                       DeviceHandle, ComputeTimestamps, HostTimingStart,
-                       DeviceTimingStart, HostDeviceRate, DeviceMaxWGs,
-                       HasGOffsets);
+    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this,
+                       ComputeTimestamps);
   } else {
     uint32_t num = std::max(1U, NumUniversalQueues / 2);
     void *Ptr = allocSharedMem(CacheLineSize * num);
     ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-    ComputeQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                       ComputeTimestamps, HostTimingStart, DeviceTimingStart,
-                       HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    ComputeQueues.init(UniversalQueueOrd, num, this, ComputeTimestamps);
   }
 
   if (CopyQueueOrd != UINT32_MAX) {
     void *Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
     CopyTimestamps = static_cast<uint64_t *>(Ptr);
-    CopyQueues.init(CopyQueueOrd, NumCopyQueues, ContextHandle, DeviceHandle,
-                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this, CopyTimestamps);
   } else {
     uint32_t num = std::max(1U, NumUniversalQueues / 2);
     void *Ptr = allocSharedMem(CacheLineSize * num);
     CopyTimestamps = static_cast<uint64_t *>(Ptr);
-    CopyQueues.init(UniversalQueueOrd, num, ContextHandle, DeviceHandle,
-                    CopyTimestamps, HostTimingStart, DeviceTimingStart,
-                    HostDeviceRate, DeviceMaxWGs, HasGOffsets);
+    CopyQueues.init(UniversalQueueOrd, num, this, CopyTimestamps);
   }
 
   // calculate KernelCacheHash
@@ -1777,27 +1863,26 @@ void Level0Device::pushCommand(_cl_command_node *Command) {
   }
 }
 
-void *Level0Device::allocSharedMem(uint64_t Size) {
+void *Level0Device::allocSharedMem(uint64_t Size,
+                                   ze_device_mem_alloc_flags_t DevFlags,
+                                   ze_host_mem_alloc_flags_t HostFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
-      ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr,
-      ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED, GlobalMemOrd};
+      ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
   ze_host_mem_alloc_desc_t HostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
-                                       nullptr,
-                                       ZE_HOST_MEM_ALLOC_FLAG_BIAS_UNCACHED};
+                                       nullptr, HostFlags};
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res =
-      zeMemAllocShared(ContextHandle, &MemAllocDesc, &HostDesc, Size,
-                       Align, // alignment
-                       DeviceHandle, &Ptr);
+  ze_result_t Res = zeMemAllocShared(ContextHandle, &MemAllocDesc, &HostDesc,
+                                     Size, Align, DeviceHandle, &Ptr);
   LEVEL0_CHECK_RET(nullptr, Res);
   return Ptr;
 }
 
-void *Level0Device::allocDeviceMem(uint64_t Size) {
+void *Level0Device::allocDeviceMem(uint64_t Size,
+                                   ze_device_mem_alloc_flags_t DevFlags) {
   void *Ptr = nullptr;
   ze_device_mem_alloc_desc_t MemAllocDesc = {
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr,
@@ -1806,16 +1891,46 @@ void *Level0Device::allocDeviceMem(uint64_t Size) {
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
 
-  ze_result_t Res = zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size,
-                                     Align, // alignment
+  ze_result_t Res = zeMemAllocDevice(ContextHandle, &MemAllocDesc, Size, Align,
                                      DeviceHandle, &Ptr);
   LEVEL0_CHECK_RET(nullptr, Res);
   return Ptr;
 }
 
+void *Level0Device::allocHostMem(uint64_t Size,
+                                 ze_device_mem_alloc_flags_t HostFlags) {
+  void *Ptr = nullptr;
+  ze_host_mem_alloc_desc_t HostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
+                                       nullptr, HostFlags};
+
+  uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
+  uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);
+
+  ze_result_t Res = zeMemAllocHost(ContextHandle, &HostDesc, Size, Align, &Ptr);
+  LEVEL0_CHECK_RET(nullptr, Res);
+  return Ptr;
+}
+
 void Level0Device::freeMem(void *Ptr) {
+  if (Ptr == nullptr)
+    return;
   ze_result_t Res = zeMemFree(ContextHandle, Ptr);
   LEVEL0_CHECK_ABORT(Res);
+}
+
+bool Level0Device::freeMemBlocking(void *Ptr) {
+  if (Ptr == nullptr)
+    return true;
+
+  if (!Driver->hasExtension("ZE_extension_memory_free_policies"))
+    return false;
+
+  ze_memory_free_ext_desc_t FreeExtDesc = {
+      ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr,
+      ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE};
+  ze_result_t Res = zeMemFreeExt(ContextHandle, &FreeExtDesc, Ptr);
+  LEVEL0_CHECK_ABORT(Res);
+  return true;
 }
 
 static void conventOpenclToZeImgFormat(cl_channel_type ChType,
@@ -2161,6 +2276,92 @@ int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
   return CL_SUCCESS;
 }
 
+cl_bitfield Level0Device::getMemCaps(cl_device_info Type) {
+  switch (Type) {
+  case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+    return HostMemCaps;
+  case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+    return DeviceMemCaps;
+  case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    return SingleSharedCaps;
+  case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    return CrossSharedCaps;
+  case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+    return SystemSharedCaps;
+  default:
+    assert(0 && "unhandled switch value");
+  }
+  return 0;
+}
+
+void *Level0Device::getMemBasePtr(const void *USMPtr) {
+  void *Base = nullptr;
+  size_t Size = 0;
+  ze_result_t Res = zeMemGetAddressRange(ContextHandle, USMPtr, &Base, &Size);
+  if (Res != ZE_RESULT_SUCCESS)
+    return nullptr;
+  return Base;
+}
+
+size_t Level0Device::getMemSize(const void *USMPtr) {
+  void *Base = nullptr;
+  size_t Size = 0;
+  ze_result_t Res = zeMemGetAddressRange(ContextHandle, USMPtr, &Base, &Size);
+  if (Res != ZE_RESULT_SUCCESS)
+    return 0;
+  return Size;
+}
+
+cl_device_id Level0Device::getMemAssoc(const void *USMPtr) {
+  ze_memory_allocation_properties_t Props = {};
+  ze_device_handle_t AssocDev = nullptr;
+  ze_result_t Res =
+      zeMemGetAllocProperties(ContextHandle, USMPtr, &Props, &AssocDev);
+  if (Res != ZE_RESULT_SUCCESS || AssocDev == nullptr)
+    return nullptr;
+
+  return Driver->getClDevForHandle(AssocDev);
+}
+
+cl_unified_shared_memory_type_intel
+Level0Device::getMemType(const void *USMPtr) {
+  ze_memory_allocation_properties_t Props = {};
+  ze_device_handle_t AssocDev = nullptr;
+  ze_result_t Res =
+      zeMemGetAllocProperties(ContextHandle, USMPtr, &Props, &AssocDev);
+  if (Res != ZE_RESULT_SUCCESS)
+    return CL_MEM_TYPE_UNKNOWN_INTEL;
+
+  switch (Props.type) {
+  case ZE_MEMORY_TYPE_HOST:
+    return CL_MEM_TYPE_HOST_INTEL;
+  case ZE_MEMORY_TYPE_DEVICE:
+    return CL_MEM_TYPE_DEVICE_INTEL;
+  case ZE_MEMORY_TYPE_SHARED:
+    return CL_MEM_TYPE_SHARED_INTEL;
+  case ZE_MEMORY_TYPE_UNKNOWN:
+  default:
+    return CL_MEM_TYPE_UNKNOWN_INTEL;
+  }
+}
+
+cl_mem_alloc_flags_intel Level0Device::getMemFlags(const void *USMPtr) {
+  // TODO
+  return 0;
+}
+
+void Level0Device::getTimingInfo(uint32_t &TS, uint32_t &KernelTS,
+                                 double &TimerFreq, double &NsPerCycle) {
+  TS = TSBits;
+  KernelTS = KernelTSBits;
+  TimerFreq = TimerFrequency;
+  NsPerCycle = TimerNsPerCycle;
+}
+
+void Level0Device::getMaxWGs(uint32_t_3 *MaxWGs) {
+  std::memcpy(MaxWGs, MaxWGCount, sizeof(uint32_t_3));
+}
+
 static constexpr unsigned MaxLevel0Devices = 1024;
 
 Level0Driver::Level0Driver() {
@@ -2266,8 +2467,9 @@ Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
   }
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
-      new Level0Device(this, DeviceHandles[Index], ContextH, Dev, Params));
+      new Level0Device(this, DeviceHandles[Index], Dev, Params));
   ++NumDevices;
+  HandleToIDMap[DeviceHandles[Index]] = Dev;
   return Devices[Index].get();
 }
 

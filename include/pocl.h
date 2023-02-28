@@ -393,6 +393,13 @@ typedef struct
   size_t pattern_size;
 } _cl_command_svm_fill;
 
+typedef struct
+{
+  const void *ptr;
+  size_t size;
+  cl_mem_advice_intel advice;
+} _cl_command_svm_memadvise;
+
 typedef union
 {
   _cl_command_run run;
@@ -425,6 +432,8 @@ typedef union
   _cl_command_svm_cpy svm_memcpy;
   _cl_command_svm_fill svm_fill;
   _cl_command_svm_migrate svm_migrate;
+
+  _cl_command_svm_memadvise mem_advise;
 } _cl_command_t;
 
 // one item in the command queue or command buffer

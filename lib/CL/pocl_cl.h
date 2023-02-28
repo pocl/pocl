@@ -574,6 +574,10 @@ struct pocl_device_ops {
   void (*svm_migrate) (cl_device_id dev, size_t num_svm_pointers,
                        void *__restrict__ svm_pointers,
                        size_t *__restrict__ sizes);
+  /* USM Ops (Intel) */
+  void (*usm_free) (cl_device_id dev, void *svm_ptr, cl_bool blocking);
+  void *(*usm_alloc) (cl_device_id dev, unsigned alloc_type,
+                      cl_mem_alloc_flags_intel flags, size_t size, cl_int *errcode);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -858,9 +862,25 @@ struct pocl_device_ops {
                               size_t global_z, size_t *local_x,
                               size_t *local_y, size_t *local_z);
 
-  cl_int (*get_device_info_ext) (cl_device_id dev, cl_device_info param_name,
-                                 size_t param_value_size, void * param_value,
-                                 size_t * param_value_size_ret);
+  cl_int (*get_device_info_ext) (cl_device_id dev,
+                                 cl_device_info param_name,
+                                 size_t param_value_size,
+                                 void *param_value,
+                                 size_t *param_value_size_ret);
+
+  cl_int (*get_mem_info_ext) (cl_device_id dev,
+                              const void *ptr,
+                              cl_uint param_name,
+                              size_t param_value_size,
+                              void *param_value,
+                              size_t *param_value_size_ret);
+
+  cl_int (*set_kernel_exec_info_ext) (cl_device_id dev,
+                                      unsigned program_device_i,
+                                      cl_kernel kernel,
+                                      cl_uint param_name,
+                                      size_t param_value_size,
+                                      const void *param_value);
 
   /* optional. Return CL_SUCCESS if the device can be, or is associated with
    * the GL context described in properties. */
@@ -1234,6 +1254,10 @@ struct _cl_context {
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
 
+  /* The device that should allocate USM memory
+   * NULL if none of devices in the context is USM capable */
+  cl_device_id usm_allocdev;
+
   /* for enqueueing migration commands. Two reasons:
    * 1) since migration commands can execute in parallel
    * to other commands, we can increase paralelism
@@ -1254,7 +1278,7 @@ struct _cl_context {
   /* list of destructor callbacks */
   context_destructor_callback_t *destructor_callbacks;
 
-  /* list of SVM buffers */
+  /* list of SVM & USM allocations */
   pocl_svm_ptr *svm_ptrs;
 
 #ifdef ENABLE_LLVM

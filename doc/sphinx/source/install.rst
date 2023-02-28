@@ -135,7 +135,7 @@ EXTRA_KERNEL_FLAGS
 EXTRA_KERNEL_{C,CL,CXX}_FLAGS
   cmake variables for per-language options for kernel library compilation
 
-
+.. _pocl-cmake-variables:
 
 CMake: other options & features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -151,9 +151,6 @@ use ";" as separator (you'll have to escape it for bash).
   This determines the LLVM installation used by pocl.
   If not specified, pocl will try to find and link against
   llvm-config in PATH env var (usually means your system LLVM).
-
-- ``-DSINGLE_LLVM_LIB`` this is deprecated and has no effect (pocl now uses
-  llvm-config exclusively to get the LLVM library list)
 
 - ``-DSTATIC_LLVM`` pocl uses ``llvm-config --libs`` to get list of LLVM libraries
   it should link to. With this flag enabled, it additionally passes ``--link-static``
@@ -242,8 +239,8 @@ use ";" as separator (you'll have to escape it for bash).
   a time is untested. Using together with ``-DENABLE_ICD=OFF`` is highly
   recommended to avoid issues with loading order of sanitizer libraries.
 
-- ``-DENABLE_{CUDA,TCE,HSA}=ON/OFF`` - enable various (non-CPU) backends.
-  Usually requires some extra setup; see their documentation.
+- ``-DENABLE_{CUDA,TCE,HSA,VULKAN,LEVEL0}=ON/OFF`` - enable various (non-CPU) backends.
+  Usually requires some additional build dependencies; see their documentation.
 
 - ``-DPOCL_DEBUG_MESSAGES=ON`` - when disabled, pocl is compiled without
   debug messages (POCL_DEBUG env var) support.

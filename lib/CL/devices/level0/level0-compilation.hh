@@ -90,11 +90,21 @@ public:
   /// for getOrCreateForBuild
   friend class Level0Program;
 
+  void setIndirectAccess(ze_kernel_indirect_access_flag_t AccessFlag,
+                         bool Value);
+  void setAccessedPointers(const std::vector<void *> &Ptrs);
+  ze_kernel_indirect_access_flags_t getIndirectFlags() {
+    return IndirectAccessFlags;
+  }
+  const std::vector<void *> &getAccessedPointers() { return AccessedPointers; }
+
 private:
   std::mutex Mutex;
   /// map of ProgramBuilds to Kernel handles
   std::map<Level0ProgramBuild*, ze_kernel_handle_t> KernelHandles;
   std::string Name;
+  std::vector<void *> AccessedPointers;
+  ze_kernel_indirect_access_flags_t IndirectAccessFlags = 0;
 
   bool createForBuild(Level0ProgramBuild* Build);
   /// returns (or creates a new) ze_kernel_handle_t for a particular ProgramBuild

@@ -105,6 +105,8 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free = pocl_level0_free;
   Ops->svm_free = pocl_level0_svm_free;
   Ops->svm_alloc = pocl_level0_svm_alloc;
+  Ops->usm_alloc = pocl_level0_usm_alloc;
+  Ops->usm_free = pocl_level0_usm_free;
 
   Ops->build_source = pocl_level0_build_source;
   Ops->build_binary = pocl_level0_build_binary;
@@ -142,6 +144,8 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free_sampler = pocl_level0_free_sampler;
 
   Ops->get_device_info_ext = pocl_level0_get_device_info_ext;
+  Ops->get_mem_info_ext = pocl_level0_get_mem_info_ext;
+  Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
 }
 
 void appendToBuildLog(cl_program Program, cl_uint DeviceI, char *Log,
@@ -1180,7 +1184,6 @@ int pocl_level0_create_sampler(cl_device_id ClDevice, cl_sampler Samp,
 int pocl_level0_free_sampler(cl_device_id ClDevice, cl_sampler Samp,
                              unsigned ContextDeviceI) {
 
-  Level0Device *Device = (Level0Device *)ClDevice->data;
   ze_sampler_handle_t HSampler =
       (ze_sampler_handle_t)Samp->device_data[ClDevice->dev_id];
   if (HSampler != nullptr) {
@@ -1189,17 +1192,64 @@ int pocl_level0_free_sampler(cl_device_id ClDevice, cl_sampler Samp,
   return CL_SUCCESS;
 }
 
+void *pocl_level0_svm_alloc(cl_device_id Dev, cl_svm_mem_flags Flags,
+                            size_t Size) {
+  Level0Device *Device = (Level0Device *)Dev->data;
+  return Device->allocSharedMem(Size);
+}
+
 void pocl_level0_svm_free(cl_device_id Dev, void *SvmPtr) {
   Level0Device *Device = (Level0Device *)Dev->data;
   Device->freeMem(SvmPtr);
 }
 
-void *pocl_level0_svm_alloc(cl_device_id Dev, cl_svm_mem_flags Flags,
-                            size_t Size)
-
-{
+void *pocl_level0_usm_alloc(cl_device_id Dev, unsigned AllocType,
+                            cl_mem_alloc_flags_intel Flags, size_t Size,
+                            cl_int *ErrCode) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  return Device->allocSharedMem(Size);
+  int errcode = CL_SUCCESS;
+  void *Ptr = nullptr;
+  ze_host_mem_alloc_flags_t HostZeFlags = 0;
+  ze_device_mem_alloc_flags_t DevZeFlags = 0;
+  if (Flags & CL_MEM_ALLOC_WRITE_COMBINED_INTEL)
+    HostZeFlags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_WRITE_COMBINED;
+  if (Flags & CL_MEM_ALLOC_INITIAL_PLACEMENT_DEVICE_INTEL)
+    DevZeFlags |= ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+  if (Flags & CL_MEM_ALLOC_INITIAL_PLACEMENT_HOST_INTEL)
+    HostZeFlags |= ZE_HOST_MEM_ALLOC_FLAG_BIAS_INITIAL_PLACEMENT;
+
+  switch (AllocType) {
+  case CL_MEM_TYPE_HOST_INTEL:
+    POCL_GOTO_ERROR_ON(!Device->supportsHostUSM(), CL_INVALID_OPERATION,
+                       "Device does not support Host USM allocations\n");
+    Ptr = Device->allocHostMem(Size, HostZeFlags);
+    break;
+  case CL_MEM_TYPE_DEVICE_INTEL:
+    POCL_GOTO_ERROR_ON(!Device->supportsDeviceUSM(), CL_INVALID_OPERATION,
+                       "Device does not support Device USM allocations\n");
+    Ptr = Device->allocDeviceMem(Size, DevZeFlags);
+    break;
+  case CL_MEM_TYPE_SHARED_INTEL:
+    POCL_GOTO_ERROR_ON(!Device->supportsSingleSharedUSM(), CL_INVALID_OPERATION,
+                       "Device does not support Shared USM allocations\n");
+    Ptr = Device->allocSharedMem(Size, DevZeFlags, HostZeFlags);
+    break;
+  default:
+    POCL_MSG_ERR("Unknown USM AllocType requested\n");
+    errcode = CL_INVALID_PROPERTY;
+  }
+ERROR:
+  if (ErrCode)
+    *ErrCode = errcode;
+  return Ptr;
+}
+
+void pocl_level0_usm_free(cl_device_id Dev, void *SvmPtr, cl_bool Blocking) {
+  Level0Device *Device = (Level0Device *)Dev->data;
+  if (Blocking == CL_FALSE)
+    Device->freeMem(SvmPtr);
+  else
+    Device->freeMemBlocking(SvmPtr);
 }
 
 cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
@@ -1208,11 +1258,21 @@ cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
                                        void *param_value,
                                        size_t *param_value_size_ret) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  const std::vector<size_t> &SupportedSGSizes =
-      Device->getSupportedSubgroupSizes();
 
   switch (param_name) {
+
+  case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL: {
+    cl_bitfield Caps = Device->getMemCaps(param_name);
+    POCL_RETURN_GETINFO(cl_bitfield, Caps);
+  }
+
   case CL_DEVICE_SUB_GROUP_SIZES_INTEL: {
+    const std::vector<size_t> &SupportedSGSizes =
+        Device->getSupportedSubgroupSizes();
     if (!SupportedSGSizes.empty()) {
       POCL_RETURN_GETINFO_ARRAY(size_t, SupportedSGSizes.size(),
                                 SupportedSGSizes.data());
@@ -1220,6 +1280,143 @@ cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
       POCL_RETURN_GETINFO(size_t, 0);
     }
   }
+
+  default:
+    return CL_INVALID_VALUE;
+  }
+}
+
+/*
+
+Enumeration type and values for the param_name parameter to
+clGetMemAllocInfoINTEL to query information about a Unified Shared Memory
+allocation. Optional allocation properties may also be queried using
+clGetMemAllocInfoINTEL:
+
+typedef cl_uint cl_mem_info_intel;
+
+#define CL_MEM_ALLOC_TYPE_INTEL         0x419A
+#define CL_MEM_ALLOC_BASE_PTR_INTEL     0x419B
+#define CL_MEM_ALLOC_SIZE_INTEL         0x419C
+#define CL_MEM_ALLOC_DEVICE_INTEL       0x419D
+// CL_MEM_ALLOC_FLAGS_INTEL - defined above
+
+Enumeration type and values describing the type of Unified Shared Memory
+allocation. Returned by clGetMemAllocInfoINTEL when param_name is
+CL_MEM_ALLOC_TYPE_INTEL:
+
+typedef cl_uint cl_unified_shared_memory_type_intel;
+
+#define CL_MEM_TYPE_UNKNOWN_INTEL       0x4196
+#define CL_MEM_TYPE_HOST_INTEL          0x4197
+#define CL_MEM_TYPE_DEVICE_INTEL        0x4198
+#define CL_MEM_TYPE_SHARED_INTEL        0x4199
+
+*/
+
+cl_int pocl_level0_get_mem_info_ext(cl_device_id Dev,
+                                    const void *ptr,
+                                    cl_uint param_name,
+                                    size_t param_value_size,
+                                    void * param_value,
+                                    size_t * param_value_size_ret) {
+  Level0Device *Device = (Level0Device *)Dev->data;
+
+  switch (param_name) {
+  case CL_MEM_ALLOC_TYPE_INTEL: {
+    cl_unified_shared_memory_type_intel Type = Device->getMemType(ptr);
+    POCL_RETURN_GETINFO(cl_unified_shared_memory_type_intel, Type);
+  }
+  case CL_MEM_ALLOC_BASE_PTR_INTEL: {
+    void *Ptr = Device->getMemBasePtr(ptr);
+    POCL_RETURN_GETINFO(void *, Ptr);
+  }
+  case CL_MEM_ALLOC_SIZE_INTEL: {
+    size_t Size = Device->getMemSize(ptr);
+    POCL_RETURN_GETINFO(size_t, Size);
+  }
+  case CL_MEM_ALLOC_DEVICE_INTEL: {
+    cl_device_id DeviceID = Device->getMemAssoc(ptr);
+    POCL_RETURN_GETINFO(cl_device_id, DeviceID);
+  }
+  case CL_MEM_ALLOC_FLAGS_INTEL: {
+    cl_mem_alloc_flags_intel Flags = Device->getMemFlags(ptr);
+    POCL_RETURN_GETINFO(cl_mem_alloc_flags_intel, Flags);
+  }
+  default:
+    return CL_INVALID_VALUE;
+  }
+}
+
+/*
+
+Accepted value for the param_name parameter to clSetKernelExecInfo to specify
+that the kernel may indirectly access Unified Shared Memory allocations of the
+specified type:
+
+#define CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL      0x4200
+#define CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL    0x4201
+#define CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL    0x4202
+
+Accepted value for the param_name parameter to clSetKernelExecInfo to specify a
+set of Unified Shared Memory allocations that the kernel may indirectly access:
+
+#define CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL                  0x4203
+
+*/
+
+cl_int pocl_level0_set_kernel_exec_info_ext(
+    cl_device_id Dev, unsigned ProgramDeviceI, cl_kernel Kernel,
+    cl_uint param_name, size_t param_value_size, const void *param_value) {
+
+  assert(Kernel->data[ProgramDeviceI] != nullptr);
+  Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[ProgramDeviceI];
+
+  switch (param_name) {
+  case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
+    if (Dev->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM)
+      return CL_SUCCESS;
+    else {
+      POCL_RETURN_ERROR_ON(
+          1, CL_INVALID_OPERATION,
+          "This device doesn't support fine-grain system allocations\n");
+    }
+  }
+  case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+  case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+  case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL: {
+    cl_bool value;
+    assert(param_value_size == sizeof(cl_bool));
+    memcpy(&value, param_value, sizeof(cl_bool));
+    ze_kernel_indirect_access_flag_t Flag;
+    switch (param_name) {
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+      Flag = ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST;
+      break;
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
+      Flag = ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+      break;
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+      Flag = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+      break;
+    }
+
+    L0Kernel->setIndirectAccess(Flag, (value != CL_FALSE));
+    return CL_SUCCESS;
+  }
+
+  case CL_KERNEL_EXEC_INFO_SVM_PTRS:
+  case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
+    std::vector<void *> UsedPtrs;
+    cl_uint NumElem = param_value_size / sizeof(void *);
+    if (NumElem == 0)
+      return CL_INVALID_ARG_VALUE;
+    UsedPtrs.resize(NumElem);
+    memcpy(UsedPtrs.data(), param_value, param_value_size);
+    L0Kernel->setAccessedPointers(UsedPtrs);
+    return CL_SUCCESS;
+  }
+
   default:
     return CL_INVALID_VALUE;
   }
