@@ -1,4 +1,4 @@
-Information for Pocl developers
+Information for PoCL developers
 ===================================
 
 Testsuite
@@ -220,13 +220,14 @@ before submitting PRs. Thus, regressions on these suites should be detected
 early. The required testsuites can be enabled at buildtime with
 ``-DENABLE_TESTSUITES=tier1`` cmake option.
 
-Currently (2022-11-07) the following are included in the tier-1 test suites:
+Currently (2023-02-28) the following are included in the tier-1 test suites:
 
 * The standard test suite of pocl.
 * PyOpenCL test suite
 * piglit test suite
 * conformance_suite_micro test suite
 * OpenASIP short smoke test suite (against the latest OpenASIP open source release)
+* CHIP-SPV test suite
 
 Please note that not necessarily all the tests currently pass in the suites,
 we just ensure the currently passing ones do not regress with new
@@ -246,10 +247,6 @@ frequent "smoke testing" (under 5 minutes per typical run preferred).
 If your favourite project is already under 'example', but not listed as a tier-1
 test suite, please update its status so that 'make check' passes with the current
 HEAD of pocl and let us know, and we do our best to add it.
-
-Naturally this policy/support promise concerns only the lead developers
-(the CPC group). Any community involvement to provide a wider support/maintenance
-level will be heartily welcomed.
 
 .. _releasing:
 
