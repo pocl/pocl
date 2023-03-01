@@ -1,7 +1,7 @@
 ---
 name: Main test matrix
 
-on: [workflow_dispatch, push, pull_request]
+on: [workflow_dispatch, pull_request]
 
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
