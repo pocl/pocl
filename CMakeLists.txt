@@ -1600,7 +1600,10 @@ if (ENABLE_LEVEL0)
   pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
 
   if(NOT ENABLE_LLVM)
-    message(FATAL_ERROR "Level Zero requires LLVM/Clang")
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
+  endif()
+  if(LLVM_VERSION VERSION_GREATER_EQUAL 16.0)
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
   endif()
   if(NOT LLVM_SPIRV)
     message(FATAL_ERROR "Level Zero requires llvm-spirv translator")
@@ -1608,6 +1611,8 @@ if (ENABLE_LEVEL0)
   if(NOT SPIRV_LINK)
     message(FATAL_ERROR "Level Zero requires spirv-link from SPIR-V tools")
   endif()
+
+
 
   if (NOT LEVEL0_FOUND)
     message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")
