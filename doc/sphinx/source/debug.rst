@@ -8,11 +8,21 @@ differing in debugging coverage and impact on speed.
 This document chapter describes means for debugging OpenCL kernel code by using
 the CPU drivers of PoCL.
 
-"Offline" debugging
---------------------
+Basic printf debugging
+----------------------
 
-Offline debugging ca be done by setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env
-var to 1. This causes the intermediate output files from the kernel
+The CPU drivers of PoCL flush the OpenCL 1.2 printf() API output immediately
+at the end of the printf call. This is in contrast to some other drivers which
+flush the output only at the end of the kernel command's execution, making
+debugging crashing (segfaulting) kernels difficult since they never finish
+the command, thus any debug printouts won't get printed out.
+
+Kernel compiler debugging
+-------------------------
+
+Inspecting the kernel compiler intermediate results can be done by
+setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env var to 1.
+This causes the intermediate output files from the kernel
 compilation process to be left in PoCL's disk cache for inspection.
 By default these files are deleted, and only the final executable output is left
 in the cache.

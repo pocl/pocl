@@ -28,6 +28,10 @@
 
 #include <stdarg.h>
 
+#ifdef PRINTF_IMMEDIATE_FLUSH
+#include <unistd.h>
+#endif
+
 #define OCL_C_AS
 
 /* The OpenCL printf routine.
@@ -707,6 +711,14 @@ __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
   int r = __pocl_printf_format_full (fmt, &p, va);
   va_end (va);
 
+#ifdef PRINTF_IMMEDIATE_FLUSH
+  if (p.printf_buffer_index > 0)
+    {
+      write (STDOUT_FILENO, p.printf_buffer, p.printf_buffer_index);
+      p.printf_buffer_index = 0;
+    }
+#endif
+
   *(PRINTF_BUFFER_AS uint32_t *)__buffer_index = p.printf_buffer_index;
 
   return r;
@@ -743,6 +755,7 @@ printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
 
   *(PRINTF_BUFFER_AS uint32_t *)_printf_buffer_position
       = p.printf_buffer_index;
+
   return r;
 }
 

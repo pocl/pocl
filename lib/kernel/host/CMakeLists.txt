@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2023 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -523,7 +523,7 @@ endif()
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
 set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
-                "-emit-llvm" "-ffp-contract=off")
+                "-emit-llvm" "-ffp-contract=off" "-DPRINTF_IMMEDIATE_FLUSH")
 
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 

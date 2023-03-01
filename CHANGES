@@ -9,7 +9,7 @@ Notable User Facing Changes
 - Added support for generic address spaces in the CPU drivers
 - Added basic support for cl_khr_subgroups for CPUs: A single
   subgroup that always executes the whole X-dimension's WIs.
-- Added initial (incomplete) support for 
+- Added initial (incomplete) support for
   cl_intel_required_subgroup_size for CPUs
 - AlmaIF's OpenASIP backend now supports a standalone mode.
   It generates a standalone C program from a kernel launch, which
@@ -28,7 +28,10 @@ Notable User Facing Changes
   documentation, see doc/sphinx/source/level0.rst.
 - Support for cl_intel_unified_shared_memory (only with
   the Level Zero driver).
-  
+- CPU devices now flush printf() output after each call instead of waiting
+  for the end of the kernel command. This makes it (again) useful for debugging
+  kernel segfaults.
+
 Notable Fixes
 -------------
 
