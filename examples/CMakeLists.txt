@@ -67,6 +67,7 @@ set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
     ASL arrayfire clBLAS CLBlast clFFT chip-spv
     conformance CloverLeaf Halide IntelSVM
+    intel-compute-samples
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
     Rodinia shoc VexCL ViennaCL Glow)
