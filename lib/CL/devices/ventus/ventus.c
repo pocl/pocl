@@ -1,4 +1,4 @@
-/* ventus.c - a minimalistic single core pocl device driver layer implementation
+/* ventus.c - a pocl device driver for ventus gpgpu 
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
                  2011-2021 Pekka Jääskeläinen
@@ -52,20 +52,44 @@
 #include "pocl_llvm.h"
 #endif
 
-// from driver/include/ventus.h
+  // from driver/include/ventus.h
 #if !defined(ENABLE_LLVM)
 #include <ventus.h>
 #endif
 
-struct ventus_device_data_t {
+  /* ENABLE_LLVM means to compile the kernel using pocl compiler,
+ but for ventus(ventus has its own LLVM) it should be OFF. */
 
+struct vt_device_data_t {
 #if !defined(ENABLE_LLVM)
-  ventus_device_h ventus_device;
-  size_t ventus_print_buf_d;
-  ventus_buffer_h ventus_print_buf_h;
+  vt_device_h vt_device;
+  size_t vt_print_buf_d;
+  vt_buffer_h vt_print_buf_h;
   uint32_t printf_buffer;
   uint32_t printf_buffer_position;
 #endif
+
+struct vt_buffer_data_t {
+#if !defined(ENABLE_LLVM)
+  vt_device_h vt_device;
+  vt_buffer_h staging_buf;
+#endif
+  size_t dev_mem_addr;
+};
+
+
+  /* Maximum kernels occupancy */
+  #define MAX_KERNELS 16
+
+  // default WG size in each dimension & total WG size.
+  #define DEFAULT_WG_SIZE 4096
+
+  // location is local memory where to store kernel parameters
+  #define KERNEL_ARG_BASE_ADDR 0x7fff0000
+
+  // allocate 1MB OpenCL print buffer
+  #define PRINT_BUFFER_SIZE (1024 * 1024)
+
 
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
@@ -77,17 +101,8 @@ struct ventus_device_data_t {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
 
-  /* printf buffer */
-  void *printf_buffer;
 };
 
-struct ventus_buffer_data_t {
-#if !defined(ENABLE_LLVM)
-  ventus_device_h ventus_device;
-  ventus_buffer_h staging_buf;
-#endif
-  size_t dev_mem_addr;
-};
 
 struct kernel_context_t {
   uint32_t num_groups[3];
@@ -114,72 +129,79 @@ void
 pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 {
   ops->device_name = "ventus";
-
   ops->probe = pocl_ventus_probe;
+
   ops->uninit = pocl_ventus_uninit;
-  ops->reinit = pocl_ventus_reinit;
+  ops->reinit = NULL;
   ops->init = pocl_ventus_init;
 
-  ops->alloc_mem_obj = pocl_driver_alloc_mem_obj;
-  ops->free = pocl_driver_free;
+  ops->alloc_mem_obj = pocl_ventus_alloc_mem_obj;
+  ops->free = pocl_ventus_free;
 
-  ops->read = pocl_driver_read;
-  ops->read_rect = pocl_driver_read_rect;
-  ops->write = pocl_driver_write;
-  ops->write_rect = pocl_driver_write_rect;
-  ops->copy = pocl_driver_copy;
-  ops->copy_with_size = pocl_driver_copy_with_size;
-  ops->copy_rect = pocl_driver_copy_rect;
-  ops->memfill = pocl_driver_memfill;
-  ops->map_mem = pocl_driver_map_mem;
-  ops->unmap_mem = pocl_driver_unmap_mem;
-  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
-  ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
+  ops->read = pocl_ventus_read;
+  ops->read_rect = NULL;
+  ops->write = pocl_ventus_write;
+  ops->write_rect = NULL;
 
-  ops->can_migrate_d2d = NULL;
-  ops->migrate_d2d = NULL;
+  ops->run = pocl_ventus_run; 
+  ops->run_native = NULL;
+  /***********************No need to modify for now*************************/
 
-  ops->run = pocl_ventus_run;
-  ops->run_native = pocl_ventus_run_native;
+  ops->copy = NULL;
+  ops->copy_with_size = NULL;
+  ops->copy_rect = NULL;
 
-  ops->build_source = pocl_driver_build_source;
-  ops->link_program = pocl_driver_link_program;
-  ops->build_binary = pocl_driver_build_binary;
-  ops->free_program = pocl_driver_free_program;
-  ops->setup_metadata = pocl_driver_setup_metadata;
-  ops->supports_binary = pocl_driver_supports_binary;
-  ops->build_poclbinary = pocl_driver_build_poclbinary;
-  ops->compile_kernel = pocl_ventus_compile_kernel;
+  ops->memfill = NULL;
+  ops->map_mem = NULL;
+  ops->unmap_mem = NULL;
+  ops->get_mapping_ptr = NULL;
+  ops->free_mapping_ptr = NULL;
+
+  /* for ventus,pocl does not need to compile the kernel,so they are set to NULL */
+  ops->build_source = NULL;
+  ops->link_program = NULL;
+  ops->build_binary = NULL;
+  ops->free_program = NULL;
+  ops->setup_metadata = NULL;
+  ops->supports_binary = NULL;
+  ops->build_poclbinary = NULL;
+  ops->compile_kernel = NULL;
 
   ops->join = pocl_ventus_join;
   ops->submit = pocl_ventus_submit;
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_ventus_notify;
   ops->flush = pocl_ventus_flush;
-  ops->build_hash = pocl_ventus_build_hash;
-  ops->compute_local_size = pocl_default_local_size_optimizer;
+
+  ops->build_hash = pocl_ventus_build_hash; 
+  ops->compute_local_size = NULL;
 
   ops->get_device_info_ext = NULL;
 
-  ops->svm_free = pocl_ventus_svm_free;
-  ops->svm_alloc = pocl_ventus_svm_alloc;
+  // Currently ventus does not support svm
+  ops->svm_free = NULL;
+  ops->svm_alloc = NULL;
   /* no need to implement these two as they're noop
    * and pocl_exec_command takes care of it */
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
-  ops->svm_copy = pocl_ventus_svm_copy;
-  ops->svm_fill = pocl_driver_svm_fill;
+  ops->svm_copy = NULL;
+  ops->svm_fill = NULL;
 
   ops->create_kernel = NULL;
   ops->free_kernel = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
-  ops->copy_image_rect = pocl_ventus_copy_image_rect;
-  ops->write_image_rect = pocl_ventus_write_image_rect;
-  ops->read_image_rect = pocl_ventus_read_image_rect;
-  ops->map_image = pocl_ventus_map_image;
-  ops->unmap_image = pocl_ventus_unmap_image;
-  ops->fill_image = pocl_ventus_fill_image;
+
+  ops->can_migrate_d2d = NULL;
+  ops->migrate_d2d = NULL;
+
+  ops->copy_image_rect = NULL;
+  ops->write_image_rect = NULL;
+  ops->read_image_rect = NULL;
+  ops->map_image = NULL;
+  ops->unmap_image = NULL;
+  ops->fill_image = NULL;
 }
 
 char *
@@ -193,25 +215,72 @@ pocl_ventus_build_hash (cl_device_id device)
 unsigned int
 pocl_ventus_probe(struct pocl_device_ops *ops)
 {
-  int env_count = pocl_device_get_env_count(ops->device_name);
-
-  /* No env specified, so pthread will be used instead of basic */
-  if(env_count < 0)
-    return 0;
-
-  return env_count;
+  if (0 == strcmp(ops->device_name, "ventus"))
+    return 1;
+  return 0;
 }
 
 cl_int
 pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 {
-  struct ventus_device_data_t *d;
+  struct vt_device_data_t *d;
   cl_int ret = CL_SUCCESS;
   int err;
 
-  d = (struct ventus_device_data_t *) calloc (1, sizeof (struct ventus_device_data_t));
+  d = (struct vt_device_data_t *) calloc (1, sizeof (struct vt_device_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
+
+
+#if !defined(ENABLE_LLVM)
+  vt_device_h vt_device;
+
+  err = vt_dev_open(&vt_device);
+  if (err != 0) {
+    free(d);
+    return CL_DEVICE_NOT_FOUND;
+  }
+  
+  device->device_side_printf = 1;
+  device->printf_buffer_size = PRINT_BUFFER_SIZE;
+
+  // add storage for position pointer
+  uint32_t print_buf_dev_size = PRINT_BUFFER_SIZE + sizeof(uint32_t);
+
+  size_t vt_print_buf_d;
+  err = vt_mem_alloc(vt_device, print_buf_dev_size, &vt_print_buf_d);
+  if (err != 0) {
+    vt_dev_close(vt_device);
+    free(d);
+    return CL_INVALID_DEVICE;
+  }  
+  
+  vt_buffer_h vt_print_buf_h;
+  err = vt_buf_alloc(vt_device, print_buf_dev_size, &vt_print_buf_h);
+  if (err != 0) {
+    vt_dev_close(vt_device);
+    free(d);
+    return CL_OUT_OF_HOST_MEMORY;
+  }  
+    
+  // clear print position to zero
+  uint8_t* staging_ptr = (uint8_t*)vt_host_ptr(vt_print_buf_h);
+  memset(staging_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
+  err = vt_copy_to_dev(vt_print_buf_h, vt_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
+  if (err != 0) {
+    vt_buf_free(vt_print_buf_h);
+    vt_dev_close(vt_device);
+    free(d);
+    return CL_OUT_OF_HOST_MEMORY;
+  }
+    
+  d->vt_device      = vt_device;
+  d->vt_print_buf_d = vt_print_buf_d;
+  d->vt_print_buf_h = vt_print_buf_h; 
+  d->printf_buffer  = vt_print_buf_d;
+  d->printf_buffer_position = vt_print_buf_d + PRINT_BUFFER_SIZE;
+#endif 
+
 
   d->current_kernel = NULL;
 
@@ -310,227 +379,192 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 void
 pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
-  struct ventus_device_data_t *d;
-  struct pocl_argument *al;
+  struct vt_device_data_t *d;
   size_t x, y, z;
   unsigned i;
+  unsigned dev_i = cmd->device_i;
   cl_kernel kernel = cmd->command.run.kernel;
+  cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
+  int err;
+  
+  assert(data != NULL);
+  d = (struct vt_device_data_t *)data;
 
-  if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
-    return;
-
-  assert (data != NULL);
-  d = (struct ventus_device_data_t *) data;
-
-  d->current_kernel = kernel;
-
-  void **arguments = (void **)malloc (sizeof (void *)
-                                      * (meta->num_args + meta->num_locals));
-
-  /* Process the kernel arguments. Convert the opaque buffer
-     pointers to real device pointers, allocate dynamic local
-     memory buffers, etc. */
-  for (i = 0; i < meta->num_args; ++i)
-    {
-      al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
-        {
-          if (cmd->device->device_alloca_locals)
-            {
-              /* Local buffers are allocated in the device side work-group
-                 launcher. Let's pass only the sizes of the local args in
-                 the arg buffer. */
-              assert (sizeof (size_t) == sizeof (void *));
-              arguments[i] = (void *)al->size;
-            }
-          else
-            {
-              arguments[i] = malloc (sizeof (void *));
-              *(void **)(arguments[i]) =
-                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
-            }
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-        {
-          /* It's legal to pass a NULL pointer to clSetKernelArguments. In
-             that case we must pass the same NULL forward to the kernel.
-             Otherwise, the user must have created a buffer with per device
-             pointers stored in the cl_mem. */
-          arguments[i] = malloc (sizeof (void *));
-          if (al->value == NULL)
-            {
-              *(void **)arguments[i] = NULL;
-            }
-          else
-            {
-              void *ptr = NULL;
-              if (al->is_svm)
-                {
-                  ptr = *(void **)al->value;
-                }
-              else
-                {
-                  cl_mem m = (*(cl_mem *)(al->value));
-                  ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
-                }
-              *(void **)arguments[i] = (char *)ptr + al->offset;
-            }
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
-        {
-          dev_image_t di;
-          pocl_fill_dev_image_t (&di, al, cmd->device);
-
-          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                              sizeof (dev_image_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          memcpy (devptr, &di, sizeof (dev_image_t));
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          dev_sampler_t ds;
-          pocl_fill_dev_sampler_t (&ds, al);
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = (void *)ds;
-        }
-      else
-        {
-          arguments[i] = al->value;
-        }
-    }
-
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        size_t s = meta->local_sizes[i];
-        size_t j = meta->num_args + i;
-        arguments[j] = malloc (sizeof (void *));
-        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-        *(void **)(arguments[j]) = pp;
+  // calculate kernel arguments buffer size
+  size_t abuf_size = 0;  
+  size_t abuf_args_size = 4 * (meta->num_args + meta->num_locals);
+  size_t abuf_ext_size = 0;
+  {
+    // pocl_context data
+    abuf_size += ALIGNED_CTX_SIZE; 
+    // argument data    
+    abuf_size += abuf_args_size;
+    for (i = 0; i < meta->num_args; ++i) {  
+      auto al = &(cmd->command.run.arguments[i]);  
+      if (ARG_IS_LOCAL(meta->arg_info[i])
+       && !cmd->device->device_alloca_locals) {
+        abuf_size += 4;
+        abuf_size += al->size;
+        abuf_ext_size += al->size;
+      } else
+      if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+       || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+       || (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)) {
+        abuf_size += 4;
+      } else {
+        abuf_size += al->size;
       }
-
-  pc->printf_buffer = d->printf_buffer;
-  assert (pc->printf_buffer != NULL);
-  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
-  assert (pc->printf_buffer_capacity > 0);
-  uint32_t position = 0;
-  pc->printf_buffer_position = &position;
-
-  unsigned rm = pocl_save_rm ();
-  pocl_set_default_rm ();
-  unsigned ftz = pocl_save_ftz ();
-  pocl_set_ftz (kernel->program->flush_denorms);
-
-  for (z = 0; z < pc->num_groups[2]; ++z)
-    for (y = 0; y < pc->num_groups[1]; ++y)
-      for (x = 0; x < pc->num_groups[0]; ++x)
-        ((pocl_workgroup_func) cmd->command.run.wg)
-	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
-
-  pocl_restore_rm (rm);
-  pocl_restore_ftz (ftz);
-
-  if (position > 0)
-    {
-      write (STDOUT_FILENO, pc->printf_buffer, position);
-      position = 0;
     }
+  }
+  assert(abuf_size <= 0xffff);
 
-  for (i = 0; i < meta->num_args; ++i)
+  // allocate kernel arguments buffer
+  vt_buffer_h staging_buf;
+  err = vt_buf_alloc(d->vt_device, abuf_size, &staging_buf);
+  assert(0 == err);
+
+  // update kernel arguments buffer
+  {
+    auto abuf_ptr = (uint8_t*)vt_host_ptr(staging_buf);
+    assert(abuf_ptr);
+
+    // write context data
     {
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
-        {
-          if (!cmd->device->device_alloca_locals)
-            {
-              POCL_MEM_FREE(*(void **)(arguments[i]));
-              POCL_MEM_FREE(arguments[i]);
-            }
-          else
-            {
-              /* Device side local space allocation has deallocation via stack
-                 unwind. */
-            }
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE
-               || meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          if (meta->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
-            POCL_MEM_FREE (*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
-        }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-        {
-          POCL_MEM_FREE(arguments[i]);
-        }
-    }
-
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
-        POCL_MEM_FREE (arguments[meta->num_args + i]);
+      kernel_context_t ctx;
+      for (int i = 0; i < 3; ++i) {
+        ctx.num_groups[i] = pc->num_groups[i];
+        ctx.global_offset[i] = pc->global_offset[i];
+        ctx.local_size[i] = pc->local_size[i];        
       }
-  free(arguments);
+      ctx.work_dim = pc->work_dim;      
+      ctx.printf_buffer = d->printf_buffer;
+      ctx.printf_buffer_position = d->printf_buffer_position;
+      ctx.printf_buffer_capacity = PRINT_BUFFER_SIZE;
 
-  pocl_release_dlhandle_cache (cmd);
+      memset(abuf_ptr, 0, ALIGNED_CTX_SIZE);
+      memcpy(abuf_ptr, &ctx, sizeof(kernel_context_t));
+      print_data("*** ctx=", abuf_ptr, ALIGNED_CTX_SIZE);
+    }
+
+    // write arguments    
+    uint32_t args_base_addr = KERNEL_ARG_BASE_ADDR;
+    uint32_t args_addr = args_base_addr + ALIGNED_CTX_SIZE + abuf_args_size;
+    uint32_t args_ext_addr = (args_base_addr + abuf_size) - abuf_ext_size;
+    for (i = 0; i < meta->num_args; ++i) {
+      uint32_t addr = ALIGNED_CTX_SIZE + i * 4;
+      auto al = &(cmd->command.run.arguments[i]);
+      if (ARG_IS_LOCAL(meta->arg_info[i])) {
+        if (cmd->device->device_alloca_locals) {
+          memcpy(abuf_ptr + addr, &al->size, 4);
+          print_data("*** locals=", abuf_ptr + addr, 4);
+        } else {
+          memcpy(abuf_ptr + addr, &args_addr, 4);          
+          memcpy(abuf_ptr + (args_addr - args_base_addr), &args_ext_addr, 4);
+          args_addr += 4;
+          args_ext_addr += al->size;
+          std::abort();
+        }
+      } else
+      if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
+        memcpy(abuf_ptr + addr, &args_addr, 4);        
+        if (al->value == NULL) {
+          memset(abuf_ptr + (args_addr - args_base_addr), 0, 4);
+          print_data("*** null=", abuf_ptr + (args_addr - args_base_addr), 4); 
+        } else {
+          cl_mem m = (*(cl_mem *)(al->value));
+          auto buf_data = (vt_buffer_data_t*)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+          auto dev_mem_addr = buf_data->dev_mem_addr + al->offset;
+          memcpy(abuf_ptr + (args_addr - args_base_addr), &dev_mem_addr, 4);
+          print_data("*** ptr=", abuf_ptr + (args_addr - args_base_addr), 4);
+        }
+        args_addr += 4;
+      } else 
+      if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
+        std::abort();
+      } else 
+      if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
+        std::abort();
+      } else {
+        memcpy(abuf_ptr + addr, &args_addr, 4);
+        memcpy(abuf_ptr + (args_addr - args_base_addr), al->value, al->size);
+        print_data("*** arg-addr=", abuf_ptr + addr, 4);
+        print_data("*** arg-value=", abuf_ptr + (args_addr - args_base_addr), al->size);
+        args_addr += al->size;
+      }
+    }
+
+    // upload kernel arguments buffer
+    err = vt_copy_to_dev(staging_buf, args_base_addr, abuf_size, 0);
+    assert(0 == err);
+
+    // release staging buffer
+    err = vt_buf_free(staging_buf);
+    assert(0 == err);
+    
+    // upload kernel to device
+    if (NULL == d->current_kernel 
+     || d->current_kernel != kernel) {    
+       d->current_kernel = kernel;
+      char program_bin_path[POCL_FILENAME_LENGTH];
+      pocl_cache_final_binary_path (program_bin_path, program, dev_i, kernel, NULL, 0);
+      err = vt_upload_kernel_file(d->vt_device, program_bin_path);      
+      assert(0 == err);
+    }
+  }
+    
+  // quick off kernel execution
+  err = vt_start(d->vt_device);
+  assert(0 == err);
+
+  // wait for the execution to complete
+  err = vt_ready_wait(d->vt_device, -1);
+  assert(0 == err);
+
+  // flush print buffer 
+  {
+    auto print_ptr = (uint8_t*)vt_host_ptr(d->vt_print_buf_h);
+    err = vt_copy_from_dev(d->vt_print_buf_h, d->vt_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
+    assert(0 == err);
+    uint32_t print_size = *(uint32_t*)(print_ptr + PRINT_BUFFER_SIZE);
+    if (print_size != 0) {
+      err = vt_copy_from_dev(d->vt_print_buf_h, d->vt_print_buf_d, print_size, 0);
+      assert(0 == err);      
+      
+      write (STDOUT_FILENO, print_ptr, print_size);
+      
+      memset(print_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
+      err = vt_copy_to_dev(d->vt_print_buf_h, d->vt_print_buf_d, sizeof(uint32_t), PRINT_BUFFER_SIZE);
+      assert(0 == err);
+    }
+  }
+
+  pocl_release_dlhandle_cache(cmd);
 }
 
-void
-pocl_ventus_run_native (void *data, _cl_command_node *cmd)
-{
-  cl_event ev = cmd->sync.event.event;
-  cl_device_id dev = cmd->device;
-  size_t i;
-  for (i = 0; i < ev->num_buffers; i++)
-    {
-      void *arg_loc = cmd->command.native.arg_locs[i];
-      void *buf = ev->mem_objs[i]->device_ptrs[dev->global_mem_id].mem_ptr;
-      if (dev->address_bits == 32)
-        *((uint32_t *)arg_loc) = (uint32_t) (((uintptr_t)buf) & 0xFFFFFFFF);
-      else
-        *((uint64_t *)arg_loc) = (uint64_t) (uintptr_t)buf;
-    }
-
-  cmd->command.native.user_func(cmd->command.native.args);
-
-  POCL_MEM_FREE (cmd->command.native.arg_locs);
-}
 
 cl_int
 pocl_ventus_uninit (unsigned j, cl_device_id device)
 {
-  struct ventus_device_data_t *d = (struct ventus_device_data_t*)device->data;
-  POCL_DESTROY_LOCK (d->cq_lock);
-  pocl_aligned_free (d->printf_buffer);
+  struct vt_device_data_t *d = (struct vt_device_data_t*)device->data;
+  if (NULL == d)
+  return CL_SUCCESS;  
+
+  #if !defined(OCS_AVAILABLE)
+    vt_buf_free(d->vt_print_buf_h);
+    vt_dev_close(d->vt_device);
+  #endif
+
+  POCL_DESTROY_LOCK(d->cq_lock);
   POCL_MEM_FREE(d);
   device->data = NULL;
-  return CL_SUCCESS;
-}
-
-cl_int
-pocl_ventus_reinit (unsigned j, cl_device_id device)
-{
-  struct ventus_device_data_t *d = (struct ventus_device_data_t *)calloc (1, sizeof (struct ventus_device_data_t));
-  if (d == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  d->current_kernel = NULL;
-
-  assert (device->printf_buffer_size > 0);
-  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                          device->printf_buffer_size);
-  assert (d->printf_buffer != NULL);
-
-  POCL_INIT_LOCK (d->cq_lock);
-  device->data = d;
+  
   return CL_SUCCESS;
 }
 
 
-static void ventus_command_scheduler (struct ventus_device_data_t *d)
+static void ventus_command_scheduler (struct vt_device_data_t *d)
 {
   _cl_command_node *node;
 
@@ -551,7 +585,7 @@ static void ventus_command_scheduler (struct ventus_device_data_t *d)
 void
 pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  struct ventus_device_data_t *d = (struct ventus_device_data_t *)node->device->data;
+  struct vt_device_data_t *d = (struct vt_device_data_t *)node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (node, 1, 1);
@@ -569,7 +603,7 @@ pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq)
 
 void pocl_ventus_flush (cl_device_id device, cl_command_queue cq)
 {
-  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
+  struct vt_device_data_t *d = (struct vt_device_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   ventus_command_scheduler (d);
@@ -579,7 +613,7 @@ void pocl_ventus_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_ventus_join (cl_device_id device, cl_command_queue cq)
 {
-  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
+  struct vt_device_data_t *d = (struct vt_device_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   ventus_command_scheduler (d);
@@ -591,7 +625,7 @@ pocl_ventus_join (cl_device_id device, cl_command_queue cq)
 void
 pocl_ventus_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  struct ventus_device_data_t *d = (struct ventus_device_data_t *)device->data;
+  struct vt_device_data_t *d = (struct vt_device_data_t *)device->data;
   _cl_command_node * volatile node = event->command;
 
   if (finished->status < CL_COMPLETE)
@@ -626,230 +660,134 @@ pocl_ventus_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
 }
 
-/*********************** IMAGES ********************************/
+void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
+  cl_mem_flags flags = memobj->flags;
+  auto buf_data = (vt_buffer_data_t*)memobj->device_ptrs[device->dev_id].mem_ptr;
 
-cl_int pocl_ventus_copy_image_rect( void *data,
-                                   cl_mem src_image,
-                                   cl_mem dst_image,
-                                   pocl_mem_identifier *src_mem_id,
-                                   pocl_mem_identifier *dst_mem_id,
-                                   const size_t *src_origin,
-                                   const size_t *dst_origin,
-                                   const size_t *region)
-{
-
-  size_t px = src_image->image_elem_size * src_image->image_channels;
-  const size_t adj_src_origin[3]
-      = { src_origin[0] * px, src_origin[1], src_origin[2] };
-  const size_t adj_dst_origin[3]
-      = { dst_origin[0] * px, dst_origin[1], dst_origin[2] };
-  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
-
-  POCL_MSG_PRINT_MEMORY (
-      " ventus COPY IMAGE RECT \n"
-      "dst_image %p dst_mem_id %p \n"
-      "src_image %p src_mem_id %p \n"
-      "dst_origin [0,1,2] %zu %zu %zu \n"
-      "src_origin [0,1,2] %zu %zu %zu \n"
-      "region [0,1,2] %zu %zu %zu \n"
-      "px %zu\n",
-      dst_image, dst_mem_id,
-      src_image, src_mem_id,
-      dst_origin[0], dst_origin[1], dst_origin[2],
-      src_origin[0], src_origin[1], src_origin[2],
-      region[0], region[1], region[2],
-      px);
-
-  pocl_driver_copy_rect (
-      data, dst_mem_id, NULL, src_mem_id, NULL, adj_dst_origin, adj_src_origin,
-      adj_region, dst_image->image_row_pitch, dst_image->image_slice_pitch,
-      src_image->image_row_pitch, src_image->image_slice_pitch);
-
-  return CL_SUCCESS;
-}
-
-/* copies a region from host or device buffer to device image */
-cl_int pocl_ventus_write_image_rect (  void *data,
-                                      cl_mem dst_image,
-                                      pocl_mem_identifier *dst_mem_id,
-                                      const void *__restrict__ src_host_ptr,
-                                      pocl_mem_identifier *src_mem_id,
-                                      const size_t *origin,
-                                      const size_t *region,
-                                      size_t src_row_pitch,
-                                      size_t src_slice_pitch,
-                                      size_t src_offset)
-{
-  POCL_MSG_PRINT_MEMORY (
-      "ventus WRITE IMAGE RECT \n"
-      "dst_image %p dst_mem_id %p \n"
-      "src_hostptr %p src_mem_id %p \n"
-      "origin [0,1,2] %zu %zu %zu \n"
-      "region [0,1,2] %zu %zu %zu \n"
-      "row %zu slice %zu offset %zu \n",
-      dst_image, dst_mem_id,
-      src_host_ptr, src_mem_id,
-      origin[0], origin[1], origin[2],
-      region[0], region[1], region[2],
-      src_row_pitch, src_slice_pitch, src_offset);
-
-  const void *__restrict__ ptr
-      = src_host_ptr ? src_host_ptr : src_mem_id->mem_ptr;
-  ptr += src_offset;
-  const size_t zero_origin[3] = { 0 };
-  size_t px = dst_image->image_elem_size * dst_image->image_channels;
-  if (src_row_pitch == 0)
-    src_row_pitch = px * region[0];
-  if (src_slice_pitch == 0)
-    src_slice_pitch = src_row_pitch * region[1];
-
-  const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
-  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
-
-  pocl_driver_write_rect (data, ptr, dst_mem_id, NULL, adj_origin, zero_origin,
-                          adj_region, dst_image->image_row_pitch,
-                          dst_image->image_slice_pitch, src_row_pitch,
-                          src_slice_pitch);
-  return CL_SUCCESS;
-}
-
-/* copies a region from device image to host or device buffer */
-cl_int pocl_ventus_read_image_rect(  void *data,
-                                    cl_mem src_image,
-                                    pocl_mem_identifier *src_mem_id,
-                                    void *__restrict__ dst_host_ptr,
-                                    pocl_mem_identifier *dst_mem_id,
-                                    const size_t *origin,
-                                    const size_t *region,
-                                    size_t dst_row_pitch,
-                                    size_t dst_slice_pitch,
-                                    size_t dst_offset)
-{
-  POCL_MSG_PRINT_MEMORY (
-      "ventus READ IMAGE RECT \n"
-      "src_image %p src_mem_id %p \n"
-      "dst_hostptr %p dst_mem_id %p \n"
-      "origin [0,1,2] %zu %zu %zu \n"
-      "region [0,1,2] %zu %zu %zu \n"
-      "row %zu slice %zu offset %zu \n",
-      src_image, src_mem_id,
-      dst_host_ptr, dst_mem_id,
-      origin[0], origin[1], origin[2],
-      region[0], region[1], region[2],
-      dst_row_pitch, dst_slice_pitch, dst_offset);
-
-  void *__restrict__ ptr = dst_host_ptr ? dst_host_ptr : dst_mem_id->mem_ptr;
-  ptr += dst_offset;
-  const size_t zero_origin[3] = { 0 };
-  size_t px = src_image->image_elem_size * src_image->image_channels;
-  if (dst_row_pitch == 0)
-    dst_row_pitch = px * region[0];
-  if (dst_slice_pitch == 0)
-    dst_slice_pitch = dst_row_pitch * region[1];
-  const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
-  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
-
-  pocl_driver_read_rect (data, ptr, src_mem_id, NULL, adj_origin, zero_origin,
-                         adj_region, src_image->image_row_pitch,
-                         src_image->image_slice_pitch, dst_row_pitch,
-                         dst_slice_pitch);
-  return CL_SUCCESS;
+  /* The host program can provide the runtime with a pointer 
+  to a block of continuous memory to hold the memory object 
+  when the object is created (CL_MEM_USE_HOST_PTR). 
+  Alternatively, the physical memory can be managed 
+  by the OpenCL runtime and not be directly accessible 
+  to the host program.*/
+  if (flags & CL_MEM_USE_HOST_PTR 
+   || memobj->shared_mem_allocation_owner != device) {
+    std::abort(); //TODO
+  } else {
+    vt_buf_free(buf_data->staging_buf);
+    vt_mem_free(buf_data->vt_device, buf_data->dev_mem_addr);
+  }
+  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
+    memobj->mem_host_ptr = NULL;
 }
 
 
-cl_int pocl_ventus_map_image (void *data,
-                             pocl_mem_identifier *mem_id,
-                             cl_mem src_image,
-                             mem_mapping_t *map)
-{
-  assert (map->host_ptr != NULL);
+static void *
+pocl_ventus_malloc(cl_device_id device, cl_mem_flags flags, size_t size,
+                   void *host_ptr) {
+  auto d = (vt_device_data_t *)device->data;
+  void *b = NULL;
+  pocl_global_mem_t *mem = device->global_memory;
+  int err;
 
-  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
-    return CL_SUCCESS;
+  if (flags & CL_MEM_USE_HOST_PTR) {
+    std::abort(); //TODO
+  }
 
-  if (map->host_ptr != ((char *)mem_id->mem_ptr + map->offset))
-    {
-      pocl_ventus_read_image_rect (data, src_image, mem_id, map->host_ptr,
-                                  NULL, map->origin, map->region,
-                                  map->row_pitch, map->slice_pitch, 0);
+  vt_buffer_h staging_buf;
+  err = vt_buf_alloc(d->vt_device, size, &staging_buf);
+  if (err != 0)
+    return nullptr;
+
+  size_t dev_mem_addr;
+  err = vt_mem_alloc(d->vt_device, size, &dev_mem_addr);
+  if (err != 0) {
+    vt_buf_free(staging_buf);
+    return nullptr;
+  }
+
+  if (flags & CL_MEM_COPY_HOST_PTR) {
+    auto buf_ptr = vt_host_ptr(staging_buf);
+    memcpy((void*)buf_ptr, host_ptr, size);
+    err = vt_copy_to_dev(staging_buf, dev_mem_addr, size, 0);
+    if (err != 0) {
+      vt_buf_free(staging_buf);
+      return nullptr;
     }
-  return CL_SUCCESS;
+  }
+
+  auto buf_data = new vt_buffer_data_t();
+  buf_data->vt_device    = d->vt_device;
+  buf_data->staging_buf  = staging_buf;
+  buf_data->dev_mem_addr = dev_mem_addr;
+
+  return buf_data;
 }
 
-cl_int pocl_ventus_unmap_image(void *data,
-                              pocl_mem_identifier *mem_id,
-                              cl_mem dst_image,
-                              mem_mapping_t *map)
-{
-  if (map->map_flags == CL_MAP_READ)
-    return CL_SUCCESS;
-
-  if (map->host_ptr != ((char *)mem_id->mem_ptr + map->offset))
-    {
-      pocl_ventus_write_image_rect (data, dst_image, mem_id, map->host_ptr,
-                                   NULL, map->origin, map->region,
-                                   map->row_pitch, map->slice_pitch, 0);
-    }
-  return CL_SUCCESS;
-}
 
 cl_int
-pocl_ventus_fill_image (void *data, cl_mem image,
-                       pocl_mem_identifier *image_data, const size_t *origin,
-                       const size_t *region, cl_uint4 orig_pixel,
-                       pixel_t fill_pixel, size_t pixel_size)
-{
-   POCL_MSG_PRINT_MEMORY ("ventus / FILL IMAGE \n"
-                          "image %p data %p \n"
-                          "origin [0,1,2] %zu %zu %zu \n"
-                          "region [0,1,2] %zu %zu %zu \n"
-                          "pixel %p size %zu \n",
-                          image, image_data,
-                          origin[0], origin[1], origin[2],
-                          region[0], region[1], region[2],
-                          fill_pixel, pixel_size);
+pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
+  void *b = NULL;
+  cl_mem_flags flags = mem_obj->flags;
+  unsigned i;
 
-  size_t row_pitch = image->image_row_pitch;
-  size_t slice_pitch = image->image_slice_pitch;
-  char *__restrict const adjusted_device_ptr
-      = (char *)image_data->mem_ptr
-        + origin[0] * pixel_size
-        + row_pitch * origin[1]
-        + slice_pitch * origin[2];
+  /* Check if some driver has already allocated memory for this mem_obj
+     in our global address space, and use that. */
+  for (i = 0; i < mem_obj->context->num_devices; ++i) {
+    if (!mem_obj->device_ptrs[i].available)
+      continue;
+    if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id && mem_obj->device_ptrs[i].mem_ptr != NULL) {
+      mem_obj->device_ptrs[device->dev_id].mem_ptr = mem_obj->device_ptrs[i].mem_ptr;
+    
+      POCL_MSG_PRINT_INFO("VENTUS: alloc_mem_obj, use already allocated memory\n");
+      std::abort(); // TODO
+      return CL_SUCCESS;
+    }
+  }
 
-  size_t i, j, k;
+  /* Memory for this global memory is not yet allocated -> we'll allocate it. */
+  b = pocl_ventus_malloc(device, flags, mem_obj->size, host_ptr);
+  if (b == NULL)
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      for (i = 0; i < region[0]; ++i)
-        memcpy (adjusted_device_ptr
-                  + pixel_size * i
-                  + row_pitch * j
-                  + slice_pitch * k,
-                fill_pixel,
-                pixel_size);
+  /* Take ownership if not USE_HOST_PTR. */
+  if (~flags & CL_MEM_USE_HOST_PTR)
+    mem_obj->shared_mem_allocation_owner = device;
+
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
+
+  if (flags & CL_MEM_ALLOC_HOST_PTR) {
+    std::abort(); // TODO
+  }
+
   return CL_SUCCESS;
 }
 
-/***************************************************************************/
-void
-pocl_ventus_svm_free (cl_device_id dev, void *svm_ptr)
-{
-  /* TODO we should somehow figure out the size argument
-   * and call pocl_free_global_mem */
-  pocl_aligned_free (svm_ptr);
+void pocl_ventus_read(void *data,
+                      void *__restrict__ host_ptr,
+                      pocl_mem_identifier *src_mem_id,
+                      cl_mem src_buf,
+                      size_t offset, 
+                      size_t size) {
+  int vt_err;
+  struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
+  auto buf_data = (vt_buffer_data_t*)src_mem_id->mem_ptr;
+  vt_err = vt_copy_from_dev(buf_data->staging_buf, buf_data->dev_mem_addr, offset + size, 0);
+  assert(0 == vt_err);
+  auto buf_ptr = vt_host_ptr(buf_data->staging_buf);
+  assert(buf_ptr);
+  memcpy(host_ptr, (char *)buf_ptr + offset, size);
 }
 
-void *
-pocl_ventus_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
-
-{
-  return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
-}
-
-void
-pocl_ventus_svm_copy (cl_device_id dev, void *__restrict__ dst,
-                     const void *__restrict__ src, size_t size)
-{
-  memcpy (dst, src, size);
+void pocl_ventus_write(void *data,
+                       const void *__restrict__ host_ptr,
+                       pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf,
+                       size_t offset, 
+                       size_t size) {
+  auto buf_data = (vt_buffer_data_t*)dst_mem_id->mem_ptr;
+  auto buf_ptr = vt_host_ptr(buf_data->staging_buf);
+  memcpy((char *)buf_ptr + offset, host_ptr, size);
+  auto vt_err = vt_copy_to_dev(buf_data->staging_buf, buf_data->dev_mem_addr, offset + size, 0);
+  assert(0 == vt_err);
 }
