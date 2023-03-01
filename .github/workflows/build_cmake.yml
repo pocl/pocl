@@ -29,6 +29,8 @@ jobs:
         # asan, tsan, ubsan = sanitizers
         config: [basic, devel, asan, cts_spirv, tier1]
         include:
+          - llvm: 10
+            config: basic
           - llvm: 11
             config: basic
           - llvm: 12
@@ -49,8 +51,8 @@ jobs:
         id: cmake
         run: |
           runCMake() {
-            BUILD_FLAGS="-O1 -march=native -ggdb3 -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
@@ -67,7 +69,7 @@ jobs:
           elif [ "${{ matrix.config }}" == "basic" ]; then
             runCMake -DENABLE_ICD=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCMake -DDEVELOPER_MODE=ON -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
+            runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON
           elif [ "${{ matrix.config }}" == "tier1" ]; then
@@ -90,6 +92,8 @@ jobs:
           runCTest() {
             cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) "$@"
           }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "asan" ]; then
             runCTest -L "runtime|asan"
           elif [ "${{ matrix.config }}" == "tsan" ]; then
