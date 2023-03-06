@@ -194,6 +194,8 @@ option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL i
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
 
+option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
+
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use kernel cache for intermediate compilation files, but will clean up them on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
@@ -247,8 +249,6 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
-option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
-
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
 option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
@@ -296,13 +296,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i.86|AMD64|x86_64|amd64)")
   endif()
 endif()
 
-if(CMAKE_MAJOR_VERSION GREATER 2)
-  include(ProcessorCount)
-  ProcessorCount(CORECOUNT)
-  if(CORECOUNT LESS 1)
-    set(CORECOUNT 1)
-  endif()
-else()
+include(ProcessorCount)
+ProcessorCount(CORECOUNT)
+if(CORECOUNT LESS 1)
   set(CORECOUNT 1)
 endif()
 message(STATUS "Host CPU cores: ${CORECOUNT}")
@@ -344,11 +340,7 @@ endfunction()
 
 # Recent versions of CMake can make use of Ninja's console pool to avoid
 # buffering the output of particular commands.
-if(CMAKE_VERSION VERSION_LESS 3.2.0)
-  set(COMMAND_USES_TERMINAL)
-else()
-  set(COMMAND_USES_TERMINAL USES_TERMINAL)
-endif()
+set(COMMAND_USES_TERMINAL USES_TERMINAL)
 
 include(GNUInstallDirs)
 
