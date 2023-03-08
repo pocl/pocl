@@ -68,6 +68,7 @@ set(ALL_TESTSUITES
     ASL arrayfire clBLAS CLBlast clFFT chip-spv
     conformance CloverLeaf Halide IntelSVM
     intel-compute-samples oneapi-samples
+    simple-sycl-samples dpcpp-book-samples
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
     Rodinia shoc VexCL ViennaCL Glow)
