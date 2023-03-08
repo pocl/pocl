@@ -104,4 +104,4 @@ add_test(NAME all_intel_compute_tests
 
 set_tests_properties(
   all_intel_compute_tests
-  PROPERTIES LABELS "${TS_NAME}")
+  PROPERTIES LABELS "${TS_NAME};level0")

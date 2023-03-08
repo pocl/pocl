@@ -75,4 +75,4 @@ set_tests_properties(
   oneapi_samples
   PROPERTIES
     ENVIRONMENT "LD_LIBRARY_PATH=${SYCL_LIBDIR};ONEAPI_DEVICE_SELECTOR=opencl:*"
-    LABELS "${TS_NAME}")
+    LABELS "${TS_NAME};level0")
