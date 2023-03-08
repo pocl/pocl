@@ -54,7 +54,7 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_svm_check_pointer (context, svm_ptr, size);
+  errcode = pocl_svm_check_pointer (context, svm_ptr, size, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 

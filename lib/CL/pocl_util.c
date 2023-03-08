@@ -2684,7 +2684,8 @@ pocl_free_kernel_metadata (cl_program program, unsigned kernel_i)
 }
 
 int
-pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size)
+pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size,
+                        size_t *buffer_size)
 {
 
   /* TODO we need a better data structure than linked list,
@@ -2723,6 +2724,9 @@ pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size)
       POCL_MSG_ERR ("The pointer+size exceeds the size of the allocation\n");
       return CL_INVALID_OPERATION;
     }
+
+  if (found != NULL && buffer_size != NULL)
+    *buffer_size = item->size;
 
   return CL_SUCCESS;
 }

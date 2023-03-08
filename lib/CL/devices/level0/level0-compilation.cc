@@ -110,7 +110,7 @@ void Level0Kernel::setIndirectAccess(
   }
 }
 
-void Level0Kernel::setAccessedPointers(const std::vector<void *> &Ptrs) {
+void Level0Kernel::setAccessedPointers(const std::map<void *, size_t> &Ptrs) {
   std::lock_guard<std::mutex> LockGuard(Mutex);
   AccessedPointers = Ptrs;
 }

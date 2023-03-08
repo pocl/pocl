@@ -1064,8 +1064,11 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     P->mem_ptr = Mem->mem_host_ptr;
     P->version = Mem->mem_host_ptr_version;
   } else {
-    //    void *all = Device->allocDeviceMem(mem->size);
-    Allocation = Device->allocSharedMem(Mem->size);
+    bool Compress = false;
+    if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
+      Compress = (Mem->flags & CL_MEM_READ_ONLY) > 0;
+    }
+    Allocation = Device->allocSharedMem(Mem->size, Compress);
     if (Allocation == nullptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
@@ -1195,7 +1198,11 @@ int pocl_level0_free_sampler(cl_device_id ClDevice, cl_sampler Samp,
 void *pocl_level0_svm_alloc(cl_device_id Dev, cl_svm_mem_flags Flags,
                             size_t Size) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  return Device->allocSharedMem(Size);
+  bool Compress = false;
+  if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
+    Compress = (Flags & CL_MEM_READ_ONLY) > 0;
+  }
+  return Device->allocSharedMem(Size, Compress);
 }
 
 void pocl_level0_svm_free(cl_device_id Dev, void *SvmPtr) {
@@ -1232,7 +1239,7 @@ void *pocl_level0_usm_alloc(cl_device_id Dev, unsigned AllocType,
   case CL_MEM_TYPE_SHARED_INTEL:
     POCL_GOTO_ERROR_ON(!Device->supportsSingleSharedUSM(), CL_INVALID_OPERATION,
                        "Device does not support Shared USM allocations\n");
-    Ptr = Device->allocSharedMem(Size, DevZeFlags, HostZeFlags);
+    Ptr = Device->allocSharedMem(Size, false, DevZeFlags, HostZeFlags);
     break;
   default:
     POCL_MSG_ERR("Unknown USM AllocType requested\n");
@@ -1407,12 +1414,22 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
 
   case CL_KERNEL_EXEC_INFO_SVM_PTRS:
   case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
-    std::vector<void *> UsedPtrs;
+    std::map<void *, size_t> UsedPtrs;
     cl_uint NumElem = param_value_size / sizeof(void *);
     if (NumElem == 0)
       return CL_INVALID_ARG_VALUE;
-    UsedPtrs.resize(NumElem);
-    memcpy(UsedPtrs.data(), param_value, param_value_size);
+    void **Elems = (void **)param_value;
+    size_t AllocationSize;
+    // find the allocation sizes for the pointers. Needed for L0 API
+    for (cl_uint i = 0; i < NumElem; ++i) {
+      AllocationSize = 0;
+      int err =
+          pocl_svm_check_pointer(Kernel->context, Elems[i], 1, &AllocationSize);
+      POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
+                           "Invalid pointer given to the call\n");
+      assert(AllocationSize > 0);
+      UsedPtrs[Elems[i]] = AllocationSize;
+    }
     L0Kernel->setAccessedPointers(UsedPtrs);
     return CL_SUCCESS;
   }

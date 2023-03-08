@@ -173,9 +173,9 @@ private:
                   size_t *sizes);
   void svmAdvise(const void *ptr, size_t size, cl_mem_advice_intel advice);
 
-  static bool setupKernelArgs(ze_module_handle_t ModuleH,
-                              ze_kernel_handle_t KernelH, cl_device_id Dev,
-                              unsigned DeviceI, _cl_command_run *RunCmd);
+  bool setupKernelArgs(ze_module_handle_t ModuleH, ze_kernel_handle_t KernelH,
+                       cl_device_id Dev, unsigned DeviceI,
+                       _cl_command_run *RunCmd);
   void runWithOffsets(struct pocl_context *PoclCtx, ze_kernel_handle_t KernelH);
   void run(_cl_command_node *Cmd);
 
@@ -235,7 +235,7 @@ public:
 
   void pushCommand(_cl_command_node *Command);
 
-  void *allocSharedMem(uint64_t Size,
+  void *allocSharedMem(uint64_t Size, bool EnableCompression = false,
                        ze_device_mem_alloc_flags_t DevFlags =
                            ZE_DEVICE_MEM_ALLOC_FLAG_BIAS_CACHED,
                        ze_host_mem_alloc_flags_t HostFlags =
@@ -284,6 +284,7 @@ public:
   bool supportsSystemSharedUSM() { return SystemSharedCaps != 0; }
   bool supportsOndemandPaging() { return OndemandPaging; }
   bool supportsGlobalOffsets() { return HasGOffsets; }
+  bool supportsCompression() { return HasCompression; }
 
 private:
   Level0QueueGroup CopyQueues;
@@ -302,6 +303,7 @@ private:
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
   bool HasGOffsets = false;
+  bool HasCompression = false;
   uint32_t MaxCommandQueuePriority = 0;
   uint32_t TSBits = 0;
   uint32_t KernelTSBits = 0;

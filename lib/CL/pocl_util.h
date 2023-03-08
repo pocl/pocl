@@ -263,8 +263,9 @@ float half_to_float (uint16_t value);
 
 void pocl_free_kernel_metadata (cl_program program, unsigned kernel_i);
 
+POCL_EXPORT
 int pocl_svm_check_pointer (cl_context context, const void *svm_ptr,
-                            size_t size);
+                            size_t size, size_t *buffer_size);
 
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
  * OpenCL-style bitcode produced by e.g. llvm-spirv */

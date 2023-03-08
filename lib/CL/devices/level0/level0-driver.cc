@@ -808,9 +808,12 @@ void Level0Queue::svmFill(void *DstPtr, size_t Size, void *Pattern,
   LEVEL0_CHECK_ABORT(Res);
 }
 
+// The function clEnqueueMigrateMemINTEL explicitly migrates a region of
+// a shared Unified Shared Memory allocation to the device associated
+// with command_queue. This is a hint that may improve performance and
+// is not required for correctness
 void Level0Queue::svmMigrate(unsigned num_svm_pointers, void **svm_pointers,
                              size_t *sizes) {
-  // TODO there is a "residency" API, but it seems windows-only
   for (unsigned i = 0; i < num_svm_pointers; ++i) {
     ze_result_t Res =
         zeCommandListAppendMemoryPrefetch(CmdListH, svm_pointers[i], sizes[i]);
@@ -862,17 +865,16 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
         void *MemPtr = memid->mem_ptr;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
+        LEVEL0_CHECK_ABORT(Res);
+        // optimization for read-only buffers
+        ze_memory_advice_t Adv =
+            (PoclArg[i].is_readonly ? ZE_MEMORY_ADVICE_SET_READ_MOSTLY
+                                    : ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
+        Res = zeCommandListAppendMemAdvise(CmdListH, Device->getDeviceHandle(),
+                                           MemPtr, arg_buf->size, Adv);
       }
       LEVEL0_CHECK_ABORT(Res);
 
-#if 0
-      // TODO finish: optimization for read-only buffers
-      ze_memory_advice_t Adv = (pa[i].is_readonly ?
-                                  ZE_MEMORY_ADVICE_SET_READ_MOSTLY :
-                                  ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
-      zeCommandListAppendMemAdvise(CmdList, DevHandle, MemPtr, memid->size,
-      Adv);
-#endif
     } else if (Kernel->meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
       assert(PoclArg[i].value != NULL);
       assert(PoclArg[i].size == sizeof(void *));
@@ -1013,14 +1015,14 @@ void Level0Queue::run(_cl_command_node *Cmd) {
     ze_result_t Res = zeKernelSetIndirectAccess(KernelH, Flags);
     LEVEL0_CHECK_ABORT(Res);
   }
-  const std::vector<void *> &AccessedPointers = L0Kernel->getAccessedPointers();
-  for (void *Ptr : AccessedPointers) {
-    // TODO implement in some way.
-    // TODO there is a "residency" API, but it seems windows-only
-    POCL_MSG_ERR("CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL / "
-                 "CL_KERNEL_EXEC_INFO_SVM_PTRS not implemented\n");
-    // ze_result_t Res = zeContextMakeMemoryResident(ContextH, DeviceH, );
-    // assert(Res == ZE_RESULT_SUCCESS);
+  const std::map<void *, size_t> &AccessedPointers =
+      L0Kernel->getAccessedPointers();
+  for (auto &I : AccessedPointers) {
+    void *Ptr = I.first;
+    size_t Size = I.second;
+    ze_result_t Res = zeContextMakeMemoryResident(
+        Device->getContextHandle(), Device->getDeviceHandle(), Ptr, Size);
+    LEVEL0_CHECK_ABORT(Res);
   }
 
   if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {
@@ -1269,6 +1271,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   assert(ContextHandle);
   ze_result_t Res = ZE_RESULT_SUCCESS;
   HasGOffsets = Drv->hasExtension("ZE_experimental_global_offset");
+  HasCompression = Drv->hasExtension("ZE_extension_memory_compression_hints");
 
   ze_device_properties_t DeviceProperties{};
   DeviceProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2;
@@ -1863,7 +1866,7 @@ void Level0Device::pushCommand(_cl_command_node *Command) {
   }
 }
 
-void *Level0Device::allocSharedMem(uint64_t Size,
+void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
                                    ze_device_mem_alloc_flags_t DevFlags,
                                    ze_host_mem_alloc_flags_t HostFlags) {
   void *Ptr = nullptr;
@@ -1871,6 +1874,13 @@ void *Level0Device::allocSharedMem(uint64_t Size,
       ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC, nullptr, DevFlags, GlobalMemOrd};
   ze_host_mem_alloc_desc_t HostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC,
                                        nullptr, HostFlags};
+
+  ze_memory_compression_hints_ext_desc_t MemCompHints = {
+      ZE_STRUCTURE_TYPE_MEMORY_COMPRESSION_HINTS_EXT_DESC, nullptr,
+      ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED};
+  if (EnableCompression && supportsCompression()) {
+    MemAllocDesc.pNext = &MemCompHints;
+  }
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
   uint64_t Align = std::min(NextPowerOf2, (uint64_t)MAX_EXTENDED_ALIGNMENT);

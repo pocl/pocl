@@ -65,7 +65,7 @@ pocl_svm_memfill_common (cl_command_type command_type,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_svm_check_pointer (context, svm_ptr, size);
+  errcode = pocl_svm_check_pointer (context, svm_ptr, size, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 

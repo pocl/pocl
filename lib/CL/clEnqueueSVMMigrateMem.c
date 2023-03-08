@@ -58,7 +58,7 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
     {
       POCL_RETURN_ERROR_COND ((svm_pointers[i] == NULL), CL_INVALID_VALUE);
       size_t size = sizes ? sizes[i] : 1;
-      errcode = pocl_svm_check_pointer (context, svm_pointers[i], size);
+      errcode = pocl_svm_check_pointer (context, svm_pointers[i], size, NULL);
       if (errcode != CL_SUCCESS)
         return errcode;
     }
