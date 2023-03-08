@@ -1224,7 +1224,7 @@ cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
 
 if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups")
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_intel_unified_shared_memory")
 endif()
 
 # Extensions that are work-in-progress with known unfinished aspects.

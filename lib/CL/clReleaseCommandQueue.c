@@ -52,7 +52,13 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
       /* hidden queues don't retain the context. */
       if ((command_queue->properties & CL_QUEUE_HIDDEN) == 0)
-        POname (clReleaseContext) (context);
+        {
+          POCL_LOCK_OBJ (context);
+          DL_DELETE (context->command_queues, command_queue);
+          POCL_UNLOCK_OBJ (context);
+
+          POname (clReleaseContext) (context);
+        }
 
       assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %" PRId64 " (%p)\n",
