@@ -145,6 +145,11 @@ pocl.
  default cache directory will be used, which is ``$XDG_CACHE_HOME/pocl/kcache``
  (if set) or ``$HOME/.cache/pocl/kcache/`` on Unix-like systems.
 
+- **POCL_CPU_LOCAL_MEM_SIZE**
+
+ Set the local memory size of the CPU devices (pthread, basic) to the
+ given amount in bytes instead of the default one.
+
 - **POCL_DEBUG**
 
  Enables debug messages to stderr. This will be mostly messages from error

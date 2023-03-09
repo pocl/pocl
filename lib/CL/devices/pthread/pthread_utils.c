@@ -235,9 +235,21 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
           size_t size = meta->local_sizes[i];
           arguments[j] = &arguments2[j];
           arguments2[j] = start;
+          if ((size_t)(start - local_mem + size) > local_mem_size)
+            {
+              size_t total_auto_local_size = 0;
+              for (i = 0; j < meta->num_locals; ++j)
+                {
+                  total_auto_local_size += meta->local_sizes[j];
+                }
+              POCL_ABORT (
+                  "PoCL detected an OpenCL program error: "
+                  "%d automatic local buffer(s) with total size %lu "
+                  "bytes doesn't fit to the local memory of size %lu\n",
+                  meta->num_locals, total_auto_local_size, local_mem_size);
+            }
           start += size;
           start = align_ptr (start);
-          assert ((size_t)(start - local_mem) <= local_mem_size);
         }
     }
 }
