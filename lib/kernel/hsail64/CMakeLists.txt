@@ -55,7 +55,7 @@ foreach(FILE atomics.cl atomic_impl.ll barrier.c
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
+set(CLANG_FLAGS "-emit-llvm" "-target" "hsail64")
 
 set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${HSA_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HSA_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
 

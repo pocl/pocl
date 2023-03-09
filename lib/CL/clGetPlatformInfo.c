@@ -75,10 +75,6 @@ static const char *pocl_version
       ", SLEEF"
 #endif
 
-#ifndef _CL_DISABLE_HALF
-      ", FP16"
-#endif
-
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
       ", DISTRO"
 #endif

@@ -1469,21 +1469,30 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->native_vector_width_long = POCL_DEVICES_NATIVE_VECTOR_WIDTH_LONG;
   dev->native_vector_width_float = POCL_DEVICES_NATIVE_VECTOR_WIDTH_FLOAT;
 
-#ifdef _CL_DISABLE_DOUBLE
-  dev->native_vector_width_double = 0;
-  dev->preferred_vector_width_double = 0;
-#else
-  dev->native_vector_width_double = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
-  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
-#endif
-#ifdef _CL_DISABLE_HALF
-  dev->preferred_vector_width_half = 0;
-  dev->native_vector_width_half = 0;
-#else
-  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
-  dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
-#endif
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+    {
+      dev->native_vector_width_double = 0;
+      dev->preferred_vector_width_double = 0;
+    }
+  else
+    {
+      dev->native_vector_width_double
+          = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
+      dev->preferred_vector_width_double
+          = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+    }
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+    {
+      dev->preferred_vector_width_half = 0;
+      dev->native_vector_width_half = 0;
+    }
+  else
+    {
+      dev->preferred_vector_width_half
+          = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+      dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
+    }
 #endif
 
   dev->grid_width_specialization_limit = USHRT_MAX;
@@ -1515,7 +1524,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
-  dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
@@ -1527,19 +1535,30 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 #endif
 
-#ifdef _CL_DISABLE_DOUBLE
-  dev->double_fp_config = 0;
-#else
-  /* TODO: all of these are the minimum mandated, but not all CPUs may actually
-   * support all of them. */
-  dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
-                          | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
-                          | CL_FP_INF_NAN | CL_FP_DENORM;
-  /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
-   * https://github.com/Oblomov/clinfo/issues/28 */
-  dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
-#endif
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+    {
+      dev->half_fp_config = 0;
+    }
+  else
+    {
+      dev->half_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+    }
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+    {
+      dev->double_fp_config = 0;
+    }
+  else
+    {
+      /* TODO: all of these are the minimum mandated, but not all CPUs may
+       * actually support all of them. */
+      dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
+                              | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
+                              | CL_FP_INF_NAN | CL_FP_DENORM;
+      /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
+       * https://github.com/Oblomov/clinfo/issues/28 */
+      dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+    }
   dev->global_mem_cache_type = CL_NONE;
   dev->global_mem_cacheline_size = 0;
   dev->global_mem_cache_size = 0;

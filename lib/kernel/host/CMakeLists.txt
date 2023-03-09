@@ -242,7 +242,7 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
-if(NOT CL_DISABLE_HALF)
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
   list(REMOVE_ITEM SOURCES_WITH_SLEEF
     libclc-pocl/cos.cl
     libclc-pocl/sin.cl
@@ -437,7 +437,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   compile_sleef_c_to_bc("c" "sleef/libm/sleefsp.c"
                         "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
 
-  if(ENABLE_FP64)
+  if(HOST_CPU_ENABLE_CL_KHR_FP64)
     compile_sleef_c_to_bc("c" "sleef/libm/sleefdp.c"
                           "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
   endif()
@@ -451,7 +451,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   set(STR "#define SLEEF_ENABLED\n")
   file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
-  if(ENABLE_FP64)
+  if(HOST_CPU_ENABLE_CL_KHR_FP64)
     set(STR "#define SLEEF_DOUBLE_AVAILABLE\n")
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()

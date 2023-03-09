@@ -227,7 +227,7 @@ function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   else()
     unset(EXTRA_OPT)
   endif()
-  if(NOT CL_DISABLE_HALF)
+  if(HOST_CPU_ENABLE_CL_KHR_FP16)
     list(APPEND EXTRA_OPT "--fp16")
   endif()
 

@@ -194,18 +194,11 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_write_async"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_read_array_barrier"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_array_barrier_int  buffer_read_array_barrier_uint  buffer_read_array_barrier_long  buffer_read_array_barrier_ulong  buffer_read_array_barrier_short  buffer_read_array_barrier_ushort  buffer_read_array_barrier_char  buffer_read_array_barrier_uchar  buffer_read_array_barrier_float)
 
-if(CL_DISABLE_HALF)
-  unset(HALF_READ)
-  unset(HALF_WRITE)
-else()
-  set(HALF_READ buffer_read_half)
-  set(HALF_WRITE buffer_write_half)
-endif()
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_read"
-         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_int  buffer_read_uint  buffer_read_long  buffer_read_ulong  buffer_read_short  buffer_read_ushort  buffer_read_float  buffer_read_char  buffer_read_uchar  buffer_read_struct  buffer_read_random_size ${HALF_READ})
+         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_read_int  buffer_read_uint  buffer_read_long  buffer_read_ulong  buffer_read_short  buffer_read_ushort  buffer_read_float  buffer_read_char  buffer_read_uchar  buffer_read_struct  buffer_read_random_size buffer_read_half)
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_write"
-         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_write_int  buffer_write_uint  buffer_write_short  buffer_write_ushort  buffer_write_char  buffer_write_uchar  buffer_write_float  buffer_write_long  buffer_write_ulong  buffer_write_struct ${HALF_WRITE})
+         COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS} buffer_write_int  buffer_write_uint  buffer_write_short  buffer_write_ushort  buffer_write_char  buffer_write_uchar  buffer_write_float  buffer_write_long  buffer_write_ulong  buffer_write_struct buffer_write_half)
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_buffers_fill"
          COMMAND "${TS_BUILDDIR}/buffers/test_buffers" ${EXTRA_ARGS}   buffer_fill_int  buffer_fill_uint  buffer_fill_short  buffer_fill_ushort  buffer_fill_char  buffer_fill_uchar  buffer_fill_long  buffer_fill_ulong  buffer_fill_float  buffer_fill_struct)
@@ -596,34 +589,28 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_address_space"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_geometrics"
          COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" ${EXTRA_ARGS} )
 
-if(CL_DISABLE_HALF)
-  unset(OCL_FULL_TESTS_FP16)
-  unset(OCL_MINI_TESTS_FP16)
-else()
-  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_1"
-           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vload_half vloada_half vstore_half)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_1"
+         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vload_half vloada_half vstore_half)
 
-  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_2"
-           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half vstore_half_rte vstorea_half_rte)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_2"
+         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half vstore_half_rte vstorea_half_rte)
 
-  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_3"
-           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstore_half_rtz vstore_half_rtn vstore_half_rtp)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_3"
+         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstore_half_rtz vstore_half_rtn vstore_half_rtp)
 
-  add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_4"
-           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_4"
+         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vstorea_half_rtp vstorea_half_rtz vstorea_half_rtn)
 
 
-  add_test(NAME "${TS_NAME}${TS_SUFFIX}_mini_half"
-           COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} -w)
-  set(OCL_FULL_TESTS_FP16
-      "${TS_NAME}${TS_SUFFIX}_half_1"
-      "${TS_NAME}${TS_SUFFIX}_half_2"
-      "${TS_NAME}${TS_SUFFIX}_half_3"
-      "${TS_NAME}${TS_SUFFIX}_half_4")
-  set(OCL_MINI_TESTS_FP16
-      "${TS_NAME}${TS_SUFFIX}_mini_half")
-
-endif()
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_mini_half"
+         COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} -w)
+set(OCL_FULL_TESTS_FP16
+    "${TS_NAME}${TS_SUFFIX}_half_1"
+    "${TS_NAME}${TS_SUFFIX}_half_2"
+    "${TS_NAME}${TS_SUFFIX}_half_3"
+    "${TS_NAME}${TS_SUFFIX}_half_4")
+set(OCL_MINI_TESTS_FP16
+    "${TS_NAME}${TS_SUFFIX}_mini_half")
 
 #***************************************************************************
 
@@ -1084,11 +1071,9 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_0"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}  op_undef_true_simple  op_undef_false_simple  op_undef_int_simple  op_undef_uint_simple  op_undef_char_simple  op_undef_uchar_simple  op_undef_ushort_simple  op_undef_long_simple  op_undef_ulong_simple  op_undef_short_simple  op_undef_float_simple  op_undef_double_simple  op_undef_int4_simple  op_undef_int3_simple  op_undef_struct_int_float_simple  op_undef_struct_int_char_simple  op_undef_struct_struct_simple   op_vector_int4_extract  op_vector_float4_extract  op_vector_long2_extract  op_vector_double2_extract  op_vector_char16_extract  op_vector_int4_insert  op_vector_float4_insert  op_vector_long2_insert  op_vector_double2_insert  op_vector_char16_insert  op_vector_times_scalar_float  op_vector_times_scalar_double
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
-if(NOT CL_DISABLE_HALF)
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_half"
         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS}   op_fadd_half_regular  op_fsub_half_regular  op_fmul_half_regular  op_fdiv_half_regular  op_frem_half_regular  op_fmod_half_regular  op_fadd_half_fast  op_fsub_half_fast  op_fmul_half_fast  op_fdiv_half_fast  op_frem_half_fast  op_fmod_half_fast op_constant_half_simple op_copy_half_simple  op_spec_constant_half_simple op_undef_half_simple
         WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
-endif()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
          COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked  decorate_saturated_conversion_char   decorate_saturated_conversion_ushort  decorate_saturated_conversion_int  decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
@@ -1208,11 +1193,8 @@ if(HAVE_SPIRV_TOOLS)
     "${TS_NAME}${TS_SUFFIX}_spirv_new_6"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_7"
     "${TS_NAME}${TS_SUFFIX}_spirv_new_8"
-    "${TS_NAME}${TS_SUFFIX}_spirv_new_9")
-  if(NOT CL_DISABLE_HALF)
-    list(APPEND OCL_30_TESTS_FULL
-      "${TS_NAME}${TS_SUFFIX}_spirv_new_half")
-  endif()
+    "${TS_NAME}${TS_SUFFIX}_spirv_new_9"
+    "${TS_NAME}${TS_SUFFIX}_spirv_new_half")
 endif()
 
 set(CTS_FULL_LIST

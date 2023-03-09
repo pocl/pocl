@@ -259,7 +259,15 @@ POCLU_API char *POCLU_CALL poclu_read_file (const char *filename);
  */
 POCLU_API int POCLU_CALL poclu_supports_opencl_30 (cl_device_id *devices,
                                                    unsigned num_devices);
-
+/**
+ * \brief check if opencl device(s) support an extension
+ *
+ * @param device [in] cl_device_id object
+ * @param ext [in] C string of extension e.g. "cl_khr_fp16"
+ * @return 1 if device supports the extension, 0 otherwise
+ */
+POCLU_API int POCLU_CALL poclu_supports_extension (cl_device_id dev,
+                                                   const char *ext);
 /**
  * \brief read the contents of a file.
  *

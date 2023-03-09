@@ -199,19 +199,19 @@ void cpu_setup_vector_widths(cl_device_id dev) {
       VECWIDTH(cl_long);
   dev->native_vector_width_float = dev->preferred_vector_width_float =
       VECWIDTH(float);
-#ifdef _CL_DISABLE_DOUBLE
-  dev->native_vector_width_double = dev->preferred_vector_width_double = 0;
-#else
-  dev->native_vector_width_double = dev->preferred_vector_width_double =
-      VECWIDTH(double);
-#endif
+  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL) {
+    dev->native_vector_width_double = dev->preferred_vector_width_double = 0;
+  } else {
+    dev->native_vector_width_double = dev->preferred_vector_width_double =
+        VECWIDTH(double);
+  }
 
-#ifdef _CL_DISABLE_HALF
-  dev->native_vector_width_half = dev->preferred_vector_width_half = 0;
-#else
-  dev->native_vector_width_half = dev->preferred_vector_width_half =
-      VECWIDTH(cl_short);
-#endif
+  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL) {
+    dev->native_vector_width_half = dev->preferred_vector_width_half = 0;
+  } else {
+    dev->native_vector_width_half = dev->preferred_vector_width_half =
+        VECWIDTH(cl_short);
+  }
 }
 
 int pocl_llvm_remove_file_on_signal(const char *file) {

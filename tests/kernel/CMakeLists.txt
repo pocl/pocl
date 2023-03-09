@@ -58,12 +58,6 @@ add_test_pocl(NAME "kernel/test_hadd"
               COMMAND "kernel" "test_hadd")
 
 
-set(PROPS "")
-if(NOT ENABLE_ANYSAN)
-  set(PROPS
-    FAIL_REGULAR_EXPRESSION "FAIL"
-    PASS_REGULAR_EXPRESSION "OK\n")
-endif()
 
 set(VARIANTS "loopvec;cbs")
 foreach(VARIANT ${VARIANTS})
@@ -73,7 +67,6 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_hadd_${VARIANT}"
     PROPERTIES
       COST 40.0
-      ${PROPS}
       PROCESSORS 1
       DEPENDS "pocl_version_check"
       LABELS "kernel")
@@ -82,7 +75,6 @@ endforeach()
 set_tests_properties( "kernel/test_hadd_loopvec"
   PROPERTIES
     COST 40.0
-    ${PROPS}
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
@@ -147,7 +139,6 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_frexp_modf_${VARIANT}"
     PROPERTIES
       COST 4.0
-      ${PROPS}
       PROCESSORS 1
       DEPENDS "pocl_version_check"
       LABELS "internal;kernel")
@@ -205,20 +196,20 @@ add_test_pocl(NAME "kernel/test_shuffle_short"
 add_test_pocl(NAME "kernel/test_shuffle_ushort"
               COMMAND "test_shuffle" "ushort")
 
-if(NOT CL_DISABLE_HALF)
-  add_test_pocl(NAME "kernel/test_shuffle_half"
-              COMMAND "test_shuffle" "half")
-  list(APPEND EXTRA_TESTS "kernel/test_shuffle_half")
-endif()
-
 add_test_pocl(NAME "kernel/test_shuffle_int"
               COMMAND "test_shuffle" "int")
 
 add_test_pocl(NAME "kernel/test_shuffle_uint"
               COMMAND "test_shuffle" "uint")
 
+add_test_pocl(NAME "kernel/test_shuffle_half"
+              COMMAND "test_shuffle" "half")
+
 add_test_pocl(NAME "kernel/test_shuffle_float"
               COMMAND "test_shuffle" "float")
+
+add_test_pocl(NAME "kernel/test_shuffle_double"
+              COMMAND "test_shuffle" "double")
 
 add_test_pocl(NAME "kernel/test_shuffle_long"
               COMMAND "test_shuffle" "long")
@@ -267,12 +258,6 @@ add_test_pocl(NAME "kernel/test_sizeof_uint"
               EXPECTED_OUTPUT "test_sizeof_expout.txt"
               COMMAND "kernel" "test_sizeof")
 
-if(ENABLE_FP64)
-  add_test_pocl(NAME "kernel/test_shuffle_double"
-                COMMAND "test_shuffle" "double")
-  list(APPEND EXTRA_TESTS "kernel/test_shuffle_double")
-endif()
-
 foreach(VARIANT ${VARIANTS})
   set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})
   list(TRANSFORM EXTRA_TEST_VARIANT APPEND "_${VARIANT}")
@@ -281,16 +266,16 @@ foreach(VARIANT ${VARIANTS})
     "kernel/test_shuffle_short_${VARIANT}" "kernel/test_shuffle_ushort_${VARIANT}"
     "kernel/test_shuffle_int_${VARIANT}" "kernel/test_shuffle_uint_${VARIANT}"
     "kernel/test_shuffle_long_${VARIANT}" "kernel/test_shuffle_ulong_${VARIANT}"
-    "kernel/test_shuffle_float_${VARIANT}"
+    "kernel/test_shuffle_half_${VARIANT}" "kernel/test_shuffle_float_${VARIANT}"
+    "kernel/test_shuffle_double_${VARIANT}"
     "kernel/test_ucharn_${VARIANT}"
     "kernel/test_printf_${VARIANT}"
     "kernel/test_sizeof_uint_${VARIANT}"
     ${EXTRA_TEST_VARIANT}
 
     PROPERTIES
-      COST 77
-      ${PROPS}
       PROCESSORS 1
+      COST 120
       DEPENDS "pocl_version_check"
       LABELS "internal;kernel")
 endforeach()
@@ -404,10 +389,11 @@ set_property(TEST
   "kernel/test_shuffle_ushort_loopvec"
   "kernel/test_shuffle_int_loopvec"
   "kernel/test_shuffle_uint_loopvec"
+  "kernel/test_shuffle_half_loopvec"
   "kernel/test_shuffle_float_loopvec"
+  "kernel/test_shuffle_double_loopvec"
   "kernel/test_shuffle_long_loopvec"
   "kernel/test_shuffle_ulong_loopvec"
-  "kernel/test_shuffle_double_loopvec"
   "kernel/test_as_type_loopvec"
   "kernel/test_convert_type_1_loopvec"
   "kernel/test_convert_type_4_loopvec"

@@ -109,8 +109,12 @@ typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
 #if defined(__CBUILD__) && defined(cl_khr_fp16)
-/*  */
+
+#ifdef _HAS_FLOAT16_TYPE
 typedef _Float16 half;
+#else
+typedef __fp16 half;
+#endif
 
 typedef half half2  __attribute__((__ext_vector_type__(2)));
 typedef half half3  __attribute__((__ext_vector_type__(3)));

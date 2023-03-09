@@ -79,9 +79,7 @@ ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/intel/compute-samples.git"
-  PATCH_COMMAND
-    ${TS_SRCDIR}/scripts/install/install_googletest.sh
-    ${TS_SRCDIR}/scripts/install/download_mediadata.sh
+  PATCH_COMMAND ${BASH} -c "${TS_SRCDIR}/scripts/install/install_googletest.sh && ${TS_SRCDIR}/scripts/install/download_mediadata.sh"
   CONFIGURE_COMMAND ${CMAKE_COMMAND}
     -DWITH_L0=OFF
     -DOpenCL_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/include

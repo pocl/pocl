@@ -3,8 +3,6 @@
 #define _BSD_SOURCE             // define M_PI
 #define _DEFAULT_SOURCE
 
-#include <assert.h>
-
 #ifdef _MSC_VER
 #  include "vccompat.hpp"
 #endif
@@ -12,6 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "pocl_opencl.h"
 
@@ -28,55 +27,19 @@ typedef struct grid_t {
 } grid_t;
 
 static int initialised = 0;
+static cl_device_id device;
 static cl_context context;
 static cl_command_queue cmd_queue;
 static cl_program program;
 static cl_kernel kernel;
 
 
-#ifdef _CL_DISABLE_DOUBLE
-#error Scalarwave test requires cl_khr_fp64 support.
-#endif
-
 int 
-exec_scalarwave_kernel(char      const *const program_source, 
-                       cl_double       *const phi,
+exec_scalarwave_kernel(cl_double       *const phi,
                        cl_double const *const phi_p,
                        cl_double const *const phi_p_p,
                        grid_t    const *const grid)
-{ 
-  
-  if (!initialised) {
-    initialised = 1;
-    
-    context = poclu_create_any_context();
-    if (!context) return -1;
-    
-    size_t ndevices;
-    clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevices);
-    ndevices /= sizeof(cl_device_id);
-    cl_device_id *devices = (cl_device_id*)malloc(ndevices * sizeof(cl_device_id));
-    clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                     ndevices*sizeof(cl_device_id), devices, NULL);
-    
-    cmd_queue =
-      clCreateCommandQueue(context, devices[0], 0, NULL);
-    if (!cmd_queue) return -1;
-    
-    program =
-      clCreateProgramWithSource(context, 1, (const char**)&program_source,
-                                NULL, NULL);
-    if (!program) return -1;
-    
-    int ierr;
-    ierr = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-    if (ierr) return -1;
-    
-    kernel = clCreateKernel(program, "scalarwave", NULL);
-    if (!kernel) return -1;
-
-    free (devices);
-  }
+{
   
   size_t const npoints = grid->ai * grid->aj * grid->ak;
   cl_mem const mem_phi =
@@ -150,8 +113,16 @@ static int roundup(int const nx)
 int
 main(void)
 {
+
+  poclu_get_any_device (&context, &device, &cmd_queue);
+  if (!poclu_supports_extension (device, "cl_khr_fp64"))
+    {
+      printf ("scalarwave requires cl_khr_fp64, test SKIPPED\n");
+      return 77;
+    }
+
   FILE *const source_file = fopen(SRCDIR "/examples/scalarwave/scalarwave.cl", "r");
-  assert(source_file != NULL && "scalarwave.cl not found!");
+  TEST_ASSERT (source_file != NULL && "scalarwave.cl not found!");
   
   fseek(source_file, 0, SEEK_END);
   size_t const source_size = ftell(source_file);
@@ -162,6 +133,20 @@ main(void)
   source[source_size] = '\0';
   
   fclose(source_file);
+
+  program = clCreateProgramWithSource (context, 1, (const char **)&source,
+                                       NULL, NULL);
+  if (!program)
+    return -1;
+
+  int ierr;
+  ierr = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+  if (ierr)
+    return -1;
+
+  kernel = clCreateKernel (program, "scalarwave", NULL);
+  if (!kernel)
+    return -1;
 
   grid_t grid;
   grid.dt = ALPHA/(NX-1);
@@ -211,10 +196,9 @@ main(void)
     
     // TODO: We allocate the buffers each time, which is slow. But
     // then, we only want to test correctness, not performance. (Yet?)
-    int const ierr =
-      exec_scalarwave_kernel (source, phi, phi_p, phi_p_p, &grid);
-    assert(!ierr);
-    
+    int const ierr = exec_scalarwave_kernel (phi, phi_p, phi_p_p, &grid);
+    TEST_ASSERT (ierr == 0);
+
   } // for n
 
   clReleaseKernel (kernel);
@@ -236,7 +220,7 @@ main(void)
     printf ("phi(%-8g,%-8g,%-8g) = %g\n", x,y,z, phi[ind3d]);
   }
 
-  printf ("Done.\n");
+  printf ("OK\n");
 
   free (phi);
   free (phi_p);

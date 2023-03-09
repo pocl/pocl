@@ -36,6 +36,11 @@ int main(int argc, char *argv[]) {
   cl::CommandQueue queue = cl::CommandQueue::getDefault();
   cl::Program program(SOURCE, true);
 
+  if (poclu_supports_extension(device.get(), "cl_khr_fp64") == 0) {
+    std::cout << "this test requires cl_khr_fp64, test SKIPPED\n";
+    return 77;
+  }
+
   // Create buffers on the device.
   cl::Buffer buffer_A(CL_MEM_READ_WRITE, sizeof(double) * n);
   cl::Buffer buffer_B(CL_MEM_READ_WRITE, sizeof(double) * n);

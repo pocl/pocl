@@ -860,7 +860,7 @@ endif()
 # Clang documentation on Language Extensions:
 # __fp16 is supported on every target, as it is purely a storage format
 # _Float16 is currently only supported on the following targets... SPIR, x86
-# DIsabled for non-x86-64 because of limitations:
+# Limitations:
 #     The _Float16 type requires SSE2 feature and above due to the instruction
 #        limitations. When using it on i386 targets, you need to specify -msse2
 #        explicitly.
@@ -870,27 +870,27 @@ endif()
 #        Early versions provided FP16 builtins in a different ABI. A workaround is
 #        to use a small code snippet to check the ABI if you cannot make sure of it.
 
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED CL_DISABLE_HALF)
-  # LLVM <15 doesn't support FP16 emulation
-  # LLVM 15 crashes on some code, with the FP16 emulation
-  # CONFORMANCE disables FP16 b/c it's incomplete
-  # enabled on x86-64 only for now
-  if((LLVM_VERSION_MAJOR LESS 16) OR ENABLE_CONFORMANCE OR (NOT X86_64))
-    message(STATUS "FP16 support disabled")
-    set(CL_DISABLE_HALF 1)
-  else()
-    set(CL_DISABLE_HALF 0)
-    message(STATUS "Checking fp16 support")
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_FLOAT16)
+  set(HOST_CPU_SUPPORTS_FLOAT16 0)
+  message(STATUS "Checking host support for _Float16 type")
     custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
-      RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
-    if(RESV)
-      set(CL_DISABLE_HALF 1)
-    endif()
+    RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  if(RESV EQUAL 0)
+    set(HOST_CPU_SUPPORTS_FLOAT16 1)
   endif()
 endif()
 
-set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE INTERNAL "Disable cl_khr_fp16 because fp16 is not supported")
-message(STATUS "FP16 is disabled: ${CL_DISABLE_HALF}")
+####################################################################
+
+# TODO we should check double support of the target somehow (excluding emulation),
+# for now just provide an option
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_DOUBLE)
+  if(X86)
+    set(HOST_CPU_SUPPORTS_DOUBLE ON CACHE INTERNAL "FP64, always enabled on X86(-64)" FORCE)
+  else()
+    option(HOST_CPU_SUPPORTS_DOUBLE "Enable FP64 support for Host CPU device" ON)
+  endif()
+endif()
 
 #####################################################################
 

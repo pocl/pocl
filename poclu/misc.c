@@ -269,6 +269,23 @@ poclu_supports_opencl_30 (cl_device_id *devices, unsigned num_devices)
   return (supported == num_devices);
 }
 
+int
+poclu_supports_extension (cl_device_id dev, const char *ext)
+{
+  char extensions[8192];
+  int err;
+  size_t real_size = 0;
+  err = clGetDeviceInfo (dev, CL_DEVICE_EXTENSIONS, 0, NULL, &real_size);
+  TEST_ASSERT (err == CL_SUCCESS);
+  TEST_ASSERT (real_size > 0);
+  TEST_ASSERT (real_size < 8192);
+  err = clGetDeviceInfo (dev, CL_DEVICE_EXTENSIONS, real_size, extensions,
+                         NULL);
+  TEST_ASSERT (err == CL_SUCCESS);
+  extensions[real_size] = 0;
+  return (strstr (extensions, ext) != NULL);
+}
+
 cl_int
 poclu_show_program_build_log (cl_program program)
 {

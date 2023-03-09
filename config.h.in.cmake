@@ -1,4 +1,8 @@
 
+#ifndef POCL_CONFIG_H
+#define POCL_CONFIG_H
+
+
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
@@ -92,6 +96,12 @@
 
 #cmakedefine ENABLE_LOADABLE_DRIVERS
 
+/* TODO FIXME: required for pocl_init_default_device_infos(),
+ * (along with a bunch of host-CPU variables) even if
+ * the CPU driver is not compiled. */
+#undef HOST_DEVICE_EXTENSIONS
+#define HOST_DEVICE_EXTENSIONS ""
+
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
@@ -107,6 +117,7 @@
 
 #define HOST_CLANG_FLAGS  "@HOST_CLANG_FLAGS@"
 
+#undef HOST_DEVICE_EXTENSIONS
 #define HOST_DEVICE_EXTENSIONS "@HOST_DEVICE_EXTENSIONS@"
 
 #define HOST_DEVICE_FEATURES_30 "@HOST_DEVICE_FEATURES_30@"
@@ -236,12 +247,6 @@
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
-/* Disable cl_khr_fp16 because fp16 is not supported */
-#cmakedefine _CL_DISABLE_HALF
-
-/* Disable cl_khr_fp64 because fp64 is not supported */
-#cmakedefine _CL_DISABLE_DOUBLE
-
 /* platform version */
 #define POCL_PLATFORM_VERSION_MAJOR 3
 #define POCL_PLATFORM_VERSION_MINOR 0
@@ -263,3 +268,5 @@
 #cmakedefine USE_POCL_MEMMANAGER
 
 #cmakedefine LLVM_OPAQUE_POINTERS
+
+#endif
