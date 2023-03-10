@@ -185,8 +185,7 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   }
 #endif
 
-  if (link(Mod, BuiltinLib, Log, Device->global_as_id,
-           Device->device_aux_functions))
+  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions))
     return true;
 
   return false;

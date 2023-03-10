@@ -111,8 +111,7 @@ static void
 CopyFunc(const llvm::StringRef Name,
          const llvm::Module *  From,
          llvm::Module *        To,
-         ValueToValueMapTy &   VVMap,
-         unsigned AS) {
+         ValueToValueMapTy &   VVMap) {
 
     llvm::Function *SrcFunc = From->getFunction(Name);
     // TODO: is this the linker error "not found", and not an assert?
@@ -161,8 +160,7 @@ static int
 copy_func_callgraph(const llvm::StringRef func_name,
                     const llvm::Module *  from,
                     llvm::Module *        to,
-                    ValueToValueMapTy &   vvm,
-                    unsigned AS) {
+                    ValueToValueMapTy &   vvm) {
     llvm::StringSet<> callees;
     llvm::Function *RootFunc = from->getFunction(func_name);
     if (RootFunc == NULL)
@@ -178,14 +176,14 @@ copy_func_callgraph(const llvm::StringRef func_name,
     for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
       llvm::Function *SrcFunc = from->getFunction(ci->getKey());
       if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(ci->getKey(), from, to, vvm, AS);
+        copy_func_callgraph(ci->getKey(), from, to, vvm);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
 		 SrcFunc->getName().str().c_str());
       }
-      CopyFunc(ci->getKey(), from, to, vvm, AS);
+      CopyFunc(ci->getKey(), from, to, vvm);
     }
-    CopyFunc(func_name, from, to, vvm, AS);
+    CopyFunc(func_name, from, to, vvm);
     return 0;
 }
 
@@ -247,7 +245,7 @@ using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib,
          std::string &log,
-         unsigned global_AS, const char **DevAuxFuncs) {
+         const char **DevAuxFuncs) {
 
   assert(Program);
   assert(Lib);
@@ -313,7 +311,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
   for (di = DeclaredFunctions.begin(), de = DeclaredFunctions.end();
        di != de; di++) {
       llvm::StringRef r = di->getKey();
-      if (copy_func_callgraph(r, Lib, Program, vvm, global_AS)) {
+      if (copy_func_callgraph(r, Lib, Program, vvm)) {
         Function *f = Program->getFunction(r);
         if ((f == NULL) ||
             (f->isDeclaration() &&
@@ -340,7 +338,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
 }
 
 int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
-                          const llvm::Module *program, unsigned global_AS,
+                          const llvm::Module *program,
                           const char **DevAuxFuncs) {
   ValueToValueMapTy vvm;
 
@@ -360,12 +358,12 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   }
 
   const StringRef kernel_name(name);
-  copy_func_callgraph(kernel_name, program, parallel_bc, vvm, global_AS);
+  copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
 
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      copy_func_callgraph(*Func++, program, parallel_bc, vvm, global_AS);
+      copy_func_callgraph(*Func++, program, parallel_bc, vvm);
     }
   }
 
