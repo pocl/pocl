@@ -248,9 +248,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 #endif
 
   /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout 
+     the OpenCL extension is enabled. This causes to printout
      an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put 
+     initialize global_mem_size which it is not yet. Just put
      a nonzero there for now. */
   device->global_mem_size = 1;
   err = pocl_topology_detect_device_info(device);
@@ -266,6 +266,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
+
+  device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
+                                                device->local_mem_size);
 
   if (device->vendor_id == 0)
     device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;

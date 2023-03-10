@@ -31,6 +31,8 @@ Notable User Facing Changes
 - CPU devices now flush printf() output after each call instead of waiting
   for the end of the kernel command. This makes it (again) useful for debugging
   kernel segfaults.
+- Added a new POCL_CPU_LOCAL_MEM_SIZE environment for overriding the
+  local memory size for the CPU devices.
 
 Notable Fixes
 -------------
