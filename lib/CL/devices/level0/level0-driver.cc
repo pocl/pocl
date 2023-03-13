@@ -859,7 +859,10 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), nullptr);
       } else if (PoclArg[i].is_svm != 0) {
         void *MemPtr = *(void**)PoclArg[i].value;
-        Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
+        if (MemPtr == nullptr)
+          Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), nullptr);
+        else
+          Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
