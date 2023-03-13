@@ -1183,7 +1183,7 @@ endif()
 # FP16 support requires _Float16 type
 # LLVM <15 doesn't support _Float16;
 # LLVM 15 crashes on some code; LLVM 16 seems to work
-# CONFORMANCE disables FP16 b/c PoCL support is incomplete
+# CONFORMANCE=ON disables FP16 b/c PoCL support is incomplete
 if((LLVM_VERSION_MAJOR GREATER_EQUAL 16)
    AND (NOT ENABLE_CONFORMANCE)
    AND HOST_CPU_SUPPORTS_FLOAT16)
@@ -1243,12 +1243,17 @@ endif()
 #   https://github.com/KhronosGroup/OpenCL-CTS/issues/1236
 #
 # * cl_khr_subgroup_ballot: sub_group_ballot() works for uniform calls, the rest
-# are unimplemented.
+#   are unimplemented.
 #
 # * cl_intel_subgroups: The block reads/writes are unimplemented.
 #
 # * cl_intel_required_subgroup_size: CL_​KERNEL_​SPILL_​MEM_​SIZE_​INTEL and
 #   CL_​KERNEL_​COMPILE_​SUB_​GROUP_​SIZE_​INTEL are yet to implement.
+#
+# * cl_khr_fp16: only implemented for part of builtin library functions.
+#   Those with either 1) expression implementation, or 2) Clang builtin
+#   implementation.
+#
 #
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
@@ -1613,6 +1618,8 @@ if (ENABLE_LEVEL0)
   if(NOT ENABLE_LLVM)
     message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
   endif()
+  # Clang 16 produces bitcode with opaque pointers (despite PoCL passing -no-opaque-pointers).
+  # SPIR-V translator seems to be Ok with it, but the Level0 driver crashes inside the compiler
   if(LLVM_VERSION VERSION_GREATER_EQUAL 16.0)
     message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
   endif()

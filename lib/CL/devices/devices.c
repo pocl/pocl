@@ -514,13 +514,7 @@ pocl_init_devices ()
 #ifdef __linux__
 
 #ifdef ENABLE_HOST_CPU_DEVICES
-/* disabled by default if ENABLE_CONFORMANCE=OFF as it might
- * mask genuine division-by-zero errors. */
-#ifdef ENABLE_CONFORMANCE
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
-#else
-  if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 0))
-#endif
     {
       pocl_install_sigfpe_handler ();
     }

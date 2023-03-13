@@ -27,7 +27,7 @@ jobs:
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
-        config: [basic, devel, asan, cts_spirv, tier1]
+        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1]
         include:
           - llvm: 10
             config: basic
@@ -39,10 +39,6 @@ jobs:
             config: basic
           - llvm: 14
             config: basic
-          - llvm: 15
-            config: tsan
-          - llvm: 15
-            config: ubsan
 
     steps:
       - uses: actions/checkout@v3
@@ -61,7 +57,7 @@ jobs:
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
           if [ "${{ matrix.config }}" == "asan" ]; then
-            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
           elif [ "${{ matrix.config }}" == "tsan" ]; then
             runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
           elif [ "${{ matrix.config }}" == "ubsan" ]; then

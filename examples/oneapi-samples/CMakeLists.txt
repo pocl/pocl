@@ -49,6 +49,14 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
+# The reason we don't use git repo of oneapi-samples:
+# The git repo has an unusable (for PoCL) buildsystem (Cmake files with hardcoded
+# icpx compiler, sometimes not even CMake just plain handwritten Makefile,
+# each sample directory is a separate CMake / Make project ... etc),
+# so we have to use our own CMake files anyway.
+#
+# If the oneapi-samples buildsystem is fixed someday, then we could use the repo directly.
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"

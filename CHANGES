@@ -39,15 +39,15 @@ Notable User Facing Changes
 - Partial support for cl_khr_fp16 when compiled with LLVM 16+. The
   implementation relies on Clang, and may result in emulation if
   the CPU does not support the required instruction set.
+- [Linux, x86-64 only] SIGFPE handler has been changed to skip instructions
+  causing division-by-zero, only if it occured in one of the CPU driver
+  threads; so division-by-zero errors are no longer hidden in user threads.
 
 Notable Fixes
 -------------
 
 - Fix handling of clBuildProgram() -I directories given with quotes or
   with leading/trailing white space.
-- CPU devices now flush printf() output after each call instead of waiting
-  for the end of the kernel command. This makes it (again) useful for debugging
-  kernel segfaults.
 
 3.1 December 2022
 =================

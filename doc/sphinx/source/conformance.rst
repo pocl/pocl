@@ -109,11 +109,11 @@ Known issues in pocl / things to be aware of
 
 - Integer division by zero. OpenCL 1.2 specification requires that division by
   zero on integers results in undefined values, instead of raising exceptions.
-  This requires pocl to install a handler of SIGFPE. Unfortunately signal
-  handlers are per-process not per-thread, and pocl drivers do not run in a
-  separate process, which means that integer division by zero will not raise
-  SIGFPE for the entire pocl library and also the user's program. The handler
-  may be disabled by setting the env variable POCL_SIGFPE_HANDLER to 0.
+  This requires pocl to install a handler of SIGFPE. The handler is per-process,
+  but it checks the thread ID, so that it only ignores the error for the CPU
+  driver threads, not the user program's threads. This might not work on every
+  system. The handler can be disabled completely by setting the env variable
+  POCL_SIGFPE_HANDLER to 0.
   Note that this is currently only relevant for x86(-64) + Linux, on all other
   systems this issue is not handled in any way (thus Pocl is likely
   non-conformant there).

@@ -143,6 +143,20 @@ pocl_install_sigusr2_handler ()
 
 static struct sigaction sigfpe_action, old_sigfpe_action;
 
+/* list of threads (e.g. of CPU driver), for which the SIGFPE should be
+ * ignored. for all threads not on this list, the original handler is invoked
+ */
+static pthread_t ignored_thread_ids[2048];
+static unsigned num_ignored_threads = 0;
+
+void
+pocl_ignore_sigfpe_for_thread (pthread_t thr)
+{
+  unsigned current_idx
+      = __atomic_fetch_add (&num_ignored_threads, 1, __ATOMIC_SEQ_CST);
+  __atomic_store_n (ignored_thread_ids + current_idx, thr, __ATOMIC_SEQ_CST);
+}
+
 static void
 sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 {
@@ -153,6 +167,25 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
   if ((signo == SIGFPE)
       && ((si->si_code == FPE_INTDIV) || (si->si_code == FPE_INTOVF)))
     {
+      /* SIGFPE is delivered to the thread that caused the div-by-zero.
+       * check if the thread is on the list of threads we should ignore.
+       */
+      pthread_t ID = pthread_self ();
+      int found = 0;
+      unsigned max_threads
+          = __atomic_load_n (&num_ignored_threads, __ATOMIC_SEQ_CST);
+      for (unsigned i = 0; i < max_threads; ++i)
+        {
+          if (ID == ignored_thread_ids[i])
+            {
+              found = 1;
+              break;
+            }
+        }
+      /* if it's not on the list, run the original handler. */
+      if (!found)
+        goto ORIGINAL_HANDLER;
+
       /* Luckily for us, div-by-0 exceptions do NOT advance the IP register,
        * so we have to disassemble the instruction (to know its length)
        * and move IP past it. */
