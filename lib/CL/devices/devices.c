@@ -51,6 +51,7 @@
 #include "pocl_tracing.h"
 #include "pocl_util.h"
 #include "pocl_export.h"
+#include "pocl_version.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"

@@ -1808,6 +1808,9 @@ rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/conf
 configure_file("config2.h.in.cmake" "config2.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h" 0)
 
+configure_file("pocl_version.h.in.cmake" "pocl_version.h.new" ESCAPE_QUOTES)
+rename_if_different("${CMAKE_BINARY_DIR}/pocl_version.h.new" "${CMAKE_BINARY_DIR}/pocl_version.h" 0)
+
 configure_file("pocl_opencl.h.in.cmake" "pocl_opencl.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h" 0)
 

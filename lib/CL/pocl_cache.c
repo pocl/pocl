@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "pocl_build_timestamp.h"
+#include "pocl_version.h"
 
 #ifdef ENABLE_LLVM
 #include "kernellib_hash.h"

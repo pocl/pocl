@@ -22,6 +22,7 @@
 */
 
 #include "pocl_util.h"
+#include "pocl_version.h"
 
 #define S(A) #A
 #define STRINGIFY(X) S(X)
