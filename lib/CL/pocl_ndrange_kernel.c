@@ -41,7 +41,7 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
   size_t local_x, local_y, local_z;
   offset_x = offset_y = offset_z = 0;
   global_x = global_y = global_z = 0;
-  local_x = local_y = local_z = 0;
+  local_x = local_y = local_z = 1;
   /* cached values for max_work_item_sizes,
    * since we are going to access them repeatedly */
   size_t max_local_x, max_local_y, max_local_z;
@@ -62,6 +62,17 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
   cl_device_id realdev = pocl_real_dev (command_queue->device);
 
   if (global_work_size == NULL)
+    {
+      global_x = global_y = global_z = 0;
+      goto SKIP_WG_SIZE_CALCULATION;
+    }
+
+  cl_uint zero_gws = 0;
+  for (cl_uint i = 0; i < work_dim; ++i)
+    {
+      zero_gws += (global_work_size[i] == 0);
+    }
+  if (zero_gws)
     {
       global_x = global_y = global_z = 0;
       goto SKIP_WG_SIZE_CALCULATION;
