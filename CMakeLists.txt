@@ -507,8 +507,9 @@ if(ENABLE_LLVM)
   # LLVM 16: Only opaque pointers will be supported. Typed pointers will not be supported.
   #
   # Up to llvm 14 including, ENABLE_LLVM_OPAQUE_POINTERS is force-set to OFF
-  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON
   # For llvm 15 ENABLE_LLVM_OPAQUE_POINTERS is a CMake option, defaulting to OFF,
+  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON.
+  #    Clang 16 accepts -Xclang -no-opaque-pointers but silently produces bitcode with opaque pointers.
   # reason is that 1) it's unfinished 2) for properly handling images, we need opaque types,
   # which will only be available in LLVM 16+
   # TODO: This should be temporary. After the opaque pointer conversion in PoCL is finished,
@@ -516,8 +517,7 @@ if(ENABLE_LLVM)
   # of the code, since this macro adds another layer of complexity.
   if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
     set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
-  elseif(LLVM_VERSION VERSION_EQUAL 15.0
-         OR LLVM_VERSION VERSION_EQUAL 16.0)
+  elseif(LLVM_VERSION VERSION_EQUAL 15.0)
     if(ENABLE_LEVEL0)
       set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
     else()
