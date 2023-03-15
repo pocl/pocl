@@ -440,7 +440,7 @@ pocl_vulkan_setup_memory_types (cl_device_id dev, pocl_vulkan_device_data_t *d,
   uint32_t gart_mem_type = UINT32_MAX;
   VkDeviceSize gart_mem_size = 0;
 
-  if (d->device_is_iGPU)
+  if (d->device_is_iGPU || (d->mem_props.memoryHeapCount == 1))
     {
       /* integrated GPU */
       heap_i = UINT32_MAX;
