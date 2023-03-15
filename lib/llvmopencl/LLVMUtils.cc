@@ -41,6 +41,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 using namespace llvm;
 
+//#define DEBUG_LLVM_UTILS
+
 static void findInstructionUsesImpl(Use &U, std::vector<Use *> &Uses,
                                     std::set<Use *> &Visited) {
   if (Visited.count(&U))
@@ -285,6 +287,61 @@ bool isLocalMemFunctionArg(llvm::Function *F, unsigned ArgIndex) {
   else
     return getConstantIntMDValue(MD->getOperand(ArgIndex)) ==
            SPIR_ADDRESS_SPACE_LOCAL;
+}
+
+bool isProgramScopeVariable(GlobalVariable &GVar) {
+
+  bool retval = false;
+
+  // no need to handle constants
+  if (GVar.isConstant()) {
+    retval = false;
+    goto END;
+  }
+
+  // global variables from direct Clang compilation have external
+  // linkage with Target AS numbers
+  if (GVar.getLinkage() == GlobalValue::LinkageTypes::ExternalLinkage) {
+    retval = true;
+    goto END;
+  }
+
+#ifdef DEBUG_LLVM_UTILS
+  std::cerr << "isProgramScopeVariable: checking variable: " <<
+            GVar.getName().str() << "\n";
+#endif
+
+  // global variables from SPIR-V have internal linkage with SPIR AS numbers
+  if (GVar.getLinkage() == GlobalValue::LinkageTypes::InternalLinkage) {
+#ifdef DEBUG_LLVM_UTILS
+    std::cerr << "isProgramScopeVariable: checking internal linkage\n";
+#endif
+    PointerType *GVarT = GVar.getType();
+    int AddrSpace = GVarT->getAddressSpace();
+
+    if (AddrSpace < 0) {
+#ifdef DEBUG_LLVM_UTILS
+      std::cerr << "isProgramScopeVariable: not a pointer\n";
+#endif
+      goto END;
+    }
+
+    if (AddrSpace == SPIR_ADDRESS_SPACE_GLOBAL) {
+      if (!GVar.hasName()) {
+        GVar.setName("__anonymous_gvar");
+      }
+      retval = true;
+    }
+  }
+
+END:
+#ifdef DEBUG_LLVM_UTILS
+  std::cerr << "isProgramScopeVariable: \n"
+            << "Variable: " << GVar.getName().str()
+            << " is ProgramScope variable: " << retval << "\n";
+
+#endif
+  return retval;
 }
 
 void setFuncArgAddressSpaceMD(llvm::Function *F, unsigned ArgIndex,

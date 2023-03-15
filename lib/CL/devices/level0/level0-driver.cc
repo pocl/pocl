@@ -27,6 +27,7 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_cl.h"
+#include "pocl_llvm.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
@@ -375,20 +376,31 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
     break;
   }
 
-  zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
-  zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish, nullptr, 0,
-                                          nullptr);
-  zeCommandListClose(CmdListH);
+  ze_result_t res;
+  res = zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
+  LEVEL0_CHECK_ABORT(res);
+  res = zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish,
+                                                nullptr, 0,  nullptr);
+  LEVEL0_CHECK_ABORT(res);
+  res = zeCommandListClose(CmdListH);
+  LEVEL0_CHECK_ABORT(res);
+
   uint64_t HostStartTS = pocl_gettimemono_ns();
-  zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
-  zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max());
+  res = zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
+  LEVEL0_CHECK_ABORT(res);
+  res = zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max());
+  LEVEL0_CHECK_ABORT(res);
+
   uint64_t HostFinishTS = pocl_gettimemono_ns();
   if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE) {
+    assert(event > (void *)0x100000);
+    assert(EventStart > (void *)0x100000);
+    assert(EventFinish > (void *)0x100000);
     calculateEventTimes(event, *EventStart, *EventFinish, HostStartTS,
                         HostFinishTS);
   } else {
-    event->time_start = 0;
-    event->time_end = 0;
+    event->time_start = HostStartTS;
+    event->time_end = HostFinishTS;
   }
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
@@ -983,9 +995,10 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   cl_kernel Kernel = Cmd->command.run.kernel;
   cl_program Program = Kernel->program;
   unsigned DeviceI = Cmd->program_device_i;
+  struct pocl_context *PoclCtx = &RunCmd->pc;
 
   assert(Program->data[DeviceI] != nullptr);
-  Level0ProgramSPtr *L0Program = (Level0ProgramSPtr *)Program->data[DeviceI];
+  Level0Program *L0Program = (Level0Program *)Program->data[DeviceI];
   assert(Kernel->data[DeviceI] != nullptr);
   Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[DeviceI];
 
@@ -997,10 +1010,12 @@ void Level0Queue::run(_cl_command_node *Cmd) {
     }
   }
 
+  unsigned TotalLocalWGSize =
+      PoclCtx->local_size[0] * PoclCtx->local_size[1] * PoclCtx->local_size[2];
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
-  bool Res = L0Program->get()->getBestKernel(L0Kernel, Needs64bitPtrs, ModuleH,
-                                             KernelH);
+  bool Res = Device->getBestKernel(L0Program, L0Kernel, Needs64bitPtrs,
+                                   TotalLocalWGSize, ModuleH, KernelH);
   assert(Res == true);
   assert(KernelH);
   assert(ModuleH);
@@ -1032,8 +1047,6 @@ void Level0Queue::run(_cl_command_node *Cmd) {
     POCL_MSG_ERR("Level0: Failed to setup kernel arguments\n");
     return;
   }
-
-  struct pocl_context *PoclCtx = &RunCmd->pc;
 
   uint32_t TotalWGsX = PoclCtx->num_groups[0];
   uint32_t TotalWGsY = PoclCtx->num_groups[1];
@@ -1204,7 +1217,8 @@ _cl_command_node *Level0QueueGroup::getWorkOrWait(bool &ShouldExit) {
 /// serialize SPIRV of the program since we might need
 /// to rebuild it with new Spec Constants
 /// also serialize the directory with native binaries
-const char *LEVEL0_SERIALIZE_ENTRIES[2] = {"/program.spv", "/native" };
+const char *LEVEL0_SERIALIZE_ENTRIES[3] = {"/program.bc", "/program.spv",
+                                           "/native"};
 
 static const cl_image_format SupportedImageFormats[] = {
     {CL_R, CL_SIGNED_INT8},
@@ -1820,6 +1834,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   }
 
   // calculate KernelCacheHash
+  //
+  // Note!!! there is no need to add Spec Constants or Compiler options
+  // into KernelCacheHash, because pocl_cache_create_program_cachedir
+  // has already taken care of those
   SHA1_CTX HashCtx;
   uint8_t Digest[SHA1_DIGEST_SIZE];
   pocl_SHA1_Init(&HashCtx);
@@ -1828,7 +1846,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   // const ze_driver_uuid_t DrvUUID = Driver->getUUID();
   // pocl_SHA1_Update(&HashCtx, (const uint8_t*)&DrvUUID.id,
   // sizeof(DrvUUID.id));
-
   uint32_t DrvVersion = Driver->getVersion();
   pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DrvVersion,
                    sizeof(DrvVersion));
@@ -1838,14 +1855,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   pocl_SHA1_Update(&HashCtx, (const uint8_t *)&DeviceProperties.vendorId,
                    sizeof(DeviceProperties.vendorId));
-
   // not reliable
   // pocl_SHA1_Update(&HashCtx,
   //                 (const uint8_t*)&deviceProperties.uuid,
   //                 sizeof(deviceProperties.uuid));
   pocl_SHA1_Update(&HashCtx, (const uint8_t *)ClDev->short_name,
                    strlen(ClDev->short_name));
-
   pocl_SHA1_Final(&HashCtx, Digest);
 
   std::stringstream SStream;
@@ -1859,7 +1874,12 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->available = CL_TRUE;
 }
 
-Level0Device::~Level0Device() {}
+Level0Device::~Level0Device() {
+  // ComputeQueues.wait()
+  // CopyQueues.wait()
+  freeMem(static_cast<void *>(ComputeTimestamps));
+  freeMem(static_cast<void *>(CopyTimestamps));
+}
 
 void Level0Device::pushCommand(_cl_command_node *Command) {
   if (Command->type == CL_COMMAND_NDRANGE_KERNEL) {
@@ -2218,6 +2238,13 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
     Spirv[i] = static_cast<uint8_t>(Program->program_il[i]);
   }
 
+  std::vector<char> ProgramBC;
+  char *BinaryPtr = (char *)Program->binaries[DeviceI];
+  size_t BinarySize = Program->binary_sizes[DeviceI];
+  int TestR = bitcode_is_triple(BinaryPtr, BinarySize, "spir");
+  assert(TestR && "Program->binaries[] is not LLVM bitcode!");
+  ProgramBC.insert(ProgramBC.end(), BinaryPtr, BinaryPtr + BinarySize);
+
   assert(Program->data[DeviceI] == nullptr);
   char ProgramCacheDir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_path(ProgramCacheDir, Program, DeviceI);
@@ -2237,43 +2264,45 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
     }
   }
 
+  std::string UserJITPref(pocl_get_string_option("POCL_LEVEL0_JIT", "auto"));
+  bool JITCompilation = false;
+  if (UserJITPref == "0")
+    JITCompilation = false;
+  else if (UserJITPref == "1")
+    JITCompilation = true;
+  else {
+    // use heuristic
+    if (UserJITPref != "auto")
+      POCL_MSG_WARN("unknown option given to POCL_LEVEL0_JIT: '%s' \n",
+                    UserJITPref.c_str());
+    JITCompilation =
+        (Program->num_kernels > 256 && Program->program_il_size > 128000);
+  }
+  POCL_MSG_PRINT_LEVEL0("createProgram | using JIT: %s\n",
+                        (JITCompilation ? "YES" : "NO"));
+
   std::string CompilerOptions(
       Program->compiler_options != nullptr ? Program->compiler_options : "");
   bool Optimize =
       (CompilerOptions.find("-cl-disable-opt") == std::string::npos);
 
-  Level0ProgramSPtr ProgramData(new Level0Program(
-      ContextHandle, DeviceHandle, SpecConstantIDs.size(),
-      SpecConstantIDs.data(), SpecConstantPtrs.data(), SpecConstantSizes.data(),
-      Spirv, ProgramCacheDir, KernelCacheHash));
-
   std::string BuildLog;
-#if 0
-    if (!Driver->getJobSched().createAndWaitForO0Builds(ProgramData, BuildLog,
-                                                        Supports64bitBuffers)) {
-      // TODO  appendToBuildLog
-      POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
-                         "Failed to compile SPIR-V module to ZE module\n");
-    } else {
-      if (Optimize) {
-        Driver->getJobSched().createO2Builds(ProgramData, Supports64bitBuffers);
-      }
-      program->data[device_i] = new Level0ProgramSPtr(std::move(ProgramData));
-      return CL_SUCCESS;
-    }
-#endif
+  Level0Program *ProgramData = Driver->getJobSched().createProgram(
+      ContextHandle, DeviceHandle, JITCompilation, BuildLog, Optimize,
+      Supports64bitBuffers, SpecConstantIDs.size(), SpecConstantIDs.data(),
+      SpecConstantPtrs.data(), SpecConstantSizes.data(), Spirv, ProgramBC,
+      ProgramCacheDir, KernelCacheHash);
 
-  if (!Driver->getJobSched().createAndWaitForExactBuilds(
-          ProgramData, BuildLog, Supports64bitBuffers, Optimize)) {
+  if (ProgramData == nullptr) {
     if (!BuildLog.empty()) {
       appendToBuildLog(Program, DeviceI, strdup(BuildLog.c_str()),
                        BuildLog.size());
     }
     POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
-                         "Failed to compile SPIR-V module to ZE module\n");
+                         "Failed to compile program\n");
   }
 
-  Program->data[DeviceI] = new Level0ProgramSPtr(std::move(ProgramData));
+  Program->data[DeviceI] = ProgramData;
   return CL_SUCCESS;
 }
 
@@ -2282,11 +2311,19 @@ int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
     return CL_SUCCESS;
   }
 
-  Level0ProgramSPtr *ProgramData = (Level0ProgramSPtr *)Program->data[DeviceI];
-  Driver->getJobSched().cancelAllJobsFor(ProgramData->get());
-  delete ProgramData;
+  Level0Program *ProgramData = (Level0Program *)Program->data[DeviceI];
+  Driver->getJobSched().releaseProgram(ProgramData);
   Program->data[DeviceI] = nullptr;
   return CL_SUCCESS;
+}
+
+bool Level0Device::getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
+                                 bool LargeOffset, unsigned LocalWGSize,
+                                 ze_module_handle_t &Mod,
+                                 ze_kernel_handle_t &Ker) {
+
+  return Driver->getJobSched().getBestKernel(Program, Kernel, LargeOffset,
+                                             LocalWGSize, Mod, Ker);
 }
 
 cl_bitfield Level0Device::getMemCaps(cl_device_info Type) {

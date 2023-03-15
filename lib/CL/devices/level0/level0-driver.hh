@@ -264,6 +264,9 @@ public:
   const std::vector<size_t> &getSupportedSubgroupSizes() {
     return SupportedSubgroupSizes;
   }
+  bool getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
+                     bool LargeOffset, unsigned LocalWGSize,
+                     ze_module_handle_t &Mod, ze_kernel_handle_t &Ker);
 
   cl_bitfield getMemCaps(cl_device_info Type);
   cl_unified_shared_memory_type_intel getMemType(const void *USMPtr);

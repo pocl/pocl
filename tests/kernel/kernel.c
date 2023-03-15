@@ -16,8 +16,8 @@ int call_test(const char *name)
 {
   size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
   size_t srcdir_length, name_length, filename_size;
-  char *filename = NULL;
   char *source = NULL;
+  cl_device_id device = NULL;
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
@@ -27,66 +27,19 @@ int call_test(const char *name)
 
   TEST_ASSERT (name != NULL);
 
-  /* determine file name of kernel source to load */
-  srcdir_length = strlen(SRCDIR);
-  name_length = strlen(name);
-  filename_size = srcdir_length + name_length + 16;
-  filename = (char *)malloc(filename_size + 1);
-  if (!filename) {
-    puts("out of memory");
-    goto error;
-  }
+  char filename[1024];
+  snprintf (filename, 1023, "kernel/%s", name);
 
-  snprintf(filename, filename_size, "%s/%s.cl", SRCDIR, name);
+  char Options[1024];
+  snprintf (Options, 1024, "-I%s", SRCDIR);
+
+  int err = poclu_get_any_device (&context, &device, &queue);
+  CHECK_OPENCL_ERROR_IN ("poclu_get_any_device");
 
   /* read source code */
-  source = poclu_read_file (filename);
-  TEST_ASSERT (source != NULL && "Kernel .cl not found.");
-
-  /* setup an OpenCL context and command queue using default device */
-  context = poclu_create_any_context();
-  if (!context) {
-    puts("clCreateContextFromType call failed\n");
-    goto error;
-  }
-
-  size_t device_id_size = 0;
-  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL,
-                             &device_id_size);
-  if (result != CL_SUCCESS)
-    {
-      puts ("clGetContextInfo call failed while fetching size\n");
-      goto error;
-    }
-  cl_device_id *devices = malloc (device_id_size);
-  TEST_ASSERT (devices != NULL && "out of host memory\n");
-  result = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size,
-                             devices, NULL);
-  if (result != CL_SUCCESS) {
-    puts("clGetContextInfo call failed\n");
-    goto error;
-  }
-
-  queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
-  if (!queue) {
-    puts("clCreateCommandQueue call failed\n");
-    goto error;
-  }
-
-  /* create and build program */
-  program = clCreateProgramWithSource (context, 1, (const char **)&source,
-                                       NULL, NULL);
-  if (!program) {
-    puts("clCreateProgramWithSource call failed\n");
-    goto error;
-  }
-
-  result = clBuildProgram(program, 0, NULL, "-I" SRCDIR, NULL, NULL);
-  if (result != CL_SUCCESS) {
-    puts("clBuildProgram call failed\n");
-    poclu_show_program_build_log (program);
-    goto error;
-  }
+  err = poclu_load_program (context, device, filename, 0, 0, 0, NULL, Options,
+                            &program);
+  CHECK_OPENCL_ERROR_IN ("clCreateProgram call failed\n");
 
   /* execute the kernel with give name */
   kernel = clCreateKernel(program, name, NULL); 
@@ -124,10 +77,6 @@ error:
   if (source) {
     free(source);
   }
-  if (filename) {
-    free(filename);
-  }
-  free (devices);
 
   return retval;
 }

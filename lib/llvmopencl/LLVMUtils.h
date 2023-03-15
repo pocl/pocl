@@ -62,6 +62,10 @@ bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 // Checks if the given argument of Func is a local buffer.
 bool isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);
 
+// determines if GVar is OpenCL program-scope variable
+// if it has empty name, sets it to __anonymous_global_as.XYZ
+bool isProgramScopeVariable(llvm::GlobalVariable &GVar);
+
 // Sets the address space metadata of the given function argument.
 // Note: The address space ids must be SPIR ids. If it encounters
 // argument indices without address space ids in the list, sets

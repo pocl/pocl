@@ -64,6 +64,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 // #define POCL_DEBUG_PROGVARS
 
+#include "LLVMUtils.h"
 #include "ProgramScopeVariables.h"
 
 #include "pocl_llvm_api.h"
@@ -232,49 +233,6 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   Builder.CreateStore(Init, GVarPtrWithOffset);
 }
 
-// determines if GVar is OpenCL program-scope variable
-static bool isProgramScopeVariable(GlobalVariable &GVar) {
-
-  bool retval = false;
-
-  // no need to handle constants
-  if (GVar.isConstant()) {
-    retval = false;
-    goto END;
-  }
-
-  // global variables from direct Clang compilation have external
-  // linkage with Target AS numbers
-  if (GVar.getLinkage() == GlobalValue::LinkageTypes::ExternalLinkage) {
-    retval = true;
-    goto END;
-  }
-
-  // global variables from SPIR-V have internal linkage with SPIR AS numbers
-  if (GVar.getLinkage() == GlobalValue::LinkageTypes::InternalLinkage) {
-    LLVM_DEBUG(dbgs() << "checking internal linkage\n";);
-    PointerType *GVarT = GVar.getType();
-    int AddrSpace = GVarT->getAddressSpace();
-
-    if (AddrSpace < 0) {
-      LLVM_DEBUG(dbgs() << "not a pointer\n";);
-      goto END;
-    }
-
-    if (AddrSpace == SPIR_ADDRESS_SPACE_GLOBAL) {
-      if (!GVar.hasName()) {
-        GVar.setName("__anonymous_global_as");
-      }
-      retval = true;
-    }
-  }
-
-END:
-  LLVM_DEBUG(dbgs() << "Variable: " << GVar.getName() << "\n";
-             dbgs() << "IsProgramScopeVariable: " << retval << "\n";);
-  return retval;
-
-}
 
 
 // walks through a Module's global variables,

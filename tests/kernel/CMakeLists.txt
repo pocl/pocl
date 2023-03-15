@@ -399,7 +399,6 @@ set_property(TEST
   "kernel/test_convert_type_4_loopvec"
   "kernel/test_bitselect_loopvec"
   "kernel/test_hadd_loopvec"
-  "kernel/test_hadd_loops"
   "kernel/test_min_max_loopvec"
   "kernel/test_length_distance_loopvec"
   "kernel/test_fmin_fmax_fma_loopvec"

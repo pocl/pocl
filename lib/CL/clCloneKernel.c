@@ -119,14 +119,20 @@ POname (clCloneKernel) (cl_kernel source_kernel,
         }
     }
 
-  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
-
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
       if (device->ops->create_kernel)
-        device->ops->create_kernel (device, program, kernel, i);
+        {
+          int r = device->ops->create_kernel (device, program, kernel, i);
+          POCL_GOTO_ERROR_ON ((r != CL_SUCCESS), CL_OUT_OF_RESOURCES,
+                              "could not create device-specific data "
+                              "for kernel %s\n",
+                              kernel->name);
+        }
     }
+
+  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
 
   POCL_LOCK_OBJ (program);
   LL_PREPEND (program->kernels, kernel);
@@ -143,8 +149,19 @@ ERROR:
     {
       POCL_MEM_FREE (kernel->dyn_arguments);
       POCL_MEM_FREE (kernel->data);
-      POCL_MEM_FREE (kernel->dyn_argument_storage);
-      POCL_MEM_FREE (kernel->dyn_argument_offsets);
+      if (kernel->meta->total_argument_storage_size)
+        {
+          POCL_MEM_FREE (kernel->dyn_argument_storage);
+          POCL_MEM_FREE (kernel->dyn_argument_offsets);
+        }
+      else
+        {
+          for (i = 0; i < kernel->meta->num_args; ++i)
+            {
+              struct pocl_argument *p = &kernel->dyn_arguments[i];
+              POCL_MEM_FREE (p->value);
+            }
+        }
     }
   POCL_MEM_FREE (kernel);
   kernel = NULL;
