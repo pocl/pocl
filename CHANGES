@@ -33,6 +33,8 @@ Notable User Facing Changes
   kernel segfaults.
 - Added a new POCL_CPU_LOCAL_MEM_SIZE environment for overriding the
   local memory size for the CPU devices.
+- CUDA: Added Direct Peer-to-Peer buffer migrations for much better performance
+  scaling in multi-GPU scenarios
 
 Notable Fixes
 -------------

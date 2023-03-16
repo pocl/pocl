@@ -296,7 +296,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
 
-  ops->can_migrate_d2d = NULL;
+  ops->can_migrate_d2d = pocl_cuda_can_migrate_d2d;
   ops->migrate_d2d = NULL;
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -802,6 +802,34 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
   p->version = 0;
 }
 
+int
+pocl_cuda_can_migrate_d2d (cl_device_id dest, cl_device_id source)
+{
+  assert (dest != source);
+  if (strcmp (dest->ops->device_name, source->ops->device_name) == 0)
+    {
+      int possible;
+      pocl_cuda_device_data_t *src_dev
+          = (pocl_cuda_device_data_t *)source->data;
+      pocl_cuda_device_data_t *dst_dev = (pocl_cuda_device_data_t *)dest->data;
+      cuDeviceCanAccessPeer (&possible, src_dev->device, dst_dev->device);
+      POCL_MSG_PRINT_CUDA ("cuDeviceCanAccessPeer %p and %p -> %s\n", source,
+                           dest, possible ? "yes" : "no");
+      if (possible)
+        {
+          cuCtxSetCurrent (dst_dev->context);
+          CUresult res = cuCtxEnablePeerAccess (src_dev->context, 0);
+          POCL_MSG_PRINT_CUDA ("cuCtxEnablePeerAccess from %p to %p : %u\n",
+                               source, dest, res);
+          if (res == CUDA_SUCCESS
+              || res == CUDA_ERROR_PEER_ACCESS_ALREADY_ENABLED)
+            return 1;
+        }
+    }
+
+  return 0;
+}
+
 void
 pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
                        size_t offset, size_t cb)
@@ -873,6 +901,27 @@ pocl_cuda_submit_copy (CUstream stream, void*__restrict__ src_mem_ptr,
   result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
                                 cb, stream);
   CUDA_CHECK (result, "cuMemcpyDtoDAsync");
+}
+
+void
+pocl_cuda_submit_copy_p2p (CUstream stream, cl_device_id src_device,
+                           void *__restrict__ src_mem_ptr, size_t src_offset,
+                           cl_device_id dst_device,
+                           void *__restrict__ dst_mem_ptr, size_t dst_offset,
+                           size_t cb)
+{
+  void *src_ptr = src_mem_ptr + src_offset;
+  void *dst_ptr = dst_mem_ptr + dst_offset;
+
+  CUresult result;
+  POCL_MSG_PRINT_CUDA ("cuMemcpyPeerAsync %p -> %p / %zu B \n", src_ptr,
+                       dst_ptr, cb);
+  result = cuMemcpyPeerAsync (
+      (CUdeviceptr)dst_ptr,
+      ((pocl_cuda_device_data_t *)dst_device->data)->context,
+      (CUdeviceptr)src_ptr,
+      ((pocl_cuda_device_data_t *)dst_device->data)->context, cb, stream);
+  CUDA_CHECK (result, "cuMemcpyPeerAsync");
 }
 
 void
@@ -1859,8 +1908,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
           }
         case ENQUEUE_MIGRATE_TYPE_D2D:
           {
-            POCL_ABORT_UNIMPLEMENTED (
-                "CUDA does not support D2D migration.\n");
+            cl_mem mem = event->mem_objs[0];
+            pocl_cuda_submit_copy_p2p (
+                stream, cmd->migrate.src_device, cmd->migrate.src_id->mem_ptr,
+                0, cq->device, cmd->migrate.dst_id->mem_ptr, 0, mem->size);
+            break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:
           {
