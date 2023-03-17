@@ -145,9 +145,8 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
 
   for (Module::global_iterator i = M->global_begin(),
          e = M->global_end(); i != e; ++i) {
-    std::string FuncName = "";
-    FuncName = F->getName().str();
-    if (isAutomaticLocal(FuncName, *i)) {
+
+    if (isAutomaticLocal(F, *i)) {
       Locals.push_back(&*i);
 
       // Add the parameters to the end of the function parameter list.

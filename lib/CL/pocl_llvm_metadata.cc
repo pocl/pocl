@@ -593,7 +593,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     for (llvm::Module::global_iterator i = input->global_begin(),
                                        e = input->global_end();
          i != e; ++i) {
-      if (pocl::isAutomaticLocal(funcName, *i)) {
+      if (pocl::isAutomaticLocal(KernelFunction, *i)) {
         POCL_MSG_PRINT_LLVM("Automatic local detected in kernel %s: %s\n",
                             meta->name, (*i).getName().data());
         locals.push_back(&*i);
