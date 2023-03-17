@@ -115,6 +115,33 @@ void Level0Kernel::setAccessedPointers(const std::vector<void *> &Ptrs) {
   AccessedPointers = Ptrs;
 }
 
+std::string zeResultToString(ze_result_t ZeRes) {
+  switch (ZeRes) {
+  case ZE_RESULT_ERROR_UNINITIALIZED:
+    return "ZE_RESULT_ERROR_UNINITIALIZED";
+  case ZE_RESULT_ERROR_DEVICE_LOST:
+    return "ZE_RESULT_ERROR_DEVICE_LOST";
+  case ZE_RESULT_ERROR_INVALID_NULL_HANDLE:
+    return "ZE_RESULT_ERROR_INVALID_NULL_HANDLE";
+  case ZE_RESULT_ERROR_INVALID_NULL_POINTER:
+    return "ZE_RESULT_ERROR_INVALID_NULL_POINTER";
+  case ZE_RESULT_ERROR_INVALID_ENUMERATION:
+    return "ZE_RESULT_ERROR_INVALID_ENUMERATION";
+  case ZE_RESULT_ERROR_INVALID_NATIVE_BINARY:
+    return "ZE_RESULT_ERROR_INVALID_NATIVE_BINARY";
+  case ZE_RESULT_ERROR_INVALID_SIZE:
+    return "ZE_RESULT_ERROR_INVALID_SIZE";
+  case ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY:
+    return "ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY";
+  case ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY:
+    return "ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY";
+  case ZE_RESULT_ERROR_MODULE_BUILD_FAILURE:
+    return "ZE_RESULT_ERROR_MODULE_BUILD_FAILURE";
+  default:
+    return "Error " + std::to_string(ZeRes);
+  }
+}
+
 bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
                                     ze_device_handle_t Device) {
   POCL_MEASURE_START(load_binary);
@@ -132,11 +159,12 @@ bool Level0ProgramBuild::loadBinary(ze_context_handle_t Context,
   ze_result_t ZeRes =
       zeModuleCreate(Context, Device, &ModuleDesc, &TempModuleH, &BuildLogH);
   if (ZeRes != ZE_RESULT_SUCCESS) {
+    BuildLog = zeResultToString(ZeRes) + "\n";
     size_t LogSize = 0;
     // should be null terminated.
     zeModuleBuildLogGetString(BuildLogH, &LogSize, nullptr);
     if (LogSize > 0) {
-      BuildLog = "Output of zeModuleCreate:\n";
+      BuildLog += "Output of zeModuleCreate:\n";
       char *Log = (char *)malloc(LogSize);
       assert(Log);
       zeModuleBuildLogGetString(BuildLogH, &LogSize, Log);
@@ -237,11 +265,12 @@ bool Level0ProgramBuild::compile(ze_context_handle_t Context,
   ZeRes = zeModuleCreate(Context, Device, &ModuleDesc, &ModuleH, &BuildLogH);
 
   if (ZeRes != ZE_RESULT_SUCCESS) {
+    BuildLog = zeResultToString(ZeRes) + "\n";
     size_t LogSize = 0;
     // should be null terminated.
     zeModuleBuildLogGetString(BuildLogH, &LogSize, nullptr);
     if (LogSize > 0) {
-      BuildLog = "Output of zeModuleCreate:\n";
+      BuildLog += "Output of zeModuleCreate:\n";
       char *Log = (char *)malloc(LogSize);
       assert(Log);
       zeModuleBuildLogGetString(BuildLogH, &LogSize, Log);
