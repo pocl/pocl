@@ -24,5 +24,10 @@
 
 #include "templates.h"
 
+#if !__has_builtin(__builtin_hypotf16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
 DEFINE_BUILTIN_V_VV(hypot)
 // DEFINE_EXPR_V_VV(hypot, sqrt(a*a + b*b))

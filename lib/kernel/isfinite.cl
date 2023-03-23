@@ -24,6 +24,11 @@
 
 #include "templates.h"
 
+#if !__has_builtin(__builtin_isfinitef16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
 #define __builtin_isfinitef __builtin_isfinite
 
 DEFINE_BUILTIN_L_V(isfinite)

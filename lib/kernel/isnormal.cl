@@ -24,6 +24,11 @@
 
 #include "templates.h"
 
+#if !__has_builtin(__builtin_isnormalf16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
 #define __builtin_isnormalf __builtin_isnormal
 
 DEFINE_BUILTIN_L_V(isnormal)

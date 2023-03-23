@@ -23,4 +23,9 @@
 
 #include "templates.h"
 
+#if !__has_builtin(__builtin_frexpf16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
 DEFINE_BUILTIN_V_VPJ (frexp)
