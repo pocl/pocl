@@ -1898,14 +1898,14 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
                       "clCompileProgram() for Vulkan "
                       "is not yet implemented\n");
 
-  char program_cl_path_temp[POCL_FILENAME_LENGTH];
+  char program_cl_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_cl_path_temp, ".cl", NULL);
   pocl_write_file (program_cl_path_temp, program->source, source_len, 0, 0);
 
-  char program_map_path_temp[POCL_FILENAME_LENGTH];
+  char program_map_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_map_path_temp, ".map", NULL);
 
-  char program_spv_path_temp[POCL_FILENAME_LENGTH];
+  char program_spv_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
 
   char *COMPILATION[MAX_COMPILATION_ARGS]
@@ -2073,21 +2073,21 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
   memcpy (hash_source+source_len, compilation_args_concated,
           compilation_args_concated_len);
 
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_create_program_cachedir (program, device_i, hash_source,
                                       hash_source_len, program_bc_path);
   size_t len = strlen (program_bc_path);
   assert (len > 3);
   len -= 2;
   program_bc_path[len] = 0;
-//  char program_cl_path[POCL_FILENAME_LENGTH];
-//  strncpy (program_cl_path, program_bc_path, POCL_FILENAME_LENGTH);
-//  strcat (program_cl_path, "cl");
-  char program_spv_path[POCL_FILENAME_LENGTH];
-  strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
+  //  char program_cl_path[POCL_MAX_PATHNAME_LENGTH];
+  //  strncpy (program_cl_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
+  //  strcat (program_cl_path, "cl");
+  char program_spv_path[POCL_MAX_PATHNAME_LENGTH];
+  strncpy (program_spv_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
   strcat (program_spv_path, "spv");
-  char program_map_path[POCL_FILENAME_LENGTH];
-  strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
+  char program_map_path[POCL_MAX_PATHNAME_LENGTH];
+  strncpy (program_map_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
   strcat (program_map_path, "map");
 
   if (pocl_exists (program_spv_path) && pocl_exists (program_map_path))
@@ -2160,18 +2160,18 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
          but it didn't read the binary yet, b/c it's not called program.bc */
       assert (program->binaries[device_i] == NULL);
 
-      char program_bc_path[POCL_FILENAME_LENGTH];
+      char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_program_bc_path (program_bc_path, program, device_i);
 
       size_t len = strlen (program_bc_path);
       assert (len > 3);
       len -= 2;
       program_bc_path[len] = 0;
-      char program_spv_path[POCL_FILENAME_LENGTH];
-      strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
+      char program_spv_path[POCL_MAX_PATHNAME_LENGTH];
+      strncpy (program_spv_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
       strcat (program_spv_path, "spv");
-      char program_map_path[POCL_FILENAME_LENGTH];
-      strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
+      char program_map_path[POCL_MAX_PATHNAME_LENGTH];
+      strncpy (program_map_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
       strcat (program_map_path, "map");
 
       POCL_RETURN_ERROR_ON (
@@ -2195,7 +2195,7 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
                         "the binary supplied to vulkan driver is not SPIR-V, "
                         "or it's not using execution model shader\n");
 
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_create_program_cachedir (program, device_i,
                                       program->binaries[device_i],
                                       program->binary_sizes[device_i],
@@ -2204,21 +2204,21 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
   assert (len > 3);
   len -= 2;
   program_bc_path[len] = 0;
-  char program_cl_path[POCL_FILENAME_LENGTH];
-  strncpy (program_cl_path, program_bc_path, POCL_FILENAME_LENGTH);
+  char program_cl_path[POCL_MAX_PATHNAME_LENGTH];
+  strncpy (program_cl_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
   strcat (program_cl_path, "cl");
-  char program_spv_path[POCL_FILENAME_LENGTH];
-  strncpy (program_spv_path, program_bc_path, POCL_FILENAME_LENGTH);
+  char program_spv_path[POCL_MAX_PATHNAME_LENGTH];
+  strncpy (program_spv_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
   strcat (program_spv_path, "spv");
-  char program_map_path[POCL_FILENAME_LENGTH];
-  strncpy (program_map_path, program_bc_path, POCL_FILENAME_LENGTH);
+  char program_map_path[POCL_MAX_PATHNAME_LENGTH];
+  strncpy (program_map_path, program_bc_path, POCL_MAX_PATHNAME_LENGTH);
   strcat (program_map_path, "map");
 
   if (!pocl_exists (program_spv_path) || !pocl_exists (program_map_path))
     {
-      char program_spv_path_temp[POCL_FILENAME_LENGTH];
+      char program_spv_path_temp[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_tempname (program_spv_path_temp, ".spv", NULL);
-      char program_map_path_temp[POCL_FILENAME_LENGTH];
+      char program_map_path_temp[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_tempname (program_map_path_temp, ".map", NULL);
       int err = CL_SUCCESS;
 

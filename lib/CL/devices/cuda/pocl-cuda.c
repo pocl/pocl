@@ -1120,13 +1120,13 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
       assert (error == 0);
     }
 
-  char bc_filename[POCL_FILENAME_LENGTH];
+  char bc_filename[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
                                        kernel, command, specialized);
 
-  char ptx_filename[POCL_FILENAME_LENGTH];
+  char ptx_filename[POCL_MAX_PATHNAME_LENGTH];
   strcpy (ptx_filename, bc_filename);
-  strncat (ptx_filename, ".ptx", POCL_FILENAME_LENGTH - 1);
+  strncat (ptx_filename, ".ptx", POCL_MAX_PATHNAME_LENGTH - 1);
 
   if (!pocl_exists (ptx_filename))
     {
@@ -1231,7 +1231,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
 
   uint64_t builtins_file_len = 0;
   char *builtins_file = NULL;
-  char builtin_path[POCL_FILENAME_LENGTH];
+  char builtin_path[POCL_MAX_PATHNAME_LENGTH];
 
   char filename[64];
   filename[0] = '/';

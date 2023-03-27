@@ -208,7 +208,7 @@ void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
                                        _cl_command_node *cmd) {
   assert(kd);
 
-  char tpef_file[POCL_FILENAME_LENGTH];
+  char tpef_file[POCL_MAX_PATHNAME_LENGTH];
   // first try specialized
   pocl_cache_kernel_cachedir_path(tpef_file, kernel->program,
                                   cmd->program_device_i, kernel,

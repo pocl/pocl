@@ -1072,8 +1072,8 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
                              int specialize)
 {
   int error;
-  char hsailfile[POCL_FILENAME_LENGTH];
-  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  char hsailfile[POCL_MAX_PATHNAME_LENGTH];
+  char parallel_bc_path[POCL_MAX_PATHNAME_LENGTH];
   _cl_command_run *run_cmd = &cmd->command.run;
 
   pocl_cache_work_group_function_path (parallel_bc_path,
@@ -1081,9 +1081,9 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
                                        run_cmd->kernel, cmd, specialize);
 
   strcpy (brigfile, parallel_bc_path);
-  strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
+  strncat (brigfile, ".brig", POCL_MAX_PATHNAME_LENGTH - 1);
   strcpy (hsailfile, parallel_bc_path);
-  strncat (hsailfile, ".hsail", POCL_FILENAME_LENGTH-1);
+  strncat (hsailfile, ".hsail", POCL_MAX_PATHNAME_LENGTH - 1);
 
   if (pocl_exists (brigfile))
     POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n",
@@ -1286,7 +1286,7 @@ void
 pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
                                cl_device_id device, int specialize)
 {
-  char brigfile[POCL_FILENAME_LENGTH];
+  char brigfile[POCL_MAX_PATHNAME_LENGTH];
   char *brig_blob;
 
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;

@@ -490,8 +490,8 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
   int spec_constants_changed = 0;
   char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
   concated_spec_const_option[0] = 0;
-  char program_bc_spirv[POCL_FILENAME_LENGTH];
-  char unlinked_program_bc_temp[POCL_FILENAME_LENGTH];
+  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
+  char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
   program_bc_spirv[0] = 0;
   unlinked_program_bc_temp[0] = 0;
   /* using --spirv-target-env=CL2.0 here would enable proper OpenCL 2.0
@@ -574,7 +574,7 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
 {
   cl_device_id device = program->devices[device_i];
   int errcode;
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
 
   if (program->binaries[device_i])
     {
@@ -1030,11 +1030,11 @@ pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
   assert (program->build_status == CL_BUILD_NONE);
 
   uint64_t builtins_file_len = 0;
-  char builtin_path[POCL_FILENAME_LENGTH];
+  char builtin_path[POCL_MAX_PATHNAME_LENGTH];
   char *builtins_file = NULL;
 
   uint64_t common_builtins_file_len = 0;
-  char common_builtin_path[POCL_FILENAME_LENGTH];
+  char common_builtin_path[POCL_MAX_PATHNAME_LENGTH];
   char *common_builtins_file = NULL;
 
   char filename[64];

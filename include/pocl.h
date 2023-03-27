@@ -47,7 +47,11 @@
 /* detects restrict, variadic macros etc */
 #include "pocl_compiler_features.h"
 
-#define POCL_FILENAME_LENGTH 1024
+/* The maximum file, directory and path name lengths. TODO: These should be
+   detected from the filesystem properties of the execution platform. */
+#define POCL_MAX_DIRNAME_LENGTH 255
+#define POCL_MAX_FILENAME_LENGTH (POCL_MAX_DIRNAME_LENGTH)
+#define POCL_MAX_PATHNAME_LENGTH 4096
 
 /* official Khronos ID */
 #ifndef CL_KHRONOS_VENDOR_ID_POCL

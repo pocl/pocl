@@ -500,12 +500,12 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
-  char ByteCode[POCL_FILENAME_LENGTH + 13];
+  char ByteCode[POCL_MAX_PATHNAME_LENGTH + 13];
 
   assert(Dev != NULL);
   assert(Command->command.run.kernel);
 
-  char CacheDir[POCL_FILENAME_LENGTH];
+  char CacheDir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_kernel_cachedir_path(CacheDir, Kernel->program,
                                   Command->program_device_i,
                                   Kernel, "", Command, Specialize);
@@ -522,8 +522,8 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
     AssemblyFileName += "/parallel.tpef";
 
     if (access(AssemblyFileName.c_str(), F_OK) != 0) {
-      Error = snprintf(ByteCode, POCL_FILENAME_LENGTH + 13, "%s%s", CacheDir,
-                       POCL_PARALLEL_BC_FILENAME);
+      Error = snprintf(ByteCode, POCL_MAX_PATHNAME_LENGTH + 13, "%s%s",
+                       CacheDir, POCL_PARALLEL_BC_FILENAME);
       TCEString BuildCmd = Dev->tceccCommandLine(RunCommand, TempDir, ByteCode,
                                                  AssemblyFileName);
 
@@ -923,7 +923,7 @@ pocl_tce_init_build(void *data)
      access to the (custom) hardware operations. */
   // to avoid threading issues, generate to tempfile then rename
   if (!pocl_exists(devextHeaderFn.c_str())) {
-    char tempfile[POCL_FILENAME_LENGTH];
+    char tempfile[POCL_MAX_PATHNAME_LENGTH];
     pocl_mk_tempname(tempfile, mach_tmpdir.c_str(), ".devext", NULL);
 
     std::string tceopgenCmd = std::string("tceopgen > ") + tempfile;
