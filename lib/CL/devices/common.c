@@ -109,8 +109,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   int error = 0;
   void *llvm_module = NULL;
 
-  char tmp_module[POCL_FILENAME_LENGTH];
-  char tmp_objfile[POCL_FILENAME_LENGTH];
+  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
+  char tmp_objfile[POCL_MAX_PATHNAME_LENGTH];
 
   char *objfile = NULL;
   uint64_t objfile_size = 0;
@@ -120,19 +120,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   const char *kernel_name = kernel->name;
 
   /* $/parallel.bc */
-  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  char parallel_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
                                        kernel, command, specialize);
 
   /* $/kernel.so */
-  char final_binary_path[POCL_FILENAME_LENGTH];
+  char final_binary_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
                                 command, specialize);
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
+  assert (strlen (final_binary_path) < (POCL_MAX_PATHNAME_LENGTH - 3));
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
       device_i, device, kernel, command, &llvm_module, specialize);
@@ -153,7 +153,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
   else
     {
-      char kernel_parallel_path[POCL_FILENAME_LENGTH];
+      char kernel_parallel_path[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_kernel_cachedir_path (kernel_parallel_path, program,
                                        command->program_device_i,
                                        kernel, "", command, specialize);
@@ -234,19 +234,23 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   error = pocl_rename (tmp_module, final_binary_path);
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so to final has failed.\n");
+      POCL_MSG_PRINT_LLVM (
+          "Renaming temporary kernel.so to final ('%s') has failed.\n",
+          final_binary_path);
       goto FINISH;
     }
 
   /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
-      char objfile_path[POCL_FILENAME_LENGTH];
+      char objfile_path[POCL_MAX_PATHNAME_LENGTH];
       strcpy (objfile_path, final_binary_path);
       strcat (objfile_path, ".o");
       error = pocl_rename (tmp_objfile, objfile_path);
       if (error)
-        POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so.o to final .o has failed.\n");
+        POCL_MSG_PRINT_LLVM (
+            "Renaming temporary kernel.so.o to final %s has failed.\n",
+            objfile_path);
     }
   else
     {
@@ -264,7 +268,7 @@ FINISH:
     return error;
   else
     {
-      memcpy (output, final_binary_path, POCL_FILENAME_LENGTH);
+      memcpy (output, final_binary_path, POCL_MAX_PATHNAME_LENGTH);
       return 0;
     }
 }
@@ -937,7 +941,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  module_fn = malloc (POCL_FILENAME_LENGTH);
+  module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
   pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
 
   if (pocl_exists (module_fn))
@@ -970,7 +974,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
     }
   else
     {
-      module_fn = malloc (POCL_FILENAME_LENGTH);
+      module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
       /* First try to find a specialized WG binary, if allowed by the
          command. */
       if (!run_cmd->force_generic_wg_func)

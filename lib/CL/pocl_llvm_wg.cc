@@ -510,7 +510,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
       pocl_get_string_option("POCL_BITCODE_FINALIZER", "");
   if (FinalizerCommand != "") {
     // Run a user-defined command on the final bitcode.
-    char TempParallelBCFileName[POCL_FILENAME_LENGTH];
+    char TempParallelBCFileName[POCL_MAX_PATHNAME_LENGTH];
     int FD = -1, Err = 0;
 
     Err = pocl_mk_tempname(TempParallelBCFileName, "/tmp/pocl-parallel", ".bc",
@@ -538,14 +538,14 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
   cl_context ctx = Kernel->context;
   void *Module = NULL;
 
-  char ParallelBCPath[POCL_FILENAME_LENGTH];
+  char ParallelBCPath[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_work_group_function_path(ParallelBCPath, Kernel->program, DeviceI,
                                       Kernel, Command, Specialize);
 
   if (pocl_exists(ParallelBCPath))
     return CL_SUCCESS;
 
-  char FinalBinaryPath[POCL_FILENAME_LENGTH];
+  char FinalBinaryPath[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_path(FinalBinaryPath, Kernel->program, DeviceI,
                                Kernel, Command, Specialize);
 
@@ -702,8 +702,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   // Next call the target's assembler via the Toolchain API indirectly through
   // the Driver API.
 
-  char AsmFileName[POCL_FILENAME_LENGTH];
-  char ObjFileName[POCL_FILENAME_LENGTH];
+  char AsmFileName[POCL_MAX_PATHNAME_LENGTH];
+  char ObjFileName[POCL_MAX_PATHNAME_LENGTH];
 
   std::string AsmStr = SOS.str().str();
   pocl_write_tempfile(AsmFileName, "/tmp/pocl-asm", ".s", AsmStr.c_str(),

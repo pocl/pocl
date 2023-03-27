@@ -118,7 +118,7 @@ CL_API_SUFFIX__VERSION_2_1
 #endif
   cl_program program = NULL;
   int errcode = CL_SUCCESS;
-  char program_bc_spirv[POCL_FILENAME_LENGTH];
+  char program_bc_spirv[POCL_MAX_PATHNAME_LENGTH];
   program_bc_spirv[0] = 0;
 
   POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);

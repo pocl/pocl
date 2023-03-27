@@ -158,7 +158,7 @@ int pocl_almaif_tce_cleanup(cl_device_id device) {
 
 #define SUBST(x) "  -DKERNEL_EXE_CMD_OFFSET=" #x
 #define OFFSET_ARG(c) SUBST(c)
-#define MAX_CMDLINE_LEN (32 * POCL_FILENAME_LENGTH)
+#define MAX_CMDLINE_LEN (32 * POCL_MAX_PATHNAME_LENGTH)
 
 void tceccCommandLine(char *commandline, size_t max_cmdline_len,
                       _cl_command_run *run_cmd, AlmaifData *D,
@@ -173,16 +173,16 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
   else
     mainC = "tta_device_main.c";
 
-  char deviceMainSrc[POCL_FILENAME_LENGTH];
+  char deviceMainSrc[POCL_MAX_PATHNAME_LENGTH];
   const char *poclIncludePathSwitch;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
-    snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s", SRCDIR,
+    snprintf(deviceMainSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s%s", SRCDIR,
              "/lib/CL/devices/almaif/openasip/", mainC);
     assert(access(deviceMainSrc, R_OK) == 0);
     poclIncludePathSwitch = " -I " SRCDIR "/include"
                             " -I " SRCDIR "/lib/CL/devices/almaif/openasip";
   } else {
-    snprintf(deviceMainSrc, POCL_FILENAME_LENGTH, "%s%s%s",
+    snprintf(deviceMainSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s%s",
              POCL_INSTALL_PRIVATE_DATADIR, "/", mainC);
     assert(access(deviceMainSrc, R_OK) == 0);
     poclIncludePathSwitch = " -I " POCL_INSTALL_PRIVATE_DATADIR "/include";
@@ -203,16 +203,17 @@ void tceccCommandLine(char *commandline, size_t max_cmdline_len,
            extraParams, multicoreFlags, userFlags, endianFlags,
            preprocessor_directives);
 
-  char kernelObjSrc[POCL_FILENAME_LENGTH];
-  snprintf(kernelObjSrc, POCL_FILENAME_LENGTH, "%s%s", tempDir,
+  char kernelObjSrc[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(kernelObjSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s", tempDir,
            "/../descriptor.so.kernel_obj.c");
 
-  char kernelMdSymbolName[POCL_FILENAME_LENGTH];
-  snprintf(kernelMdSymbolName, POCL_FILENAME_LENGTH, "_%s_md",
+  char kernelMdSymbolName[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(kernelMdSymbolName, POCL_MAX_PATHNAME_LENGTH, "_%s_md",
            run_cmd->kernel->name);
 
-  char programBcFile[POCL_FILENAME_LENGTH];
-  snprintf(programBcFile, POCL_FILENAME_LENGTH, "%s%s", tempDir, "/program.bc");
+  char programBcFile[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(programBcFile, POCL_MAX_PATHNAME_LENGTH, "%s%s", tempDir,
+           "/program.bc");
 
   /* Compile in steps to save the program.bc for automated exploration
      use case when producing the kernel capture scripts. */
@@ -306,31 +307,31 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
-  char inputBytecode[POCL_FILENAME_LENGTH + 13];
+  char inputBytecode[POCL_MAX_PATHNAME_LENGTH + 13];
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
 
-  char cachedir[POCL_FILENAME_LENGTH];
+  char cachedir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
                                   cmd->program_device_i, kernel, "", cmd,
                                   specialize);
   cmd->command.run.device_data = strdup(cachedir);
 
   // output TPEF
-  char assemblyFileName[POCL_FILENAME_LENGTH];
-  snprintf(assemblyFileName, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+  char assemblyFileName[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(assemblyFileName, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
            "/parallel.tpef");
 
-  char tempDir[POCL_FILENAME_LENGTH];
-  strncpy(tempDir, cachedir, POCL_FILENAME_LENGTH);
+  char tempDir[POCL_MAX_PATHNAME_LENGTH];
+  strncpy(tempDir, cachedir, POCL_MAX_PATHNAME_LENGTH);
 
   if (!pocl_exists(assemblyFileName)) {
     char descriptor_content[64 * 1024];
     pocl_tce_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
                                      kernel, device, specialize);
 
-    error = snprintf(inputBytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+    error = snprintf(inputBytecode, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
                      POCL_PARALLEL_BC_FILENAME);
 
     char commandLine[MAX_CMDLINE_LEN];
@@ -354,8 +355,9 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
         POCL_MSG_WARN("Error while running tcedisasm.\n");
   }
 
-  char md_path[POCL_FILENAME_LENGTH];
-  snprintf(md_path, POCL_FILENAME_LENGTH, "%s/kernel_address.txt", cachedir);
+  char md_path[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(md_path, POCL_MAX_PATHNAME_LENGTH, "%s/kernel_address.txt",
+           cachedir);
 
   if (!pocl_exists(md_path)) {
     TTAMachine::Machine *mach = NULL;
@@ -376,7 +378,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                    assemblyFileName);
     }
 
-    char wg_func_name[4 * POCL_FILENAME_LENGTH];
+    char wg_func_name[4 * POCL_MAX_PATHNAME_LENGTH];
     snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
              cmd->command.run.kernel->name);
     if (prog->hasProcedure(wg_func_name)) {
@@ -394,13 +396,14 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
     delete mach;
   }
 
-  char imem_file[POCL_FILENAME_LENGTH];
-  snprintf(imem_file, POCL_FILENAME_LENGTH, "%s%s", cachedir, "/parallel.img");
+  char imem_file[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(imem_file, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
+           "/parallel.img");
 
   if (!pocl_exists(imem_file)) {
-    char genbits_command[POCL_FILENAME_LENGTH * 8];
+    char genbits_command[POCL_MAX_PATHNAME_LENGTH * 8];
     // --dmemwidthinmaus 4
-    snprintf(genbits_command, (POCL_FILENAME_LENGTH * 8),
+    snprintf(genbits_command, (POCL_MAX_PATHNAME_LENGTH * 8),
              "SAVEDIR=$PWD; cd %s; generatebits --dmemwidthinmaus 4 "
              "--piformat=bin2n --diformat=bin2n --program "
              "parallel.tpef %s ; cd $SAVEDIR",
@@ -480,7 +483,7 @@ char *pocl_tce_init_build(void *data) {
      access to the (custom) hardware operations. */
   // to avoid threading issues, generate to tempfile then rename
   if (!pocl_exists(devextHeaderFn.c_str())) {
-    char tempfile[POCL_FILENAME_LENGTH];
+    char tempfile[POCL_MAX_PATHNAME_LENGTH];
     pocl_mk_tempname(tempfile, mach_tmpdir.c_str(), ".devext", NULL);
 
     std::string tceopgenCmd = std::string("tceopgen > ") + tempfile;

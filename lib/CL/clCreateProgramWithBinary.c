@@ -147,7 +147,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   TP_CREATE_PROGRAM (context->id, program->id);
 
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
 
   if (allow_empty_binaries && (lengths == NULL) && (binaries == NULL))
     goto SUCCESS;

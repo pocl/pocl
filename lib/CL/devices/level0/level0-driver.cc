@@ -2206,7 +2206,7 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   }
 
   assert(Program->data[DeviceI] == nullptr);
-  char ProgramCacheDir[POCL_FILENAME_LENGTH];
+  char ProgramCacheDir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_path(ProgramCacheDir, Program, DeviceI);
 
   std::vector<uint32_t> SpecConstantIDs;

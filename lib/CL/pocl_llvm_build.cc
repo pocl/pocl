@@ -200,11 +200,11 @@ int pocl_llvm_build_program(cl_program program,
                             int linking_program)
 
 {
-  char tempfile[POCL_FILENAME_LENGTH];
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char tempfile[POCL_MAX_PATHNAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module *mod = nullptr;
-  char temp_include_dir[POCL_FILENAME_LENGTH];
+  char temp_include_dir[POCL_MAX_PATHNAME_LENGTH];
   std::string user_options(program->compiler_options ? program->compiler_options
                                                      : "");
   size_t n = 0;
@@ -526,7 +526,7 @@ int pocl_llvm_build_program(cl_program program,
   if (0) {
 #endif
   } else {
-    char temp[POCL_FILENAME_LENGTH];
+    char temp[POCL_MAX_PATHNAME_LENGTH];
     pocl_get_private_datadir(temp);
     IncludeRoot = temp;
 #ifdef ENABLE_RELOCATION
@@ -569,7 +569,7 @@ int pocl_llvm_build_program(cl_program program,
   // but if debugging option is enabled in the kernel compiler
   // we need to dump the file to disk first for the debugger
   // to find it.
-  char source_file[POCL_FILENAME_LENGTH];
+  char source_file[POCL_MAX_PATHNAME_LENGTH];
   POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
   fe.Inputs.push_back(
@@ -784,7 +784,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
                            int link_device_builtin_library,
                            int linking_into_new_cl_program) {
 
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   std::string concated_binaries;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
@@ -1002,7 +1002,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   } else // POCL_BUILDING == 0, use install dir
 #endif
   {
-    char temp[POCL_FILENAME_LENGTH];
+    char temp[POCL_MAX_PATHNAME_LENGTH];
     pocl_get_private_datadir(temp);
     kernellib = temp;
   }

@@ -352,9 +352,9 @@ recursively_serialize_path (char* path,
     {
       DIR *d;
       struct dirent *entry;
-      char subpath[POCL_FILENAME_LENGTH];
+      char subpath[POCL_MAX_PATHNAME_LENGTH];
 
-      strncpy (subpath, path, POCL_FILENAME_LENGTH-1);
+      strncpy (subpath, path, POCL_MAX_PATHNAME_LENGTH - 1);
       char* p = subpath + strlen(subpath);
       *p++ = '/';
       d = opendir (path);
@@ -379,8 +379,8 @@ serialize_kernel_cachedir (cl_program program,
                            unsigned device_i,
                            unsigned char* buffer)
 {
-  char path[POCL_FILENAME_LENGTH];
-  char basedir[POCL_FILENAME_LENGTH];
+  char path[POCL_MAX_PATHNAME_LENGTH];
+  char basedir[POCL_MAX_PATHNAME_LENGTH];
 
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
@@ -695,7 +695,7 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 
   unsigned num_kernels = program->num_kernels;
 
-  char basedir[POCL_FILENAME_LENGTH];
+  char basedir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
 
@@ -729,7 +729,7 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
   {
     unsigned char *saved_b = buffer;
     BUFFER_STORE(0, uint64_t); // size of the following binaries;
-    char temp[POCL_FILENAME_LENGTH];
+    char temp[POCL_MAX_PATHNAME_LENGTH];
     strcpy(temp, basedir);
     strcat(temp, dev->serialize_entries[i]);
     POCL_MSG_PRINT_INFO ("serializing %s\n", temp);
@@ -787,7 +787,7 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   //assert(pocl_binary_check_binary_header(&b));
   assert (buffer < end_of_buffer);
 
-  char basedir[POCL_FILENAME_LENGTH];
+  char basedir[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
 

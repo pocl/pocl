@@ -88,14 +88,14 @@ int
 pocl_mkdir_p (const char* path)
 {
   size_t len = strlen (path);
-  if (len >= POCL_FILENAME_LENGTH - 1)
+  if (len >= POCL_MAX_PATHNAME_LENGTH - 1)
     {
       return -1;
     }
   if (len <= 1)
     return -1;
 
-  char path_copy[POCL_FILENAME_LENGTH];
+  char path_copy[POCL_MAX_PATHNAME_LENGTH];
   memcpy (path_copy, path, len);
   path_copy[len] = 0;
 
@@ -210,7 +210,7 @@ pocl_write_file (const char *path, const char *content, uint64_t count,
 {
   assert(path);
   assert(content);
-  char path2[POCL_FILENAME_LENGTH];
+  char path2[POCL_MAX_PATHNAME_LENGTH];
   int err, fd = -1;
 
   if (pocl_exists(path)) 
@@ -297,9 +297,9 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
    * but tmpnam() generates an annoying warning... */
   int fd;
 
-  strncpy (output, prefix, POCL_FILENAME_LENGTH);
+  strncpy (output, prefix, POCL_MAX_PATHNAME_LENGTH);
   size_t len = strlen (prefix);
-  strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
+  strncpy (output + len, "_XXXXXX", (POCL_MAX_PATHNAME_LENGTH - len));
 
 #ifdef __ANDROID__
   fd = pocl_mkstemp (output);
@@ -307,7 +307,7 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
   if (suffix)
     {
       len += 7;
-      strncpy (output + len, suffix, (POCL_FILENAME_LENGTH - len));
+      strncpy (output + len, suffix, (POCL_MAX_PATHNAME_LENGTH - len));
 #ifdef HAVE_MKOSTEMPS
       fd = mkostemps (output, strlen (suffix), O_CLOEXEC);
 #else
@@ -348,9 +348,9 @@ pocl_mk_tempdir (char *output, const char *prefix)
   assert (0);
 #elif defined(HAVE_MKDTEMP)
   /* TODO mkdtemp() might not be portable outside Linux */
-  strncpy (output, prefix, POCL_FILENAME_LENGTH);
+  strncpy (output, prefix, POCL_MAX_PATHNAME_LENGTH);
   size_t len = strlen (prefix);
-  strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
+  strncpy (output + len, "_XXXXXX", (POCL_MAX_PATHNAME_LENGTH - len));
   return (mkdtemp (output) == NULL);
 #else
 #error mkdtemp() not available

@@ -224,7 +224,7 @@ pocl_install_sigfpe_handler ()
    * Registering our handlers before LLVM creates its sigaltstack
    * leads to interesting crashes & bugs later.
    */
-  char random_empty_file[POCL_FILENAME_LENGTH];
+  char random_empty_file[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (random_empty_file, NULL, NULL);
   pocl_llvm_remove_file_on_signal (random_empty_file);
 #endif

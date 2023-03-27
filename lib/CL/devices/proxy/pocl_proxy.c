@@ -767,7 +767,7 @@ static int
 get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
                      cl_program prog, cl_device_id device, cl_kernel kernel)
 {
-  char string_value[POCL_FILENAME_LENGTH];
+  char string_value[POCL_MAX_PATHNAME_LENGTH];
   int err;
   size_t size;
 
@@ -779,7 +779,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
   err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
   assert (err == CL_SUCCESS);
   assert (size > 0);
-  assert (size < POCL_FILENAME_LENGTH);
+  assert (size < POCL_MAX_PATHNAME_LENGTH);
 
   err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, size, string_value,
                          NULL);
@@ -789,7 +789,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
 
   err = clGetKernelInfo (kernel, CL_KERNEL_ATTRIBUTES, 0, NULL, &size);
   assert (err == CL_SUCCESS);
-  assert (size < POCL_FILENAME_LENGTH);
+  assert (size < POCL_MAX_PATHNAME_LENGTH);
 
   if (size > 0)
     {
@@ -870,7 +870,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, 0, NULL,
                                 &size);
       assert (err == CL_SUCCESS);
-      assert (size < POCL_FILENAME_LENGTH);
+      assert (size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, size,
                                 string_value, NULL);
       assert (err == CL_SUCCESS);
@@ -881,7 +881,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, 0, NULL, &size);
       assert (err == CL_SUCCESS);
-      assert (size < POCL_FILENAME_LENGTH);
+      assert (size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, size,
                                 string_value, NULL);
       assert (err == CL_SUCCESS);
@@ -1108,8 +1108,8 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
 
   if (d->backend->supports_binaries)
     {
-      char program_bc_path[POCL_FILENAME_LENGTH];
-      char temp_path[POCL_FILENAME_LENGTH];
+      char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+      char temp_path[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
                                           program_bc_path);
 
@@ -1155,7 +1155,7 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
 
   // TODO should binary be already loaded ?
   assert (program->pocl_binaries[device_i]);
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_bc_path (program_bc_path, program, device_i);
 
   assert (pocl_exists (program_bc_path));

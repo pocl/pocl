@@ -135,8 +135,8 @@ void AlmaIFDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
   assert(kd);
 
   if (kd->imem_img_size == 0) {
-    char img_file[POCL_FILENAME_LENGTH];
-    char cachedir[POCL_FILENAME_LENGTH];
+    char img_file[POCL_MAX_PATHNAME_LENGTH];
+    char cachedir[POCL_MAX_PATHNAME_LENGTH];
     // first try specialized
     pocl_cache_kernel_cachedir_path(img_file, kernel->program,
                                     cmd->program_device_i, kernel,
@@ -192,8 +192,9 @@ void AlmaIFDevice::preread_images(const char *kernel_cachedir,
   size_t size = 0;
   char *content = NULL;
 
-  char module_fn[POCL_FILENAME_LENGTH];
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel.img", kernel_cachedir);
+  char module_fn[POCL_MAX_PATHNAME_LENGTH];
+  snprintf(module_fn, POCL_MAX_PATHNAME_LENGTH, "%s/parallel.img",
+           kernel_cachedir);
 
   if (pocl_exists(module_fn)) {
     int res = pocl_read_file(module_fn, &content, &temp);
@@ -207,7 +208,7 @@ void AlmaIFDevice::preread_images(const char *kernel_cachedir,
   } else
     POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
 
-  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/kernel_address.txt",
+  snprintf(module_fn, POCL_MAX_PATHNAME_LENGTH, "%s/kernel_address.txt",
            kernel_cachedir);
   if (pocl_exists(module_fn)) {
     int res = pocl_read_file(module_fn, &content, &temp);
@@ -223,7 +224,7 @@ void AlmaIFDevice::preread_images(const char *kernel_cachedir,
   } else
     POCL_ABORT("ALMAIF: %s for this kernel does not exist.\n", module_fn);
 
-  /*  snprintf(module_fn, POCL_FILENAME_LENGTH, "%s/parallel_local.img",
+  /*  snprintf(module_fn, POCL_MAX_PATHNAME_LENGTH, "%s/parallel_local.img",
              kernel_cachedir);
     if (pocl_exists(module_fn)) {
       int res = pocl_read_file(module_fn, &content, &temp);

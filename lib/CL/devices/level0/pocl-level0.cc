@@ -266,12 +266,12 @@ cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice) {
 }
 
 static void convertProgramBcToSpv(char *ProgramBcPath, char *ProgramSpvPath) {
-  strncpy(ProgramSpvPath, ProgramBcPath, POCL_FILENAME_LENGTH);
+  strncpy(ProgramSpvPath, ProgramBcPath, POCL_MAX_PATHNAME_LENGTH);
   size_t Len = strlen(ProgramBcPath);
   assert(Len > 3);
   Len -= 2;
   ProgramSpvPath[Len] = 0;
-  strncat(ProgramSpvPath, "spv", POCL_FILENAME_LENGTH);
+  strncat(ProgramSpvPath, "spv", POCL_MAX_PATHNAME_LENGTH);
 }
 
 static constexpr unsigned DefaultCaptureSize = 128 * 1024;
@@ -323,8 +323,8 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
 
 static int
 compileProgramBcToSpv(cl_program Program, cl_uint DeviceI,
-                      const char ProgramBcPathTemp[POCL_FILENAME_LENGTH],
-                      char ProgramSpvPathTemp[POCL_FILENAME_LENGTH]) {
+                      const char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH],
+                      char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH]) {
   std::vector<std::string> CompilationArgs;
   std::vector<char *> CompilationArgs2;
 
@@ -355,7 +355,7 @@ compileProgramBcToSpv(cl_program Program, cl_uint DeviceI,
 }
 
 static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
-                             char ProgramSpvPathTemp[POCL_FILENAME_LENGTH],
+                             char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH],
                              std::vector<std::string> &SpvBinaryPaths,
                              int CreateLibrary) {
   std::vector<std::string> CompilationArgs;
@@ -402,10 +402,10 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
   cl_device_id Dev = Program->devices[DeviceI];
   Level0Device *Device = (Level0Device *)Dev->data;
 
-  char ProgramSpvPathTemp[POCL_FILENAME_LENGTH];
-  char ProgramBcPathTemp[POCL_FILENAME_LENGTH];
-  char ProgramBcPath[POCL_FILENAME_LENGTH];
-  char ProgramSpvPath[POCL_FILENAME_LENGTH];
+  char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
 
   pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
   pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
@@ -481,8 +481,8 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
                              int LinkProgram, int SpirBuild) {
   cl_device_id Dev = Program->devices[DeviceI];
   Level0Device *Device = (Level0Device *)Dev->data;
-  char ProgramBcPath[POCL_FILENAME_LENGTH];
-  char ProgramSpvPath[POCL_FILENAME_LENGTH];
+  char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
 
   if ((Program->program_il != nullptr) && Program->program_il_size > 0 &&
       Program->pocl_binaries[DeviceI] == nullptr &&
@@ -527,7 +527,7 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
       convertProgramBcToSpv(ProgramBcPath, ProgramSpvPath);
 
       if (pocl_exists(ProgramSpvPath) == 0) {
-        char ProgramSpvPathTemp[POCL_FILENAME_LENGTH];
+        char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
         pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
 
         pocl_write_file(ProgramSpvPathTemp, Binary, BinarySize, 0, 0);
@@ -541,8 +541,8 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
 #ifdef ENABLE_SPIR
       if ((bitcode_is_triple(Binary, BinarySize, "spir-unknown") != 0) ||
           (bitcode_is_triple(Binary, BinarySize, "spir64-unknown") != 0)) {
-        char ProgramSpvPathTemp[POCL_FILENAME_LENGTH];
-        char ProgramBcPathTemp[POCL_FILENAME_LENGTH];
+        char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
+        char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
 
         pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
         pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
@@ -593,8 +593,8 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
                              int CreateLibrary) {
   cl_device_id Dev = Program->devices[DeviceI];
   Level0Device *Device = (Level0Device *)Dev->data;
-  char ProgramBcPath[POCL_FILENAME_LENGTH];
-  char ProgramSpvPath[POCL_FILENAME_LENGTH];
+  char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
 
   /* we have program->binaries[] which is SPIR-V */
   assert(Program->pocl_binaries[DeviceI] == nullptr);
@@ -626,7 +626,7 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
                                      SpvConcatBinary.size(), ProgramBcPath);
   convertProgramBcToSpv(ProgramBcPath, ProgramSpvPath);
 
-  char ProgramSpvPathTemp[POCL_FILENAME_LENGTH];
+  char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
 
   int Err = linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp,
