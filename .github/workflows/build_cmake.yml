@@ -1,7 +1,16 @@
 ---
 name: Main test matrix
 
-on: [workflow_dispatch, pull_request]
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
 
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
@@ -15,9 +24,9 @@ env:
   CCACHE_DIR: /home/github/ccache_storage
 
 jobs:
-  build:
+  main_test_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, debian]
     strategy:
       fail-fast: false
       matrix:
@@ -104,6 +113,106 @@ jobs:
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+
+  cuda_test:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64, cuda]
+    strategy:
+      fail-fast: false
+      matrix:
+        # for now, only 15, although it supports also 14 & 16
+        llvm: [15]
+        config: [cuda]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "cuda" ]; then
+            runCMake -DENABLE_CUDA=ON
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Run Build
+        id: build
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "cuda" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+  openasip_test:
+    env:
+      PATH: "/home/LLVM_${{ matrix.llvm }}0/bin:/home/TCE_${{ matrix.llvm }}0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      LD_LIBRARY_PATH: "/home/TCE_${{ matrix.llvm }}0/lib"
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, x64, openasip]
+    strategy:
+      fail-fast: false
+      matrix:
+        # for now, only 15 is enabled
+        llvm: [15]
+        config: [openasip]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}0/bin/llvmtce-config \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "openasip" ]; then
+            runCMake -DENABLE_TCE=ON
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Run Build
+        id: build
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "openasip" ]; then
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests
           else
             echo "Unknown configuration" && exit 1
           fi
