@@ -283,8 +283,8 @@ The string after "HSTR:" is the device build hash.
   This is required because pocl binaries contain a device hash, and the LLVM-less
   pocl needs to know which binaries it can load.
 
-**NOTE**: If you've enabled the `almaif <http://portablecl.org/docs/html/almaif.html#usage>`_ 
-device, `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
+**NOTE**: If you've enabled the :ref:`almaif device <almaif_usage>`
+, `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
 accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched. 
 
 Cross-compile pocl
