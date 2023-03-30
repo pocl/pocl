@@ -131,6 +131,8 @@ As a practical example, enqueuing a kernel dispatch packet proceeds as follows:
   - The driver sees the completion signal change, and can consider the command
     completed.
 
+.. _almaif_usage:
+
 Usage
 -----
 
