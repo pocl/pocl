@@ -331,6 +331,16 @@ if(NOT DEFINED SPIRV_LINK)
   endif()
 endif()
 
+if(NOT DEFINED HAVE_LLVM_SPIRV_LIB)
+  find_path(LLVM_SPIRV_INCLUDEDIR "LLVMSPIRVLib.h" PATHS "${LLVM_INCLUDEDIR}/LLVMSPIRVLib" NO_DEFAULT_PATH)
+  find_library(LLVM_SPIRV_LIB "LLVMSPIRVLib" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  if(LLVM_SPIRV_INCLUDEDIR AND LLVM_SPIRV_LIB)
+    set(HAVE_LLVM_SPIRV_LIB 1 CACHE BOOL "have LLVMSPIRVLib")
+  else()
+    set(HAVE_LLVM_SPIRV_LIB 0 CACHE BOOL "have LLVMSPIRVLib")
+  endif()
+endif()
+
 ####################################################################
 
 # try compile with any compiler (supplied as argument)

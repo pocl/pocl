@@ -28,7 +28,7 @@ add_pocl_device_library(pocl-devices-level0
   level0-compilation.cc level0-compilation.hh
   level0-driver.cc level0-driver.hh)
 
-set_property(TARGET pocl-devices-level0 PROPERTY CXX_STANDARD 14)
+set_property(TARGET pocl-devices-level0 PROPERTY CXX_STANDARD 17)
 
 if(ENABLE_LOADABLE_DRIVERS)
   target_link_libraries(pocl-devices-level0 PRIVATE ${LEVEL0_LIBRARIES} ${PTHREAD_LIBRARY})
