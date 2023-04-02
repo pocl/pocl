@@ -382,7 +382,7 @@ step5 make a writefile for chisel
      memory buffers, etc. */
   for (i = 0; i < meta->num_args; ++i)
     {
-      auto al = &(cmd->command.run.arguments[i]);
+      pocl_argument* al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL(meta->arg_info[i]))   
         {
           if (cmd->device->device_alloca_locals)
@@ -412,7 +412,7 @@ step5 make a writefile for chisel
             }
           else
             {
-              void *ptr = NULL;uint64_t dev_mem_addr;
+              void *ptr = NULL;
               if (al->is_svm)
                 {
                   ptr = *(void **)al->value;
@@ -420,8 +420,8 @@ step5 make a writefile for chisel
               else
                 {
                   cl_mem m = (*(cl_mem *)(al->value));
-                  m->flags=m->flags & CL_MEM_COPY_HOST_PTR
-                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr)
+                  m->flags=m->flags & CL_MEM_COPY_HOST_PTR;
+                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
                   assert(0 == CL_SUCCESS);
                   ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
                 }
@@ -553,7 +553,7 @@ uint64_t abuf_size = 0;
   uint64_t pc_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
 
   
@@ -563,13 +563,13 @@ uint64_t abuf_size = 0;
   uint64_t pds_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, pds_src_size, &pds_dev_mem_addr,0,0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
 
   
 
 //prepare kernel_metadata
-  char *kernel_metadata=memset(KNL_MAX_METADATA_SIZE);
+  char *kernel_metadata;
   memset(kernel_metadata,0,KNL_MAX_METADATA_SIZE);
   memcpy(kernel_metadata+KNL_ENTRY,&kernel_entry,4);
   uint32_t arg_dev_mem_addr_32=(uint32_t)arg_dev_mem_addr;
@@ -578,24 +578,24 @@ uint64_t abuf_size = 0;
   uint32_t local_size_32[3];local_size_32[0]=(uint32_t)pc->local_size[0];local_size_32[1]=(uint32_t)pc->local_size[1];local_size_32[2]=(uint32_t)pc->local_size[2];
   uint32_t global_offset_32[3];global_offset_32[0]=(uint32_t)pc->global_offset[0];global_offset_32[1]=(uint32_t)pc->global_offset[1];global_offset_32[2]=(uint32_t)pc->global_offset[2];
   uint32_t global_size_32[3];global_size_32[0]=(uint32_t)pc->num_groups[0];global_size_32[1]=(uint32_t)pc->num_groups[1];global_size_32[2]=(uint32_t)pc->num_groups[2];
-  memcpy(kernel_metadata+KNL_GL_SIZE_X,global_size_32[0],4);
-  memcpy(kernel_metadata+KNL_GL_SIZE_Y,global_size_32[1],4);
-  memcpy(kernel_metadata+KNL_GL_SIZE_Z,global_size_32[2],4);
-  memcpy(kernel_metadata+KNL_LC_SIZE_X,local_size_32[0],4);
-  memcpy(kernel_metadata+KNL_LC_SIZE_Y,local_size_32[1],4);
-  memcpy(kernel_metadata+KNL_LC_SIZE_Z,local_size_32[2],4);
-  memcpy(kernel_metadata+KNL_GL_OFFSET_X,global_offset_32[0],4);
-  memcpy(kernel_metadata+KNL_GL_OFFSET_Y,global_offset_32[1],4);
-  memcpy(kernel_metadata+KNL_GL_OFFSET_Z,global_offset_32[2],4);
+  memcpy(kernel_metadata+KNL_GL_SIZE_X,&global_size_32[0],4);
+  memcpy(kernel_metadata+KNL_GL_SIZE_Y,&global_size_32[1],4);
+  memcpy(kernel_metadata+KNL_GL_SIZE_Z,&global_size_32[2],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_X,&local_size_32[0],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_Y,&local_size_32[1],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_Z,&local_size_32[2],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_X,&global_offset_32[0],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_Y,&global_offset_32[1],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_Z,&global_offset_32[2],4);
 //memcpy(kernel_metadata+KNL_PRINT_ADDR,global_offset_32[0],4);
   uint64_t knl_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, KNL_MAX_METADATA_SIZE, &knl_dev_mem_addr,0,0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
   err = vt_copy_to_dev(d->vt_device,knl_dev_mem_addr,kernel_metadata, KNL_MAX_METADATA_SIZE, 0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
 
   uint64_t pdsbase=pds_dev_mem_addr;
