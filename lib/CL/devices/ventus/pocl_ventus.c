@@ -54,18 +54,18 @@
 #endif
 
   // from driver/include/ventus.h
-#if !defined(ENABLE_LLVM)
+//#if !defined(ENABLE_LLVM)
 #include "ventus.h"
 #include "pocl_ventus.h"
-#endif
+//#endif
 
   /* ENABLE_LLVM means to compile the kernel using pocl compiler,
  but for ventus(ventus has its own LLVM) it should be OFF. */
 
 struct vt_device_data_t {
-#if !defined(ENABLE_LLVM)
+//#if !defined(ENABLE_LLVM)
   vt_device_h vt_device;
-#endif
+//#endif
 
 
   #define MAX_KERNELS 16
@@ -375,7 +375,7 @@ step5 make a writefile for chisel
                                       * (meta->num_args + meta->num_locals));
 
 
-//TODO 1: support local buffer as argument? but in current structure, allocated localmembuffer will be mapped to ddr space.
+//TODO 1: support local buffer as argument. Notice in current structure, allocated localmembuffer will be mapped to ddr space.
 //TODO 2: print buffer support in pocl
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
@@ -390,14 +390,13 @@ step5 make a writefile for chisel
               /* Local buffers are allocated in the device side work-group
                  launcher. Let's pass only the sizes of the local args in
                  the arg buffer. */
-              
-              arguments[i] = (void *)al->size;
+              printf("not support local buffer arg yet.\n");
+              //arguments[i] = (void *)al->size;
             }
           else
             {
               arguments[i] = malloc (sizeof (void *));
-              *(void **)(arguments[i]) =
-                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+              //*(void **)(arguments[i]) =pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
@@ -489,7 +488,7 @@ step5 make a writefile for chisel
 // create argument buffer now.
 uint64_t abuf_size = 0;  
     for (i = 0; i < meta->num_args; ++i) {  
-      auto al = &(cmd->command.run.arguments[i]);  
+      pocl_argument* al = &(cmd->command.run.arguments[i]);  
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         abuf_size += 4;
         //abuf_size += al->size;
@@ -507,7 +506,7 @@ uint64_t abuf_size = 0;
   char* abuf_args_data = malloc(abuf_size);
   uint64_t abuf_args_p = 0;
   for(i = 0; i < meta->num_args; ++i) {  
-      auto al = &(cmd->command.run.arguments[i]);  
+      pocl_argument* al = &(cmd->command.run.arguments[i]);  
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         uint32_t local_vaddr=0;
         memcpy(abuf_args_data+abuf_args_p,&local_vaddr,4);
@@ -516,10 +515,10 @@ uint64_t abuf_size = 0;
       if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)) {
-        memcpy(abuf_args_data+abuf_args_p,((cl_mem)(a1->value))->device_ptrs->mem_ptr,4);
+        memcpy(abuf_args_data+abuf_args_p,((cl_mem)(al->value))->device_ptrs->mem_ptr,4);
         abuf_args_p+=4;
       } else {
-        memcpy(abuf_args_data+abuf_args_p,a1->value,a1->size);
+        memcpy(abuf_args_data+abuf_args_p,al->value,al->size);
         abuf_args_p+=al->size;
       }
     }
