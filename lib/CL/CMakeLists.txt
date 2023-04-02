@@ -242,15 +242,19 @@ if (ENABLE_LLVM)
   unset(CMAKE_CXX_STANDARD)
   unset(CMAKE_CXX_STANDARD_REQUIRED)
 
-  include_directories(${LLVM_INCLUDE_DIRS})
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
   add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
+  target_include_directories(lib_cl_llvm PRIVATE ${LLVM_INCLUDE_DIRS})
   harden("lib_cl_llvm")
 
   if(OCL_ICD_INCLUDE_DIRS)
     target_include_directories("lib_cl_llvm" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+  endif()
+
+  if (HAVE_LLVM_SPIRV_LIB)
+    target_include_directories(lib_cl_llvm PRIVATE ${LLVM_SPIRV_INCLUDEDIR})
   endif()
 
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
@@ -297,6 +301,9 @@ endif()
 
 if(ENABLE_LLVM)
    list(APPEND POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+   if (HAVE_LLVM_SPIRV_LIB)
+     list(PREPEND POCL_PRIVATE_LINK_LIST ${LLVM_SPIRV_LIB})
+   endif()
 endif()
 
 if(HAVE_LTTNG_UST)

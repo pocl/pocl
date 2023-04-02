@@ -1766,6 +1766,7 @@ if (ENABLE_LEVEL0)
     set(OCL_DRIVERS "${OCL_DRIVERS} level0")
     set(OCL_TARGETS "${OCL_TARGETS} level0")
   endif()
+
 endif()
 
 ##########################################################
