@@ -34,7 +34,7 @@
 #include "utlist.h"
 
 #include <assert.h>
-#include <ctypes.h?
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +49,6 @@
 #include "pocl_workgroup_func.h"
 
 #include "common_driver.h"
-#include <iostream>
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -340,16 +339,16 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   struct vt_device_data_t *d;
   size_t x, y, z;
   unsigned i;
-  unsigned dev_i = cmd->device_i;
   cl_kernel kernel = cmd->command.run.kernel;
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
-  int err,i;
+  int err;
 
     uint64_t num_thread=8;
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
-    uint64_t num_workgroups[3]=pc->num_groups;
+    uint64_t num_workgroups[3];
+    num_workgroups[0]=pc->num_groups[0];num_workgroups[1]=pc->num_groups[1];num_workgroups[2]=pc->num_groups[2];
     uint64_t num_workgroup=num_workgroups[0]*num_workgroups[1]*num_workgroups[2];
     uint64_t num_processor=num_warp*num_workgroup;
     uint64_t ldssize=0x1000;
@@ -383,7 +382,7 @@ step5 make a writefile for chisel
      memory buffers, etc. */
   for (i = 0; i < meta->num_args; ++i)
     {
-      al = &(cmd->command.run.arguments[i]);
+      auto al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL(meta->arg_info[i]))   
         {
           if (cmd->device->device_alloca_locals)
