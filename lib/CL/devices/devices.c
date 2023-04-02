@@ -64,7 +64,7 @@
 #endif
 
 #ifdef BUILD_VENTUS
-#include "ventus/ventus.h"
+#include "ventus/pocl_ventus.h"
 #endif
 
 #ifdef TCE_AVAILABLE

@@ -359,8 +359,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     uint64_t knlbase=0x90000000;
     uint64_t sgpr_usage=32;
     uint64_t vgpr_usage=32;
-    meta_data driver_meta(0,num_workgroups,num_thread,num_warp,knlbase,ldssize,pdssize,32,32,pdsbase);
-  
+    
 
 /*
 step1 upload kernel_rom & allocate its mem (load cache file?)
@@ -603,8 +602,18 @@ uint64_t abuf_size = 0;
 
   uint64_t pdsbase=pds_dev_mem_addr;
   uint64_t knlbase=knl_dev_mem_addr;
-  meta_data driver_meta(0,num_workgroups,num_thread,num_warp,knlbase,ldssize,pdssize,sgpr_usage,vgpr_usage,pdsbase);
-  
+  struct meta_data driver_meta;
+    driver_meta.kernel_id=0;
+    driver_meta.kernel_size=num_workgroups;
+    driver_meta.wf_size=num_thread;
+    driver_meta.wg_size=num_warp;
+    driver_meta.metaDataBaseAddr=knlbase;
+    driver_meta.ldsSize=ldssize;
+    driver_meta.pdsSize=pdssize;
+    driver_meta.sgprUsage=sgpr_usage;
+    driver_meta.vgprUsage=vgpr_usage;
+    driver_meta.pdsBaseAddr=pdsbase;
+
 // prepare a write function
 
 #ifdef WRITE_CHISEL_TEST
