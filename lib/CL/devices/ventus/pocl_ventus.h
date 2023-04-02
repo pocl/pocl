@@ -31,7 +31,7 @@ unsigned int pocl_ventus_probe(struct pocl_device_ops *ops);
 cl_int pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters);
 void pocl_ventus_run (void *data, _cl_command_node *cmd);
 cl_int pocl_ventus_uninit (unsigned j, cl_device_id device);
-static void ventus_command_scheduler (struct vt_device_data_t *d);
+void ventus_command_scheduler (struct vt_device_data_t *d);
 void pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq);
 void pocl_ventus_flush (cl_device_id device, cl_command_queue cq);
 void pocl_ventus_join (cl_device_id device, cl_command_queue cq);

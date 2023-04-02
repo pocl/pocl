@@ -525,11 +525,11 @@ uint64_t abuf_size = 0;
   uint64_t arg_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
   err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
   if (err != 0) {
-    return CL_DEVICE_NOT_AVAILABLE;
+    abort();
   }
 
 //pass in vmem file  
@@ -598,11 +598,13 @@ uint64_t abuf_size = 0;
     abort();
   }
 
-  uint64_t pdsbase=pds_dev_mem_addr;
-  uint64_t knlbase=knl_dev_mem_addr;
+  pdsbase=pds_dev_mem_addr;
+  knlbase=knl_dev_mem_addr;
   struct meta_data driver_meta;
     driver_meta.kernel_id=0;
-    driver_meta.kernel_size=num_workgroups;
+    driver_meta.kernel_size[0]=num_workgroups[0];
+    driver_meta.kernel_size[1]=num_workgroups[1];
+    driver_meta.kernel_size[2]=num_workgroups[2];
     driver_meta.wf_size=num_thread;
     driver_meta.wg_size=num_warp;
     driver_meta.metaDataBaseAddr=knlbase;
@@ -694,7 +696,7 @@ pocl_ventus_uninit (unsigned j, cl_device_id device)
 }
 
 
-static void ventus_command_scheduler (struct vt_device_data_t *d)
+void ventus_command_scheduler (struct vt_device_data_t *d)
 {
   _cl_command_node *node;
 
@@ -793,8 +795,8 @@ pocl_ventus_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 
 void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   cl_mem_flags flags = memobj->flags;
-  auto d = (vt_device_data_t *)device->data;
-  uint64_t dev_mem_addr = *(memobj->device_ptrs[device->dev_id].mem_ptr);
+  struct vt_device_data_t *d = (vt_device_data_t *)device->data;
+  uint64_t dev_mem_addr = *((uint64_t*)(memobj->device_ptrs[device->dev_id].mem_ptr));
 
   /* The host program can provide the runtime with a pointer 
   to a block of continuous memory to hold the memory object 
@@ -802,13 +804,12 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   Alternatively, the physical memory can be managed 
   by the OpenCL runtime and not be directly accessible 
   to the host program.*/
-  if (flags & CL_MEM_USE_HOST_PTR 
-   || memobj->shared_mem_allocation_owner != device) {
+  if (flags & CL_MEM_USE_HOST_PTR) {
     abort(); //TODO
   } else {
-    vt_buf_free(d->vt_device,mem_obj->size,dev_mem_addr,0,0);
+    vt_buf_free(d->vt_device,memobj->size,dev_mem_addr,0,0);
     free(memobj->mem_host_ptr);
-    memobj->mem_host_ptr = nullptr;
+    memobj->mem_host_ptr = NULL;
   }
   if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
     memobj->mem_host_ptr = NULL;
@@ -821,23 +822,7 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
   printf("allocating mem in pocl\n");
-
-  /* Check if some driver has already allocated memory for this mem_obj
-     in our global address space, and use that. */
-  for (i = 0; i < mem_obj->context->num_devices; ++i) {
-    if (!mem_obj->device_ptrs[i].available)
-      continue;
-    if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id && mem_obj->device_ptrs[i].mem_ptr != NULL) {
-      mem_obj->device_ptrs[device->dev_id].mem_ptr = mem_obj->device_ptrs[i].mem_ptr;
-    
-      POCL_MSG_PRINT_INFO("VENTUS: alloc_mem_obj, use already allocated memory\n");
-      abort(); // TODO
-      return CL_SUCCESS;
-    }
-  }
-
-  /* Memory for this global memory is not yet allocated -> we'll allocate it. */
-  auto d = (vt_device_data_t *)device->data;
+  vt_device_data_t* d = (vt_device_data_t *)device->data;
   pocl_global_mem_t *mem = device->global_memory;
   int err;
   if (flags & CL_MEM_USE_HOST_PTR) {
@@ -877,7 +862,7 @@ void pocl_ventus_read(void *data,
                       size_t offset, 
                       size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
-  auto err = vt_copy_from_dev(d->vt_device,*(src_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  int err = vt_copy_from_dev(d->vt_device,*(src_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
 
@@ -888,6 +873,6 @@ void pocl_ventus_write(void *data,
                        size_t offset, 
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  auto err = vt_copy_to_dev(d->vt_device,*(dst_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  int err = vt_copy_to_dev(d->vt_device,*(dst_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
