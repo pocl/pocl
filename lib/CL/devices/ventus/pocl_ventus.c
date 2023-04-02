@@ -34,7 +34,9 @@
 #include "utlist.h"
 
 #include <assert.h>
+#include <ctypes.h?
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -47,14 +49,15 @@
 #include "pocl_workgroup_func.h"
 
 #include "common_driver.h"
-
+#include <iostream>
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
   // from driver/include/ventus.h
 #if !defined(ENABLE_LLVM)
-#include <ventus.h>
+#include "ventus.h"
+#include "pocl_ventus.h"
 #endif
 
   /* ENABLE_LLVM means to compile the kernel using pocl compiler,
@@ -63,29 +66,10 @@
 struct vt_device_data_t {
 #if !defined(ENABLE_LLVM)
   vt_device_h vt_device;
-  size_t vt_print_buf_d;
-  vt_buffer_h vt_print_buf_h;
-  uint32_t printf_buffer;
-  uint32_t printf_buffer_position;
 #endif
 
-struct vt_buffer_data_t {
-#if !defined(ENABLE_LLVM)
-  vt_device_h vt_device;
-  vt_buffer_h staging_buf;
-#endif
-  size_t dev_mem_addr;
-};
 
-
-  /* Maximum kernels occupancy */
   #define MAX_KERNELS 16
-
-  // default WG size in each dimension & total WG size.
-  #define DEFAULT_WG_SIZE 4096
-
-  // location is local memory where to store kernel parameters
-  #define KERNEL_ARG_BASE_ADDR 0x7fff0000
 
   // allocate 1MB OpenCL print buffer
   #define PRINT_BUFFER_SIZE (1024 * 1024)
@@ -100,21 +84,27 @@ struct vt_buffer_data_t {
 
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
-
+  
+  /* printf buffer */
+  void *printf_buffer;
 };
 
+#define KNL_ENTRY 0
+#define KNL_ARG_BASE 4
+#define KNL_WORK_DIM 8
+#define KNL_GL_SIZE_X 12
+#define KNL_GL_SIZE_Y 16
+#define KNL_GL_SIZE_Z 20
+#define KNL_LC_SIZE_X 24
+#define KNL_LC_SIZE_Y 28
+#define KNL_LC_SIZE_Z 32
+#define KNL_GL_OFFSET_X 36
+#define KNL_GL_OFFSET_Y 40
+#define KNL_GL_OFFSET_Z 44
+#define KNL_PRINT_ADDR 48
+#define KNL_PRINT_SIZE 52
+#define KNL_MAX_METADATA_SIZE 64
 
-struct kernel_context_t {
-  uint32_t num_groups[3];
-  uint32_t global_offset[3];
-  uint32_t local_size[3];
-  uint32_t printf_buffer;
-  uint32_t printf_buffer_position;
-  uint32_t printf_buffer_capacity;
-  uint32_t work_dim;
-};
-
-static size_t ALIGNED_CTX_SIZE = 4 * ((sizeof(struct kernel_context_t) + 3) / 4);
 
 // FIXME: Do not use hardcoded library search path!
 static const char *ventus_final_ld_flags[] = {
@@ -165,7 +155,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->setup_metadata = NULL;
   ops->supports_binary = NULL;
   ops->build_poclbinary = NULL;
-  ops->compile_kernel = NULL;
+  ops->compile_kernel = NULL;  //or use int (*build_builtin) (cl_program program, cl_uint device_i);
 
   ops->join = pocl_ventus_join;
   ops->submit = pocl_ventus_submit;
@@ -208,7 +198,7 @@ char *
 pocl_ventus_build_hash (cl_device_id device)
 {
   char* res = (char *)calloc(1000, sizeof(char));
-  snprintf(res, 1000, "THU-%s", device->llvm_cpu);
+  snprintf(res, 1000, "THU-ventus-GPGPU");
   return res;
 }
 
@@ -231,8 +221,6 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-
-#if !defined(ENABLE_LLVM)
   vt_device_h vt_device;
 
   err = vt_dev_open(&vt_device);
@@ -241,46 +229,18 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
     return CL_DEVICE_NOT_FOUND;
   }
   
-  device->device_side_printf = 1;
-  device->printf_buffer_size = PRINT_BUFFER_SIZE;
-
+  /*
   // add storage for position pointer
   uint32_t print_buf_dev_size = PRINT_BUFFER_SIZE + sizeof(uint32_t);
-
   size_t vt_print_buf_d;
-  err = vt_mem_alloc(vt_device, print_buf_dev_size, &vt_print_buf_d);
+  err = vt_buf_alloc(vt_device, print_buf_dev_size, &vt_print_buf_d);
   if (err != 0) {
     vt_dev_close(vt_device);
     free(d);
     return CL_INVALID_DEVICE;
-  }  
-  
-  vt_buffer_h vt_print_buf_h;
-  err = vt_buf_alloc(vt_device, print_buf_dev_size, &vt_print_buf_h);
-  if (err != 0) {
-    vt_dev_close(vt_device);
-    free(d);
-    return CL_OUT_OF_HOST_MEMORY;
-  }  
+  }  */
     
-  // clear print position to zero
-  uint8_t* staging_ptr = (uint8_t*)vt_host_ptr(vt_print_buf_h);
-  memset(staging_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
-  err = vt_copy_to_dev(vt_print_buf_h, vt_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
-  if (err != 0) {
-    vt_buf_free(vt_print_buf_h);
-    vt_dev_close(vt_device);
-    free(d);
-    return CL_OUT_OF_HOST_MEMORY;
-  }
-    
-  d->vt_device      = vt_device;
-  d->vt_print_buf_d = vt_print_buf_d;
-  d->vt_print_buf_h = vt_print_buf_h; 
-  d->printf_buffer  = vt_print_buf_d;
-  d->printf_buffer_position = vt_print_buf_d + PRINT_BUFFER_SIZE;
-#endif 
-
+  d->vt_device   = vt_device;
 
   d->current_kernel = NULL;
 
@@ -290,24 +250,24 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->long_name = "Ventus GPGPU device";
   dev->vendor = "THU";
-  dev->vendor_id = 0x1234; // TODO: Update vendor id!
+  dev->vendor_id = 0; // TODO: Update vendor id!
   dev->version = "2.0";
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
-  dev->extensions = "";
+  dev->extensions = ""; // no extention support now
   dev->profile = "FULL_PROFILE";
   dev->endian_little = CL_TRUE;
 
-  dev->max_mem_alloc_size = 100 * 1024 * 1024;
+  dev->max_mem_alloc_size = 100 * 1024 * 1024; //100M
   dev->mem_base_addr_align = 4;
 
-  dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0
-  dev->local_mem_size = 131072;     // TODO: Update this to conformant to OCL 2.0
+  dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0 // no cpmstant buffer now
+  dev->local_mem_size = 64 * 1024;     // TODO: Update this to conformant to OCL 2.0 // 64kB per SM
   dev->global_mem_size = 1024 * 1024 * 1024; // 1G ram
   dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
-  dev->global_mem_cacheline_size = 64; // FIXME: Is this accurate?
-  dev->global_mem_cache_size = 32768;  // FIXME: Is this accurate?
+  dev->global_mem_cacheline_size = 128; // 128 Bytes for 32 thread
+  dev->global_mem_cache_size = 64 * 128; 
   dev->image_max_buffer_size = dev->max_mem_alloc_size / 16;
 
   dev->image2d_max_width = 1024; // TODO: Update
@@ -319,13 +279,15 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_work_item_sizes[1] = 1024;
   dev->max_work_item_sizes[2] = 1024;
   dev->max_parameter_size = 64;
-  dev->max_compute_units = 1;
-  dev->max_clock_frequency = 600; // TODO: This is frequency in MHz
+  dev->max_compute_units = 16 * 32; // 16 SM comprise 16 int32 and 16 fp32 cores
+  dev->max_clock_frequency = 100; // TODO: This is frequency in MHz
   dev->address_bits = 32;
 
   // Supports device side printf
-  dev->device_side_printf = 1;
-  dev->printf_buffer_size = PRINTF_BUFFER_SIZE;
+  dev->device_side_printf = 0;
+  dev->printf_buffer_size = 0;
+
+  dev->device_alloca_locals = 1; //
 
   // Doesn't support partition
   dev->max_sub_devices = 1;
@@ -368,10 +330,6 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   POCL_INIT_LOCK (d->cq_lock);
 
-  assert (dev->printf_buffer_size > 0);
-  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                          dev->printf_buffer_size);
-  assert (d->printf_buffer != NULL);
 
   return ret;
 }
@@ -387,27 +345,156 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
-  int err;
-  
-  assert(data != NULL);
-  d = (struct vt_device_data_t *)data;
+  int err,i;
 
-  // calculate kernel arguments buffer size
-  size_t abuf_size = 0;  
-  size_t abuf_args_size = 4 * (meta->num_args + meta->num_locals);
-  size_t abuf_ext_size = 0;
-  {
-    // pocl_context data
-    abuf_size += ALIGNED_CTX_SIZE; 
-    // argument data    
-    abuf_size += abuf_args_size;
+    uint64_t num_thread=8;
+    uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
+    uint64_t num_workgroups[3]=pc->num_groups;
+    uint64_t num_workgroup=num_workgroups[0]*num_workgroups[1]*num_workgroups[2];
+    uint64_t num_processor=num_warp*num_workgroup;
+    uint64_t ldssize=0x1000;
+    uint64_t pdssize=0x1000;
+    uint64_t pdsbase=0x8a000000;
+    uint64_t start_pc=0x80000000;
+    uint64_t knlbase=0x90000000;
+    uint64_t sgpr_usage=32;
+    uint64_t vgpr_usage=32;
+    meta_data driver_meta(0,num_workgroups,num_thread,num_warp,knlbase,ldssize,pdssize,32,32,pdsbase);
+  
+
+/*
+step1 upload kernel_rom & allocate its mem (load cache file?)
+step2 allocate kernel argument & arg buffer
+      notice kernel arg buffer is offered by command.run.
+step3 prepare kernel metadata (pc(start_pc=8000) & kernel entrance(0x8000005c) & arg pointer )
+step4 prepare driver metadata
+step5 make a writefile for chisel      
+*/
+  assert(cmd->device->data != NULL);
+  d = (struct vt_device_data_t *)cmd->device->data;
+
+  void **arguments = (void **)malloc (sizeof (void *)
+                                      * (meta->num_args + meta->num_locals));
+
+
+//TODO 1: support local buffer as argument? but in current structure, allocated localmembuffer will be mapped to ddr space.
+//TODO 2: print buffer support in pocl
+  /* Process the kernel arguments. Convert the opaque buffer
+     pointers to real device pointers, allocate dynamic local
+     memory buffers, etc. */
+  for (i = 0; i < meta->num_args; ++i)
+    {
+      al = &(cmd->command.run.arguments[i]);
+      if (ARG_IS_LOCAL(meta->arg_info[i]))   
+        {
+          if (cmd->device->device_alloca_locals)
+            {
+              /* Local buffers are allocated in the device side work-group
+                 launcher. Let's pass only the sizes of the local args in
+                 the arg buffer. */
+              
+              arguments[i] = (void *)al->size;
+            }
+          else
+            {
+              arguments[i] = malloc (sizeof (void *));
+              *(void **)(arguments[i]) =
+                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+            }
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+        {
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In
+             that case we must pass the same NULL forward to the kernel.
+             Otherwise, the user must have created a buffer with per device
+             pointers stored in the cl_mem. */
+          arguments[i] = malloc (sizeof (void *));
+          if (al->value == NULL)
+            {
+              *(void **)arguments[i] = NULL;
+            }
+          else
+            {
+              void *ptr = NULL;uint64_t dev_mem_addr;
+              if (al->is_svm)
+                {
+                  ptr = *(void **)al->value;
+                }
+              else
+                {
+                  cl_mem m = (*(cl_mem *)(al->value));
+                  m->flags=m->flags & CL_MEM_COPY_HOST_PTR
+                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr)
+                  assert(0 == CL_SUCCESS);
+                  ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+                }
+              *(void **)arguments[i] = (uint64_t *)ptr;
+            }
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          dev_image_t di;
+          pocl_fill_dev_image_t (&di, al, cmd->device);
+
+          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                              sizeof (dev_image_t));
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = devptr;
+          memcpy (devptr, &di, sizeof (dev_image_t));
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+        {
+          dev_sampler_t ds;
+          pocl_fill_dev_sampler_t (&ds, al);
+          arguments[i] = malloc (sizeof (void *));
+          *(void **)(arguments[i]) = (void *)ds;
+        }
+      else
+        {
+          arguments[i] = al->value;
+        }
+    }
+
+  if (cmd->device->device_alloca_locals)
+    {
+      printf("notice that ventus hasn't support local buffer as argument yet.\n");
+      /* Local buffers are allocated in the device side work-group
+         launcher. Let's pass only the sizes of the local args in
+         the arg buffer. */
+      for (i = 0; i < meta->num_locals; ++i) 
+        {
+          size_t s = meta->local_sizes[i]; //TODO: create local_buf at ddr, and map argument to this addr.
+          size_t j = meta->num_args + i;
+          *(size_t *)(arguments[j]) = s;
+        }
+    }
+  else
+    {
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          arguments[j] = malloc (sizeof (void *));
+          void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+          *(void **)(arguments[j]) = pp;
+        }
+    }
+
+  /*pc->printf_buffer = d->printf_buffer;
+  assert (pc->printf_buffer != NULL);
+  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
+  assert (pc->printf_buffer_capacity > 0);
+  uint32_t position = 0;
+  pc->printf_buffer_position = &position;
+  pc->global_var_buffer = program->gvar_storage[dev_i];*/
+
+// create argument buffer now.
+uint64_t abuf_size = 0;  
     for (i = 0; i < meta->num_args; ++i) {  
       auto al = &(cmd->command.run.arguments[i]);  
-      if (ARG_IS_LOCAL(meta->arg_info[i])
-       && !cmd->device->device_alloca_locals) {
+      if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         abuf_size += 4;
-        abuf_size += al->size;
-        abuf_ext_size += al->size;
+        //abuf_size += al->size;
       } else
       if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -417,128 +504,167 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
         abuf_size += al->size;
       }
     }
-  }
+  
   assert(abuf_size <= 0xffff);
-
-  // allocate kernel arguments buffer
-  vt_buffer_h staging_buf;
-  err = vt_buf_alloc(d->vt_device, abuf_size, &staging_buf);
-  assert(0 == err);
-
-  // update kernel arguments buffer
-  {
-    auto abuf_ptr = (uint8_t*)vt_host_ptr(staging_buf);
-    assert(abuf_ptr);
-
-    // write context data
-    {
-      kernel_context_t ctx;
-      for (int i = 0; i < 3; ++i) {
-        ctx.num_groups[i] = pc->num_groups[i];
-        ctx.global_offset[i] = pc->global_offset[i];
-        ctx.local_size[i] = pc->local_size[i];        
-      }
-      ctx.work_dim = pc->work_dim;      
-      ctx.printf_buffer = d->printf_buffer;
-      ctx.printf_buffer_position = d->printf_buffer_position;
-      ctx.printf_buffer_capacity = PRINT_BUFFER_SIZE;
-
-      memset(abuf_ptr, 0, ALIGNED_CTX_SIZE);
-      memcpy(abuf_ptr, &ctx, sizeof(kernel_context_t));
-      print_data("*** ctx=", abuf_ptr, ALIGNED_CTX_SIZE);
-    }
-
-    // write arguments    
-    uint32_t args_base_addr = KERNEL_ARG_BASE_ADDR;
-    uint32_t args_addr = args_base_addr + ALIGNED_CTX_SIZE + abuf_args_size;
-    uint32_t args_ext_addr = (args_base_addr + abuf_size) - abuf_ext_size;
-    for (i = 0; i < meta->num_args; ++i) {
-      uint32_t addr = ALIGNED_CTX_SIZE + i * 4;
-      auto al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL(meta->arg_info[i])) {
-        if (cmd->device->device_alloca_locals) {
-          memcpy(abuf_ptr + addr, &al->size, 4);
-          print_data("*** locals=", abuf_ptr + addr, 4);
-        } else {
-          memcpy(abuf_ptr + addr, &args_addr, 4);          
-          memcpy(abuf_ptr + (args_addr - args_base_addr), &args_ext_addr, 4);
-          args_addr += 4;
-          args_ext_addr += al->size;
-          std::abort();
-        }
+  char* abuf_args_data = malloc(abuf_size);
+  uint64_t abuf_args_p = 0;
+  for(i = 0; i < meta->num_args; ++i) {  
+      auto al = &(cmd->command.run.arguments[i]);  
+      if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
+        uint32_t local_vaddr=0;
+        memcpy(abuf_args_data+abuf_args_p,&local_vaddr,4);
+        abuf_args_p+=4;
       } else
-      if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
-        memcpy(abuf_ptr + addr, &args_addr, 4);        
-        if (al->value == NULL) {
-          memset(abuf_ptr + (args_addr - args_base_addr), 0, 4);
-          print_data("*** null=", abuf_ptr + (args_addr - args_base_addr), 4); 
-        } else {
-          cl_mem m = (*(cl_mem *)(al->value));
-          auto buf_data = (vt_buffer_data_t*)m->device_ptrs[cmd->device->dev_id].mem_ptr;
-          auto dev_mem_addr = buf_data->dev_mem_addr + al->offset;
-          memcpy(abuf_ptr + (args_addr - args_base_addr), &dev_mem_addr, 4);
-          print_data("*** ptr=", abuf_ptr + (args_addr - args_base_addr), 4);
-        }
-        args_addr += 4;
-      } else 
-      if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE) {
-        std::abort();
-      } else 
-      if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
-        std::abort();
+      if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+       || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+       || (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)) {
+        memcpy(abuf_args_data+abuf_args_p,((cl_mem)(a1->value))->device_ptrs->mem_ptr,4);
+        abuf_args_p+=4;
       } else {
-        memcpy(abuf_ptr + addr, &args_addr, 4);
-        memcpy(abuf_ptr + (args_addr - args_base_addr), al->value, al->size);
-        print_data("*** arg-addr=", abuf_ptr + addr, 4);
-        print_data("*** arg-value=", abuf_ptr + (args_addr - args_base_addr), al->size);
-        args_addr += al->size;
+        memcpy(abuf_args_data+abuf_args_p,a1->value,a1->size);
+        abuf_args_p+=al->size;
       }
     }
+  uint64_t arg_dev_mem_addr;
+  err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
+  err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
 
-    // upload kernel arguments buffer
-    err = vt_copy_to_dev(staging_buf, args_base_addr, abuf_size, 0);
-    assert(0 == err);
-
-    // release staging buffer
-    err = vt_buf_free(staging_buf);
-    assert(0 == err);
-    
-    // upload kernel to device
-    if (NULL == d->current_kernel 
-     || d->current_kernel != kernel) {    
+//pass in vmem file  
+  char filename[]="vecadd.riscv";
+  vt_upload_kernel_file(d->vt_device,filename,0);
+  //after checking pocl_cache_binary, use the following to pass in.
+   /*if (NULL == d->current_kernel || d->current_kernel != kernel) {    
        d->current_kernel = kernel;
       char program_bin_path[POCL_FILENAME_LENGTH];
       pocl_cache_final_binary_path (program_bin_path, program, dev_i, kernel, NULL, 0);
-      err = vt_upload_kernel_file(d->vt_device, program_bin_path);      
+      err = vt_upload_kernel_file(d->vt_device, program_bin_path,0);      
       assert(0 == err);
-    }
+    }*/
+  uint32_t kernel_entry=0x8000005c;
+  ldssize=0x1000; //pass from elf file
+  pdssize=0x1000; //pass from elf file
+  start_pc=0x80000000; // start.S baseaddr, now lock to 0x80000000
+  sgpr_usage=32;
+  vgpr_usage=32;
+  uint64_t pc_src_size=0x10000000;
+  uint64_t pc_dev_mem_addr;
+  err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
   }
-    
+
+  
+  
+//prepare privatemem
+  uint64_t pds_src_size=pdssize*num_thread*num_warp*num_workgroup;
+  uint64_t pds_dev_mem_addr;
+  err = vt_buf_alloc(d->vt_device, pds_src_size, &pds_dev_mem_addr,0,0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
+
+  
+
+//prepare kernel_metadata
+  char *kernel_metadata=memset(KNL_MAX_METADATA_SIZE);
+  memset(kernel_metadata,0,KNL_MAX_METADATA_SIZE);
+  memcpy(kernel_metadata+KNL_ENTRY,&kernel_entry,4);
+  uint32_t arg_dev_mem_addr_32=(uint32_t)arg_dev_mem_addr;
+  memcpy(kernel_metadata+KNL_ARG_BASE,&arg_dev_mem_addr_32,4);
+  memcpy(kernel_metadata+KNL_WORK_DIM,&(pc->work_dim),4);
+  uint32_t local_size_32[3];local_size_32[0]=(uint32_t)pc->local_size[0];local_size_32[1]=(uint32_t)pc->local_size[1];local_size_32[2]=(uint32_t)pc->local_size[2];
+  uint32_t global_offset_32[3];global_offset_32[0]=(uint32_t)pc->global_offset[0];global_offset_32[1]=(uint32_t)pc->global_offset[1];global_offset_32[2]=(uint32_t)pc->global_offset[2];
+  uint32_t global_size_32[3];global_size_32[0]=(uint32_t)pc->num_groups[0];global_size_32[1]=(uint32_t)pc->num_groups[1];global_size_32[2]=(uint32_t)pc->num_groups[2];
+  memcpy(kernel_metadata+KNL_GL_SIZE_X,global_size_32[0],4);
+  memcpy(kernel_metadata+KNL_GL_SIZE_Y,global_size_32[1],4);
+  memcpy(kernel_metadata+KNL_GL_SIZE_Z,global_size_32[2],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_X,local_size_32[0],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_Y,local_size_32[1],4);
+  memcpy(kernel_metadata+KNL_LC_SIZE_Z,local_size_32[2],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_X,global_offset_32[0],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_Y,global_offset_32[1],4);
+  memcpy(kernel_metadata+KNL_GL_OFFSET_Z,global_offset_32[2],4);
+//memcpy(kernel_metadata+KNL_PRINT_ADDR,global_offset_32[0],4);
+  uint64_t knl_dev_mem_addr;
+  err = vt_buf_alloc(d->vt_device, KNL_MAX_METADATA_SIZE, &knl_dev_mem_addr,0,0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
+  err = vt_copy_to_dev(d->vt_device,knl_dev_mem_addr,kernel_metadata, KNL_MAX_METADATA_SIZE, 0,0);
+  if (err != 0) {
+    return CL_DEVICE_NOT_AVAILABLE;
+  }
+
+  uint64_t pdsbase=pds_dev_mem_addr;
+  uint64_t knlbase=knl_dev_mem_addr;
+  meta_data driver_meta(0,num_workgroups,num_thread,num_warp,knlbase,ldssize,pdssize,sgpr_usage,vgpr_usage,pdsbase);
+  
+// prepare a write function
+
+#ifdef WRITE_CHISEL_TEST
+
+#endif
+
+
+
+//pass metadata to "run" 
   // quick off kernel execution
-  err = vt_start(d->vt_device);
+  err = vt_start(d->vt_device, &driver_meta,0);
   assert(0 == err);
 
   // wait for the execution to complete
   err = vt_ready_wait(d->vt_device, -1);
   assert(0 == err);
 
-  // flush print buffer 
-  {
-    auto print_ptr = (uint8_t*)vt_host_ptr(d->vt_print_buf_h);
-    err = vt_copy_from_dev(d->vt_print_buf_h, d->vt_print_buf_d + PRINT_BUFFER_SIZE, sizeof(uint32_t), PRINT_BUFFER_SIZE);
-    assert(0 == err);
-    uint32_t print_size = *(uint32_t*)(print_ptr + PRINT_BUFFER_SIZE);
-    if (print_size != 0) {
-      err = vt_copy_from_dev(d->vt_print_buf_h, d->vt_print_buf_d, print_size, 0);
-      assert(0 == err);      
-      
-      write (STDOUT_FILENO, print_ptr, print_size);
-      
-      memset(print_ptr + PRINT_BUFFER_SIZE, 0, sizeof(uint32_t));
-      err = vt_copy_to_dev(d->vt_print_buf_h, d->vt_print_buf_d, sizeof(uint32_t), PRINT_BUFFER_SIZE);
-      assert(0 == err);
+  // move print buffer back or wait to read?     
+
+
+
+for (i = 0; i < meta->num_args; ++i)
+    {
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
+        {
+          if (!cmd->device->device_alloca_locals)
+            {
+              POCL_MEM_FREE(*(void **)(arguments[i]));
+              POCL_MEM_FREE(arguments[i]);
+            }
+          else
+            {
+              /* Device side local space allocation has deallocation via stack
+                 unwind. */
+            }
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE
+               || meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+        {
+          if (meta->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
+            POCL_MEM_FREE (*(void **)(arguments[i]));
+          POCL_MEM_FREE(arguments[i]);
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+        {
+          POCL_MEM_FREE(arguments[i]);
+        }
     }
-  }
+
+  if (!cmd->device->device_alloca_locals)
+    for (i = 0; i < meta->num_locals; ++i)
+      {
+        POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
+        POCL_MEM_FREE (arguments[meta->num_args + i]);
+      }
+  free(arguments);
+  free(abuf_args_data);
+  free(kernel_metadata);
+
+  
 
   pocl_release_dlhandle_cache(cmd);
 }
@@ -551,11 +677,8 @@ pocl_ventus_uninit (unsigned j, cl_device_id device)
   if (NULL == d)
   return CL_SUCCESS;  
 
-  #if !defined(OCS_AVAILABLE)
-    vt_buf_free(d->vt_print_buf_h);
-    vt_dev_close(d->vt_device);
-  #endif
-
+  vt_dev_close(d->vt_device);
+  
   POCL_DESTROY_LOCK(d->cq_lock);
   POCL_MEM_FREE(d);
   device->data = NULL;
@@ -656,13 +779,15 @@ void
 pocl_ventus_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
+  printf("in pocl ventus compile kernel func\n");
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
 }
 
 void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   cl_mem_flags flags = memobj->flags;
-  auto buf_data = (vt_buffer_data_t*)memobj->device_ptrs[device->dev_id].mem_ptr;
+  auto d = (vt_device_data_t *)device->data;
+  uint64_t dev_mem_addr = *(memobj->device_ptrs[device->dev_id].mem_ptr);
 
   /* The host program can provide the runtime with a pointer 
   to a block of continuous memory to hold the memory object 
@@ -672,64 +797,23 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   to the host program.*/
   if (flags & CL_MEM_USE_HOST_PTR 
    || memobj->shared_mem_allocation_owner != device) {
-    std::abort(); //TODO
+    abort(); //TODO
   } else {
-    vt_buf_free(buf_data->staging_buf);
-    vt_mem_free(buf_data->vt_device, buf_data->dev_mem_addr);
+    vt_buf_free(d->vt_device,mem_obj->size,dev_mem_addr,0,0);
+    free(memobj->mem_host_ptr);
+    memobj->mem_host_ptr = nullptr;
   }
   if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
     memobj->mem_host_ptr = NULL;
 }
 
 
-static void *
-pocl_ventus_malloc(cl_device_id device, cl_mem_flags flags, size_t size,
-                   void *host_ptr) {
-  auto d = (vt_device_data_t *)device->data;
-  void *b = NULL;
-  pocl_global_mem_t *mem = device->global_memory;
-  int err;
-
-  if (flags & CL_MEM_USE_HOST_PTR) {
-    std::abort(); //TODO
-  }
-
-  vt_buffer_h staging_buf;
-  err = vt_buf_alloc(d->vt_device, size, &staging_buf);
-  if (err != 0)
-    return nullptr;
-
-  size_t dev_mem_addr;
-  err = vt_mem_alloc(d->vt_device, size, &dev_mem_addr);
-  if (err != 0) {
-    vt_buf_free(staging_buf);
-    return nullptr;
-  }
-
-  if (flags & CL_MEM_COPY_HOST_PTR) {
-    auto buf_ptr = vt_host_ptr(staging_buf);
-    memcpy((void*)buf_ptr, host_ptr, size);
-    err = vt_copy_to_dev(staging_buf, dev_mem_addr, size, 0);
-    if (err != 0) {
-      vt_buf_free(staging_buf);
-      return nullptr;
-    }
-  }
-
-  auto buf_data = new vt_buffer_data_t();
-  buf_data->vt_device    = d->vt_device;
-  buf_data->staging_buf  = staging_buf;
-  buf_data->dev_mem_addr = dev_mem_addr;
-
-  return buf_data;
-}
-
-
 cl_int
 pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
-  void *b = NULL;
+  
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
+  printf("allocating mem in pocl\n");
 
   /* Check if some driver has already allocated memory for this mem_obj
      in our global address space, and use that. */
@@ -740,24 +824,40 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
       mem_obj->device_ptrs[device->dev_id].mem_ptr = mem_obj->device_ptrs[i].mem_ptr;
     
       POCL_MSG_PRINT_INFO("VENTUS: alloc_mem_obj, use already allocated memory\n");
-      std::abort(); // TODO
+      abort(); // TODO
       return CL_SUCCESS;
     }
   }
 
   /* Memory for this global memory is not yet allocated -> we'll allocate it. */
-  b = pocl_ventus_malloc(device, flags, mem_obj->size, host_ptr);
-  if (b == NULL)
+  auto d = (vt_device_data_t *)device->data;
+  pocl_global_mem_t *mem = device->global_memory;
+  int err;
+  if (flags & CL_MEM_USE_HOST_PTR) {
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  }
+  uint64_t dev_mem_addr;
+  err = vt_buf_alloc(d->vt_device, mem_obj->size, &dev_mem_addr,0,0,0);
+  if (err != 0) {
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  }
+
+  if (flags & CL_MEM_COPY_HOST_PTR) {
+    err = vt_copy_to_dev(d->vt_device,dev_mem_addr,host_ptr, mem_obj->size, 0,0);
+    if (err != 0) {
+      return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    }
+  }
 
   /* Take ownership if not USE_HOST_PTR. */
   if (~flags & CL_MEM_USE_HOST_PTR)
     mem_obj->shared_mem_allocation_owner = device;
 
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = memset(sizeof(uint64_t));
+  *(mem_obj->device_ptrs[device->dev_id].mem_ptr)=dev_mem_addr;
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
-    std::abort(); // TODO
+    abort(); // TODO
   }
 
   return CL_SUCCESS;
@@ -769,14 +869,9 @@ void pocl_ventus_read(void *data,
                       cl_mem src_buf,
                       size_t offset, 
                       size_t size) {
-  int vt_err;
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
-  auto buf_data = (vt_buffer_data_t*)src_mem_id->mem_ptr;
-  vt_err = vt_copy_from_dev(buf_data->staging_buf, buf_data->dev_mem_addr, offset + size, 0);
-  assert(0 == vt_err);
-  auto buf_ptr = vt_host_ptr(buf_data->staging_buf);
-  assert(buf_ptr);
-  memcpy(host_ptr, (char *)buf_ptr + offset, size);
+  auto err = vt_copy_from_dev(d->vt_device,*(src_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  assert(0 == err);
 }
 
 void pocl_ventus_write(void *data,
@@ -785,9 +880,7 @@ void pocl_ventus_write(void *data,
                        cl_mem dst_buf,
                        size_t offset, 
                        size_t size) {
-  auto buf_data = (vt_buffer_data_t*)dst_mem_id->mem_ptr;
-  auto buf_ptr = vt_host_ptr(buf_data->staging_buf);
-  memcpy((char *)buf_ptr + offset, host_ptr, size);
-  auto vt_err = vt_copy_to_dev(buf_data->staging_buf, buf_data->dev_mem_addr, offset + size, 0);
-  assert(0 == vt_err);
+  struct vt_device_data_t *d = (struct vt_device_data_t *)data;
+  auto err = vt_copy_to_dev(d->vt_device,*(dst_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  assert(0 == err);
 }
