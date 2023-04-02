@@ -24,6 +24,6 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( pocl_ventus.h pocl_ventus.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( pocl_ventus.h pocl_ventus.c ventus.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_pocl_device_library("pocl-devices-ventus" pocl_ventus.h pocl_ventus.c)
+add_pocl_device_library("pocl-devices-ventus" pocl_ventus.h pocl_ventus.c ventus.h)
