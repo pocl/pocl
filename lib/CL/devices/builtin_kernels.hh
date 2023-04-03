@@ -4,7 +4,7 @@
 /*
   steps to add a new builtin kernel:
 
-  1) add it to the end of BuiltinKernelId enum in this file
+  1) add it to the end of BuiltinKernelId enum in this file, before POCL_CDBI_LAST
 
   2) open builtin_kernels.cc and edit pocl_BIDescriptors, add a new struct
      for the new kernel, with argument metadata
@@ -68,7 +68,7 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_OPENVX_SCALEIMAGE_BL_U8 = 22,
   POCL_CDBI_OPENVX_TENSORCONVERTDEPTH_WRAP_U8_F32 = 23,
   POCL_CDBI_OPENVX_MINMAXLOC_R1_U8 = 24,
-  POCL_CDBI_LAST = 25,
+  POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
 
