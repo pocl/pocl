@@ -815,13 +815,9 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
   }
-
-  /* Take ownership if not USE_HOST_PTR. */
-  if (~flags & CL_MEM_USE_HOST_PTR)
-    mem_obj->shared_mem_allocation_owner = device;
-
+  
   memset(mem_obj->device_ptrs[device->dev_id].mem_ptr,0,sizeof(uint64_t));
-  *(mem_obj->device_ptrs[device->dev_id].mem_ptr)=dev_mem_addr;
+  memcpy((mem_obj->device_ptrs[device->dev_id].mem_ptr),&dev_mem_addr,sizeof(uint64_t));
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
     abort(); // TODO
@@ -837,7 +833,7 @@ void pocl_ventus_read(void *data,
                       size_t offset, 
                       size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
-  int err = vt_copy_from_dev(d->vt_device,*(uint64_t*(src_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
+  int err = vt_copy_from_dev(d->vt_device,*((uint64_t*)(src_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
 
@@ -848,6 +844,6 @@ void pocl_ventus_write(void *data,
                        size_t offset, 
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  int err = vt_copy_to_dev(d->vt_device,*(uint64_t*(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
+  int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
