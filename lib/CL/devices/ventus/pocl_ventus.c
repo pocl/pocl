@@ -62,31 +62,6 @@
   /* ENABLE_LLVM means to compile the kernel using pocl compiler,
  but for ventus(ventus has its own LLVM) it should be OFF. */
 
-struct vt_device_data_t {
-//#if !defined(ENABLE_LLVM)
-  vt_device_h vt_device;
-//#endif
-
-
-  #define MAX_KERNELS 16
-
-  // allocate 1MB OpenCL print buffer
-  #define PRINT_BUFFER_SIZE (1024 * 1024)
-
-
-  /* List of commands ready to be executed */
-  _cl_command_node *ready_list;
-  /* List of commands not yet ready to be executed */
-  _cl_command_node *command_list;
-  /* Lock for command list related operations */
-  pocl_lock_t cq_lock;
-
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-  
-  /* printf buffer */
-  void *printf_buffer;
-};
 
 #define KNL_ENTRY 0
 #define KNL_ARG_BASE 4
@@ -795,7 +770,7 @@ pocl_ventus_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 
 void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   cl_mem_flags flags = memobj->flags;
-  struct vt_device_data_t *d = (vt_device_data_t *)device->data;
+  vt_device_data_t* d = (vt_device_data_t *)device->data;
   uint64_t dev_mem_addr = *((uint64_t*)(memobj->device_ptrs[device->dev_id].mem_ptr));
 
   /* The host program can provide the runtime with a pointer 
@@ -807,7 +782,7 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   if (flags & CL_MEM_USE_HOST_PTR) {
     abort(); //TODO
   } else {
-    vt_buf_free(d->vt_device,memobj->size,dev_mem_addr,0,0);
+    vt_buf_free(d->vt_device,memobj->size,&dev_mem_addr,0,0);
     free(memobj->mem_host_ptr);
     memobj->mem_host_ptr = NULL;
   }
@@ -845,7 +820,7 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   if (~flags & CL_MEM_USE_HOST_PTR)
     mem_obj->shared_mem_allocation_owner = device;
 
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = memset(sizeof(uint64_t));
+  memset(mem_obj->device_ptrs[device->dev_id].mem_ptr,0,sizeof(uint64_t));
   *(mem_obj->device_ptrs[device->dev_id].mem_ptr)=dev_mem_addr;
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
@@ -862,7 +837,7 @@ void pocl_ventus_read(void *data,
                       size_t offset, 
                       size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
-  int err = vt_copy_from_dev(d->vt_device,*(src_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  int err = vt_copy_from_dev(d->vt_device,*(uint64_t*(src_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
 
@@ -873,6 +848,6 @@ void pocl_ventus_write(void *data,
                        size_t offset, 
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
-  int err = vt_copy_to_dev(d->vt_device,*(dst_mem_id->mem_ptr)+offset,host_ptr,size,0,0);
+  int err = vt_copy_to_dev(d->vt_device,*(uint64_t*(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }

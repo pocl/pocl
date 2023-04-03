@@ -12,7 +12,32 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (ventus)
 
-struct meta_data{  // 这个metadata是供驱动使用的，而不是给硬件的
+typedef struct vt_device_data_t {
+//#if !defined(ENABLE_LLVM)
+  vt_device_h vt_device;
+//#endif
+
+
+  #define MAX_KERNELS 16
+
+  // allocate 1MB OpenCL print buffer
+  #define PRINT_BUFFER_SIZE (1024 * 1024)
+
+
+  /* List of commands ready to be executed */
+  _cl_command_node *ready_list;
+  /* List of commands not yet ready to be executed */
+  _cl_command_node *command_list;
+  /* Lock for command list related operations */
+  pocl_lock_t cq_lock;
+
+  /* Currently loaded kernel. */
+  cl_kernel current_kernel;
+  
+  /* printf buffer */
+  void *printf_buffer;
+}vt_device_data_t;
+typedef struct meta_data{  // 这个metadata是供驱动使用的，而不是给硬件的
     uint64_t kernel_id;
     uint64_t kernel_size[3];///> 每个kernel的workgroup三维数目
     uint64_t wf_size; ///> 每个warp的thread数目
@@ -23,7 +48,7 @@ struct meta_data{  // 这个metadata是供驱动使用的，而不是给硬件�
     uint64_t sgprUsage;///> 每个workgroup使用的标量寄存器数目
     uint64_t vgprUsage;///> 每个thread使用的向量寄存器数目
     uint64_t pdsBaseAddr;///> private memory的基址，要转成每个workgroup的基地址， wf_size*wg_size*pdsSize
-};
+}meta_data;
 
 void pocl_ventus_init_device_ops(struct pocl_device_ops *ops);
 char *pocl_ventus_build_hash (cl_device_id device);
