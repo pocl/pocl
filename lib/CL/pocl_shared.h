@@ -92,13 +92,40 @@ cl_int pocl_ndrange_kernel_common (
     cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
     cl_sync_point_khr *sync_point_p, _cl_command_node **cmd);
 
-cl_int pocl_copy_buffer_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset,
-    size_t size, cl_uint num_items_in_wait_list,
-    const cl_event *event_wait_list, cl_event *event,
-    const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point, _cl_command_node **cmd);
+cl_int pocl_rect_copy (cl_command_buffer_khr command_buffer,
+                       cl_command_queue command_queue,
+                       cl_command_type command_type,
+                       cl_mem src,
+                       cl_int src_is_image,
+                       cl_mem dst,
+                       cl_int dst_is_image,
+                       const size_t *src_origin,
+                       const size_t *dst_origin,
+                       const size_t *region,
+                       size_t *src_row_pitch,
+                       size_t *src_slice_pitch,
+                       size_t *dst_row_pitch,
+                       size_t *dst_slice_pitch,
+                       cl_uint num_items_in_wait_list,
+                       const cl_event *event_wait_list,
+                       cl_event *event,
+                       const cl_sync_point_khr *sync_point_wait_list,
+                       cl_sync_point_khr *sync_point,
+                       _cl_command_node **cmd);
+
+cl_int pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
+                                cl_command_queue command_queue,
+                                cl_mem src_buffer,
+                                cl_mem dst_buffer,
+                                size_t src_offset,
+                                size_t dst_offset,
+                                size_t size,
+                                cl_uint num_items_in_wait_list,
+                                const cl_event *event_wait_list,
+                                cl_event *event,
+                                const cl_sync_point_khr *sync_point_wait_list,
+                                cl_sync_point_khr *sync_point,
+                                _cl_command_node **cmd);
 
 cl_int pocl_copy_buffer_rect_common (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
@@ -174,6 +201,137 @@ cl_int pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
                                 cl_sync_point_khr *sync_point,
                                 _cl_command_node **cmd);
 
+cl_int
+pocl_svm_memcpy_rect_common (cl_command_buffer_khr command_buffer,
+                             cl_command_queue command_queue,
+                             void *dst_ptr,
+                             const void *src_ptr,
+                             const size_t *src_origin,
+                             const size_t *dst_origin,
+                             const size_t *region,
+                             size_t src_row_pitch,
+                             size_t src_slice_pitch,
+                             size_t dst_row_pitch,
+                             size_t dst_slice_pitch,
+                             cl_uint num_items_in_wait_list,
+                             const cl_event *event_wait_list,
+                             cl_event *event,
+                             const cl_sync_point_khr *sync_point_wait_list,
+                             cl_sync_point_khr *sync_point,
+                             _cl_command_node **cmd);
+
+cl_int
+pocl_svm_memfill_rect_common (cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              void *svm_ptr,
+                              const size_t *origin,
+                              const size_t *region,
+                              size_t row_pitch,
+                              size_t slice_pitch,
+                              const void *pattern,
+                              size_t pattern_size,
+                              cl_uint num_items_in_wait_list,
+                              const cl_event *event_wait_list,
+                              cl_event *event,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              cl_sync_point_khr *sync_point,
+                              _cl_command_node **cmd);
+
+cl_int pocl_read_buffer_common (cl_command_buffer_khr command_buffer,
+                                cl_command_queue command_queue,
+                                cl_mem buffer,
+                                size_t offset,
+                                size_t size,
+                                void *ptr,
+                                cl_uint num_items_in_wait_list,
+                                const cl_event *event_wait_list,
+                                cl_event *event,
+                                const cl_sync_point_khr *sync_point_wait_list,
+                                cl_sync_point_khr *sync_point,
+                                _cl_command_node **cmd);
+
+cl_int pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
+                                 cl_command_queue command_queue,
+                                 cl_mem buffer,
+                                 size_t offset,
+                                 size_t size,
+                                 const void *ptr,
+                                 cl_uint num_items_in_wait_list,
+                                 const cl_event *event_wait_list,
+                                 cl_event *event,
+                                 const cl_sync_point_khr *sync_point_wait_list,
+                                 cl_sync_point_khr *sync_point,
+                                 _cl_command_node **cmd);
+
+cl_int pocl_read_image_common (cl_command_buffer_khr command_buffer,
+                               cl_command_queue command_queue,
+                               cl_mem image,
+                               const size_t *origin, /* [3] */
+                               const size_t *region, /* [3] */
+                               size_t row_pitch,
+                               size_t slice_pitch,
+                               void *ptr,
+                               cl_uint num_items_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event,
+                               const cl_sync_point_khr *sync_point_wait_list,
+                               cl_sync_point_khr *sync_point,
+                               _cl_command_node **cmd);
+
+cl_int pocl_write_image_common (cl_command_buffer_khr command_buffer,
+                                cl_command_queue command_queue,
+                                cl_mem image,
+                                const size_t *origin, /* [3] */
+                                const size_t *region, /* [3] */
+                                size_t row_pitch,
+                                size_t slice_pitch,
+                                const void *ptr,
+                                cl_uint num_items_in_wait_list,
+                                const cl_event *event_wait_list,
+                                cl_event *event,
+                                const cl_sync_point_khr *sync_point_wait_list,
+                                cl_sync_point_khr *sync_point,
+                                _cl_command_node **cmd);
+
+cl_int
+pocl_read_buffer_rect_common (cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_mem buffer,
+                              const size_t *buffer_origin,
+                              const size_t *host_origin,
+                              const size_t *region,
+                              size_t buffer_row_pitch,
+                              size_t buffer_slice_pitch,
+                              size_t host_row_pitch,
+                              size_t host_slice_pitch,
+                              void *ptr,
+                              cl_uint num_items_in_wait_list,
+                              const cl_event *event_wait_list,
+                              cl_event *event,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              cl_sync_point_khr *sync_point,
+                              _cl_command_node **cmd);
+
+cl_int
+pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
+                               cl_command_queue command_queue,
+                               cl_mem buffer,
+                               const size_t *buffer_origin,
+                               const size_t *host_origin,
+                               const size_t *region,
+                               size_t buffer_row_pitch,
+                               size_t buffer_slice_pitch,
+                               size_t host_row_pitch,
+                               size_t host_slice_pitch,
+                               const void *ptr,
+                               cl_uint num_items_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event,
+                               const cl_sync_point_khr *sync_point_wait_list,
+                               cl_sync_point_khr *sync_point,
+                               _cl_command_node **cmd);
+
+/* this one is NOT implemented for command buffers */
 cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
                                     cl_command_queue command_queue,
                                     cl_uint num_svm_pointers,
@@ -183,6 +341,27 @@ cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
                                     cl_uint num_events_in_wait_list,
                                     const cl_event *event_wait_list,
                                     cl_event *event);
+
+#define POCL_VALIDATE_WAIT_LIST_PARAMS                                        \
+  do                                                                          \
+    {                                                                         \
+      if (command_buffer == NULL)                                             \
+        {                                                                     \
+          assert (sync_point_wait_list == NULL);                              \
+          POCL_RETURN_ERROR_COND (                                            \
+              (event_wait_list == NULL && num_items_in_wait_list > 0),        \
+              CL_INVALID_EVENT_WAIT_LIST);                                    \
+          POCL_RETURN_ERROR_COND (                                            \
+              (event_wait_list != NULL && num_items_in_wait_list == 0),       \
+              CL_INVALID_EVENT_WAIT_LIST);                                    \
+        }                                                                     \
+      else                                                                    \
+        {                                                                     \
+          assert (event_wait_list == NULL && event == NULL);                  \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+/* sync point wait list is validated in pocl_create_recorded_command */
 
 int
 pocl_set_kernel_arg_pointer(cl_kernel kernel,

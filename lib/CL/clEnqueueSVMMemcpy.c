@@ -62,11 +62,6 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
 
   POCL_RETURN_ERROR_COND((size == 0), CL_INVALID_VALUE);
 
-  const char *s = (const char *)src_ptr;
-  char *d = (char *)dst_ptr;
-  if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
-    POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
-
   /* Utilize shadow buffers internally to share code with cl_mem buffer
      copies. */
 
@@ -93,30 +88,38 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     }
   else if (dst_svm_ptr != NULL && src_svm_ptr == NULL)
     {
+      // "host to SVM buffer memcopy command buffering unimplemented");
       if (command_buffer)
-        POCL_ABORT_UNIMPLEMENTED (
-            "host to SVM buffer memcopy command buffering unimplemented");
-      /* Read from a host address to the SVM region. */
-      /* TODO: Command buffering. clEnqueueWriteBuffer is not supported by
-         the command buffer specs. We should extend the spec to include it. */
-      errcode = POname (clEnqueueWriteBuffer) (
-          command_queue, dst_svm_ptr->shadow_cl_mem, CL_FALSE,
-          dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
-          num_items_in_wait_list, event_wait_list, event);
+        {
+          errcode = POname (clCommandWriteBufferPOCL) (
+              command_buffer, NULL, dst_svm_ptr->shadow_cl_mem,
+              dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
+              num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
+        }
+      else
+        {
+          errcode = POname (clEnqueueWriteBuffer) (
+              command_queue, dst_svm_ptr->shadow_cl_mem, CL_FALSE,
+              dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
+              num_items_in_wait_list, event_wait_list, event);
+        }
     }
   else if (src_svm_ptr != NULL && dst_svm_ptr == NULL)
     {
       if (command_buffer)
-        POCL_ABORT_UNIMPLEMENTED (
-            "SVM buffer to host memcopy command buffering unimplemented");
-
-      /* Read from the SVM region to a host address. */
-      /* TODO: Command buffering. clEnqueueReadBuffer is not supported by
-         the command buffer specs. We should extend the spec to include it. */
-      errcode = POname (clEnqueueReadBuffer) (
-          command_queue, src_svm_ptr->shadow_cl_mem, CL_FALSE,
-          src_ptr - src_svm_ptr->svm_ptr, size, dst_ptr,
-          num_items_in_wait_list, event_wait_list, event);
+        {
+          errcode = POname (clCommandReadBufferPOCL) (
+              command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
+              src_ptr - src_svm_ptr->svm_ptr, size, dst_ptr,
+              num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
+        }
+      else
+        {
+          errcode = POname (clEnqueueReadBuffer) (
+              command_queue, src_svm_ptr->shadow_cl_mem, CL_FALSE,
+              src_ptr - src_svm_ptr->svm_ptr, size, dst_ptr,
+              num_items_in_wait_list, event_wait_list, event);
+        }
     }
   else
     {
@@ -146,6 +149,7 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
       c->command.svm_memcpy.size = size;
     }
 
+  // TODO this is likely very wrong
   if (event != NULL)
     (*event)->command_type = command_type;
 

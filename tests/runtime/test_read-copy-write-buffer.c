@@ -123,7 +123,20 @@ main(void)
         CHECK_CL_ERROR (clReleaseEvent (evts[1]));
         CHECK_CL_ERROR (clReleaseEvent (evts[0]));
 
-        TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
+        unsigned errors = 0;
+        for (unsigned i = 0; i < nels; ++i)
+          {
+            if (host_buf1[i] != host_buf2[i])
+              {
+                ++errors;
+                if ((errors < 20) || (errors % 1024 == 0))
+                  {
+                    printf ("ERROR @ %u |  BUF 1 %i | BUF 2 %i \n", i,
+                            host_buf1[i], host_buf2[i]);
+                  }
+              }
+          }
+        TEST_ASSERT (errors == 0);
       }
 
       free(host_buf2);

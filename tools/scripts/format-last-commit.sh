@@ -23,7 +23,10 @@ trap "rm -f $PATCHY" EXIT
 
 git show -U0 --no-color >$PATCHY
 
-$RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style GNU <$PATCHY
+SCRIPTPATH=$( realpath "$0"  )
+RELPATH=$(dirname "$SCRIPTPATH")
+
+$RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style=file:$RELPATH/style.GNU <$PATCHY
 $RELPATH/clang-format-diff.py -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)|(lib/CL/devices/tce/.*)' -i -p1 -style LLVM <$PATCHY
 
 if [ -z "$(git diff)" ]; then

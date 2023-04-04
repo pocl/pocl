@@ -182,6 +182,18 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueMemcpyINTEL.c"
                    "clEnqueueMemAdviseINTEL.c"
                    "clEnqueueMigrateMemINTEL.c"
+                   "clCommandReadBufferPOCL.c"
+                   "clCommandReadBufferRectPOCL.c"
+                   "clCommandReadImagePOCL.c"
+                   "clCommandSVMMemcpyPOCL.c"
+                   "clCommandSVMMemcpyRectPOCL.c"
+                   "clCommandSVMMemfillPOCL.c"
+                   "clCommandSVMMemfillRectPOCL.c"
+                   "clCommandWriteBufferPOCL.c"
+                   "clCommandWriteBufferRectPOCL.c"
+                   "clCommandWriteImagePOCL.c"
+                   "clEnqueueSVMMemcpyRectPOCL.c"
+                   "clEnqueueSVMMemfillRectPOCL.c"
 )
 
 if(ANDROID)

@@ -49,8 +49,6 @@ pocl_kernel_calc_wg_size (cl_command_queue command_queue, cl_kernel kernel,
    * since we are going to access them repeatedly */
   size_t max_group_size;
 
-  cl_int errcode = CL_SUCCESS;
-
   POCL_RETURN_ERROR_COND ((work_dim < 1), CL_INVALID_WORK_DIMENSION);
   POCL_RETURN_ERROR_ON (
       (work_dim > command_queue->device->max_work_item_dimensions),
@@ -359,12 +357,6 @@ pocl_ndrange_kernel_common (
   size_t offset[3] = { 0, 0, 0 };
   size_t num_groups[3] = { 0, 0, 0 };
   size_t local[3] = { 0, 0, 0 };
-  /* cached values for max_work_item_sizes,
-   * since we are going to access them repeatedly */
-  size_t max_local_x, max_local_y, max_local_z;
-  /* cached values for max_work_group_size,
-   * since we are going to access them repeatedly */
-  size_t max_group_size;
 
   int errcode = 0;
 

@@ -724,6 +724,35 @@ pocl_exec_command (_cl_command_node *node)
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Mem_Advise        ");
       break;
 
+    case CL_COMMAND_SVM_MEMFILL_RECT_POCL:
+      pocl_update_event_running (event);
+      assert (dev->ops->svm_fill_rect);
+      dev->ops->svm_fill_rect (dev,
+                               cmd->svm_fill_rect.svm_ptr,
+                               cmd->svm_fill_rect.origin,
+                               cmd->svm_fill_rect.region,
+                               cmd->svm_fill_rect.row_pitch,
+                               cmd->svm_fill_rect.slice_pitch,
+                               cmd->svm_fill_rect.pattern,
+                               cmd->svm_fill_rect.pattern_size);
+      break;
+
+    case CL_COMMAND_SVM_MEMCPY_RECT_POCL:
+      pocl_update_event_running (event);
+      assert (dev->ops->svm_copy_rect);
+      dev->ops->svm_copy_rect (dev,
+                               cmd->svm_memcpy_rect.dst,
+                               cmd->svm_memcpy_rect.src,
+                               cmd->svm_memcpy_rect.dst_origin,
+                               cmd->svm_memcpy_rect.src_origin,
+                               cmd->svm_memcpy_rect.region,
+                               cmd->svm_memcpy_rect.dst_row_pitch,
+                               cmd->svm_memcpy_rect.dst_slice_pitch,
+                               cmd->svm_memcpy_rect.src_row_pitch,
+                               cmd->svm_memcpy_rect.src_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer Rect      ");
+      break;
+
     case CL_COMMAND_COMMAND_BUFFER_KHR:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE (event);
@@ -1857,9 +1886,14 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
+
         { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },
-        { CL_MAKE_VERSION (0, 1, 0), CL_POCL_PINNED_BUFFERS_EXTENSION_NAME } };
+        { CL_MAKE_VERSION (0, 1, 0), CL_POCL_PINNED_BUFFERS_EXTENSION_NAME },
+        { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_svm_rect" },
+        { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_svm" },
+        { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_buffer" },
+        { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_exec" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);

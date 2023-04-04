@@ -147,6 +147,8 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_migrate = NULL;
   ops->svm_copy = pocl_driver_svm_copy;
   ops->svm_fill = pocl_driver_svm_fill;
+  ops->svm_copy_rect = pocl_driver_svm_copy_rect;
+  ops->svm_fill_rect = pocl_driver_svm_fill_rect;
 
   ops->create_kernel = NULL;
   ops->free_kernel = NULL;

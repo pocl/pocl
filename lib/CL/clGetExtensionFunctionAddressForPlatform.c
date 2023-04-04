@@ -154,6 +154,45 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clCommandSVMMemcpyKHR") == 0)
     return (void *)&POname (clCommandSVMMemcpyKHR);
 
+  /* cl_pocl_command_buffer_svm */
+  if (strcmp (func_name, "clCommandSVMMemcpyPOCL") == 0)
+    return (void *)&POname (clCommandSVMMemcpyPOCL);
+
+  if (strcmp (func_name, "clCommandSVMMemcpyRectPOCL") == 0)
+    return (void *)&POname (clCommandSVMMemcpyRectPOCL);
+
+  if (strcmp (func_name, "clCommandSVMMemfillPOCL") == 0)
+    return (void *)&POname (clCommandSVMMemfillPOCL);
+
+  if (strcmp (func_name, "clCommandSVMMemfillRectPOCL") == 0)
+    return (void *)&POname (clCommandSVMMemfillRectPOCL);
+
+  /* cl_pocl_command_buffer_host_buffer */
+  if (strcmp (func_name, "clCommandReadBufferPOCL") == 0)
+    return (void *)&POname (clCommandReadBufferPOCL);
+
+  if (strcmp (func_name, "clCommandReadBufferRectPOCL") == 0)
+    return (void *)&POname (clCommandReadBufferRectPOCL);
+
+  if (strcmp (func_name, "clCommandReadImagePOCL") == 0)
+    return (void *)&POname (clCommandReadImagePOCL);
+
+  if (strcmp (func_name, "clCommandWriteBufferPOCL") == 0)
+    return (void *)&POname (clCommandWriteBufferPOCL);
+
+  if (strcmp (func_name, "clCommandWriteBufferRectPOCL") == 0)
+    return (void *)&POname (clCommandWriteBufferRectPOCL);
+
+  if (strcmp (func_name, "clCommandWriteImagePOCL") == 0)
+    return (void *)&POname (clCommandWriteImagePOCL);
+
+  /* cl_pocl_svm_rect */
+  if (strcmp (func_name, "clEnqueueSVMMemcpyRectPOCL") == 0)
+    return (void *)&POname (clEnqueueSVMMemcpyRectPOCL);
+
+  if (strcmp (func_name, "clEnqueueSVMMemFillRectPOCL") == 0)
+    return (void *)&POname (clEnqueueSVMMemFillRectPOCL);
+
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;
 }

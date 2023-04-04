@@ -22,39 +22,27 @@
 */
 
 #include "pocl_cl.h"
-#include "utlist.h"
-#include <assert.h>
+#include "pocl_shared.h"
 #include "pocl_util.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
-                     cl_mem buffer,
-                     cl_bool blocking_write,
-                     size_t offset,
-                     size_t size,
-                     const void *ptr,
-                     cl_uint num_events_in_wait_list,
-                     const cl_event *event_wait_list,
-                     cl_event *event) CL_API_SUFFIX__VERSION_1_0
+cl_int
+pocl_validate_write_buffer (cl_command_queue command_queue,
+                            cl_mem buffer,
+                            size_t offset,
+                            size_t size,
+                            const void *ptr)
 {
-  cl_device_id device;
-  unsigned i;
-  _cl_command_node *cmd = NULL;
-  int errcode;
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
-                          CL_INVALID_COMMAND_QUEUE);
-
-  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
-
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
                           CL_INVALID_MEM_OBJECT);
 
-  POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
+  if (command_queue)
+    {
+      POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
 
-  POCL_RETURN_ERROR_ON((command_queue->context != buffer->context),
-    CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
+      POCL_RETURN_ERROR_ON (
+          (command_queue->context != buffer->context), CL_INVALID_CONTEXT,
+          "buffer and command_queue are not from the same context\n");
+    }
 
   POCL_RETURN_ERROR_ON (
       (buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)),
@@ -64,37 +52,105 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
 
+  POCL_RETURN_ERROR_COND ((size == 0), CL_INVALID_VALUE);
+
   if (pocl_buffer_boundcheck (buffer, offset, size) != CL_SUCCESS)
     return CL_INVALID_VALUE;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+  return CL_SUCCESS;
+}
 
-  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+cl_int
+pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
+                          cl_command_queue command_queue,
+                          cl_mem buffer,
+                          size_t offset,
+                          size_t size,
+                          const void *ptr,
+                          cl_uint num_items_in_wait_list,
+                          const cl_event *event_wait_list,
+                          cl_event *event,
+                          const cl_sync_point_khr *sync_point_wait_list,
+                          cl_sync_point_khr *sync_point,
+                          _cl_command_node **cmd)
+{
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
 
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
+  unsigned i;
+  cl_device_id device;
+  POCL_CHECK_DEV_IN_CMDQ;
+
+  cl_int errcode
+      = pocl_validate_write_buffer (command_queue, buffer, offset, size, ptr);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CHECK_DEV_IN_CMDQ;
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
+  if (command_queue)
+    {
+      POCL_RETURN_ERROR_ON (
+          (buffer->size > command_queue->device->max_mem_alloc_size),
+          CL_OUT_OF_RESOURCES,
+          "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+    }
 
   char rdonly = 0;
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &buffer, &rdonly);
-  if (errcode != CL_SUCCESS)
+  if (command_buffer == NULL)
     {
-      POCL_MSG_ERR ("create command failed \n");
-      return errcode;
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+      errcode = pocl_create_command (
+          cmd, command_queue, CL_COMMAND_WRITE_BUFFER, event,
+          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
     }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
+          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+    }
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  cmd->command.write.src_host_ptr = ptr;
-  cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
-  cmd->command.write.offset = offset;
-  cmd->command.write.size = size;
+  _cl_command_node *c = *cmd;
+
+  c->command.write.src_host_ptr = ptr;
+  c->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
+  c->command.write.offset = offset;
+  c->command.write.size = size;
+
+  return CL_SUCCESS;
+}
+
+CL_API_ENTRY cl_int CL_API_CALL
+POname (clEnqueueWriteBuffer) (cl_command_queue command_queue,
+                               cl_mem buffer,
+                               cl_bool blocking_write,
+                               size_t offset,
+                               size_t size,
+                               const void *ptr,
+                               cl_uint num_events_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event) CL_API_SUFFIX__VERSION_1_0
+{
+  cl_int errcode;
+  _cl_command_node *cmd = NULL;
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
+  errcode = pocl_write_buffer_common (
+      NULL, command_queue, buffer, offset, size, ptr, num_events_in_wait_list,
+      event_wait_list, event, NULL, NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   pocl_command_enqueue (command_queue, cmd);
 
