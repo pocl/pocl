@@ -101,7 +101,7 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
       errcode = pocl_check_event_wait_list (
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
-          return errcode;
+        return errcode;
       errcode = pocl_create_command (
           cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
           num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
@@ -218,7 +218,7 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
       errcode = pocl_check_event_wait_list (
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
-          return errcode;
+        return errcode;
       errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_FILL_IMAGE,
                                      event, num_items_in_wait_list,
                                      event_wait_list, 1, &image, &rdonly);

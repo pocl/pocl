@@ -188,6 +188,24 @@
                        size_t *__restrict__ sizes); \
   void pocl_##__DRV__##_svm_register (cl_device_id dev, void *host_ptr, size_t size);      \
   void pocl_##__DRV__##_svm_unregister (cl_device_id dev, void *host_ptr, size_t size);    \
+  void pocl_##__DRV__##_svm_copy_rect (cl_device_id dev, \
+                                       void *__restrict__ dst,  \
+                                       const void *__restrict__ src,  \
+                                       const size_t *dst_origin, \
+                                       const size_t *src_origin, \
+                                       const size_t *region, \
+                                       size_t dst_row_pitch, \
+                                       size_t dst_slice_pitch,  \
+                                       size_t src_row_pitch,\
+                                       size_t src_slice_pitch); \
+  void pocl_##__DRV__##_svm_fill_rect (cl_device_id dev, \
+                                       void *__restrict__ svm_ptr, \
+                                       const size_t *origin, \
+                                       const size_t *region, \
+                                       size_t row_pitch, \
+                                       size_t slice_pitch, \
+                                       void *__restrict__ pattern, \
+                                       size_t pattern_size); \
   void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \
   void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
   cl_int pocl_##__DRV__##_get_device_info_ext(cl_device_id dev,               \
@@ -213,3 +231,4 @@
   void * pocl_##__DRV__##_usm_alloc (cl_device_id dev, unsigned alloc_type, \
                                      cl_mem_alloc_flags_intel flags, size_t size, \
                                      cl_int *errcode);
+

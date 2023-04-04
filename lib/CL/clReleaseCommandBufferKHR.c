@@ -25,6 +25,8 @@
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
 
+#include <alloca.h>
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
     CL_API_SUFFIX__VERSION_1_2

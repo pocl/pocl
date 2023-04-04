@@ -136,21 +136,19 @@ pocl_driver_copy_with_size (void *data, pocl_mem_identifier *dst_mem_id,
     memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
 }
 
+/* required for PoCL's command buffer extensions */
 void
-pocl_driver_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
-                       cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
-                       cl_mem src_buf,
-                       const size_t *__restrict__ const dst_origin,
-                       const size_t *__restrict__ const src_origin,
-                       const size_t *__restrict__ const region,
-                       size_t const dst_row_pitch,
-                       size_t const dst_slice_pitch,
-                       size_t const src_row_pitch,
-                       size_t const src_slice_pitch)
+pocl_driver_svm_copy_rect (cl_device_id dev,
+                           void *__restrict__ dst_ptr,
+                           const void *__restrict__ src_ptr,
+                           const size_t *__restrict__ const dst_origin,
+                           const size_t *__restrict__ const src_origin,
+                           const size_t *__restrict__ const region,
+                           size_t dst_row_pitch,
+                           size_t dst_slice_pitch,
+                           size_t src_row_pitch,
+                           size_t src_slice_pitch)
 {
-
-  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
   char const *__restrict const adjusted_src_ptr
       = (char const *)src_ptr + src_origin[0] + src_row_pitch * src_origin[1]
         + src_slice_pitch * src_origin[2];
@@ -191,6 +189,74 @@ pocl_driver_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
           memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
                   adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
                   region[0]);
+    }
+}
+
+void
+pocl_driver_copy_rect (void *data,
+                       pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf,
+                       pocl_mem_identifier *src_mem_id,
+                       cl_mem src_buf,
+                       const size_t *__restrict__ const dst_origin,
+                       const size_t *__restrict__ const src_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const dst_row_pitch,
+                       size_t const dst_slice_pitch,
+                       size_t const src_row_pitch,
+                       size_t const src_slice_pitch)
+{
+  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
+  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+
+  pocl_driver_svm_copy_rect (NULL, dst_ptr, src_ptr, dst_origin, src_origin,
+                             region, dst_row_pitch, dst_slice_pitch,
+                             src_row_pitch, src_slice_pitch);
+}
+
+void
+pocl_driver_svm_fill_rect (cl_device_id dev,
+                           void *__restrict__ svm_ptr,
+                           const size_t *origin,
+                           const size_t *region,
+                           size_t row_pitch,
+                           size_t slice_pitch,
+                           void *__restrict__ pattern,
+                           size_t pattern_size)
+{
+  char *__restrict__ adjusted_ptr = (char *)svm_ptr + origin[0]
+                                    + row_pitch * origin[1]
+                                    + slice_pitch * origin[2];
+
+  POCL_MSG_PRINT_MEMORY ("FILL RECT \n"
+                         "PTR %p \n"
+                         "origin %u %u %u | region %u %u %u\n"
+                         "row_pitch %lu slice_pitch %lu\n",
+                         adjusted_ptr, (unsigned)origin[0],
+                         (unsigned)origin[1], (unsigned)origin[2],
+                         (unsigned)region[0], (unsigned)region[1],
+                         (unsigned)region[2], (unsigned long)row_pitch,
+                         (unsigned long)slice_pitch);
+
+  size_t j, k;
+
+  /* TODO: handle overlaping regions */
+  if ((row_pitch == region[0]) && (slice_pitch == (region[1] * region[0])))
+    {
+      size_t size = region[0] * region[1] * region[2];
+      pocl_fill_aligned_buf_with_pattern (adjusted_ptr, 0, size, pattern,
+                                          pattern_size);
+    }
+  else
+    {
+      for (k = 0; k < region[2]; ++k)
+        for (j = 0; j < region[1]; ++j)
+          {
+            size_t offset = row_pitch * j + slice_pitch * k;
+            size_t size = region[0];
+            pocl_fill_aligned_buf_with_pattern (adjusted_ptr, offset, size,
+                                                pattern, pattern_size);
+          }
     }
 }
 

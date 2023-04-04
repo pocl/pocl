@@ -67,9 +67,11 @@ POname (clCreateCommandBufferKHR) (
       for (key = properties; *key != 0; key += 2)
         num_properties += 1;
 
-      cl_command_buffer_properties_khr seen_keys[num_properties];
-
       unsigned i = 0;
+      cl_command_buffer_properties_khr seen_keys[num_properties];
+      for (i = 0; i < num_properties; ++i)
+        seen_keys[i] = 0;
+
       for (key = properties; *key != 0; key += 2, ++i)
         {
           /* Duplicate keys are not allowed */

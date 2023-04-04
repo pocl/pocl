@@ -46,6 +46,8 @@ extern "C"
 
 #ifndef cl_pocl_content_size
 
+#define cl_pocl_content_size 1
+
 extern CL_API_ENTRY cl_int CL_API_CALL
 clSetContentSizeBufferPoCL(
     cl_mem    buffer,
@@ -94,6 +96,406 @@ typedef struct _cl_mem_pinning
 } cl_mem_pinning;
 
 /* cl_pocl_pinned_buffers */
+#endif
+
+/***********************************
+* cl_pocl_svm_rect +
+* cl_pocl_command_buffer_svm +
+* cl_pocl_command_buffer_host_buffer
+* extensions
+************************************/
+
+// SVM memory command-buffer functions (clCommandSVMMemcpyPOCL etc)
+#define cl_pocl_command_buffer_svm 1
+
+// cl_mem & host command-buffer functions (clCommandReadBuffer etc)
+#define cl_pocl_command_buffer_host_buffer 1
+
+// these are separate from command-buffers
+// clEnqueueSVMMemFillRectPOCL, clEnqueueSVMMemcpyRectPOCL
+#define cl_pocl_svm_rect 1
+
+/****************************************************/
+
+/* cl_device_command_buffer_capabilities_khr - bitfield */
+#define CL_COMMAND_BUFFER_CAPABILITY_PROFILING_POCL  (1 << 8)
+
+/* cl_command_buffer_flags_khr */
+#define CL_COMMAND_BUFFER_PROFILING_POCL              (1 << 8)
+
+/* cl_command_buffer_info_khr */
+#define CL_COMMAND_BUFFER_INFO_PROFILING_POCL                     0x1299
+
+/* cl_command_type */
+/* To be used by clGetEventInfo: */
+/* TODO use values from an assigned range */
+#define CL_COMMAND_SVM_MEMCPY_RECT_POCL                       0x1210
+#define CL_COMMAND_SVM_MEMFILL_RECT_POCL                      0x1211
+
+typedef cl_int (CL_API_CALL *
+clCommandSVMMemcpyPOCL_fn)(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    size_t size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandSVMMemcpyRectPOCL_fn)(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    const size_t *dst_origin,
+    const size_t *src_origin,
+    const size_t *region,
+    size_t dst_row_pitch,
+    size_t dst_slice_pitch,
+    size_t src_row_pitch,
+    size_t src_slice_pitch,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandSVMMemfillPOCL_fn)(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    size_t size,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+
+typedef cl_int (CL_API_CALL *
+clCommandSVMMemfillRectPOCL_fn)(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    const size_t *origin,
+    const size_t *region,
+    size_t row_pitch,
+    size_t slice_pitch,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+
+
+
+
+
+
+typedef cl_int (CL_API_CALL *
+clCommandReadBufferPOCL_fn)(cl_command_buffer_khr command_buffer,
+                        cl_command_queue command_queue,
+                        cl_mem buffer,
+                        size_t offset,
+                        size_t size,
+                        void *ptr,
+                        cl_uint num_sync_points_in_wait_list,
+                        const cl_sync_point_khr* sync_point_wait_list,
+                        cl_sync_point_khr* sync_point,
+                        cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandReadBufferRectPOCL_fn)(cl_command_buffer_khr command_buffer,
+                            cl_command_queue command_queue,
+                            cl_mem buffer,
+                            const size_t *buffer_origin,
+                            const size_t *host_origin,
+                            const size_t *region,
+                            size_t buffer_row_pitch,
+                            size_t buffer_slice_pitch,
+                            size_t host_row_pitch,
+                            size_t host_slice_pitch,
+                            void *ptr,
+                            cl_uint num_sync_points_in_wait_list,
+                            const cl_sync_point_khr* sync_point_wait_list,
+                            cl_sync_point_khr* sync_point,
+                            cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandReadImagePOCL_fn)(cl_command_buffer_khr command_buffer,
+                       cl_command_queue command_queue,
+                       cl_mem               image,
+                       const size_t *       origin, /* [3] */
+                       const size_t *       region, /* [3] */
+                       size_t               row_pitch,
+                       size_t               slice_pitch,
+                       void *               ptr,
+                       cl_uint num_sync_points_in_wait_list,
+                       const cl_sync_point_khr* sync_point_wait_list,
+                       cl_sync_point_khr* sync_point,
+                       cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandWriteBufferPOCL_fn)(cl_command_buffer_khr command_buffer,
+                         cl_command_queue command_queue,
+                         cl_mem buffer,
+                         size_t offset,
+                         size_t size,
+                         const void *ptr,
+                         cl_uint num_sync_points_in_wait_list,
+                         const cl_sync_point_khr* sync_point_wait_list,
+                         cl_sync_point_khr* sync_point,
+                         cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandWriteBufferRectPOCL_fn)(cl_command_buffer_khr command_buffer,
+                             cl_command_queue command_queue,
+                             cl_mem buffer,
+                             const size_t *buffer_origin,
+                             const size_t *host_origin,
+                             const size_t *region,
+                             size_t buffer_row_pitch,
+                             size_t buffer_slice_pitch,
+                             size_t host_row_pitch,
+                             size_t host_slice_pitch,
+                             const void *ptr,
+                             cl_uint num_sync_points_in_wait_list,
+                             const cl_sync_point_khr* sync_point_wait_list,
+                             cl_sync_point_khr* sync_point,
+                             cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clCommandWriteImagePOCL_fn)(cl_command_buffer_khr command_buffer,
+                        cl_command_queue    command_queue,
+                        cl_mem              image,
+                        const size_t *      origin, /*[3]*/
+                        const size_t *      region, /*[3]*/
+                        size_t              row_pitch,
+                        size_t              slice_pitch,
+                        const void *        ptr,
+                        cl_uint num_sync_points_in_wait_list,
+                        const cl_sync_point_khr* sync_point_wait_list,
+                        cl_sync_point_khr* sync_point,
+                        cl_mutable_command_khr* mutable_handle);
+
+typedef cl_int (CL_API_CALL *
+clEnqueueSVMMemcpyRectPOCL_fn) (cl_command_queue command_queue,
+                            cl_bool blocking,
+                            void *dst_ptr,
+                            const void *src_ptr,
+                            const size_t *dst_origin,
+                            const size_t *src_origin,
+                            const size_t *region,
+                            size_t dst_row_pitch,
+                            size_t dst_slice_pitch,
+                            size_t src_row_pitch,
+                            size_t src_slice_pitch,
+                            cl_uint num_events_in_wait_list,
+                            const cl_event *event_wait_list,
+                            cl_event *event);
+
+typedef cl_int (CL_API_CALL *
+clEnqueueSVMMemFillRectPOCL_fn) (cl_command_queue  command_queue,
+                             void *            svm_ptr,
+                             const size_t *    origin,
+                             const size_t *    region,
+                             size_t            row_pitch,
+                             size_t            slice_pitch,
+                             const void *      pattern,
+                             size_t            pattern_size,
+                             size_t            size,
+                             cl_uint           num_events_in_wait_list,
+                             const cl_event *  event_wait_list,
+                             cl_event *        event);
+
+
+#ifndef CL_NO_PROTOTYPES
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemcpyPOCL(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    size_t size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemcpyRectPOCL(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    const size_t *dst_origin,
+    const size_t *src_origin,
+    const size_t *region,
+    size_t dst_row_pitch,
+    size_t dst_slice_pitch,
+    size_t src_row_pitch,
+    size_t src_slice_pitch,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemfillPOCL(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    size_t size,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemfillRectPOCL(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    const size_t *origin,
+    const size_t *region,
+    size_t row_pitch,
+    size_t slice_pitch,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+
+
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandReadBufferPOCL(cl_command_buffer_khr command_buffer,
+                        cl_command_queue command_queue,
+                        cl_mem buffer,
+                        size_t offset,
+                        size_t size,
+                        void *ptr,
+                        cl_uint num_sync_points_in_wait_list,
+                        const cl_sync_point_khr* sync_point_wait_list,
+                        cl_sync_point_khr* sync_point,
+                        cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandReadBufferRectPOCL(cl_command_buffer_khr command_buffer,
+                            cl_command_queue command_queue,
+                            cl_mem buffer,
+                            const size_t *buffer_origin,
+                            const size_t *host_origin,
+                            const size_t *region,
+                            size_t buffer_row_pitch,
+                            size_t buffer_slice_pitch,
+                            size_t host_row_pitch,
+                            size_t host_slice_pitch,
+                            void *ptr,
+                            cl_uint num_sync_points_in_wait_list,
+                            const cl_sync_point_khr* sync_point_wait_list,
+                            cl_sync_point_khr* sync_point,
+                            cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandReadImagePOCL(cl_command_buffer_khr command_buffer,
+                       cl_command_queue command_queue,
+                       cl_mem               image,
+                       const size_t *       origin, /* [3] */
+                       const size_t *       region, /* [3] */
+                       size_t               row_pitch,
+                       size_t               slice_pitch,
+                       void *               ptr,
+                       cl_uint num_sync_points_in_wait_list,
+                       const cl_sync_point_khr* sync_point_wait_list,
+                       cl_sync_point_khr* sync_point,
+                       cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandWriteBufferPOCL(cl_command_buffer_khr command_buffer,
+                         cl_command_queue command_queue,
+                         cl_mem buffer,
+                         size_t offset,
+                         size_t size,
+                         const void *ptr,
+                         cl_uint num_sync_points_in_wait_list,
+                         const cl_sync_point_khr* sync_point_wait_list,
+                         cl_sync_point_khr* sync_point,
+                         cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandWriteBufferRectPOCL(cl_command_buffer_khr command_buffer,
+                             cl_command_queue command_queue,
+                             cl_mem buffer,
+                             const size_t *buffer_origin,
+                             const size_t *host_origin,
+                             const size_t *region,
+                             size_t buffer_row_pitch,
+                             size_t buffer_slice_pitch,
+                             size_t host_row_pitch,
+                             size_t host_slice_pitch,
+                             const void *ptr,
+                             cl_uint num_sync_points_in_wait_list,
+                             const cl_sync_point_khr* sync_point_wait_list,
+                             cl_sync_point_khr* sync_point,
+                             cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandWriteImagePOCL(cl_command_buffer_khr command_buffer,
+                        cl_command_queue    command_queue,
+                        cl_mem              image,
+                        const size_t *      origin, /*[3]*/
+                        const size_t *      region, /*[3]*/
+                        size_t              row_pitch,
+                        size_t              slice_pitch,
+                        const void *        ptr,
+                        cl_uint num_sync_points_in_wait_list,
+                        const cl_sync_point_khr* sync_point_wait_list,
+                        cl_sync_point_khr* sync_point,
+                        cl_mutable_command_khr* mutable_handle);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clEnqueueSVMMemcpyRectPOCL (cl_command_queue command_queue,
+                            cl_bool blocking,
+                            void *dst_ptr,
+                            const void *src_ptr,
+                            const size_t *dst_origin,
+                            const size_t *src_origin,
+                            const size_t *region,
+                            size_t dst_row_pitch,
+                            size_t dst_slice_pitch,
+                            size_t src_row_pitch,
+                            size_t src_slice_pitch,
+                            cl_uint num_events_in_wait_list,
+                            const cl_event *event_wait_list,
+                            cl_event *event);
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clEnqueueSVMMemFillRectPOCL (cl_command_queue  command_queue,
+                             void *            svm_ptr,
+                             const size_t *    origin,
+                             const size_t *    region,
+                             size_t            row_pitch,
+                             size_t            slice_pitch,
+                             const void *      pattern,
+                             size_t            pattern_size,
+                             size_t            size,
+                             cl_uint           num_events_in_wait_list,
+                             const cl_event *  event_wait_list,
+                             cl_event *        event);
+
+
 #endif
 
 #ifdef __cplusplus

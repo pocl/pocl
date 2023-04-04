@@ -20,25 +20,18 @@
 */
 
 #include "pocl_cl.h"
-#include "assert.h"
 #include "pocl_image_util.h"
+#include "pocl_shared.h"
 #include "pocl_util.h"
-#include "utlist.h"
-#include <string.h>
 
-extern CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueReadImage)(cl_command_queue     command_queue,
-                           cl_mem               image,
-                           cl_bool              blocking_read, 
-                           const size_t *       origin, /* [3] */
-                           const size_t *       region, /* [3] */
-                           size_t               row_pitch,
-                           size_t               slice_pitch,
-                           void *               ptr,
-                           cl_uint              num_events_in_wait_list,
-                           const cl_event *     event_wait_list,
-                           cl_event *           event) 
-CL_API_SUFFIX__VERSION_1_0 
+cl_int
+pocl_validate_read_image (cl_command_queue command_queue,
+                          cl_mem image,
+                          const size_t *origin, /* [3] */
+                          const size_t *region, /* [3] */
+                          size_t row_pitch,
+                          size_t slice_pitch,
+                          void *ptr)
 {
   cl_int errcode;
   _cl_command_node *cmd = NULL;
@@ -54,17 +47,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
 
-  if (IS_IMAGE1D_BUFFER (image))
-    {
-      IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region);
-      return POname (clEnqueueReadBuffer) (
-          command_queue, image,
-          blocking_read,
-          i1d_origin[0], i1d_region[0],
-          ptr,
-          num_events_in_wait_list, event_wait_list, event);
-    }
-
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
@@ -73,11 +55,6 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
                         "image is a GL texture\n");
   POCL_RETURN_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
-
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
 
   POCL_RETURN_ERROR_ON (
       (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)),
@@ -93,42 +70,114 @@ CL_API_SUFFIX__VERSION_1_0
         "1D Image buffer has been created with CL_MEM_HOST_WRITE_ONLY "
         "or CL_MEM_HOST_NO_ACCESS\n");
 
-  if (errcode != CL_SUCCESS)
-    return errcode;
+  return pocl_check_image_origin_region (image, origin, region);
+}
 
-  errcode = pocl_check_image_origin_region (image, origin, region);
+cl_int
+pocl_read_image_common (cl_command_buffer_khr command_buffer,
+                        cl_command_queue command_queue,
+                        cl_mem image,
+                        const size_t *origin, /* [3] */
+                        const size_t *region, /* [3] */
+                        size_t row_pitch,
+                        size_t slice_pitch,
+                        void *ptr,
+                        cl_uint num_items_in_wait_list,
+                        const cl_event *event_wait_list,
+                        cl_event *event,
+                        const cl_sync_point_khr *sync_point_wait_list,
+                        cl_sync_point_khr *sync_point,
+                        _cl_command_node **cmd)
+{
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
+
+  unsigned i;
+  cl_device_id device;
+  POCL_CHECK_DEV_IN_CMDQ;
+
+  cl_int errcode = pocl_validate_read_image (
+      command_queue, image, origin, region, row_pitch, slice_pitch, ptr);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   char rdonly = 1;
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &image, &rdonly);
-  if (errcode != CL_SUCCESS)
+  if (command_buffer == NULL)
     {
-      POCL_MEM_FREE(cmd);
-      return errcode;
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+      errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_READ_IMAGE,
+                                     event, num_items_in_wait_list,
+                                     event_wait_list, 1, &image, &rdonly);
+    }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, CL_COMMAND_READ_IMAGE,
+          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+    }
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  _cl_command_node *c = *cmd;
+
+  c->command.read_image.src_mem_id
+      = &image->device_ptrs[device->global_mem_id];
+  c->command.read_image.src = image;
+  c->command.read_image.dst_host_ptr = ptr;
+  c->command.read_image.dst_mem_id = NULL;
+  c->command.read_image.origin[0] = origin[0];
+  c->command.read_image.origin[1] = origin[1];
+  c->command.read_image.origin[2] = origin[2];
+  c->command.read_image.region[0] = region[0];
+  c->command.read_image.region[1] = region[1];
+  c->command.read_image.region[2] = region[2];
+  c->command.read_image.dst_row_pitch = row_pitch;
+  c->command.read_image.dst_slice_pitch = slice_pitch;
+  c->command.read_image.dst_offset = 0;
+
+  return CL_SUCCESS;
+}
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+POname (clEnqueueReadImage) (cl_command_queue command_queue,
+                             cl_mem image,
+                             cl_bool blocking_read,
+                             const size_t *origin, /* [3] */
+                             const size_t *region, /* [3] */
+                             size_t row_pitch,
+                             size_t slice_pitch,
+                             void *ptr,
+                             cl_uint num_events_in_wait_list,
+                             const cl_event *event_wait_list,
+                             cl_event *event) CL_API_SUFFIX__VERSION_1_0
+{
+  cl_int errcode;
+  _cl_command_node *cmd = NULL;
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (image)),
+                          CL_INVALID_MEM_OBJECT);
+
+  if (IS_IMAGE1D_BUFFER (image))
+    {
+      IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region);
+      return POname (clEnqueueReadBuffer) (
+          command_queue, image, blocking_read, i1d_origin[0], i1d_region[0],
+          ptr, num_events_in_wait_list, event_wait_list, event);
     }
 
-  cl_device_id dev = command_queue->device;
-  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->global_mem_id];
-  cmd->command.read_image.dst_host_ptr = ptr;
-  cmd->command.read_image.dst_mem_id = NULL;
-  cmd->command.read_image.src = image;
+  errcode = pocl_read_image_common (
+      NULL, command_queue, image, origin, region, row_pitch, slice_pitch, ptr,
+      num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  cmd->command.read_image.origin[0] = origin[0];
-  cmd->command.read_image.origin[1] = origin[1];
-  cmd->command.read_image.origin[2] = origin[2];
-  cmd->command.read_image.region[0] = region[0];
-  cmd->command.read_image.region[1] = region[1];
-  cmd->command.read_image.region[2] = region[2];
-
-  cmd->command.read_image.dst_row_pitch = row_pitch;
-  cmd->command.read_image.dst_slice_pitch = slice_pitch;
-  cmd->command.read_image.dst_offset = 0;
-
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_read)
     POname(clFinish) (command_queue);

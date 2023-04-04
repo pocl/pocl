@@ -193,6 +193,24 @@ POdeclsym(clEnqueueMigrateMemINTEL)
 POdeclsym(clCommandSVMMemcpyKHR)
 POdeclsym(clCommandSVMMemFillKHR)
 
+/* cl_pocl_command_buffer_svm */
+POdeclsym(clCommandSVMMemcpyPOCL)
+POdeclsym(clCommandSVMMemcpyRectPOCL)
+POdeclsym(clCommandSVMMemfillPOCL)
+POdeclsym(clCommandSVMMemfillRectPOCL)
+
+/* cl_pocl_command_buffer_host_buffer */
+POdeclsym(clCommandReadBufferPOCL)
+POdeclsym(clCommandReadBufferRectPOCL)
+POdeclsym(clCommandReadImagePOCL)
+POdeclsym(clCommandWriteBufferPOCL)
+POdeclsym(clCommandWriteBufferRectPOCL)
+POdeclsym(clCommandWriteImagePOCL)
+
+/* cl_pocl_svm_rect */
+POdeclsym(clEnqueueSVMMemFillRectPOCL)
+POdeclsym(clEnqueueSVMMemcpyRectPOCL)
+
 
 #ifdef __cplusplus
 }

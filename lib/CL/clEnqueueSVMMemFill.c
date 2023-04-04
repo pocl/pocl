@@ -44,6 +44,8 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
 
   unsigned i;
   cl_device_id device;
+
+  POCL_CHECK_DEV_IN_CMDQ;
   cl_int errcode;
 
   /* command_queue can be NULL when pushing to a command buffer. */
@@ -103,6 +105,7 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  // TODO this is likely very wrong
   if (event != NULL)
     (*event)->command_type = command_type;
 
