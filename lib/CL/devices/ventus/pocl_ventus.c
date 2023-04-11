@@ -22,7 +22,6 @@
    IN THE SOFTWARE.
 */
 
-#include "ventus.h"
 #include "common.h"
 #include "config.h"
 #include "config2.h"

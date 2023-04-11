@@ -8,7 +8,7 @@
 #define POCL_VENTUS_H
 
 #include "pocl_cl.h"
-
+#include "ventus.h"
 #include "prototypes.inc"
 GEN_PROTOTYPES (ventus)
 
