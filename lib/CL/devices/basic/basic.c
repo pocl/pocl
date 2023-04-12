@@ -1009,8 +1009,8 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
     case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
     case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
       {
-        cl_bitfield Caps = pocl_basic_get_mem_caps (device, param_name);
-        POCL_RETURN_GETINFO (cl_bitfield, Caps);
+        cl_bitfield caps = pocl_basic_get_mem_caps (device, param_name);
+        POCL_RETURN_GETINFO (cl_bitfield, caps);
       }
 
     case CL_DEVICE_SUB_GROUP_SIZES_INTEL:

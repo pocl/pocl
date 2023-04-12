@@ -25,10 +25,10 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clSetKernelExecInfo)(cl_kernel  kernel,
-                            cl_kernel_exec_info  param_name,
-                            size_t  param_value_size,
-                            const void  *param_value) CL_API_SUFFIX__VERSION_1_0
+POname(clSetKernelExecInfo)(cl_kernel kernel,
+                            cl_kernel_exec_info param_name,
+                            size_t param_value_size,
+                            const void *param_value) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
