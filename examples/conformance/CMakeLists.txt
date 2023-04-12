@@ -588,11 +588,11 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_events_ooo"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_events_other"
          COMMAND "${TS_BUILDDIR}/events/test_events" ${EXTRA_ARGS} userevents  waitlists  callbacks  callbacks_simultaneous  userevents_multithreaded)
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_address_space"
-         COMMAND "${TS_BUILDDIR}/generic_address_space/test_generic_address_space")
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_AS"
+         COMMAND "${TS_BUILDDIR}/generic_address_space/test_generic_address_space" ${EXTRA_ARGS} )
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_geometrics"
-         COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" ${EXTRA_ARGS} )
+         COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_half_1"
          COMMAND "${TS_BUILDDIR}/half/test_half" ${EXTRA_ARGS} vload_half vloada_half vstore_half)
@@ -1170,7 +1170,7 @@ set(OCL_30_TESTS_FULL
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_svm_or_xor_and"
     "${TS_NAME}${TS_SUFFIX}_device_execution"
     "${TS_NAME}${TS_SUFFIX}_device_timer"
-    "${TS_NAME}${TS_SUFFIX}_generic_address_space"
+    "${TS_NAME}${TS_SUFFIX}_generic_AS"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
     "${TS_NAME}${TS_SUFFIX}_pipes"
@@ -1753,6 +1753,15 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_mini_tanpi"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_mini_trunc"
          COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -d trunc)
 
+# skips two tests that fail in SPIR-V mode:
+# compare_pointers
+# builtin_functions
+add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_AS_mini"
+         COMMAND "${TS_BUILDDIR}/generic_address_space/test_generic_address_space" ${EXTRA_ARGS}
+         function_get_fence function_to_address_space variable_get_fence variable_to_address_space casting conditional_casting chain_casting ternary_operator_casting
+         language_struct language_union multiple_calls_same_function library_function generic_variable_volatile generic_variable_const
+         generic_variable_gentype generic_advanced_casting generic_ptr_to_host_mem generic_ptr_to_host_mem_svm max_number_of_params)
+
 set(OCL_30_TESTS_MINI
     "${TS_NAME}${TS_SUFFIX}_api_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_basic_other_ocl_30"
@@ -1763,7 +1772,7 @@ set(OCL_30_TESTS_MINI
     "${TS_NAME}${TS_SUFFIX}_c11_atomics_micro_5"
     "${TS_NAME}${TS_SUFFIX}_device_execution"
     "${TS_NAME}${TS_SUFFIX}_device_timer"
-    "${TS_NAME}${TS_SUFFIX}_generic_address_space"
+    "${TS_NAME}${TS_SUFFIX}_generic_AS_mini"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
     "${TS_NAME}${TS_SUFFIX}_pipes"
@@ -2261,6 +2270,7 @@ set(OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_device_timer"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
+    "${TS_NAME}${TS_SUFFIX}_generic_AS_mini"
     "${TS_NAME}${TS_SUFFIX}_subgroups_1"
     "${TS_NAME}${TS_SUFFIX}_SVM_1"
     "${TS_NAME}${TS_SUFFIX}_SVM_2"

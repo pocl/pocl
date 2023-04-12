@@ -300,7 +300,7 @@ endif()
 
 include("bitcode_rules")
 
-foreach(FILE "host/addrspace_operators.ll")
+foreach(FILE "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
   if(LLVM_OPAQUE_POINTERS)
     generate_opaque_ptr_ll("${FILE}" "opaque" OPAQ_PTR_FILE)
     list(APPEND SOURCES_WITH_SLEEF "${OPAQ_PTR_FILE}")
