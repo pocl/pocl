@@ -189,7 +189,8 @@ bool OpenCL_Manager::processCameraFrame(unsigned char* input, unsigned long *out
     return isValid;
 }
 
-OpenCL_Manager::OpenCL_Manager() : Context{std::make_unique<OpenCL_Context>()} {}
+OpenCL_Manager::OpenCL_Manager()
+    : Context{std::unique_ptr<OpenCL_Context>(new OpenCL_Context())} {}
 OpenCL_Manager::~OpenCL_Manager() {}
 
 
