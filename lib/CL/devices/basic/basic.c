@@ -69,6 +69,16 @@ struct data {
   void *printf_buffer;
 };
 
+typedef struct _pocl_basic_usm_allocation_t
+{
+  void *ptr;
+  size_t size;
+  cl_mem_alloc_flags_intel flags;
+  unsigned alloc_type;
+
+  struct _pocl_basic_usm_allocation_t *next, *prev;
+} pocl_basic_usm_allocation_t;
+
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
@@ -120,14 +130,20 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = pocl_basic_get_device_info_ext;
+  ops->get_mem_info_ext = pocl_basic_get_mem_info_ext;
   ops->set_kernel_exec_info_ext = pocl_basic_set_kernel_exec_info_ext;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
-  /* no need to implement these two as they're noop
+  ops->usm_alloc = pocl_basic_usm_alloc;
+  ops->usm_free = pocl_basic_usm_free;
+  ops->usm_free_blocking = NULL;
+  /* no need to implement these as they're noop
    * and pocl_exec_command takes care of it */
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
+  ops->svm_advise = NULL;
+  ops->svm_migrate = NULL;
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_driver_svm_fill;
 
@@ -247,6 +263,21 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
                      | CL_DEVICE_SVM_ATOMICS;
 #endif
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
+      != NULL)
+    {
+      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->device_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->single_shared_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+    }
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout
      an unimplemented property error because hwloc is used to
@@ -278,6 +309,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      basic devices can be still used for task level parallelism 
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
+  device->max_sub_devices = 0;
+  device->num_partition_properties = 0;
+  device->num_partition_types = 0;
 
   return ret;
 }
@@ -855,11 +889,111 @@ pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }
 
+static struct _pocl_basic_usm_allocation_t *usm_allocations = NULL;
+static pocl_lock_t usm_lock;
+
+void *
+pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,
+                      cl_mem_alloc_flags_intel flags, size_t size,
+                      cl_int *err_code)
+{
+  int errcode = CL_SUCCESS;
+  void *ptr = NULL;
+
+  switch (alloc_type)
+    {
+    case CL_MEM_TYPE_HOST_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->host_usm_capabs == 0), CL_INVALID_OPERATION,
+                          "Device does not support Host USM allocations\n");
+      break;
+    case CL_MEM_TYPE_DEVICE_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->device_usm_capabs == 0), CL_INVALID_OPERATION,
+                          "Device does not support Device USM allocations\n");
+      break;
+    case CL_MEM_TYPE_SHARED_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->single_shared_usm_capabs == 0),
+                          CL_INVALID_OPERATION,
+                          "Device does not support Shared USM allocations\n");
+      break;
+    default:
+      POCL_GOTO_ERROR_ON (1, CL_INVALID_PROPERTY,
+                          "Unknown USM AllocType requested\n");
+    }
+
+  ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+
+  if (ptr != NULL)
+    {
+      pocl_basic_usm_allocation_t *all
+          = malloc (sizeof (pocl_basic_usm_allocation_t));
+      POCL_GOTO_ERROR_COND ((all == NULL), CL_OUT_OF_HOST_MEMORY);
+      all->ptr = ptr;
+      all->size = size;
+      all->flags = flags;
+      all->alloc_type = alloc_type;
+      POCL_LOCK (usm_lock);
+      DL_APPEND (usm_allocations, all);
+      POCL_UNLOCK (usm_lock);
+
+      POCL_MSG_WARN ("ALLOCATED: ALL_PTR: %p ALL_SIZE: %zu\n", all->ptr,
+                     all->size);
+    }
+
+ERROR:
+  if (err_code)
+    *err_code = errcode;
+
+  return ptr;
+}
+
+void
+pocl_basic_usm_free (cl_device_id dev, void *svm_ptr)
+{
+  POCL_LOCK (usm_lock);
+  pocl_basic_usm_allocation_t *item = NULL, *tmp = NULL;
+  DL_FOREACH_SAFE (usm_allocations, item, tmp)
+  {
+    if (item->ptr == svm_ptr)
+      {
+        DL_DELETE (usm_allocations, item);
+        free (item);
+        break;
+      }
+  }
+  POCL_UNLOCK (usm_lock);
+
+  /* we should always find it, b/c there are checks
+   * in the runtime API (clMemFreeINTEL) */
+  assert (item != NULL);
+  pocl_aligned_free (svm_ptr);
+}
+
 void
 pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
                      const void *__restrict__ src, size_t size)
 {
   memcpy (dst, src, size);
+}
+
+static cl_bitfield
+pocl_basic_get_mem_caps (cl_device_id device, cl_device_info Type)
+{
+  switch (Type)
+    {
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+      return device->host_usm_capabs;
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+      return device->device_usm_capabs;
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+      return device->single_shared_usm_capabs;
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+      return device->cross_shared_usm_capabs;
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+      return device->system_shared_usm_capabs;
+    default:
+      assert (0 && "unhandled switch value");
+    }
+  return 0;
 }
 
 cl_int
@@ -869,6 +1003,16 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
 {
   switch (param_name)
     {
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+      {
+        cl_bitfield caps = pocl_basic_get_mem_caps (device, param_name);
+        POCL_RETURN_GETINFO (cl_bitfield, caps);
+      }
+
     case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
     {
       /* We can basically support fixing any WG size with the CPU devices, but
@@ -878,7 +1022,71 @@ pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
                                  sizes);
     }
     default:
-      return CL_INVALID_VALUE;
+    POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
+                  param_name);
+    return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_basic_get_mem_info_ext (cl_device_id dev, const void *ptr,
+                             cl_uint param_name, size_t param_value_size,
+                             void *param_value, size_t *param_value_size_ret)
+{
+  POCL_LOCK (usm_lock);
+  pocl_basic_usm_allocation_t *item = NULL;
+  DL_FOREACH (usm_allocations, item)
+  {
+    POCL_MSG_WARN ("PTR: %p ITEM_PTR: %p SIZE: %zu\n", ptr, item->ptr,
+                   item->size);
+    if ((ptr >= item->ptr)
+        && ((const char *)ptr < ((const char *)item->ptr + item->size)))
+    {
+      break;
+    }
+  }
+  POCL_UNLOCK (usm_lock);
+
+  switch (param_name)
+    {
+
+    case CL_MEM_ALLOC_TYPE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_uint, CL_MEM_TYPE_UNKNOWN_INTEL);
+      else
+          POCL_RETURN_GETINFO (cl_uint, item->alloc_type);
+    }
+    case CL_MEM_ALLOC_BASE_PTR_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (void *, NULL);
+      else
+          POCL_RETURN_GETINFO (void *, item->ptr);
+    }
+    case CL_MEM_ALLOC_SIZE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (size_t, 0);
+      else
+          POCL_RETURN_GETINFO (size_t, item->size);
+    }
+    case CL_MEM_ALLOC_DEVICE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_device_id, NULL);
+      else
+          POCL_RETURN_GETINFO (cl_device_id, dev);
+    }
+    case CL_MEM_ALLOC_FLAGS_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, 0);
+      else
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, item->flags);
+    }
+    default:
+    return CL_INVALID_VALUE;
     }
 }
 
@@ -894,7 +1102,11 @@ pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
     {
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
-      return CL_SUCCESS;
+    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
+    return CL_SUCCESS;
     default:
       return CL_INVALID_VALUE;
     }

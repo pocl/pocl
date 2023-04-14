@@ -401,7 +401,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   ParallelBC->setDataLayout(ProgramBC->getDataLayout());
 
   copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC,
-                        Device->global_as_id, Device->device_aux_functions);
+                        Device->device_aux_functions);
 
   // Set to true to generate a global offset 0 specialized WG function.
   bool WGAssumeZeroGlobalOffset;

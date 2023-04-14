@@ -400,7 +400,7 @@ static size_t calculateOffsetsSizes(GVarUlongMapT &GVarOffsets,
     // add to the offset the required amount of storage for the global variable
     TypeSize GVSize = DL.getTypeAllocSize(GVar->getValueType());
     assert(GVSize.isScalable() == false);
-    GVarSizes[GVar] = GVSize.getFixedSize();
+    GVarSizes[GVar] = GVSize.getFixedValue();
     CurrentOffset += GVarSizes[GVar];
 
 #ifdef POCL_DEBUG_PROGVARS

@@ -684,6 +684,7 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MEMCPY:
+    case CL_COMMAND_MEMCPY_INTEL:
       pocl_update_event_running (event);
       assert (dev->ops->svm_copy);
       dev->ops->svm_copy (dev,
@@ -694,6 +695,7 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
+    case CL_COMMAND_MEMFILL_INTEL:
       pocl_update_event_running (event);
       assert (dev->ops->svm_fill);
       dev->ops->svm_fill (dev,
@@ -705,12 +707,21 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MIGRATE_MEM:
+    case CL_COMMAND_MIGRATEMEM_INTEL:
       pocl_update_event_running (event);
       if (dev->ops->svm_migrate)
         dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
                                cmd->svm_migrate.svm_pointers,
                                cmd->svm_migrate.sizes);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
+      break;
+
+    case CL_COMMAND_MEMADVISE_INTEL:
+      pocl_update_event_running (event);
+      if (dev->ops->svm_advise)
+        dev->ops->svm_advise (dev, cmd->mem_advise.ptr, cmd->mem_advise.size,
+                              cmd->mem_advise.advice);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Mem_Advise        ");
       break;
 
     case CL_COMMAND_COMMAND_BUFFER_KHR:

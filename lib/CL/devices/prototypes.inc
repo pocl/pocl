@@ -206,8 +206,9 @@
                                       size_t param_value_size,  \
                                       const void * param_value);  \
   void pocl_##__DRV__##_usm_free (cl_device_id dev, \
-                                  void *svm_ptr, \
-                                  cl_bool blocking); \
+                                  void *svm_ptr); \
+  void pocl_##__DRV__##_usm_free_blocking (cl_device_id dev, \
+                                           void *svm_ptr); \
   void * pocl_##__DRV__##_usm_alloc (cl_device_id dev, unsigned alloc_type, \
                                      cl_mem_alloc_flags_intel flags, size_t size, \
                                      cl_int *errcode);

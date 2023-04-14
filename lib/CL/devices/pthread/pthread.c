@@ -200,6 +200,21 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
                      | CL_DEVICE_SVM_ATOMICS;
 #endif
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
+      != NULL)
+    {
+      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->device_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->single_shared_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+    }
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to

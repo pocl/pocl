@@ -32,7 +32,42 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Constants.h>
 
+#include <iostream>
+#include <set>
+
 using namespace llvm;
+
+static void findInstructionUsesImpl(Use &U, std::vector<Use *> &Uses,
+                                    std::set<Use *> &Visited) {
+  if (Visited.count(&U))
+    return;
+  Visited.insert(&U);
+
+  assert(isa<Constant>(*U));
+  if (isa<Instruction>(U.getUser())) {
+    Uses.push_back(&U);
+    return;
+  }
+  if (isa<Constant>(U.getUser())) {
+    for (auto &U : U.getUser()->uses())
+      findInstructionUsesImpl(U, Uses, Visited);
+    return;
+  }
+
+  // Catch other user kinds - we may need to process them (somewhere but not
+  // here).
+  llvm_unreachable("Unexpected user kind.");
+}
+
+// Return list of non-constant leaf use edges whose users are instructions.
+static std::vector<Use *> findInstructionUses(GlobalVariable *GVar) {
+  std::vector<Use *> Uses;
+  std::set<Use *> Visited;
+  for (auto &U : GVar->uses())
+    findInstructionUsesImpl(U, Uses, Visited);
+  return Uses;
+}
+
 
 namespace pocl {
 
@@ -115,6 +150,51 @@ void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func) {
       CE->destroyConstant();
     }
   }
+}
+
+bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
+  std::vector<Use *> Uses = findInstructionUses(GVar);
+  std::vector<Function *> Funcs;
+  for (auto &U : Uses) {
+    if (Instruction *I = dyn_cast<Instruction>(U->getUser()))
+    {
+      if (I->getFunction() == F)
+        return true;
+    }
+  }
+  return false;
+}
+
+
+bool
+isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var) {
+  // Without the fake address space IDs, there is no reliable way to figure out
+  // if the address space is local from the bitcode. We could check its AS
+  // against the device's local address space id, but for now lets rely on the
+  // naming convention only. Only relying on the naming convention has the problem
+  // that LLVM can move private const arrays to the global space which make
+  // them look like local arrays (see Github Issue 445). This should be properly
+  // fixed in Clang side with e.g. a naming convention for the local arrays to
+  // detect them robstly without having logical address space info in the IR.
+  std::string FuncName = F->getName().str();
+  if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
+    return false;
+  if (Var.getName().startswith(FuncName + ".")) {
+    assert(isGVarUsedByFunction(&Var, F) == true);
+    return true;
+  }
+
+  // handle SPIR local AS (3)
+  if (Var.getParent() && Var.getParent()->getNamedMetadata("spirv.Source") &&
+      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL)) {
+
+    if (!Var.hasName())
+      Var.setName(llvm::Twine(FuncName, ".__anon_gvar"));
+    // check it's used by this particular function
+    return isGVarUsedByFunction(&Var, F);
+  }
+
+  return false;
 }
 
 void eraseFunctionAndCallers(llvm::Function *Function) {

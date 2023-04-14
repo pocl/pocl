@@ -107,6 +107,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->svm_alloc = pocl_level0_svm_alloc;
   Ops->usm_alloc = pocl_level0_usm_alloc;
   Ops->usm_free = pocl_level0_usm_free;
+  Ops->usm_free_blocking = pocl_level0_usm_free_blocking;
 
   Ops->build_source = pocl_level0_build_source;
   Ops->build_binary = pocl_level0_build_binary;
@@ -1251,12 +1252,14 @@ ERROR:
   return Ptr;
 }
 
-void pocl_level0_usm_free(cl_device_id Dev, void *SvmPtr, cl_bool Blocking) {
+void pocl_level0_usm_free(cl_device_id Dev, void *SvmPtr) {
   Level0Device *Device = (Level0Device *)Dev->data;
-  if (Blocking == CL_FALSE)
-    Device->freeMem(SvmPtr);
-  else
-    Device->freeMemBlocking(SvmPtr);
+  Device->freeMem(SvmPtr);
+}
+
+void pocl_level0_usm_free_blocking(cl_device_id Dev, void *SvmPtr) {
+  Level0Device *Device = (Level0Device *)Dev->data;
+  Device->freeMemBlocking(SvmPtr);
 }
 
 cl_int pocl_level0_get_device_info_ext(cl_device_id Dev,
@@ -1411,7 +1414,6 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
     L0Kernel->setIndirectAccess(Flag, (value != CL_FALSE));
     return CL_SUCCESS;
   }
-
   case CL_KERNEL_EXEC_INFO_SVM_PTRS:
   case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
     std::map<void *, size_t> UsedPtrs;

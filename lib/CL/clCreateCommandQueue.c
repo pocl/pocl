@@ -82,7 +82,12 @@ POname(clCreateCommandQueue)(cl_context context,
 
   /* hidden queues don't retain the context. */
   if ((properties & CL_QUEUE_HIDDEN) == 0)
+  {
     POname (clRetainContext) (context);
+    POCL_LOCK_OBJ (context);
+    DL_APPEND (context->command_queues, command_queue);
+    POCL_UNLOCK_OBJ (context);
+  }
 
   TP_CREATE_QUEUE (context->id, command_queue->id);
 

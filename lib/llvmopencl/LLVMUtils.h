@@ -53,31 +53,9 @@ void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func);
 POCL_EXPORT
 void eraseFunctionAndCallers(llvm::Function *Function);
 
-inline bool
-isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
-  // Without the fake address space IDs, there is no reliable way to figure out
-  // if the address space is local from the bitcode. We could check its AS
-  // against the device's local address space id, but for now lets rely on the
-  // naming convention only. Only relying on the naming convention has the problem
-  // that LLVM can move private const arrays to the global space which make
-  // them look like local arrays (see Github Issue 445). This should be properly
-  // fixed in Clang side with e.g. a naming convention for the local arrays to
-  // detect them robstly without having logical address space info in the IR.
-  if (!llvm::isa<llvm::PointerType>(Var.getType()) || Var.isConstant())
-    return false;
-  if (Var.getName().startswith(FuncName + "."))
-    return true;
+bool isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var);
 
-  // handle SPIR local AS (3)
-  if (Var.getParent() && Var.getParent()->getNamedMetadata("spirv.Source") &&
-      (Var.getType()->getAddressSpace() == SPIR_ADDRESS_SPACE_LOCAL)) {
-    if (!Var.hasName())
-      Var.setName(llvm::Twine(FuncName, ".__anon_local"));
-    return true;
-  }
-
-  return false;
-}
+bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 
 // Checks if the given argument of Func is a local buffer.
 bool isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);

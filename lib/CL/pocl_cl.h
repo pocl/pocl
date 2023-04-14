@@ -574,10 +574,16 @@ struct pocl_device_ops {
   void (*svm_migrate) (cl_device_id dev, size_t num_svm_pointers,
                        void *__restrict__ svm_pointers,
                        size_t *__restrict__ sizes);
+  void (*svm_advise) (cl_device_id dev, const void *svm_ptr, size_t size,
+                      cl_mem_advice_intel advice);
   /* USM Ops (Intel) */
-  void (*usm_free) (cl_device_id dev, void *svm_ptr, cl_bool blocking);
   void *(*usm_alloc) (cl_device_id dev, unsigned alloc_type,
                       cl_mem_alloc_flags_intel flags, size_t size, cl_int *errcode);
+  void (*usm_free) (cl_device_id dev, void *svm_ptr);
+  /* this one is separate, because the device might choose to not support it in
+   * the driver. in that case, the runtime will create an event of usm_free
+   * type, which has a wait on all CQs in the context. */
+  void (*usm_free_blocking) (cl_device_id dev, void *svm_ptr);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -1185,6 +1191,12 @@ struct _cl_device_id {
   /* OpenCL C features supported by the device compiler */
   size_t num_opencl_features_with_version;
   const cl_name_version *opencl_features_with_version;
+
+  cl_device_unified_shared_memory_capabilities_intel host_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel device_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel single_shared_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel cross_shared_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel system_shared_usm_capabs;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
@@ -1281,6 +1293,10 @@ struct _cl_context {
   /* list of SVM & USM allocations */
   pocl_svm_ptr *svm_ptrs;
 
+  /* list of command queues created for the context.
+   * required for clMemBlockingFreeINTEL */
+  struct _cl_command_queue *command_queues;
+
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
 #endif
@@ -1315,6 +1331,9 @@ struct _cl_command_queue {
 
   /* device specific data */
   void *data;
+
+  /* list of CQs stored in cl_context */
+  struct _cl_command_queue *prev, *next;
 };
 
 struct _cl_command_buffer_khr

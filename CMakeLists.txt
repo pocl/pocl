@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 cmake_policy(SET CMP0067 OLD)
 
 project(pocl)
@@ -194,6 +194,8 @@ option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL i
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
 
+option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
+
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use kernel cache for intermediate compilation files, but will clean up them on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
@@ -247,8 +249,6 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
-option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
-
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
 option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
@@ -296,13 +296,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i.86|AMD64|x86_64|amd64)")
   endif()
 endif()
 
-if(CMAKE_MAJOR_VERSION GREATER 2)
-  include(ProcessorCount)
-  ProcessorCount(CORECOUNT)
-  if(CORECOUNT LESS 1)
-    set(CORECOUNT 1)
-  endif()
-else()
+include(ProcessorCount)
+ProcessorCount(CORECOUNT)
+if(CORECOUNT LESS 1)
   set(CORECOUNT 1)
 endif()
 message(STATUS "Host CPU cores: ${CORECOUNT}")
@@ -344,11 +340,7 @@ endfunction()
 
 # Recent versions of CMake can make use of Ninja's console pool to avoid
 # buffering the output of particular commands.
-if(CMAKE_VERSION VERSION_LESS 3.2.0)
-  set(COMMAND_USES_TERMINAL)
-else()
-  set(COMMAND_USES_TERMINAL USES_TERMINAL)
-endif()
+set(COMMAND_USES_TERMINAL USES_TERMINAL)
 
 include(GNUInstallDirs)
 
@@ -515,8 +507,9 @@ if(ENABLE_LLVM)
   # LLVM 16: Only opaque pointers will be supported. Typed pointers will not be supported.
   #
   # Up to llvm 14 including, ENABLE_LLVM_OPAQUE_POINTERS is force-set to OFF
-  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON
   # For llvm 15 ENABLE_LLVM_OPAQUE_POINTERS is a CMake option, defaulting to OFF,
+  # Post llvm 15, ENABLE_LLVM_OPAQUE_POINTERS is force-set to ON.
+  #    Clang 16 accepts -Xclang -no-opaque-pointers but silently produces bitcode with opaque pointers.
   # reason is that 1) it's unfinished 2) for properly handling images, we need opaque types,
   # which will only be available in LLVM 16+
   # TODO: This should be temporary. After the opaque pointer conversion in PoCL is finished,
@@ -524,8 +517,7 @@ if(ENABLE_LLVM)
   # of the code, since this macro adds another layer of complexity.
   if(LLVM_VERSION VERSION_LESS_EQUAL 14.0)
     set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
-  elseif(LLVM_VERSION VERSION_EQUAL 15.0
-         OR LLVM_VERSION VERSION_EQUAL 16.0)
+  elseif(LLVM_VERSION VERSION_EQUAL 15.0)
     if(ENABLE_LEVEL0)
       set(ENABLE_LLVM_OPAQUE_POINTERS OFF CACHE INTERNAL "llvm opaque pointers" FORCE)
     else()
@@ -1232,7 +1224,7 @@ cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
 cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
 
 if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups")
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_intel_unified_shared_memory")
 endif()
 
 # Extensions that are work-in-progress with known unfinished aspects.
@@ -1815,6 +1807,9 @@ rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/conf
 
 configure_file("config2.h.in.cmake" "config2.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h" 0)
+
+configure_file("pocl_version.h.in.cmake" "pocl_version.h.new" ESCAPE_QUOTES)
+rename_if_different("${CMAKE_BINARY_DIR}/pocl_version.h.new" "${CMAKE_BINARY_DIR}/pocl_version.h" 0)
 
 configure_file("pocl_opencl.h.in.cmake" "pocl_opencl.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h" 0)

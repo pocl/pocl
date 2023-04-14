@@ -29,6 +29,16 @@ separate_arguments(KERNEL_C_FLAGS)
 separate_arguments(KERNEL_CL_FLAGS)
 separate_arguments(KERNEL_CXX_FLAGS)
 
+unset(OPAQUE_OPT)
+if(LLVM_VERSION VERSION_EQUAL 15.0)
+  if(LLVM_OPAQUE_POINTERS)
+    set(OPAQUE_OPT "-Xclang" "-opaque-pointers")
+  else()
+    set(OPAQUE_OPT "-Xclang" "-no-opaque-pointers")
+  endif()
+endif()
+
+
 function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
@@ -43,7 +53,7 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
+        COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
         ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-I${CMAKE_SOURCE_DIR}/include"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
@@ -63,7 +73,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
+        COMMAND  "${CLANGXX}" ${OPAQUE_OPT} ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
         ${DEVICE_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-O1"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
@@ -119,7 +129,7 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
           ${DEPENDLIST}
-        COMMAND "${CLANG}" ${CLANG_FLAGS}
+        COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS}
         ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
         "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         ${INCLUDELIST}
@@ -144,7 +154,8 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
         ${SLEEF_C_KERNEL_DEPEND_HEADERS}
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_C_FLAGS} ${KERNEL_C_FLAGS} ${ARGN}
+        COMMAND "${CLANG}" ${OPAQUE_OPT} ${CLANG_FLAGS}
+        ${DEVICE_C_FLAGS} ${KERNEL_C_FLAGS} ${ARGN}
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include"
@@ -167,12 +178,11 @@ function(compile_ll_to_bc FILENAME SUBDIR BCLIST)
     list(APPEND ${BCLIST} "${BC_FILE}")
     set(${BCLIST} ${${BCLIST}} PARENT_SCOPE)
 
-    if(LLVM_VERSION VERSION_EQUAL 15.0
-       OR LLVM_VERSION VERSION_EQUAL 16.0)
+    if(LLVM_VERSION VERSION_EQUAL 15.0)
       # both of these are necesssary. some of the files (like barrier.ll)
       # don't contain any pointers and thus cannot be guessed; if llvm-as
       # produces the wrong opaque-type file, later llvm-link will fail
-      if(ENABLE_LLVM_OPAQUE_POINTERS)
+      if(LLVM_OPAQUE_POINTERS)
         set(EXTRA_OPT "-opaque-pointers=1")
       else()
         set(EXTRA_OPT "-opaque-pointers=0")
@@ -206,7 +216,7 @@ endmacro()
 function(generate_cuda_spir_wrapper OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/spir_wrapper.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
-  if(ENABLE_LLVM_OPAQUE_POINTERS)
+  if(LLVM_OPAQUE_POINTERS)
     set(EXTRA_OPT "--opaque-pointers")
   else()
     unset(EXTRA_OPT)
@@ -222,7 +232,7 @@ endfunction()
 function(generate_cpu_spir_wrapper ARCH SUBDIR SIZE OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/spir_wrapper_${SIZE}bit.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
-  if(ENABLE_LLVM_OPAQUE_POINTERS)
+  if(LLVM_OPAQUE_POINTERS)
     set(EXTRA_OPT "--opaque-pointers")
   else()
     unset(EXTRA_OPT)
