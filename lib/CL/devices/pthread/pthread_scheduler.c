@@ -131,7 +131,9 @@ pthread_scheduler_init (cl_device_id device)
       PTHREAD_CHECK (pthread_create (&scheduler.thread_pool[i].thread, NULL,
                                      pocl_pthread_driver_thread,
                                      (void *)&scheduler.thread_pool[i]));
+#ifdef __x86_64__
       pocl_ignore_sigfpe_for_thread (scheduler.thread_pool[i].thread);
+#endif
     }
 
   PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,

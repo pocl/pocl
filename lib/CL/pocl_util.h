@@ -59,8 +59,10 @@ void pocl_restore_ftz (unsigned ftz);
 
 void pocl_install_sigfpe_handler ();
 void pocl_install_sigusr2_handler ();
+#ifdef __x86_64__
 POCL_EXPORT
 void pocl_ignore_sigfpe_for_thread (pthread_t thr);
+#endif
 
 void bzero_s (void *v, size_t n);
 
