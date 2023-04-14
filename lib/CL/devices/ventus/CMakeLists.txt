@@ -26,4 +26,14 @@
 if(MSVC)
   set_source_files_properties( pocl_ventus.h pocl_ventus.c ventus.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
+#message(STATUS "now in " "${CMAKE_CURRENT_SOURCE_DIR}")
+#set(POCL_PUBLIC_LINK_LIST $ENV{VENTUS_INSTALL_PREFIX}/lib/ PARENT_SCOPE)
+#
+#list(APPEND POCL_LIBRARY_NAME "spike_driver" PARENT_SCOPE)
+#set(POCL_LIBRARY_NAME "spike_driver:${POCL_LIBRARY_NAME}" PARENT_SCOPE)
+#message(STATUS "devices library linked a library name: " ${POCL_PUBLIC_LINK_LIST} ${POCL_PRIVATE_LINK_LIST})
+#message(STATUS "libraries need to link when generating pocl device library " ${name} ":" ${POCL_LIBRARY_NAME})
+
 add_pocl_device_library("pocl-devices-ventus" pocl_ventus.h pocl_ventus.c ventus.h)
+target_link_libraries(pocl-devices-ventus PRIVATE spike_driver)
+target_link_directories(pocl-devices-ventus PRIVATE $ENV{VENTUS_INSTALL_PREFIX}/lib)
