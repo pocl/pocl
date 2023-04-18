@@ -306,10 +306,32 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   return ret;
 }
+//#define PRINT_CHISEL_TESTCODE
+#ifdef PRINT_CHISEL_TESTCODE
+void fp_write_file(FILE *fp,char *p,uint64_t size){
+  for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
+    fprintf(fp,"%08x\n",*((uint32_t*)p+i));
+} 
+#endif
 
 void
 pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
+
+#ifdef PRINT_CHISEL_TESTCODE
+  uint64_t c_num_buffer=0;
+  uint64_t c_max_num_buffer=32;
+  uint64_t c_buffer_base[c_max_num_buffer];
+  uint64_t c_buffer_size[c_max_num_buffer];
+  uint64_t c_buffer_allocsize[c_max_num_buffer];
+  char c_metadata_name[]="test.metadata";
+  char c_data_name[]="test.data";
+  FILE *fp_metadata=fopen(c_metadata_name,"w");
+  FILE *fp_data=fopen(c_data_name,"w");
+
+  //assume that chisel_test won't use cases with 32 or more input buffer.
+#endif
+
   struct vt_device_data_t *d;
   size_t x, y, z;
   unsigned i;
@@ -398,6 +420,15 @@ step5 make a writefile for chisel
                   err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
                   assert(0 == CL_SUCCESS);
                   ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+
+                  #ifdef PRINT_CHISEL_TESTCODE
+                    c_buffer_base[c_num_buffer]=*((uint64_t *)ptr);
+                    c_buffer_size[c_num_buffer]=m->size;
+                    c_buffer_allocsize[c_num_buffer]=m->size;
+                    c_num_buffer=c_num_buffer+1;
+                    assert(c_num_buffer<=c_max_num_buffer);
+                    fp_write_file(fp_data,m->mem_host_ptr,m->size);
+                  #endif
                 }
               *(void **)arguments[i] = (uint64_t *)ptr;
             }
@@ -501,6 +532,16 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+
+  #ifdef PRINT_CHISEL_TESTCODE
+    c_buffer_base[c_num_buffer]=arg_dev_mem_addr;
+    c_buffer_size[c_num_buffer]=abuf_size;
+    c_buffer_allocsize[c_num_buffer]=abuf_size;
+    c_num_buffer=c_num_buffer+1;
+    assert(c_num_buffer<=c_max_num_buffer);
+    fp_write_file(fp_data,abuf_args_data,abuf_size);
+  #endif
+
   err = vt_copy_to_dev(d->vt_device,arg_dev_mem_addr,abuf_args_data, abuf_size, 0,0);
   if (err != 0) {
     abort();
@@ -529,6 +570,14 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+  #ifdef PRINT_CHISEL_TESTCODE
+    c_buffer_base[c_num_buffer]=pc_dev_mem_addr;
+    c_buffer_size[c_num_buffer]=0;
+    c_buffer_allocsize[c_num_buffer]=pc_src_size;
+    c_num_buffer=c_num_buffer+1;
+    assert(c_num_buffer<=c_max_num_buffer);
+    //TODO: add upload kernel file here.
+  #endif
 
   
   
@@ -539,6 +588,13 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+  #ifdef PRINT_CHISEL_TESTCODE
+    c_buffer_base[c_num_buffer]=pds_dev_mem_addr;
+    c_buffer_size[c_num_buffer]=0;
+    c_buffer_allocsize[c_num_buffer]=pds_src_size;
+    c_num_buffer=c_num_buffer+1;
+    assert(c_num_buffer<=c_max_num_buffer);
+  #endif
 
   
 
@@ -571,6 +627,15 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+  #ifdef PRINT_CHISEL_TESTCODE
+    c_buffer_base[c_num_buffer]=knl_dev_mem_addr;
+    c_buffer_size[c_num_buffer]=KNL_MAX_METADATA_SIZE;
+    c_buffer_allocsize[c_num_buffer]=KNL_MAX_METADATA_SIZE;
+    c_num_buffer=c_num_buffer+1;
+    assert(c_num_buffer<=c_max_num_buffer);
+    fp_write_file(fp_data,kernel_metadata,KNL_MAX_METADATA_SIZE);
+  #endif
+
 
   pdsbase=pds_dev_mem_addr;
   knlbase=knl_dev_mem_addr;
@@ -590,9 +655,26 @@ uint64_t abuf_size = 0;
 
 // prepare a write function
 
-#ifdef WRITE_CHISEL_TEST
-
-#endif
+  #ifdef PRINT_CHISEL_TESTCODE
+    fp_write_file(fp_metadata,&(driver_meta.kernel_id),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.kernel_size[0]),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.kernel_size[1]),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.kernel_size[2]),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.wf_size),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.wg_size),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.metaDataBaseAddr),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.ldsSize),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.pdsSize),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.sgprUsage),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.vgprUsage),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(driver_meta.pdsBaseAddr),sizeof(uint64_t));
+    fp_write_file(fp_metadata,&(c_num_buffer),sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_base[i],sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_size[i],sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_allocsize[i],sizeof(uint64_t));
+    fclose(fp_metadata);
+    fclose(fp_data);
+  #endif
 
 
 
