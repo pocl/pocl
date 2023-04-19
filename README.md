@@ -76,6 +76,12 @@ from this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
 Additionally, if you want the CPU device to report as 3.0 OpenCL
 you will need LLVM 14 or newer.
 
+### GPU support on different architectures
+
+PoCL can be used to provide OpenCL driver on several architectures where the hardware manufacturer does not ship them 
+like Nvidia Tegra (ARM) or IBM Power servers. On PPC64le servers, there are specific instructions to handle the build 
+of PoCL in [README.PPC64le](./README.PPC64le). 
+
 ### Windows
 
 Windows support has been unmaintained for a long time and building on Windows
