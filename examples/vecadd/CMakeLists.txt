@@ -28,8 +28,12 @@ add_compile_options(${OPENCL_CFLAGS})
 if (MSVC)
   set_source_files_properties( vecadd.c vecadd_exec.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
+
+#message(STATUS "ld_library_path=$ENV{LD_LIBRARY_PATH}")
+
 add_executable("vecadd" vecadd.c vecadd_exec.c vecadd.cl)
 
+TARGET_LINK_DIRECTORIES(vecadd PUBLIC $ENV{LD_LIBRARY_PATH})
 target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})
 
 add_test(NAME "examples/vecadd" COMMAND "vecadd")

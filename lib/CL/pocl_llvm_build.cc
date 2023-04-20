@@ -78,7 +78,7 @@ POP_COMPILER_DIAGS
 #include "UnifyPrintf.h"
 #include "linker.h"
 
-//#define DEBUG_POCL_LLVM_API
+#define DEBUG_POCL_LLVM_API
 
 #if defined(DEBUG_POCL_LLVM_API) && defined(NDEBUG)
 #undef NDEBUG
@@ -341,7 +341,6 @@ int pocl_llvm_build_program(cl_program program,
     ss << "-D__IMAGE_SUPPORT__=1 ";
 
   ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
-
 
   ss << "-D__OPENCL_VERSION__=" << device->version_as_int << " ";
 

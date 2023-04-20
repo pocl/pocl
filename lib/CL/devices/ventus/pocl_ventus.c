@@ -121,11 +121,11 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->free_mapping_ptr = NULL;
 
   /* for ventus,pocl does not need to compile the kernel,so they are set to NULL */
-  ops->build_source = NULL;
+  ops->build_source = pocl_ventus_build_source;
   ops->link_program = NULL;
   ops->build_binary = NULL;
   ops->free_program = NULL;
-  ops->setup_metadata = NULL;
+  ops->setup_metadata = pocl_ventus_setup_metadata;
   ops->supports_binary = NULL;
   ops->build_poclbinary = NULL;
   ops->compile_kernel = NULL;  //or use int (*build_builtin) (cl_program program, cl_uint device_i);
@@ -430,7 +430,7 @@ step5 make a writefile for chisel
                     fp_write_file(fp_data,m->mem_host_ptr,m->size);
                   #endif
                 }
-              *(void **)arguments[i] = (uint64_t *)ptr;
+                ((void **)arguments)[i] = ptr;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -520,7 +520,8 @@ uint64_t abuf_size = 0;
       if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)) {
-        memcpy(abuf_args_data+abuf_args_p,((cl_mem)(al->value))->device_ptrs->mem_ptr,4);
+       // memcpy(abuf_args_data+abuf_args_p,((cl_mem)(al->value))->device_ptrs->mem_ptr,4);
+          memcpy(abuf_args_data+abuf_args_p,arguments[i],4);
         abuf_args_p+=4;
       } else {
         memcpy(abuf_args_data+abuf_args_p,al->value,al->size);
@@ -599,7 +600,7 @@ uint64_t abuf_size = 0;
   
 
 //prepare kernel_metadata
-  char *kernel_metadata;
+  char *kernel_metadata= malloc(sizeof(char)*KNL_MAX_METADATA_SIZE);
   memset(kernel_metadata,0,KNL_MAX_METADATA_SIZE);
   memcpy(kernel_metadata+KNL_ENTRY,&kernel_entry,4);
   uint32_t arg_dev_mem_addr_32=(uint32_t)arg_dev_mem_addr;
@@ -775,8 +776,8 @@ pocl_ventus_submit (_cl_command_node *node, cl_command_queue cq)
 {
   struct vt_device_data_t *d = (struct vt_device_data_t *)node->device->data;
 
-  if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, 1, 1);
+  //if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
+  //  pocl_check_kernel_dlhandle_cache (node, 1, 1);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
@@ -891,13 +892,13 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   }
 
   if (flags & CL_MEM_COPY_HOST_PTR) {
-    err = vt_copy_to_dev(d->vt_device,dev_mem_addr,host_ptr, mem_obj->size, 0,0);
+    err = vt_copy_to_dev(d->vt_device,dev_mem_addr,mem_obj->mem_host_ptr, mem_obj->size, 0,0);
     if (err != 0) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
   }
-  
-  memset(mem_obj->device_ptrs[device->dev_id].mem_ptr,0,sizeof(uint64_t));
+  free(mem_obj->device_ptrs[device->dev_id].mem_ptr);
+  mem_obj->device_ptrs[device->dev_id].mem_ptr= malloc(sizeof(uint64_t));
   memcpy((mem_obj->device_ptrs[device->dev_id].mem_ptr),&dev_mem_addr,sizeof(uint64_t));
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
@@ -927,4 +928,34 @@ void pocl_ventus_write(void *data,
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
+}
+
+
+
+int pocl_ventus_setup_metadata  (cl_device_id device, cl_program program,
+                                 unsigned program_device_i)
+{
+    return pocl_driver_setup_metadata  (device, program,
+     program_device_i);
+}
+
+int pocl_ventus_build_program(cl_program program,
+                            unsigned device_i,
+                            cl_uint num_input_headers,
+                            const cl_program *input_headers,
+                            const char **header_include_names,
+                            int linking_program)
+
+{
+
+}
+
+int pocl_ventus_build_source (cl_program program, cl_uint device_i,
+                              cl_uint num_input_headers,
+                              const cl_program *input_headers,
+                              const char **header_include_names,
+                              int link_builtin_lib)
+{
+    return pocl_driver_build_source(program,device_i,num_input_headers,
+                                     input_headers,header_include_names,link_builtin_lib);
 }

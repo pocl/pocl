@@ -67,6 +67,8 @@ add_subdirectory("matadd")
 add_subdirectory("boxadd")
 add_subdirectory("EinsteinToolkit")
 
+add_subdirectory(hello)
+
 # TODO:   opencl-book-samples
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
