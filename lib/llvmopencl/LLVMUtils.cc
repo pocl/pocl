@@ -32,6 +32,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Constants.h>
 
+#include <llvm/ADT/SmallSet.h>
+
 #include <iostream>
 #include <set>
 
@@ -152,13 +154,51 @@ void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func) {
   }
 }
 
+static void
+recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
+                               llvm::Function *F) {
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
+      Instruction *Instr = dyn_cast<Instruction>(BI);
+      if (!llvm::isa<CallInst>(Instr))
+        continue;
+      CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      Function *Callee = CallInstr->getCalledFunction();
+      if (!Callee)
+        continue;
+      if (Callee->isDeclaration())
+        continue;
+#ifdef LLVM_OLDER_THAN_11_0
+      if (FSet.count(Callee) > 0)
+#else
+      if (FSet.contains(Callee))
+#endif
+        continue;
+      FSet.insert(Callee);
+      recursivelyFindCalledFunctions(FSet, Callee);
+    }
+  }
+}
+
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   std::vector<Use *> Uses = findInstructionUses(GVar);
+  // we must recursively search for each function called by F, because
+  // this (isGVarUsedByFunction) is called by isAutomaticLocal(),
+  // which in turn is called on "unprocessed" LLVM bitcode (or SPIRV),
+  // where we haven't run any LLVM passes yet; in particular the pass
+  // that inlines all functions using "special" variables and kernels
+  llvm::SmallSet<llvm::Function *, 12> CalledFunctionSet;
+  CalledFunctionSet.insert(F);
+  recursivelyFindCalledFunctions(CalledFunctionSet, F);
   std::vector<Function *> Funcs;
   for (auto &U : Uses) {
     if (Instruction *I = dyn_cast<Instruction>(U->getUser()))
     {
-      if (I->getFunction() == F)
+#ifdef LLVM_OLDER_THAN_11_0
+      if (CalledFunctionSet.count(I->getFunction()) > 0)
+#else
+      if (CalledFunctionSet.contains(I->getFunction()))
+#endif
         return true;
     }
   }
