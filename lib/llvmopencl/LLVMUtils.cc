@@ -1,6 +1,7 @@
 // Implementation of LLVMUtils, useful common LLVM-related functionality.
 //
 // Copyright (c) 2013-2019 Pekka Jääskeläinen
+//               2023 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +28,11 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/Module.h>
-#include <llvm/IR/Metadata.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/Module.h>
 
 #include <llvm/ADT/SmallSet.h>
 
@@ -260,6 +262,18 @@ int getConstantIntMDValue(Metadata *MD) {
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val) {
   IntegerType *I32Type = IntegerType::get(C, 32);
   return ConstantAsMetadata::get(ConstantInt::get(I32Type, Val));
+}
+
+llvm::DISubprogram *mimicDISubprogram(llvm::DISubprogram *Old,
+                                      const llvm::StringRef &NewFuncName,
+                                      llvm::DIScope *Scope) {
+
+  return DISubprogram::getDistinct(
+      Old->getContext(), Old->getScope(), NewFuncName, "", Old->getFile(),
+      Old->getLine(), Old->getType(), Old->getScopeLine(),
+      Old->getContainingType(), Old->getVirtualIndex(),
+      Old->getThisAdjustment(), Old->getFlags(), Old->getSPFlags(),
+      Old->getUnit(), Old->getTemplateParams(), Old->getDeclaration());
 }
 
 bool isLocalMemFunctionArg(llvm::Function *F, unsigned ArgIndex) {

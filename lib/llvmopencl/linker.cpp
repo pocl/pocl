@@ -37,13 +37,16 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/GlobalValue.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/ADT/StringSet.h"
+#include <llvm/ADT/StringSet.h>
+#include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/GlobalValue.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#include <llvm/Transforms/Utils/ValueMapper.h>
+
 #include "pocl_cl.h"
 
 #include "LLVMUtils.h"
@@ -88,8 +91,37 @@ find_called_functions(llvm::Function *F,
         Callee->setCallingConv(llvm::CallingConv::C);
         CI->setCallingConv(llvm::CallingConv::C);
       }
-      if (!Callee->hasName())
-        Callee->setName("__anonymous_internal_func__");
+      if (!Callee->hasName()) {
+        if (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL) {
+          // This is an SPIR-V entry point wrapper function: SPIR-V
+          // translator generates these because OpenCL allows calling
+          // kernels from kernels like they were device side functions
+          // whereas SPIR-V entry points cannot call other entry points.
+
+          Callee->setName(std::string("_spirv_wrapped_") + F->getName());
+
+          // The SPIR-V translator loses the kernel's original DISubprogram
+          // info, leaving it to the wrapper, thus even after inlining the
+          // function to the kernel we do not get any debug info (LLVM checks
+          // for DISubprogram for each function it generates the debug info
+          // for). Just reuse the DISubprogram in the kernel here in that case.
+          if (Callee->getSubprogram() != nullptr &&
+              F->getSubprogram() == nullptr &&
+              Callee->getSubprogram()->getName() == F->getName()) {
+            F->setSubprogram(pocl::mimicDISubprogram(
+                Callee->getSubprogram(),
+                std::string("_spirv_wrapped_") + F->getName().str(), nullptr));
+            CI->setDebugLoc(llvm::DILocation::get(
+                Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
+                F->getSubprogram(), nullptr, true));
+            printf("%s %d\n", __FILE__, __LINE__);
+            llvm::verifyModule(*CI->getParent()->getParent()->getParent(),
+                               &errs());
+          }
+        } else {
+          Callee->setName("__noname_function");
+        }
+      }
       const char* Name = Callee->getName().data();
       DB_PRINT("search: %s calls %s\n",
                F->getName().data(), Name);

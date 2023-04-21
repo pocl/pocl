@@ -1,6 +1,7 @@
 // Header for LLVMUtils, useful common LLVM-related functionality.
 //
 // Copyright (c) 2013-2019 Pekka Jääskeläinen
+//               2023 Pekka Jääskeläinen / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -28,8 +29,9 @@
 
 #include "pocl.h"
 #include "pocl_spir.h"
-//#include "_libclang_versions_checks.h"
+// #include "_libclang_versions_checks.h"
 
+#include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
@@ -68,6 +70,19 @@ void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
                               unsigned AS);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
+
+/**
+ * \brief Clones a DISubprogram with changed function name and scope.
+ *
+ * \param [in] Old The DISubprogram to clone.
+ * \param [in] NewFuncName A new function name.
+ * \param [in] Scope New scope.
+ * \returns a new DISubprogram.
+ *
+ */
+llvm::DISubprogram *mimicDISubprogram(llvm::DISubprogram *Old,
+                                      const llvm::StringRef &NewFuncName,
+                                      llvm::DIScope *Scope = nullptr);
 }
 
 template <typename VectorT>

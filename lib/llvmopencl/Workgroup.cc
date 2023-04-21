@@ -40,12 +40,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/CallSite.h>
 #endif
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/MDBuilder.h>
+#include <llvm/IR/Verifier.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -616,7 +617,6 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     // we might not have all of the globals anymore in the module in case the
     // kernel does not refer to them and they are optimized away
     HiddenArgs = 4;
-
   }
 
   FunctionType *ft =
@@ -629,9 +629,10 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     Function *F = M->getFunction(funcName);
     F->setName(funcName + "_original");
     L = Function::Create(ft, Function::ExternalLinkage, funcName, M);
-  } else
+  } else {
     L = Function::Create(ft, Function::ExternalLinkage,
                          "_pocl_kernel_" + funcName, M);
+  }
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
@@ -652,7 +653,15 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   // At least the argument address space metadata is useful. The argument
   // indices should still hold even though we appended the hidden args.
+  // Note: This also copies the DISubprogram !dbg, if any. We have to retain
+  // a valid DISubprogram for correctness for enabling debug output.
   L->copyMetadata(F, 0);
+
+  if (F->getSubprogram() != nullptr) {
+    L->setSubprogram(
+        pocl::mimicDISubprogram(F->getSubprogram(), L->getName(), nullptr));
+  }
+
   // We need to mark the generated function to avoid it being considered a
   // new kernel to process (which results in infinite recursion). This is
   // because kernels are detected by the presense of the argument metadata
@@ -670,9 +679,14 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     pb = pbp = pbc = nullptr;
   }
 
-  CallInst *c = Builder.CreateCall(F, ArrayRef<Value*>(arguments));
+  CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(arguments));
   Builder.CreateRetVoid();
 
+  if (L->getSubprogram() != nullptr && F->getSubprogram() != nullptr) {
+    CI->setDebugLoc(llvm::DILocation::get(CI->getContext(),
+                                          F->getSubprogram()->getLine(), 0,
+                                          L->getSubprogram(), nullptr, true));
+  }
   std::set<CallInst *> CallsToRemove;
 
   // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
@@ -711,17 +725,15 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   // needed for printf
   InlineFunctionInfo IFI;
 #ifdef LLVM_OLDER_THAN_11_0
-  InlineFunction(c, IFI);
+  InlineFunction(CI, IFI);
 #else
-  InlineFunction(*c, IFI);
+  InlineFunction(*CI, IFI);
 #endif
 
   if (DeviceSidePrintf) {
     Function *poclPrintf = M->getFunction("__pocl_printf");
     replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, *M, L, printfCache);
   }
-
-  L->setSubprogram(F->getSubprogram());
 
   // SPMD machines might need a special calling convention to mark the
   // kernels that should be executed in SPMD fashion. For MIMD/CPU,
@@ -958,8 +970,16 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   std::string FuncName = "";
   FuncName = F->getName().str();
 
-  FunctionCallee fc = M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
+  FunctionCallee fc =
+      M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
   Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
+
+  // Propagate the DISubprogram to the launcher so we get debug data emitted
+  // in case the kernel is inlined to it.
+  if (auto *KernelSp = F->getSubprogram()) {
+    WorkGroup->setSubprogram(
+        pocl::mimicDISubprogram(KernelSp, WorkGroup->getName(), nullptr));
+  }
 
   assert(WorkGroup != nullptr);
   BasicBlock *Block = BasicBlock::Create(M->getContext(), "", WorkGroup);
@@ -1045,7 +1065,13 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   ++ai;
   Arguments.push_back(&*ai);
 
-  Builder.CreateCall(F, ArrayRef<Value *>(Arguments));
+  llvm::CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(Arguments));
+  if (WorkGroup->getSubprogram() != nullptr && F->getSubprogram() != nullptr) {
+    CI->setDebugLoc(
+        llvm::DILocation::get(CI->getContext(), F->getSubprogram()->getLine(),
+                              0, WorkGroup->getSubprogram(), nullptr, true));
+  }
+
   Builder.CreateRetVoid();
 }
 
