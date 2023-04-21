@@ -189,9 +189,11 @@ Workgroup::runOnModule(Module &M) {
       kernels[&OrigKernel] = L;
     } else {
       createDefaultWorkgroupLauncher(L);
+#ifdef TCE_AVAILABLE
       // This is used only by TCE anymore. TODO: Replace all with the
       // ArgBuffer one.
       createFastWorkgroupLauncher(L);
+#endif
     }
   }
 
