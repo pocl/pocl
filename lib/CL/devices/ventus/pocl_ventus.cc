@@ -40,6 +40,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <utlist.h>
+#include <sstream>
 
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
@@ -83,9 +84,13 @@
 static const char *ventus_final_ld_flags[] = {
   "-nodefaultlibs",
   CLANG_RESOURCE_DIR"/../../crt0.o",
-  "-L"CLANG_RESOURCE_DIR"/../../",
+  "-L" CLANG_RESOURCE_DIR"/../../",
   "-lworkitem",
   NULL
+};
+
+extern const char *ventus_other_compile_flags[] = {
+
 };
 
 void
@@ -508,7 +513,7 @@ uint64_t abuf_size = 0;
     }
   
   assert(abuf_size <= 0xffff);
-  char* abuf_args_data = malloc(abuf_size);
+  char* abuf_args_data = (char*)malloc(abuf_size);
   uint64_t abuf_args_p = 0;
   for(i = 0; i < meta->num_args; ++i) {  
       pocl_argument* al = &(cmd->command.run.arguments[i]);  
@@ -600,7 +605,7 @@ uint64_t abuf_size = 0;
   
 
 //prepare kernel_metadata
-  char *kernel_metadata= malloc(sizeof(char)*KNL_MAX_METADATA_SIZE);
+  char *kernel_metadata= (char*)malloc(sizeof(char)*KNL_MAX_METADATA_SIZE);
   memset(kernel_metadata,0,KNL_MAX_METADATA_SIZE);
   memcpy(kernel_metadata+KNL_ENTRY,&kernel_entry,4);
   uint32_t arg_dev_mem_addr_32=(uint32_t)arg_dev_mem_addr;
@@ -956,6 +961,29 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               const char **header_include_names,
                               int link_builtin_lib)
 {
-    return pocl_driver_build_source(program,device_i,num_input_headers,
+    int err = pocl_driver_build_source(program,device_i,num_input_headers,
                                      input_headers,header_include_names,link_builtin_lib);
+    if(err != 0) {
+        POCL_MSG_ERR("LLVM build program.bc failed!\n");
+        return -1;
+    }
+
+
+    std::string clang_path(CLANG);
+    std::stringstream ss_cmd, ss_out;
+
+    char program_bc_path[POCL_FILENAME_LENGTH];
+    pocl_cache_program_bc_path(program_bc_path, program, device_i);
+
+    cl_device_id device = program->devices[device_i];
+
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << "-mcpu=" << device->llvm_cpu << program_bc_path << ventus_final_ld_flags
+           << ventus_other_compile_flags << " -o " << "vecadd.riscv" << std::endl;
+
+    err = execl(ss_cmd.srt().c_str(), ss_out);
+    if(err != 0) {
+        POCL_MSG_ERR("%s\n", ss_out.str().c_str());
+        return err;
+    }
+
 }

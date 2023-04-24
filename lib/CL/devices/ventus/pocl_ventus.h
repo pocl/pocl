@@ -10,6 +10,11 @@
 #include "pocl_cl.h"
 #include "ventus.h"
 #include "prototypes.inc"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 GEN_PROTOTYPES (ventus)
 
 typedef struct vt_device_data_t {
@@ -79,7 +84,10 @@ void pocl_ventus_write(void *data,
                        pocl_mem_identifier *dst_mem_id,
                        cl_mem dst_buf,
                        size_t offset, 
-                       size_t size);                      
+                       size_t size);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* POCL_VENTUS_H */

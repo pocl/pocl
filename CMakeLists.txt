@@ -971,7 +971,7 @@ else()
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)
   endif()
 
-  if (NOT OCL_ICD_FOUND AND)
+  if (NOT OCL_ICD_FOUND)
     find_path(OCL_ICD_INCLUDE_DIRS
       NAMES
         ocl_icd.h

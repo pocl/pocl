@@ -22,9 +22,9 @@
 #include <stdio.h>
 //#include <queue>
 
-//#ifdef __cplusplus
-//extern "C" {
-//#endif
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void* vt_device_h; ///< 类型定义，指向vt_device类的指针
 
@@ -86,7 +86,7 @@ int vt_buf_free(vt_device_h hdevice, uint64_t size, uint64_t *vaddr, uint64_t ta
 /// @param taskID 任务ID
 /// @param kernelID kernel ID
 /// @return 若无错误则返回0，否则返回-1
-int vt_copy_to_dev(vt_device_h hdevice, uint64_t dev_vaddr, void *src_addr, uint64_t size, uint64_t taskID, uint64_t kernelID);
+int vt_copy_to_dev(vt_device_h hdevice, uint64_t dev_vaddr, const void *src_addr, uint64_t size, uint64_t taskID, uint64_t kernelID);
 
 
 /// @brief 【已实现】将数据从设备内存复制到buffer
@@ -146,8 +146,8 @@ int vt_upload_kernel_file(vt_device_h device, const char* filename, int kernelID
 int vt_dump_perf(vt_device_h device, FILE* stream);
 
 
-//#ifdef __cplusplus
-//}
-//#endif
+#ifdef __cplusplus
+}
+#endif
 
 #endif // __VT_DRIVER_H__

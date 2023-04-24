@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2021 pocl developers
+#   Copyright (c) 2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,28 @@
 #
 #=============================================================================
 
-if(MSVC)
-  set_source_files_properties( pocl_ventus.h pocl_ventus.cc ventus.h PROPERTIES LANGUAGE CXX )
-endif(MSVC)
+add_compile_options(${OPENCL_CFLAGS})
 
-add_pocl_device_library("pocl-devices-ventus" pocl_ventus.h pocl_ventus.cc ventus.h)
-target_link_libraries(pocl-devices-ventus PRIVATE spike_driver)
-target_link_directories(pocl-devices-ventus PRIVATE ${CMAKE_INSTALL_PREFIX}/lib/ventus-driver)
+if (MSVC)
+  set_source_files_properties(hello.cc PROPERTIES LANGUAGE CXX )
+endif(MSVC)
+add_executable("hello" hello.cc)
+
+target_link_libraries("hello" ${POCLU_LINK_OPTIONS})
+
+add_test(NAME "examples/hello" COMMAND "hello")
+
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "OK")
+endif()
+
+set_tests_properties(
+  "examples/hello"
+  PROPERTIES
+    COST 3.0
+    ${PROPS}
+    PROCESSORS 1
+    LABELS "internal;vulkan"
+    DEPENDS "pocl_version_check")
