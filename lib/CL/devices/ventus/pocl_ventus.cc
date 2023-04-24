@@ -90,7 +90,14 @@ static const char *ventus_final_ld_flags[] = {
 };
 
 extern const char *ventus_other_compile_flags[] = {
-
+	"-I" CLANG_RESOURCE_DIR"/../../../../libclc/generic/include",
+	CLANG_RESOURCE_DIR"/../../../../libclc/riscv32/lib/workitem/get_global_id.cl",
+	"-O1",
+	"-cl-std=CL2.0",
+	"-Wl,",
+	"-T,",
+	CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
+	NULL
 };
 
 void
@@ -969,18 +976,44 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
     }
 
 
-    std::string clang_path(CLANG);
-    std::stringstream ss_cmd, ss_out;
+    const char* clang_path(CLANG);
+	if (!pocl_exists(clang_path)) {
+		POCL_MSG_ERR("$CLANG: '%s' doesn't exist\n", clang_path);
+		return -1;
+	}
+    std::stringstream ss_cmd;
+	std::stringstream ss_out;
 
     char program_bc_path[POCL_FILENAME_LENGTH];
-    pocl_cache_program_bc_path(program_bc_path, program, device_i);
+    //TODO：这行获取的是program.bc文件路径，作为clang的输入文件，可能要改成从program->source创建cl文件并传给clang进行编译
+	pocl_cache_program_bc_path(program_bc_path, program, device_i);
+
 
     cl_device_id device = program->devices[device_i];
 
-    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << "-mcpu=" << device->llvm_cpu << program_bc_path << ventus_final_ld_flags
-           << ventus_other_compile_flags << " -o " << "vecadd.riscv" << std::endl;
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu << " " << program_bc_path << " ";
+	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
+		ss_cmd << ventus_final_ld_flags[i] << " ";
+	}
+	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
+		ss_cmd << ventus_other_compile_flags[i] << " ";
+	}
+        ss_cmd << " -o " << "object.riscv" << std::endl;
+	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
-    err = execl(ss_cmd.srt().c_str(), ss_out);
+	FILE *fp = popen(ss_cmd.str().c_str(), "r");
+	if(fp == NULL) {
+		POCL_MSG_ERR("running compile kernel failed");
+		return -1;
+	}
+	char temp[1024];
+
+	while (fgets(temp, 1024, fp) != NULL)
+	{
+		ss_out << temp;
+	}
+	pclose(fp);
+    //TODO：运行到这一行会报SIGILL (signal SIGILL: illegal instruction operand)，可能是pclose用法不对？
     if(err != 0) {
         POCL_MSG_ERR("%s\n", ss_out.str().c_str());
         return err;
