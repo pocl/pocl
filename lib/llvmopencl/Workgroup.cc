@@ -687,41 +687,6 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
                                           F->getSubprogram()->getLine(), 0,
                                           L->getSubprogram(), nullptr, true));
   }
-  std::set<CallInst *> CallsToRemove;
-
-  // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
-  // llvm::InlineFunction explodes in case of kernels with restrict
-  // metadata and a lot of lifetime markers. The issue produces at
-  // least with EinsteinToolkit which has a lot of restrict kernel
-  // args). Remove them here before inlining to speed it up.
-  // TODO: Investigate the root cause.
-
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
-    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
-      Instruction *Instr = dyn_cast<Instruction>(BI);
-      if (!llvm::isa<CallInst>(Instr)) continue;
-      CallInst *CallInstr = dyn_cast<CallInst>(Instr);
-      if (CallInstr->isInlineAsm()) continue;
-      Function *Callee = CallInstr->getCalledFunction();
-      // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
-      // llvm::InlineFunction explodes in case of kernels with restrict
-      // metadata and a lot of lifetime markers. The issue produces at
-      // least with EinsteinToolkit which has a lot of restrict kernel
-      // args). Remove them here before inlining to speed it up.
-      // TODO: Investigate the root cause.
-      if (Callee != nullptr &&
-          (Callee->getName().startswith("llvm.lifetime.end") ||
-           Callee->getName().startswith("llvm.lifetime.start"))) {
-        CallsToRemove.insert(CallInstr);
-        continue;
-      }
-    }
-  }
-
-  for (auto C : CallsToRemove) {
-    C->eraseFromParent();
-  }
-
   // needed for printf
   InlineFunctionInfo IFI;
 #ifdef LLVM_OLDER_THAN_11_0
