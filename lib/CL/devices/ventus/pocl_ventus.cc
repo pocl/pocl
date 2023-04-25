@@ -975,7 +975,6 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
         return -1;
     }
 
-
     const char* clang_path(CLANG);
 	if (!pocl_exists(clang_path)) {
 		POCL_MSG_ERR("$CLANG: '%s' doesn't exist\n", clang_path);
@@ -995,7 +994,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
 		ss_cmd << ventus_final_ld_flags[i] << " ";
 	}
-	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
+	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
 		ss_cmd << ventus_other_compile_flags[i] << " ";
 	}
         ss_cmd << " -o " << "object.riscv" << std::endl;
