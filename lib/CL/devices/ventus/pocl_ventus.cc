@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <utlist.h>
 #include <sstream>
+#include <fstream>
 
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
@@ -89,14 +90,12 @@ static const char *ventus_final_ld_flags[] = {
   NULL
 };
 
-extern const char *ventus_other_compile_flags[] = {
+static const char *ventus_other_compile_flags[] = {
 	"-I" CLANG_RESOURCE_DIR"/../../../../libclc/generic/include",
 	CLANG_RESOURCE_DIR"/../../../../libclc/riscv32/lib/workitem/get_global_id.cl",
 	"-O1",
 	"-cl-std=CL2.0",
-	"-Wl,",
-	"-T,",
-	CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
+	"-Wl,-T," CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
 	NULL
 };
 
@@ -561,7 +560,7 @@ uint64_t abuf_size = 0;
   }
 
 //pass in vmem file  
-  char filename[]="vecadd.riscv";
+  char filename[]="object.riscv";
   vt_upload_kernel_file(d->vt_device,filename,0);
   //after checking pocl_cache_binary, use the following to pass in.
    /*if (NULL == d->current_kernel || d->current_kernel != kernel) {    
@@ -959,7 +958,7 @@ int pocl_ventus_build_program(cl_program program,
                             int linking_program)
 
 {
-
+  return 0;//unused file now.
 }
 
 int pocl_ventus_build_source (cl_program program, cl_uint device_i,
@@ -968,29 +967,36 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               const char **header_include_names,
                               int link_builtin_lib)
 {
-    int err = pocl_driver_build_source(program,device_i,num_input_headers,
+    /*int err = pocl_driver_build_source(program,device_i,num_input_headers,
                                      input_headers,header_include_names,link_builtin_lib);
     if(err != 0) {
         POCL_MSG_ERR("LLVM build program.bc failed!\n");
         return -1;
-    }
+    }*/
 
-    const char* clang_path(CLANG);
+  const char* clang_path(CLANG);
 	if (!pocl_exists(clang_path)) {
 		POCL_MSG_ERR("$CLANG: '%s' doesn't exist\n", clang_path);
 		return -1;
 	}
-    std::stringstream ss_cmd;
+  std::stringstream ss_cmd;
 	std::stringstream ss_out;
 
-    char program_bc_path[POCL_FILENAME_LENGTH];
-    //TODO：这行获取的是program.bc文件路径，作为clang的输入文件，可能要改成从program->source创建cl文件并传给clang进行编译
-	pocl_cache_program_bc_path(program_bc_path, program, device_i);
+  char program_bc_path[POCL_FILENAME_LENGTH];
+    
+
+  pocl_cache_create_program_cachedir(program, device_i, program->source,
+                                       strlen(program->source),
+                                       program_bc_path);  
+  //TODO: move .cl and .riscv file into program_bc_path, and let spike read file from this path.
+  std::ofstream outfile("object.cl");
+  outfile << program->source;
+  outfile.close();
 
 
-    cl_device_id device = program->devices[device_i];
+  cl_device_id device = program->devices[device_i];
 
-    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu << " " << program_bc_path << " ";
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl ";
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
 		ss_cmd << ventus_final_ld_flags[i] << " ";
 	}
@@ -1011,11 +1017,13 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 	{
 		ss_out << temp;
 	}
-	pclose(fp);
-    //TODO：运行到这一行会报SIGILL (signal SIGILL: illegal instruction operand)，可能是pclose用法不对？
-    if(err != 0) {
-        POCL_MSG_ERR("%s\n", ss_out.str().c_str());
-        return err;
+	int status=pclose(fp);
+    if (status == -1) {
+        perror("pclose() failed");
+        exit(EXIT_FAILURE);
+    } else {
+        POCL_MSG_PRINT_LLVM("after calling clang, the output is : \"%s\"\n", ss_cmd.str().c_str());
     }
+    return 0;
 
 }
