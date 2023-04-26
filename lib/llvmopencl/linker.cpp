@@ -119,8 +119,6 @@ find_called_functions(llvm::Function *F,
             CI->setDebugLoc(llvm::DILocation::get(
                 Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
                 F->getSubprogram(), nullptr, true));
-            llvm::verifyModule(*CI->getParent()->getParent()->getParent(),
-                               &errs());
           }
         } else {
           Callee->setName("__noname_function");

@@ -107,7 +107,8 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   std::string Error;
 
   // Verify module.
-  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 1)) {
+  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 1)
+      || pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
     llvm::raw_string_ostream Errs(Error);
     if (llvm::verifyModule(*Module->get(), &Errs)) {
       POCL_MSG_ERR("\n%s\n", Error.c_str());

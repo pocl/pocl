@@ -208,6 +208,10 @@ pocl.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
+- **POCL_LLVM_VERIFY** environment variable can be set to ``0``
+  to skip LLVM bitcode verification on LLVM modules produced by
+  certain drivers (CUDA, CPU, Level0). Currently defaults to 1 = ON.
+
 - **POCL_EXTRA_BUILD_FLAGS**
 
  Adds the contents of the environment variable to all clBuildProgram() calls.
@@ -258,6 +262,7 @@ pocl.
  Bool. When enabled(==1), some drivers will create virtual devices which are only
  good for creating pocl binaries. Requires those drivers to be compiled with support
  for compilation for those devices.
+
 
 - **POCL_SIGFPE_HANDLER**
 

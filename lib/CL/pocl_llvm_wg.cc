@@ -409,7 +409,7 @@ public:
       return false;
     }
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 0)) {
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
       std::string ErrorLog;
       llvm::raw_string_ostream Errs(ErrorLog);
       if (llvm::verifyModule(*ProgramGVarsNonKernelsBC.get(), &Errs)) {
@@ -437,7 +437,7 @@ public:
 
     copyKernelFromBitcode(KernelName, KernelBC.get(), ProgramBC.get(), nullptr);
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 0)) {
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
       llvm::raw_string_ostream Errs(*BuildLog);
       if (llvm::verifyModule(*KernelBC.get(), &Errs)) {
         POCL_MSG_ERR("Failed to verify Kernel Module:\n%s\n",

@@ -46,8 +46,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
+
 
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Host.h"
@@ -187,6 +189,16 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 
   if (link(Mod, BuiltinLib, Log, Device->device_aux_functions))
     return true;
+
+  raw_string_ostream OS(Log);
+  bool BrokenDebugInfo = false;
+  if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
+    if (llvm::verifyModule(*Mod, &OS, &BrokenDebugInfo))
+      return true;
+  }
+
+  if (BrokenDebugInfo)
+    Log.append("Warning: broken DebugInfo detected\n");
 
   return false;
 }
