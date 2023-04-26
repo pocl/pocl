@@ -427,10 +427,10 @@ step5 make a writefile for chisel
               else
                 {
                   cl_mem m = (*(cl_mem *)(al->value));
-                  m->flags=m->flags & CL_MEM_COPY_HOST_PTR;
                   err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
                   assert(0 == CL_SUCCESS);
-                  ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
+                  ptr = malloc(sizeof(uint64_t));
+                  memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
                   #ifdef PRINT_CHISEL_TESTCODE
                     c_buffer_base[c_num_buffer]=*((uint64_t *)ptr);
