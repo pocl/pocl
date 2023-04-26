@@ -743,7 +743,7 @@ for (i = 0; i < meta->num_args; ++i)
 
   
 
-  pocl_release_dlhandle_cache(cmd);
+  //pocl_release_dlhandle_cache(cmd);
 }
 
 
@@ -967,12 +967,12 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               const char **header_include_names,
                               int link_builtin_lib)
 {
-    /*int err = pocl_driver_build_source(program,device_i,num_input_headers,
+    int err = pocl_driver_build_source(program,device_i,num_input_headers,
                                      input_headers,header_include_names,link_builtin_lib);
     if(err != 0) {
         POCL_MSG_ERR("LLVM build program.bc failed!\n");
         return -1;
-    }*/
+    }
 
   const char* clang_path(CLANG);
 	if (!pocl_exists(clang_path)) {
