@@ -86,19 +86,18 @@ function(add_test_pocl)
     list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
 
     add_test(${POCL_TEST_ARGLIST} )
-    if(ENABLE_ANYSAN)
-      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-        SKIP_RETURN_CODE 77
-        SKIP_REGULAR_EXPRESSION "SKIP")
-    else()
+    if(NOT ENABLE_ANYSAN)
       set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
                           PASS_REGULAR_EXPRESSION "OK"
                           FAIL_REGULAR_EXPRESSION "FAIL")
-      if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
-        set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
-          SKIP_REGULAR_EXPRESSION "SKIP")
-      endif()
     endif()
+    set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+      SKIP_RETURN_CODE 77)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.16)
+      set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
+        SKIP_REGULAR_EXPRESSION "SKIP")
+    endif()
+
     set_tests_properties("${POCL_VARIANT_TEST_NAME}" PROPERTIES
                           ENVIRONMENT POCL_WORK_GROUP_METHOD=${VARIANT})
   endforeach()
