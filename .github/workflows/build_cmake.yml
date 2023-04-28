@@ -204,7 +204,7 @@ jobs:
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "openasip" ]; then
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests --output-on-failure
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -245,8 +245,6 @@ jobs:
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_vulkan_tests --output-on-failure
 
 
-  # TODO: enable ccache
-  # -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
   arm64_matrix:
     name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
     runs-on: [self-hosted, linux, arm64, debian]
@@ -264,7 +262,7 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DDEVELOPER_MODE=ON \
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
@@ -289,3 +287,45 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           runCTest -L internal
 
+  level_zero_test:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: [self-hosted, linux, level_zero]
+    strategy:
+      fail-fast: false
+      matrix:
+        # for now, only 15, it supports also 14 but NOT 16
+        llvm: [15]
+        config: [level_zero]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0
+
+      - name: Run Build
+        id: build
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Run Tests
+        id: ctest
+        env:
+          OverrideDefaultFP64Settings: "1"
+          IGC_EnableDPEmulation: "1"
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 --output-on-failure -E 'test_hadd_|test_sampler_address_clam|test_alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
