@@ -160,10 +160,10 @@ private:
   void unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
                   mem_mapping_t *Map);
 
-  static void fillImage(cl_mem Image, pocl_mem_identifier *MemId,
-                        const size_t *Origin, const size_t *Region,
-                        cl_uint4 OrigPixel, pixel_t FillPixel,
-                        size_t PixelSize);
+  void fillImage(cl_mem Image, pocl_mem_identifier *MemId,
+                 const size_t *Origin, const size_t *Region,
+                 cl_uint4 OrigPixel, pixel_t FillPixel,
+                 size_t PixelSize);
 
   static void svmMap(void *Ptr);
   static void svmUnmap(void *Ptr);
@@ -268,6 +268,16 @@ public:
                      bool LargeOffset, unsigned LocalWGSize,
                      ze_module_handle_t &Mod, ze_kernel_handle_t &Ker);
 
+  bool getMemfillKernel(unsigned PatternSize, Level0Kernel **L0Kernel,
+                        ze_module_handle_t &ModH, ze_kernel_handle_t &KerH);
+
+  bool getImagefillKernel(cl_channel_type ChType,
+                          cl_channel_order ChOrder,
+                          cl_mem_object_type ImgType,
+                          Level0Kernel **L0Kernel,
+                          ze_module_handle_t &ModH,
+                          ze_kernel_handle_t &KerH);
+
   cl_bitfield getMemCaps(cl_device_info Type);
   cl_unified_shared_memory_type_intel getMemType(const void *USMPtr);
   void *getMemBasePtr(const void *USMPtr);
@@ -280,6 +290,7 @@ public:
   void getTimingInfo(uint32_t &TS, uint32_t &KernelTS, double &TimerFreq,
                      double &NsPerCycle);
   void getMaxWGs(uint32_t_3 *MaxWGs);
+  uint32_t getMaxWGSize() { return ClDev->max_work_group_size; }
   bool supportsHostUSM() { return HostMemCaps != 0; }
   bool supportsDeviceUSM() { return DeviceMemCaps != 0; }
   bool supportsSingleSharedUSM() { return SingleSharedCaps != 0; }
@@ -290,6 +301,11 @@ public:
   bool supportsCompression() { return HasCompression; }
 
 private:
+  Level0Program *MemfillProgram;
+  Level0Program *ImagefillProgram;
+  std::map<std::string, Level0Kernel *> MemfillKernels;
+  std::map<std::string, Level0Kernel *> ImagefillKernels;
+
   Level0QueueGroup CopyQueues;
   Level0QueueGroup ComputeQueues;
   // TODO check reliability
@@ -323,6 +339,9 @@ private:
   cl_device_unified_shared_memory_capabilities_intel SingleSharedCaps = 0;
   cl_device_unified_shared_memory_capabilities_intel CrossSharedCaps = 0;
   cl_device_unified_shared_memory_capabilities_intel SystemSharedCaps = 0;
+
+  bool initBuiltinKernels();
+  void destroyBuiltinKernels();
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;

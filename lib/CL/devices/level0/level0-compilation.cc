@@ -146,7 +146,9 @@ Level0Program::~Level0Program() {
   ProgBuilds.clear();
   KernBuilds.clear();
   JITProgBuilds.clear();
-  pocl_llvm_release_context_for_program(ProgramLLVMCtx);
+  if (JITCompilation) {
+    pocl_llvm_release_context_for_program(ProgramLLVMCtx);
+  }
 }
 
 Level0Program::Level0Program(ze_context_handle_t Ctx, ze_device_handle_t Dev,
@@ -167,12 +169,12 @@ bool Level0Program::init() {
   // InitializeLLVM();
   if (SPIRV.size() <= 20)
     return false;
-  if (ProgramBC.size() <= 20)
-    return false;
   if (CacheUUID.size() <= 10)
     return false;
 
   if (JITCompilation) {
+    if (ProgramBC.size() <= 20)
+      return false;
     char *LinkinSpirvContent = nullptr;
     uint64_t LinkinSpirvSize = 0;
     ProgramLLVMCtx = pocl_llvm_create_context_for_program(ProgramBC.data(),
