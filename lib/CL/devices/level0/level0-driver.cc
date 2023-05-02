@@ -38,6 +38,11 @@
 #include <iomanip>
 #include <sstream>
 
+
+// TODO: do we need to use Barriers, if we're using immediate
+// cmdlist in synchronous mode
+//#define LEVEL0_IMMEDIATE_CMDLIST
+
 using namespace pocl;
 
 extern void appendToBuildLog(cl_program program, cl_uint device_i, char *Log,
@@ -76,6 +81,7 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   cl_event event = Cmd->sync.event.event;
   cl_device_id dev = Cmd->device;
   _cl_command_t *cmd = &Cmd->command;
+  ze_result_t res;
   cl_mem mem = nullptr;
   if (event->num_buffers > 0) {
     mem = event->mem_objs[0];
@@ -83,9 +89,15 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
   const char *Msg = nullptr;
   pocl_update_event_running(event);
-  zeCommandListReset(CmdListH);
-  zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventStart, nullptr, 0,
+
+#ifndef LEVEL0_IMMEDIATE_CMDLIST
+  res = zeCommandListReset(CmdListH);
+  LEVEL0_CHECK_ABORT(res);
+  res = zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventStart, nullptr, 0,
                                           nullptr);
+  LEVEL0_CHECK_ABORT(res);
+#endif
+  uint64_t HostStartTS = pocl_gettimemono_ns();
 
   switch (Cmd->type) {
   case CL_COMMAND_READ_BUFFER:
@@ -283,8 +295,9 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
     run(Cmd);
     // synchronize content of writable USE_HOST_PTR buffers with the host
     if (event->num_buffers != 0u) {
+#ifndef LEVEL0_IMMEDIATE_CMDLIST
       zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
-
+#endif
       for (size_t i = 0; i < event->num_buffers; ++i) {
         mem = event->mem_objs[i];
         if ((mem->flags & CL_MEM_READ_ONLY) != 0u) {
@@ -379,7 +392,7 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
     break;
   }
 
-  ze_result_t res;
+#ifndef LEVEL0_IMMEDIATE_CMDLIST
   res = zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
   LEVEL0_CHECK_ABORT(res);
   res = zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish,
@@ -387,14 +400,14 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   LEVEL0_CHECK_ABORT(res);
   res = zeCommandListClose(CmdListH);
   LEVEL0_CHECK_ABORT(res);
-
-  uint64_t HostStartTS = pocl_gettimemono_ns();
   res = zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
   LEVEL0_CHECK_ABORT(res);
   res = zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max());
   LEVEL0_CHECK_ABORT(res);
+#endif
 
   uint64_t HostFinishTS = pocl_gettimemono_ns();
+#ifndef LEVEL0_IMMEDIATE_CMDLIST
   if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE) {
     assert(event > (void *)0x100000);
     assert(EventStart > (void *)0x100000);
@@ -405,6 +418,11 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
     event->time_start = HostStartTS;
     event->time_end = HostFinishTS;
   }
+#else
+  event->time_start = HostStartTS;
+  event->time_end = HostFinishTS;
+#endif
+
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
@@ -1268,7 +1286,23 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   ze_result_t ZeRes = ZE_RESULT_SUCCESS;
   ze_command_queue_handle_t Queue = nullptr;
   ze_command_list_handle_t CmdList = nullptr;
-
+#ifdef LEVEL0_IMMEDIATE_CMDLIST
+  ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
+                                          nullptr,
+                                          Ordinal,
+                                          0, // index
+                                          0, // flags
+                                          ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS,
+                                          ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+  for (unsigned i = 0; i < Count; ++i) {
+    cmdQueueDesc.index = i;
+    ZeRes = zeCommandListCreateImmediate(ContextH, DeviceH,
+                               &cmdQueueDesc, &CmdList);
+    LEVEL0_CHECK_RET(false, ZeRes);
+    QHandles[i] = Queue;
+    LHandles[i] = CmdList;
+  }
+#else
   ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC,
                                           nullptr,
                                           Ordinal,
@@ -1291,6 +1325,7 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
     QHandles[i] = Queue;
     LHandles[i] = CmdList;
   }
+#endif
 
   for (unsigned i = 0; i < Count; ++i) {
     Queues.emplace_back(
