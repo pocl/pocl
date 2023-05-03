@@ -238,6 +238,14 @@ pocl.
  contains all the intermediate compiler files are left as it is. This
  will be handy for debugging
 
+- **POCL_LEVEL0_JIT**
+
+ Sets up Just-In-Time compilation of Kernels (at clEnqueueNDRange time) in
+ the Level0 driver. Accepted values: {0,1,auto}
+   0 = always disable JIT
+   1 = always use JIT,
+   auto (default) = guess based on program's kernel count & SPIR-V size.
+
 - **POCL_MAX_PTHREAD_COUNT**
 
  The maximum number of threads created for work group execution in the

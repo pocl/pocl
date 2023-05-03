@@ -40,7 +40,7 @@ What's implemented (some were not tested)
 -------------------------------------------
  * buffer read/write/map/unmap
  * kernel execution
- * image support (except FillImage)
+ * image support
  * sampler support
  * Spec constants
  * subgroups
@@ -64,11 +64,18 @@ Unfinished / non-optimal
 Doesnt work / missing
 -----------------------
 
- * clEnqueueFillImage
  * ZE_MEMORY_ADVICE_SET_READ_MOSTLY optimization
  * support for row_pitch/slice_pitch arguments of Image APIs
  *   ... there are actually two Level0 extension APIs that have the
  *   row/pitch as arguments, but they return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+
+Extra features / tunables
+--------------------------
+
+POCL_LEVEL0_JIT env variable can be used to enable JIT compilation (kernels are
+compiled when launched instead of clBuildProgram-time). Useful with programs
+that have thousands of kernels (e.g. from templated code).
+See :ref:`pocl-env-variables` for details.
 
 Known Bugs
 -----------
