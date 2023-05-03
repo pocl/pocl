@@ -114,7 +114,6 @@ find_called_functions(llvm::Function *F,
             CI->setDebugLoc(llvm::DILocation::get(
                 Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
                 F->getSubprogram(), nullptr, true));
-            printf("%s %d\n", __FILE__, __LINE__);
             llvm::verifyModule(*CI->getParent()->getParent()->getParent(),
                                &errs());
           }
@@ -211,7 +210,7 @@ copy_func_callgraph(const llvm::StringRef func_name,
         copy_func_callgraph(ci->getKey(), from, to, vvm);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
-		 SrcFunc->getName().str().c_str());
+                 SrcFunc->getName().str().c_str());
       }
       CopyFunc(ci->getKey(), from, to, vvm);
     }
@@ -345,6 +344,32 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
       llvm::StringRef r = di->getKey();
       if (copy_func_callgraph(r, Lib, Program, vvm)) {
         Function *f = Program->getFunction(r);
+
+        if (f->getName().equals("__to_local") ||
+            f->getName().equals("__to_global") ||
+            f->getName().equals("__to_private")) {
+
+          // Special handling for the AS cast built-ins: They do not use
+          // type mangling, which complicates the CPU implementation which
+          // sometimes gets all-0 AS input and sometimes not (SPIR-V).
+          // Here, in case the target doesn't define these built-ins in the
+          // bitcode library, we replace the calls directly with address
+          // space casts. This works for uniform address space targets (CPUs),
+          // while the disjoint AS targets can override the implementation
+          // as needed.
+          for (auto *U : f->users()) {
+            if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U)) {
+              llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
+                Call->getArgOperand(0),
+                Call->getFunctionType()->getReturnType(),
+                f->getName() + ".as_cast", Call);
+              Call->replaceAllUsesWith(AsCast);
+              Call->eraseFromParent();
+            }
+          }
+          continue;
+        }
+
         if ((f == NULL) ||
             (f->isDeclaration() &&
              // A target might want to expose the C99 printf in case not supporting
