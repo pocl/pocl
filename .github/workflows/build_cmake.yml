@@ -156,7 +156,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests --output-on-failure
 
   openasip_test:
     env:
