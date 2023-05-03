@@ -1203,6 +1203,7 @@ int pocl_level0_create_sampler(cl_device_id ClDevice, cl_sampler Samp,
   ze_sampler_handle_t HSampler = Device->allocSampler(
       Samp->addressing_mode, Samp->filter_mode, Samp->normalized_coords);
   if (HSampler == nullptr) {
+    POCL_MSG_ERR("Failed to create sampler\n");
     return CL_FAILED;
   }
   Samp->device_data[ClDevice->dev_id] = HSampler;

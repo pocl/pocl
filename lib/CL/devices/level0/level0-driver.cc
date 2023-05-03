@@ -1045,7 +1045,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       assert(PoclArg[i].value != NULL);
       assert(PoclArg[i].size == sizeof(void *));
 
-      cl_sampler sam = (cl_sampler)(PoclArg[i].value);
+      cl_sampler sam = (*(cl_sampler *)(PoclArg[i].value));
       ze_sampler_handle_t hSampler =
           (ze_sampler_handle_t)sam->device_data[Dev->dev_id];
 
@@ -1380,35 +1380,30 @@ const char *LEVEL0_SERIALIZE_ENTRIES[3] = {"/program.bc", "/program.spv",
                                            "/native"};
 
 static const cl_image_format SupportedImageFormats[] = {
-    {CL_R, CL_SIGNED_INT8},
-    {CL_R, CL_SIGNED_INT16},
-    {CL_R, CL_SIGNED_INT32},
+    {CL_R, CL_SIGNED_INT8},        {CL_R, CL_SIGNED_INT16},
+    {CL_R, CL_SIGNED_INT32},       {CL_R, CL_SNORM_INT8},
+    {CL_R, CL_SNORM_INT16},        {CL_R, CL_UNSIGNED_INT8},
+    {CL_R, CL_UNSIGNED_INT16},     {CL_R, CL_UNSIGNED_INT32},
+    {CL_R, CL_UNORM_INT8},         {CL_R, CL_UNORM_INT16},
+    {CL_R, CL_HALF_FLOAT},         {CL_R, CL_FLOAT},
 
-    {CL_RG, CL_SIGNED_INT8},
-    {CL_RGBA, CL_SIGNED_INT8},
+    {CL_RG, CL_SIGNED_INT8},       {CL_RG, CL_SIGNED_INT16},
+    {CL_RG, CL_SIGNED_INT32},      {CL_RG, CL_SNORM_INT8},
+    {CL_RG, CL_SNORM_INT16},       {CL_RG, CL_UNSIGNED_INT8},
+    {CL_RG, CL_UNSIGNED_INT16},    {CL_RG, CL_UNSIGNED_INT32},
+    {CL_RG, CL_UNORM_INT8},        {CL_RG, CL_UNORM_INT16},
+    {CL_RG, CL_HALF_FLOAT},        {CL_RG, CL_FLOAT},
 
-    {CL_RG, CL_SIGNED_INT16},
-    {CL_RGBA, CL_SIGNED_INT16},
+    {CL_RGBA, CL_SIGNED_INT8},     {CL_RGBA, CL_SIGNED_INT16},
+    {CL_RGBA, CL_SIGNED_INT32},    {CL_RGBA, CL_SNORM_INT8},
+    {CL_RGBA, CL_SNORM_INT16},     {CL_RGBA, CL_UNSIGNED_INT8},
+    {CL_RGBA, CL_UNSIGNED_INT16},  {CL_RGBA, CL_UNSIGNED_INT32},
+    {CL_RGBA, CL_UNORM_INT8},      {CL_RGBA, CL_UNORM_INT16},
+    {CL_RGBA, CL_HALF_FLOAT},      {CL_RGBA, CL_FLOAT},
 
-    {CL_RG, CL_SIGNED_INT32},
-    {CL_RGBA, CL_SIGNED_INT32},
-
-    {CL_RGB, CL_UNORM_INT_101010},
-    {CL_RGB, CL_UNORM_SHORT_565},
-    {CL_RGBA, CL_UNORM_SHORT_555},
-
-    {CL_R, CL_UNSIGNED_INT8},
-    {CL_R, CL_UNSIGNED_INT16},
-    {CL_R, CL_UNSIGNED_INT32},
-
-    {CL_RG, CL_UNSIGNED_INT8},
-    {CL_RGBA, CL_UNSIGNED_INT8},
-
-    {CL_RG, CL_UNSIGNED_INT16},
-    {CL_RGBA, CL_UNSIGNED_INT16},
-
-    {CL_RG, CL_UNSIGNED_INT32},
-    {CL_RGBA, CL_UNSIGNED_INT32},
+    {CL_RGB, CL_UNORM_INT_101010}, {CL_RGB, CL_UNORM_SHORT_565},
+    {CL_RGB, CL_UNORM_SHORT_555},
+    //{CL_RGBA, CL_UNORM_SHORT_555},
 
 };
 
