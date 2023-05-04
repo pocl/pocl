@@ -93,9 +93,6 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 #ifndef LEVEL0_IMMEDIATE_CMDLIST
   res = zeCommandListReset(CmdListH);
   LEVEL0_CHECK_ABORT(res);
-  res = zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventStart, nullptr, 0,
-                                          nullptr);
-  LEVEL0_CHECK_ABORT(res);
 #endif
   uint64_t HostStartTS = pocl_gettimemono_ns();
 
@@ -395,9 +392,6 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 #ifndef LEVEL0_IMMEDIATE_CMDLIST
   res = zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr);
   LEVEL0_CHECK_ABORT(res);
-  res = zeCommandListAppendWriteGlobalTimestamp(CmdListH, EventFinish,
-                                                nullptr, 0,  nullptr);
-  LEVEL0_CHECK_ABORT(res);
   res = zeCommandListClose(CmdListH);
   LEVEL0_CHECK_ABORT(res);
   res = zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr);
@@ -407,22 +401,8 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 #endif
 
   uint64_t HostFinishTS = pocl_gettimemono_ns();
-#ifndef LEVEL0_IMMEDIATE_CMDLIST
-  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE) {
-    assert(event > (void *)0x100000);
-    assert(EventStart > (void *)0x100000);
-    assert(EventFinish > (void *)0x100000);
-    calculateEventTimes(event, *EventStart, *EventFinish, HostStartTS,
-                        HostFinishTS);
-  } else {
-    event->time_start = HostStartTS;
-    event->time_end = HostFinishTS;
-  }
-#else
   event->time_start = HostStartTS;
   event->time_end = HostFinishTS;
-#endif
-
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
