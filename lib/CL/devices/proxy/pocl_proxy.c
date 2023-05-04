@@ -650,7 +650,7 @@ pocl_proxy_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_proxy_reinit (unsigned j, cl_device_id device)
+pocl_proxy_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   return CL_SUCCESS;
 }
