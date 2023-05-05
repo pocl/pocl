@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <unistd.h>
 #include <utlist.h>
 #include <sstream>
@@ -96,6 +97,12 @@ static const char *ventus_other_compile_flags[] = {
 	"-O1",
 	"-cl-std=CL2.0",
 	"-Wl,-T," CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
+	NULL
+};
+
+static const char *ventus_objdump_flags[] = {
+  "-D",
+  "--mattr=+v",
 	NULL
 };
 
@@ -742,8 +749,9 @@ for (i = 0; i < meta->num_args; ++i)
   free(kernel_metadata);
 
   
-
+  
   //pocl_release_dlhandle_cache(cmd);
+ 
 }
 
 
@@ -889,7 +897,6 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
-  printf("allocating mem in pocl\n");
   vt_device_data_t* d = (vt_device_data_t *)device->data;
   pocl_global_mem_t *mem = device->global_memory;
   int err;
@@ -985,9 +992,9 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
   char program_bc_path[POCL_FILENAME_LENGTH];
     
 
-  pocl_cache_create_program_cachedir(program, device_i, program->source,
-                                       strlen(program->source),
-                                       program_bc_path);  
+  //pocl_cache_create_program_cachedir(program, device_i, program->source,
+  //                                     strlen(program->source),
+  //                                     program_bc_path);  
   //TODO: move .cl and .riscv file into program_bc_path, and let spike read file from this path.
   std::ofstream outfile("object.cl");
   outfile << program->source;
@@ -1022,8 +1029,57 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
         perror("pclose() failed");
         exit(EXIT_FAILURE);
     } else {
-        POCL_MSG_PRINT_LLVM("after calling clang, the output is : \"%s\"\n", ss_cmd.str().c_str());
+        POCL_MSG_PRINT_LLVM("after calling clang, the output is : \"%s\"\n", ss_out.str().c_str());
     }
-    return 0;
+
+
+    /*const char* env_var = std::getenv("POCL_PRINT_CHISEL_TESTCODE");
+    if (env_var != nullptr) {
+        if (std::string(env_var) == "y") {
+            // 使用宏定义1
+            #ifndef PRINT_CHISEL_TESTCODE
+            #define PRINT_CHISEL_TESTCODE
+            #endif
+            printf("generate chisel testcode\n");
+        } 
+    } */
+ #define PRINT_CHISEL_TESTCODE
+ #ifdef PRINT_CHISEL_TESTCODE
+  std::stringstream ss2_cmd;
+	std::stringstream ss2_out;
+
+  std::string clang_string_path(clang_path);
+  std::string llvm_dump_path=clang_string_path.substr(0,clang_string_path.length()-6);
+
+  
+  ss2_cmd << llvm_dump_path <<"/../llvm-objdump ";
+	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
+		ss2_cmd << ventus_objdump_flags[i] << " ";
+	}
+    ss2_cmd << " object.riscv > object.dump " << std::endl;
+	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss2_cmd.str().c_str());
+
+  FILE *fp2 = popen(ss2_cmd.str().c_str(), "r");
+	if(fp2 == NULL) {
+		POCL_MSG_ERR("running compile kernel failed");
+		return -1;
+	}
+	char temp2[1024];
+	while (fgets(temp2, 1024, fp2) != NULL)
+	{
+		ss2_out << temp2;
+	}
+	int status2=pclose(fp2);
+    if (status2 == -1) {
+        perror("pclose() failed");
+        exit(EXIT_FAILURE);
+    } else {
+        POCL_MSG_PRINT_LLVM("after calling llvm-objdump, the output is : \"%s\"\n", ss2_out.str().c_str());
+    }
+
+ #endif
+
+  pocl_ventus_release_IR(program);
+return 0;
 
 }

@@ -102,6 +102,14 @@ unlink_source(FrontendOptions &fe)
 
 }
 
+int pocl_ventus_release_IR(cl_program  program){
+   cl_context ctx = program->context;
+  PoclLLVMContextData *ctx_data = (PoclLLVMContextData *)ctx->llvm_context_data;
+  assert(ctx_data);
+  if (ctx_data->number_of_IRs > 0) ctx_data->number_of_IRs=0;
+  return CL_SUCCESS;
+}
+
 static void appendToProgramBuildLog(cl_program program, unsigned device_i,
                                     std::string &s) {
   if (!s.empty()) {
