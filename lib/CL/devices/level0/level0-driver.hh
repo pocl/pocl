@@ -340,8 +340,11 @@ private:
   cl_device_unified_shared_memory_capabilities_intel CrossSharedCaps = 0;
   cl_device_unified_shared_memory_capabilities_intel SystemSharedCaps = 0;
 
-  bool initBuiltinKernels();
-  void destroyBuiltinKernels();
+  /// initializes kernels used internally by the driver
+  /// to implement functionality missing in the Level Zero API,
+  /// e.g. FillImage, FillBuffer with large patterns etc
+  bool initHelperKernels();
+  void destroyHelperKernels();
 };
 
 typedef std::unique_ptr<Level0Device> Level0DeviceUPtr;

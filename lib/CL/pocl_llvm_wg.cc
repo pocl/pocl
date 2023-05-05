@@ -333,8 +333,8 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
         Builder.LoopVectorize = false;
         Builder.SLPVectorize = false;
       }
-      Builder.VerifyInput = true;
-      Builder.VerifyOutput = true;
+      Builder.VerifyInput = LLVM_VERIFY_MODULE_DEFAULT > 0;
+      Builder.VerifyOutput = LLVM_VERIFY_MODULE_DEFAULT > 0;
       Builder.populateModulePassManager(*Passes);
       continue;
     }
@@ -409,7 +409,7 @@ public:
       return false;
     }
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
       std::string ErrorLog;
       llvm::raw_string_ostream Errs(ErrorLog);
       if (llvm::verifyModule(*ProgramGVarsNonKernelsBC.get(), &Errs)) {
@@ -437,7 +437,7 @@ public:
 
     copyKernelFromBitcode(KernelName, KernelBC.get(), ProgramBC.get(), nullptr);
 
-    if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
       llvm::raw_string_ostream Errs(*BuildLog);
       if (llvm::verifyModule(*KernelBC.get(), &Errs)) {
         POCL_MSG_ERR("Failed to verify Kernel Module:\n%s\n",

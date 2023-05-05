@@ -599,11 +599,11 @@ void Level0Queue::writeRect(const void *__restrict__ HostPtr,
 
 
 static void poclLevel0Memfill(Level0Device *Device,
-                                ze_command_list_handle_t CmdListH,
-                                const void *MemPtr,
-                                size_t Size, size_t Offset,
-                                const void *__restrict__ Pattern,
-                                size_t PatternSize) {
+                              ze_command_list_handle_t CmdListH,
+                              const void *MemPtr,
+                              size_t Size, size_t Offset,
+                              const void *__restrict__ Pattern,
+                              size_t PatternSize) {
 
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
@@ -663,7 +663,7 @@ void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
   POCL_MSG_PRINT_LEVEL0("MEMFILL | PTR %p | SIZE %zu | PAT SIZE %zu\n", DstPtr,
                         Size, PatternSize);
   poclLevel0Memfill(Device, CmdListH, DstPtr, Size,
-                      Offset, Pattern, PatternSize);
+                    Offset, Pattern, PatternSize);
 }
 
 
@@ -922,7 +922,7 @@ void Level0Queue::svmFill(void *DstPtr, size_t Size, void *Pattern,
                         Size, PatternSize);
 
   poclLevel0Memfill(Device, CmdListH, DstPtr, Size,
-                      0, Pattern, PatternSize);
+                    0, Pattern, PatternSize);
 
 #if 0
   // this *might* be useful some way (perhaps faster), but:
@@ -1982,13 +1982,13 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   SStream.flush();
   KernelCacheHash = SStream.str();
 
-  initBuiltinKernels();
+  initHelperKernels();
 
   ClDev->available = CL_TRUE;
 }
 
 Level0Device::~Level0Device() {
-  destroyBuiltinKernels();
+  destroyHelperKernels();
   // ComputeQueues.wait()
   // CopyQueues.wait()
   freeMem(static_cast<void *>(ComputeTimestamps));
@@ -2014,7 +2014,7 @@ static void calculateHash(uint8_t *BuildHash,
   BuildHash[2] = '/';
 }
 
-bool Level0Device::initBuiltinKernels() {
+bool Level0Device::initHelperKernels() {
   std::vector<uint8_t> SpvData;
   std::vector<char> ProgramBCData;
   std::string BuildLog;
@@ -2102,7 +2102,7 @@ bool Level0Device::initBuiltinKernels() {
   return true;
 }
 
-void Level0Device::destroyBuiltinKernels() {
+void Level0Device::destroyHelperKernels() {
   if (MemfillProgram) {
     for (auto &I : MemfillKernels) {
       Driver->getJobSched().releaseKernel(MemfillProgram, I.second);

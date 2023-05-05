@@ -192,7 +192,7 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 
   raw_string_ostream OS(Log);
   bool BrokenDebugInfo = false;
-  if (pocl_get_bool_option("POCL_LLVM_VERIFY", 1)) {
+  if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
     if (llvm::verifyModule(*Mod, &OS, &BrokenDebugInfo))
       return true;
   }

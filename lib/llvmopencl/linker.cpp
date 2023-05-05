@@ -515,29 +515,15 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
     GV->eraseFromParent();
   }
 
-#if 0
-  // mark SPIRV Kernels as dso_local + external
-  llvm::Module::iterator MI, ME;
-  for(MI = Program->begin(), ME = Program->end() ; MI != ME; ++MI) {
-    Function *F = &*MI;
-    if (F->isDeclaration())
-      continue;
-    if (!F->hasName()) {
-      std::string temp = std::to_string(UniDist(*Mersenne));
-      F->setName(Twine("anonymous_func__",
-                       StringRef(temp)));
-    }
-
-    std::string FName = F->getName().str();
-    if (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL) {
-      F->setDSOLocal(true);
-      F->setLinkage(GlobalValue::LinkageTypes::InternalLinkage);
-    }
-  }
-#endif
-
   // copy functions to the output.bc, then replace them with references
-  // in the original program.bc
+  // in the original program.bc.
+  // This can be useful in combination with enabled JIT, if the user program's
+  // kernels call a lot of subroutines, and those subroutines are shared
+  // (called) by multiple kernels.
+  // With this enabled, subroutines are separated & compiled to ZE module only
+  // once (together with program-scope variables), and then linked (with ZE
+  // linker). If disabled, subroutines are copied & compiled for each kernel
+  // separately.
   if (pocl_get_bool_option("POCL_LLVM_MOVE_NONKERNELS", 0)) {
     std::list<llvm::Function *> FunctionsToErase;
     llvm::Module::iterator MI, ME;

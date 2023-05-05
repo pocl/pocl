@@ -42,6 +42,7 @@ Notable User Facing Changes
 - Linux/x86-64 only: SIGFPE handler has been changed to skip instructions
   causing division-by-zero, only if it occured in one of the CPU driver
   threads; so division-by-zero errors are no longer hidden in user threads.
+- POCL_CUDA_VERIFY_MODULE env variable has been replaced by POCL_LLVM_VERIFY
 
 Notable Fixes
 -------------
