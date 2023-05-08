@@ -31,8 +31,8 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
-#include "memfill.h"
 #include "imagefill.h"
+#include "memfill.h"
 
 #include <cstring>
 #include <iomanip>
@@ -618,8 +618,8 @@ static void poclLevel0Memfill(Level0Device *Device,
   std::lock_guard<std::mutex> KernelLockGuard(Ker->getMutex());
 
   // set kernel arg 0 = mem pointer
-  ze_result_t ZeRes = zeKernelSetArgumentValue(KernelH, 0, sizeof(void *),
-                                               &MemPtr);
+  ze_result_t ZeRes =
+      zeKernelSetArgumentValue(KernelH, 0, sizeof(void *), &MemPtr);
   LEVEL0_CHECK_ABORT(ZeRes);
 
   // set kernel arg 1 = pattern (POD type)
@@ -650,13 +650,10 @@ static void poclLevel0Memfill(Level0Device *Device,
   ZeRes = zeKernelSetGroupSize(KernelH, WGSizeX, 1, 1);
   LEVEL0_CHECK_ABORT(ZeRes);
   ze_group_count_t LaunchFuncArgs = {TotalWGsX, 1, 1};
-  ZeRes = zeCommandListAppendLaunchKernel(
-      CmdListH, KernelH, &LaunchFuncArgs, nullptr, 0, nullptr);
+  ZeRes = zeCommandListAppendLaunchKernel(CmdListH, KernelH, &LaunchFuncArgs,
+                                          nullptr, 0, nullptr);
   LEVEL0_CHECK_ABORT(ZeRes);
 }
-
-
-
 
 void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                           size_t Size, size_t Offset,
@@ -859,16 +856,14 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   ze_image_handle_t ImageH = (ze_image_handle_t)(MemId->extra_ptr);
   assert(Image);
   //" SIZE %zu | PAT SIZE %zu\n",
-  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p |\n",
-                        MapPtr, ImageH);
+  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p |\n", MapPtr, ImageH);
 
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
   Level0Kernel *Ker = nullptr;
   bool Res = Device->getImagefillKernel(Image->image_channel_order,
                                         Image->image_channel_data_type,
-                                        Image->type,
-                                        &Ker, ModuleH, KernelH);
+                                        Image->type, &Ker, ModuleH, KernelH);
   assert(Res == true);
   assert(KernelH);
   assert(ModuleH);
@@ -878,9 +873,8 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   std::lock_guard<std::mutex> KernelLockGuard(Ker->getMutex());
 
   // set kernel arg 0 = image pointer
-  ze_result_t ZeRes = zeKernelSetArgumentValue(KernelH, 0,
-                                               sizeof(ze_image_handle_t),
-                                               &ImageH);
+  ze_result_t ZeRes =
+      zeKernelSetArgumentValue(KernelH, 0, sizeof(ze_image_handle_t), &ImageH);
   LEVEL0_CHECK_ABORT(ZeRes);
 
   // set kernel arg 1 = Pixel pattern (POD type)
@@ -889,8 +883,9 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
 
   if (Origin[0] || Origin[1] || Origin[2]) {
     if (Device->supportsGlobalOffsets()) {
-      ZeRes = zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
-          (uint32_t)Origin[1], (uint32_t)Origin[2]);
+      ZeRes =
+          zeKernelSetGlobalOffsetExp(KernelH, (uint32_t)Origin[0],
+                                     (uint32_t)Origin[1], (uint32_t)Origin[2]);
       LEVEL0_CHECK_ABORT(ZeRes);
     } else {
       POCL_MSG_ERR("imagefill: origin specified but device doesn't "
@@ -901,11 +896,10 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   // TODO could be better
   ZeRes = zeKernelSetGroupSize(KernelH, 1, 1, 1);
   LEVEL0_CHECK_ABORT(ZeRes);
-  ze_group_count_t LaunchFuncArgs = {(uint32_t)Region[0],
-                                     (uint32_t)Region[1],
+  ze_group_count_t LaunchFuncArgs = {(uint32_t)Region[0], (uint32_t)Region[1],
                                      (uint32_t)Region[2]};
-  ZeRes = zeCommandListAppendLaunchKernel(
-      CmdListH, KernelH, &LaunchFuncArgs, nullptr, 0, nullptr);
+  ZeRes = zeCommandListAppendLaunchKernel(CmdListH, KernelH, &LaunchFuncArgs,
+                                          nullptr, 0, nullptr);
   LEVEL0_CHECK_ABORT(ZeRes);
 }
 
@@ -2012,11 +2006,10 @@ static void calculateHash(uint8_t *BuildHash,
   pocl_SHA1_Final(&HashCtx, TempDigest);
 
   uint8_t *hashstr = BuildHash;
-  for (unsigned i=0; i < SHA1_DIGEST_SIZE; i++)
-      {
-          *hashstr++ = (TempDigest[i] & 0x0F) + 65;
-          *hashstr++ = ((TempDigest[i] & 0xF0) >> 4) + 65;
-      }
+  for (unsigned i = 0; i < SHA1_DIGEST_SIZE; i++) {
+    *hashstr++ = (TempDigest[i] & 0x0F) + 65;
+    *hashstr++ = ((TempDigest[i] & 0xF0) >> 4) + 65;
+  }
   *hashstr = 0;
   BuildHash[2] = '/';
 }
@@ -2038,36 +2031,33 @@ bool Level0Device::initBuiltinKernels() {
   calculateHash(BuildHash, MemfillSpv, MemfillSpvLen);
   pocl_cache_program_path(ProgramCacheDir, &FakeProgram, 0);
   SpvData.clear();
-  SpvData.insert(SpvData.end(), MemfillSpv, MemfillSpv+MemfillSpvLen);
+  SpvData.insert(SpvData.end(), MemfillSpv, MemfillSpv + MemfillSpvLen);
   MemfillProgram = Driver->getJobSched().createProgram(
       ContextHandle, DeviceHandle,
-        false, //JITCompilation,
-        BuildLog,
-        false, // Optimize,
-        Supports64bitBuffers,
-        0, //SpecConstantIDs.size(),
-        nullptr, //SpecConstantIDs.data(),
-        nullptr, //SpecConstantPtrs.data(),
-        nullptr, //SpecConstantSizes.data(),
-        SpvData,
-        ProgramBCData, // can be empty if JIT = disabled
-        ProgramCacheDir,
-        KernelCacheHash);
+      false, // JITCompilation,
+      BuildLog,
+      false, // Optimize,
+      Supports64bitBuffers,
+      0,       // SpecConstantIDs.size(),
+      nullptr, // SpecConstantIDs.data(),
+      nullptr, // SpecConstantPtrs.data(),
+      nullptr, // SpecConstantSizes.data(),
+      SpvData,
+      ProgramBCData, // can be empty if JIT = disabled
+      ProgramCacheDir, KernelCacheHash);
   if (MemfillProgram == nullptr) {
     POCL_MSG_ERR("Level0 Device: Failed to build memfill kernels");
     return false;
   }
 
-  for (unsigned i = 1 ; i <= 128; i *= 2) {
+  for (unsigned i = 1; i <= 128; i *= 2) {
     std::string Kernel1D = "memfill_" + std::to_string(i);
-    K = Driver->getJobSched().createKernel(MemfillProgram,
-                                           Kernel1D.c_str());
+    K = Driver->getJobSched().createKernel(MemfillProgram, Kernel1D.c_str());
     assert(K);
     MemfillKernels[Kernel1D] = K;
 
     std::string Kernel3D = "memfill_rect_" + std::to_string(i);
-    K = Driver->getJobSched().createKernel(MemfillProgram,
-                                           Kernel1D.c_str());
+    K = Driver->getJobSched().createKernel(MemfillProgram, Kernel1D.c_str());
     assert(K);
     MemfillKernels[Kernel3D] = K;
   }
@@ -2075,21 +2065,20 @@ bool Level0Device::initBuiltinKernels() {
   calculateHash(BuildHash, ImagefillSpv, ImagefillSpvLen);
   pocl_cache_program_path(ProgramCacheDir, &FakeProgram, 0);
   SpvData.clear();
-  SpvData.insert(SpvData.end(), ImagefillSpv, ImagefillSpv+ImagefillSpvLen);
+  SpvData.insert(SpvData.end(), ImagefillSpv, ImagefillSpv + ImagefillSpvLen);
   ImagefillProgram = Driver->getJobSched().createProgram(
       ContextHandle, DeviceHandle,
-        false, //JITCompilation,
-        BuildLog,
-        false, // Optimize,
-        Supports64bitBuffers,
-        0, //SpecConstantIDs.size(),
-        nullptr, //SpecConstantIDs.data(),
-        nullptr, //SpecConstantPtrs.data(),
-        nullptr, //SpecConstantSizes.data(),
-        SpvData,
-        ProgramBCData, // can be empty if JIT = disabled
-        ProgramCacheDir,
-        KernelCacheHash);
+      false, // JITCompilation,
+      BuildLog,
+      false, // Optimize,
+      Supports64bitBuffers,
+      0,       // SpecConstantIDs.size(),
+      nullptr, // SpecConstantIDs.data(),
+      nullptr, // SpecConstantPtrs.data(),
+      nullptr, // SpecConstantSizes.data(),
+      SpvData,
+      ProgramBCData, // can be empty if JIT = disabled
+      ProgramCacheDir, KernelCacheHash);
   if (ImagefillProgram == nullptr) {
     POCL_MSG_ERR("Level0 Device: Failed to build imagefill kernels");
     return false;
@@ -2109,7 +2098,6 @@ bool Level0Device::initBuiltinKernels() {
       ImagefillKernels[KernelName] = K;
     }
   }
-
 
   return true;
 }
@@ -2131,8 +2119,8 @@ void Level0Device::destroyBuiltinKernels() {
 
 void Level0Device::pushCommand(_cl_command_node *Command) {
   if (Command->type == CL_COMMAND_NDRANGE_KERNEL ||
-      Command->type ==  CL_COMMAND_SVM_MEMFILL ||
-      Command->type ==  CL_COMMAND_MEMFILL_INTEL ||
+      Command->type == CL_COMMAND_SVM_MEMFILL ||
+      Command->type == CL_COMMAND_MEMFILL_INTEL ||
       Command->type == CL_COMMAND_FILL_BUFFER ||
       Command->type == CL_COMMAND_FILL_IMAGE) {
     ComputeQueues.pushWork(Command);
@@ -2590,7 +2578,7 @@ bool Level0Device::getMemfillKernel(unsigned PatternSize,
   *L0Kernel = K;
   return Driver->getJobSched().getBestKernel(MemfillProgram, K,
                                              false, // LargeOffset,
-                                             1024, // LocalWGSize,
+                                             1024,  // LocalWGSize,
                                              ModH, KerH);
 }
 
@@ -2602,27 +2590,43 @@ bool Level0Device::getImagefillKernel(cl_channel_type ChType,
                                       ze_kernel_handle_t &KerH) {
 
   std::string PixelType;
-  switch(ChType) {
-    case CL_UNSIGNED_INT8:
-    case CL_UNSIGNED_INT16:
-    case CL_UNSIGNED_INT32:
-      PixelType = "ui"; break;
-    case CL_SIGNED_INT8:
-    case CL_SIGNED_INT16:
-    case CL_SIGNED_INT32:
-      PixelType = "i"; break;
-    default:
-      PixelType = "f";
+  switch (ChType) {
+  case CL_UNSIGNED_INT8:
+  case CL_UNSIGNED_INT16:
+  case CL_UNSIGNED_INT32:
+    PixelType = "ui";
+    break;
+  case CL_SIGNED_INT8:
+  case CL_SIGNED_INT16:
+  case CL_SIGNED_INT32:
+    PixelType = "i";
+    break;
+  default:
+    PixelType = "f";
   }
   std::string ImageType;
   switch (ImgType) {
-    case CL_MEM_OBJECT_IMAGE1D: ImageType = "1d_"; break;
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY: ImageType = "1d_array_"; break;
-    case CL_MEM_OBJECT_IMAGE1D_BUFFER: ImageType = "1d_buffer_"; break;
-    case CL_MEM_OBJECT_IMAGE2D: ImageType = "2d_"; break;
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY: ImageType = "2d_array_"; break;
-    case CL_MEM_OBJECT_IMAGE3D: ImageType = "3d_"; break;
-    default:  ImageType = "_unknown"; break;
+  case CL_MEM_OBJECT_IMAGE1D:
+    ImageType = "1d_";
+    break;
+  case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+    ImageType = "1d_array_";
+    break;
+  case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+    ImageType = "1d_buffer_";
+    break;
+  case CL_MEM_OBJECT_IMAGE2D:
+    ImageType = "2d_";
+    break;
+  case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    ImageType = "2d_array_";
+    break;
+  case CL_MEM_OBJECT_IMAGE3D:
+    ImageType = "3d_";
+    break;
+  default:
+    ImageType = "_unknown";
+    break;
   }
 
   std::string KernelName = "imagefill_" + ImageType + PixelType;
@@ -2632,10 +2636,9 @@ bool Level0Device::getImagefillKernel(cl_channel_type ChType,
   *L0Kernel = K;
   return Driver->getJobSched().getBestKernel(ImagefillProgram, K,
                                              false, // LargeOffset,
-                                             1024, // LocalWGSize,
+                                             1024,  // LocalWGSize,
                                              ModH, KerH);
 }
-
 
 cl_bitfield Level0Device::getMemCaps(cl_device_info Type) {
   switch (Type) {
