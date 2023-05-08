@@ -710,22 +710,6 @@ int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
   Program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
       Program->num_kernels, sizeof(pocl_kernel_metadata_t));
 
-  /*
-    if (NameCount != KernelInfoMap.size()) {
-      POCL_MSG_ERR("ZE reports %u kernel names, "
-                   "but SPIRV parser reports %zu\n",
-                   NameCount, KernelInfoMap.size());
-      for (auto &KInfo : KernelInfoMap) {
-        std::string Name = KInfo.first;
-        POCL_MSG_ERR("SPIRV kernel: %s\n", Name.c_str());
-      }
-      for (unsigned I = 0; I < NameCount; ++I) {
-        POCL_MSG_ERR("ZE kernel: %s\n", NameArray[I]);
-      }
-      return 0;
-    }
-  */
-
   uint32_t Idx = 0;
   for (auto &I : KernelInfoMap) {
     std::string Name = I.first;
