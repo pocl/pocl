@@ -96,6 +96,54 @@ extern "C" {
   void pocl_llvm_release_context (cl_context ctx);
 
   /**
+   * \brief Creates instance of a class that holds llvm::Module of input IR
+   * (program.bc), plus its own LLVM contexts, so it can be safely used in
+   * multithreaded env. Returns an output SPIR-V with Program-scope variables
+   * (and optionally, non-kernel functions). This SPIR-V needs to be turned
+   * into a native (device) module and linked with each JIT-compiled kernel
+   * module, otherwise Program-scope variables will not work properly.
+   *
+   * \param [in] ProgramBcBytes in-memory IR of program.bc
+   * \param [in] ProgramBcSize size of program.bc
+   * \param [out] LinkinSpirvContent output SPIRV with prog-scope vars
+   * \param [out] LinkinSpirvSize size of output LinkinSpirvContent
+   * \returns opaque handle to instance holding the data, or NULL on error
+   *
+   */
+  POCL_EXPORT
+  void *pocl_llvm_create_context_for_program (const char *ProgramBcBytes,
+                                              size_t ProgramBcSize,
+                                              char **LinkinSpirvContent,
+                                              uint64_t *LinkinSpirvSize);
+
+  /**
+  * \brief extracts SPIR-V of a single Kernel (plus all functions it uses)
+  * from the program IR, converts it to SPIRV & returns it.
+  *
+  * \param [in] ProgCtx the handle from pocl_llvm_create_context_for_program
+  * \param [in] KernelName name of the kernel to extract
+  * \param [out] BuildLogStr handle (std::string *) of log with errors/warnings
+  * \param [out] SpirvContent output SPIRV with the kernel
+  * \param [out] SpirvSize size of output SpirvContent
+  * \returns 0 on success
+  *
+  */
+  POCL_EXPORT
+  int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
+                                     const char* KernelName,
+                                     void* BuildLogStr,
+                                     char **SpirvContent,
+                                     uint64_t *SpirvSize);
+
+  /**
+  * \brief destroys the instance of hidden class used to extract kernel SPIR-V
+  *
+  * \param [in] ProgCtx the  handle from pocl_llvm_create_context_for_program
+  */
+  POCL_EXPORT
+  void pocl_llvm_release_context_for_program (void *ProgCtx);
+
+  /**
    * Count the number of "__kernel" functions in 'program'.
    *
    * Results are valid as long as program binary is not modified.

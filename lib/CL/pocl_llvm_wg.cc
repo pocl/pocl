@@ -30,11 +30,13 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm_api.h"
+#include "pocl_util.h"
 
 #include <iostream>
 #include <map>
 #include <regex>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "CompilerWarnings.h"
@@ -52,8 +54,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/ADT/Triple.h>
 #include <llvm/ADT/StringRef.h>
 
-#include <llvm/IR/Module.h>
 #include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/Verifier.h>
 
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Target/TargetMachine.h>
@@ -330,8 +333,8 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
         Builder.LoopVectorize = false;
         Builder.SLPVectorize = false;
       }
-      Builder.VerifyInput = true;
-      Builder.VerifyOutput = true;
+      Builder.VerifyInput = LLVM_VERIFY_MODULE_DEFAULT > 0;
+      Builder.VerifyOutput = LLVM_VERIFY_MODULE_DEFAULT > 0;
       Builder.populateModulePassManager(*Passes);
       continue;
     }
@@ -368,9 +371,251 @@ void pocl_destroy_llvm_module(void *modp, cl_context ctx) {
   }
 }
 
-// The global variables used to control the WG function generation's
-// specialization parameteres. Defined in lib/llvmopencl/WorkitemHandler.cc.
 namespace pocl {
+class ProgramWithContext {
+
+  llvm::LLVMContext LLVMCtx;
+  std::unique_ptr<llvm::Module> ProgramBC;
+  std::unique_ptr<llvm::Module> ProgramGVarsNonKernelsBC;
+  std::mutex Lock;
+  unsigned Num = 0;
+
+public:
+
+  bool init(const char *ProgramBcBytes,
+            size_t ProgramBcSize,
+            char* LinkinOutputBCPath) {
+    Num = 0;
+    llvm::Module *P = parseModuleIRMem(ProgramBcBytes, ProgramBcSize, &LLVMCtx);
+    if (P == nullptr)
+      return false;
+    ProgramBC.reset(P);
+
+    ProgramGVarsNonKernelsBC.reset(
+        new llvm::Module(llvm::StringRef("program_gvars.bc"), LLVMCtx));
+
+    ProgramGVarsNonKernelsBC->setTargetTriple(ProgramBC->getTargetTriple());
+    ProgramGVarsNonKernelsBC->setDataLayout(ProgramBC->getDataLayout());
+
+    if (!moveProgramScopeVarsOutOfProgramBc(&LLVMCtx, ProgramBC.get(),
+                                            ProgramGVarsNonKernelsBC.get()))
+      return false;
+
+    pocl_cache_tempname(LinkinOutputBCPath, ".bc", NULL);
+    int r = pocl_write_module(ProgramGVarsNonKernelsBC.get(),
+                              LinkinOutputBCPath, 0);
+    if (r != 0) {
+      POCL_MSG_ERR("ProgramWithContext->init: failed to write module\n");
+      return false;
+    }
+
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
+      std::string ErrorLog;
+      llvm::raw_string_ostream Errs(ErrorLog);
+      if (llvm::verifyModule(*ProgramGVarsNonKernelsBC.get(), &Errs)) {
+        POCL_MSG_ERR("Failed to verify Program GVars Module:\n%s\n",
+                     ErrorLog.c_str());
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool getBitcodeForKernel(const char* KernelName,
+                           char* OutputPath,
+                           std::string *BuildLog) {
+    std::lock_guard<std::mutex> LockGuard(Lock);
+
+    // Create an empty Module and copy only the kernel+callgraph from
+    // program.bc.
+    std::unique_ptr<llvm::Module> KernelBC(
+        new llvm::Module(llvm::StringRef("parallel_bc"), LLVMCtx));
+
+    KernelBC->setTargetTriple(ProgramBC->getTargetTriple());
+    KernelBC->setDataLayout(ProgramBC->getDataLayout());
+
+    copyKernelFromBitcode(KernelName, KernelBC.get(), ProgramBC.get(), nullptr);
+
+    if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
+      llvm::raw_string_ostream Errs(*BuildLog);
+      if (llvm::verifyModule(*KernelBC.get(), &Errs)) {
+        POCL_MSG_ERR("Failed to verify Kernel Module:\n%s\n",
+                     BuildLog->c_str());
+        BuildLog->append("Failed to verify Kernel Module\n");
+        return false;
+      }
+    }
+
+    pocl_cache_tempname(OutputPath, ".bc", NULL);
+    int r = pocl_write_module(KernelBC.get(), OutputPath, 0);
+    if (r != 0) {
+      POCL_MSG_ERR("getBitcodeForKernel: failed to write module\n");
+      BuildLog->append("getBitcodeForKernel: failed to write module\n");
+      return false;
+    }
+    return true;
+  }
+};
+
+static int convertBitcodeToSpv(char* TempBitcodePath,
+                               std::string *BuildLog,
+                               char **SpirvContent,
+                               uint64_t *SpirvSize) {
+
+  char TempSpirvPath[POCL_MAX_PATHNAME_LENGTH];
+
+// max bytes in output of 'llvm-spirv'
+#define MAX_OUTPUT_BYTES 65536
+
+//   --spirv-ext=<+SPV_extenstion1_name,-SPV_extension2_name>
+//   Specify list of allowed/disallowed extensions
+#define ALLOW_EXTS                                                             \
+  "--spirv-ext=+SPV_INTEL_subgroups,+SPV_INTEL_usm_storage_classes,+SPV_"      \
+  "INTEL_arbitrary_precision_integers,+SPV_INTEL_arbitrary_precision_fixed_"   \
+  "point,+SPV_INTEL_arbitrary_precision_floating_point,+SPV_INTEL_kernel_"     \
+  "attributes"
+  /*
+  possibly useful:
+    "+SPV_INTEL_unstructured_loop_controls,"
+    "+SPV_INTEL_blocking_pipes,"
+    "+SPV_INTEL_function_pointers,"
+    "+SPV_INTEL_io_pipes,"
+    "+SPV_INTEL_inline_assembly,"
+    "+SPV_INTEL_optimization_hints,"
+    "+SPV_INTEL_float_controls2,"
+    "+SPV_INTEL_vector_compute,"
+    "+SPV_INTEL_fast_composite,"
+    "+SPV_INTEL_variable_length_array,"
+    "+SPV_INTEL_fp_fast_math_mode,"
+    "+SPV_INTEL_long_constant_composite,"
+    "+SPV_INTEL_memory_access_aliasing,"
+    "+SPV_INTEL_runtime_aligned,"
+    "+SPV_INTEL_arithmetic_fence,"
+    "+SPV_INTEL_bfloat16_conversion,"
+    "+SPV_INTEL_global_variable_decorations,"
+    "+SPV_INTEL_non_constant_addrspace_printf,"
+    "+SPV_INTEL_hw_thread_queries,"
+    "+SPV_INTEL_complex_float_mul_div,"
+    "+SPV_INTEL_split_barrier,"
+    "+SPV_INTEL_masked_gather_scatter"
+
+  probably not useful:
+    "+SPV_INTEL_media_block_io,+SPV_INTEL_device_side_avc_motion_estimation,"
+    "+SPV_INTEL_fpga_loop_controls,+SPV_INTEL_fpga_memory_attributes,"
+    "+SPV_INTEL_fpga_memory_accesses,"
+    "+SPV_INTEL_fpga_reg,+SPV_INTEL_fpga_buffer_location,"
+    "+SPV_INTEL_fpga_cluster_attributes,"
+    "+SPV_INTEL_loop_fuse,"
+    "+SPV_INTEL_optnone," // this one causes crash
+    "+SPV_INTEL_fpga_dsp_control,"
+    "+SPV_INTEL_fpga_invocation_pipelining_attributes,"
+    "+SPV_INTEL_token_type,"
+    "+SPV_INTEL_debug_module,"
+    "+SPV_INTEL_joint_matrix,"
+  */
+  pocl_cache_tempname(TempSpirvPath, ".spirv", NULL);
+  char LLVMspirv[] = LLVM_SPIRV;
+  char AllowedExtOption[] = ALLOW_EXTS;
+  // TODO ze_device_module_properties_t.spirvVersionSupported
+  char MaxSPIRVOption[] = "--spirv-max-version=1.2";
+#ifdef LLVM_OPAQUE_POINTERS
+  char OpaquePtrsOption[] = "--opaque-pointers";
+#endif
+  char OutputOption[] = { '-', 'o', 0 };
+  char *CmdArgs[] = { LLVMspirv, AllowedExtOption,
+#ifdef LLVM_OPAQUE_POINTERS
+                      OpaquePtrsOption,
+#endif
+                      MaxSPIRVOption, OutputOption,
+                      TempSpirvPath, TempBitcodePath, NULL };
+  char CapturedOutput[MAX_OUTPUT_BYTES];
+  size_t CapturedBytes = MAX_OUTPUT_BYTES;
+
+  int r =
+      pocl_run_command_capture_output(CapturedOutput, &CapturedBytes, CmdArgs);
+  if (r != 0) {
+    BuildLog->append("llvm-spirv failed with output:\n");
+    std::string Captured(CapturedOutput, CapturedBytes);
+    BuildLog->append(Captured);
+    return -1;
+  }
+
+  r = pocl_read_file(TempSpirvPath, SpirvContent, SpirvSize);
+  if (r != 0) {
+    BuildLog->append("failed to read output file from llvm-spirv\n");
+    return -1;
+  }
+
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
+    pocl_remove(TempBitcodePath);
+    pocl_remove(TempSpirvPath);
+  } else {
+    POCL_MSG_PRINT_GENERAL("LLVM SPIR-V conversion tempfiles: %s -> %s",
+                           TempBitcodePath, TempSpirvPath);
+  }
+  return 0;
+}
+
+} // namespace pocl
+
+void *pocl_llvm_create_context_for_program(const char *ProgramBcBytes,
+                                           size_t ProgramBcSize,
+                                           char **LinkinSpirvContent,
+                                           uint64_t *LinkinSpirvSize) {
+  assert(ProgramBcBytes);
+  assert(ProgramBcSize > 0);
+
+  char TempBitcodePath[POCL_MAX_PATHNAME_LENGTH];
+
+  pocl::ProgramWithContext *P = new pocl::ProgramWithContext;
+  // parse the program's bytes into a llvm::Module
+  if (P == nullptr ||
+      !P->init(ProgramBcBytes, ProgramBcSize, TempBitcodePath)) {
+    POCL_MSG_ERR("failed to create program for context");
+    return nullptr;
+  }
+
+  std::string BuildLog;
+  if (pocl::convertBitcodeToSpv(TempBitcodePath, &BuildLog,
+                                LinkinSpirvContent, LinkinSpirvSize) != 0) {
+    POCL_MSG_ERR("failed to create program for context, log:%s\n",
+                 BuildLog.c_str());
+    return nullptr;
+  }
+
+  return (void *)P;
+}
+
+void pocl_llvm_release_context_for_program(void *ProgCtx) {
+  if (ProgCtx == nullptr)
+    return;
+  pocl::ProgramWithContext *P = (pocl::ProgramWithContext *)ProgCtx;
+  delete P;
+}
+
+// extract SPIRV of a single Kernel from a program
+int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
+                                   const char* KernelName,
+                                   void* BuildLogStr,
+                                   char **SpirvContent,
+                                   uint64_t *SpirvSize) {
+
+  POCL_MEASURE_START(extractKernel);
+
+  std::string *BuildLog = (std::string *)BuildLogStr;
+
+  char TempBitcodePath[POCL_MAX_PATHNAME_LENGTH];
+  pocl::ProgramWithContext *P = (pocl::ProgramWithContext *)ProgCtx;
+  if (!P->getBitcodeForKernel(KernelName, TempBitcodePath, BuildLog)) {
+    return -1;
+  }
+
+  int r = pocl::convertBitcodeToSpv(TempBitcodePath, BuildLog,
+                                    SpirvContent, SpirvSize);
+
+  POCL_MEASURE_FINISH(extractKernel);
+  return r;
 }
 
 int pocl_llvm_generate_workgroup_function_nowrite(

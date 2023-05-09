@@ -104,14 +104,20 @@ POname(clCreateKernel)(cl_program program,
       assert (offset == kernel->meta->total_argument_storage_size);
     }
 
-  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
-
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
       if (device->ops->create_kernel)
-        device->ops->create_kernel (device, program, kernel, i);
+        {
+          int r = device->ops->create_kernel (device, program, kernel, i);
+          POCL_GOTO_ERROR_ON ((r != CL_SUCCESS), CL_OUT_OF_RESOURCES,
+                              "could not create device-specific data "
+                              "for kernel %s\n",
+                              kernel->name);
+        }
     }
+
+  TP_CREATE_KERNEL (kernel->context->id, kernel->id, kernel->name);
 
   POCL_LOCK_OBJ (program);
   LL_PREPEND (program->kernels, kernel);
@@ -121,7 +127,9 @@ POname(clCreateKernel)(cl_program program,
   POCL_ATOMIC_INC (kernel_c);
 
   errcode = CL_SUCCESS;
-  goto SUCCESS;
+
+  POCL_MSG_PRINT_GENERAL ("Created Kernel %s (%p)\n", kernel->name, kernel);
+  goto OUT;
 
 ERROR:
   if (kernel)
@@ -133,10 +141,6 @@ ERROR:
     }
   POCL_MEM_FREE (kernel);
   kernel = NULL;
-  goto OUT;
-
-SUCCESS:
-  POCL_MSG_PRINT_GENERAL ("Created Kernel %s (%p)\n", kernel->name, kernel);
 
 OUT:
   if(errcode_ret != NULL)

@@ -206,7 +206,10 @@ pocl_check_device_supports_image (cl_device_id device,
     }
 
   POCL_MSG_ERR2 ("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR",
-                 "The image format is not supported by the device\n");
+                 "The image format (ch. order: %u ch. data type: %u) "
+                 "is not supported by the device\n",
+                 image_format->image_channel_order,
+                 image_format->image_channel_data_type);
   return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
 }
 

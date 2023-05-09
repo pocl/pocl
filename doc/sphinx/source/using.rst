@@ -177,6 +177,9 @@ pocl.
  *         **basic**    A minimalistic example device driver for executing
                         kernels on the host CPU. No multithreading.
 
+ *         **pthread**  Native kernel execution on the host CPU with
+                        threaded execution of work groups using pthreads.
+
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
 
  *         **hsa**      Uses HSA Runtime API to control HSA-compliant
@@ -186,12 +189,11 @@ pocl.
  *         **vulkan**   An experimental driver that uses Vulkan and SPIR-V for executing on
 	                Vulkan supported devices.
 
- *         **pthread**  Native kernel execution on the host CPU with
-                        threaded execution of work groups using pthreads.
-
  *         **ttasim**   Device that simulates a TTA device using the
                         TCE's ttasim library. Enabled only if TCE libraries
                         installed.
+
+ *         **level0**   An experimental driver that uses libze to execute on Intel GPUs.
 
  If POCL_DEVICES is not set, one pthread device will be used.
  To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
@@ -234,6 +236,22 @@ pocl.
  contains all the intermediate compiler files are left as it is. This
  will be handy for debugging
 
+- **POCL_LEVEL0_JIT**
+
+ Sets up Just-In-Time compilation in the Level0 driver.
+ (see :ref:`pocl-level0-driver` for details)
+ Accepted values: {0,1,auto}
+   *   0 = always disable JIT
+   *   1 = always use JIT,
+   *   auto (default) = guess based on program's kernel count & SPIR-V size.
+
+- **POCL_LLVM_VERIFY**
+
+  if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
+  verification of LLVM modules at certain stages (program.bc always,
+  kernel bitcode (parallel.bc) only with some drivers).
+  Defaults to 0 if CMAKE_BUILD_TYPE=Debug and 1 otherwise.
+
 - **POCL_MAX_PTHREAD_COUNT**
 
  The maximum number of threads created for work group execution in the
@@ -258,6 +276,7 @@ pocl.
  Bool. When enabled(==1), some drivers will create virtual devices which are only
  good for creating pocl binaries. Requires those drivers to be compiled with support
  for compilation for those devices.
+
 
 - **POCL_SIGFPE_HANDLER**
 

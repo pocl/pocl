@@ -23,6 +23,10 @@ int copyKernelFromBitcode(const char *name, llvm::Module *parallel_bc,
                           const llvm::Module *program,
                           const char **DevAuxFuncs);
 
+bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
+                                        llvm::Module *ProgramBC,
+                                        llvm::Module *OutputBC);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

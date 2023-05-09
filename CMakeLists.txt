@@ -108,6 +108,12 @@ if(NOT CMAKE_BUILD_TYPE)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(LLVM_VERIFY_MODULE_DEFAULT 1)
+else()
+  set(LLVM_VERIFY_MODULE_DEFAULT 0)
+endif()
+
 ##################################################################################
 
 macro(set_expr VAR)

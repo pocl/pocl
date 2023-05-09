@@ -466,6 +466,14 @@ pocl_getpath (char *path, size_t len, const char *explicit_binary,
   if (access (path, F_OK) == 0)
     return CL_SUCCESS;
 
+  snprintf (path, len, "%s/%s%s", SRCDIR, basename, ext);
+  if (access (path, F_OK) == 0)
+    return CL_SUCCESS;
+
+  snprintf (path, len, "%s/tests/%s%s", SRCDIR, basename, ext);
+  if (access (path, F_OK) == 0)
+    return CL_SUCCESS;
+
   snprintf (path, len, "%s/examples/%s/%s%s", SRCDIR, basename, basename, ext);
   if (access (path, F_OK) == 0)
     return CL_SUCCESS;

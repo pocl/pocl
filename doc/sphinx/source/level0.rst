@@ -1,3 +1,6 @@
+
+.. _pocl-level0-driver:
+
 Level Zero driver
 =================
 
@@ -40,7 +43,7 @@ What's implemented (some were not tested)
 -------------------------------------------
  * buffer read/write/map/unmap
  * kernel execution
- * image support (except FillImage)
+ * image support
  * sampler support
  * Spec constants
  * subgroups
@@ -53,22 +56,28 @@ What's implemented (some were not tested)
 Unfinished / non-optimal
 -------------------------
 
- * kernel argument metadata parsing
- *   (type_name is not parsed ATM, the other arg attributes are)
- * CL_MEM_USE_HOST_PTR handling (works with buffers,
- *   but doesn't work with Images)
- * all buffers are allocated using shared memory (zeMemAllocShared),
+ * kernel argument metadata parsing (``type_name`` is
+   not parsed ATM, the other argument attributes are)
+ * ``CL_MEM_USE_HOST_PTR`` handling (works with buffers, but doesn't work with Images)
+ * all buffers are allocated using shared memory (``zeMemAllocShared``),
    this might be a performance problem on dGPUs.
    TODO: investigate & possibly use the virtual + physical memory APIs.
 
 Doesnt work / missing
 -----------------------
 
- * clEnqueueFillImage
- * ZE_MEMORY_ADVICE_SET_READ_MOSTLY optimization
+ * ``ZE_MEMORY_ADVICE_SET_READ_MOSTLY`` optimization
  * support for row_pitch/slice_pitch arguments of Image APIs
- *   ... there are actually two Level0 extension APIs that have the
- *   row/pitch as arguments, but they return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE
+   ... there are actually two Level0 extension APIs that have the row/pitch arguments,
+   but they currently return ``ZE_RESULT_ERROR_UNSUPPORTED_FEATURE``
+
+Extra features / tunables
+--------------------------
+
+``POCL_LEVEL0_JIT`` env variable can be used to enable JIT compilation (kernels are
+compiled lazily only when launched via clEnqueueNDRangeKernel, instead of eagerly
+at clBuildProgram-time). Useful with programs that have thousands of kernels
+(e.g. from heavily templated code). See :ref:`pocl-env-variables` for accepted values.
 
 Known Bugs
 -----------
@@ -81,7 +90,7 @@ Testing
 
 The tests that should work with Level Zero driver can be run with tools/scripts/run_level0_tests.
 
-This driver was tested with these devices:
+This driver was tested with these de0vices:
 
 * Intel Tiger Lake integrated GPU
 * Intel Alder Lake integrated GPU

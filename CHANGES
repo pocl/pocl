@@ -28,7 +28,7 @@ Notable User Facing Changes
   however there are still a few missing. For the full
   documentation, see doc/sphinx/source/level0.rst.
 - Support for cl_intel_unified_shared_memory (only with
-  the Level Zero driver).
+  the Level Zero driver & the CPU drivers).
 - CPU devices now flush printf() output after each call instead of waiting
   for the end of the kernel command. This makes it (again) useful for debugging
   kernel segfaults.
@@ -42,6 +42,7 @@ Notable User Facing Changes
 - Linux/x86-64 only: SIGFPE handler has been changed to skip instructions
   causing division-by-zero, only if it occured in one of the CPU driver
   threads; so division-by-zero errors are no longer hidden in user threads.
+- POCL_CUDA_VERIFY_MODULE env variable has been replaced by POCL_LLVM_VERIFY
 
 Notable Fixes
 -------------

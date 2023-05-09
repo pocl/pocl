@@ -88,11 +88,10 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
       err = clSetKernelArg (kernel, 3, sizeof (cl_mem), (void *)&memobjs[1]);
       CHECK_CL_ERROR2 (err);
 
-      cl_event ev;
       size_t global[2] = { n, n };
       size_t local[2] = { 8, 8 };
       err = clEnqueueNDRangeKernel (cmd_queue, kernel, 2, NULL, global, local,
-                                    0, NULL, &ev);
+                                    0, NULL, NULL);
       CHECK_CL_ERROR2 (err);
     }
   else

@@ -42,8 +42,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Function.h>
 #include <llvm/IR/GlobalValue.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/LegacyPassManager.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/PassInfo.h>
+#include <llvm/PassRegistry.h>
+#include <llvm/Transforms/IPO/AlwaysInliner.h>
+#include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
@@ -114,8 +119,6 @@ find_called_functions(llvm::Function *F,
             CI->setDebugLoc(llvm::DILocation::get(
                 Callee->getContext(), Callee->getSubprogram()->getLine(), 0,
                 F->getSubprogram(), nullptr, true));
-            llvm::verifyModule(*CI->getParent()->getParent()->getParent(),
-                               &errs());
           }
         } else {
           Callee->setName("__noname_function");
@@ -266,6 +269,11 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
       NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
   }
+
+  /* LLVM 1x complains about this being an invalid MDnode. */
+  llvm::NamedMDNode *DebugCU = program->getNamedMetadata("llvm.dbg.cu");
+  if (DebugCU && DebugCU->getNumOperands() == 0)
+    program->eraseNamedMetadata(DebugCU);
 }
 
 
@@ -275,8 +283,7 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
 using namespace pocl;
 
 int link(llvm::Module *Program, const llvm::Module *Lib,
-         std::string &log,
-         const char **DevAuxFuncs) {
+         std::string &log, const char **DevAuxFuncs) {
 
   assert(Program);
   assert(Lib);
@@ -427,12 +434,138 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   std::string log;
   shared_copy(parallel_bc, program, log, vvm);
 
-  /* LLVM 13 complains about this being an invalid MDnode. */
-  llvm::NamedMDNode *DebugCU = parallel_bc->getNamedMetadata("llvm.dbg.cu");
-  if (DebugCU && DebugCU->getNumOperands()==0)
-    parallel_bc->eraseNamedMetadata(DebugCU);
+  if (pocl_get_bool_option("POCL_LLVM_ALWAYS_INLINE", 0)) {
+    llvm::Module::iterator MI, ME;
+    for (MI = parallel_bc->begin(), ME = parallel_bc->end(); MI != ME; ++MI) {
+      Function *F = &*MI;
+      if (F->isDeclaration())
+          continue;
+      // inline all except the kernel
+      if (F->getName() != name) {
+          F->addFnAttr(Attribute::AlwaysInline);
+      }
+    }
 
+    llvm::legacy::PassManager Passes;
+    Passes.add(createAlwaysInlinerLegacyPass());
+    Passes.run(*parallel_bc);
+  }
   return 0;
+}
+
+bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
+                                        llvm::Module *ProgramBC,
+                                        llvm::Module *OutputBC) {
+
+  ValueToValueMapTy VVM;
+  llvm::Module::global_iterator GI, GE;
+
+  // Copy all the globals from input to output module.
+  DB_PRINT("cloning the global variables:\n");
+  for (GI = ProgramBC->global_begin(), GE = ProgramBC->global_end(); GI != GE;
+       GI++) {
+    DB_PRINT(" %s\n", GI->getName().data());
+    GlobalVariable *GV = new GlobalVariable(
+        *OutputBC, GI->getValueType(), GI->isConstant(), GI->getLinkage(),
+        (Constant *)0, GI->getName(), (GlobalVariable *)0,
+        GI->getThreadLocalMode(), GI->getType()->getAddressSpace());
+    GV->copyAttributesFrom(&*GI);
+    // for program scope vars, change linkage to external
+    if (isProgramScopeVariable(*GV)) {
+      GV->setDSOLocal(false);
+      GV->setLinkage(GlobalValue::LinkageTypes::ExternalLinkage);
+    }
+    VVM[&*GI] = GV;
+  }
+
+  // add initializers to global vars, copy aliases & MD
+  std::string log;
+  shared_copy(OutputBC, ProgramBC, log, VVM);
+
+  // change program-scope variables in Input module to references
+  std::list<GlobalVariable *> GVarsToErase;
+  std::list<GlobalVariable *> ProgramGVars;
+  for (GI = ProgramBC->global_begin(), GE = ProgramBC->global_end(); GI != GE;
+       GI++) {
+    ProgramGVars.push_back(&*GI);
+  }
+
+  // we can't use iteration over ProgramBC->global_begin/end here, because we're
+  // adding new GVars into the Module during iteration
+  for (auto GI : ProgramGVars) {
+    DB_PRINT(" %s\n", GI->getName().data());
+    if (isProgramScopeVariable(*GI)) {
+      std::string OrigName = GI->getName().str();
+      GI->setName(Twine(OrigName, "__old"));
+      GlobalVariable *NewGV = new GlobalVariable(
+          *ProgramBC, GI->getValueType(), GI->isConstant(),
+          GlobalValue::LinkageTypes::ExternalLinkage,
+          (Constant *)nullptr, // initializer
+          OrigName,
+          (GlobalVariable *)nullptr, // insert-before
+          GI->getThreadLocalMode(), GI->getType()->getAddressSpace());
+
+      NewGV->copyAttributesFrom(GI);
+      NewGV->setDSOLocal(false);
+      GI->replaceAllUsesWith(NewGV);
+      GVarsToErase.push_back(GI);
+    }
+  }
+  for (auto GV : GVarsToErase) {
+    GV->eraseFromParent();
+  }
+
+  // copy functions to the output.bc, then replace them with references
+  // in the original program.bc.
+  // This can be useful in combination with enabled JIT, if the user program's
+  // kernels call a lot of subroutines, and those subroutines are shared
+  // (called) by multiple kernels.
+  // With this enabled, subroutines are separated & compiled to ZE module only
+  // once (together with program-scope variables), and then linked (with ZE
+  // linker). If disabled, subroutines are copied & compiled for each kernel
+  // separately.
+  if (pocl_get_bool_option("POCL_LLVM_MOVE_NONKERNELS", 0)) {
+    std::list<llvm::Function *> FunctionsToErase;
+    llvm::Module::iterator MI, ME;
+    for (MI = ProgramBC->begin(), ME = ProgramBC->end(); MI != ME; ++MI) {
+      Function *F = &*MI;
+      if (F->isDeclaration())
+          continue;
+
+      if (!F->hasName()) {
+          F->setName("anonymous_func__");
+      }
+
+      std::string FName = F->getName().str();
+      if (F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL) {
+          // POCL_MSG_WARN("NOT copying kernel function %s\n", FName.c_str());
+      } else {
+          if (F->getCallingConv() == llvm::CallingConv::SPIR_FUNC)
+          POCL_MSG_WARN("Copying non-kernel function %s\n", FName.c_str());
+          copy_func_callgraph(F->getName(), ProgramBC, OutputBC, VVM);
+          Function *DestF = OutputBC->getFunction(FName);
+          assert(DestF);
+          DestF->setDSOLocal(false);
+          DestF->setVisibility(GlobalValue::VisibilityTypes::DefaultVisibility);
+          DestF->setLinkage(llvm::GlobalValue::ExternalLinkage);
+          Twine TempName(FName, "__decl");
+          Function *NewFDecl =
+              Function::Create(F->getFunctionType(), Function::ExternalLinkage,
+                               F->getAddressSpace(), TempName, ProgramBC);
+          assert(NewFDecl);
+          F->setName(Twine(FName, "___old"));
+          F->replaceAllUsesWith(NewFDecl);
+          NewFDecl->setName(FName);
+          FunctionsToErase.push_back(F);
+      }
+    }
+
+    for (auto FF : FunctionsToErase) {
+      FF->eraseFromParent();
+    }
+  }
+
+  return true;
 }
 
 /* vim: set expandtab ts=4 : */

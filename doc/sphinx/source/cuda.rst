@@ -58,10 +58,6 @@ Building pocl with CUDA support
   target GPU architecture (e.g. ``POCL_CUDA_GPU_ARCH=sm_35``), which may be
   necessary in cases where LLVM doesn't yet support the architecture.
 
-  The ``POCL_CUDA_VERIFY_MODULE`` environment variable can be set to ``0``
-  to skip verification that the LLVM module produced by the CUDA backend
-  is well formed. Currently defaults to 1 = ON.
-
   The ``POCL_CUDA_DUMP_NVVM`` environment variable can be set to ``1`` to
   dump the LLVM IR that is fed into the NVPTX backend for debugging purposes
   (requires ``POCL_DEBUG=1``).
