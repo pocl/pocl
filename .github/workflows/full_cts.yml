@@ -21,6 +21,7 @@ jobs:
   build:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, medium]
+    timeout-minutes: 1200
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +54,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) "$@"
+            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) --test-output-size-passed 128000 --test-output-size-failed 128000 --test-output-truncation head "$@"
           }
           if [ "${{ matrix.config }}" == "cts_full" ]; then
             runCTest -L conformance_suite_full_main
