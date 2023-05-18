@@ -189,7 +189,7 @@ char *
 pocl_ventus_build_hash (cl_device_id device)
 {
   char* res = (char *)calloc(1000, sizeof(char));
-  snprintf(res, 1000, "THU-ventus-GPGPU");
+  snprintf(res, 1000, "THU-ventus-GPGPU\n");
   return res;
 }
 
