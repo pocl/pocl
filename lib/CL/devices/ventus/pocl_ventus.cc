@@ -101,7 +101,7 @@ static const char *ventus_other_compile_flags[] = {
 };
 
 static const char *ventus_objdump_flags[] = {
-  "-D",
+  "-d",
   "--mattr=+v",
 	NULL
 };
@@ -1052,8 +1052,8 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
   std::string llvm_dump_path=clang_string_path.substr(0,clang_string_path.length()-6);
 
   
-  ss2_cmd << llvm_dump_path <<"/../llvm-objdump ";
-	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
+  ss2_cmd << llvm_dump_path <<"/llvm-objdump ";
+	for(int i = 0; ventus_objdump_flags[i] != NULL; i++) {
 		ss2_cmd << ventus_objdump_flags[i] << " ";
 	}
     ss2_cmd << " object.riscv > object.dump " << std::endl;
