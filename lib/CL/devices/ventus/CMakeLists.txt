@@ -29,4 +29,4 @@ endif(MSVC)
 
 add_pocl_device_library("pocl-devices-ventus" pocl_ventus.h pocl_ventus.cc ventus.h)
 target_link_libraries(pocl-devices-ventus PRIVATE spike_driver)
-target_link_directories(pocl-devices-ventus PRIVATE ${CMAKE_INSTALL_PREFIX}/lib/ventus-driver)
+target_link_directories(pocl-devices-ventus PRIVATE ${CMAKE_INSTALL_PREFIX}/lib)
