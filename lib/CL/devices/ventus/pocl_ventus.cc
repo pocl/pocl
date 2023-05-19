@@ -242,7 +242,6 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->long_name = "Ventus GPGPU device";
   dev->vendor = "THU";
   dev->vendor_id = 0; // TODO: Update vendor id!
-  dev->version = "2.0";
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
