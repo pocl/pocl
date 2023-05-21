@@ -43,6 +43,33 @@ else()
 	set(CMAKE_CXX_STANDARD "${SUPPORTED_CXX_STD_VERSION}")
 endif()
 
+# if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
+# also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
+# since it takes DEFAULT_FEATURE_X=0 to mean "FEATURE_X is unavailable"
+macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQUESTED_DISABLING_FEATURE)
+
+  if(DEFINED ${VARNAME})
+    set(_CACHED "(cached)")
+  else()
+    set(_CACHED "")
+    set(${VARNAME} ${DEFAULT_${VARNAME}})
+  endif()
+
+  if(${VARNAME} AND (NOT ${DEFAULT_${VARNAME}}))
+    message(WARNING "${DOCS_FEATURE_IS_UNAVAILABLE}")
+    set(${VARNAME} 0)
+    set(_CACHED "(override)")
+  endif()
+  if((NOT ${VARNAME}) AND ${DEFAULT_${VARNAME}} )
+    message(STATUS "${DOCS_REQUESTED_DISABLING_FEATURE}")
+  endif()
+  if(${VARNAME})
+    message(STATUS "${DESCRIPTION} ${_CACHED}: 1")
+  else()
+    message(STATUS "${DESCRIPTION} ${_CACHED}: 0")
+  endif()
+endmacro()
+
 include(CheckCCompilerFlag)
 include(CPackComponent)
 macro(pass_through_cpack_vars)
@@ -399,22 +426,32 @@ else()
 endif()
 
 find_package(PkgConfig MODULE)
-find_package(Hwloc)
+
+if(NOT DEFINED DEFAULT_ENABLE_HWLOC)
+  find_package(Hwloc)
 
   if(NOT Hwloc_FOUND)
-    message(STATUS "hwloc package not found")
-    set(ENABLE_HWLOC OFF CACHE BOOL "Hwloc" FORCE)
+   message(STATUS "hwloc package not found")
+   set(DEFAULT_ENABLE_HWLOC OFF CACHE INTERNAL "default hwloc")
   else()
-      if("${Hwloc_VERSION}" VERSION_LESS "1.0")
-        message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
-      endif()
+     if("${Hwloc_VERSION}" VERSION_LESS "1.0")
+       message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
+     endif()
 
-      message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
-      message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
-      message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
+     message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
+     message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
+     message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
 
-      set(ENABLE_HWLOC ON CACHE BOOL "Hwloc" FORCE)
+     set(DEFAULT_ENABLE_HWLOC ON CACHE INTERNAL "default hwloc")
   endif()
+endif()
+
+option(ENABLE_HWLOC "Enable Portable Hardware Locality software package"
+        ${DEFAULT_ENABLE_HWLOC})
+setup_cached_var(ENABLE_HWLOC "Using hwloc"
+        "Requested build with hwloc, but no hwloc found!"
+        "Hwloc found, but requested build without it")
+
 
 
 include(sanitizers)
@@ -563,35 +600,6 @@ if (NOT MSVC)
 else()
     set(LINK_COMMAND "${CLANGXX}")
 endif()
-
-######################################################################################
-
-# if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
-# also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
-# since it takes DEFAULT_FEATURE_X=0 to mean "FEATURE_X is unavailable"
-macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQUESTED_DISABLING_FEATURE)
-
-  if(DEFINED ${VARNAME})
-    set(_CACHED "(cached)")
-  else()
-    set(_CACHED "")
-    set(${VARNAME} ${DEFAULT_${VARNAME}})
-  endif()
-
-  if(${VARNAME} AND (NOT ${DEFAULT_${VARNAME}}))
-    message(WARNING "${DOCS_FEATURE_IS_UNAVAILABLE}")
-    set(${VARNAME} 0)
-    set(_CACHED "(override)")
-  endif()
-  if((NOT ${VARNAME}) AND ${DEFAULT_${VARNAME}} )
-    message(STATUS "${DOCS_REQUESTED_DISABLING_FEATURE}")
-  endif()
-  if(${VARNAME})
-    message(STATUS "${DESCRIPTION} ${_CACHED}: 1")
-  else()
-    message(STATUS "${DESCRIPTION} ${_CACHED}: 0")
-  endif()
-endmacro()
 
 ######################################################################################
 
@@ -2130,6 +2138,7 @@ MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
+MESSAGE(STATUS "ENABLE_HWLOC: ${ENABLE_HWLOC}")
 
 MESSAGE(STATUS "ENABLE_IPO: ${ENABLE_IPO}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
