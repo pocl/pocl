@@ -92,6 +92,7 @@
 #include "level0/pocl-level0.h"
 #endif
 
+#define MAX_ENV_NAME_LEN 1024
 #define MAX_DEV_NAME_LEN 64
 
 #ifndef PATH_MAX
@@ -489,7 +490,7 @@ pocl_init_devices ()
 
   /* first time initialization */
   unsigned i, j, dev_index;
-  char env_name[1024];
+  char env_name[MAX_ENV_NAME_LEN] = { 0 };
   char dev_name[MAX_DEV_NAME_LEN] = { 0 };
 
   /* Set a global debug flag, so we don't have to call pocl_get_bool_option
@@ -626,7 +627,8 @@ pocl_init_devices ()
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
           POCL_GOTO_ERROR_ON (
-              (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j)
+              (snprintf (env_name, MAX_ENV_NAME_LEN,
+                         "POCL_%s%d_PARAMETERS", dev_name, j)
                < 0),
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
           errcode = pocl_devices[dev_index].ops->init (
