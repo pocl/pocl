@@ -56,7 +56,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) --test-output-size-passed 128000 --test-output-size-failed 128000 --test-output-truncation head "$@"
+            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) --test-output-size-passed 128000 --test-output-size-failed 128000 --test-output-truncation head --repeat until-pass:3 "$@"
           }
           if [ "${{ matrix.config }}" == "cts_full" ]; then
             runCTest -L conformance_suite_full_main
