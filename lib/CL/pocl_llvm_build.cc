@@ -312,8 +312,6 @@ int pocl_llvm_build_program(cl_program program,
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
-  size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
-
 #if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   ss << "-opaque-pointers ";
@@ -322,24 +320,35 @@ int pocl_llvm_build_program(cl_program program,
 #endif
 #endif
 
+  std::string fp_contract;
+  if (device->llvm_fp_contract_mode != NULL) {
+    fp_contract = std::string(device->llvm_fp_contract_mode);
+  } else {
+    fp_contract = "on";
+  }
+
+  size_t fastmath_flag = user_options.find("-cl-fast-relaxed-math");
+
   if (fastmath_flag != std::string::npos) {
 #ifdef ENABLE_CONFORMANCE
     user_options.replace(fastmath_flag, 21,
                          "-cl-finite-math-only -cl-unsafe-math-optimizations");
 #endif
     ss << "-D__FAST_RELAXED_MATH__=1 ";
+    fp_contract = "fast";
   }
 
-#ifdef ENABLE_CONFORMANCE
   size_t unsafemath_flag = user_options.find("-cl-unsafe-math-optimizations");
 
   if (unsafemath_flag != std::string::npos) {
+#ifdef ENABLE_CONFORMANCE
     // this should be almost the same but disables -freciprocal-math.
     // required for conformance_math_divide test to pass with OpenCL 3.0
     user_options.replace(unsafemath_flag, 29,
                          "-cl-no-signed-zeros -cl-mad-enable -ffp-contract=fast");
-  }
 #endif
+    fp_contract = "fast";
+  }
 
   ss << user_options << " ";
 
@@ -394,16 +403,6 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   ss << "-fno-builtin ";
-  /* with fp-contract=on we get calls to fma with processors which do not
-   * have fma instructions. These ruin the performance.
-   *
-   * TODO find out which processors. Seems to be at least TCE
-   *
-   * default fp-contract is "on" which means "enable if enabled by a pragma".
-   */
-  llvm::Triple triple (device->llvm_target_triplet);
-  if (triple.getArch () == Triple::tce)
-    ss << "-ffp-contract=off ";
 
   // This is required otherwise the initialization fails with
   // unknown triple ''
@@ -491,6 +490,7 @@ int pocl_llvm_build_program(cl_program program,
 
   LangOptions *la = pocl_build.getLangOpts();
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+  llvm::Triple triple (device->llvm_target_triplet);
 
 #ifndef LLVM_OLDER_THAN_15_0
   LangOptions::setLangDefaults(*la, clang::Language::OpenCL, triple,
@@ -518,6 +518,28 @@ int pocl_llvm_build_program(cl_program program,
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
+
+  // setLangDefaults overrides to FPM_On for OpenCL.
+  // So, we need to manually set it after
+  if (fp_contract == "fast") {
+#ifndef LLVM_OLDER_THAN_11_0
+    la->setDefaultFPContractMode(LangOptions::FPM_Fast);
+#else
+    la->setDefaultFPContractMode(LangOptions::FPC_Fast);
+#endif
+  } else if (fp_contract == "on") {
+#ifndef LLVM_OLDER_THAN_11_0
+    la->setDefaultFPContractMode(LangOptions::FPM_On);
+#else
+    la->setDefaultFPContractMode(LangOptions::FPC_On);
+#endif
+  } else if (fp_contract == "off") {
+#ifndef LLVM_OLDER_THAN_11_0
+    la->setDefaultFPContractMode(LangOptions::FPM_Off);
+#else
+    la->setDefaultFPContractMode(LangOptions::FPC_Off);
+#endif
+  }
 
   la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
 

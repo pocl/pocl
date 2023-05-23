@@ -1052,6 +1052,7 @@ struct _cl_device_id {
 
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
+  const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
   /* A running number (starting from zero) across all the device instances.
      Used for indexing arrays in data structures with device specific
      entries. */
