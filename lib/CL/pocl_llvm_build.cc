@@ -525,19 +525,19 @@ int pocl_llvm_build_program(cl_program program,
 #ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_Fast);
 #else
-    la->setDefaultFPContractMode(LangOptions::FCM_Fast);
+    la->setDefaultFPContractMode(LangOptions::FPC_Fast);
 #endif
   } else if (fp_contract == "on") {
 #ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_On);
 #else
-    la->setDefaultFPContractMode(LangOptions::FCM_On);
+    la->setDefaultFPContractMode(LangOptions::FPC_On);
 #endif
   } else if (fp_contract == "off") {
 #ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_Off);
 #else
-    la->setDefaultFPContractMode(LangOptions::FCM_Off);
+    la->setDefaultFPContractMode(LangOptions::FPC_Off);
 #endif
   }
 
