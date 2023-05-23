@@ -702,7 +702,7 @@ uint64_t abuf_size = 0;
   assert(0 == err);
 
   // wait for the execution to complete
-  err = vt_ready_wait(d->vt_device, -1);
+  err = vt_ready_wait(d->vt_device, 1000);
   assert(0 == err);
 
   // move print buffer back or wait to read?     
@@ -1009,7 +1009,10 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
 		ss_cmd << ventus_other_compile_flags[i] << " ";
 	}
-        ss_cmd << " -o " << "object.riscv" << std::endl;
+#ifndef POCL_DEBUG_FLAG_GENERAL
+	ss_cmd << " -w ";
+#endif
+	ss_cmd << " -o " << "object.riscv" << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
 	FILE *fp = popen(ss_cmd.str().c_str(), "r");
