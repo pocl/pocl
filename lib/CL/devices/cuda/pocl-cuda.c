@@ -1675,7 +1675,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
   unsigned arg_index = meta->num_args;
 
-  if (meta->num_locals != 0)
+  if (sharedMemBytes != 0)
     {
       /* Deal with automatic local allocations if there are local function args
        */
