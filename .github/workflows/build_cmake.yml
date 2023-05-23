@@ -14,6 +14,7 @@ on:
 
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
+  CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000"
   POCL_KERNEL_CACHE: "0"
   POCL_MAX_WORK_GROUP_SIZE: "1024"
   POCL_MEMORY_LIMIT: "2"
@@ -30,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [15]
+        llvm: [15, 16]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
@@ -85,6 +86,8 @@ jobs:
 
       - name: Run Build
         id: build
+        # ocassionally, build seems to get stuck in git-pull of the CTS
+        timeout-minutes: 40
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
           if [ "${{ matrix.config }}" == "cts_spirv" ] || [ "${{ matrix.config }}" == "tier1" ]; then
@@ -95,7 +98,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) "$@"
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -124,8 +127,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for now, only 15, although it supports also 14 & 16
-        llvm: [15]
+        llvm: [15, 16]
         config: [cuda]
 
     steps:
@@ -156,7 +158,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests --output-on-failure
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS
 
   openasip_test:
     env:
@@ -204,7 +206,7 @@ jobs:
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "openasip" ]; then
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests --output-on-failure
+            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests $CTEST_FLAGS
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -242,16 +244,17 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_vulkan_tests --output-on-failure
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_vulkan_tests $CTEST_FLAGS
 
 
-  arm64_matrix:
+  # only for LLVM up to 15
+  arm64_old_matrix:
     name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
     runs-on: [self-hosted, linux, arm64, debian]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [14, 15]
+        llvm: [15]
         config: [basic]
 
     steps:
@@ -281,7 +284,50 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest --output-on-failure -j$(nproc) -E test_shuffle_half_
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E test_shuffle_half_
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          runCTest -L internal
+
+  # this one is only for LLVM 16+
+  arm64_new_matrix:
+    name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
+    runs-on: [self-hosted, linux, arm64, ubuntu]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16]
+        config: [basic]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          runCMake -DENABLE_ICD=1
+
+      - name: Run Build
+        id: build
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E test_shuffle_half_
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -294,7 +340,7 @@ jobs:
       fail-fast: false
       matrix:
         # for now, only 15, it supports also 14 but NOT 16
-        llvm: [15]
+        llvm: [14, 15]
         config: [level_zero]
 
     steps:
@@ -328,4 +374,4 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 --output-on-failure -E 'test_hadd_|test_sampler_address_clam|test_alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E 'test_hadd_|test_sampler_address_clam|test_alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
