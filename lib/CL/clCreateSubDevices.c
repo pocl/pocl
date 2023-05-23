@@ -48,6 +48,8 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    cl_uint num_props = 0;
    cl_uint i;
 
+   //unsigned yo = offsetof(struct _cl_device_id, ops);
+
    POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (in_device)), CL_INVALID_DEVICE);
    POCL_GOTO_ERROR_COND((properties == NULL), CL_INVALID_VALUE);
    POCL_GOTO_ERROR_COND((num_devices && !out_devices), CL_INVALID_VALUE);
