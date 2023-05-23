@@ -289,7 +289,7 @@ bool isLocalMemFunctionArg(llvm::Function *F, unsigned ArgIndex) {
            SPIR_ADDRESS_SPACE_LOCAL;
 }
 
-bool isProgramScopeVariable(GlobalVariable &GVar) {
+bool isProgramScopeVariable(GlobalVariable &GVar, unsigned DeviceLocalAS) {
 
   bool retval = false;
 
@@ -299,7 +299,7 @@ bool isProgramScopeVariable(GlobalVariable &GVar) {
     goto END;
   }
 
-  // global variables from direct Clang compilation have external
+  // program-scope variables from direct Clang compilation have external
   // linkage with Target AS numbers
   if (GVar.getLinkage() == GlobalValue::LinkageTypes::ExternalLinkage) {
     retval = true;
@@ -317,20 +317,36 @@ bool isProgramScopeVariable(GlobalVariable &GVar) {
     std::cerr << "isProgramScopeVariable: checking internal linkage\n";
 #endif
     PointerType *GVarT = GVar.getType();
-    int AddrSpace = GVarT->getAddressSpace();
-
-    if (AddrSpace < 0) {
-#ifdef DEBUG_LLVM_UTILS
-      std::cerr << "isProgramScopeVariable: not a pointer\n";
-#endif
-      goto END;
-    }
+    assert(GVarT != nullptr);
+    unsigned AddrSpace = GVarT->getAddressSpace();
 
     if (AddrSpace == SPIR_ADDRESS_SPACE_GLOBAL) {
+#ifdef DEBUG_LLVM_UTILS
+      std::cerr << "isProgramScopeVariable: AS = SPIR Global AS\n";
+#endif
       if (!GVar.hasName()) {
         GVar.setName("__anonymous_gvar");
       }
       retval = true;
+    }
+
+    // variables in local AS cannot have initializer (OpenCL standard).
+    // for CPU target, Local AS = Global AS = 0, and
+    // function-scope variables ("static global X = {...};")
+    // must be recognized as program-scope variables
+    if (GVar.hasInitializer()) {
+      Constant *C = GVar.getInitializer();
+      bool isUndef = isa<UndefValue>(C);
+      if (AddrSpace == DeviceLocalAS && !isUndef) {
+#ifdef DEBUG_LLVM_UTILS
+        std::cerr << "isProgramScopeVariable: AS = device's Local AS && "
+                     "isUndef == false\n";
+#endif
+        if (!GVar.hasName()) {
+          GVar.setName("__anonymous_gvar");
+        }
+        retval = true;
+      }
     }
   }
 

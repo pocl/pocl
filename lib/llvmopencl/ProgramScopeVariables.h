@@ -30,7 +30,8 @@
 #endif
 
 int runProgramScopeVariablesPass(llvm::Module *Program, unsigned DeviceGlobalAS,
-                                 size_t &TotalGVarSize, std::string &Log);
+                                 unsigned DeviceLocalAS, size_t &TotalGVarSize,
+                                 std::string &Log);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

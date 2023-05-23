@@ -30,6 +30,7 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm_api.h"
+#include "pocl_spir.h"
 #include "pocl_util.h"
 
 #include <iostream>
@@ -398,7 +399,8 @@ public:
     ProgramGVarsNonKernelsBC->setDataLayout(ProgramBC->getDataLayout());
 
     if (!moveProgramScopeVarsOutOfProgramBc(&LLVMCtx, ProgramBC.get(),
-                                            ProgramGVarsNonKernelsBC.get()))
+                                            ProgramGVarsNonKernelsBC.get(),
+                                            SPIR_ADDRESS_SPACE_LOCAL))
       return false;
 
     pocl_cache_tempname(LinkinOutputBCPath, ".bc", NULL);

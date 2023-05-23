@@ -181,7 +181,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
 #ifndef LLVM_OLDER_THAN_14_0
   if (Device->program_scope_variables_pass) {
     size_t TotalGVarBytes = 0;
-    if (runProgramScopeVariablesPass(Mod, Device->global_as_id, TotalGVarBytes, Log))
+    if (runProgramScopeVariablesPass(Mod, Device->global_as_id,
+                                     Device->local_as_id, TotalGVarBytes, Log))
       return true;
     Program->global_var_total_size[device_i] = TotalGVarBytes;
   }
