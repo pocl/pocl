@@ -328,6 +328,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->address_bits = (sizeof (void *) * 8);
 
   dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
+  dev->llvm_fp_contract_mode = "fast";
 
   dev->spmd = CL_TRUE;
   dev->workgroup_pass = CL_FALSE;
