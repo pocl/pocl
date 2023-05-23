@@ -290,6 +290,11 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   dev->final_linkage_flags = ventus_final_ld_flags;
 
+  // float rounding mode
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+                          | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
+                          | CL_FP_DENORM;
+
   // TODO: Do we have builtin kernels for Ventus?
 
 #ifdef ENABLE_LLVM
@@ -358,7 +363,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   struct pocl_context *pc = &cmd->command.run.pc;
   int err;
 
-    uint64_t num_thread=8;
+    uint64_t num_thread=32;
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
     uint64_t num_workgroups[3];
     num_workgroups[0]=pc->num_groups[0];num_workgroups[1]=pc->num_groups[1];num_workgroups[2]=pc->num_groups[2];
