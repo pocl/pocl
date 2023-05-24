@@ -969,7 +969,11 @@ int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
       if (Alignments[i] == 0)
         Alignments[i] = MAX_EXTENDED_ALIGNMENT;
     } else {
+#ifdef LLVM_OLDER_THAN_16_0
       Alignments[i] = Arg.getParamAlignment();
+#else
+      Alignments[i] = Arg.getParamAlign().valueOrOne().value();
+#endif
     }
   }
 
