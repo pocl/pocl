@@ -148,7 +148,7 @@ if [ -e "${CL_DEV_INFO}" ]; then
   fi
 
   if [[ "$CL_DEVICE_VERSION" =~ "PoCL" ]] && [ "$CL_IS_30" = "true" ]; then
-    if [[ "$CL_DEVICE_VERSION" =~ "basic" ]] || [[ "$CL_DEVICE_VERSION" =~ "pthread" ]]; then
+    if [[ "$CL_DEVICE_VERSION" =~ "basic" ]] || [[ "$CL_DEVICE_VERSION" =~ "pthread" ]] || [[ "$CL_DEVICE_VERSION" =~ "cpu" ]]; then
       CL_EXT_DEFS="${CL_EXT_DEFS} -D__opencl_c_named_address_space_builtins=1 -D__opencl_c_int64=1 -D__opencl_c_atomic_order_acq_rel=1 -D__opencl_c_atomic_order_seq_cst=1 -D__opencl_c_atomic_scope_device=1 -D__opencl_c_program_scope_global_variables=1 -D__opencl_c_generic_address_space=1"
       CL_EXTS="${CL_EXTS},+__opencl_c_named_address_space_builtins,+__opencl_c_int64,+__opencl_c_atomic_order_acq_rel,+__opencl_c_atomic_order_seq_cst,+__opencl_c_atomic_scope_device,+__opencl_c_program_scope_global_variables,+__opencl_c_generic_address_space"
     fi
