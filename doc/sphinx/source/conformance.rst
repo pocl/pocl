@@ -24,7 +24,7 @@ Conformance related CMake options
 Supported & Unsupported optional OpenCL 3.0 features
 ------------------------------------------------------
 
-This list is only related to CPU devices (basic & pthread drivers).
+This list is only related to CPU devices (cpu & cpu-minimal drivers).
 Other drivers (CUDA, TCE etc) only support 1.2 partially.
 Note that 3.0 support on CPU devices requires LLVM 14 or newer.
 

@@ -162,11 +162,11 @@ built version. It should be executed in the build root, typically::
 
   . ../tools/scripts/devel-envs.sh
 
-Target and Host CPU Architectures for 'basic' and 'pthread' Devices
+Target and Host CPU Architectures for CPU Devices
 -------------------------------------------------------------------
 
 By default, pocl build system compiles the kernel libraries for
-the host CPU architecture, to be used by 'basic' and 'pthread' devices.
+the host CPU architecture, to be used by CPU devices ('cpu' and 'cpu-minimal').
 
 LLVM is used to detect the CPU variant to be used as target. This 
 can be overridden by passing -DLLC_HOST_CPU=... to CMake. See the
@@ -175,7 +175,7 @@ documentation for LLC_HOST_CPU build option.
 Cross-compilation where 'build' is different from 'host' has not been
 tested.
 Cross-compilation where 'host' is a different architecture from 'target'
-has not been tested for 'basic' and 'pthread' devices. 
+has not been tested for CPU devices.
 
 Writing Documentation
 ---------------------
