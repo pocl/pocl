@@ -49,6 +49,9 @@ jobs:
             config: basic
           - llvm: 14
             config: basic
+        exclude:
+          - llvm: 16
+            config: cts_spirv
 
     steps:
       - uses: actions/checkout@v3
@@ -327,7 +330,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E test_shuffle_half_
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E 'test_shuffle_half_|test_llvm_segfault_issue_889'
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}

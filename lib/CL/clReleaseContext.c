@@ -68,9 +68,15 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
             POname (clReleaseCommandQueue) (context->default_queues[i]);
           if (dev->ops->free_context)
             dev->ops->free_context (dev, context);
-          POname (clReleaseDevice) (context->devices[i]);
         }
 
+
+      for (i = 0; i < context->num_create_devices; ++i)
+      {
+        POname (clReleaseDevice) (context->create_devices[i]);
+      }
+
+      POCL_MEM_FREE (context->create_devices);
       POCL_MEM_FREE (context->default_queues);
       POCL_MEM_FREE (context->devices);
       POCL_MEM_FREE (context->properties);

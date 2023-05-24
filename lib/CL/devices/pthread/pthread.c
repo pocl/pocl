@@ -73,7 +73,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 {
   pocl_basic_init_device_ops(ops);
 
-  ops->device_name = "pthread";
+  ops->device_name = "cpu";
 
   /* implementation that differs from basic */
   ops->probe = pocl_pthread_probe;
@@ -101,7 +101,7 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH,
+  snprintf (res, 1000, "cpu-%s-%s", HOST_DEVICE_BUILD_HASH,
             device->llvm_cpu);
   return res;
 }
@@ -110,6 +110,11 @@ unsigned int
 pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* for backwards compatibility */
+  if (env_count <= 0)
+    env_count = pocl_device_get_env_count("pthread");
+
   /* Env was not specified, default behavior was to use 1 pthread device */
   if (env_count < 0)
     return 1;
@@ -224,15 +229,26 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (err)
     return CL_INVALID_DEVICE;
 
-  /* device->max_compute_units was set up by topology_detect,
-   * but if the user requests, lower it */
+  /* if hwloc/topology detection failed, use a fixed maximum */
   int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
                                                   : device->max_compute_units;
-  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+
+  /* device->max_compute_units was set up by topology_detect,
+   * but if the user requests, lower it */
+
+  /* old env variable */
+  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+
+  if (max_threads < 0)
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_COUNT", fallback);
+
+  /* old env variable */
+  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1);
+  if (min_threads < 0)
+    min_threads = pocl_get_int_option ("POCL_CPU_MIN_COUNT", 1);
 
   device->max_compute_units
-      = max ((unsigned)max_thr,
-             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
+      = max ((unsigned)max_threads, (unsigned)min_threads);
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);

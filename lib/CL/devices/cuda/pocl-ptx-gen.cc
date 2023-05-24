@@ -56,6 +56,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include <set>
+#include <optional>
 
 namespace llvm {
 extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
@@ -137,9 +138,13 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   llvm::TargetOptions Options;
 
   // TODO: CPU and features?
+#ifdef LLVM_OLDER_THAN_16_0
   std::unique_ptr<llvm::TargetMachine> Machine(
       Target->createTargetMachine(Triple, Arch, "+ptx40", Options, llvm::None));
-
+#else
+  std::unique_ptr<llvm::TargetMachine> Machine(
+      Target->createTargetMachine(Triple, Arch, "+ptx40", Options, std::nullopt));
+#endif
   llvm::legacy::PassManager Passes;
 
   // Add pass to emit PTX.
@@ -227,8 +232,12 @@ void fixPrintF(llvm::Module *Module) {
   NewPrintF->takeName(OldPrintF);
 
   // Take function body from old function.
+#ifdef LLVM_OLDER_THAN_16_0
   NewPrintF->getBasicBlockList().splice(NewPrintF->begin(),
                                         OldPrintF->getBasicBlockList());
+#else
+  NewPrintF->splice(NewPrintF->begin(), OldPrintF);
+#endif
 
   // Create i32 to hold current argument index.
 #ifdef LLVM_OLDER_THAN_11_0
@@ -960,7 +969,11 @@ int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
       if (Alignments[i] == 0)
         Alignments[i] = MAX_EXTENDED_ALIGNMENT;
     } else {
+#ifdef LLVM_OLDER_THAN_16_0
       Alignments[i] = Arg.getParamAlignment();
+#else
+      Alignments[i] = Arg.getParamAlign().valueOrOne().value();
+#endif
     }
   }
 

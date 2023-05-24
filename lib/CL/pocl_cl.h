@@ -1249,6 +1249,10 @@ struct _cl_context {
   unsigned num_devices;
   unsigned num_properties;
 
+  /* the original device list given to clCreateContext,
+   * required for */
+  cl_device_id *create_devices;
+  unsigned num_create_devices;
   /*********************************************************************/
   /* these values depend on which devices are in context;
    * they're calculated by pocl_setup_context() */

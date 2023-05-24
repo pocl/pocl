@@ -82,7 +82,7 @@ typedef struct _pocl_basic_usm_allocation_t
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
-  ops->device_name = "basic";
+  ops->device_name = "cpu-minimal";
 
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
@@ -163,7 +163,7 @@ char *
 pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH,
+  snprintf (res, 1000, "cpu-minimal-%s-%s", HOST_DEVICE_BUILD_HASH,
             device->llvm_cpu);
   return res;
 }
@@ -172,6 +172,10 @@ unsigned int
 pocl_basic_probe(struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* for backwards compatibility */
+  if (env_count <= 0)
+    env_count = pocl_device_get_env_count("basic");
 
   /* No env specified, so pthread will be used instead of basic */
   if(env_count < 0)
@@ -190,7 +194,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   if (first_basic_init)
     {
-      POCL_MSG_WARN ("INIT dlcache DOTO delete\n");
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
     }
@@ -688,7 +691,7 @@ cl_int pocl_basic_copy_image_rect( void *data,
   const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
 
   POCL_MSG_PRINT_MEMORY (
-      " BASIC COPY IMAGE RECT \n"
+      "CPU: COPY IMAGE RECT \n"
       "dst_image %p dst_mem_id %p \n"
       "src_image %p src_mem_id %p \n"
       "dst_origin [0,1,2] %zu %zu %zu \n"
@@ -723,7 +726,7 @@ cl_int pocl_basic_write_image_rect (  void *data,
                                       size_t src_offset)
 {
   POCL_MSG_PRINT_MEMORY (
-      "BASIC WRITE IMAGE RECT \n"
+      "CPU: WRITE IMAGE RECT \n"
       "dst_image %p dst_mem_id %p \n"
       "src_hostptr %p src_mem_id %p \n"
       "origin [0,1,2] %zu %zu %zu \n"
@@ -768,7 +771,7 @@ cl_int pocl_basic_read_image_rect(  void *data,
                                     size_t dst_offset)
 {
   POCL_MSG_PRINT_MEMORY (
-      "BASIC READ IMAGE RECT \n"
+      "CPU: READ IMAGE RECT \n"
       "src_image %p src_mem_id %p \n"
       "dst_hostptr %p dst_mem_id %p \n"
       "origin [0,1,2] %zu %zu %zu \n"
@@ -841,7 +844,7 @@ pocl_basic_fill_image (void *data, cl_mem image,
                        const size_t *region, cl_uint4 orig_pixel,
                        pixel_t fill_pixel, size_t pixel_size)
 {
-   POCL_MSG_PRINT_MEMORY ("BASIC / FILL IMAGE \n"
+   POCL_MSG_PRINT_MEMORY ("CPU: FILL IMAGE \n"
                           "image %p data %p \n"
                           "origin [0,1,2] %zu %zu %zu \n"
                           "region [0,1,2] %zu %zu %zu \n"

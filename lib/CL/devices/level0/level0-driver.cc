@@ -28,6 +28,7 @@
 #include "pocl_cache.h"
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
+#include "pocl_spir.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 
@@ -1514,6 +1515,10 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   ClDev->linker_available = CL_TRUE;
   ClDev->has_own_timer = CL_TRUE;
   ClDev->use_only_clang_opencl_headers = CL_TRUE;
+
+  ClDev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
+  ClDev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
+  ClDev->global_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
 
   // TODO the values here are copied from the Intel NEO.
   // we need a way to figure out the suitable values for

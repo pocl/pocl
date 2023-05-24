@@ -239,13 +239,13 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
 // determines which ones are OpenCL program-scope variables
 // and checks all of those have definitions
 static bool areAllGvarsDefined(Module *Program, std::string &log,
-                               GVarSetT &GVarSet) {
+                               GVarSetT &GVarSet, unsigned DeviceLocalAS) {
 
   bool FoundAllReferences = true;
 
   for (GlobalVariable &GVar : Program->globals()) {
 
-    if (isProgramScopeVariable(GVar)) {
+    if (isProgramScopeVariable(GVar, DeviceLocalAS)) {
 
       assert(GVar.hasName());
       // adding GV declarations to the module also changes
@@ -537,12 +537,11 @@ static void eraseMappedGlobalVariables(GVarSetT &GVarSet) {
 
 using namespace pocl;
 
-
-
-int runProgramScopeVariablesPass(Module *Program,
-                                 unsigned DeviceGlobalAS, // the Target Global AS, not SPIR Global AS
-                                 size_t &TotalGVarSize,
-                                 std::string &Log) {
+int runProgramScopeVariablesPass(
+    Module *Program,
+    unsigned DeviceGlobalAS, // the Target Global AS, not SPIR AS
+    unsigned DeviceLocalAS,  // the Target Local AS, not SPIR AS
+    size_t &TotalGVarSize, std::string &Log) {
 
   assert(Program);
   GVarSetT GVarSet;
@@ -550,7 +549,7 @@ int runProgramScopeVariablesPass(Module *Program,
   LLVMContext &Ctx = Program->getContext();
   const DataLayout &DL = Program->getDataLayout();
 
-  if (!areAllGvarsDefined(Program, Log, GVarSet))
+  if (!areAllGvarsDefined(Program, Log, GVarSet, DeviceLocalAS))
     return -1;
 
   if (GVarSet.empty()) {
@@ -586,6 +585,5 @@ int runProgramScopeVariablesPass(Module *Program,
 
   return 0;
 }
-
 
 #endif

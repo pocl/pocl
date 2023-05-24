@@ -149,7 +149,7 @@ pocl.
 
 - **POCL_CPU_LOCAL_MEM_SIZE**
 
- Set the local memory size of the CPU devices (pthread, basic) to the
+ Set the local memory size of the CPU devices (cpu, cpu-minimal) to the
  given amount in bytes instead of the default one.
 
 - **POCL_DEBUG**
@@ -174,11 +174,11 @@ pocl.
  POCL_DEVICES is a space separated list of the device instances to be enabled.
  This environment variable is used for the following devices:
 
- *         **basic**    A minimalistic example device driver for executing
-                        kernels on the host CPU. No multithreading.
+ *         **cpu-minimal** A minimalistic example device driver for executing
+                           kernels on the host CPU. No multithreading.
 
- *         **pthread**  Native kernel execution on the host CPU with
-                        threaded execution of work groups using pthreads.
+ *         **cpu**      Execution of OpenCL kernels on the host CPU using
+                        all CPU threads.
 
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
 
@@ -267,7 +267,7 @@ pocl.
 - **POCL_MEMORY_LIMIT**
 
  Integer option, unit: gigabytes. Limits the total global memory size
- reported by pocl for the pthread/basic devices (this will also affect
+ reported by pocl for the CPU devices (this will also affect
  local/constant/max-alloc-size numbers, since these are derived from
  global mem size).
 

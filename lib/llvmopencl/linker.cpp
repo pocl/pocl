@@ -455,7 +455,8 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
 
 bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
                                         llvm::Module *ProgramBC,
-                                        llvm::Module *OutputBC) {
+                                        llvm::Module *OutputBC,
+                                        unsigned DeviceLocalAS) {
 
   ValueToValueMapTy VVM;
   llvm::Module::global_iterator GI, GE;
@@ -471,7 +472,7 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
         GI->getThreadLocalMode(), GI->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*GI);
     // for program scope vars, change linkage to external
-    if (isProgramScopeVariable(*GV)) {
+    if (isProgramScopeVariable(*GV, DeviceLocalAS)) {
       GV->setDSOLocal(false);
       GV->setLinkage(GlobalValue::LinkageTypes::ExternalLinkage);
     }
@@ -494,7 +495,7 @@ bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,
   // adding new GVars into the Module during iteration
   for (auto GI : ProgramGVars) {
     DB_PRINT(" %s\n", GI->getName().data());
-    if (isProgramScopeVariable(*GI)) {
+    if (isProgramScopeVariable(*GI, DeviceLocalAS)) {
       std::string OrigName = GI->getName().str();
       GI->setName(Twine(OrigName, "__old"));
       GlobalVariable *NewGV = new GlobalVariable(
