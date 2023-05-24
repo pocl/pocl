@@ -49,6 +49,9 @@ jobs:
             config: basic
           - llvm: 14
             config: basic
+        exclude:
+          - llvm: 16
+            config: cts_spirv
 
     steps:
       - uses: actions/checkout@v3
