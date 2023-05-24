@@ -43,7 +43,8 @@ Notable User Facing Changes
   causing division-by-zero, only if it occured in one of the CPU driver
   threads; so division-by-zero errors are no longer hidden in user threads.
 - POCL_CUDA_VERIFY_MODULE env variable has been replaced by POCL_LLVM_VERIFY
-- CUDA: compilation now defaults to -ffp-contract=fast, previously it was off
+- CUDA: compilation now defaults to `-ffp-contract=fast`, previously it was `-ffp-contract=on`.
+- `-cl-fast-relaxed-math` now defaults to `-ffp-contract=fast`, previously it was `-ffp-contract=on`.
 - CPU drivers: renamed 'basic' to 'cpu-minimal' and 'pthread' driver to 'cpu',
   to reflect the hardware they're driving instead of implementation details.
 
