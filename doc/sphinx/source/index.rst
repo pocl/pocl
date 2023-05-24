@@ -15,6 +15,7 @@ Contents:
    using
    features
    debug
+   sycl_with_pocl_arm
    faq
    development
    design
