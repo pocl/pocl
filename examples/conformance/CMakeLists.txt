@@ -2252,6 +2252,7 @@ set(OCL_30_TESTS_MICRO
     "${TS_NAME}${TS_SUFFIX}_device_timer"
     "${TS_NAME}${TS_SUFFIX}_integer_ops_ocl_30"
     "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
+    "${TS_NAME}${TS_SUFFIX}_subgroups_1"
     "${TS_NAME}${TS_SUFFIX}_SVM_1"
     "${TS_NAME}${TS_SUFFIX}_SVM_2"
 )

@@ -293,7 +293,7 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
 endif()
 
 
-if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
 endif()
 

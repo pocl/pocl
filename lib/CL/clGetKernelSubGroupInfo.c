@@ -72,6 +72,11 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetKernelSubGroupInfo) (
                             CL_INVALID_VALUE, "NDRange not given.");
     }
 
+  POCL_RETURN_ERROR_ON (
+      (strstr (realdev->extensions, "cl_khr_subgroup") == NULL),
+      CL_INVALID_OPERATION,
+      "device does not support any subgroup extensions\n");
+
   /************************************************************************/
 
   switch (param_name)
