@@ -142,6 +142,6 @@ add_test(NAME "${TS_NAME}"
 
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  ENVIRONMENT "POCL_MAX_PTHREAD_COUNT=1"
+  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chip-spv")

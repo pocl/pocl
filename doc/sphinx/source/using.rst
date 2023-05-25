@@ -85,11 +85,10 @@ pocl.
 
 - **POCL_AFFINITY**
 
-  Linux-only, specific to pthread driver. If set to 1, each thread of
-  the pthread CPU driver sets its affinity to its index. This may be
-  useful with very long running kernels, or when using subdevices
-  (lets any idle cores enter deeper sleep). Defaults to 0 (most
-  people don't need this).
+  Linux-only, specific to 'cpu' driver. If set to 1, each thread of
+  the driver sets its affinity to its index. This may be useful
+  with very long running kernels, or when using subdevices.
+  Defaults to 0 (most people don't need this).
 
 - **POCL_BINARY_SPECIALIZE_WG**
 
@@ -178,7 +177,7 @@ pocl.
                            kernels on the host CPU. No multithreading.
 
  *         **cpu**      Execution of OpenCL kernels on the host CPU using
-                        all CPU threads.
+                        (by default) all available CPU threads.
 
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
 
@@ -195,16 +194,16 @@ pocl.
 
  *         **level0**   An experimental driver that uses libze to execute on Intel GPUs.
 
- If POCL_DEVICES is not set, one pthread device will be used.
+ If POCL_DEVICES is not set, one cpu device will be used.
  To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
  environment variable can be specified (where drivername is in uppercase).
  Example::
 
-  export POCL_DEVICES="pthread ttasim ttasim"
+  export POCL_DEVICES="cpu ttasim ttasim"
   export POCL_TTASIM0_PARAMETERS="/path/to/my/machine0.adf"
   export POCL_TTASIM1_PARAMETERS="/path/to/my/machine1.adf"
 
- Creates three devices, one CPU device with pthread multithreading and two
+ Creates three devices, one 'cpu' device with multithreading and two
  TTA device simulated with the ttasim. The ttasim devices gets a path to
  the architecture description file of the tta to simulate as a parameter.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
@@ -252,10 +251,10 @@ pocl.
   kernel bitcode (parallel.bc) only with some drivers).
   Defaults to 0 if CMAKE_BUILD_TYPE=Debug and 1 otherwise.
 
-- **POCL_MAX_PTHREAD_COUNT**
+- **POCL_CPU_MAX_CU_COUNT**
 
  The maximum number of threads created for work group execution in the
- pthread device driver. The default is to determine this from the number of
+ 'cpu' device driver. The default is to determine this from the number of
  hardware threads available in the CPU.
 
 - **POCL_MAX_WORK_GROUP_SIZE**

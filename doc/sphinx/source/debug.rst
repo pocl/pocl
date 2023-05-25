@@ -91,8 +91,8 @@ Setup:
     This will cause all kernels to compile with debuginfo.
   * ``export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1``
     This will leave the source files in PoCL's cache.
-  * Optional: ``export POCL_MAX_PTHREAD_COUNT=1``
-    This limits the pthread driver to a single worker thread.
+  * Optional: ``export POCL_CPU_MAX_CU_COUNT=1``
+    This limits the cpu driver to a single worker thread.
   * Run your application with gdb, as usual.
 
 Example 1:
@@ -160,7 +160,7 @@ Example 2:
 
 Lets say we want to step the "dot_product" kernel from the previous example. Launch gdb::
 
-    POCL_MAX_PTHREAD_COUNT=1 gdb ./example
+    POCL_CPU_MAX_CU_COUNT=1 gdb ./example
 
 Make a breakpoint on the kernel name::
 

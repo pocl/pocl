@@ -237,15 +237,15 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
    * but if the user requests, lower it */
 
   /* old env variable */
-  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
 
-  if (max_threads < 0)
-    max_threads = pocl_get_int_option ("POCL_CPU_MAX_COUNT", fallback);
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", fallback);
 
   /* old env variable */
-  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1);
-  if (min_threads < 0)
-    min_threads = pocl_get_int_option ("POCL_CPU_MIN_COUNT", 1);
+  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 0);
+  if (min_threads <= 0)
+    min_threads = pocl_get_int_option ("POCL_CPU_MIN_CU_COUNT", 1);
 
   device->max_compute_units
       = max ((unsigned)max_threads, (unsigned)min_threads);
