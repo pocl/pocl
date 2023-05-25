@@ -1017,6 +1017,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 #ifndef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
+        ss_cmd << program->compiler_options << " ";
 	ss_cmd << " -o " << "object.riscv" << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
