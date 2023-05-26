@@ -118,7 +118,8 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
                              Value *GVarBuffer, Type *GVarBufferTy,
                              GVarSetT &GVarSet, // for replacements
                              GVarUlongMapT &GVarOffsets,
-                             Const2InstMapT &InsnCache) {
+                             Const2InstMapT &InsnCache,
+                             unsigned DeviceGlobalAS) {
   if (InsnCache.count(C))
     return InsnCache[C];
 
@@ -141,9 +142,20 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
       Value *GVarPtrWithOffset =
           Builder.CreateGEP(GVarBufferTy, GVarBuffer, Indices,
                             Twine{"_pocl_gvar_with_offset_", GVarName});
-      // TODO addrspacecast
+
+      // AScast from DeviceGlobalAS to use's AS
+      // %0 = addrspacecast ptr %_pocl_gvar_with_offset_GVAR to ptr addrspace(1)
+      if (GVar->getAddressSpace() != DeviceGlobalAS) {
+        GVarPtrWithOffset = Builder.CreateAddrSpaceCast(
+            GVarPtrWithOffset,
+            PointerType::get(GVarBufferTy, GVar->getAddressSpace()));
+      }
+      // bitcast to final pointer type if needed
+#ifndef LLVM_OPAQUE_POINTERS
       GVarPtrWithOffset =
           Builder.CreateBitCast(GVarPtrWithOffset, GVar->getType());
+#endif
+
       Instruction *I = cast<Instruction>(GVarPtrWithOffset);
       InsnCache[GVar] = I;
       return I;
@@ -157,8 +169,9 @@ static Value *expandConstant(Constant *C, IRBuilder<> &Builder,
     SmallVector<Value *, 4> Ops; // Collect potentially expanded operands.
     bool AnyOpExpanded = false;
     for (Value *Op : CE->operand_values()) {
-      Value *V = expandConstant(cast<Constant>(Op), Builder, GVarBuffer,
-                                GVarBufferTy, GVarSet, GVarOffsets, InsnCache);
+      Value *V =
+          expandConstant(cast<Constant>(Op), Builder, GVarBuffer, GVarBufferTy,
+                         GVarSet, GVarOffsets, InsnCache, DeviceGlobalAS);
       Ops.push_back(V);
       AnyOpExpanded |= !isa<Constant>(V);
     }
@@ -227,7 +240,7 @@ static void addGlobalVarInitInstr(GlobalVariable *OriginalGVarDef,
   // the constant expression as instructions.
   Value *Init =
       expandConstant(OriginalGVarDef->getInitializer(), Builder, GVarBuffer,
-                     GVarBufferTy, GVarSet, GVarOffsets, Cache);
+                     GVarBufferTy, GVarSet, GVarOffsets, Cache, DeviceGlobalAS);
 
   // store [Z x i8] initializer, ptr addrspace(1) %0, align 1
   Builder.CreateStore(Init, GVarPtrWithOffset);
