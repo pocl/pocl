@@ -78,6 +78,7 @@ static const char *workgroup_variables[] = {"_local_id_x",
                                             "_global_offset_x",
                                             "_global_offset_y",
                                             "_global_offset_z",
+                                            "_pocl_sub_group_size",
                                             PoclGVarBufferName,
                                             NULL};
 
