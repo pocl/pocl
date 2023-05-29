@@ -729,12 +729,14 @@ bool WorkitemLoops::handleLocalMemAllocas(Kernel &K) {
     Value *Size = Call->getArgOperand(0);
     Align Alignment =
       cast<ConstantInt>(Call->getArgOperand(1))->getAlignValue();
+    Value *ExtraSize = Call->getArgOperand(2);
 
     IRBuilder<> Builder(K.getEntryBlock().getTerminator());
 
     if (Call->getCalledFunction() == WorkGroupAllocaFuncDecl) {
           Instruction *WGSize = getWorkGroupSizeInstr(K);
           Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
+          Size = Builder.CreateBinOp(Instruction::Add, Size, ExtraSize);
     }
     AllocaInst *Alloca = new AllocaInst(
         llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,

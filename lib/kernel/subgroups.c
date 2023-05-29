@@ -38,9 +38,12 @@
  * @param element_size The size of an element to allocate (for all WIs in the
  * WG).
  * @param align The alignment of the start of chunk.
+ * @param extra_bytes extra bytes to add to the allocation, some functions need
+ * extra space
  * @return pointer to the allocated stack space (freed at unwind).
  */
-void *__pocl_work_group_alloca (size_t element_size, size_t align);
+void *__pocl_work_group_alloca (size_t element_size, size_t align,
+                                size_t extra_bytes);
 
 /**
  * \brief Internal pseudo function which allocates space from the work-group
@@ -113,7 +116,7 @@ void _CL_OVERLOADABLE sub_group_barrier (cl_mem_fence_flags flags);
   TYPE _CL_OVERLOADABLE PREFIX##sub_group_shuffle (TYPE val, uint index)      \
   {                                                                           \
     volatile TYPE *temp_storage                                               \
-        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
+        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE), 0);         \
     temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     return temp_storage[get_first_llid () + index % get_sub_group_size ()];   \
@@ -136,11 +139,11 @@ SUB_GROUP_SHUFFLE_T (float)
 SUB_GROUP_SHUFFLE_T (double)
 
 #define SUB_GROUP_SHUFFLE_XOR_PT(PREFIX, TYPE)                                \
-  __attribute__ ((always_inline)) TYPE _CL_OVERLOADABLE                       \
-  PREFIX##sub_group_shuffle_xor (TYPE val, uint mask)                         \
+  __attribute__ ((always_inline))                                             \
+  TYPE _CL_OVERLOADABLE PREFIX##sub_group_shuffle_xor (TYPE val, uint mask)   \
   {                                                                           \
     volatile TYPE *temp_storage                                               \
-        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
+        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE), 0);         \
     temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     return temp_storage[get_first_llid ()                                     \
@@ -183,7 +186,7 @@ SUB_GROUP_BROADCAST_T (double)
   TYPE _CL_OVERLOADABLE sub_group_reduce_##OPNAME (TYPE val)                  \
   {                                                                           \
     volatile TYPE *temp_storage                                               \
-        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
+        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE), 0);         \
     temp_storage[get_local_linear_id ()] = val;                               \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     if (get_sub_group_local_id () == 0)                                       \
@@ -216,7 +219,7 @@ SUB_GROUP_REDUCE_T (max, a > b ? a : b)
   TYPE _CL_OVERLOADABLE sub_group_scan_inclusive_##OPNAME (TYPE val)          \
   {                                                                           \
     volatile TYPE *data                                                       \
-        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
+        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE), 0);         \
     data[get_local_linear_id ()] = val;                                       \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
     if (get_sub_group_local_id () == 0)                                       \
@@ -248,8 +251,8 @@ SUB_GROUP_SCAN_INCLUSIVE_T (max, a > b ? a : b)
   __attribute__ ((always_inline))                                             \
   TYPE _CL_OVERLOADABLE sub_group_scan_exclusive_##OPNAME (TYPE val)          \
   {                                                                           \
-    volatile TYPE *data                                                       \
-        = __pocl_work_group_alloca (sizeof (TYPE), sizeof (TYPE));            \
+    volatile TYPE *data = __pocl_work_group_alloca (                          \
+        sizeof (TYPE), sizeof (TYPE), sizeof (TYPE));                         \
     data[get_local_linear_id () + 1] = val;                                   \
     data[get_first_llid ()] = ID;                                             \
     sub_group_barrier (CLK_LOCAL_MEM_FENCE);                                  \
@@ -292,8 +295,8 @@ sub_group_ballot (int predicate)
 {
   /* TODO: We actually would need only one per SG. */
   uint *flags
-      = __pocl_work_group_alloca (sizeof (uint) * 4, sizeof (uint) * 4);
-  char *res = __pocl_work_group_alloca (sizeof (char), 4);
+      = __pocl_work_group_alloca (sizeof (uint) * 4, sizeof (uint) * 4, 0);
+  char *res = __pocl_work_group_alloca (sizeof (char), 4, 0);
   if (get_local_linear_id () < 128)
     res[get_local_linear_id ()] = !!predicate;
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
