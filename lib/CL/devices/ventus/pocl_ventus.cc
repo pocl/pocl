@@ -570,9 +570,6 @@ uint64_t abuf_size = 0;
     abort();
   }
 
-//pass in vmem file  
-  char filename[]="object.riscv";
-  vt_upload_kernel_file(d->vt_device,filename,0);
   //after checking pocl_cache_binary, use the following to pass in.
    /*if (NULL == d->current_kernel || d->current_kernel != kernel) {    
        d->current_kernel = kernel;
@@ -581,7 +578,36 @@ uint64_t abuf_size = 0;
       err = vt_upload_kernel_file(d->vt_device, program_bin_path,0);      
       assert(0 == err);
     }*/
-  uint32_t kernel_entry=0x8000005c;
+
+   /**
+    *这个是kernel函数的入口地址，可以在终端执行nm -s object.riscv看到kernel函数的入口
+    *clCreateKernel.c line 79
+    */
+	uint32_t kernel_entry;
+#ifdef __linux__
+   	std::string kernel_entry_cmd = R"(nm -s object.riscv | grep "vecadd" | grep -o '^[^ ]*')";
+	FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
+	if(fp0 == NULL) {
+		POCL_MSG_ERR("running compile kernel failed");
+		return;
+	}
+	char temp2[1024];
+	while (fgets(temp2, 1024, fp0) != NULL)
+	{
+		kernel_entry = static_cast<uint32_t>(std::strtoul(temp2, nullptr, 16));
+	}
+	int status2=pclose(fp0);
+	if (status2 == -1) {
+		perror("pclose() failed");
+		exit(EXIT_FAILURE);
+	} else {
+		POCL_MSG_PRINT_LLVM("Kernel entry of \"%s\" is : \"0x%x\"\n", kernel->name, kernel_entry);
+	}
+#elif
+	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
+	exit(1);
+#endif
+
   ldssize=0x1000; //pass from elf file
   pdssize=0x1000; //pass from elf file
   start_pc=0x80000000; // start.S baseaddr, now lock to 0x80000000
@@ -589,10 +615,28 @@ uint64_t abuf_size = 0;
   vgpr_usage=32;
   uint64_t pc_src_size=0x10000000;
   uint64_t pc_dev_mem_addr;
+  ///TODO 在这个地址放程序段
   err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
   if (err != 0) {
     abort();
   }
+  /// parsing object file to obtain vmem file using assembler
+#ifdef __linux__
+	std::string assembler_path = CLANG;
+    assembler_path = assembler_path.substr(0,assembler_path.length()-6);
+	assembler_path += "/../../assemble.sh";
+  system((std::string("chmod +x ") + assembler_path).c_str());
+  assembler_path += " object";
+  system(assembler_path.c_str());
+	POCL_MSG_PRINT_LLVM("Vmem file has been written to object.vmem\n");
+#elif
+	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
+	exit(1);
+#endif
+	//pass in vmem file
+	char filename[]="object.riscv";
+	///TODO 将text段搬到ddr,并且起始地址必须是0x80000000,spike专用，verilator需要先解析出vmem,然后上传程序段
+	vt_upload_kernel_file(d->vt_device,filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
     c_buffer_base[c_num_buffer]=pc_dev_mem_addr;
     c_buffer_size[c_num_buffer]=0;
@@ -619,7 +663,7 @@ uint64_t abuf_size = 0;
     assert(c_num_buffer<=c_max_num_buffer);
   #endif
 
-  
+
 
 //prepare kernel_metadata
   char *kernel_metadata= (char*)malloc(sizeof(char)*KNL_MAX_METADATA_SIZE);
@@ -650,6 +694,7 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+  POCL_MSG_PRINT_INFO("kernel metadata has been written to 0x%x\n", knl_dev_mem_addr);
   #ifdef PRINT_CHISEL_TESTCODE
     c_buffer_base[c_num_buffer]=knl_dev_mem_addr;
     c_buffer_size[c_num_buffer]=KNL_MAX_METADATA_SIZE;
@@ -1014,10 +1059,10 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
 		ss_cmd << ventus_other_compile_flags[i] << " ";
 	}
-#ifndef POCL_DEBUG_FLAG_GENERAL
+#ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
-        ss_cmd << program->compiler_options << " ";
+	ss_cmd << program->compiler_options << " ";
 	ss_cmd << " -o " << "object.riscv" << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
