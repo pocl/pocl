@@ -136,8 +136,60 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
+  sycl_matrix:
+    name: LLVM ${{ matrix.llvm }} - SYCL
+    runs-on: [self-hosted, linux, x64, sycl]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16]
 
-  cuda_test:
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=0 -DENABLE_TESTSUITES=all \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p /home/github/examples/build_sycl
+          mkdir -p /home/github/examples/source
+          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_sycl -DSYCL_CXX_COMPILER=/opt/sycl/bin/clang++ -DSYCL_LIBDIR=/opt/sycl/lib
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j4
+
+      - name: Build Examples
+        id: build_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 120
+        run: |
+          cd ${{ github.workspace }}/build && make -j4 prepare_examples
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j4 $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          runCTest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples"
+
+
+  cuda_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, cuda]
     strategy:
@@ -176,7 +228,7 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS
 
-  openasip_test:
+  openasip_matrix:
     env:
       PATH: "/home/LLVM_${{ matrix.llvm }}0/bin:/home/TCE_${{ matrix.llvm }}0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       LD_LIBRARY_PATH: "/home/TCE_${{ matrix.llvm }}0/lib"
@@ -227,7 +279,8 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
-  vulkan_test:
+  # could be tried with multiple CLSPV versions
+  vulkan_matrix:
     name: Vulkan
     runs-on: [self-hosted, linux, vulkan]
 
