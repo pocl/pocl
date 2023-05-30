@@ -248,7 +248,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
         id: ctest
@@ -377,7 +377,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
         id: ctest
