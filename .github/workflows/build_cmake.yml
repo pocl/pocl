@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run CMake
+      - name: CMake
         id: cmake
         run: |
           runCMake() {
@@ -91,15 +91,19 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
-      - name: Run Build
-        id: build
-        # ocassionally, build seems to get stuck in git-pull of the CTS
-        timeout-minutes: 120
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
-          if [ "${{ matrix.config }}" == "cts_spirv" ] || [ "${{ matrix.config }}" == "tier1" ] || [ "${{ matrix.config }}" == "chip_spv" ]; then
-            make -j$(nproc) prepare_examples
-          fi
+
+      - name: Build Examples
+        id: build_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 120
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chip_spv' }}
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc) prepare_examples
 
       - name: Run Tests
         id: ctest
