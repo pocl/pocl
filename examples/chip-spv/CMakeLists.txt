@@ -130,7 +130,7 @@ ExternalProject_Add(
     "-DLLVM_CONFIG=${LLVM_CONFIG}"
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  PATCH_COMMAND patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch
+  PATCH_COMMAND cd "${TS_BASEDIR}/src/${TS_NAME}/HIP" && git reset --hard HEAD && cd "${TS_BASEDIR}/src/${TS_NAME}" && git reset --hard HEAD && patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch
   BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
 )
