@@ -146,11 +146,12 @@ endif()
 # TODO hardcoded -j8 and repeat 2
 add_test(NAME "${TS_NAME}"
          COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
-           "${TS_BUILDDIR}" "cpu" "pocl"  8 2
+           "${TS_BUILDDIR}" "cpu" "pocl" ${CORECOUNT} 2
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 set_tests_properties(${TS_NAME}
   PROPERTIES
+  PROCESSORS ${CORECOUNT}
   ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chip-spv")
