@@ -77,13 +77,16 @@ else()
 endif()
 
 # if we have disabled FP16, disable also the FP16 tests in chip-spv
+# disable hipMultiThreadAddCallback test, it's fixed but in later commit
 # TODO this assumes we're using CPU device
-if(NOT HOST_CPU_ENABLE_CL_KHR_FP16)
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
+    "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests.txt"
+    "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
+else()
   set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
     "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests_fp16_disabled.txt"
     "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
-else()
-  set(CHIP_SPV_INSTALL_COMMAND "echo" "INSTALLED")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chip-spv
