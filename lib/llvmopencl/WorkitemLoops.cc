@@ -63,7 +63,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "VariableUniformityAnalysis.h"
 
-#define CONTEXT_ARRAY_ALIGN 64
+// this must be at least the alignment of largest OpenCL type (= 128 bytes)
+#define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
 
 using namespace llvm;
 using namespace pocl;
