@@ -143,15 +143,16 @@ if(ENABLE_LOADABLE_DRIVERS)
   add_dependencies(${TS_NAME} pocl-devices-basic pocl-devices-pthread pocl-devices-topology)
 endif()
 
-# TODO hardcoded -j8 and repeat 2
 add_test(NAME "${TS_NAME}"
          COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
            "${TS_BUILDDIR}" "cpu" "pocl" ${CORECOUNT} 2
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
+# Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
+# so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
   PROCESSORS ${CORECOUNT}
-  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1"
+  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chip-spv")
