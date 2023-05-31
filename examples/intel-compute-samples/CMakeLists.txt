@@ -45,6 +45,13 @@ if(NOT PNG_FOUND)
   return()
 endif()
 
+find_program(OCLOC ocloc)
+if(NOT OCLOC)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocloc")
+  return()
+endif()
+
+
 #find_package(GTest 1.10)
 #if(NOT GTest_FOUND)
 #  message(STATUS "Disabling testsuite ${TS_NAME}, requires GoogleTest 1.10 (libgtest-dev)")
@@ -96,7 +103,7 @@ add_dependencies(prepare_examples ${TS_NAME})
 
 set(SKIP_TEST_EXPR "subgroups_imagecopy_tests_hw|subgroups_visualization_tests_hw|vme_search_tests_hw|vme_hme_tests_hw|vme_intra_tests_hw|vme_wpp_tests_hw|vme_interlaced_tests_hw|vme_interop_tests_hw|ocl_utils_tests_hw|test_cl_unified_shared_memory_hw|test_cl_visa_injection_rt_basic_hw|test_cl_command_queue_families_hw")
 add_test(NAME all_intel_compute_tests
-         COMMAND "${CMAKE_CTEST_COMMAND}"
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
          -E "${SKIP_TEST_EXPR}"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
