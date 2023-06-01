@@ -293,14 +293,14 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
 endif()
 
 
-if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
 endif()
 
 
 include("bitcode_rules")
 
-foreach(FILE "host/addrspace_operators.ll")
+foreach(FILE "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
   if(LLVM_OPAQUE_POINTERS)
     generate_opaque_ptr_ll("${FILE}" "opaque" OPAQ_PTR_FILE)
     list(APPEND SOURCES_WITH_SLEEF "${OPAQ_PTR_FILE}")

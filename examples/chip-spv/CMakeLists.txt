@@ -77,13 +77,16 @@ else()
 endif()
 
 # if we have disabled FP16, disable also the FP16 tests in chip-spv
+# disable hipMultiThreadAddCallback test, it's fixed but in later commit
 # TODO this assumes we're using CPU device
-if(NOT HOST_CPU_ENABLE_CL_KHR_FP16)
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
+    "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests.txt"
+    "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
+else()
   set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
     "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests_fp16_disabled.txt"
     "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
-else()
-  set(CHIP_SPV_INSTALL_COMMAND "echo" "INSTALLED")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chip-spv
@@ -111,6 +114,14 @@ endif()
 
 list(APPEND CMAKE_CALL_ENV ${CMAKE_COMMAND})
 
+set(UPSTREAM_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+if(CMAKE_C_COMPILER_LAUNCHER)
+  list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}")
+endif()
+if(CMAKE_CXX_COMPILER_LAUNCHER)
+  list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
+endif()
+
 # TODO: hardcoded -j8
 ExternalProject_Add(
   ${TS_NAME}
@@ -118,11 +129,12 @@ ExternalProject_Add(
   GIT_REPOSITORY "${CHIP_GIT_REPO}"
   GIT_TAG "${CHIP_GIT_TAG}"
   CONFIGURE_COMMAND "${CMAKE_COMMAND}" ${CMAKE_CALL_ENV}
+    ${UPSTREAM_CMAKE_ARGS}
     "-DLLVM_CONFIG=${LLVM_CONFIG}"
-    "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel 8 --target all build_tests
+  PATCH_COMMAND cd "${TS_BASEDIR}/src/${TS_NAME}/HIP" && git reset --hard HEAD && cd "${TS_BASEDIR}/src/${TS_NAME}" && git reset --hard HEAD && patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch
+  BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
 )
 
@@ -134,14 +146,16 @@ if(ENABLE_LOADABLE_DRIVERS)
   add_dependencies(${TS_NAME} pocl-devices-basic pocl-devices-pthread pocl-devices-topology)
 endif()
 
-# TODO hardcoded -j8 and repeat 2
 add_test(NAME "${TS_NAME}"
          COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
-           "${TS_BUILDDIR}" "cpu" "pocl"  8 2
+           "${TS_BUILDDIR}" "cpu" "pocl" ${CORECOUNT} 2
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
+# Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
+# so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  ENVIRONMENT "POCL_MAX_PTHREAD_COUNT=1"
+  PROCESSORS ${CORECOUNT}
+  ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chip-spv")

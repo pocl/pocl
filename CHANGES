@@ -47,6 +47,8 @@ Notable User Facing Changes
 - `-cl-fast-relaxed-math` now defaults to `-ffp-contract=fast`, previously it was `-ffp-contract=on`.
 - CPU drivers: renamed 'basic' to 'cpu-minimal' and 'pthread' driver to 'cpu',
   to reflect the hardware they're driving instead of implementation details.
+- POCL_MAX_PTHREAD_COUNT renamed to POCL_CPU_MAX_CU_COUNT; the old env. variable is deprecated
+  but still works
 
 Notable Fixes
 -------------
@@ -58,6 +60,17 @@ Notable Fixes
   specialization.
 - CPU driver: Made kernel debug info more robust especially
   when building the device program from SPIR-V.
+
+Known issues
+------------
+
+- With LLVM 16, when running CTS with the offline compilation mode (= via SPIR-V), Clang + SPIR-V translator
+  produces invalid SPIR-V for several tests. PoCL bugreport:
+    https://github.com/pocl/pocl/issues/1232
+  Related Khronos issues:
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2008
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2024
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2025
 
 3.1 December 2022
 =================

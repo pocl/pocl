@@ -27,6 +27,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
+#include "pocl_llvm_api.h"
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
@@ -407,11 +408,12 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
         pointer == M->getGlobalVariable("_global_offset_z") ||
         pointer == M->getGlobalVariable("_local_size_x") ||
         pointer == M->getGlobalVariable("_local_size_y") ||
-        pointer == M->getGlobalVariable("_local_size_z")) {
+        pointer == M->getGlobalVariable("_local_size_z") ||
+        pointer == M->getGlobalVariable(PoclGVarBufferName)) {
 
       setUniform(f, v, true);
       return true;
-    } 
+    }
   }
 
   if (isa<llvm::PHINode>(v)) {

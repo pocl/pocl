@@ -366,12 +366,27 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
           // as needed.
           for (auto *U : f->users()) {
             if (llvm::CallInst *Call = dyn_cast<llvm::CallInst>(U)) {
+            PointerType *ArgPT =
+                dyn_cast<PointerType>(Call->getArgOperand(0)->getType());
+            PointerType *RetPT =
+                dyn_cast<PointerType>(Call->getFunctionType()->getReturnType());
+            if (ArgPT == nullptr || RetPT == nullptr) {
+              log.append("Invalid use of operator __to_{local,global,private}");
+              found_all_undefined = false;
+              break;
+            }
+            if (ArgPT->getAddressSpace() == RetPT->getAddressSpace()) {
+              Value *V = Call->getArgOperand(0);
+              Call->replaceAllUsesWith(V);
+              Call->eraseFromParent();
+            } else {
               llvm::AddrSpaceCastInst *AsCast = new llvm::AddrSpaceCastInst(
-                Call->getArgOperand(0),
-                Call->getFunctionType()->getReturnType(),
-                f->getName() + ".as_cast", Call);
+                  Call->getArgOperand(0),
+                  Call->getFunctionType()->getReturnType(),
+                  f->getName() + ".as_cast", Call);
               Call->replaceAllUsesWith(AsCast);
               Call->eraseFromParent();
+            }
             }
           }
           continue;

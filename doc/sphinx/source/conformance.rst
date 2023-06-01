@@ -96,6 +96,14 @@ Known issues with the conformance testsuite
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
   with "max_images" argument.
 
+- With LLVM 16, when running CTS with the offline compilation mode
+  (= via SPIR-V), Clang + SPIR-V translator produces invalid
+  SPIR-V for several tests. PoCL bugreport:
+    https://github.com/pocl/pocl/issues/1232
+  Related Khronos issues:
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2008
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2024
+    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2025
 
 .. _sigfpe-handler:
 

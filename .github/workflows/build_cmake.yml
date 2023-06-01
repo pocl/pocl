@@ -37,7 +37,7 @@ jobs:
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
-        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1]
+        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chip_spv]
         include:
           - llvm: 10
             config: basic
@@ -52,11 +52,13 @@ jobs:
         exclude:
           - llvm: 16
             config: cts_spirv
+          - llvm: 16
+            config: chip_spv
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run CMake
+      - name: CMake
         id: cmake
         run: |
           runCMake() {
@@ -80,22 +82,28 @@ jobs:
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
-            runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/source
+            runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source
           elif [ "${{ matrix.config }}" == "tier1" ]; then
-            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/source
+            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source
+          elif [ "${{ matrix.config }}" == "chip_spv" ]; then
+            runCMake -DENABLE_TESTSUITES=chip-spv -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build
           else
             echo "Unknown configuration" && exit 1
           fi
 
-      - name: Run Build
-        id: build
-        # ocassionally, build seems to get stuck in git-pull of the CTS
-        timeout-minutes: 40
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
-          if [ "${{ matrix.config }}" == "cts_spirv" ] || [ "${{ matrix.config }}" == "tier1" ]; then
-            make -j$(nproc) prepare_examples
-          fi
+
+      - name: Build Examples
+        id: build_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 120
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chip_spv' }}
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc) prepare_examples
 
       - name: Run Tests
         id: ctest
@@ -119,6 +127,8 @@ jobs:
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
+          elif [ "${{ matrix.config }}" == "chip_spv" ]; then
+            runCTest -L chip-spv
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -238,7 +248,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
         id: ctest
@@ -367,7 +377,7 @@ jobs:
       - name: Run Build
         id: build
         run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
+          cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
         id: ctest

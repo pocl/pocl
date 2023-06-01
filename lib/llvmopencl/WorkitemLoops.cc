@@ -63,7 +63,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "VariableUniformityAnalysis.h"
 
-#define CONTEXT_ARRAY_ALIGN 64
+// this must be at least the alignment of largest OpenCL type (= 128 bytes)
+#define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
 
 using namespace llvm;
 using namespace pocl;
@@ -729,12 +730,14 @@ bool WorkitemLoops::handleLocalMemAllocas(Kernel &K) {
     Value *Size = Call->getArgOperand(0);
     Align Alignment =
       cast<ConstantInt>(Call->getArgOperand(1))->getAlignValue();
+    Value *ExtraSize = Call->getArgOperand(2);
 
     IRBuilder<> Builder(K.getEntryBlock().getTerminator());
 
     if (Call->getCalledFunction() == WorkGroupAllocaFuncDecl) {
           Instruction *WGSize = getWorkGroupSizeInstr(K);
           Size = Builder.CreateBinOp(Instruction::Mul, WGSize, Size);
+          Size = Builder.CreateBinOp(Instruction::Add, Size, ExtraSize);
     }
     AllocaInst *Alloca = new AllocaInst(
         llvm::Type::getInt8Ty(Call->getContext()), 0, Size, Alignment,
@@ -1275,9 +1278,11 @@ bool WorkitemLoops::shouldNotBeContextSaved(llvm::Instruction *Instr) {
   // The local memory allocation call is uniform, the same pointer to the
   // work-group shared memory area is returned to all work-items. It must
   // not be replicated.
-  if (isa<CallInst>(Instr) &&
-      cast<CallInst>(Instr)->getCalledFunction() == LocalMemAllocaFuncDecl)
-    return true;
+  if (isa<CallInst>(Instr)) {
+    Function *F = cast<CallInst>(Instr)->getCalledFunction();
+    if (F && (F == LocalMemAllocaFuncDecl || F == WorkGroupAllocaFuncDecl))
+      return true;
+  }
 
   // _local_id loads should not be replicated as it leads to/ problems in
   // conditional branch case where the header node of the region is shared

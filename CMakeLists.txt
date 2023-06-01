@@ -1225,21 +1225,35 @@ else()
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
+# Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
+cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
+cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
+
+# Host CPU device: list of OpenCL 3.0 features that are always enabled
+set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
+  __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+  __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
+  __opencl_c_generic_address_space")
+
+# Host CPU device: these extensions are always enabled but require OpenCL 3.0
+# (or they need 2.x, but PoCL only supports 1.2 and 3.0)
+if(HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_intel_unified_shared_memory")
+endif()
+
+# Host CPU device: extensions only enabled when conformance is OFF
+if((NOT ENABLE_CONFORMANCE) AND (HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3))
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
+cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
+endif()
+
 # Extensions that are considered feature-complete (preferably CTS-tested).
 #
 # * cl_khr_subgroups: A simple implementation where SG is always the whole local
 # X-dimension. NOTE: Independent forward progress is not yet supported, but it's
 # not needed for compliance due to the corner case of only one SG in flight.
 # Passes the subgroups/test_subgroups CTS.
-
-
-set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
-cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer")
-
-if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_intel_unified_shared_memory")
-endif()
 
 # Extensions that are work-in-progress with known unfinished aspects.
 # These are not advertised with a conformant build.
@@ -1260,21 +1274,15 @@ endif()
 #   Those with either 1) expression implementation, or 2) Clang builtin
 #   implementation.
 #
-#
-if(NOT ENABLE_CONFORMANCE)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
-cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
-endif()
 
-set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
-  __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
-  __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
-  __opencl_c_generic_address_space")
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_subgroups")
+endif()
 
 # TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
 # for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
 # .... seems like a bug in CTS, but needs to be investigated.
-if(ENABLE_CONFORMANCE)
+if((NOT ENABLE_CONFORMANCE) OR (HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3))
   set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_atomic_scope_all_devices")
 endif()
 
