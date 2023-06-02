@@ -1,19 +1,19 @@
-How to use POCL as SYCL's OpenCL runtime backend on ARM
+How to use PoCL as SYCL's OpenCL runtime backend on ARM
 =======================================================
 
-SYCL is a programming model that enables you to create one program that can 
+SYCL is a C++-based programming model that enables you to create one program that can 
 execute in a wide variety of devices. For example, you can have a program in
-SYCL that can execute on a AMD GPU and a NVIDIA GPU using the same C++ code.
+SYCL that can execute on an AMD GPU and an NVIDIA GPU using the same C++ code.
 To enable this, SYCL implementations need different backends that can run on a
-specific device (e.g. CUDA or OpenCL). This is where POCL comes to play, providing
+specific device (e.g. CUDA or OpenCL). This is where PoCL comes to play, providing
 a portable OpenCL implementation to use as SYCL's OpenCL runtime.
 
 The objective of this tutorial is to have Intel's oneAPI DPC++ as a SYCL
-implementation able to produce programs that can run on ARM using POCL as the
+implementation able to produce programs that can run on ARM using PoCL as the
 OpenCL backend.
 
-So this tutorial has 2 main parts. Compile Intel's LLVM (oneAPI DPC++) on ARM
-and compile POCL on ARM. We will install DPC++ and then we will install POCL
+The tutorial has 2 main parts. Compile Intel's LLVM (oneAPI DPC++) on ARM
+and compile PoCL on ARM. We will install DPC++ and then we will install PoCL
 independently from DPC++ using a vanilla LLVM (not Intel's version).
 
 Software versions
@@ -26,7 +26,7 @@ Listing tags from git repository (obtained with
 ``git describe --tags``).:
 
 -  DPC++ - Intel LLVM: sycl-nightly/20230413_160000-2-g097d21c
--  POCL: v3.1-RC1-279-g6a5c38b
+-  PoCL: v3.1-RC1-279-g6a5c38b
 -  SPIRV-Tools: sdk-1.3.243.0-33-gdd03c1f
 -  OpenCL-Headers: v2023.02.06-5-g8c4f011
 -  OpenCL-ICD-Loader: v2023.02.06-2-gece9144
@@ -127,8 +127,8 @@ Official installation instructions can be found at https://intel.github.io/llvm-
 Installation of vanilla LLVM
 ----------------------------
 
-We will install LLVM 16 (vanilla version, not Intel's). This is the LLVM that POCL will use,
-and is needed to compile POCL. Notice that we want a static LLVM.
+We will install LLVM 16 (vanilla version, not Intel's). This is the LLVM that PoCL will use,
+and is needed to compile PoCL. Notice that we want a static LLVM.
 
 1. Download and uncompress `LLVM tar
    file <https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.0/llvm-16.0.0.src.tar.xz>`__.
@@ -147,7 +147,7 @@ and is needed to compile POCL. Notice that we want a static LLVM.
 
 3. ninja install
 
-Installation of POCL
+Installation of PoCL
 --------------------
 
 .. _prerequisites-1:
@@ -167,7 +167,7 @@ Prerequisites
    ./opencl/CMakeLists.txt, at lines 23 and
    24 <https://github.com/intel/llvm/blob/c5d04bcc0b7b7adf93a9f4c57faf6fada06575cf/opencl/CMakeLists.txt#L23>`__.
 
-POCL installation
+PoCL installation
 ^^^^^^^^^^^^^^^^^
 
 1. After you have both the ICD-Loader and the Opencl Headers installed
@@ -183,7 +183,7 @@ POCL installation
    export LIBRARY_PATH=${VVV_ICD_LOADER}/lib64/:$LIBRARY_PATH
    export LD_LIBRARY_PATH=${VVV_ICD_LOADER}/lib64:$LD_LIBRARY_PATH
 
-2. Clone the `POCL repository <https://github.com/pocl/pocl>`__, create
+2. Clone the `PoCL repository <https://github.com/pocl/pocl>`__, create
    a build directory and from inside execute CMake. Remember to replace the paths accordingly:
 
 ::
@@ -195,7 +195,7 @@ POCL installation
 
 3. ninja install
 4. OPTIONAL: Run the test suite: ``ctest -j 128 -L internal``.
-5. When using POCL you should export some environment variables. I
+5. When using PoCL you should export some environment variables. I
    suggest you create a env-pocl.sh script that exports the variables
    for you:
 
@@ -224,17 +224,17 @@ POCL installation
    export VVV_pocl_help="SYCL_PI_TRACE=2 POCL_DEBUG=all OCL_ICD_ENABLE_TRACE=1"
 
 
-Using SYCL with POCL
+Using SYCL with PoCL
 --------------------
 
-I uploaded a simple example to test if SYCL is working with POCL. It
+I uploaded a simple example to test if SYCL is working with PoCL. It
 just tests that you can compile and execute simple SYCL programs using
-POCL as the OpenCL implementation that SYCL uses.
+PoCL as the OpenCL implementation that SYCL uses.
 
 1. ``source env-pocl.sh``
 2. ``source env-sycl.sh``
 3. The first test you should do is validate that the SYCL runtime can
-   find and query simple information from the POCL runtime. This is how
+   find and query simple information from the PoCL runtime. This is how
    it looks for me:
 
 ::
@@ -296,7 +296,7 @@ POCL as the OpenCL implementation that SYCL uses.
 Known issues
 ------------
 
-1. ``queue.memset()`` is not supported using POCL right now (see 
+1. ``queue.memset()`` is not supported using PoCL right now (see 
 `issue #1223 <https://github.com/pocl/pocl/issues/1223>`__). 
 You should use ``queue.fill()`` instead.
 
@@ -313,7 +313,7 @@ Troubleshooting
 ---------------
 
 If you ever have runtime errors, these errors can be located at three
-parts: they might be in the ICD-Loader, in POCL or in SYCL.
+parts: they might be in the ICD-Loader, in PoCL or in SYCL.
 
 -  To query debug information from the ICD-Loader:
    ``OCL_ICD_ENABLE_TRACE=1 ./a.out``
