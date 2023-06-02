@@ -1,4 +1,4 @@
-4.0    unreleased
+4.0 June 2023
 =================
 
 Notable User Facing Changes
@@ -36,8 +36,8 @@ Notable User Facing Changes
   local memory size for the CPU devices.
 - CUDA: Added Direct Peer-to-Peer buffer migrations for much better performance
   scaling in multi-GPU scenarios
-- Partial support for cl_khr_fp16 when compiled with LLVM 16+. The
-  implementation relies on Clang, and may result in emulation if
+- CPU drivers gained partial support for cl_khr_fp16 when compiled with LLVM 16+.
+  The implementation relies on Clang, and may result in emulation if
   the CPU does not support the required instruction set.
 - Linux/x86-64 only: SIGFPE handler has been changed to skip instructions
   causing division-by-zero, only if it occured in one of the CPU driver
@@ -49,6 +49,8 @@ Notable User Facing Changes
   to reflect the hardware they're driving instead of implementation details.
 - POCL_MAX_PTHREAD_COUNT renamed to POCL_CPU_MAX_CU_COUNT; the old env. variable is deprecated
   but still works
+- it's now possible to disable libhwloc support even when it's present, using -DENABLE_HWLOC=0
+  CMake option
 
 Notable Fixes
 -------------
