@@ -1,3 +1,7 @@
+#if CLANG_MAJOR < 17
+#define LLVM_OLDER_THAN_17_0 1
+#endif
+
 #if CLANG_MAJOR < 16
 #define LLVM_OLDER_THAN_16_0 1
 #endif
