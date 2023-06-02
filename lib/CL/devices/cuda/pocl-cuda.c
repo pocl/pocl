@@ -353,10 +353,11 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   /* Get specific device name */
   {
-     char *name = calloc (256, sizeof (char));
+     char *name = calloc (256 + 5, sizeof (char));
+     strcpy(name, "CUDA-");
 
      if (ret != CL_INVALID_DEVICE)
-       cuDeviceGetName (name, 256, data->device);
+       cuDeviceGetName (name + 5, 256, data->device);
      else
        snprintf (name, 255, "Unavailable CUDA device #%d", j);
      dev->long_name = dev->short_name = name;
