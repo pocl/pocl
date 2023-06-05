@@ -13,7 +13,7 @@ Installation
 
 Required:
 
- * Clang+LLVM: 14 and 15 should work, older may work but are untested, 16 currently doesn't work
+ * Clang+LLVM: 14 and 15 should work, older may work but are untested
  * Level Zero ICD + development files (level-zero and level-zero-devel)
  * Level Zero drivers (on Ubuntu, intel-level-zero-gpu)
  * SPIRV-LLVM-Translator from Khronos (https://github.com/KhronosGroup/SPIRV-LLVM-Translator)

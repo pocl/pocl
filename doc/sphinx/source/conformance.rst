@@ -9,13 +9,18 @@ Conformance related CMake options
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   Defaults to OFF. This option by itself does not guarantee OpenCL-conformant build;
-  it merely ensures that a build fails if some options which would result
-  in non-conformant kernel library are given.
+  it merely ensures that a build fails if some CMake options which are known to result
+  in non-conformant PoCL build are given. Only applies to CPU driver.
 
-  Changes when ENABLE_CONFORMANCE is ON:
+  Changes when ENABLE_CONFORMANCE is ON, the CPU drivers are built
+  with the following changes:
 
-    * read-write images are disabled (some 1D/2D image array tests fail),
-      even though compiler support is indicated (__opencl_c_read_write_images)
+    * read-write images are disabled (some 1D/2D image array tests fail)
+    * the list of supported image formats is much smaller
+    * SLEEF is always enforced for the builtin library
+    * cl_khr_fp16 is disabled
+    * cl_khr_subgroup_{ballot,shuffle} are disabled
+    * cl_intel_subgroups,cl_intel_required_subgroup_size are disabled
 
   If ENABLE_CONFORMANCE is OFF, and ENABLE_HOST_CPU_DEVICES is ON,
   the conformance testsuite is disabled in CMake. This is because
@@ -25,7 +30,7 @@ Supported & Unsupported optional OpenCL 3.0 features
 ------------------------------------------------------
 
 This list is only related to CPU devices (cpu & cpu-minimal drivers).
-Other drivers (CUDA, TCE etc) only support 1.2 partially.
+Other drivers (CUDA, TCE etc) only support OpenCL 1.2.
 Note that 3.0 support on CPU devices requires LLVM 14 or newer.
 
 Supported 3.0 features:
@@ -34,28 +39,32 @@ Supported 3.0 features:
   * C11 atomics
   * 3D Image Writes
   * SPIR-V
+  * Program Scope Global Variables
+  * Subgroups
+  * Generic Address Space
 
 Unsupported 3.0 features:
 
   * Device-side enqueue
   * Pipes
-  * Program Scope Global Variables
   * Non-Uniform Work Groups
   * Read-Write Images
   * Creating 2D Images from Buffers
   * sRGB & Depth Images
   * Device and Host Timer Synchronization
   * Intermediate Language Programs
-  * Subgroups
   * Program Initialization and Clean-Up Kernels
   * Work Group Collective Functions
-  * Generic Address Space
 
+.. _running-cts:
 
 How to run the OpenCL 3.0 conformance test suite
 ------------------------------------------------
 
-First you need to enable the suite in the pocl's external test suite set.
+You'll need to build PoCL with enabled ICD, and the ICD must be one that supports
+OpenCL version 3.0 (for ocl-icd, this is available since version 2.3.0).
+This is because while the CTS will run with 1.2 devices, it requires 3.0 headers
+and 3.0 ICD to build. You'll also need to enable the suite in the pocl's external test suite set.
 This is done by adding ``-DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON``
 to the cmake command line. After this ``make prepare_examples`` fetches and
 prepares the conformance suite for testing. After building pocl with ``make``,
@@ -83,8 +92,10 @@ to run tests which are only relevant to OpenCL 3.0.
 
 CPU device version 1.2 should also work with CTS 3.0 (tests will be skipped).
 
-Known issues with the conformance testsuite
------------------------------------------------
+.. _known-issues:
+
+Known issues related to CTS
+---------------------------
 
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
@@ -96,24 +107,14 @@ Known issues with the conformance testsuite
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
   with "max_images" argument.
 
-- With LLVM 16, when running CTS with the offline compilation mode
-  (= via SPIR-V), Clang + SPIR-V translator produces invalid
+- With LLVM 15 and 16, when running CTS with the offline compilation mode
+  (= via SPIR-V), Clang + SPIR-V translator produce invalid
   SPIR-V for several tests. PoCL bugreport:
-    https://github.com/pocl/pocl/issues/1232
+  `<https://github.com/pocl/pocl/issues/1232>`_
   Related Khronos issues:
-    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2008
-    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2024
-    https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2025
-
-.. _sigfpe-handler:
-
-Known issues in pocl / things to be aware of
---------------------------------------------
-
-- some of the tests in CTS fail to run with SPIR-V offline compilation mode.
-  In some cases, llvm-spirv fails to translate SPIR-V to LLVM IR, or the SPIR-V
-  fails to validate, and in some cases (e.g. async_copy) unsolved SPIR-V issues
-  in PoCL.
+  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2008>`_
+  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2024>`_
+  `<https://github.com/KhronosGroup/SPIRV-LLVM-Translator/issues/2025>`_
 
 - Integer division by zero. OpenCL 1.2 specification requires that division by
   zero on integers results in undefined values, instead of raising exceptions.
@@ -129,18 +130,13 @@ Known issues in pocl / things to be aware of
 - Many of ``native_`` and ``half_`` variants of kernel library functions are mapped
   to the "full" variants.
 
-- the optional OpenGL / D3D extensions are not supported.
-
-- clUnloadCompiler() only actually unload LLVM after all programs & kernels
-  have been released.
-
 - clSetUserEventStatus() called with negative status. The Spec leaves the behaviour
   in this case as "implementation defined", and this part of pocl is
   only very lightly tested by the conformance tests. clSetUserEventStatus()
   called with CL_COMPLETE works as expected, and is heavily used by
   the conversions conformance test.
 
-Conformance tests results (kernel library precision) on tested hardware
+Conformance tests results (precision of builtin math library functions)
 -----------------------------------------------------------------------
 
 Note that it's impossible to test double precision on the entire range,

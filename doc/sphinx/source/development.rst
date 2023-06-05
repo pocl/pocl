@@ -4,23 +4,18 @@ Information for PoCL developers
 Testsuite
 ----------
 
-Before changes are committed to the mainline, all tests in the 'make
-check' tier-1 suite should pass::
+Before changes are committed to the upstream PoCL, the code must pass the Main
+Test Matrix Github workflow.
 
-   make check_tier1
-
-"make check_tier1" will invoke ctest with tier-1 testsuites. See
- `maintenance-policy`_ for list of what's included in tier-1.
-
-Under the 'examples' directory there are placeholder directories for
+Under the 'examples' directory there are directories for
 external OpenCL application projects which are used as test suites for
 pocl (e.g. ViennaCL). These test suites can be enabled for cmake
-with -DENABLE_TESTSUITES (you can specify a list of test suites
-if you do not want to enabled all of them, see configure help for the
-available list).  Note that these additional test suites require
-additional software (tools and libraries). The configure script checks
-some of them but the check is not exhaustive. Test suites are disabled if
-their requirement files are not available.
+with -DENABLE_TESTSUITES (you can specify a list of test suites if you
+do not want to enabled all of them, see ``examples/CMakeLists.txt`` for the
+available list). Note that these additional test suites require
+additional software (tools and libraries). CMake will check some of them,
+but the checks are not exhaustive. Testsuites are disabled if
+the dependency checks fail.
 
 You can run the tests or built examples using "ctest" directly;
 ``ctest --print-labels`` prints the available labels (testsuites);
@@ -96,7 +91,8 @@ improved. Running ``tools/scripts/format-branch.sh`` in the root of
 the repository diffs against a ``master`` branch and formats the difference,
 and leaves the diff uncommitted in the working tree.
 ``tools/scripts/format-last-commit.sh`` formats only the last commit and can be
-used in an interactive rebase session.
+used in an interactive rebase session. Both scripts require "clang-format" binary
+present in PATH.
 
 An example emacs configuration to help get the pocl code style correct::
 
@@ -226,7 +222,7 @@ Currently (2023-02-28) the following are included in the tier-1 test suites:
 * PyOpenCL test suite
 * piglit test suite
 * conformance_suite_micro test suite
-* OpenASIP short smoke test suite (against the latest OpenASIP open source release)
+* SHOC test suite
 * CHIP-SPV test suite
 
 Please note that not necessarily all the tests currently pass in the suites,
