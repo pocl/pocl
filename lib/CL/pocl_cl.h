@@ -347,6 +347,7 @@ extern uint64_t last_object_id;
 
 #  define POname(name) name
 #  define POdeclsym(name)
+#  define POdeclsymExport(name)
 #  define POsym(name)
 #  define POsymAlways(name)
 
@@ -354,9 +355,9 @@ extern uint64_t last_object_id;
 /* Visual Studio does not support this magic either */
 #  define POname(name) name
 #  define POdeclsym(name)
+#  define POdeclsymExport(name)
 #  define POsym(name)
 #  define POsymAlways(name)
-#  define POdeclsym(name)
 
 #else
 /* Symbol aliases are supported */
@@ -364,6 +365,7 @@ extern uint64_t last_object_id;
 #  define POname(name) PO##name
 
 #define POdeclsym(name) __typeof__ (name) PO##name;
+#define POdeclsymExport(name) POCL_EXPORT POdeclsym(name)
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 
