@@ -355,8 +355,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for now, only 15, it supports also 14 but NOT 16
-        llvm: [14, 15]
+        llvm: [14, 15, 16]
         config: [level_zero]
 
     steps:
@@ -367,10 +366,14 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            if [ ${{ matrix.llvm }} -lt 16 ]; then
+              LLVM_FLAGS="-DSTATIC_LLVM=0 -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config"
+            else
+              LLVM_FLAGS="-DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv"
+            fi
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config \
-            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+            $LLVM_FLAGS "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
@@ -388,6 +391,11 @@ jobs:
           OverrideDefaultFP64Settings: "1"
           IGC_EnableDPEmulation: "1"
         run: |
+          if [ ${{ matrix.llvm }} -lt 16 ]; then
+            TEST_EXCLUDES='test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+          else
+            TEST_EXCLUDES='test_hadd_|read-copy-write-buffer|buffer-image-copy|copy_signbit_loopvec|isnan_loopvec|sampler_address_clamp_loopvec|program_from_binary_with_local_1_1_1|spirv/printf|example0_spirv|example1_spirv|oneapi_samples|all_simple_sycl_samples|all_dpcpp_book_samples'
+          fi
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E 'test_hadd_|test_sampler_address_clam|test_alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E $TEST_EXCLUDES
