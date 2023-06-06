@@ -37,6 +37,8 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
+#include "llvm/IR/DebugInfo.h"
+#include "llvm/IR/DebugLoc.h"
 #include <llvm/ADT/StringSet.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Function.h>
@@ -49,7 +51,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassRegistry.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
-#include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
 #include "pocl_cl.h"
@@ -65,6 +66,43 @@ using namespace llvm;
 #define DB_PRINT(...)
 
 namespace pocl {
+
+// A workaround for issue #889. In some cases, functions seem
+// to get multiple DISubprogram nodes attached. This causes
+// the llvm::verifyModule to complain, and
+// LLVM to segfault in some configurations (ARM, x86 in distro mode, ...)
+// Erase the MD nodes if we detect the condition.
+// TODO this needs further investigation & a proper fix
+static bool removeDuplicateDbgInfo(Module *Mod) {
+
+  bool Erased = false;
+
+  for (Function &F : Mod->functions()) {
+
+    bool EraseMdDbg = false;
+    // Get the function metadata attachments.
+    SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+    F.getAllMetadata(MDs);
+    unsigned NumDebugAttachments = 0;
+
+    for (const auto &I : MDs) {
+      if (I.first == LLVMContext::MD_dbg) {
+        if (isa<DISubprogram>(I.second)) {
+          DISubprogram *DI = cast<DISubprogram>(I.second);
+          if (!DI->isDistinct()) {
+            EraseMdDbg = true;
+          }
+        }
+      }
+    }
+
+    if (EraseMdDbg) {
+      F.eraseMetadata(LLVMContext::MD_dbg);
+      Erased = true;
+    }
+  }
+  return Erased;
+}
 
 // Find all functions in the calltree of F, append their
 // name to function name set.
@@ -208,14 +246,15 @@ copy_func_callgraph(const llvm::StringRef func_name,
     // functions call other kernel library functions.
     llvm::StringSet<>::iterator ci,ce;
     for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
-      llvm::Function *SrcFunc = from->getFunction(ci->getKey());
+      llvm::StringRef Name = ci->getKey();
+      llvm::Function *SrcFunc = from->getFunction(Name);
       if (!SrcFunc->isDeclaration()) {
-        copy_func_callgraph(ci->getKey(), from, to, vvm);
+        copy_func_callgraph(Name, from, to, vvm);
       } else {
         DB_PRINT("%s is declaration, not recursing into it!\n",
                  SrcFunc->getName().str().c_str());
       }
-      CopyFunc(ci->getKey(), from, to, vvm);
+      CopyFunc(Name, from, to, vvm);
     }
     CopyFunc(func_name, from, to, vvm);
     return 0;
@@ -320,7 +359,6 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
     find_called_functions(&*fi, DeclaredFunctions);
   }
 
-
   // Copy all the globals from lib to program.
   // It probably is faster to just copy them all, than to inspect
   // both program and lib to find which actually are used.
@@ -412,6 +450,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
     return 1;
 
   shared_copy(Program, Lib, log, vvm);
+
+  removeDuplicateDbgInfo(Program);
 
   return 0;
 }

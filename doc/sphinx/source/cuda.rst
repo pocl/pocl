@@ -11,13 +11,13 @@ The goal of this backend is to provide an open-source alternative to the
 proprietary NVIDIA OpenCL implementation.
 This makes use of the NVPTX backend in LLVM and the CUDA driver API.
 
-Building pocl with CUDA support
+Building PoCL with CUDA support
 -------------------------------
 
 1) Install prerequisites
 ~~~~~~~~~~~~~~~~~~~~~~~~
-  Aside from the usual pocl dependencies, you will also need the CUDA toolkit.
-  Currently this backend has only been tested against CUDA 8.0, but it may also
+  Aside from the usual PoCL dependencies, you will also need the CUDA toolkit.
+  Currently the backend is only regularly tested against CUDA 11.6, but it should
   be possible to build against other versions.
 
   If you experience build failures regarding missing CUDA headers or libraries,
@@ -27,17 +27,17 @@ Building pocl with CUDA support
 
   The CUDA backend requires LLVM built with the NVPTX backend enabled.
 
-2) Build pocl
+2) Build PoCL
 ~~~~~~~~~~~~~
   To enable the CUDA backend, add ``-DENABLE_CUDA=ON`` to your CMake
   configuration command line.
 
-  Otherwise, build and install pocl as normal.
+  Otherwise, build and install PoCL as normal.
 
 3) Run tests
 ~~~~~~~~~~~~
-  After building pocl, you can smoke test the CUDA backend by executing the
-  subset of pocl's tests that are known to pass on NVIDIA GPUs::
+  After building PoCL, you can smoke test the CUDA backend by executing the
+  subset of PoCL's tests that are known to pass on NVIDIA GPUs::
 
     ../tools/scripts/run_cuda_tests
 
@@ -49,7 +49,7 @@ Building pocl with CUDA support
 
   The CUDA backend currently has a runtime dependency on the CUDA toolkit. If
   you receive errors regarding a failure to load ``libdevice``, you may need
-  to set the ``POCL_CUDA_TOOLKIT_PATH`` environment variable to tell pocl
+  to set the ``POCL_CUDA_TOOLKIT_PATH`` environment variable to tell PoCL
   where the CUDA toolkit is installed.
   Set this variable to the root of the toolkit installation (the directory
   containing the ``nvvm`` directory).
@@ -72,9 +72,9 @@ CUDA backend status
 
 (last updated: 2017-06-02)
 
-The CUDA backend currently passes 73 tests from pocl's internal testsuite, and
+The CUDA backend currently passes 73 tests from PoCL's internal testsuite, and
 is capable of running various real OpenCL codes.
-Unlike NVIDIA's proprietary OpenCL implementation, pocl supports SPIR
+Unlike NVIDIA's proprietary OpenCL implementation, PoCL supports SPIR-V
 consumption, and so this backend has also been able to run (for example) SYCL
 codes using Codeplay's ComputeCpp implementation on NVIDIA GPUs.
 Since it uses CUDA under-the-hood, this backend also works with all of the
@@ -87,7 +87,7 @@ Conformance status
 The Khronos OpenCL 1.2 conformance tests are
 `available here <https://github.com/KhronosGroup/OpenCL-CTS/tree/cl12_trunk>`_.
 The following test categories are known to pass on at least one NVIDIA GPU using
-pocl's CUDA backend:
+PoCL's CUDA backend:
 
 * allocations
 * api
@@ -124,7 +124,7 @@ and runtime can begin.
 
 Support
 ~~~~~~~
-For bug reports and questions, please use pocl's `GitHub issue tracker
+For bug reports and questions, please use PoCL's `GitHub issue tracker
 <https://github.com/pocl/pocl/issues>`_.
 Pull requests and other contributions are also very welcome.
 

@@ -240,6 +240,7 @@ pocl.
  Sets up Just-In-Time compilation in the Level0 driver.
  (see :ref:`pocl-level0-driver` for details)
  Accepted values: {0,1,auto}
+
    *   0 = always disable JIT
    *   1 = always use JIT,
    *   auto (default) = guess based on program's kernel count & SPIR-V size.
@@ -280,7 +281,7 @@ pocl.
 - **POCL_SIGFPE_HANDLER**
 
  Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
- See :ref:`sigfpe-handler`
+ See :ref:`known-issues`
 
 - **POCL_SIGUSR2_HANDLER**
 

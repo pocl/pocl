@@ -283,7 +283,7 @@ Downsides:
 Setup:
   * For example, to use the Address Sanitizer (ASan), build PoCL with these flags::
 
-       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug
+       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LOADABLE_DRIVERS=OFF
 
   * This will result in ``lib/CL/libOpenCL.so``. Rebuild your application
     with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``.
