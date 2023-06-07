@@ -52,6 +52,7 @@ Notable User Facing Changes
   but still works
 - it's now possible to disable libhwloc support even when it's present, using -DENABLE_HWLOC=0
   CMake option
+- Fixed issues with SYCL via DPC++ on PoCL on ARM.
 
 Notable Fixes
 -------------
