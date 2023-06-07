@@ -10,7 +10,7 @@ Requirements
 In order to build pocl, you need the following support libraries and
 tools:
 
-  * Latest released version of LLVM & Clang
+  * A supported version of LLVM & Clang (check release notes)
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
   * CMake
@@ -52,6 +52,9 @@ this PPA: https://launchpad.net/~ocl-icd/+archive/ubuntu/ppa
 Additionally, if you want the CPU device to report as 3.0 OpenCL,
 you will need LLVM 14 or newer.
 
+Note: PoCL assumes that the OpenCL development headers and the ICD loader
+(if present on your system) are version compatible.
+
 Clang / LLVM Notes
 ------------------
 
@@ -73,7 +76,7 @@ Supported LLVM versions
 Configure & Build
 -----------------
 
-CMake version 3.3 or higher is required.
+CMake version 3.12 or higher is required.
 
 The build+install is the usual CMake way::
 
@@ -234,8 +237,8 @@ use ";" as separator (you'll have to escape it for bash).
 
 - ``-DENABLE_{A,L,T,UB}SAN`` - compiles pocl's host code (and tests
   + examples) with various sanitizers. Using more than one sanitizer at
-  a time is untested. Using together with ``-DENABLE_ICD=OFF`` is highly
-  recommended to avoid issues with loading order of sanitizer libraries.
+  a time is untested. Using together with ``-DENABLE_ICD=OFF -DENABLE_LOADABLE_DRIVERS=OFF``
+  is highly recommended to avoid issues with loading order of sanitizer libraries.
 
 - ``-DENABLE_{CUDA,TCE,HSA,VULKAN,LEVEL0}=ON/OFF`` - enable various (non-CPU) backends.
   Usually requires some additional build dependencies; see their documentation.
@@ -249,8 +252,7 @@ use ";" as separator (you'll have to escape it for bash).
 
 - ``-DENABLE_POCL_FLOAT_CONVERSION=ON/OFF``
   When enabled, OpenCL printf() call's f/e/g formatters are handled by pocl.
-  When disabled (default), these are handled by system C library. Can only
-  be enabled when Clang's compiler-rt library is present.
+  When disabled (default), these are handled by system C library.
 
 - ``-DINTEL_SDE_AVX512=<PATH>``
   Path to Intel® Software Development Emulator. When this option is given,
@@ -317,10 +319,11 @@ Install Docker
 Build & start Pocl container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-* create an empty directory <D>
-* copy Dockerfile of your choice (any file from tools/docker/) to ``<D>/Dockerfile``
-* ``cd <D> ; sudo docker build -t TAG .`` .. where TAG is a name you can choose for the build.
-* ``sudo docker run -t TAG``
+* ``cd tools/docker``
+* pick a Dockerfile from tools/docker, e.g. Fedora/default
+* to build PoCL: ``sudo docker build -t TAG -f Fedora/default .``, where
+  TAG is a name you choose for the build (must be lowercase)
+* to run the tests on the built PoCL: ``sudo docker run -t TAG``
 * this will by default use master branch of pocl git; to use a different branch/commit,
   run docker build with ``--build-arg GIT_COMMIT=<branch/commit>``
 
@@ -338,11 +341,5 @@ Dockerfiles are named according to what they build, or the release they're based
    installs pocl into system path, then runs the internal tests
 * `<release>`: same as above, except uses specific release and specific LLVM version
   (the latest available in that release).
-* `X.32bit`: same as X but sets up i386 environment
 * `conformance`: builds & installs Pocl, then runs conformance test suite
   (the shortest version of it)
-
-Some additional notes:
-
-* TCE is built using three stages (LLVM, TCE, pocl)
-* PHSA built using three stages (LLVM, PHSA runtime, pocl)

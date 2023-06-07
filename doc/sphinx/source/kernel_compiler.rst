@@ -97,14 +97,34 @@ parallel semantics of OpenCL C.
 After the ``ParallelRegions`` have been formed, the static multiple 
 work-item execution can be produced in multiple ways.
 
-Currently, two styles of output are supported for the work-group functions:
-"fully replicated" (``WorkitemReplication``) and "work-item loops" (``WorkitemLoops``). 
-The former is suitable for smaller local sizes and static multi-issue machines; it simply 
-duplicates the code for the different work-items to produce the work-groups. 
-The latter produces loops around the parallel regions that loop across the
+Currently, three styles of output are supported for the work-group functions:
+"fully replicated" (``WorkitemReplication``), "work-item loops" (``WorkitemLoops``)
+and "cbs" (continuation-based synchronization).
+
+The WorkitemReplication is suitable for smaller local sizes and static multi-issue machines;
+it simply duplicates the code for the different work-items to produce the work-groups.
+
+The WorkitemLoops produces loops around the parallel regions that loop across the
 local space. The loops are annotated as parallel using the LLVM parallel loop
 annotation. This helps in producing vectorized versions of the work-group
 functions using the plain LLVM inner loop vectorizer.
+
+The CBS method rectifies a problem with PoCL's WILoops workgroup generation method,
+related to barriers inside loops.
+
+The OpenCL 1.2 page on barrier states:
+"If barrier is inside a loop, all work-items must execute the barrier for each
+iteration of the loop before any are allowed to continue execution beyond the barrier"
+
+Meanwhile OpenCL 3.0 states:
+"If the barrier is inside a loop, then all work-items in the work-group must execute
+the barrier on each iteration of the loop if any work-item executes the barrier on that iteration."
+
+OpenCL 3.0 specification is quite clear that a barrier only has an impact *if* it is reached by any work-item.
+WILoops relies on the more strict interpretation of the OpenCL 1.0-2.x restriction on barriers inside loops,
+which can unfortunately break some legal OpenCL 3.0 code. CBS does not suffer from this problem,
+however it is also harder to achieve same level of ILP through CBS, therefore it currently is
+not the default method.
 
 Because in ``WorkitemLoops`` there are only a subset of work-items "alive"
 at the same time (the current parallel region iteration), one has to store
@@ -116,6 +136,7 @@ The context data treatment is not needed for the ``WorkitemReplication`` method 
 that case, all the work-items are "live" at the same time, and the work-item variables 
 are replicated as scalars for each work-item which are visible across the whole 
 work-group function without needing to restore them separately.
+
 
 Work-group autovectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -238,9 +259,24 @@ depending which style of parameter passing is desired:
  accessible from the host). Explicit global address space identifier is used to access
  the argument data.
 
+* ``KERNELNAME_workgroup_argbuffer()``
 
-*NOTE: There's a plan to remove the first workgroup function and unify the way the
-workgroups are called from the host code. Thus, the former version might go away.*
+ creates a work group launcher with all the argument data passed
+ in a single argument buffer. All argument values, including pointers
+ are stored directly in the argument buffer with natural alignment.
+ The rules for populating the buffer are those of the HSA kernel calling convention.
+
+* ``phsa_kernel.KERNELNAME_grid_launcher()``
+
+ Creates a launcher function that executes all work-items in the grid by
+ launching a given work-group function for all work-group ids.
+
+ The function adheres to the PHSA calling convention where the first two
+ arguments are for PHSA's context data, and the third one is the argument
+ buffer.
+
+*NOTE: There's a plan to remove the "fast" workgroup function and unify the way the
+workgroups are called from the host code.
 
 Assisting transformations
 ^^^^^^^^^^^^^^^^^^^^^^^^^
