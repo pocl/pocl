@@ -43,6 +43,7 @@ Notable User Facing Changes
   causing division-by-zero, only if it occured in one of the CPU driver
   threads; so division-by-zero errors are no longer hidden in user threads.
 - POCL_CUDA_VERIFY_MODULE env variable has been replaced by POCL_LLVM_VERIFY
+- Fixed issues with SYCL via DPC++ on PoCL on ARM.
 
 Notable Fixes
 -------------

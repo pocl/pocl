@@ -26,7 +26,7 @@ Listing tags from git repository (obtained with
 ``git describe --tags``).:
 
 -  DPC++ - Intel LLVM: sycl-nightly/20230413_160000-2-g097d21c
--  PoCL: v3.1-RC1-279-g6a5c38b
+-  PoCL: v4.0
 -  SPIRV-Tools: sdk-1.3.243.0-33-gdd03c1f
 -  OpenCL-Headers: v2023.02.06-5-g8c4f011
 -  OpenCL-ICD-Loader: v2023.02.06-2-gece9144
@@ -240,7 +240,7 @@ PoCL as the OpenCL implementation that SYCL uses.
 ::
 
    [host@user]$ sycl-ls
-   [opencl:cpu:0] Portable Computing Language, pthread-0xd01 OpenCL 3.0 PoCL HSTR: pthread-aarch64-unknown-linux-gnu-tsv110 [4.0-pre next-0-gbbb3d72]
+   [opencl:cpu:0] Portable Computing Language, pthread-0xd01 OpenCL 4.0 PoCL HSTR: pthread-aarch64-unknown-linux-gnu-tsv110 [4.0-pre next-0-gbbb3d72]
 
 4. After that, you can try with this test:
 
