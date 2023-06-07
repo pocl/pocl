@@ -293,23 +293,21 @@ SUB_GROUP_SCAN_EXCLUSIVE_OT (max, a > b ? a : b, double, -INFINITY)
 __attribute__ ((always_inline)) uint4 _CL_OVERLOADABLE
 sub_group_ballot (int predicate)
 {
-  /* TODO: We actually would need only one per SG. */
-  uint *flags
-      = __pocl_work_group_alloca (sizeof (uint) * 4, sizeof (uint) * 4, 0);
+  /* The results for the ballot for all of the WG's SGs. */
+  uint4 *flags = __pocl_work_group_alloca (sizeof (uint4), sizeof (uint4), 0);
+  /* Temporary storage for the predicate flags of all WIs in the WG. */
   char *res = __pocl_work_group_alloca (sizeof (char), 4, 0);
-  if (get_local_linear_id () < 128)
-    res[get_local_linear_id ()] = !!predicate;
+  res[get_local_linear_id ()] = !!predicate;
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
   if (get_sub_group_local_id () == 0)
     {
-      flags[get_first_llid ()] = flags[get_first_llid () + 1]
-          = flags[get_first_llid () + 2] = flags[get_first_llid () + 3] = ~0;
+      flags[get_sub_group_id ()] = 0;
+      uint *f = &flags[get_sub_group_id ()];
       for (uint i = 0; i < get_sub_group_size () && i < 128; ++i)
         {
-          flags[get_first_llid () * 4 + i / 32]
-              |= res[get_first_llid () * 4 + i] << (i % 32);
+          f[i / 32] |= res[get_first_llid () + i] << (i % 32);
         }
     }
   sub_group_barrier (CLK_LOCAL_MEM_FENCE);
-  return ((uint4 *)flags)[get_first_llid () * 4];
+  return flags[get_sub_group_id ()];
 }
