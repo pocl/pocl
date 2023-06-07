@@ -80,7 +80,9 @@ you will need LLVM 14 or newer.
 
 PoCL can be used to provide OpenCL driver on several architectures where the hardware manufacturer does not ship them 
 like Nvidia Tegra (ARM) or IBM Power servers. On PPC64le servers, there are specific instructions to handle the build 
-of PoCL in [README.PPC64le](./README.PPC64le). 
+of PoCL in [README.PPC64le](./README.PPC64le).
+See also [PoCL with CUDA driver](#pocl-with-cuda-driver) section for prebuilt
+binaries.
 
 ### Windows
 
@@ -101,6 +103,61 @@ Building on ARM platforms is possible but lacks a maintainer and there are
 
 If you are a distro maintainer, check [README.packaging](./README.packaging) for
 recommendations on build settings for packaged builds.
+
+## Binary packages
+
+### Linux distros
+
+PoCL with CPU device support can be found on many linux distribution managers.
+See [![latest packaged version(s)](https://repology.org/badge/latest-versions/pocl.svg)](https://repology.org/project/pocl/versions)
+
+### PoCL with CUDA driver
+
+PoCL with CUDA driver support for Linux `x86_64`, `aarch64` and `ppc64le`
+can be found on conda-forge distribution and can be installed with
+
+    wget "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+    bash Mambaforge-$(uname)-$(uname -m).sh   # install mambaforge
+
+To install pocl with cuda driver
+
+    mamba install pocl-cuda
+
+To install all drivers
+
+    mamba install pocl
+
+### macOS
+
+#### Homebrew
+
+PoCL with CPU driver support Intel and Apple Silicon chips can be
+found on homebrew and can be installed with
+
+    brew install pocl
+
+Note that this installs an ICD loader from KhronoGroup and the builtin
+OpenCL implementation will be invisible when your application is linked
+to this loader.
+
+#### Conda
+
+PoCL with CPU driver support Intel and Apple Silicon chips
+can be found on conda-forge distribution and can be installed with
+
+    curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-$(uname)-$(uname -m).sh"
+    bash Mambaforge-$(uname)-$(uname -m).sh
+
+To install the CPU driver
+
+    mamba install pocl
+
+Note that this installs an ICD loader from KhronoGroup and the builtin
+OpenCL implementation will be invisible when your application is linked
+to this loader. To make both pocl and the builtin OpenCL implementaiton
+visible, do
+
+    mamba install pocl ocl_icd_wrapper_apple
 
 ## License
 
