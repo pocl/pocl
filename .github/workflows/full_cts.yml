@@ -27,8 +27,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for now, test only with LLVM 15
-        llvm: [15]
+        # test with LLVM 15 & 16
+        llvm: [15, 16]
         config: [cts_full]
 
     steps:

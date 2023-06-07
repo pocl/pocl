@@ -99,23 +99,6 @@ add_test_pocl(NAME "regression/test_issue_893" COMMAND "test_issue_893")
 
 add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
 
-if(LLVM_VERSION_MAJOR GREATER 9 AND LLVM_VERSION_MAJOR LESS 13)
-  # segfaults on some 32-bit ARM & 64-bit ARM but not all of them;
-  # does not segfault on ODROID C2 & XU3 with Debian 10
-  # segfaults on Cavium ThunderX
-  if(ARM)
-    set_tests_properties("regression/test_llvm_segfault_issue_889_loopvec"
-                         "regression/test_llvm_segfault_issue_889_cbs" PROPERTIES DISABLED 1)
-  endif()
-  # (sporadically?) segfaults on AMD CPUs
-  # in distro builds, we don't know whether we target a failing or a
-  # passing CPU during the tests
-  if(X86_64 AND (KERNELLIB_HOST_DISTRO_VARIANTS OR LLC_HOST_CPU MATCHES "^znver.*"))
-    set_tests_properties("regression/test_llvm_segfault_issue_889_loopvec"
-                         "regression/test_llvm_segfault_issue_889_cbs" PROPERTIES DISABLED 1)
-  endif()
-endif()
-
 # repl
 
 add_test_pocl(NAME "regression/phi_nodes_not_replicated" WORKITEM_HANDLER "loopvec;cbs;repl" COMMAND "test_loop_phi_replication")

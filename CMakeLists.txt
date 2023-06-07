@@ -1562,6 +1562,10 @@ if(ENABLE_TCE)
   set(TCE_DEVICE_CL_VERSION "120")
   set(TCE_DEVICE_CL_STD "1.2")
 
+  if(LLVM_VERSION VERSION_GREATER_EQUAL 16.0)
+    message(FATAL_ERROR "OpenASIP requires LLVM/Clang <= 15")
+  endif()
+
   if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
     message(WARNING "TCE is enabled but your LLVM was not built with RTTI. You should rebuild LLVM with 'make REQUIRES_RTTI=1'. See the INSTALL file for more information.")
   endif()
@@ -1630,12 +1634,7 @@ if (ENABLE_LEVEL0)
   pkg_check_modules(LEVEL0 REQUIRED level-zero>=1.3)
 
   if(NOT ENABLE_LLVM)
-    message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
-  endif()
-  # Clang 16 produces bitcode with opaque pointers (despite PoCL passing -no-opaque-pointers).
-  # SPIR-V translator seems to be Ok with it, but the Level0 driver crashes inside the compiler
-  if(LLVM_VERSION VERSION_GREATER_EQUAL 16.0)
-    message(FATAL_ERROR "Level Zero requires LLVM/Clang <= 15")
+    message(FATAL_ERROR "Level Zero requires LLVM/Clang")
   endif()
   if(NOT LLVM_SPIRV)
     message(FATAL_ERROR "Level Zero requires llvm-spirv translator")
@@ -1643,8 +1642,9 @@ if (ENABLE_LEVEL0)
   if(NOT SPIRV_LINK)
     message(FATAL_ERROR "Level Zero requires spirv-link from SPIR-V tools")
   endif()
-
-
+  if(NOT STATIC_LLVM)
+    message(WARNING "Level Zero might run into symbol conflicts when using dynamic LLVM libraries, consider using -DSTATIC_LLVM=ON")
+  endif()
 
   if (NOT LEVEL0_FOUND)
     message(STATUS "Could not find level-zero via pkg-config, trying to find it directly")

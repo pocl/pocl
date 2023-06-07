@@ -65,7 +65,7 @@ The callbacks can be divided into several groups:
    Buffers (cl_mem objects) in OpenCL are per-context; the allocation of the backing storage
    (device memory) in PoCL is done lazily. IOW a buffer is allocated only on devices which actually run
    commands using those buffers. This happens at clEnqueueXYZ time (``clEnqueue -> pocl_create_command()
-    -> can_run_command() -> device->ops->alloc_mem_obj()``).
+   -> can_run_command() -> device->ops->alloc_mem_obj()``).
 
 3. memory mapping - ``get_mapping_ptr, free_mapping_ptr``
 

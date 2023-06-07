@@ -82,11 +82,14 @@ jobs:
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
-            runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source
+            mkdir -p /home/github/examples/build_cts_spirv
+            runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
-            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source
+            mkdir -p /home/github/examples/build_tier1
+            runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_tier1
           elif [ "${{ matrix.config }}" == "chip_spv" ]; then
-            runCMake -DENABLE_TESTSUITES=chip-spv -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build
+            mkdir -p /home/github/examples/build_chip_spv
+            runCMake -DENABLE_TESTSUITES=chip-spv -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_chip_spv
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -133,8 +136,60 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
+  sycl_matrix:
+    name: LLVM ${{ matrix.llvm }} - SYCL
+    runs-on: [self-hosted, linux, x64, sycl]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16]
 
-  cuda_test:
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=0 -DENABLE_TESTSUITES=all \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          mkdir -p /home/github/examples/build_sycl
+          mkdir -p /home/github/examples/source
+          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_sycl -DSYCL_CXX_COMPILER=/opt/sycl/bin/clang++ -DSYCL_LIBDIR=/opt/sycl/lib
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j4
+
+      - name: Build Examples
+        id: build_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 120
+        run: |
+          cd ${{ github.workspace }}/build && make -j4 prepare_examples
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j4 $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          runCTest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples"
+
+
+  cuda_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, cuda]
     strategy:
@@ -173,7 +228,7 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_cuda_tests $CTEST_FLAGS
 
-  openasip_test:
+  openasip_matrix:
     env:
       PATH: "/home/LLVM_${{ matrix.llvm }}0/bin:/home/TCE_${{ matrix.llvm }}0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       LD_LIBRARY_PATH: "/home/TCE_${{ matrix.llvm }}0/lib"
@@ -224,7 +279,8 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
-  vulkan_test:
+  # could be tried with multiple CLSPV versions
+  vulkan_matrix:
     name: Vulkan
     runs-on: [self-hosted, linux, vulkan]
 
@@ -340,7 +396,7 @@ jobs:
         id: ctest
         run: |
           runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E 'test_shuffle_half_|test_llvm_segfault_issue_889'
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E 'test_shuffle_half_'
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -352,8 +408,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for now, only 15, it supports also 14 but NOT 16
-        llvm: [14, 15]
+        llvm: [14, 15, 16]
         config: [level_zero]
 
     steps:
@@ -364,10 +419,14 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            if [ ${{ matrix.llvm }} -lt 16 ]; then
+              LLVM_FLAGS="-DSTATIC_LLVM=0 -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config"
+            else
+              LLVM_FLAGS="-DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv"
+            fi
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config \
-            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+            $LLVM_FLAGS "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
@@ -385,6 +444,11 @@ jobs:
           OverrideDefaultFP64Settings: "1"
           IGC_EnableDPEmulation: "1"
         run: |
+          if [ ${{ matrix.llvm }} -lt 16 ]; then
+            TEST_EXCLUDES='test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+          else
+            TEST_EXCLUDES='test_hadd_|read-copy-write-buffer|buffer-image-copy|copy_signbit_loopvec|isnan_loopvec|sampler_address_clamp_loopvec|program_from_binary_with_local_1_1_1|spirv/printf|example0_spirv|example1_spirv|oneapi_samples|all_simple_sycl_samples|all_dpcpp_book_samples'
+          fi
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E 'test_hadd_|test_sampler_address_clam|test_alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E $TEST_EXCLUDES
