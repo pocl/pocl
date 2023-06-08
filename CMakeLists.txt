@@ -988,6 +988,9 @@ else()
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)
   endif()
 
+  # Need to avoid finding the Apple OpenCL framework
+  set(CMAKE_FIND_FRAMEWORK NEVER CACHE STRING "Find frameworks on macOS")
+
   if (NOT OCL_ICD_FOUND)
     find_path(OCL_ICD_INCLUDE_DIRS
       NAMES
@@ -1062,6 +1065,10 @@ if(ENABLE_ICD)
   set(TESTS_USE_ICD ${HAVE_OCL_ICD})
 else()
   set(TESTS_USE_ICD 0)
+endif()
+
+if (NOT ENABLE_ICD AND APPLE)
+  message(FATAL_ERROR "macOS build needs an ICD loader, but a loader was not found")
 endif()
 
 if(ENABLE_ICD OR ENABLE_PROXY_DEVICE)
