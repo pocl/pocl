@@ -1052,7 +1052,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 
   cl_device_id device = program->devices[device_i];
 
-    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl ";
+    ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl " << " -o " << "object.riscv ";
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
 		ss_cmd << ventus_final_ld_flags[i] << " ";
 	}
@@ -1062,8 +1062,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
-	ss_cmd << program->compiler_options << " ";
-	ss_cmd << " -o " << "object.riscv" << std::endl;
+	ss_cmd << program->compiler_options << " " << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
 	FILE *fp = popen(ss_cmd.str().c_str(), "r");
