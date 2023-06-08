@@ -66,11 +66,14 @@ wont be able to run with another OpenCL implementation without recompilation.
 Using pocl on MacOSX
 --------------------
 
-On MacOSX, you can either link your program directly with pocl or link through an ICD loader.
-If you use an ICD loader, Apple OpenCL implementation will be invisible, unless you use a
-wrapper library to expose the Apple OpenCL implementation as an ICD. Note that due to old
-ICD on Mac OS X, tests and examples might not build. Recommended is to build PoCL with
-either -DENABLE_TESTS=OFF or -DENABLE_ICD=OFF.
+On MacOSX, you can either link your program directly with pocl or link through the
+ICD loader by KhronosGroup.
+
+Even if you use an ICD loader, the Apple OpenCL implementation will still be invisible,
+unless you use a wrapper library to expose the Apple OpenCL implementation as an ICD.
+
+When ENABLE_ICD is turned off and an application links directly with PoCL, the only
+platform that is visible to the application will be PoCL.
 
 .. _pocl-env-variables:
 
