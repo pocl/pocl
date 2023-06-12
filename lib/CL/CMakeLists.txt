@@ -194,9 +194,6 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
 
 if(ENABLE_LOADABLE_DRIVERS)
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices>")
-  if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
-    list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices-topology>")
-  endif()
 else()
   # link drivers into libpocl
   list(APPEND LIBPOCL_OBJS ${POCL_DEVICES_OBJS})

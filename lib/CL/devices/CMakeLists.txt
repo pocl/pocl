@@ -67,16 +67,17 @@ if(BUILD_ALMAIF)
 endif()
 
 # for these drivers, use HWLOC if found
-if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
+if(ENABLE_HOST_CPU_DEVICES)
   add_subdirectory("topology")
-  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-    "$<TARGET_OBJECTS:pocl-devices-topology>")
-
-  if(Hwloc_FOUND)
-    if(Hwloc_LDFLAGS)
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-    else()
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+      "$<TARGET_OBJECTS:pocl-devices-topology>")
+    if(Hwloc_FOUND)
+      if(Hwloc_LDFLAGS)
+        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
+      else()
+        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
+      endif()
     endif()
   endif()
 endif()
