@@ -1165,10 +1165,7 @@ pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
       fake_cmd.command.run.pc.global_offset[2] = 0;
       fake_cmd.command.run.pc.global_var_buffer = program->gvar_storage[dev_i];
 
-      char *saved_name = NULL;
-      pocl_sanitize_builtin_kernel_name (&fake_kernel, &saved_name);
       device->ops->compile_kernel (&fake_cmd, &fake_kernel, device, 0);
-      pocl_restore_builtin_kernel_name (&fake_kernel, saved_name);
 
       if (callback) {
         callback (program, dev_i, &fake_cmd);
