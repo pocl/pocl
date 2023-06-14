@@ -33,7 +33,7 @@ jobs:
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
-        config: [basic]
+        config: [basic, devel]
 
     steps:
       - uses: actions/checkout@v3
@@ -48,8 +48,11 @@ jobs:
         shell: bash -el {0}
         run: |
           mamba install 'clangdev=${{ matrix.llvm }}.*' 'llvmdev=${{ matrix.llvm }}.*' \
-             llvm-spirv libhwloc khronos-opencl-icd-loader clhpp ld64 compilers pkg-config cmake make
+             llvm-spirv libhwloc ld64 compilers pkg-config cmake make
           conda activate pocl-deps
+          if [ "${{ matrix.config }}" == "basic" ]; then
+            mamba install khronos-opencl-icd-loader clhpp
+          fi
 
       - name: CMake
         shell: bash -el {0}
@@ -68,6 +71,8 @@ jobs:
           mkdir ${{ github.workspace }}/build
           if [ "${{ matrix.config }}" == "basic" ]; then
             runCMake -DENABLE_ICD=1
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCMake -DENABLE_ICD=0 -DENABLE_EXTRA_VALIDITY_CHECKS=1 -DENABLE_RELOCATION=0
           else
             echo "Unknown configuration" && exit 1
           fi
