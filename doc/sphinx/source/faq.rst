@@ -12,7 +12,7 @@ Using pocl
 Supported compilers and compiler combinations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Pocl usually uses two different compilers (though may be built
+PoCL usually uses two different compilers (though may be built
 using only one). One is used to compile C and C++ files - this is usually
 the "system compiler". It's specified by CMAKE_C{,XX}_COMPILER variables
 to cmake, but usually just left to default. The second compiler is used
@@ -32,7 +32,7 @@ to build pocl, as the one that was used to build the 2nd compiler. Note that
 while most Linux distributions use GCC to build their Clang/LLVM,
 the official downloads from llvm.org are built using Clang.
 
-Pocl is not listed by clinfo / is not found
+PoCL is not listed by clinfo / is not found
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Occasionally, proprietary implementations rewrite the ICD loader by their own

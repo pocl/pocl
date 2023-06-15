@@ -101,7 +101,7 @@ Currently, three styles of output are supported for the work-group functions:
 "fully replicated" (``WorkitemReplication``), "work-item loops" (``WorkitemLoops``)
 and "cbs" (continuation-based synchronization).
 
-The WorkitemReplication is suitable for smaller local sizes and static multi-issue machines;
+The WorkitemReplication can be interesting for smaller WG sizes and static multi-issue machines (VLIW);
 it simply duplicates the code for the different work-items to produce the work-groups.
 
 The WorkitemLoops produces loops around the parallel regions that loop across the
@@ -109,8 +109,8 @@ local space. The loops are annotated as parallel using the LLVM parallel loop
 annotation. This helps in producing vectorized versions of the work-group
 functions using the plain LLVM inner loop vectorizer.
 
-The CBS method rectifies a problem with PoCL's WILoops workgroup generation method,
-related to barriers inside loops.
+The CBS method rectifies a corner case with PoCL's WILoops workgroup generation method,
+related to barriers inside loops:
 
 The OpenCL 1.2 page on barrier states:
 "If barrier is inside a loop, all work-items must execute the barrier for each
@@ -123,7 +123,7 @@ the barrier on each iteration of the loop if any work-item executes the barrier 
 OpenCL 3.0 specification is quite clear that a barrier only has an impact *if* it is reached by any work-item.
 WILoops relies on the more strict interpretation of the OpenCL 1.0-2.x restriction on barriers inside loops,
 which can unfortunately break some legal OpenCL 3.0 code. CBS does not suffer from this problem,
-however it is also harder to achieve same level of ILP through CBS, therefore it currently is
+however it is also harder to achieve same level of ILP through CBS as with the more static PoCL's default method, therefore it currently is
 not the default method.
 
 Because in ``WorkitemLoops`` there are only a subset of work-items "alive"

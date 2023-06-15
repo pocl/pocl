@@ -8,10 +8,10 @@ Major new features
 =============================
 
 -------------------------------------------------------------------------------
-PoCL: Support for Clang/LLVM 16.0 (except TCE drivers)
+PoCL: Support for Clang/LLVM 16.0
 -------------------------------------------------------------------------------
 
-PoCL now supports Clang/LLVM from 10.0 to 16.0 inclusive. The most relevant
+PoCL now supports Clang/LLVM from 10.0 to 16.0 inclusive. The most PoCL-relevant
 change of the new 16.0 release is support for `_Float16 type on x86 and
 ARM targets. <https://releases.llvm.org/16.0.0/tools/clang/docs/LanguageExtensions.html#half-precision-floating-point>`_
 
@@ -26,7 +26,7 @@ CPU driver: support for program-scope variables
 -------------------------------------------------------------------------------
 
 Global variables in program-scope are now supported, along with static global
-variables in function-scope, for both OpenCL C source and SPIR-V compilation. Passes
+variables in function-scope, for both OpenCL C source and SPIR-V compilation. The implementation passes
 the ``basic/test_basic`` test of the OpenCL-CTS, and has been tested with
 user applications (CHIP-SPV).
 
@@ -55,7 +55,7 @@ CPU driver: support for generic address space
 -------------------------------------------------------------------------------
 
 Generic AS is now supported, for both OpenCL C source and SPIR-V compilation.
-Passes the ``generic_address_space/test_generic_address_space`` test
+PoCL now passes the ``generic_address_space/test_generic_address_space`` test
 of the OpenCL-CTS, and has been tested with user applications (CHIP-SPV).
 
 .. code-block:: c
@@ -70,10 +70,10 @@ of the OpenCL-CTS, and has been tested with user applications (CHIP-SPV).
   }
 
 -------------------------------------------------------------------------------
-CPU driver: initial(partial) support for cl_khr_subgroups
+CPU driver: initial (partial) support for cl_khr_subgroups
 -------------------------------------------------------------------------------
 
-A single subgroup that always executes the whole X-dimension's WIs.
+The default is a single subgroup that always executes the whole X-dimension's WIs.
 Independent forward progress is not yet supported, but it's
 not needed for CTS compliance, due to the corner case of only one SG in flight.
 
@@ -123,7 +123,7 @@ This driver supports devices accessible via Level Zero API.
 The driver has been tested with multiple devices (iGPU and dGPU),
 and passes a large portion of PoCL tests (87% tests passed, 32 tests
 fail out of 254), however it has not been finished nor optimized yet,
-therefore it is not production quality.
+therefore it cannot be considered production quality.
 
 The driver supports the following OpenCL extensions, in addition to atomics:
 cl_khr_il_program, cl_khr_3d_image_writes,
@@ -144,7 +144,7 @@ CPU driver, Level Zero driver: support for cl_intel_unified_shared_memory
 
 Together with SPIR-V support and other new features, this allows
 using PoCL as an OpenCL backend for SYCL runtimes. This works with the
-CPU driver (tested on x86-64 & ARM64) and the LevelZero driver. Vincent A. Arcila
+CPU driver (tested on x86-64 & ARM64) and the Level Zero driver. Vincent A. Arcila
 has contributed a guide for building PoCL as SYCL runtime backend on ARM.
 
 Additionally, there is a new testsuite integrated into PoCL for testing USM support,
@@ -155,7 +155,7 @@ and PoCL currently passes 78% of the tests (12 tests failed out of 54).
 New testsuites
 -------------------------------------------------------------------------------
 
-There are also multiple new CTest testsuites in PoCL. For testing PoCL as SYCL backend,
+There are also multiple new CTest testsuites in PoCL. For testing PoCL as a SYCL backend,
 there are three new testsuites: ``dpcpp-book-samples``, ``oneapi-samples`` and ``simple-sycl-samples``.
 
 * ``dpcpp-book-samples``: these are samples from https://github.com/Apress/data-parallel-CPP
@@ -211,9 +211,9 @@ Bugfixes and minor features
   passing it to the code generation.
 
 * New alternative work-group function mode for non-SPMD from Open SYCL:
-  Continuation-based synchronization is slightly more general than POCL's
+  Continuation-based synchronization is somewhat more general than the default one in PoCL's
   current kernel compiler, but allows for fewer hand-rolled optimizations.
-  CBS is expected to work for kernels that POCL's current kernel compiler
+  CBS is expected to work for kernels that PoCL's current kernel compiler
   does not support. Currently, CBS can be manually enabled by setting
   the environment variable `POCL_WORK_GROUP_METHOD=cbs`.
 
