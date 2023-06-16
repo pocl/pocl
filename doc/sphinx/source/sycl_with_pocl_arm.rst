@@ -293,6 +293,26 @@ PoCL as the OpenCL implementation that SYCL uses.
 
 5. ``clang++ -fsycl t.cpp && ./a.out``
 
+Alternative way to test SYCL with PoCL
+--------------------------------------
+
+In addition to previous example, it's now possible to build PoCL with support for external SYCL testsuites,
+though this has so far been tested only with x86-64.
+
+In the PoCL installation step, add the following options to the CMake command ::
+
+    "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples"
+     -DSYCL_CXX_COMPILER=<DPCPP_BASE_PATH>/bin/clang++ -DSYCL_LIBDIR=<DPCPP_BASE_PATH>/lib
+
+where DPCPP_BASE_PATH is the BASE_PATH from the env-sycl.sh. The quotes around -DENABLE_TESTSUITES
+are required, since it contains semicolon. After building PoCL with ``ninja install``,
+you must build the external testsuites with ``ninja prepare_examples``. After the successful build,
+there should be a new ctest label for each testsuite. Hence you can run the tests with::
+
+    ctest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples"
+
+...check that you're using PoCL (with sycl-ls) before running ctest.
+
 Known issues
 ------------
 
