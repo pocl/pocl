@@ -7,28 +7,26 @@ Release Notes for PoCL 4.0
 Major new features
 =============================
 
--------------------------------------------------------------------------------
-PoCL: Support for Clang/LLVM 16.0
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Support for Clang/LLVM 16.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PoCL now supports Clang/LLVM from 10.0 to 16.0 inclusive. The most PoCL-relevant
-change of the new 16.0 release is support for `_Float16 type on x86 and
-ARM targets. <https://releases.llvm.org/16.0.0/tools/clang/docs/LanguageExtensions.html#half-precision-floating-point>`_
+change of the new 16.0 release is support for `_Float16 type on x86 and ARM targets.
+<https://releases.llvm.org/16.0.0/tools/clang/docs/LanguageExtensions.html#half-precision-floating-point>`_
 
-Clang 16 release notes:
-https://releases.llvm.org/16.0.0/tools/clang/docs/ReleaseNotes.html
-
-LLVM 16 release notes:
-https://releases.llvm.org/16.0.0/docs/ReleaseNotes.html
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CPU driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 -------------------------------------------------------------------------------
-CPU driver: support for program-scope variables
+Support for program-scope variables
 -------------------------------------------------------------------------------
 
 Global variables in program-scope are now supported, along with static global
 variables in function-scope, for both OpenCL C source and SPIR-V compilation. The implementation passes
 the ``basic/test_basic`` test of the OpenCL-CTS, and has been tested with
-user applications (CHIP-SPV).
+client applications through chipStar.
 
 .. code-block:: c
 
@@ -51,7 +49,7 @@ user applications (CHIP-SPV).
 
 
 -------------------------------------------------------------------------------
-CPU driver: support for generic address space
+Support for generic address space
 -------------------------------------------------------------------------------
 
 Generic AS is now supported, for both OpenCL C source and SPIR-V compilation.
@@ -70,7 +68,7 @@ of the OpenCL-CTS, and has been tested with CUDA/HIP applications through chipSt
   }
 
 -------------------------------------------------------------------------------
-CPU driver: initial (partial) support for cl_khr_subgroups
+Initial support for cl_khr_subgroups
 -------------------------------------------------------------------------------
 
 The default is a single subgroup that always executes the whole X-dimension's WIs.
@@ -90,7 +88,7 @@ Additionally, there is partial implementation for ``cl_khr_subgroup_shuffle``,
   * ``cl_intel_subgroups``: The block reads/writes are unimplemented.
 
 -------------------------------------------------------------------------------
-CPU driver: initial support for cl_intel_required_subgroup_size
+Initial support for cl_intel_required_subgroup_size
 -------------------------------------------------------------------------------
 
 This extension allows the programmer to specify the required subgroup size for
@@ -103,7 +101,7 @@ however ``CL_​KERNEL_​SPILL_​MEM_​SIZE_​INTEL`` and ``CL_​KERNEL_​
 ``clGetKernelWorkGroupInfo`` API are not yet implemented.
 
 -------------------------------------------------------------------------------
-CPU driver: partial support for cl_khr_fp16
+Initial support for cl_khr_fp16
 -------------------------------------------------------------------------------
 
 PoCL now has partial support for ``cl_khr_fp16`` when compiled with Clang/LLVM 16+.
@@ -114,11 +112,11 @@ Clang/LLVM 16+, the following targets have native fp16 support: 32-bit and
 Currently only implemented for a part of builtin library functions,
 those that are implemented with either an expression, or a Clang builtin.
 
--------------------------------------------------------------------------------
-Level Zero driver: a new device driver, using the Level Zero API.
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Level Zero driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This driver supports devices accessible via Level Zero API.
+This is a new experimental driver that supports devices accessible via Level Zero API.
 
 The driver has been tested with multiple devices (iGPU and dGPU),
 and passes a large portion of PoCL tests (87% tests passed, 32 tests
@@ -130,20 +128,20 @@ cl_khr_il_program, cl_khr_3d_image_writes,
 cl_khr_fp16, cl_khr_fp64, cl_khr_subgroups, cl_intel_unified_shared_memory.
 In addition, Specialization Constants and SVM are supported.
 
-We also intend to use the driver for implementing features not found in
+We also intend to use the driver for prototyping features not found in
 the official Intel Compute Runtime OpenCL drivers, and for experimenting
-with integration with other OpenCL devices in the same runtime.
+with asynchronous execution with other OpenCL devices in the same PoCL platform.
 One such feature currently implemented is the JIT kernel compilation, which is
 useful with programs that have thousands of kernels but only launch a few of
-them (e.g. because of templated code).
+them (e.g. when using SPIR-V IL produced from heavily templated C++ code).
 For details, see the full driver documentation in `doc/sphinx/source/level0.rst`.
 
 -------------------------------------------------------------------------------
-CPU driver, Level Zero driver: support for cl_intel_unified_shared_memory
+Support for cl_intel_unified_shared_memory
 -------------------------------------------------------------------------------
 
-Together with SPIR-V support and other new features, this allows
-using PoCL as an OpenCL backend for SYCL runtimes. This works with the
+This extension, together with SPIR-V support and other new features, allows
+using PoCL as an OpenCL backend for SYCL runtimes. This works with the both
 CPU driver (tested on x86-64 & ARM64) and the Level Zero driver. Vincent A. Arcila
 has contributed a guide for building PoCL as SYCL runtime backend on ARM.
 
@@ -151,9 +149,9 @@ Additionally, there is a new testsuite integrated into PoCL for testing USM supp
 ``intel-compute-samples``. These are tests from https://github.com/intel/compute-samples
 and PoCL currently passes 78% of the tests (12 tests failed out of 54).
 
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 New testsuites
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are also multiple new CTest testsuites in PoCL. For testing PoCL as a SYCL backend,
 there are three new testsuites: ``dpcpp-book-samples``, ``oneapi-samples`` and ``simple-sycl-samples``.
@@ -167,13 +165,13 @@ there are three new testsuites: ``dpcpp-book-samples``, ``oneapi-samples`` and `
 * ``simple-sycl-samples``: these are from https://github.com/bashbaug/simple-sycl-samples
   currently contains only 8 samples, PoCL passes all of them.
 
-For testing PoCL as CHIP-SPV backend: ``chip-spv`` testsuite. This builds
-the runtime and the tests from https://github.com/CHIP-SPV/chip-spv, and
-runs a subset of tests (approximately 800) with PoCL as the chipStar's OpenCL backend.
+For testing PoCL as chipStar's OpenCL backend: ``chipStar`` testsuite. This builds
+the runtime and the tests from https://github.com/CHIP-SPV/chipStar, and
+runs a subset of tests (approximately 800) with PoCL as the chipStar's backend.
 
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Mac OS X support
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Thanks to efforts of Isuru Fernando who stepped up to become the official Mac OSX port maintainer, PoCL's CPU driver has been again fixed to work on Mac OS X.
 The current 4.0 release has been tested on these configurations:
@@ -183,9 +181,9 @@ MacOS 10.13 (Intel Sandybridge), MacOS 11.7 Intel (Ivybridge) with Clang 15.
 Additionally, there are now Github Actions for CI testing of PoCL with Mac OS X,
 testing 4 different configurations: LLVM 15 and 15, with and without ICD loader.
 
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Github Actions
--------------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The original CI used by PoCL authors (Python Buildbot, https://buildbot.net)
 has been converted to publicly accessible Github Actions CI. These are currently
