@@ -56,7 +56,7 @@ CPU driver: support for generic address space
 
 Generic AS is now supported, for both OpenCL C source and SPIR-V compilation.
 PoCL now passes the ``generic_address_space/test_generic_address_space`` test
-of the OpenCL-CTS, and has been tested with user applications (CHIP-SPV).
+of the OpenCL-CTS, and has been tested with CUDA/HIP applications through chipStar.
 
 .. code-block:: c
 
@@ -94,7 +94,7 @@ CPU driver: initial support for cl_intel_required_subgroup_size
 -------------------------------------------------------------------------------
 
 This extension allows the programmer to specify the required subgroup size for
-a kernel function. This can be important for algorithm correctness. The programmer
+a kernel function. This can be important for algorithm correctness in some cases. It's used by chipStar to implement fixed width warps when needed. The programmer
 can specify the size with a new kernel attribute:
 ``__attribute__((intel_reqd_sub_group_size(<int>)))``
 
@@ -169,16 +169,16 @@ there are three new testsuites: ``dpcpp-book-samples``, ``oneapi-samples`` and `
 
 For testing PoCL as CHIP-SPV backend: ``chip-spv`` testsuite. This builds
 the runtime and the tests from https://github.com/CHIP-SPV/chip-spv, and
-runs a subset of tests (approximately 800) with PoCL as OpenCL backend.
+runs a subset of tests (approximately 800) with PoCL as the chipStar's OpenCL backend.
 
 -------------------------------------------------------------------------------
 Mac OS X support
 -------------------------------------------------------------------------------
 
-Thanks to efforts of Isuru Fernando, PoCL has been fixed to work on Mac OS X.
+Thanks to efforts of Isuru Fernando who stepped up to become the official Mac OSX port maintainer, PoCL's CPU driver has been again fixed to work on Mac OS X.
 The current 4.0 release has been tested on these configurations:
 
-MacOS 10.13 (Intel Sandybridge), MacOS 11.7 Intel (Ivybridge) with Clang 15
+MacOS 10.13 (Intel Sandybridge), MacOS 11.7 Intel (Ivybridge) with Clang 15.
 
 Additionally, there are now Github Actions for CI testing of PoCL with Mac OS X,
 testing 4 different configurations: LLVM 15 and 15, with and without ICD loader.
@@ -193,7 +193,7 @@ set up to test PoCL with last two LLVM versions rigorously, and basic tests with
 older LLVM versions. The most tested driver is the CPU driver, with multiple
 configurations enabling or testing different features: sanitizers, external
 testsuites, SYCL support, OpenCL conformance, SPIR-V support. There are also
-basic tests for other drivers in PoCL: OpenASIP, Vulkan, CUDA, and LevelZero.
+basic tests for other experimental/WiP/research-drivers in PoCL: OpenASIP, Vulkan, CUDA, and LevelZero.
 
 =============================
 Bugfixes and minor features
