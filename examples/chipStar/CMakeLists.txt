@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-set(TS_NAME "chip-spv")
+set(TS_NAME "chipStar")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
@@ -49,7 +49,7 @@ if(NOT ENABLE_HOST_CPU_DEVICES)
 endif()
 
 if(ENABLE_HOST_CPU_DEVICES AND (ENABLE_CONFORMANCE))
-  message(WARNING "CHIP-SPV + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
+  message(WARNING "${TS_NAME} + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
 endif()
 
 find_package(Python3 3.8 COMPONENTS Interpreter Development)
@@ -68,7 +68,7 @@ set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 if(CUSTOM_CHIP_GIT_REPO)
   set(CHIP_GIT_REPO "${CUSTOM_CHIP_GIT_REPO}")
 else()
-  set(CHIP_GIT_REPO "https://github.com/CHIP-SPV/chip-spv")
+  set(CHIP_GIT_REPO "https://github.com/CHIP-SPV/${TS_NAME}")
 endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
@@ -76,7 +76,7 @@ else()
   set(CHIP_GIT_TAG "f1ff1ef4749392e5c656663c0c1be5a286c69cd4")
 endif()
 
-# if we have disabled FP16, disable also the FP16 tests in chip-spv
+# if we have disabled FP16, disable also the FP16 tests in chipStar
 # disable hipMultiThreadAddCallback test, it's fixed but in later commit
 # TODO this assumes we're using CPU device
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
@@ -89,9 +89,9 @@ else()
     "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
 endif()
 
-# set up env variables. Unfortunately this is necessary even just to build chip-spv
+# set up env variables. Unfortunately this is necessary even just to build chipStar
 # because the catch testsuite's "autodiscovery" feature requires
-# a working chip-spv (which requires a working backend)
+# a working chipStar (which requires a working backend)
 set(CMAKE_CALL_ENV "-E" "env" "OCL_ICD_VENDORS=${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd")
 list(APPEND CMAKE_CALL_ENV "POCL_BUILDING=1")
 list(APPEND CMAKE_CALL_ENV "POCL_KERNEL_CACHE=0")
@@ -104,7 +104,7 @@ list(APPEND CMAKE_CALL_ENV "HIP_PLATFORM=spirv")
 list(APPEND CMAKE_CALL_ENV "HIP_ARCH=spirv")
 
 # add llvm-spirv's directory to the PATH environment var. Necessary
-# for chip-spv; in theory passing -DLLVM_SPIRV=... should be enough,
+# for chipStar; in theory passing -DLLVM_SPIRV=... should be enough,
 # but it doesn't pass that to Clang (yet) so the compilation fails.
 if(LLVM_SPIRV)
   get_filename_component(LLVM_SPIRV_DIR "${LLVM_SPIRV}" DIRECTORY)
@@ -140,7 +140,7 @@ ExternalProject_Add(
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
-# this ensures that libpocl is built before chip-spv testsuite build begins
+# this ensures that libpocl is built before chipStar testsuite build begins
 add_dependencies(${TS_NAME} ${POCL_LIBRARY_NAME})
 if(ENABLE_LOADABLE_DRIVERS)
   add_dependencies(${TS_NAME} pocl-devices-basic pocl-devices-pthread pocl-devices-topology)
@@ -158,4 +158,4 @@ set_tests_properties(${TS_NAME}
   PROCESSORS ${CORECOUNT}
   ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
-  LABELS "chip-spv")
+  LABELS "chipStar")

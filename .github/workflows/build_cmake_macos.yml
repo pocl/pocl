@@ -89,7 +89,7 @@ jobs:
         id: build_examples
         # occasionally git timeouts on git clone of the examples
         timeout-minutes: 120
-        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chip_spv' }}
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chipStar' }}
         run: |
           cd ${{ github.workspace }}/build && make -j$(sysctl -n hw.logicalcpu) prepare_examples
 
@@ -110,8 +110,8 @@ jobs:
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
-          elif [ "${{ matrix.config }}" == "chip_spv" ]; then
-            runCTest -L chip-spv
+          elif [ "${{ matrix.config }}" == "chipStar" ]; then
+            runCTest -L chipStar
           else
             echo "Unknown configuration" && exit 1
           fi
