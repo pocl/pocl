@@ -36,6 +36,11 @@ foreach(FILE
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
   get_global_offset.c
+  native_cos.cl native_sin.cl native_tan.cl
+  native_log.cl native_log2.cl native_log10.cl
+  native_exp.cl native_exp10.cl
+  native_powr.cl
+  native_divide.cl native_recip.cl
   rsqrt.cl
   printf.c
   wait_group_events.cl
