@@ -66,7 +66,7 @@ endif()
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
-  GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit"
+  GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit.git"
   GIT_TAG "main"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
