@@ -106,6 +106,8 @@ typedef struct pocl_cuda_kernel_data_s
   CUfunction kernel;
   CUfunction kernel_offsets;
   size_t *alignments;
+  CUdeviceptr constant_mem_base;
+  size_t constant_mem_size;
 } pocl_cuda_kernel_data_t;
 
 typedef struct pocl_cuda_event_data_s
@@ -1213,6 +1215,10 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
       kdata->kernel = function;
     }
 
+  /* Get handle to constant memory buffer */
+  cuModuleGetGlobal (&kdata->constant_mem_base, &kdata->constant_mem_size, module,
+                     "_constant_memory_region_");
+
   POCL_UNLOCK (ddata->compile_lock);
 
   return kdata;
@@ -1573,12 +1579,6 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   unsigned constantMemOffsets[meta->num_args];
   unsigned globalOffsets[3];
 
-  /* Get handle to constant memory buffer */
-  size_t constant_mem_size;
-  CUdeviceptr constant_mem_base = 0;
-  cuModuleGetGlobal (&constant_mem_base, &constant_mem_size, module,
-                     "_constant_memory_region_");
-
   CUresult result;
   unsigned i;
   for (i = 0; i < meta->num_args; i++)
@@ -1610,7 +1610,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
             else if (meta->arg_info[i].address_qualifier
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
-                assert (constant_mem_base);
+                assert (kdata->constant_mem_base);
                 assert (arguments[i].is_svm == 0);
 
                 /* Get device pointer */
@@ -1627,7 +1627,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
                 /* Copy to constant buffer at current offset */
                 result
-                    = cuMemcpyDtoDAsync (constant_mem_base + constantMemBytes,
+                    = cuMemcpyDtoDAsync (kdata->constant_mem_base + constantMemBytes,
                                          src, mem->size, stream);
                 CUDA_CHECK (result, "cuMemcpyDtoDAsync");
 
@@ -1669,9 +1669,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
         }
     }
 
-  if (constantMemBytes > constant_mem_size)
+  if (constantMemBytes > kdata->constant_mem_size)
     POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated\n",
-                constantMemBytes, constant_mem_size);
+                constantMemBytes, kdata->constant_mem_size);
 
   unsigned arg_index = meta->num_args;
 
