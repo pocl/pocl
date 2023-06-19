@@ -446,6 +446,7 @@ CLK_UNSIGNED_INT8, CLK_UNSIGNED_INT16, or CLK_UNSIGNED_INT32.
       {                                                                       \
         array_offset_pixels = clamp (coord4.y, 0, asize);                     \
         coord4.y = 0;                                                         \
+        coord4.z = 0;                                                         \
       }                                                                       \
     array_offset_pixels *= slice_pitch;                                       \
     pocl_write_pixel (as_uint4 (color), i_ptr, coord4, array_offset_pixels,   \
