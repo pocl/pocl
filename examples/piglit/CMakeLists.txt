@@ -260,12 +260,6 @@ set_tests_properties(
     LABELS "piglit")
 
 set_tests_properties(
-  piglit_cl_api_create_program_with_binary
-
-  PROPERTIES
-    WILL_FAIL 1)
-
-set_tests_properties(
   # these fail with OpenCL 3.0,
   # but work with 1.2
   piglit_cl_api_create_command_queue
