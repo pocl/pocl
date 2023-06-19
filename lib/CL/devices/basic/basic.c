@@ -591,7 +591,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, 1, 1);
+    pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
@@ -662,7 +662,7 @@ pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
   char *saved_name = NULL;
   pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
+    pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize);
   pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 

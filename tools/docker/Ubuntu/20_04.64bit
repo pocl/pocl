@@ -1,9 +1,9 @@
-FROM amd64/ubuntu:22.04
+FROM amd64/ubuntu:20.04
 
 ARG GIT_COMMIT=master
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
-ARG LLVM_VERSION=13
+ARG LLVM_VERSION=12
 
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
 
@@ -19,11 +19,7 @@ RUN apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libcl
 
 RUN cd /home ; git clone https://github.com/$GH_SLUG.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; test -z "$GH_PR" || (git fetch origin +refs/pull/$GH_PR/merge && git checkout -qf FETCH_HEAD) && :
-RUN cd /home/pocl ; mkdir b ; cd b; \
-   cmake -DCMAKE_INSTALL_PREFIX=/usr \
-         -DKERNELLIB_HOST_CPU_VARIANTS=distro \
-         -DPOCL_ICD_ABSOLUTE_PATH=OFF \
-         -G Ninja ..
+RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${LLVM_VERSION} -DCMAKE_INSTALL_PREFIX=/usr ..
 RUN cd /home/pocl/b ; ninja install
 # removing this picks up PoCL from the system install, not the build dir
 RUN cd /home/pocl/b ; rm -f CTestCustom.cmake

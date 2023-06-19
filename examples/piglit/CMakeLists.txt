@@ -66,7 +66,7 @@ endif()
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
-  GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit"
+  GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit.git"
   GIT_TAG "main"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -258,12 +258,6 @@ set_tests_properties(
     PASS_REGULAR_EXPRESSION "pass"
     FAIL_REGULAR_EXPRESSION "fail"
     LABELS "piglit")
-
-set_tests_properties(
-  piglit_cl_api_create_program_with_binary
-
-  PROPERTIES
-    WILL_FAIL 1)
 
 set_tests_properties(
   # these fail with OpenCL 3.0,

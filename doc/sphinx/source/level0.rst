@@ -48,8 +48,6 @@ What's implemented (some were not tested)
  * Spec constants
  * subgroups
  * SVM
- * event timestamps
- * unlimited WG count execution
  * 64bit buffer support (specialization)
  * caching native binaries
 
@@ -58,7 +56,8 @@ Unfinished / non-optimal
 
  * kernel argument metadata parsing (``type_name`` is
    not parsed ATM, the other argument attributes are)
- * ``CL_MEM_USE_HOST_PTR`` handling (works with buffers, but doesn't work with Images)
+ * host synchronization when ``CL_MEM_USE_HOST_PTR`` is used (works with
+   buffers, but doesn't work with Images)
  * all buffers are allocated using shared memory (``zeMemAllocShared``),
    this might be a performance problem on dGPUs.
    TODO: investigate & possibly use the virtual + physical memory APIs.
@@ -85,12 +84,16 @@ Known Bugs
 The FP64 support, on some devices, is software emulated. Kernels using FP64
 might not produce results with accuracy that is required by the OpenCL standard.
 
+Certain tests may pass on some GPUs but not others. Also, the driver is known to fail more
+tests with LLVM 16 because of unsolved bugs related to opaque-pointer changes in LLVM and SPIRV-LLVM-Translator.
+
 Testing
 ---------
 
-The tests that should work with Level Zero driver can be run with tools/scripts/run_level0_tests.
+The tests that should work with Level Zero driver can be run with ``tools/scripts/run_level0_tests``.
 
 This driver was tested with these de0vices:
 
 * Intel Tiger Lake integrated GPU
 * Intel Alder Lake integrated GPU
+* Intel Arc A750

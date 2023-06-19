@@ -387,11 +387,6 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
                                       pocl_cpu_gvar_init_callback);
 
-  char *saved_name = NULL;
-  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
-  pocl_restore_builtin_kernel_name (kernel, saved_name);
-
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   if (num_groups == 0)
@@ -404,7 +399,10 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
       return;
     }
 
-  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
+  char *saved_name = NULL;
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
+  pocl_check_kernel_dlhandle_cache (cmd, CL_TRUE, CL_TRUE);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 
   run_cmd = new_kernel_run_command ();
   run_cmd->data = data;

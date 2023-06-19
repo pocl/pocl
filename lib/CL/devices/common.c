@@ -1032,7 +1032,6 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
         /* move to the front of the line */
         DL_DELETE (pocl_dlhandle_cache, ci);
         DL_PREPEND (pocl_dlhandle_cache, ci);
-        ++ci->ref_count;
         run_cmd->wg = ci->wg;
         return ci;
       }
@@ -1046,14 +1045,18 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
  * in the disk, if not, builds the kernel and puts it to respective
  * caches.
  *
- * The initial refcount may be 0, in case we're just pre-compiling kernels
+ * if handle already exists: if the retain argument is given,
+ * the refcount is increased, otherwise it's kept unchanged.
+ * if handle doesn't exist: if the retain argument is given,
+ * refcount is set to 1, otherwise it's set to 0.
+ * This can be useful in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately.
  *
  * TODO: This function is really specific to CPU (host) drivers since dlhandles
  * imply program loading to the same process as the host. Move to basic.c? */
 void
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                  unsigned initial_refcount, int specialize)
+                                  int retain, int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
@@ -1069,6 +1072,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci = fetch_dlhandle_cache_item (run_cmd, specialize);
   if (ci != NULL)
     {
+      if (retain) ++ci->ref_count;
       POCL_UNLOCK (pocl_dlhandle_lock);
       return;
     }
@@ -1079,7 +1083,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->local_wgs[0] = run_cmd->pc.local_size[0];
   ci->local_wgs[1] = run_cmd->pc.local_size[1];
   ci->local_wgs[2] = run_cmd->pc.local_size[2];
-  ci->ref_count = initial_refcount;
+  ci->ref_count = retain ? 1 : 0;
   ci->specialize = specialize;
   ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
                    && run_cmd->pc.global_offset[1] == 0

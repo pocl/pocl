@@ -361,7 +361,7 @@ get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
 
 /* array_coord must be unnormalized & repeats removed */
 _CL_READONLY static int4
-get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
+get_image_array_offset_float (global dev_image_t *img, int4 uvw_after_rint,
                          float4 array_coord)
 {
   int4 res = uvw_after_rint;
@@ -369,13 +369,13 @@ get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
     {
       if (img->_height > 0)
         {
-          res.z = clamp (convert_int (floor (array_coord.z + 0.5f)), 0,
+          res.z = clamp (convert_int (rint (array_coord.z)), 0,
                          (img->_image_array_size - 1));
           res.w = 0;
         }
       else
         {
-          res.y = clamp (convert_int (floor (array_coord.y + 0.5f)), 0,
+          res.y = clamp (convert_int (rint (array_coord.y)), 0,
                          (img->_image_array_size - 1));
           res.z = 0;
           res.w = 0;
@@ -384,18 +384,13 @@ get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
   return res;
 }
 
-/* RET: (int4) (img.x{,y,z}, array_size, 0 {,0 ...} ) */
+/* RET: (int4) (img.x{,y,z}, array_size, 1 {,1 ...} ) */
 _CL_READONLY static int4
 pocl_get_image_array_size (global dev_image_t *img)
 {
+  int4 min = (int4)(1);
   int4 imgsize = (int4) (img->_width, img->_height, img->_depth, 0);
-  if (img->_image_array_size > 0)
-    {
-      if (img->_height > 0)
-        imgsize.z = img->_image_array_size;
-      else
-        imgsize.y = img->_image_array_size;
-    }
+  imgsize = select(min, imgsize, (imgsize > min));
   return imgsize;
 }
 /*************************************************************************/
@@ -1295,6 +1290,7 @@ read_pixel_linear_1d (float4 abc, float4 one_m, int ijk0, int ijk1,
 #define INVALID_SAMPLER_FILTER (uint4) (0x2222)
 #define INVALID_SAMPLER_NORMAL (uint4) (0x3333)
 
+
 _CL_READONLY static uint4
 nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
                   const dev_sampler_t samp)
@@ -1317,7 +1313,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
     {
       int4 final_coord
           = pocl_address_mode (img, convert_int4 (floor (coord)), samp);
-      int4 array_coord = get_image_array_offset2 (img, final_coord, coord);
+      int4 array_coord = get_image_array_offset_float (img, final_coord, coord);
       return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
@@ -1340,7 +1336,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
       else if (img->_height != 0)
         {
           if (img->_image_array_size > 0)
-            a_index = clamp (convert_int (floor (coord.z + 0.5f)), 0,
+            a_index = clamp (convert_int (rint (coord.z)), 0,
                              (int)(img->_image_array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1350,7 +1346,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
       else
         {
           if (img->_image_array_size > 0)
-            a_index = clamp (convert_int (floor (coord.y + 0.5f)), 0,
+            a_index = clamp (convert_int (rint (coord.y)), 0,
                              (int)(img->_image_array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,
@@ -1389,7 +1385,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
       int4 ijk = convert_int4 (floor (uvw));
       int4 final_coord = select (ijk, (ijk - maxcoord), (ijk >= maxcoord));
       int4 array_coord
-          = get_image_array_offset2 (img, final_coord, (coord * whd));
+          = get_image_array_offset_float (img, final_coord, (coord * whd));
 
       return pocl_read_pixel (img, array_coord);
     }
@@ -1405,7 +1401,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
            i1 = i1 – wt
       */
       int a_index = 0;
-      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
+      int4 maxcoord = pocl_get_image_array_size (img);
       float4 whd = convert_float4 (maxcoord);
       float4 uvw = (coord - floor (coord)) * whd;
       int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
@@ -1430,7 +1426,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.z * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.z)),
                          0, (array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1441,7 +1437,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.y * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.y)),
                          0, (array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,
@@ -1485,7 +1481,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       int4 wdt = max ((maxcoord - (int4) (1)), (int4) (0));
       int4 final_coord = select (ijk, wdt, (ijk > wdt));
       int4 array_coord
-          = get_image_array_offset2 (img, final_coord, (coord * whd));
+          = get_image_array_offset_float (img, final_coord, (coord * whd));
       return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
@@ -1501,8 +1497,9 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       */
       float4 ss = (float4) (2.0f) * rint ((float4) (0.5f) * coord);
       ss = fabs (coord - ss);
-      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
-      float4 uvw = ss * convert_float4 (maxcoord);
+      int4 maxcoord = pocl_get_image_array_size (img);
+      float4 whd = convert_float4 (maxcoord);
+      float4 uvw = ss * whd;
       int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
       int4 ijk1 = ijk0 + (int4) (1);
       ijk0 = max (ijk0, (int4)0);
@@ -1524,7 +1521,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.z * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.z)),
                          0, (array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1535,7 +1532,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.y * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.y)),
                          0, (array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,

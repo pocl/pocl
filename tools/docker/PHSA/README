@@ -1,2 +1,0 @@
-copy the clang-3.7-hsail-branch.patch from POCL/tools/patches to
-the docker build directory, it needs to be there to build LLVM 3.7

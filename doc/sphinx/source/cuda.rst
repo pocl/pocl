@@ -62,10 +62,11 @@ Building PoCL with CUDA support
   dump the LLVM IR that is fed into the NVPTX backend for debugging purposes
   (requires ``POCL_DEBUG=1``).
 
-  The ``POCL_CUDA_DISABLE_QUEUE_THREADS`` environment variable can be set to
-  ``1`` to disable background threads for handling command submission. This can
-  potentially reduce command launch latency, but can cause problems if using
-  user events or sharing a context with a non-CUDA device.
+  The ``POCL_CUDA_DISABLE_QUEUE_THREADS`` environment variable indicates usage
+  of background threads for handling command submission. Defaults to ``1``, set to
+  ``0`` to enable background threads.
+  Disabled threads can potentially reduce command launch latency, but can
+  cause problems if using user events or sharing a context with a non-CUDA device.
 
 CUDA backend status
 -------------------
