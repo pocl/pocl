@@ -179,7 +179,7 @@ The current 4.0 release has been tested on these configurations:
 MacOS 10.13 (Intel Sandybridge), MacOS 11.7 Intel (Ivybridge) with Clang 15.
 
 Additionally, there are now Github Actions for CI testing of PoCL with Mac OS X,
-testing 4 different configurations: LLVM 15 and 15, with and without ICD loader.
+testing 4 different configurations: LLVM 15 and 16, with and without ICD loader.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Github Actions
