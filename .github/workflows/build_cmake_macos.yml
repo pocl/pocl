@@ -1,0 +1,117 @@
+---
+name: Main test matrix for macOS
+
+on:
+  push:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - 'CHANGES'
+      - 'COPYING'
+      - 'CREDITS'
+      - 'LICENSE'
+      - 'README.*'
+
+env:
+  POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
+  CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000"
+  POCL_KERNEL_CACHE: "0"
+  POCL_MAX_WORK_GROUP_SIZE: "1024"
+  POCL_MEMORY_LIMIT: "2"
+
+jobs:
+  main_test_matrix:
+    name: LLVM macOS ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [15, 16]
+        # basic = simplest pthread build
+        # devel = with devel options
+        # cts_spirv = cts with SPIR-V
+        # tier1 = includes CTS without SPIR-V
+        # asan, tsan, ubsan = sanitizers
+        config: [basic, devel]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: latest
+          mamba-version: "*"
+          activate-environment: pocl-deps
+
+      - name: Install dependencies
+        shell: bash -el {0}
+        run: |
+          mamba install 'clangdev=${{ matrix.llvm }}.*' 'llvmdev=${{ matrix.llvm }}.*' \
+             llvm-spirv libhwloc ld64 compilers pkg-config cmake make
+          conda activate pocl-deps
+          if [ "${{ matrix.config }}" == "basic" ]; then
+            mamba install khronos-opencl-icd-loader clhpp
+          fi
+
+      - name: CMake
+        shell: bash -el {0}
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DDEVELOPER_MODE=ON -DCMAKE_FIND_FRAMEWORK=LAST -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
+            -DOPENCL_H=$CONDA_PREFIX/include/CL/opencl.h -DOPENCL_HPP=$CONDA_PREFIX/include/CL/opencl.hpp \
+            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=$CONDA_PREFIX/bin/llvm-config -DLLVM_SPIRV=$CONDA_PREFIX/bin/llvm-spirv \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "basic" ]; then
+            runCMake -DENABLE_ICD=1
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCMake -DENABLE_ICD=0 -DENABLE_EXTRA_VALIDITY_CHECKS=1 -DENABLE_RELOCATION=0
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        shell: bash -el {0}
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(sysctl -n hw.logicalcpu)
+
+      - name: Build Examples
+        shell: bash -el {0}
+        id: build_examples
+        # occasionally git timeouts on git clone of the examples
+        timeout-minutes: 120
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chipStar' }}
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(sysctl -n hw.logicalcpu) prepare_examples
+
+      - name: Run Tests
+        shell: bash -el {0}
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j$(sysctl -n hw.logicalcpu) $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "basic" ]; then
+            runCTest -L internal
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCTest -L internal
+          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
+            runCTest -L conformance_suite_micro_spirv
+          elif [ "${{ matrix.config }}" == "tier1" ]; then
+            runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
+          elif [ "${{ matrix.config }}" == "chipStar" ]; then
+            runCTest -L chipStar
+          else
+            echo "Unknown configuration" && exit 1
+          fi

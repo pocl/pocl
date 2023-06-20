@@ -148,8 +148,8 @@ Using pocl from the Build Tree
 
 If you want use the pocl from the build tree, you must export
 POCL_BUILDING=1 so pocl searches for its utility scripts from the
-build tree first, then the installation location. The "make check"
-testsuite does this automatically.
+build tree first, then the installation location. Running PoCL's ctest
+from the build root will do this automatically.
 
 There's a helper script that, when sourced, in addition to setting
 POCL_BUILDING setups the OCL_ICD_VENDORS path to point to the pocl in
@@ -177,8 +177,7 @@ Writing Documentation
 ---------------------
 
 The documentation is written using the `Sphinx documentation generator 
-<http://sphinx-doc.org/>`_ and
-the reStructuredText markup.
+<http://sphinx-doc.org/>`_ and the reStructuredText markup.
 
 This Sphinx documentation can be built by::
 
@@ -221,13 +220,13 @@ Currently (2023-02-28) the following are included in the tier-1 test suites:
 * The standard test suite of pocl.
 * PyOpenCL test suite
 * piglit test suite
-* conformance_suite_micro test suite
+* conformance_suite_micro_main test suite
 * SHOC test suite
 * CHIP-SPV test suite
 
 Please note that not necessarily all the tests currently pass in the suites,
 we just ensure the currently passing ones do not regress with new
-commits (expected failing ones are marked as XFAILs or skipped).
+commits (expected failing ones are disabled or skipped).
 The primary test platform is x86-64.
 
 The latest LLVM release is given priority when testing, and we cannot

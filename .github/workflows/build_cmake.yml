@@ -37,7 +37,7 @@ jobs:
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
-        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chip_spv]
+        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chipstar]
         include:
           - llvm: 10
             config: basic
@@ -53,7 +53,7 @@ jobs:
           - llvm: 16
             config: cts_spirv
           - llvm: 16
-            config: chip_spv
+            config: chipstar
 
     steps:
       - uses: actions/checkout@v3
@@ -87,9 +87,9 @@ jobs:
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             mkdir -p /home/github/examples/build_tier1
             runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_tier1
-          elif [ "${{ matrix.config }}" == "chip_spv" ]; then
-            mkdir -p /home/github/examples/build_chip_spv
-            runCMake -DENABLE_TESTSUITES=chip-spv -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_chip_spv
+          elif [ "${{ matrix.config }}" == "chipstar" ]; then
+            mkdir -p /home/github/examples/build_chipstar
+            runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_chipstar
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -104,7 +104,7 @@ jobs:
         id: build_examples
         # occasionally git timeouts on git clone of the examples
         timeout-minutes: 120
-        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chip_spv' }}
+        if: ${{ matrix.config == 'cts_spirv' || matrix.config == 'tier1' || matrix.config == 'chipstar' }}
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc) prepare_examples
 
@@ -130,8 +130,8 @@ jobs:
             runCTest -L conformance_suite_micro_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
-          elif [ "${{ matrix.config }}" == "chip_spv" ]; then
-            runCTest -L chip-spv
+          elif [ "${{ matrix.config }}" == "chipstar" ]; then
+            runCTest -L chipStar
           else
             echo "Unknown configuration" && exit 1
           fi

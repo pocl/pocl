@@ -339,10 +339,11 @@ main(void)
         cl::Buffer outBuffer3 = cl::Buffer(
             context, CL_MEM_READ_WRITE, 128, nullptr);
 
-        char c = 42;
-        int i = 0x3838292;
-        long l = 0x283849239423;
-        int matching_res = 0;
+        cl_char c = 42;
+        cl_int i = 0x3838292;
+        cl_long l = static_cast<cl_long>(0x283849239423LL);
+        cl_int matching_res = 0;
+
         test4w.setArg(0, c);
         test4w.setArg(1, i);
         test4w.setArg(2, l);

@@ -66,11 +66,14 @@ wont be able to run with another OpenCL implementation without recompilation.
 Using pocl on MacOSX
 --------------------
 
-On MacOSX, you can either link your program directly with pocl or link through an ICD loader.
-If you use an ICD loader, Apple OpenCL implementation will be invisible, unless you use a
-wrapper library to expose the Apple OpenCL implementation as an ICD. Note that due to old
-ICD on Mac OS X, tests and examples might not build. Recommended is to build PoCL with
-either -DENABLE_TESTS=OFF or -DENABLE_ICD=OFF.
+On MacOSX, you can either link your program directly with pocl or link through the
+ICD loader by KhronosGroup.
+
+Even if you use an ICD loader, the Apple OpenCL implementation will still be invisible,
+unless you use a wrapper library to expose the Apple OpenCL implementation as an ICD.
+
+When ENABLE_ICD is turned off and an application links directly with PoCL, the only
+platform that is visible to the application will be PoCL.
 
 .. _pocl-env-variables:
 
@@ -151,6 +154,12 @@ pocl.
  Set the local memory size of the CPU devices (cpu, cpu-minimal) to the
  given amount in bytes instead of the default one.
 
+- **POCL_CPU_MAX_CU_COUNT**
+
+ The maximum number of threads created for work group execution in the
+ 'cpu' device driver. The default is to determine this from the number of
+ hardware threads available in the CPU.
+
 - **POCL_DEBUG**
 
  Enables debug messages to stderr. This will be mostly messages from error
@@ -216,12 +225,6 @@ pocl.
  adding debug data all the built kernels to help debugging kernel issues
  with tools such as gdb or valgrind.
 
-- **POCL_IMPLICIT_FINISH**
-
- Add an implicit call to clFinish after every clEnqueue* call. Useful mostly for
- pocl internal development, and is enabled only if pocl is configured with
- ``--enable-debug``.
-
 - **POCL_KERNEL_CACHE**
 
  If this is set to 0 at runtime, kernel compilation files will be deleted at
@@ -251,12 +254,6 @@ pocl.
   verification of LLVM modules at certain stages (program.bc always,
   kernel bitcode (parallel.bc) only with some drivers).
   Defaults to 0 if CMAKE_BUILD_TYPE=Debug and 1 otherwise.
-
-- **POCL_CPU_MAX_CU_COUNT**
-
- The maximum number of threads created for work group execution in the
- 'cpu' device driver. The default is to determine this from the number of
- hardware threads available in the CPU.
 
 - **POCL_MAX_WORK_GROUP_SIZE**
 
@@ -331,7 +328,7 @@ pocl.
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
 
-- **POCL_VULKAN_VALIDATE=1**
+- **POCL_VULKAN_VALIDATE**
 
  When set to 1, and the Vulkan implementation has the validation layers,
  enables the validation layers in the driver. You will also need POCL_DEBUG=vulkan

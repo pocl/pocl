@@ -988,18 +988,30 @@ else()
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)
   endif()
 
+
+  # Need to avoid finding the Apple OpenCL framework
+  set(CMAKE_FIND_FRAMEWORK NEVER CACHE STRING "Find frameworks on macOS")
+
   if (NOT OCL_ICD_FOUND)
     find_path(OCL_ICD_INCLUDE_DIRS
       NAMES
         ocl_icd.h
     )
-    find_library(OCL_ICD_LIBRARIES
-      NAMES
-        OpenCL
-    )
-    if(OCL_ICD_INCLUDE_DIRS AND OCL_ICD_LIBRARIES)
-      set(OCL_ICD_FOUND 1)
-    endif()
+  elseif("${OCL_ICD_LIBRARIES}" STREQUAL "")
+    # OCL_ICD_LIBRARIES is set to empty because of a bug in ocl-icd.pc
+    unset(OCL_ICD_LIBRARIES CACHE)
+  endif()
+
+  # Find OCL_ICD_LIBRARIES with the hint from pkg-config
+  find_library(OCL_ICD_LIBRARIES
+    NAMES
+      OpenCL
+    HINTS
+      ${OCL_ICD_LIBDIR}
+  )
+
+  if(OCL_ICD_INCLUDE_DIRS AND OCL_ICD_LIBRARIES)
+    set(OCL_ICD_FOUND 1)
   endif()
 
   if(OCL_ICD_FOUND)
@@ -1007,7 +1019,7 @@ else()
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
 
-    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "ocl-icd library")
+    set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "ocl-icd library")
     set(OPENCL_LIBDIR "${OCL_ICD_LIBDIR}" CACHE INTERNAL "opencl ICD/library path")
 
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
@@ -1062,6 +1074,10 @@ if(ENABLE_ICD)
   set(TESTS_USE_ICD ${HAVE_OCL_ICD})
 else()
   set(TESTS_USE_ICD 0)
+endif()
+
+if (APPLE AND NOT ENABLE_ICD AND VISIBILITY_HIDDEN)
+  add_compile_definitions("-DCL_API_CALL=__attribute__ ((visibility (\"default\")))")
 endif()
 
 if(ENABLE_ICD OR ENABLE_PROXY_DEVICE)
@@ -1949,7 +1965,7 @@ if(ENABLE_TESTS)
 
     # make check & make check_tier1
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chip-spv'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)

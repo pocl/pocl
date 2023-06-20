@@ -7,34 +7,32 @@ on x86-64+Linux, see :ref:`pocl-conformance` for details.
 Known unsupported OpenCL features
 =================================
 
-The known unsupported OpenCL (both 1.x and 2.x) features are
-listed here as encountered.
+The known unsupported OpenCL features are listed here as encountered.
 
-Frontend/Clang
---------------
-
-* OpenCL 1.x
-
-  * OpenGL interoperability extension
-  * SPIR extension (partially available, see below)
+Unimplemented device-side features
+----------------------------------
 
 * OpenCL 2.0
 
-  * generic address space (recognized by LLVM 3.8+ but incomplete)
-  * pipes (WIP)
+  * pipes
   * device-side enqueue
 
 * OpenCL 3.0
 
   see :ref:`pocl-conformance` for the list
 
-* cl_khr_f16: half precision support (with the exception of  vload_half / vstore_half)
-
-Unimplemented host side functions
+Unimplemented host-side features
 ---------------------------------
 
-All 1.2 API call are implemented. From the 2.x and 3.0 API, all should exist,
-but some might have "dummy" implementations (they always return an error).
+All 1.2 runtime API call are implemented. From the 2.x and 3.0 API, all should
+exist, but some might have "dummy" implementations (they always return an error).
+
+Unimplemented extensions
+------------------------
+
+  * OpenCL 1.x SPIR 1.2 / 2.0 extension
+  * OpenGL interoperability extension
+  * DirectX interoperability extension
 
 SPIR and SPIR-V support
 =========================
@@ -62,8 +60,8 @@ See :ref:`pocl-install` for additional requirements for SPIR-V support.
 
 Requirements:
 
-* recent PoCL (1.5+ should work, 3.1 recommended)
-* recent LLVM (7.0+ works, for full support 12+ is recommended)
+* recent PoCL (4.0+ has most extensive support)
+* recent LLVM (10.0+ works, for best experience 14+ is recommended)
 
 To compile the LLVM SPIR-V translator::
 

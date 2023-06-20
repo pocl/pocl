@@ -86,7 +86,7 @@ size_t pocl_cmd_max_grid_dim_width (_cl_command_run *cmd);
 
 POCL_EXPORT
 void pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                       unsigned initial_refcount,
+                                       int retain,
                                        int specialize);
 
 POCL_EXPORT
