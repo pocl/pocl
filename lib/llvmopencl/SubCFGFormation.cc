@@ -253,7 +253,7 @@ void insertLocalIdInit(llvm::BasicBlock *Entry) {
 
 // get the wg size values for the loop bounds
 llvm::SmallVector<llvm::Value *, 3>
-getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<std::size_t> LocalSizes,
+getLocalSizeValues(llvm::Function &F, llvm::ArrayRef<unsigned long> LocalSizes,
                    bool DynSizes, int Dim) {
   auto &DL = F.getParent()->getDataLayout();
   llvm::IRBuilder<> Builder{F.getEntryBlock().getTerminator()};
@@ -384,7 +384,7 @@ class SubCFG {
   size_t Dim;
 
   llvm::BasicBlock *createExitWithID(
-      llvm::detail::DenseMapPair<llvm::BasicBlock *, unsigned long> BarrierPair,
+      llvm::detail::DenseMapPair<llvm::BasicBlock *, size_t> BarrierPair,
       llvm::BasicBlock *After, llvm::BasicBlock *TargetBB);
 
   void loadMultiSubCfgValues(
@@ -1356,7 +1356,7 @@ void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
   F.viewCFG();
 #endif
 
-  std::array<size_t, 3> LocalSizes;
+  std::array<unsigned long, 3> LocalSizes;
   getModuleIntMetadata(*F.getParent(), "WGLocalSizeX", LocalSizes[0]);
   getModuleIntMetadata(*F.getParent(), "WGLocalSizeY", LocalSizes[1]);
   getModuleIntMetadata(*F.getParent(), "WGLocalSizeZ", LocalSizes[2]);
