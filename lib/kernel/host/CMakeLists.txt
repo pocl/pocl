@@ -559,7 +559,7 @@ endfunction()
 foreach(CPU_VARIANT IN LISTS KERNELLIB_HOST_CPU_VARIANTS)
 
 if(CPU_VARIANT MATCHES "native")
-  set(VARIANT "${_LLC_HOST_CPU}")
+  set(VARIANT "${SELECTED_HOST_CPU}")
 else()
   set(VARIANT "${CPU_VARIANT}")
 endif()
