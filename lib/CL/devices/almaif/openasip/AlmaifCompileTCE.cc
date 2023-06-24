@@ -108,10 +108,15 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   device->long_name = device->short_name = "ALMAIF TCE";
   device->vendor = "pocl";
   device->extensions = TCE_DEVICE_EXTENSIONS;
-  if (device->endian_little)
+  if (device->endian_little) {
     device->llvm_target_triplet = "tcele-tut-llvm";
-  else
+    device->kernellib_name = "kernel-tcele-tut-llvm";
+  } else {
     device->llvm_target_triplet = "tce-tut-llvm";
+    device->kernellib_name = "kernel-tce-tut-llvm";
+  }
+  device->kernellib_fallback_name = NULL;
+  device->kernellib_subdir = "tce";
   device->llvm_cpu = NULL;
   d->compilationData->backend_data = (void *)bd;
   device->builtins_sources_path = "tce_builtins.cl";

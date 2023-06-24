@@ -1672,21 +1672,36 @@ pocl_init_default_device_infos (cl_device_id dev)
 #ifdef ENABLE_LLVM
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-#if defined(KERNELLIB_HOST_DISTRO_VARIANTS)
-  dev->kernellib_name = pocl_get_distro_kernellib_name ();
-  dev->llvm_cpu = pocl_get_distro_cpu_name (dev->kernellib_name);
-  if (!dev->kernellib_name || !dev->llvm_cpu)
+
+  char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
+  char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
+  strcat(kernellib, dev->llvm_target_triplet);
+
+  strcat(kernellib, '-');
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  char* kernellib_variant = pocl_get_distro_kernellib_variant ();
+  dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
+  strcat(kernellib, kernellib_variant);
+  if (!kernellib_variant)
     dev->available = CL_FALSE;
 #elif defined(HOST_CPU_FORCED)
-  dev->kernellib_name = OCL_KERNEL_TARGET_CPU;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+  strcat(kernellib, OCL_KERNEL_TARGET_CPU);
 #else
-  dev->kernellib_name = NULL;
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
+  strcpy(kernellib_fallback, kernellib);
+  strcat(kernellib_fallback, OCL_KERNEL_TARGET_CPU);
+  strcat(kernellib, dev->llvm_cpu);
 #endif
+
+  dev->kernellib_name = strdup(kernellib);
+  dev->kernellib_fallback_name = strdup(kernellib_fallback);
+  dev->kernellib_subdir = "host";
 
 #else /* No compiler, no CPU info */
   dev->kernellib_name = NULL;
+  dev->kernellib_fallback_name = NULL;
+  dev->kernellib_subdir = "host";
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";
 #endif

@@ -944,7 +944,9 @@ struct _cl_device_id {
   void *data;
 
   const char* llvm_target_triplet; /* the llvm target triplet to use */
-  const char *kernellib_name;      /* the kernellib variant to use */
+  const char* kernellib_name;      /* bitcode kernel library name */
+  const char* kernellib_fallback_name; /* bitcode kernel fallback library name */
+  const char* kernellib_subdir; /* bitcode kernel library subdir */
   const char* llvm_cpu; /* the llvm CPU variant to use */
   const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
 

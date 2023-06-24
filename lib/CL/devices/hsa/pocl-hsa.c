@@ -707,6 +707,19 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name));
   get_hsa_device_features (dev->long_name, dev);
 
+  if (dev->llvm_target_triplet != NULL) {
+    if (strcmp(dev->llvm_target_triplet, "hsail64") == 0) {
+      dev->kernellib_name = "kernel-hsail64";
+      dev->kernellib_fallback_name = NULL;
+      dev->kernellib_subdir = "hsail64";
+    }
+    if (strcmp(dev->llvm_target_triplet, "amdgcn--amdhsa") == 0) {
+      dev->kernellib_name = "kernel-amdgcn--amdhsa";
+      dev->kernellib_fallback_name = NULL;
+      dev->kernellib_subdir = "amdgcn";
+    }
+  }
+
   dev->type = CL_DEVICE_TYPE_GPU;
 
   // Enable when it's actually implemented AND if supported by
