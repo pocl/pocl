@@ -39,7 +39,7 @@ CL_API_SUFFIX__VERSION_1_0
   
   POCL_RETURN_ERROR_COND((num_entries == 0 && image_formats != NULL), CL_INVALID_VALUE);
 
-  cl_int idx = opencl_image_type_to_index (image_type);
+  cl_int idx = pocl_opencl_image_type_to_index (image_type);
 
   POCL_RETURN_ERROR_ON ((idx < 0), CL_INVALID_VALUE,
                         "invalid image type\n");

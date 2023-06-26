@@ -33,7 +33,7 @@
 void origin_to_bytes (cl_mem mem, const size_t *origin, size_t *byte_offset);
 
 POCL_EXPORT
-cl_int opencl_image_type_to_index (cl_mem_object_type  image_type);
+cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type);
 
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
