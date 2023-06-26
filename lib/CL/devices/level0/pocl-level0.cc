@@ -490,8 +490,8 @@ int pocl_level0_supports_binary(cl_device_id Device, size_t Length,
     return 1;
   }
 #ifdef ENABLE_SPIR
-  if ((bitcode_is_triple(Binary, Length, "spir-unknown") != 0) ||
-      (bitcode_is_triple(Binary, Length, "spir64-unknown") != 0)) {
+  if ((pocl_bitcode_is_triple(Binary, Length, "spir-unknown") != 0) ||
+      (pocl_bitcode_is_triple(Binary, Length, "spir64-unknown") != 0)) {
     return 1;
   }
 #endif
@@ -567,10 +567,10 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
       assert(Program->binary_sizes[DeviceI] > 0);
 
       int Triple =
-          bitcode_is_triple((char *)Program->binaries[DeviceI],
+          pocl_bitcode_is_triple((char *)Program->binaries[DeviceI],
                             Program->binary_sizes[DeviceI], "spir-unknown");
       Triple +=
-          bitcode_is_triple((char *)Program->binaries[DeviceI],
+          pocl_bitcode_is_triple((char *)Program->binaries[DeviceI],
                             Program->binary_sizes[DeviceI], "spir64-unknown");
       POCL_RETURN_ERROR_ON((Triple == 0), CL_BUILD_PROGRAM_FAILURE,
                            "the binary supplied to level0 driver is "
