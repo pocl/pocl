@@ -43,6 +43,7 @@
 #include <utlist.h>
 #include <sstream>
 #include <fstream>
+#include <algorithm>
 
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
@@ -330,7 +331,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 }
 //#define PRINT_CHISEL_TESTCODE
 #ifdef PRINT_CHISEL_TESTCODE
-void fp_write_file(FILE *fp,char *p,uint64_t size){
+void fp_write_file(FILE *fp,void *p,uint64_t size){
   for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
     fprintf(fp,"%08x\n",*((uint32_t*)p+i));
 } 
@@ -449,7 +450,8 @@ step5 make a writefile for chisel
                     c_buffer_allocsize[c_num_buffer]=m->size;
                     c_num_buffer=c_num_buffer+1;
                     assert(c_num_buffer<=c_max_num_buffer);
-                    fp_write_file(fp_data,m->mem_host_ptr,m->size);
+					if(m->mem_host_ptr)
+                    	fp_write_file(fp_data,(m->mem_host_ptr),m->size);
                   #endif
                 }
                 ((void **)arguments)[i] = ptr;
@@ -625,9 +627,9 @@ uint64_t abuf_size = 0;
 	std::string assembler_path = CLANG;
     assembler_path = assembler_path.substr(0,assembler_path.length()-6);
 	assembler_path += "/../../assemble.sh";
-  system((std::string("chmod +x ") + assembler_path).c_str());
-  assembler_path += " object";
-  system(assembler_path.c_str());
+  	system((std::string("chmod +x ") + assembler_path).c_str());
+  	assembler_path += " object";
+  	system(assembler_path.c_str());
 	POCL_MSG_PRINT_LLVM("Vmem file has been written to object.vmem\n");
 #elif
 	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
@@ -638,12 +640,32 @@ uint64_t abuf_size = 0;
 	///TODO 将text段搬到ddr,并且起始地址必须是0x80000000,spike专用，verilator需要先解析出vmem,然后上传程序段
 	vt_upload_kernel_file(d->vt_device,filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
-    c_buffer_base[c_num_buffer]=pc_dev_mem_addr;
-    c_buffer_size[c_num_buffer]=0;
-    c_buffer_allocsize[c_num_buffer]=pc_src_size;
-    c_num_buffer=c_num_buffer+1;
-    assert(c_num_buffer<=c_max_num_buffer);
     //TODO: add upload kernel file here.
+	std::ifstream vmem_file("object.vmem");
+	vmem_file.seekg(0, vmem_file.end);
+	auto size = vmem_file.tellg();
+	std::string content;
+	content.resize(size);
+	vmem_file.seekg(0, vmem_file.beg);
+	vmem_file.read(&content[0], size);
+	content.erase(std::remove(content.begin(), content.end(), '\n'), content.end());
+	int vmem_line_count = content.length() / 8;
+	uint32_t* vmem_content = new uint32_t[vmem_line_count];
+	for (int i = 0; i < vmem_line_count; i++) {
+		std::string substring = (content).substr(i * 8, 8); // 每次提取8个字符
+		unsigned int value = std::stoul(substring, nullptr, 16); // 转换为无符号整数
+		memcpy(vmem_content + i, &value, sizeof(uint32_t)); // 复制到数组中
+	}
+	fp_write_file(fp_data,vmem_content, vmem_line_count*sizeof(uint32_t));
+	fp_write_file(fp_metadata, &(pc_dev_mem_addr), sizeof(uint64_t));
+	delete []vmem_content;
+	content.clear();
+
+	c_buffer_base[c_num_buffer]=pc_dev_mem_addr;
+	c_buffer_size[c_num_buffer]=vmem_line_count*sizeof(uint32_t);
+	c_buffer_allocsize[c_num_buffer]=pc_src_size;
+	c_num_buffer=c_num_buffer+1;
+	assert(c_num_buffer<=c_max_num_buffer);
   #endif
 
   
@@ -737,9 +759,9 @@ uint64_t abuf_size = 0;
     fp_write_file(fp_metadata,&(driver_meta.vgprUsage),sizeof(uint64_t));
     fp_write_file(fp_metadata,&(driver_meta.pdsBaseAddr),sizeof(uint64_t));
     fp_write_file(fp_metadata,&(c_num_buffer),sizeof(uint64_t));
-    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_base[i],sizeof(uint64_t));
-    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_size[i],sizeof(uint64_t));
-    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,c_buffer_allocsize[i],sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,&c_buffer_base[i],sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,&c_buffer_size[i],sizeof(uint64_t));
+    for(int i=0;i<c_num_buffer;i++)  fp_write_file(fp_metadata,&c_buffer_allocsize[i],sizeof(uint64_t));
     fclose(fp_metadata);
     fclose(fp_data);
   #endif
