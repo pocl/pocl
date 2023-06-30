@@ -249,7 +249,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->profile = "FULL_PROFILE";
   dev->endian_little = CL_TRUE;
 
-  dev->max_mem_alloc_size = 100 * 1024 * 1024; //100M
+  dev->max_mem_alloc_size = 500 * 1024 * 1024; //100M
   dev->mem_base_addr_align = 4;
 
   dev->max_constant_buffer_size = 32768;     // TODO: Update this to conformant to OCL 2.0 // no cpmstant buffer now
