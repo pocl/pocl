@@ -329,7 +329,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   return ret;
 }
-//#define PRINT_CHISEL_TESTCODE
+#define PRINT_CHISEL_TESTCODE
 #ifdef PRINT_CHISEL_TESTCODE
 void fp_write_file(FILE *fp,void *p,uint64_t size){
   for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
@@ -340,7 +340,6 @@ void fp_write_file(FILE *fp,void *p,uint64_t size){
 void
 pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
-
 #ifdef PRINT_CHISEL_TESTCODE
   uint64_t c_num_buffer=0;
   uint64_t c_max_num_buffer=32;
@@ -1117,7 +1116,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
             printf("generate chisel testcode\n");
         } 
     } */
- #define PRINT_CHISEL_TESTCODE
+
  #ifdef PRINT_CHISEL_TESTCODE
   std::stringstream ss2_cmd;
 	std::stringstream ss2_out;
