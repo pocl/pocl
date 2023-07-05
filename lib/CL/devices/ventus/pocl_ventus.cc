@@ -89,6 +89,7 @@ static const char *ventus_final_ld_flags[] = {
   CLANG_RESOURCE_DIR"/../../crt0.o",
   "-L" CLANG_RESOURCE_DIR"/../../",
   "-lworkitem",
+  "-lriscv32clc",
   NULL
 };
 
@@ -1045,7 +1046,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               int link_builtin_lib)
 {
     int err = pocl_driver_build_source(program,device_i,num_input_headers,
-                                     input_headers,header_include_names,link_builtin_lib);
+                                     input_headers,header_include_names,0);
     if(err != 0) {
         POCL_MSG_ERR("LLVM build program.bc failed!\n");
         return -1;
