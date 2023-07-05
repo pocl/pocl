@@ -971,9 +971,6 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   vt_device_data_t* d = (vt_device_data_t *)device->data;
   pocl_global_mem_t *mem = device->global_memory;
   int err;
-  if (flags & CL_MEM_USE_HOST_PTR) {
-    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-  }
   uint64_t dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, mem_obj->size, &dev_mem_addr,0,0,0);
   if (err != 0) {
