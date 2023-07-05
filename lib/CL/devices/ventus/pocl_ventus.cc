@@ -95,9 +95,7 @@ static const char *ventus_final_ld_flags[] = {
 
 static const char *ventus_other_compile_flags[] = {
 	"-I" CLANG_RESOURCE_DIR"/../../../../libclc/generic/include",
-	CLANG_RESOURCE_DIR"/../../../../libclc/riscv32/lib/workitem/get_global_id.cl",
 	"-O1",
-	"-cl-std=CL2.0",
 	"-Wl,-T," CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
 	NULL
 };
