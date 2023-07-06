@@ -88,8 +88,10 @@ static const char *ventus_final_ld_flags[] = {
   "-nodefaultlibs",
   CLANG_RESOURCE_DIR"/../../crt0.o",
   "-L" CLANG_RESOURCE_DIR"/../../",
+  "-Wl,--start-group",
   "-lworkitem",
   "-lriscv32clc",
+  "-Wl,--end-group",
   NULL
 };
 
