@@ -555,7 +555,7 @@ int pocl_llvm_build_program(cl_program program,
     ta.CPU = device->llvm_cpu;
 
 #ifdef DEBUG_POCL_LLVM_API
-  std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str();
+  std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str() << std::endl;
 #endif
   CI.createDiagnostics(diagsBuffer, false);
 
