@@ -611,7 +611,7 @@ int pocl_llvm_build_program(cl_program program,
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
   }
   /* always remove preprocessed output - the sources are in different files */
-  pocl_remove(tempfile);
+//  pocl_remove(tempfile);
 
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
@@ -675,7 +675,7 @@ int pocl_llvm_build_program(cl_program program,
   success = CI.ExecuteAction(EmitLLVM);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
-
+  std::cout << ss_build_log.str() << std::endl;
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
 

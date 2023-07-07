@@ -245,7 +245,12 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
-  dev->extensions = ""; // no extention support now
+
+  char extensions[1024];
+  extensions[0] = 0;
+  strcat (extensions, "cl_khr_fp64");
+  dev->extensions = strdup (extensions); // no extention support now
+
   dev->profile = "FULL_PROFILE";
   dev->endian_little = CL_TRUE;
 
@@ -1079,7 +1084,7 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
-	ss_cmd << program->compiler_options << " " << std::endl;
+	ss_cmd << program->compiler_options << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
 	FILE *fp = popen(ss_cmd.str().c_str(), "r");
