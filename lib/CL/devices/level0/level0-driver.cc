@@ -2486,7 +2486,7 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   std::vector<char> ProgramBC;
   char *BinaryPtr = (char *)Program->binaries[DeviceI];
   size_t BinarySize = Program->binary_sizes[DeviceI];
-  int TestR = bitcode_is_triple(BinaryPtr, BinarySize, "spir");
+  int TestR = pocl_bitcode_is_triple(BinaryPtr, BinarySize, "spir");
   assert(TestR && "Program->binaries[] is not LLVM bitcode!");
   ProgramBC.insert(ProgramBC.end(), BinaryPtr, BinaryPtr + BinarySize);
 

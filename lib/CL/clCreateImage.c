@@ -64,7 +64,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
         " || image_desc->num_samples != 0 ");
 
     image_type = image_desc->image_type;
-    image_type_idx = opencl_image_type_to_index (image_type);
+    image_type_idx = pocl_opencl_image_type_to_index (image_type);
     POCL_GOTO_ERROR_ON ((image_type_idx < 0),
                         CL_INVALID_VALUE, "unknown image type\n");
 

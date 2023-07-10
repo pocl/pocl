@@ -157,7 +157,7 @@ char *pocl_get_llvm_cpu_name() {
   return cpu_name;
 }
 
-int bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
+int pocl_bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
   std::string Triple;
   if (getModuleTriple(bitcode, size, Triple) == 0)
     return Triple.find(triple) != std::string::npos;

@@ -26,7 +26,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
-cl_int opencl_image_type_to_index (cl_mem_object_type  image_type)
+cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type)
 {
   switch (image_type)
     {

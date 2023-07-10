@@ -42,7 +42,7 @@ extern "C" {
   int cpu_has_fma ();
 
   POCL_EXPORT
-  int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
+  int pocl_bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
 
   /* Sets up the native/preferred vector widths at runtime (using LLVM). */
   void cpu_setup_vector_widths (cl_device_id dev);

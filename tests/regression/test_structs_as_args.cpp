@@ -54,16 +54,25 @@ struct int_pair {
     cl_long b;
 };
 
+// i386 has a default alignment of 4 even for 64-bit types
+#ifdef __i386__
+#define CL_LONG_ALIGNMENT __attribute__((aligned(8)))
+#else
+#define CL_LONG_ALIGNMENT
+#endif
+
 struct test_struct {
     cl_int elementA;
     cl_int elementB;
-    cl_long elementC;
+    cl_long elementC CL_LONG_ALIGNMENT;
     cl_char elementD;
-    cl_long elementE;
+    cl_long elementE CL_LONG_ALIGNMENT;
     cl_float elementF;
     cl_short elementG;
-    cl_long elementH;
+    cl_long elementH CL_LONG_ALIGNMENT;
 };
+
+#undef CL_LONG_ALIGNMENT
 
 static char
 kernelSourceCode[] = 

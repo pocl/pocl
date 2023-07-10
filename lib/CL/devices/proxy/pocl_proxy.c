@@ -598,7 +598,7 @@ pocl_proxy_get_device_info (cl_device_id device, proxy_device_data_t *d)
       assert (err == CL_SUCCESS);
       assert (retval == num_image_formats);
 
-      int type_index = opencl_image_type_to_index (type);
+      int type_index = pocl_opencl_image_type_to_index (type);
       device->image_formats[type_index] = formats;
       device->num_image_formats[type_index] = num_image_formats;
     }

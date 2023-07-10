@@ -579,7 +579,7 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
   if (program->binaries[device_i])
     {
       int spir_binary
-          = bitcode_is_triple ((char *)program->binaries[device_i],
+          = pocl_bitcode_is_triple ((char *)program->binaries[device_i],
                                program->binary_sizes[device_i], "spir");
       if (spir_binary)
         {
@@ -854,7 +854,7 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 
 #ifdef ENABLE_SPIR
   /* SPIR binary is supported if the device has cl_khr_spir */
-  if (bitcode_is_triple (binary, length, "spir"))
+  if (pocl_bitcode_is_triple (binary, length, "spir"))
     {
       if (strstr (device->extensions, "cl_khr_spir") == NULL)
         {
@@ -871,7 +871,7 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 
   /* LLVM IR can be supported by the driver, if the triple matches */
   if (device->llvm_target_triplet
-      && bitcode_is_triple (binary, length, device->llvm_target_triplet))
+      && pocl_bitcode_is_triple (binary, length, device->llvm_target_triplet))
     return 1;
 
   return 0;
