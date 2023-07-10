@@ -343,7 +343,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
 #ifdef PRINT_CHISEL_TESTCODE
   uint64_t c_num_buffer=0;
-  uint64_t c_max_num_buffer=32;
+  uint64_t c_max_num_buffer=1024;
   uint64_t c_buffer_base[c_max_num_buffer];
   uint64_t c_buffer_size[c_max_num_buffer];
   uint64_t c_buffer_allocsize[c_max_num_buffer];
