@@ -250,7 +250,8 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   char extensions[1024];
   extensions[0] = 0;
-  strcat (extensions, "cl_khr_fp64");
+  strcat (extensions, "cl_khr_fp64"
+                      " __opencl_c_generic_address_space");
   dev->extensions = strdup (extensions); // no extention support now
 
   dev->profile = "FULL_PROFILE";
@@ -450,13 +451,14 @@ step5 make a writefile for chisel
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
                   #ifdef PRINT_CHISEL_TESTCODE
-                    c_buffer_base[c_num_buffer]=*((uint64_t *)ptr);
-                    c_buffer_size[c_num_buffer]=m->size;
-                    c_buffer_allocsize[c_num_buffer]=m->size;
-                    c_num_buffer=c_num_buffer+1;
-                    assert(c_num_buffer<=c_max_num_buffer);
-					if(m->mem_host_ptr)
-                    	fp_write_file(fp_data,(m->mem_host_ptr),m->size);
+                  if(m->mem_host_ptr) {
+                      c_buffer_base[c_num_buffer] = *((uint64_t *) ptr);
+                      c_buffer_size[c_num_buffer] = m->size;
+                      c_buffer_allocsize[c_num_buffer] = m->size;
+                      c_num_buffer = c_num_buffer + 1;
+                      assert(c_num_buffer <= c_max_num_buffer);
+                      fp_write_file(fp_data, (m->mem_host_ptr), m->size);
+                  }
                   #endif
                 }
                 ((void **)arguments)[i] = ptr;
@@ -592,7 +594,8 @@ uint64_t abuf_size = 0;
     */
 	uint32_t kernel_entry;
 #ifdef __linux__
-   	std::string kernel_entry_cmd = R"(nm -s object.riscv | grep "vecadd" | grep -o '^[^ ]*')";
+    std::string kernel_name(meta->name);
+   	std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
 	FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
 	if(fp0 == NULL) {
 		POCL_MSG_ERR("running compile kernel failed");
@@ -642,7 +645,7 @@ uint64_t abuf_size = 0;
 #endif
 	//pass in vmem file
 	char filename[]="object.riscv";
-	///TODO 将text段搬到ddr,并且起始地址必须是0x80000000,spike专用，verilator需要先解析出vmem,然后上传程序段
+	///TODO 将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
 	vt_upload_kernel_file(d->vt_device,filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
     //TODO: add upload kernel file here.
@@ -1120,40 +1123,6 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
         } 
     } */
 
- #ifdef PRINT_CHISEL_TESTCODE
-  std::stringstream ss2_cmd;
-	std::stringstream ss2_out;
-
-  std::string clang_string_path(clang_path);
-  std::string llvm_dump_path=clang_string_path.substr(0,clang_string_path.length()-6);
-
-  
-  ss2_cmd << llvm_dump_path <<"/llvm-objdump ";
-	for(int i = 0; ventus_objdump_flags[i] != NULL; i++) {
-		ss2_cmd << ventus_objdump_flags[i] << " ";
-	}
-    ss2_cmd << " object.riscv > object.dump " << std::endl;
-	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss2_cmd.str().c_str());
-
-  FILE *fp2 = popen(ss2_cmd.str().c_str(), "r");
-	if(fp2 == NULL) {
-		POCL_MSG_ERR("running compile kernel failed");
-		return -1;
-	}
-	char temp2[1024];
-	while (fgets(temp2, 1024, fp2) != NULL)
-	{
-		ss2_out << temp2;
-	}
-	int status2=pclose(fp2);
-    if (status2 == -1) {
-        perror("pclose() failed");
-        exit(EXIT_FAILURE);
-    } else {
-        POCL_MSG_PRINT_LLVM("after calling llvm-objdump, the output is : \"%s\"\n", ss2_out.str().c_str());
-    }
-
- #endif
 
   pocl_ventus_release_IR(program);
 return 0;
