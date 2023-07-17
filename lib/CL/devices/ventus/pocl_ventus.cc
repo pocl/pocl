@@ -82,18 +82,14 @@
 #define KNL_PRINT_SIZE 52
 #define KNL_MAX_METADATA_SIZE 64
 
-
 // FIXME: Do not use hardcoded library search path!
 static const char *ventus_final_ld_flags[] = {
   "-nodefaultlibs",
-  CLANG_RESOURCE_DIR"/../../crt0.o",
-//  CLANG_RESOURCE_DIR"/../../get_global_id.o",
-//  CLANG_RESOURCE_DIR"/../../get_global_size.o",
+  "-Wl," CLANG_RESOURCE_DIR"/../../crt0.o",
+  "-Wl," CLANG_RESOURCE_DIR"/../../riscv32clc.o",
+  "-Wl,--gc-sections",
   "-L" CLANG_RESOURCE_DIR"/../../",
-  "-Wl,--start-group",
   "-lworkitem",
-  "-lriscv32clc",
-  "-Wl,--end-group",
   NULL
 };
 
@@ -1098,6 +1094,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
 		ss_cmd << ventus_other_compile_flags[i] << " ";
 	}
+  ss_cmd << "-Wl,--init=" << program->kernel_meta->name << " ";
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
