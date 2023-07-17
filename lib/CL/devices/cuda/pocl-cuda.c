@@ -429,6 +429,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
               data->supports_cu_mem_host_register = pocl_get_bool_option ("POCL_CUDA_SUPPORTS_CU_MEM_HOST_REGISTER", 1);
 #endif
             }
+	}
     }
 
   dev->preferred_wg_size_multiple = 32;
