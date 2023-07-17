@@ -564,9 +564,14 @@ step5 make a writefile for chisel
   pc->printf_buffer_position = &position;
   pc->global_var_buffer = program->gvar_storage[dev_i];*/
 
-// create argument buffer now.
-uint64_t abuf_size = 0;  
-    for (i = 0; i < meta->num_args; ++i) {  
+  /**********************************************************************************************************
+   * create argument buffer now.
+   * The variable `arg_dev_mem_addr` reveals the address that kernel argument
+   * buffer saves in device memory, to get the content of kernel argument,
+   * check the variable `abuf_args_data`.
+   **********************************************************************************************************/
+  uint64_t abuf_size = 0;
+  for (i = 0; i < meta->num_args; ++i) {
       pocl_argument* al = &(cmd->command.run.arguments[i]);  
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         abuf_size += 4;
@@ -620,6 +625,7 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
+  /**********************************************************************************************************/
 
   //after checking pocl_cache_binary, use the following to pass in.
    /*if (NULL == d->current_kernel || d->current_kernel != kernel) {    
@@ -630,57 +636,60 @@ uint64_t abuf_size = 0;
       assert(0 == err);
     }*/
 
-   /**
-    *这个是kernel函数的入口地址，可以在终端执行nm -s object.riscv看到kernel函数的入口
-    *clCreateKernel.c line 79
-    */
+    /**********************************************************************************************************
+     * 这个是kernel函数的入口地址，可以在终端执行nm -s object.riscv看到kernel函数的入口
+     * clCreateKernel.c line 79
+    ***********************************************************************************************************/
 	uint32_t kernel_entry;
-#ifdef __linux__
+  #ifdef __linux__
     std::string kernel_name(meta->name);
-   	std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
-	FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
-	if(fp0 == NULL) {
-		POCL_MSG_ERR("running compile kernel failed");
-		return;
-	}
-	char temp2[1024];
-	while (fgets(temp2, 1024, fp0) != NULL)
-	{
-		kernel_entry = static_cast<uint32_t>(std::strtoul(temp2, nullptr, 16));
-	}
-	int status2=pclose(fp0);
-	if (status2 == -1) {
-		perror("pclose() failed");
-		exit(EXIT_FAILURE);
-	} else {
-		POCL_MSG_PRINT_VENTUS("Kernel entry of \"%s\" is : \"0x%x\"\n", kernel->name, kernel_entry);
-	}
-#elif
-	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
-	exit(1);
-#endif
+    std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
+    FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
+    if(fp0 == NULL) {
+        POCL_MSG_ERR("running compile kernel failed");
+        return;
+    }
+    char temp2[1024];
+    while (fgets(temp2, 1024, fp0) != NULL)
+    {
+        kernel_entry = static_cast<uint32_t>(std::strtoul(temp2, nullptr, 16));
+    }
+    int status2=pclose(fp0);
+    if (status2 == -1) {
+        perror("pclose() failed");
+        exit(EXIT_FAILURE);
+    } else {
+        POCL_MSG_PRINT_VENTUS("Kernel entry of \"%s\" is : \"0x%x\"\n", kernel->name, kernel_entry);
+    }
+  #elif
+    POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
+    exit(1);
+  #endif
+  /***********************************************************************************************************/
+
 
 
   uint64_t pc_src_size=0x10000000;
   uint64_t pc_dev_mem_addr = 0x80000000;
-//  ///TODO 在这个地址放程序段
-//  err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
-//  if (err != 0) {
-//    abort();
-//  }
-  /// parsing object file to obtain vmem file using assembler
-#ifdef __linux__
-	std::string assembler_path = CLANG;
+
+  /***********************************************************************************************************
+   * parsing object file to obtain vmem file using assembler
+   ***********************************************************************************************************/
+  #ifdef __linux__
+	  std::string assembler_path = CLANG;
     assembler_path = assembler_path.substr(0,assembler_path.length()-6);
-	assembler_path += "/../../assemble.sh";
+	  assembler_path += "/../../assemble.sh";
   	system((std::string("chmod +x ") + assembler_path).c_str());
   	assembler_path += " object";
   	system(assembler_path.c_str());
-	POCL_MSG_PRINT_VENTUS("Vmem file has been written to object.vmem\n");
-#elif
-	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
-	exit(1);
-#endif
+	  POCL_MSG_PRINT_VENTUS("Vmem file has been written to object.vmem\n");
+  #elif
+    POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
+    exit(1);
+  #endif
+  /***********************************************************************************************************/
+
+
 	//pass in vmem file
 	char filename[]="object.riscv";
 	///将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
