@@ -1,6 +1,6 @@
 FROM debian:bullseye
 
-ARG GIT_COMMIT=master
+ARG GIT_COMMIT=main
 ARG LLVM_VERSION=13
 
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0

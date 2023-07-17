@@ -1,6 +1,6 @@
 FROM amd64/ubuntu:20.04
 
-ARG GIT_COMMIT=master
+ARG GIT_COMMIT=main
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
 ARG LLVM_VERSION=12

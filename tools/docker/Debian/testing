@@ -1,5 +1,5 @@
 FROM debian:testing
-ARG GIT_COMMIT=master
+ARG GIT_COMMIT=main
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
 RUN apt update
 RUN apt upgrade -y

@@ -1,5 +1,5 @@
 FROM library/archlinux:latest
-ARG GIT_COMMIT=master
+ARG GIT_COMMIT=main
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Arch version=1.0
 
 RUN pacman -Sy
