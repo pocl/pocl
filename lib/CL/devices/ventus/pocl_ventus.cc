@@ -87,6 +87,8 @@
 static const char *ventus_final_ld_flags[] = {
   "-nodefaultlibs",
   CLANG_RESOURCE_DIR"/../../crt0.o",
+//  CLANG_RESOURCE_DIR"/../../get_global_id.o",
+//  CLANG_RESOURCE_DIR"/../../get_global_size.o",
   "-L" CLANG_RESOURCE_DIR"/../../",
   "-Wl,--start-group",
   "-lworkitem",
@@ -142,6 +144,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 
   /* for ventus,pocl does not need to compile the kernel,so they are set to NULL */
   ops->build_source = pocl_ventus_build_source;
+  ops->post_build_program = pocl_ventus_post_build_program;
   ops->link_program = NULL;
   ops->build_binary = NULL;
   ops->free_program = NULL;
@@ -336,7 +339,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   return ret;
 }
-#define PRINT_CHISEL_TESTCODE
+//#define PRINT_CHISEL_TESTCODE
 #ifdef PRINT_CHISEL_TESTCODE
 void fp_write_file(FILE *fp,void *p,uint64_t size){
   for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
@@ -623,13 +626,13 @@ uint64_t abuf_size = 0;
   start_pc=0x80000000; // start.S baseaddr, now lock to 0x80000000
   sgpr_usage=32;
   vgpr_usage=32;
-  uint64_t pc_src_size=0x10000000;
-  uint64_t pc_dev_mem_addr;
-  ///TODO 在这个地址放程序段
-  err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
-  if (err != 0) {
-    abort();
-  }
+//  uint64_t pc_src_size=0x10000000;
+//  uint64_t pc_dev_mem_addr;
+//  ///TODO 在这个地址放程序段
+//  err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
+//  if (err != 0) {
+//    abort();
+//  }
   /// parsing object file to obtain vmem file using assembler
 #ifdef __linux__
 	std::string assembler_path = CLANG;
@@ -980,20 +983,26 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   pocl_global_mem_t *mem = device->global_memory;
   int err;
   uint64_t dev_mem_addr;
-  err = vt_buf_alloc(d->vt_device, mem_obj->size, &dev_mem_addr,0,0,0);
-  if (err != 0) {
-    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  // if this memory object has not been allocated device memory space,
+  // then allocating a device memory and binding the memory pointer to cl_mem object
+  if(!mem_obj->device_ptrs[device->dev_id].mem_ptr) {
+      err = vt_buf_alloc(d->vt_device, mem_obj->size, &dev_mem_addr,0,0,0);
+      if (err != 0) {
+          return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      }
+      free(mem_obj->device_ptrs[device->dev_id].mem_ptr);
+      mem_obj->device_ptrs[device->dev_id].mem_ptr= malloc(sizeof(uint64_t));
+      memcpy((mem_obj->device_ptrs[device->dev_id].mem_ptr),&dev_mem_addr,sizeof(uint64_t));
   }
 
-  if (flags & CL_MEM_COPY_HOST_PTR) {
-    err = vt_copy_to_dev(d->vt_device,dev_mem_addr,mem_obj->mem_host_ptr, mem_obj->size, 0,0);
+  // if the memory object has been allocated device memory pointer and
+  // if the flags indicates that copy data from host ptr, then do the following operations.
+  if ((flags & CL_MEM_COPY_HOST_PTR) && mem_obj->device_ptrs[device->dev_id].mem_ptr) {
+    err = vt_copy_to_dev(d->vt_device,*(uint64_t*)(mem_obj->device_ptrs[device->dev_id].mem_ptr),mem_obj->mem_host_ptr, mem_obj->size, 0,0);
     if (err != 0) {
       return CL_MEM_OBJECT_ALLOCATION_FAILURE;
     }
   }
-  free(mem_obj->device_ptrs[device->dev_id].mem_ptr);
-  mem_obj->device_ptrs[device->dev_id].mem_ptr= malloc(sizeof(uint64_t));
-  memcpy((mem_obj->device_ptrs[device->dev_id].mem_ptr),&dev_mem_addr,sizeof(uint64_t));
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
     abort(); // TODO
@@ -1048,15 +1057,18 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               cl_uint num_input_headers,
                               const cl_program *input_headers,
                               const char **header_include_names,
-                              int link_builtin_lib)
-{
-    int err = pocl_driver_build_source(program,device_i,num_input_headers,
-                                     input_headers,header_include_names,0);
-    if(err != 0) {
-        POCL_MSG_ERR("LLVM build program.bc failed!\n");
-        return -1;
-    }
+                              int link_builtin_lib) {
+    return pocl_driver_build_source(program, device_i, num_input_headers,
+                                       input_headers, header_include_names, 0);
 
+//    if (error != 0) {
+//        POCL_MSG_ERR("LLVM build program.bc failed!\n");
+//        return -1;
+//    }
+//    return 0;
+}
+
+int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
   const char* clang_path(CLANG);
 	if (!pocl_exists(clang_path)) {
 		POCL_MSG_ERR("$CLANG: '%s' doesn't exist\n", clang_path);
