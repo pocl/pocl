@@ -62,7 +62,7 @@ POname (clGetCommandBufferInfoKHR) (
       break;
     case CL_COMMAND_BUFFER_QUEUES_KHR:
       PARAM_SIZE (sizeof (cl_command_queue) * command_buffer->num_queues);
-      PARAM_VALUE (&command_buffer->queues,
+      PARAM_VALUE (command_buffer->queues,
                    sizeof (cl_command_queue) * command_buffer->num_queues);
       break;
     case CL_COMMAND_BUFFER_REFERENCE_COUNT_KHR:
