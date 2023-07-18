@@ -30,6 +30,10 @@
 
 #include "pocl_types.h"
 
+/* TODO: when changing these two structs, also update
+ * enum PoclContextStructFields and struct PoclContetxT
+ * in Workgroup.cc
+ */
 struct pocl_context32 {
   uint num_groups[3];
   uint global_offset[3];
@@ -37,6 +41,7 @@ struct pocl_context32 {
   uint printf_buffer;
   uint printf_buffer_position;
   uint printf_buffer_capacity;
+  uint global_var_buffer;
   uint work_dim;
 };
 
@@ -49,6 +54,7 @@ struct pocl_context {
   uchar *printf_buffer;
   uint *printf_buffer_position;
   uint printf_buffer_capacity;
+  uchar *global_var_buffer;
   uint work_dim;
 };
 

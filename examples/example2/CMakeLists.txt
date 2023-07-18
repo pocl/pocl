@@ -57,8 +57,8 @@ set_tests_properties( "examples/example2" ${SPIREX}
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    LABELS "internal;cuda"
+    # devices which support SPIR
+    LABELS "internal;cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
@@ -68,8 +68,9 @@ set_property(TEST "examples/example2"
 add_test(NAME "examples/example2_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/example2.bin####${CMAKE_CURRENT_SOURCE_DIR}/example2.cl"
-            "-DCMD2=${CMAKE_BINARY_DIR}/examples/example2/example2####b####${CMAKE_BINARY_DIR}/example2.bin"
-            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2.bin"
+            "-DCMD2=${CMAKE_COMMAND}####-E####rm####-rf####${CMAKE_BINARY_DIR}/Testing/Cache"
+            "-DCMD3=${CMAKE_BINARY_DIR}/examples/example2/example2####b####${CMAKE_BINARY_DIR}/example2.bin"
+            "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
 set_tests_properties( "examples/example2_poclbin"
@@ -77,5 +78,6 @@ set_tests_properties( "examples/example2_poclbin"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    LABELS "poclbin;internal"
+    ENVIRONMENT "POCL_KERNEL_CACHE=0"
+    LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")

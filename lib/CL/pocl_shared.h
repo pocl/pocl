@@ -26,8 +26,7 @@
 
 #include "config.h"
 
-#include <CL/cl_gl.h>
-#include <CL/cl_egl.h>
+#include "pocl_cl.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,24 +37,6 @@ extern "C" {
 #endif
 
 void pocl_check_uninit_devices ();
-
-cl_int pocl_rect_copy(cl_command_queue command_queue,
-                      cl_command_type command_type,
-                      cl_mem src,
-                      cl_int src_is_image,
-                      cl_mem dst,
-                      cl_int dst_is_image,
-                      const size_t *src_origin,
-                      const size_t *dst_origin,
-                      const size_t *region,
-                      size_t src_row_pitch,
-                      size_t src_slice_pitch,
-                      size_t dst_row_pitch,
-                      size_t dst_slice_pitch,
-                      cl_uint num_events_in_wait_list,
-                      const cl_event *event_wait_list,
-                      cl_event *event,
-                      _cl_command_node **cmd);
 
 cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
                                     const cl_device_id *device_list,
@@ -94,8 +75,113 @@ int context_set_properties (cl_context context,
                             const cl_context_properties *properties);
 
 cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
-                              size_t size, cl_mem_object_type type, int *device_image_support, void *host_ptr,
-                              cl_int *errcode_ret);
+                              size_t size, cl_mem_object_type type,
+                              int *device_image_support, void *host_ptr,
+                              int host_ptr_is_svm, cl_int *errcode_ret);
+
+cl_int pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command);
+
+cl_int pocl_ndrange_kernel_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    const cl_ndrange_kernel_command_properties_khr *properties,
+    cl_kernel kernel, cl_uint work_dim, const size_t *global_work_offset,
+    const size_t *global_work_size, const size_t *local_work_size,
+    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
+    cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point_p, _cl_command_node **cmd);
+
+cl_int pocl_copy_buffer_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset,
+    size_t size, cl_uint num_items_in_wait_list,
+    const cl_event *event_wait_list, cl_event *event,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, _cl_command_node **cmd);
+
+cl_int pocl_copy_buffer_rect_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_buffer, cl_mem dst_buffer, const size_t *src_origin,
+    const size_t *dst_origin, const size_t *region, size_t src_row_pitch,
+    size_t src_slice_pitch, size_t dst_row_pitch, size_t dst_slice_pitch,
+    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
+    cl_event *event, const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, _cl_command_node **cmd);
+
+cl_int pocl_copy_buffer_to_image_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_buffer, cl_mem dst_image, size_t src_offset,
+    const size_t *dst_origin, const size_t *region,
+    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
+    cl_event *event, const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
+    _cl_command_node **cmd);
+
+cl_int pocl_copy_image_to_buffer_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_image, cl_mem dst_buffer, const size_t *src_origin,
+    const size_t *region, size_t dst_offset, cl_uint num_items_in_wait_list,
+    const cl_event *event_wait_list, cl_event *event,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
+    _cl_command_node **cmd);
+
+cl_int pocl_copy_image_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem src_image, cl_mem dst_image, const size_t *src_origin,
+    const size_t *dst_origin, const size_t *region,
+    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
+    cl_event *event, const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, _cl_command_node **cmd);
+
+cl_int pocl_fill_buffer_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem buffer, const void *pattern, size_t pattern_size, size_t offset,
+    size_t size, cl_uint num_items_in_wait_list,
+    const cl_event *event_wait_list, cl_event *event,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, _cl_command_node **cmd);
+
+cl_int pocl_fill_image_common (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    cl_mem image, const void *fill_color, const size_t *origin,
+    const size_t *region, cl_uint num_items_in_wait_list,
+    const cl_event *event_wait_list, cl_event *event,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
+    _cl_command_node **cmd);
+
+cl_int pocl_svm_memcpy_common (cl_command_type command_type,
+                               cl_command_queue command_queue,
+                               cl_bool blocking, void *dst_ptr,
+                               const void *src_ptr, size_t size,
+                               cl_uint num_events_in_wait_list,
+                               const cl_event *event_wait_list,
+                               cl_event *event);
+
+cl_int pocl_svm_memfill_common (cl_command_type command_type,
+                                cl_command_queue command_queue,
+                                void *svm_ptr,
+                                const void *pattern,
+                                size_t pattern_size,
+                                size_t size,
+                                cl_uint num_events_in_wait_list,
+                                const cl_event *event_wait_list,
+                                cl_event *event);
+
+cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
+                                    cl_command_queue command_queue,
+                                    cl_uint num_svm_pointers,
+                                    const void **svm_pointers,
+                                    const size_t *sizes,
+                                    cl_mem_migration_flags flags,
+                                    cl_uint num_events_in_wait_list,
+                                    const cl_event *event_wait_list,
+                                    cl_event *event);
+
+int
+pocl_set_kernel_arg_pointer(cl_kernel kernel,
+                            cl_uint arg_index,
+                            const void *arg_value);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

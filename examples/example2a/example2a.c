@@ -50,8 +50,9 @@ main (int argc, char **argv)
   cl_command_queue queue = NULL;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
+  cl_platform_id platform = NULL;
 
-  err = poclu_get_any_device (&context, &device, &queue);
+  err = poclu_get_any_device2 (&context, &device, &queue, &platform);
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
   spir = (argc > 1 && argv[1][0] == 's');
@@ -134,7 +135,7 @@ ERROR:
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (input);
   free (output);
 

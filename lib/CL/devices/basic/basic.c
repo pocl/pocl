@@ -2,6 +2,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
                  2011-2021 Pekka Jääskeläinen
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,6 +24,7 @@
 */
 
 #include "basic.h"
+#include "builtin_kernels.hh"
 #include "common.h"
 #include "config.h"
 #include "config2.h"
@@ -67,10 +69,20 @@ struct data {
   void *printf_buffer;
 };
 
+typedef struct _pocl_basic_usm_allocation_t
+{
+  void *ptr;
+  size_t size;
+  cl_mem_alloc_flags_intel flags;
+  unsigned alloc_type;
+
+  struct _pocl_basic_usm_allocation_t *next, *prev;
+} pocl_basic_usm_allocation_t;
+
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
-  ops->device_name = "basic";
+  ops->device_name = "cpu-minimal";
 
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
@@ -102,11 +114,12 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_source = pocl_driver_build_source;
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
-  ops->free_program = pocl_driver_free_program;
+  ops->free_program = pocl_basic_free_program;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_basic_compile_kernel;
+  ops->build_builtin = pocl_driver_build_opencl_builtins;
 
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
@@ -116,14 +129,21 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->build_hash = pocl_basic_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
-  ops->get_device_info_ext = NULL;
+  ops->get_device_info_ext = pocl_basic_get_device_info_ext;
+  ops->get_mem_info_ext = pocl_basic_get_mem_info_ext;
+  ops->set_kernel_exec_info_ext = pocl_basic_set_kernel_exec_info_ext;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;
-  /* no need to implement these two as they're noop
+  ops->usm_alloc = pocl_basic_usm_alloc;
+  ops->usm_free = pocl_basic_usm_free;
+  ops->usm_free_blocking = NULL;
+  /* no need to implement these as they're noop
    * and pocl_exec_command takes care of it */
   ops->svm_map = NULL;
   ops->svm_unmap = NULL;
+  ops->svm_advise = NULL;
+  ops->svm_migrate = NULL;
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_driver_svm_fill;
 
@@ -143,13 +163,8 @@ char *
 pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "cpu-minimal-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
@@ -157,6 +172,10 @@ unsigned int
 pocl_basic_probe(struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* for backwards compatibility */
+  if (env_count <= 0)
+    env_count = pocl_device_get_env_count("basic");
 
   /* No env specified, so pthread will be used instead of basic */
   if(env_count < 0)
@@ -175,7 +194,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   if (first_basic_init)
     {
-      POCL_MSG_WARN ("INIT dlcache DOTO delete\n");
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
     }
@@ -188,6 +206,19 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
+    {
+      /* In reality there is no independent SG progress implemented in this
+         version because we can only have one SG in flight at a time, but it's
+         a corner case which allows us to advertise it for full CTS compliance.
+       */
+      device->sub_group_independent_forward_progress = CL_TRUE;
+
+      /* Just an arbitrary number here based on assumption of SG size 32. */
+      device->max_num_sub_groups = device->max_work_group_size / 32;
+    }
+
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 
@@ -196,6 +227,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
+  device->generic_as_support = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -205,8 +238,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_setup_extensions_with_version (device);
 
-  /* builtin kernels.. skip, basic/pthread doesn't have any
-  pocl_setup_builtin_kernels_with_version (device); */
+  pocl_setup_builtin_kernels_with_version (device);
 
   pocl_setup_ils_with_version (device);
 
@@ -238,10 +270,25 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
                      | CL_DEVICE_SVM_ATOMICS;
 #endif
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
+      != NULL)
+    {
+      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->device_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->single_shared_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+    }
+
   /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout 
+     the OpenCL extension is enabled. This causes to printout
      an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put 
+     initialize global_mem_size which it is not yet. Just put
      a nonzero there for now. */
   device->global_mem_size = 1;
   err = pocl_topology_detect_device_info(device);
@@ -258,6 +305,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
+  device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
+                                                device->local_mem_size);
+
   if (device->vendor_id == 0)
     device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
 
@@ -266,6 +316,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      basic devices can be still used for task level parallelism 
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
+  device->max_sub_devices = 0;
+  device->num_partition_properties = 0;
+  device->num_partition_types = 0;
 
   return ret;
 }
@@ -278,8 +331,13 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
+  cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
+  cl_uint dev_i = cmd->program_device_i;
+
+  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
+                                      pocl_cpu_gvar_init_callback);
 
   if (pc->num_groups[0] == 0 || pc->num_groups[1] == 0 || pc->num_groups[2] == 0)
     return;
@@ -365,15 +423,30 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
-  if (!cmd->device->device_alloca_locals)
-    for (i = 0; i < meta->num_locals; ++i)
-      {
-        size_t s = meta->local_sizes[i];
-        size_t j = meta->num_args + i;
-        arguments[j] = malloc (sizeof (void *));
-        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-        *(void **)(arguments[j]) = pp;
-      }
+  if (cmd->device->device_alloca_locals)
+    {
+      /* Local buffers are allocated in the device side work-group
+         launcher. Let's pass only the sizes of the local args in
+         the arg buffer. */
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          assert (sizeof (size_t) == sizeof (void *));
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          *(size_t *)(arguments[j]) = s;
+        }
+    }
+  else
+    {
+      for (i = 0; i < meta->num_locals; ++i)
+        {
+          size_t s = meta->local_sizes[i];
+          size_t j = meta->num_args + i;
+          arguments[j] = malloc (sizeof (void *));
+          void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+          *(void **)(arguments[j]) = pp;
+        }
+    }
 
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);
@@ -381,6 +454,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   assert (pc->printf_buffer_capacity > 0);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
+  pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
   pocl_set_default_rm ();
@@ -444,7 +518,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
-  cl_event ev = cmd->event;
+  cl_event ev = cmd->sync.event.event;
   cl_device_id dev = cmd->device;
   size_t i;
   for (i = 0; i < ev->num_buffers; i++)
@@ -500,8 +574,8 @@ static void basic_command_scheduler (struct data *d)
   /* execute commands from ready list */
   while ((node = d->ready_list))
     {
-      assert (pocl_command_is_ready(node->event));
-      assert (node->event->status == CL_SUBMITTED);
+      assert (pocl_command_is_ready (node->sync.event.event));
+      assert (node->sync.event.event->status == CL_SUBMITTED);
       CDL_DELETE (d->ready_list, node);
       POCL_UNLOCK (d->cq_lock);
       pocl_exec_command (node);
@@ -517,13 +591,13 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, 1, 1);
+    pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 
@@ -585,10 +659,22 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                            cl_device_id device, int specialize)
 {
+  char *saved_name = NULL;
+  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
+    pocl_check_kernel_dlhandle_cache (cmd, CL_FALSE, specialize);
+  pocl_restore_builtin_kernel_name (kernel, saved_name);
 }
 
+int
+pocl_basic_free_program (cl_device_id device, cl_program program,
+                          unsigned dev_i)
+{
+  pocl_driver_free_program (device, program, dev_i);
+  program->global_var_total_size[dev_i] = 0;
+  POCL_MEM_FREE (program->gvar_storage[dev_i]);
+  return 0;
+}
 /*********************** IMAGES ********************************/
 
 cl_int pocl_basic_copy_image_rect( void *data,
@@ -609,7 +695,7 @@ cl_int pocl_basic_copy_image_rect( void *data,
   const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
 
   POCL_MSG_PRINT_MEMORY (
-      " BASIC COPY IMAGE RECT \n"
+      "CPU: COPY IMAGE RECT \n"
       "dst_image %p dst_mem_id %p \n"
       "src_image %p src_mem_id %p \n"
       "dst_origin [0,1,2] %zu %zu %zu \n"
@@ -644,7 +730,7 @@ cl_int pocl_basic_write_image_rect (  void *data,
                                       size_t src_offset)
 {
   POCL_MSG_PRINT_MEMORY (
-      "BASIC WRITE IMAGE RECT \n"
+      "CPU: WRITE IMAGE RECT \n"
       "dst_image %p dst_mem_id %p \n"
       "src_hostptr %p src_mem_id %p \n"
       "origin [0,1,2] %zu %zu %zu \n"
@@ -689,7 +775,7 @@ cl_int pocl_basic_read_image_rect(  void *data,
                                     size_t dst_offset)
 {
   POCL_MSG_PRINT_MEMORY (
-      "BASIC READ IMAGE RECT \n"
+      "CPU: READ IMAGE RECT \n"
       "src_image %p src_mem_id %p \n"
       "dst_hostptr %p dst_mem_id %p \n"
       "origin [0,1,2] %zu %zu %zu \n"
@@ -762,7 +848,7 @@ pocl_basic_fill_image (void *data, cl_mem image,
                        const size_t *region, cl_uint4 orig_pixel,
                        pixel_t fill_pixel, size_t pixel_size)
 {
-   POCL_MSG_PRINT_MEMORY ("BASIC / FILL IMAGE \n"
+   POCL_MSG_PRINT_MEMORY ("CPU: FILL IMAGE \n"
                           "image %p data %p \n"
                           "origin [0,1,2] %zu %zu %zu \n"
                           "region [0,1,2] %zu %zu %zu \n"
@@ -810,9 +896,225 @@ pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }
 
+static struct _pocl_basic_usm_allocation_t *usm_allocations = NULL;
+static pocl_lock_t usm_lock;
+
+void *
+pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,
+                      cl_mem_alloc_flags_intel flags, size_t size,
+                      cl_int *err_code)
+{
+  int errcode = CL_SUCCESS;
+  void *ptr = NULL;
+
+  switch (alloc_type)
+    {
+    case CL_MEM_TYPE_HOST_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->host_usm_capabs == 0), CL_INVALID_OPERATION,
+                          "Device does not support Host USM allocations\n");
+      break;
+    case CL_MEM_TYPE_DEVICE_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->device_usm_capabs == 0), CL_INVALID_OPERATION,
+                          "Device does not support Device USM allocations\n");
+      break;
+    case CL_MEM_TYPE_SHARED_INTEL:
+      POCL_GOTO_ERROR_ON ((dev->single_shared_usm_capabs == 0),
+                          CL_INVALID_OPERATION,
+                          "Device does not support Shared USM allocations\n");
+      break;
+    default:
+      POCL_GOTO_ERROR_ON (1, CL_INVALID_PROPERTY,
+                          "Unknown USM AllocType requested\n");
+    }
+
+  ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+
+  if (ptr != NULL)
+    {
+      pocl_basic_usm_allocation_t *all
+          = malloc (sizeof (pocl_basic_usm_allocation_t));
+      POCL_GOTO_ERROR_COND ((all == NULL), CL_OUT_OF_HOST_MEMORY);
+      all->ptr = ptr;
+      all->size = size;
+      all->flags = flags;
+      all->alloc_type = alloc_type;
+      POCL_LOCK (usm_lock);
+      DL_APPEND (usm_allocations, all);
+      POCL_UNLOCK (usm_lock);
+
+      POCL_MSG_WARN ("ALLOCATED: ALL_PTR: %p ALL_SIZE: %zu\n", all->ptr,
+                     all->size);
+    }
+
+ERROR:
+  if (err_code)
+    *err_code = errcode;
+
+  return ptr;
+}
+
+void
+pocl_basic_usm_free (cl_device_id dev, void *svm_ptr)
+{
+  POCL_LOCK (usm_lock);
+  pocl_basic_usm_allocation_t *item = NULL, *tmp = NULL;
+  DL_FOREACH_SAFE (usm_allocations, item, tmp)
+  {
+    if (item->ptr == svm_ptr)
+      {
+        DL_DELETE (usm_allocations, item);
+        free (item);
+        break;
+      }
+  }
+  POCL_UNLOCK (usm_lock);
+
+  /* we should always find it, b/c there are checks
+   * in the runtime API (clMemFreeINTEL) */
+  assert (item != NULL);
+  pocl_aligned_free (svm_ptr);
+}
+
 void
 pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
                      const void *__restrict__ src, size_t size)
 {
   memcpy (dst, src, size);
+}
+
+static cl_bitfield
+pocl_basic_get_mem_caps (cl_device_id device, cl_device_info Type)
+{
+  switch (Type)
+    {
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+      return device->host_usm_capabs;
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+      return device->device_usm_capabs;
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+      return device->single_shared_usm_capabs;
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+      return device->cross_shared_usm_capabs;
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+      return device->system_shared_usm_capabs;
+    default:
+      assert (0 && "unhandled switch value");
+    }
+  return 0;
+}
+
+cl_int
+pocl_basic_get_device_info_ext (cl_device_id device, cl_device_info param_name,
+                            size_t param_value_size, void *param_value,
+                            size_t *param_value_size_ret)
+{
+  switch (param_name)
+    {
+    case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+    case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+      {
+        cl_bitfield caps = pocl_basic_get_mem_caps (device, param_name);
+        POCL_RETURN_GETINFO (cl_bitfield, caps);
+      }
+
+    case CL_DEVICE_SUB_GROUP_SIZES_INTEL:
+    {
+      /* We can basically support fixing any WG size with the CPU devices, but
+         let's report something semi-sensible here for vectorization aid. */
+      size_t sizes[] = { 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 };
+      POCL_RETURN_GETINFO_ARRAY (size_t, sizeof (sizes) / sizeof (size_t),
+                                 sizes);
+    }
+    default:
+    POCL_MSG_ERR ("Unknown param_name for get_device_info_ext: %u\n",
+                  param_name);
+    return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_basic_get_mem_info_ext (cl_device_id dev, const void *ptr,
+                             cl_uint param_name, size_t param_value_size,
+                             void *param_value, size_t *param_value_size_ret)
+{
+  POCL_LOCK (usm_lock);
+  pocl_basic_usm_allocation_t *item = NULL;
+  DL_FOREACH (usm_allocations, item)
+  {
+    POCL_MSG_WARN ("PTR: %p ITEM_PTR: %p SIZE: %zu\n", ptr, item->ptr,
+                   item->size);
+    if ((ptr >= item->ptr)
+        && ((const char *)ptr < ((const char *)item->ptr + item->size)))
+    {
+      break;
+    }
+  }
+  POCL_UNLOCK (usm_lock);
+
+  switch (param_name)
+    {
+
+    case CL_MEM_ALLOC_TYPE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_uint, CL_MEM_TYPE_UNKNOWN_INTEL);
+      else
+          POCL_RETURN_GETINFO (cl_uint, item->alloc_type);
+    }
+    case CL_MEM_ALLOC_BASE_PTR_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (void *, NULL);
+      else
+          POCL_RETURN_GETINFO (void *, item->ptr);
+    }
+    case CL_MEM_ALLOC_SIZE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (size_t, 0);
+      else
+          POCL_RETURN_GETINFO (size_t, item->size);
+    }
+    case CL_MEM_ALLOC_DEVICE_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_device_id, NULL);
+      else
+          POCL_RETURN_GETINFO (cl_device_id, dev);
+    }
+    case CL_MEM_ALLOC_FLAGS_INTEL:
+    {
+      if (item == NULL)
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, 0);
+      else
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, item->flags);
+    }
+    default:
+    return CL_INVALID_VALUE;
+    }
+}
+
+cl_int
+pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
+                                     unsigned program_device_i,
+                                     cl_kernel Kernel, cl_uint param_name,
+                                     size_t param_value_size,
+                                     const void *param_value)
+{
+
+  switch (param_name)
+    {
+    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
+    case CL_KERNEL_EXEC_INFO_SVM_PTRS:
+    case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
+    return CL_SUCCESS;
+    default:
+      return CL_INVALID_VALUE;
+    }
 }

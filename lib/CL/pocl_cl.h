@@ -31,7 +31,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_VALGRIND
+#ifdef ENABLE_VALGRIND
 #include <valgrind/helgrind.h>
 #endif
 
@@ -63,8 +63,9 @@ typedef pthread_t pocl_thread_t;
 #  include "pocl_icd.h"
 #endif
 
-#include <CL/cl_gl.h>
 #include <CL/cl_egl.h>
+#include <CL/cl_ext.h>
+#include <CL/cl_gl.h>
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -77,22 +78,18 @@ typedef pthread_t pocl_thread_t;
 #if defined(__GNUC__) || defined(__clang__)
 
 /* These return the new value. */
-/* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
-#define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
-#define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  __sync_val_compare_and_swap (ptr, oldval, newval)
+/* See: https://gcc.gnu.org/onlinedocs/gcc-4.7.4/gcc/_005f_005fatomic-Builtins.html */
+#define POCL_ATOMIC_INC(x) __atomic_add_fetch (&x, 1, __ATOMIC_SEQ_CST)
+#define POCL_ATOMIC_DEC(x) __atomic_sub_fetch (&x, 1, __ATOMIC_SEQ_CST)
 
 #elif defined(_WIN32)
 #define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
 #define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
-  InterlockedCompareExchange64 (ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif
 
-#ifdef HAVE_VALGRIND
+#ifdef ENABLE_VALGRIND
 #define VG_REFC_ZERO(var)                                                     \
   ANNOTATE_HAPPENS_AFTER (&var->pocl_refcount);                               \
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL (&var->pocl_refcount)
@@ -100,6 +97,42 @@ typedef pthread_t pocl_thread_t;
 #else
 #define VG_REFC_ZERO(var) (void)0
 #define VG_REFC_NONZERO(var) (void)0
+#endif
+
+/*
+ * a workaround for a detection problem in Valgrind, which causes
+ * false positives. Valgrind manual states:
+ *
+ * Helgrind only partially correctly handles POSIX condition variables. This is
+ * because Helgrind can see inter-thread dependencies between a
+ * pthread_cond_wait call and a pthread_cond_signal/ pthread_cond_broadcast
+ * call only if the waiting thread actually gets to the rendezvous first (so
+ * that it actually calls pthread_cond_wait). It can't see dependencies between
+ * the threads if the signaller arrives first. In the latter case, POSIX
+ * guidelines imply that the associated boolean condition still provides an
+ * inter-thread synchronisation event, but one which is invisible to Helgrind.
+ *
+ * ... this macro explicitly associates the cond var with the mutex, by
+ * calling pthread_cond_wait with a short timeout (100 usec)
+ */
+
+#ifdef ENABLE_VALGRIND
+#define VG_ASSOC_COND_VAR(cond_var, mutex)                                    \
+  do                                                                          \
+    {                                                                         \
+      struct timespec time_to_wait;                                           \
+      clock_gettime (CLOCK_MONOTONIC, &time_to_wait);                         \
+      time_to_wait.tv_nsec += 100000;                                         \
+      if (time_to_wait.tv_nsec > 1000000000)                                  \
+        {                                                                     \
+          time_to_wait.tv_nsec -= 1000000000;                                 \
+          time_to_wait.tv_sec += 1;                                           \
+        }                                                                     \
+      POCL_TIMEDWAIT_COND (cond_var, mutex, time_to_wait);                    \
+    }                                                                         \
+  while (0)
+#else
+#define VG_ASSOC_COND_VAR(var, mutex) (void)0
 #endif
 
 #ifdef __linux__
@@ -191,26 +224,26 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 #define IS_CL_OBJECT_VALID(__OBJ__)                                           \
   (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
    && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
-#define CHECK_VALIDITY_MARKERS                                                \
+#define CHECK_VALIDITY_MARKERS(__OBJ__)                                       \
       assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
       assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);
-#define SET_VALIDITY_MARKERS                                                  \
+#define SET_VALIDITY_MARKERS(__OBJ__)                                         \
       (__OBJ__)->magic_1 = POCL_MAGIC_1;                                      \
       (__OBJ__)->magic_2 = POCL_MAGIC_2;
-#define UNSET_VALIDITY_MARKERS                                               \
+#define UNSET_VALIDITY_MARKERS(__OBJ__)                                       \
       (__OBJ__)->magic_1 = 0;                                                 \
       (__OBJ__)->magic_2 = 0;
 #else
 #define IS_CL_OBJECT_VALID(__OBJ__)   ((__OBJ__) != NULL)
-#define CHECK_VALIDITY_MARKERS
-#define SET_VALIDITY_MARKERS
-#define UNSET_VALIDITY_MARKERS
+#define CHECK_VALIDITY_MARKERS(__OBJ__)
+#define SET_VALIDITY_MARKERS(__OBJ__)
+#define UNSET_VALIDITY_MARKERS(__OBJ__)
 #endif
 
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS;                                                 \
+      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
       POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
       assert ((__OBJ__)->pocl_refcount > 0);                                  \
     }                                                                         \
@@ -218,7 +251,7 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS;                                                 \
+      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
@@ -232,6 +265,9 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
       POCL_UNLOCK_OBJ (__OBJ__);                                              \
     }                                                                         \
   while (0)
+
+#define POCL_RELEASE_OBJECT_UNLOCKED(__OBJ__, __NEW_REFCOUNT__)               \
+      __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;
 
 #define POCL_RETAIN_OBJECT_UNLOCKED(__OBJ__)    \
     ++((__OBJ__)->pocl_refcount)
@@ -258,7 +294,7 @@ extern uint64_t last_object_id;
 #define POCL_INIT_OBJECT_NO_ICD(__OBJ__)                                      \
   do                                                                          \
     {                                                                         \
-      SET_VALIDITY_MARKERS;                                                   \
+      SET_VALIDITY_MARKERS(__OBJ__);                                          \
       (__OBJ__)->pocl_refcount = 1;                                           \
       POCL_INIT_LOCK ((__OBJ__)->pocl_lock);                                  \
       (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id);                       \
@@ -286,24 +322,32 @@ extern uint64_t last_object_id;
 #define POCL_DESTROY_OBJECT(__OBJ__)                                          \
   do                                                                          \
     {                                                                         \
-      UNSET_VALIDITY_MARKERS;                                                \
+      UNSET_VALIDITY_MARKERS(__OBJ__);                                        \
       POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock);                               \
     }                                                                         \
   while (0)
 
 /* Declares the generic pocl object attributes inside a struct. */
+#ifdef ENABLE_EXTRA_VALIDITY_CHECKS
 #define POCL_OBJECT                                                           \
   uint64_t magic_1;                                                           \
   uint64_t id;                                                                \
   pocl_lock_t pocl_lock;                                                      \
   uint64_t magic_2;                                                           \
   int pocl_refcount
+#else
+#define POCL_OBJECT                                                           \
+  uint64_t id;                                                                \
+  pocl_lock_t pocl_lock;                                                      \
+  int pocl_refcount
+#endif
 
 #ifdef __APPLE__
 /* Note: OSX doesn't support aliases because it doesn't use ELF */
 
 #  define POname(name) name
 #  define POdeclsym(name)
+#  define POdeclsymExport(name)
 #  define POsym(name)
 #  define POsymAlways(name)
 
@@ -311,9 +355,9 @@ extern uint64_t last_object_id;
 /* Visual Studio does not support this magic either */
 #  define POname(name) name
 #  define POdeclsym(name)
+#  define POdeclsymExport(name)
 #  define POsym(name)
 #  define POsymAlways(name)
-#  define POdeclsym(name)
 
 #else
 /* Symbol aliases are supported */
@@ -321,6 +365,7 @@ extern uint64_t last_object_id;
 #  define POname(name) PO##name
 
 #define POdeclsym(name) __typeof__ (name) PO##name;
+#define POdeclsymExport(name) POCL_EXPORT POdeclsym(name)
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 
@@ -365,6 +410,8 @@ extern uint64_t last_object_id;
 /* pocl specific flag, for "hidden" default queues allocated in each context */
 #define CL_QUEUE_HIDDEN (1 << 10)
 
+#define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
+
 typedef struct pocl_argument {
   uint64_t size;
   /* The "offset" is used to simplify subbuffer handling.
@@ -406,8 +453,6 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
-/* represents a single buffer to host memory mapping */
-
 struct pocl_device_ops {
   const char *device_name;
 
@@ -418,7 +463,7 @@ struct pocl_device_ops {
 
   /* submit gives the command for the device. The command may be left in the cq
      or stored to the device driver owning the cq. submit is called
-     with node->event locked, and must return with it unlocked. */
+     with node->sync.event.event locked, and must return with it unlocked. */
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
   /* join is called by clFinish and this function blocks until all the enqueued
@@ -531,6 +576,16 @@ struct pocl_device_ops {
   void (*svm_migrate) (cl_device_id dev, size_t num_svm_pointers,
                        void *__restrict__ svm_pointers,
                        size_t *__restrict__ sizes);
+  void (*svm_advise) (cl_device_id dev, const void *svm_ptr, size_t size,
+                      cl_mem_advice_intel advice);
+  /* USM Ops (Intel) */
+  void *(*usm_alloc) (cl_device_id dev, unsigned alloc_type,
+                      cl_mem_alloc_flags_intel flags, size_t size, cl_int *errcode);
+  void (*usm_free) (cl_device_id dev, void *svm_ptr);
+  /* this one is separate, because the device might choose to not support it in
+   * the driver. in that case, the runtime will create an event of usm_free
+   * type, which has a wait on all CQs in the context. */
+  void (*usm_free_blocking) (cl_device_id dev, void *svm_ptr);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -809,19 +864,45 @@ struct pocl_device_ops {
   /* The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
    * is left to the runtime. */
-  void (*compute_local_size) (cl_device_id dev, size_t global_x,
-                              size_t global_y, size_t global_z,
-                              size_t *local_x, size_t *local_y,
-                              size_t *local_z);
+  void (*compute_local_size) (cl_device_id dev, cl_kernel kernel,
+                              unsigned device_i,
+                              size_t global_x, size_t global_y,
+                              size_t global_z, size_t *local_x,
+                              size_t *local_y, size_t *local_z);
 
-  cl_int (*get_device_info_ext) (cl_device_id dev, cl_device_info param_name,
-                                 size_t param_value_size, void * param_value,
-                                 size_t * param_value_size_ret);
+  cl_int (*get_device_info_ext) (cl_device_id dev,
+                                 cl_device_info param_name,
+                                 size_t param_value_size,
+                                 void *param_value,
+                                 size_t *param_value_size_ret);
+
+  cl_int (*get_mem_info_ext) (cl_device_id dev,
+                              const void *ptr,
+                              cl_uint param_name,
+                              size_t param_value_size,
+                              void *param_value,
+                              size_t *param_value_size_ret);
+
+  cl_int (*set_kernel_exec_info_ext) (cl_device_id dev,
+                                      unsigned program_device_i,
+                                      cl_kernel kernel,
+                                      cl_uint param_name,
+                                      size_t param_value_size,
+                                      const void *param_value);
 
   /* optional. Return CL_SUCCESS if the device can be, or is associated with
    * the GL context described in properties. */
   cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
                                   const cl_context_properties *properties);
+
+  /* cl_khr_command_buffer extension */
+  cl_int (*create_finalized_command_buffer) (
+      cl_device_id device, cl_command_buffer_khr command_buffer);
+
+  cl_int (*free_command_buffer) (cl_device_id device,
+                                 cl_command_buffer_khr command_buffer);
+
+  cl_int (*run_command_buffer) (void *data, cl_command_buffer_khr cmd);
 };
 
 typedef struct pocl_global_mem_t {
@@ -869,6 +950,7 @@ struct _cl_device_id {
   size_t max_work_group_size;
   size_t preferred_wg_size_multiple;
   cl_bool non_uniform_work_group_support;
+  cl_bool generic_as_support;
   cl_uint preferred_vector_width_char;
   cl_uint preferred_vector_width_short;
   cl_uint preferred_vector_width_int;
@@ -935,6 +1017,13 @@ struct _cl_device_id {
      loads from the context struct passed as a kernel argument. This flag
      enables or disables this pass. */
   cl_bool workgroup_pass;
+  /* The program scope variable pass takes program-scope variables and replaces
+     them by references into a buffer, and creates an initializer kernel. */
+  cl_bool program_scope_variables_pass;
+  /* if CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
+   * and rely purely on Clang's OpenCL headers. For most drivers,
+   * this should default to CL_FALSE. */
+  cl_bool use_only_clang_opencl_headers;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
@@ -962,8 +1051,10 @@ struct _cl_device_id {
   cl_version opencl_c_version_as_cl;
 
   void *data;
+
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
+  const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
   /* A running number (starting from zero) across all the device instances.
      Used for indexing arrays in data structures with device specific
      entries. */
@@ -1012,7 +1103,15 @@ struct _cl_device_id {
 
   /* semicolon separated list of builtin kernels*/
   char *builtin_kernel_list;
+  unsigned num_builtin_kernels;
+  /* relative path to file with OpenCL sources of the builtin kernels */
+  const char* builtins_sources_path;
 
+  /* list of extra filenames or directories to serialize, from
+   * the program's directory in pocl cache. By default
+   * "program.bc" is serialized so that shouldn't be included here.
+   * Useful for adding extra files not related to any particular kernel
+   * (which have their own subdirectories in program's cache dir). */
   const char **serialize_entries;
   unsigned num_serialize_entries;
 
@@ -1086,8 +1185,7 @@ struct _cl_device_id {
 
   /* list of builtin kernels as in device->builtin_kernel_list,
    * but with their versions */
-  size_t num_builtin_kernels_with_version;
-  const cl_name_version *builtin_kernels_with_version;
+  cl_name_version *builtin_kernels_with_version;
 
   /* OpenCL C language versions supported by the device compiler */
   size_t num_opencl_c_with_version;
@@ -1096,6 +1194,12 @@ struct _cl_device_id {
   /* OpenCL C features supported by the device compiler */
   size_t num_opencl_features_with_version;
   const cl_name_version *opencl_features_with_version;
+
+  cl_device_unified_shared_memory_capabilities_intel host_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel device_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel single_shared_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel cross_shared_usm_capabs;
+  cl_device_unified_shared_memory_capabilities_intel system_shared_usm_capabs;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
@@ -1108,6 +1212,13 @@ struct _cl_device_id {
 #define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
 
 #define OPENCL_MAX_DIMENSION 3
+#ifndef HAVE_SIZE_T_3
+#define HAVE_SIZE_T_3
+typedef struct
+{
+  size_t size[3];
+} size_t_3;
+#endif
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
@@ -1140,6 +1251,10 @@ struct _cl_context {
   unsigned num_devices;
   unsigned num_properties;
 
+  /* the original device list given to clCreateContext,
+   * required for */
+  cl_device_id *create_devices;
+  unsigned num_create_devices;
   /*********************************************************************/
   /* these values depend on which devices are in context;
    * they're calculated by pocl_setup_context() */
@@ -1157,6 +1272,10 @@ struct _cl_context {
   /* The device that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
+
+  /* The device that should allocate USM memory
+   * NULL if none of devices in the context is USM capable */
+  cl_device_id usm_allocdev;
 
   /* for enqueueing migration commands. Two reasons:
    * 1) since migration commands can execute in parallel
@@ -1178,8 +1297,12 @@ struct _cl_context {
   /* list of destructor callbacks */
   context_destructor_callback_t *destructor_callbacks;
 
-  /* list of SVM buffers */
+  /* list of SVM & USM allocations */
   pocl_svm_ptr *svm_ptrs;
+
+  /* list of command queues created for the context.
+   * required for clMemBlockingFreeINTEL */
+  struct _cl_command_queue *command_queues;
 
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
@@ -1215,6 +1338,42 @@ struct _cl_command_queue {
 
   /* device specific data */
   void *data;
+
+  /* list of CQs stored in cl_context */
+  struct _cl_command_queue *prev, *next;
+};
+
+struct _cl_command_buffer_khr
+{
+  POCL_ICD_OBJECT;
+  POCL_OBJECT;
+  POCL_FAST_LOCK_T mutex;
+
+  /* Queues that this command buffer was created for */
+  cl_uint num_queues;
+  cl_command_queue *queues;
+
+  /* List of flags that this command buffer was created with */
+  cl_uint num_properties;
+  cl_command_buffer_properties_khr *properties;
+
+  /* recording / ready / pending (executing) / invalid */
+  cl_command_buffer_state_khr state;
+  /* Number of currently in-flight instances of this command buffer */
+  cl_uint pending;
+
+  /* Number of currently allocated sync points in this command buffer.
+   * Used for generating the next sync point id and for validating sync point
+   * wait lists when recording commands. */
+  cl_uint num_syncpoints;
+
+  _cl_command_node *cmds;
+};
+
+struct _cl_mutable_command_khr
+{
+  /* Unused in cl_khr_command_buffer but required in public API and used by
+   * follow-up extensions. */
 };
 
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \
@@ -1316,6 +1475,7 @@ struct _cl_mem {
   /* reference count; when it reaches 0,
    * the mem_host_ptr is automatically freed */
   uint mem_host_ptr_refcount;
+  int mem_host_ptr_is_svm;
 
   /* array of device-specific memory bookkeeping structs.
      The location of some device's struct is determined by
@@ -1411,12 +1571,33 @@ typedef struct pocl_kernel_metadata_s
    * the total size here. see struct _cl_kernel on why */
   size_t total_argument_storage_size;
 
-  /* array[program->num_devices] */
+  /****** subgroups *******/
+  /* per-device value for CL_KERNEL_MAX_NUM_SUB_GROUPS */
+  size_t *max_subgroups;
+  /* per-device value for CL_KERNEL_COMPILE_NUM_SUB_GROUPS */
+  size_t *compile_subgroups;
+
+  /****** workgroups *******/
+  /* per-device value for CL_KERNEL_WORK_GROUP_SIZE */
+  size_t *max_workgroup_size;
+  /* per-device value for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE */
+  size_t *preferred_wg_multiple;
+  /* per-device value for CL_KERNEL_LOCAL_MEM_SIZE */
+  cl_ulong *local_mem_size;
+  /* per-device value for CL_KERNEL_PRIVATE_MEM_SIZE */
+  cl_ulong *private_mem_size;
+  /* per-device value for CL_KERNEL_SPILL_MEM_SIZE_INTEL */
+  cl_ulong *spill_mem_size;
+
+  /* per-device array of hashes */
   pocl_kernel_hash_t *build_hash;
 
   /* If this is a BI kernel descriptor, they are statically defined in
      the custom device driver, thus should not be freed. */
   cl_bitfield builtin_kernel;
+  /* maximum global work size usable with the kernel.
+   * Only applies to builtin kernels */
+  size_t_3 builtin_max_global_work;
 
   /* device-specific METAdata, void* array[program->num_devices] */
   void **data;
@@ -1481,10 +1662,26 @@ struct _cl_program {
   cl_build_status build_status;
   /* Use to store binary type */
   cl_program_binary_type binary_type;
+  /* total size of program-scope variables. This depends on alignments
+   * & type sizes, hence it is device-dependent */
+  size_t *global_var_total_size;
+  /* per-device pointer to a llmv::Module instance;
+   * optional - for devices which use PoCL's LLVM passes */
+  void** llvm_irs;
+  /* per-device buffers for storing program-scope vars. Allocated lazily.
+   * these are not cl_mem because the Specs explicitly say these are not
+   * migrated between devices. */
+  void** gvar_storage;
 
   /* Store SPIR-V binary from clCreateProgramWithIL() */
   char *program_il;
   size_t program_il_size;
+  /* for SPIR-V store also specialization constants */
+  size_t num_spec_consts;
+  cl_uint *spec_const_ids;
+  cl_uint *spec_const_sizes;
+  uint64_t *spec_const_values;
+  char *spec_const_is_set;
 };
 
 struct _cl_kernel {

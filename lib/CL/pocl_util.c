@@ -25,6 +25,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <time.h>
 
@@ -47,11 +48,22 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
+#include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
+
+#ifdef ENABLE_RELOCATION
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif
+#include <dlfcn.h>
+#endif
 
 /* required for setting SSE/AVX flush denorms to zero flag */
 #if defined(__x86_64__) && defined(__GNUC__)
@@ -511,8 +523,8 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
   else
     POCL_ATOMIC_INC (event_c);
 
-  POCL_MSG_PRINT_EVENTS ("Created event %p / ID %" PRIu64 " / Command %s\n",
-                         (*event), (*event)->id,
+  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) Command %s\n",
+                         (*event)->id, (*event),
                          pocl_command_to_str (command_type));
 
   return CL_SUCCESS;
@@ -551,7 +563,7 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
     return CL_OUT_OF_HOST_MEMORY;
-    
+
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;
   LL_PREPEND (notifier_event->notify_list, notify_target);
@@ -581,13 +593,22 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
 
   for (i = 0; i < num_objs; ++i)
     {
+      POCL_LOCK_OBJ (objs[i]);
       pocl_mem_identifier *p = &objs[i]->device_ptrs[dev->global_mem_id];
       // skip already allocated
-      if (p->mem_ptr)
+      if (p->mem_ptr) {
+        POCL_UNLOCK_OBJ (objs[i]);
         continue;
+      }
 
       assert (dev->ops->alloc_mem_obj);
       errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
+      if (errcode != CL_SUCCESS) {
+        POCL_MSG_ERR("Failed to allocate %zx bytes on device %s\n",
+                     objs[i]->size, dev->short_name);
+      }
+
+      POCL_UNLOCK_OBJ (objs[i]);
       if (errcode != CL_SUCCESS)
         return CL_FALSE;
     }
@@ -603,24 +624,20 @@ pocl_create_command_struct (_cl_command_node **cmd,
                             size_t num_buffers, const cl_mem *buffers)
 {
   unsigned i;
-  int err;
   cl_event *event = NULL;
+  cl_int errcode = CL_SUCCESS;
 
   *cmd = pocl_mem_manager_new_command ();
-  if (*cmd == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
 
   (*cmd)->type = command_type;
 
-  event = &((*cmd)->event);
-  err = pocl_create_event (event, command_queue, command_type, num_buffers,
-                           buffers, command_queue->context);
+  event = &((*cmd)->sync.event.event);
+  errcode = pocl_create_event (event, command_queue, command_type, num_buffers,
+                               buffers, command_queue->context);
 
-  if (err != CL_SUCCESS)
-    {
-      POCL_MEM_FREE(*cmd);
-      return err;
-    }
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
   (*event)->command_type = command_type;
 
   /* if host application wants this commands event
@@ -639,7 +656,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
     }
 
   (*cmd)->device = command_queue->device;
-  (*cmd)->event->command = (*cmd);
+  (*cmd)->sync.event.event->command = (*cmd);
 
   /* Form event synchronizations based on the given wait list */
   for (i = 0; i < num_events; ++i)
@@ -648,9 +665,14 @@ pocl_create_command_struct (_cl_command_node **cmd,
       pocl_create_event_sync ((*event), wle);
     }
   POCL_MSG_PRINT_EVENTS (
-      "Created command struct: CMD %p (event %" PRIu64 " / %p, type: %s)\n", *cmd,
-      (*event)->id, *event, pocl_command_to_str (command_type));
+      "Created immediate command struct: CMD %p (event %" PRIu64
+      " / %p, type: %s)\n",
+      *cmd, (*event)->id, *event, pocl_command_to_str (command_type));
   return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (*cmd);
+  return errcode;
 }
 
 static int
@@ -1001,7 +1023,7 @@ pocl_create_command_full (_cl_command_node **cmd,
                                     buffers);
   if (err)
     return err;
-  cl_event final_event = (*cmd)->event;
+  cl_event final_event = (*cmd)->sync.event.event;
 
   /* retain once for every buffer; this is because we set every buffer's
    * "last event" to this, and then some next command enqueue
@@ -1046,7 +1068,113 @@ pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
                                    readonly_flags, 0);
 }
 
-/* call with node->event UNLOCKED */
+cl_int
+pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
+                                    cl_command_queue *command_queue)
+{
+  assert (command_queue != NULL);
+  cl_command_queue q = *command_queue;
+  POCL_RETURN_ERROR_COND ((q != NULL), CL_INVALID_COMMAND_QUEUE);
+
+  if (q)
+    {
+      POCL_RETURN_ERROR_COND (
+          (command_buffer->queues[0]->context != q->context),
+          CL_INVALID_CONTEXT);
+      int queue_in_buffer = 0;
+      for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+        {
+          if (q == command_buffer->queues[i])
+            queue_in_buffer = 1;
+        }
+      POCL_RETURN_ERROR_COND ((!queue_in_buffer), CL_INVALID_COMMAND_QUEUE);
+    }
+  else
+    q = command_buffer->queues[0];
+
+  *command_queue = q;
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_create_recorded_command (_cl_command_node **cmd,
+                              cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_command_type command_type, cl_uint num_deps,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              size_t num_buffers, cl_mem *buffers,
+                              char *readonly_flags)
+{
+  cl_int errcode = pocl_check_syncpoint_wait_list (command_buffer, num_deps,
+                                                   sync_point_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  *cmd = pocl_mem_manager_new_command ();
+  POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
+  (*cmd)->type = command_type;
+  (*cmd)->buffered = 1;
+
+  (*cmd)->sync.syncpoint.num_sync_points_in_wait_list = num_deps;
+  if (num_deps > 0)
+    {
+      cl_sync_point_khr *wait_list
+          = malloc (sizeof (cl_sync_point_khr) * num_deps);
+      if (wait_list == NULL)
+        {
+          POCL_MEM_FREE (*cmd);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
+      memcpy (wait_list, sync_point_wait_list,
+              sizeof (cl_sync_point_khr) * num_deps);
+      (*cmd)->sync.syncpoint.sync_point_wait_list = wait_list;
+    }
+
+  (*cmd)->memobj_count = num_buffers;
+  if (num_buffers > 0)
+    {
+      cl_mem *memobjs = (cl_mem *)malloc (sizeof (cl_mem) * num_buffers);
+      (*cmd)->memobj_list = memobjs;
+      POCL_GOTO_ERROR_COND ((memobjs == NULL), CL_OUT_OF_HOST_MEMORY);
+
+      char *flags = (char *)malloc (sizeof (char) * num_buffers);
+      (*cmd)->readonly_flag_list = flags;
+      POCL_GOTO_ERROR_COND ((flags == NULL), CL_OUT_OF_HOST_MEMORY);
+
+      memcpy (memobjs, buffers, sizeof (cl_mem) * num_buffers);
+      memcpy (flags, readonly_flags, sizeof (char) * num_buffers);
+      for (unsigned i = 0; i < num_buffers; ++i)
+        {
+          POname (clRetainMemObject) (memobjs[i]);
+        }
+    }
+
+  return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (*cmd);
+  return errcode;
+}
+
+cl_int
+pocl_command_record (cl_command_buffer_khr command_buffer,
+                     _cl_command_node *cmd, cl_sync_point_khr *sync_point)
+{
+  POCL_LOCK (command_buffer->mutex);
+  if (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR)
+    {
+      POCL_UNLOCK (command_buffer->mutex);
+      return CL_INVALID_OPERATION;
+    }
+  LL_APPEND (command_buffer->cmds, cmd);
+  if (sync_point != NULL)
+    *sync_point = command_buffer->num_syncpoints + 1;
+  command_buffer->num_syncpoints++;
+  POCL_UNLOCK (command_buffer->mutex);
+  return CL_SUCCESS;
+}
+
+/* call with node->sync.event.event UNLOCKED */
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
 {
@@ -1061,7 +1189,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("In-order Q; adding event syncs\n");
       if (command_queue->last_event.event)
         {
-          pocl_create_event_sync (node->event,
+          pocl_create_event_sync (node->sync.event.event,
                                   command_queue->last_event.event);
         }
     }
@@ -1073,7 +1201,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->last_event.event)
         {
-          pocl_create_event_sync (node->event,
+          pocl_create_event_sync (node->sync.event.event,
                                   command_queue->last_event.event);
         }
     }
@@ -1087,33 +1215,33 @@ void pocl_command_enqueue (cl_command_queue command_queue,
       POCL_MSG_PRINT_EVENTS ("Barrier; adding event syncs\n");
       DL_FOREACH (command_queue->events, event)
         {
-          pocl_create_event_sync (node->event, event);
+          pocl_create_event_sync (node->sync.event.event, event);
         }
     }
 
   if (node->type == CL_COMMAND_BARRIER)
-    command_queue->barrier = node->event;
+    command_queue->barrier = node->sync.event.event;
   else
     {
       if (command_queue->barrier)
         {
-          pocl_create_event_sync (node->event, command_queue->barrier);
+          pocl_create_event_sync (node->sync.event.event,
+                                  command_queue->barrier);
         }
     }
-  DL_APPEND (command_queue->events, node->event);
+  DL_APPEND (command_queue->events, node->sync.event.event);
 
   POCL_MSG_PRINT_EVENTS ("Pushed Event %" PRIu64 " to CQ %" PRIu64 ".\n",
-                         node->event->id, command_queue->id);
-  command_queue->last_event.event = node->event;
+                         node->sync.event.event->id, command_queue->id);
+  command_queue->last_event.event = node->sync.event.event;
   POCL_UNLOCK_OBJ (command_queue);
 
-  POCL_LOCK_OBJ (node->event);
-  assert (node->event->status == CL_QUEUED);
-  assert (command_queue == node->event->queue);
-  pocl_update_event_queued (node->event);
+  POCL_LOCK_OBJ (node->sync.event.event);
+  assert (node->sync.event.event->status == CL_QUEUED);
+  assert (command_queue == node->sync.event.event->queue);
+  pocl_update_event_queued (node->sync.event.event);
   command_queue->device->ops->submit(node, command_queue);
-  /* node->event is unlocked by device_ops->submit */
-
+  /* node->sync.event.event is unlocked by device_ops->submit */
 }
 
 int
@@ -1146,7 +1274,7 @@ pocl_release_mem_host_ptr (cl_mem mem)
   return 0;
 }
 
-/* call (and return) with node->event locked */
+/* call (and return) with node->sync.event.event locked */
 void
 pocl_command_push (_cl_command_node *node,
                    _cl_command_node **ready_list,
@@ -1163,9 +1291,9 @@ pocl_command_push (_cl_command_node *node,
       CDL_PREPEND ((*pending_list), node);
       return;
     }
-  if (pocl_command_is_ready(node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       CDL_PREPEND ((*ready_list), node);
     }
   else
@@ -1194,7 +1322,7 @@ pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
   POCL_UNLOCK_OBJ (mem);
 }
 
-static void
+void
 pocl_ndrange_node_cleanup (_cl_command_node *node)
 {
   cl_uint i;
@@ -1597,6 +1725,10 @@ pocl_setup_context (cl_context context)
                      < dev->svm_allocation_priority)
             {
               context->svm_allocdev = dev;
+              if (dev->ops->usm_alloc && dev->ops->usm_free)
+              {
+                  context->usm_allocdev = dev;
+              }
             }
         }
 
@@ -1674,6 +1806,36 @@ pocl_check_event_wait_list (cl_command_queue command_queue,
               (event_wait_list[i]->context != command_queue->context),
               CL_INVALID_CONTEXT);
         }
+    }
+
+  return CL_SUCCESS;
+}
+
+int
+pocl_check_syncpoint_wait_list (cl_command_buffer_khr command_buffer,
+                                cl_uint num_sync_points_in_wait_list,
+                                const cl_sync_point_khr *sync_point_wait_list)
+{
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list > 0 && sync_point_wait_list == NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+  POCL_RETURN_ERROR_COND (
+      (num_sync_points_in_wait_list == 0 && sync_point_wait_list != NULL),
+      CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+
+  POCL_LOCK (command_buffer->mutex);
+  cl_uint next_syncpoint = command_buffer->num_syncpoints + 1;
+  POCL_UNLOCK (command_buffer->mutex);
+
+  POCL_RETURN_ERROR_ON ((next_syncpoint == 0), CL_OUT_OF_RESOURCES,
+                        "Too many commands in buffer\n");
+
+  for (unsigned i = 0; i < num_sync_points_in_wait_list; ++i)
+    {
+      POCL_RETURN_ERROR_COND ((sync_point_wait_list[i] == 0),
+                              CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
+      POCL_RETURN_ERROR_COND ((sync_point_wait_list[i] >= next_syncpoint),
+                              CL_INVALID_SYNC_POINT_WAIT_LIST_KHR);
     }
 
   return CL_SUCCESS;
@@ -1767,6 +1929,8 @@ pocl_command_to_str (cl_command_type cmd)
       return "svm_map";
     case CL_COMMAND_SVM_UNMAP:
       return "svm_unmap";
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      return "command_buffer_khr";
     }
 
   return "unknown";
@@ -2002,6 +2166,10 @@ static void pocl_free_event_node (cl_event event)
     case CL_COMMAND_SVM_MIGRATE_MEM:
       POCL_MEM_FREE (node->command.svm_migrate.sizes);
       POCL_MEM_FREE (node->command.svm_migrate.svm_pointers);
+      break;
+
+    case CL_COMMAND_SVM_FREE:
+      POCL_MEM_FREE (node->command.svm_free.svm_pointers);
       break;
     }
   pocl_mem_manager_free_command (node);
@@ -2325,6 +2493,80 @@ pocl_escape_quoted_whitespace (char *temp_options, char *replace_me)
   return 0;
 }
 
+/* returns private datadir, possibly using relative path to libpocl sharedlib */
+int pocl_get_private_datadir(char* private_datadir)
+{
+#ifdef ENABLE_RELOCATION
+    Dl_info info;
+    if (dladdr((void*)pocl_get_private_datadir, &info))
+    {
+        char const *soname = info.dli_fname;
+        strcpy(private_datadir, soname);
+        char* last_slash = strrchr (private_datadir,'/');
+        if (last_slash)
+          {
+            ++last_slash;
+            *last_slash = 0;
+            strcat (private_datadir, POCL_INSTALL_PRIVATE_DATADIR_REL);
+            return 0;
+          }
+        else
+          return -1;
+    }
+#endif
+    strcpy (private_datadir, POCL_INSTALL_PRIVATE_DATADIR);
+    return 0;
+}
+
+/* returns path to a file from either the PoCL's source directory
+ * (if POCL_BUILDING=1), or PoCL's private datadir (if POCL_BUILDING=0)
+ * each arg (if not empty) should start with '/' but NOT end with it
+ */
+int pocl_get_srcdir_or_datadir (char* path,
+                                const char* srcdir_suffix,
+                                const char* datadir_suffix,
+                                const char* filename)
+{
+  path[0] = 0;
+#ifdef ENABLE_POCL_BUILDING
+  if (pocl_get_bool_option ("POCL_BUILDING", 0))
+    {
+      strcat(path, SRCDIR);
+      strcat(path, srcdir_suffix);
+      strcat(path, filename);
+    }
+  else
+#endif
+    {
+      if (pocl_get_private_datadir(path)) return -1;
+      strcat(path, datadir_suffix);
+      strcat(path, filename);
+    }
+
+  return 0;
+}
+
+
+void
+pocl_str_toupper(char *out, const char *in)
+{
+  int i;
+
+  for (i = 0; in[i] != '\0'; i++)
+    out[i] = toupper(in[i]);
+  out[i] = '\0';
+}
+
+void
+pocl_str_tolower(char *out, const char *in)
+{
+  int i;
+
+  for (i = 0; in[i] != '\0'; i++)
+    out[i] = tolower(in[i]);
+  out[i] = '\0';
+}
+
 int
 pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
                                     size_t size,
@@ -2405,4 +2647,84 @@ pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,
       return -1;
     }
   return 0;
+}
+
+void
+pocl_free_kernel_metadata (cl_program program, unsigned kernel_i)
+{
+  pocl_kernel_metadata_t *meta = &program->kernel_meta[kernel_i];
+  unsigned j;
+  POCL_MEM_FREE (meta->attributes);
+  POCL_MEM_FREE (meta->name);
+  for (j = 0; j < meta->num_args; ++j)
+    {
+      POCL_MEM_FREE (meta->arg_info[j].name);
+      POCL_MEM_FREE (meta->arg_info[j].type_name);
+    }
+  POCL_MEM_FREE (meta->max_subgroups);
+  POCL_MEM_FREE (meta->compile_subgroups);
+  POCL_MEM_FREE (meta->max_workgroup_size);
+  POCL_MEM_FREE (meta->preferred_wg_multiple);
+  POCL_MEM_FREE (meta->local_mem_size);
+  POCL_MEM_FREE (meta->private_mem_size);
+  POCL_MEM_FREE (meta->spill_mem_size);
+  POCL_MEM_FREE (meta->arg_info);
+  if (meta->data != NULL)
+    for (j = 0; j < program->num_devices; ++j)
+      if (meta->data[j] != NULL)
+        {
+          POCL_MSG_WARN ("kernel metadata not freed\n");
+          meta->data[j] = NULL; // TODO free data in driver callback
+        }
+  POCL_MEM_FREE (meta->data);
+  POCL_MEM_FREE (meta->local_sizes);
+  POCL_MEM_FREE (meta->build_hash);
+}
+
+int
+pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size,
+                        size_t *buffer_size)
+{
+
+  /* TODO we need a better data structure than linked list,
+   * right now it does a linear scan of all SVM allocations. */
+  POCL_LOCK_OBJ (context);
+  pocl_svm_ptr *found = NULL, *item = NULL;
+  char *svm_alloc_end = NULL;
+  char *svm_alloc_start = NULL;
+  DL_FOREACH (context->svm_ptrs, item)
+  {
+    svm_alloc_start = (char *)item->svm_ptr;
+    svm_alloc_end = svm_alloc_start + item->size;
+    if (((char *)svm_ptr >= svm_alloc_start)
+        && ((char *)svm_ptr < svm_alloc_end))
+      {
+        found = item;
+        break;
+      }
+  }
+  POCL_UNLOCK_OBJ (context);
+
+  /* if the device does not support system allocation,
+   * then the pointer must be found in the context's SVM alloc list */
+  if (found == NULL
+      && (context->svm_allocdev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
+             == 0)
+    {
+      POCL_MSG_ERR (
+          "Can't find the pointer %p in list of allocated SVM pointers\n",
+            svm_ptr);
+      return CL_INVALID_OPERATION;
+    }
+
+  if (found != NULL && (((char *)svm_ptr + size) > svm_alloc_end))
+    {
+      POCL_MSG_ERR ("The pointer+size exceeds the size of the allocation\n");
+      return CL_INVALID_OPERATION;
+    }
+
+  if (found != NULL && buffer_size != NULL)
+    *buffer_size = item->size;
+
+  return CL_SUCCESS;
 }

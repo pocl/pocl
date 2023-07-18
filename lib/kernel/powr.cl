@@ -25,5 +25,3 @@
 #include "templates.h"
 
 DEFINE_EXPR_V_VV(powr, pow(a, b))
-
-DEFINE_EXPR_F_FF(half_powr, powr(a, b))

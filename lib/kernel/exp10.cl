@@ -25,5 +25,3 @@
 #include "templates.h"
 
 DEFINE_EXPR_V_V(exp10, exp(a*TYPED_CONST(stype, M_LN10_H, M_LN10_F, M_LN10)))
-
-DEFINE_EXPR_F_F(half_exp10, exp10(a))

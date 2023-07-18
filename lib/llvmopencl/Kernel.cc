@@ -274,8 +274,8 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
 
 }
 
-void
-Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ) {
+void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
+                                  size_t LocalSizeZ) {
 
   IRBuilder<> Builder(getEntryBlock().getFirstNonPHI());
 
@@ -289,8 +289,9 @@ Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalS
   llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
 
   GV = M->getGlobalVariable("_local_size_x");
-  if (GV != NULL)
+  if (GV != NULL) {
     Builder.CreateStore(ConstantInt::get(SizeT, LocalSizeX), GV);
+  }
 
   GV = M->getGlobalVariable("_local_size_y");
   if (GV != NULL)
@@ -300,4 +301,3 @@ Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalS
   if (GV != NULL)
     Builder.CreateStore(ConstantInt::get(SizeT, LocalSizeZ), GV);
 }
-

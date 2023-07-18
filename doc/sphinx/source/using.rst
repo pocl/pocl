@@ -43,7 +43,7 @@ An ICD loader is an OpenCL library acting as a "proxy" to one of the various Ope
 implementations installed in the system. pocl does not provide an ICD loader itself,
 but NVidia, AMD, Intel, Khronos, and the free ocl-icd project each provides one.
 
-* `ocl-icd <https://forge.imag.fr/projects/ocl-icd/>`_
+* `ocl-icd <https://github.com/OCL-dev/ocl-icd>`_
 * `Khronos <http://www.khronos.org/opencl/>`_
 
 Linking your program directly with pocl
@@ -66,11 +66,16 @@ wont be able to run with another OpenCL implementation without recompilation.
 Using pocl on MacOSX
 --------------------
 
-On MacOSX, you can either link your program directly with pocl or link through an ICD loader.
-If you use an ICD loader, Apple OpenCL implementation will be invisible, unless you use a
-wrapper library to expose the Apple OpenCL implementation as an ICD. Note that due to old
-ICD on Mac OS X, tests and examples might not build. Recommended is to build PoCL with
-either -DENABLE_TESTS=OFF or -DENABLE_ICD=OFF.
+On MacOSX, you can either link your program directly with pocl or link through the
+ICD loader by KhronosGroup.
+
+Even if you use an ICD loader, the Apple OpenCL implementation will still be invisible,
+unless you use a wrapper library to expose the Apple OpenCL implementation as an ICD.
+
+When ENABLE_ICD is turned off and an application links directly with PoCL, the only
+platform that is visible to the application will be PoCL.
+
+.. _pocl-env-variables:
 
 Tuning pocl behavior with ENV variables
 ---------------------------------------
@@ -79,12 +84,14 @@ The behavior of pocl can be controlled with multiple environment variables
 listed below. The variables are helpful both when using and when developing
 pocl.
 
+.. highlight:: bash
+
 - **POCL_AFFINITY**
- Linux-only, specific to pthread driver. If set to 1, each thread of
- the pthread CPU driver sets its affinity to its index. This may be
- useful with very long running kernels, or when using subdevices
- (lets any idle cores enter deeper sleep). Defaults to 0 (most
- people don't need this).
+
+  Linux-only, specific to 'cpu' driver. If set to 1, each thread of
+  the driver sets its affinity to its index. This may be useful
+  with very long running kernels, or when using subdevices.
+  Defaults to 0 (most people don't need this).
 
 - **POCL_BINARY_SPECIALIZE_WG**
 
@@ -97,7 +104,7 @@ pocl.
 
   Example::
 
-    POCL_BINARY_SPECIALIZE_WG=2-1-1,0-0-0-goffs0,13-1-1-smallgrid,128-2-1-goffs0-smallgrid poclcc [...]
+    POCL_BINARY_SPECIALIZE_WG='2-1-1,0-0-0-goffs0,13-1-1-smallgrid,128-2-1-goffs0-smallgrid' poclcc [...]
 
   This makes poclcc generate a binary which contains the generic work-group
   function binary, a work-group function that is specialized for local size
@@ -106,6 +113,27 @@ pocl.
   for a "small grid" (size defined by the device driver), and finally one
   that is specialized for local size 128x2x1, an origo global offset and
   a small grid.
+
+- **POCL_BITCODE_FINALIZER**
+
+  Defines a custom command that can manipulate the final kernel work-group
+  function bitcode produced after all LLVM optimizations and before entering code
+  generation. This can be useful, for example, to add instrumentation to the LLVM
+  bitcode before proceeding to the backend.
+
+  Example::
+
+    POCL_BITCODE_FINALIZER='verificarlo %(bc) --emit-llvm -o %(bc)' examples/example1/example1
+
+  This results in running the above command with '%(bc)' strings replaced with
+  the path of the final bitcode's temporary file. Note that the modified
+  bitcode should be written over the same file for it to get picked to the
+  code generation.
+
+  Please note that setting the env doesn't force regeneration of the kernel
+  binaries if they are found in the kernel compiler cache. You can either
+  use POCL_KERNEL_CACHE=0 to disable the kernel cache, or wipe the kernel
+  cache directory manually to force kernel binary rebuild.
 
 - **POCL_BUILDING**
 
@@ -121,6 +149,17 @@ pocl.
  default cache directory will be used, which is ``$XDG_CACHE_HOME/pocl/kcache``
  (if set) or ``$HOME/.cache/pocl/kcache/`` on Unix-like systems.
 
+- **POCL_CPU_LOCAL_MEM_SIZE**
+
+ Set the local memory size of the CPU devices (cpu, cpu-minimal) to the
+ given amount in bytes instead of the default one.
+
+- **POCL_CPU_MAX_CU_COUNT**
+
+ The maximum number of threads created for work group execution in the
+ 'cpu' device driver. The default is to determine this from the number of
+ hardware threads available in the CPU.
+
 - **POCL_DEBUG**
 
  Enables debug messages to stderr. This will be mostly messages from error
@@ -134,12 +173,6 @@ pocl.
  error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,cuda,vulkan,proxy,all.
  Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
-- **POCL_SIGUSR2_HANDLER**
-
- When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print
- some debugging information. Currently it prints the count of live cl_* objects
- by type (buffers, events, etc).
-
 - **POCL_DEBUG_LLVM_PASSES**
 
  When set to 1, enables debug output from LLVM passes during optimization.
@@ -149,8 +182,11 @@ pocl.
  POCL_DEVICES is a space separated list of the device instances to be enabled.
  This environment variable is used for the following devices:
 
- *         **basic**    A minimalistic example device driver for executing
-                        kernels on the host CPU. No multithreading.
+ *         **cpu-minimal** A minimalistic example device driver for executing
+                           kernels on the host CPU. No multithreading.
+
+ *         **cpu**      Execution of OpenCL kernels on the host CPU using
+                        (by default) all available CPU threads.
 
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
 
@@ -160,24 +196,23 @@ pocl.
 
  *         **vulkan**   An experimental driver that uses Vulkan and SPIR-V for executing on
 	                Vulkan supported devices.
- 
- *         **pthread**  Native kernel execution on the host CPU with
-                        threaded execution of work groups using pthreads.
 
  *         **ttasim**   Device that simulates a TTA device using the
                         TCE's ttasim library. Enabled only if TCE libraries
                         installed.
 
- If POCL_DEVICES is not set, one pthread device will be used.
+ *         **level0**   An experimental driver that uses libze to execute on Intel GPUs.
+
+ If POCL_DEVICES is not set, one cpu device will be used.
  To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
  environment variable can be specified (where drivername is in uppercase).
  Example::
 
-  export POCL_DEVICES="pthread ttasim ttasim"
+  export POCL_DEVICES="cpu ttasim ttasim"
   export POCL_TTASIM0_PARAMETERS="/path/to/my/machine0.adf"
   export POCL_TTASIM1_PARAMETERS="/path/to/my/machine1.adf"
 
- Creates three devices, one CPU device with pthread multithreading and two
+ Creates three devices, one 'cpu' device with multithreading and two
  TTA device simulated with the ttasim. The ttasim devices gets a path to
  the architecture description file of the tta to simulate as a parameter.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
@@ -189,12 +224,6 @@ pocl.
  E.g. ``POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"`` can be useful for force
  adding debug data all the built kernels to help debugging kernel issues
  with tools such as gdb or valgrind.
-
-- **POCL_IMPLICIT_FINISH**
-
- Add an implicit call to clFinish after every clEnqueue* call. Useful mostly for
- pocl internal development, and is enabled only if pocl is configured with
- ``--enable-debug``.
 
 - **POCL_KERNEL_CACHE**
 
@@ -209,11 +238,22 @@ pocl.
  contains all the intermediate compiler files are left as it is. This
  will be handy for debugging
 
-- **POCL_MAX_PTHREAD_COUNT**
+- **POCL_LEVEL0_JIT**
 
- The maximum number of threads created for work group execution in the
- pthread device driver. The default is to determine this from the number of
- hardware threads available in the CPU.
+ Sets up Just-In-Time compilation in the Level0 driver.
+ (see :ref:`pocl-level0-driver` for details)
+ Accepted values: {0,1,auto}
+
+   *   0 = always disable JIT
+   *   1 = always use JIT,
+   *   auto (default) = guess based on program's kernel count & SPIR-V size.
+
+- **POCL_LLVM_VERIFY**
+
+  if enabled, some drivers (CUDA, CPU, Level0) use an extra step of
+  verification of LLVM modules at certain stages (program.bc always,
+  kernel bitcode (parallel.bc) only with some drivers).
+  Defaults to 0 if CMAKE_BUILD_TYPE=Debug and 1 otherwise.
 
 - **POCL_MAX_WORK_GROUP_SIZE**
 
@@ -224,7 +264,7 @@ pocl.
 - **POCL_MEMORY_LIMIT**
 
  Integer option, unit: gigabytes. Limits the total global memory size
- reported by pocl for the pthread/basic devices (this will also affect
+ reported by pocl for the CPU devices (this will also affect
  local/constant/max-alloc-size numbers, since these are derived from
  global mem size).
 
@@ -234,53 +274,17 @@ pocl.
  good for creating pocl binaries. Requires those drivers to be compiled with support
  for compilation for those devices.
 
-- **POCL_VECTORIZER_REMARKS**
-
- When set to 1, prints out remarks produced by the loop vectorizer of LLVM
- during kernel compilation.
-
-- **POCL_VULKAN_VALIDATE=1**
-
- When set to 1, and the Vulkan implementation has the validation layers,
- enables the validation layers in the driver. You will also need POCL_DEBUG=vulkan
- or POCL_DEBUG=all to see the output printed.
-
-- **POCL_WORK_GROUP_METHOD**
-
- The kernel compiler method to produce the work group functions from
- multiple work items. Legal values:
-
-    auto   -- Choose the best available method depending on the
-              kernel and the work group size. Use
-              POCL_FULL_REPLICATION_THRESHOLD=N to set the
-              maximum local size for a work group to be
-              replicated fully with 'repl'. Otherwise,
-              'loops' is used.
-
-    loops  -- Create for-loops that execute the work items
-              (under stabilization). The drawback is the
-              need to save the thread contexts in arrays.
-
-              The loops will be unrolled a certain number of
-              times of which maximum can be controlled with
-              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
-              variable (default is to not perform unrolling).
-
-    loopvec -- Create work-item for-loops (see 'loops') and execute
-               the LLVM LoopVectorizer. The loops are not unrolled
-               but the unrolling decision is left to the generic
-               LLVM passes (the default).
-
-    repl   -- Replicate and chain all work items. This results
-              in more easily scalarizable private variables, thus
-              might avoid storing work-item context to memory.
-              However, the code bloat is increased with larger
-              WG sizes.
 
 - **POCL_SIGFPE_HANDLER**
 
  Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
- See :ref:`sigfpe-handler`
+ See :ref:`known-issues`
+
+- **POCL_SIGUSR2_HANDLER**
+
+ When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print
+ some debugging information. Currently it prints the count of live cl_* objects
+ by type (buffers, events, etc).
 
 - **POCL_STARTUP_DELAY**
 
@@ -319,3 +323,65 @@ pocl.
               For more information, please see lttng documentation:
               http://lttng.org/docs/#doc-tracing-your-own-user-application
 
+- **POCL_VECTORIZER_REMARKS**
+
+ When set to 1, prints out remarks produced by the loop vectorizer of LLVM
+ during kernel compilation.
+
+- **POCL_VULKAN_VALIDATE**
+
+ When set to 1, and the Vulkan implementation has the validation layers,
+ enables the validation layers in the driver. You will also need POCL_DEBUG=vulkan
+ or POCL_DEBUG=all to see the output printed.
+
+- **POCL_WORK_GROUP_METHOD**
+
+ The kernel compiler method to produce the work group functions from
+ multiple work items. Legal values:
+
+    auto   -- Choose the best available method depending on the
+              kernel and the work group size. Use
+              POCL_FULL_REPLICATION_THRESHOLD=N to set the
+              maximum local size for a work group to be
+              replicated fully with 'repl'. Otherwise,
+              'loops' is used.
+
+    loops  -- Create for-loops that execute the work items
+              (under stabilization). The drawback is the
+              need to save the thread contexts in arrays.
+
+              The loops will be unrolled a certain number of
+              times of which maximum can be controlled with
+              POCL_WILOOPS_MAX_UNROLL_COUNT=N environment
+              variable (default is to not perform unrolling).
+
+    loopvec -- Create work-item for-loops (see 'loops') and execute
+               the LLVM LoopVectorizer. The loops are not unrolled
+               but the unrolling decision is left to the generic
+               LLVM passes (the default).
+
+    repl   -- Replicate and chain all work items. This results
+              in more easily scalarizable private variables, thus
+              might avoid storing work-item context to memory.
+              However, the code bloat is increased with larger
+              WG sizes.
+    
+    cbs    -- Use continuation-based synchronization to execute work-items
+              on non-SPMD devices.
+              CBS is expected to work for kernels that 'loops' does not support.
+              For most other kernels it is expected to perform slightly worse.
+              Also enables the LLVM LoopVectorizer.
+
+              An in-depth explanation of the implementation of CBS and how it
+              compares to the other approaches can be found in
+              [this thesis](https://joameyer.de/hipsycl/Thesis_JoachimMeyer.pdf).
+
+- **POCL_WORK_GROUP_SPECIALIZATION**
+
+  PoCL specializes work-groups at kernel command launch time by default
+  to optimize the execution performance with the cost of cached variations
+  of the kernels with the different specialization values.
+
+  The kernel command parameters PoCL currently specializes with include
+  the local size, global offset zero or non-zero and maximum grid size.
+  The specialization can be disabled by setting this environment variable to 0.

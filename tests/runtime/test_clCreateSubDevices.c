@@ -138,8 +138,8 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("CL_DEVICE_MAX_COMPUTE_UNITS");
   if (max_cus < 2)
     {
-      printf("This test requires a cl device with at least 2 compute units"
-             " (a dual-core or better CPU)\n");
+      printf (
+          "This test requires a cl device with at least 2 compute units\n");
       return 77;
     }
 
@@ -148,7 +148,11 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("CL_DEVICE_PARTITION_MAX_SUB_DEVICES");
 
   // test fails without possible sub-devices, e.g. with basic pocl device
-  TEST_ASSERT(max_subs > 1);
+  if (max_subs < 2)
+    {
+      printf ("This test requires a cl device with at least 2 subdevices\n");
+      return 77;
+    }
 
   cl_device_partition_property *dev_pt;
   size_t dev_pt_size;

@@ -107,7 +107,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
       POCL_MSG_PRINT_GENERAL ("Kernel %15s || SetArg idx %3u || %8s || "
                               "Local %1i || Size %6zu || Value %p || "
                               "Pointer %p || *(uint32*)Value: %8u || "
-                              "*(uint64*)Value: %8lu ||\nHex Value: %s\n",
+                              "*(uint64*)Value: %8" PRIu64 " ||\nHex Value: %s\n",
                               kernel->name, arg_index, pi->type_name, is_local,
                               arg_size, arg_value, ptr_value, uint32_value,
                               uint64_value, hexval);
@@ -155,13 +155,14 @@ POname(clSetKernelArg)(cl_kernel kernel,
   else if (pi->type_size)
     {
       size_t as = arg_size;
+      size_t as3 = arg_size;
       /* handle <type>3 vectors, we accept both <type>3 and <type>4 sizes */
       if (as % 3 == 0)
-        as = (as / 3) * 4;
+        as3 = (as / 3) * 4;
       POCL_RETURN_ERROR_ON (
-          (pi->type_size != as), CL_INVALID_ARG_SIZE,
-          "Arg %u is %s, but arg_size is not sizeof(%s) == %u\n", arg_index,
-          pi->type_name, pi->type_name, pi->type_size);
+          (pi->type_size != as && pi->type_size != as3), CL_INVALID_ARG_SIZE,
+          "Arg %u is type %s, but arg_size (%zu) is not sizeof(type) == %u\n",
+          arg_index, pi->type_name, arg_size, pi->type_size);
     }
 
   p = &(kernel->dyn_arguments[arg_index]);

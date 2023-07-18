@@ -70,6 +70,7 @@
 #define cosh           _cl_cosh
 #define cospi          _cl_cospi
 #define cross          _cl_cross
+#define ctz            _cl_ctz
 #define degrees        _cl_degrees
 #define distance       _cl_distance
 #define dot            _cl_dot
@@ -87,7 +88,9 @@
 #define floor          _cl_floor
 #define fma            _cl_fma
 #define fmax           _cl_fmax
+#define fmax_common    _cl_fmax_common
 #define fmin           _cl_fmin
+#define fmin_common    _cl_fmin_common
 #define fmod           _cl_fmod
 #define fract          _cl_fract
 #define frexp          _cl_frexp
@@ -931,6 +934,72 @@
 #define convert_float16_sat_rtn    _cl_convert_float16_sat_rtn
 #define convert_double16_sat_rtn    _cl_convert_double16_sat_rtn
 
+#define convert_half    _cl_convert_half
+#define convert_half_rte    _cl_convert_half_rte
+#define convert_half_rtz    _cl_convert_half_rtz
+#define convert_half_rtp    _cl_convert_half_rtp
+#define convert_half_rtn    _cl_convert_half_rtn
+#define convert_half_sat    _cl_convert_half._sat
+#define convert_half_sat_rte    _cl_convert_half_sat_rte
+#define convert_half_sat_rtz    _cl_convert_half_sat_rtz
+#define convert_half_sat_rtp    _cl_convert_half_sat_rtp
+#define convert_half_sat_rtn    _cl_convert_half_sat_rtn
+
+#define convert_half2    _cl_convert_half2
+#define convert_half2_rte    _cl_convert_half2_rte
+#define convert_half2_rtz    _cl_convert_half2_rtz
+#define convert_half2_rtp    _cl_convert_half2_rtp
+#define convert_half2_rtn    _cl_convert_half2_rtn
+#define convert_half2_sat    _cl_convert_half2._sat
+#define convert_half2_sat_rte    _cl_convert_half2_sat_rte
+#define convert_half2_sat_rtz    _cl_convert_half2_sat_rtz
+#define convert_half2_sat_rtp    _cl_convert_half2_sat_rtp
+#define convert_half2_sat_rtn    _cl_convert_half2_sat_rtn
+
+#define convert_half3    _cl_convert_half3
+#define convert_half3_rte    _cl_convert_half3_rte
+#define convert_half3_rtz    _cl_convert_half3_rtz
+#define convert_half3_rtp    _cl_convert_half3_rtp
+#define convert_half3_rtn    _cl_convert_half3_rtn
+#define convert_half3_sat    _cl_convert_half3._sat
+#define convert_half3_sat_rte    _cl_convert_half3_sat_rte
+#define convert_half3_sat_rtz    _cl_convert_half3_sat_rtz
+#define convert_half3_sat_rtp    _cl_convert_half3_sat_rtp
+#define convert_half3_sat_rtn    _cl_convert_half3_sat_rtn
+
+#define convert_half4    _cl_convert_half4
+#define convert_half4_rte    _cl_convert_half4_rte
+#define convert_half4_rtz    _cl_convert_half4_rtz
+#define convert_half4_rtp    _cl_convert_half4_rtp
+#define convert_half4_rtn    _cl_convert_half4_rtn
+#define convert_half4_sat    _cl_convert_half4._sat
+#define convert_half4_sat_rte    _cl_convert_half4_sat_rte
+#define convert_half4_sat_rtz    _cl_convert_half4_sat_rtz
+#define convert_half4_sat_rtp    _cl_convert_half4_sat_rtp
+#define convert_half4_sat_rtn    _cl_convert_half4_sat_rtn
+
+#define convert_half8    _cl_convert_half8
+#define convert_half8_rte    _cl_convert_half8_rte
+#define convert_half8_rtz    _cl_convert_half8_rtz
+#define convert_half8_rtp    _cl_convert_half8_rtp
+#define convert_half8_rtn    _cl_convert_half8_rtn
+#define convert_half8_sat    _cl_convert_half8._sat
+#define convert_half8_sat_rte    _cl_convert_half8_sat_rte
+#define convert_half8_sat_rtz    _cl_convert_half8_sat_rtz
+#define convert_half8_sat_rtp    _cl_convert_half8_sat_rtp
+#define convert_half8_sat_rtn    _cl_convert_half8_sat_rtn
+
+#define convert_half16    _cl_convert_half16
+#define convert_half16_rte    _cl_convert_half16_rte
+#define convert_half16_rtz    _cl_convert_half16_rtz
+#define convert_half16_rtp    _cl_convert_half16_rtp
+#define convert_half16_rtn    _cl_convert_half16_rtn
+#define convert_half16_sat    _cl_convert_half16._sat
+#define convert_half16_sat_rte    _cl_convert_half16_sat_rte
+#define convert_half16_sat_rtz    _cl_convert_half16_sat_rtz
+#define convert_half16_sat_rtp    _cl_convert_half16_sat_rtp
+#define convert_half16_sat_rtn    _cl_convert_half16_sat_rtn
+
 
 #define atomic_add     _cl_atomic_add
 #define atomic_sub     _cl_atomic_sub
@@ -944,17 +1013,17 @@
 #define atomic_or      _cl_atomic_or
 #define atomic_xor     _cl_atomic_xor
 
-#define atom_add     _cl_atomic_add
-#define atom_sub     _cl_atomic_sub
-#define atom_xchg    _cl_atomic_xchg
-#define atom_inc     _cl_atomic_inc
-#define atom_dec     _cl_atomic_dec
-#define atom_cmpxchg _cl_atomic_cmpxchg
-#define atom_min     _cl_atomic_min
-#define atom_max     _cl_atomic_max
-#define atom_and     _cl_atomic_and
-#define atom_or      _cl_atomic_or
-#define atom_xor     _cl_atomic_xor
+#define atom_add     _cl_atom_add
+#define atom_sub     _cl_atom_sub
+#define atom_xchg    _cl_atom_xchg
+#define atom_inc     _cl_atom_inc
+#define atom_dec     _cl_atom_dec
+#define atom_cmpxchg _cl_atom_cmpxchg
+#define atom_min     _cl_atom_min
+#define atom_max     _cl_atom_max
+#define atom_and     _cl_atom_and
+#define atom_or      _cl_atom_or
+#define atom_xor     _cl_atom_xor
 
 #define  atomic_init    _cl_atomic_init
 #define  atomic_flag_test_and_set_explicit    _cl_atomic_flag_test_and_set_explicit
@@ -985,5 +1054,26 @@
 #define  atomic_fetch_min    _cl_atomic_fetch_min
 #define  atomic_fetch_max_explicit    _cl_atomic_fetch_max_explicit
 #define  atomic_fetch_max    _cl_atomic_fetch_max
+
+#define read_mem_fence     _cl_read_mem_fence
+#define write_mem_fence    _cl_write_mem_fence
+#define mem_fence          _cl_mem_fence
+#define work_group_barrier _cl_work_group_barrier
+#define atomic_work_item_fence _cl_atomic_work_item_fence
+#define wait_group_events  _cl_wait_group_events
+
+#define get_image_array_size _cl_get_image_array_size
+#define get_image_channel_data_type _cl_get_image_channel_data_type
+#define get_image_channel_order _cl_get_image_channel_order
+#define get_image_dim _cl_get_image_dim
+#define get_image_depth _cl_get_image_depth
+#define get_image_height _cl_get_image_height
+#define get_image_width _cl_get_image_width
+#define read_imageui _cl_read_imageui
+#define read_imagei _cl_read_imagei
+#define read_imagef _cl_read_imagef
+#define write_imageui _cl_write_imageui
+#define write_imagei _cl_write_imagei
+#define write_imagef _cl_write_imagef
 
 #endif

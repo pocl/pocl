@@ -33,14 +33,14 @@ add_executable("spirv_printf" printf.cc)
 
 target_link_libraries("spirv_printf" ${POCLU_LINK_OPTIONS})
 
-add_test_pocl(NAME "spirv/printf" COMMAND "spirv_printf")
+add_test_pocl(NAME "spirv/printf" COMMAND "spirv_printf" WORKITEM_HANDLER "loopvec")
 
 set_tests_properties( "spirv/printf"
   PROPERTIES
     COST 4.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "internal;spirv"
+    LABELS "internal;spirv;level0"
     DEPENDS "pocl_version_check")
 
 endif()

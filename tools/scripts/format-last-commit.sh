@@ -20,33 +20,9 @@ SCRIPTPATH=$( realpath "$0"  )
 RELPATH=$(dirname "$SCRIPTPATH")
 
 $RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style GNU <$PATCHY
-$RELPATH/clang-format-diff.py -regex '(.*(\.hh$|\.cc$))|(lib/llvmopencl/.*\.h)' -i -p1 -style LLVM <$PATCHY
+$RELPATH/clang-format-diff.py -regex '(.*(\.hpp$|\.hh$|\.cc$|\.cpp$))|(lib/llvmopencl/.*)|(lib/CL/devices/tce/.*)' -i -p1 -style LLVM <$PATCHY
 
 if [ -z "$(git diff)" ]; then
   echo "No changes."
   exit 0
-fi
-
-git diff
-
-echo "ACCEPT CHANGES ?"
-
-read REPLY
-
-if [ "$REPLY" == "y" ]; then
-
-  git add -u
-
-  git commit --amend
-
-  if [ -d .git/rebase-merge ]; then
-
-    git rebase --continue
-
-  fi
-
-else
-
-  git add -p
-
 fi

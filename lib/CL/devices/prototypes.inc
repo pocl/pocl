@@ -188,4 +188,27 @@
   void pocl_##__DRV__##_svm_register (cl_device_id dev, void *host_ptr, size_t size);      \
   void pocl_##__DRV__##_svm_unregister (cl_device_id dev, void *host_ptr, size_t size);    \
   void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \
-  void pocl_##__DRV__##_notify_event_finished (cl_event event);
+  void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
+  cl_int pocl_##__DRV__##_get_device_info_ext(cl_device_id dev,               \
+                                         cl_device_info param_name,           \
+                                         size_t param_value_size,             \
+                                         void * param_value,                  \
+                                         size_t * param_value_size_ret);      \
+  cl_int pocl_##__DRV__##_get_mem_info_ext(cl_device_id dev, const void *ptr, \
+                                         cl_uint param_name,                  \
+                                         size_t param_value_size,             \
+                                         void * param_value,                  \
+                                         size_t * param_value_size_ret);      \
+  cl_int pocl_##__DRV__##_set_kernel_exec_info_ext (cl_device_id dev,                        \
+                                      unsigned program_device_i, \
+                                      cl_kernel kernel,   \
+                                      cl_uint param_name,  \
+                                      size_t param_value_size,  \
+                                      const void * param_value);  \
+  void pocl_##__DRV__##_usm_free (cl_device_id dev, \
+                                  void *svm_ptr); \
+  void pocl_##__DRV__##_usm_free_blocking (cl_device_id dev, \
+                                           void *svm_ptr); \
+  void * pocl_##__DRV__##_usm_alloc (cl_device_id dev, unsigned alloc_type, \
+                                     cl_mem_alloc_flags_intel flags, size_t size, \
+                                     cl_int *errcode);

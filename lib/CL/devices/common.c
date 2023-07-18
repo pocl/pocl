@@ -3,6 +3,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
                  2011-2021 Pekka Jääskeläinen
+                 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -44,7 +45,6 @@
 #include "common.h"
 #include "pocl_shared.h"
 
-#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -56,6 +56,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "common_driver.h"
 
 #ifdef HAVE_GETRLIMIT
 #include <sys/time.h>
@@ -82,6 +83,7 @@ uint64_t last_object_id = 0;
 
 unsigned long buffer_c;
 unsigned long svm_buffer_c;
+unsigned long usm_buffer_c;
 unsigned long queue_c;
 unsigned long context_c;
 unsigned long image_c;
@@ -107,8 +109,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   int error = 0;
   void *llvm_module = NULL;
 
-  char tmp_module[POCL_FILENAME_LENGTH];
-  char tmp_objfile[POCL_FILENAME_LENGTH];
+  char tmp_module[POCL_MAX_PATHNAME_LENGTH];
+  char tmp_objfile[POCL_MAX_PATHNAME_LENGTH];
 
   char *objfile = NULL;
   uint64_t objfile_size = 0;
@@ -118,19 +120,19 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   const char *kernel_name = kernel->name;
 
   /* $/parallel.bc */
-  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  char parallel_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
                                        kernel, command, specialize);
 
   /* $/kernel.so */
-  char final_binary_path[POCL_FILENAME_LENGTH];
+  char final_binary_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
                                 command, specialize);
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
+  assert (strlen (final_binary_path) < (POCL_MAX_PATHNAME_LENGTH - 3));
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
       device_i, device, kernel, command, &llvm_module, specialize);
@@ -151,7 +153,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
   else
     {
-      char kernel_parallel_path[POCL_FILENAME_LENGTH];
+      char kernel_parallel_path[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_kernel_cachedir_path (kernel_parallel_path, program,
                                        command->program_device_i,
                                        kernel, "", command, specialize);
@@ -232,19 +234,23 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   error = pocl_rename (tmp_module, final_binary_path);
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so to final has failed.\n");
+      POCL_MSG_PRINT_LLVM (
+          "Renaming temporary kernel.so to final ('%s') has failed.\n",
+          final_binary_path);
       goto FINISH;
     }
 
   /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
-      char objfile_path[POCL_FILENAME_LENGTH];
+      char objfile_path[POCL_MAX_PATHNAME_LENGTH];
       strcpy (objfile_path, final_binary_path);
       strcat (objfile_path, ".o");
       error = pocl_rename (tmp_objfile, objfile_path);
       if (error)
-        POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so.o to final .o has failed.\n");
+        POCL_MSG_PRINT_LLVM (
+            "Renaming temporary kernel.so.o to final %s has failed.\n",
+            objfile_path);
     }
   else
     {
@@ -262,7 +268,7 @@ FINISH:
     return error;
   else
     {
-      memcpy (output, final_binary_path, POCL_FILENAME_LENGTH);
+      memcpy (output, final_binary_path, POCL_MAX_PATHNAME_LENGTH);
       return 0;
     }
 }
@@ -294,16 +300,15 @@ pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
   di->_data = (mem->device_ptrs[device->global_mem_id].mem_ptr);
 }
 
-
 /**
- * executes given command. Call with node->event UNLOCKED.
+ * executes given command. Call with node->sync.event.event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
   cl_mem mem = NULL;
@@ -617,12 +622,8 @@ pocl_exec_command (_cl_command_node *node)
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
-    case CL_COMMAND_MARKER:
-      pocl_update_event_running (event);
-      POCL_UPDATE_EVENT_COMPLETE(event);
-      break;
-
     case CL_COMMAND_BARRIER:
+    case CL_COMMAND_MARKER:
       pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
@@ -683,6 +684,7 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MEMCPY:
+    case CL_COMMAND_MEMCPY_INTEL:
       pocl_update_event_running (event);
       assert (dev->ops->svm_copy);
       dev->ops->svm_copy (dev,
@@ -693,6 +695,7 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
+    case CL_COMMAND_MEMFILL_INTEL:
       pocl_update_event_running (event);
       assert (dev->ops->svm_fill);
       dev->ops->svm_fill (dev,
@@ -704,12 +707,26 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_SVM_MIGRATE_MEM:
+    case CL_COMMAND_MIGRATEMEM_INTEL:
       pocl_update_event_running (event);
       if (dev->ops->svm_migrate)
         dev->ops->svm_migrate (dev, cmd->svm_migrate.num_svm_pointers,
                                cmd->svm_migrate.svm_pointers,
                                cmd->svm_migrate.sizes);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Migrate_Mem       ");
+      break;
+
+    case CL_COMMAND_MEMADVISE_INTEL:
+      pocl_update_event_running (event);
+      if (dev->ops->svm_advise)
+        dev->ops->svm_advise (dev, cmd->mem_advise.ptr, cmd->mem_advise.size,
+                              cmd->mem_advise.advice);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Mem_Advise        ");
+      break;
+
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      pocl_update_event_running (event);
+      POCL_UPDATE_EVENT_COMPLETE (event);
       break;
 
     default:
@@ -727,6 +744,7 @@ pocl_broadcast (cl_event brc_event)
 
   while ((target = brc_event->notify_list))
     {
+      POname (clRetainEvent) (target->event);
       pocl_lock_events_inorder (brc_event, target->event);
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
@@ -758,6 +776,7 @@ pocl_broadcast (cl_event brc_event)
           }
         LL_DELETE (brc_event->notify_list, target);
         pocl_unlock_events_inorder (brc_event, target->event);
+        POname (clReleaseEvent) (target->event);
         pocl_mem_manager_free_event_node (target);
     }
 }
@@ -933,7 +952,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-  module_fn = malloc (POCL_FILENAME_LENGTH);
+  module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
   pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
 
   if (pocl_exists (module_fn))
@@ -966,7 +985,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
     }
   else
     {
-      module_fn = malloc (POCL_FILENAME_LENGTH);
+      module_fn = malloc (POCL_MAX_PATHNAME_LENGTH);
       /* First try to find a specialized WG binary, if allowed by the
          command. */
       if (!run_cmd->force_generic_wg_func)
@@ -1013,7 +1032,6 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
         /* move to the front of the line */
         DL_DELETE (pocl_dlhandle_cache, ci);
         DL_PREPEND (pocl_dlhandle_cache, ci);
-        ++ci->ref_count;
         run_cmd->wg = ci->wg;
         return ci;
       }
@@ -1027,14 +1045,18 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd, int specialize)
  * in the disk, if not, builds the kernel and puts it to respective
  * caches.
  *
- * The initial refcount may be 0, in case we're just pre-compiling kernels
+ * if handle already exists: if the retain argument is given,
+ * the refcount is increased, otherwise it's kept unchanged.
+ * if handle doesn't exist: if the retain argument is given,
+ * refcount is set to 1, otherwise it's set to 0.
+ * This can be useful in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately.
  *
  * TODO: This function is really specific to CPU (host) drivers since dlhandles
  * imply program loading to the same process as the host. Move to basic.c? */
 void
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                  unsigned initial_refcount, int specialize)
+                                  int retain, int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
@@ -1050,6 +1072,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci = fetch_dlhandle_cache_item (run_cmd, specialize);
   if (ci != NULL)
     {
+      if (retain) ++ci->ref_count;
       POCL_UNLOCK (pocl_dlhandle_lock);
       return;
     }
@@ -1060,7 +1083,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->local_wgs[0] = run_cmd->pc.local_size[0];
   ci->local_wgs[1] = run_cmd->pc.local_size[1];
   ci->local_wgs[2] = run_cmd->pc.local_size[2];
-  ci->ref_count = initial_refcount;
+  ci->ref_count = retain ? 1 : 0;
   ci->specialize = specialize;
   ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
                    && run_cmd->pc.global_offset[1] == 0
@@ -1220,6 +1243,29 @@ pocl_set_buffer_image_limits(cl_device_id device)
       device->max_constant_buffer_size = s;
     }
 
+  /* OpenCL 3.0 mandates at least 64KB for CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE
+   * and 32KB for CL_DEVICE_LOCAL_MEM_SIZE. pocl_topology tries to use size of
+   * largest non-shared cache (usually L2), but some CPUs don't have L3
+   * and the only non-shared cache is L1, which can be too small. */
+  if (device->version_as_int > 299)
+    {
+      if (device->local_mem_size < 32 * 1024)
+        device->local_mem_size = 32 * 1024;
+      if (device->max_constant_buffer_size < 64 * 1024)
+        device->max_constant_buffer_size = 64 * 1024;
+    }
+
+  /* set program scope variable device limits.
+   * only the max_size is an actual limit.
+   * for CPU devices there is no hardware limit.
+   * TODO what should we set them to ?
+   * setting this to >= 2^16 causes LLVM to crash in SDNode */
+  if (device->program_scope_variables_pass)
+    {
+      device->global_var_max_size = 64 * 1000;
+      device->global_var_pref_size = max(64 * 1000, device->max_constant_buffer_size);
+    }
+
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
    * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
@@ -1363,6 +1409,18 @@ static const cl_image_format supported_image_formats[] = {
   { CL_R, CL_UNSIGNED_INT32 },
   { CL_R, CL_HALF_FLOAT },
   { CL_R, CL_FLOAT },
+  { CL_RG, CL_SNORM_INT8 },
+  { CL_RG, CL_SNORM_INT16 },
+  { CL_RG, CL_UNORM_INT8 },
+  { CL_RG, CL_UNORM_INT16 },
+  { CL_RG, CL_SIGNED_INT8 },
+  { CL_RG, CL_SIGNED_INT16 },
+  { CL_RG, CL_SIGNED_INT32 },
+  { CL_RG, CL_UNSIGNED_INT8 },
+  { CL_RG, CL_UNSIGNED_INT16 },
+  { CL_RG, CL_UNSIGNED_INT32 },
+  { CL_RG, CL_HALF_FLOAT },
+  { CL_RG, CL_FLOAT },
   { CL_RGBA, CL_SNORM_INT8 },
   { CL_RGBA, CL_SNORM_INT16 },
   { CL_RGBA, CL_UNORM_INT8 },
@@ -1430,21 +1488,30 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->native_vector_width_long = POCL_DEVICES_NATIVE_VECTOR_WIDTH_LONG;
   dev->native_vector_width_float = POCL_DEVICES_NATIVE_VECTOR_WIDTH_FLOAT;
 
-#ifdef _CL_DISABLE_DOUBLE
-  dev->native_vector_width_double = 0;
-  dev->preferred_vector_width_double = 0;
-#else
-  dev->native_vector_width_double = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
-  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
-#endif
-#ifdef _CL_DISABLE_HALF
-  dev->preferred_vector_width_half = 0;
-  dev->native_vector_width_half = 0;
-#else
-  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
-  dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
-#endif
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+    {
+      dev->native_vector_width_double = 0;
+      dev->preferred_vector_width_double = 0;
+    }
+  else
+    {
+      dev->native_vector_width_double
+          = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
+      dev->preferred_vector_width_double
+          = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+    }
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+    {
+      dev->preferred_vector_width_half = 0;
+      dev->native_vector_width_half = 0;
+    }
+  else
+    {
+      dev->preferred_vector_width_half
+          = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+      dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
+    }
 #endif
 
   dev->grid_width_specialization_limit = USHRT_MAX;
@@ -1476,7 +1543,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
-  dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
@@ -1488,19 +1554,30 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 #endif
 
-#ifdef _CL_DISABLE_DOUBLE
-  dev->double_fp_config = 0;
-#else
-  /* TODO: all of these are the minimum mandated, but not all CPUs may actually
-   * support all of them. */
-  dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
-                          | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
-                          | CL_FP_INF_NAN | CL_FP_DENORM;
-  /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
-   * https://github.com/Oblomov/clinfo/issues/28 */
-  dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
-#endif
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+    {
+      dev->half_fp_config = 0;
+    }
+  else
+    {
+      dev->half_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+    }
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+    {
+      dev->double_fp_config = 0;
+    }
+  else
+    {
+      /* TODO: all of these are the minimum mandated, but not all CPUs may
+       * actually support all of them. */
+      dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
+                              | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
+                              | CL_FP_INF_NAN | CL_FP_DENORM;
+      /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
+       * https://github.com/Oblomov/clinfo/issues/28 */
+      dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
+    }
   dev->global_mem_cache_type = CL_NONE;
   dev->global_mem_cacheline_size = 0;
   dev->global_mem_cache_size = 0;
@@ -1579,7 +1656,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->global_var_pref_size = 0;
   dev->non_uniform_work_group_support = CL_FALSE;
   dev->max_num_sub_groups = 0;
-  dev->sub_group_independent_forward_progress = CL_FALSE;
 
 #ifdef ENABLE_LLVM
 
@@ -1608,6 +1684,16 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
                                     | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                     | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+
+  if (dev->llvm_cpu != NULL)
+    {
+      dev->builtin_kernel_list
+          = strdup ("pocl.add.i8;"
+                    "org.khronos.openvx.scale_image.nn.u8;"
+                    "org.khronos.openvx.scale_image.bl.u8;"
+                    "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32");
+      dev->num_builtin_kernels = 4;
+    }
 }
 
 /*
@@ -1696,24 +1782,36 @@ pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30)
   dev->num_opencl_c_with_version = supports_30 ? 4 : 3;
 }
 
+/* this is a list of recognized extensions, not a list of reported extensions;
+   the reported are stored in dev->extensions; this only for versioning */
 static const cl_name_version OPENCL_EXTENSIONS[]
-    = { { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
+    = { { CL_MAKE_VERSION (1, 0, 0), "cl_intel_required_subgroup_size" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_intel_subgroups" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_intel_unified_shared_memory" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_byte_addressable_store" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_global_int32_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_local_int32_extended_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_base_atomics" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_int64_extended_atomics" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroups" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_extended_types" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_vote" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_ballot" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_arithmetic" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle_relative" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_clustered_reduce" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_3d_image_writes" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp16" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_fp64" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_nv_device_attribute_query" },
-
         { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
-
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
-        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" } };
+        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
+        { CL_MAKE_VERSION (0, 9, 0), "cl_khr_command_buffer" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);
@@ -1815,6 +1913,10 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp16" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_fp64" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_int64" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_program_scope_global_variables" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_generic_address_space" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_subgroups" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_work_group_collective_functions" },
 };
 
 const size_t OPENCL_FEATURES_NUM
@@ -1834,5 +1936,46 @@ pocl_setup_features_with_version (cl_device_id dev)
 void
 pocl_setup_builtin_kernels_with_version (cl_device_id dev)
 {
-  /* implementation should use BIDescriptors */
+  if (dev->num_builtin_kernels == 0)
+    return;
+
+  assert (dev->builtin_kernel_list != NULL);
+
+  dev->builtin_kernels_with_version
+      = malloc (dev->num_builtin_kernels * sizeof (cl_name_version));
+  assert (dev->builtin_kernels_with_version);
+
+  char *temp = strdup (dev->builtin_kernel_list);
+  char *token;
+  char *rest = temp;
+
+  unsigned i = 0;
+  while ((token = strtok_r (rest, ";", &rest)))
+    {
+      // The builtin kernel name stored here can only be the
+      // maximum of CL_NAME_VERSION_MAX_NAME_SIZE - 1.
+      if (strlen (token) >= CL_NAME_VERSION_MAX_NAME_SIZE)
+        {
+          POCL_MSG_WARN ("Built-in kernel name cannot fit in to the "
+                         "cl_name_version array. Length of built-in kernel "
+                         "name is %u, and the concatenated length is %u\n",
+                         strlen (token), CL_NAME_VERSION_MAX_NAME_SIZE - 1);
+          token[CL_NAME_VERSION_MAX_NAME_SIZE - 1] = '\0';
+        }
+      strncpy (dev->builtin_kernels_with_version[i].name, token,
+               CL_NAME_VERSION_MAX_NAME_SIZE);
+
+      /* proper versioning could use pocl_BIDescriptors.
+       * For now, hardcode the version to 1.2 */
+      dev->builtin_kernels_with_version[i].version = CL_MAKE_VERSION (1, 2, 0);
+      i++;
+    }
+  free (temp);
+
+  if (i != dev->num_builtin_kernels)
+    {
+      POCL_ABORT ("Builtin kernels with version list construction failed. "
+                  "There are %u built-in kernels, but only %u were found\n",
+                  dev->num_builtin_kernels, i);
+    }
 }

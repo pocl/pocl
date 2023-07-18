@@ -1,0 +1,60 @@
+Portable Computing Language (PoCL) v4.0 released
+------------------------------------------------
+
+PoCL is a portable open source (MIT-licensed) implementation of the
+OpenCL standard. It aims to support the minimal v3.0 feature set (official
+conformance stamp not yet applied for).
+
+In addition to being an easily portable multi-device (truly
+heterogeneous) open-source OpenCL implementation, a major goal of the
+project is improving interoperability for diversity of OpenCL-capable
+devices by integrating them to a single centrally orchestrated platform.
+Another key goal is to enhance performance portability of OpenCL
+programs across device types utilizing runtime and compiler techniques.
+
+Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
+Vulkan-compatible GPUs (experimental) and ASIPs (experimental,
+see: http://openasip.org). It is also known to have multiple (private)
+adaptations in active production use.
+
+Release Highlights
+------------------
+
+* Support for Clang/LLVM 16.0
+* Support for Clang/LLVM 6-9 (inclusive) dropped
+* More improvements to SPIR-V support for CPU and CUDA drivers
+* CPU drivers: gained support for program-scope variables, generic AS,
+  cl_khr_fp16 (LLVM 16+), cl_khr_subgroups, cl_intel_unified_shared_memory.
+* New driver for devices using the Level Zero API.
+
+Misc. Notes
+-----------
+
+* Please note that there's an official PoCL "maintenance policy" in
+place. This text describes the policy and how you can get your favourite
+project that uses OpenCL to remain regression free in the future PoCL
+releases: http://portablecl.org/docs/html/maintainer-policy.html
+
+* We are looking for ARM CPU and RISC-V CPU maintainers (and any other
+target of your interest). If you are interested in ensuring PoCL stays
+stable for these processor architectures in the future, please contact us.
+
+* The dedicated TTASim driver will be deprecated once the AlmaIF driver
+reaches feature parity with it.
+
+Acknowledgements
+----------------
+
+Customized Parallel Computing (CPC) research group of Tampere University,
+Finland leads the development of PoCL on the side and for the needs of
+their research projects. This project has received funding from European
+Union's Horizon 2020 research and innovation programme under Grant
+Agreement No 871738 (CPSoSaware), Academy of Finland (decision #331344) and
+Business Finland's AISA project.
+
+The financial support is very much appreciated -- it keeps this open
+source project going!
+
+Links
+-----
+Release web page:  http://portablecl.org/pocl-4.0.html

@@ -598,7 +598,7 @@ pocl_proxy_get_device_info (cl_device_id device, proxy_device_data_t *d)
       assert (err == CL_SUCCESS);
       assert (retval == num_image_formats);
 
-      int type_index = opencl_image_type_to_index (type);
+      int type_index = pocl_opencl_image_type_to_index (type);
       device->image_formats[type_index] = formats;
       device->num_image_formats[type_index] = num_image_formats;
     }
@@ -767,7 +767,7 @@ static int
 get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
                      cl_program prog, cl_device_id device, cl_kernel kernel)
 {
-  char string_value[POCL_FILENAME_LENGTH];
+  char string_value[POCL_MAX_PATHNAME_LENGTH];
   int err;
   size_t size;
 
@@ -779,7 +779,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
   err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, 0, NULL, &size);
   assert (err == CL_SUCCESS);
   assert (size > 0);
-  assert (size < POCL_FILENAME_LENGTH);
+  assert (size < POCL_MAX_PATHNAME_LENGTH);
 
   err = clGetKernelInfo (kernel, CL_KERNEL_FUNCTION_NAME, size, string_value,
                          NULL);
@@ -789,7 +789,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
 
   err = clGetKernelInfo (kernel, CL_KERNEL_ATTRIBUTES, 0, NULL, &size);
   assert (err == CL_SUCCESS);
-  assert (size < POCL_FILENAME_LENGTH);
+  assert (size < POCL_MAX_PATHNAME_LENGTH);
 
   if (size > 0)
     {
@@ -870,7 +870,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, 0, NULL,
                                 &size);
       assert (err == CL_SUCCESS);
-      assert (size < POCL_FILENAME_LENGTH);
+      assert (size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_TYPE_NAME, size,
                                 string_value, NULL);
       assert (err == CL_SUCCESS);
@@ -881,7 +881,7 @@ get_kernel_metadata (pocl_kernel_metadata_t *meta, cl_uint num_devices,
 
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, 0, NULL, &size);
       assert (err == CL_SUCCESS);
-      assert (size < POCL_FILENAME_LENGTH);
+      assert (size < POCL_MAX_PATHNAME_LENGTH);
       err = clGetKernelArgInfo (kernel, i, CL_KERNEL_ARG_NAME, size,
                                 string_value, NULL);
       assert (err == CL_SUCCESS);
@@ -1108,8 +1108,8 @@ pocl_proxy_build_source (cl_program program, cl_uint device_i,
 
   if (d->backend->supports_binaries)
     {
-      char program_bc_path[POCL_FILENAME_LENGTH];
-      char temp_path[POCL_FILENAME_LENGTH];
+      char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+      char temp_path[POCL_MAX_PATHNAME_LENGTH];
       pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
                                           program_bc_path);
 
@@ -1155,7 +1155,7 @@ pocl_proxy_build_binary (cl_program program, cl_uint device_i,
 
   // TODO should binary be already loaded ?
   assert (program->pocl_binaries[device_i]);
-  char program_bc_path[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_program_bc_path (program_bc_path, program, device_i);
 
   assert (pocl_exists (program_bc_path));
@@ -1475,7 +1475,7 @@ pocl_proxy_free_sampler (cl_device_id device, cl_sampler samp,
 static void
 proxy_push_command (_cl_command_node *node)
 {
-  cl_command_queue cq = node->event->queue;
+  cl_command_queue cq = node->sync.event.event->queue;
   proxy_queue_data_t *qd = (proxy_queue_data_t *)cq->data;
 
   POCL_FAST_LOCK (qd->wq_lock);
@@ -1487,7 +1487,7 @@ proxy_push_command (_cl_command_node *node)
 void
 pocl_proxy_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  cl_event e = node->event;
+  cl_event e = node->sync.event.event;
   assert (e->data == NULL);
 
   pocl_proxy_event_data_t *e_d = NULL;
@@ -1556,7 +1556,7 @@ pocl_proxy_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       assert (event->status == CL_QUEUED);
       pocl_update_event_submitted (event);
@@ -2176,7 +2176,7 @@ proxy_exec_command (_cl_command_node *node, cl_device_id dev,
                     proxy_device_data_t *d, proxy_queue_data_t *qd)
 {
   _cl_command_t *cmd = &node->command;
-  cl_event event = node->event;
+  cl_event event = node->sync.event.event;
   const char *cstr = NULL;
   cl_command_queue cq_id = qd->proxied_id;
   unsigned context_device_i = qd->context_device_i;
@@ -2448,8 +2448,8 @@ pocl_proxy_queue_pthread (void *ptr)
           DL_DELETE (qd->work_queue, cmd);
           POCL_FAST_UNLOCK (qd->wq_lock);
 
-          assert (pocl_command_is_ready (cmd->event));
-          assert (cmd->event->status == CL_SUBMITTED);
+          assert (pocl_command_is_ready (cmd->sync.event.event));
+          assert (cmd->sync.event.event->status == CL_SUBMITTED);
 
           proxy_exec_command (cmd, device, d, qd);
           /* if the proxy_exec_command called proxy_free_cmd_queue(),

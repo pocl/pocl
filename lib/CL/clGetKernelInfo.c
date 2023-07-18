@@ -46,8 +46,16 @@ POname(clGetKernelInfo)(cl_kernel      kernel ,
     POCL_RETURN_GETINFO(cl_context, kernel->context);
   case CL_KERNEL_PROGRAM:
     POCL_RETURN_GETINFO(cl_program, kernel->program);
+  /* OpenCL 3.0 clGetKernelInfo states:
+   *   For kernels not created from OpenCL C source and the
+   *   clCreateProgramWithSource API call the string returned
+   *   from this query will be empty.
+   * However, llvm-spirv translator is capable of both writing and reading
+   * the attributes to/from the SPV binary, so we need to check here
+   * and only return for source programs not IL programs. */
   case CL_KERNEL_ATTRIBUTES:
-    if (kernel->meta->attributes)
+    if (kernel->program->source != NULL &&
+        kernel->meta->attributes)
       POCL_RETURN_GETINFO_STR (kernel->meta->attributes);
     else
       POCL_RETURN_GETINFO_STR ("");

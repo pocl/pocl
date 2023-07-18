@@ -45,6 +45,7 @@ map_channels (uint4 color, int order)
     case CLK_BGRA:
       return color.zyxw;
     case CLK_RGBA:
+    case CLK_RG:
     default:
       return color;
     }
@@ -97,6 +98,59 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
       float4 colorf = color * f65535;
       ushort4 final_color = convert_ushort4_sat_rte (colorf);
       ((ushort4 *)data)[base_index] = final_color;
+      return;
+    }
+
+  return;
+}
+
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
+static void
+write_float2_pixel (float2 color, void *data, size_t base_index, int type)
+{
+  if (type == CLK_FLOAT)
+    {
+      ((float2 *)data)[base_index] = color;
+      return;
+    }
+  if (type == CLK_HALF_FLOAT)
+    {
+      vstorea_half2(color, base_index, data);
+    }
+  const float2 f127 = ((float2) (SCHAR_MAX));
+  const float2 f32767 = ((float2) (SHRT_MAX));
+  const float2 f255 = ((float2) (UCHAR_MAX));
+  const float2 f65535 = ((float2) (USHRT_MAX));
+  if (type == CLK_SNORM_INT8)
+    {
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      float2 colorf = color * f127;
+      char2 final_color = convert_char2_sat_rte (colorf);
+      ((char2 *)data)[base_index] = final_color;
+      return;
+    }
+  if (type == CLK_SNORM_INT16)
+    {
+      float2 colorf = color * f32767;
+      short2 final_color = convert_short2_sat_rte (colorf);
+      ((short2 *)data)[base_index] = final_color;
+      return;
+    }
+  if (type == CLK_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      float2 colorf = color * f255;
+      uchar2 final_color = convert_uchar2_sat_rte (colorf);
+      ((uchar2 *)data)[base_index] = final_color;
+      return;
+    }
+  if (type == CLK_UNORM_INT16)
+    {
+      float2 colorf = color * f65535;
+      ushort2 final_color = convert_ushort2_sat_rte (colorf);
+      ((ushort2 *)data)[base_index] = final_color;
       return;
     }
 
@@ -181,6 +235,17 @@ pocl_write_pixel_fast_ui (uint4 color, size_t base_index, int order,
       return;
     }
 
+  if (order == CLK_RG)
+    {
+      if (elem_size == 1)
+        ((uchar2 *)data)[base_index] = convert_uchar2_sat (color.xy);
+      else if (elem_size == 2)
+        ((ushort2 *)data)[base_index] = convert_ushort2_sat (color.xy);
+      else if (elem_size == 4)
+        ((uint2 *)data)[base_index] = color.xy;
+      return;
+    }
+
   if (elem_size == 1)
     {
       ((uchar4 *)data)[base_index] = convert_uchar4_sat (color);
@@ -211,6 +276,10 @@ pocl_write_pixel_fast_f (float4 color, size_t base_index, int channel_type,
   else if (order == CLK_R)
     {
       write_float_pixel (color.x, data, base_index, channel_type);
+    }
+  else if (order == CLK_RG)
+    {
+      write_float2_pixel (color.xy, data, base_index, channel_type);
     }
   else
     {
@@ -246,6 +315,17 @@ pocl_write_pixel_fast_i (int4 color, size_t base_index, int order,
         ((short *)data)[base_index] = convert_short_sat (color.x);
       else if (elem_size == 4)
         ((int *)data)[base_index] = color.x;
+      return;
+    }
+
+  if (order == CLK_RG)
+    {
+      if (elem_size == 1)
+        ((char2 *)data)[base_index] = convert_char2_sat (color.xy);
+      else if (elem_size == 2)
+        ((short2 *)data)[base_index] = convert_short2_sat (color.xy);
+      else if (elem_size == 4)
+        ((int2 *)data)[base_index] = color.xy;
       return;
     }
 
@@ -366,6 +446,7 @@ CLK_UNSIGNED_INT8, CLK_UNSIGNED_INT16, or CLK_UNSIGNED_INT32.
       {                                                                       \
         array_offset_pixels = clamp (coord4.y, 0, asize);                     \
         coord4.y = 0;                                                         \
+        coord4.z = 0;                                                         \
       }                                                                       \
     array_offset_pixels *= slice_pitch;                                       \
     pocl_write_pixel (as_uint4 (color), i_ptr, coord4, array_offset_pixels,   \

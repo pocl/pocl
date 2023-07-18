@@ -22,6 +22,7 @@
 */
 
 #include "pocl_util.h"
+#include "pocl_version.h"
 
 #define S(A) #A
 #define STRINGIFY(X) S(X)
@@ -73,10 +74,6 @@ static const char *pocl_version
 
 #ifdef ENABLE_SLEEF
       ", SLEEF"
-#endif
-
-#ifndef _CL_DISABLE_HALF
-      ", FP16"
 #endif
 
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS

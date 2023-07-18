@@ -64,7 +64,7 @@ main(void)
     // test the poclu's half conversion functions
     printf("through conversion: %.0f\n", 
            poclu_cl_half_to_float(poclu_float_to_cl_half(42.0f)));
-
+    fflush(stdout);
     try {
         std::vector<cl::Platform> platformList;
 
@@ -74,7 +74,7 @@ main(void)
         // Pick first platform
         cl_context_properties cprops[] = {
             CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_GPU, cprops);
+        cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
 
         // Query the set of devices attched to the context
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
@@ -82,8 +82,6 @@ main(void)
         assert (devices.size() == 1);
 
         cl::Device device = devices.at(0);
-
-        assert (strncmp(device.getInfo<CL_DEVICE_NAME>().c_str(), "ttasim", 6)==0 );
 
         a = poclu_bswap_cl_float (device(), a);
 

@@ -63,6 +63,92 @@ CL_API_SUFFIX__VERSION_1_2
   if (strcmp (func_name, "clGetPlatformInfo") == 0)
     return (void *)&POname(clGetPlatformInfo);
 
+  if (strcmp (func_name, "clCreateProgramWithILKHR") == 0)
+    return (void *)&POname(clCreateProgramWithIL);
+
+  /* cl_khr_command_buffer */
+  if (strcmp (func_name, "clCreateCommandBufferKHR") == 0)
+    return (void *)&POname (clCreateCommandBufferKHR);
+
+  if (strcmp (func_name, "clRetainCommandBufferKHR") == 0)
+    return (void *)&POname (clRetainCommandBufferKHR);
+
+  if (strcmp (func_name, "clReleaseCommandBufferKHR") == 0)
+    return (void *)&POname (clReleaseCommandBufferKHR);
+
+  if (strcmp (func_name, "clFinalizeCommandBufferKHR") == 0)
+    return (void *)&POname (clFinalizeCommandBufferKHR);
+
+  if (strcmp (func_name, "clEnqueueCommandBufferKHR") == 0)
+    return (void *)&POname (clEnqueueCommandBufferKHR);
+
+  if (strcmp (func_name, "clCommandBarrierWithWaitListKHR") == 0)
+    return (void *)&POname (clCommandBarrierWithWaitListKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferRectKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferRectKHR);
+
+  if (strcmp (func_name, "clCommandCopyBufferToImageKHR") == 0)
+    return (void *)&POname (clCommandCopyBufferToImageKHR);
+
+  if (strcmp (func_name, "clCommandCopyImageKHR") == 0)
+    return (void *)&POname (clCommandCopyImageKHR);
+
+  if (strcmp (func_name, "clCommandCopyImageToBufferKHR") == 0)
+    return (void *)&POname (clCommandCopyImageToBufferKHR);
+
+  if (strcmp (func_name, "clCommandFillBufferKHR") == 0)
+    return (void *)&POname (clCommandFillBufferKHR);
+
+  if (strcmp (func_name, "clCommandFillImageKHR") == 0)
+    return (void *)&POname (clCommandFillImageKHR);
+
+  if (strcmp (func_name, "clCommandNDRangeKernelKHR") == 0)
+    return (void *)&POname (clCommandNDRangeKernelKHR);
+
+  if (strcmp (func_name, "clGetCommandBufferInfoKHR") == 0)
+    return (void *)&POname (clGetCommandBufferInfoKHR);
+  /* end of cl_khr_command_buffer */
+
+  /* cl_intel_unified_shared_memory */
+  if (strcmp (func_name, "clHostMemAllocINTEL") == 0)
+    return (void *)&POname (clHostMemAllocINTEL);
+
+  if (strcmp (func_name, "clDeviceMemAllocINTEL") == 0)
+    return (void *)&POname (clDeviceMemAllocINTEL);
+
+  if (strcmp (func_name, "clSharedMemAllocINTEL") == 0)
+    return (void *)&POname (clSharedMemAllocINTEL);
+
+  if (strcmp (func_name, "clMemFreeINTEL") == 0)
+    return (void *)&POname (clMemFreeINTEL);
+
+  if (strcmp (func_name, "clMemBlockingFreeINTEL") == 0)
+    return (void *)&POname (clMemBlockingFreeINTEL);
+
+  if (strcmp (func_name, "clGetMemAllocInfoINTEL") == 0)
+    return (void *)&POname (clGetMemAllocInfoINTEL);
+
+  if (strcmp (func_name, "clSetKernelArgMemPointerINTEL") == 0)
+    return (void *)&POname (clSetKernelArgMemPointerINTEL);
+
+  if (strcmp (func_name, "clEnqueueMemFillINTEL") == 0)
+    return (void *)&POname (clEnqueueMemFillINTEL);
+
+  if (strcmp (func_name, "clEnqueueMemcpyINTEL") == 0)
+    return (void *)&POname (clEnqueueMemcpyINTEL);
+
+  if (strcmp (func_name, "clEnqueueMigrateMemINTEL") == 0)
+    return (void *)&POname (clEnqueueMigrateMemINTEL);
+
+  if (strcmp (func_name, "clEnqueueMemAdviseINTEL") == 0)
+    return (void *)&POname (clEnqueueMemAdviseINTEL);
+  /* end of cl_intel_unified_shared_memory */
+
+  POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;
 }
 POsymAlways (clGetExtensionFunctionAddressForPlatform)

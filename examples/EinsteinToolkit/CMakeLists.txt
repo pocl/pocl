@@ -44,7 +44,7 @@ if(NOT MIPS)
   set_tests_properties( "EinsteinToolkit"
     PROPERTIES
     COST 15.0
-    LABELS "EinsteinToolkit"
+    LABELS "internal;EinsteinToolkit"
     DEPENDS "pocl_version_check")
 
   add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)

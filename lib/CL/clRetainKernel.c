@@ -30,7 +30,8 @@ POname(clRetainKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (kernel, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Kernel %p  : %d\n", kernel, refc);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Kernel %s (%p), Refcount: %d\n",
+                            kernel->name, kernel, refc);
   return CL_SUCCESS;
 }
 POsym(clRetainKernel)

@@ -31,31 +31,34 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/fp16/repl" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
+add_test_pocl(NAME "tce/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
+add_test_pocl(NAME "tcele/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
 
-#AT_SETUP([Half-precision floats on ttasim (repl)])
-set_tests_properties( "tce/fp16/repl"
+add_test_pocl(NAME "almaif/fp16" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt" WORKITEM_HANDLER "loopvec")
+
+#AT_SETUP([Half-precision floats on ttasim])
+set_tests_properties( "tce/fp16"
   PROPERTIES
     COST 40.0
     PROCESSORS 1
     LABELS "tce;tta;ttasim;half"
-    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf;POCL_WORK_GROUP_METHOD=repl"
+    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf"
     DEPENDS "pocl_version_check")
 
-# add_test_pocl(NAME "tce/fp16/loopvec" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
+set_tests_properties( "tcele/fp16"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    LABELS "tce;tta;ttasim;half"
+    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16_LE.adf"
+    DEPENDS "pocl_version_check")
 
 
-#set_tests_properties( "tce/fp16/loopvec"
-#  PROPERTIES
-#    COST 40.0
-#    PROCESSORS 1
-#    LABELS "tce;tta;ttasim;half"
-#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf;POCL_WORK_GROUP_METHOD=loopvec"
-#    DEPENDS "pocl_version_check")
+set_tests_properties( "almaif/fp16"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    LABELS "almaif"
+    ENVIRONMENT "POCL_DEVICES=almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16_LE"
+    DEPENDS "pocl_version_check")
 
-#if(LLVM_OLDER_THAN_6_0)
-# TODO: Produces wrong results also with LLVM 7 now. It seems to be very
-# fragile to IR changes.
-#  set_property(TEST "tce/fp16/loopvec"
-#  APPEND PROPERTY WILL_FAIL 1)
-#endif()

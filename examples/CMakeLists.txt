@@ -34,23 +34,26 @@
 
 set_opencl_header_includes()
 
+# DOWNLOAD_EXTRACT_TIMESTAMP option to ExternalProject
+if(POLICY CMP0135)
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 # clang flags for SPIR compilation
 # -Xclang -finclude-default-header is required for LLVM < 13 to include opencl-c-base.h and opencl-c.h
-set(SPIR_COMMON_FLAGS "-x####cl####-D_CL_DISABLE_HALF####-Xclang####-cl-std=CL1.2####-D__OPENCL_C_VERSION__=120####-D__OPENCL_VERSION__=120####-Dcl_khr_byte_addressable_store####-Dcl_khr_global_int32_base_atomics####-Dcl_khr_global_int32_extended_atomics####-Dcl_khr_local_int32_base_atomics####-Dcl_khr_local_int32_extended_atomics####-Dcl_khr_int64####-Dcl_khr_spir####-Xclang####-cl-ext=-all,+cl_khr_byte_addressable_store,+cl_khr_global_int32_base_atomics,+cl_khr_global_int32_extended_atomics,+cl_khr_local_int32_base_atomics,+cl_khr_local_int32_extended_atomics,+cl_khr_spir####-D__ENDIAN_LITTLE__=1####-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=0####-emit-llvm####-Xclang####-finclude-default-header")
+set(SPIR_COMMON_FLAGS "-x####cl####-Xclang####-cl-std=CL1.2####-D__OPENCL_C_VERSION__=120####-D__OPENCL_VERSION__=120####-Dcl_khr_byte_addressable_store####-Dcl_khr_global_int32_base_atomics####-Dcl_khr_global_int32_extended_atomics####-Dcl_khr_local_int32_base_atomics####-Dcl_khr_local_int32_extended_atomics####-Dcl_khr_int64####-Dcl_khr_spir####-Xclang####-cl-ext=-all,+cl_khr_byte_addressable_store,+cl_khr_global_int32_base_atomics,+cl_khr_global_int32_extended_atomics,+cl_khr_local_int32_base_atomics,+cl_khr_local_int32_extended_atomics,+cl_khr_spir####-D__ENDIAN_LITTLE__=1####-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=0####-emit-llvm####-Xclang####-finclude-default-header")
 add_subdirectory("example0")
 add_subdirectory("example1")
 add_subdirectory("example2")
 add_subdirectory("example2a")
 add_subdirectory("matrix1")
 
-if(ENABLE_ACCEL_DEVICE)
+if(ENABLE_ALMAIF_DEVICE)
   add_subdirectory("accel")
 endif()
 
 add_subdirectory("poclcc")
-if(ENABLE_FP64)
-  add_subdirectory("scalarwave")
-endif()
+add_subdirectory("scalarwave")
 add_subdirectory("trig")
 add_subdirectory("vecadd")
 add_subdirectory("matadd")
@@ -60,8 +63,10 @@ add_subdirectory("EinsteinToolkit")
 # TODO:   opencl-book-samples
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
-    ASL arrayfire clBLAS CLBlast clFFT
+    ASL arrayfire clBLAS CLBlast clFFT chipStar
     conformance CloverLeaf Halide IntelSVM
+    intel-compute-samples oneapi-samples
+    simple-sycl-samples dpcpp-book-samples
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
     Rodinia shoc VexCL ViennaCL Glow)
@@ -72,7 +77,7 @@ endif()
 
 if("${ENABLE_TESTSUITES}" MATCHES "tier1")
   list(REMOVE_ITEM ENABLE_TESTSUITES "tier1")
-  list(APPEND ENABLE_TESTSUITES "piglit" "PyOpenCL" "conformance" "CLBlast" "shoc")
+  list(APPEND ENABLE_TESTSUITES "piglit" "PyOpenCL" "conformance" "shoc")
 endif()
 
 include(ExternalProject)
@@ -108,7 +113,11 @@ if(ENABLE_TESTSUITES)
   message(STATUS "    source: ${TESTSUITE_SOURCE_BASEDIR}")
 
   foreach(TESTSUITE IN LISTS ENABLE_TESTSUITES)
-    list(FIND ALL_TESTSUITES ${TESTSUITE} INDEX)
+    if(NOT TESTSUITE)
+      continue()
+    endif()
+    set(INDEX -1)
+    list(FIND ALL_TESTSUITES "${TESTSUITE}" INDEX)
     if(${INDEX} GREATER -1)
       if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TESTSUITE}")
         add_subdirectory("${TESTSUITE}")
@@ -116,7 +125,7 @@ if(ENABLE_TESTSUITES)
         message(FATAL_ERROR "Cannot find source dir for testsuite: ${TESTSUITE}")
       endif()
     else()
-      message(WARNING "Unknown testsuite ${TESTSUITE} requested")
+      message(WARNING "Unknown testsuite '${TESTSUITE}' requested")
     endif()
   endforeach()
 

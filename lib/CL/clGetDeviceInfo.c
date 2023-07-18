@@ -1,17 +1,18 @@
 /* OpenCL runtime library: clGetDeviceInfo()
 
    Copyright (c) 2011-2012 Kalle Raiskila and Pekka Jääskeläinen
-   
+                 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -290,11 +291,11 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE:
     POCL_RETURN_GETINFO(cl_uint, device->dev_queue_max_size);
   case CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT:
-    POCL_RETURN_GETINFO(cl_uint, 0);
+    POCL_RETURN_GETINFO(cl_uint, 64);
   case CL_DEVICE_PREFERRED_LOCAL_ATOMIC_ALIGNMENT:
-    POCL_RETURN_GETINFO(cl_uint, 0);
+    POCL_RETURN_GETINFO(cl_uint, 64);
   case CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT:
-    POCL_RETURN_GETINFO(cl_uint, 0);
+    POCL_RETURN_GETINFO(cl_uint, 64);
 
   case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);
@@ -333,7 +334,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT:
     POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
   case CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT:
-    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
+    POCL_RETURN_GETINFO (cl_bool, device->generic_as_support);
   case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
     POCL_RETURN_GETINFO (cl_uint, 0);
   case CL_DEVICE_PIPE_SUPPORT:
@@ -359,8 +360,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
                                device->ils_with_version);
 
   case CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION:
-    POCL_RETURN_GETINFO_ARRAY (cl_name_version,
-                               device->num_builtin_kernels_with_version,
+    POCL_RETURN_GETINFO_ARRAY (cl_name_version, device->num_builtin_kernels,
                                device->builtin_kernels_with_version);
 
   case CL_DEVICE_OPENCL_C_ALL_VERSIONS:
@@ -372,6 +372,17 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO_ARRAY (cl_name_version,
                                device->num_opencl_features_with_version,
                                device->opencl_features_with_version);
+
+  /** cl_khr_command_buffer queries **/
+  case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
+    POCL_RETURN_GETINFO (
+        cl_device_command_buffer_capabilities_khr,
+        CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+            | CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
+            | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR);
+
+  case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
+    POCL_RETURN_GETINFO (cl_command_queue_properties, 0);
   }
 
   if(device->ops->get_device_info_ext != NULL) {

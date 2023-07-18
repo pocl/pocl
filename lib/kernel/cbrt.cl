@@ -24,4 +24,8 @@
 
 #include "templates.h"
 
+// there is no Clang builtin cbrt for fp16 type
+#undef __IF_FP16
+#define __IF_FP16(X)
+
 DEFINE_BUILTIN_V_V(cbrt)

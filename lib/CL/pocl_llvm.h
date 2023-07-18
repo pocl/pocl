@@ -31,6 +31,7 @@
 extern "C" {
 #endif
 
+
   void InitializeLLVM ();
   void UnInitializeLLVM ();
 
@@ -40,13 +41,15 @@ extern "C" {
   /* Returns if the cpu supports FMA instruction (uses LLVM). */
   int cpu_has_fma ();
 
-  int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
+  POCL_EXPORT
+  int pocl_bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
 
   /* Sets up the native/preferred vector widths at runtime (using LLVM). */
   void cpu_setup_vector_widths (cl_device_id dev);
 
   /* Compiles an .cl file into LLVM IR.
    */
+  POCL_EXPORT
   int pocl_llvm_build_program (cl_program program, unsigned device_i,
                                cl_uint num_input_headers,
                                const cl_program *input_headers,
@@ -81,9 +84,10 @@ extern "C" {
   /**
    * Free the LLVM IR of a program for a given device
    */
+  POCL_EXPORT
   void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
 
-  /* calls delete on the module. */
+  POCL_EXPORT
   void pocl_destroy_llvm_module (void *modp, cl_context ctx);
 
   int pocl_llvm_remove_file_on_signal (const char *file);
@@ -92,11 +96,52 @@ extern "C" {
   void pocl_llvm_release_context (cl_context ctx);
 
   /**
-   * Update the program->binaries[] representation of the kernels
-   * from the program->data[] LLVM IR representation.
-   * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
+   * \brief Creates instance of a class that holds llvm::Module of input IR
+   * (program.bc), plus its own LLVM contexts, so it can be safely used in
+   * multithreaded env. Returns an output SPIR-V with Program-scope variables
+   * (and optionally, non-kernel functions). This SPIR-V needs to be turned
+   * into a native (device) module and linked with each JIT-compiled kernel
+   * module, otherwise Program-scope variables will not work properly.
+   *
+   * \param [in] ProgramBcBytes in-memory IR of program.bc
+   * \param [in] ProgramBcSize size of program.bc
+   * \param [out] LinkinSpirvContent output SPIRV with prog-scope vars
+   * \param [out] LinkinSpirvSize size of output LinkinSpirvContent
+   * \returns opaque handle to instance holding the data, or NULL on error
+   *
    */
-  int pocl_llvm_update_binaries (cl_program program, cl_uint device_i);
+  POCL_EXPORT
+  void *pocl_llvm_create_context_for_program (const char *ProgramBcBytes,
+                                              size_t ProgramBcSize,
+                                              char **LinkinSpirvContent,
+                                              uint64_t *LinkinSpirvSize);
+
+  /**
+  * \brief extracts SPIR-V of a single Kernel (plus all functions it uses)
+  * from the program IR, converts it to SPIRV & returns it.
+  *
+  * \param [in] ProgCtx the handle from pocl_llvm_create_context_for_program
+  * \param [in] KernelName name of the kernel to extract
+  * \param [out] BuildLogStr handle (std::string *) of log with errors/warnings
+  * \param [out] SpirvContent output SPIRV with the kernel
+  * \param [out] SpirvSize size of output SpirvContent
+  * \returns 0 on success
+  *
+  */
+  POCL_EXPORT
+  int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
+                                     const char* KernelName,
+                                     void* BuildLogStr,
+                                     char **SpirvContent,
+                                     uint64_t *SpirvSize);
+
+  /**
+  * \brief destroys the instance of hidden class used to extract kernel SPIR-V
+  *
+  * \param [in] ProgCtx the  handle from pocl_llvm_create_context_for_program
+  */
+  POCL_EXPORT
+  void pocl_llvm_release_context_for_program (void *ProgCtx);
 
   /**
    * Count the number of "__kernel" functions in 'program'.
@@ -119,7 +164,9 @@ extern "C" {
                               cl_uint num_input_programs,
                               unsigned char **cur_device_binaries,
                               size_t *cur_device_binary_sizes,
-                              void **cur_llvm_irs, int link_program, int spir);
+                              void **cur_llvm_irs,
+                              int link_device_builtin_library,
+                              int linking_into_new_cl_program);
 
   int pocl_invoke_clang (cl_device_id Device, const char **Args);
 

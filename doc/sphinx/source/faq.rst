@@ -12,16 +12,15 @@ Using pocl
 Supported compilers and compiler combinations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Pocl usually uses two different compilers (though may be built
+PoCL usually uses two different compilers (though may be built
 using only one). One is used to compile C and C++ files - this is usually
-the "system compiler". It's specified by CC and CXX vars to configure
-script, or CMAKE_C{,XX}_COMPILER variables to cmake, but usually just
-left to default. The second compiler is used to build OpenCL files - this
-is always clang+llvm. It's specified by LLVM_CONFIG=<path> to configure,
-or -DWITH_LLVM_CONFIG=<path> to cmake.
+the "system compiler". It's specified by CMAKE_C{,XX}_COMPILER variables
+to cmake, but usually just left to default. The second compiler is used
+to build OpenCL files - this is always clang+llvm. It's specified by
+-DWITH_LLVM_CONFIG=<path> to cmake.
 
 You may use clang as both "system" and OpenCL compiler for pocl.
-Note however that pocl uses the CXX_FLAGS *which the 2nd compiler (clang)
+Note however that pocl uses the CXX_FLAGS *which the 2nd compiler (Clang/LLVM)
 was built with*, to build parts of pocl that link with that compiler. This
 may cause some issues, if you try to build pocl with a different compiler
 as the one used to build the 2nd compiler - because gcc and clang are not
@@ -30,10 +29,10 @@ warnings about unknown flags, not actual bugs.
 
 Anyway, the most trouble-free solution is to use the same "system" compiler
 to build pocl, as the one that was used to build the 2nd compiler. Note that
-while most Linux distributions use gcc to build their clang/llvm,
-the official downloads from llvm.org are built using clang.
+while most Linux distributions use GCC to build their Clang/LLVM,
+the official downloads from llvm.org are built using Clang.
 
-Pocl is not listed by clinfo / is not found
+PoCL is not listed by clinfo / is not found
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Occasionally, proprietary implementations rewrite the ICD loader by their own
@@ -78,19 +77,20 @@ If you see this error::
 
 It's caused by initializers of static variables (like pocl's LLVM Pass names)
 called more than once. This happens for example when you link libpocl twice
-to your program.
+to your program, or you link libpocl and another library that dynamically links
+to a different LLVM.
 
-One way that could happen, is building pocl with ``--disable-icd`` while having
+One way that could happen, is building pocl with ``-DENABLE_ICD=0`` while having
 hwloc "plugins" package installed (with the opencl plugin). What happens is:
 
-* libpocl.so gets built, and also libOpenCL.so which is it's copy
+* libOpenCL.so gets built
 * program gets linked to the built libOpenCL.so; that is linked to hwloc
 * at runtime, hwloc will try to open the hwloc-opencl plugin; that links to
   system-installed libOpenCL.so (usually the ICD loader);
 * the ICD loader will try to dlopen libpocl.so -> you get the error.
 
-The solution is either to use ``--enable-icd --disable-direct-linkage``, or
-to uninstall the hwloc "plugins" package.
+Although PoCL now has a workaround for the hwloc case, this will not work
+in other cases; another solution is to uninstall the hwloc "plugins" package.
 
 Why is pocl slow?
 ^^^^^^^^^^^^^^^^^

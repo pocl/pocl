@@ -6,6 +6,7 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
+#define CL_HPP_CL_1_2_DEFAULT_BUILD
 #include <CL/opencl.hpp>
 #include <iostream>
 
@@ -91,7 +92,8 @@ int main(int argc, char *argv[])
   auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
 
   cl_int i = 0;
-  cl::Buffer buffer;
+  cl::Buffer buffer(CL_MEM_READ_WRITE, 4096);
+
   kernel(cl::EnqueueArgs(queue, cl::NDRange(16), cl::NDRange(16)),
          buffer, buffer, buffer, i, i, buffer);
 

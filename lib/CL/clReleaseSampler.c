@@ -34,13 +34,16 @@ CL_API_SUFFIX__VERSION_1_0
 
   int new_refcount;
   POCL_RELEASE_OBJECT (sampler, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("RELEASE Sampler %p, REFCNT: %d\n", sampler,
-                            new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Sampler %" PRId64 " (%p), Refcount: %d\n",
+                            sampler->id, sampler, new_refcount);
 
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (sampler);
       POCL_ATOMIC_DEC (sampler_c);
+
+      POCL_MSG_PRINT_REFCOUNTS ("Free Sampler %" PRId64 " (%p)\n", sampler->id,
+                                sampler);
 
       cl_context context = sampler->context;
       TP_FREE_SAMPLER (context->id, sampler->id);

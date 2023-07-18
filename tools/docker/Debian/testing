@@ -1,12 +1,12 @@
 FROM debian:testing
-ARG GIT_COMMIT=master
+ARG GIT_COMMIT=main
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
 RUN apt update
 RUN apt upgrade -y
-RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc15 pkg-config libclang-dev llvm-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
-RUN if [ "$LLVM_VERSION" -gt "9" ]; then apt install -y libclang-cpp${LLVM_VERSION} libclang-cpp${LLVM_VERSION}-dev ; fi
+RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc15 pkg-config libclang-dev libclang-cpp-dev llvm-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
 
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
+
 RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..
 RUN cd /home/pocl/b ; ninja
 

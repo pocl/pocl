@@ -24,8 +24,9 @@
 #include <CL/cl.h>
 #include <string.h>
 
-#include "pocl_util.h"
 #include "pocl_image_util.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueFillImage)(cl_command_queue  command_queue,
@@ -44,81 +45,12 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (image)),
-                          CL_INVALID_MEM_OBJECT);
-  POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND((fill_color == NULL), CL_INVALID_VALUE);
-
-  POCL_RETURN_ERROR_ON((command_queue->context != image->context), CL_INVALID_CONTEXT,
-      "image and command_queue are not from the same context\n");
-
-  POCL_RETURN_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
-                        "image argument is not an image\n");
-  POCL_RETURN_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
-                        "image is a GL texture\n");
-  POCL_RETURN_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
-
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
+  errcode = pocl_fill_image_common (
+      NULL, command_queue, image, fill_color, origin, region,
+      num_events_in_wait_list, event_wait_list, event, NULL, NULL, NULL, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_check_image_origin_region (image, origin, region);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
-
-  size_t px = image->image_elem_size * image->image_channels;
-  char fill_pattern[16];
-  pocl_write_pixel_zero (fill_pattern, fill_color_vec,
-                         image->image_channel_order, image->image_elem_size,
-                         image->image_channel_data_type);
-
-  /* The fill color is:
-   *
-   * a four component RGBA floating-point color value if the image channel
-   * data type is NOT an unnormalized signed and unsigned integer type,
-   *
-   * a four component signed integer value if the image channel data type
-   * is an unnormalized signed integer type and
-   *
-   * a four component unsigned integer value if the image channel data type
-   * is an unormalized unsigned integer type.
-   *
-   * The fill color will be converted to the appropriate
-   * image channel format and order associated with image.
-   */
-
-  if (IS_IMAGE1D_BUFFER (image))
-    {
-      return POname (clEnqueueFillBuffer) (
-          command_queue, image->buffer, fill_pattern, px, origin[0] * px,
-          region[0] * px, num_events_in_wait_list, event_wait_list, event);
-    }
-
-  char rdonly = 0;
-
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 1, &image, &rdonly);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  memcpy (cmd->command.fill_image.fill_pixel, fill_pattern, 16);
-  cmd->command.fill_image.orig_pixel = fill_color_vec;
-  cmd->command.fill_image.pixel_size = px;
-
-  cmd->command.fill_image.mem_id
-      = &image->device_ptrs[command_queue->device->global_mem_id];
-
-  cmd->command.fill_image.origin[0] = origin[0];
-  cmd->command.fill_image.origin[1] = origin[1];
-  cmd->command.fill_image.origin[2] = origin[2];
-  cmd->command.fill_image.region[0] = region[0];
-  cmd->command.fill_image.region[1] = region[1];
-  cmd->command.fill_image.region[2] = region[2];
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

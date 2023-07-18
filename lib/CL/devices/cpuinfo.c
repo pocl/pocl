@@ -426,12 +426,11 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 }
 
 /*
- * Expects:
- *   short name
  *
  * Sets up:
  *   vendor_id
  *   vendor (name)
+ *   short name
  *   long name
  *
  *   max compute units IF NOT SET ALREADY
@@ -442,6 +441,8 @@ void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
   int res;
+
+  device->short_name = device->ops->device_name;
 
   if (device->max_compute_units == 0) {
     res = pocl_cpuinfo_detect_compute_unit_count();

@@ -1,4 +1,5 @@
-/* cl_half - helper functions for the cl_half datatype
+/**
+ * \brief cl_half - helper functions for the cl_half datatype
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
                       Timo Viitanen / Tampere University of Technology
@@ -21,6 +22,8 @@
    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
+
+   \file
 */
 
 // for exp2
@@ -31,12 +34,18 @@
 
 #include "pocl_opencl.h"
 
+/**
+ * \brief union to store data when converting float to half.
+ */
 typedef union
 {
   int32_t i;
   float f;
 } FloatConvUnion;
 
+/**
+ * \todo not exposed via poclu.h should it be added or removed?
+ */
 cl_half
 poclu_float_to_cl_half_fast(float value)
 {
@@ -49,8 +58,9 @@ poclu_float_to_cl_half_fast(float value)
   return half;
 }
 
-// The idea behind these float to half functions is from:
-// https://gamedev.stackexchange.com/a/17410
+/**
+ * \todo not exposed via poclu.h should it be added or removed?
+ */
 cl_half
 poclu_float_to_cl_half(float value)
 {
@@ -82,6 +92,9 @@ poclu_float_to_cl_half(float value)
   return half;
 }
 
+/**
+ * \todo not exposed via poclu.h should it be added or removed?
+ */
 cl_half
 poclu_float_to_cl_half_ceil(float value)
 {
@@ -119,6 +132,9 @@ poclu_float_to_cl_half_ceil(float value)
   return half;
 }
 
+/**
+ * \todo not exposed via poclu.h should it be added or removed?
+ */
 cl_half
 poclu_float_to_cl_half_floor(float value)
 {

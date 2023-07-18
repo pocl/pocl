@@ -28,6 +28,10 @@
 
 #include <stdarg.h>
 
+#ifdef PRINTF_IMMEDIATE_FLUSH
+#include <unistd.h>
+#endif
+
 #define OCL_C_AS
 
 /* The OpenCL printf routine.
@@ -368,6 +372,13 @@ __pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
 
               if (vector_length == 0)
                 vector_length = 1;
+
+// TODO: This hack can be removed once TTA backend can handle
+// va_arg with vector types
+#ifdef DISABLE_VECTOR_PRINTF
+              vector_length = 1;
+#endif
+
               DEBUG_PRINTF (("[printf:length=%d]\n", length));
 
               p->flags = flags;
@@ -691,16 +702,24 @@ __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
 {
   param_t p = { 0 };
 
-  p.printf_buffer = __buffer;
+  p.printf_buffer = (PRINTF_BUFFER_AS char *)__buffer;
   p.printf_buffer_capacity = __buffer_capacity;
-  p.printf_buffer_index = *__buffer_index;
+  p.printf_buffer_index = *(PRINTF_BUFFER_AS uint32_t *)__buffer_index;
 
   va_list va;
   va_start (va, fmt);
   int r = __pocl_printf_format_full (fmt, &p, va);
   va_end (va);
 
-  *__buffer_index = p.printf_buffer_index;
+#ifdef PRINTF_IMMEDIATE_FLUSH
+  if (p.printf_buffer_index > 0)
+    {
+      write (STDOUT_FILENO, p.printf_buffer, p.printf_buffer_index);
+      p.printf_buffer_index = 0;
+    }
+#endif
+
+  *(PRINTF_BUFFER_AS uint32_t *)__buffer_index = p.printf_buffer_index;
 
   return r;
 }
@@ -721,9 +740,10 @@ printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
 {
   param_t p = { 0 };
 
-  p.printf_buffer = _printf_buffer;
+  p.printf_buffer = (PRINTF_BUFFER_AS char *)_printf_buffer;
   p.printf_buffer_capacity = _printf_buffer_capacity;
-  p.printf_buffer_index = *_printf_buffer_position;
+  p.printf_buffer_index
+      = *(PRINTF_BUFFER_AS uint32_t *)_printf_buffer_position;
 
   va_list va;
   va_start (va, fmt);
@@ -733,7 +753,9 @@ printf (const PRINTF_FMT_STR_AS char *restrict fmt, ...)
   __pocl_printf (_printf_buffer, _printf_buffer_position,
                  _printf_buffer_capacity, NULL);
 
-  *_printf_buffer_position = p.printf_buffer_index;
+  *(PRINTF_BUFFER_AS uint32_t *)_printf_buffer_position
+      = p.printf_buffer_index;
+
   return r;
 }
 

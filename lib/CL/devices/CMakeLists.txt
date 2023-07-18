@@ -28,7 +28,9 @@ if(ENABLE_LOADABLE_DRIVERS)
   function(add_pocl_device_library name)
     add_library(${name} SHARED ${ARGN})
     harden("${name}")
-    target_include_directories(${name} SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+    if(OCL_ICD_INCLUDE_DIRS)
+      target_include_directories(${name} SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+    endif()
     target_link_libraries(${name} PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_LIBRARY_NAME} ${POCL_PRIVATE_LINK_LIST})
     set_target_properties(${name} PROPERTIES PREFIX "lib" SUFFIX ".so")
     install(TARGETS ${name} LIBRARY DESTINATION "${POCL_INSTALL_PRIVATE_LIBDIR}" COMPONENT "lib")
@@ -38,7 +40,9 @@ else()
 
   function(add_pocl_device_library name)
     add_library(${name} OBJECT ${ARGN})
-    target_include_directories(${name} SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+    if(OCL_ICD_INCLUDE_DIRS)
+      target_include_directories(${name} SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+    endif()
   endfunction()
 
 endif()
@@ -56,23 +60,24 @@ if(BUILD_PTHREAD)
     "$<TARGET_OBJECTS:pocl-devices-pthread>")
 endif()
 
-if(BUILD_ACCEL)
-  add_subdirectory("accel")
+if(BUILD_ALMAIF)
+  add_subdirectory("almaif")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-    "$<TARGET_OBJECTS:pocl-devices-accel>")
+    "$<TARGET_OBJECTS:pocl-devices-almaif>")
 endif()
 
 # for these drivers, use HWLOC if found
-if(ENABLE_HOST_CPU_DEVICES OR ENABLE_HSA)
+if(ENABLE_HOST_CPU_DEVICES)
   add_subdirectory("topology")
-  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-    "$<TARGET_OBJECTS:pocl-devices-topology>")
-
-  if(Hwloc_FOUND)
-    if(Hwloc_LDFLAGS)
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-    else()
-      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+      "$<TARGET_OBJECTS:pocl-devices-topology>")
+    if(Hwloc_FOUND)
+      if(Hwloc_LDFLAGS)
+        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
+      else()
+        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
+      endif()
     endif()
   endif()
 endif()
@@ -117,6 +122,17 @@ if(ENABLE_VULKAN)
   endif()
 endif()
 
+if(ENABLE_LEVEL0)
+  include_directories(AFTER "${LEVEL0_INCLUDE_DIRS}")
+  add_subdirectory("level0")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-level0>")
+
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${LEVEL0_LIBRARIES})
+  endif()
+endif()
+
 if(ENABLE_CUDA)
   add_subdirectory("cuda")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
@@ -133,6 +149,8 @@ set(POCL_DEVICES_SOURCES
   common.h  common.c
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
+  builtin_kernels.cc builtin_kernels.hh
+  spirv.hh  spirv_parser.hh  spirv_parser.cc
   cpuinfo.c  cpuinfo.h)
 
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
@@ -143,7 +161,9 @@ if(MSVC)
   set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
-target_include_directories("pocl-devices" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+if(OCL_ICD_INCLUDE_DIRS)
+  target_include_directories("pocl-devices" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
+endif()
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices>")
 harden("pocl-devices")

@@ -26,21 +26,14 @@
 #include "pocl_util.h"
 #include "devices.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
-                                 cl_uint arg_index,
-                                 const void *arg_value) CL_API_SUFFIX__VERSION_2_0
+int
+pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
+                             const void *arg_value)
 {
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
-
-  POCL_RETURN_ERROR_ON (
-      (!kernel->context->svm_allocdev), CL_INVALID_OPERATION,
-      "None of the devices in this context is SVM-capable\n");
-
   POCL_RETURN_ERROR_ON ((kernel->dyn_arguments == NULL), CL_INVALID_KERNEL,
                         "This kernel has no arguments that could be set\n");
 
-  POCL_MSG_PRINT_INFO ("Setting kernel ARG %i to SVM %p\n", arg_index,
+  POCL_MSG_PRINT_INFO ("Setting kernel arg %i to pointer: %p\n", arg_index,
                        arg_value);
 
   struct pocl_argument *p;
@@ -75,5 +68,19 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
   p->size = sizeof (void *);
 
   return CL_SUCCESS;
+}
+
+CL_API_ENTRY cl_int CL_API_CALL
+POname (clSetKernelArgSVMPointer) (cl_kernel kernel, cl_uint arg_index,
+                                   const void *arg_value)
+    CL_API_SUFFIX__VERSION_2_0
+{
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
+
+  POCL_RETURN_ERROR_ON (
+      (!kernel->context->svm_allocdev), CL_INVALID_OPERATION,
+      "None of the devices in this context is SVM-capable\n");
+
+  return pocl_set_kernel_arg_pointer (kernel, arg_index, arg_value);
 }
 POsym(clSetKernelArgSVMPointer)

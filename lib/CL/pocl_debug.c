@@ -1,7 +1,7 @@
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h>
 
 #include "pocl_cl.h"
 #include "pocl_debug.h"
@@ -41,6 +41,9 @@ static pocl_lock_t console_mutex;
         }
       /* else parse */
       char* tokenize = strdup (debug);
+      for(int i =0; i < strlen (tokenize); i++){
+          tokenize[i] = tolower(tokenize[i]);
+        }
       char* ptr = NULL;
       ptr = strtok (tokenize, ",");
 
@@ -48,6 +51,8 @@ static pocl_lock_t console_mutex;
       {
         if (strncmp (ptr, "general", 7) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_GENERAL;
+        else if (strncmp (ptr, "level0", 6) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LEVEL0;
         else if (strncmp (ptr, "vulkan", 6) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_VULKAN;
         else if (strncmp (ptr, "event", 5) == 0)
@@ -64,6 +69,10 @@ static pocl_lock_t console_mutex;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LOCKING;
         else if (strncmp (ptr, "cuda", 4) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_CUDA;
+        else if (strncmp (ptr, "almaif", 6) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ALMAIF;
+        else if (strncmp (ptr, "mmap", 4) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ALMAIF_MMAP;
         else if (strncmp (ptr, "warn", 4) == 0)
           pocl_debug_messages_filter |= (POCL_DEBUG_FLAG_WARNING | POCL_DEBUG_FLAG_ERROR);
         else if (strncmp (ptr, "hsa", 3) == 0)

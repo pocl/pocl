@@ -419,6 +419,13 @@ IMPLEMENT_VSTORE_HALF (__private, _rte)
 IMPLEMENT_VSTORE_HALF (__private, _rtz)
 IMPLEMENT_VSTORE_HALF (__private, _rtp)
 IMPLEMENT_VSTORE_HALF (__private, _rtn)
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_VSTORE_HALF (__generic, )
+IMPLEMENT_VSTORE_HALF (__generic, _rte)
+IMPLEMENT_VSTORE_HALF (__generic, _rtz)
+IMPLEMENT_VSTORE_HALF (__generic, _rtp)
+IMPLEMENT_VSTORE_HALF (__generic, _rtn)
+#endif
 
 #ifdef cl_khr_fp64
 
@@ -619,5 +626,12 @@ IMPLEMENT_VSTORE_HALF_DBL (__private, _rte)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtz)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtp)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtn)
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_VSTORE_HALF_DBL (__generic, )
+IMPLEMENT_VSTORE_HALF_DBL (__generic, _rte)
+IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtz)
+IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtp)
+IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtn)
+#endif
 
 #endif

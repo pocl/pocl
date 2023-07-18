@@ -66,6 +66,13 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
+  /*  Returns CL_INVALID_DEVICE if device is not in the list
+   *  of devices associated with program. */
+  int device_i = pocl_cl_device_assoc_index (program, device);
+  POCL_RETURN_ERROR_ON ((device_i < 0), CL_INVALID_DEVICE,
+                        "Device is not in the list of devices"
+                        " associated with the program\n");
+
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
@@ -93,12 +100,6 @@ POname(clGetProgramBuildInfo)(cl_program            program,
         }
       else
         {
-          /*  Returns CL_INVALID_DEVICE if device is not in the list
-           *  of devices associated with program. */
-          int device_i = pocl_cl_device_assoc_index (program, device);
-          POCL_RETURN_ERROR_ON ((device_i < 0), CL_INVALID_DEVICE,
-                                "Device is not in the list of devices"
-                                " associated with the program\n");
           /*  If build status of program for device is CL_BUILD_NONE,
            *  an empty string is returned. */
           device_i = pocl_cl_device_built_index (program, device);
@@ -117,13 +118,15 @@ POname(clGetProgramBuildInfo)(cl_program            program,
         }
       POCL_RETURN_GETINFO_STR ("");
     }
+
   case CL_PROGRAM_BINARY_TYPE:
     {
       POCL_RETURN_GETINFO(cl_program_binary_type, program->binary_type);
     }
+
   case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE:
     {
-      POCL_RETURN_GETINFO (size_t, device->global_var_pref_size);
+      POCL_RETURN_GETINFO (size_t, program->global_var_total_size[device_i]);
     }
   }
   

@@ -62,8 +62,9 @@ POname(clSVMAlloc)(cl_context context,
   const cl_svm_mem_flags valid_flags = (CL_MEM_SVM_ATOMICS | CL_MEM_SVM_FINE_GRAIN_BUFFER
                                   | CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY
                                   | CL_MEM_READ_ONLY);
-  POCL_RETURN_ERROR_ON((flags & (!valid_flags)), NULL, "flags argument "
-                                "contains invalid bits (nonexistent flags)\n");
+  POCL_RETURN_ERROR_ON ((flags & (~valid_flags)), NULL,
+                        "flags argument "
+                        "contains invalid bits (nonexistent flags)\n");
 
   /* CL_MEM_SVM_FINE_GRAIN_BUFFER or CL_MEM_SVM_ATOMICS is specified in flags
    * and these are not supported by at least one device in context. */

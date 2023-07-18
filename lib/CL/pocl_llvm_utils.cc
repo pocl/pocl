@@ -28,6 +28,7 @@
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
+#include <unistd.h>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -59,10 +60,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/LegacyPassManager.h>
 #define PassManager legacy::PassManager
 
-#ifndef LLVM_OLDER_THAN_10_0
-  #include <llvm/InitializePasses.h>
-  #include <llvm/Support/CommandLine.h>
-#endif
+#include <llvm/InitializePasses.h>
+#include <llvm/Support/CommandLine.h>
 #include <llvm-c/Core.h>
 
 using namespace llvm;
@@ -75,13 +74,25 @@ llvm::Module *parseModuleIR(const char *path, llvm::LLVMContext *c) {
   return parseIRFile(path, Err, *c).release();
 }
 
+void parseModuleGVarSize(cl_program program, unsigned device_i,
+                         llvm::Module *ProgramBC) {
+
+  unsigned long TotalGVarBytes = 0;
+  if (!getModuleIntMetadata(*ProgramBC, PoclGVarMDName, TotalGVarBytes))
+    return;
+
+  if (TotalGVarBytes) {
+    if (program->global_var_total_size[device_i])
+      assert(program->global_var_total_size[device_i] == TotalGVarBytes);
+    else
+      program->global_var_total_size[device_i] = TotalGVarBytes;
+    POCL_MSG_PRINT_LLVM("Total Global Variable Bytes: %zu\n", TotalGVarBytes);
+  }
+}
+
 void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
   llvm::raw_string_ostream sos(dest);
-#ifdef LLVM_OLDER_THAN_7_0
-  WriteBitcodeToFile(mod, sos);
-#else
   WriteBitcodeToFile(*mod, sos);
-#endif
   sos.str(); // flush
 }
 
@@ -146,7 +157,7 @@ char *pocl_get_llvm_cpu_name() {
   return cpu_name;
 }
 
-int bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
+int pocl_bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
   std::string Triple;
   if (getModuleTriple(bitcode, size, Triple) == 0)
     return Triple.find(triple) != std::string::npos;
@@ -188,19 +199,19 @@ void cpu_setup_vector_widths(cl_device_id dev) {
       VECWIDTH(cl_long);
   dev->native_vector_width_float = dev->preferred_vector_width_float =
       VECWIDTH(float);
-#ifdef _CL_DISABLE_DOUBLE
-  dev->native_vector_width_double = dev->preferred_vector_width_double = 0;
-#else
-  dev->native_vector_width_double = dev->preferred_vector_width_double =
-      VECWIDTH(double);
-#endif
+  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL) {
+    dev->native_vector_width_double = dev->preferred_vector_width_double = 0;
+  } else {
+    dev->native_vector_width_double = dev->preferred_vector_width_double =
+        VECWIDTH(double);
+  }
 
-#ifdef _CL_DISABLE_HALF
-  dev->native_vector_width_half = dev->preferred_vector_width_half = 0;
-#else
-  dev->native_vector_width_half = dev->preferred_vector_width_half =
-      VECWIDTH(cl_short);
-#endif
+  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL) {
+    dev->native_vector_width_half = dev->preferred_vector_width_half = 0;
+  } else {
+    dev->native_vector_width_half = dev->preferred_vector_width_half =
+        VECWIDTH(cl_short);
+  }
 }
 
 int pocl_llvm_remove_file_on_signal(const char *file) {
@@ -245,7 +256,7 @@ PoclCompilerMutexGuard::PoclCompilerMutexGuard(pocl_lock_t *ptr) {
 
 PoclCompilerMutexGuard::~PoclCompilerMutexGuard() { POCL_UNLOCK(*lock); }
 
-std::string currentWgMethod;
+std::string CurrentWgMethod;
 
 static bool LLVMInitialized = false;
 static bool LLVMOptionsInitialized = false;
@@ -272,7 +283,9 @@ void InitializeLLVM() {
     initializeAnalysis(Registry);
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
+#ifdef LLVM_OLDER_THAN_16_0
     initializeInstrumentation(Registry);
+#endif
     initializeTarget(Registry);
   }
 
@@ -288,10 +301,13 @@ void InitializeLLVM() {
 
     llvm::cl::Option *O = nullptr;
 
-    currentWgMethod =
+    CurrentWgMethod =
         pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
+    if (CurrentWgMethod == "auto")
+      CurrentWgMethod = "loopvec";
 
-    if (currentWgMethod == "loopvec") {
+    if (CurrentWgMethod == "loopvec" || CurrentWgMethod == "loops" ||
+        CurrentWgMethod == "cbs") {
 
       O = opts["scalarize-load-store"];
       assert(O && "could not find LLVM option 'scalarize-load-store'");
@@ -376,8 +392,6 @@ static unsigned GlobalLLVMContextRefcount = 0;
 
 void pocl_llvm_create_context(cl_context ctx) {
 
-  POCL_MSG_PRINT_LLVM("creating LLVM context\n");
-
 #ifdef GLOBAL_LLVM_CONTEXT
   if (GlobalLLVMContext != nullptr) {
     ctx->llvm_context_data = GlobalLLVMContext;
@@ -391,6 +405,13 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
+#if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
+#ifdef LLVM_OPAQUE_POINTERS
+  data->Context->setOpaquePointers(true);
+#else
+  data->Context->setOpaquePointers(false);
+#endif
+#endif
   data->number_of_IRs = 0;
   data->poclDiagString = new std::string;
   data->poclDiagStream = new llvm::raw_string_ostream(*data->poclDiagString);
@@ -410,6 +431,8 @@ void pocl_llvm_create_context(cl_context ctx) {
   GlobalLLVMContext = data;
   ++GlobalLLVMContextRefcount;
 #endif
+
+  POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
 
 void pocl_llvm_release_context(cl_context ctx) {
@@ -454,8 +477,7 @@ void pocl_llvm_release_context(cl_context ctx) {
 
 #define POCL_METADATA_ROOT "pocl_meta"
 
-void setModuleIntMetadata(llvm::Module *mod, const char *key,
-                          unsigned long data) {
+void setModuleIntMetadata(llvm::Module *mod, const char *key, unsigned long data) {
 
   llvm::Metadata *meta[] = {MDString::get(mod->getContext(), key),
                             llvm::ConstantAsMetadata::get(ConstantInt::get(
@@ -493,7 +515,9 @@ void setModuleBoolMetadata(llvm::Module *mod, const char *key, bool data) {
 bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
                           unsigned long &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {
@@ -518,7 +542,9 @@ bool getModuleIntMetadata(const llvm::Module &mod, const char *key,
 bool getModuleStringMetadata(const llvm::Module &mod, const char *key,
                              std::string &data) {
   NamedMDNode *Root = mod.getNamedMetadata(POCL_METADATA_ROOT);
-  assert(Root);
+  if (!Root)
+    return false;
+
   bool found = false;
 
   for (size_t i = 0; i < Root->getNumOperands(); ++i) {

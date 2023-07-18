@@ -375,8 +375,10 @@ main(void){
       CHECK_CL_ERROR(clReleaseProgram(program));
   }
 
-  /*TEST 10: valid kernel with Compile option -cl-std=CL2.0*/
-  {
+  /*TEST 10: valid kernel with Compile option -cl-std=CL3.0 */
+  if (poclu_supports_opencl_30 (devices, num_devices))
+      {
+      printf ("Testing -cl-std=CL3.0\n");
       size_t kernel_size = strlen(valid_kernel);
       const char* kernel_buffer = valid_kernel;
 
@@ -384,7 +386,8 @@ main(void){
                                           &kernel_size, &err);
       CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-cl-std=CL2.0", NULL, NULL));
+      CHECK_CL_ERROR (clBuildProgram (program, num_devices, devices,
+                                      "-cl-std=CL3.0", NULL, NULL));
 
       /* TODO FIXME: from here to the clFinish() should be removed once
        * delayed linking is disabled/removed in pocl, probably
@@ -402,7 +405,7 @@ main(void){
       CHECK_CL_ERROR(clReleaseCommandQueue(q));
       CHECK_CL_ERROR(clReleaseKernel(k));
       CHECK_CL_ERROR(clReleaseProgram(program));
-  }
+      }
 
   /*TEST 11: macro test */
   {
@@ -412,13 +415,18 @@ main(void){
                                         &s, &err);
     CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-#ifdef _CL_DISABLE_DOUBLE
-    const char *options = NULL;
-#else
-    const char *options = "-DTEST_DOUBLES";
-#endif
+    const char *options;
+    if (poclu_supports_extension (devices[0], "cl_khr_fp64"))
+      {
+          options = "-DTEST_DOUBLES";
+      }
+    else
+      {
+          options = NULL;
+      }
 
-    CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, options, NULL, NULL));
+    CHECK_CL_ERROR (
+        clBuildProgram (program, 1, &devices[0], options, NULL, NULL));
 
     CHECK_CL_ERROR(clReleaseProgram(program));
 

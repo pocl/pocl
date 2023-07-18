@@ -90,9 +90,10 @@ extern "C" {
 #define POCL_DEBUG_FLAG_HSA 0x100
 #define POCL_DEBUG_FLAG_TCE 0x200
 #define POCL_DEBUG_FLAG_CUDA 0x400
-#define POCL_DEBUG_FLAG_ACCEL 0x800
+#define POCL_DEBUG_FLAG_ALMAIF 0x800
 #define POCL_DEBUG_FLAG_PROXY 0x1000
-
+#define POCL_DEBUG_FLAG_ALMAIF_MMAP 0x2000
+#define POCL_DEBUG_FLAG_LEVEL0 0x4000
 
 #define POCL_DEBUG_FLAG_VULKAN 0x80000
 
@@ -231,11 +232,12 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_INFO_F(filter, errcode, ...) \
           POCL_MSG_PRINT_F(filter, INFO, errcode, __VA_ARGS__)
 
-    #define POCL_MSG_PRINT_ACCEL2(errcode, ...) POCL_MSG_PRINT_INFO_F(ACCEL, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_ACCEL(...) POCL_MSG_PRINT_INFO_F(ACCEL, "", __VA_ARGS__)
-
+    #define POCL_MSG_PRINT_ALMAIF2(errcode, ...) POCL_MSG_PRINT_INFO_F(ALMAIF, errcode, __VA_ARGS__)
+    #define POCL_MSG_PRINT_ALMAIF(...) POCL_MSG_PRINT_INFO_F(ALMAIF, "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_ALMAIF_MMAP(...) POCL_MSG_PRINT_INFO_F(ALMAIF_MMAP, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_PROXY2(errcode, ...) POCL_MSG_PRINT_INFO_F(PROXY, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_PROXY(...) POCL_MSG_PRINT_INFO_F(PROXY, "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_LEVEL0(...) POCL_MSG_PRINT_INFO_F(LEVEL0, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_VULKAN2(errcode, ...) POCL_MSG_PRINT_INFO_F(VULKAN, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_VULKAN(...) POCL_MSG_PRINT_INFO_F(VULKAN, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
@@ -279,10 +281,12 @@ POCL_EXPORT
     #define POCL_MEASURE_FINISH(...)  do {} while (0)
     #define POCL_DEBUG_EVENT_TIME(...)  do {} while (0)
 
-    #define POCL_MSG_PRINT_ACCEL2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_ACCEL(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ALMAIF2(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ALMAIF(...)  do {} while (0)
+    #define POCL_MSG_PRINT_ALMAIF_MMAP(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
     #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
+    #define POCL_MSG_PRINT_LEVEL0(...) do {} while (0)
     #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
     #define POCL_MSG_PRINT_VULKAN(...)  do {} while (0)
     #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)

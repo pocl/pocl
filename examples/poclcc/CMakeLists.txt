@@ -31,5 +31,5 @@ set_tests_properties( "poclcc"
   PROPERTIES
     COST 3.0
     PROCESSORS 1
-    LABELS "internal"
+    LABELS "internal;level0"
     DEPENDS "pocl_version_check")

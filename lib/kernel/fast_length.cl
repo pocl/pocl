@@ -24,5 +24,12 @@
 
 #include "templates.h"
 
+#undef __IF_FP16
+#undef __IF_FP64
+#define __IF_FP16(X)
+#define __IF_FP64(X)
+
+// half_sqrt is not supported yet
 // DEFINE_EXPR_S_VV(fast_length, half_sqrt(dot(a, a)))
+
 DEFINE_EXPR_S_V(fast_length, sqrt(dot(a, a)))

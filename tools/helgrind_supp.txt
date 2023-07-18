@@ -1,0 +1,21 @@
+{
+   PoclReleaseEvent_1
+   Helgrind:Race
+   ...
+   fun:POclReleaseEvent
+   ...
+   fun:start_thread
+   fun:clone
+}
+{
+   DubiousLock
+   Helgrind:Misc
+   ...
+   fun:__pthread_cond_wait_common
+   ...
+   fun:pthread_scheduler_get_work
+   fun:pocl_pthread_driver_thread
+   ...
+   fun:start_thread
+   fun:clone
+}

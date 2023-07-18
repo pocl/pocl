@@ -118,27 +118,7 @@
 
 /************************ setup Clang version macros ******************/
 
-#if (__clang_major__ == 6)
-
-# undef LLVM_6_0
-# define LLVM_6_0
-
-#elif (__clang_major__ == 7)
-
-# undef LLVM_7_0
-# define LLVM_7_0
-
-#elif (__clang_major__ == 8)
-
-# undef LLVM_8_0
-# define LLVM_8_0
-
-#elif (__clang_major__ == 9)
-
-# undef LLVM_9_0
-# define LLVM_9_0
-
-#elif (__clang_major__ == 10)
+#if (__clang_major__ == 10)
 
 # undef LLVM_10_0
 # define LLVM_10_0
@@ -163,6 +143,21 @@
 #undef LLVM_14_0
 #define LLVM_14_0
 
+#elif (__clang_major__ == 15)
+
+#undef LLVM_15_0
+#define LLVM_15_0
+
+#elif (__clang_major__ == 16)
+
+#undef LLVM_16_0
+#define LLVM_16_0
+
+#elif (__clang_major__ == 17)
+
+#undef LLVM_17_0
+#define LLVM_17_0
+
 #else
 
 #error Unsupported Clang/LLVM version.
@@ -171,7 +166,6 @@
 
 #define CLANG_MAJOR __clang_major__
 #include "_libclang_versions_checks.h"
-
 
 
 /****************************************************************************/
@@ -227,8 +221,8 @@
    be unified to avoid failing tests. */
 #undef FP_ILOGBNAN
 #undef FP_ILOGB0
-#define FP_ILOGBNAN INT_MIN
-#define FP_ILOGB0 INT_MIN
+#define FP_ILOGB0    INT_MIN
+#define FP_ILOGBNAN  INT_MAX
 
 /****************************************************************************/
 

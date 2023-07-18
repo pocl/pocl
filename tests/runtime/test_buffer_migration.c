@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "poclu.h"
 
 /*
@@ -52,7 +53,7 @@ main (int argc, char **argv)
   cl_program program = NULL;
   cl_kernel kernel = NULL;
 
-  err = poclu_get_multiple_devices (&platform, &context, &num_devices,
+  err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
                                     &devices, &queues);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
@@ -64,8 +65,9 @@ main (int argc, char **argv)
       goto EARLY_EXIT;
     }
 
+  const char *sourcefile = SRCDIR "/tests/runtime/migration_test";
   const char *basename = "migration_test";
-  err = poclu_load_program_multidev (context, devices, num_devices, basename,
+  err = poclu_load_program_multidev (context, devices, num_devices, sourcefile,
                                      0, 0, 0, NULL, NULL, &program);
   if (err != CL_SUCCESS)
     goto ERROR;

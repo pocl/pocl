@@ -14,56 +14,17 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
                    cl_event *            event ) CL_API_SUFFIX__VERSION_1_0
 {
   _cl_command_node *cmd = NULL;
-  cl_device_id device;
-  unsigned i;
+  cl_int errcode;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  /* src_image, dst_image: Can be 1D, 2D, 3D image or a 1D, 2D image array
-   * objects allowing us to perform the following actions */
-  POCL_RETURN_ERROR_ON (
-      (IS_IMAGE1D_BUFFER (src_image) || IS_IMAGE1D_BUFFER (dst_image)),
-      CL_INVALID_MEM_OBJECT,
-      "clEnqueueCopyImage cannot be called on image 1D buffers!\n");
-
-  POCL_CHECK_DEV_IN_CMDQ;
-
-  cl_int err = pocl_rect_copy(
-    command_queue,
-    CL_COMMAND_COPY_IMAGE,
-    src_image, CL_TRUE,
-    dst_image, CL_TRUE,
-    src_origin, dst_origin, region,
-    0, 0,
-    0, 0,
-    num_events_in_wait_list, event_wait_list,
-    event,
-    &cmd);
-
-  if (err != CL_SUCCESS)
-    return err;
-
-  cmd->command.copy_image.src_mem_id = &src_image->device_ptrs[device->global_mem_id];
-  cmd->command.copy_image.src = src_image;
-  cmd->command.copy_image.dst_mem_id = &dst_image->device_ptrs[device->global_mem_id];
-  cmd->command.copy_image.dst = dst_image;
-
-  cmd->command.copy_image.src_origin[0] = src_origin[0];
-  cmd->command.copy_image.src_origin[1] = src_origin[1];
-  cmd->command.copy_image.src_origin[2] = src_origin[2];
-  cmd->command.copy_image.dst_origin[0] = dst_origin[0];
-  cmd->command.copy_image.dst_origin[1] = dst_origin[1];
-  cmd->command.copy_image.dst_origin[2] = dst_origin[2];
-  cmd->command.copy_image.region[0] = region[0];
-  cmd->command.copy_image.region[1] = region[1];
-  cmd->command.copy_image.region[2] = region[2];
+  errcode = pocl_copy_image_common (NULL, command_queue, src_image, dst_image,
+                                    src_origin, dst_origin, region,
+                                    num_events_in_wait_list, event_wait_list,
+                                    event, NULL, NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   pocl_command_enqueue (command_queue, cmd);
 

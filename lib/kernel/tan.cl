@@ -24,6 +24,9 @@
 
 #include "templates.h"
 
-DEFINE_BUILTIN_V_V(tan)
+#if !__has_builtin(__builtin_tanf16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
 
-DEFINE_EXPR_F_F(half_tan, tan(a))
+DEFINE_BUILTIN_V_V(tan)

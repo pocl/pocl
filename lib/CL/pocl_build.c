@@ -165,8 +165,8 @@ static cl_int
 process_options (const char *options, char *modded_options, char *link_options,
                  cl_program program, int compiling, int linking,
                  int *create_library, unsigned *flush_denorms,
-                 int *requires_correctly_rounded_sqrt_div,
-                 int *spir_build, size_t size)
+                 int *requires_correctly_rounded_sqrt_div, int *spir_build,
+                 cl_version *cl_c_version, size_t size)
 {
   cl_int error;
   char *token = NULL;
@@ -174,6 +174,7 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   *create_library = 0;
   *flush_denorms = 0;
+  *cl_c_version = 0;
   *requires_correctly_rounded_sqrt_div = 0;
   *spir_build = 0;
   int enable_link_options = 0;
@@ -248,7 +249,12 @@ process_options (const char *options, char *modded_options, char *link_options,
                 token = "-fdenormal-fp-math=positive-zero";
             }
 #endif
-
+            if (strncmp (token, "-cl-std=CL", 10) == 0)
+            {
+                unsigned major = token[10] - '0';
+                unsigned minor = token[12] - '0';
+                *cl_c_version = CL_MAKE_VERSION (major, minor, 0);
+            }
             }
           else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
             {
@@ -403,6 +409,7 @@ pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
   pocl_SHA1_Init (&hash_ctx);
 
   char *n = program->kernel_meta[kernel_i].name;
+  assert (n != NULL && program->build_hash[device_i] != NULL);
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
                     sizeof (SHA1_digest_t));
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
@@ -425,22 +432,9 @@ free_meta (cl_program program)
       for (i = 0; i < program->num_kernels; i++)
         {
           pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
-          POCL_MEM_FREE (meta->build_hash);
           if (meta->builtin_kernel)
             continue;
-          POCL_MEM_FREE (meta->attributes);
-          POCL_MEM_FREE (meta->name);
-          for (j = 0; j < meta->num_args; ++j)
-            {
-              POCL_MEM_FREE (meta->arg_info[j].name);
-              POCL_MEM_FREE (meta->arg_info[j].type_name);
-            }
-          POCL_MEM_FREE (meta->arg_info);
-          for (j = 0; j < program->num_devices; ++j)
-            if (meta->data[j] != NULL)
-              meta->data[j] = NULL; // TODO free data in driver callback
-          POCL_MEM_FREE (meta->data);
-          POCL_MEM_FREE (meta->local_sizes);
+          pocl_free_kernel_metadata (program, i);
         }
       POCL_MEM_FREE (program->kernel_meta);
     }
@@ -464,6 +458,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
 
   program->num_kernels = 0;
   program->build_status = CL_BUILD_NONE;
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   for (i = 0; i < program->num_devices;
        ++i) // TODO associated_num_devices or not ???
@@ -481,6 +476,7 @@ clean_program_on_rebuild (cl_program program, int from_error)
           POCL_MEM_FREE (program->pocl_binaries[i]);
           program->pocl_binary_sizes[i] = 0;
         }
+      program->global_var_total_size[i] = 0;
     }
 
   if (!from_error)
@@ -568,13 +564,13 @@ setup_device_kernel_hashes (cl_program program)
 {
   cl_uint i, device_i;
 
-  if ((program->builtin_kernel_names != NULL) || (program->num_kernels == 0)
-      || (program->num_devices == 0))
+  if ((program->num_kernels == 0) || (program->num_devices == 0))
     return;
 
   assert (program->kernel_meta);
   for (i = 0; i < program->num_kernels; ++i)
     {
+      assert (program->kernel_meta[i].build_hash == NULL);
       program->kernel_meta[i].build_hash = (pocl_kernel_hash_t *)calloc (
           program->num_devices, sizeof (pocl_kernel_hash_t));
     }
@@ -586,6 +582,24 @@ setup_device_kernel_hashes (cl_program program)
           /* calculate device-specific kernel hashes. */
           pocl_calculate_kernel_hash (program, i, device_i);
         }
+    }
+}
+
+static int
+check_device_supports (cl_device_id device, cl_version cl_c_version)
+{
+  if (device->num_opencl_c_with_version > 0)
+    {
+      for (size_t i = 0; i < device->num_opencl_c_with_version; ++i)
+        {
+          if (device->opencl_c_with_version[i].version == cl_c_version)
+            return 0;
+        }
+      return -1;
+    }
+  else
+    {
+      return cl_c_version > device->opencl_c_version_as_cl;
     }
 }
 
@@ -610,6 +624,7 @@ compile_and_link_program(int compile_program,
   int create_library = 0;
   int requires_cr_sqrt_div = 0;
   int spir_build = 0;
+  cl_version cl_c_version = 0;
   unsigned flush_denorms = 0;
   cl_device_id *unique_devlist = NULL;
   unsigned device_i = 0, actually_built = 0;
@@ -648,7 +663,8 @@ compile_and_link_program(int compile_program,
       "to call clCreateProgramWith{Binary|Source|BuiltinKernels} first\n");
 
   POCL_GOTO_LABEL_ON (FINISH,
-                      ((program->source == NULL) && (link_program == 0)),
+                      ((program->source == NULL) &&
+                        (program->program_il == NULL) && (link_program == 0)),
                       CL_INVALID_OPERATION,
                       "Cannot clCompileProgram when program has no source\n");
 
@@ -680,10 +696,10 @@ compile_and_link_program(int compile_program,
       i = strlen (temp_options);
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
-      errcode = process_options (temp_options, program->compiler_options,
-                                 link_options, program, compile_program,
-                                 link_program, &create_library, &flush_denorms,
-                                 &requires_cr_sqrt_div, &spir_build, size);
+      errcode = process_options (
+          temp_options, program->compiler_options, link_options, program,
+          compile_program, link_program, &create_library, &flush_denorms,
+          &requires_cr_sqrt_div, &spir_build, &cl_c_version, size);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
@@ -710,8 +726,23 @@ compile_and_link_program(int compile_program,
       program->devices = unique_devlist;
     }
 
+  /* if program will be compiled using clCompileProgram its binary_type
+   * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
+   *
+   * if program was created by clLinkProgram which is called
+   * with the –createlibrary link option its binary_type will be set to
+   * CL_PROGRAM_BINARY_TYPE_LIBRARY.
+   */
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+  if (create_library)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+  if (compile_program && !link_program)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
+  if (program->num_builtin_kernels > 0)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
+
   POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
-                       num_devices, program->compiler_options);
+                       program->num_devices, program->compiler_options);
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     POCL_MSG_PRINT_LLVM ("   BUILDING for device: %s\n",
@@ -737,6 +768,16 @@ compile_and_link_program(int compile_program,
     {
       cl_device_id device = program->devices[device_i];
 
+      if (cl_c_version && check_device_supports (device, cl_c_version))
+        {
+          APPEND_TO_BUILD_LOG_GOTO (
+              build_error_code,
+              "Build option -cl-std specified OpenCL C version %u.%u,"
+              "but device %s doesn't support that OpenCL C version.\n",
+              CL_VERSION_MAJOR (cl_c_version), CL_VERSION_MINOR (cl_c_version),
+              device->short_name);
+        }
+
       if (requires_cr_sqrt_div
           && !(device->single_fp_config & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT))
         APPEND_TO_BUILD_LOG_GOTO (build_error_code,
@@ -756,9 +797,8 @@ compile_and_link_program(int compile_program,
                                           device->long_name);
             }
         }
-      else
-          /* only link the program/library */
-          if (!compile_program && link_program)
+      /* only link the program/library */
+      else if (!compile_program && link_program)
         {
           assert (num_input_programs > 0);
 
@@ -811,7 +851,8 @@ compile_and_link_program(int compile_program,
                                       device->long_name);
 
           if ((program->binary_sizes[device_i] == 0)
-              && (program->pocl_binary_sizes[device_i] == 0))
+              && (program->pocl_binary_sizes[device_i] == 0)
+              && (program->program_il_size == 0))
             APPEND_TO_BUILD_LOG_GOTO (CL_INVALID_BINARY,
                                       "No poclbinaries nor binaries "
                                       "for device %s - can't build "
@@ -843,38 +884,24 @@ compile_and_link_program(int compile_program,
       ++actually_built;
     }
   assert (actually_built == program->num_devices);
-
-  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-  /* if program will be compiled using clCompileProgram its binary_type
-   * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
-   *
-   * if program was created by clLinkProgram which is called
-   * with the –createlibrary link option its binary_type will be set to
-   * CL_PROGRAM_BINARY_TYPE_LIBRARY.
-   */
-  if (create_library)
-    program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
-  if (compile_program && !link_program)
-    program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
-
   assert(program->num_kernels == 0);
 
-  if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
+  /* for executables & programs with builtin kernels,
+   * setup the kernel metadata */
+  /* if the program is not a finished executable, we don't need
+   * to setup kernel metadata */
+  if (program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE
+      || program->binary_type == CL_PROGRAM_BINARY_TYPE_NONE)
     {
-      program->build_status = CL_BUILD_SUCCESS;
-      errcode = CL_SUCCESS;
-      goto FINISH;
-    }
+      errcode = setup_kernel_metadata (program);
+      if (errcode != CL_SUCCESS)
+        {
+          POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
+          goto ERROR;
+        }
 
-  errcode = setup_kernel_metadata (program);
-  if (errcode != CL_SUCCESS)
-    {
-      POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
-      goto ERROR;
+      setup_device_kernel_hashes (program);
     }
-
-  if (program->builtin_kernel_names == NULL)
-    setup_device_kernel_hashes (program);
 
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {

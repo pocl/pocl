@@ -180,6 +180,11 @@ POname(clCreateContext)(const cl_context_properties * properties,
   if (errcode)
     goto ERROR;
 
+  context->create_devices = calloc(num_devices, sizeof(cl_device_id));
+  POCL_GOTO_ERROR_COND ((context->create_devices == NULL), CL_OUT_OF_HOST_MEMORY);
+  memcpy(context->create_devices, devices, num_devices * sizeof(cl_device_id));
+  context->num_create_devices = num_devices;
+
   context->devices = pocl_unique_device_list(devices, num_devices,
                                              &context->num_devices);
   POCL_GOTO_ERROR_COND ((context->devices == NULL), CL_OUT_OF_HOST_MEMORY);
@@ -209,8 +214,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
   if (!pocl_offline_compile)
     pocl_setup_context (context);
 
-  for (i = 0; i < context->num_devices; ++i)
-    POname (clRetainDevice) (context->devices[i]);
+  for (i = 0; i < context->num_create_devices; ++i)
+    POname (clRetainDevice) (context->create_devices[i]);
 
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
@@ -224,6 +229,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);
 
+  POCL_MSG_PRINT_GENERAL ("Created Context %" PRId64 " (%p)\n", context->id,
+                          context);
   return context;
   
 ERROR:
@@ -235,15 +242,12 @@ ERROR:
             {
               POname (clReleaseCommandQueue) (context->default_queues[i]);
             }
-          if (context->devices && context->devices[i])
-            {
-              POname (clReleaseDevice) (context->devices[i]);
-            }
         }
       for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
         POCL_MEM_FREE (context->image_formats[i]);
       POCL_MEM_FREE (context->default_queues);
       POCL_MEM_FREE (context->devices);
+      POCL_MEM_FREE (context->create_devices);
       POCL_MEM_FREE (context->properties);
     }
   POCL_MEM_FREE(context);

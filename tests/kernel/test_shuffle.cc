@@ -25,6 +25,8 @@ cl_context ctx;
 cl_device_id did;
 cl_platform_id pid;
 cl_command_queue queue;
+int supports_half = 0;
+int supports_double = 0;
 
 #define ERRCHECK()  if (check_cl_error(errcode, __LINE__, __FUNCTION__)) abort();
 
@@ -337,6 +339,8 @@ int main( int argc, char *argv[])
 	}
 
 	poclu_get_any_device( &ctx, &did, &queue);
+        supports_half = poclu_supports_extension(did, "cl_khr_fp16");
+        supports_double = poclu_supports_extension(did, "cl_khr_fp64");
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic push
@@ -385,7 +389,12 @@ int main( int argc, char *argv[])
 
 	 } else if( strcmp("half", argv[1]) == 0 ) {
 
-	   TestShuffle<cl_half, cl_ushort> t("half"); num_errors = t.run();
+     if (supports_half != 0) {
+       TestShuffle<cl_half, cl_ushort> t("half"); num_errors = t.run();
+     } else {
+       std::cout << "device doesn't support cl_khr_fp16 extension, test SKIPPED\n";
+       return 77;
+     }
 
 	 } else if( strcmp("float", argv[1]) == 0 ) {
 
@@ -393,7 +402,13 @@ int main( int argc, char *argv[])
 
 	 } else if( strcmp("double", argv[1]) == 0 ) {
 
-	   TestShuffle<cl_double, cl_ulong> t("double"); num_errors = t.run();
+     if (supports_double != 0) {
+       TestShuffle<cl_double, cl_ulong> t("double"); num_errors = t.run();
+     } else {
+       std::cout << "device doesn't support cl_khr_fp64 extension, test SKIPPED\n";
+       return 77;
+     }
+
 
 	 } else {
 

@@ -1,0 +1,38 @@
+diff --git a/tests/catch/CMakeLists.txt b/tests/catch/CMakeLists.txt
+index 8585ec6f..330256b6 100644
+--- a/HIP/tests/catch/CMakeLists.txt
++++ b/HIP/tests/catch/CMakeLists.txt
+@@ -39,10 +39,7 @@ if(NOT DEFINED ROCM_PATH)
+     if(DEFINED ENV{ROCM_PATH})
+         set(ROCM_PATH $ENV{ROCM_PATH} CACHE STRING "ROCM Path")
+     else()
+-        cmake_path(GET HIP_PATH PARENT_PATH ROCM_PATH)
+-        if (NOT EXISTS "${ROCM_PATH}/bin/rocm_agent_enumerator")
+-            set(ROCM_PATH "/opt/rocm/")
+-        endif()
++        set(ROCM_PATH "/opt/rocm")
+     endif()
+ endif()
+ file(TO_CMAKE_PATH "${ROCM_PATH}" ROCM_PATH)
+@@ -135,8 +132,8 @@ set(ADD_SCRIPT_PATH ${CMAKE_CURRENT_BINARY_DIR}/${CATCH_BUILD_DIR}/script/CatchA
+ 
+ if (WIN32)
+   configure_file(catchProp_in_rc.in ${CMAKE_CURRENT_BINARY_DIR}/catchProp.rc @ONLY)
+-  cmake_path(SET LLVM_RC_PATH "${HIP_PATH}/../lc/bin/llvm-rc.exe")
+-  cmake_path(SET LLVM_RC_PATH NORMALIZE "${LLVM_RC_PATH}")
++#  cmake_path(SET LLVM_RC_PATH "${HIP_PATH}/../lc/bin/llvm-rc.exe")
++#  cmake_path(SET LLVM_RC_PATH NORMALIZE "${LLVM_RC_PATH}")
+ 
+   # generates the .res files to be used by executables to populate the properties
+   # expects LC folder with clang, llvm-rc to be present one level up of HIP
+diff --git a/scripts/check.py b/scripts/check.py
+index fa8581f6..02ecb4f5 100755
+--- a/scripts/check.py
++++ b/scripts/check.py
+@@ -56,5 +56,5 @@ if(backend == "pocl" or backend == "opencl"):
+ else:
+     env_vars = "CHIP_BE=level0 CHIP_DEVICE_TYPE={device_type} CHIP_DEVICE_NUM=0".format(backend=backend, device_type=device_type)
+ 
+-cmd = "{env_vars} ctest --timeout {timeout} --repeat until-fail:{num_tries} -j {num_threads} -E \"`cat ./test_lists/{device_type}_{backend}_failed_tests.txt`\"".format(work_dir=work_dir, num_tries=num_tries, env_vars=env_vars, num_threads=num_threads, device_type=device_type, backend=backend, timeout=timeout)
++cmd = "{env_vars} ctest --output-on-failure --timeout {timeout} --repeat until-fail:{num_tries} -j {num_threads} -E \"`cat ./test_lists/{device_type}_{backend}_failed_tests.txt`\"".format(work_dir=work_dir, num_tries=num_tries, env_vars=env_vars, num_threads=num_threads, device_type=device_type, backend=backend, timeout=timeout)
+ run_cmd(cmd)

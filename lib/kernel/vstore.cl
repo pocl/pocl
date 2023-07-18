@@ -111,3 +111,22 @@ IMPLEMENT_VSTORE(float , __private)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VSTORE(double, __private)
 #endif
+
+#ifdef __opencl_c_generic_address_space
+IMPLEMENT_VSTORE(char  , __generic)
+IMPLEMENT_VSTORE(short , __generic)
+IMPLEMENT_VSTORE(int   , __generic)
+#if defined(cl_khr_int64)
+IMPLEMENT_VSTORE(long  , __generic)
+#endif
+IMPLEMENT_VSTORE(uchar , __generic)
+IMPLEMENT_VSTORE(ushort, __generic)
+IMPLEMENT_VSTORE(uint  , __generic)
+#if defined(cl_khr_int64)
+IMPLEMENT_VSTORE(ulong , __generic)
+#endif
+IMPLEMENT_VSTORE(float , __generic)
+#if defined(cl_khr_fp64)
+IMPLEMENT_VSTORE(double, __generic)
+#endif
+#endif /* __opencl_c_generic_address_space */

@@ -1,11 +1,15 @@
 
+#ifndef POCL_CONFIG_H
+#define POCL_CONFIG_H
+
+
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
-#cmakedefine BUILD_ACCEL
+#cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
-
+#cmakedefine BUILD_LEVEL0
 #cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
@@ -51,6 +55,8 @@
 
 #cmakedefine ENABLE_SPIRV
 
+#cmakedefine ENABLE_VALGRIND
+
 #cmakedefine HAVE_DLFCN_H
 
 #cmakedefine HAVE_FORK
@@ -84,11 +90,17 @@
 
 #cmakedefine HAVE_UTIME
 
-#cmakedefine HAVE_VALGRIND
+#cmakedefine HAVE_XRT
 
 #cmakedefine ENABLE_LLVM
 
 #cmakedefine ENABLE_LOADABLE_DRIVERS
+
+/* TODO FIXME: required for pocl_init_default_device_infos(),
+ * (along with a bunch of host-CPU variables) even if
+ * the CPU driver is not compiled. */
+#undef HOST_DEVICE_EXTENSIONS
+#define HOST_DEVICE_EXTENSIONS ""
 
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
@@ -105,6 +117,7 @@
 
 #define HOST_CLANG_FLAGS  "@HOST_CLANG_FLAGS@"
 
+#undef HOST_DEVICE_EXTENSIONS
 #define HOST_DEVICE_EXTENSIONS "@HOST_DEVICE_EXTENSIONS@"
 
 #define HOST_DEVICE_FEATURES_30 "@HOST_DEVICE_FEATURES_30@"
@@ -147,6 +160,16 @@
 
 
 
+#ifdef BUILD_LEVEL0
+
+#define CLANG "@CLANG@"
+
+#define LLVM_SPIRV "@LLVM_SPIRV@"
+
+#define SPIRV_LINK "@SPIRV_LINK@"
+
+#endif
+
 
 
 #ifdef ENABLE_LLVM
@@ -165,21 +188,6 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-/* "Using LLVM 6.0" */
-#cmakedefine LLVM_6_0
-
-/* "Using LLVM 7.0" */
-#cmakedefine LLVM_7_0
-
-/* "Using LLVM 8.0" */
-#cmakedefine LLVM_8_0
-
-#cmakedefine LLVM_9_0
-
-#cmakedefine LLVM_10_0
-
-#cmakedefine LLVM_11_0
-
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
 #cmakedefine LLVM_BUILD_MODE_DEBUG
@@ -188,6 +196,7 @@
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
 
+#define LLVM_VERIFY_MODULE_DEFAULT @LLVM_VERIFY_MODULE_DEFAULT@
 
 #endif
 
@@ -202,9 +211,6 @@
 /* used in lib/CL/devices/basic */
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
 #define OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"
-
-#define POCL_VERSION_BASE "@POCL_VERSION_BASE@"
-#define POCL_VERSION_FULL "@POCL_VERSION_FULL@"
 
 #define POCL_KERNEL_CACHE_DEFAULT @POCL_KERNEL_CACHE_DEFAULT@
 
@@ -235,14 +241,10 @@
 
 #define TCE_DEVICE_EXTENSIONS "@TCE_DEVICE_EXTENSIONS@"
 
+#define OACC_EXECUTABLE "@TCECC@"
+
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
-
-/* Disable cl_khr_fp16 because fp16 is not supported */
-#cmakedefine _CL_DISABLE_HALF
-
-/* Disable cl_khr_fp64 because fp64 is not supported */
-#cmakedefine _CL_DISABLE_DOUBLE
 
 /* platform version */
 #define POCL_PLATFORM_VERSION_MAJOR 3
@@ -263,3 +265,7 @@
 
 
 #cmakedefine USE_POCL_MEMMANAGER
+
+#cmakedefine LLVM_OPAQUE_POINTERS
+
+#endif

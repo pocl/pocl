@@ -2,7 +2,7 @@
 HSA
 ===
 
-Note: pocl's HSA support is currently in experimental stage.
+Note: PoCL's HSA runtime support is deprecated.
 
 The experimental HSA driver currently only works with generic HSA Agent
 support (e.g. for your CPU); implementation exists in the phsa project.
@@ -12,7 +12,7 @@ Installing prerequisite software
 
 1) Install PoCL requirements
 
-  Described in :ref:`_pocl-install`
+  Described in :doc:`install`.
 
 2) Install an phsa runtime library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

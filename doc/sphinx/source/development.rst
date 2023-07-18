@@ -1,26 +1,21 @@
-Information for Pocl developers
+Information for PoCL developers
 ===================================
 
 Testsuite
 ----------
 
-Before changes are committed to the mainline, all tests in the 'make
-check' tier-1 suite should pass::
+Before changes are committed to the upstream PoCL, the code must pass the Main
+Test Matrix Github workflow.
 
-   make check_tier1
-
-"make check_tier1" will invoke ctest with tier-1 testsuites. See
- `maintenance-policy`_ for list of what's included in tier-1.
-
-Under the 'examples' directory there are placeholder directories for
+Under the 'examples' directory there are directories for
 external OpenCL application projects which are used as test suites for
 pocl (e.g. ViennaCL). These test suites can be enabled for cmake
-with -DENABLE_TESTSUITES (you can specify a list of test suites
-if you do not want to enabled all of them, see configure help for the
-available list).  Note that these additional test suites require
-additional software (tools and libraries). The configure script checks
-some of them but the check is not exhaustive. Test suites are disabled if
-their requirement files are not available.
+with -DENABLE_TESTSUITES (you can specify a list of test suites if you
+do not want to enabled all of them, see ``examples/CMakeLists.txt`` for the
+available list). Note that these additional test suites require
+additional software (tools and libraries). CMake will check some of them,
+but the checks are not exhaustive. Testsuites are disabled if
+the dependency checks fail.
 
 You can run the tests or built examples using "ctest" directly;
 ``ctest --print-labels`` prints the available labels (testsuites);
@@ -96,7 +91,8 @@ improved. Running ``tools/scripts/format-branch.sh`` in the root of
 the repository diffs against a ``master`` branch and formats the difference,
 and leaves the diff uncommitted in the working tree.
 ``tools/scripts/format-last-commit.sh`` formats only the last commit and can be
-used in an interactive rebase session.
+used in an interactive rebase session. Both scripts require "clang-format" binary
+present in PATH.
 
 An example emacs configuration to help get the pocl code style correct::
 
@@ -152,8 +148,8 @@ Using pocl from the Build Tree
 
 If you want use the pocl from the build tree, you must export
 POCL_BUILDING=1 so pocl searches for its utility scripts from the
-build tree first, then the installation location. The "make check"
-testsuite does this automatically.
+build tree first, then the installation location. Running PoCL's ctest
+from the build root will do this automatically.
 
 There's a helper script that, when sourced, in addition to setting
 POCL_BUILDING setups the OCL_ICD_VENDORS path to point to the pocl in
@@ -162,11 +158,11 @@ built version. It should be executed in the build root, typically::
 
   . ../tools/scripts/devel-envs.sh
 
-Target and Host CPU Architectures for 'basic' and 'pthread' Devices
+Target and Host CPU Architectures for CPU Devices
 -------------------------------------------------------------------
 
 By default, pocl build system compiles the kernel libraries for
-the host CPU architecture, to be used by 'basic' and 'pthread' devices.
+the host CPU architecture, to be used by CPU devices ('cpu' and 'cpu-minimal').
 
 LLVM is used to detect the CPU variant to be used as target. This 
 can be overridden by passing -DLLC_HOST_CPU=... to CMake. See the
@@ -175,14 +171,13 @@ documentation for LLC_HOST_CPU build option.
 Cross-compilation where 'build' is different from 'host' has not been
 tested.
 Cross-compilation where 'host' is a different architecture from 'target'
-has not been tested for 'basic' and 'pthread' devices. 
+has not been tested for CPU devices.
 
 Writing Documentation
 ---------------------
 
 The documentation is written using the `Sphinx documentation generator 
-<http://sphinx-doc.org/>`_ and
-the reStructuredText markup.
+<http://sphinx-doc.org/>`_ and the reStructuredText markup.
 
 This Sphinx documentation can be built by::
 
@@ -220,20 +215,18 @@ before submitting PRs. Thus, regressions on these suites should be detected
 early. The required testsuites can be enabled at buildtime with
 ``-DENABLE_TESTSUITES=tier1`` cmake option.
 
-Currently (2017-03-16) the following are included in the tier-1 test suites:
+Currently (2023-02-28) the following are included in the tier-1 test suites:
 
 * The standard test suite of pocl.
-* AMD SDK 3.0 test suite
 * PyOpenCL test suite
 * piglit test suite
-* conformance_suite_micro test suite
-* CLBlast tests (excluding the longest running ones)
-* HSA test suite (uses the LLVM 3.7 with an HSAIL backend and targets an AMD Kaveri GPU)
-* TCE short smoke test suite (against the latest TCE open source release)
+* conformance_suite_micro_main test suite
+* SHOC test suite
+* CHIP-SPV test suite
 
 Please note that not necessarily all the tests currently pass in the suites,
 we just ensure the currently passing ones do not regress with new
-commits (expected failing ones are marked as XFAILs or skipped).
+commits (expected failing ones are disabled or skipped).
 The primary test platform is x86-64.
 
 The latest LLVM release is given priority when testing, and we cannot
@@ -249,10 +242,6 @@ frequent "smoke testing" (under 5 minutes per typical run preferred).
 If your favourite project is already under 'example', but not listed as a tier-1
 test suite, please update its status so that 'make check' passes with the current
 HEAD of pocl and let us know, and we do our best to add it.
-
-Naturally this policy/support promise concerns only the lead developers
-(the CPC group). Any community involvement to provide a wider support/maintenance
-level will be heartily welcomed.
 
 .. _releasing:
 

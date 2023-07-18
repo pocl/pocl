@@ -65,20 +65,25 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    LABELS "internal;cuda"
+    # devices which support SPIR
+    LABELS "internal;cuda;level0"
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
 set_property(TEST "examples/example1_dot_product"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")
+  APPEND PROPERTY LABELS "hsa;hsa-native;vulkan")
 
+if (ENABLE_TCE)
+  set_property(TEST "examples/example1_dot_product"
+    APPEND PROPERTY LABELS "tce;almaif")
+endif()
 
 add_test(NAME "examples/example1_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/example1.bin####${CMAKE_CURRENT_SOURCE_DIR}/example1.cl"
-            "-DCMD2=${CMAKE_BINARY_DIR}/examples/example1/example1####b####${CMAKE_BINARY_DIR}/example1.bin"
-            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
+            "-DCMD2=${CMAKE_COMMAND}####-E####rm####-rf####${CMAKE_BINARY_DIR}/Testing/Cache"
+            "-DCMD3=${CMAKE_BINARY_DIR}/examples/example1/example1####b####${CMAKE_BINARY_DIR}/example1.bin"
+            "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
 set_tests_properties( "examples/example1_poclbin"
@@ -86,6 +91,6 @@ set_tests_properties( "examples/example1_poclbin"
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    ENVIRONMENT "POCL_CACHE_DIR=./Testing/Temporary"
-    LABELS "poclbin;internal"
+    ENVIRONMENT "POCL_KERNEL_CACHE=0"
+    LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")

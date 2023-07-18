@@ -1,0 +1,333 @@
+===========================
+Fixed-Function Accelerators
+===========================
+
+The ``almaif`` driver can be used for easy integration of custom fixed-function
+accelerators through a standardized hardware interface and a standardized
+procedure for enqueuing commands. More information about the interface can
+be found from the publications at the end of this page.
+
+
+Interface
+---------
+
+The control register interface for the fixed-function accelerators is quite
+simple. The address space of the device is split into four regions. The sizes
+and starting addresses of the regions are advertised in the control region
+by the accelerator.
+
++-------------+--------------------+
+| High bits   | Address Space      |
+|             |                    |
++=============+====================+
+| 00          | Control registers  |
++-------------+--------------------+
+| 01          | Instruction memory |
++-------------+--------------------+
+| 10          | Data memory        |
++-------------+--------------------+
+| 11          | Parameter memory   |
++-------------+--------------------+
+
+The control registers are also used to control the
+execution of the accelerator:
+
+.. list-table::
+  :widths: 20 25 55
+  :header-rows: 1
+
+  * - Offset
+    - Name
+    - Description
+  * - 0x000
+    - STATUS
+    - Status of the accelerator. Bit 0 is high when the execution is stalled
+      due to any reason, bit 1 is high when the external stall signal is active,
+      and bit 2 is high when the accelerator reset is active.
+  * - 0x200
+    - COMMAND
+    - Command register to control execution. Writing 1 to this register resets
+      the accelerator, writing 2 lifts reset and external stall, and writing 4
+      enables the external stall signal, pausing execution.
+  * - 0x300
+    - DEVICE_CLASS
+    - Device class (vendor ID) of the accelerator. Currently unused by the
+      driver.
+  * - 0x304
+    - DEVICE_ID
+    - Device ID of the accelerator. Currently unused by the driver.
+  * - 0x308
+    - INTERFACE_TYPE
+    - Version number of the interface. This describes interface
+      version 3.
+  * - 0x30C
+    - CORE_COUNT
+    - Core count of the accelerator. Multicore devices are currently not
+      supported.
+  * - 0x310
+    - CTRL_SIZE
+    - Size of control memory (this register space) in bytes.
+      Must be at least 1024.
+  * - 0x314
+    - IMEM_SIZE
+    - Size of the instruction memory in bytes
+  * - 0x318
+    - IMEM_STARTING_ADDRESS (64b)
+    - Starting address of the instruction memory
+  * - 0x320
+    - CQMEM_SIZE (64b)
+    - Size of the command queue memory in bytes. The cq region includes
+      a ring buffer of 64B packets and the 64B queue header. Therefore
+      the CQMEM_SIZE is (queue_length + 1) * 64.
+  * - 0x328
+    - CQMEM_STARTING_ADDRESS (64b)
+    - Starting address of the command queue memory
+  * - 0x330
+    - BUFFERMEM_SIZE
+    - Size of the data memory reserved for on-chip buffers.
+  * - 0x338
+    - BUFFERMEM_STARTING_ADDRESS
+    - Starting address of the buffer memory.
+  * - 0x340
+    - FEATURE_FLAGS (64b)
+    - Bitmap of various features.
+
+      Bit 0: HAS_MASTER_INTERFACE. If set to 1, the accelerator can access outside
+      of its AlmaIF address space with a master interface. This also means that the
+      above X_STARTING_ADDRESS values are absolute values. Also, any pointers to data buffers,
+      completion signals etc. are given to the accelerator as absolute addresses and
+      the accelerator needs to decode the address to determine whether the pointer
+      points to its own buffermem region or external devices or memories.
+      If set to 0, the data buffers, completion signals etc. are given as pointers
+      relative to the beginning of the buffer mem region, and the device is assumed
+      to not being able to access external devices or memories.
+
+      Bits: 1-63: Reserved, should be set to 0
+
+The other three regions are used for the following:
+The instruction memory can be used to configure the accelerator. PoCL looks for
+<device_name>.img-binary file and if it exists, writes it to the region at the initialization time.
+In case of compiled kernels, PoCL will overwrite this region with the new program.
+The command queue memory is used to store an AQL Queue, as defined by the `HSA Runtime Programmer’s
+Reference Manual <http://www.hsafoundation.com/standards/>`_, the write and read
+indexes of which are exposed in a 64B header at the beginnig of the region.
+The size of the queue is such that it uses all of the region remaining after the header.
+Finally, the buffer memory is used to store data and argument buffers as well as
+completion signals for the kernels.
+
+As a practical example, enqueuing a kernel dispatch packet proceeds as follows:
+
+  - The driver allocates and populates the OpenCL buffers and the argument
+    buffer for the kernel, as well as space for a 32-bit completion signal.
+  - The driver writes the kernel packet to the device.
+    Its position depends on the value of the write index. The completion signal
+    address as well as the argument buffer address and pointers to buffer
+    arguments are given as physical addresses in the accelerator's address
+    space. The kernel object simply corresponds to the kernel IDs shown in the
+    table below.
+  - The driver sets the packet header and increments the queue write index.
+  - The device executes the kernel and writes a 1 in case of a success or a 2
+    in case of a failure to the completion signal address, if it is not 0.
+  - The driver sees the completion signal change, and can consider the command
+    completed.
+
+.. _almaif_usage:
+
+Usage
+-----
+
+To enable this driver, simply add ``-DENABLE_ALMAIF_DEVICE=1`` to the cmake
+arguments. On small FPGA SoCs and other relatively low performance hosts, you
+may wish to follow the instructions in :ref:`pocl-without-llvm`.
+(Recommended for Zynq-7020 SoC).
+
+The fixed-function accelerators need to be told what kernel to execute. For
+this, the almaif driver has a list of builtin kernels that can be referred to
+in the ``clCreateProgramWithBuiltInKernels`` call:
+
+.. list-table::
+  :widths: 20 20 60
+  :header-rows: 1
+
+  * - Kernel name
+    - Kernel ID
+    - Function
+  * - pocl.copy.i8
+    - 0
+    - Copies from argument 0 to argument 1 as many bytes as there are work items
+  * - pocl.add.i32
+    - 1
+    - 32-bit element-wise addition on arrays pointed to by arguments 0 and 1,
+      stored in an array pointed to by argument 3
+  * - pocl.mul.i32
+    - 2
+    - As pocl.add.i32, but with 32-bit multiplication
+  * - Online compiler available.
+    - 65535
+    - Special flag to communicate that device supports compiled kernels.
+
+The full list of currently supported built-in kernels is maintained in
+lib/CL/devices/builtin_kernels.{cc,hh}
+
+To execute tests in examples/accel that generate both TTA and High-level synthesis
+(HLS) based accelerators for PYNQ-Z1 device you need to enable few variables
+in the CMAKE configuration.
+First, set CMAKE variable VIVADO_PATH to point to the directory with the
+'vivado' executable. (E.g. at Xilinx/Vivado/2021.2/bin/)
+
+1. If you have the `OpenASIP <http://openasip.org/>`_/TCEMC toolset installed,
+you can set ENABLE_TCE to 1 to enable
+RTL and firmware generation of various OpenASIP TTA cores with different memory configurations.
+Then, you can simulate them with ttasim instruction set simulator by running
+``LLVM=1 ../tools/scripts/run_almaif_tests`` from the build directory.
+
+2. If you have Vitis HLS installed, set VITIS_HLS_PATH to point to the directory
+with the vitis_hls executable.
+This enables the generation of fixed-function accelerator from C description.
+
+The bitstreams themselves are not automatically built with PoCL build process, but rather
+with a separate 'make bitstreams' command. This generates the bitstreams to
+build/examples/accel/bitstreams and build/examples/accel/hls/bitstreams directories. 
+Once bitstreams have been built, build PoCL on the PYNQ-Z1 device.
+(You don't need to set ENABLE_TCE or VIVADO/VITIS_HLS_PATH).
+Copy the bistreams directories (and in case of TTA, also the firmware_imgs
+directory and example0_*.poclbins)
+to their correct PoCL build directories on PYNQ.
+Finally, run ``../tools/scripts/run_almaif_tests`` to run the test program
+on the FPGA device.
+
+
+
+
+Driver arguments are used to tell pocl where the accelerator is and what
+functions it supports. To run examples manually, after programming the
+FPGA, execute::
+
+  POCL_DEVICES=almaif POCL_ALMAIF0_PARAMETERS=0x40000000,<device_name>,1,2 ./accel_example
+
+The environment variables define an accelerator with base physical address of
+0x4000_0000 that can execute pocl.add.i32 and pocl.mul.i32. If the device requires
+firmware to be loaded in, pocl will attempt to load it from <device_name>.img.
+When running the example, verify that the address given in the parameter matches
+the base address of the accelerator.
+
+
+Note that as the driver requires write access to ``/dev/mem`` for memory
+mapping, you may need to execute the application with elevated privileges. In
+this case, note that ``sudo`` by default overrides your environment variables.
+You can either assign them in the same command, or use ``sudo`` with the
+``--preserve-env`` switch.
+
+
+
+The driver supports instruction-set simulation for TTA devices. To enable it,
+set the base address to 0xB, and set the <device_name> to point to a TTA
+device's .adf-file and compiled firmware binary (.tpef-file). PoCL will then
+start up the simulation with <device_name>.adf and, if it exists, <device_name>.tpef.
+
+
+
+There's an alternative way to emulate the accelerator in software by
+setting the base physical address to 0xE. This directs the driver to instead
+use a software emulating function from almaif/EmulationDevice.cc.
+No changes to the source OpenCL host program (e.g. accel_example.cpp)
+when switching between emulation, instruction-set simulation or FPGA execution.
+
+
+Standalone mode
+^^^^^^^^^^^^^^^
+
+Almaif driver's OpenASIP backend supports a standalone mode meant for executing
+kernels without the host runtime. The standalone mode generates a C program
+that contains the input data and pre-initialized command structures to run
+a single kernel with either ttasim or RTL simulation. The mode is enabled
+with an environment variable POCL_ALMAIF_STANDALONE=1. The mode generates
+helper scripts to the working directory, while outputting the standalone C program
+to the kernel CACHE directory.
+
+Example usage of the mode can be found in examples/accel/CMakelists.txt, which
+generates standalone tests using both ttasim and RTL simulator (ghdl) to run the
+example0 kernel on various TTA configurations.
+
+Wrapping new hardware component
+-------------------------------
+
+This section will walk through the addition of new implementation for an existing
+built-in kernel.
+The component can be any hardware component, as long as it supports the AlmaIF
+interface specification described above.
+The following section presents an example method of generating the accelerator
+with HLS. However, other methods of generating the accelerator exists, the only
+requirement is that it implements the AlmaIF specification as described above.
+
+
+High-level synthesis
+^^^^^^^^^^^^^^^^^^^^
+Template for HLS-accelerator is in examples/accel/hls/poclAccel.cpp-file.
+It can be generated with 'make hls_vecadd_bs', which generates the biststream
+file to examples/accel/hls/bitstreams/. To enable the target, you need to add
+VITIS_HLS_PATH and VIVADO_PATH as CMAKE variables that point to the directory
+containing the 'vitis_hls' and 'vivado' binaries.
+
+The build process of HLS accelerator consists of two parts:
+
+1. Generating accelerator RTL from C++ input (With Vitis HLS using script
+generate_hls_core.tcl)
+
+2. Generating block design with the accelerator and block memory for AlmaIF
+regions (With Vivado using script generate_hls_project.tcl)
+
+To run the vector addition on HLS generated core, the bitstream needs to
+be copied to PYNQ-Z1.
+The generate_hls_project.tcl file sets the base address of the accelerator
+to a physical address 0x40000000. This base address is given to PoCL through
+an environment variable::
+
+    export POCL_DEVICES=almaif
+    export POCL_ALMAIF0_PARAMETERS="0x40000000,dummy,1,2"
+
+The bitstream can be loaded on the FPGA with various ways. PYNQ-Z1 image
+includes a python library to do it, which can be used with a following one-liner::
+
+    sudo -E python -c "from pynq import Overlay;Overlay('examples/accel/hls/bitstreams/vecadd_1.bit')"
+
+After that, it's possible to run the examples/accel/accel_example program.
+
+Using this work
+---------------
+
+If you are utilizing, further developing or comparing to the AlmaIF driver of PoCL
+in your academic work, please cite the following publication::
+
+    @ARTICLE{leppanen2023,
+      TITLE = {Efficient {OpenCL} system integration of non-blocking {FPGA} accelerators},
+      JOURNAL = {Microprocessors and Microsystems},
+      VOLUME = {97},
+      PAGES = {104772},
+      YEAR = {2023},
+      ISSN = {0141-9331},
+      DOI = {https://doi.org/10.1016/j.micpro.2023.104772},
+      AUTHOR = {Topi Leppänen and Atro Lotvonen and Panagiotis Mousouliotis and Joonas Multanen and Georgios Keramidas and Pekka Jääskeläinen},
+    }
+
+The other relevant publications::
+
+    @ARTICLE{leppanen2022,
+      AUTHOR={Leppänen, Topi and Lotvonen, Atro and Jääskeläinen, Pekka},
+      TITLE={Cross-vendor programming abstraction for diverse heterogeneous platforms},
+      JOURNAL={Frontiers in Computer Science},
+      VOLUME={4},
+      YEAR={2022},
+      URL={https://www.frontiersin.org/articles/10.3389/fcomp.2022.945652},
+      DOI={10.3389/fcomp.2022.945652},
+      ISSN={2624-9898},
+    }
+
+    @INPROCEEDINGS{leppanen2021,
+      AUTHOR={Leppänen, Topi and Mousouliotis, Panagiotis and Keramidas, Georgios and Multanen, Joonas and Jääskeläinen, Pekka},
+      BOOKTITLE={2021 IEEE Nordic Circuits and Systems Conference (NorCAS)},
+      TITLE={Unified OpenCL Integration Methodology for FPGA Designs},
+      YEAR={2021},
+      PAGES={1-7},
+      DOI={10.1109/NorCAS53631.2021.9599861}
+    }

@@ -54,12 +54,13 @@ main (void)
   clSetContentSizeBufferPoCL_fn setContentSizeBuffer
       = (clSetContentSizeBufferPoCL_fn)setContentSizeBuffer_ptr;
 
-  char devname[512];
-  err = clGetDeviceInfo (device, CL_DEVICE_NAME, 512, devname, NULL);
+  cl_device_type devtype;
+  err = clGetDeviceInfo (device, CL_DEVICE_TYPE, sizeof(devtype),
+                         &devtype, NULL);
   CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
-  if (strstr (devname, "basic") == NULL && strstr (devname, "pthread") == NULL)
+  if (devtype != CL_DEVICE_TYPE_CPU)
     {
-      printf ("Device is not basic/pthread -> skipping test\n");
+      printf ("Device is not CPU -> skipping test\n");
       return 77;
     }
 

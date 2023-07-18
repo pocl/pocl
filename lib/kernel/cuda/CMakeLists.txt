@@ -33,12 +33,14 @@ endforeach()
 
 foreach(FILE
   async_work_group_copy.cl async_work_group_strided_copy.cl
-  atomic_add.ll atomic_and.ll atomic_cmpxchg.ll atomic_dec.ll atomic_inc.ll
-  atomic_min.ll atomic_max.ll atomic_or.ll atomic_sub.ll atomic_xchg.ll
-  atomic_xor.ll barrier.ll spir_wrapper64.ll
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
   get_global_offset.c
+  native_cos.cl native_sin.cl native_tan.cl
+  native_log.cl native_log2.cl native_log10.cl
+  native_exp.cl native_exp10.cl
+  native_powr.cl
+  native_divide.cl native_recip.cl
   rsqrt.cl
   printf.c
   wait_group_events.cl
@@ -47,7 +49,24 @@ foreach(FILE
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
-list(APPEND KERNEL_SOURCES "cuda/nvvm_functions.ll")
+foreach(FILE
+  atomic_add.ll atomic_and.ll atomic_cmpxchg.ll atomic_dec.ll atomic_inc.ll
+  atomic_min.ll atomic_max.ll atomic_or.ll atomic_sub.ll atomic_xchg.ll
+  atomic_xor.ll barrier.ll nvvm_functions.ll)
+
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+
+  if(LLVM_OPAQUE_POINTERS)
+    generate_opaque_ptr_ll("cuda/${FILE}" "cuda/opaque" OPAQ_PTR_FILE)
+    list(APPEND KERNEL_SOURCES "${OPAQ_PTR_FILE}")
+  else()
+    list(APPEND KERNEL_SOURCES "cuda/${FILE}")
+  endif()
+
+endforeach()
+
+generate_cuda_spir_wrapper(SPIR_WRAPPER_FILE)
+list(APPEND KERNEL_SOURCES "${SPIR_WRAPPER_FILE}")
 
 # Select either NVPTX or NVPTX64
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
@@ -57,7 +76,7 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 
-set(CLANG_FLAGS "-ffreestanding" "-emit-llvm" "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
+set(CLANG_FLAGS "-ffreestanding" "-emit-llvm" "-target" "${LLVM_TARGET}")
 
 # Enable all extensions
 set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${CUDA_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${CUDA_DEVICE_CL_VERSION}" "-Xclang" "-cl-ext=all" ${KERNEL_CL_FLAGS})

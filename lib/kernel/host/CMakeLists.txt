@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2023 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,6 @@ as_type.cl
 async_work_group_copy.cl
 async_work_group_strided_copy.cl
 atomics.cl
-addrspace_operators.ll
 barrier.ll
 bitselect.cl
 clamp.cl
@@ -47,6 +46,8 @@ dot.cl
 fast_distance.cl
 fast_length.cl
 fast_normalize.cl
+fmax_common.cl
+fmin_common.cl
 fract.cl
 get_global_id.c
 get_linear_id.c
@@ -241,11 +242,72 @@ sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
 
-if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
-  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper32.ll")
-else()
-  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper64.ll")
+if(HOST_CPU_ENABLE_CL_KHR_FP16)
+  list(REMOVE_ITEM SOURCES_WITH_SLEEF
+    libclc-pocl/cos.cl
+    libclc-pocl/sin.cl
+    libclc-pocl/log2.cl
+    libclc-pocl/pow.cl
+    libclc-pocl/fmod.cl
+    sleef-pocl/scalars.cl
+    sleef-pocl/ceil.cl
+    sleef-pocl/copysign.cl
+    sleef-pocl/exp2.cl
+    sleef-pocl/exp.cl
+    sleef-pocl/fabs.cl
+    sleef-pocl/floor.cl
+    sleef-pocl/fma.cl
+    sleef-pocl/fmax.cl
+    sleef-pocl/fmin.cl
+    sleef-pocl/log10.cl
+    sleef-pocl/log.cl
+    sleef-pocl/ldexp.cl
+    sleef-pocl/rint.cl
+    sleef-pocl/round.cl
+    sleef-pocl/sqrt.cl
+    sleef-pocl/trunc.cl
+    )
+
+  list(APPEND SOURCES_WITH_SLEEF
+    fabs.cl
+    fma.cl
+    fmod.cl
+    copysign.cl
+    pow.cl
+    ceil.cl
+    cos.cl
+    exp.cl
+    exp2.cl
+    floor.cl
+    fmax.cl
+    fmin.cl
+    log10.cl
+    log2.cl
+    log.cl
+    ldexp.cl
+    rint.cl
+    round.cl
+    sin.cl
+    sqrt.cl
+    trunc.cl)
 endif()
+
+
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
+  list(APPEND SOURCES_WITH_SLEEF subgroups.c subgroups.cl)
+endif()
+
+
+include("bitcode_rules")
+
+foreach(FILE "host/addrspace_operators.ll" "host/addrspace_operators_spir.ll")
+  if(LLVM_OPAQUE_POINTERS)
+    generate_opaque_ptr_ll("${FILE}" "opaque" OPAQ_PTR_FILE)
+    list(APPEND SOURCES_WITH_SLEEF "${OPAQ_PTR_FILE}")
+  else()
+    list(APPEND SOURCES_WITH_SLEEF "${FILE}")
+  endif()
+endforeach()
 
 if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
@@ -277,7 +339,6 @@ endforeach()
 
 #=============================================================================
 
-include("bitcode_rules")
 
 if(ENABLE_SLEEF)
   set(KERNEL_SOURCES ${SOURCES_WITH_SLEEF})
@@ -306,9 +367,7 @@ set(KERNEL_CL_FLAGS
 
 # https://bugzilla.mozilla.org/show_bug.cgi?id=1657502
 # this *likely* shouldn't be a problem for PoCL, but needs testing
-if(LLVM_VERSION_MAJOR GREATER 10)
-  list(APPEND KERNEL_CL_FLAGS "-Wno-psabi")
-endif()
+list(APPEND KERNEL_CL_FLAGS "-Wno-psabi")
 
 set(HOST_DEVICE_VERSION_3DIGIT "${HOST_DEVICE_CL_VERSION_MAJOR}${HOST_DEVICE_CL_VERSION_MINOR}0")
 
@@ -378,7 +437,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   compile_sleef_c_to_bc("c" "sleef/libm/sleefsp.c"
                         "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
 
-  if(ENABLE_FP64)
+  if(HOST_CPU_ENABLE_CL_KHR_FP64)
     compile_sleef_c_to_bc("c" "sleef/libm/sleefdp.c"
                           "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
   endif()
@@ -392,7 +451,7 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   set(STR "#define SLEEF_ENABLED\n")
   file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
-  if(ENABLE_FP64)
+  if(HOST_CPU_ENABLE_CL_KHR_FP64)
     set(STR "#define SLEEF_DOUBLE_AVAILABLE\n")
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
@@ -413,7 +472,25 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
 
-  foreach(VECSIZE "128" "256" "512")
+  # the "runtime/clGetKernelArgInfo" requires working images with spir,
+  # that only works if we're using the new (generated) wrappers
+  set(HAVE_WORKING_IMAGES_WITH_SPIR OFF CACHE BOOL "image functions work with SPIR" FORCE)
+  if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
+    set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
+  else()
+    if(X86 OR (ARM AND LLVM_VERSION_MAJOR GREATER 11))
+      # for X86-64 & ARM, use the generated SPIR wrapper,
+      # based on CPU's largest supported vector size
+      set(SPIR_WRAPPER_FILE "")
+    else()
+      # for older LLVMs or other CPUs, use a generic
+      # 64bit wrapper, this doesn't support vectors and misses
+      # some functions, but otherwise should mostly work
+      set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")
+    endif()
+  endif()
+
+  foreach(VECSIZE "512" "256" "128")
 
     set(EXTRA_FLAGS "-DDORENAME;-DVEC${VECSIZE}")
     custom_try_compile_any(1 "${CLANG}" "c" "${TEST_SRC}" RES
@@ -431,6 +508,15 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
       set(STR "#define SLEEF_VEC_${VECSIZE}_AVAILABLE\n")
       file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
 
+      if(ENABLE_SPIR AND NOT SPIR_WRAPPER_FILE)
+        if (ARM)
+          generate_cpu_spir_wrapper(cpu_arm ${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        endif()
+        if(X86)
+          generate_cpu_spir_wrapper(cpu_x86 ${VARIANT} ${VECSIZE} SPIR_WRAPPER_FILE)
+        endif()
+        set(HAVE_WORKING_IMAGES_WITH_SPIR ON CACHE BOOL "image functions work with SPIR" FORCE)
+      endif()
     else()
       message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")
     endif()
@@ -446,6 +532,10 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     endif()
 
   endforeach()
+
+  if(ENABLE_SPIR)
+    compile_ll_to_bc("${SPIR_WRAPPER_FILE}" "${VARIANT}" BC_FILE_LIST)
+  endif()
 
   file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}")
   set(SLEEF_BC "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/sleef.bc")
@@ -469,7 +559,7 @@ endfunction()
 foreach(CPU_VARIANT IN LISTS KERNELLIB_HOST_CPU_VARIANTS)
 
 if(CPU_VARIANT MATCHES "native")
-  set(VARIANT "${LLC_HOST_CPU}")
+  set(VARIANT "${SELECTED_HOST_CPU}")
 else()
   set(VARIANT "${CPU_VARIANT}")
 endif()
@@ -484,7 +574,7 @@ endif()
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
 set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
-                "-emit-llvm" "-ffp-contract=off")
+                "-emit-llvm" "-ffp-contract=off" "-DPRINTF_IMMEDIATE_FLUSH")
 
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 

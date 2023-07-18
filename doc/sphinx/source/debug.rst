@@ -8,11 +8,21 @@ differing in debugging coverage and impact on speed.
 This document chapter describes means for debugging OpenCL kernel code by using
 the CPU drivers of PoCL.
 
-"Offline" debugging
---------------------
+Basic printf debugging
+----------------------
 
-Offline debugging ca be done by setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env
-var to 1. This causes the intermediate output files from the kernel
+The CPU drivers of PoCL flush the OpenCL 1.2 printf() API output immediately
+at the end of the printf call. This is in contrast to some other drivers which
+flush the output only at the end of the kernel command's execution, making
+debugging crashing (segfaulting) kernels difficult since they never finish
+the command, thus any debug printouts won't get printed out.
+
+Kernel compiler debugging
+-------------------------
+
+Inspecting the kernel compiler intermediate results can be done by
+setting ``POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES`` env var to 1.
+This causes the intermediate output files from the kernel
 compilation process to be left in PoCL's disk cache for inspection.
 By default these files are deleted, and only the final executable output is left
 in the cache.
@@ -81,8 +91,8 @@ Setup:
     This will cause all kernels to compile with debuginfo.
   * ``export POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES=1``
     This will leave the source files in PoCL's cache.
-  * Optional: ``export POCL_MAX_PTHREAD_COUNT=1``
-    This limits the pthread driver to a single worker thread.
+  * Optional: ``export POCL_CPU_MAX_CU_COUNT=1``
+    This limits the cpu driver to a single worker thread.
   * Run your application with gdb, as usual.
 
 Example 1:
@@ -150,7 +160,7 @@ Example 2:
 
 Lets say we want to step the "dot_product" kernel from the previous example. Launch gdb::
 
-    POCL_MAX_PTHREAD_COUNT=1 gdb ./example
+    POCL_CPU_MAX_CU_COUNT=1 gdb ./example
 
 Make a breakpoint on the kernel name::
 
@@ -198,7 +208,7 @@ Downsides:
   * May report some leaks which are not ones (see below).
 
 Setup:
-  * Optional: build PoCL with ``-DCMAKE_BUILD_TYPE=Debug``
+  * Optional: build PoCL with ``-DENABLE_VALGRIND=ON -DCMAKE_BUILD_TYPE=Debug``
   * ``export POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable"``,
     or add these flags to the ``clBuildProgram`` call.
     This will cause all kernels to compile with debuginfo.
@@ -273,7 +283,7 @@ Downsides:
 Setup:
   * For example, to use the Address Sanitizer (ASan), build PoCL with these flags::
 
-       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug
+       -DENABLE_ASAN=1 -DENABLE_ICD=0 -DCMAKE_BUILD_TYPE=Debug -DENABLE_LOADABLE_DRIVERS=OFF
 
   * This will result in ``lib/CL/libOpenCL.so``. Rebuild your application
     with the correct ``-fsanitize=X`` flag and link it to ``lib/CL/libOpenCL.so``.

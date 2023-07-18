@@ -10,6 +10,7 @@
 
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
+#define CL_HPP_CL_1_2_DEFAULT_BUILD
 #include <CL/opencl.hpp>
 
 const char *SOURCE = R"RAW(
@@ -34,6 +35,11 @@ int main(int argc, char *argv[]) {
   cl::Device device = cl::Device::getDefault();
   cl::CommandQueue queue = cl::CommandQueue::getDefault();
   cl::Program program(SOURCE, true);
+
+  if (poclu_supports_extension(device.get(), "cl_khr_fp64") == 0) {
+    std::cout << "this test requires cl_khr_fp64, test SKIPPED\n";
+    return 77;
+  }
 
   // Create buffers on the device.
   cl::Buffer buffer_A(CL_MEM_READ_WRITE, sizeof(double) * n);

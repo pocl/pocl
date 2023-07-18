@@ -57,13 +57,14 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
 
     POCL_GOTO_ERROR_COND((image_desc == NULL), CL_INVALID_IMAGE_DESCRIPTOR);
 
-    if (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0) {
-      POCL_ABORT_UNIMPLEMENTED("clCreateImage with image_desc->num_mip_levels != 0"
-      " || image_desc->num_samples != 0 ");
-    }
+    POCL_GOTO_ERROR_ON (
+        (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0),
+        CL_INVALID_IMAGE_FORMAT_DESCRIPTOR,
+        "Unimplemented: clCreateImage with image_desc->num_mip_levels != 0"
+        " || image_desc->num_samples != 0 ");
 
     image_type = image_desc->image_type;
-    image_type_idx = opencl_image_type_to_index (image_type);
+    image_type_idx = pocl_opencl_image_type_to_index (image_type);
     POCL_GOTO_ERROR_ON ((image_type_idx < 0),
                         CL_INVALID_VALUE, "unknown image type\n");
 
@@ -210,17 +211,34 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
         /* Retain the buffer we're referencing */
         POname (clRetainMemObject) (b);
 
-        POCL_MSG_PRINT_MEMORY ("CREATED IMAGE: %p REF BUFFER: %p \n\n", mem,
-                               b);
+        POCL_MSG_PRINT_MEMORY ("Created Image:  %" PRId64
+                               " (%p), Refbuffer: %" PRId64 " (%p) \n\n",
+                               mem->id, mem, b->id, b);
       }
     else
       {
         POCL_GOTO_ERROR_COND ((image_desc->buffer != NULL),
                               CL_INVALID_OPERATION);
+        int host_ptr_is_svm = CL_FALSE;
+
+        if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
+          {
+            pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
+            if (item)
+              {
+                POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
+                                    "The provided host_ptr is SVM pointer, "
+                                    "but the allocated SVM size (%zu) is smaller "
+                                    "then requested size (%zu)",
+                                    item->size, size);
+                host_ptr_is_svm = CL_TRUE;
+              }
+          }
+
         mem = pocl_create_memobject (context, flags, size,
                                      image_desc->image_type,
                                      device_image_support,
-                                     host_ptr, &errcode);
+                                     host_ptr, host_ptr_is_svm, &errcode);
         if (mem == NULL)
           goto ERROR;
       }
@@ -266,8 +284,9 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     POCL_RETAIN_OBJECT (context);
 
     POCL_MSG_PRINT_MEMORY (
-        "Created Image %p, HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
-        mem, mem->mem_host_ptr, size, mem->image_row_pitch,
+        "Created Image %" PRId64
+        " (%p), HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
+        mem->id, mem, mem->mem_host_ptr, size, mem->image_row_pitch,
         mem->image_slice_pitch, (unsigned)flags);
 
     POCL_ATOMIC_INC (image_c);

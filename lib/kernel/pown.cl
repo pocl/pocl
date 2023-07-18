@@ -24,6 +24,11 @@
 
 #include "templates.h"
 
+#if !__has_builtin(__builtin_pownf16)
+#undef __IF_FP16
+#define __IF_FP16(X)
+#endif
+
 // Map to the right builtin
 #define __builtin_pownf __builtin_powif
 #define __builtin_pown  __builtin_powi

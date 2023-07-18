@@ -22,26 +22,25 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_shared.h"
 #include "pocl_util.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
-                    cl_bool blocking_copy,
-                    void *dst_ptr,
-                    const void *src_ptr,
-                    size_t size,
-                    cl_uint num_events_in_wait_list,
-                    const cl_event *event_wait_list,
-                    cl_event *event) CL_API_SUFFIX__VERSION_2_0
+cl_int
+pocl_svm_memcpy_common (cl_command_type command_type,
+                        cl_command_queue command_queue, cl_bool blocking_copy,
+                        void *dst_ptr, const void *src_ptr, size_t size,
+                        cl_uint num_events_in_wait_list,
+                        const cl_event *event_wait_list, cl_event *event)
 {
-  unsigned i;
   cl_int errcode;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  cl_context context = command_queue->context;
+
   POCL_RETURN_ERROR_ON (
-      (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
+      (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND((src_ptr == NULL), CL_INVALID_VALUE);
@@ -55,16 +54,15 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-
   const char *s = (const char *)src_ptr;
   char *d = (char *)dst_ptr;
   if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
     POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
 
   _cl_command_node *cmd = NULL;
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MEMCPY,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 0, NULL, NULL);
+  errcode = pocl_create_command (&cmd, command_queue, command_type, event,
+                                 num_events_in_wait_list, event_wait_list, 0,
+                                 NULL, NULL);
 
   if (errcode != CL_SUCCESS)
     {
@@ -82,6 +80,18 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
     return POname (clFinish) (command_queue);
   else
     return CL_SUCCESS;
+}
+
+CL_API_ENTRY cl_int CL_API_CALL
+POname (clEnqueueSVMMemcpy) (cl_command_queue command_queue, cl_bool blocking,
+                             void *dst_ptr, const void *src_ptr, size_t size,
+                             cl_uint num_events_in_wait_list,
+                             const cl_event *event_wait_list,
+                             cl_event *event) CL_API_SUFFIX__VERSION_2_0
+{
+  return pocl_svm_memcpy_common (
+      CL_COMMAND_SVM_MEMCPY, command_queue, blocking, dst_ptr, src_ptr, size,
+      num_events_in_wait_list, event_wait_list, event);
 }
 POsym(clEnqueueSVMMemcpy)
 

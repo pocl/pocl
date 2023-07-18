@@ -31,10 +31,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
-#include "IsolateRegions.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "IsolateRegions.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
 
@@ -52,6 +53,8 @@ char IsolateRegions::ID = 0;
 
 void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<pocl::VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 /* Ensure Single-Entry Single-Exit Regions are isolated from the
@@ -99,6 +102,10 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
 
   llvm::BasicBlock *exit = R->getExit();
   if (exit == NULL) return false;
+  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
+          pocl::WorkitemHandlerChooser::POCL_WIH_CBS &&
+      Workgroup::hasWorkgroupBarriers(*exit->getParent()))
+    return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
   std::cerr << "### processing region:" << std::endl;

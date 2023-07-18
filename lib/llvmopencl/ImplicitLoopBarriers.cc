@@ -34,10 +34,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Dominators.h"
 
-#include "ImplicitLoopBarriers.h"
+#include "llvm/Analysis/LoopInfo.h"
+
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "ImplicitLoopBarriers.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 
 #include "pocl_runtime_config.h"
 
@@ -59,10 +62,16 @@ void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addRequired<VariableUniformityAnalysis>();
   AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
+    return false;
+
+  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
+      WorkitemHandlerChooser::POCL_WIH_CBS)
     return false;
 
   if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&

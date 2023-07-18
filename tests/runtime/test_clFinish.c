@@ -40,7 +40,6 @@ int main()
   cl_platform_id platforms[1];
   cl_uint nplatforms;
   cl_device_id devices[1]; // + 1 for duplicate test
-  cl_uint num_devices;
   cl_program program = NULL;
   cl_kernel kernelA = NULL;
   cl_kernel kernelB = NULL;
@@ -70,13 +69,11 @@ int main()
   CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
   if (!nplatforms)
     return EXIT_FAILURE;
-  
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1,
-                       devices, &num_devices);  
+
+  err = clGetDeviceIDs (platforms[0], CL_DEVICE_TYPE_ALL, 1, devices, NULL);
   CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
-  cl_context context = clCreateContext(NULL, num_devices, devices, NULL, 
-                                       NULL, &err);
+  cl_context context = clCreateContext (NULL, 1, devices, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   err = clGetContextInfo(context, CL_CONTEXT_DEVICES,
@@ -122,7 +119,7 @@ int main()
                                        &kernel_size, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram (program, num_devices, devices, NULL, NULL, NULL);
+  err = clBuildProgram (program, 1, devices, NULL, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   kernelA = clCreateKernel (program, "test_kernel", NULL); 

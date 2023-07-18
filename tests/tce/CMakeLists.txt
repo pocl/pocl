@@ -35,12 +35,12 @@ add_compile_options(${TCE_CXXFLAGS})
 # than disabling -pedantic (AFAICT, with GCC 4/5)
 add_compile_options("-Wno-pedantic")
 
-add_subdirectory("ttasim")
+add_subdirectory("printf")
+
+add_subdirectory("autolocal")
+
 add_subdirectory("fp16")
 if(ENABLE_HOST_CPU_DEVICES)
   add_subdirectory("multi_AS_copy")
 endif()
 
-if(ENABLE_TCEMC)
-  add_subdirectory("tcemc")
-endif()

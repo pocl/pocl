@@ -1,3 +1,15 @@
+#if CLANG_MAJOR < 17
+#define LLVM_OLDER_THAN_17_0 1
+#endif
+
+#if CLANG_MAJOR < 16
+#define LLVM_OLDER_THAN_16_0 1
+#endif
+
+#if CLANG_MAJOR < 15
+#define LLVM_OLDER_THAN_15_0 1
+#endif
+
 #if CLANG_MAJOR < 14
 #define LLVM_OLDER_THAN_14_0 1
 #endif
@@ -12,24 +24,4 @@
 
 #if CLANG_MAJOR < 11
 #define LLVM_OLDER_THAN_11_0 1
-#endif
-
-#if CLANG_MAJOR < 10
-#define LLVM_OLDER_THAN_10_0 1
-#endif
-
-#if CLANG_MAJOR < 9
-#define LLVM_OLDER_THAN_9_0 1
-#endif
-
-#if CLANG_MAJOR < 8
-#define LLVM_OLDER_THAN_8_0 1
-#endif
-
-#if CLANG_MAJOR < 7
-#define LLVM_OLDER_THAN_7_0 1
-#endif
-
-#if CLANG_MAJOR < 6
-#define LLVM_OLDER_THAN_6_0 1
 #endif

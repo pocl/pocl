@@ -34,10 +34,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instructions.h"
 
-#include "BarrierTailReplication.h"
 #include "Barrier.h"
-#include "Workgroup.h"
+#include "BarrierTailReplication.h"
 #include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
 
@@ -65,6 +66,8 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addPreserved<LoopInfoWrapperPass>();
 
   AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
 bool
@@ -72,7 +75,9 @@ BarrierTailReplication::runOnFunction(Function &F)
 {
   if (!Workgroup::isKernelToProcess(F))
     return false;
-  
+  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
+      WorkitemHandlerChooser::POCL_WIH_CBS)
+    return false;
 #ifdef DEBUG_BARRIER_REPL
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif
@@ -83,12 +88,6 @@ BarrierTailReplication::runOnFunction(Function &F)
   LI = &getAnalysis<LoopInfoWrapperPass>();
 
   bool changed = ProcessFunction(F);
-
-
-  // In LLVM 7+, it is replaced by some assert(verify()) in LLVM itself
-#ifdef LLVM_OLDER_THAN_7_0
-  DT->verifyDomTree();
-#endif
 
   LI->verifyAnalysis();
   /* The created tails might contain PHI nodes with operands 
@@ -352,7 +351,11 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
          i2 != e2; ++i2) {
       Instruction *i = i2->clone();
       reference_map.insert(std::make_pair(&*i2, i));
+#ifdef LLVM_OLDER_THAN_16_0
       new_b->getInstList().push_back(i);
+#else
+      i->insertInto(new_b, new_b->end());
+#endif
     }
 
     // Add predicates to PHINodes of basic blocks the replicated

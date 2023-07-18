@@ -50,6 +50,9 @@ map_channels (uint4 color, int order)
       return color.yzwx;
     case CLK_BGRA:
       return color.zyxw;
+    case CLK_RA:
+      return color.xwyz;
+    case CLK_RG:
     case CLK_RGBA:
     default:
       return color;
@@ -97,6 +100,47 @@ get_float4_pixel (void *data, size_t base_index, int type)
       return convert_float4 (((ushort4 *)data)[base_index]) * one_65535th;
     }
   return (float4) (123.0f);
+}
+
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
+_CL_READONLY static float2
+get_float2_pixel (void *data, size_t base_index, int type)
+{
+  if (type == CLK_FLOAT)
+    return ((float2 *)data)[base_index];
+  if (type == CLK_HALF_FLOAT)
+    {
+      return vloada_half2(base_index, data);
+    }
+  const float2 one_127th = (float2) (1.0f / 127.0f);
+  const float2 one_32767th = (float2) (1.0f / 32767.0f);
+  const float2 one_255th = ((float2) (1.0f / (float)UCHAR_MAX));
+  const float2 one_65535th = ((float2) (1.0f / (float)USHRT_MAX));
+  if (type == CLK_SNORM_INT8)
+    {
+      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
+      int2 color = convert_int2 (((char2 *)data)[base_index]);
+      float2 colorf = convert_float2 (color);
+      return max ((float2) (-1.0f), (one_127th * colorf));
+    }
+  if (type == CLK_SNORM_INT16)
+    {
+      int2 color = convert_int2 (((short2 *)data)[base_index]);
+      float2 colorf = convert_float2 (color);
+      return max ((float2) (-1.0f), (one_32767th * colorf));
+    }
+  if (type == CLK_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float2 (((uchar2 *)data)[base_index]) * one_255th;
+    }
+  if (type == CLK_UNORM_INT16)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float2 (((ushort2 *)data)[base_index]) * one_65535th;
+    }
+  return (float2) (123.0f);
 }
 
 /* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
@@ -174,6 +218,18 @@ pocl_read_pixel_fast_ui (size_t base_index, int order, int elem_size,
       return color;
     }
 
+  if (order == CLK_RG)
+    {
+      color = (uint4)0;
+      if (elem_size == 1)
+        color.xy = convert_uint2(((uchar2 *)data)[base_index]);
+      else if (elem_size == 2)
+        color.xy = convert_uint2(((ushort2 *)data)[base_index]);
+      else if (elem_size == 4)
+        color.xy = ((uint2 *)data)[base_index];
+      return color;
+    }
+
   if (elem_size == 1)
     {
       return convert_uint4 (((uchar4 *)data)[base_index]);
@@ -207,6 +263,11 @@ pocl_read_pixel_fast_f (size_t base_index, int channel_type, int order,
     {
       float p = get_float_pixel (data, base_index, channel_type);
       return (float4) (p, 0.0f, 0.0f, 1.0f);
+    }
+  else if (order == CLK_RG)
+    {
+      float2 p = get_float2_pixel (data, base_index, channel_type);
+      return (float4) (p.x, p.y, 0.0f, 1.0f);
     }
   else
     {
@@ -244,6 +305,18 @@ pocl_read_pixel_fast_i (size_t base_index, int order, int elem_size,
         color.x = ((short *)data)[base_index];
       else if (elem_size == 4)
         color.x = ((int *)data)[base_index];
+      return color;
+    }
+
+  if (order == CLK_RG)
+    {
+      color = (int4)0;
+      if (elem_size == 1)
+        color.xy = convert_int2(((char2 *)data)[base_index]);
+      else if (elem_size == 2)
+        color.xy = convert_int2(((short2 *)data)[base_index]);
+      else if (elem_size == 4)
+        color.xy = ((int2 *)data)[base_index];
       return color;
     }
 
@@ -288,7 +361,7 @@ get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
 
 /* array_coord must be unnormalized & repeats removed */
 _CL_READONLY static int4
-get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
+get_image_array_offset_float (global dev_image_t *img, int4 uvw_after_rint,
                          float4 array_coord)
 {
   int4 res = uvw_after_rint;
@@ -296,13 +369,13 @@ get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
     {
       if (img->_height > 0)
         {
-          res.z = clamp (convert_int (floor (array_coord.z + 0.5f)), 0,
+          res.z = clamp (convert_int (rint (array_coord.z)), 0,
                          (img->_image_array_size - 1));
           res.w = 0;
         }
       else
         {
-          res.y = clamp (convert_int (floor (array_coord.y + 0.5f)), 0,
+          res.y = clamp (convert_int (rint (array_coord.y)), 0,
                          (img->_image_array_size - 1));
           res.z = 0;
           res.w = 0;
@@ -311,18 +384,13 @@ get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
   return res;
 }
 
-/* RET: (int4) (img.x{,y,z}, array_size, 0 {,0 ...} ) */
+/* RET: (int4) (img.x{,y,z}, array_size, 1 {,1 ...} ) */
 _CL_READONLY static int4
 pocl_get_image_array_size (global dev_image_t *img)
 {
+  int4 min = (int4)(1);
   int4 imgsize = (int4) (img->_width, img->_height, img->_depth, 0);
-  if (img->_image_array_size > 0)
-    {
-      if (img->_height > 0)
-        imgsize.z = img->_image_array_size;
-      else
-        imgsize.y = img->_image_array_size;
-    }
+  imgsize = select(min, imgsize, (imgsize > min));
   return imgsize;
 }
 /*************************************************************************/
@@ -1222,6 +1290,7 @@ read_pixel_linear_1d (float4 abc, float4 one_m, int ijk0, int ijk1,
 #define INVALID_SAMPLER_FILTER (uint4) (0x2222)
 #define INVALID_SAMPLER_NORMAL (uint4) (0x3333)
 
+
 _CL_READONLY static uint4
 nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
                   const dev_sampler_t samp)
@@ -1244,7 +1313,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
     {
       int4 final_coord
           = pocl_address_mode (img, convert_int4 (floor (coord)), samp);
-      int4 array_coord = get_image_array_offset2 (img, final_coord, coord);
+      int4 array_coord = get_image_array_offset_float (img, final_coord, coord);
       return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
@@ -1267,7 +1336,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
       else if (img->_height != 0)
         {
           if (img->_image_array_size > 0)
-            a_index = clamp (convert_int (floor (coord.z + 0.5f)), 0,
+            a_index = clamp (convert_int (rint (coord.z)), 0,
                              (int)(img->_image_array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1277,7 +1346,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
       else
         {
           if (img->_image_array_size > 0)
-            a_index = clamp (convert_int (floor (coord.y + 0.5f)), 0,
+            a_index = clamp (convert_int (rint (coord.y)), 0,
                              (int)(img->_image_array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,
@@ -1316,7 +1385,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
       int4 ijk = convert_int4 (floor (uvw));
       int4 final_coord = select (ijk, (ijk - maxcoord), (ijk >= maxcoord));
       int4 array_coord
-          = get_image_array_offset2 (img, final_coord, (coord * whd));
+          = get_image_array_offset_float (img, final_coord, (coord * whd));
 
       return pocl_read_pixel (img, array_coord);
     }
@@ -1332,7 +1401,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
            i1 = i1 – wt
       */
       int a_index = 0;
-      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
+      int4 maxcoord = pocl_get_image_array_size (img);
       float4 whd = convert_float4 (maxcoord);
       float4 uvw = (coord - floor (coord)) * whd;
       int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
@@ -1357,7 +1426,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.z * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.z)),
                          0, (array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1368,7 +1437,7 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.y * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.y)),
                          0, (array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,
@@ -1412,7 +1481,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       int4 wdt = max ((maxcoord - (int4) (1)), (int4) (0));
       int4 final_coord = select (ijk, wdt, (ijk > wdt));
       int4 array_coord
-          = get_image_array_offset2 (img, final_coord, (coord * whd));
+          = get_image_array_offset_float (img, final_coord, (coord * whd));
       return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
@@ -1428,8 +1497,9 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       */
       float4 ss = (float4) (2.0f) * rint ((float4) (0.5f) * coord);
       ss = fabs (coord - ss);
-      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
-      float4 uvw = ss * convert_float4 (maxcoord);
+      int4 maxcoord = pocl_get_image_array_size (img);
+      float4 whd = convert_float4 (maxcoord);
+      float4 uvw = ss * whd;
       int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
       int4 ijk1 = ijk0 + (int4) (1);
       ijk0 = max (ijk0, (int4)0);
@@ -1451,7 +1521,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.z * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.z)),
                          0, (array_size - 1));
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, a_index, img->_width, img->_height,
@@ -1462,7 +1532,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
         {
           if (array_size > 0)
             a_index
-                = clamp (convert_int (floor ((coord.y * arraysize_f) + 0.5f)),
+                = clamp (convert_int (rint (coord.y)),
                          0, (array_size - 1));
           res = read_pixel_linear_1d (
               abc, one_m, ijk0.x, ijk1.x, a_index, img->_width, slice_pitch,
@@ -1540,17 +1610,11 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 
 /*************************************************************************/
 
-#if __clang_major__ > 3
 /* After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
  which we convert to int32 with the LLVM pass HandleSamplerInitialization. */
 #define READ_SAMPLER                                                          \
   const dev_sampler_t s                                                       \
-      = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));
-#else
-/* Before Clang 4.0, the sampler_t was passed as an int32. */
-#define READ_SAMPLER                                                          \
-  const dev_sampler_t s = (dev_sampler_t) (__builtin_astype (sampler, int));
-#endif
+      = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));              \
 
 /* Implementation for read_image with any image data type and int coordinates
    __IMGTYPE__ = image type (image2d_t, ...)
@@ -1568,7 +1632,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
     return as_##__RETVAL__ (color);                                           \
   }
@@ -1581,7 +1646,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
     return as_float4 (color);                                                 \
   }
@@ -1594,7 +1660,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
     return as_float4 (color);                                                 \
   }
@@ -1608,7 +1675,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    READ_SAMPLER                                                              \
+    const dev_sampler_t s                                                     \
+        = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));            \
     uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
     return as_##__RETVAL__ (color);                                           \
   }

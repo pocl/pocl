@@ -39,6 +39,7 @@ POCL_EXPORT
 int pocl_mkdir_p(const char* path);
 
 /* Remove a file or empty directory */
+POCL_EXPORT
 int pocl_remove(const char* path);
 
 POCL_EXPORT

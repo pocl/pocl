@@ -24,22 +24,6 @@
 #
 #=============================================================================
 
-if(TCE_CONFIG AND ((NOT DEFINED ENABLE_TCE) OR (ENABLE_TCE)) )
-  execute_process(COMMAND "${TCE_CONFIG}" --llvm-config
-                  RESULT_VARIABLE RES
-                  OUTPUT_VARIABLE TCE_LLVM_CONFIG
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(RES EQUAL 0)
-    if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
-      if(NOT WITH_LLVM_CONFIG STREQUAL TCE_LLVM_CONFIG)
-        message(FATAL_ERROR "TCE is not disabled, and the llvm-config in WITH_LLVM_CONFIG (${WITH_LLVM_CONFIG}) is different from llvm-config used by TCE (${TCE_LLVM_CONFIG})")
-      endif()
-    else()
-      set(WITH_LLVM_CONFIG "${TCE_LLVM_CONFIG}")
-    endif()
-  endif()
-endif()
-
 if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   # search for preferred version
   if(IS_ABSOLUTE "${WITH_LLVM_CONFIG}")
@@ -55,15 +39,15 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
+      "llvm-config-mp-17.0" "llvm-config-17" "llvm-config170"
+      "llvm-config-mp-16.0" "llvm-config-16" "llvm-config160"
+      "llvm-config-mp-15.0" "llvm-config-15" "llvm-config150"
       "llvm-config-mp-14.0" "llvm-config-14" "llvm-config140"
       "llvm-config-mp-13.0" "llvm-config-13" "llvm-config130"
       "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
       "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
       "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
-      "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
-      "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
-      "llvm-config-mp-7.0" "llvm-config-7" "llvm-config70"
-      "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
+      "llvm-config"
     DOC "llvm-config executable")
 endif()
 
@@ -136,15 +120,16 @@ string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LIBDIR "${LLVM_LIBDI
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}")
 
-run_llvm_config(LLVM_SRC_ROOT --src-root)
-run_llvm_config(LLVM_OBJ_ROOT --obj-root)
+if(LLVM_VERSION_MAJOR LESS 16)
+  run_llvm_config(LLVM_SRC_ROOT --src-root)
+  run_llvm_config(LLVM_OBJ_ROOT --obj-root)
+endif()
+
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 run_llvm_config(LLVM_BUILD_MODE --build-mode)
 run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
-run_llvm_config(LLVM_SYSLIBS --system-libs)
-string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
@@ -188,29 +173,7 @@ if(WIN32)
 endif(WIN32)
 
 # required for sources..
-if(LLVM_VERSION MATCHES "^6[.]0")
-  set(LLVM_MAJOR 6)
-  set(LLVM_6_0 1)
-  set(LLVM_OLDER_THAN_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^7[.]")
-  set(LLVM_MAJOR 7)
-  set(LLVM_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^8[.]")
-  set(LLVM_MAJOR 8)
-  set(LLVM_8_0 1)
-  set(LLVM_OLDER_THAN_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^9[.]")
-  set(LLVM_MAJOR 9)
-  set(LLVM_9_0 1)
-  set(LLVM_OLDER_THAN_10_0 1)
-elseif(LLVM_VERSION MATCHES "^10[.]")
+if(LLVM_VERSION MATCHES "^10[.]")
   set(LLVM_MAJOR 10)
   set(LLVM_10_0 1)
 elseif(LLVM_VERSION MATCHES "^11[.]")
@@ -225,17 +188,22 @@ elseif(LLVM_VERSION MATCHES "^13[.]")
 elseif(LLVM_VERSION MATCHES "^14[.]")
   set(LLVM_MAJOR 14)
   set(LLVM_14_0 1)
+elseif(LLVM_VERSION MATCHES "^15[.]")
+  set(LLVM_MAJOR 15)
+  set(LLVM_15_0 1)
+elseif(LLVM_VERSION MATCHES "^16[.]")
+  set(LLVM_MAJOR 16)
+  set(LLVM_16_0 1)
+elseif(LLVM_VERSION MATCHES "^17[.]")
+  set(LLVM_MAJOR 17)
+  set(LLVM_17_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 6.0 and 14.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 10.0 and 17.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
 
 run_llvm_config(LLVM_HAS_RTTI --has-rtti)
-
-if(DEFINED SINGLE_LLVM_LIB)
-   message(AUTHOR_WARNING "SINGLE_LLVM_LIB option was removed; pocl now uses only llvm-config to get the libraries. Use STATIC_LLVM=ON/OFF to affect which libraries pocl requests from llvm-config")
-endif()
 
 if(STATIC_LLVM)
   set(LLVM_LIB_MODE --link-static)
@@ -245,6 +213,10 @@ endif()
 
 unset(LLVM_LIBS)
 run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
+string(STRIP "${LLVM_LIBS}" LLVM_LIBS)
+if(NOT LLVM_LIBS)
+  message(FATAL_ERROR "llvm-config --libs did not return anything, perhaps wrong setting of STATIC_LLVM ?")
+endif()
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
 
@@ -257,6 +229,9 @@ endforeach()
 
 foreach(LIBNAME ${LLVM_LIBNAMES})
   find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  if(NOT L_LIBFILE_${LIBNAME})
+    message(FATAL_ERROR "Could not find LLVM library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+  endif()
   list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
 endforeach()
 
@@ -264,29 +239,36 @@ set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 
 ####################################################################
 
+# this needs to be done with LLVM_LIB_MODE because it affects the output
 run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 ####################################################################
 
-# llvm-config does not include clang libs
-if((9 LESS LLVM_MAJOR) AND (NOT STATIC_LLVM))
-  # For Clang 10+, link against a single shared library instead of multiple component shared
-  # libraries.
+if(STATIC_LLVM)
+  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
+      clangParse clangSema clangRewrite clangRewriteFrontend
+      clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
+  if(LLVM_MAJOR GREATER 14)
+     list(APPEND CLANG_LIBNAMES clangSupport)
+  endif()
+else()
+  # For non-static builds, link against a single shared library
+  # instead of multiple component shared libraries.
   if("${LLVM_LIBNAMES}" MATCHES "LLVMTCE")
     set(CLANG_LIBNAMES clangTCE-cpp)
   else()
     set(CLANG_LIBNAMES clang-cpp)
   endif()
-else()
-  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
-      clangParse clangSema clangRewrite clangRewriteFrontend
-      clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
 endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
+  list(APPEND CLANG_LIBS "-l${LIBNAME}")
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  if(NOT C_LIBFILE_${LIBNAME})
+    message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
+  endif()
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
   if(UNIX AND (NOT APPLE))
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
@@ -297,9 +279,10 @@ endforeach()
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
   find_program(${OUTPUT_VAR}
-    NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}"
-    HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}"
+    NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}"
+    HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}"
     DOC "${DOCSTRING}"
+    NO_DEFAULT_PATH
     NO_CMAKE_PATH
     NO_CMAKE_ENVIRONMENT_PATH
   )
@@ -332,6 +315,13 @@ if(NOT DEFINED LLVM_SPIRV)
   endif()
 endif()
 
+if(NOT DEFINED SPIRV_LINK)
+  find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  if(SPIRV_LINK)
+    message(STATUS "Found spirv-link: ${SPIRV_LINK}")
+  endif()
+endif()
+
 ####################################################################
 
 # try compile with any compiler (supplied as argument)
@@ -342,8 +332,8 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
 
   math(EXPR LSIZE "${ARGC} - 4")
 
-  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE ${RES_VAR} OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${${RES_VAR}} AND (NOT ${SILENT}))
+  execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE RESV OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
+  if(${RESV} AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -357,6 +347,7 @@ macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
   endif()
   file(REMOVE "${RANDOM_FILENAME}")
 
+  set(${RES_VAR} ${RESV})
 endmacro()
 
 # convenience c/c++ source wrapper
@@ -464,31 +455,6 @@ macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     endif()
   endif()
 endmacro()
-
-####################################################################
-####################################################################
-
-# The option for specifying the target changed; try the modern syntax
-# first, and fall back to the old-style syntax if this failed
-
-if(NOT DEFINED CLANG_TARGET_OPTION AND ENABLE_HOST_CPU_DEVICES)
-
-  custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
-  if(NOT RES)
-    set(CLANG_TGT "--target=")
-  else()
-    #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
-    custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
-    if(NOT RES)
-      set(CLANG_TGT "-target ")
-    else()
-      message(FATAL_ERROR "Cannot determine Clang option to specify the target")
-    endif()
-  endif()
-
-  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
-
-endif()
 
 ####################################################################
 ####################################################################
@@ -627,6 +593,31 @@ endif()
 
 ####################################################################
 
+if(ENABLE_HOST_CPU_DEVICES)
+
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+
+if(NOT DEFINED CLANG_TARGET_OPTION)
+
+  custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
+  if(NOT RES)
+    set(CLANG_TGT "--target=")
+  else()
+    #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
+    custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
+    if(NOT RES)
+      set(CLANG_TGT "-target ")
+    else()
+      message(FATAL_ERROR "Cannot determine Clang option to specify the target")
+    endif()
+  endif()
+
+  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
+
+endif()
+
+
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
 # to all the scripts, or set the respective flags here in
@@ -641,8 +632,7 @@ endif()
 # depending on whether they are generated via clang or directly
 # via llc.
 
-
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_TRIPLE)
+if(NOT DEFINED LLC_TRIPLE)
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
   set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
   file(WRITE "${_EMPTY_C_FILE}" "")
@@ -661,7 +651,6 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_TRIPLE)
   string(REPLACE "armv7l-" "armv7-" LLC_TRIPLE "${LLC_TRIPLE}")
 
   set(LLC_TRIPLE "${LLC_TRIPLE}" CACHE INTERNAL "LLC_TRIPLE")
-
 endif()
 
 
@@ -669,13 +658,12 @@ endif()
 # targeted if you pass -mcpu=native to llc, so we could replace this auto-detection
 # with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
 # because of the work-around for arm1176jz-s.
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
+if(NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
-  # WTF, ^^ has return value 1
-  #if(RES_VAR)
-  #  message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
-  #endif()
+  if(RES_VAR)
+    message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")
+  endif()
 
   if(OUTPUT_VAR MATCHES "Host CPU: ([^ ]*)")
     # sigh... STRING(STRIP is to workaround regexp bug in cmake
@@ -690,33 +678,32 @@ if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
   endif()
 endif()
 
-
-
 if((LLC_HOST_CPU_AUTO MATCHES "unknown") AND (NOT LLC_HOST_CPU))
   message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please run CMake with -DLLC_HOST_CPU=<cpu> (you can find valid names with: llc -mcpu=help)")
 else()
   set(LLC_HOST_CPU_AUTO "${LLC_HOST_CPU_AUTO}" CACHE INTERNAL "Autodetected CPU")
 endif()
 
-if((DEFINED LLC_HOST_CPU) AND (NOT LLC_HOST_CPU STREQUAL LLC_HOST_CPU_AUTO))
-  message(STATUS "Autodetected CPU ${LLC_HOST_CPU_AUTO} overriden by user to ${LLC_HOST_CPU}")
+if(DEFINED LLC_HOST_CPU)
+  if(NOT LLC_HOST_CPU STREQUAL LLC_HOST_CPU_AUTO)
+    message(STATUS "Autodetected CPU ${LLC_HOST_CPU_AUTO} overridden by user to ${LLC_HOST_CPU}")
+  endif()
+  set(SELECTED_HOST_CPU "${LLC_HOST_CPU}")
   set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user")
 else()
-  set(LLC_HOST_CPU "${LLC_HOST_CPU_AUTO}" CACHE STRING "The Host CPU to use with llc")
+  set(SELECTED_HOST_CPU "${LLC_HOST_CPU_AUTO}")
   set(HOST_CPU_FORCED 0 CACHE INTERNAL "CPU is forced by user")
 endif()
 
 
-####################################################################
 # Some architectures have -march and -mcpu reversed
-
 if(NOT DEFINED CLANG_MARCH_FLAG)
   message(STATUS "Checking clang -march vs. -mcpu flag")
-  custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${LLC_HOST_CPU})
+  custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${SELECTED_HOST_CPU})
   if(NOT RES)
     set(CLANG_MARCH_FLAG "-march=")
   else()
-    custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -mcpu=${LLC_HOST_CPU})
+    custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -mcpu=${SELECTED_HOST_CPU})
     if(NOT RES)
       set(CLANG_MARCH_FLAG "-mcpu=")
     else()
@@ -728,12 +715,16 @@ if(NOT DEFINED CLANG_MARCH_FLAG)
   set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
 endif()
 
+endif(ENABLE_HOST_CPU_DEVICES)
+
 ####################################################################
 
 # This tests that we can actually link to the llvm libraries.
 # Mostly to catch issues like #295 - cannot find -ledit
 
-if(NOT DEFINED LLVM_LINK_TEST)
+if(NOT LLVM_LINK_TEST)
+
+  message(STATUS "Running LLVM link test")
 
   set(LLVM_LINK_TEST_SOURCE "
     #include <stdio.h>
@@ -780,20 +771,134 @@ if(NOT DEFINED LLVM_LINK_TEST)
 
 endif()
 
+####################################################################
+
+# This tests that we can actually link to the Clang libraries.
+
+if(NOT CLANG_LINK_TEST)
+
+  message(STATUS "Running Clang link test")
+
+  set(CLANG_LINK_TEST_SOURCE "
+    #include <stdio.h>
+    #include <clang/Lex/PreprocessorOptions.h>
+    #include <clang/Basic/Diagnostic.h>
+    #include <clang/Basic/LangOptions.h>
+    #include <clang/CodeGen/CodeGenAction.h>
+    #include <clang/Driver/Compilation.h>
+    #include <clang/Driver/Driver.h>
+    #include <clang/Frontend/CompilerInstance.h>
+    #include <clang/Frontend/CompilerInvocation.h>
+    #include <clang/Frontend/FrontendActions.h>
+
+    using namespace clang;
+    using namespace llvm;
+
+    int main( int argc, char* argv[] )
+    {
+       if( argc < 2 )
+         exit(2);
+
+       CompilerInstance CI;
+       CompilerInvocation &pocl_build = CI.getInvocation();
+
+       LangOptions *la = pocl_build.getLangOpts();
+       PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+       po.Includes.push_back(\"/usr/include/test/path.h\");
+
+       la->OpenCLVersion = 300;
+       la->FakeAddressSpaceMap = false;
+       la->Blocks = true; //-fblocks
+       la->MathErrno = false; // -fno-math-errno
+       la->NoBuiltin = true;  // -fno-builtin
+       la->AsmBlocks = true;  // -fasm (?)
+
+       la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
+
+       la->PICLevel = PICLevel::BigPIC;
+       la->PIE = 0;
+
+       clang::TargetOptions &ta = pocl_build.getTargetOpts();
+       ta.Triple = \"x86_64-pc-linux-gnu\";
+       ta.CPU = \"haswell\";
+
+       FrontendOptions &fe = pocl_build.getFrontendOpts();
+       fe.Inputs.clear();
+
+       fe.Inputs.push_back(
+           FrontendInputFile(argv[1],
+                             clang::InputKind(clang::Language::OpenCL)));
+
+       CodeGenOptions &cg = pocl_build.getCodeGenOpts();
+       cg.EmitOpenCLArgMetadata = true;
+       cg.StackRealignment = true;
+       cg.VerifyModule = true;
+
+       bool success = true;
+       clang::PrintPreprocessedAction Preprocess;
+       success = CI.ExecuteAction(Preprocess);
+
+       return (success ? 0 : 11);
+    }")
+
+  string(RANDOM RNDNAME)
+  set(CLANG_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/clang_link_test_${RNDNAME}.cc")
+  file(WRITE "${CLANG_LINK_TEST_FILENAME}" "${CLANG_LINK_TEST_SOURCE}")
+
+  try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
+              CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
+              OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
+
+  if(CLANG_LINK_TEST)
+    message(STATUS "Clang link test OK")
+    set(CLANG_LINK_TEST 1 CACHE INTERNAL "Clang link test result")
+  else()
+    message(STATUS "Clang link test output: ${_TRY_COMPILE_OUTPUT}")
+    message(FATAL_ERROR "Clang link test FAILED. This mostly happens when your Clang installation does not have all dependencies and/or headers installed.")
+  endif()
+
+endif()
+
 
 ####################################################################
 
-if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED ${CL_DISABLE_HALF})
-  set(CL_DISABLE_HALF 0)
-  message(STATUS "Checking fp16 support")
-  custom_try_compile_clang_silent("__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
-  if(RESV)
-    set(CL_DISABLE_HALF 1)
+# Clang documentation on Language Extensions:
+# __fp16 is supported on every target, as it is purely a storage format
+# _Float16 is currently only supported on the following targets... SPIR, x86
+# Limitations:
+#     The _Float16 type requires SSE2 feature and above due to the instruction
+#        limitations. When using it on i386 targets, you need to specify -msse2
+#        explicitly.
+#     For targets without F16C feature or above, please make sure:
+#     Use GCC 12.0 and above if you are using libgcc.
+#     If you are using compiler-rt, use the same version with the compiler.
+#        Early versions provided FP16 builtins in a different ABI. A workaround is
+#        to use a small code snippet to check the ABI if you cannot make sure of it.
+
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_FLOAT16)
+  set(HOST_CPU_SUPPORTS_FLOAT16 0)
+  message(STATUS "Checking host support for _Float16 type")
+    custom_try_compile_clang_silent("_Float16 callfp16(_Float16 a) { return a * 1.8f16; };" "_Float16 x=callfp16((_Float16)argc);"
+    RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${SELECTED_HOST_CPU})
+  if(RESV EQUAL 0)
+    set(HOST_CPU_SUPPORTS_FLOAT16 1)
   endif()
 endif()
 
-set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE INTERNAL "Disable cl_khr_fp16 because fp16 is not supported")
-message(STATUS "FP16 is disabled: ${CL_DISABLE_HALF}")
+####################################################################
+
+# TODO we should check double support of the target somehow (excluding emulation),
+# for now just provide an option
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED HOST_CPU_SUPPORTS_DOUBLE)
+  if(X86)
+    set(HOST_CPU_SUPPORTS_DOUBLE ON CACHE INTERNAL "FP64, always enabled on X86(-64)" FORCE)
+  else()
+    option(HOST_CPU_SUPPORTS_DOUBLE "Enable FP64 support for Host CPU device" ON)
+  endif()
+endif()
 
 #####################################################################
 
@@ -801,7 +906,5 @@ execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOUR
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
 
-set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h")
-if(NOT LLVM_OLDER_THAN_9_0)
-  list(APPEND CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")
-endif()
+set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+                         "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")

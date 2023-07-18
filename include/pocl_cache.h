@@ -38,6 +38,8 @@ extern "C" {
 
 int pocl_cache_init_topdir ();
 
+unsigned pocl_cache_buildhash_is_valid(cl_program program, unsigned device_i);
+
 POCL_EXPORT
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
@@ -99,7 +101,7 @@ int pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                          int specialize);
 
 // required by pocl_binary.c
-
+POCL_EXPORT
 void pocl_cache_program_path (char *path, cl_program program,
                               unsigned device_i);
 
@@ -113,6 +115,10 @@ POCL_EXPORT
 void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
                                unsigned     device_i);
+
+POCL_EXPORT
+void pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
+                                  unsigned device_i);
 
 POCL_EXPORT
 void pocl_cache_work_group_function_path (char *parallel_bc_path,

@@ -39,15 +39,25 @@ namespace pocl {
     ParallelRegion::ParallelRegionVector*
       getParallelRegions(llvm::LoopInfo *LI);
 
-    void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ);
+    void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
+                              size_t LocalSizeZ);
+
+    // Returns an instruction in the entry block which computes the
+    // total size of work-items in the work-group. If it doesn't
+    // exist, creates it to the end of the entry block.
+    llvm::Instruction *getWorkGroupSizeInstr();
 
     static bool isKernel(const llvm::Function &F);
 
     static bool classof(const Kernel *) { return true; }
     // We assume any function can be a kernel. This could be used
-    // to check for metadata (but would need to be overrideable somehow
+    // to check for metadata but would need to be overrideable somehow
     // to honor the forced kernel name(s) parameter in command line.
     static bool classof(const llvm::Function *) { return true; }
+
+  private:
+    // Instruction that computes the work-group size
+    llvm::Instruction *WGSizeInstr;
   };
 
 }

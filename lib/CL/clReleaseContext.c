@@ -44,15 +44,18 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   int new_refcount;
   POCL_LOCK (pocl_context_handling_lock);
 
-  POCL_MSG_PRINT_REFCOUNTS ("Release Context \n");
   POCL_RELEASE_OBJECT(context, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Context %" PRId64 " (%p), Refcount: %d\n",
+                            context->id, context, new_refcount);
+
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (context);
 
       POCL_ATOMIC_DEC (context_c);
 
-      POCL_MSG_PRINT_REFCOUNTS ("Free Context %p\n", context);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Context %" PRId64 " (%p)\n", context->id,
+                                context);
 
       /* The context holds references to all its devices,
          memory objects, command-queues etc. Release the
@@ -65,9 +68,15 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
             POname (clReleaseCommandQueue) (context->default_queues[i]);
           if (dev->ops->free_context)
             dev->ops->free_context (dev, context);
-          POname (clReleaseDevice) (context->devices[i]);
         }
 
+
+      for (i = 0; i < context->num_create_devices; ++i)
+      {
+        POname (clReleaseDevice) (context->create_devices[i]);
+      }
+
+      POCL_MEM_FREE (context->create_devices);
       POCL_MEM_FREE (context->default_queues);
       POCL_MEM_FREE (context->devices);
       POCL_MEM_FREE (context->properties);

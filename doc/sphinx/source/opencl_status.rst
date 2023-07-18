@@ -7,56 +7,61 @@ on x86-64+Linux, see :ref:`pocl-conformance` for details.
 Known unsupported OpenCL features
 =================================
 
-The known unsupported OpenCL (both 1.x and 2.x) features are
-listed here as encountered.
+The known unsupported OpenCL features are listed here as encountered.
 
-Frontend/Clang
---------------
-
-* OpenCL 1.x
-
-  * OpenGL interoperability extension
-  * SPIR extension (partially available, see below)
+Unimplemented device-side features
+----------------------------------
 
 * OpenCL 2.0
 
-  * generic address space (recognized by LLVM 3.8+ but incomplete)
-  * pipes (WIP)
+  * pipes
   * device-side enqueue
 
-* cl_khr_f16: half precision support (with the exception of  vload_half / vstore_half)
+* OpenCL 3.0
 
-Unimplemented host side functions
+  see :ref:`pocl-conformance` for the list
+
+Unimplemented host-side features
 ---------------------------------
 
-All 1.2 API call are implemented. From the 2.x and 3.0 API, all should
-exist, but some (e.g. clSetProgramSpecializationConstant) have
-"dummy" implementations (they always return an error).
+All 1.2 runtime API call are implemented. From the 2.x and 3.0 API, all should
+exist, but some might have "dummy" implementations (they always return an error).
+
+Unimplemented extensions
+------------------------
+
+  * OpenCL 1.x SPIR 1.2 / 2.0 extension
+  * OpenGL interoperability extension
+  * DirectX interoperability extension
 
 SPIR and SPIR-V support
 =========================
 
-There is some experimental support available for SPIR and SPIR-V.
+There is now extensive support available for SPIR and SPIR-V.
+
 Note that SPIR 1.2 and 2.0 are unsupported (though they may accidentally work);
 "SPIR" in the following text refers to LLVM IR bitcode with SPIR target,
 the exact format of which is LLVM-version-dependent. The binary format
 of SPIR-V is independent of LLVM; for this reason SPIR-V is the preferred format.
+
 Note that SPIR-V format supports different "capabilities" which in effect
 are different "dialects" of SPIR-V. The CPU driver supports the "Kernel" dialect,
 produced by llvm-spirv, Vulkan driver supports the "Shader" dialect produced
 by clspv.
 
-How to build PoCL with SPIR/SPIR-V support
---------------------------------------------
+How to build PoCL with SPIR/SPIR-V support (CPU / CUDA devices)
+----------------------------------------------------------------
 
 Support for SPIR target is built into LLVM; PoCL built with LLVM automatically supports it.
 If you don't require SPIR-V support, you may skip this part.
-Support for SPIR-V binaries depends on functional llvm-spirv translator.
+
+Support for SPIR-V binaries depends on functional llvm-spirv translator and some packages.
+See :ref:`pocl-install` for additional requirements for SPIR-V support.
 
 Requirements:
 
-* recent PoCL (1.5+ should work)
-* recent LLVM (8.0+ works, 7.0 might but is untested)
+* recent PoCL (4.0+ has most extensive support)
+* recent LLVM (10.0+ works, for best experience 14+ is recommended)
 
 To compile the LLVM SPIR-V translator::
 
@@ -103,9 +108,5 @@ if PoCL only reports OpenCL 1.2 support.
 Limitations
 -------------
 
-The most complete support is for the CPU device, but there are a few parts
-of OpenCL kernel library which CPU driver doesn't yet support with SPIR-V:
-Vector datatypes, images, certain geometric math functions.
-
-SPIR / SPIR-V support on other devices than the CPU devices is currently
-untested.
+The most complete support is for the CPU device on x86-64 and ARM64 platforms,
+but there is also some support for CUDA and CPU devices on other platforms.

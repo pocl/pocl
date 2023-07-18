@@ -24,5 +24,10 @@
 
 #include "templates.h"
 
+// there is no Clang builtin ldexp for fp16 type
+#undef __IF_FP16
+#define __IF_FP16(X)
+
 DEFINE_BUILTIN_V_VJ(ldexp)
-DEFINE_BUILTIN_V_VI(ldexp)
+
+DEFINE_EXPR_V_VI(ldexp, ldexp(a, (jtype)b))

@@ -1,5 +1,25 @@
+#undef __IF_FP64
+
 #ifdef cl_khr_fp64
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#define __IF_FP64(X) X
+#else
+#define __IF_FP64(X)
+#endif
+
+#undef __IF_INT64
+#if defined(__opencl_c_int64) || defined(cl_khr_int64)
+#define __IF_INT64(X) X
+#else
+#define __IF_INT64(X)
+#endif
+
+#ifndef _CL_NOINLINE
+#define _CL_NOINLINE __attribute__((__noinline__))
+#endif
+
+#ifndef _CL_OVERLOADABLE
+#define _CL_OVERLOADABLE __attribute__((__overloadable__))
 #endif
 
 constant float values[] = {

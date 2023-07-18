@@ -34,14 +34,15 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
                  const cl_event *event_wait_list,
                  cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-  unsigned i;
   cl_int errcode;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  cl_context context = command_queue->context;
+
   POCL_RETURN_ERROR_ON (
-      (command_queue->context->svm_allocdev == NULL), CL_INVALID_OPERATION,
+      (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND ((size == 0), CL_INVALID_VALUE);
@@ -50,6 +51,10 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  errcode = pocl_svm_check_pointer (context, svm_ptr, size, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 

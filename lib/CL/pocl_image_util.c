@@ -26,7 +26,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
-cl_int opencl_image_type_to_index (cl_mem_object_type  image_type)
+cl_int pocl_opencl_image_type_to_index (cl_mem_object_type  image_type)
 {
   switch (image_type)
     {
@@ -206,7 +206,10 @@ pocl_check_device_supports_image (cl_device_id device,
     }
 
   POCL_MSG_ERR2 ("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR",
-                 "The image format is not supported by the device\n");
+                 "The image format (ch. order: %u ch. data type: %u) "
+                 "is not supported by the device\n",
+                 image_format->image_channel_order,
+                 image_format->image_channel_data_type);
   return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
 }
 
@@ -254,14 +257,13 @@ pocl_get_image_information (cl_channel_order ch_order,
 
 /****************************************************/
 
-#define FOR4 unsigned i; for (i = 0; i < 4; i++)
-
 cl_char4
 convert_char4_sat (cl_float4 x)
 {
   cl_char4 r;
-  FOR4
-    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  unsigned i;
+  for (i = 0; i < 4; i++)
+      r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
 
@@ -269,7 +271,8 @@ cl_short4
 convert_short4_sat (cl_float4 x)
 {
   cl_short4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -278,7 +281,8 @@ cl_uchar4
 convert_uchar4_sat (cl_float4 x)
 {
   cl_uchar4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_uchar)max (0, min ((cl_long) (x.s[i]), CL_UCHAR_MAX));
   return r;
 }
@@ -287,7 +291,50 @@ cl_ushort4
 convert_ushort4_sat (cl_float4 x)
 {
   cl_ushort4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = (cl_ushort)max (0, min ((cl_long) (x.s[i]), CL_USHRT_MAX));
+  return r;
+}
+
+/****************************************************/
+
+cl_char2
+convert_char2_sat (cl_float2 x)
+{
+  cl_char2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  return r;
+}
+
+cl_short2
+convert_short2_sat (cl_float2 x)
+{
+  cl_short2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
+  return r;
+}
+
+cl_uchar2
+convert_uchar2_sat (cl_float2 x)
+{
+  cl_uchar2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_uchar)max (0, min ((cl_long) (x.s[i]), CL_UCHAR_MAX));
+  return r;
+}
+
+cl_ushort2
+convert_ushort2_sat (cl_float2 x)
+{
+  cl_ushort2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_ushort)max (0, min ((cl_long) (x.s[i]), CL_USHRT_MAX));
   return r;
 }
@@ -328,7 +375,8 @@ cl_char4
 convert_char4_sat_int (cl_int4 x)
 {
   cl_char4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
   return r;
 }
@@ -337,7 +385,8 @@ cl_short4
 convert_short4_sat_int (cl_int4 x)
 {
   cl_short4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
   return r;
 }
@@ -346,7 +395,8 @@ cl_uchar4
 convert_uchar4_sat_int (cl_uint4 x)
 {
   cl_uchar4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
     r.s[i] = (cl_uchar)min (x.s[i], CL_UCHAR_MAX);
   return r;
 }
@@ -355,7 +405,50 @@ cl_ushort4
 convert_ushort4_sat_int (cl_uint4 x)
 {
   cl_ushort4 r;
-  FOR4
+  unsigned i;
+  for (i = 0; i < 4; i++)
+    r.s[i] = (cl_ushort)min (x.s[i], CL_USHRT_MAX);
+  return r;
+}
+
+/****************************************************/
+
+cl_char2
+convert_char2_sat_int (cl_int2 x)
+{
+  cl_char2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  return r;
+}
+
+cl_short2
+convert_short2_sat_int (cl_int2 x)
+{
+  cl_short2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
+  return r;
+}
+
+cl_uchar2
+convert_uchar2_sat_int (cl_uint2 x)
+{
+  cl_uchar2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
+    r.s[i] = (cl_uchar)min (x.s[i], CL_UCHAR_MAX);
+  return r;
+}
+
+cl_ushort2
+convert_ushort2_sat_int (cl_uint2 x)
+{
+  cl_ushort2 r;
+  unsigned i;
+  for (i = 0; i < 2; i++)
     r.s[i] = (cl_ushort)min (x.s[i], CL_USHRT_MAX);
   return r;
 }
@@ -414,6 +507,7 @@ map_channels (const cl_uint4 color, int order)
         return ret;
       }
     case CL_RGBA:
+    case CL_RG:
     default:
       return color;
     }
@@ -427,7 +521,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_FLOAT)
     {
       cl_float4 *p = (cl_float4 *)data;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         p->s[i] = color.s[i];
       return;
     }
@@ -448,7 +543,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f127;
       cl_char4 final_color = convert_char4_sat (colorf);
       *((cl_char4 *)data) = final_color;
@@ -457,7 +553,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_SNORM_INT16)
     {
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f32767;
       cl_short4 final_color = convert_short4_sat (colorf);
       *((cl_short4 *)data) = final_color;
@@ -468,7 +565,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f255;
       cl_uchar4 final_color = convert_uchar4_sat (colorf);
       *((cl_uchar4 *)data) = final_color;
@@ -477,10 +575,78 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_UNORM_INT16)
     {
       cl_float4 colorf;
-      FOR4
+      unsigned i;
+      for (i = 0; i < 4; i++)
         colorf.s[i] = color.s[i] * f65535;
       cl_ushort4 final_color = convert_ushort4_sat (colorf);
       *((cl_ushort4 *)data) = final_color;
+      return;
+    }
+
+  return;
+}
+
+/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
+ * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+static void
+write_float2_pixel (cl_float2 color, void *data, int type)
+{
+  unsigned i;
+  if (type == CL_FLOAT)
+    {
+      cl_float2 *p = (cl_float2 *)data;
+      for (i = 0; i < 2; i++)
+        p->s[i] = color.s[i];
+      return;
+    }
+  if (type == CL_HALF_FLOAT)
+    {
+      /* TODO: convert to builtins */
+      ((uint16_t *)data)[0] = float_to_half (color.s0);
+      ((uint16_t *)data)[1] = float_to_half (color.s1);
+      return;
+    }
+  const cl_float f127 = ((cl_float) (CL_CHAR_MAX));
+  const cl_float f32767 = ((cl_float) (CL_SHRT_MAX));
+  const cl_float f255 = ((cl_float) (CL_UCHAR_MAX));
+  const cl_float f65535 = ((cl_float) (CL_USHRT_MAX));
+  if (type == CL_SNORM_INT8)
+    {
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float2 colorf;
+      for (i = 0; i < 2; i++)
+        colorf.s[i] = color.s[i] * f127;
+      cl_char2 final_color = convert_char2_sat (colorf);
+      *((cl_char2 *)data) = final_color;
+      return;
+    }
+  if (type == CL_SNORM_INT16)
+    {
+      cl_float2 colorf;
+      for (i = 0; i < 2; i++)
+        colorf.s[i] = color.s[i] * f32767;
+      cl_short2 final_color = convert_short2_sat (colorf);
+      *((cl_short2 *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float2 colorf;
+      for (i = 0; i < 2; i++)
+        colorf.s[i] = color.s[i] * f255;
+      cl_uchar2 final_color = convert_uchar2_sat (colorf);
+      *((cl_uchar2 *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT16)
+    {
+      cl_float2 colorf;
+      for (i = 0; i < 2; i++)
+        colorf.s[i] = color.s[i] * f65535;
+      cl_ushort2 final_color = convert_ushort2_sat (colorf);
+      *((cl_ushort2 *)data) = final_color;
       return;
     }
 
@@ -569,6 +735,19 @@ pocl_write_pixel_fast_ui (cl_uint4 color, int order, int elem_size, void *data)
       return;
     }
 
+  if (order == CL_RG)
+    {
+      cl_uint2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
+      if (elem_size == 1)
+        *((cl_uchar2 *)data) = convert_uchar2_sat_int (tmp);
+      else if (elem_size == 2)
+        *((cl_ushort2 *)data) = convert_ushort2_sat_int (tmp);
+      else if (elem_size == 4) {
+        *((cl_uint2 *)data) = tmp;
+      }
+      return;
+    }
+
   if (elem_size == 1)
     {
       *((cl_uchar4 *)data) = convert_uchar4_sat_int (color);
@@ -599,6 +778,11 @@ pocl_write_pixel_fast_f (cl_float4 color, int channel_type, int order,
   else if (order == CL_R)
     {
       write_float_pixel (color.s[0], data, channel_type);
+    }
+  else if (order == CL_RG)
+    {
+      cl_float2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
+      write_float2_pixel (tmp, data, channel_type);
     }
   else
     {
@@ -633,6 +817,19 @@ pocl_write_pixel_fast_i (cl_int4 color, int order, int elem_size, void *data)
         *((cl_short *)data) = convert_short_sat_int (color.s[0]);
       else if (elem_size == 4)
         *((cl_int *)data) = color.s[0];
+      return;
+    }
+
+  if (order == CL_RG)
+    {
+      cl_int2 tmp; tmp.s0 = color.s[0]; tmp.s1 = color.s[1];
+      if (elem_size == 1)
+        *((cl_char2 *)data) = convert_char2_sat_int (tmp);
+      else if (elem_size == 2)
+        *((cl_short2 *)data) = convert_short2_sat_int (tmp);
+      else if (elem_size == 4) {
+        *((cl_int2 *)data) = tmp;
+      }
       return;
     }
 

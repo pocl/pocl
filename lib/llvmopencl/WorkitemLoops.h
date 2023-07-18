@@ -1,24 +1,25 @@
 // Header for WorkitemLoops function pass.
-// 
+//
 // Copyright (c) 2012 Pekka Jääskeläinen / TUT
-// 
+//               2022-2023 Pekka Jääskeläinen / Intel Finland Oy
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+// IN THE SOFTWARE.
 
 #ifndef _POCL_WORKITEM_LOOPS_H
 #define _POCL_WORKITEM_LOOPS_H
@@ -28,10 +29,10 @@
 
 #include "pocl.h"
 
-#include "llvm/ADT/Twine.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-#include "llvm/IR/IRBuilder.h"
+#include <llvm/ADT/Twine.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/Transforms/Utils/ValueMapper.h>
+#include <llvm/IR/IRBuilder.h>
 
 #include "WorkitemHandler.h"
 #include "ParallelRegion.h"
@@ -59,7 +60,7 @@ namespace pocl {
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
     typedef std::set<llvm::Instruction* > InstructionIndex;
     typedef std::vector<llvm::Instruction* > InstructionVec;
-    typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
+    typedef std::map<std::string, llvm::AllocaInst *> StrInstructionMap;
 
     llvm::DominatorTree *DT;
     llvm::LoopInfoWrapperPass *LI;
@@ -72,30 +73,51 @@ namespace pocl {
 
     StrInstructionMap contextArrays;
 
+    // Points to the __pocl_local_mem_alloca pseudo function declaration, if
+    // it's been referred to in the processed module.
+    llvm::Function *LocalMemAllocaFuncDecl;
+
+    // Points to the __pocl_work_group_alloca pseudo function declaration, if
+    // it's been referred to in the processed module.
+    llvm::Function *WorkGroupAllocaFuncDecl;
+
+    // Points to the work-group size computation instruction in the entry
+    // block of the currently handled function.
+    llvm::Instruction *WGSizeInstr;
+
     virtual bool ProcessFunction(llvm::Function &F);
 
-    void FixMultiRegionVariables(ParallelRegion *region);
-    void AddContextSaveRestore(llvm::Instruction *instruction);
+    void fixMultiRegionVariables(ParallelRegion *region);
+#if LLVM_MAJOR > 13
+    bool handleLocalMemAllocas(Kernel &K);
+#endif
+    void addContextSaveRestore(llvm::Instruction *instruction);
     void releaseParallelRegions();
+
+    // Returns an instruction in the entry block which computes the
+    // total size of work-items in the work-group. If it doesn't
+    // exist, creates it to the end of the entry block.
+    llvm::Instruction *getWorkGroupSizeInstr(llvm::Function &F);
 
     llvm::Value *GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
                                   ParallelRegion *region);
-    llvm::Instruction *AddContextSave(llvm::Instruction *instruction,
-                                      llvm::Instruction *alloca);
-    llvm::Instruction *AddContextRestore(llvm::Value *val,
-                                         llvm::Instruction *alloca,
-                                         llvm::Type *InstType,
-                                         bool PoclWrapperStructAdded,
-                                         llvm::Instruction *before = NULL,
-                                         bool isAlloca = false);
-    llvm::Instruction *GetContextArray(llvm::Instruction *val,
-                                       bool &PoclWrapperStructAdded);
+    llvm::Instruction *AddContextSave (llvm::Instruction *instruction,
+                                       llvm::AllocaInst *alloca);
+    llvm::Instruction *AddContextRestore (llvm::Value *val,
+                                          llvm::AllocaInst *alloca,
+                                          llvm::Type *InstType,
+                                          bool PoclWrapperStructAdded,
+                                          llvm::Instruction *before = NULL,
+                                          bool isAlloca = false);
+    llvm::AllocaInst *getContextArray(llvm::Instruction *val,
+                                      bool &PoclWrapperStructAdded);
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
-    CreateLoopAround
-        (ParallelRegion &region, llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
-         bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
-         bool addIncBlock=true, llvm::Value *DynamicLocalSize=NULL);
+    CreateLoopAround(ParallelRegion &region, llvm::BasicBlock *entryBB,
+                     llvm::BasicBlock *exitBB, bool peeledFirst,
+                     llvm::Value *localIdVar, size_t LocalSizeForDim,
+                     bool addIncBlock = true,
+                     llvm::Value *DynamicLocalSize = NULL);
 
     llvm::BasicBlock *
       AppendIncBlock
@@ -104,7 +126,7 @@ namespace pocl {
 
     ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
 
-    bool ShouldNotBeContextSaved(llvm::Instruction *instr);
+    bool shouldNotBeContextSaved(llvm::Instruction *instr);
 
     llvm::Type *RecursivelyAlignArrayType(llvm::Type *ArrayType,
                                           llvm::Type *ElementType,

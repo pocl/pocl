@@ -105,7 +105,20 @@ main (int argc, char **argv)
   if (err)
     printf ("FAIL\n");
   else
-    printf ("PASS\n");
+    {
+      printf ("PASS\n");
+
+      int generate_output = (argc > 1 && argv[1][0] == 'o');
+      if (generate_output)
+        {
+          FILE *f = fopen ("golden_output.txt", "w");
+          for (i = 0; i < N; ++i)
+            {
+              fprintf (f, "%d\n", dst[i]);
+            }
+          fclose (f);
+        }
+    }
 
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));

@@ -44,6 +44,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #endif
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
@@ -55,6 +56,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include <set>
+#include <optional>
 
 namespace llvm {
 extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
@@ -106,7 +108,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   std::string Error;
 
   // Verify module.
-  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 1)) {
+  if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
     llvm::raw_string_ostream Errs(Error);
     if (llvm::verifyModule(*Module->get(), &Errs)) {
       POCL_MSG_ERR("\n%s\n", Error.c_str());
@@ -136,23 +138,21 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   llvm::TargetOptions Options;
 
   // TODO: CPU and features?
+#ifdef LLVM_OLDER_THAN_16_0
   std::unique_ptr<llvm::TargetMachine> Machine(
       Target->createTargetMachine(Triple, Arch, "+ptx40", Options, llvm::None));
-
+#else
+  std::unique_ptr<llvm::TargetMachine> Machine(
+      Target->createTargetMachine(Triple, Arch, "+ptx40", Options, std::nullopt));
+#endif
   llvm::legacy::PassManager Passes;
 
   // Add pass to emit PTX.
   llvm::SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream PTXStream(Data);
   if (Machine->addPassesToEmitFile(Passes, PTXStream,
-#ifndef LLVM_OLDER_THAN_7_0
                                    nullptr,
-#endif
-#ifdef LLVM_OLDER_THAN_10_0
-                                   llvm::TargetMachine::CGFT_AssemblyFile)) {
-#else
                                    llvm::CGFT_AssemblyFile)) {
-#endif
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
   }
@@ -232,8 +232,12 @@ void fixPrintF(llvm::Module *Module) {
   NewPrintF->takeName(OldPrintF);
 
   // Take function body from old function.
+#ifdef LLVM_OLDER_THAN_16_0
   NewPrintF->getBasicBlockList().splice(NewPrintF->begin(),
                                         OldPrintF->getBasicBlockList());
+#else
+  NewPrintF->splice(NewPrintF->begin(), OldPrintF);
+#endif
 
   // Create i32 to hold current argument index.
 #ifdef LLVM_OLDER_THAN_11_0
@@ -329,11 +333,7 @@ void fixPrintF(llvm::Module *Module) {
     if (!Call)
       continue;
 
-#ifndef LLVM_OLDER_THAN_8_0
     unsigned NumArgs = Call->arg_size() - 1;
-#else
-    unsigned NumArgs = Call->getNumArgOperands() - 1;
-#endif
 
     llvm::Value *Format = Call->getArgOperand(0);
 
@@ -356,8 +356,13 @@ void fixPrintF(llvm::Module *Module) {
 
       // Cast pointers to the generic address space.
       if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() != 0) {
+#ifdef LLVM_OPAQUE_POINTERS
+        llvm::CastInst *AddrSpaceCast = llvm::CastInst::CreatePointerCast(
+            Arg, llvm::PointerType::get(Context, 0));
+#else
         llvm::CastInst *AddrSpaceCast =llvm::CastInst::CreatePointerCast(
           Arg, ArgType->getPointerElementType()->getPointerTo());
+#endif
         AddrSpaceCast->insertBefore(Call);
         Arg = AddrSpaceCast;
         ArgType = Arg->getType();
@@ -370,6 +375,7 @@ void fixPrintF(llvm::Module *Module) {
           llvm::GetElementPtrInst::Create(I64, Args, {ArgIndex});
       ArgPtr->insertBefore(Call);
 
+#ifndef LLVM_OPAQUE_POINTERS
       // Cast pointer to correct type if necessary.
       if (ArgPtr->getType()->getPointerElementType() != ArgType) {
         llvm::BitCastInst *ArgPtrBC =
@@ -377,7 +383,7 @@ void fixPrintF(llvm::Module *Module) {
         ArgPtrBC->insertAfter(ArgPtr);
         ArgPtr = ArgPtrBC;
       }
-
+#endif
       // Store argument to i64 array.
 #ifdef LLVM_OLDER_THAN_11_0
       llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr);
@@ -438,8 +444,12 @@ void fixPrintF(llvm::Module *Module) {
     llvm::Type *FormatType = Format->getType();
     if (FormatType->getPointerAddressSpace() != 0) {
       // Cast address space to generic.
+#ifdef LLVM_OPAQUE_POINTERS
+      llvm::Type *NewFormatType = llvm::PointerType::get(Context, 0);
+#else
       llvm::Type *NewFormatType =
           FormatType->getPointerElementType()->getPointerTo(0);
+#endif
       llvm::AddrSpaceCastInst *FormatASC =
           new llvm::AddrSpaceCastInst(Format, NewFormatType);
       FormatASC->insertBefore(Call);
@@ -545,6 +555,7 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
 
   const char *BasePath[] = {
     pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
+    pocl_get_string_option("CUDA_HOME", "/usr/local/cuda"),
     "/usr/local/lib/cuda",
     "/usr/local/lib",
     "/usr/lib",
@@ -688,9 +699,13 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
+#ifdef LLVM_OPAQUE_POINTERS
+      llvm::GetElementPtrInst *GEP = llvm::GetElementPtrInst::Create(
+          Base->getValueType(), Base, {Zero, Offset});
+#else
       llvm::GetElementPtrInst *GEP =
           llvm::GetElementPtrInst::Create(Base->getType()->getPointerElementType(), Base, {Zero, Offset});
-
+#endif
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
 
@@ -699,6 +714,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
 
       // Map the old local memory argument to the result of this cast.
       VV[&Arg] = Cast;
+
     } else {
       // No change to other arguments.
       Arguments.push_back(&Arg);
@@ -882,14 +898,9 @@ void mapLibDeviceCalls(llvm::Module *Module) {
       if (Call) {
         // Create function declaration for libdevice version.
         llvm::FunctionType *FunctionType = Function->getFunctionType();
-#ifdef LLVM_OLDER_THAN_9_0
-        llvm::Constant *LibDeviceFunction = Module->getOrInsertFunction(
-            Entry.LibDeviceFunctionName, FunctionType);
-#else
         llvm::FunctionCallee FC = Module->getOrInsertFunction(
             Entry.LibDeviceFunctionName, FunctionType);
         llvm::Function *LibDeviceFunction = llvm::cast<llvm::Function>(FC.getCallee());
-#endif
         // Replace function with libdevice version.
         std::vector<llvm::Value *> Args(Call->arg_begin(), Call->arg_end());
         llvm::CallInst *NewCall =
@@ -934,11 +945,35 @@ int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
   for (auto &Arg : Kernel->args()) {
     unsigned i = Arg.getArgNo();
     llvm::Type *Type = Arg.getType();
-    if (!Type->isPointerTy())
-      Alignments[i] = 0;
-    else {
-      llvm::Type *ElemType = Type->getPointerElementType();
-      Alignments[i] = DL.getTypeAllocSize(ElemType);
+    Alignments[i] = 0;
+    // TODO test this
+    if (Type->isPointerTy()) {
+      // try to figure out alignment from uses
+      for (auto U : Arg.users()) {
+        if (llvm::GetElementPtrInst *GEP =
+                llvm::dyn_cast<llvm::GetElementPtrInst>(U)) {
+          for (auto UU : GEP->users()) {
+            if (llvm::StoreInst *SI = llvm::dyn_cast<llvm::StoreInst>(UU)) {
+              Alignments[i] = SI->getAlign().value();
+              break;
+            }
+            if (llvm::LoadInst *LI = llvm::dyn_cast<llvm::LoadInst>(UU)) {
+              Alignments[i] = LI->getAlign().value();
+              break;
+            }
+          }
+          if (Alignments[i])
+            break;
+        }
+      }
+      if (Alignments[i] == 0)
+        Alignments[i] = MAX_EXTENDED_ALIGNMENT;
+    } else {
+#ifdef LLVM_OLDER_THAN_16_0
+      Alignments[i] = Arg.getParamAlignment();
+#else
+      Alignments[i] = Arg.getParamAlign().valueOrOne().value();
+#endif
     }
   }
 

@@ -1,6 +1,6 @@
 /* OpenCL runtime library: caching functions
 
-   Copyright (c) 2015-2019 pocl developers
+   Copyright (c) 2015-2023 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -29,6 +29,7 @@
 
 #include "config.h"
 #include "pocl_build_timestamp.h"
+#include "pocl_version.h"
 
 #ifdef ENABLE_LLVM
 #include "kernellib_hash.h"
@@ -51,15 +52,16 @@
 /* The filename in which the program LLVM bc is stored in the program's temp
  * dir. */
 #define POCL_PROGRAM_BC_FILENAME "/program.bc"
+#define POCL_PROGRAM_SPV_FILENAME "/program.spv"
 
-static char cache_topdir[POCL_FILENAME_LENGTH];
-static char tempfile_pattern[POCL_FILENAME_LENGTH];
-static char tempdir_pattern[POCL_FILENAME_LENGTH];
+static char cache_topdir[POCL_MAX_PATHNAME_LENGTH];
+static char tempfile_pattern[POCL_MAX_PATHNAME_LENGTH];
+static char tempdir_pattern[POCL_MAX_PATHNAME_LENGTH];
 static int cache_topdir_initialized = 0;
 static int use_kernel_cache = 0;
 
 /* sanity check on SHA1 digest emptiness */
-static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
+unsigned pocl_cache_buildhash_is_valid(cl_program program, unsigned device_i)
 {
   unsigned i, sum = 0;
   for(i=0; i<sizeof(SHA1_digest_t); i++)
@@ -75,13 +77,12 @@ static void program_device_dir(char *path,
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
-    assert(buildhash_is_valid(program, device_i));
+    assert(pocl_cache_buildhash_is_valid(program, device_i));
 
-    int bytes_written = snprintf(path, POCL_FILENAME_LENGTH,
-                                 "%s/%s%s", cache_topdir,
-                                 program->build_hash[device_i],
-                                 append_path);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    int bytes_written
+        = snprintf (path, POCL_MAX_PATHNAME_LENGTH, "%s/%s%s", cache_topdir,
+                    program->build_hash[device_i], append_path);
+    assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
 }
 
 void pocl_cache_program_path(char*        path,
@@ -97,6 +98,61 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                                 unsigned     device_i) {
     program_device_dir(program_bc_path, program,
                        device_i, POCL_PROGRAM_BC_FILENAME);
+}
+
+void
+pocl_cache_program_spv_path (char *program_bc_path, cl_program program,
+                             unsigned device_i)
+{
+  program_device_dir (program_bc_path, program, device_i,
+                      POCL_PROGRAM_SPV_FILENAME);
+}
+
+/**
+ * \brief Return a string clipped to a given length with a hash appended.
+ *
+ * Returns the string as is if it is not too long. Clips the string and appends
+ * a hash of the original string to make it uniqueish, if it's too long.
+ *
+ * \param str [in] the original string
+ * \param max_length [in] maximum size of the generated string in chars
+ * \param new_str [out] storage where the generated zero terminated
+ * string will be written (must have at least max_length + 1 of storage).
+ */
+static void
+pocl_hash_clipped_name (const char *str, size_t max_length, char *new_str)
+{
+  if (strlen (str) > max_length)
+    {
+      SHA1_CTX hash_ctx;
+      uint8_t digest[SHA1_DIGEST_SIZE];
+      int i = 0;
+      char *new_str_pos = new_str;
+      pocl_SHA1_Init (&hash_ctx);
+      pocl_SHA1_Update (&hash_ctx, (uint8_t *)str, strlen (str));
+      pocl_SHA1_Final (&hash_ctx, digest);
+
+      strncpy (new_str, str, max_length - SHA1_DIGEST_SIZE * 2 - 1);
+      new_str_pos += max_length - SHA1_DIGEST_SIZE * 2 - 1;
+#ifndef _WIN32
+      *new_str_pos++ = '.';
+#else
+      *new_str_pos++ = ' ';
+#endif
+
+      /* Convert the digest to an alphabetic string. */
+      for (i = 0; i < SHA1_DIGEST_SIZE; i++)
+        {
+          *new_str_pos++ = (digest[i] & 0x0F) + 65;
+          *new_str_pos++ = ((digest[i] & 0xF0) >> 4) + 65;
+        }
+      *new_str_pos = 0;
+      POCL_MSG_PRINT_GENERAL ("Generated a shortened name '%s'\n", new_str);
+    }
+  else
+    {
+      strncpy (new_str, str, strlen (str) + 1);
+    }
 }
 
 /* Return the cache directory for the given work-group function.
@@ -117,12 +173,17 @@ pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
 {
   int bytes_written;
   _cl_command_run *run_cmd = &command->command.run;
-  char tempstring[POCL_FILENAME_LENGTH];
+  char tempstring[POCL_MAX_PATHNAME_LENGTH];
   cl_device_id dev = command->device;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
+
+  char kernel_dir_name[POCL_MAX_DIRNAME_LENGTH + 1];
+  pocl_hash_clipped_name (kernel->name, POCL_MAX_DIRNAME_LENGTH,
+                          &kernel_dir_name[0]);
+
   bytes_written = snprintf (
-      tempstring, POCL_FILENAME_LENGTH, "/%s/%zu-%zu-%zu%s%s%s", kernel->name,
-      !specialized ? 0 : run_cmd->pc.local_size[0],
+      tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s/%zu-%zu-%zu%s%s%s",
+      kernel_dir_name, !specialized ? 0 : run_cmd->pc.local_size[0],
       !specialized ? 0 : run_cmd->pc.local_size[1],
       !specialized ? 0 : run_cmd->pc.local_size[2],
       (specialized && run_cmd->pc.global_offset[0] == 0
@@ -135,9 +196,10 @@ pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
           ? "-smallgrid"
           : "",
       append_str);
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+  assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
 
-  program_device_dir (kernel_cachedir_path, program, program_device_i, tempstring);
+  program_device_dir (kernel_cachedir_path, program, program_device_i,
+                      tempstring);
 }
 
 void
@@ -145,10 +207,14 @@ pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
                             unsigned device_i, const char *kernel_name)
 {
   int bytes_written;
-  char tempstring[POCL_FILENAME_LENGTH];
+  char tempstring[POCL_MAX_PATHNAME_LENGTH];
+  char file_name[POCL_MAX_DIRNAME_LENGTH + 1];
+
+  pocl_hash_clipped_name (kernel_name, POCL_MAX_DIRNAME_LENGTH, &file_name[0]);
+
   bytes_written
-      = snprintf (tempstring, POCL_FILENAME_LENGTH, "/%s", kernel_name);
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+      = snprintf (tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s", file_name);
+  assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
   program_device_dir (kernel_cachedir_path, program, device_i, tempstring);
 }
 
@@ -181,17 +247,24 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
      pocl_llvm_generate_workgroup_function() on their own */
 
   int bytes_written;
-  char final_binary_name[POCL_FILENAME_LENGTH];
+  char final_binary_name[POCL_MAX_PATHNAME_LENGTH];
 
   /* FIXME: Why different naming for SPMD and why the .brig suffix? */
   if (kernel->program->devices[device_i]->spmd)
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
+    bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
                               "%s.brig", POCL_PARALLEL_BC_FILENAME);
   else
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
-                              "/%s.so", kernel->name);
+    {
+      char file_name[POCL_MAX_FILENAME_LENGTH + 1];
+      /* -5: Leave space for .so and for additional .o if temp file debugging
+         is enabled. */
+      pocl_hash_clipped_name (kernel->name, POCL_MAX_FILENAME_LENGTH - 5,
+                              &file_name[0]);
+      bytes_written = snprintf (final_binary_name, POCL_MAX_PATHNAME_LENGTH,
+                                "/%s.so", file_name);
+    }
 
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+  assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
 
   pocl_cache_kernel_cachedir_path (final_binary_path, program, device_i,
                                    kernel, final_binary_name, command,
@@ -258,7 +331,7 @@ int pocl_cache_update_program_last_access(cl_program program,
   if (!use_kernel_cache)
     return 0;
 
-  char last_accessed_path[POCL_FILENAME_LENGTH];
+  char last_accessed_path[POCL_MAX_PATHNAME_LENGTH];
   program_device_dir (last_accessed_path, program, device_i,
                       POCL_LAST_ACCESSED_FILENAME);
 
@@ -269,10 +342,10 @@ int pocl_cache_update_program_last_access(cl_program program,
 
 int pocl_cache_device_cachedir_exists(cl_program   program,
                                       unsigned device_i) {
-    char device_cachedir_path[POCL_FILENAME_LENGTH];
-    program_device_dir(device_cachedir_path, program, device_i, "");
+  char device_cachedir_path[POCL_MAX_PATHNAME_LENGTH];
+  program_device_dir (device_cachedir_path, program, device_i, "");
 
-    return pocl_exists(device_cachedir_path);
+  return pocl_exists (device_cachedir_path);
 }
 
 /******************************************************************************/
@@ -281,12 +354,12 @@ int
 pocl_cache_write_descriptor (_cl_command_node *command, cl_kernel kernel,
                              int specialize, const char *content, size_t size)
 {
-  char dirr[POCL_FILENAME_LENGTH];
+  char dirr[POCL_MAX_PATHNAME_LENGTH];
 
   pocl_cache_kernel_cachedir_path (dirr, kernel->program, command->program_device_i,
                                    kernel, "", command, specialize);
 
-  char descriptor[POCL_FILENAME_LENGTH];
+  char descriptor[POCL_MAX_PATHNAME_LENGTH];
 
   pocl_cache_kernel_cachedir_path (
       descriptor, kernel->program, command->program_device_i, kernel,
@@ -305,30 +378,30 @@ pocl_cache_write_descriptor (_cl_command_node *command, cl_kernel kernel,
 
 char* pocl_cache_read_buildlog(cl_program program,
                                unsigned device_i) {
-    char buildlog_path[POCL_FILENAME_LENGTH];
-    if (program->build_hash[device_i][0] == 0)
-        return NULL;
-    program_device_dir(buildlog_path, program,
-                       device_i, POCL_BUILDLOG_FILENAME);
+  char buildlog_path[POCL_MAX_PATHNAME_LENGTH];
+  if (program->build_hash[device_i][0] == 0)
+    return NULL;
+  program_device_dir (buildlog_path, program, device_i,
+                      POCL_BUILDLOG_FILENAME);
 
-    if (!pocl_exists(buildlog_path))
-      return NULL;
+  if (!pocl_exists (buildlog_path))
+    return NULL;
 
-    char* res=NULL;
-    uint64_t filesize;
-    if (pocl_read_file(buildlog_path, &res, &filesize))
-        return NULL;
-    return res;
+  char *res = NULL;
+  uint64_t filesize;
+  if (pocl_read_file (buildlog_path, &res, &filesize))
+    return NULL;
+  return res;
 }
 
 int pocl_cache_append_to_buildlog(cl_program  program,
                                   unsigned    device_i,
                                   const char *content,
                                   size_t      size) {
-    if (!buildhash_is_valid (program, device_i))
+    if (!pocl_cache_buildhash_is_valid (program, device_i))
       return -1;
 
-    char buildlog_path[POCL_FILENAME_LENGTH];
+    char buildlog_path[POCL_MAX_PATHNAME_LENGTH];
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
@@ -344,15 +417,19 @@ pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                      _cl_command_node *command, int specialize)
 {
   assert (bc);
-  char kernel_parallel_path[POCL_FILENAME_LENGTH];
+  char kernel_parallel_path[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
                                    kernel, "", command, specialize);
   int err = pocl_mkdir_p (kernel_parallel_path);
   if (err)
-    return err;
+    {
+      POCL_MSG_PRINT_GENERAL ("Unable to create directory %s.\n",
+                              kernel_parallel_path);
+      return err;
+    }
 
   assert (strlen (kernel_parallel_path)
-          < (POCL_FILENAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
+          < (POCL_MAX_PATHNAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
   strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
   return pocl_write_module (bc, kernel_parallel_path, 0);
 }
@@ -386,6 +463,10 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options,
                          strlen(program->compiler_options));
 
+    pocl_SHA1_Update (&hash_ctx,
+                      (uint8_t *)&program->binary_type,
+                      sizeof(cl_program_binary_type));
+
 #ifdef ENABLE_LLVM
     /* The kernel compiler work-group function method affects the
        produced binary heavily. */
@@ -396,6 +477,21 @@ build_program_compute_hash (cl_program program, unsigned device_i,
         if (wg_method)
           pocl_SHA1_Update (&hash_ctx, (uint8_t *)wg_method,
                             strlen (wg_method));
+      }
+#endif
+
+#ifdef ENABLE_SPIR
+    for (size_t i = 0; i < program->num_spec_consts; ++i)
+      {
+        if (program->spec_const_is_set[i])
+          {
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_ids[i],
+                              sizeof (cl_uint));
+            pocl_SHA1_Update (&hash_ctx,
+                              (uint8_t *)&program->spec_const_values[i],
+                              program->spec_const_sizes[i]);
+          }
       }
 #endif
 
@@ -438,7 +534,7 @@ pocl_cache_init_topdir ()
 
   if (tmp_path)
     {
-      needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
+      needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s", tmp_path);
     } else {
 #ifdef __ANDROID__
         POCL_ABORT ("Please set the POCL_CACHE_DIR env var to your app's cache directory (Context.getCacheDir())\n");
@@ -448,8 +544,8 @@ pocl_cache_init_topdir ()
         if (!tmp_path)
             tmp_path = getenv("TEMP");
         assert(tmp_path);
-        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                          "%s\\pocl", tmp_path);
+        needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s\\pocl",
+                           tmp_path);
 #else
         // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
         // $HOME/.cache should be used."
@@ -462,21 +558,21 @@ pocl_cache_init_topdir ()
           p = "pocl/uncached";
 
         if (tmp_path && tmp_path[0] != '\0') {
-            needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "%s/%s",
+            needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "%s/%s",
                                tmp_path, p);
         }
         else if ((tmp_path = getenv("HOME")) != NULL) {
-            needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH,
-                               "%s/.cache/%s", tmp_path, p);
+          needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH,
+                             "%s/.cache/%s", tmp_path, p);
         }
         else {
-            needed
-                = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "/tmp/%s", p);
+          needed = snprintf (cache_topdir, POCL_MAX_PATHNAME_LENGTH, "/tmp/%s",
+                             p);
         }
 #endif
     }
 
-  if (needed >= POCL_FILENAME_LENGTH)
+  if (needed >= POCL_MAX_PATHNAME_LENGTH)
     {
       POCL_MSG_ERR ("pocl: cache path longer than maximum filename length\n");
       return 1;
@@ -501,25 +597,25 @@ pocl_cache_init_topdir ()
         return 1;
       }
 
-    strncpy (tempfile_pattern, cache_topdir, POCL_FILENAME_LENGTH);
+    strncpy (tempfile_pattern, cache_topdir, POCL_MAX_PATHNAME_LENGTH);
     size_t len = strlen (tempfile_pattern);
     strncpy (tempfile_pattern + len, "/tempfile",
-             (POCL_FILENAME_LENGTH - len));
-    tempfile_pattern[POCL_FILENAME_LENGTH - 1] = 0;
-    assert (strlen (tempfile_pattern) < POCL_FILENAME_LENGTH);
+             (POCL_MAX_PATHNAME_LENGTH - len));
+    tempfile_pattern[POCL_MAX_PATHNAME_LENGTH - 1] = 0;
+    assert (strlen (tempfile_pattern) < POCL_MAX_PATHNAME_LENGTH);
 
     int bytes_written;
     if (use_kernel_cache)
       {
-        bytes_written = snprintf (tempdir_pattern, POCL_FILENAME_LENGTH,
+        bytes_written = snprintf (tempdir_pattern, POCL_MAX_PATHNAME_LENGTH,
                                   "%s/tempdir", cache_topdir);
-        assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+        assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
       }
     else
       {
-        bytes_written = snprintf (tempdir_pattern, POCL_FILENAME_LENGTH,
+        bytes_written = snprintf (tempdir_pattern, POCL_MAX_PATHNAME_LENGTH,
                                   "%s/_UNCACHED", cache_topdir);
-        assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+        assert (bytes_written > 0 && bytes_written < POCL_MAX_PATHNAME_LENGTH);
       }
 
     cache_topdir_initialized = 1;
@@ -542,12 +638,13 @@ pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
                                     char *program_bc_path)
 {
     assert(cache_topdir_initialized);
+    assert (program_bc_path);
 
     /* NULL is used only in one place, clCreateWithBinary,
      * and we want to keep the original hash value in that case */
     if (hash_source == NULL)
       {
-        assert (buildhash_is_valid (program, device_i));
+        assert (pocl_cache_buildhash_is_valid (program, device_i));
         program_device_dir (program_bc_path, program, device_i, "");
 
         if (pocl_mkdir_p (program_bc_path))
@@ -557,7 +654,7 @@ pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
       {
         build_program_compute_hash (program, device_i, hash_source,
                                     hash_source_len);
-        assert (buildhash_is_valid (program, device_i));
+        assert (pocl_cache_buildhash_is_valid (program, device_i));
 
         program_device_dir (program_bc_path, program, device_i, "");
 
@@ -567,7 +664,7 @@ pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
     else
       {
         /* if kernel cache is disabled, use a random dir. */
-        char random_dir[POCL_FILENAME_LENGTH];
+        char random_dir[POCL_MAX_PATHNAME_LENGTH];
         if (pocl_cache_create_tempdir (random_dir))
           return 1;
         size_t s = strlen (cache_topdir) + 1;
@@ -590,10 +687,10 @@ void pocl_cache_cleanup_cachedir(cl_program program) {
 
   for (i = 0; i < program->num_devices; i++)
     {
-      if (!buildhash_is_valid (program, i))
+      if (!pocl_cache_buildhash_is_valid (program, i))
         continue;
 
-      char cachedir[POCL_FILENAME_LENGTH];
+      char cachedir[POCL_MAX_PATHNAME_LENGTH];
       program_device_dir (cachedir, program, i, "");
       pocl_rm_rf (cachedir);
     }

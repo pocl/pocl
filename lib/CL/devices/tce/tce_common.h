@@ -129,12 +129,19 @@ class TCEDevice {
   size_t curLocalY;
   size_t curLocalZ;
 
+  size_t curGoffsX;
+  size_t curGoffsY;
+  size_t curGoffsZ;
+
   uint64_t globalCycleCount;
 
   pocl_lock_t wq_lock;
   pocl_cond_t wakeup_cond;
   pocl_lock_t tce_compile_lock;
   _cl_command_node *work_queue;
+
+  chunk_info_t *printf_buffer;
+  chunk_info_t *printf_position_chunk;
 };
 
 void *pocl_tce_driver_thread (void *cldev);

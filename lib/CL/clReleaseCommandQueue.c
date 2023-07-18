@@ -38,7 +38,9 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   POname(clFlush)(command_queue);
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("Release Command Queue %p  %d\n", command_queue, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Command Queue %" PRId64
+                            " (%p), Refcount: %d\n",
+                            command_queue->id, command_queue, new_refcount);
 
   if (new_refcount == 0)
     {
@@ -50,10 +52,17 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
       /* hidden queues don't retain the context. */
       if ((command_queue->properties & CL_QUEUE_HIDDEN) == 0)
-        POname (clReleaseContext) (context);
+        {
+          POCL_LOCK_OBJ (context);
+          DL_DELETE (context->command_queues, command_queue);
+          POCL_UNLOCK_OBJ (context);
+
+          POname (clReleaseContext) (context);
+        }
 
       assert (command_queue->command_count == 0);
-      POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %p\n", command_queue);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %" PRId64 " (%p)\n",
+                                command_queue->id, command_queue);
       if (command_queue->device->ops->free_queue)
         command_queue->device->ops->free_queue (device, command_queue);
       POCL_DESTROY_OBJECT (command_queue);

@@ -33,8 +33,8 @@ if(ENABLE_HOST_CPU_DEVICES)
     # pocl.
     set_tests_properties("pocl_version_check"
       PROPERTIES
-      ENVIRONMENT "POCL_DEVICES=basic"
-      PASS_REGULAR_EXPRESSION "basic"
+      ENVIRONMENT "POCL_DEVICES=cpu"
+      PASS_REGULAR_EXPRESSION "cpu"
       LABELS "internal;cuda")
 endif()
 
@@ -61,10 +61,10 @@ if(BUILD_PTHREAD)
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_pthread")
 endif()
 
-if(BUILD_ACCEL)
-  add_test(NAME pocl_test_dlopen_device_accel COMMAND test_dlopen accel)
-  set_tests_properties("pocl_test_dlopen_device_accel" PROPERTIES LABELS "internal;dlopen")
-  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_accel")
+if(BUILD_ALMAIF)
+  add_test(NAME pocl_test_dlopen_device_almaif COMMAND test_dlopen almaif)
+  set_tests_properties("pocl_test_dlopen_device_almaif" PROPERTIES LABELS "internal;dlopen")
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_almaif")
 endif()
 
 if(ENABLE_TCE)
@@ -95,6 +95,12 @@ if(ENABLE_VULKAN)
   add_test(NAME pocl_test_dlopen_device_vulkan COMMAND test_dlopen vulkan)
   set_tests_properties("pocl_test_dlopen_device_vulkan" PROPERTIES LABELS "internal;dlopen;vulkan")
   set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_vulkan")
+endif()
+
+if(ENABLE_LEVEL0)
+  add_test(NAME pocl_test_dlopen_device_level0 COMMAND test_dlopen level0)
+  set_tests_properties("pocl_test_dlopen_device_level0" PROPERTIES LABELS "internal;dlopen;level0")
+  set_property(TEST "pocl_version_check" APPEND PROPERTY DEPENDS "pocl_test_dlopen_device_level0")
 endif()
 endif()
 

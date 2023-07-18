@@ -31,9 +31,11 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
 
-add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy")
+add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
+
+add_test_pocl(NAME "almaif/multi_AS_copy" COMMAND "multi_AS_copy" WORKITEM_HANDLER "loopvec")
 
 set_tests_properties( "tce/multi_AS_copy"
   PROPERTIES
@@ -52,3 +54,13 @@ set_tests_properties( "tcele/multi_AS_copy"
     LABELS "tce;tta;ttasim"
     ENVIRONMENT "POCL_DEVICES=pthread ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     DEPENDS "pocl_version_check")
+
+set_tests_properties( "almaif/multi_AS_copy"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "OK"
+    LABELS "almaif"
+    ENVIRONMENT "POCL_DEVICES=pthread almaif;POCL_ALMAIF0_PARAMETERS=0xB,${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE"
+    DEPENDS "pocl_version_check")
+

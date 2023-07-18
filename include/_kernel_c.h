@@ -33,6 +33,10 @@
 
 #include "pocl_types.h"
 
+/* cannot include "_builtin_renames.h" because it overrides some C/C++ macros,
+   but we need the prefixed functions in the builtin library */
+#define POCL_BUILTIN_PREFIX(FUNC) _cl_##FUNC
+
 #include "_kernel_constants.h"
 
 /* Function/type attributes supported by Clang/SPIR */
@@ -105,9 +109,10 @@ typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
 #if defined(__CBUILD__) && defined(cl_khr_fp16)
-/* NOTE: the Clang's __fp16 does not work robustly in C mode,
-   it might produce invalid code at least with half vectors.
-   Using the native 'half' type in OpenCL C mode works better. */
+
+#ifdef _HAS_FLOAT16_TYPE
+typedef _Float16 half;
+#else
 typedef __fp16 half;
 #endif
 
@@ -116,6 +121,7 @@ typedef half half3  __attribute__((__ext_vector_type__(3)));
 typedef half half4  __attribute__((__ext_vector_type__(4)));
 typedef half half8  __attribute__((__ext_vector_type__(8)));
 typedef half half16 __attribute__((__ext_vector_type__(16)));
+#endif
 
 typedef float float2  __attribute__((__ext_vector_type__(2)));
 typedef float float3  __attribute__((__ext_vector_type__(3)));

@@ -36,7 +36,7 @@
 #undef FP_ILOGBNAN
 
 #define FP_ILOGB0   INT_MIN
-#define FP_ILOGBNAN INT_MIN
+#define FP_ILOGBNAN INT_MAX
 
 
 //

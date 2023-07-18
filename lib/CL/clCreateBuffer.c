@@ -33,7 +33,7 @@ extern unsigned long buffer_c;
 cl_mem
 pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
                        cl_mem_object_type type, int* device_image_support,
-                       void *host_ptr, cl_int *errcode_ret)
+                       void *host_ptr, int host_ptr_is_svm, cl_int *errcode_ret)
 {
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
@@ -123,9 +123,6 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->context = context;
   mem->is_image = (type != CL_MEM_OBJECT_PIPE && type != CL_MEM_OBJECT_BUFFER);
 
-  mem->mem_host_ptr_version = 0;
-  mem->latest_version = 0;
-
   /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
    *
    * The user is responsible for ensuring that data passed into and out of
@@ -150,6 +147,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
         }
       mem->mem_host_ptr_version = 1;
       mem->mem_host_ptr_refcount = 1;
+      mem->mem_host_ptr_is_svm = host_ptr_is_svm;
       mem->latest_version = 1;
     }
 
@@ -231,20 +229,24 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 {
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
+  int host_ptr_is_svm = CL_FALSE;
 
   if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
     {
       pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
       if (item)
-        POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
-                            "The provided host_ptr is SVM pointer, "
-                            "but the allocated SVM size (%zu) is smaller "
-                            "then requested size (%zu)",
-                            item->size, size);
+        {
+          POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
+                              "The provided host_ptr is SVM pointer, "
+                              "but the allocated SVM size (%zu) is smaller "
+                              "then requested size (%zu)",
+                              item->size, size);
+          host_ptr_is_svm = CL_TRUE;
+        }
     }
 
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
-                               NULL, host_ptr, &errcode);
+                               NULL, host_ptr, host_ptr_is_svm, &errcode);
 
   if (mem == NULL)
     goto ERROR;
@@ -253,7 +255,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 
   POname(clRetainContext)(context);
 
-  POCL_MSG_PRINT_MEMORY ("Created Buffer ID %" PRIu64 " / %p, MEM_HOST_PTR: %p, "
+  POCL_MSG_PRINT_MEMORY ("Created Buffer %" PRIu64 " (%p), MEM_HOST_PTR: %p, "
                          "device_ptrs[0]: %p, SIZE %zu, FLAGS %" PRIu64 " \n",
                          mem->id, mem, mem->mem_host_ptr,
                          mem->device_ptrs[0].mem_ptr, size, flags);

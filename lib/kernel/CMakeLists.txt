@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2018 pocl developers
+#   Copyright (c) 2014-2022 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,9 @@ fdim.cl
 floor.cl
 fma.cl
 fmax.cl
+fmax_common.cl
 fmin.cl
+fmin_common.cl
 fmod.cl
 fract.cl
 frexp.cl

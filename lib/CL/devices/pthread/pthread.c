@@ -73,7 +73,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 {
   pocl_basic_init_device_ops(ops);
 
-  ops->device_name = "pthread";
+  ops->device_name = "cpu";
 
   /* implementation that differs from basic */
   ops->probe = pocl_pthread_probe;
@@ -101,13 +101,8 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = pocl_get_llvm_cpu_name ();
-  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
-  POCL_MEM_FREE (name);
-#else
-  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
-#endif
+  snprintf (res, 1000, "cpu-%s-%s", HOST_DEVICE_BUILD_HASH,
+            device->llvm_cpu);
   return res;
 }
 
@@ -115,6 +110,11 @@ unsigned int
 pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
+
+  /* for backwards compatibility */
+  if (env_count <= 0)
+    env_count = pocl_device_get_env_count("pthread");
+
   /* Env was not specified, default behavior was to use 1 pthread device */
   if (env_count < 0)
     return 1;
@@ -132,6 +132,8 @@ static int scheduler_initialized = 0;
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
+  /* TODO: call pocl_basic_init() to avoid duplicating a lot of the
+     initializations here. */
   struct data *d;
   int err;
 
@@ -143,6 +145,19 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->data = d;
 
   pocl_init_default_device_infos (device);
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
+    {
+      /* In reality there is no independent SG progress implemented in this
+         version because we can only have one SG in flight at a time, but it's
+         a corner case which allows us to advertise it for full CTS compliance.
+       */
+      device->sub_group_independent_forward_progress = CL_TRUE;
+
+      /* Just an arbitrary number here based on assumption of SG size 32. */
+      device->max_num_sub_groups = device->max_work_group_size / 32;
+    }
+
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
 
@@ -151,6 +166,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
 #if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
   device->features = HOST_DEVICE_FEATURES_30;
+  device->program_scope_variables_pass = CL_TRUE;
+  device->generic_as_support = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (device, CL_TRUE);
   pocl_setup_features_with_version (device);
@@ -160,8 +177,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_setup_extensions_with_version (device);
 
-  /* builtin kernels.. skip, basic/pthread doesn't have any
-  pocl_setup_builtin_kernels_with_version (device); */
+  pocl_setup_builtin_kernels_with_version (device);
 
   pocl_setup_ils_with_version (device);
 
@@ -193,6 +209,21 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
                      | CL_DEVICE_SVM_ATOMICS;
 #endif
 
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
+      != NULL)
+    {
+      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->device_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->single_shared_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+    }
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to
@@ -202,18 +233,32 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (err)
     return CL_INVALID_DEVICE;
 
-  /* device->max_compute_units was set up by topology_detect,
-   * but if the user requests, lower it */
+  /* if hwloc/topology detection failed, use a fixed maximum */
   int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
                                                   : device->max_compute_units;
-  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+
+  /* device->max_compute_units was set up by topology_detect,
+   * but if the user requests, lower it */
+
+  /* old env variable */
+  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
+
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", fallback);
+
+  /* old env variable */
+  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 0);
+  if (min_threads <= 0)
+    min_threads = pocl_get_int_option ("POCL_CPU_MIN_CU_COUNT", 1);
 
   device->max_compute_units
-      = max ((unsigned)max_thr,
-             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
+      = max ((unsigned)max_threads, (unsigned)min_threads);
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
+
+  device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
+                                                device->local_mem_size);
 
   /* in case hwloc doesn't provide a PCI ID, let's generate
      a vendor id that hopefully is unique across vendors. */
@@ -297,12 +342,12 @@ void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   node->ready = 1;
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
-      pocl_update_event_submitted (node->event);
+      pocl_update_event_submitted (node->sync.event.event);
       pthread_scheduler_push_command (node);
     }
-  POCL_UNLOCK_OBJ (node->event);
+  POCL_UNLOCK_OBJ (node->sync.event.event);
   return;
 }
 
@@ -346,7 +391,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->event))
+  if (pocl_command_is_ready (node->sync.event.event))
     {
       if (event->status == CL_QUEUED)
         {
@@ -387,6 +432,8 @@ pocl_pthread_update_event (cl_device_id device, cl_event event)
 
       PTHREAD_CHECK (pthread_cond_init (&e_d->event_cond, NULL));
       event->data = (void *) e_d;
+
+      VG_ASSOC_COND_VAR (e_d->event_cond, event->pocl_lock);
     }
 }
 
@@ -417,6 +464,11 @@ pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   PTHREAD_CHECK (pthread_cond_init (cond, NULL));
+
+  POCL_LOCK_OBJ (queue);
+  VG_ASSOC_COND_VAR ((*cond), queue->pocl_lock);
+  POCL_UNLOCK_OBJ (queue);
+
   return CL_SUCCESS;
 }
 
