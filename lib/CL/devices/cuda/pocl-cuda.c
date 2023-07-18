@@ -396,19 +396,44 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
-#if CUDA_VERSION >= 11010
-      GET_CU_PROP (READ_ONLY_HOST_REGISTER_SUPPORTED, data->supports_cu_mem_host_register);
-#elif defined(__aarch64__) || defined(__arm__)
-      // For cuda < 11.1, we don't know if the device supports cuMemHostRegister
-      // or not. Let's assume that it doesn't in ARM devices.
-      // This gives a false negative for Jetson Xavier, but it is the best we could do.
-      data->supports_cu_mem_host_register = 0;
-#else
-      data->supports_cu_mem_host_register = 1;
-#endif
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
+
+  if (ret != CL_INVALID_DEVICE)
+    {
+      int driver_version = 0;
+      result = cuDriverGetVersion(&driver_version);
+      if (CUDA_CHECK_ERROR (result, "cuDriverGetVersion"))
+	{
+          ret = CL_INVALID_DEVICE;
+	}
+      else
+	{
+#if CUDA_VERSION >= 11010
+          if (driver_version >= 11010)
+            {
+              int value;
+              result = cuDeviceGetAttribute (&value,
+                CU_DEVICE_ATTRIBUTE_READ_ONLY_HOST_REGISTER_SUPPORTED, data->device);
+              data->supports_cu_mem_host_register = value;
+              if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
+                ret = CL_INVALID_DEVICE;
+            } else {
+#else
+            {
+#endif
+#if defined(__aarch64__) || defined(__arm__)
+              // For cuda < 11.1, we don't know if the device supports cuMemHostRegister
+              // or not. Let's assume that it doesn't in ARM devices.
+              // This gives a false negative for Jetson Xavier, but it is the best we could do.
+              data->supports_cu_mem_host_register = pocl_get_bool_option ("POCL_CUDA_SUPPORTS_CU_MEM_HOST_REGISTER", 0);
+#else
+              data->supports_cu_mem_host_register = pocl_get_bool_option ("POCL_CUDA_SUPPORTS_CU_MEM_HOST_REGISTER", 1);
+#endif
+            }
+        }
+    }
 
   dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
