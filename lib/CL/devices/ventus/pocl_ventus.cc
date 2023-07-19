@@ -335,7 +335,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 
   return ret;
 }
-//#define PRINT_CHISEL_TESTCODE
+#define PRINT_CHISEL_TESTCODE
 #ifdef PRINT_CHISEL_TESTCODE
 void fp_write_file(FILE *fp,void *p,uint64_t size){
   for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
@@ -346,19 +346,6 @@ void fp_write_file(FILE *fp,void *p,uint64_t size){
 void
 pocl_ventus_run (void *data, _cl_command_node *cmd)
 {
-#ifdef PRINT_CHISEL_TESTCODE
-  uint64_t c_num_buffer=0;
-  uint64_t c_max_num_buffer=1024;
-  uint64_t c_buffer_base[c_max_num_buffer];
-  uint64_t c_buffer_size[c_max_num_buffer];
-  uint64_t c_buffer_allocsize[c_max_num_buffer];
-  char c_metadata_name[]="test.metadata";
-  char c_data_name[]="test.data";
-  FILE *fp_metadata=fopen(c_metadata_name,"w");
-  FILE *fp_data=fopen(c_data_name,"w");
-
-  //assume that chisel_test won't use cases with 32 or more input buffer.
-#endif
 
   struct vt_device_data_t *d;
   size_t x, y, z;
@@ -382,7 +369,22 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     uint64_t knlbase=0x90000000;
     uint64_t sgpr_usage=32;
     uint64_t vgpr_usage=32;
-    
+
+#ifdef PRINT_CHISEL_TESTCODE
+    uint64_t c_num_buffer=0;
+    uint64_t c_max_num_buffer=1024;
+    uint64_t c_buffer_base[c_max_num_buffer];
+    uint64_t c_buffer_size[c_max_num_buffer];
+    uint64_t c_buffer_allocsize[c_max_num_buffer];
+    std::string metadata_name_s = std::string(meta->name)+".metadata";
+    const char *c_metadata_name = metadata_name_s.c_str();
+    std::string data_name_s = std::string(meta->name)+".data";
+    const char *c_data_name = data_name_s.c_str();
+    FILE *fp_metadata=fopen(c_metadata_name,"w");
+    FILE *fp_data=fopen(c_data_name,"w");
+
+    //assume that chisel_test won't use cases with 32 or more input buffer.
+#endif
 
 /*
 step1 upload kernel_rom & allocate its mem (load cache file?)
@@ -450,14 +452,20 @@ step5 make a writefile for chisel
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
                   #ifdef PRINT_CHISEL_TESTCODE
-                  if(m->mem_host_ptr) {
+
                       c_buffer_base[c_num_buffer] = *((uint64_t *) ptr);
                       c_buffer_size[c_num_buffer] = m->size;
                       c_buffer_allocsize[c_num_buffer] = m->size;
                       c_num_buffer = c_num_buffer + 1;
                       assert(c_num_buffer <= c_max_num_buffer);
-                      fp_write_file(fp_data, (m->mem_host_ptr), m->size);
-                  }
+                      if(m->mem_host_ptr)
+                          fp_write_file(fp_data, (m->mem_host_ptr), m->size);
+                      else {
+                          void* zero_data = new uint64_t [m->size];
+                          memset(zero_data,0,m->size);
+                          fp_write_file(fp_data, zero_data, m->size);
+                          delete static_cast<uint64_t*>(zero_data);
+                      }
                   #endif
                 }
                 ((void **)arguments)[i] = ptr;
@@ -622,8 +630,8 @@ uint64_t abuf_size = 0;
   start_pc=0x80000000; // start.S baseaddr, now lock to 0x80000000
   sgpr_usage=32;
   vgpr_usage=32;
-//  uint64_t pc_src_size=0x10000000;
-//  uint64_t pc_dev_mem_addr;
+  uint64_t pc_src_size=0x10000000;
+  uint64_t pc_dev_mem_addr = 0x80000000;
 //  ///TODO 在这个地址放程序段
 //  err = vt_buf_alloc(d->vt_device, pc_src_size, &pc_dev_mem_addr,0,0,0);
 //  if (err != 0) {
@@ -703,7 +711,7 @@ uint64_t abuf_size = 0;
   memcpy(kernel_metadata+KNL_WORK_DIM,&(pc->work_dim),4);
   uint32_t local_size_32[3];local_size_32[0]=(uint32_t)pc->local_size[0];local_size_32[1]=(uint32_t)pc->local_size[1];local_size_32[2]=(uint32_t)pc->local_size[2];
   uint32_t global_offset_32[3];global_offset_32[0]=(uint32_t)pc->global_offset[0];global_offset_32[1]=(uint32_t)pc->global_offset[1];global_offset_32[2]=(uint32_t)pc->global_offset[2];
-  uint32_t global_size_32[3];global_size_32[0]=(uint32_t)pc->num_groups[0];global_size_32[1]=(uint32_t)pc->num_groups[1];global_size_32[2]=(uint32_t)pc->num_groups[2];
+  uint32_t global_size_32[3];global_size_32[0]=(uint32_t)pc->num_groups[0]*local_size_32[0];global_size_32[1]=(uint32_t)pc->num_groups[1]*local_size_32[1];global_size_32[2]=(uint32_t)pc->num_groups[2]*local_size_32[2];
   memcpy(kernel_metadata+KNL_GL_SIZE_X,&global_size_32[0],4);
   memcpy(kernel_metadata+KNL_GL_SIZE_Y,&global_size_32[1],4);
   memcpy(kernel_metadata+KNL_GL_SIZE_Z,&global_size_32[2],4);
@@ -1056,12 +1064,6 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
                               int link_builtin_lib) {
     return pocl_driver_build_source(program, device_i, num_input_headers,
                                        input_headers, header_include_names, 0);
-
-//    if (error != 0) {
-//        POCL_MSG_ERR("LLVM build program.bc failed!\n");
-//        return -1;
-//    }
-//    return 0;
 }
 
 int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
@@ -1083,7 +1085,6 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
   std::ofstream outfile("object.cl");
   outfile << program->source;
   outfile.close();
-
 
   cl_device_id device = program->devices[device_i];
 
