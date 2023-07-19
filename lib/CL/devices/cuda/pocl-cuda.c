@@ -73,6 +73,9 @@ cudnnHandle_t cudnn;
       }                                                                       \
   }
 
+void pocl_cuda_svm_copy_async (CUstream, void *restrict, const void *restrict,
+                               size_t);
+
 typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
@@ -309,6 +312,15 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->map_mem = NULL;
   ops->unmap_mem = NULL;
   ops->run = NULL;
+
+  ops->svm_alloc = pocl_cuda_svm_alloc;
+  ops->svm_free = pocl_cuda_svm_free;
+  /* No need to implement these two as they are no-ops
+   * and pocl_exec_command takes care of them. */
+  ops->svm_map = NULL;
+  ops->svm_unmap = NULL;
+  ops->svm_copy = pocl_cuda_svm_copy;
+  ops->svm_fill = pocl_cuda_svm_fill;
 }
 
 cl_int
@@ -562,6 +574,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
     result = cuMemGetInfo (&memfree, &memtotal);
   dev->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
   dev->global_mem_size = memtotal;
+
+  dev->svm_allocation_priority = 2;
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
 
   // All devices starting from Compute Capability 2.0 have this limit;
   // See e.g.
@@ -1220,7 +1235,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   result = cuModuleGetFunction (&function, module, kernel->name);
   CUDA_CHECK (result, "cuModuleGetFunction");
 
-  /* Get pointer aligment */
+  /* Get pointer alignment */
   if (!kdata->alignments)
     {
       kdata->alignments
@@ -1632,6 +1647,10 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
                 sharedMemBytes += size;
               }
+            else if (arguments[i].is_svm == 1)
+              {
+                params[i] = arguments[i].value;
+              }
             else if (meta->arg_info[i].address_qualifier
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
@@ -1957,6 +1976,53 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
                                 cmd->memfill.pattern,
                                 cmd->memfill.pattern_size);
       break;
+    case CL_COMMAND_SVM_MAP:
+    case CL_COMMAND_SVM_UNMAP:
+      /* empty */
+      break;
+
+    case CL_COMMAND_SVM_MEMCPY:
+      pocl_cuda_svm_copy_async (stream, cmd->svm_memcpy.dst,
+                                cmd->svm_memcpy.src, cmd->svm_memcpy.size);
+      break;
+    case CL_COMMAND_SVM_MEMFILL:
+      pocl_cuda_submit_memfill (stream, cmd->svm_fill.svm_ptr,
+                                cmd->svm_fill.size, 0, cmd->svm_fill.pattern,
+                                cmd->svm_fill.pattern_size);
+      break;
+    case CL_COMMAND_SVM_FREE:
+      if (cmd->svm_free.pfn_free_func)
+        {
+          cmd->svm_free.pfn_free_func (
+              cmd->svm_free.queue, cmd->svm_free.num_svm_pointers,
+              cmd->svm_free.svm_pointers, cmd->svm_free.data);
+        }
+      else
+        {
+          int i;
+          for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
+            {
+              void *ptr = cmd->svm_free.svm_pointers[i];
+              POCL_LOCK_OBJ (event->context);
+              pocl_svm_ptr *tmp = NULL, *item = NULL;
+              DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+              {
+                if (item->svm_ptr == ptr)
+                  {
+                    DL_DELETE (event->context->svm_ptrs, item);
+                    break;
+                  }
+              }
+              POCL_UNLOCK_OBJ (event->context);
+              assert (item);
+              POCL_MEM_FREE (item);
+              // Leads to 'undefined symbol: POclReleaseContext'
+              // POname (clReleaseContext) (event->context);
+
+              dev->ops->svm_free (dev, ptr);
+            }
+        }
+      break;
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_COPY_IMAGE:
@@ -1965,11 +2031,6 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     case CL_COMMAND_FILL_IMAGE:
     case CL_COMMAND_MAP_IMAGE:
     case CL_COMMAND_NATIVE_KERNEL:
-    case CL_COMMAND_SVM_FREE:
-    case CL_COMMAND_SVM_MAP:
-    case CL_COMMAND_SVM_UNMAP:
-    case CL_COMMAND_SVM_MEMCPY:
-    case CL_COMMAND_SVM_MEMFILL:
     default:
       POCL_ABORT_UNIMPLEMENTED (pocl_command_to_str (node->type));
       break;
@@ -2314,4 +2375,65 @@ pocl_cuda_finalize_thread (void *data)
 char* pocl_cuda_init_build(void *data)
 {
     return strdup("-mllvm --nvptx-short-ptr");
+}
+
+/****** SVM callbacks *****/
+
+void *
+pocl_cuda_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM cuMemAllocManaged %lu\n", size);
+  if ((flags & CL_MEM_SVM_FINE_GRAIN_BUFFER)
+      && ((dev->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) == 0))
+    {
+      POCL_MSG_ERR (
+          "This device does not support SVM fine-grained buffers.\n");
+      return NULL;
+    }
+
+  CUdeviceptr dptr;
+  CUresult res;
+  res = cuMemAllocManaged (&dptr, size, CU_MEM_ATTACH_GLOBAL);
+  CUDA_CHECK (res, "cuMemAllocManaged");
+  return (void *)dptr;
+}
+
+void
+pocl_cuda_svm_free (cl_device_id dev, void *svm_ptr)
+{
+  POCL_MSG_PRINT_CUDA ("SVM cuMemFree %p\n", svm_ptr);
+  CUresult res;
+  res = cuMemFree ((CUdeviceptr)svm_ptr);
+  CUDA_CHECK (res, "cuMemFree");
+}
+
+void
+pocl_cuda_svm_copy (cl_device_id dev, void *__restrict__ dst,
+                    const void *__restrict__ src, size_t size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM cuMemcpy %p -> %p, %lu bytes\n", src, dst, size);
+  CUresult res;
+  res = cuMemcpy ((CUdeviceptr)dst, (CUdeviceptr)src, size);
+  CUDA_CHECK (res, "cuMemcpy");
+}
+
+void
+pocl_cuda_svm_copy_async (CUstream stream, void *__restrict__ dst,
+                          const void *__restrict__ src, size_t size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM cuMemcpyAsync %p -> %p, %lu bytes\n", src, dst,
+                       size);
+
+  CUresult res;
+  res = cuMemcpyAsync ((CUdeviceptr)dst, (CUdeviceptr)src, size, stream);
+  CUDA_CHECK (res, "cuMemcpyAsync");
+}
+
+void
+pocl_cuda_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
+                    void *__restrict__ pattern, size_t pattern_size)
+{
+  POCL_MSG_PRINT_CUDA ("SVM MEMFILL %p \n", svm_ptr);
+
+  pocl_cuda_submit_memfill (0, svm_ptr, size, 0, pattern, pattern_size);
 }

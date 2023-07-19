@@ -3,6 +3,7 @@
 
 Notable User Facing Changes
 ---------------------------
+- Added support for Coarse-Grained buffer SVM on CUDA devices.
 
 Notable Fixes
 -------------
