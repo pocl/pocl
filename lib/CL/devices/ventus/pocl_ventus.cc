@@ -44,6 +44,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <map>
 
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
@@ -356,7 +357,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   struct pocl_context *pc = &cmd->command.run.pc;
   int err;
 
-    uint64_t num_thread=32;
+    uint64_t num_thread=4;
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
     uint64_t num_workgroups[3];
     num_workgroups[0]=pc->num_groups[0];num_workgroups[1]=pc->num_groups[1];num_workgroups[2]=pc->num_groups[2];
@@ -652,10 +653,10 @@ uint64_t abuf_size = 0;
 #endif
 	//pass in vmem file
 	char filename[]="object.riscv";
-	///TODO 将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
+	///将text段搬到ddr(not related to spike),并且起始地址必须是0x80000000(spike专用)，verilator需要先解析出vmem,然后上传程序段
 	vt_upload_kernel_file(d->vt_device,filename,0);
   #ifdef PRINT_CHISEL_TESTCODE
-    //TODO: add upload kernel file here.
+    //this file includes all kernels of executable file, kernel actually to be executed is determined by metadata.
 	std::ifstream vmem_file("object.vmem");
 	vmem_file.seekg(0, vmem_file.end);
 	auto size = vmem_file.tellg();
@@ -794,7 +795,27 @@ uint64_t abuf_size = 0;
 
   // move print buffer back or wait to read?     
 
-
+    // rename log file from spike and add index for log
+    const char* sp_logname = "object.riscv.log";
+    static std::map<std::string, int> knl_name_list;
+    auto it = knl_name_list.find(meta->name);
+    if(it != knl_name_list.end())
+        it->second++;
+    else
+        knl_name_list[meta->name] = 0;
+    char newName[256]; // 假设文件名不超过 255 个字符
+    FILE* logfp = fopen(sp_logname, "r");
+    if(logfp) {
+        fclose(logfp);
+        strcpy(newName, meta->name);
+        sprintf(newName, "%s_%d.log",meta->name,knl_name_list[meta->name]);
+        //strcat(newName, ".log");
+        if(rename(sp_logname, newName) == 0) {
+            printf("Log file %s renamed successfully to %s.\n", sp_logname, newName);
+        } else {
+            printf("Unable to rename the log file %s.\n", sp_logname);
+        }
+    }
 
 for (i = 0; i < meta->num_args; ++i)
     {
