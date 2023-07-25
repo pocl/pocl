@@ -18,8 +18,7 @@ the version control system:</p>
 <ul>
 
 <li><b>Version 4.0:</b> Supports LLVM versions 10.0 to 16.0.
-            <a href="downloads/pocl-4.0.tar.gz">pocl-4.0.tar.gz (1.9 M)</a>,
-            <a href="https://raw.githubusercontent.com/pocl/pocl/release_4_0/CHANGES">change log</a>,
+            <a href="https://github.com/pocl/pocl/releases/tag/v4.0">download</a>,
             <a href="https://github.com/pocl/pocl/blob/release_4_0/doc/notes_4_0.rst">release notes</a></li>
 
 <li><b>Version 3.1:</b> Supports LLVM versions 6.0 to 15.0.
