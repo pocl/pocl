@@ -78,7 +78,7 @@ POname (clGetCommandBufferInfoKHR) (
       PARAM_SIZE (2 * sizeof (cl_command_buffer_properties_khr)
                       * command_buffer->num_properties
                   + 1);
-      PARAM_VALUE (&command_buffer->properties,
+      PARAM_VALUE (command_buffer->properties,
                    2 * sizeof (cl_command_buffer_properties_khr)
                            * command_buffer->num_properties
                        + 1);
