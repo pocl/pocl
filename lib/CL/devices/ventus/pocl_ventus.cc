@@ -357,7 +357,7 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   struct pocl_context *pc = &cmd->command.run.pc;
   int err;
 
-    uint64_t num_thread=4;
+    uint64_t num_thread=32;
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
     uint64_t num_workgroups[3];
     num_workgroups[0]=pc->num_groups[0];num_workgroups[1]=pc->num_groups[1];num_workgroups[2]=pc->num_groups[2];
@@ -370,6 +370,8 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     uint64_t knlbase=0x90000000;
     uint64_t sgpr_usage=32;
     uint64_t vgpr_usage=32;
+    uint64_t new_lds_base = ventus_local_base+ventus_local_size_total;
+    uint64_t local_arg[meta->num_args];
 
 #ifdef PRINT_CHISEL_TESTCODE
     uint64_t c_num_buffer=0;
@@ -417,6 +419,30 @@ step5 make a writefile for chisel
               /* Local buffers are allocated in the device side work-group
                  launcher. Let's pass only the sizes of the local args in
                  the arg buffer. */
+                void* tmp_arg = malloc(al->size);
+                memset(tmp_arg,0,al->size);
+                if(al->value != nullptr)
+                    memcpy(tmp_arg, al->value, al->size);
+                uint64_t aligned_size = (al->size / 4096 + 1)*4096;
+                new_lds_base -= aligned_size;
+                memcpy(&local_arg[i], &new_lds_base, sizeof(uint32_t));
+                printf("new_lds_base:%08lx\n", new_lds_base);
+                err = vt_copy_to_dev(d->vt_device, new_lds_base, tmp_arg, aligned_size,0,0);
+                if (err != 0) {
+                    abort();
+                }
+                #ifdef PRINT_CHISEL_TESTCODE
+                  c_buffer_base[c_num_buffer] = new_lds_base;
+                  c_buffer_size[c_num_buffer] = al->size;
+                  c_buffer_allocsize[c_num_buffer] = aligned_size;
+                  c_num_buffer = c_num_buffer + 1;
+                  assert(c_num_buffer <= c_max_num_buffer);
+                  void* zero_data = malloc(al->size*sizeof(uint64_t));
+                  memset(zero_data,0,al->size);
+                  fp_write_file(fp_data, zero_data, al->size);
+                  free(tmp_arg);
+
+                #endif
               printf("not support local buffer arg yet.\n");
               //arguments[i] = (void *)al->size;
             }
@@ -453,7 +479,6 @@ step5 make a writefile for chisel
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
                   #ifdef PRINT_CHISEL_TESTCODE
-
                       c_buffer_base[c_num_buffer] = *((uint64_t *) ptr);
                       c_buffer_size[c_num_buffer] = m->size;
                       c_buffer_allocsize[c_num_buffer] = m->size;
@@ -462,7 +487,7 @@ step5 make a writefile for chisel
                       if(m->mem_host_ptr)
                           fp_write_file(fp_data, (m->mem_host_ptr), m->size);
                       else {
-                          void* zero_data = new uint64_t [m->size];
+                          void* zero_data = malloc(m->size*sizeof(uint64_t));
                           memset(zero_data,0,m->size);
                           fp_write_file(fp_data, zero_data, m->size);
                           delete static_cast<uint64_t*>(zero_data);
@@ -535,7 +560,6 @@ uint64_t abuf_size = 0;
       pocl_argument* al = &(cmd->command.run.arguments[i]);  
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         abuf_size += 4;
-        //abuf_size += al->size;
       } else
       if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
        || (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -552,8 +576,7 @@ uint64_t abuf_size = 0;
   for(i = 0; i < meta->num_args; ++i) {  
       pocl_argument* al = &(cmd->command.run.arguments[i]);  
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
-        uint32_t local_vaddr=0;
-        memcpy(abuf_args_data+abuf_args_p,&local_vaddr,4);
+        memcpy(abuf_args_data+abuf_args_p,&local_arg[i],4);
         abuf_args_p+=4;
       } else
       if ((meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
@@ -567,6 +590,7 @@ uint64_t abuf_size = 0;
         abuf_args_p+=al->size;
       }
     }
+    POCL_MSG_PRINT_VENTUS("Allocating kernel arg buffer entry:\n");
   uint64_t arg_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, abuf_size, &arg_dev_mem_addr,0,0,0);
   if (err != 0) {
@@ -603,7 +627,7 @@ uint64_t abuf_size = 0;
 	uint32_t kernel_entry;
 #ifdef __linux__
     std::string kernel_name(meta->name);
-   	std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
+   	std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
 	FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
 	if(fp0 == NULL) {
 		POCL_MSG_ERR("running compile kernel failed");
@@ -619,7 +643,7 @@ uint64_t abuf_size = 0;
 		perror("pclose() failed");
 		exit(EXIT_FAILURE);
 	} else {
-		POCL_MSG_PRINT_LLVM("Kernel entry of \"%s\" is : \"0x%x\"\n", kernel->name, kernel_entry);
+		POCL_MSG_PRINT_VENTUS("Kernel entry of \"%s\" is : \"0x%x\"\n", kernel->name, kernel_entry);
 	}
 #elif
 	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
@@ -646,7 +670,7 @@ uint64_t abuf_size = 0;
   	system((std::string("chmod +x ") + assembler_path).c_str());
   	assembler_path += " object";
   	system(assembler_path.c_str());
-	POCL_MSG_PRINT_LLVM("Vmem file has been written to object.vmem\n");
+	POCL_MSG_PRINT_VENTUS("Vmem file has been written to object.vmem\n");
 #elif
 	POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
 	exit(1);
@@ -689,6 +713,7 @@ uint64_t abuf_size = 0;
 //prepare privatemem
   uint64_t pds_src_size=pdssize*num_thread*num_warp*num_workgroup;
   uint64_t pds_dev_mem_addr;
+    POCL_MSG_PRINT_VENTUS("Preparing private memory of ventus:\n");
   err = vt_buf_alloc(d->vt_device, pds_src_size, &pds_dev_mem_addr,0,0,0);
   if (err != 0) {
     abort();
@@ -723,6 +748,7 @@ uint64_t abuf_size = 0;
   memcpy(kernel_metadata+KNL_GL_OFFSET_Y,&global_offset_32[1],4);
   memcpy(kernel_metadata+KNL_GL_OFFSET_Z,&global_offset_32[2],4);
 //memcpy(kernel_metadata+KNL_PRINT_ADDR,global_offset_32[0],4);
+    POCL_MSG_PRINT_VENTUS("Allocating metadata space:\n");
   uint64_t knl_dev_mem_addr;
   err = vt_buf_alloc(d->vt_device, KNL_MAX_METADATA_SIZE, &knl_dev_mem_addr,0,0,0);
   if (err != 0) {
@@ -732,7 +758,7 @@ uint64_t abuf_size = 0;
   if (err != 0) {
     abort();
   }
-  POCL_MSG_PRINT_INFO("kernel metadata has been written to 0x%x\n", knl_dev_mem_addr);
+  POCL_MSG_PRINT_VENTUS("kernel metadata has been written to 0x%x\n", knl_dev_mem_addr);
   #ifdef PRINT_CHISEL_TESTCODE
     c_buffer_base[c_num_buffer]=knl_dev_mem_addr;
     c_buffer_size[c_num_buffer]=KNL_MAX_METADATA_SIZE;
@@ -1001,7 +1027,7 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
 
 cl_int
 pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
-  
+
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
   vt_device_data_t* d = (vt_device_data_t *)device->data;
@@ -1054,6 +1080,10 @@ void pocl_ventus_write(void *data,
                        size_t offset, 
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
+  void *tmp_data = malloc(size);
+    memcpy(tmp_data, host_ptr, size);
+    dst_buf->mem_host_ptr = tmp_data;
+//  memcpy(dst_buf->mem_host_ptr, host_ptr, sizeof(void*));
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
