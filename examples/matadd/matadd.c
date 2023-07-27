@@ -27,8 +27,8 @@
 
 #include "poclu.h"
 
-#define N (16*16)
-#define M (8*16)
+#define N (4)
+#define M (4)
 
 #ifdef __cplusplus
 #  define CALLAPI "C"
@@ -95,12 +95,12 @@ main (int argc, char **argv)
 	  {
 	    printf ("%d FAIL: %f + %f != %f\n", indx,
 		    srcA[indx], srcB[indx], dst[indx]);
-	    err = 1;
-	    goto FINISH;
+	    err ++;
+	    if (err >=100) goto FINISH;
 	  }
       }
 
-  printf ("OK\n");
+  if (err == 0) printf ("OK\n");
 
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));

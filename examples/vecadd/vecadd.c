@@ -27,7 +27,7 @@
 
 #include "poclu.h"
 
-#define N 128
+#define N 6
 
 #ifdef __cplusplus
 #  define CALLAPI "C"

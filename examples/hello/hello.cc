@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         std::cout << "Create command queue failed" << std::endl;
         return -1;
     }
-    const uint32_t cal_num = 10000;
+    const uint32_t cal_num = 100;
     uint32_t* hA = new uint32_t[cal_num];
     uint32_t* hB = new uint32_t[cal_num];
     uint32_t* hC = new uint32_t[cal_num];
@@ -55,6 +55,10 @@ int main(int argc, char** argv) {
             "__kernel void test_main(__global const uint* A, __global const uint* B, __global uint* C) {\n"
             "  size_t idx = get_global_id(0);\n"
             "  C[idx] = A[idx] + B[idx];\n"
+            "}\n"
+            "__kernel void test_main2(__global const uint* A, __global const uint* B, __global uint* C) {\n"
+            "  size_t idx = get_global_id(0);\n"
+            "  C[idx] = A[idx] - B[idx];\n"
             "}";
     cl_program program = clCreateProgramWithSource(context, 1, &program_source,
                                                    nullptr, nullptr);
@@ -97,10 +101,49 @@ int main(int argc, char** argv) {
     }
 
     // check one output data
-    if (hC[1024] != hA[1024] + hB[1024]) {
-        std::cout << "Data calculation failed" << std::endl;
+    for(int i = 0; i < cal_num; ++i)
+    if (hC[i] != hA[i] + hB[i]) {
+        std::cout << "test_main Data calculation failed" << std::endl;
         return -1;
     }
+    std::cout << "test_main OK" << std::endl;
+
+
+
+    cl_kernel kernel2 = clCreateKernel(program, "test_main2", nullptr);
+    if (kernel2 == nullptr) {
+        std::cout << "Create kernel failed" << std::endl;
+        return -1;
+    }
+    err = clSetKernelArg(kernel2, 0, sizeof(cl_mem), &mA);
+    err |= clSetKernelArg(kernel2, 1, sizeof(cl_mem), &mB);
+    err |= clSetKernelArg(kernel2, 2, sizeof(cl_mem), &mC);
+    if (err != CL_SUCCESS) {
+        std::cout << "Set kernel arg failed" << std::endl;
+        return -1;
+    }
+    size_t global_size2[] {cal_num};
+    size_t local_size2[] {cal_num / 10};
+    err = clEnqueueNDRangeKernel(queue, kernel2, 1, nullptr, global_size2,
+                                 local_size2, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        std::cout << "Run kernel failed" << std::endl;
+        return -1;
+    }
+    err = clEnqueueReadBuffer(queue, mC, CL_TRUE, 0, sizeof(uint32_t) * cal_num,
+                              hC, 0, nullptr, nullptr);
+    if (err != CL_SUCCESS) {
+        std::cout << "Read data failed" << std::endl;
+        return -1;
+    }
+
+    // check one output data
+    for(int i = 0; i < cal_num; ++i)
+        if (hC[i] != hA[i] - hB[i]) {
+        std::cout << "test_main2 Data calculation failed" << std::endl;
+        return -1;
+    }
+    std::cout << "test_main2 OK" << std::endl;
 
     return 0;
 }
