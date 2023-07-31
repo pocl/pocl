@@ -356,6 +356,13 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
   int err;
+  //calculating number of kernel name appears.
+  static std::map<std::string, int> knl_name_list;
+  auto it = knl_name_list.find(meta->name);
+  if(it != knl_name_list.end())
+      it->second++;
+  else
+      knl_name_list[meta->name] = 0;
 
     uint64_t num_thread=32;
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
@@ -368,8 +375,8 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     uint64_t pdsbase=0x8a000000;
     uint64_t start_pc=0x80000000;
     uint64_t knlbase=0x90000000;
-    uint64_t sgpr_usage=32;
-    uint64_t vgpr_usage=32;
+    uint64_t sgpr_usage=64;
+    uint64_t vgpr_usage=64;
     uint64_t new_lds_base = ventus_local_base+ventus_local_size_total;
     uint64_t local_arg[meta->num_args];
 
@@ -379,9 +386,9 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
     uint64_t c_buffer_base[c_max_num_buffer];
     uint64_t c_buffer_size[c_max_num_buffer];
     uint64_t c_buffer_allocsize[c_max_num_buffer];
-    std::string metadata_name_s = std::string(meta->name)+".metadata";
+    std::string metadata_name_s = std::string(meta->name)+"_"+std::to_string(knl_name_list[meta->name])+".metadata";
     const char *c_metadata_name = metadata_name_s.c_str();
-    std::string data_name_s = std::string(meta->name)+".data";
+    std::string data_name_s = std::string(meta->name)+"_"+std::to_string(knl_name_list[meta->name])+".data";
     const char *c_data_name = data_name_s.c_str();
     FILE *fp_metadata=fopen(c_metadata_name,"w");
     FILE *fp_data=fopen(c_data_name,"w");
@@ -479,19 +486,22 @@ step5 make a writefile for chisel
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
                   #ifdef PRINT_CHISEL_TESTCODE
-                      c_buffer_base[c_num_buffer] = *((uint64_t *) ptr);
-                      c_buffer_size[c_num_buffer] = m->size;
-                      c_buffer_allocsize[c_num_buffer] = m->size;
-                      c_num_buffer = c_num_buffer + 1;
-                      assert(c_num_buffer <= c_max_num_buffer);
-                      if(m->mem_host_ptr)
-                          fp_write_file(fp_data, (m->mem_host_ptr), m->size);
-                      else {
-                          void* zero_data = malloc(m->size*sizeof(uint64_t));
-                          memset(zero_data,0,m->size);
-                          fp_write_file(fp_data, zero_data, m->size);
-                          delete static_cast<uint64_t*>(zero_data);
-                      }
+                    if (m->device_ptrs[cmd->device->global_mem_id].extra == 0) {
+                        c_buffer_base[c_num_buffer] = *((uint64_t *) ptr);
+                        c_buffer_size[c_num_buffer] = m->size;
+                        c_buffer_allocsize[c_num_buffer] = m->size;
+                        c_num_buffer = c_num_buffer + 1;
+                        assert(c_num_buffer <= c_max_num_buffer);
+                        if(m->mem_host_ptr)
+                            fp_write_file(fp_data, (m->mem_host_ptr), m->size);
+                        else {
+                            void* zero_data = malloc(m->size*sizeof(uint64_t));
+                            memset(zero_data,0,m->size);
+                            fp_write_file(fp_data, zero_data, m->size);
+                            delete static_cast<uint64_t*>(zero_data);
+                        }
+                        m->device_ptrs[cmd->device->global_mem_id].extra++;
+                    }
                   #endif
                 }
                 ((void **)arguments)[i] = ptr;
@@ -823,12 +833,6 @@ uint64_t abuf_size = 0;
 
     // rename log file from spike and add index for log
     const char* sp_logname = "object.riscv.log";
-    static std::map<std::string, int> knl_name_list;
-    auto it = knl_name_list.find(meta->name);
-    if(it != knl_name_list.end())
-        it->second++;
-    else
-        knl_name_list[meta->name] = 0;
     char newName[256]; // 假设文件名不超过 255 个字符
     FILE* logfp = fopen(sp_logname, "r");
     if(logfp) {
@@ -1081,9 +1085,9 @@ void pocl_ventus_write(void *data,
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   void *tmp_data = malloc(size);
-    memcpy(tmp_data, host_ptr, size);
-    dst_buf->mem_host_ptr = tmp_data;
-//  memcpy(dst_buf->mem_host_ptr, host_ptr, sizeof(void*));
+  memcpy(tmp_data, host_ptr, size);
+  dst_buf->mem_host_ptr = tmp_data;
+
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }

@@ -15,7 +15,6 @@
 extern "C" {
 #endif
 
-#define POCL_DEBUG_FLAG_VENTUS 0x100000
 #define POCL_MSG_PRINT_VENTUS(...) POCL_MSG_PRINT_INFO_F(VENTUS, "", __VA_ARGS__)
 
 #define ventus_local_base 0x80000000
