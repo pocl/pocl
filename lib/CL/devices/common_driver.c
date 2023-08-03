@@ -497,7 +497,7 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
 {
 #ifdef LLVM_SPIRV
   int errcode = CL_SUCCESS;
-
+  cl_device_id device = program->devices[device_i];
   int spec_constants_changed = 0;
   char concated_spec_const_option[MAX_SPEC_CONST_CMDLINE_LEN];
   concated_spec_const_option[0] = 0;
@@ -505,12 +505,15 @@ pocl_regen_spirv_binary (cl_program program, cl_uint device_i)
   char unlinked_program_bc_temp[POCL_MAX_PATHNAME_LENGTH];
   program_bc_spirv[0] = 0;
   unlinked_program_bc_temp[0] = 0;
-  /* using --spirv-target-env=CL2.0 here would enable proper OpenCL 2.0
-   * atomics, unfortunately it also enables generic ptrs which PoCL doesn't
-   * support */
+
+  /* using --spirv-target-env=CL2.0 here enables llvm-spirv to produce proper
+   * OpenCL 2.0 atomics, unfortunately it also enables generic ptrs, which not
+   * all PoCL devices support, hence check the device */
+  char* spirv_target_env = (device->generic_as_support != CL_FALSE) ?
+                        "--spirv-target-env=CL2.0" :  "--spirv-target-env=CL1.2";
   char *args[8] = { LLVM_SPIRV,
                     concated_spec_const_option,
-                    "--spirv-target-env=CL1.2",
+                    spirv_target_env,
                     "-r", "-o",
                     unlinked_program_bc_temp,
                     program_bc_spirv,
