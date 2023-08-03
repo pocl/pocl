@@ -69,12 +69,11 @@ Flatten::runOnModule(Module &M)
   bool changed = false;
 
   std::string DevAuxFunctionsList;
-  getModuleStringMetadata(M, "device_aux_functions", DevAuxFunctionsList);
-  std::string KernelName;
-  getModuleStringMetadata(M, "KernelName", KernelName);
+  bool FoundMetadata =
+      getModuleStringMetadata(M, "device_aux_functions", DevAuxFunctionsList);
 
   std::set<std::string> AuxFuncs;
-  if (DevAuxFunctionsList.size() > 0) {
+  if (FoundMetadata && DevAuxFunctionsList.size() > 0) {
     size_t pos = 0;
     std::string token;
     while ((pos = DevAuxFunctionsList.find(";")) != std::string::npos) {
@@ -94,7 +93,7 @@ Flatten::runOnModule(Module &M)
     changed = true;
     decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
     decltype(llvm::GlobalValue::ExternalLinkage) linkage;
-    if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
+    if (pocl::Workgroup::isKernelToProcess(*f)) {
       replaceThisAttr = Attribute::AlwaysInline;
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;
