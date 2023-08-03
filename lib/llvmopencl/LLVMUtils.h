@@ -73,6 +73,11 @@ bool isProgramScopeVariable(llvm::GlobalVariable &GVar, unsigned DeviceLocalAS);
 void setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex,
                               unsigned AS);
 
+bool hasWorkgroupBarriers(const llvm::Function &F);
+
+POCL_EXPORT
+bool isKernelToProcess(const llvm::Function &F);
+
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
 
 /**

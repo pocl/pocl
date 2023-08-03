@@ -67,7 +67,7 @@ void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
+  if (!isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
   if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
@@ -75,7 +75,7 @@ bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
     return false;
 
   if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
-      !Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent())) {
+      !hasWorkgroupBarriers(*L->getHeader()->getParent())) {
 #ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### ILB: The kernel has no barriers, let's not add implicit ones "
               << "either to avoid WI context switch overheads"

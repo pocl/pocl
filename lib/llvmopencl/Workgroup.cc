@@ -1591,68 +1591,6 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
   Builder.CreateRetVoid();
 }
 
-// Returns true in case the given function is a kernel that
-// should be processed by the kernel compiler.
-bool Workgroup::isKernelToProcess(const Function &F) {
-
-  const Module *m = F.getParent();
-
-  if (F.getMetadata("kernel_arg_access_qual") &&
-      F.getMetadata("pocl_generated") == nullptr)
-    return true;
-
-  NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
-  if (kernels == NULL) {
-
-    std::string KernelName;
-    getModuleStringMetadata(*m, "KernelName", KernelName);
-
-    if (KernelName == "")
-      return true;
-    if (F.getName().str() == KernelName)
-      return true;
-
-    return false;
-  }
-
-  for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
-    if (kernels->getOperand(i)->getOperand(0) == NULL)
-      continue; // globaldce might have removed uncalled kernels
-    Function *k =
-      cast<Function>(
-        dyn_cast<ValueAsMetadata>(kernels->getOperand(i)->getOperand(0))
-        ->getValue());
-    if (&F == k)
-      return true;
-  }
-
-  return false;
-}
-
-// Returns true in case the given function is a kernel with work-group
-// barriers inside it.
-bool
-Workgroup::hasWorkgroupBarriers(const Function &F)
-{
-  for (llvm::Function::const_iterator i = F.begin(), e = F.end();
-       i != e; ++i) {
-    const llvm::BasicBlock* bb = &*i;
-    if (Barrier::hasBarrier(bb)) {
-
-      // Ignore the implicit entry and exit barriers.
-      if (Barrier::hasOnlyBarrier(bb) && bb == &F.getEntryBlock())
-        continue;
-
-      if (Barrier::hasOnlyBarrier(bb) &&
-          bb->getTerminator()->getNumSuccessors() == 0)
-        continue;
-
-      return true;
-    }
-  }
-  return false;
-}
-
 // The subgroup size is currently defined for the CPU implementations
 // via the intel_reqd_subgroup_size metadata or the local dimension
 // x size (the default).

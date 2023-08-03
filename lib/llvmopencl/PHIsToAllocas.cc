@@ -58,7 +58,7 @@ PHIsToAllocas::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool
 PHIsToAllocas::runOnFunction(Function &F) {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
 #ifdef CBS_NO_PHIS_IN_SPLIT

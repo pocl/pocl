@@ -73,7 +73,7 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 BarrierTailReplication::runOnFunction(Function &F)
 {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
   if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
       WorkitemHandlerChooser::POCL_WIH_CBS)

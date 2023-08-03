@@ -93,7 +93,7 @@ Flatten::runOnModule(Module &M)
     changed = true;
     decltype(Attribute::AlwaysInline) replaceThisAttr, replacementAttr;
     decltype(llvm::GlobalValue::ExternalLinkage) linkage;
-    if (pocl::Workgroup::isKernelToProcess(*f)) {
+    if (pocl::isKernelToProcess(*f)) {
       replaceThisAttr = Attribute::AlwaysInline;
       replacementAttr = Attribute::NoInline;
       linkage = llvm::GlobalValue::ExternalLinkage;

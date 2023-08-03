@@ -101,13 +101,13 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 
 bool WorkitemLoops::runOnFunction(Function &F) {
 
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
   auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
   if (WIH != pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS &&
       !(WIH == pocl::WorkitemHandlerChooser::POCL_WIH_CBS &&
-        !Workgroup::hasWorkgroupBarriers(F)))
+        !hasWorkgroupBarriers(F)))
     return false;
 
   DTP = &getAnalysis<DominatorTreeWrapperPass>();

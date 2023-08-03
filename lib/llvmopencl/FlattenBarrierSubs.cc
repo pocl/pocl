@@ -118,8 +118,7 @@ bool FlattenBarrierSubs::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
 
-    if (KernelName == F->getName().str() ||
-        pocl::Workgroup::isKernelToProcess(*F)) {
+    if (KernelName == F->getName().str() || pocl::isKernelToProcess(*F)) {
 
 #ifdef DEBUG_FLATTEN_SUBS
       std::cerr << "### FlattenBarrierSubs Pass running on " << KernelName

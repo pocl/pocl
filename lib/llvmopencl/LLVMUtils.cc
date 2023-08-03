@@ -22,7 +22,9 @@
 // THE SOFTWARE.
 
 #include "LLVMUtils.h"
+#include "Barrier.h"
 
+#include "pocl_llvm_api.h"
 #include "pocl_spir.h"
 
 #include "CompilerWarnings.h"
@@ -378,5 +380,68 @@ void setFuncArgAddressSpaceMD(llvm::Function *F, unsigned ArgIndex,
   }
   AddressQuals.push_back(createConstantIntMD(C, AS));
   F->setMetadata(MDKind, MDNode::get(F->getContext(), AddressQuals));
+}
+
+// Returns true in case the given function is a kernel that
+// should be processed by the kernel compiler.
+bool isKernelToProcess(const llvm::Function &F) {
+
+  const Module *m = F.getParent();
+
+  if (F.getMetadata("kernel_arg_access_qual") &&
+      F.getMetadata("pocl_generated") == nullptr)
+    return true;
+
+  if (F.isDeclaration())
+    return false;
+  if (!F.hasName())
+    return false;
+  if (F.getName().startswith("@llvm"))
+    return false;
+
+  NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
+  if (kernels == NULL) {
+
+    std::string KernelName;
+    bool HasMeta = getModuleStringMetadata(*m, "KernelName", KernelName);
+
+    if (HasMeta && KernelName.size() && F.getName().str() == KernelName)
+      return true;
+
+    return false;
+  }
+
+  for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
+    if (kernels->getOperand(i)->getOperand(0) == NULL)
+      continue; // globaldce might have removed uncalled kernels
+    Function *k = cast<Function>(
+        dyn_cast<ValueAsMetadata>(kernels->getOperand(i)->getOperand(0))
+            ->getValue());
+    if (&F == k)
+      return true;
+  }
+
+  return false;
+}
+
+// Returns true in case the given function is a kernel with work-group
+// barriers inside it.
+bool hasWorkgroupBarriers(const llvm::Function &F) {
+  for (llvm::Function::const_iterator i = F.begin(), e = F.end(); i != e; ++i) {
+    const llvm::BasicBlock *bb = &*i;
+    if (pocl::Barrier::hasBarrier(bb)) {
+
+      // Ignore the implicit entry and exit barriers.
+      if (pocl::Barrier::hasOnlyBarrier(bb) && bb == &F.getEntryBlock())
+        continue;
+
+      if (pocl::Barrier::hasOnlyBarrier(bb) &&
+          bb->getTerminator()->getNumSuccessors() == 0)
+        continue;
+
+      return true;
+    }
+  }
+  return false;
 }
 }

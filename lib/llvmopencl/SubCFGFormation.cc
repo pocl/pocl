@@ -1572,13 +1572,13 @@ void SubCFGFormationPassLegacy::getAnalysisUsage(
 }
 
 bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
       pocl::WorkitemHandlerChooser::POCL_WIH_CBS)
     return false;
-  if (!Workgroup::hasWorkgroupBarriers(F))
+  if (!hasWorkgroupBarriers(F))
     return false;
 
 #ifdef DEBUG_SUBCFG_FORMATION
@@ -1607,7 +1607,7 @@ char SubCFGFormationPassLegacy::ID = 0;
 llvm::PreservedAnalyses
 SubCFGFormationPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   auto &MAM = AM.getResult<llvm::ModuleAnalysisManagerFunctionProxy>(F);
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return llvm::PreservedAnalyses::all();
 
   llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
@@ -1616,7 +1616,7 @@ SubCFGFormationPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   auto &PDT = AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
   auto &LI = AM.getResult<llvm::LoopAnalysis>(F);
 
-  if (Workgroup::hasWorkgroupBarriers(F))
+  if (hasWorkgroupBarriers(F))
     formSubCfgs(F, LI, DT, PDT);
   else
     createLoopsAroundKernel(F, DT, LI, PDT);

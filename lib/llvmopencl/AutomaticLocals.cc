@@ -102,7 +102,7 @@ AutomaticLocals::runOnModule(Module &M)
     // recognized as kernelsToProcess.
     if (find(NewFuncs.begin(), NewFuncs.end(), &*mi) != NewFuncs.end())
       continue;
-    if (!Workgroup::isKernelToProcess(*mi))
+    if (!isKernelToProcess(*mi))
       continue;
 
     Function *F = &*mi;

@@ -41,8 +41,6 @@ namespace pocl {
 
     virtual bool runOnModule(llvm::Module &M);
 
-    static bool isKernelToProcess(const llvm::Function &F);
-    static bool hasWorkgroupBarriers(const llvm::Function &F);
   private:
     llvm::Function *createWrapper(
       llvm::Function *F, FunctionMapping &printfCache);
