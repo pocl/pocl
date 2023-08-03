@@ -87,7 +87,15 @@ separate_arguments(CUDA_DEVICE_EXTENSIONS)
 foreach(EXT ${CUDA_DEVICE_EXTENSIONS})
   set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} -D${EXT}")
 endforeach()
+if(CUDA_DEVICE_CL_VERSION_MAJOR GREATER_EQUAL 3)
+  separate_arguments(CUDA_DEVICE_FEATURES_30)
+  foreach(EXT ${CUDA_DEVICE_FEATURES_30})
+    set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} -D${EXT}")
+  endforeach()
+endif()
 separate_arguments(DEVICE_CL_FLAGS)
+
+
 
 make_kernel_bc(KERNEL_BC "${LLVM_TARGET}" "BCs" 0 0 0 ${KERNEL_SOURCES})
 
