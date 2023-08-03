@@ -75,7 +75,8 @@
 #define TYPED_CONST(TYPE, HALF_VAL, SINGLE_VAL, DOUBLE_VAL) \
         IF_HALF(TYPE, HALF_VAL, IF_DOUBLE(TYPE, DOUBLE_VAL, SINGLE_VAL))
 
-#ifdef __opencl_c_generic_address_space
+// for CUDA, the Generic AS is the same as private, which causes duplicate definitions
+#if defined(__opencl_c_generic_address_space) && !defined(__NVPTX__)
 #  define IF_GEN_AS(X) X
 #else
 #  define IF_GEN_AS(X)

@@ -134,24 +134,22 @@ IMPLEMENT_VLOAD(double, __private)
 IMPLEMENT_VLOAD(half, __private)
 #endif
 
-#ifdef __opencl_c_generic_address_space
-IMPLEMENT_VLOAD(char  , __generic)
-IMPLEMENT_VLOAD(short , __generic)
-IMPLEMENT_VLOAD(int   , __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(char  , __generic))
+IF_GEN_AS(IMPLEMENT_VLOAD(short , __generic))
+IF_GEN_AS(IMPLEMENT_VLOAD(int   , __generic))
 #if defined(cl_khr_int64)
-IMPLEMENT_VLOAD(long  , __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(long  , __generic))
 #endif
-IMPLEMENT_VLOAD(uchar , __generic)
-IMPLEMENT_VLOAD(ushort, __generic)
-IMPLEMENT_VLOAD(uint  , __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(uchar , __generic))
+IF_GEN_AS(IMPLEMENT_VLOAD(ushort, __generic))
+IF_GEN_AS(IMPLEMENT_VLOAD(uint  , __generic))
 #if defined(cl_khr_int64)
-IMPLEMENT_VLOAD(ulong , __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(ulong , __generic))
 #endif
-IMPLEMENT_VLOAD(float , __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(float , __generic))
 #if defined(cl_khr_fp64)
-IMPLEMENT_VLOAD(double, __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(double, __generic))
 #endif
 #if defined(cl_khr_fp16)
-IMPLEMENT_VLOAD(half, __generic)
+IF_GEN_AS(IMPLEMENT_VLOAD(half, __generic))
 #endif
-#endif /* __opencl_c_generic_address_space */

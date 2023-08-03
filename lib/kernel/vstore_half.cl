@@ -50,6 +50,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "templates.h"
+
 #define ROUND_TOWARD_INFINITY 1
 #define ROUND_TOWARD_NEG_INFINITY 2
 #define ROUND_TOWARD_ZERO 3
@@ -419,13 +421,13 @@ IMPLEMENT_VSTORE_HALF (__private, _rte)
 IMPLEMENT_VSTORE_HALF (__private, _rtz)
 IMPLEMENT_VSTORE_HALF (__private, _rtp)
 IMPLEMENT_VSTORE_HALF (__private, _rtn)
-#ifdef __opencl_c_generic_address_space
-IMPLEMENT_VSTORE_HALF (__generic, )
-IMPLEMENT_VSTORE_HALF (__generic, _rte)
-IMPLEMENT_VSTORE_HALF (__generic, _rtz)
-IMPLEMENT_VSTORE_HALF (__generic, _rtp)
-IMPLEMENT_VSTORE_HALF (__generic, _rtn)
-#endif
+
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, ))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rte))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rtz))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rtp))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF (__generic, _rtn))
+
 
 #ifdef cl_khr_fp64
 
@@ -609,7 +611,7 @@ IMPLEMENT_VSTORE_HALF (__generic, _rtn)
     vstorea_half8##SUFFIX (data.hi, offset * 2 + 1, p);                       \
   }
 
-#endif
+#endif // __F16C__
 
 IMPLEMENT_VSTORE_HALF_DBL (__global, )
 IMPLEMENT_VSTORE_HALF_DBL (__global, _rte)
@@ -626,12 +628,11 @@ IMPLEMENT_VSTORE_HALF_DBL (__private, _rte)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtz)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtp)
 IMPLEMENT_VSTORE_HALF_DBL (__private, _rtn)
-#ifdef __opencl_c_generic_address_space
-IMPLEMENT_VSTORE_HALF_DBL (__generic, )
-IMPLEMENT_VSTORE_HALF_DBL (__generic, _rte)
-IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtz)
-IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtp)
-IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtn)
-#endif
 
-#endif
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF_DBL (__generic, ))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF_DBL (__generic, _rte))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtz))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtp))
+IF_GEN_AS(IMPLEMENT_VSTORE_HALF_DBL (__generic, _rtn))
+
+#endif // cl_khr_fp64
