@@ -73,22 +73,35 @@ cudnnHandle_t cudnn;
       }                                                                       \
   }
 
+#define CUDA_BUILTIN_KERNELS 6
+static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
+    = { "pocl.mul.i32",
+        "pocl.add.i32",
+        "pocl.dnn.conv2d_int8_relu",
+        "pocl.sgemm.local.f32",
+        "pocl.sgemm.tensor.f16f16f32",
+        "pocl.sgemm_ab.tensor.f16f16f32" };
+
+#define OPENCL_BUILTIN_KERNELS 5
+static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
+  "pocl.abs.f32",
+  // from common builtin kernels:
+  "pocl.add.i8",
+  "org.khronos.openvx.scale_image.nn.u8",
+  "org.khronos.openvx.scale_image.bl.u8",
+  "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32",
+};
+
+#ifdef ENABLE_CUDNN
+#define CUDNN_BUILTIN_KERNELS 1
+static const char *CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS]
+    = { "pocl.dnn.conv2d.nchw.f32" };
+#else
+#define CUDNN_BUILTIN_KERNELS 0
+#endif
+
 void pocl_cuda_svm_copy_async (CUstream, void *restrict, const void *restrict,
                                size_t);
-
-typedef struct pocl_cuda_device_data_s
-{
-  CUdevice device;
-  CUcontext context;
-  CUevent epoch_event;
-  cl_ulong epoch;
-  char libdevice[PATH_MAX];
-  pocl_lock_t compile_lock;
-  int supports_cu_mem_host_register;
-  int supports_managed_memory;
-  int sm_maj, sm_min;
-  cl_bool available;
-} pocl_cuda_device_data_t;
 
 typedef struct pocl_cuda_queue_data_s
 {
@@ -106,14 +119,23 @@ typedef struct pocl_cuda_queue_data_s
 
 typedef struct pocl_cuda_kernel_data_s
 {
-  CUmodule module;
-  CUmodule module_offsets;
   CUfunction kernel;
   CUfunction kernel_offsets;
   size_t *alignments;
-  CUdeviceptr constant_mem_base;
-  size_t constant_mem_size;
+  size_t refcount;
 } pocl_cuda_kernel_data_t;
+
+typedef struct pocl_cuda_program_data_s
+{
+  CUmodule module;
+  CUmodule module_offsets;
+  CUdeviceptr constant_mem_base;
+  CUdeviceptr constant_mem_base_offsets;
+  size_t constant_mem_size;
+  size_t constant_mem_size_offsets;
+  void *align_map;
+  void *align_map_offsets;
+} pocl_cuda_program_data_t;
 
 typedef struct pocl_cuda_event_data_s
 {
@@ -124,6 +146,27 @@ typedef struct pocl_cuda_event_data_s
   pthread_cond_t event_cond;
   volatile unsigned num_ext_events;
 } pocl_cuda_event_data_t;
+
+typedef struct pocl_cuda_device_data_s
+{
+  CUdevice device;
+  CUcontext context;
+  CUevent epoch_event;
+  cl_ulong epoch;
+  char libdevice[PATH_MAX];
+  pocl_lock_t compile_lock;
+  int supports_cu_mem_host_register;
+  int supports_managed_memory;
+  int sm_maj, sm_min, warp_size;
+  cl_bool available;
+
+  pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
+  pocl_cuda_kernel_data_t CudnnBuiltinKernelsData[CUDNN_BUILTIN_KERNELS];
+  pocl_cuda_program_data_t CudaBuiltinKernelsProgram;
+  pocl_cuda_program_data_t CudnnBuiltinKernelsProgram;
+  int CudaBuiltinKernelsBuilt;
+
+} pocl_cuda_device_data_t;
 
 extern unsigned int pocl_num_devices;
 
@@ -167,37 +210,6 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
 
-#define CUDA_BUILTIN_KERNELS 6
-static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
-    = { "pocl.mul.i32",
-        "pocl.add.i32",
-        "pocl.dnn.conv2d_int8_relu",
-        "pocl.sgemm.local.f32",
-        "pocl.sgemm.tensor.f16f16f32",
-        "pocl.sgemm_ab.tensor.f16f16f32" };
-static pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
-
-#define OPENCL_BUILTIN_KERNELS 5
-static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
-  "pocl.abs.f32",
-  // from common builtin kernels:
-  "pocl.add.i8",
-  "org.khronos.openvx.scale_image.nn.u8",
-  "org.khronos.openvx.scale_image.bl.u8",
-  "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32",
-};
-static pocl_cuda_kernel_data_t OpenclBuiltinKernelsData[OPENCL_BUILTIN_KERNELS];
-
-#ifdef ENABLE_CUDNN
-#define CUDNN_BUILTIN_KERNELS 1
-static const char* CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS] = {
-  "pocl.dnn.conv2d.nchw.f32"
-};
-static pocl_cuda_kernel_data_t CudnnBuiltinKernelsData[CUDNN_BUILTIN_KERNELS];
-#else
-#define CUDNN_BUILTIN_KERNELS 0
-#endif
-
 
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
@@ -233,13 +245,17 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->build_source = pocl_driver_build_source;
   ops->link_program = pocl_driver_link_program;
   ops->build_binary = pocl_driver_build_binary;
-  ops->free_program = pocl_driver_free_program;
   ops->setup_metadata = pocl_driver_setup_metadata;
   ops->supports_binary = pocl_driver_supports_binary;
   ops->build_poclbinary = pocl_driver_build_poclbinary;
-  ops->compile_kernel = pocl_cuda_compile_kernel;
+
+  ops->post_build_program = pocl_cuda_post_build_program;
+  ops->free_program = pocl_cuda_free_program;
   ops->build_builtin = pocl_cuda_build_builtin;
-  ops->set_kernel_exec_info_ext = pocl_cuda_set_kernel_exec_info_ext;
+
+  ops->compile_kernel = pocl_cuda_compile_kernel;
+  ops->create_kernel = pocl_cuda_create_kernel;
+  ops->free_kernel = pocl_cuda_free_kernel;
 
   // TODO
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -273,8 +289,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   CUresult result;
   int ret = CL_SUCCESS;
 
-  if (dev->data)
-    return ret;
+  assert (dev->data == NULL);
 
   pocl_init_default_device_infos (dev);
   dev->extensions = CUDA_DEVICE_EXTENSIONS;
@@ -305,6 +320,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->has_64bit_long = 1;
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
+  dev->data = data;
+
   result = cuDeviceGet (&data->device, j);
   if (CUDA_CHECK_ERROR (result, "cuDeviceGet"))
     ret = CL_INVALID_DEVICE;
@@ -426,12 +443,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 #else
   dev->supported_spir_v_versions = "";
 #endif
-  pocl_setup_ils_with_version (dev);
-
-  pocl_setup_opencl_c_with_version (dev, 0);
 
   /* Get GPU architecture name */
-  int sm_maj = 0, sm_min = 0;
+  int sm_maj = 0, sm_min = 0, warp_size = 32;
   if (ret != CL_INVALID_DEVICE)
     {
       cuDeviceGetAttribute (&sm_maj, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
@@ -439,12 +453,16 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       cuDeviceGetAttribute (&sm_min, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
                             data->device);
     }
+  cuDeviceGetAttribute (&warp_size, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
+                        data->device);
+
   char *gpu_arch = calloc (16, sizeof (char));
   snprintf (gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
   dev->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
   POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", dev->llvm_cpu);
   data->sm_maj = sm_maj;
   data->sm_min = sm_min;
+  data->warp_size = warp_size;
 
   /* Find libdevice library */
   if (findLibDevice (data->libdevice, dev->llvm_cpu))
@@ -491,8 +509,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
     }
 
-  pocl_setup_builtin_kernels_with_version (dev);
-
   dev->device_side_printf = 0;
 
   /* Create context */
@@ -535,12 +551,44 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 //                    | CL_DEVICE_SVM_ATOMICS;
   }
 
+  /* OpenCL 3.0 properties */
+  /* Minimum mandated capability */
+  dev->atomic_memory_capabilities
+      = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+  dev->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                   | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                   | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+
+  // TODO should check from Compute Capability ??
+  dev->sub_group_independent_forward_progress = CL_TRUE;
+
+  /* Just an arbitrary number here based on assumption of SG size 32. */
+  dev->max_num_sub_groups = dev->max_work_group_size / 32;
+
   // All devices starting from Compute Capability 2.0 have this limit;
   // See e.g.
   // https://forums.developer.nvidia.com/t/max-size-of-cuda-arguments/50218
   dev->max_parameter_size = 4352;
 
-  dev->data = data;
+#if (CUDA_DEVICE_CL_VERSION_MAJOR >= 3)
+  dev->features = CUDA_DEVICE_FEATURES_30;
+  /* this is not enabled because we're compiling program.bc and
+   * handing it over to CUDA; we're not running workgroup function
+   * generation. Therefore CUDA takes care of program-scope variables. */
+  dev->program_scope_variables_pass = CL_FALSE;
+  dev->generic_as_support = CL_TRUE;
+
+  pocl_setup_opencl_c_with_version (dev, CL_TRUE);
+  pocl_setup_features_with_version (dev);
+#else
+  pocl_setup_opencl_c_with_version (dev, CL_FALSE);
+#endif
+
+  pocl_setup_extensions_with_version (dev);
+
+  pocl_setup_builtin_kernels_with_version (dev);
+
+  pocl_setup_ils_with_version (dev);
 
 #ifdef ENABLE_CUDNN
   CUDNN_CALL (cudnnCreate (&cudnn));
@@ -1083,145 +1131,6 @@ pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
   return NULL;
 }
 
-static pocl_cuda_kernel_data_t *
-load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
-                         int has_offsets, unsigned device_i,
-                         _cl_command_node *command, int specialized)
-{
-  CUresult result;
-  pocl_kernel_metadata_t *meta = kernel->meta;
-  /* Check if we already have a compiled kernel function */
-  pocl_cuda_kernel_data_t *kdata
-      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
-  if (kdata)
-    {
-      if ((has_offsets && kdata->kernel_offsets)
-          || (!has_offsets && kdata->kernel))
-        return kdata;
-    }
-  else
-    {
-      /* TODO: when can we release this? */
-      kdata = meta->data[device_i]
-          = (void *)calloc (1, sizeof (pocl_cuda_kernel_data_t));
-    }
-
-  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
-  cuCtxSetCurrent (ddata->context);
-
-  POCL_LOCK(ddata->compile_lock);
-
-  /* Generate the parallel bitcode file linked with the kernel library */
-  int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
-                                                     command, specialized);
-  if (error)
-    {
-      POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
-                              " for kernel %s\n", kernel->name);
-      assert (error == 0);
-    }
-
-  char bc_filename[POCL_MAX_PATHNAME_LENGTH];
-  pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
-                                       kernel, command, specialized);
-
-  char ptx_filename[POCL_MAX_PATHNAME_LENGTH];
-  strcpy (ptx_filename, bc_filename);
-  strncat (ptx_filename, ".ptx", POCL_MAX_PATHNAME_LENGTH - 1);
-
-  if (!pocl_exists (ptx_filename))
-    {
-      /* Generate PTX from LLVM bitcode */
-      if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
-                        device->llvm_cpu,
-                        ((pocl_cuda_device_data_t *)device->data)->libdevice,
-                        has_offsets))
-        POCL_ABORT ("pocl-cuda: failed to generate PTX\n");
-    }
-
-  /* Load PTX module */
-  /* TODO: When can we unload the module? */
-  CUmodule module;
-
-#ifdef POCL_DEBUG_MESSAGES
-  if (!(pocl_debug_messages_filter & POCL_DEBUG_FLAG_CUDA))
-    {
-      result = cuModuleLoad (&module, ptx_filename);
-      CUDA_CHECK (result, "cuModuleLoad");
-    }
-  else
-    {
-#endif
-      struct stat st;
-      stat (ptx_filename, &st);
-
-      const int fd = open (ptx_filename, O_RDONLY);
-      assert (fd != -1);
-
-      char *buffer = (char *)malloc (st.st_size + 1);
-      const ssize_t r = read (fd, buffer, st.st_size);
-      assert (r == st.st_size);
-
-      buffer[r] = '\0';
-      close (fd);
-
-      unsigned int log_size = 1 << 12;
-      char *log = (char *)malloc (log_size);
-
-      CUjit_option opt[]
-          = { CU_JIT_ERROR_LOG_BUFFER, CU_JIT_ERROR_LOG_BUFFER_SIZE_BYTES };
-      void *val[] = { log, (void *)log_size };
-      result = cuModuleLoadDataEx (&module, buffer,
-                                   sizeof (opt) / sizeof (opt[0]), opt, val);
-
-      unsigned int out_size = (unsigned int)val[1];
-
-      if (out_size > 0 || result != CUDA_SUCCESS)
-        POCL_MSG_PRINT_CUDA ("cuModuleLoadDataEx(%s) log: %s\n", ptx_filename,
-                             log);
-
-      CUDA_CHECK (result, "cuModuleLoadDataEx");
-
-      free (log);
-      free (buffer);
-#ifdef POCL_DEBUG_MESSAGES
-    }
-#endif
-
-  /* Get kernel function */
-  CUfunction function;
-  result = cuModuleGetFunction (&function, module, kernel->name);
-  CUDA_CHECK (result, "cuModuleGetFunction");
-
-  /* Get pointer alignment */
-  if (!kdata->alignments)
-    {
-      kdata->alignments
-          = calloc (meta->num_args + meta->num_locals + 4, sizeof (size_t));
-      pocl_cuda_get_ptr_arg_alignment (bc_filename, kernel->name,
-                                       kdata->alignments);
-    }
-
-  if (has_offsets)
-    {
-      kdata->module_offsets = module;
-      kdata->kernel_offsets = function;
-    }
-  else
-    {
-      kdata->module = module;
-      kdata->kernel = function;
-    }
-
-  /* Get handle to constant memory buffer */
-  cuModuleGetGlobal (&kdata->constant_mem_base, &kdata->constant_mem_size, module,
-                     "_constant_memory_region_");
-
-  POCL_UNLOCK (ddata->compile_lock);
-
-  return kdata;
-}
-
 // https://docs.nvidia.com/cuda/ptx-compiler-api/index.html#basic-usage
 
 /* build a program with builtin kernels. */
@@ -1232,6 +1141,13 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   POCL_MSG_PRINT_CUDA ("preparing CUDA builtin kernels\n");
   cl_device_id dev = program->devices[device_i];
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
+  /* these only need to be built once per device */
+  if (ddata->CudaBuiltinKernelsBuilt)
+    {
+      POCL_MSG_PRINT_CUDA ("CUDA builtin kernels already built\n");
+      return 0;
+    }
+
   int have_sm70 = (ddata->sm_maj >= 7);
 
   uint64_t builtins_file_len = 0;
@@ -1251,7 +1167,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
 
   if (pocl_read_file (builtin_path, &builtins_file, &builtins_file_len) < 0)
     {
-      POCL_MSG_ERR ("can't find cuda builtins in file %s\n", builtin_path);
+      POCL_MSG_ERR ("can't read cuda builtins from file %s\n", builtin_path);
       return -1;
     }
 
@@ -1259,78 +1175,79 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   CUfunction ff;
   CUmodule mod;
   res = cuModuleLoadData (&mod, builtins_file);
-  CUDA_CHECK (res, "cuModuleLoadData builtin");
+  if (CUDA_CHECK_ERROR (res, "cuModuleLoadData CudaBuiltinKernelsPTX"))
+    return -1;
 
-  /* The alignment requirements for the driver are:
-   * 0 for pointer types
-   * "allocation size" for non-pointer types
-   *
-   * ... see the code in pocl_cuda_get_ptr_arg_alignment()
-   *
-   * Some builtin kernels use pointers for all arguments,
-   * for them we can use this array of zeros for alignments.
-   */
+  memset (&ddata->CudaBuiltinKernelsProgram, 0,
+          sizeof (pocl_cuda_program_data_t));
+  ddata->CudaBuiltinKernelsProgram.module = mod;
+  ddata->CudaBuiltinKernelsProgram.module_offsets = mod; // TODO fix this
+
   static size_t cuda_builtin_kernel_zero_alignments[20] = { 0 };
 
   res = cuModuleGetFunction (&ff, mod, "pocl_mul_i32");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_mul_i32");
-  CudaBuiltinKernelsData[0].kernel = ff;
-  CudaBuiltinKernelsData[0].kernel_offsets = ff; // TODO fix this
-  CudaBuiltinKernelsData[0].module = mod;
-  CudaBuiltinKernelsData[0].module_offsets = mod; // TODO fix this
-  CudaBuiltinKernelsData[0].alignments = cuda_builtin_kernel_zero_alignments;
+  if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_mul_i32"))
+    return -1;
+  ddata->CudaBuiltinKernelsData[0].kernel = ff;
+  ddata->CudaBuiltinKernelsData[0].kernel_offsets = ff; // TODO fix this
+  ddata->CudaBuiltinKernelsData[0].alignments
+      = cuda_builtin_kernel_zero_alignments;
+  ddata->CudaBuiltinKernelsData[0].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_add_i32");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_add_i32");
-  CudaBuiltinKernelsData[1].kernel = ff;
-  CudaBuiltinKernelsData[1].kernel_offsets = ff; // TODO fix this
-  CudaBuiltinKernelsData[1].module = mod;
-  CudaBuiltinKernelsData[1].module_offsets = mod; // TODO fix this
-  CudaBuiltinKernelsData[1].alignments = cuda_builtin_kernel_zero_alignments;
+  if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_add_i32"))
+    return -1;
+  ddata->CudaBuiltinKernelsData[1].kernel = ff;
+  ddata->CudaBuiltinKernelsData[1].kernel_offsets = ff; // TODO fix this
+  ddata->CudaBuiltinKernelsData[1].alignments
+      = cuda_builtin_kernel_zero_alignments;
+  ddata->CudaBuiltinKernelsData[1].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_dnn_conv2d_int8_relu");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_dnn_conv2d_int8_relu");
-  CudaBuiltinKernelsData[2].kernel = ff;
-  CudaBuiltinKernelsData[2].kernel_offsets = ff; // TODO fix this
-  CudaBuiltinKernelsData[2].module = mod;
-  CudaBuiltinKernelsData[2].module_offsets = mod; // TODO fix this
-  CudaBuiltinKernelsData[2].alignments = cuda_builtin_kernel_zero_alignments;
+  if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_dnn_conv2d_int8_relu"))
+    return -1;
+  ddata->CudaBuiltinKernelsData[2].kernel = ff;
+  ddata->CudaBuiltinKernelsData[2].kernel_offsets = ff; // TODO fix this
+  ddata->CudaBuiltinKernelsData[2].alignments
+      = cuda_builtin_kernel_zero_alignments;
+  ddata->CudaBuiltinKernelsData[2].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_local_f32");
-  CUDA_CHECK (res, "cuModuleGetFunction  pocl_sgemm_local_f32");
-  CudaBuiltinKernelsData[3].kernel = ff;
-  CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
-  CudaBuiltinKernelsData[3].module = mod;
-  CudaBuiltinKernelsData[3].module_offsets = mod; // TODO fix this
+  if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_sgemm_local_f32"))
+    return -1;
+  ddata->CudaBuiltinKernelsData[3].kernel = ff;
+  ddata->CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
   // 3 pointers, 3 unsigned
   static size_t sgemm_local_alignments[] = {0, 0, 0, 4, 4, 4,};
-  CudaBuiltinKernelsData[3].alignments = sgemm_local_alignments;
+  ddata->CudaBuiltinKernelsData[3].alignments = sgemm_local_alignments;
+  ddata->CudaBuiltinKernelsData[3].refcount = 1;
 
   if (have_sm70)
   {
-      res = cuModuleGetFunction(&ff, mod, "pocl_sgemm_tensor_f16f16f32");
-      CUDA_CHECK (res, "cuModuleGetFunction  pocl_sgemm_tensor_f16f16f32");
-      CudaBuiltinKernelsData[3].kernel = ff;
-      CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
-      CudaBuiltinKernelsData[3].module = mod;
-      CudaBuiltinKernelsData[3].module_offsets = mod; // TODO fix this
-      // 3 pointers, 3 unsigned
-      static size_t sgemm_tensor_alignments[] = { 0, 0, 0, 4, 4, 4 };
-      CudaBuiltinKernelsData[3].alignments = sgemm_tensor_alignments;
+    res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_tensor_f16f16f32");
+    if (CUDA_CHECK_ERROR (res,
+                          "cuModuleGetFunction  pocl_sgemm_tensor_f16f16f32"))
+      return -1;
+    ddata->CudaBuiltinKernelsData[4].kernel = ff;
+    ddata->CudaBuiltinKernelsData[4].kernel_offsets = ff; // TODO fix this
+    // 3 pointers, 3 unsigned
+    static size_t sgemm_tensor_alignments[] = { 0, 0, 0, 4, 4, 4 };
+    ddata->CudaBuiltinKernelsData[4].alignments = sgemm_tensor_alignments;
+    ddata->CudaBuiltinKernelsData[4].refcount = 1;
 
-      res = cuModuleGetFunction (&ff, mod,
-                                 "pocl_sgemm_scale_tensor_f16f16f32");
-      CUDA_CHECK (res,
-                  "cuModuleGetFunction  pocl_sgemm_scale_tensor_f16f16f32");
-      CudaBuiltinKernelsData[3].kernel = ff;
-      CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
-      CudaBuiltinKernelsData[3].module = mod;
-      CudaBuiltinKernelsData[3].module_offsets = mod; // TODO fix this
-      // 3 pointers, 3 unsigned, 2 floats
-      static size_t sgemm_tensor_scale_alignments[]
-          = { 0, 0, 0, 4, 4, 4, 4, 4 };
-      CudaBuiltinKernelsData[3].alignments = sgemm_tensor_scale_alignments;
+    res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_scale_tensor_f16f16f32");
+    if (CUDA_CHECK_ERROR (
+            res, "cuModuleGetFunction  pocl_sgemm_scale_tensor_f16f16f32"))
+      return -1;
+    ddata->CudaBuiltinKernelsData[5].kernel = ff;
+    ddata->CudaBuiltinKernelsData[5].kernel_offsets = ff; // TODO fix this
+    // 3 pointers, 3 unsigned, 2 floats
+    static size_t sgemm_tensor_scale_alignments[] = { 0, 0, 0, 4, 4, 4, 4, 4 };
+    ddata->CudaBuiltinKernelsData[5].alignments
+        = sgemm_tensor_scale_alignments;
+    ddata->CudaBuiltinKernelsData[5].refcount = 1;
   }
+  ddata->CudaBuiltinKernelsBuilt = CL_TRUE;
   return 0;
 }
 
@@ -1339,22 +1256,262 @@ int
 pocl_cuda_build_builtin (cl_program program, cl_uint device_i)
 {
   if (pocl_cuda_build_cuda_builtins (program, device_i) != 0)
-    return -1;
+    {
+      POCL_MSG_ERR ("pocl-cuda: failed to build CUDA builtin kernels\n");
+      return -1;
+    }
 
   if (pocl_driver_build_opencl_builtins (program, device_i) != 0)
-    return -1;
+    {
+      POCL_MSG_ERR ("pocl-cuda: failed to build OpenCL builtin kernels\n");
+      return -1;
+    }
 
   return 0;
+}
+
+static int
+pocl_cuda_build_ptx (void *llvm_ir, char *out_ptx, CUmodule *out_module,
+                     cl_device_id device, pocl_cuda_device_data_t *ddata,
+                     int use_offsets, CUdeviceptr *constant_mem_base,
+                     size_t *constant_mem_size, void **alignments)
+{
+  assert (llvm_ir);
+  assert (out_ptx);
+  assert (out_module);
+  CUresult result;
+
+  /* Generate PTX from LLVM bitcode */
+  if (!pocl_exists (out_ptx))
+    {
+      int r = pocl_ptx_gen (llvm_ir, out_ptx, device->llvm_cpu,
+                            ddata->libdevice, use_offsets, alignments);
+      POCL_RETURN_ERROR_ON ((r != 0), CL_BUILD_PROGRAM_FAILURE,
+                            "pocl-cuda: failed to generate PTX file %s\n",
+                            out_ptx);
+    }
+  else
+    {
+      int r = pocl_cuda_create_alignments (llvm_ir, alignments);
+      POCL_RETURN_ERROR_ON (
+          (r != 0), CL_BUILD_PROGRAM_FAILURE,
+          "pocl-cuda: failed to create Alignments from BC\n");
+    }
+
+#ifdef POCL_DEBUG_MESSAGES
+  if (!(pocl_debug_messages_filter & POCL_DEBUG_FLAG_CUDA))
+    {
+      result = cuModuleLoad (out_module, out_ptx);
+      POCL_RETURN_ERROR_ON ((result != CUDA_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+                            "cuModuleLoad PTX failed\n");
+    }
+  else
+    {
+#endif
+      uintptr_t log_size = 1 << 12;
+      char *log = (char *)malloc (log_size);
+      CUjit_option opt[]
+          = { CU_JIT_ERROR_LOG_BUFFER, CU_JIT_ERROR_LOG_BUFFER_SIZE_BYTES };
+      char *content = NULL;
+      uint64_t content_size = 0;
+
+      pocl_read_file (out_ptx, &content, &content_size);
+      POCL_RETURN_ERROR_ON ((content_size == 0), CL_BUILD_PROGRAM_FAILURE,
+                            "failed to read PTX file: %s\n", out_ptx);
+      void *val[] = { log, (void *)log_size };
+      result = cuModuleLoadDataEx (out_module, content,
+                                   sizeof (opt) / sizeof (opt[0]), opt, val);
+
+      uintptr_t out_size = (uintptr_t)val[1];
+
+      if (out_size > 0 || result != CUDA_SUCCESS)
+        POCL_MSG_PRINT_CUDA ("cuModuleLoadDataEx(%s) log: %s\n", out_ptx, log);
+
+      free (content);
+      free (log);
+
+      POCL_RETURN_ERROR_ON ((result != CUDA_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+                            "cuModuleLoadDataEx failed\n");
+#ifdef POCL_DEBUG_MESSAGES
+    }
+#endif
+
+  /* Get handle to constant memory buffer */
+  // this call might fail actually
+  cuModuleGetGlobal (constant_mem_base, constant_mem_size, *out_module,
+                     "_constant_memory_region_");
+
+  return CL_SUCCESS;
+}
+
+int
+pocl_cuda_post_build_program (cl_program program, cl_uint device_i)
+{
+  int result;
+  cl_device_id device = program->devices[device_i];
+  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
+  cuCtxSetCurrent (ddata->context);
+
+  POCL_LOCK (ddata->compile_lock);
+  char program_bc[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_program_bc_path (program_bc, program, device_i);
+
+  char noofs_ptx_filename[POCL_MAX_PATHNAME_LENGTH];
+  strcpy (noofs_ptx_filename, program_bc);
+  strncat (noofs_ptx_filename, ".noOfs.ptx", POCL_MAX_PATHNAME_LENGTH - 1);
+
+  char ofs_ptx_filename[POCL_MAX_PATHNAME_LENGTH];
+  strcpy (ofs_ptx_filename, program_bc);
+  strncat (ofs_ptx_filename, ".Ofs.ptx", POCL_MAX_PATHNAME_LENGTH - 1);
+
+  /* Load PTX module */
+  size_t constant_mem_size = 0;
+  void *align_map = NULL;
+  CUdeviceptr constant_mem_base;
+  CUmodule noofs_module;
+  CUmodule ofs_module;
+
+  assert (program->llvm_irs[device_i]);
+  result = pocl_llvm_run_passes_on_program (program, device_i);
+  assert (result == CL_SUCCESS);
+
+  /*
+    pocl_cuda_build_ptx(program_bc, noofs_ptx_filename, &noofs_module, device,
+    ddata, 0, &constant_mem_base, &constant_mem_size); pdata->module =
+    noofs_module; pdata->constant_mem_base = constant_mem_base;
+    pdata->constant_mem_size = constant_mem_size;
+  */
+
+  result = pocl_cuda_build_ptx (
+      program->llvm_irs[device_i], ofs_ptx_filename, &ofs_module, device,
+      ddata, 1, &constant_mem_base, &constant_mem_size, &align_map);
+  if (result == CL_SUCCESS)
+    {
+      pocl_cuda_program_data_t *pdata = (pocl_cuda_program_data_t *)calloc (
+          1, sizeof (pocl_cuda_program_data_t));
+      POCL_RETURN_ERROR_COND ((pdata == NULL), CL_OUT_OF_HOST_MEMORY);
+      pdata->module_offsets = ofs_module;
+      pdata->constant_mem_base_offsets = constant_mem_base;
+      pdata->constant_mem_size_offsets = constant_mem_size;
+      pdata->align_map_offsets = align_map;
+      program->data[device_i] = pdata;
+    }
+  POCL_UNLOCK (ddata->compile_lock);
+  return result;
+}
+
+int
+pocl_cuda_free_program (cl_device_id device, cl_program program,
+                        unsigned device_i)
+{
+  CUresult result;
+  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
+  if (program->data[device_i] == NULL)
+    return CL_SUCCESS;
+
+  pocl_cuda_program_data_t *pdata
+      = (pocl_cuda_program_data_t *)program->data[device_i];
+  /*
+      if (pdata->module)
+      {
+        result = cuModuleUnload(pdata->module);
+        CUDA_CHECK (result, "cuModuleUnload");
+        pdata->module = NULL;
+      }
+  */
+  if (pdata->module_offsets)
+    {
+      result = cuModuleUnload (pdata->module_offsets);
+      if (result != CUDA_SUCCESS)
+        {
+          POCL_MSG_ERR ("cuModuleUnload failed\n");
+        }
+      pdata->module_offsets = NULL;
+    }
+  if (pdata->align_map_offsets)
+    {
+      pocl_cuda_destroy_alignments (program->llvm_irs[device_i],
+                                    pdata->align_map_offsets);
+      pdata->align_map_offsets = NULL;
+    }
+  pocl_driver_free_program (device, program, device_i);
+  POCL_MEM_FREE (program->data[device_i]);
+  return CL_SUCCESS;
 }
 
 void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize)
 {
-  load_or_generate_kernel (kernel, device, 0, cmd->program_device_i, cmd,
-                           specialize);
+  return;
 }
 
+int
+pocl_cuda_create_kernel (cl_device_id device, cl_program program,
+                         cl_kernel kernel, unsigned device_i)
+{
+  CUresult result;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+  pocl_cuda_program_data_t *pdata
+      = (pocl_cuda_program_data_t *)program->data[device_i];
+  assert (pdata != NULL);
+  pocl_cuda_kernel_data_t *kdata
+      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
+  if (kdata != NULL)
+    {
+      ++kdata->refcount;
+      return CL_SUCCESS;
+    }
+
+  kdata = meta->data[device_i]
+      = (void *)calloc (1, sizeof (pocl_cuda_kernel_data_t));
+
+  /* Get kernel function */
+  CUfunction function = NULL;
+  /*
+    result = cuModuleGetFunction (&function, pdata->module, kernel->name);
+    CUDA_CHECK (result, "cuModuleGetFunction");
+    kdata->kernel = function;
+  */
+  assert (pdata->module_offsets);
+  result
+      = cuModuleGetFunction (&function, pdata->module_offsets, kernel->name);
+  if (result != CUDA_SUCCESS)
+    {
+      POCL_MSG_ERR ("pocl_cuda_create_kernel: cuModuleGetFunction() failed\n");
+      POCL_MEM_FREE (meta->data[device_i]);
+      return CL_OUT_OF_RESOURCES;
+    }
+
+  kdata->kernel_offsets = function;
+  /* Get pointer alignment */
+  kdata->alignments
+      = calloc (meta->num_args + meta->num_locals + 4, sizeof (size_t));
+  pocl_cuda_get_ptr_arg_alignment (program->llvm_irs[device_i], kernel->name,
+                                   kdata->alignments,
+                                   pdata->align_map_offsets);
+  ++kdata->refcount;
+  return CL_SUCCESS;
+}
+
+int
+pocl_cuda_free_kernel (cl_device_id device, cl_program program,
+                       cl_kernel kernel, unsigned device_i)
+{
+  pocl_kernel_metadata_t *meta = kernel->meta;
+  pocl_cuda_kernel_data_t *kdata
+      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
+  if (kdata != NULL)
+    {
+      --kdata->refcount;
+      if (kdata->refcount == 0)
+        {
+          POCL_MEM_FREE (kdata);
+          meta->data[device_i] = NULL;
+        }
+    }
+  return CL_SUCCESS;
+}
 
 #ifdef ENABLE_CUDNN
 void
@@ -1493,6 +1650,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
   pocl_kernel_metadata_t *meta = kernel->meta;
+  CUdeviceptr constant_mem_base;
+  size_t constant_mem_size;
+  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
 
   if (pc.num_groups[0] == 0 || pc.num_groups[1] == 0 || pc.num_groups[2] == 0)
     return;
@@ -1504,17 +1664,20 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
   CUmodule module = NULL;
   CUfunction function = NULL;
   pocl_cuda_kernel_data_t *kdata = NULL;
+  char *saved_kernel_name = NULL;
+
   /* Get kernel function */
   if (prog->num_builtin_kernels > 0)
     {
+      assert (0 && "builtin kernels unsupported");
       /* CUDA builtins */
       for (size_t i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
         {
           if (strcmp (kernel->name, CudaBuiltinKernels[i]) == 0)
             {
-              function = CudaBuiltinKernelsData[i].kernel;
-              module = CudaBuiltinKernelsData[i].module;
-              kdata = &CudaBuiltinKernelsData[i];
+              module = ddata->CudaBuiltinKernelsProgram.module;
+              kdata = &ddata->CudaBuiltinKernelsData[i];
+              function = kdata->kernel;
               break;
             }
         }
@@ -1529,44 +1692,34 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
             }
         }
 #endif //ENABLE_CUDNN
+    }
 
-      /* OpenCL builtins. TODO we just assign OpenclBuiltinKernelsData[i] here,
-       * it could be assigned to multiple kernel objects with same name.
-       * currently won't crash because it's not freed, but should be refcounted
-       * & freed */
-      if (kdata == NULL)
+  if (kdata == NULL)
+    {
+      /* handle OpenCL builtins */
+      for (size_t i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
         {
-          for (size_t i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
+          if (strcmp (kernel->name, OpenclBuiltinKernels[i]) == 0)
             {
-              if (strcmp (kernel->name, OpenclBuiltinKernels[i]) == 0)
-                {
-
-                  pocl_kernel_metadata_t *meta = kernel->meta;
-                  assert (meta->data != NULL);
-                  meta->data[cmd->program_device_i]
-                      = &OpenclBuiltinKernelsData[i];
-                  char *saved_name = NULL;
-                  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-                  kdata = load_or_generate_kernel (kernel, device, has_offsets,
-                                                   cmd->program_device_i, cmd,
-                                                   1);
-                  assert (kdata == meta->data[cmd->program_device_i]);
-                  assert (kdata == &OpenclBuiltinKernelsData[i]);
-                  module = has_offsets ? kdata->module_offsets : kdata->module;
-                  function
-                      = has_offsets ? kdata->kernel_offsets : kdata->kernel;
-                  pocl_restore_builtin_kernel_name (kernel, saved_name);
-                }
+              pocl_sanitize_builtin_kernel_name (kernel, &saved_kernel_name);
+              break;
             }
         }
+      int has_offsets1 = 1;
+      kdata = (pocl_cuda_kernel_data_t *)meta->data[cmd->program_device_i];
+      pocl_cuda_program_data_t *pdata
+          = (pocl_cuda_program_data_t *)prog->data[cmd->program_device_i];
+      module = has_offsets1 ? pdata->module_offsets : pdata->module;
+      function = has_offsets1 ? kdata->kernel_offsets : kdata->kernel;
+      constant_mem_base = has_offsets1 ? pdata->constant_mem_base_offsets
+                                       : pdata->constant_mem_base;
+      constant_mem_size = has_offsets1 ? pdata->constant_mem_size_offsets
+                                       : pdata->constant_mem_size;
+      if (saved_kernel_name)
+        pocl_restore_builtin_kernel_name (kernel, saved_kernel_name);
     }
-  else
-    {
-      kdata = load_or_generate_kernel (kernel, device, has_offsets,
-                                       cmd->program_device_i, cmd, 1);
-      module = has_offsets ? kdata->module_offsets : kdata->module;
-      function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
-    }
+
+  assert (kdata);
 
   /* Prepare kernel arguments */
   void *null = NULL;
@@ -1612,7 +1765,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
             else if (meta->arg_info[i].address_qualifier
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
-                assert (kdata->constant_mem_base);
+                assert (constant_mem_base);
                 assert (arguments[i].is_svm == 0);
 
                 /* Get device pointer */
@@ -1622,6 +1775,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                       + arguments[i].offset;
 
                 size_t align = kdata->alignments[i];
+                assert (align && "Zero alignment for pointer argument!");
                 if (constantMemBytes % align)
                   {
                     constantMemBytes += align - (constantMemBytes % align);
@@ -1629,7 +1783,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
                 /* Copy to constant buffer at current offset */
                 result
-                    = cuMemcpyDtoDAsync (kdata->constant_mem_base + constantMemBytes,
+                    = cuMemcpyDtoDAsync (constant_mem_base + constantMemBytes,
                                          src, mem->size, stream);
                 CUDA_CHECK (result, "cuMemcpyDtoDAsync");
 
@@ -1671,9 +1825,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
         }
     }
 
-  if (constantMemBytes > kdata->constant_mem_size)
+  if (constantMemBytes > constant_mem_size)
     POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated\n",
-                constantMemBytes, kdata->constant_mem_size);
+                constantMemBytes, constant_mem_size);
 
   unsigned arg_index = meta->num_args;
 

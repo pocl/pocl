@@ -74,6 +74,7 @@ void writeModuleIRtoString(const llvm::Module *mod, std::string& dest);
 llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
                                 llvm::LLVMContext *c);
 std::string getDiagString (cl_context ctx);
+std::string getDiagString (void *PoclCtx);
 
 void setModuleIntMetadata (llvm::Module *mod, const char *key, unsigned long data);
 void setModuleStringMetadata (llvm::Module *mod, const char *key,

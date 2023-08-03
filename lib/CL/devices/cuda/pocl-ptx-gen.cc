@@ -29,13 +29,16 @@
 #include "pocl.h"
 #include "pocl_debug.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
 
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Linker/Linker.h"
@@ -56,6 +59,13 @@
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
+#include <llvm/PassInfo.h>
+#include <llvm/PassRegistry.h>
+
+#include <llvm/Analysis/TargetLibraryInfo.h>
+#include <llvm/Analysis/TargetTransformInfo.h>
+#include <llvm/IR/LegacyPassManager.h>
+
 #include <set>
 #include <optional>
 
@@ -63,58 +73,154 @@ namespace llvm {
 extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 }
 
-static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
-static void fixConstantMemArgs(llvm::Module *Module, const char *KernelName);
-static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
+typedef std::map<std::string, std::vector<size_t>> AlignmentMapT;
+
+static void addKernelAnnotations(llvm::Module *Module);
+static void fixConstantMemArgs(llvm::Module *Module);
+static void fixLocalMemArgs(llvm::Module *Module);
 static void fixPrintF(llvm::Module *Module);
-static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
-static void linkLibDevice(llvm::Module *Module, const char *KernelName,
-                          const char *LibDevicePath);
+static void handleGetWorkDim(llvm::Module *Module);
+static void linkLibDevice(llvm::Module *Module, const char *LibDevicePath);
 static void mapLibDeviceCalls(llvm::Module *Module);
+static void createAlignmentMap(llvm::Module *Module,
+                               AlignmentMapT *AlignmentMap);
 
-int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
-                 const char *KernelName, const char *Arch,
-                 const char *LibDevicePath, int HasOffsets) {
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
-      llvm::MemoryBuffer::getFile(BitcodeFilename);
-  if (!Buffer) {
-    POCL_MSG_ERR("[CUDA] ptx-gen: failed to open bitcode file\n");
-    return 1;
+namespace pocl {
+extern bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
+extern llvm::ModulePass *
+createAutomaticLocalsPass(pocl_autolocals_to_args_strategy autolocals_to_args);
+extern bool isKernelToProcess(const llvm::Function &F);
+} // namespace pocl
+
+/*
+void pocl_ptx_run_passes(void *llvm_module, void* dev) {
+
+  bool VerifyMod = pocl_get_bool_option("POCL_LLVM_VERIFY",
+LLVM_VERIFY_MODULE_DEFAULT);
+
+  llvm::legacy::PassManager Passes;
+  llvm::Module *Mod = (llvm::Module *)llvm_module;
+  cl_device_id Device = (cl_device_id)dev;
+
+  llvm::PassRegistry *Registry = llvm::PassRegistry::getPassRegistry();
+
+  llvm::Triple triple(Device->llvm_target_triplet);
+  llvm::TargetLibraryInfoImpl TLII(triple);
+  TLII.disableAllFunctions();
+  Passes.add(new llvm::TargetLibraryInfoWrapperPass(TLII));
+
+  std::vector<std::string> passes;
+
+  //passes.push_back("print-module");
+
+  passes.push_back("inline-kernels");
+  passes.push_back("remove-optnone");
+  passes.push_back("optimize-wi-func-calls");
+  passes.push_back("handle-samplers");
+  passes.push_back("infer-address-spaces");
+  passes.push_back("mem2reg");
+  passes.push_back("domtree");
+
+  passes.push_back("flatten-inline-all");
+  passes.push_back("always-inline");
+
+  // this must be done AFTER inlining
+  passes.push_back("automatic-locals");
+  // Attempt to move all allocas to the entry block
+  passes.push_back("allocastoentry");
+
+  passes.push_back("simplifycfg");
+
+  passes.push_back("loop-deletion");
+
+  passes.push_back("remove-barriers");
+
+  //passes.push_back("print-module");
+  // if llvm verif
+  if (VerifyMod) passes.push_back("verify");
+
+  for (unsigned i = 0; i < passes.size(); ++i) {
+    if (passes[i] == "automatic-locals") {
+      Passes.add(pocl::createAutomaticLocalsPass(Device->autolocals_to_args));
+      continue;
+    }
+
+    const llvm::PassInfo *PIs =
+Registry->getPassInfo(llvm::StringRef(passes[i])); if (PIs) { llvm::Pass
+*thispass = PIs->createPass(); Passes.add(thispass); } else { POCL_ABORT("Failed
+to create kernel compiler pass\n");
+    }
+
   }
+  Passes.run(*Mod);
+}
+*/
 
-  // Load the LLVM bitcode module.
-  llvm::LLVMContext Context;
-  llvm::Expected<std::unique_ptr<llvm::Module>> Module =
-      parseBitcodeFile(Buffer->get()->getMemBufferRef(), Context);
+static void verifyModule(llvm::Module *Module, const char *step) {
+  std::string Error;
+  llvm::raw_string_ostream Errs(Error);
+  if (llvm::verifyModule(*Module, &Errs)) {
+    POCL_MSG_ERR("\n%s\n", Error.c_str());
+    POCL_ABORT("[CUDA] ptx-gen: STEP %s: module verification FAILED\n", step);
+  } else {
+    POCL_MSG_WARN("[CUDA] ptx-gen: STEP %s: module verification PASSED\n",
+                  step);
+  }
+}
+
+int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
+                 const char *LibDevicePath, int HasOffsets,
+                 void **AlignmentMapPtr) {
+
+  llvm::Module *Module = (llvm::Module *)llvm_module;
   if (!Module) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
     return 1;
   }
+  bool VerifyMod =
+      pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT);
+
+  AlignmentMapT *A = new AlignmentMapT;
+  assert(*AlignmentMapPtr == nullptr);
+  *AlignmentMapPtr = A;
+  createAlignmentMap(Module, A);
+  if (VerifyMod)
+    verifyModule(Module, "getAlignmentMap");
 
   // Apply transforms to prepare for lowering to PTX.
-  fixPrintF(Module->get());
-  fixConstantMemArgs(Module->get(), KernelName);
-  fixLocalMemArgs(Module->get(), KernelName);
-  handleGetWorkDim(Module->get(), KernelName);
-  addKernelAnnotations(Module->get(), KernelName);
-  mapLibDeviceCalls(Module->get());
-  linkLibDevice(Module->get(), KernelName, LibDevicePath);
+  fixPrintF(Module);
+  if (VerifyMod)
+    verifyModule(Module, "fixPrintF");
+
+  fixConstantMemArgs(Module);
+  if (VerifyMod)
+    verifyModule(Module, "fixConstantMemArgs");
+
+  fixLocalMemArgs(Module);
+  if (VerifyMod)
+    verifyModule(Module, "fixLocalMemArgs");
+
+  handleGetWorkDim(Module);
+  if (VerifyMod)
+    verifyModule(Module, "handleGetWorkDim");
+
+  addKernelAnnotations(Module);
+  if (VerifyMod)
+    verifyModule(Module, "addAnnotations");
+
+  mapLibDeviceCalls(Module);
+  if (VerifyMod)
+    verifyModule(Module, "mapLibDeviceCalls");
+
+  linkLibDevice(Module, LibDevicePath);
+  if (VerifyMod)
+    verifyModule(Module, "linkLibDevice");
+
   if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0)) {
     std::string ModuleString;
     llvm::raw_string_ostream ModuleStringStream(ModuleString);
-    (*Module)->print(ModuleStringStream, NULL);
+    Module->print(ModuleStringStream, NULL);
     POCL_MSG_PRINT_INFO("NVVM module:\n%s\n", ModuleString.c_str());
-  }
-
-  std::string Error;
-
-  // Verify module.
-  if (pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT)) {
-    llvm::raw_string_ostream Errs(Error);
-    if (llvm::verifyModule(*Module->get(), &Errs)) {
-      POCL_MSG_ERR("\n%s\n", Error.c_str());
-      POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
-    }
   }
 
 #ifdef LLVM_OLDER_THAN_11_0
@@ -125,6 +231,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
       (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
 #endif
 
+  std::string Error;
   // Get NVPTX target.
   const llvm::Target *Target =
       llvm::TargetRegistry::lookupTarget(Triple, Error);
@@ -159,7 +266,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   }
 
   // Run passes.
-  Passes.run(**Module);
+  Passes.run(*Module);
 
 #ifdef LLVM_OLDER_THAN_11_0
   std::string PTX = PTXStream.str();
@@ -171,8 +278,10 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
 }
 
 // Add the metadata needed to mark a function as a kernel in PTX.
-void addKernelAnnotations(llvm::Module *Module, const char *KernelName) {
+void addKernelAnnotations(llvm::Module *Module) {
   llvm::LLVMContext &Context = Module->getContext();
+  llvm::Constant *One =
+      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(Context), 1);
 
   // Remove existing nvvm.annotations metadata since it is sometimes corrupt.
   auto *Annotations = Module->getNamedMetadata("nvvm.annotations");
@@ -182,20 +291,20 @@ void addKernelAnnotations(llvm::Module *Module, const char *KernelName) {
   // Add nvvm.annotations metadata to mark kernel entry point.
   Annotations = Module->getOrInsertNamedMetadata("nvvm.annotations");
 
-  // Get handle to function.
-  auto *Function = Module->getFunction(KernelName);
-  if (!Function)
-    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
+  for (auto &FI : Module->functions()) {
+    if (!pocl::isKernelToProcess(FI))
+      continue;
 
-  // Create metadata.
-  llvm::Constant *One =
-      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(Context), 1);
-  llvm::Metadata *FuncMD = llvm::ValueAsMetadata::get(Function);
-  llvm::Metadata *NameMD = llvm::MDString::get(Context, "kernel");
-  llvm::Metadata *OneMD = llvm::ConstantAsMetadata::get(One);
+    llvm::Function *Function = &FI;
 
-  llvm::MDNode *Node = llvm::MDNode::get(Context, {FuncMD, NameMD, OneMD});
-  Annotations->addOperand(Node);
+    // Create metadata.
+    llvm::Metadata *FuncMD = llvm::ValueAsMetadata::get(Function);
+    llvm::Metadata *NameMD = llvm::MDString::get(Context, "kernel");
+    llvm::Metadata *OneMD = llvm::ConstantAsMetadata::get(One);
+
+    llvm::MDNode *Node = llvm::MDNode::get(Context, {FuncMD, NameMD, OneMD});
+    Annotations->addOperand(Node);
+  }
 }
 
 // PTX doesn't support variadic functions, so we need to modify the IR to
@@ -462,6 +571,7 @@ void fixPrintF(llvm::Module *Module) {
   VPrintF->eraseFromParent();
 }
 
+// TODO broken, replaces in whole module not just  1 function
 // Replace all load users of a scalar global variable with new value.
 static void replaceScalarGlobalVar(llvm::Module *Module, const char *Name,
                                    llvm::Value *NewValue) {
@@ -481,49 +591,60 @@ static void replaceScalarGlobalVar(llvm::Module *Module, const char *Name,
 }
 
 // Add an extra kernel argument for the dimensionality.
-void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
-  llvm::Function *Function = Module->getFunction(KernelName);
-  if (!Function)
-    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
+void handleGetWorkDim(llvm::Module *Module) {
 
-  // Add additional argument for the work item dimensionality.
-  llvm::FunctionType *FunctionType = Function->getFunctionType();
-  std::vector<llvm::Type *> ArgumentTypes(FunctionType->param_begin(),
-                                          FunctionType->param_end());
-  ArgumentTypes.push_back(llvm::Type::getInt32Ty(Module->getContext()));
-
-  // Create new function.
-  llvm::FunctionType *NewFunctionType =
-      llvm::FunctionType::get(Function->getReturnType(), ArgumentTypes, false);
-  llvm::Function *NewFunction = llvm::Function::Create(
-      NewFunctionType, Function->getLinkage(), Function->getName(), Module);
-  NewFunction->takeName(Function);
-
-  // Map function arguments.
-  llvm::ValueToValueMapTy VV;
-  llvm::Function::arg_iterator OldArg;
-  llvm::Function::arg_iterator NewArg;
-  for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
-       OldArg != Function->arg_end(); NewArg++, OldArg++) {
-    NewArg->takeName(&*OldArg);
-    VV[&*OldArg] = &*NewArg;
-  }
-
-  // Clone function.
-  llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
-
-  Function->eraseFromParent();
+  llvm::SmallVector<llvm::Function *, 8> FunctionsToErase;
 
   auto WorkDimVar = Module->getGlobalVariable("_work_dim");
-  if (!WorkDimVar)
+  if (WorkDimVar == nullptr)
     return;
 
-  // Replace uses of the global offset variables with the new arguments.
-  NewArg->setName("work_dim");
-  replaceScalarGlobalVar(Module, "_work_dim", (&*NewArg++));
+  for (auto &FI : Module->functions()) {
+    if (!pocl::isKernelToProcess(FI))
+      continue;
 
-  // TODO: What if get_work_dim() is called from a non-kernel function?
+    llvm::Function *Function = &FI;
+    if (!pocl::isGVarUsedByFunction(WorkDimVar, Function))
+      continue;
+
+    // Add additional argument for the work item dimensionality.
+    llvm::FunctionType *FunctionType = Function->getFunctionType();
+    std::vector<llvm::Type *> ArgumentTypes(FunctionType->param_begin(),
+                                            FunctionType->param_end());
+    ArgumentTypes.push_back(llvm::Type::getInt32Ty(Module->getContext()));
+
+    // Create new function.
+    llvm::FunctionType *NewFunctionType = llvm::FunctionType::get(
+        Function->getReturnType(), ArgumentTypes, false);
+    llvm::Function *NewFunction = llvm::Function::Create(
+        NewFunctionType, Function->getLinkage(), Function->getName(), Module);
+    NewFunction->takeName(Function);
+
+    // Map function arguments.
+    llvm::ValueToValueMapTy VV;
+    llvm::Function::arg_iterator OldArg;
+    llvm::Function::arg_iterator NewArg;
+    for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
+         OldArg != Function->arg_end(); NewArg++, OldArg++) {
+      NewArg->takeName(&*OldArg);
+      VV[&*OldArg] = &*NewArg;
+    }
+
+    // Clone function.
+    llvm::SmallVector<llvm::ReturnInst *, 1> RI;
+    CloneFunctionIntoAbs(NewFunction, Function, VV, RI);
+    FunctionsToErase.push_back(Function);
+
+    // Replace uses of the global offset variables with the new arguments.
+    NewArg->setName("work_dim");
+    // replaceScalarGlobalVar(Module, "_work_dim", (&*NewArg++));
+
+    // TODO: What if get_work_dim() is called from a non-kernel function?
+  }
+
+  for (auto F : FunctionsToErase) {
+    F->eraseFromParent();
+  }
 }
 
 int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
@@ -609,8 +730,7 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
 // This would remove this runtime dependency on the CUDA toolkit.
 // Had some issues with the earlier pocl LLVM passes crashing on the libdevice
 // code - needs more investigation.
-void linkLibDevice(llvm::Module *Module, const char *KernelName,
-                   const char *LibDevicePath) {
+void linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   auto Buffer = llvm::MemoryBuffer::getFile(LibDevicePath);
   if (!Buffer)
     POCL_ABORT("[CUDA] failed to open libdevice library file\n");
@@ -629,7 +749,8 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 
   // Link libdevice into module.
   llvm::Linker Linker(*Module);
-  if (Linker.linkInModule(std::move(LibDeviceModule.get()))) {
+  if (Linker.linkInModule(std::move(LibDeviceModule.get()),
+                          llvm::Linker::Flags::LinkOnlyNeeded)) {
     POCL_ABORT("[CUDA] failed to link to libdevice\n");
   }
 
@@ -637,7 +758,8 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 
   // Run internalize to mark all non-kernel functions as internal.
   auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
-    return GV.getName() == KernelName;
+    const llvm::Function *F = llvm::dyn_cast<llvm::Function>(&GV);
+    return (F != nullptr && pocl::isKernelToProcess(*F));
   };
   Passes.add(llvm::createInternalizePass(PreserveKernel));
 
@@ -667,14 +789,10 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 // space with an integer offset, and then inserts the necessary GEP+BitCast
 // instructions to calculate the new pointers from the provided base global
 // variable.
-void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
+bool convertPtrArgsToOffsets(llvm::Module *Module, llvm::Function *Function,
                              unsigned AddrSpace, llvm::GlobalVariable *Base) {
 
   llvm::LLVMContext &Context = Module->getContext();
-
-  llvm::Function *Function = Module->getFunction(KernelName);
-  if (!Function)
-    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
   // Argument info for creating new function.
   std::vector<llvm::Argument *> Arguments;
@@ -724,7 +842,7 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   }
 
   if (!NeedsArgOffsets)
-    return;
+    return false;
 
   // Create new function with offsets instead of local memory pointers.
   llvm::FunctionType *NewFunctionType =
@@ -758,12 +876,14 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
     Pair.second->insertAfter(Pair.first);
   }
 
-  Function->eraseFromParent();
+  return true;
 }
 
 // CUDA doesn't allow constant pointer arguments, so we have to convert them to
 // offsets and manually add them to a global variable base pointer.
-void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
+void fixConstantMemArgs(llvm::Module *Module) {
+
+  llvm::SmallVector<llvm::Function *, 8> FunctionsToErase;
 
   // Calculate total size of automatic constant allocations.
   size_t TotalAutoConstantSize = 0;
@@ -783,14 +903,24 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
       NULL, "_constant_memory_region_",
       NULL, llvm::GlobalValue::NotThreadLocal, 4, false);
 
-  convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase);
+  for (auto &FI : Module->functions()) {
+    if (!pocl::isKernelToProcess(FI))
+      continue;
+    if (convertPtrArgsToOffsets(Module, &FI, 4, ConstantMemBase))
+      FunctionsToErase.push_back(&FI);
+  }
+  for (auto F : FunctionsToErase) {
+    F->eraseFromParent();
+  }
 }
 
 // CUDA doesn't allow multiple local memory arguments or automatic variables, so
 // we have to create a single global variable for local memory allocations, and
 // then manually add offsets to it to get each individual local memory
 // allocation.
-void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
+void fixLocalMemArgs(llvm::Module *Module) {
+
+  llvm::SmallVector<llvm::Function *, 8> FunctionsToErase;
 
   // Create global variable for local memory allocations.
   llvm::Type *ByteArrayType =
@@ -800,7 +930,16 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
       "_shared_memory_region_", NULL, llvm::GlobalValue::NotThreadLocal, 3,
       false);
 
-  convertPtrArgsToOffsets(Module, KernelName, 3, SharedMemBase);
+  for (auto &FI : Module->functions()) {
+    if (!pocl::isKernelToProcess(FI))
+      continue;
+    if (convertPtrArgsToOffsets(Module, &FI, 3, SharedMemBase))
+      FunctionsToErase.push_back(&FI);
+  }
+
+  for (auto F : FunctionsToErase) {
+    F->eraseFromParent();
+  }
 }
 
 // Map kernel math functions onto the corresponding CUDA libdevice functions.
@@ -916,37 +1055,27 @@ void mapLibDeviceCalls(llvm::Module *Module) {
   }
 }
 
-int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
-                                    const char *KernelName,
-                                    size_t *Alignments) {
-  // Create buffer for bitcode file.
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
-      llvm::MemoryBuffer::getFile(BitcodeFilename);
-  if (!Buffer) {
-    POCL_MSG_ERR("[CUDA] ptx-gen: failed to open bitcode file\n");
-    return 1;
-  }
-
+static int getPtrArgAlignment(llvm::Module *Module, llvm::Function *Kernel,
+                              std::vector<size_t> &AlignmentVec) {
   // Load the LLVM bitcode module.
-  llvm::LLVMContext Context;
-  llvm::Expected<std::unique_ptr<llvm::Module>> Module =
-      parseBitcodeFile(Buffer->get()->getMemBufferRef(), Context);
   if (!Module) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
-    return 1;
+    return -1;
   }
 
   // Get kernel function.
-  llvm::Function *Kernel = (*Module)->getFunction(KernelName);
-  if (!Kernel)
-    POCL_ABORT("[CUDA] kernel function not found in module\n");
+  if (!Kernel) {
+    POCL_MSG_ERR("[CUDA] kernel function not found in module\n");
+    return -1;
+  }
 
   // Calculate alignment for each argument.
-  const llvm::DataLayout &DL = (*Module)->getDataLayout();
+  const llvm::DataLayout &DL = Module->getDataLayout();
   for (auto &Arg : Kernel->args()) {
     unsigned i = Arg.getArgNo();
     llvm::Type *Type = Arg.getType();
-    Alignments[i] = 0;
+    AlignmentVec.push_back(0);
+    assert(i < AlignmentVec.size());
     // TODO test this
     if (Type->isPointerTy()) {
       // try to figure out alignment from uses
@@ -955,28 +1084,92 @@ int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
                 llvm::dyn_cast<llvm::GetElementPtrInst>(U)) {
           for (auto UU : GEP->users()) {
             if (llvm::StoreInst *SI = llvm::dyn_cast<llvm::StoreInst>(UU)) {
-              Alignments[i] = SI->getAlign().value();
+              AlignmentVec[i] = SI->getAlign().value();
               break;
             }
             if (llvm::LoadInst *LI = llvm::dyn_cast<llvm::LoadInst>(UU)) {
-              Alignments[i] = LI->getAlign().value();
+              AlignmentVec[i] = LI->getAlign().value();
               break;
             }
           }
-          if (Alignments[i])
+          if (AlignmentVec[i])
             break;
         }
       }
-      if (Alignments[i] == 0)
-        Alignments[i] = MAX_EXTENDED_ALIGNMENT;
+      if (AlignmentVec[i] == 0)
+        AlignmentVec[i] = MAX_EXTENDED_ALIGNMENT;
+      //      POCL_MSG_WARN("V1 ||||| Argument %u : ALIGN %zu \n", i,
+      //      AlignmentVec[i]);
     } else {
 #ifdef LLVM_OLDER_THAN_16_0
-      Alignments[i] = Arg.getParamAlignment();
+      AlignmentVec[i] = Arg.getParamAlignment();
 #else
-      Alignments[i] = Arg.getParamAlign().valueOrOne().value();
+      if (Arg.getType()->isPointerTy())
+        AlignmentVec[i] = Arg.getParamAlign().valueOrOne().value();
+      else
+        AlignmentVec[i] = DL.getTypeAllocSize(Arg.getType());
 #endif
+      //      POCL_MSG_WARN("V2 ||||| Argument %u : ALIGN %zu \n", i,
+      //      AlignmentVec[i]);
     }
   }
 
+  return 0;
+}
+
+void createAlignmentMap(llvm::Module *Module, AlignmentMapT *AlignmentMap) {
+  for (auto &FI : Module->functions()) {
+    if (!pocl::isKernelToProcess(FI))
+      continue;
+    std::string Name = FI.getName().str();
+    if (AlignmentMap->find(Name) != AlignmentMap->end())
+      continue;
+    std::vector<size_t> &AVec = (*AlignmentMap)[Name];
+    AVec.reserve(4);
+    if (getPtrArgAlignment(Module, &FI, AVec) != 0)
+      POCL_MSG_ERR("can't figure out alignments for kernel %s", Name.c_str());
+  }
+}
+
+int pocl_cuda_create_alignments(void *llvm_module, void **AlignmentMapPtr) {
+  llvm::Module *Module = (llvm::Module *)llvm_module;
+  if (!Module) {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
+    return 1;
+  }
+  bool VerifyMod =
+      pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT);
+
+  AlignmentMapT *A = new AlignmentMapT;
+  assert(*AlignmentMapPtr == nullptr);
+  *AlignmentMapPtr = A;
+  createAlignmentMap(Module, A);
+
+  if (VerifyMod)
+    verifyModule(Module, "getAlignmentMap");
+  return 0;
+}
+
+void pocl_cuda_destroy_alignments(void *llvm_module, void *AlignmentMapPtr) {
+  if (AlignmentMapPtr != nullptr) {
+    AlignmentMapT *A = (AlignmentMapT *)(AlignmentMapPtr);
+    delete A;
+  }
+}
+
+int pocl_cuda_get_ptr_arg_alignment(void *LLVM_IR, const char *KernelName,
+                                    size_t *Alignments, void *AlignmentMapPtr) {
+  AlignmentMapT *AMap = (AlignmentMapT *)AlignmentMapPtr;
+  assert(AMap != nullptr);
+
+  std::string Name(KernelName);
+  if (AMap->find(Name) == AMap->end()) {
+    POCL_MSG_ERR(
+        "pocl_cuda_get_ptr_arg_alignment: kernel not found in module\n");
+    return 1;
+  }
+  std::vector<size_t> &AVec = AMap->at(Name);
+  //  POCL_MSG_WARN("AVEC SIZE: %zu\n", AVec.size());
+  std::memcpy(Alignments, AVec.data(), sizeof(size_t) * AVec.size());
   return 0;
 }

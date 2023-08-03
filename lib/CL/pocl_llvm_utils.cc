@@ -340,15 +340,17 @@ static void diagHandler(LLVMDiagnosticInfoRef DI, void *diagprinter) {
   unwrap(DI)->print(*poclDiagPrinter);
 }
 
-std::string getDiagString(cl_context ctx) {
-  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
-
+std::string getDiagString(void *PoclCtx) {
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)PoclCtx;
   llvm_ctx->poclDiagStream->flush();
   std::string ret(*llvm_ctx->poclDiagString);
   llvm_ctx->poclDiagString->clear();
   return ret;
 }
 
+std::string getDiagString(cl_context ctx) {
+  return getDiagString((PoclLLVMContextData *)ctx->llvm_context_data);
+}
 
 /* The LLVM API interface functions are not at the moment not thread safe,
  * Pocl needs to ensure only one thread is using this layer at the time.

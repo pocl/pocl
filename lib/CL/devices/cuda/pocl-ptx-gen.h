@@ -41,16 +41,22 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch);
 
 /* Generate a PTX file from an LLVM bitcode file. */
 /* Returns zero on success, non-zero on failure. */
-int pocl_ptx_gen (const char *BitcodeFilename, const char *PTXFilename,
-                  const char *KernelName, const char *Arch,
-                  const char *LibDevicePath, int HasOffsets);
+int pocl_ptx_gen (void *llvm_module, const char *PTXFilename, const char *Arch,
+                  const char *LibDevicePath, int HasOffsets,
+                  void **AlignmentMapPtr);
+
+int pocl_cuda_create_alignments (void *llvm_module, void **AlignmentMapPtr);
+
+void pocl_cuda_destroy_alignments (void *llvm_module, void *AlignmentMapPtr);
 
 /* Populate the Alignments array with the required pointer alignments for */
 /* each kernel argument. */
 /* Returns zero on success, non-zero on failure. */
-int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
-                                    const char *KernelName,
-                                    size_t *Alignments);
+int pocl_cuda_get_ptr_arg_alignment (void *LLVM_IR, const char *KernelName,
+                                     size_t *Alignments,
+                                     void *AlignmentMapPtr);
+
+void pocl_ptx_run_passes (void *llvm_module, void *dev);
 
 #ifdef __cplusplus
 }
