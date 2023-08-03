@@ -216,10 +216,9 @@ endmacro()
 function(generate_cuda_spir_wrapper OUTPUT)
   set(FNAME "${CMAKE_CURRENT_BINARY_DIR}/spir_wrapper.ll")
   set(${OUTPUT} "${FNAME}" PARENT_SCOPE)
+  set(EXTRA_OPT "--fp16" "-g")
   if(LLVM_OPAQUE_POINTERS)
-    set(EXTRA_OPT "--opaque-pointers")
-  else()
-    unset(EXTRA_OPT)
+    list(APPEND EXTRA_OPT "--opaque-pointers")
   endif()
 
   add_custom_command( OUTPUT "${FNAME}"
