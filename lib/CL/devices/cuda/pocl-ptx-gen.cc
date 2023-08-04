@@ -27,6 +27,7 @@
 #include "common.h"
 #include "pocl-ptx-gen.h"
 #include "pocl.h"
+#include "pocl_debug.h"
 #include "pocl_file_util.h"
 #include "pocl_runtime_config.h"
 

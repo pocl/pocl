@@ -24,6 +24,10 @@
 #ifndef POCL_DEBUG_H
 #define POCL_DEBUG_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef _WIN32
 #  include <stdint.h>
 #  include <stddef.h> // size_t

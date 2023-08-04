@@ -1,6 +1,6 @@
-/* OpenCL runtime library: time measurement related helpers.
+/* pocl_threads.c - helper functions for thread operations
 
-   Copyright (c) 2012-2019 pocl developers
+   Copyright (c) 2023 Jan Solanti / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -21,32 +21,16 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_TIMING_H
-#define POCL_TIMING_H
+#include "pocl_threads.h"
+#include "pocl_debug.h"
 
-#include <stdint.h>
-
-#ifdef HAVE_CLOCK_GETTIME
-#include <time.h>
-#endif
-
-#include "config.h"
-
-#include "pocl_export.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern const unsigned pocl_timer_resolution;
-
-POCL_EXPORT
-uint64_t pocl_gettimemono_ns();
-
-int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *sec, int* nanosec);
-
-#ifdef __cplusplus
+void
+pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
+{
+  if (status != 0)
+    {
+      POCL_MSG_PRINT2 (ERROR, func, line, "Error from pthread call:\n");
+      POCL_ABORT ("PTHREAD ERROR in %s():%u: %s (%d)\n", func, line,
+                  strerror (status), status);
+    }
 }
-#endif
-
-#endif

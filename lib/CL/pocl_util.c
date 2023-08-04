@@ -1852,16 +1852,6 @@ pocl_status_to_str (int status)
   return status_to_str[status];
 }
 
-void
-pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
-{
-  if (status != 0)
-    {
-      POCL_MSG_PRINT2 (ERROR, func, line, "Error from pthread call:\n");
-      POCL_ABORT ("PTHREAD ERROR in %s():%u: %s (%d)\n", func, line, strerror (status), status);
-    }
-}
-
 /* Convert a command type to its representation string
  */
 const char *

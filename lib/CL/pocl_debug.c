@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "pocl_cl.h"
 #include "pocl_debug.h"
+#include "pocl_threads.h"
 #include "pocl_timing.h"
 
 #ifdef POCL_DEBUG_MESSAGES
