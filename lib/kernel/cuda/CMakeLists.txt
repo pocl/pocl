@@ -31,6 +31,8 @@ foreach(FILE printf_base.c atomics.cl)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
+list(APPEND KERNEL_SOURCES svm_atomics.cl)
+
 foreach(FILE
   async_work_group_copy.cl async_work_group_strided_copy.cl
   get_global_id.c get_global_size.c get_group_id.c
@@ -50,9 +52,12 @@ foreach(FILE
 endforeach()
 
 foreach(FILE
-  atomic_add.ll atomic_and.ll atomic_cmpxchg.ll atomic_dec.ll atomic_inc.ll
-  atomic_min.ll atomic_max.ll atomic_or.ll atomic_sub.ll atomic_xchg.ll
-  atomic_xor.ll barrier.ll nvvm_functions.ll)
+  atomic_add.ll      atomic_and.ll      atomic_cmpxchg.ll      atomic_min.ll      atomic_max.ll      atomic_or.ll      atomic_sub.ll      atomic_xchg.ll       atomic_xor.ll
+  atomic_add_20.ll   atomic_and_20.ll   atomic_cmpxchg_20.ll   atomic_min_20.ll   atomic_max_20.ll   atomic_or_20.ll   atomic_sub_20.ll   atomic_xchg_20.ll    atomic_xor_20.ll
+
+  atomic_dec.ll atomic_inc.ll
+
+  barrier.ll nvvm_functions.ll)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 
