@@ -1663,6 +1663,8 @@ pocl_init_default_device_infos (cl_device_id dev)
 #if defined(KERNELLIB_HOST_DISTRO_VARIANTS)
   dev->kernellib_name = pocl_get_distro_kernellib_name ();
   dev->llvm_cpu = pocl_get_distro_cpu_name (dev->kernellib_name);
+  if (!dev->kernellib_name || !dev->llvm_cpu)
+    dev->available = CL_FALSE;
 #elif defined(HOST_CPU_FORCED)
   dev->kernellib_name = OCL_KERNEL_TARGET_CPU;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
