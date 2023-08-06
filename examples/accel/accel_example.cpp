@@ -21,7 +21,6 @@
    IN THE SOFTWARE.
 */
 
-
 #include <CL/opencl.hpp>
 
 #include <string>

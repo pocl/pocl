@@ -31,6 +31,7 @@
 #include "poclu.h"
 
 #define N 4
+#define ITER 200
 
 #ifdef __cplusplus
 #  define CALLAPI "C"
@@ -38,10 +39,12 @@
 #  define CALLAPI
 #endif
 
-extern CALLAPI int
-exec_dot_product_kernel (cl_context context, cl_device_id device,
-                         cl_command_queue cmd_queue, cl_program program, int n,
-                         cl_float4 *srcA, cl_float4 *srcB, cl_float *dst);
+extern CALLAPI int exec_dot_product_kernel (cl_context context,
+                                            cl_device_id device,
+                                            cl_command_queue cmd_queue,
+                                            cl_program program, int n,
+                                            int iter, cl_float4 *srcA,
+                                            cl_float4 *srcB, cl_float *dst);
 
 int
 main (int argc, char **argv)
@@ -61,7 +64,7 @@ main (int argc, char **argv)
   srand ((unsigned int)time (NULL));
 
   err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
-                                    &devices, &queues);
+                                    &devices, &queues, 0);
 
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
   cl_device_id first_dev = devices[0];
@@ -108,7 +111,7 @@ main (int argc, char **argv)
   err = 0;
 
   if (exec_dot_product_kernel (context, first_dev, first_queue, program, N,
-                               srcA, srcB, dst))
+                               ITER, srcA, srcB, dst))
     {
       printf ("Error running the tests\n");
       err = 1;

@@ -32,9 +32,12 @@ add_executable("matrix1" matrix1.c matrix1.cl)
 
 target_link_libraries("matrix1" ${POCLU_LINK_OPTIONS})
 
-add_test(NAME "examples/matrix1" COMMAND "matrix1" 512)
-
-add_test(NAME "examples/matrix1_local" COMMAND "matrix1" 512 -l)
+if(ENABLE_TCE OR ENABLE_ALMAIF)
+  add_test("examples/matrix1" "matrix1" 64 8)
+else()
+  add_test("examples/matrix1" "matrix1" 512)
+  add_test("examples/matrix1_local" "matrix1" 512 -l)
+  set(EXTRA "examples/matrix1_local")
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
@@ -53,12 +56,14 @@ if (ENABLE_SPIR)
            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1_spir_local.spir64"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
-  list(APPEND SPIREX "examples/matrix1_spir" "examples/matrix1_spir_local")
+  list(APPEND EXTRA "examples/matrix1_spir" "examples/matrix1_spir_local")
 endif()
 
 endif()
 
-set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
+endif()
+
+set_tests_properties( "examples/matrix1" ${EXTRA}
   PROPERTIES
     COST 8.0
     PASS_REGULAR_EXPRESSION "OK"
@@ -68,8 +73,7 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
     DEPENDS "pocl_version_check")
 
 # devices which don't support SPIR
-set_property(TEST "examples/matrix1" "examples/matrix1_local"
-  APPEND PROPERTY LABELS "vulkan")
+set_property(TEST "examples/matrix1" ${EXTRA} APPEND PROPERTY LABELS "vulkan")
 
 add_test(NAME "examples/matrix1_poclbin"
          COMMAND ${CMAKE_COMMAND}
