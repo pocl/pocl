@@ -1412,7 +1412,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   SETUP_DEVICE_CL_VERSION(3, 0);
 
-  ClDev->available = CL_FALSE;
+  ClDev->available = &this->Available;
   ContextHandle = Drv->getContextHandle();
   assert(DeviceHandle);
   assert(ContextHandle);
@@ -1989,7 +1989,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   initHelperKernels();
 
-  ClDev->available = CL_TRUE;
+  this->Available = CL_TRUE;
 }
 
 Level0Device::~Level0Device() {

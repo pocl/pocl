@@ -753,6 +753,8 @@ compile_and_link_program(int compile_program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id dev = program->devices[i];
+      POCL_GOTO_ERROR_COND ((*dev->available == CL_FALSE),
+                            CL_DEVICE_NOT_AVAILABLE);
       for (cl_uint j = 0; j < program->associated_num_devices; ++j)
         if (program->associated_devices[j] == dev)
           ++num_found;

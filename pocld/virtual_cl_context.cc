@@ -22,7 +22,7 @@
    IN THE SOFTWARE.
 */
 
-#include <OpenCL/cl.h>
+#include <cassert>
 #include <memory>
 
 #include "common.hh"
@@ -634,7 +634,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   char *b = (char *)clSVMAlloc(SharedContextList.front()->getHandle()(),
                                CL_MEM_READ_WRITE, buf_size, 0);
   if (!b) {
-    POCL_MSG_ERR("SVM allocation of size %" PRIu32 " failed", buf_size);
+    POCL_MSG_ERR("SVM allocation of size %" PRIu32 " failed\n", buf_size);
     replyFail(&rep->rep, &req->req, CL_MEM_OBJECT_ALLOCATION_FAILURE);
     return;
   }

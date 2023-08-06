@@ -128,7 +128,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
 #define CHECK_ID_EXISTS2(set, err, ID)                                         \
   do {                                                                         \
     if (set.find(ID) == set.end()) {                                           \
-      POCL_MSG_ERR("Can't find object with ID " #ID "; reply FAIL with: %d",   \
+      POCL_MSG_ERR("Can't find object with ID " #ID "; reply FAIL with: %d\n", \
                    err);                                                       \
       rep->rep.data_size = 0;                                                  \
       rep->rep.fail_details = err;                                             \
@@ -146,7 +146,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
 #define CHECK_ID_NOT_EXISTS(set, err)                                          \
   do {                                                                         \
     if (set.find(id) != set.end()) {                                           \
-      POCL_MSG_ERR("FOUND object with ID %" PRIu32 "; reply FAIL with: %d",    \
+      POCL_MSG_ERR("FOUND object with ID %" PRIu32 "; reply FAIL with: %d\n",  \
                    id, err);                                                   \
       rep->rep.data_size = 0;                                                  \
       rep->rep.fail_details = err;                                             \

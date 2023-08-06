@@ -75,7 +75,8 @@ typedef struct tce_queue_data_s {
 TCEDevice::TCEDevice(cl_device_id dev, const char *adfName)
     : local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName),
       parent(dev), currentProgram(NULL), curKernelAddr(0), curKernel(NULL),
-      shutdownRequested(false), globalCycleCount(0),  work_queue(NULL) {
+      shutdownRequested(false), globalCycleCount(0), available(CL_TRUE),
+      work_queue(NULL) {
 
   POCL_INIT_LOCK(wq_lock);
   POCL_INIT_COND(wakeup_cond);

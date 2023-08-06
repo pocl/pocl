@@ -95,6 +95,10 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
         }
       POCL_GOTO_ERROR_ON((!found), CL_INVALID_DEVICE,
         "device not found in the device list of the context\n");
+      POCL_GOTO_ERROR_ON (
+          (*(device_list[i]->available) == CL_FALSE), CL_DEVICE_NOT_AVAILABLE,
+          "Requested building for device '%s' but it is unavailable.\n",
+          device_list[i]->long_name);
     }
 
   if ((program = (cl_program) calloc (1, sizeof (struct _cl_program))) == NULL)

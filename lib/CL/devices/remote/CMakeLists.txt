@@ -24,7 +24,7 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( remote.h remote.c server.h server.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( remote.h remote.c communication.h communication.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library("pocl-devices-remote" remote.h remote.c server.h server.c)
+add_pocl_device_library("pocl-devices-remote" remote.h remote.c communication.h communication.c)

@@ -221,16 +221,18 @@ void ReplyQueueThread::writeThread() {
         ReplyMessageType t =
             static_cast<ReplyMessageType>(reply->rep.message_type);
 
+#ifdef DYNAMIC_BUFFER_SIZE
         if (t == MessageType_ReadBufferReply) {
           if (reply->req->req.m.read.content_size < reply->extra_size) {
             POCL_MSG_PRINT_INFO(
                 "readBufferContentPOCL: for read request size %" PRIuS
-                "setting reply to content size %" PRIuS "\n",
+                ", setting reply to content size %" PRIuS "\n",
                 reply->extra_size, size_t(reply->req->req.m.read.content_size));
             reply->rep.data_size = reply->extra_size =
                 reply->req->req.m.read.content_size;
           }
         }
+#endif
 
         POCL_MSG_PRINT_GENERAL(
             "%s: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIuS

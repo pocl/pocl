@@ -18,6 +18,9 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   cl_int errcode = pocl_copy_image_to_buffer_common (
       NULL, command_queue, src_image, dst_buffer, src_origin, region,
       dst_offset, num_events_in_wait_list, event_wait_list, event, NULL, NULL,

@@ -63,7 +63,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %" PRId64 " (%p)\n",
                                 command_queue->id, command_queue);
-      if (command_queue->device->ops->free_queue)
+      if (command_queue->device->ops->free_queue
+          && (*(command_queue->device->available) == CL_TRUE))
         command_queue->device->ops->free_queue (device, command_queue);
       POCL_DESTROY_OBJECT (command_queue);
       POCL_MEM_FREE(command_queue);

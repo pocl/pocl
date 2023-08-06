@@ -41,32 +41,25 @@ extern "C"
     const char *help_help; /**< @brief Print help and exit help description. */
     const char
         *version_help; /**< @brief Print version and exit help description.  */
-    char *address_arg; /**< @brief IPv4 listen address.  */
-    char *address_orig; /**< @brief IPv4 listen address original value given at
+    char *address_arg; /**< @brief Listen address.  */
+    char *address_orig; /**< @brief Listen address original value given at
                            command line.  */
-    const char
-        *address_help; /**< @brief IPv4 listen address help description.  */
-    int port_arg;      /**< @brief IPv4 listen port.  */
-    char *port_orig;   /**< @brief IPv4 listen port original value given at
-                          command line.  */
-    const char *port_help; /**< @brief IPv4 listen port help description.  */
+    const char *address_help; /**< @brief Listen address help description.  */
+    int port_arg;             /**< @brief Listen port.  */
+    char *port_orig; /**< @brief Listen port original value given at command
+                        line.  */
+    const char *port_help; /**< @brief Listen port help description.  */
     char *log_filter_arg;  /**< @brief Program log category filter.  */
     char *log_filter_orig; /**< @brief Program log category filter original
                               value given at command line.  */
     const char *log_filter_help; /**< @brief Program log category filter help
                                     description.  */
-    char *log_file_arg;          /**< @brief Program log file.  */
-    char *log_file_orig; /**< @brief Program log file original value given at
-                            command line.  */
-    const char
-        *log_file_help; /**< @brief Program log file help description.  */
 
     unsigned int help_given;       /**< @brief Whether help was given.  */
     unsigned int version_given;    /**< @brief Whether version was given.  */
     unsigned int address_given;    /**< @brief Whether address was given.  */
     unsigned int port_given;       /**< @brief Whether port was given.  */
     unsigned int log_filter_given; /**< @brief Whether log_filter was given. */
-    unsigned int log_file_given;   /**< @brief Whether log_file was given.  */
   };
 
   /** @brief The additional parameters to pass to parser functions */

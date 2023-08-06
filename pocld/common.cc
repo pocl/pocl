@@ -25,6 +25,7 @@
 #include "common.hh"
 #include "traffic_monitor.hh"
 
+#include <cassert>
 #include <iomanip>
 #include <sstream>
 #include <sys/uio.h>

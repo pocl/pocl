@@ -47,7 +47,6 @@ else()
 
 endif()
 
-
 if(BUILD_BASIC)
   add_subdirectory("basic")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
@@ -106,6 +105,7 @@ if(ENABLE_PROXY_DEVICE)
   add_subdirectory("proxy")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-proxy>")
+  # link to libOpenCL, TODO disable for ANDROID ?
   list(APPEND POCL_DEVICES_LINK_LIST OpenCL)
 endif()
 
@@ -151,6 +151,7 @@ if(ENABLE_CUDA)
     list(APPEND POCL_DEVICES_LINK_LIST cuda)
   endif()
 endif()
+
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c

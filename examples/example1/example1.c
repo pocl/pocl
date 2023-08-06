@@ -140,11 +140,13 @@ FINISH:
     {
       CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
     }
+  free (queues);
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   free (srcA);
   free (srcB);
   free (dst);
+  free (devices);
 
   return err;
 }

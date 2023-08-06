@@ -1001,7 +1001,7 @@ pocl_create_command_full (_cl_command_node **cmd,
   int err = CL_SUCCESS;
   size_t i;
 
-  POCL_RETURN_ERROR_ON ((dev->available == CL_FALSE), CL_INVALID_DEVICE,
+  POCL_RETURN_ERROR_ON ((*dev->available == CL_FALSE), CL_INVALID_DEVICE,
                         "device is not available\n");
 
   if (num_buffers >= 1)
@@ -2227,6 +2227,42 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   POCL_UNLOCK_OBJ (event);
   ops->broadcast (event);
 
+  /* With remote being asynchronous it is possible that an event is signaled as
+   * complete before some of its dependencies. Therefore this event has to be
+   * removed from the notify lists of any remaining events in the wait list.
+   *
+   * Mind the acrobatics of trying to avoid races with pocl_broadcast and
+   * pocl_create_event_sync. */
+  event_node *tmp;
+  POCL_LOCK_OBJ (event);
+  while ((tmp = event->wait_list))
+    {
+      cl_event notifier = tmp->event;
+      POCL_UNLOCK_OBJ (event);
+      pocl_lock_events_inorder (notifier, event);
+      if (tmp != event->wait_list)
+        {
+          pocl_unlock_events_inorder (notifier, event);
+          POCL_LOCK_OBJ (event);
+          continue;
+        }
+      event_node *tmp2;
+      LL_FOREACH (notifier->notify_list, tmp2)
+      {
+        if (tmp2->event == event)
+          {
+            LL_DELETE (notifier->notify_list, tmp2);
+            pocl_mem_manager_free_event_node (tmp2);
+            break;
+          }
+      }
+      LL_DELETE (event->wait_list, tmp);
+      pocl_unlock_events_inorder (notifier, event);
+      pocl_mem_manager_free_event_node (tmp);
+      POCL_LOCK_OBJ (event);
+    }
+  POCL_UNLOCK_OBJ (event);
+
 #ifdef POCL_DEBUG_MESSAGES
   if (msg != NULL)
     {
@@ -2256,6 +2292,14 @@ pocl_update_event_failed (cl_event event)
 {
   POCL_UNLOCK_OBJ (event);
   pocl_update_event_finished (CL_FAILED, NULL, 0, event, NULL);
+  POCL_LOCK_OBJ (event);
+}
+
+void
+pocl_update_event_device_lost (cl_event event)
+{
+  POCL_UNLOCK_OBJ (event);
+  pocl_update_event_finished (CL_DEVICE_NOT_AVAILABLE, NULL, 0, event, NULL);
   POCL_LOCK_OBJ (event);
 }
 

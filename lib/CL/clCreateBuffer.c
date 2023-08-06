@@ -122,6 +122,8 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->size = size;
   mem->context = context;
   mem->is_image = (type != CL_MEM_OBJECT_PIPE && type != CL_MEM_OBJECT_BUFFER);
+  mem->mem_host_ptr_version = 0;
+  mem->latest_version = 0;
 
   /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
    *
@@ -134,6 +136,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
    */
   if (flags & CL_MEM_USE_HOST_PTR)
     {
+      POCL_MSG_PRINT_MEMORY ("CL_MEM_USE_HOST_PTR %p \n", host_ptr);
       assert (host_ptr);
       mem->mem_host_ptr = host_ptr;
       if (((uintptr_t)host_ptr % context->min_buffer_alignment) != 0)
@@ -157,6 +160,8 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
    * do it, we allocate it via malloc */
   if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
+      POCL_MSG_PRINT_MEMORY (
+          "Trying driver allocation for CL_MEM_ALLOC_HOST_PTR\n");
       unsigned i;
       for (i = 0; i < context->num_devices; ++i)
         {
@@ -247,7 +252,6 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
                                NULL, host_ptr, host_ptr_is_svm, &errcode);
-
   if (mem == NULL)
     goto ERROR;
 

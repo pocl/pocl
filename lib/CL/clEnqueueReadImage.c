@@ -46,6 +46,9 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (image)),
                           CL_INVALID_MEM_OBJECT);
 

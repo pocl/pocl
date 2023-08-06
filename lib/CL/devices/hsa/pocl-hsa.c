@@ -215,6 +215,7 @@ typedef struct pocl_hsa_device_data_s {
   void *printf_buffer;
   uint32_t *printf_write_pos;
 
+  cl_bool available;
 } pocl_hsa_device_data_t;
 
 void pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
@@ -567,6 +568,8 @@ init_dev_data (cl_device_id dev, int count)
   dev->data = d;
   d->device = dev;
   d->hw_schedulers = 3;
+  d->available = CL_TRUE;
+  dev->available = &d->available;
   POCL_INIT_LOCK (d->pocl_hsa_compilation_lock);
 
   /* Before the first HSA device, re-init the runtime. */

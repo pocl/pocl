@@ -63,8 +63,9 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MSG_PRINT_REFCOUNTS ("Free Event %" PRIu64 " (%p)\n", event->id,
                                 event);
-      if (event->command_type != CL_COMMAND_USER &&
-          event->queue->device->ops->free_event_data)
+      if (event->command_type != CL_COMMAND_USER
+          && event->queue->device->ops->free_event_data
+          && (*(event->queue->device->available) == CL_TRUE))
         event->queue->device->ops->free_event_data(event);
 
       if (event->queue)

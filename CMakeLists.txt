@@ -87,19 +87,18 @@ if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
-    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>")
-
     check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
+    set(FORBID_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
     if (HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
-      add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>")
+        set(FORBID_IMPLICIT_FUNCTIONS ${FORBID_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
     endif()
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:${FORBID_IMPLICIT_FUNCTIONS}>")
 
     add_compile_options("-Wno-ignored-attributes")
 
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
   endif()
-
 endif()
 
 set(MAJOR_VERSION 4)
@@ -196,7 +195,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
 set(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
 set(CPACK_PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}~${VERSION_SUFFIX_FIXED_TEXT}")
 if(HAVE_GIT)
-	set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT}")
+       set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT}")
 endif()
 
 ##################################################################################
@@ -230,6 +229,10 @@ option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy
 option(ENABLE_ALMAIF_DEVICE "Enable the generic hardware accelerator device driver." OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use kernel cache for intermediate compilation files, but will clean up them on exit. You can still enable keeping the files it at runtime with an env var." ON)
+
+option(ENABLE_REMOTE_SERVER "Build the 'pocld' server daemon for the remote driver" OFF)
+
+option(ENABLE_REMOTE_CLIENT "Build the client library of the remote driver" OFF)
 
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
@@ -288,6 +291,9 @@ option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
 
 option(ENABLE_EXAMPLES "Build examples. Defaults to ON" ON)
 
+option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requires libRDMAcm and libverbs" OFF)
+
+option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" OFF)
 
 ##########################################################
 
@@ -413,10 +419,8 @@ endif()
 
 ######################################################################################
 
-
-######################################################################################
-
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 option(HARDENING_ENABLE "Enable hardening against various attacks. May worsen performance" OFF)
 if(HARDENING_ENABLE)
   include(Hardening)
@@ -606,7 +610,7 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99 ${FORBID_IMPLICIT_FUNCTIONS}")
   if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()
@@ -969,6 +973,13 @@ if(UNIX)
   else()
     set(HAVE_LTTNG_UST 0)
   endif()
+endif()
+
+######################################################################################
+
+if(ENABLE_RDMA)
+  find_package(RDMAcm MODULE REQUIRED)
+  find_package(Verbs MODULE REQUIRED)
 endif()
 
 ######################################################################################
@@ -1438,6 +1449,13 @@ if(DEFINED EXTRA_OCL_TARGETS)
   set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
 endif()
 
+####################################################################
+
+if(ENABLE_REMOTE_CLIENT)
+  set(BUILD_REMOTE_CLIENT 1)
+  set(OCL_TARGETS "${OCL_TARGETS} remote")
+  set(OCL_DRIVERS "${OCL_DRIVERS} remote")
+endif()
 
 if(ENABLE_PROXY_DEVICE)
   # see doc/sphinx/source/proxy.rst
@@ -1884,7 +1902,7 @@ if(ENABLE_ICD)
   endif()
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${CONTENT}" CONDITION 1)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
-         DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
+          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
 
   # write icd file for pocl testing
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
@@ -1926,7 +1944,7 @@ if(UNIX)
 
   configure_file("${CMAKE_SOURCE_DIR}/pocl.pc.in.cmake" "${CMAKE_BINARY_DIR}/pocl.pc" @ONLY)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
-         DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
+          DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
 
 endif()
 
@@ -2004,7 +2022,10 @@ if(ENABLE_DOXYGEN)
 
   unset(DOXY_INDEX)
   unset(HTML_VIEWER_COMMAND)
+endif()
 
+if(ENABLE_REMOTE_SERVER)
+    add_subdirectory("pocld")
 endif()
 
 set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
@@ -2167,7 +2188,9 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 MESSAGE(STATUS "ENABLE_HWLOC: ${ENABLE_HWLOC}")
-
+if(ARM)
+MESSAGE(STATUS "ENABLE_FP64: ${ENABLE_FP64}")
+endif()
 MESSAGE(STATUS "ENABLE_IPO: ${ENABLE_IPO}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
@@ -2187,7 +2210,6 @@ MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
 MESSAGE(STATUS "ENABLE_RELOCATION: ${ENABLE_RELOCATION}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE: ${ENABLE_PROXY_DEVICE}")
 MESSAGE(STATUS "ENABLE_PROXY_DEVICE_INTEROP: ${ENABLE_PROXY_DEVICE_INTEROP}")
-MESSAGE(STATUS "ENABLE_STREAM_DEVICE: ${ENABLE_STREAM_DEVICE}")
 MESSAGE(STATUS "ENABLE_REMOTE_SERVER: ${ENABLE_REMOTE_SERVER}")
 MESSAGE(STATUS "ENABLE_REMOTE_CLIENT: ${ENABLE_REMOTE_CLIENT}")
 MESSAGE(STATUS "ENABLE_D2D_MIG: ${ENABLE_D2D_MIG}")
@@ -2195,6 +2217,7 @@ MESSAGE(STATUS "ENABLE_RDMA: ${ENABLE_RDMA}")
 MESSAGE(STATUS "ENABLE_CL_GET_GL_CONTEXT: ${ENABLE_CL_GET_GL_CONTEXT}")
 MESSAGE(STATUS "ENABLE_OPENGL_INTEROP: ${ENABLE_OPENGL_INTEROP}")
 MESSAGE(STATUS "ENABLE_EGL_INTEROP: ${ENABLE_EGL_INTEROP}")
+
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")

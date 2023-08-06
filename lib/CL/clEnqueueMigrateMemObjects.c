@@ -41,6 +41,9 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
   POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
 

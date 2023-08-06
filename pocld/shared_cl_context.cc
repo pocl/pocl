@@ -22,6 +22,8 @@
    IN THE SOFTWARE.
 */
 
+#include <cassert>
+
 #include "shared_cl_context.hh"
 #include "cmd_queue.hh"
 #include "common.hh"
@@ -41,7 +43,7 @@
     }                                                                          \
   }                                                                            \
   if (err == CL_SUCCESS)                                                       \
-    POCL_MSG_PRINT_INFO(msg " event %" PRIu64, ev_id);                         \
+    POCL_MSG_PRINT_INFO(msg " event %" PRIu64 "\n", ev_id);                    \
   else {                                                                       \
     POCL_MSG_ERR("%s = %d, event %" PRIu64 "\n", msg, err, ev_id);             \
   }                                                                            \
@@ -602,8 +604,7 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
 
   temp = clientDevice.getInfo<CL_DEVICE_VERSION>();
   std::strncpy(i.device_version, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
-  is_pocl_CPU = (temp.find("pocl") != std::string::npos &&
-                 temp.find("stream") == std::string::npos);
+  is_pocl_CPU = (temp.find("pocl") != std::string::npos);
 
   temp = clientDevice.getInfo<CL_DRIVER_VERSION>();
   std::strncpy(i.driver_version, temp.c_str(), MAX_PACKED_STRING_LEN);
@@ -749,14 +750,10 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
   i.image3d_max_width = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_WIDTH>();
   i.image3d_max_depth = clientDevice.getInfo<CL_DEVICE_IMAGE3D_MAX_DEPTH>();
 
-  // these two seem to be forgotten in opencl.hpp
-  // i.image_max_buffer_size =
-  // clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>();
-  // i.image_max_array_size =
-  // clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>(); for now just return
-  // the minimums
-  i.image_max_array_size = 2048;
-  i.image_max_buffer_size = 65536;
+  i.image_max_buffer_size =
+      clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_BUFFER_SIZE>();
+  i.image_max_array_size =
+      clientDevice.getInfo<CL_DEVICE_IMAGE_MAX_ARRAY_SIZE>();
 
   /*******************************************************************/
 
@@ -881,7 +878,7 @@ int SharedCLContext::buildProgram(
   if (options == nullptr)
     options = "";
   std::string opts(options);
-  opts += " -cl-kernel-arg-info -cl-std=CL1.2";
+  opts += " -cl-kernel-arg-info";
 
   if (is_builtin) {
     std::string source(src, src + src_size);
@@ -1738,22 +1735,31 @@ int SharedCLContext::setKernelArgs(cl::Kernel *k, clKernelStruct *kernel,
         break;
       }
       case PoclRemoteArgType::Pointer: {
-        uint32_t buffer_id = static_cast<uint32_t>(args[i]);
-        POCL_MSG_PRINT_GENERAL(
-            "Setting ARG %u type POINTER, buffer id: %" PRIu32
-            " ARGS[i]: %" PRIu64 "\n",
-            i, buffer_id, args[i]);
-        if (buffer_id == 0) {
-          POCL_MSG_WARN("NULL PTR ARG DETECTED: KERNEL %s ARG %u / %s \n",
-                        kernel->metaData->meta.name, i,
-                        kernel->metaData->arg_meta[i].name);
-          err = k->setArg(i, sizeof(void *), nullptr);
+        if (kernel->metaData->arg_meta[i].address_qualifier ==
+            CL_KERNEL_ARG_ADDRESS_LOCAL) {
+          POCL_MSG_PRINT_GENERAL(
+              "Setting ARG %u type POINTER (LOCAL), size: %" PRIu64 "\n", i,
+              args[i]);
+          err = k->setArg(i, static_cast<size_t>(args[i]), nullptr);
           assert(err == CL_SUCCESS);
         } else {
-          cl::Buffer *b = findBuffer(buffer_id);
-          assert(b);
-          err = k->setArg<>(i, (*b));
-          assert(err == CL_SUCCESS);
+          uint32_t buffer_id = static_cast<uint32_t>(args[i]);
+          POCL_MSG_PRINT_GENERAL(
+              "Setting ARG %u type POINTER, buffer id: %" PRIu32
+              " ARGS[i]: %" PRIu64 "\n",
+              i, buffer_id, args[i]);
+          if (buffer_id == 0) {
+            POCL_MSG_WARN("NULL PTR ARG DETECTED: KERNEL %s ARG %u / %s \n",
+                          kernel->metaData->meta.name, i,
+                          kernel->metaData->arg_meta[i].name);
+            err = k->setArg(i, sizeof(void *), nullptr);
+            assert(err == CL_SUCCESS);
+          } else {
+            cl::Buffer *b = findBuffer(buffer_id);
+            assert(b);
+            err = k->setArg<>(i, (*b));
+            assert(err == CL_SUCCESS);
+          }
         }
         break;
       }

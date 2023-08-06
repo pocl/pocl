@@ -63,9 +63,7 @@ struct event_data {
 };
 
 struct data {
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-  volatile uint64_t total_cmd_exec_time;
+  cl_bool available;
 };
 
 void
@@ -141,8 +139,9 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  d->current_kernel = NULL;
   device->data = d;
+  d->available = CL_TRUE;
+  device->available = &d->available;
 
   pocl_init_default_device_infos (device);
 
@@ -308,7 +307,7 @@ pocl_pthread_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_pthread_reinit (unsigned j, cl_device_id device)
+pocl_pthread_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   struct data *d;
 
@@ -316,7 +315,6 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  d->current_kernel = NULL;
   device->data = d;
 
   cl_int ret = CL_SUCCESS;

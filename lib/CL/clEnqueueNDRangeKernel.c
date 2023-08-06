@@ -62,6 +62,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   _cl_command_node *cmd;
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
   errcode = pocl_ndrange_kernel_common (
       NULL, command_queue, NULL, kernel, work_dim, global_work_offset,
       global_work_size, local_work_size, num_events_in_wait_list,

@@ -23,6 +23,7 @@
    IN THE SOFTWARE.
 */
 
+#include <cassert>
 #include <poll.h>
 #include <sys/socket.h>
 

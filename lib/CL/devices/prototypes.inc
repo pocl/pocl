@@ -34,7 +34,8 @@
   POCL_EXPORT                                                                 \
   void pocl_##__DRV__##_init_device_ops (struct pocl_device_ops *ops);        \
   cl_int pocl_##__DRV__##_uninit (unsigned j, cl_device_id device);           \
-  cl_int pocl_##__DRV__##_reinit (unsigned j, cl_device_id device);           \
+  cl_int pocl_##__DRV__##_reinit (unsigned j, cl_device_id device,            \
+                                  const char *parameters);                    \
   cl_int pocl_##__DRV__##_init (unsigned j, cl_device_id device,              \
                                 const char *parameters);                      \
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops);          \

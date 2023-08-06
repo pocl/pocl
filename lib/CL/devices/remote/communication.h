@@ -1,4 +1,5 @@
-/* server.h - part of pocl-remote driver that talks to pocl-remote server
+/* communication.h - part of pocl-remote driver that talks to pocl-remote
+   server
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
@@ -22,8 +23,10 @@
    IN THE SOFTWARE.
 */
 
-#ifndef POCL_SERVER_H
-#define POCL_SERVER_H
+#ifndef POCL_REMOTE_COMMUNICATION_H
+#define POCL_REMOTE_COMMUNICATION_H
+
+#include "messages.h"
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
@@ -61,23 +64,14 @@ typedef void (*network_command_callback) (void *arg, _cl_command_node *node,
 
 typedef struct network_command network_command;
 
-//                                          RequestMsg_t *req,
-//                                          ReplyMsg_t *rep,
-//                                          uint64_t* req_wait_list;
-//                                          size_t req_waitlist_size;
-//                                          char* req_extra_data,
-//                                          size_t req_extra_size,
-//                                          char* req_extra_data2,
-//                                          size_t req_extra_size2,
-//                                          char* rep_extra_data,
-//                                          size_t rep_extra_size
-
+/** Lock used for synchronous commands */
 typedef struct sync_t
 {
   pocl_lock_t mutex;
   pocl_cond_t cond;
 } sync_t;
 
+/** Callback data used for asynchronous commands */
 typedef struct async_t
 {
   network_command_callback cb;
@@ -406,24 +400,16 @@ cl_int pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
 cl_int pocl_network_read_rect (
     uint32_t cq_id, remote_device_data_t *ddata, uint32_t src_mem,
     const size_t *__restrict__ const buffer_origin,
-    //                                const size_t *__restrict__ const
-    //                                host_origin,
     const size_t *__restrict__ const region, size_t const buffer_row_pitch,
     size_t const buffer_slice_pitch,
-    //                                size_t const host_row_pitch,
-    //                                size_t const host_slice_pitch,
     void *host_ptr, size_t size, network_command_callback cb, void *arg,
     _cl_command_node *node);
 
 cl_int pocl_network_write_rect (
     uint32_t cq_id, remote_device_data_t *ddata, uint32_t dst_mem,
     const size_t *__restrict__ const buffer_origin,
-    //                                const size_t *__restrict__ const
-    //                                host_origin,
     const size_t *__restrict__ const region, size_t const buffer_row_pitch,
     size_t const buffer_slice_pitch,
-    //                                size_t const host_row_pitch,
-    //                                size_t const host_slice_pitch,
     const void *host_ptr, size_t size, network_command_callback cb, void *arg,
     _cl_command_node *node);
 

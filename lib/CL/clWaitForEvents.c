@@ -53,6 +53,8 @@ POname(clWaitForEvents)(cl_uint              num_events ,
       if (event_list[i]->command_type == CL_COMMAND_USER)
         continue;
       dev = event_list[i]->queue->device;
+      POCL_RETURN_ERROR_COND ((*(dev->available) == CL_FALSE),
+                              CL_DEVICE_NOT_AVAILABLE);
       if (dev->ops->wait_event)
         dev->ops->wait_event (dev, event_list[i]);
       else

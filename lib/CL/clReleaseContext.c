@@ -29,6 +29,10 @@
 #include "pocl_llvm.h"
 #endif
 
+#ifdef ENABLE_RDMA
+#include "pocl_rdma.h"
+#endif
+
 #include <unistd.h>
 
 extern unsigned long context_c;

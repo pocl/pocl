@@ -323,6 +323,8 @@ typedef struct pocl_vulkan_device_data_s
   /* device pthread */
   pthread_t driver_pthread_id;
 
+  cl_bool available;
+
 } pocl_vulkan_device_data_t;
 
 typedef struct pocl_vulkan_program_data_s
@@ -1094,7 +1096,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
                                            sizeof (pocl_vulkan_device_data_t));
   dev->data = d;
   d->dev = dev;
-  dev->available = CL_FALSE;
+  dev->available = &d->available;
 
   VkPhysicalDevice pd = pocl_vulkan_devices[j];
 
@@ -1543,7 +1545,6 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->device_side_printf = 0;
   dev->printf_buffer_size = 1024*1024;
 
-  dev->available = CL_TRUE;
   dev->endian_little = CL_TRUE;
   dev->parent_device = NULL;
   dev->max_sub_devices = 0;
@@ -1685,7 +1686,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   PTHREAD_CHECK (pthread_create (&d->driver_pthread_id, NULL,
                                  pocl_vulkan_driver_pthread, dev));
 
-  dev->available = CL_TRUE;
+  d->available = CL_TRUE;
   return CL_SUCCESS;
 }
 
@@ -1717,7 +1718,7 @@ pocl_vulkan_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_vulkan_reinit (unsigned j, cl_device_id device)
+pocl_vulkan_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   return 0;
 }

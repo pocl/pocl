@@ -65,6 +65,8 @@ POname(clGetKernelWorkGroupInfo)
   POCL_RETURN_ERROR_ON ((dev_i == CL_UINT_MAX), CL_INVALID_KERNEL,
                         "the kernel was not built for this device\n");
 
+  POCL_RETURN_ERROR_COND ((*(device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
   /************************************************************************/
 
   switch (param_name)

@@ -86,6 +86,7 @@ typedef struct pocl_cuda_device_data_s
   pocl_lock_t compile_lock;
   int supports_cu_mem_host_register;
   int sm_maj, sm_min;
+  cl_bool available;
 } pocl_cuda_device_data_t;
 
 typedef struct pocl_cuda_queue_data_s
@@ -447,6 +448,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         }
     }
 
+  data->available = CL_TRUE;
+  dev->available = &data->available;
+
   dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
@@ -703,10 +707,11 @@ pocl_cuda_uninit (unsigned j, cl_device_id device)
 {
   pocl_cuda_device_data_t *data = device->data;
 
-  if (device->available) {
+  if (*(device->available) == CL_TRUE)
+    {
       cuEventDestroy (data->epoch_event);
       cuCtxDestroy (data->context);
-  }
+    }
 
   POCL_MEM_FREE (data);
   device->data = NULL;

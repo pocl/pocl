@@ -45,6 +45,9 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
       (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   POCL_RETURN_ERROR_COND ((size == 0), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND ((svm_ptr == NULL), CL_INVALID_VALUE);

@@ -1,4 +1,4 @@
-/* remote.c - a pocl device driver which delegates to remote devices
+/* remote.c - a pocl device driver which controls remote devices
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
@@ -45,8 +45,8 @@
 #include <CL/cl.h>
 
 // TODO mess
+#include "communication.h"
 #include "messages.h"
-#include "server.h"
 
 /*
   TODO / problematic:
@@ -279,9 +279,6 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   assert (device->short_name);
   char *res = calloc (1000, sizeof (char));
   snprintf (res, 1000, "pocl-remote: %s", device->short_name);
-  //  snprintf (res, 1000, "pocl-remote %s:%u/%" PRIu32,
-  //                       d->server->address, d->server->fast_port,
-  //                       d->remote_device_index);
   d->build_hash = res;
 
   POCL_INIT_COND (d->wakeup_cond);
@@ -328,8 +325,9 @@ create_build_hash (cl_program program, cl_device_id device, unsigned device_i)
   pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->binaries[device_i],
                     program->binary_sizes[device_i]);
 
-  const char *dev_hash = device->ops->build_hash (device);
+  char *dev_hash = device->ops->build_hash (device);
   pocl_SHA1_Update (&hash_ctx, (const uint8_t *)dev_hash, strlen (dev_hash));
+  free (dev_hash);
 
   uint8_t digest[SHA1_DIGEST_SIZE];
   pocl_SHA1_Final (&hash_ctx, digest);
@@ -348,6 +346,10 @@ create_build_hash (cl_program program, cl_device_id device, unsigned device_i)
   return;
 }
 
+/**
+ * Move build logs into the program object according to the device list
+ * specified for the progam.
+ */
 static void
 setup_build_logs (cl_program program, unsigned num_relevant_devices,
                   unsigned *build_indexes, char **build_logs)
@@ -363,6 +365,10 @@ setup_build_logs (cl_program program, unsigned num_relevant_devices,
     }
 }
 
+/**
+ * Setup mapping from global device indices to indices in the list of devices
+ * the program has been requested to be built for.
+ */
 static unsigned
 setup_relevant_devices (cl_program program, cl_device_id device,
 
@@ -552,9 +558,8 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
 
   // for source builds, get the binaries
   {
-    //      POCL_MSG_ERR ("num_relevant_devices: %u\n", num_relevant_devices);
-    char program_bc_path[POCL_MAX_FILENAME_LENGTH];
-    char temp_path[POCL_MAX_FILENAME_LENGTH];
+    char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+    char temp_path[POCL_MAX_PATHNAME_LENGTH];
 
     for (i = 0; i < num_relevant_devices; ++i)
       {
@@ -735,9 +740,6 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
 
       &build_log, NULL, 0);
 
-  // TODO build_log
-  // setup_build_logs (program, 1, device_list, build_indexes, build_logs);
-
   if (err)
     return err;
 
@@ -747,27 +749,9 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
   pd->refcount = 1;
 
   program->data[device_i] = pd;
-  //  program->binary_sizes[device_i] = 0;
-  //  program->binaries[device_i] = NULL;
-  //  create_build_hash(program, device, real_i);
-  //  pocl_cache_create_program_cachedir(program, real_i, NULL, 0,
-  //  program_bc_path);
 
   return CL_SUCCESS;
 }
-
-/*
-int pocl_remote_link_program (cl_program program,
-                     cl_uint device_i,
-                     cl_uint num_input_programs,
-                     unsigned char **cur_device_binaries,
-                     size_t *cur_device_binary_sizes,
-                     void **cur_device_data,
-                     int create_library)
-{
-
-}
-*/
 
 int
 pocl_remote_setup_metadata (cl_device_id device, cl_program program,
@@ -783,8 +767,6 @@ pocl_remote_setup_metadata (cl_device_id device, cl_program program,
 
   if (pd->kernel_meta_bytes)
     {
-      // POCL_MSG_PRINT_REMOTE ("pocl_remote_setup_metadata: have
-      // pd->kernel_meta_bytes \n");
       size_t num_kernels = 0;
       pocl_kernel_metadata_t *kernel_meta = NULL;
       int err = pocl_network_setup_metadata (pd->kernel_meta_bytes,
@@ -1304,21 +1286,6 @@ pocl_remote_async_write_rect (void *data, _cl_command_node *node,
       (size_t)(adjusted_host_ptr - (const char *)host_ptr), total_size,
       buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch);
 
-  //  size_t j, k;
-
-  //  size_t alloc_size = region[2] * region[1] * region[0];
-  //  char *__restrict__ p = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-  //  alloc_size); assert (p);
-
-  //  for (k = 0; k < region[2]; ++k)
-  //    for (j = 0; j < region[1]; ++j)
-  //      memcpy (p + region[0] * j
-  //                + region[0] * region[1] * k,
-  //              adjusted_host_ptr
-  //                + host_row_pitch * j
-  //                + host_slice_pitch * k,
-  //              region[0]);
-
   /*************************************************************************/
 
   int r = pocl_network_write_rect (
@@ -1363,12 +1330,6 @@ pocl_remote_async_read_rect (void *data, _cl_command_node *node,
       buffer_origin[2], host_origin[0], host_origin[1], host_origin[2],
       (size_t)(adjusted_host_ptr - (char *)host_ptr), total_size,
       buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch);
-
-  //  size_t j, k;
-
-  //  size_t alloc_size = region[2] * region[1] * region[0];
-  //  char *__restrict__ p = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-  //  alloc_size); assert (p);
 
   int r = pocl_network_read_rect (queue_id, data, src_id, buffer_origin,
                                   region, buffer_row_pitch, buffer_slice_pitch,
@@ -1448,39 +1409,6 @@ pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
   assert (r == 0);
   return 0;
 }
-
-/*
-cl_int
-pocl_remote_uninit (unsigned j, cl_device_id device)
-{
-  struct data *d = (struct data*)device->data;
-  POCL_DESTROY_LOCK (d->cq_lock);
-  pocl_aligned_free (d->printf_buffer);
-  POCL_MEM_FREE(d);
-  device->data = NULL;
-  return CL_SUCCESS;
-}
-
-cl_int
-pocl_remote_reinit (unsigned j, cl_device_id device)
-{
-  struct data *d = (struct data *)calloc (1, sizeof (struct data));
-  if (d == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  d->current_kernel = NULL;
-  d->current_dlhandle = 0;
-
-  assert (device->printf_buffer_size > 0);
-  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                          device->printf_buffer_size);
-  assert (d->printf_buffer != NULL);
-
-  POCL_INIT_LOCK (d->cq_lock);
-  device->data = d;
-  return CL_SUCCESS;
-}
-*/
 
 void
 pocl_remote_async_run (void *data, _cl_command_node *cmd)
@@ -1674,32 +1602,8 @@ pocl_remote_async_write_image_rect (void *data, _cl_command_node *node,
 
       assert (src_host_ptr);
 
-      //      char const *__restrict__ const adjusted_host_ptr =
-      //      (char const*)src_host_ptr +
-      //      px * origin[0] + src_row_pitch * origin[1] + src_slice_pitch *
-      //      origin[2];
-
       size_t size = region[0] * px + src_row_pitch * (region[1] - 1)
                     + src_slice_pitch * (region[2] - 1);
-      /*
-          // OPTIMIZATION, disabled for now
-          size_t j, k;
-
-          size_t alloc_size = region[2] * region[1] * rowsize;
-          char *__restrict__ p = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-         alloc_size); assert (p);
-
-          for (k = 0; k < region[2]; ++k)
-            for (j = 0; j < region[1]; ++j)
-              memcpy (p + rowsize * j
-                        + rowsize * region[1] * k,
-                      adjusted_host_ptr
-                        + src_row_pitch * j
-                        + src_slice_pitch * k,
-                      rowsize);
-
-         pocl_aligned_free (p);
-      */
       int r = pocl_network_write_image_rect (
           queue_id, data, dst_id, origin, region, src_host_ptr,
           size, // adjusted_host_ptr,
@@ -1757,36 +1661,9 @@ pocl_remote_async_read_image_rect (void *data, _cl_command_node *node,
         dst_slice_pitch = dst_row_pitch * region[1];
 
       assert (dst_host_ptr);
-      //    char *__restrict__ const adjusted_host_ptr =
-      //      (char*)dst_host_ptr +
-      //      origin[2] * dst_slice_pitch + origin[1] * dst_row_pitch +
-      //      origin[0] * px;
 
       size_t size = region[0] * px + dst_row_pitch * (region[1] - 1)
                     + dst_slice_pitch * (region[2] - 1);
-
-      /*
-          // OPTIMIZATION, disabled for now
-          size_t j, k;
-
-          size_t alloc_size = region[2] * region[1] * rowsize;
-          char *__restrict__ p = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-         alloc_size); assert (p);
-
-          int r = pocl_network_read_image_rect (data, src_ptr->remote_id,
-         origin, region, p, alloc_size); assert (r == 0);
-
-          for (k = 0; k < region[2]; ++k)
-            for (j = 0; j < region[1]; ++j)
-              memcpy (adjusted_host_ptr
-                        + dst_row_pitch * j
-                        + dst_slice_pitch * k,
-                      p + rowsize * j
-                        + rowsize * region[1] * k,
-                      rowsize);
-
-          pocl_aligned_free (p);
-      */
 
       int r = pocl_network_read_image_rect (queue_id, data, src_id, origin,
                                             region, dst_host_ptr,
@@ -2093,6 +1970,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_MARKER:
     case CL_COMMAND_BARRIER:
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
       goto EARLY_FINISH;
 
     default:
@@ -2117,7 +1995,6 @@ pocl_remote_driver_pthread (void *cldev)
 
   while (1)
     {
-      //    POCL_MSG_ERR ("DRIVER: RETRY\n");
       if (d->driver_thread_exit_requested)
         {
           POCL_FAST_UNLOCK (d->wq_lock);
@@ -2145,8 +2022,6 @@ pocl_remote_driver_pthread (void *cldev)
 
           cl_event event = finished->sync.event.event;
 
-          //      POCL_MSG_ERR ("FINISHED CMD %p\n", finished);
-
           const char *cstr = pocl_command_to_str (finished->type);
           char msg[128] = "Event ";
           strcat (msg, cstr);
@@ -2159,7 +2034,6 @@ pocl_remote_driver_pthread (void *cldev)
       if ((d->work_queue == NULL) && (d->finished_list == NULL)
           && (d->driver_thread_exit_requested == 0))
         {
-          //      POCL_MSG_ERR ("REMOTE: WAITING\n");
           POCL_WAIT_COND (d->wakeup_cond, d->wq_lock);
           // since cond_wait returns with locked mutex, might as well retry
         }

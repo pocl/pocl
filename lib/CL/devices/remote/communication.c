@@ -1,4 +1,5 @@
-/* server.c - part of pocl-remote driver that talks to pocl-remote server
+/* communication.c - part of pocl-remote driver that talks to pocl-remote
+   server
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
@@ -53,8 +54,7 @@
 #endif
 
 // TODO mess
-#include "messages.h"
-#include "server.h"
+#include "communication.h"
 
 // https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_MRG/1.2/html/Realtime_Tuning_Guide/sect-Realtime_Tuning_Guide-Application_Tuning_and_Deployment-TCP_NODELAY_and_Small_Buffer_Writes.html
 // https://eklitzke.org/the-caveats-of-tcp-nodelay
@@ -332,7 +332,7 @@ writev_full (int fd, size_t num, void **arys, size_t *sizes,
       total += sizes[i];
     }
 
-  // TODO this is crap
+  // TODO there has to be a better way to handle this
   if (total >= THRESHOLD)
     {
 
@@ -398,23 +398,6 @@ finish_running_cmd (network_command *running_cmd)
       cl_event e = running_cmd->data.async.node->sync.event.event;
       cl_command_type type = running_cmd->data.async.node->type;
 
-      // remote libOpenCL timings
-      //          POCL_MSG_ERR ("SUBM %zu\nQUEUED %zu\nSTARTED %zu\nCOMPLETED
-      //          %zu\n",
-      //                        running_cmd->reply.timing.queued,
-      //                        running_cmd->reply.timing.submitted,
-      //                        running_cmd->reply.timing.started,
-      //                        running_cmd->reply.timing.completed
-      //                        );
-
-      // some devices occasionally return garbage timestamps
-      //          assert (running_cmd->reply.timing.submitted >=
-      //          running_cmd->reply.timing.queued); assert
-      //          (running_cmd->reply.timing.started >=
-      //          running_cmd->reply.timing.submitted); assert
-      //          (running_cmd->reply.timing.completed >=
-      //          running_cmd->reply.timing.started);
-
       uint64_t ocl_in_host_queue = 0, ocl_in_dev_queue = 0, ocl_on_dev = 0;
       if (running_cmd->reply.timing.submitted
           >= running_cmd->reply.timing.queued)
@@ -455,12 +438,7 @@ finish_running_cmd (network_command *running_cmd)
                                       ? remote_reading_ns
                                       : local_writing_ns;
 
-      // assert (running_cmd->reply.server_write_end_timestamp_ns >=
-      // running_cmd->reply.server_write_start_timestamp_ns);
       // TODO we don't have the timings for remote writing
-      // uint64_t remote_writing_ns =
-      // running_cmd->request.client_write_end_timestamp_ns -
-      // running_cmd->request.client_write_start_timestamp_ns;
       uint64_t remote_writing_ns = 0;
 
       /* No-op until reader has finished writing timestamps (should never be
@@ -479,17 +457,6 @@ finish_running_cmd (network_command *running_cmd)
                                       ? local_reading_ns
                                       : remote_writing_ns;
 
-      // assumes synchronized clocks
-      // assert(running_cmd->reply.server_read_end_timestamp_ns >=
-      // running_cmd->request.client_write_start_timestamp_ns); uint64_t
-      // client_to_remote = running_cmd->reply.server_read_end_timestamp_ns -
-      // running_cmd->request.client_write_start_timestamp_ns;
-      // assumes synchronized clocks
-      // assert(running_cmd->reply.client_read_end_timestamp_ns >=
-      // running_cmd->reply.server_write_start_timestamp_ns); uint64_t
-      // remote_to_client = running_cmd->reply.client_read_end_timestamp_ns -
-      // running_cmd->reply.server_write_start_timestamp_ns;
-
       switch (type)
         {
 
@@ -500,17 +467,6 @@ finish_running_cmd (network_command *running_cmd)
           e->time_submit = e->time_queue + ocl_in_host_queue;
           e->time_start = e->time_submit + ocl_in_dev_queue;
           e->time_end = e->time_start + ocl_on_dev;
-          /*
-                        POCL_MSG_ERR ("client2srv: %zu\n"
-                                      "KERNEL TIME: \n%zu   \n%zu   \n%zu   \n"
-                                      "srv2client: %zu \n",
-                                      client_to_remote,
-                                      ocl_in_host_queue,
-                                      ocl_in_dev_queue,
-                                      ocl_on_dev,
-                                      remote_to_client
-                                      );
-          */
           break;
 
         case CL_COMMAND_READ_BUFFER:
@@ -534,31 +490,8 @@ finish_running_cmd (network_command *running_cmd)
           e->time_end = e->time_start + ocl_on_dev + client_to_remote;
           break;
 
-          /*
-                      case CL_COMMAND_COPY_BUFFER:
-                      case CL_COMMAND_COPY_IMAGE:
-                      case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-                      case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
-                      case CL_COMMAND_COPY_BUFFER_RECT:
-                      case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-                      case CL_COMMAND_FILL_BUFFER:
-                      case CL_COMMAND_FILL_IMAGE:
-          */
-
         default:
           break;
-          //              e->time_queue =
-          //              running_cmd->request.client_write_start_timestamp_ns;
-          //              if (ocl_start > 0 && ocl_comp > 0) {
-          //                  e->time_submit =
-          //                  running_cmd->request.client_write_start_timestamp_ns
-          //                  + (ocl_submit - ocl_queued); e->time_start =
-          //                  running_cmd->request.client_write_start_timestamp_ns
-          //                  + (ocl_start - ocl_queued); e->time_end =
-          //                  running_cmd->request.client_write_start_timestamp_ns
-          //                  + (ocl_comp - ocl_queued);
-          //              } else {
-          //              }
         }
 
 #ifdef ENABLE_RDMA
@@ -940,17 +873,12 @@ pocl_remote_reader_pthread (void *aa)
       assert (running_cmd->status == NETCMD_WRITTEN);
       running_cmd->status = NETCMD_READ;
 
-      // POCL_MSG_ERR ("READER THR: DONE, FOUND %u / %p in INFLIGHT\n",
-      // rep.msg_id, running_cmd);
-
       // READ EXTRA DATA
       if (running_cmd->reply.data_size > 0)
         {
           assert (running_cmd->rep_extra_data != NULL);
           assert (running_cmd->rep_extra_size >= running_cmd->reply.data_size);
           running_cmd->rep_extra_size = running_cmd->reply.data_size;
-          // POCL_MSG_WARN ("READER THR: READING EXTRA DATA %zu bytes\n",
-          // running_cmd->reply.data_size);
           readb = read_full (fd, running_cmd->rep_extra_data,
                              running_cmd->reply.data_size, remote);
           CHECK_READ (readb);
@@ -969,7 +897,6 @@ pocl_remote_rdma_reader_pthread (void *aa)
 {
   network_queue_arg *a = aa;
   remote_server_data_t *remote = a->remote;
-  // network_queue *inflight = a->in_flight;
   network_queue *this = a->ours;
   rdma_data_t *rdma_data = &remote->rdma_data;
   POCL_MEM_FREE (a);
@@ -1068,9 +995,6 @@ pocl_remote_rdma_writer_pthread (void *aa)
   network_queue *this = a->ours;
   rdma_data_t *rdma_data = &remote->rdma_data;
   POCL_MEM_FREE (a);
-  // int resending = 0;
-  // network_command *backup[5] = {NULL};
-  // int backup_idx = 0;
 
   network_command *cmd;
   RequestMsg_t request;
@@ -1126,9 +1050,6 @@ pocl_remote_rdma_writer_pthread (void *aa)
 
           write_wr.wr.rdma.rkey = s->remote_rkey;
           write_wr.wr.rdma.remote_addr = s->remote_vaddr + offset;
-
-          // We could also include up to 32 bits of immediate data
-          // send_wr.imm_data = 0x1234;
 
           struct ibv_wc wc = {};
 
@@ -1198,9 +1119,6 @@ pocl_remote_rdma_writer_pthread (void *aa)
             }
 
           rdma_unregister_mem_region (mem_region);
-          // aparently this is only used for incoming SENDs wiht immediate
-          // operations
-          // assert (cmd->req_extra_size == wc.byte_len);
 
           // Hand command over to reply receiver thread
 
@@ -1469,6 +1387,9 @@ EXIT:
 }
 #endif
 
+/**
+ * Start all threads needed for the given server connection
+ */
 static void
 start_engines (remote_server_data_t *d, remote_device_data_t *devd,
                cl_device_id device)
@@ -1660,15 +1581,15 @@ find_or_create_server (const char *address_with_port, unsigned port,
 #ifdef ENABLE_RDMA
   // TODO: re-enable once client RDMA has been reworked to match server
   // communication
-  // if (rdma_init_id (&d->rdma_data) == 0)
-  //  {
-  //    hs.rdma_supported = 0;
-  //  }
-  // else
-  //  {
-  //    POCL_MSG_ERR ("Could not create RDMAcm event channel and id, continuing
-  //    without RDMA\n");
-  //  }
+  if (CL_TRUE || rdma_init_id (&d->rdma_data) == 0)
+    {
+      hs.rdma_supported = 0;
+    }
+  else
+    {
+      POCL_MSG_ERR ("Could not create RDMAcm event channel and id, continuing"
+                    "without RDMA\n");
+    }
 #endif
   ssize_t readb, writeb;
   writeb = write (d->fast_socket_fd, &hs, sizeof (ClientHandshake_t));
@@ -1835,9 +1756,6 @@ find_or_create_server (const char *address_with_port, unsigned port,
   for (size_t i = 0; i < num_plat_devs; ++i)
     d->num_devices += d->platform_devices[i];
 
-  // readb = read (d->fast_socket_fd, &server_info, sizeof (ServerInfoMsg_t));
-  // assert ((size_t) (readb) == sizeof (ServerInfoMsg_t));
-
   POCL_MSG_PRINT_REMOTE ("Connected to %s:%d which has %d devices\n",
                          d->address, d->fast_port, d->num_devices);
 
@@ -1959,20 +1877,6 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
     }
   POCL_MSG_PRINT_REMOTE (
       "Setting up remote device with PLATFORM %u / DEVICE %u\n", pid, did);
-
-  /*
-    if (pid >= data->num_platforms)
-      {
-        POCL_MSG_ERR ();
-        return CL_INVALID_DEVICE;
-      }
-
-    if (did >= data->platform_devices[pid])
-      {
-        POCL_MSG_ERR ("Remote device index invalid (the platform %u only has %u
-    devices)\n", pid, data->platform_devices[pid]); return CL_INVALID_DEVICE;
-      }
-  */
 
   ddata->remote_device_index = did;
   ddata->remote_platform_index = pid;
@@ -2141,10 +2045,6 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
 
       for (j = 0; j < p.num_formats; ++j)
         {
-          //          POCL_MSG_ERR ("DEVINFO: TYPE %zu     DATA_TYPE %u  ORDER
-          //          %u \n",
-          //                        i, p->formats[j].channel_data_type,
-          //                        p->formats[j].channel_order);
           ary[j].image_channel_data_type = p.formats[j].channel_data_type;
           ary[j].image_channel_order = p.formats[j].channel_order;
         }
@@ -2246,6 +2146,7 @@ pocl_network_free_buffer (remote_device_data_t *ddata, uint32_t mem_id)
   rdma_buffer_info_t *s;
   HASH_FIND (hh, data->rdma_keys, &mem_id, sizeof (uint32_t), s);
   HASH_DEL (data->rdma_keys, s);
+  free (s);
 #endif
 
   return 0;
@@ -2479,10 +2380,6 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
   uint64_t metadata_size = 0;
   READ_BYTES (metadata_size);
   assert (metadata_size > 0);
-  //  size_t curpos = (size_t)((buf + metadata_size) - buffer);
-  //  POCL_MSG_PRINT_REMOTE ("METADATA SIZE: %zu CURPOS: %zu REPLY: %zu \n",
-  //                         (size_t)metadata_size, curpos,
-  //                         (size_t)nc.reply.data_size);
 
   assert ((size_t)((buf + metadata_size) - buffer)
           <= (size_t)nc.reply.data_size);
@@ -2733,12 +2630,6 @@ pocl_network_create_image (remote_device_data_t *ddata, cl_mem image)
   nc.request.m.create_image.row_pitch = image->image_row_pitch;
   nc.request.m.create_image.slice_pitch = image->image_slice_pitch;
 
-  // #ifdef ENABLE_RDMA
-  //   CreateRdmaBufferReply_t info;
-  //   nc.rep_extra_data = (char *)&info;
-  //   nc.rep_extra_size = sizeof(info);
-  // #endif
-
   SEND_REQ_FAST;
 
   wait_on_netcmd (netcmd);
@@ -2748,14 +2639,6 @@ pocl_network_create_image (remote_device_data_t *ddata, cl_mem image)
   CHECK_REPLY (CreateImage);
 
   SET_REMOTE_ID (image, id);
-
-  // #ifdef ENABLE_RDMA
-  //   rdma_buffer_info_t *s = malloc(sizeof(rdma_buffer_info_t));
-  //   s->mem_id = id;
-  //   is->remote_rkey = info.server_rkey;
-  //   // NOTE: mem_id here is the field name of the hashmap key
-  //   HASH_ADD(hh, data->rdma_keys, mem_id, sizeof(uint32_t), s);
-  // #endif
 
   return 0;
 }
@@ -2782,12 +2665,6 @@ pocl_network_free_image (remote_device_data_t *ddata, uint32_t image_id)
   CHECK_REPLY (FreeImage);
 
   UNSET_REMOTE_ID (image, image_id);
-
-  // #ifdef ENABLE_RDMA
-  //   rdma_buffer_info_t *s;
-  //   HASH_FIND(hh, data->rdma_keys, &image_id, sizeof(uint32_t), s);
-  //   HASH_DEL(data->rdma_keys, s);
-  // #endif
 
   return 0;
 }
@@ -2824,12 +2701,6 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
   req->m.migrate.depth = depth;
   req->m.migrate.width = width;
   req->m.migrate.height = height;
-  //  req->m.migrate.dest_pid = dest->remote_platform_index;
-  //  req->m.migrate.dest_did = dest->remote_device_index;
-
-  //  POCL_MSG_ERR ("MIGRATE D2D QUEUE_ID %u MEMID %u IS_IMG %u SIZE %zu \n",
-  //  cq_id, mem_id, mem_is_image, size); TP_MIGRATE_BUFFER(req->msg_id,
-  //  ddata->local_did, cq_id, node->sync.event.event->id);
 
   data = source->server;
   SEND_REQ_FAST;
@@ -2857,10 +2728,6 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
   netcmd->rep_extra_data = host_ptr;
   netcmd->rep_extra_size = size;
 
-  // size_t start = *(size_t *)host_ptr;
-  //  POCL_MSG_ERR ("NETWORK READ BUF ID %u / PTR %p / SIZE %zu\n", mem_id,
-  //  host_ptr, size);
-
   TP_READ_BUFFER (req->msg_id, ddata->local_did, cq_id,
                   node->sync.event.event->id);
 
@@ -2887,10 +2754,6 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
   // REQUEST
   netcmd->req_extra_data = host_ptr;
   netcmd->req_extra_size = size;
-
-  //  size_t start = *(size_t *)host_ptr;
-  //  POCL_MSG_ERR ("NETWORK WRITE BUF ID %u / PTR %p / SIZE %zu / START
-  //  %lx\n", mem_id, host_ptr, size, start);
 
   TP_WRITE_BUFFER (req->msg_id, ddata->local_did, cq_id,
                    node->sync.event.event->id);

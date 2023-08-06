@@ -5,7 +5,7 @@ Remote Driver
 Background
 ----------
 
-PoCL-Remote is an OpenCL driver which will forward OpenCL commands to
+PoCL-Remote is an OpenCL driver which forwards OpenCL commands to
 a remote server over network. The remote OpenCL devices are listed in
 the local OpenCL platform device list and each each remote device can
 be used like it was a local OpenCL device. The properties of a remote
@@ -13,18 +13,28 @@ device as queried via clGetDeviceInfo() mirror the remote physical
 device's properties etc.
 
 The key differentiating aim of PoCL-Remote to other similar remote
-forwarding OpenCL implementations is that it focuses also on execution
-latency, not only throughput, thus is being tuned for interactive
-applications such as mixed reality.
+forwarding OpenCL implementations is that the server side component
+is capable of autonomously scheduling commands based on event dependencies
+as well as communicating in peer-to-peer fashion with other servers in order
+to not tax the client's network connection with signaling and buffer
+migrations between servers. The overall design focuses also on execution
+latency, not only throughput, and is still targeted to also support
+interactive low latency applications such as mixed reality.
 
-One the client side PoCL-Remote is just another pocl driver that controls
-remote devices via a control protocol. On the server side, there is the
+On the client side PoCL-Remote is a PoCL driver backend that controls
+remote devices via a control protocol and transparently exposes them to
+applications as if they were local devices. On the server side, there is the
 ``pocld`` daemon which forwards requests to remote OpenCL implementations,
 which can be either PoCL-based or proprietary.
 
-PoCL-Remote has successfully been run on PC and Android devices and with some
-tweaks it has proven usable even in bare metal firmware of low end embedded
-devices.
+The PoCL-Remote client has successfully been run on PC and Android devices
+and with some tweaks (dubbed "Nano-PoCL") it has proven usable even in bare
+metal firmware of low end embedded devices with limited toolchain support.
+This kind of portability is a big reason why the PoCL-Remote client and core
+PoCL components are written in plain C rather than C++. As a concrete example
+of this embedded support is this `demo <https://doi.org/10.1145/3585341.3585376>`
+of the PoCL-Remote client running on the "AI Deck" add-on board of a Crazyflie
+nano drone.
 
 Overall execution latency is optimized by leaving server side command ordering
 up to the underlying OpenCL driver via translated OpenCL event dependencies.
@@ -34,6 +44,40 @@ The peer-to-peer connections can optionally be made more efficient by building
 the daemon with RDMA support, which then gets used when migrating buffers
 between nodes.
 
+More Information
+----------------
+
+PoCL-Remote has previously been showcased at
+`IWOCL '20 <http://doi.org/10.1145/3388333.3388642>`,
+`SAMOS 2021 <https://doi.org/10.1007/978-3-031-04580-6_6>` and
+`IWOCL '23 <https://doi.org/10.1145/3388333.3388642>`.
+There is also a full length journal article under review which describes the
+published version (for example its RDMA support). A preprint of the article is
+available in `arXiv <https://doi.org/10.48550/arXiv.2309.00407>`.
+
+If you use PoCL-R in a research paper, please cite the introductory paper with the following format:
+
+``
+@InProceedings{10.1007/978-3-031-04580-6_6,
+author="Solanti, Jan
+and Babej, Michal
+and Ikkala, Julius
+and Malamal Vadakital, Vinod Kumar
+and J{\"a}{\"a}skel{\"a}inen, Pekka",
+editor="Orailoglu, Alex
+and Jung, Matthias
+and Reichenbach, Marc",
+title="PoCL-R: A Scalable Low Latency Distributed OpenCL Runtime",
+booktitle="Embedded Computer Systems: Architectures, Modeling, and Simulation",
+year="2022",
+publisher="Springer International Publishing",
+address="Cham",
+pages="78--94",
+isbn="978-3-031-04580-6"
+}
+``
+
+
 Prerequisites
 --------------
 
@@ -42,17 +86,18 @@ pocl-based) to act as a server, and another machine as a client which runs the
 OpenCL application. Naturally, it's possible to use the same machine for both
 for testing purposes.
 
-The remote driver has been tested so far with AMD, NVidia, Intel and Pocl
-implementations.
+The remote driver has been tested so far with AMD, NVidia and Intel OpenCL
+implementations as well as with PoCL's CPU backend.
 
 Current Status
 --------------
 
-The current version has been tested with a few programs in our lab, namely:
+The current version has been tested with various programs, such as:
 
   * the builtin tests of pocl
   * AMD's Baikal ray-tracing application
   * Luxmark
+  * FluidX3D
 
 The image support in particular is quite new and very lightly tested.
 The same applies for multi-device setup.
@@ -61,11 +106,11 @@ printf() support exists, but please note that the "standard output" (stdout) is
 shared per client-server connection, so if multiple remote devices launch
 kernels with printf() simultaneously, the output order is undefined.
 
-Known bugs/issues
+Known Bugs/Issues
 -----------------
 
 * the "-I" option to clBuildProgram does not work
-* SPIR is not supported
+* SPIR(-V) is not supported
 * clGetKernelWorkGroupInfo() can return incorrect information
 * clCompileProgram() and clLinkProgram() API calls are broken (this is WIP)
 * clSetKernelArg() will not return a CL_INVALID_ARG_SIZE error if arg_size does not
@@ -74,7 +119,7 @@ Known bugs/issues
   information cannot be retrieved from OpenCL API runtime calls.
 * there are some hardcoded limits (max devices per server) - this is WIP
 
-Known bugs/issues in OpenCL implementations
+Known Bugs/Issues in OpenCL Implementations
 --------------------------------------------
 
 * Nvidia's OpenCL implementation has a bug where clCreateKernelsInProgram()
@@ -85,8 +130,8 @@ Known bugs/issues in OpenCL implementations
 
 * ARM Mali OpenCL SDK (on Linux) and some Android OpenCL implementations fail
   to return anything for clGetKernelArgInfo calls,
-  so it's unusable by itself (as backend for loca/remote drivers).
-  It is usable if pocl is built with at least two drivers (local/remote/pthread
+  so it's unusable by itself (as backend for the proxy driver or for pocld).
+  It is usable if pocl is built with at least two drivers (proxy/remote/pthread
   etc) of which at least one provides the build information.
   For OpenCL (pocl) users, it means all CL programs (to be used with Mali) must
   be built for at least two devices from two drivers,
@@ -95,14 +140,15 @@ Known bugs/issues in OpenCL implementations
   compilation/parsing step, because without argument metadata
   it's impossible to tell if an argument to clSetKernelArg is a pointer or an integer.
 
-How to build
+How to Build
 -------------
 
 First you need to install the build dependencies.
 These are listed in :ref:`pocl-install` or alternatively you can
 also take a look at the Dockerfiles in ``tools/docker``.
 
-Note that you do not need LLVM if you want to only use the PoCL-Remote driver.
+Note that you do not need LLVM if you want to only use the PoCL-Remote driver
+to control server side devices for which a separate OpenCL driver exists.
 
 These steps build pocl **without** the CPU driver (= with remote driver only).
 
@@ -123,12 +169,12 @@ To build the remote *server*::
 
     git clone [the repository with pocl that has the PoCL-Remote]
     mkdir build; cd build;
-    cmake ../server
+    cmake ../pocld
 
 This should produce **pocld** (the server executable). If you need both the
 client library and server binary on the same machine you can alternatively add
 ``-DENABLE_REMOTE_SERVER=1`` to the cmake flags in the client build to get
-**server/pocld** generated in the same build directory.
+**pocld/pocld** generated in the same build directory.
 
 On the server, make sure that "clinfo" lists at least one OpenCL device, then
 run the server command::
@@ -176,7 +222,7 @@ Then you can run the simple dot product in example1::
   (3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
   OK
 
-Android build (client only)
+Android Build (Client Only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Download Android NDK (or install via package management). Note that older
@@ -237,11 +283,12 @@ implementations in the same Windows registry entries as before, so the Khronos I
 gained some new code which uses new & awesome way to enumerate the OpenCL implementations
 - but this code does not compile under MSYS.
 
-possible workaround (untested): manually add opencl implementations to old registry paths
+Possible workaround (untested): manually add OpenCL implementations to old registry paths
 (example is in https://github.com/KhronosGroup/OpenCL-ICD-Loader/blob/master/README.txt).
 
-First, install MSYS2 from https://www.msys2.org/; i have only tested the x86_64 version.
-Follow the instructions to update all MSYS2 packages. Then install CMake, GCC and friends::
+First, install MSYS2 from https://www.msys2.org/; only tested the x86_64
+version has been tested. Follow the instructions to update all MSYS2 packages.
+Then install CMake, GCC and friends::
 
     pacman -S cmake make gcc patch
 
@@ -267,7 +314,7 @@ To build pocl::
     cd $HOME/pocl
     mkdir b
     cd b
-    cmake -DCMAKE_SYSTEM_NAME=MSYS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLIBOPENCL=$HOME/ICD/b ../server
+    cmake -DCMAKE_SYSTEM_NAME=MSYS -DCMAKE_BUILD_TYPE=RelWithDebInfo -DLIBOPENCL=$HOME/ICD/b ../pocld
     make -j8
 
 This will result in pocld.exe in ``$HOME/pocl/b`` directory. This requires a few DLLs:
@@ -340,7 +387,7 @@ Now you have tracing data in ``$HOME/lttng-traces/<session-name>-<date>-<time>``
 directory. You can view them using "babeltrace" tool, or eclipse-based "trace compass",
 or possibly other tools.
 
-Viewing traces
+Viewing Traces
 ~~~~~~~~~~~~~~
 For this you'll need chrome/chromium, ruby and babeltrace installed.
 START_TIME and END_TIME are optional - they define a time
@@ -356,7 +403,7 @@ To convert binary LTTNG trace format to text, then to JSON, run::
 To view the JSON trace, open Google Chrome/Chromium, type ``chrome://tracing``,
 click Load, and find ``/tmp/trace.json``.
 
-Remote and local traces
+Remote and Local Traces
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 It's possible to combine local and remote tracing outputs to get a full view
@@ -371,15 +418,23 @@ support from *every* network device in path to achieve sub-microsecond precision
 Implementation Notes
 --------------------
 
-PoCL-Remote is currently in its early experimental stage with no testers outside
-our lab. There are plenty of aspects we plan to develop and improve. Here we list
-some of them:
+Although PoCL-R has been in development for several years it has only seen
+limited testing outside the original lab since it has not been publicly available.
 
 * The current implementation is asynchronous across multiple command queues, but
   blocking within a command queue. In other words, multiple CQs progress
   in parallel, but each enqueued command has an implicit clFinish() and
   there is network communication before the next command is launched.
   This is a key bottleneck that will be resolved in a future version.
+
+* For the time being the client side part of PoCL-Remote must be built with the
+  ``ENABLE_LOADABLE_DRIVERS`` build option set to ``OFF``.
+
+* SPIR(-V) is not supported and the respective extension is masked out from
+  remote devices' extension lists by pocld.
+
+* There is no authentication or encryption whatsoever of network traffic. Don't
+  use PoCL-Remote outside of closed private networks.
 
 * Synchronous commands (like clCreate* / clBuildProgram etc) are run in a separate thread.
 

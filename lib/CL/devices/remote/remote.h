@@ -1,4 +1,4 @@
-/* remote.h - a pocl device driver which delegates to remote devices
+/* remote.h - a pocl device driver which controls remote devices
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University

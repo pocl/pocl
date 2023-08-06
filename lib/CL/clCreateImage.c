@@ -87,7 +87,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
     for (i = 0; i < context->num_devices; i++)
       {
         cl_device_id dev = context->devices[i];
-        if (!dev->image_support)
+        if (!dev->image_support || (*(dev->available) == CL_FALSE))
           continue;
         else
           {

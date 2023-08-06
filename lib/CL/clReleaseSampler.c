@@ -50,7 +50,7 @@ CL_API_SUFFIX__VERSION_1_0
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
-          if (dev->available != CL_TRUE)
+          if (*(dev->available) == CL_FALSE)
             continue;
           if (dev->image_support == CL_TRUE && dev->ops->free_sampler)
             {

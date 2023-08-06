@@ -742,10 +742,21 @@ pocl_broadcast (cl_event brc_event)
   event_node *target;
   event_node *tmp;
 
+  POCL_LOCK_OBJ (brc_event);
   while ((target = brc_event->notify_list))
     {
-      POname (clRetainEvent) (target->event);
-      pocl_lock_events_inorder (brc_event, target->event);
+      cl_event target_event = target->event;
+      POname (clRetainEvent) (target_event);
+      POCL_UNLOCK_OBJ (brc_event);
+
+      pocl_lock_events_inorder (brc_event, target_event);
+      if (target != brc_event->notify_list)
+        {
+          pocl_unlock_events_inorder (brc_event, target_event);
+          POCL_LOCK_OBJ (brc_event);
+          continue;
+        }
+
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
         {
@@ -775,10 +786,12 @@ pocl_broadcast (cl_event brc_event)
                 }
           }
         LL_DELETE (brc_event->notify_list, target);
-        pocl_unlock_events_inorder (brc_event, target->event);
+        pocl_unlock_events_inorder (brc_event, target_event);
         POname (clReleaseEvent) (target->event);
         pocl_mem_manager_free_event_node (target);
+        POCL_LOCK_OBJ (brc_event);
     }
+  POCL_UNLOCK_OBJ (brc_event);
 }
 
 /**
@@ -1592,7 +1605,6 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->profiling_timer_resolution = pocl_timer_resolution;
 
   dev->endian_little = !(WORDS_BIGENDIAN);
-  dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
   dev->spmd = CL_FALSE;

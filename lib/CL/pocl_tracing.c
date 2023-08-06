@@ -353,15 +353,12 @@ static const struct pocl_event_tracer text_logger = {
   text_tracer_event_updated,
 };
 
-static const struct pocl_event_tracer cq_profiler = {
-  "cq",
-  pocl_cq_profiling_init,
-  NULL, /* destroy callback */
-  /* Avoid a callback after every event change to minimize impact to the
-     profiling run. Instead just store the event timestamps with as
-     little impact as possible for later collection/analysis. */
-  NULL
-};
+static const struct pocl_event_tracer cq_profiler
+    = { "cq", pocl_cq_profiling_init,
+        /* Avoid a callback after every event change to minimize impact to the
+           profiling run. Instead just store the event timestamps with as
+           little impact as possible for later collection/analysis. */
+        NULL, NULL };
 
 //#################################################################
 
@@ -526,8 +523,9 @@ static const struct pocl_event_tracer lttng_tracer = {
   lttng_tracer_event_updated,
 };
 
-
 #endif
+
+// #################################################################
 
 /* List of tracers
  */
@@ -536,8 +534,7 @@ static const struct pocl_event_tracer *pocl_event_tracers[]
 #ifdef HAVE_LTTNG_UST
         &lttng_tracer,
 #endif
-        &cq_profiler
-      };
+        &cq_profiler };
 
 #define POCL_TRACER_COUNT                                                     \
   (sizeof (pocl_event_tracers) / sizeof ((pocl_event_tracers)[0]))

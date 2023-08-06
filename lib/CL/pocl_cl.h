@@ -117,8 +117,11 @@
 //############################################################################
 
 #ifdef ENABLE_EXTRA_VALIDITY_CHECKS
+// 13_729_512_230_397_775_139
 #define POCL_MAGIC_1 0xBE8906A1A83D8D23ULL
+// 511_941_616_703_887_367
 #define POCL_MAGIC_2 0x071AC830215FD807ULL
+
 #define IS_CL_OBJECT_VALID(__OBJ__)                                           \
   (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
    && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
@@ -436,7 +439,7 @@ struct pocl_device_ops {
   cl_int (*uninit) (unsigned j, cl_device_id device);
   /* reinitializes the driver for a particular device. Called after uninit;
    * the first initialization is done by 'init'. May be NULL */
-  cl_int (*reinit) (unsigned j, cl_device_id device);
+  cl_int (*reinit) (unsigned j, cl_device_id device, const char *parameters);
 
   /* allocate a buffer in device memory */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
@@ -496,16 +499,11 @@ struct pocl_device_ops {
                 size_t offset,
                 size_t size);
   /* clEnqReadBufferRect */
-  void (*read_rect) (void *data,
-                     void *__restrict__ dst_host_ptr,
-                     pocl_mem_identifier * src_mem_id,
-                     cl_mem src_buf,
-                     const size_t *buffer_origin,
-                     const size_t *host_origin, 
-                     const size_t *region,
-                     size_t buffer_row_pitch,
-                     size_t buffer_slice_pitch,
-                     size_t host_row_pitch,
+  void (*read_rect) (void *data, void *__restrict__ dst_host_ptr,
+                     pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                     const size_t *buffer_origin, const size_t *host_origin,
+                     const size_t *region, size_t buffer_row_pitch,
+                     size_t buffer_slice_pitch, size_t host_row_pitch,
                      size_t host_slice_pitch);
   /* clEnqWriteBuffer */
   void (*write) (void *data,
@@ -515,16 +513,11 @@ struct pocl_device_ops {
                  size_t offset,
                  size_t size);
   /* clEnqWriteBufferRect */
-  void (*write_rect) (void *data,
-                      const void *__restrict__ src_host_ptr,
-                      pocl_mem_identifier * dst_mem_id,
-                      cl_mem dst_buf,
-                      const size_t *buffer_origin,
-                      const size_t *host_origin, 
-                      const size_t *region,
-                      size_t buffer_row_pitch,
-                      size_t buffer_slice_pitch,
-                      size_t host_row_pitch,
+  void (*write_rect) (void *data, const void *__restrict__ src_host_ptr,
+                      pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                      const size_t *buffer_origin, const size_t *host_origin,
+                      const size_t *region, size_t buffer_row_pitch,
+                      size_t buffer_slice_pitch, size_t host_row_pitch,
                       size_t host_slice_pitch);
   /* clEnqCopyBuffer */
   void (*copy) (void *data,
@@ -571,7 +564,7 @@ struct pocl_device_ops {
                    size_t pattern_size);
 
   /* Maps 'size' bytes of device global memory at  + offset to
-     host-accessible memory. This might or might not involve copying 
+     host-accessible memory. This might or might not involve copying
      the block from the device. */
   cl_int (*map_mem) (void *data,
                      pocl_mem_identifier * src_mem_id,
@@ -898,7 +891,7 @@ struct _cl_device_id {
   cl_bool host_unified_memory;
   size_t profiling_timer_resolution;
   cl_bool endian_little;
-  cl_bool available;
+  cl_bool *available;
   cl_bool compiler_available;
   cl_bool linker_available;
   /* Is the target a Single Program Multiple Data machine? If not,
@@ -1033,6 +1026,7 @@ struct _cl_device_id {
    * This allows using both CPU and HSA for SVM allocations,
    * with HSA having priority in multi-device context */
   cl_uint svm_allocation_priority;
+
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -1106,10 +1100,23 @@ struct _cl_device_id {
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
 
+#define DEVICE_IS_SVM_CAPABLE(dev)                                            \
+  (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
+
 #define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
-#define CHECK_DEVICE_AVAIL_RET(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return CL_INVALID_DEVICE; }
-#define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
+#define CHECK_DEVICE_AVAIL_RET(dev)                                           \
+  if (*(dev->available) == CL_FALSE)                                          \
+    {                                                                         \
+      POCL_MSG_ERR ("This cl_device is not available.\n");                    \
+      return CL_INVALID_DEVICE;                                               \
+    }
+#define CHECK_DEVICE_AVAIL_RETV(dev)                                          \
+  if (*(dev->available) == CL_FALSE)                                          \
+    {                                                                         \
+      POCL_MSG_ERR ("This cl_device is not available.\n");                    \
+      return;                                                                 \
+    }
 
 #define OPENCL_MAX_DIMENSION 3
 #ifndef HAVE_SIZE_T_3
@@ -1122,7 +1129,7 @@ typedef struct
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
-}; 
+};
 
 typedef struct _context_destructor_callback context_destructor_callback_t;
 struct _context_destructor_callback
@@ -1376,6 +1383,7 @@ struct _cl_mem {
    * or temporary allocation by a migration command. Since it
    * can have multiple users, it's refcounted. */
   void *mem_host_ptr;
+
   /* version of buffer content in mem_host_ptr */
   uint64_t mem_host_ptr_version;
   /* reference count; when it reaches 0,
@@ -1397,7 +1405,6 @@ struct _cl_mem {
   /* the event that last changed (written to) the buffer, this
    * is used as a "from "dependency for any migration commands */
   cl_event last_event;
-
 
   /* A linked list of regions of the buffer mapped to the
      host memory */

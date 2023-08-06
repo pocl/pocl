@@ -190,6 +190,10 @@ if(ANDROID)
   list(APPEND POCL_LIB_SOURCES "pocl_mkstemp.c")
 endif()
 
+if(ENABLE_RDMA)
+  list(APPEND POCL_LIB_SOURCES "pocl_rdma.c")
+endif()
+
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 
@@ -294,7 +298,7 @@ endif()
 harden("${POCL_LIBRARY_NAME}")
 
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
-  VERSION "${LIB_BUILD_VERSION}" 
+  VERSION "${LIB_BUILD_VERSION}"
   LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")
 
 target_link_libraries("${POCL_LIBRARY_NAME}" PRIVATE ${POCL_PRIVATE_LINK_LIST})

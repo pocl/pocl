@@ -53,6 +53,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
+  POCL_RETURN_ERROR_COND ((*(device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT:
@@ -165,7 +168,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_ENDIAN_LITTLE                     :
     POCL_RETURN_GETINFO(cl_uint, device->endian_little);
   case CL_DEVICE_AVAILABLE                         :
-    POCL_RETURN_GETINFO(cl_bool, device->available);
+    POCL_RETURN_GETINFO (cl_bool, *(device->available));
   case CL_DEVICE_COMPILER_AVAILABLE                :
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_LINKER_AVAILABLE                  :
