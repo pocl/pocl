@@ -66,6 +66,15 @@ if(BUILD_ALMAIF)
     "$<TARGET_OBJECTS:pocl-devices-almaif>")
 endif()
 
+if(BUILD_REMOTE_CLIENT)
+  add_subdirectory("remote")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-remote>")
+  if(ENABLE_RDMA)
+    list(APPEND POCL_DEVICES_LINK_LIST RDMAcm::RDMAcm IBVerbs::verbs)
+  endif()
+endif()
+
 # for these drivers, use HWLOC if found
 if(ENABLE_HOST_CPU_DEVICES)
   add_subdirectory("topology")

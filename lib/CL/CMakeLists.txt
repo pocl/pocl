@@ -207,7 +207,6 @@ if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 endif()
 
-
 if (ENABLE_LLVM)
   include_directories(${LLVM_INCLUDE_DIRS})
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")

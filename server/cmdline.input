@@ -1,0 +1,9 @@
+version "0.1"
+package "pocld"
+purpose "remote OpenCLserver"
+
+# Options
+option "address" a "IPv4 listen address" string optional
+option "port" p "IPv4 listen port" int optional
+option "log_filter" v "Program log category filter" string optional
+option "log_file" f "Program log file" string optional

@@ -30,6 +30,8 @@
 #ifndef BUFALLOC_H
 #define BUFALLOC_H
 
+#include "pocl_cl.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,7 +40,6 @@ extern "C" {
 
 #ifndef __TCE_STANDALONE__
 
-#include "pocl_cl.h"
 
 typedef pocl_lock_t ba_lock_t;
 

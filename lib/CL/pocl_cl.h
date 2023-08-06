@@ -1362,7 +1362,13 @@ struct _cl_mem {
   unsigned num_properties;
 
   size_t size;
-  size_t origin; /* for sub-buffers */
+  /* for sub-buffers */
+  size_t origin;
+  /* this is an optimization. if set to nonzero,
+   * it marks the actual content size in bytes,
+   * to avoid transferring garbage data when
+   * migrating / reading buffers. */
+  size_t content_size;
 
   /* host backing memory for a buffer.
    *

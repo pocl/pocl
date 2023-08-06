@@ -51,6 +51,8 @@ typedef CL_API_ENTRY cl_int
     cl_mem    buffer,
     cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
 
+/* ################################## cl_pocl_rdma
+ * ################################# */
 
 #ifdef __cplusplus
 }

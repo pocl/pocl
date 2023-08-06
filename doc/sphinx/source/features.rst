@@ -17,3 +17,4 @@ TCE devices and fixed-function accelerators.
    proxy
    vulkan
    level0
+   remote

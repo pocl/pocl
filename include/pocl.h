@@ -180,6 +180,7 @@ typedef struct
   pocl_mem_identifier *src_mem_id;
   size_t offset;
   size_t size;
+  size_t *content_size;
 } _cl_command_read;
 
 // clEnqueueWriteBuffer

@@ -214,12 +214,14 @@ POCLU_API cl_int POCLU_CALL poclu_get_any_device (cl_context *context,
  * @param num_devices [out] the number of devices found.
  * @param devices [out] pointer to array of device pointers.
  * @param queues [out] pointer to array of queue pointers.
- * @return CL_SUCCESS on success, or a descriptive OpenCL error code upon failure.
+ * @param ooo_queues whether to pass CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+ * @return CL_SUCCESS on success, or a descriptive OpenCL error code upon
+ * failure.
  */
 POCLU_API cl_int POCLU_CALL poclu_get_multiple_devices (
-    cl_platform_id *platform, cl_context *context,
-    cl_char include_custom_dev, cl_uint *num_devices,
-    cl_device_id **devices, cl_command_queue **queues);
+    cl_platform_id *platform, cl_context *context, cl_char include_custom_dev,
+    cl_uint *num_devices, cl_device_id **devices, cl_command_queue **queues,
+    int ooo_queues);
 
 /**
  * \brief convert a float to a cl_half (uint16_t).

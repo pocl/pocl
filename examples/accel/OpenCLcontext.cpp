@@ -234,14 +234,6 @@ bool OpenCL_Context::initialize(unsigned width, unsigned height, unsigned bpp)
     LOG_I("OpenCL platform vendor: %s\n",  platform.getInfo<CL_PLATFORM_VENDOR>().c_str());
     LOG_I("Found %lu OpenCL devices.\n", devices.size());
 
-    void* ptr;
-#ifdef ENABLE_COMPRESSION
-    clSetBufferCompressionPOCL_fn SetBufferComPOCL = nullptr;
-    ptr = clGetExtensionFunctionAddressForPlatform(platform(), "clSetBufferCompressionPOCL");
-    if (ptr)
-        SetBufferComPOCL = (clSetBufferCompressionPOCL_fn)ptr;
-#endif
-
     if (devices.size() == 1) {
         GpuDev = devices[0];
         FpgaDev = devices[0];
@@ -300,14 +292,6 @@ bool OpenCL_Context::initialize(unsigned width, unsigned height, unsigned bpp)
     CHECK_CL_ERROR(err, "Inter buffer creation failed\n");
     FpgaOutputBuffer = cl::Buffer(ClContext, CL_MEM_READ_WRITE, OUTPUT_SIZE, nullptr, &err);
     CHECK_CL_ERROR(err, "Output buffer creation failed\n");
-
-#ifdef ENABLE_COMPRESSION
-    if (SetBufferComPOCL) {
-        int r = SetBufferComPOCL(InputBuffer(), CL_COMPRESSION_VBYTE, nullptr);
-        assert (r == CL_SUCCESS);
-        LOG_I ("Buffer compression VBYTE enabled\n");
-    }
-#endif
 
     GpuKernel.setArg(0, GpuInputBuffer);
     GpuKernel.setArg(1, InterBuffer);

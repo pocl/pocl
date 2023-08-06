@@ -61,7 +61,7 @@ main (int argc, char **argv)
   srand ((unsigned int)time (NULL));
 
   err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
-                                    &devices, &queues);
+                                    &devices, &queues, 0);
 
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
   cl_device_id first_dev = devices[0];
