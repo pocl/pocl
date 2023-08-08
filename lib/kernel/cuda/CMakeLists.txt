@@ -57,7 +57,7 @@ foreach(FILE
 
   atomic_dec.ll atomic_inc.ll
 
-  barrier.ll nvvm_functions.ll)
+  barrier.ll nvvm_functions.ll subgroup.ll)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 
