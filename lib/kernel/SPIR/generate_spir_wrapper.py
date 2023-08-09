@@ -1433,6 +1433,14 @@ for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 											("private", "private", "none", "none", "none", "none"),
 											['PVA'+mang_type, 'P'+mang_type, mang_type],
 											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_strong", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
 
 
 f = "atomic_flag_test_and_set"
