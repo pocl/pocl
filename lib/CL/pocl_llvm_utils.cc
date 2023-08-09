@@ -136,7 +136,8 @@ static int getModuleTriple(const char *input_stream, size_t size,
 }
 
 char *pocl_get_llvm_cpu_name() {
-  StringRef r = llvm::sys::getHostCPUName();
+  const char *custom = pocl_get_string_option("POCL_LLVM_CPU_NAME", NULL);
+  StringRef r = custom ? StringRef(custom) : llvm::sys::getHostCPUName();
 
   // LLVM may return an empty string -- treat as generic
   if (r.empty())
@@ -146,7 +147,7 @@ char *pocl_get_llvm_cpu_name() {
   if (r.str() == "generic" && strlen(OCL_KERNEL_TARGET_CPU)) {
     POCL_MSG_WARN("LLVM does not recognize your cpu, trying to use "
                    OCL_KERNEL_TARGET_CPU " for -target-cpu\n");
-    r = llvm::StringRef(OCL_KERNEL_TARGET_CPU);
+    r = StringRef(OCL_KERNEL_TARGET_CPU);
   }
 #endif
 
@@ -156,6 +157,101 @@ char *pocl_get_llvm_cpu_name() {
   cpu_name[r.size()] = 0;
   return cpu_name;
 }
+
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+const struct kernellib_features {
+  const char *kernellib_name;
+  const char *cpu_name;
+  const char *features[12];
+} kernellib_feature_map[] = {
+// order the entries s.t. if a cpu matches multiple entries, the "best" match
+// comes last
+#if defined(__x86_64__)
+    "sse2",
+    "athlon64",
+    {"sse2", NULL},
+    "ssse3",
+    "core2",
+    {"sse2", "ssse3", "cx16", NULL},
+    "sse41",
+    "penryn",
+    {"sse2", "sse4.1", "cx16", NULL},
+    "avx",
+    "sandybridge",
+    {"sse2", "avx", "cx16", "popcnt", NULL},
+    "avx_f16c",
+    "ivybridge",
+    {"sse2", "avx", "cx16", "popcnt", "f16c", NULL},
+    "avx_fma4",
+    "bdver1",
+    {"sse2", "avx", "cx16", "popcnt", "xop", "fma4", NULL},
+    "avx2",
+    "haswell",
+    {"sse2", "avx", "avx2", "cx16", "popcnt", "lzcnt", "f16c", "fma", "bmi",
+     "bmi2", NULL},
+    "avx512",
+    "skylake-avx512",
+    {"sse2", "avx512f", NULL},
+#endif
+    NULL,
+    NULL,
+    {NULL}};
+
+/* for "distro" style kernel libs, return which kernellib to use, at runtime */
+const char *pocl_get_distro_kernellib_name() {
+  StringMap<bool> Features;
+
+  if (!llvm::sys::getHostCPUFeatures(Features)) {
+    POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
+    return NULL;
+  }
+
+  const char *custom = pocl_get_string_option("POCL_KERNELLIB_NAME", NULL);
+
+  const kernellib_features *best_match = NULL;
+  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
+       ++kf) {
+    bool matches = true;
+    for (const char *const *f = kf->features; *f; ++f)
+      matches &= Features[*f];
+    if (matches) {
+      best_match = kf;
+      if (custom && !strcmp(custom, kf->kernellib_name))
+        break;
+    }
+  }
+
+  if (!best_match) {
+    POCL_MSG_WARN("Can't find a kernellib supported by the host CPU (%s)\n",
+                  llvm::sys::getHostCPUName());
+    return NULL;
+  }
+
+  return best_match->kernellib_name;
+}
+
+/* for "distro" style kernel libs, return which target cpu to use for a given
+ * kernellib */
+const char *pocl_get_distro_cpu_name(const char *kernellib_name) {
+  StringMap<bool> Features;
+
+  if (!llvm::sys::getHostCPUFeatures(Features)) {
+    POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
+    return NULL;
+  }
+
+  const kernellib_features *best_match = NULL;
+  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
+       ++kf) {
+    if (!strcmp(kernellib_name, kf->kernellib_name))
+      return kf->cpu_name;
+  }
+
+  POCL_MSG_WARN("Can't find a cpu name matching the kernellib (%s)\n",
+                kernellib_name);
+  return NULL;
+}
+#endif
 
 int pocl_bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
   std::string Triple;

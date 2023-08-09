@@ -942,46 +942,6 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   return CL_SUCCESS;
 }
 
-/* for "distro" style kernel libs, return which kernellib to use, at runtime */
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-const char *getX86KernelLibName() {
-  StringMap<bool> Features;
-  const char *res = NULL;
-
-  if (!llvm::sys::getHostCPUFeatures(Features)) {
-    POCL_MSG_WARN ("getX86KernelLibName(): LLVM can't get host CPU flags!\n");
-    /* getX86KernelLibName should only ever be enabled
-       on x86-64, which always has sse2 */
-    return "sse2";
-  }
-
-  if (Features["sse2"])
-    res = "sse2";
-  else
-    POCL_ABORT("Pocl on x86_64 requires at least SSE2\n");
-  if (Features["ssse3"] && Features["cx16"])
-    res = "ssse3";
-  if (Features["sse4.1"] && Features["cx16"])
-    res = "sse41";
-  if (Features["avx"] && Features["cx16"] && Features["popcnt"])
-    res = "avx";
-  if (Features["avx"] && Features["cx16"] && Features["popcnt"] && Features["f16c"])
-    res = "avx_f16c";
-  if (Features["avx"] && Features["cx16"] && Features["popcnt"]
-      && Features["xop"] && Features["fma4"])
-    res = "avx_fma4";
-  if (Features["avx"] && Features["avx2"] && Features["cx16"]
-      && Features["popcnt"] && Features["lzcnt"] && Features["f16c"]
-      && Features["fma"] && Features["bmi"] && Features["bmi2"])
-    res = "avx2";
-  if (Features["avx512f"] )
-    res = "avx512";
-
-  return res;
-}
-#endif
-
-
 /**
  * Return the OpenCL C built-in function library bitcode
  * for the given device.
@@ -1046,10 +1006,8 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
 
   if (is_host) {
     kernellib += '-';
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    kernellib += getX86KernelLibName();
-#elif defined(HOST_CPU_FORCED)
-    kernellib += OCL_KERNEL_TARGET_CPU;
+#if defined(KERNELLIB_HOST_DISTRO_VARIANTS) || defined(HOST_CPU_FORCED)
+    kernellib += device->kernellib_name;
 #else
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;
