@@ -35,6 +35,8 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   unsigned i;
   int p, errcode;
   cl_mem_alloc_flags_intel flags = 0;
+  void *ptr = NULL;
+
   if (properties)
     {
       i = 0;
@@ -111,7 +113,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_GOTO_ERROR_ON ((p > 1), CL_INVALID_VALUE,
                       "aligment argument must be a power of 2\n");
 
-  void *ptr
+  ptr
       = device->ops->usm_alloc (device, alloc_type, flags, size, &errcode);
   if (errcode != CL_SUCCESS)
     goto ERROR;
@@ -135,14 +137,12 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
 
   POCL_ATOMIC_INC (usm_buffer_c);
 
-  return ptr;
-
 ERROR:
   if (errcode_ret)
     {
       *errcode_ret = errcode;
     }
-  return NULL;
+  return ptr;
 }
 
 CL_API_ENTRY void *CL_API_CALL
