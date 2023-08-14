@@ -381,7 +381,23 @@ separate_arguments(DEVICE_C_FLAGS)
 
 function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
 
-  if("${VARIANT}" STREQUAL "sse2")
+  if("${VARIANT}" STREQUAL "i386")
+    set(CLANG_F "${CLANG_MARCH_FLAG}i386")
+    set(LLC_F "-mcpu=i386")
+
+  elseif("${VARIANT}" STREQUAL "i686")
+    set(CLANG_F "${CLANG_MARCH_FLAG}i686")
+    set(LLC_F "-mcpu=i686")
+
+  elseif("${VARIANT}" STREQUAL "mmx")
+    set(CLANG_F "${CLANG_MARCH_FLAG}pentium-mmx")
+    set(LLC_F "-mcpu=pentium-mmx")
+
+  elseif("${VARIANT}" STREQUAL "sse")
+    set(CLANG_F "${CLANG_MARCH_FLAG}pentium3")
+    set(LLC_F "-mcpu=pentium3")
+
+  elseif("${VARIANT}" STREQUAL "sse2")
     set(CLANG_F "${CLANG_MARCH_FLAG}athlon64")
     set(LLC_F "-mcpu=athlon64")
 
