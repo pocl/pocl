@@ -175,7 +175,22 @@ const struct kernellib_features {
 } kernellib_feature_map[] = {
 // order the entries s.t. if a cpu matches multiple entries, the "best" match
 // comes last
-#if defined(__x86_64__)
+#if defined(__i386__)
+    "i386",
+    "i386",
+    {NULL},
+    // FIXME: Can we distinguish i686 from i386 using feature flags?
+    "i686",
+    "i686",
+    {NULL},
+    "mmx",
+    "pentium-mmx",
+    {"mmx", NULL},
+    "sse",
+    "pentium3",
+    {"sse", NULL},
+#endif
+#if defined(__i386__) || defined(__x86_64__)
     "sse2",
     "athlon64",
     {"sse2", NULL},
