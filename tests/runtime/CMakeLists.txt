@@ -167,6 +167,14 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_EXAMPLES)
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;runtime")
+
+  add_test(NAME "runtime/remote_buffer_ping_pong" COMMAND  "${CMAKE_CURRENT_SOURCE_DIR}/test_remote_buffer_ping_pong.sh" ${CMAKE_BINARY_DIR})
+  set_tests_properties("runtime/remote_buffer_ping_pong"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
 endif()
 
 if(NOT ENABLE_ANYSAN)
