@@ -21,6 +21,16 @@ should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
 
+<h2>2023-08-24: <a href="remote-backend.html">Network Offloading Driver Added</a></h2>
+<p>PoCL main branch now has a new backend that allows for transparently
+offloading OpenCL tasks to other nodes on the network running a newly
+introduced "pocld" daemon. In contrast to existing OpenCL proxies, this
+implementation does not merely forward API calls as is, but performs smart
+memory management and distributed command scheduling to keep latency down
+and scale well to multiple nodes. The driver is considered ready
+for out-of-lab testing. Please do so!
+</p>
+
 <h2>2022-12-05: <a href="pocl-3.1.html">Portable Computing Language (PoCL) v3.1 released</a></h2>
 
 <h2>2022-11-15: <a href="almaif.html">Advanced hardware accelerator support through AlmaIF</a></h2>
