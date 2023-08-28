@@ -189,6 +189,50 @@ jobs:
           runCTest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples"
 
 
+  remote_matrix:
+    name: LLVM ${{ matrix.llvm }} - remote
+    runs-on: [self-hosted, linux, x64, debian]
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [16]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
+            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=0 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_SERVER=1 \
+            -DENABLE_LOADABLE_DRIVERS=0 -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$BUILD_FLAGS" \
+            -DCMAKE_CXX_FLAGS_RELEASE="$BUILD_FLAGS" -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            -DENABLE_ICD=1 "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          runCMake
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j4
+
+      - name: Run Tests
+        id: ctest
+        # TODO: create proper label for remote tests
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j1 $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          runCTest -R "remote"
+
   cuda_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, cuda]
