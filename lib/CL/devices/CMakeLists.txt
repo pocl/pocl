@@ -23,6 +23,9 @@
 #
 #=============================================================================
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 if(ENABLE_LOADABLE_DRIVERS)
 
   function(add_pocl_device_library name)
