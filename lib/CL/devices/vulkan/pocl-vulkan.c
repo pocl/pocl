@@ -1843,7 +1843,7 @@ compile_shader (cl_program program, cl_uint device_i,
   VkShaderModuleCreateInfo shader_info;
   shader_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
   shader_info.pNext = NULL;
-  shader_info.pCode = program->binaries[device_i];
+  shader_info.pCode = (const uint32_t *)program->binaries[device_i];
   shader_info.codeSize = program->binary_sizes[device_i];
   shader_info.flags = 0;
   VkShaderModule tempShader = NULL;
@@ -2773,7 +2773,7 @@ extract_clspv_map_metadata (pocl_vulkan_program_data_t *vulkan_program_data,
       {
           vulkan_program_data->constant_binding = constant_binding;
           vulkan_program_data->constant_dset = constant_dset;
-          vulkan_program_data->constant_data = constant_bytes;
+          vulkan_program_data->constant_data = (uint32_t *)constant_bytes;
           vulkan_program_data->constant_data_size = constant_size;
       }
 
