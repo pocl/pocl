@@ -46,13 +46,15 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
-  POCL_RELEASE_OBJECT (program, new_refcount);
+  POCL_LOCK_OBJ (program);
+  POCL_RELEASE_OBJECT_UNLOCKED (program, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS (
       "Release Program %" PRId64 " (%p), Refcount: %d, Kernel #: %zu \n",
       program->id, program, new_refcount, program->num_kernels);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (program);
       VG_REFC_ZERO (program);
 
       POCL_ATOMIC_DEC (program_c);
@@ -129,6 +131,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (program);
+      POCL_UNLOCK_OBJ (program);
     }
 
   return CL_SUCCESS;

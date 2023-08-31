@@ -47,7 +47,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   cl_context context = memobj->context;
 
-  POCL_RELEASE_OBJECT(memobj, new_refcount);
+  POCL_LOCK_OBJ (memobj);
+  POCL_RELEASE_OBJECT_UNLOCKED (memobj, new_refcount);
 
   POCL_MSG_PRINT_REFCOUNTS ("Release Memory Object %" PRId64
                             " (%p), Refcount: %d\n",
@@ -64,6 +65,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_int err = CL_SUCCESS;
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (memobj);
       VG_REFC_ZERO (memobj);
 
       cl_event last = memobj->last_event;
@@ -172,6 +174,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (memobj);
+      POCL_UNLOCK_OBJ (memobj);
     }
 
   return CL_SUCCESS;
