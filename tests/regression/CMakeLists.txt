@@ -347,7 +347,6 @@ set_property(TEST
   "regression/vector_kernel_arguments_loopvec"
 
   "regression/test_workitem_func_outside_kernel_loopvec"
-  "regression/test_llvm_segfault_issue_889_loopvec"
   "regression/test_issue_893_loopvec"
   "regression/test_flatten_barrier_subs_loopvec"
 
