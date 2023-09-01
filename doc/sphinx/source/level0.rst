@@ -92,7 +92,7 @@ Testing
 
 The tests that should work with Level Zero driver can be run with ``tools/scripts/run_level0_tests``.
 
-This driver was tested with these de0vices:
+This driver was tested with these devices:
 
 * Intel Tiger Lake integrated GPU
 * Intel Alder Lake integrated GPU
