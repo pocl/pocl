@@ -204,7 +204,7 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
   return err;
 }
 
-#define CUDA_CHECK(result, api)                                               \
+#define CUDA_CHECK_ABORT(result, api)                                         \
   pocl_cuda_abort_on_error (result, __LINE__, __FUNCTION__, #result, api)
 
 #define CUDA_CHECK_ERROR(result, api)                                         \
@@ -739,6 +739,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   void *b = NULL;
 
   p->extra_ptr = NULL;
+  p->mem_ptr = NULL;
   p->version = 0;
   cl_mem_flags flags = mem->flags;
 
@@ -750,7 +751,8 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
            * Allocate device memory and perform explicit copies
            * before and after running a kernel */
           result = cuMemAlloc ((CUdeviceptr *)&b, mem->size);
-          CUDA_CHECK (result, "cuMemAlloc");
+          if (CUDA_CHECK_ERROR (result, "cuMemAlloc"))
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
         }
       else
         {
@@ -762,10 +764,14 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
                                       CU_MEMHOSTREGISTER_DEVICEMAP);
           if (result != CUDA_SUCCESS
               && result != CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
-            CUDA_CHECK (result, "cuMemHostRegister");
+            {
+              CUDA_CHECK_ERROR (result, "cuMemHostRegister");
+              return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+            }
           result = cuMemHostGetDevicePointer ((CUdeviceptr *)&b, mem->mem_host_ptr,
                                               0);
-          CUDA_CHECK (result, "cuMemHostGetDevicePointer");
+          if (CUDA_CHECK_ERROR (result, "cuMemHostGetDevicePointer"))
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
           /* TODO can we assume cuMemHostRegister copies
            * the content of host memory to the device ? for now, lets not */
@@ -777,9 +783,20 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
     {
       result = cuMemHostAlloc (&p->extra_ptr, mem->size,
                                CU_MEMHOSTREGISTER_DEVICEMAP);
-      CUDA_CHECK (result, "cuMemHostAlloc");
+      if (CUDA_CHECK_ERROR (result, "cuMemHostAlloc"))
+        {
+          p->extra_ptr = NULL;
+          return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+        }
+
       result = cuMemHostGetDevicePointer ((CUdeviceptr *)&b, p->extra_ptr, 0);
-      CUDA_CHECK (result, "cuMemHostGetDevicePointer");
+      if (CUDA_CHECK_ERROR (result, "cuMemHostGetDevicePointer"))
+        {
+          cuMemFreeHost (p->extra_ptr);
+          p->extra_ptr = NULL;
+          return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+        }
+
       mem->mem_host_ptr = p->extra_ptr;
       mem->mem_host_ptr_refcount = 1;
       mem->mem_host_ptr_version = 0;
@@ -787,10 +804,20 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
       if (flags & CL_MEM_COPY_HOST_PTR)
         {
           result = cuMemcpyHtoD ((CUdeviceptr)b, host_ptr, mem->size);
-          CUDA_CHECK (result, "cuMemcpyHtoD");
+          if (CUDA_CHECK_ERROR (result, "cuMemcpyHtoD"))
+            {
+              cuMemFreeHost (p->extra_ptr);
+              p->extra_ptr = NULL;
+              return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+            }
 
           result = cuStreamSynchronize (0);
-          CUDA_CHECK (result, "cuStreamSynchronize");
+          if (CUDA_CHECK_ERROR (result, "cuStreamSynchronize"))
+            {
+              cuMemFreeHost (p->extra_ptr);
+              p->extra_ptr = NULL;
+              return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+            }
 
           mem->mem_host_ptr_version = 1;
           mem->latest_version = 1;
@@ -800,19 +827,14 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   else
     {
       result = cuMemAlloc ((CUdeviceptr *)&b, mem->size);
-      if (result != CUDA_SUCCESS)
+      if (CUDA_CHECK_ERROR (result, "cuMemAlloc"))
         {
-          const char *err;
-          cuGetErrorName (result, &err);
-          POCL_MSG_PRINT2 (CUDA, __FUNCTION__, __LINE__,
-                           "-> Failed to allocate memory: %s\n", err);
           return CL_MEM_OBJECT_ALLOCATION_FAILURE;
         }
     }
-  p->mem_ptr = b;
-  err = CL_SUCCESS;
 
-  return err;
+  p->mem_ptr = b;
+  return CL_SUCCESS;
 }
 
 void
@@ -886,7 +908,7 @@ pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
   POCL_MSG_PRINT_CUDA ("cuMemcpyDtoHAsync %p -> %p / %zu B \n", device_ptr, host_ptr, cb);
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (device_ptr + offset), cb, stream);
-  CUDA_CHECK (result, "cuMemcpyDtoHAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpyDtoHAsync");
 }
 
 void
@@ -921,7 +943,7 @@ pocl_cuda_submit_memfill (CUstream stream, void *mem_ptr, size_t size_in_bytes,
     default:
       POCL_ABORT ("unrecognized pattern_size");
     }
-  CUDA_CHECK (result, "cuMemset*Async");
+  CUDA_CHECK_ABORT (result, "cuMemset*Async");
 }
 
 void
@@ -931,7 +953,7 @@ pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
   POCL_MSG_PRINT_CUDA ("cuMemcpyHtoDAsync %p -> %p / %zu B \n", host_ptr, device_ptr, cb);
   CUresult result = cuMemcpyHtoDAsync ((CUdeviceptr) (device_ptr + offset),
                                        host_ptr, cb, stream);
-  CUDA_CHECK (result, "cuMemcpyHtoDAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpyHtoDAsync");
 }
 
 void
@@ -949,7 +971,7 @@ pocl_cuda_submit_copy (CUstream stream, void*__restrict__ src_mem_ptr,
   POCL_MSG_PRINT_CUDA ("cuMemcpyDtoDAsync %p -> %p / %zu B \n", src_ptr, dst_ptr, cb);
   result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
                                 cb, stream);
-  CUDA_CHECK (result, "cuMemcpyDtoDAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpyDtoDAsync");
 }
 
 void
@@ -970,7 +992,7 @@ pocl_cuda_submit_copy_p2p (CUstream stream, cl_device_id src_device,
       ((pocl_cuda_device_data_t *)dst_device->data)->context,
       (CUdeviceptr)src_ptr,
       ((pocl_cuda_device_data_t *)dst_device->data)->context, cb, stream);
-  CUDA_CHECK (result, "cuMemcpyPeerAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpyPeerAsync");
 }
 
 void
@@ -1009,7 +1031,7 @@ pocl_cuda_submit_read_rect (CUstream stream, void *__restrict__ const host_ptr,
   params.srcHeight = buffer_slice_pitch / buffer_row_pitch;
 
   CUresult result = cuMemcpy3DAsync (&params, stream);
-  CUDA_CHECK (result, "cuMemcpy3DAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpy3DAsync");
 }
 
 void
@@ -1049,7 +1071,7 @@ pocl_cuda_submit_write_rect (CUstream stream,
   params.dstHeight = buffer_slice_pitch / buffer_row_pitch;
 
   CUresult result = cuMemcpy3DAsync (&params, stream);
-  CUDA_CHECK (result, "cuMemcpy3DAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpy3DAsync");
 }
 
 void
@@ -1090,7 +1112,7 @@ pocl_cuda_submit_copy_rect (CUstream stream,
   params.srcMemoryType = params.dstMemoryType = CU_MEMORYTYPE_DEVICE;
 
   CUresult result = cuMemcpy3DAsync (&params, stream);
-  CUDA_CHECK (result, "cuMemcpy3DAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpy3DAsync");
 }
 
 void
@@ -1110,7 +1132,7 @@ pocl_cuda_submit_map_mem (CUstream stream, cl_mem mem,
 
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (buf_ptr + offset), size, stream);
-  CUDA_CHECK (result, "cuMemcpyDtoHAsync");
+  CUDA_CHECK_ABORT (result, "cuMemcpyDtoHAsync");
 }
 
 void *
@@ -1126,7 +1148,7 @@ pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
     {
       CUresult result = cuMemcpyHtoDAsync (
           (CUdeviceptr) (dst_mem_id->mem_ptr + offset), host_ptr, size, stream);
-      CUDA_CHECK (result, "cuMemcpyHtoDAsync");
+      CUDA_CHECK_ABORT (result, "cuMemcpyHtoDAsync");
     }
   return NULL;
 }
@@ -1785,7 +1807,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 result
                     = cuMemcpyDtoDAsync (constant_mem_base + constantMemBytes,
                                          src, mem->size, stream);
-                CUDA_CHECK (result, "cuMemcpyDtoDAsync");
+                CUDA_CHECK_ABORT (result, "cuMemcpyDtoDAsync");
 
                 constantMemOffsets[i] = constantMemBytes;
                 params[i] = constantMemOffsets + i;
@@ -1873,7 +1895,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                            pc.num_groups[2], pc.local_size[0],
                            pc.local_size[1], pc.local_size[2], sharedMemBytes,
                            stream, params, NULL);
-  CUDA_CHECK (result, "cuLaunchKernel");
+  CUDA_CHECK_ABORT (result, "cuLaunchKernel");
 }
 
 void
@@ -1911,7 +1933,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
               ;
 
             result = cuStreamWaitEvent (stream, dep_data->end, 0);
-            CUDA_CHECK (result, "cuStreamWaitEvent");
+            CUDA_CHECK_ABORT (result, "cuStreamWaitEvent");
           }
       }
     else
@@ -1930,25 +1952,25 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       CUdeviceptr dev_ext_event_flag;
       result = cuMemHostAlloc ((void **)&event_data->ext_event_flag, 4,
                                CU_MEMHOSTALLOC_DEVICEMAP);
-      CUDA_CHECK (result, "cuMemAllocHost");
+      CUDA_CHECK_ABORT (result, "cuMemAllocHost");
 
       *event_data->ext_event_flag = 0;
 
       result = cuMemHostGetDevicePointer (&dev_ext_event_flag,
                                            event_data->ext_event_flag, 0);
-      CUDA_CHECK (result, "cuMemHostGetDevicePointer");
+      CUDA_CHECK_ABORT (result, "cuMemHostGetDevicePointer");
       result = cuStreamWaitValue32 (stream, dev_ext_event_flag, 1,
                                     CU_STREAM_WAIT_VALUE_GEQ);
-      CUDA_CHECK (result, "cuStreamWaitValue32");
+      CUDA_CHECK_ABORT (result, "cuStreamWaitValue32");
     }
 
   /* Create and record event for command start if profiling enabled */
   if (cq->properties & CL_QUEUE_PROFILING_ENABLE)
     {
       result = cuEventCreate (&event_data->start, CU_EVENT_DEFAULT);
-      CUDA_CHECK (result, "cuEventCreate");
+      CUDA_CHECK_ABORT (result, "cuEventCreate");
       result = cuEventRecord (event_data->start, stream);
-      CUDA_CHECK (result, "cuEventRecord");
+      CUDA_CHECK_ABORT (result, "cuEventRecord");
     }
 
   pocl_update_event_submitted (node->sync.event.event);
@@ -2153,9 +2175,9 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     result = cuEventCreate (&event_data->end, CU_EVENT_DEFAULT);
   else
     result = cuEventCreate (&event_data->end, CU_EVENT_DISABLE_TIMING);
-  CUDA_CHECK (result, "cuEventCreate");
+  CUDA_CHECK_ABORT (result, "cuEventCreate");
   result = cuEventRecord (event_data->end, stream);
-  CUDA_CHECK (result, "cuEventRecord");
+  CUDA_CHECK_ABORT (result, "cuEventRecord");
 
   event_data->events_ready = 1;
 }
@@ -2230,7 +2252,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   /* Wait for command to finish */
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
   result = cuEventSynchronize (event_data->end);
-  CUDA_CHECK (result, "cuEventSynchronize");
+  CUDA_CHECK_ABORT (result, "cuEventSynchronize");
 
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
       || event->command_type == CL_COMMAND_TASK)
@@ -2291,7 +2313,7 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
        * usage of float by CUDA. */
 
       float diff;
-      CUresult result;
+      CUresult result, result2;
       pocl_cuda_event_data_t *event_data
           = (pocl_cuda_event_data_t *)event->data;
       cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
@@ -2299,13 +2321,18 @@ pocl_cuda_update_event (cl_device_id device, cl_event event)
       result = cuEventElapsedTime (
           &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
           event_data->start);
-      CUDA_CHECK (result, "cuEventElapsedTime");
+      CUDA_CHECK_ERROR (result, "cuEventElapsedTime");
       event->time_start = epoch + (cl_ulong)(diff * 1e6);
 
-      result = cuEventElapsedTime (
-          &diff, event_data->start, event_data->end);
-      CUDA_CHECK (result, "cuEventElapsedTime");
+      result2 = cuEventElapsedTime (&diff, event_data->start, event_data->end);
+      CUDA_CHECK_ERROR (result2, "cuEventElapsedTime");
       event->time_end = event->time_start + (cl_ulong)(diff * 1e6);
+
+      if (result != CUDA_SUCCESS || result2 != CUDA_SUCCESS)
+        {
+          event->time_start = 0;
+          event->time_end = 0;
+        }
     }
 }
 
@@ -2365,7 +2392,7 @@ pocl_cuda_free_event_data (cl_event event)
       if (event_data->ext_event_flag)
         {
           CUresult result = cuMemFreeHost (event_data->ext_event_flag);
-          CUDA_CHECK (result, "cuMemFreeHost");
+          CUDA_CHECK_ERROR (result, "pocl_cuda_free_event_data cuMemFreeHost");
         }
       free (event->data);
     }
@@ -2506,7 +2533,9 @@ pocl_cuda_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   CUdeviceptr dptr;
   CUresult res;
   res = cuMemAllocManaged (&dptr, size, CU_MEM_ATTACH_GLOBAL);
-  CUDA_CHECK (res, "cuMemAllocManaged");
+  CUDA_CHECK_ERROR (res, "pocl_cuda_svm_alloc cuMemAllocManaged");
+  if (res != CUDA_SUCCESS)
+    dptr = NULL;
   return (void *)dptr;
 }
 
@@ -2516,7 +2545,7 @@ pocl_cuda_svm_free (cl_device_id dev, void *svm_ptr)
   POCL_MSG_PRINT_CUDA ("SVM cuMemFree %p\n", svm_ptr);
   CUresult res;
   res = cuMemFree ((CUdeviceptr)svm_ptr);
-  CUDA_CHECK (res, "cuMemFree");
+  CUDA_CHECK_ERROR (res, "pocl_cuda_svm_free cuMemFree");
 }
 
 void
@@ -2526,7 +2555,7 @@ pocl_cuda_svm_copy (cl_device_id dev, void *__restrict__ dst,
   POCL_MSG_PRINT_CUDA ("SVM cuMemcpy %p -> %p, %lu bytes\n", src, dst, size);
   CUresult res;
   res = cuMemcpy ((CUdeviceptr)dst, (CUdeviceptr)src, size);
-  CUDA_CHECK (res, "cuMemcpy");
+  CUDA_CHECK_ABORT (res, "pocl_cuda_svm_copy cuMemcpy");
 }
 
 void
@@ -2538,7 +2567,7 @@ pocl_cuda_svm_copy_async (CUstream stream, void *__restrict__ dst,
 
   CUresult res;
   res = cuMemcpyAsync ((CUdeviceptr)dst, (CUdeviceptr)src, size, stream);
-  CUDA_CHECK (res, "cuMemcpyAsync");
+  CUDA_CHECK_ABORT (res, "cuMemcpyAsync");
 }
 
 void
@@ -2588,57 +2617,57 @@ pocl_cuda_get_device_info_ext (cl_device_id device, cl_device_info param_name,
     case CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV:
       res = cuDeviceGetAttribute (
           &value, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV:
       res = cuDeviceGetAttribute (
           &value, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_REGISTERS_PER_BLOCK_NV:
       res = cuDeviceGetAttribute (
           &value, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK, cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_WARP_SIZE_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_GPU_OVERLAP_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_GPU_OVERLAP,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_bool, value);
     case CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV:
       res = cuDeviceGetAttribute (
           &value, CU_DEVICE_ATTRIBUTE_KERNEL_EXEC_TIMEOUT, cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_bool, value);
     case CL_DEVICE_INTEGRATED_MEMORY_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_INTEGRATED,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_bool, value);
     case CL_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT_NV:
       res = cuDeviceGetAttribute (
           &value, CU_DEVICE_ATTRIBUTE_ASYNC_ENGINE_COUNT, cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_PCI_BUS_ID_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_PCI_BUS_ID,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_PCI_SLOT_ID_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_PCI_DEVICE_ID,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
     case CL_DEVICE_PCI_DOMAIN_ID_NV:
       res = cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_PCI_DOMAIN_ID,
                                   cudaDev);
-      CUDA_CHECK (res, "cuDeviceGetAttribute");
+      CUDA_CHECK_ABORT (res, "cuDeviceGetAttribute");
       POCL_RETURN_GETINFO (cl_uint, value);
 
     case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:

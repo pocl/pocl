@@ -80,7 +80,7 @@ static void fixConstantMemArgs(llvm::Module *Module);
 static void fixLocalMemArgs(llvm::Module *Module);
 static void fixPrintF(llvm::Module *Module);
 static void handleGetWorkDim(llvm::Module *Module);
-static void linkLibDevice(llvm::Module *Module, const char *LibDevicePath);
+static int linkLibDevice(llvm::Module *Module, const char *LibDevicePath);
 static void mapLibDeviceCalls(llvm::Module *Module);
 static void createAlignmentMap(llvm::Module *Module,
                                AlignmentMapT *AlignmentMap);
@@ -156,15 +156,17 @@ to create kernel compiler pass\n");
 }
 */
 
-static void verifyModule(llvm::Module *Module, const char *step) {
+static bool verifyModule(llvm::Module *Module, const char *step) {
   std::string Error;
   llvm::raw_string_ostream Errs(Error);
   if (llvm::verifyModule(*Module, &Errs)) {
-    POCL_MSG_ERR("\n%s\n", Error.c_str());
-    POCL_ABORT("[CUDA] ptx-gen: STEP %s: module verification FAILED\n", step);
+    POCL_MSG_ERR("[CUDA] ptx-gen step %s: module verification FAILED\n%s\n",
+                 step, Error.c_str());
+    return false;
   } else {
-    POCL_MSG_WARN("[CUDA] ptx-gen: STEP %s: module verification PASSED\n",
-                  step);
+    // POCL_MSG_PRINT_CUDA("[CUDA] ptx-gen: STEP %s: module verification
+    // PASSED\n", step);
+    return true;
   }
 }
 
@@ -175,7 +177,7 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   llvm::Module *Module = (llvm::Module *)llvm_module;
   if (!Module) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
-    return 1;
+    return CL_BUILD_PROGRAM_FAILURE;
   }
   bool VerifyMod =
       pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT);
@@ -184,37 +186,38 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   assert(*AlignmentMapPtr == nullptr);
   *AlignmentMapPtr = A;
   createAlignmentMap(Module, A);
-  if (VerifyMod)
-    verifyModule(Module, "getAlignmentMap");
+  if (VerifyMod && !verifyModule(Module, "getAlignmentMap"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module);
-  if (VerifyMod)
-    verifyModule(Module, "fixPrintF");
+  if (VerifyMod && !verifyModule(Module, "fixPrintF"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   fixConstantMemArgs(Module);
-  if (VerifyMod)
-    verifyModule(Module, "fixConstantMemArgs");
+  if (VerifyMod && !verifyModule(Module, "fixConstantMemArgs"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   fixLocalMemArgs(Module);
-  if (VerifyMod)
-    verifyModule(Module, "fixLocalMemArgs");
+  if (VerifyMod && !verifyModule(Module, "fixLocalMemArgs"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   handleGetWorkDim(Module);
-  if (VerifyMod)
-    verifyModule(Module, "handleGetWorkDim");
+  if (VerifyMod && !verifyModule(Module, "handleGetWorkDim"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   addKernelAnnotations(Module);
-  if (VerifyMod)
-    verifyModule(Module, "addAnnotations");
+  if (VerifyMod && !verifyModule(Module, "addAnnotations"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   mapLibDeviceCalls(Module);
-  if (VerifyMod)
-    verifyModule(Module, "mapLibDeviceCalls");
+  if (VerifyMod && !verifyModule(Module, "mapLibDeviceCalls"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
-  linkLibDevice(Module, LibDevicePath);
-  if (VerifyMod)
-    verifyModule(Module, "linkLibDevice");
+  if (linkLibDevice(Module, LibDevicePath) != 0)
+    return CL_BUILD_PROGRAM_FAILURE;
+  if (VerifyMod && !verifyModule(Module, "linkLibDevice"))
+    return CL_BUILD_PROGRAM_FAILURE;
 
   if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0)) {
     std::string ModuleString;
@@ -239,7 +242,7 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   if (!Target) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to get target\n");
     POCL_MSG_ERR("%s\n", Error.c_str());
-    return 1;
+    return CL_BUILD_PROGRAM_FAILURE;
   }
 
   // TODO: Set options?
@@ -262,7 +265,7 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
                                    nullptr,
                                    llvm::CGFT_AssemblyFile)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
-    return 1;
+    return CL_BUILD_PROGRAM_FAILURE;
   }
 
   // Run passes.
@@ -270,11 +273,21 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
 
 #ifdef LLVM_OLDER_THAN_11_0
   std::string PTX = PTXStream.str();
-  return pocl_write_file(PTXFilename, PTX.c_str(), PTX.size(), 0, 0);
+  const char *Content = PTX.c_str();
+  size_t ContentSize = PTX.size();
 #else
   llvm::StringRef PTX = PTXStream.str();
-  return pocl_write_file(PTXFilename, PTX.data(), PTX.size(), 0, 0);
+  const char *Content = PTX.data();
+  size_t ContentSize = PTX.size();
 #endif
+
+  if (pocl_write_file(PTXFilename, Content, ContentSize, 0, 0)) {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to write final PTX into %s\n",
+                 PTXFilename);
+    return CL_BUILD_PROGRAM_FAILURE;
+  }
+
+  return CL_SUCCESS;
 }
 
 // Add the metadata needed to mark a function as a kernel in PTX.
@@ -730,18 +743,22 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
 // This would remove this runtime dependency on the CUDA toolkit.
 // Had some issues with the earlier pocl LLVM passes crashing on the libdevice
 // code - needs more investigation.
-void linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
+int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   auto Buffer = llvm::MemoryBuffer::getFile(LibDevicePath);
-  if (!Buffer)
-    POCL_ABORT("[CUDA] failed to open libdevice library file\n");
+  if (!Buffer) {
+    POCL_MSG_ERR("[CUDA] failed to open libdevice library file\n");
+    return -1;
+  }
 
   POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", LibDevicePath);
 
   // Load libdevice bitcode library.
   llvm::Expected<std::unique_ptr<llvm::Module>> LibDeviceModule =
       parseBitcodeFile(Buffer->get()->getMemBufferRef(), Module->getContext());
-  if (!LibDeviceModule)
-    POCL_ABORT("[CUDA] failed to load libdevice bitcode\n");
+  if (!LibDeviceModule) {
+    POCL_MSG_ERR("[CUDA] failed to load libdevice bitcode\n");
+    return -1;
+  }
 
   // Fix triple and data-layout of libdevice module.
   (*LibDeviceModule)->setTargetTriple(Module->getTargetTriple());
@@ -751,7 +768,8 @@ void linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   llvm::Linker Linker(*Module);
   if (Linker.linkInModule(std::move(LibDeviceModule.get()),
                           llvm::Linker::Flags::LinkOnlyNeeded)) {
-    POCL_ABORT("[CUDA] failed to link to libdevice\n");
+    POCL_MSG_ERR("[CUDA] failed to link to libdevice\n");
+    return -1;
   }
 
   llvm::legacy::PassManager Passes;
@@ -783,6 +801,7 @@ void linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   Builder.populateModulePassManager(Passes);
 
   Passes.run(*Module);
+  return 0;
 }
 
 // This transformation replaces each pointer argument in the specific address
@@ -1135,7 +1154,7 @@ int pocl_cuda_create_alignments(void *llvm_module, void **AlignmentMapPtr) {
   llvm::Module *Module = (llvm::Module *)llvm_module;
   if (!Module) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
-    return 1;
+    return -1;
   }
   bool VerifyMod =
       pocl_get_bool_option("POCL_LLVM_VERIFY", LLVM_VERIFY_MODULE_DEFAULT);
@@ -1145,8 +1164,8 @@ int pocl_cuda_create_alignments(void *llvm_module, void **AlignmentMapPtr) {
   *AlignmentMapPtr = A;
   createAlignmentMap(Module, A);
 
-  if (VerifyMod)
-    verifyModule(Module, "getAlignmentMap");
+  if (VerifyMod && !verifyModule(Module, "getAlignmentMap"))
+    return -1;
   return 0;
 }
 
