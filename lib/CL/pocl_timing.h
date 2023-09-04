@@ -24,6 +24,12 @@
 #ifndef POCL_TIMING_H
 #define POCL_TIMING_H
 
+#include <stdint.h>
+
+#ifdef HAVE_CLOCK_GETTIME
+#include <time.h>
+#endif
+
 #include "config.h"
 
 #include "pocl_export.h"

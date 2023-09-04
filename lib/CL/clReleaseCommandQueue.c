@@ -37,13 +37,15 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
   cl_device_id device = command_queue->device;
 
   POname(clFlush)(command_queue);
-  POCL_RELEASE_OBJECT(command_queue, new_refcount);
+  POCL_LOCK_OBJ (command_queue);
+  POCL_RELEASE_OBJECT_UNLOCKED (command_queue, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release Command Queue %" PRId64
                             " (%p), Refcount: %d\n",
                             command_queue->id, command_queue, new_refcount);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (command_queue);
       VG_REFC_ZERO (command_queue);
 
       TP_FREE_QUEUE (context->id, command_queue->id);
@@ -63,7 +65,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %" PRId64 " (%p)\n",
                                 command_queue->id, command_queue);
-      if (command_queue->device->ops->free_queue)
+      if (command_queue->device->ops->free_queue
+          && (*(command_queue->device->available) == CL_TRUE))
         command_queue->device->ops->free_queue (device, command_queue);
       POCL_DESTROY_OBJECT (command_queue);
       POCL_MEM_FREE(command_queue);
@@ -71,6 +74,7 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
   else
     {
       VG_REFC_NONZERO (command_queue);
+      POCL_UNLOCK_OBJ (command_queue);
     }
   return CL_SUCCESS;
 }

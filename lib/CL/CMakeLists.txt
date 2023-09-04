@@ -154,6 +154,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
                    "pocl_hash.c" "pocl_file_util.c"
                    "pocl_debug.h" "pocl_debug.c" "pocl_timing.c"
+                   "pocl_timing.h" "pocl_threads.h" "pocl_threads.c"
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
@@ -189,6 +190,10 @@ if(ANDROID)
   list(APPEND POCL_LIB_SOURCES "pocl_mkstemp.c")
 endif()
 
+if(ENABLE_RDMA)
+  list(APPEND POCL_LIB_SOURCES "pocl_rdma.c")
+endif()
+
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 
@@ -205,7 +210,6 @@ harden("pocl_cache")
 if(OCL_ICD_INCLUDE_DIRS)
   target_include_directories("pocl_cache" SYSTEM PUBLIC ${OCL_ICD_INCLUDE_DIRS})
 endif()
-
 
 if (ENABLE_LLVM)
   include_directories(${LLVM_INCLUDE_DIRS})
@@ -294,7 +298,7 @@ endif()
 harden("${POCL_LIBRARY_NAME}")
 
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
-  VERSION "${LIB_BUILD_VERSION}" 
+  VERSION "${LIB_BUILD_VERSION}"
   LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")
 
 target_link_libraries("${POCL_LIBRARY_NAME}" PRIVATE ${POCL_PRIVATE_LINK_LIST})

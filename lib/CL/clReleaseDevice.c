@@ -32,10 +32,12 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
     return CL_SUCCESS;
 
   int new_refcount;
-  POCL_RELEASE_OBJECT (device, new_refcount);
+  POCL_LOCK_OBJ (device);
+  POCL_RELEASE_OBJECT_UNLOCKED (device, new_refcount);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (device);
       POCL_DESTROY_OBJECT (device);
       POCL_MEM_FREE (device->partition_type);
       POCL_MEM_FREE (device->builtin_kernel_list);
@@ -45,8 +47,11 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
       POCL_MEM_FREE (device);
     }
   else
-    POCL_MSG_PRINT_REFCOUNTS ("Release Device %d (%p), Refcount: %d\n",
-                              device->dev_id, device, device->pocl_refcount);
+    {
+      POCL_MSG_PRINT_REFCOUNTS ("Release Device %d (%p), Refcount: %d\n",
+                                device->dev_id, device, device->pocl_refcount);
+      POCL_UNLOCK_OBJ (device);
+    }
 
   return CL_SUCCESS;
 }

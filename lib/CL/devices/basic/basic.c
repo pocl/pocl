@@ -67,6 +67,8 @@ struct data {
 
   /* printf buffer */
   void *printf_buffer;
+
+  cl_bool available;
 };
 
 typedef struct _pocl_basic_usm_allocation_t
@@ -203,7 +205,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
     return CL_OUT_OF_HOST_MEMORY;
 
   d->current_kernel = NULL;
+  d->available = CL_TRUE;
   device->data = d;
+  device->available = &d->available;
 
   pocl_init_default_device_infos (device);
 
@@ -548,7 +552,7 @@ pocl_basic_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_basic_reinit (unsigned j, cl_device_id device)
+pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   struct data *d = (struct data *)calloc (1, sizeof (struct data));
   if (d == NULL)

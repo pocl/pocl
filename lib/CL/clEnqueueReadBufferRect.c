@@ -51,6 +51,9 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
                           CL_INVALID_MEM_OBJECT);
 

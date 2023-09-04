@@ -80,6 +80,9 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clEnqueueReleaseEGLObjectsKHR) (
       POCL_UNLOCK_OBJ (mem_objects[i]);
     }
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   errcode = pocl_create_command (
       &cmd, command_queue, CL_COMMAND_RELEASE_EGL_OBJECTS_KHR, event,
       num_events_in_wait_list, event_wait_list, num_mem_objects, copy, rdonly);

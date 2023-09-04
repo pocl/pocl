@@ -10,6 +10,8 @@
 #cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
 #cmakedefine BUILD_LEVEL0
+#cmakedefine BUILD_REMOTE_SERVER
+#cmakedefine BUILD_REMOTE_CLIENT
 #cmakedefine BUILD_PROXY
 
 #define BUILDDIR "@BUILDDIR@"
@@ -31,6 +33,10 @@
 #cmakedefine ENABLE_EXTRA_VALIDITY_CHECKS
 
 #cmakedefine ENABLE_CONFORMANCE
+
+#cmakedefine ENABLE_RDMA
+
+#cmakedefine ENABLE_TRAFFIC_MONITOR
 
 #cmakedefine ENABLE_HWLOC
 
@@ -206,7 +212,6 @@
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
 
 #define PRINTF_BUFFER_SIZE @PRINTF_BUFFER_SIZE@
-
 
 /* used in lib/CL/devices/basic */
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"

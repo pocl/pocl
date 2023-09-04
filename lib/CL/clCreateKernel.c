@@ -107,7 +107,7 @@ POname(clCreateKernel)(cl_program program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
-      if (device->ops->create_kernel)
+      if (device->ops->create_kernel && *(device->available) == CL_TRUE)
         {
           int r = device->ops->create_kernel (device, program, kernel, i);
           POCL_GOTO_ERROR_ON ((r != CL_SUCCESS), CL_OUT_OF_RESOURCES,

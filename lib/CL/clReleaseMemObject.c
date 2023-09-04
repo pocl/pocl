@@ -1,29 +1,33 @@
 /* OpenCL runtime library: clReleaseMemObject()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "devices.h"
 #include "pocl_cl.h"
 #include "utlist.h"
+
+#ifdef ENABLE_RDMA
+#include "pocl_rdma.h"
+#endif
 
 extern unsigned long buffer_c;
 
@@ -43,7 +47,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   cl_context context = memobj->context;
 
-  POCL_RELEASE_OBJECT(memobj, new_refcount);
+  POCL_LOCK_OBJ (memobj);
+  POCL_RELEASE_OBJECT_UNLOCKED (memobj, new_refcount);
 
   POCL_MSG_PRINT_REFCOUNTS ("Release Memory Object %" PRId64
                             " (%p), Refcount: %d\n",
@@ -51,16 +56,19 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   /* OpenCL 1.2 Page 118:
 
-     After the memobj reference count becomes zero and commands queued for execution on 
-     a command-queue(s) that use memobj have finished, the memory object is deleted. If 
-     memobj is a buffer object, memobj cannot be deleted until all sub-buffer objects associated 
-     with memobj are deleted.
+     After the memobj reference count becomes zero and commands queued for
+     execution on a command-queue(s) that use memobj have finished, the memory
+     object is deleted. If memobj is a buffer object, memobj cannot be deleted
+     until all sub-buffer objects associated with memobj are deleted.
   */
 
+  cl_int err = CL_SUCCESS;
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (memobj);
       VG_REFC_ZERO (memobj);
 
+      cl_event last = memobj->last_event;
       if (memobj->is_image)
         {
           TP_FREE_IMAGE (context->id, memobj->id);
@@ -76,7 +84,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         {
           cl_mem b = memobj->buffer;
           assert (b);
-          int err = POname (clReleaseMemObject) (b);
+          err = POname (clReleaseMemObject) (b);
           POCL_MEM_FREE (memobj);
           return err;
         }
@@ -94,7 +102,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           for (i = 0; i < context->num_devices; ++i)
             {
               dev = context->devices[i];
-              if (dev->available != CL_TRUE)
+              if (*(dev->available) == CL_FALSE)
                 continue;
               if (memobj->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
                 continue;
@@ -110,7 +118,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               if (memobj->flags & CL_MEM_USE_HOST_PTR)
                 memobj->mem_host_ptr = NULL; /* user allocated, do not free */
               else
-                POCL_MEM_FREE (memobj->mem_host_ptr);
+                {
+                  POCL_MEM_FREE (memobj->mem_host_ptr);
+                }
             }
 
           POCL_MEM_FREE (memobj->device_ptrs);
@@ -150,8 +160,6 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           memobj->size_buffer = NULL;
         }
 
-      cl_event last = memobj->last_event;
-
       POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);
 
@@ -166,6 +174,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (memobj);
+      POCL_UNLOCK_OBJ (memobj);
     }
 
   return CL_SUCCESS;

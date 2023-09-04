@@ -33,3 +33,8 @@ Efficient OpenCL system integration of non-blocking FPGA accelerators,
 https://doi.org/10.1016/j.micpro.2023.104772
 Microprocessors and Microsystems, vol. 97, 2023.
 
+Jan Solanti, Michal Babej, Julius Ikkala, Pekka J&auml;&auml;skel&auml;inen
+PoCL-R: An Open Standard Based Offloading Layer for Heterogeneous Multi-Access Edge Computing with Server Side Scalability
+https://doi.org/10.48550/arXiv.2309.00407
+arXiv preprint
+

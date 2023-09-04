@@ -1,16 +1,17 @@
 <%inherit file="basic_page.makt" />
 <p>PoCL is a portable open source (MIT-licensed) implementation of the
-OpenCL standard (1.2 with some 2.0 features supported). In addition to
+OpenCL standard. In addition to
 being an easily portable multi-device (truely heterogeneous)
 open-source OpenCL implementation, a major goal of this project is
 improving interoperability of diversity of OpenCL-capable devices by
 integrating them to a single centrally orchestrated platform. Also
-one of the key goals longer term is to enhance performance portability
+one of the key goals is to enhance performance portability
 of OpenCL programs across device types utilizing runtime and compiler
 techniques.</p>
 
-<p>Upstream PoCL currently supports various CPUs, NVIDIA GPUs via libcuda,
-HSA-supported GPUs and TCE ASIPs (experimental, see: <a href="http://openasip.org">OpenASIP</a>).
+<p>PoCL currently supports various CPUs, NVIDIA GPUs via libCUDA,
+Intel GPUs via Level Zero and TCE ASIPs (<a href="http://openasip.org">OpenASIP</a>)
+at different feature coverage levels.
 It is also known to have multiple (private) adaptations in active production
 use.</p>
 
@@ -20,6 +21,25 @@ and as a portability layer. Thus, if your desired target has an LLVM backend, it
 should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
+
+<h2>2023-09-04: <a href="remote-backend.html">No-MPI OpenCL-Only Distributed Computing With PoCL-Remote</a></h2>
+
+<p>PoCL now has a new backend that allows transparently
+offloading OpenCL tasks to other nodes on the network, thus enabling
+distributing compute without using MPI or similar APIs. Since the
+standard OpenCL API suffices, compute offloading can be performed
+identically whether using local or remote devices, which makes it
+useful for selective/adaptive edge offloading and other use cases.</p>
+
+<p>In contrast to previous similar distributing OpenCL implementations,
+PoCL-Remote does not merely forward API calls
+as is, but performs smart memory management and distributed command
+scheduling to keep latency down and scale well to multiple nodes.</p>
+
+<p>The driver is now considered ready for out-of-lab testing and has been
+integrated to the <a href="http://code.portablecl.org">main</a> branch for the
+upcoming v5.0 release. <a href="remote-backend.html">Why not give it a run?</a>
+</p>
 
 <h2>2022-12-05: <a href="pocl-3.1.html">Portable Computing Language (PoCL) v3.1 released</a></h2>
 

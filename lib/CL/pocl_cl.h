@@ -38,27 +38,14 @@
 #ifdef _WIN32
 #  include "vccompat.hpp"
 #endif
-/* To get adaptive mutex type */
-#ifndef __USE_GNU
-  #define __USE_GNU
-#endif
 
-#include <pthread.h>
-#ifdef HAVE_CLOCK_GETTIME
-  #include <time.h>
-#endif
-
-typedef pthread_mutex_t pocl_lock_t;
-typedef pthread_cond_t pocl_cond_t;
-typedef pthread_t pocl_thread_t;
-#define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-
+#include "common.h"
 #include "pocl.h"
-#include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
-#include "common.h"
+#include "pocl_threads.h"
+#include "pocl_tracing.h"
 #ifdef BUILD_ICD
 #  include "pocl_icd.h"
 #endif
@@ -73,20 +60,6 @@ typedef pthread_t pocl_thread_t;
 # else
 #  define __func__ UNKNOWN_FUNCTION
 # endif
-#endif
-
-#if defined(__GNUC__) || defined(__clang__)
-
-/* These return the new value. */
-/* See: https://gcc.gnu.org/onlinedocs/gcc-4.7.4/gcc/_005f_005fatomic-Builtins.html */
-#define POCL_ATOMIC_INC(x) __atomic_add_fetch (&x, 1, __ATOMIC_SEQ_CST)
-#define POCL_ATOMIC_DEC(x) __atomic_sub_fetch (&x, 1, __ATOMIC_SEQ_CST)
-
-#elif defined(_WIN32)
-#define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
-#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
-#else
-#error Need atomic_inc() builtin for this compiler
 #endif
 
 #ifdef ENABLE_VALGRIND
@@ -141,86 +114,14 @@ typedef pthread_t pocl_thread_t;
 #define ALIGN_CACHE(x) x
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-POCL_EXPORT
-void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
-
-#ifdef __cplusplus
-}
-#endif
-
-/* Some pthread_*() calls may return '0' or a specific non-zero value on
- * success.
- */
-#define PTHREAD_CHECK2(_status_ok, _code)                                     \
-  do                                                                          \
-    {                                                                         \
-      int _pthread_status = (_code);                                          \
-      if (_pthread_status != 0 && _pthread_status != (_status_ok))            \
-        pocl_abort_on_pthread_error (_pthread_status, __LINE__,               \
-                                     __FUNCTION__);                           \
-    }                                                                         \
-  while (0)
-
-#define PTHREAD_CHECK(code) PTHREAD_CHECK2 (0, code)
-
-/* Generic functionality for handling different types of 
-   OpenCL (host) objects. */
-
-#define POCL_LOCK(__LOCK__) PTHREAD_CHECK (pthread_mutex_lock (&(__LOCK__)))
-#define POCL_UNLOCK(__LOCK__)                                                 \
-  PTHREAD_CHECK (pthread_mutex_unlock (&(__LOCK__)))
-#define POCL_INIT_LOCK(__LOCK__)                                              \
-  PTHREAD_CHECK (pthread_mutex_init (&(__LOCK__), NULL))
-/* We recycle OpenCL objects by not actually freeing them until the
-   very end. Thus, the lock should not be destroyed at the refcount 0. */
-#define POCL_DESTROY_LOCK(__LOCK__)                                           \
-  PTHREAD_CHECK (pthread_mutex_destroy (&(__LOCK__)))
-
-/* If available, use an Adaptive mutex for locking in the pthread driver,
-   otherwise fallback to simple mutexes */
-#define POCL_FAST_LOCK_T pthread_mutex_t
-#define POCL_FAST_LOCK(l) POCL_LOCK(l)
-#define POCL_FAST_UNLOCK(l) POCL_UNLOCK(l)
-
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-  #define POCL_FAST_INIT(l) \
-    do { \
-      pthread_mutexattr_t attrs; \
-      pthread_mutexattr_init (&attrs); \
-      PTHREAD_CHECK (                                                         \
-          pthread_mutexattr_settype (&attrs, PTHREAD_MUTEX_ADAPTIVE_NP));     \
-      PTHREAD_CHECK (pthread_mutex_init (&l, &attrs));                        \
-      PTHREAD_CHECK (pthread_mutexattr_destroy (&attrs));                     \
-    } while (0)
-#else
-#define POCL_FAST_INIT(l) POCL_INIT_LOCK (l)
-#endif
-
-#define POCL_FAST_DESTROY(l) POCL_DESTROY_LOCK(l)
-
-#define POCL_INIT_COND(c) PTHREAD_CHECK (pthread_cond_init (&c, NULL))
-#define POCL_DESTROY_COND(c) PTHREAD_CHECK (pthread_cond_destroy (&c))
-#define POCL_SIGNAL_COND(c) PTHREAD_CHECK (pthread_cond_signal (&c))
-#define POCL_BROADCAST_COND(c) PTHREAD_CHECK (pthread_cond_broadcast (&c))
-#define POCL_WAIT_COND(c, m) PTHREAD_CHECK (pthread_cond_wait (&c, &m))
-#define POCL_TIMEDWAIT_COND(c, m, t) PTHREAD_CHECK2(ETIMEDOUT, pthread_cond_timedwait (&c, &m, &t))
-
-#define POCL_CREATE_THREAD(thr, func, arg)                                    \
-  PTHREAD_CHECK (pthread_create (&thr, NULL, func, arg))
-#define POCL_JOIN_THREAD(thr) PTHREAD_CHECK (pthread_join (thr, NULL))
-#define POCL_JOIN_THREAD2(thr, res_ptr)                                       \
-  PTHREAD_CHECK (pthread_join (thr, res_ptr))
-#define POCL_EXIT_THREAD(res) pthread_exit (res)
-
 //############################################################################
 
 #ifdef ENABLE_EXTRA_VALIDITY_CHECKS
+// 13_729_512_230_397_775_139
 #define POCL_MAGIC_1 0xBE8906A1A83D8D23ULL
+// 511_941_616_703_887_367
 #define POCL_MAGIC_2 0x071AC830215FD807ULL
+
 #define IS_CL_OBJECT_VALID(__OBJ__)                                           \
   (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
    && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
@@ -538,7 +439,7 @@ struct pocl_device_ops {
   cl_int (*uninit) (unsigned j, cl_device_id device);
   /* reinitializes the driver for a particular device. Called after uninit;
    * the first initialization is done by 'init'. May be NULL */
-  cl_int (*reinit) (unsigned j, cl_device_id device);
+  cl_int (*reinit) (unsigned j, cl_device_id device, const char *parameters);
 
   /* allocate a buffer in device memory */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
@@ -598,16 +499,11 @@ struct pocl_device_ops {
                 size_t offset,
                 size_t size);
   /* clEnqReadBufferRect */
-  void (*read_rect) (void *data,
-                     void *__restrict__ dst_host_ptr,
-                     pocl_mem_identifier * src_mem_id,
-                     cl_mem src_buf,
-                     const size_t *buffer_origin,
-                     const size_t *host_origin, 
-                     const size_t *region,
-                     size_t buffer_row_pitch,
-                     size_t buffer_slice_pitch,
-                     size_t host_row_pitch,
+  void (*read_rect) (void *data, void *__restrict__ dst_host_ptr,
+                     pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                     const size_t *buffer_origin, const size_t *host_origin,
+                     const size_t *region, size_t buffer_row_pitch,
+                     size_t buffer_slice_pitch, size_t host_row_pitch,
                      size_t host_slice_pitch);
   /* clEnqWriteBuffer */
   void (*write) (void *data,
@@ -617,16 +513,11 @@ struct pocl_device_ops {
                  size_t offset,
                  size_t size);
   /* clEnqWriteBufferRect */
-  void (*write_rect) (void *data,
-                      const void *__restrict__ src_host_ptr,
-                      pocl_mem_identifier * dst_mem_id,
-                      cl_mem dst_buf,
-                      const size_t *buffer_origin,
-                      const size_t *host_origin, 
-                      const size_t *region,
-                      size_t buffer_row_pitch,
-                      size_t buffer_slice_pitch,
-                      size_t host_row_pitch,
+  void (*write_rect) (void *data, const void *__restrict__ src_host_ptr,
+                      pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                      const size_t *buffer_origin, const size_t *host_origin,
+                      const size_t *region, size_t buffer_row_pitch,
+                      size_t buffer_slice_pitch, size_t host_row_pitch,
                       size_t host_slice_pitch);
   /* clEnqCopyBuffer */
   void (*copy) (void *data,
@@ -673,7 +564,7 @@ struct pocl_device_ops {
                    size_t pattern_size);
 
   /* Maps 'size' bytes of device global memory at  + offset to
-     host-accessible memory. This might or might not involve copying 
+     host-accessible memory. This might or might not involve copying
      the block from the device. */
   cl_int (*map_mem) (void *data,
                      pocl_mem_identifier * src_mem_id,
@@ -1000,7 +891,7 @@ struct _cl_device_id {
   cl_bool host_unified_memory;
   size_t profiling_timer_resolution;
   cl_bool endian_little;
-  cl_bool available;
+  cl_bool *available;
   cl_bool compiler_available;
   cl_bool linker_available;
   /* Is the target a Single Program Multiple Data machine? If not,
@@ -1135,6 +1026,7 @@ struct _cl_device_id {
    * This allows using both CPU and HSA for SVM allocations,
    * with HSA having priority in multi-device context */
   cl_uint svm_allocation_priority;
+
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -1208,10 +1100,23 @@ struct _cl_device_id {
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
 
+#define DEVICE_IS_SVM_CAPABLE(dev)                                            \
+  (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
+
 #define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
-#define CHECK_DEVICE_AVAIL_RET(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return CL_INVALID_DEVICE; }
-#define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
+#define CHECK_DEVICE_AVAIL_RET(dev)                                           \
+  if (*(dev->available) == CL_FALSE)                                          \
+    {                                                                         \
+      POCL_MSG_ERR ("This cl_device is not available.\n");                    \
+      return CL_INVALID_DEVICE;                                               \
+    }
+#define CHECK_DEVICE_AVAIL_RETV(dev)                                          \
+  if (*(dev->available) == CL_FALSE)                                          \
+    {                                                                         \
+      POCL_MSG_ERR ("This cl_device is not available.\n");                    \
+      return;                                                                 \
+    }
 
 #define OPENCL_MAX_DIMENSION 3
 #ifndef HAVE_SIZE_T_3
@@ -1224,7 +1129,7 @@ typedef struct
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
-}; 
+};
 
 typedef struct _context_destructor_callback context_destructor_callback_t;
 struct _context_destructor_callback
@@ -1464,7 +1369,13 @@ struct _cl_mem {
   unsigned num_properties;
 
   size_t size;
-  size_t origin; /* for sub-buffers */
+  /* for sub-buffers */
+  size_t origin;
+  /* this is an optimization. if set to nonzero,
+   * it marks the actual content size in bytes,
+   * to avoid transferring garbage data when
+   * migrating / reading buffers. */
+  size_t content_size;
 
   /* host backing memory for a buffer.
    *
@@ -1472,6 +1383,7 @@ struct _cl_mem {
    * or temporary allocation by a migration command. Since it
    * can have multiple users, it's refcounted. */
   void *mem_host_ptr;
+
   /* version of buffer content in mem_host_ptr */
   uint64_t mem_host_ptr_version;
   /* reference count; when it reaches 0,
@@ -1493,7 +1405,6 @@ struct _cl_mem {
   /* the event that last changed (written to) the buffer, this
    * is used as a "from "dependency for any migration commands */
   cl_event last_event;
-
 
   /* A linked list of regions of the buffer mapped to the
      host memory */

@@ -47,7 +47,6 @@ else()
 
 endif()
 
-
 if(BUILD_BASIC)
   add_subdirectory("basic")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
@@ -64,6 +63,15 @@ if(BUILD_ALMAIF)
   add_subdirectory("almaif")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-almaif>")
+endif()
+
+if(BUILD_REMOTE_CLIENT)
+  add_subdirectory("remote")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-remote>")
+  if(ENABLE_RDMA)
+    list(APPEND POCL_DEVICES_LINK_LIST RDMAcm::RDMAcm IBVerbs::verbs)
+  endif()
 endif()
 
 # for these drivers, use HWLOC if found
@@ -97,6 +105,7 @@ if(ENABLE_PROXY_DEVICE)
   add_subdirectory("proxy")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-proxy>")
+  # link to libOpenCL, TODO disable for ANDROID ?
   list(APPEND POCL_DEVICES_LINK_LIST OpenCL)
 endif()
 
@@ -142,6 +151,7 @@ if(ENABLE_CUDA)
     list(APPEND POCL_DEVICES_LINK_LIST cuda)
   endif()
 endif()
+
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c

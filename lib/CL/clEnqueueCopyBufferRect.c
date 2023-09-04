@@ -46,10 +46,14 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   cl_int errcode = pocl_copy_buffer_rect_common (
       NULL, command_queue, src_buffer, dst_buffer, src_origin, dst_origin,
       region, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch,
       num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
+
   if (errcode != CL_SUCCESS)
     return errcode;
 

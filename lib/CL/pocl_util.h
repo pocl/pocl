@@ -1,24 +1,24 @@
 /* OpenCL runtime library: pocl_util utility functions
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+   Copyright (c) 2012-2023 pocl developers
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #ifndef POCL_UTIL_H
@@ -237,13 +237,16 @@ void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
-  pocl_update_event_complete (__func__, __LINE__, (__event), msg);
+  pocl_update_event_complete (__func__, __LINE__, (__event), msg)
 
 #define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
-  pocl_update_event_complete (__func__, __LINE__, (__event), NULL);
+  pocl_update_event_complete (__func__, __LINE__, (__event), NULL)
 
 POCL_EXPORT
 void pocl_update_event_failed (cl_event event);
+
+POCL_EXPORT
+void pocl_update_event_device_lost (cl_event event);
 
 const char*
 pocl_status_to_str (int status);
@@ -412,5 +415,133 @@ void pocl_str_tolower (char *out, const char *in);
         return errcode;                                                       \
     }                                                                         \
   while (0)
+
+/*  A class implemented with C macros, resembling LLVM's SmallVector
+ *  includes locking for access
+ *
+ *  Put the define in a struct; will add these members to the struct:
+ *  2 pointers + 2x uint + TYPE array[STATIC_CAPACITY]
+ *
+ *  if inserting would overflow the static array,
+ *  it moves all items to malloc'ed memory
+ */
+
+#define SMALL_VECTOR_DEFINE(TYPE, PREFIX, STATIC_CAPACITY)                    \
+  TYPE PREFIX##_backing_array[STATIC_CAPACITY];                               \
+  TYPE *PREFIX##_backing_malloc;                                              \
+  TYPE *PREFIX##_ptr;                                                         \
+  unsigned PREFIX##_capacity;                                                 \
+  unsigned PREFIX##_used;                                                     \
+  pocl_lock_t PREFIX##_handling_lock;
+
+#define SMALL_VECTOR_INIT(STRUCT, TYPE, PREFIX, STATIC_CAPACITY)              \
+  do                                                                          \
+    {                                                                         \
+      memset (STRUCT->PREFIX##_backing_array, 0,                              \
+              (STATIC_CAPACITY * sizeof (TYPE)));                             \
+      POCL_INIT_LOCK (STRUCT->PREFIX##_handling_lock);                        \
+      STRUCT->PREFIX##_backing_malloc = NULL;                                 \
+      STRUCT->PREFIX##_ptr = STRUCT->PREFIX##_backing_array;                  \
+      STRUCT->PREFIX##_capacity = STATIC_CAPACITY;                            \
+      STRUCT->PREFIX##_used = 0;                                              \
+    }                                                                         \
+  while (0)
+
+#define SMALL_VECTOR_DESTROY(STRUCT, PREFIX, STATIC_CAPACITY)                 \
+  do                                                                          \
+    {                                                                         \
+      if (STRUCT->PREFIX##_ptr != STRUCT->PREFIX##_backing_array)             \
+        pocl_aligned_free (STRUCT->PREFIX##_backing_malloc);                  \
+      STRUCT->PREFIX##_backing_malloc = NULL;                                 \
+      STRUCT->PREFIX##_ptr = STRUCT->PREFIX##_backing_array;                  \
+      STRUCT->PREFIX##_capacity = STATIC_CAPACITY;                            \
+      STRUCT->PREFIX##_used = 0;                                              \
+      POCL_DESTROY_LOCK (STRUCT->PREFIX##_handling_lock);                     \
+    }                                                                         \
+  while (0)
+
+#define SMALL_VECTOR_HELPERS_EXTRA(SUFFIX, STRUCT, TYPE, PREFIX)              \
+  static void small_vector_set_##SUFFIX (STRUCT *s, unsigned index,           \
+                                         TYPE item)                           \
+  {                                                                           \
+    POCL_LOCK (s->PREFIX##_handling_lock);                                    \
+    assert (index < s->PREFIX##_capacity);                                    \
+    memcpy (&s->PREFIX##_ptr[index], &item, sizeof (TYPE));                   \
+    POCL_UNLOCK (s->PREFIX##_handling_lock);                                  \
+  }                                                                           \
+  static TYPE small_vector_get_##SUFFIX (S *s, unsigned index)                \
+  {                                                                           \
+    POCL_LOCK (s->PREFIX##_handling_lock);                                    \
+    assert (index < s->PREFIX##_used);                                        \
+    TYPE temp = s->PREFIX##_ptr[index];                                       \
+    POCL_UNLOCK (s->PREFIX##_handling_lock);                                  \
+    return temp;                                                              \
+  }
+
+#define SMALL_VECTOR_HELPERS(SUFFIX, STRUCT, TYPE, PREFIX)                    \
+  static int small_vector_find_##SUFFIX (STRUCT *s, TYPE item)                \
+  {                                                                           \
+    POCL_LOCK (s->PREFIX##_handling_lock);                                    \
+    unsigned i;                                                               \
+    int retval = -1;                                                          \
+    for (i = 0; i < s->PREFIX##_used; ++i)                                    \
+      {                                                                       \
+        if (memcmp (&s->PREFIX##_ptr[i], &item, sizeof (TYPE)) == 0)          \
+          {                                                                   \
+            retval = i;                                                       \
+            break;                                                            \
+          }                                                                   \
+      }                                                                       \
+    POCL_UNLOCK (s->PREFIX##_handling_lock);                                  \
+    return retval;                                                            \
+  }                                                                           \
+  static unsigned small_vector_append_##SUFFIX (STRUCT *s, TYPE item)         \
+  {                                                                           \
+    POCL_LOCK (s->PREFIX##_handling_lock);                                    \
+    if (s->PREFIX##_used == s->PREFIX##_capacity)                             \
+      {                                                                       \
+        if (s->PREFIX##_ptr == s->PREFIX##_backing_array)                     \
+          {                                                                   \
+            s->PREFIX##_backing_malloc                                        \
+                = malloc (s->PREFIX##_capacity * 2 * sizeof (TYPE));          \
+            s->PREFIX##_ptr = s->PREFIX##_backing_malloc;                     \
+            memcpy (s->PREFIX##_ptr, s->PREFIX##_backing_array,               \
+                    s->PREFIX##_capacity * sizeof (TYPE));                    \
+            s->PREFIX##_capacity *= 2;                                        \
+          }                                                                   \
+        else                                                                  \
+          {                                                                   \
+            s->PREFIX##_backing_malloc                                        \
+                = realloc (s->PREFIX##_backing_malloc,                        \
+                           s->PREFIX##_capacity * 2 * sizeof (TYPE));         \
+            s->PREFIX##_capacity *= 2;                                        \
+          }                                                                   \
+      }                                                                       \
+    memcpy (&s->PREFIX##_ptr[s->PREFIX##_used], &item, sizeof (TYPE));        \
+    unsigned retval = ++s->PREFIX##_used;                                     \
+    POCL_UNLOCK (s->PREFIX##_handling_lock);                                  \
+    return retval;                                                            \
+  }                                                                           \
+  static unsigned small_vector_remove_##SUFFIX (STRUCT *s, TYPE item)         \
+  {                                                                           \
+    POCL_LOCK (s->PREFIX##_handling_lock);                                    \
+    unsigned index;                                                           \
+    for (index = 0; index < s->PREFIX##_used; ++index)                        \
+      {                                                                       \
+        if (memcmp (&s->PREFIX##_ptr[index], &item, sizeof (TYPE)) == 0)      \
+          break;                                                              \
+      }                                                                       \
+    assert (index < s->PREFIX##_used);                                        \
+    unsigned last = (s->PREFIX##_used - 1);                                   \
+    if (index != last)                                                        \
+      {                                                                       \
+        memcpy (&s->PREFIX##_ptr[index], &s->PREFIX##_ptr[last],              \
+                sizeof (TYPE));                                               \
+      }                                                                       \
+    memset (&s->PREFIX##_ptr[last], 0, sizeof (TYPE));                        \
+    unsigned retval = --s->PREFIX##_used;                                     \
+    POCL_UNLOCK (s->PREFIX##_handling_lock);                                  \
+    return retval;                                                            \
+  }
 
 #endif

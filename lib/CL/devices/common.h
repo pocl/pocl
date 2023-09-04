@@ -25,7 +25,7 @@
 #ifndef POCL_COMMON_H
 #define POCL_COMMON_H
 
-#include "pocl_cl.h"
+#include "pocl.h"
 #include "utlist.h"
 
 #define __CBUILD__

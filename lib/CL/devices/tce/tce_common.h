@@ -123,6 +123,7 @@ class TCEDevice {
   uint32_t statusAddr;
 
   uint32_t curKernelAddr;
+  cl_bool available;
   cl_kernel curKernel;
 
   size_t curLocalX;

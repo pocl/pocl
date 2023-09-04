@@ -317,7 +317,7 @@ private:
   ze_device_handle_t DeviceHandle;
   ze_context_handle_t ContextHandle;
   Level0Driver *Driver;
-  bool Available = false;
+  cl_bool Available = CL_FALSE;
   bool Integrated = false;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;

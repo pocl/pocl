@@ -34,12 +34,14 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
-  POCL_RELEASE_OBJECT (kernel, new_refcount);
+  POCL_LOCK_OBJ (kernel);
+  POCL_RELEASE_OBJECT_UNLOCKED (kernel, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release Kernel %s (%p), Refcount: %d\n",
                             kernel->name, kernel, new_refcount);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (kernel);
       VG_REFC_ZERO (kernel);
 
       POCL_ATOMIC_DEC (kernel_c);
@@ -57,7 +59,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       for (i = 0; i < program->num_devices; ++i)
         {
           cl_device_id device = program->devices[i];
-          if (device->ops->free_kernel)
+          if (device->ops->free_kernel && (*(device->available) == CL_TRUE))
             device->ops->free_kernel (device, program, kernel, i);
         }
 
@@ -86,6 +88,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (kernel);
+      POCL_UNLOCK_OBJ (kernel);
     }
 
   return CL_SUCCESS;

@@ -24,10 +24,10 @@
 #ifndef POCL_TRACING_H
 #define POCL_TRACING_H
 
+#include <CL/opencl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pocl_cl.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

@@ -245,7 +245,7 @@ cl_int pocl_level0_uninit(unsigned J, cl_device_id ClDevice) {
   return CL_SUCCESS;
 }
 
-cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice) {
+cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice, const char *parameters) {
 
   if (DriverInstance == nullptr) {
     DriverInstance = new Level0Driver();

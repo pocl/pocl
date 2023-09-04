@@ -52,9 +52,10 @@ main (int argc, char **argv)
   cl_uint i, j, num_devices = 0;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
+  cl_event ev1, ev2;
 
   err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
-                                    &devices, &queues);
+                                    &devices, &queues, 1);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   printf ("NUM DEVICES: %u \n", num_devices);
@@ -71,6 +72,20 @@ main (int argc, char **argv)
                                      0, 0, 0, NULL, NULL, &program);
   if (err != CL_SUCCESS)
     goto ERROR;
+
+  char dev_name[1024];
+  for (i = 0; i < num_devices; ++i)
+    {
+      size_t retval;
+      err = clGetDeviceInfo (devices[i], CL_DEVICE_NAME, 1024, dev_name,
+                             &retval);
+      CHECK_CL_ERROR2 (err);
+
+      dev_name[retval] = 0;
+      printf ("DEVICE %u is: %s \n", i, dev_name);
+    }
+
+  printf ("------------------------\n");
 
   kernel = clCreateKernel (program, basename, NULL);
   CHECK_CL_ERROR2 (err);
@@ -115,14 +130,20 @@ main (int argc, char **argv)
       err = clSetKernelArg (kernel, 3, sizeof (uint32_t), &index_arg);
       CHECK_CL_ERROR2 (err);
 
-      err = clEnqueueNDRangeKernel (queues[i], kernel, 1, NULL,
-                                    global_work_size, local_work_size, 0, NULL,
-                                    NULL);
+      err = clEnqueueNDRangeKernel (
+          queues[i], kernel, 1, NULL, global_work_size, local_work_size,
+          (i > 0 ? 1 : 0), (i > 0 ? &ev1 : NULL), &ev2);
+      if (i > 0)
+        clReleaseEvent (ev1);
+      ev1 = ev2;
 
       CHECK_CL_ERROR2 (err);
     }
 
   clFinish (queues[num_devices - 1]);
+
+  printf ("------------------------\n");
+
   fprintf (stderr, "NOW REVERSE \n");
 
   for (i = num_devices; i > 0; --i)
@@ -133,17 +154,25 @@ main (int argc, char **argv)
       CHECK_CL_ERROR2 (err);
 
       err = clEnqueueNDRangeKernel (queues[i - 1], kernel, 1, NULL,
-                                    global_work_size, local_work_size, 0, NULL,
-                                    NULL);
+                                    global_work_size, local_work_size, 1, &ev1,
+                                    &ev2);
+      clReleaseEvent (ev1);
+      ev1 = ev2;
 
       CHECK_CL_ERROR2 (err);
     }
 
   err = clEnqueueReadBuffer (queues[0], buf_out, CL_TRUE, 0,
-                             num_floats * sizeof (cl_float), output, 0, NULL,
+                             num_floats * sizeof (cl_float), output, 1, &ev1,
                              NULL);
   CHECK_CL_ERROR2 (err);
   fprintf (stderr, "DONE \n");
+
+  clReleaseEvent (ev1);
+
+  printf ("------------------------\n");
+
+  fprintf (stderr, "VERIFYING RESULTS \n");
 
   total_err = 0;
   for (i = 0; i < num_devices; ++i)

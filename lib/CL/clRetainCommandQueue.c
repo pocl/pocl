@@ -28,6 +28,8 @@ POname(clRetainCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERS
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) != CL_TRUE),
+                          CL_DEVICE_NOT_AVAILABLE);
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (command_queue, refc);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %" PRId64

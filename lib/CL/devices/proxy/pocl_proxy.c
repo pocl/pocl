@@ -71,6 +71,7 @@ typedef struct proxy_device_data_s
   // copy of backend->devices[device-index]
   cl_device_id device_id;
 
+  cl_bool available;
 } proxy_device_data_t;
 
 typedef struct proxy_queue_data_s
@@ -408,6 +409,9 @@ static void *pocl_proxy_queue_pthread (void *ptr);
 #define DIbool(info, name)                                                    \
   err = clGetDeviceInfo (id, name, sizeof (cl_bool), &device->info, NULL);    \
   assert (err == CL_SUCCESS)
+#define DIboolptr(info, name)                                                 \
+  err = clGetDeviceInfo (id, name, sizeof (cl_bool), device->info, NULL);     \
+  assert (err == CL_SUCCESS)
 #define DIflag(info, name)                                                    \
   err = clGetDeviceInfo (id, name, sizeof (cl_ulong), &device->info, NULL);   \
   assert (err == CL_SUCCESS)
@@ -506,7 +510,7 @@ pocl_proxy_get_device_info (cl_device_id device, proxy_device_data_t *d)
 
   // TODO queue properties
   device->queue_properties = CL_QUEUE_PROFILING_ENABLE;
-  DIbool (available, CL_DEVICE_AVAILABLE);
+  DIboolptr (available, CL_DEVICE_AVAILABLE);
   DIbool (compiler_available, CL_DEVICE_COMPILER_AVAILABLE);
   DIbool (linker_available, CL_DEVICE_LINKER_AVAILABLE);
 
@@ -624,6 +628,7 @@ pocl_proxy_init (unsigned j, cl_device_id dev, const char *parameters)
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
   dev->data = d;
+  dev->available = &d->available;
 
   d->backend = &platforms[plat_i];
   d->platform_id = platforms[plat_i].id;

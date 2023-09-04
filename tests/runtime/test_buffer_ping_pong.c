@@ -71,7 +71,7 @@ main (int argc, char **argv)
   const char *kernel_buffer = NULL;
 
   err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
-                                    &devices, &queues);
+                                    &devices, &queues, 0);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   printf ("NUM DEVICES: %u \n", num_devices);

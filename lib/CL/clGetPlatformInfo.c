@@ -24,101 +24,112 @@
 #include "pocl_util.h"
 #include "pocl_version.h"
 
+#ifdef ENABLE_RDMA
+#include "pocl_rdma.h"
+#endif
+
 #define S(A) #A
 #define STRINGIFY(X) S(X)
 
 static const char *pocl_version
-    = "OpenCL " STRINGIFY(POCL_PLATFORM_VERSION_MAJOR)
-      "." STRINGIFY(POCL_PLATFORM_VERSION_MINOR)
-      " PoCL " POCL_VERSION_FULL
+    = "OpenCL " STRINGIFY (POCL_PLATFORM_VERSION_MAJOR) "." STRINGIFY (
+        POCL_PLATFORM_VERSION_MINOR) " PoCL " POCL_VERSION_FULL
 
 #if defined(_WIN32)
    #if defined(_WIN64)
-      "  Windows x86-64"
-   #else
-      "  Windows x86"
-   #endif
-#elif defined(__ANDROID__)
-      "  Android"
-#elif defined(__APPLE__)
-      "  Apple"
-#elif defined(__linux__)
-      "  Linux"
-#elif defined(__unix__) // all unices not caught above
-      "  Unix"
+                                     "  Windows x86-64"
 #else
-      "  (Unknown OS)"
+                                     "  Windows x86"
 #endif
-      ", " CMAKE_BUILD_TYPE
+#elif defined(__ANDROID__)
+                                     "  Android"
+#elif defined(__APPLE__)
+                                     "  Apple"
+#elif defined(__linux__)
+                                     "  Linux"
+#elif defined(__unix__) // all unices not caught above
+                                     "  Unix"
+#else
+                                     "  (Unknown OS)"
+#endif
+                                     ", " CMAKE_BUILD_TYPE
 #ifdef POCL_ASSERTS_BUILD
-      "+Asserts"
+                                     "+Asserts"
 #endif
 
 #ifdef ENABLE_RELOCATION
-      ", RELOC"
+                                     ", RELOC"
 #endif
 
 #ifdef ENABLE_SPIR
-      ", SPIR"
+                                     ", SPIR"
 #endif
 
 #ifdef ENABLE_SPIRV
-      ", SPIR-V"
+                                     ", SPIR-V"
 #endif
 
 #ifdef ENABLE_LLVM
-      ", LLVM " LLVM_VERSION
+                                     ", LLVM " LLVM_VERSION
 #ifdef LLVM_BUILD_MODE_DEBUG
-      " - debug"
+                                     " - debug"
 #endif
 
 #ifdef ENABLE_SLEEF
-      ", SLEEF"
+                                     ", SLEEF"
 #endif
 
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-      ", DISTRO"
+                                     ", DISTRO"
 #endif
 
 #else
-      ", without LLVM"
+                                     ", without LLVM"
 #endif
 
 #ifdef ENABLE_ASAN
-      ", ASAN"
+                                     ", ASAN"
 #endif
 #ifdef ENABLE_TSAN
-      ", TSAN"
+                                     ", TSAN"
 #endif
 #ifdef ENABLE_LSAN
-      ", LSAN"
+                                     ", LSAN"
 #endif
 #ifdef ENABLE_UBSAN
-      ", UBSAN"
+                                     ", UBSAN"
 #endif
 
 #ifdef BUILD_PROXY
-      ", PROXY"
+                                     ", PROXY"
+#endif
+
+#ifdef BUILD_REMOTE_CLIENT
+                                     ", REMOTE"
 #endif
 
 #ifdef BUILD_CUDA
-      ", CUDA"
+                                     ", CUDA"
 #endif
 
 #ifdef BUILD_HSA
-      ", HSA"
+                                     ", HSA"
 #endif
 
 #ifdef TCE_AVAILABLE
-      ", TCE"
+                                     ", TCE"
 #endif
 
 #ifdef HAVE_LTTNG_UST
-      ", LTTNG"
+                                     ", LTTNG"
+#endif
+
+#ifdef ENABLE_RDMA
+                                     ", RDMA"
 #endif
 
 #ifdef POCL_DEBUG_MESSAGES
-      ", POCL_DEBUG"
+                                     ", POCL_DEBUG"
 #endif
     ;
 

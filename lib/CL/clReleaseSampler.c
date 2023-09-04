@@ -33,12 +33,14 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (sampler)), CL_INVALID_SAMPLER);
 
   int new_refcount;
-  POCL_RELEASE_OBJECT (sampler, new_refcount);
+  POCL_LOCK_OBJ (sampler);
+  POCL_RELEASE_OBJECT_UNLOCKED (sampler, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release Sampler %" PRId64 " (%p), Refcount: %d\n",
                             sampler->id, sampler, new_refcount);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (sampler);
       VG_REFC_ZERO (sampler);
       POCL_ATOMIC_DEC (sampler_c);
 
@@ -50,7 +52,7 @@ CL_API_SUFFIX__VERSION_1_0
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
-          if (dev->available != CL_TRUE)
+          if (*(dev->available) == CL_FALSE)
             continue;
           if (dev->image_support == CL_TRUE && dev->ops->free_sampler)
             {
@@ -66,6 +68,7 @@ CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (sampler);
+      POCL_UNLOCK_OBJ (sampler);
     }
 
   return CL_SUCCESS;

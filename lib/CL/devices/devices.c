@@ -53,6 +53,10 @@
 #include "pocl_export.h"
 #include "pocl_version.h"
 
+#ifdef ENABLE_RDMA
+#include "pocl_rdma.h"
+#endif
+
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -93,6 +97,14 @@
 #endif
 
 #define MAX_ENV_NAME_LEN 1024
+
+#ifdef BUILD_REMOTE_CLIENT
+#include "remote/remote.h"
+extern cl_int pocl_remote_setup_peer_mesh ();
+// from remote/remote.c
+extern const char *remote_device_name_ptr;
+#endif
+
 #define MAX_DEV_NAME_LEN 64
 
 #ifndef PATH_MAX
@@ -158,6 +170,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_LEVEL0
   INIT_DEV (level0),
 #endif
+#ifdef BUILD_REMOTE_CLIENT
+  INIT_DEV (remote),
+#endif
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
@@ -189,6 +204,9 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #endif
 #ifdef BUILD_LEVEL0
   "level0",
+#endif
+#ifdef BUILD_REMOTE_CLIENT
+  "remote",
 #endif
 };
 
@@ -303,7 +321,7 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
 
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
@@ -343,7 +361,7 @@ pocl_get_device_type_count(cl_device_type device_type)
 
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
@@ -382,8 +400,8 @@ pocl_uninit_devices ()
       for (j = 0; j < device_count[i]; ++j)
         {
           d = &pocl_devices[dev_index];
-          if (d->available == 0)
-            continue;
+          if (*(d->available) == CL_FALSE)
+              continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
             continue;
           cl_int ret = d->ops->uninit (j, d);
@@ -426,19 +444,23 @@ pocl_reinit_devices ()
   unsigned i, j, dev_index;
 
   dev_index = 0;
+  char env_name[1024];
+  char dev_name[MAX_DEV_NAME_LEN] = { 0 };
   cl_device_id d;
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+      pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert (pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
           d = &pocl_devices[dev_index];
-          if (d->available == 0)
+          if (*(d->available) == CL_FALSE)
             continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
             continue;
-          cl_int ret = d->ops->reinit (j, d);
+          snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j);
+          cl_int ret = d->ops->reinit (j, d, getenv (env_name));
           if (ret != CL_SUCCESS)
             {
               retval = ret;
@@ -609,6 +631,7 @@ pocl_init_devices ()
         continue;
       pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert(pocl_device_ops[i].init);
+
       for (j = 0; j < device_count[i]; ++j)
         {
           cl_device_id dev = &pocl_devices[dev_index];
@@ -631,15 +654,20 @@ pocl_init_devices ()
                          "POCL_%s%d_PARAMETERS", dev_name, j)
                < 0),
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
+
           errcode = pocl_devices[dev_index].ops->init (
               j, &pocl_devices[dev_index], getenv (env_name));
-          if (errcode != CL_SUCCESS)
-            POCL_MSG_ERR ("Device %i / %s initialization failed!", j,
-                          dev_name);
+          POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                              "Device %i / %s initialization failed!", j,
+                              dev_name);
 
           ++dev_index;
         }
     }
+
+#ifdef BUILD_REMOTE_CLIENT
+  pocl_remote_setup_peer_mesh ();
+#endif
 
   first_init_done = 1;
   devices_active = 1;

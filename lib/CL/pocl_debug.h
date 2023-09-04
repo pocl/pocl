@@ -24,6 +24,10 @@
 #ifndef POCL_DEBUG_H
 #define POCL_DEBUG_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef _WIN32
 #  include <stdint.h>
 #  include <stddef.h> // size_t
@@ -94,6 +98,8 @@ extern "C" {
 #define POCL_DEBUG_FLAG_PROXY 0x1000
 #define POCL_DEBUG_FLAG_ALMAIF_MMAP 0x2000
 #define POCL_DEBUG_FLAG_LEVEL0 0x4000
+#define POCL_DEBUG_FLAG_REMOTE 0x6000
+#define POCL_DEBUG_FLAG_STREAM 0x8000
 
 #define POCL_DEBUG_FLAG_VULKAN 0x80000
 
@@ -235,31 +241,60 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_ALMAIF2(errcode, ...) POCL_MSG_PRINT_INFO_F(ALMAIF, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_ALMAIF(...) POCL_MSG_PRINT_INFO_F(ALMAIF, "", __VA_ARGS__)
     #define POCL_MSG_PRINT_ALMAIF_MMAP(...) POCL_MSG_PRINT_INFO_F(ALMAIF_MMAP, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_PROXY2(errcode, ...) POCL_MSG_PRINT_INFO_F(PROXY, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_PROXY(...) POCL_MSG_PRINT_INFO_F(PROXY, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_LEVEL0(...) POCL_MSG_PRINT_INFO_F(LEVEL0, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_VULKAN2(errcode, ...) POCL_MSG_PRINT_INFO_F(VULKAN, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_VULKAN(...) POCL_MSG_PRINT_INFO_F(VULKAN, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_CUDA2(errcode, ...) POCL_MSG_PRINT_INFO_F(CUDA, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_CUDA(...) POCL_MSG_PRINT_INFO_F(CUDA, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_HSA2(errcode, ...) POCL_MSG_PRINT_INFO_F(HSA, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_HSA(...) POCL_MSG_PRINT_INFO_F(HSA, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_TCE2(errcode, ...) POCL_MSG_PRINT_INFO_F(TCE, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_TCE(...) POCL_MSG_PRINT_INFO_F(TCE, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_LOCKING2(errcode, ...) POCL_MSG_PRINT_INFO_F(LOCKING, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_LOCKING(...) POCL_MSG_PRINT_INFO_F(LOCKING, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_REFCOUNTS2(errcode, ...) POCL_MSG_PRINT_INFO_F(REFCOUNTS, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_REFCOUNTS(...) POCL_MSG_PRINT_INFO_F(REFCOUNTS, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_CACHE2(errcode, ...) POCL_MSG_PRINT_INFO_F(CACHE, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_CACHE(...) POCL_MSG_PRINT_INFO_F(CACHE, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_EVENTS2(errcode, ...) POCL_MSG_PRINT_INFO_F(EVENTS, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_EVENTS(...) POCL_MSG_PRINT_INFO_F(EVENTS, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_LLVM2(errcode, ...) POCL_MSG_PRINT_INFO_F(LLVM, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_LLVM(...) POCL_MSG_PRINT_INFO_F(LLVM, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_MEMORY2(errcode, ...) POCL_MSG_PRINT_INFO_F(MEMORY, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_MEMORY(...) POCL_MSG_PRINT_INFO_F(MEMORY, "", __VA_ARGS__)
-    #define POCL_MSG_PRINT_GENERAL2(errcode, ...) POCL_MSG_PRINT_INFO_F(GENERAL, errcode, __VA_ARGS__)
-    #define POCL_MSG_PRINT_GENERAL(...) POCL_MSG_PRINT_INFO_F(GENERAL, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_STREAM2(errcode, ...)                                  \
+  POCL_MSG_PRINT_INFO_F (STREAM, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_STREAM(...)                                            \
+  POCL_MSG_PRINT_INFO_F (STREAM, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_PROXY2(errcode, ...)                                   \
+  POCL_MSG_PRINT_INFO_F (PROXY, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_PROXY(...)                                             \
+  POCL_MSG_PRINT_INFO_F (PROXY, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_LEVEL0(...)                                            \
+  POCL_MSG_PRINT_INFO_F (LEVEL0, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_VULKAN2(errcode, ...)                                  \
+  POCL_MSG_PRINT_INFO_F (VULKAN, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_VULKAN(...)                                            \
+  POCL_MSG_PRINT_INFO_F (VULKAN, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_REMOTE2(errcode, ...)                                  \
+  POCL_MSG_PRINT_INFO_F (REMOTE, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_REMOTE(...)                                            \
+  POCL_MSG_PRINT_INFO_F (REMOTE, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_CUDA2(errcode, ...)                                    \
+  POCL_MSG_PRINT_INFO_F (CUDA, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_CUDA(...) POCL_MSG_PRINT_INFO_F (CUDA, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_HSA2(errcode, ...)                                     \
+  POCL_MSG_PRINT_INFO_F (HSA, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_HSA(...) POCL_MSG_PRINT_INFO_F (HSA, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_TCE2(errcode, ...)                                     \
+  POCL_MSG_PRINT_INFO_F (TCE, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_TCE(...) POCL_MSG_PRINT_INFO_F (TCE, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_LOCKING2(errcode, ...)                                 \
+  POCL_MSG_PRINT_INFO_F (LOCKING, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_LOCKING(...)                                           \
+  POCL_MSG_PRINT_INFO_F (LOCKING, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_REFCOUNTS2(errcode, ...)                               \
+  POCL_MSG_PRINT_INFO_F (REFCOUNTS, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_REFCOUNTS(...)                                         \
+  POCL_MSG_PRINT_INFO_F (REFCOUNTS, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_CACHE2(errcode, ...)                                   \
+  POCL_MSG_PRINT_INFO_F (CACHE, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_CACHE(...)                                             \
+  POCL_MSG_PRINT_INFO_F (CACHE, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_EVENTS2(errcode, ...)                                  \
+  POCL_MSG_PRINT_INFO_F (EVENTS, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_EVENTS(...)                                            \
+  POCL_MSG_PRINT_INFO_F (EVENTS, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_LLVM2(errcode, ...)                                    \
+  POCL_MSG_PRINT_INFO_F (LLVM, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_LLVM(...) POCL_MSG_PRINT_INFO_F (LLVM, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_MEMORY2(errcode, ...)                                  \
+  POCL_MSG_PRINT_INFO_F (MEMORY, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_MEMORY(...)                                            \
+  POCL_MSG_PRINT_INFO_F (MEMORY, "", __VA_ARGS__)
+#define POCL_MSG_PRINT_GENERAL2(errcode, ...)                                 \
+  POCL_MSG_PRINT_INFO_F (GENERAL, errcode, __VA_ARGS__)
+#define POCL_MSG_PRINT_GENERAL(...)                                           \
+  POCL_MSG_PRINT_INFO_F (GENERAL, "", __VA_ARGS__)
 
 #else
 
@@ -284,31 +319,151 @@ POCL_EXPORT
     #define POCL_MSG_PRINT_ALMAIF2(...)  do {} while (0)
     #define POCL_MSG_PRINT_ALMAIF(...)  do {} while (0)
     #define POCL_MSG_PRINT_ALMAIF_MMAP(...)  do {} while (0)
-    #define POCL_MSG_PRINT_PROXY2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_PROXY(...)  do {} while (0)
-    #define POCL_MSG_PRINT_LEVEL0(...) do {} while (0)
-    #define POCL_MSG_PRINT_VULKAN2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_VULKAN(...)  do {} while (0)
-    #define POCL_MSG_PRINT_CUDA2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_CUDA(...)  do {} while (0)
-    #define POCL_MSG_PRINT_HSA2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_HSA(...)  do {} while (0)
-    #define POCL_MSG_PRINT_TCE2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_TCE(...)  do {} while (0)
-    #define POCL_MSG_PRINT_LOCKING2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_LOCKING(...)  do {} while (0)
-    #define POCL_MSG_PRINT_REFCOUNTS2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_REFCOUNTS(...)  do {} while (0)
-    #define POCL_MSG_PRINT_CACHE2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_CACHE(...)  do {} while (0)
-    #define POCL_MSG_PRINT_EVENTS2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_EVENTS(...)  do {} while (0)
-    #define POCL_MSG_PRINT_LLVM2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_LLVM(...)  do {} while (0)
-    #define POCL_MSG_PRINT_MEMORY2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_MEMORY(...)  do {} while (0)
-    #define POCL_MSG_PRINT_GENERAL2(...)  do {} while (0)
-    #define POCL_MSG_PRINT_GENERAL(...)  do {} while (0)
+#define POCL_MSG_PRINT_STREAM2(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_STREAM(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_PROXY2(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_PROXY(...)                                             \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_LEVEL0(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_VULKAN2(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_VULKAN(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_REMOTE2(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_REMOTE(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_CUDA2(...)                                             \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_CUDA(...)                                              \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_HSA2(...)                                              \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_HSA(...)                                               \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_TCE2(...)                                              \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_TCE(...)                                               \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_LOCKING2(...)                                          \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_LOCKING(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_REFCOUNTS2(...)                                        \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_REFCOUNTS(...)                                         \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_CACHE2(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_CACHE(...)                                             \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_EVENTS2(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_EVENTS(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_LLVM2(...)                                             \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_LLVM(...)                                              \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_MEMORY2(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_MEMORY(...)                                            \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_GENERAL2(...)                                          \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
+#define POCL_MSG_PRINT_GENERAL(...)                                           \
+  do                                                                          \
+    {                                                                         \
+    }                                                                         \
+  while (0)
 
 #endif
 

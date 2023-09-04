@@ -35,6 +35,52 @@
 /******************************************************************************/
 /******************************************************************************/
 
+TRACEPOINT_EVENT (
+  pocl_trace,
+  msg_received,
+  TP_ARGS (
+    uint64_t, msg_id,
+    uint64_t, event_id,
+    uint32_t, local_did,
+    uint32_t, remote_did,
+    uint32_t, type,
+    uint32_t, status
+  ),
+  TP_FIELDS (
+    ctf_integer_hex (uint64_t, msg_id, msg_id)
+    ctf_integer_hex (uint64_t, event_id, event_id)
+    ctf_integer_hex (uint32_t, local_did, local_did)
+    ctf_integer_hex (uint32_t, remote_did, remote_did)
+    ctf_integer_hex (uint32_t, type, type)
+    ctf_integer_hex (uint32_t, status, status)
+  )
+)
+
+TRACEPOINT_EVENT (
+  pocl_trace,
+  msg_sent,
+  TP_ARGS (
+    uint64_t, msg_id,
+    uint64_t, event_id,
+    uint32_t, local_did,
+    uint32_t, remote_did,
+    uint32_t, type,
+    uint32_t, status
+  ),
+  TP_FIELDS (
+    ctf_integer_hex (uint64_t, msg_id, msg_id)
+    ctf_integer_hex (uint64_t, event_id, event_id)
+    ctf_integer_hex (uint32_t, local_did, local_did)
+    ctf_integer_hex (uint32_t, remote_did, remote_did)
+    ctf_integer_hex (uint32_t, type, type)
+    ctf_integer_hex (uint32_t, status, status)
+  )
+)
+
+/******************************************************************************
+*******************************************************************************
+******************************************************************************/
+
 /**
  *  NDRange kernel tracepoint
  */
@@ -597,6 +643,40 @@ TRACEPOINT_EVENT(
   TP_FIELDS(
       ctf_integer_hex(size_t, context_id, context_id)
       ctf_integer_hex(size_t, sampler_id, sampler_id)
+  )
+)
+
+TRACEPOINT_EVENT (
+  pocl_trace,
+  msg_recv_net,
+  TP_ARGS (
+    uint64_t, msg_id,
+    uint32_t, dev_id,
+    uint32_t, type,
+    uint32_t, stat
+  ),
+  TP_FIELDS (
+    ctf_integer_hex (uint64_t, msg_id, msg_id)
+    ctf_integer_hex (uint32_t, dev_id, dev_id)
+    ctf_integer_hex (uint32_t, type, type)
+    ctf_integer_hex (uint32_t, stat, stat)
+  )
+)
+
+TRACEPOINT_EVENT (
+  pocl_trace,
+  msg_sent_net,
+  TP_ARGS (
+    uint64_t, msg_id,
+    uint32_t, dev_id,
+    uint32_t, type,
+    uint32_t, stat
+  ),
+  TP_FIELDS (
+    ctf_integer_hex (uint64_t, msg_id, msg_id)
+    ctf_integer_hex (uint32_t, dev_id, dev_id)
+    ctf_integer_hex (uint32_t, type, type)
+    ctf_integer_hex (uint32_t, stat, stat)
   )
 )
 

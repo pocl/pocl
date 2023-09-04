@@ -201,7 +201,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
     {
       cl_device_id dev = context->devices[i];
       POCL_GOTO_ERROR_ON (
-          (!pocl_offline_compile && (dev->available == CL_FALSE)),
+          (!pocl_offline_compile && (*dev->available == CL_FALSE)),
           CL_INVALID_DEVICE,
           "Device unavailable and offline compilation "
           "disabled: %s\n",

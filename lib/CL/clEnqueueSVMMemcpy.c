@@ -43,6 +43,9 @@ pocl_svm_memcpy_common (cl_command_type command_type,
       (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   POCL_RETURN_ERROR_COND((src_ptr == NULL), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND((dst_ptr == NULL), CL_INVALID_VALUE);

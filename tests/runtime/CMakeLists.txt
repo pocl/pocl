@@ -159,6 +159,24 @@ set_tests_properties(
   "runtime/test_command_buffer_images"
   PROPERTIES SKIP_RETURN_CODE 77)
 
+if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_EXAMPLES)
+  add_test(NAME "runtime/remote_server_client" COMMAND  "${CMAKE_CURRENT_SOURCE_DIR}/test_remote_server_client.sh" ${CMAKE_BINARY_DIR})
+  set_tests_properties("runtime/remote_server_client"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
+
+  add_test(NAME "runtime/remote_buffer_ping_pong" COMMAND  "${CMAKE_CURRENT_SOURCE_DIR}/test_remote_buffer_ping_pong.sh" ${CMAKE_BINARY_DIR})
+  set_tests_properties("runtime/remote_buffer_ping_pong"
+    PROPERTIES
+    COST 2.0
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
+endif()
+
 if(NOT ENABLE_ANYSAN)
   set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES

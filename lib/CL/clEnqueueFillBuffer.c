@@ -42,9 +42,13 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
 
+  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
   errcode = pocl_fill_buffer_common (
       NULL, command_queue, buffer, pattern, pattern_size, offset, size,
       num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
+
   if (errcode != CL_SUCCESS)
     return errcode;
 

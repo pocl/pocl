@@ -618,7 +618,6 @@ private:
 static const char *tta_native_device_aux_funcs[] = {"_pocl_memcpy_1",
                                                     "_pocl_memcpy_4", NULL};
 
-static const char *tce_params[256];
 
 cl_int
 pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
@@ -631,7 +630,6 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
   dev->device_side_printf = 0;
-  tce_params[j] = parameters;
 
   int max_wg
       = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
@@ -685,7 +683,6 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
      }
   dev->builtins_sources_path = "builtins.cl";
 
-  dev->available = CL_TRUE;
 #ifdef ENABLE_LLVM
   dev->compiler_available = CL_TRUE;
   dev->linker_available = CL_TRUE;
@@ -724,6 +721,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 
   dev->data = new TTASimDevice(dev, parameters);
 
+  dev->available = &((TTASimDevice *)dev->data)->available;
   dev->arg_buffer_launcher = CL_TRUE;
   dev->grid_launcher = CL_FALSE;
   dev->device_aux_functions = tta_native_device_aux_funcs;
@@ -755,9 +753,10 @@ pocl_ttasim_uninit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
-cl_int pocl_ttasim_reinit(unsigned j, cl_device_id device) {
+cl_int pocl_ttasim_reinit(unsigned j, cl_device_id device,
+                          const char *parameters) {
   POCL_MSG_PRINT_TCE("DEV REINIT \n");
-  device->data = new TTASimDevice(device, tce_params[j]);
+  device->data = new TTASimDevice(device, parameters);
   return CL_SUCCESS;
 }
 

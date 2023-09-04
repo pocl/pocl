@@ -29,6 +29,10 @@
 #include "pocl_llvm.h"
 #endif
 
+#ifdef ENABLE_RDMA
+#include "pocl_rdma.h"
+#endif
+
 #include <unistd.h>
 
 extern unsigned long context_c;
@@ -44,12 +48,14 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   int new_refcount;
   POCL_LOCK (pocl_context_handling_lock);
 
-  POCL_RELEASE_OBJECT(context, new_refcount);
+  POCL_LOCK_OBJ (context);
+  POCL_RELEASE_OBJECT_UNLOCKED (context, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release Context %" PRId64 " (%p), Refcount: %d\n",
                             context->id, context, new_refcount);
 
   if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (context);
       VG_REFC_ZERO (context);
 
       POCL_ATOMIC_DEC (context_c);
@@ -108,6 +114,7 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   else
     {
       VG_REFC_NONZERO (context);
+      POCL_UNLOCK_OBJ (context);
     }
 
   POCL_UNLOCK (pocl_context_handling_lock);

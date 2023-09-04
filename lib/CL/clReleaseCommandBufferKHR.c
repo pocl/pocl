@@ -32,14 +32,16 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),
                           CL_INVALID_COMMAND_BUFFER_KHR);
 
-  int refc;
+  int new_refcount;
   int errcode_ret = CL_SUCCESS;
-  POCL_RELEASE_OBJECT (command_buffer, refc);
-  POCL_MSG_PRINT_REFCOUNTS ("Release Command Buffer %p  : %d\n", command_buffer,
-                            refc);
+  POCL_LOCK_OBJ (command_buffer);
+  POCL_RELEASE_OBJECT_UNLOCKED (command_buffer, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Command Buffer %p  : %d\n",
+                            command_buffer, new_refcount);
 
-  if (refc == 0)
+  if (new_refcount == 0)
     {
+      POCL_UNLOCK_OBJ (command_buffer);
       VG_REFC_ZERO (command_buffer);
 
       /* Avoid freeing twice if there are multiple queues on the same device */
@@ -124,6 +126,11 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
       POCL_MEM_FREE (command_buffer->queues);
       POCL_MEM_FREE (command_buffer->properties);
       POCL_MEM_FREE (command_buffer);
+    }
+  else
+    {
+      VG_REFC_NONZERO (command_buffer);
+      POCL_UNLOCK_OBJ (command_buffer);
     }
 
   return errcode_ret;
