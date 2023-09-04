@@ -32,7 +32,7 @@ and with some tweaks (dubbed "Nano-PoCL") it has proven usable even in bare
 metal firmware of low end embedded devices with limited toolchain support.
 This kind of portability is a big reason why the PoCL-Remote client and core
 PoCL components are written in plain C rather than C++. As a concrete example
-of this embedded support is this `demo <https://doi.org/10.1145/3585341.3585376>`
+of this embedded support is this `demo <https://doi.org/10.1145/3585341.3585376>`__
 of the PoCL-Remote client running on the "AI Deck" add-on board of a Crazyflie
 nano drone.
 
@@ -48,34 +48,24 @@ More Information
 ----------------
 
 PoCL-Remote has previously been showcased at
-`IWOCL '20 <http://doi.org/10.1145/3388333.3388642>`,
-`SAMOS 2021 <https://doi.org/10.1007/978-3-031-04580-6_6>` and
-`IWOCL '23 <https://doi.org/10.1145/3388333.3388642>`.
+`IWOCL '20 <http://doi.org/10.1145/3388333.3388642>`__,
+`SAMOS 2021 <https://doi.org/10.1007/978-3-031-04580-6_6>`__ and
+`IWOCL '23 <https://doi.org/10.1145/3388333.3388642>`__.
 There is also a full length journal article under review which describes the
 published version (for example its RDMA support). A preprint of the article is
-available in `arXiv <https://doi.org/10.48550/arXiv.2309.00407>`.
+available in `arXiv <https://doi.org/10.48550/arXiv.2309.00407>`__.
 
-If you use PoCL-R in a research paper, please cite the introductory paper with the following format:
+If you use PoCL-R in a research paper, please cite the introductory paper with the following format::
 
-``
-@InProceedings{10.1007/978-3-031-04580-6_6,
-author="Solanti, Jan
-and Babej, Michal
-and Ikkala, Julius
-and Malamal Vadakital, Vinod Kumar
-and J{\"a}{\"a}skel{\"a}inen, Pekka",
-editor="Orailoglu, Alex
-and Jung, Matthias
-and Reichenbach, Marc",
-title="PoCL-R: A Scalable Low Latency Distributed OpenCL Runtime",
-booktitle="Embedded Computer Systems: Architectures, Modeling, and Simulation",
-year="2022",
-publisher="Springer International Publishing",
-address="Cham",
-pages="78--94",
-isbn="978-3-031-04580-6"
-}
-``
+  @InProceedings{10.1007/978-3-031-04580-6_6,
+  author="Solanti, Jan and Babej, Michal and Ikkala, Julius and Malamal Vadakital, Vinod Kumar and J{\"a}{\"a}skel{\"a}inen, Pekka",
+  title="PoCL-R: A Scalable Low Latency Distributed OpenCL Runtime",
+  booktitle="Embedded Computer Systems: Architectures, Modeling, and Simulation",
+  year="2022",
+  pages="78--94",
+  isbn="978-3-031-04580-6"
+  }
+
 
 
 Prerequisites
