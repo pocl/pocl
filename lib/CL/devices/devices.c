@@ -61,6 +61,7 @@
 #include "pocl_llvm.h"
 #endif
 
+#ifndef ENABLE_LOADABLE_DRIVERS
 #ifdef BUILD_BASIC
 #include "basic/basic.h"
 #endif
@@ -96,14 +97,13 @@
 #include "level0/pocl-level0.h"
 #endif
 
-#define MAX_ENV_NAME_LEN 1024
-
 #ifdef BUILD_REMOTE_CLIENT
 #include "remote/remote.h"
-extern cl_int pocl_remote_setup_peer_mesh ();
-// from remote/remote.c
-extern const char *remote_device_name_ptr;
 #endif
+#endif
+
+#define MAX_ENV_NAME_LEN 1024
+
 
 #define MAX_DEV_NAME_LEN 64
 
@@ -174,6 +174,11 @@ static init_device_ops pocl_devices_init_ops[] = {
   INIT_DEV (remote),
 #endif
 };
+
+#ifdef ENABLE_LOADABLE_DRIVERS
+typedef void (*pocl_remote_init_func)();
+static pocl_remote_init_func pocl_remote_setup_peer_mesh = NULL;
+#endif
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
 
@@ -589,7 +594,7 @@ pocl_init_devices ()
           strcat (init_device_ops_name, pocl_device_types[i]);
           strcat (init_device_ops_name, "_init_device_ops");
           pocl_devices_init_ops[i] = (init_device_ops)dlsym (
-          pocl_device_handles[i], init_device_ops_name);
+            pocl_device_handles[i], init_device_ops_name);
           if (pocl_devices_init_ops[i] == NULL)
             {
               POCL_MSG_ERR ("Loading symbol %s from %s failed: %s\n",
@@ -598,6 +603,10 @@ pocl_init_devices ()
               device_count[i] = 0;
               continue;
             }
+	  if (strcmp(pocl_device_types[i], "remote") == 0) {
+	    pocl_remote_setup_peer_mesh = (pocl_remote_init_func)dlsym (
+              pocl_device_handles[i], "pocl_remote_setup_peer_mesh");
+	  }
         }
       else
         {
@@ -666,7 +675,8 @@ pocl_init_devices ()
     }
 
 #ifdef BUILD_REMOTE_CLIENT
-  pocl_remote_setup_peer_mesh ();
+  if (pocl_remote_setup_peer_mesh)
+    pocl_remote_setup_peer_mesh ();
 #endif
 
   first_init_done = 1;
