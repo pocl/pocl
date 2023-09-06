@@ -322,10 +322,6 @@ extern "C"
     uint32_t width;
     uint32_t height;
     uint32_t depth;
-#ifdef ENABLE_RDMA
-    uint32_t peer_rkey;
-    uint64_t peer_vaddr;
-#endif
   } MigrateD2DMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) CreateBufferMsg_s
