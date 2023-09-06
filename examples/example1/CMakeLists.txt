@@ -94,3 +94,16 @@ set_tests_properties( "examples/example1_poclbin"
     ENVIRONMENT "POCL_KERNEL_CACHE=0"
     LABELS "poclbin;internal;level0"
     DEPENDS "pocl_version_check")
+
+if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
+  add_test(NAME "remote/example1"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "examples/example1/example1")
+  set_tests_properties( "remote/example1"
+    PROPERTIES
+      COST 3.0
+      ${PROPS}
+      PROCESSORS 1
+      LABELS "remote"
+      DEPENDS "pocl_version_check"
+      RESOURCE_LOCK "pocld_ports")
+endif()

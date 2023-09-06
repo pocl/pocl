@@ -159,22 +159,87 @@ set_tests_properties(
   "runtime/test_command_buffer_images"
   PROPERTIES SKIP_RETURN_CODE 77)
 
-if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_EXAMPLES)
-  add_test(NAME "runtime/remote_server_client" COMMAND  "${CMAKE_CURRENT_SOURCE_DIR}/test_remote_server_client.sh" ${CMAKE_BINARY_DIR})
-  set_tests_properties("runtime/remote_server_client"
-    PROPERTIES
-    COST 2.0
-    PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
+  add_test(NAME "remote/clGetDeviceInfo"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clGetDeviceInfo")
+  add_test(NAME "remote/clEnqueueNativeKernel"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clEnqueueNativeKernel")
+  add_test(NAME "remote/clGetEventInfo"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clGetEventInfo")
+  add_test(NAME "remote/clCreateProgramWithBinary"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateProgramWithBinary")
+  add_test(NAME "remote/test_event_cycle"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_event_cycle")
+  add_test(NAME "remote/test_link_error"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_link_error")
+  add_test(NAME "remote/test_read-copy-write-buffer"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_read-copy-write-buffer")
+  add_test(NAME "remote/test_fill-buffer"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_fill-buffer")
+  add_test(NAME "remote/test_buffer-image-copy"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_buffer-image-copy")
+  add_test(NAME "remote/clCreateKernel"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateKernel")
+  add_test(NAME "remote/clGetKernelArgInfo"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clGetKernelArgInfo")
+  add_test(NAME "remote/clGetSupportedImageFormats"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clGetSupportedImageFormats")
+  add_test(NAME "remote/clCreateKernelsInProgram"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateKernelsInProgram")
+  add_test(NAME "remote/clCreateSubDevices"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clCreateSubDevices")
+  add_test(NAME "remote/test_event_free"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_event_free")
+  add_test(NAME "remote/test_event_double_wait"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_event_double_wait")
+  add_test(NAME "remote/test_enqueue_kernel_from_binary"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_enqueue_kernel_from_binary")
+  add_test(NAME "remote/test_user_event"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_user_event")
+  add_test(NAME "remote/test_buffer_migration"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_buffer_migration")
+  add_test(NAME "remote/test_buffer_ping_pong"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_buffer_ping_pong")
+  add_test(NAME "remote/clSetMemObjectDestructorCallback"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clSetMemObjectDestructorCallback")
+  add_test(NAME "remote/test_deviceside_enqueue"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_deviceside_enqueue")
+  add_test(NAME "remote/test_command_buffer"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer")
+  add_test(NAME "remote/test_command_buffer_images"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
 
-  add_test(NAME "runtime/remote_buffer_ping_pong" COMMAND  "${CMAKE_CURRENT_SOURCE_DIR}/test_remote_buffer_ping_pong.sh" ${CMAKE_BINARY_DIR})
-  set_tests_properties("runtime/remote_buffer_ping_pong"
+  set_tests_properties(
+    "remote/clCreateSubDevices"
+    "remote/test_buffer_migration"
+    "remote/test_buffer_ping_pong"
+    "remote/test_buffer-image-copy"
+    "remote/clGetSupportedImageFormats"
+    "remote/clEnqueueNativeKernel"
+    "remote/test_command_buffer"
+    "remote/test_command_buffer_images"
+    PROPERTIES SKIP_RETURN_CODE 77)
+
+  set_tests_properties(
+    "remote/clGetDeviceInfo" "remote/clEnqueueNativeKernel"
+    "remote/clGetEventInfo" "remote/clCreateProgramWithBinary"
+    "remote/clGetSupportedImageFormats" "remote/clCreateKernel"
+    "remote/clGetKernelArgInfo" "remote/test_event_cycle"
+    "remote/test_read-copy-write-buffer" "remote/test_buffer-image-copy"
+    "remote/test_fill-buffer" "remote/test_event_free"
+    "remote/test_event_double_wait" "remote/clCreateSubDevices"
+    "remote/test_enqueue_kernel_from_binary" "remote/test_user_event"
+    "remote/test_buffer_migration" "remote/test_buffer_ping_pong"
+    "remote/clSetMemObjectDestructorCallback" "remote/test_link_error"
+    "remote/test_deviceside_enqueue"
+    "remote/test_command_buffer" "remote/test_command_buffer_images"
     PROPERTIES
-    COST 2.0
-    PROCESSORS 1
-    DEPENDS "pocl_version_check"
-    LABELS "internal;runtime")
+      PASS_REGULAR_EXPRESSION "OK"
+      COST 2.0
+      PROCESSORS 1
+      DEPENDS "pocl_version_check"
+      LABELS "remote"
+      RESOURCE_LOCK "pocld_ports")
 endif()
 
 if(NOT ENABLE_ANYSAN)

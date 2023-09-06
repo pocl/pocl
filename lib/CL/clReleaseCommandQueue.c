@@ -33,8 +33,6 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
                           CL_INVALID_COMMAND_QUEUE);
 
   int new_refcount;
-  cl_context context = command_queue->context;
-  cl_device_id device = command_queue->device;
 
   POname(clFlush)(command_queue);
   POCL_LOCK_OBJ (command_queue);
@@ -47,6 +45,9 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
     {
       POCL_UNLOCK_OBJ (command_queue);
       VG_REFC_ZERO (command_queue);
+
+      cl_context context = command_queue->context;
+      cl_device_id device = command_queue->device;
 
       TP_FREE_QUEUE (context->id, command_queue->id);
 
