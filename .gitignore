@@ -83,3 +83,4 @@ CMakeLists.txt.user
 .idea/
 cmake-build-*/
 .vscode/
+.cache
