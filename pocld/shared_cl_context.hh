@@ -58,9 +58,7 @@ public:
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) = 0;
 
-#ifdef DYNAMIC_BUFFER_SIZE
   virtual int setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) = 0;
-#endif
 
 #ifdef ENABLE_RDMA
   virtual bool clientUsesRdma() = 0;
@@ -135,9 +133,11 @@ public:
                           uint64_t *waitlist) = 0;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
-                         uint32_t dst_buffer_id, size_t size, size_t src_offset,
-                         size_t dst_offset, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                         uint32_t dst_buffer_id,
+                         uint32_t content_size_buffer_id, size_t size,
+                         size_t src_offset, size_t dst_offset,
+                         EventTiming_t &evt, uint32_t waitlist_size,
+                         uint64_t *waitlist) = 0;
 
   virtual int readBufferRect(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                              sizet_vec3 &buffer_origin, sizet_vec3 &region,

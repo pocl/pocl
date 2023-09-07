@@ -202,6 +202,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_buffer_ping_pong")
   add_test(NAME "remote/clSetMemObjectDestructorCallback"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clSetMemObjectDestructorCallback")
+  add_test(NAME "remote/test_cl_pocl_content_size"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_cl_pocl_content_size")
   add_test(NAME "remote/test_deviceside_enqueue"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_deviceside_enqueue")
   add_test(NAME "remote/test_command_buffer"
@@ -213,6 +215,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/clCreateSubDevices"
     "remote/test_buffer_migration"
     "remote/test_buffer_ping_pong"
+    "remote/test_cl_pocl_content_size"
     "remote/test_buffer-image-copy"
     "remote/clGetSupportedImageFormats"
     "remote/clEnqueueNativeKernel"
@@ -231,7 +234,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_enqueue_kernel_from_binary" "remote/test_user_event"
     "remote/test_buffer_migration" "remote/test_buffer_ping_pong"
     "remote/clSetMemObjectDestructorCallback" "remote/test_link_error"
-    "remote/test_deviceside_enqueue"
+    "remote/test_cl_pocl_content_size" "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"

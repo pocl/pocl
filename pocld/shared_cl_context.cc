@@ -95,9 +95,7 @@ class SharedCLContext final : public SharedContextBase {
   unsigned plat_id;
   bool hasImageSupport;
   bool hasPoclBufferSize;
-#ifdef DYNAMIC_BUFFER_SIZE
   std::unordered_map<cl::Buffer *, cl::Buffer *> contentSizeBufferMap;
-#endif
   std::string name;
 
   int setKernelArgs(cl::Kernel *k, clKernelStruct *kernel, size_t arg_count,
@@ -133,9 +131,7 @@ public:
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) override;
 
-#ifdef DYNAMIC_BUFFER_SIZE
   virtual int setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) override;
-#endif
 
 #ifdef ENABLE_RDMA
   virtual bool clientUsesRdma() override {
@@ -214,9 +210,11 @@ public:
                           uint64_t *waitlist) override;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
-                         uint32_t dst_buffer_id, size_t size, size_t src_offset,
-                         size_t dst_offset, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) override;
+                         uint32_t dst_buffer_id,
+                         uint32_t content_size_buffer_id, size_t size,
+                         size_t src_offset, size_t dst_offset,
+                         EventTiming_t &evt, uint32_t waitlist_size,
+                         uint64_t *waitlist) override;
 
   virtual int readBufferRect(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                              sizet_vec3 &buffer_origin, sizet_vec3 &region,
@@ -492,12 +490,10 @@ int SharedCLContext::waitAndDeleteEvent(uint64_t event_id) {
   }
 }
 
-#ifdef DYNAMIC_BUFFER_SIZE
 int SharedCLContext::setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) {
   contentSizeBufferMap[b] = size_b;
   return 0;
 }
-#endif
 
 /****************************************************************************************************************/
 /****************************************************************************************************************/
@@ -1504,7 +1500,6 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
   }
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
-#ifdef DYNAMIC_BUFFER_SIZE
   auto it = contentSizeBufferMap.find(b);
 
   if ((offset == 0) && (it != contentSizeBufferMap.end())) {
@@ -1522,7 +1517,7 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
     if (output_size < size)
       size = output_size;
   }
-#endif
+
   if (content_size)
     *content_size = size;
   EVENT_TIMING("readBuffer",
@@ -1549,9 +1544,10 @@ int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
 
 int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
                                 uint32_t src_buffer_id, uint32_t dst_buffer_id,
-                                size_t size, size_t src_offset,
-                                size_t dst_offset, EventTiming_t &evt,
-                                uint32_t waitlist_size, uint64_t *waitlist) {
+                                uint32_t content_size_buffer_id, size_t size,
+                                size_t src_offset, size_t dst_offset,
+                                EventTiming_t &evt, uint32_t waitlist_size,
+                                uint64_t *waitlist) {
   cl::Buffer *src = nullptr;
   cl::Buffer *dst = nullptr;
   cl::CommandQueue *cq = nullptr;
@@ -1561,10 +1557,34 @@ int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
     FIND_BUFFER2(src);
     FIND_BUFFER2(dst);
   }
+  if (content_size_buffer_id != 0) {
+    cl::Buffer *content_size = nullptr;
+    FIND_BUFFER2(content_size);
+
+    uint32_t content_bytes = 0;
+    // TODO: blocks on all previous commands
+    cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(uint32_t),
+                          &content_bytes);
+    POCL_MSG_PRINT_GENERAL("READ BUFFER SIZE %" PRIuS
+                           " WITH CONTENT SIZE %" PRIu32 "\n",
+                           size, content_bytes);
+    if (src_offset > content_bytes)
+      size = 0;
+    else if (content_bytes < src_offset + size)
+      size = content_bytes - src_offset;
+  }
+
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
-  EVENT_TIMING("copyBuffer",
-               cq->enqueueCopyBuffer(*src, *dst, src_offset, dst_offset, size,
-                                     &dependencies, &event));
+  if (size != 0) {
+    EVENT_TIMING("copyBuffer",
+                 cq->enqueueCopyBuffer(*src, *dst, src_offset, dst_offset, size,
+                                       &dependencies, &event));
+  } else {
+    // Zero sized copy is not allowed, just use a marker as a stand-in for event
+    // sync purposes
+    EVENT_TIMING("copyBuffer",
+                 cq->enqueueMarkerWithWaitList(&dependencies, &event));
+  }
 }
 
 int SharedCLContext::readBufferRect(

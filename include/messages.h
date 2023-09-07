@@ -365,6 +365,7 @@ extern "C"
   {
     uint32_t src_buffer_id;
     uint32_t dst_buffer_id;
+    uint32_t size_buffer_id;
     uint64_t src_offset;
     uint64_t dst_offset;
     uint64_t size;

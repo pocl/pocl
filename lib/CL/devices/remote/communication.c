@@ -2776,9 +2776,10 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
 
 cl_int
 pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
-                   uint32_t src_id, uint32_t dst_id, size_t src_offset,
-                   size_t dst_offset, size_t size, network_command_callback cb,
-                   void *arg, _cl_command_node *node)
+                   uint32_t src_id, uint32_t dst_id, uint32_t content_size_id,
+                   size_t src_offset, size_t dst_offset, size_t size,
+                   network_command_callback cb, void *arg,
+                   _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
 
@@ -2788,6 +2789,7 @@ pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
   req->cq_id = cq_id;
   req->m.copy.src_buffer_id = src_id;
   req->m.copy.dst_buffer_id = dst_id;
+  req->m.copy.size_buffer_id = content_size_id;
   req->m.copy.src_offset = src_offset;
   req->m.copy.dst_offset = dst_offset;
   req->m.copy.size = size;

@@ -282,10 +282,9 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_RUNNING);
-  RETURN_IF_ERR_CODE(backend->readBuffer(req->req.event_id, queue_id,
-                                         req->req.obj_id, m.size, m.src_offset,
-                                         host_ptr, &m.content_size, evt_timing,
-                                         req->waitlist_size, req->waitlist));
+  RETURN_IF_ERR_CODE(backend->readBuffer(
+      req->req.event_id, queue_id, req->req.obj_id, m.size, m.src_offset,
+      host_ptr, &m.size, evt_timing, req->waitlist_size, req->waitlist));
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_FINISHED);
 
@@ -319,10 +318,10 @@ void CommandQueue::CopyBuffer(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_COPY_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  m.src_buffer_id, m.dst_buffer_id, m.size, CL_RUNNING);
-  RETURN_IF_ERR_CODE(
-      backend->copyBuffer(req->req.event_id, queue_id, m.src_buffer_id,
-                          m.dst_buffer_id, m.size, m.src_offset, m.dst_offset,
-                          evt_timing, req->waitlist_size, req->waitlist));
+  RETURN_IF_ERR_CODE(backend->copyBuffer(
+      req->req.event_id, queue_id, m.src_buffer_id, m.dst_buffer_id,
+      m.size_buffer_id, m.size, m.src_offset, m.dst_offset, evt_timing,
+      req->waitlist_size, req->waitlist));
   TP_COPY_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  m.src_buffer_id, m.dst_buffer_id, m.size, CL_FINISHED);
 

@@ -392,8 +392,8 @@ cl_int pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
                            _cl_command_node *node);
 
 cl_int pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
-                          uint32_t src, uint32_t dst, size_t src_offset,
-                          size_t dst_offset, size_t size,
+                          uint32_t src, uint32_t dst, uint32_t size_buf,
+                          size_t src_offset, size_t dst_offset, size_t size,
                           network_command_callback cb, void *arg,
                           _cl_command_node *node);
 

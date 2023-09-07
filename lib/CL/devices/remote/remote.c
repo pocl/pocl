@@ -1190,16 +1190,20 @@ pocl_remote_async_copy (void *data, _cl_command_node *node,
   uintptr_t src_id = (uintptr_t)src_mem_id->mem_ptr;
   uintptr_t dst_id = (uintptr_t)dst_mem_id->mem_ptr;
 
-  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
-
   if ((src_id == dst_id) && (src_offset == dst_offset))
     {
       return 1;
     }
 
-  int r = pocl_network_copy (queue_id, data, src_id, dst_id, src_offset,
-                             dst_offset, size, remote_finish_command, data,
-                             node);
+  uintptr_t content_size_id = 0;
+  if (node->command.copy.src_content_size_mem_id)
+    content_size_id
+        = (uintptr_t)node->command.copy.src_content_size_mem_id->mem_ptr;
+  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  int r = pocl_network_copy (queue_id, data, src_id, dst_id, content_size_id,
+                             src_offset, dst_offset, size,
+                             remote_finish_command, data, node);
   assert (r == 0);
   return 0;
 }
