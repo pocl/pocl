@@ -237,9 +237,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     {
       if ((device->version_as_int/100 == 2) && (device->opencl_c_version_as_opt[2] -'0' == 2 ))
       {
-        char cl_std_minor = device->opencl_c_version_as_opt[4];
+        char cl_std_minor[2] = {device->opencl_c_version_as_opt[4], '\0'};
         char opencl_c_version[20] = "OpenCL C 2.";
-        strcat(opencl_c_version, &cl_std_minor);
+        strcat(opencl_c_version, cl_std_minor);
         strcat(opencl_c_version, " PoCL");
         POCL_RETURN_GETINFO_STR (opencl_c_version);
       }
