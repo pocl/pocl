@@ -40,8 +40,9 @@ fi
 export OCL_ICD_VENDORS=$BUILD_DIR/ocl-vendors/pocl-tests.icd
 export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
+export POCL_DEBUG=
 
-$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error &
+$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error,warn,general &
 POCLD_PID=$!
 
 echo "Pocld running with PID: $POCLD_PID"
@@ -50,7 +51,7 @@ sleep 1
 
 export POCL_DEVICES="remote"
 export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT/0"
-export POCL_DEBUG=warn,err
+export POCL_DEBUG="warn,err,remote"
 unset POCL_ENABLE_UNINIT
 
 echo "Running $BUILD_DIR/$TEST_BINARY"
