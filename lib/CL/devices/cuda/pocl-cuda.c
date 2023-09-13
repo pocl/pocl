@@ -85,6 +85,7 @@ typedef struct pocl_cuda_device_data_s
   char libdevice[PATH_MAX];
   pocl_lock_t compile_lock;
   int supports_cu_mem_host_register;
+  int supports_managed_memory;
   int sm_maj, sm_min;
   cl_bool available;
 } pocl_cuda_device_data_t;
@@ -409,6 +410,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
+      data->supports_managed_memory = 0;
+      GET_CU_PROP (MANAGED_MEMORY, data->supports_managed_memory);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
@@ -581,6 +584,14 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->svm_allocation_priority = 2;
   dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+  if (data->supports_managed_memory) {
+    dev->svm_allocation_priority = 2;
+
+    /* OpenCL 2.0 properties */
+    dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                    | CL_DEVICE_SVM_FINE_GRAIN_BUFFER;
+//                    | CL_DEVICE_SVM_ATOMICS;
+  }
 
   // All devices starting from Compute Capability 2.0 have this limit;
   // See e.g.
