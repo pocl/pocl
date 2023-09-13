@@ -660,11 +660,7 @@ uint64_t abuf_size = 0;
 	exit(1);
 #endif
 
-  ldssize=0x1000; //pass from elf file
-  pdssize=0x1000; //pass from elf file
-  start_pc=0x80000000; // start.S baseaddr, now lock to 0x80000000
-  sgpr_usage=32;
-  vgpr_usage=32;
+
   uint64_t pc_src_size=0x10000000;
   uint64_t pc_dev_mem_addr = 0x80000000;
 //  ///TODO 在这个地址放程序段
