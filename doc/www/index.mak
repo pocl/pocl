@@ -41,6 +41,8 @@ integrated to the <a href="http://code.portablecl.org">main</a> branch for the
 upcoming v5.0 release. <a href="remote-backend.html">Why not give it a run?</a>
 </p>
 
+<h2>2023-06-22: <a href="pocl-4.0.html">Portable Computing Language (PoCL) v4.0 released</a></h2>
+
 <h2>2022-12-05: <a href="pocl-3.1.html">Portable Computing Language (PoCL) v3.1 released</a></h2>
 
 <h2>2022-11-15: <a href="almaif.html">Advanced hardware accelerator support through AlmaIF</a></h2>
