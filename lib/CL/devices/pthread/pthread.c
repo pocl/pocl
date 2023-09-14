@@ -71,7 +71,6 @@ struct data {
 void
 pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 {
-  pocl_ventus_init_device_ops(ops);
 
   ops->device_name = "pthread";
 
