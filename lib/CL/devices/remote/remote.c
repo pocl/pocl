@@ -1803,6 +1803,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
                 if (region[1] == 0)
                   region[1] = 1;
                 size_t origin[3] = { 0, 0, 0 };
+                // TODO: truncate region if it exceeds content size?
                 r = pocl_remote_async_write_image_rect (
                     d, node, m, cmd->migrate.mem_id, m->mem_host_ptr, NULL,
                     origin, region, 0, 0, 0);
@@ -1811,7 +1812,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
               {
                 r = pocl_remote_async_write (d, node, m->mem_host_ptr,
                                              cmd->migrate.mem_id, m, 0,
-                                             m->size);
+                                             cmd->migrate.migration_size);
               }
             assert (r == 0);
             break;

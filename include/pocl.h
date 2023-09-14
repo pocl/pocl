@@ -350,6 +350,9 @@ typedef struct
   pocl_mem_identifier *src_id;
   pocl_mem_identifier *dst_id;
   pocl_mem_identifier *mem_id;
+  /** For migrating a buffer that has a size buffer as per
+   * cl_pocl_content_size */
+  uint64_t migration_size;
 } _cl_command_migrate;
 
 typedef struct
