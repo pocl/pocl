@@ -769,9 +769,6 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			# convert arg type to SPIR mangled type with AS
 			# e.g. "Pi" -> "PU3AS3i"
 			spir_cast_arg = mang_suffix(actual_arg, MANGLING_AS_SPIR[AS])
-			# TODO this needs investigating, the SPIRV (Itanium) mangling (also c++filt) uses S3 but OpenCL source compilation results in S4
-			if spir_cast_arg == "S4_":
-				spir_cast_arg = "S3_"
 			spir_mangled_func_suffix.append(spir_cast_arg)
 
 			# mangle for target differently if required by target
