@@ -152,4 +152,7 @@
 #define clCommandFillBufferKHR POclCommandFillBufferKHR
 #define clCommandFillImageKHR POclCommandFillImageKHR
 
+/* PoCL extensions */
+#define clSetContentSizeBufferPoCL POclSetContentSizeBufferPoCL
+
 #endif
