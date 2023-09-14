@@ -43,8 +43,8 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_event_double_wait test_buffer_migration test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback
-  test_cl_pocl_content_size test_deviceside_enqueue
-  test_command_buffer test_command_buffer_images)
+  test_cl_pocl_content_size test_cl_pocl_content_size_migration
+  test_deviceside_enqueue test_command_buffer test_command_buffer_images)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -204,6 +204,10 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_clSetMemObjectDestructorCallback")
   add_test(NAME "remote/test_cl_pocl_content_size"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_cl_pocl_content_size")
+  add_test(NAME "remote/test_cl_pocl_content_size_migration_host_remote"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_with_local.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_cl_pocl_content_size_migration")
+  add_test(NAME "remote/test_cl_pocl_content_size_migration_remote_remote"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_cl_pocl_content_size_migration")
   add_test(NAME "remote/test_deviceside_enqueue"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_deviceside_enqueue")
   add_test(NAME "remote/test_command_buffer"
@@ -216,6 +220,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_buffer_migration"
     "remote/test_buffer_ping_pong"
     "remote/test_cl_pocl_content_size"
+    "remote/test_cl_pocl_content_size_migration_host_remote"
+    "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_buffer-image-copy"
     "remote/clGetSupportedImageFormats"
     "remote/clEnqueueNativeKernel"
@@ -234,7 +240,10 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_enqueue_kernel_from_binary" "remote/test_user_event"
     "remote/test_buffer_migration" "remote/test_buffer_ping_pong"
     "remote/clSetMemObjectDestructorCallback" "remote/test_link_error"
-    "remote/test_cl_pocl_content_size" "remote/test_deviceside_enqueue"
+    "remote/test_cl_pocl_content_size"
+    "remote/test_cl_pocl_content_size_migration_host_remote"
+    "remote/test_cl_pocl_content_size_migration_remote_remote"
+    "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"
