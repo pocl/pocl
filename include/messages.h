@@ -315,6 +315,7 @@ extern "C"
     uint64_t size;
     uint32_t source_pid;
     uint32_t source_did;
+    uint32_t size_id;
     uint32_t dest_peer_id;
     uint32_t source_peer_id;
     uint32_t is_image;
@@ -348,6 +349,7 @@ extern "C"
     uint64_t src_offset;
     uint64_t size;
     uint64_t content_size;
+    uint32_t content_size_id;
 #ifdef ENABLE_RDMA
     uint64_t client_vaddr;
     uint32_t client_rkey;

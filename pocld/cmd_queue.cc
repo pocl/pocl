@@ -283,8 +283,9 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readBuffer(
-      req->req.event_id, queue_id, req->req.obj_id, m.size, m.src_offset,
-      host_ptr, &m.size, evt_timing, req->waitlist_size, req->waitlist));
+      req->req.event_id, queue_id, req->req.obj_id, m.content_size_id, m.size,
+      m.src_offset, host_ptr, &m.size, evt_timing, req->waitlist_size,
+      req->waitlist));
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_FINISHED);
 

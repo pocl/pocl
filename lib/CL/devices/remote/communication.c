@@ -2674,7 +2674,7 @@ pocl_network_free_image (remote_device_data_t *ddata, uint32_t image_id)
 // ##################################################################################
 
 cl_int
-pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
+pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
                           unsigned mem_is_image, uint32_t height,
                           uint32_t width, uint32_t depth, size_t size,
                           remote_device_data_t *dest,
@@ -2701,6 +2701,7 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
   req->m.migrate.depth = depth;
   req->m.migrate.width = width;
   req->m.migrate.height = height;
+  req->m.migrate.size_id = size_id;
 
   data = source->server;
   SEND_REQ_FAST;
@@ -2710,8 +2711,9 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
 
 cl_int
 pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
-                   uint32_t mem_id, void *host_ptr, size_t offset, size_t size,
-                   network_command_callback cb, void *arg, _cl_command_node *node)
+                   uint32_t mem_id, uint32_t size_id, void *host_ptr,
+                   size_t offset, size_t size, network_command_callback cb,
+                   void *arg, _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
   assert (size > 0);
@@ -2723,6 +2725,7 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
   req->cq_id = cq_id;
   req->m.read.src_offset = offset;
   req->m.read.size = size;
+  req->m.read.content_size_id = size_id;
 
   // REPLY
   netcmd->rep_extra_data = host_ptr;

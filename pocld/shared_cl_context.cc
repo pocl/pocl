@@ -94,8 +94,6 @@ class SharedCLContext final : public SharedContextBase {
   VirtualContextBase *ParentCtx;
   unsigned plat_id;
   bool hasImageSupport;
-  bool hasPoclBufferSize;
-  std::unordered_map<cl::Buffer *, cl::Buffer *> contentSizeBufferMap;
   std::string name;
 
   int setKernelArgs(cl::Kernel *k, clKernelStruct *kernel, size_t arg_count,
@@ -113,8 +111,6 @@ public:
 
   virtual size_t numDevices() const override { return CLDevices.size(); }
 
-  virtual bool hasBufferSize() const override { return hasPoclBufferSize; }
-
   virtual void queuedPush(Request *req) override;
 
   virtual void notifyEvent(uint64_t id, cl_int status) override;
@@ -130,8 +126,6 @@ public:
 
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) override;
-
-  virtual int setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) override;
 
 #ifdef ENABLE_RDMA
   virtual bool clientUsesRdma() override {
@@ -149,8 +143,6 @@ public:
                            void *host_ptr) override;
 
   virtual int freeBuffer(uint32_t buffer_id) override;
-
-  virtual int getBufferContentSize(uint32_t buffer_id, size_t &size) override;
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
@@ -200,9 +192,10 @@ public:
   /**********************************************************************/
 
   virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                         size_t size, size_t offset, void *host_ptr,
-                         uint64_t *content_size, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) override;
+                         uint32_t size_id, size_t size, size_t offset,
+                         void *host_ptr, uint64_t *content_size,
+                         EventTiming_t &evt, uint32_t waitlist_size,
+                         uint64_t *waitlist) override;
 
   virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                           size_t size, size_t offset, void *host_ptr,
@@ -418,7 +411,6 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
   ContextWithAllDevices = cl::Context(CLDevices, properties);
 
   hasImageSupport = false;
-  hasPoclBufferSize = false;
   slow = s;
   fast = f;
   assert(slow);
@@ -434,9 +426,6 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                         CLDevices.size());
 
   std::string exts = p->getInfo<CL_PLATFORM_EXTENSIONS>();
-  hasPoclBufferSize = (exts.find("cl_pocl_buffer_size") != std::string::npos);
-  POCL_MSG_PRINT_INFO("Platform has pocl buffer size support: %s\n",
-                      hasPoclBufferSize ? "yes" : "no");
 
   for (auto Dev : CLDevices) {
     if (Dev.getInfo<CL_DEVICE_IMAGE_SUPPORT>()) {
@@ -488,11 +477,6 @@ int SharedCLContext::waitAndDeleteEvent(uint64_t event_id) {
                  event_id);
     return CL_INVALID_EVENT;
   }
-}
-
-int SharedCLContext::setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) {
-  contentSizeBufferMap[b] = size_b;
-  return 0;
 }
 
 /****************************************************************************************************************/
@@ -1427,22 +1411,6 @@ int SharedCLContext::freeBuffer(uint32_t buffer_id) {
   return 0;
 }
 
-int SharedCLContext::getBufferContentSize(uint32_t buffer_id, size_t &size) {
-  // TODO broken
-  if (!hasPoclBufferSize) {
-    POCL_MSG_ERR("This context doesn't support buffer size\n");
-    return CL_INVALID_CONTEXT;
-  }
-
-  cl::Buffer *b = nullptr;
-  int err;
-  {
-    std::unique_lock<std::mutex> lock(MainMutex);
-    FIND_BUFFER;
-  }
-  return err;
-}
-
 /****************************************************************************************************************/
 /****************************************************************************************************************/
 /****************************************************************************************************************/
@@ -1486,10 +1454,11 @@ int SharedCLContext::migrateMemObject(uint64_t ev_id, uint32_t cq_id,
 }
 
 int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
-                                uint32_t buffer_id, size_t size, size_t offset,
-                                void *host_ptr, uint64_t *content_size,
-                                EventTiming_t &evt, uint32_t waitlist_size,
-                                uint64_t *waitlist) {
+                                uint32_t buffer_id,
+                                uint32_t content_size_buffer_id, size_t size,
+                                size_t offset, void *host_ptr,
+                                uint64_t *out_size, EventTiming_t &evt,
+                                uint32_t waitlist_size, uint64_t *waitlist) {
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
   std::vector<cl::Event> dependencies;
@@ -1500,26 +1469,25 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
   }
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
-  auto it = contentSizeBufferMap.find(b);
+  if (content_size_buffer_id != 0) {
+    cl::Buffer *content_size = nullptr;
+    FIND_BUFFER2(content_size);
 
-  if ((offset == 0) && (it != contentSizeBufferMap.end())) {
-    POCL_MSG_PRINT_INFO(
-        "readBufferCONT: found content-size-buffer in map (event %" PRIu64
-        ")\n",
-        ev_id);
-    cl::Event dep;
-    cl::Buffer *b2 = it->second;
-    uint32_t output_size;
-    // TODO blocking command! (should be fast though, only 4 bytes, but blocks
-    // on all previous commands)
-    cq->enqueueReadBuffer(*b2, CL_TRUE, 0, sizeof(uint32_t), &output_size,
-                          &dependencies);
-    if (output_size < size)
-      size = output_size;
+    uint64_t content_bytes = 0;
+    // TODO: blocks on all previous commands
+    cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(content_bytes),
+                          &content_bytes);
+    POCL_MSG_PRINT_GENERAL("READ BUFFER SIZE %" PRIuS
+                           " WITH CONTENT SIZE %" PRIu64 "\n",
+                           size, content_bytes);
+    if (offset > content_bytes)
+      size = 0;
+    else if (content_bytes < offset + size)
+      size = content_bytes - offset;
   }
 
-  if (content_size)
-    *content_size = size;
+  if (out_size)
+    *out_size = size;
   EVENT_TIMING("readBuffer",
                cq->enqueueReadBuffer(*b, CL_FALSE, offset, size, host_ptr,
                                      &dependencies, &event));
@@ -1561,12 +1529,12 @@ int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
     cl::Buffer *content_size = nullptr;
     FIND_BUFFER2(content_size);
 
-    uint32_t content_bytes = 0;
+    uint64_t content_bytes = 0;
     // TODO: blocks on all previous commands
-    cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(uint32_t),
+    cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(content_bytes),
                           &content_bytes);
     POCL_MSG_PRINT_GENERAL("READ BUFFER SIZE %" PRIuS
-                           " WITH CONTENT SIZE %" PRIu32 "\n",
+                           " WITH CONTENT SIZE %" PRIu64 "\n",
                            size, content_bytes);
     if (src_offset > content_bytes)
       size = 0;

@@ -991,6 +991,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
   RequestMsg_t &r = req->req;
   EventTiming_t evt{};
   uint32_t mem_obj_id = r.obj_id;
+  uint32_t size_buffer_id = m.size_id;
   uint32_t def_queue_id = DEFAULT_QUE_ID + m.source_did;
   int err;
   char *storage = nullptr;
@@ -1003,8 +1004,10 @@ void VirtualCLContext::MigrateD2D(Request *req) {
     r.m.migrate.is_external = 1;
     POCL_MSG_PRINT_GENERAL(
         "migration between 2 different platforms, SIZE: %" PRIu64
-        "  QID: %" PRIu32 " DID: %" PRIu32 "\n",
-        uint64_t(m.size), uint32_t(r.cq_id), uint32_t(r.did));
+        "  QID: %" PRIu32 " DID: %" PRIu32 " CONTENT SIZE BUFFER: %" PRIu32
+        "\n",
+        uint64_t(m.size), uint32_t(r.cq_id), uint32_t(r.did),
+        uint32_t(size_buffer_id));
     assert(m.size);
 
     // totally made up, but we immediately delete the event from EventMap
@@ -1034,11 +1037,14 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 #ifndef RDMA_USE_SVM
       SharedContextBase *src = SharedContextList[m.source_pid];
       if (m.is_image == 0) {
+        uint64_t content_size;
         // TODO we should probably wait for events in DST SharedCLcontext
         // before launching readBuffer in SRC SharedCLcontext
         // enqueue a read buffer in the *source* context ...
-        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id, m.size, 0,
-                              storage, nullptr, evt, 0, nullptr);
+        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id,
+                              size_buffer_id, m.size, 0, storage, &content_size,
+                              evt, 0, nullptr);
+        m.size = content_size;
       } else {
         sizet_vec3 origin = {0, 0, 0};
         sizet_vec3 region = {m.width, m.height, m.depth};

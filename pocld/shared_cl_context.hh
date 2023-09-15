@@ -46,8 +46,6 @@ public:
 
   virtual size_t numDevices() const = 0;
 
-  virtual bool hasBufferSize() const = 0;
-
   virtual int writeKernelMeta(uint32_t program_id, char *buffer,
                               size_t *written) = 0;
 
@@ -57,8 +55,6 @@ public:
 
   virtual std::vector<cl::Event> remapWaitlist(size_t num_events, uint64_t *ids,
                                                uint64_t dep) = 0;
-
-  virtual int setContentSizeBuffer(cl::Buffer *b, cl::Buffer *size_b) = 0;
 
 #ifdef ENABLE_RDMA
   virtual bool clientUsesRdma() = 0;
@@ -72,8 +68,6 @@ public:
                            void *host_ptr) = 0;
 
   virtual int freeBuffer(uint32_t buffer_id) = 0;
-
-  virtual int getBufferContentSize(uint32_t buffer_id, size_t &size) = 0;
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
@@ -123,9 +117,10 @@ public:
   /**********************************************************************/
 
   virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                         size_t size, size_t offset, void *host_ptr,
-                         uint64_t *content_size, EventTiming_t &evt,
-                         uint32_t waitlist_size, uint64_t *waitlist) = 0;
+                         uint32_t size_id, size_t size, size_t offset,
+                         void *host_ptr, uint64_t *content_size,
+                         EventTiming_t &evt, uint32_t waitlist_size,
+                         uint64_t *waitlist) = 0;
 
   virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
                           size_t size, size_t offset, void *host_ptr,

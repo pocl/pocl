@@ -885,13 +885,13 @@ FINISH_VER_SETUP:
 
   if (do_need_hostptr)
     {
-      /* increase refcount for the two mig commands and for migrating the
-       * content buffer if this is a size buffer */
+      /* increase refcount for the two mig commands and for the caller
+       * if this is a size buffer needed for content size -aware migration */
       if (do_export)
         ++mem->mem_host_ptr_refcount;
       if (do_import)
         ++mem->mem_host_ptr_refcount;
-      if (mem->content_buffer != NULL)
+      if (ev_export_p)
         ++mem->mem_host_ptr_refcount;
 
       /* allocate mem_host_ptr here if needed... */
@@ -971,8 +971,9 @@ FINISH_VER_SETUP:
               = &mem->device_ptrs[ex_dev->global_mem_id];
           cmd_import->command.migrate.dst_id
               = &mem->device_ptrs[dev->global_mem_id];
-          /* Backend should pull the content size buffer from the mem id and
-           * handle content size internally */
+          if (mem->size_buffer != NULL)
+            cmd_import->command.migrate.src_content_size_mem_id
+                = &mem->size_buffer->device_ptrs[ex_dev->global_mem_id];
         }
       else
         {
@@ -1071,8 +1072,22 @@ pocl_create_command_full (_cl_command_node **cmd,
     {
       if (buffers[i]->size_buffer != NULL)
         {
-          /* Bump "last event" refcount for content size buffers too */
-          POname (clRetainEvent) (final_event);
+          /* Bump "last event" refcount for content size buffers that weren't
+           * explicitly given as dependencies */
+          int explicit = 0;
+          for (int j = 0; j < num_buffers; ++j)
+            {
+              if (buffers[j] == buffers[i]->size_buffer)
+                {
+                  explicit = 1;
+                  break;
+                }
+            }
+          if (!explicit)
+            {
+              POname (clRetainEvent) (final_event);
+            }
+
           pocl_create_migration_commands (
               dev, &size_events[i], final_event, buffers[i]->size_buffer,
               &(buffers[i]->size_buffer)->device_ptrs[dev->global_mem_id],
@@ -1093,28 +1108,25 @@ pocl_create_command_full (_cl_command_node **cmd,
             {
               cl_device_id d = size_events[i]->queue->device;
               d->ops->wait_event (d, size_events[i]);
-              POname (clReleaseEvent) (size_events[i]);
-            }
-
-          /* Override migration size if we have a host copy of content size.
-           * We might not have this e.g. if D2D migrations are possible.
-           * This may also be missing if there is a logic mistake in
-           * pocl_create_migration_commands, but since this is only a
-           * performance optimization it should not do any acute harm. */
-          if (buffers[i]->size_buffer->mem_host_ptr != NULL)
-            {
-              migration_size
-                  = *(uint64_t *)buffers[i]->size_buffer->mem_host_ptr;
-              /* remove the extra reference that pocl_create_migration_commands
-               * added so we can read out the host ptr */
+              if (buffers[i]->size_buffer->mem_host_ptr != NULL)
+                {
+                  migration_size
+                      = *(uint64_t *)buffers[i]->size_buffer->mem_host_ptr;
+                }
               pocl_release_mem_host_ptr (buffers[i]->size_buffer);
+              POname (clReleaseEvent) (size_events[i]);
+              size_events[i] = NULL;
             }
         }
 
-      pocl_create_migration_commands (
-          dev, NULL, final_event, buffers[i],
-          &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
-          command_type, mig_flags, migration_size);
+      /* Size buffers were just migrated above, don't try to redo it */
+      if (buffers[i]->content_buffer == NULL)
+        {
+          pocl_create_migration_commands (
+              dev, NULL, final_event, buffers[i],
+              &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
+              command_type, mig_flags, migration_size);
+        }
     }
 
   return err;
