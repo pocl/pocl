@@ -55,7 +55,11 @@ memory and uploaded to the destination from there.</li>
 
 Similarly, synchronisation between commands is done with OpenCL events within
 the daemon and OpenCL user events that are signaled in peer-to-peer fashion
-for dependencies between daemons.
+for dependencies between daemons. In addition to automatically choosing the
+most efficient route for communication, PoCL-Remote is also able to use size
+buffers as specified in the <emph>cl_pocl_content_size</emph> extension to
+only transfer the meaningful portion of buffers with variable sized content
+such as compressed image or video data.
 </p>
 
 <p>Early versions of PoCL-R or experiments using it have been presented at
