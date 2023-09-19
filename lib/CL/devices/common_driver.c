@@ -448,6 +448,15 @@ pocl_driver_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr,
   pocl_driver_memfill (dev->data, &temp, NULL, size, 0, pattern, pattern_size);
 }
 
+void
+pocl_driver_svm_copy (cl_device_id dev,
+                      void *__restrict__ dst,
+                      const void *__restrict__ src,
+                      size_t size)
+{
+  memcpy (dst, src, size);
+}
+
 /* These are implementations of compilation callbacks for all devices
  * that support compilation via LLVM. They take care of compilation/linking
  * of source/binary/spir down to parallel.bc level.

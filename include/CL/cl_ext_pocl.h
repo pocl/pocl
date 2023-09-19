@@ -26,36 +26,6 @@
  * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  ******************************************************************************/
 
-#ifndef __CL_EXT_POCL_H
-#define __CL_EXT_POCL_H
+#include <CL/cl_ext.h>
+#pragma message("The PoCL extensions have been moved into cl_ext.h.  Please include cl_ext.h directly.")
 
-#include <CL/cl.h>
-#include <CL/cl_platform.h>
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/***********************************
-* cl_pocl_content_size extension   *
-************************************/
-
-extern CL_API_ENTRY cl_int CL_API_CALL
-clSetContentSizeBufferPoCL(
-    cl_mem    buffer,
-    cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
-
-typedef CL_API_ENTRY cl_int
-(CL_API_CALL *clSetContentSizeBufferPoCL_fn)(
-    cl_mem    buffer,
-    cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
-
-/* ################################## cl_pocl_rdma
- * ################################# */
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __CL_EXT_POCL_H */

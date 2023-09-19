@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
 #include "pocl_util.h"
+#include "pocl_shared.h"
 
 cl_int
 pocl_validate_fill_buffer (cl_command_queue command_queue, cl_mem buffer,
@@ -80,25 +81,7 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
                          cl_sync_point_khr *sync_point, _cl_command_node **cmd)
 {
   cl_int errcode;
-  if (command_buffer == NULL)
-    {
-      assert (sync_point_wait_list == NULL);
-      POCL_RETURN_ERROR_COND (
-          (event_wait_list == NULL && num_items_in_wait_list > 0),
-          CL_INVALID_EVENT_WAIT_LIST);
-      POCL_RETURN_ERROR_COND (
-          (event_wait_list != NULL && num_items_in_wait_list == 0),
-          CL_INVALID_EVENT_WAIT_LIST);
-      errcode = pocl_check_event_wait_list (
-          command_queue, num_items_in_wait_list, event_wait_list);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-    }
-  else
-    {
-      assert (event_wait_list == NULL && event == NULL);
-      /* sync point wait list is validated in pocl_create_recorded_command */
-    }
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
 
   errcode = pocl_validate_fill_buffer (command_queue, buffer, pattern,
                                        pattern_size, offset, size);
@@ -115,6 +98,10 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
   char rdonly = 0;
   if (command_buffer == NULL)
     {
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+          return errcode;
       errcode = pocl_create_command (
           cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
           num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
@@ -177,25 +164,8 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
                         _cl_command_node **cmd)
 {
   cl_int errcode;
-  if (command_buffer == NULL)
-    {
-      assert (sync_point_wait_list == NULL);
-      POCL_RETURN_ERROR_COND (
-          (event_wait_list == NULL && num_items_in_wait_list > 0),
-          CL_INVALID_EVENT_WAIT_LIST);
-      POCL_RETURN_ERROR_COND (
-          (event_wait_list != NULL && num_items_in_wait_list == 0),
-          CL_INVALID_EVENT_WAIT_LIST);
-      errcode = pocl_check_event_wait_list (
-          command_queue, num_items_in_wait_list, event_wait_list);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-    }
-  else
-    {
-      assert (event_wait_list == NULL && event == NULL);
-      /* sync point wait list is validated in pocl_create_recorded_command */
-    }
+
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
 
   errcode = pocl_validate_fill_image (command_queue, image, fill_color, origin,
                                       region);
@@ -245,6 +215,10 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
   char rdonly = 0;
   if (command_buffer == NULL)
     {
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+          return errcode;
       errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_FILL_IMAGE,
                                      event, num_items_in_wait_list,
                                      event_wait_list, 1, &image, &rdonly);

@@ -89,6 +89,12 @@ void pocl_driver_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr,
                            size_t size, void *__restrict__ pattern,
                            size_t pattern_size);
 
+POCL_EXPORT
+void pocl_driver_svm_copy (cl_device_id dev,
+                           void *__restrict__ dst,
+                           const void *__restrict__ src,
+                           size_t size);
+
   POCL_EXPORT
   int pocl_driver_build_source (cl_program program, cl_uint device_i,
                                 cl_uint num_input_headers,

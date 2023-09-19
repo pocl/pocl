@@ -146,7 +146,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_unmap = NULL;
   ops->svm_advise = NULL;
   ops->svm_migrate = NULL;
-  ops->svm_copy = pocl_basic_svm_copy;
+  ops->svm_copy = pocl_driver_svm_copy;
   ops->svm_fill = pocl_driver_svm_fill;
 
   ops->create_kernel = NULL;
@@ -977,13 +977,6 @@ pocl_basic_usm_free (cl_device_id dev, void *svm_ptr)
    * in the runtime API (clMemFreeINTEL) */
   assert (item != NULL);
   pocl_aligned_free (svm_ptr);
-}
-
-void
-pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
-                     const void *__restrict__ src, size_t size)
-{
-  memcpy (dst, src, size);
 }
 
 static cl_bitfield
