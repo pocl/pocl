@@ -305,6 +305,37 @@ clGetCommandBufferInfoKHR_t(
 typedef clGetCommandBufferInfoKHR_t *
 clGetCommandBufferInfoKHR_fn ;
 
+typedef cl_int CL_API_CALL
+clCommandSVMMemcpyKHR_t(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    size_t size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+typedef clCommandSVMMemcpyKHR_t *
+clCommandSVMMemcpyKHR_fn ;
+
+typedef cl_int CL_API_CALL
+clCommandSVMMemfillKHR_t(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    size_t size,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle);
+
+typedef clCommandSVMMemfillKHR_t *
+clCommandSVMMemfillKHR_fn ;
+
 #if !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES)
 
 extern CL_API_ENTRY cl_command_buffer_khr CL_API_CALL
@@ -467,6 +498,33 @@ clGetCommandBufferInfoKHR(
     size_t param_value_size,
     void* param_value,
     size_t* param_value_size_ret) ;
+
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemcpyKHR(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *dst_ptr,
+    const void *src_ptr,
+    size_t size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle) ;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clCommandSVMMemfillKHR(
+    cl_command_buffer_khr command_buffer,
+    cl_command_queue command_queue,
+    void *svm_ptr,
+    size_t size,
+    const void *pattern,
+    size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr* sync_point_wait_list,
+    cl_sync_point_khr* sync_point,
+    cl_mutable_command_khr* mutable_handle) ;
+
 
 #endif /* !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES) */
 

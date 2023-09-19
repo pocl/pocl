@@ -150,23 +150,27 @@ cl_int pocl_fill_image_common (
     cl_sync_point_khr *sync_point, cl_mutable_command_khr *mutable_handle,
     _cl_command_node **cmd);
 
-cl_int pocl_svm_memcpy_common (cl_command_type command_type,
+cl_int pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
                                cl_command_queue command_queue,
-                               cl_bool blocking, void *dst_ptr,
-                               const void *src_ptr, size_t size,
-                               cl_uint num_events_in_wait_list,
-                               const cl_event *event_wait_list,
-                               cl_event *event);
+                               cl_command_type command_type,
+                               void *dst_ptr, const void *src_ptr, size_t size,
+                               cl_uint num_items_in_wait_list,
+                               const cl_event *event_wait_list, cl_event *event,
+                               const cl_sync_point_khr *sync_point_wait_list,
+                               cl_sync_point_khr *sync_point,
+                               _cl_command_node **cmd);
 
-cl_int pocl_svm_memfill_common (cl_command_type command_type,
+
+cl_int pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
                                 cl_command_queue command_queue,
-                                void *svm_ptr,
-                                const void *pattern,
+                                cl_command_type command_type,
+                                void *svm_ptr, size_t size, const void *pattern,
                                 size_t pattern_size,
-                                size_t size,
-                                cl_uint num_events_in_wait_list,
-                                const cl_event *event_wait_list,
-                                cl_event *event);
+                                cl_uint num_items_in_wait_list,
+                                const cl_event *event_wait_list, cl_event *event,
+                                const cl_sync_point_khr *sync_point_wait_list,
+                                cl_sync_point_khr *sync_point,
+                                _cl_command_node **cmd);
 
 cl_int pocl_svm_migrate_mem_common (cl_command_type command_type,
                                     cl_command_queue command_queue,
@@ -182,6 +186,28 @@ int
 pocl_set_kernel_arg_pointer(cl_kernel kernel,
                             cl_uint arg_index,
                             const void *arg_value);
+
+#define POCL_VALIDATE_WAIT_LIST_PARAMS                                        \
+  do                                                                          \
+    {                                                                         \
+      if (command_buffer == NULL)                                             \
+        {                                                                     \
+          assert (sync_point_wait_list == NULL);                              \
+          POCL_RETURN_ERROR_COND (                                            \
+              (event_wait_list == NULL && num_items_in_wait_list > 0),        \
+              CL_INVALID_EVENT_WAIT_LIST);                                    \
+          POCL_RETURN_ERROR_COND (                                            \
+              (event_wait_list != NULL && num_items_in_wait_list == 0),       \
+              CL_INVALID_EVENT_WAIT_LIST);                                    \
+        }                                                                     \
+      else                                                                    \
+        {                                                                     \
+          assert (event_wait_list == NULL && event == NULL);                  \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+/* sync point wait list is validated in pocl_create_recorded_command */
+
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

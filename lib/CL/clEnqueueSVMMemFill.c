@@ -26,12 +26,25 @@
 #include "pocl_util.h"
 
 cl_int
-pocl_svm_memfill_common (cl_command_type command_type,
-                         cl_command_queue command_queue, void *svm_ptr,
-                         const void *pattern, size_t pattern_size, size_t size,
-                         cl_uint num_events_in_wait_list,
-                         const cl_event *event_wait_list, cl_event *event)
+pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
+                         cl_command_queue command_queue,
+                         cl_command_type command_type,
+                         void *svm_ptr,
+                         size_t size,
+                         const void *pattern,
+                         size_t pattern_size,
+                         cl_uint num_items_in_wait_list,
+                         const cl_event *event_wait_list,
+                         cl_event *event,
+                         const cl_sync_point_khr *sync_point_wait_list,
+                         cl_sync_point_khr *sync_point,
+                         _cl_command_node **cmd)
 {
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
+
+  unsigned i;
+  cl_device_id device;
+  POCL_CHECK_DEV_IN_CMDQ;
   cl_int errcode;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
@@ -42,9 +55,6 @@ pocl_svm_memfill_common (cl_command_type command_type,
   POCL_RETURN_ERROR_ON (
       (context->svm_allocdev == NULL), CL_INVALID_OPERATION,
       "None of the devices in this context is SVM-capable\n");
-
-  POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
-                          CL_DEVICE_NOT_AVAILABLE);
 
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);
 
@@ -63,36 +73,39 @@ pocl_svm_memfill_common (cl_command_type command_type,
   POCL_RETURN_ERROR_ON((size % pattern_size > 0), CL_INVALID_VALUE,
                        "size must be a multiple of pattern_size\n");
 
-  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
-                                        event_wait_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
   errcode = pocl_svm_check_pointer (context, svm_ptr, size, NULL);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  _cl_command_node *cmd = NULL;
-  errcode = pocl_create_command (&cmd, command_queue, command_type, event,
-                                 num_events_in_wait_list, event_wait_list, 0,
-                                 NULL, NULL);
+  void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
+  POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  if (errcode != CL_SUCCESS)
+  if (command_buffer == NULL)
     {
-      POCL_MEM_FREE(cmd);
-      return errcode;
+      errcode = pocl_check_event_wait_list (
+          command_queue, num_items_in_wait_list, event_wait_list);
+      if (errcode != CL_SUCCESS)
+        return errcode;
+      errcode = pocl_create_command (cmd, command_queue, command_type, event,
+                                     num_items_in_wait_list, event_wait_list,
+                                     0, NULL, NULL);
     }
+  else
+    {
+      errcode = pocl_create_recorded_command (
+          cmd, command_buffer, command_queue, command_type,
+          num_items_in_wait_list, sync_point_wait_list, 0, NULL, NULL);
+    }
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  void *p = pocl_aligned_malloc (pattern_size, pattern_size);
-  assert (p);
-  memcpy (p, pattern, pattern_size);
+  _cl_command_node *c = *cmd;
 
-  cmd->command.svm_fill.svm_ptr = svm_ptr;
-  cmd->command.svm_fill.size = size;
-  cmd->command.svm_fill.pattern = p;
-  cmd->command.svm_fill.pattern_size = pattern_size;
-
-  pocl_command_enqueue(command_queue, cmd);
+  memcpy (cmd_pattern, pattern, pattern_size);
+  c->command.svm_fill.svm_ptr = svm_ptr;
+  c->command.svm_fill.size = size;
+  c->command.svm_fill.pattern = cmd_pattern;
+  c->command.svm_fill.pattern_size = pattern_size;
 
   return CL_SUCCESS;
 }
@@ -104,8 +117,18 @@ POname (clEnqueueSVMMemFill) (cl_command_queue command_queue, void *svm_ptr,
                               const cl_event *event_wait_list,
                               cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-  return pocl_svm_memfill_common (
-      CL_COMMAND_SVM_MEMFILL, command_queue, svm_ptr, pattern, pattern_size,
-      size, num_events_in_wait_list, event_wait_list, event);
+  cl_int errcode;
+  _cl_command_node *cmd = NULL;
+
+  errcode = pocl_svm_memfill_common (
+      NULL, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size, pattern,
+      pattern_size, num_events_in_wait_list, event_wait_list, event, NULL,
+      NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  pocl_command_enqueue (command_queue, cmd);
+
+  return CL_SUCCESS;
 }
 POsym(clEnqueueSVMMemFill)

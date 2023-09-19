@@ -32,8 +32,18 @@ POname (clEnqueueMemFillINTEL) (cl_command_queue command_queue, void *dst_ptr,
                                 const cl_event *event_wait_list,
                                 cl_event *event)
 {
-  return pocl_svm_memfill_common (
-      CL_COMMAND_MEMFILL_INTEL, command_queue, dst_ptr, pattern, pattern_size,
-      size, num_events_in_wait_list, event_wait_list, event);
+  cl_int errcode;
+  _cl_command_node *cmd = NULL;
+
+  errcode = pocl_svm_memfill_common (
+      NULL, command_queue, CL_COMMAND_MEMFILL_INTEL, dst_ptr, size, pattern,
+      pattern_size, num_events_in_wait_list, event_wait_list, event, NULL,
+      NULL, &cmd);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  pocl_command_enqueue (command_queue, cmd);
+
+  return CL_SUCCESS;
 }
 POsym (clEnqueueMemFillINTEL)

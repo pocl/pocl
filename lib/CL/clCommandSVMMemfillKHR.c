@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueMemcpyINTEL()
+/* OpenCL runtime library: clCommandSVMMemfillKHR()
 
-   Copyright (c) 2023 Michal Babej / Intel Finland Oy
+   Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,31 +22,41 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname (clEnqueueMemcpyINTEL) (cl_command_queue command_queue,
-                               cl_bool blocking, void *dst_ptr,
-                               const void *src_ptr, size_t size,
-                               cl_uint num_events_in_wait_list,
-                               const cl_event *event_wait_list,
-                               cl_event *event) CL_API_SUFFIX__VERSION_2_0
+CL_API_ENTRY cl_int
+POname (clCommandSVMMemfillKHR) (
+    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
+    void *svm_ptr, size_t size,
+    const void *pattern, size_t pattern_size,
+    cl_uint num_sync_points_in_wait_list,
+    const cl_sync_point_khr *sync_point_wait_list,
+    cl_sync_point_khr *sync_point,
+    cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_1_2
 {
   cl_int errcode;
   _cl_command_node *cmd = NULL;
 
-  errcode = pocl_svm_memcpy_common (
-      NULL, command_queue, CL_COMMAND_MEMCPY_INTEL, dst_ptr, src_ptr, size,
-      num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
+  CMDBUF_VALIDATE_COMMON_HANDLES;
+
+  errcode = pocl_svm_memfill_common (
+      command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size,
+      pattern, pattern_size, num_sync_points_in_wait_list, NULL, NULL,
+      sync_point_wait_list, sync_point, &cmd);
+
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
-
-  if (blocking)
-    POname (clFinish) (command_queue);
+  errcode = pocl_command_record (command_buffer, cmd, sync_point);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (cmd);
+  return errcode;
 }
-POsym (clEnqueueMemcpyINTEL)
+POsym (clCommandSVMMemfillKHR)
