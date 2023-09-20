@@ -32,10 +32,6 @@ POname (clRetainCommandBufferKHR) (cl_command_buffer_khr command_buffer)
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),
                           CL_INVALID_COMMAND_BUFFER_KHR);
 
-  POCL_RETURN_ERROR_COND (
-      (command_buffer->state == CL_COMMAND_BUFFER_STATE_INVALID_KHR),
-      CL_INVALID_COMMAND_BUFFER_KHR);
-
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (command_buffer, refc);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Command Buffer %p  : %d\n", command_buffer,

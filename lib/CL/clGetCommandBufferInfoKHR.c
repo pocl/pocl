@@ -34,10 +34,6 @@ POname (clGetCommandBufferInfoKHR) (
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),
                           CL_INVALID_COMMAND_BUFFER_KHR);
 
-  POCL_RETURN_ERROR_COND (
-      (command_buffer->state == CL_COMMAND_BUFFER_STATE_INVALID_KHR),
-      CL_INVALID_COMMAND_BUFFER_KHR);
-
 #define PARAM_SIZE(expr)                                                      \
   {                                                                           \
     if (param_value_size_ret != NULL)                                         \
@@ -53,6 +49,9 @@ POname (clGetCommandBufferInfoKHR) (
                 param_value_size < (size) ? param_value_size : (size));       \
       }                                                                       \
   }
+
+  /* All queues must have the same OpenCL context */
+  cl_context ref_ctx = command_buffer->queues[0]->context;
 
   switch (param_name)
     {
@@ -82,6 +81,10 @@ POname (clGetCommandBufferInfoKHR) (
                    2 * sizeof (cl_command_buffer_properties_khr)
                            * command_buffer->num_properties
                        + 1);
+      break;
+    case CL_COMMAND_BUFFER_CONTEXT_KHR:
+      PARAM_SIZE (sizeof (cl_context));
+      PARAM_VALUE (&ref_ctx, sizeof (cl_context));
       break;
     default:
       return CL_INVALID_VALUE;
