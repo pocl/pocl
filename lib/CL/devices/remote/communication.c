@@ -3001,13 +3001,19 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
       req->m.run_kernel.pod_arg_size = kd->pod_total_size;
 
       netcmd->req_extra_size = (kernel_md->num_args * sizeof (uint64_t));
-      netcmd->req_extra_data = malloc (netcmd->req_extra_size);
-      memcpy ((void *)netcmd->req_extra_data, kd->arg_array,
-              netcmd->req_extra_size);
+      if (netcmd->req_extra_size != 0)
+        {
+          netcmd->req_extra_data = malloc (netcmd->req_extra_size);
+          memcpy ((void *)netcmd->req_extra_data, kd->arg_array,
+                  netcmd->req_extra_size);
+        }
       netcmd->req_extra_size2 = kd->pod_total_size;
-      netcmd->req_extra_data2 = malloc (netcmd->req_extra_size2);
-      memcpy ((void *)netcmd->req_extra_data2, kd->pod_arg_storage,
-              netcmd->req_extra_size2);
+      if (netcmd->req_extra_size2 != 0)
+        {
+          netcmd->req_extra_data2 = malloc (netcmd->req_extra_size2);
+          memcpy ((void *)netcmd->req_extra_data2, kd->pod_arg_storage,
+                  netcmd->req_extra_size2);
+        }
     }
 
   TP_NDRANGE_KERNEL (req->msg_id, ddata->local_did, cq_id,
