@@ -36,11 +36,8 @@ POname (clFinalizeCommandBufferKHR) (cl_command_buffer_khr command_buffer)
                           CL_INVALID_COMMAND_BUFFER_KHR);
 
   POCL_RETURN_ERROR_COND (
-      (command_buffer->state == CL_COMMAND_BUFFER_STATE_INVALID_KHR),
-      CL_INVALID_COMMAND_BUFFER_KHR);
-
-  if (command_buffer->state == CL_COMMAND_BUFFER_STATE_EXECUTABLE_KHR)
-    return CL_SUCCESS;
+      (command_buffer->state != CL_COMMAND_BUFFER_STATE_RECORDING_KHR),
+      CL_INVALID_OPERATION);
 
   /* TODO: perform task graph optimizations here */
 
