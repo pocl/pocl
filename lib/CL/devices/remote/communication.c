@@ -1181,6 +1181,26 @@ pocl_remote_writer_pthread (void *aa)
               backup_idx = 0;
             }
 
+          if (resending)
+            {
+              if (cmd->status >= NETCMD_READ)
+                {
+                  /* backup was not needed after all */
+                  /* XXX: deduplicate with code at the end of the loop? */
+                  backup[backup_idx] = NULL;
+                  backup_idx
+                      = (backup_idx + 1)
+                        % (sizeof (backup) / sizeof (network_command *));
+                  if (backup_idx == 0)
+                    resending = 0;
+                  continue;
+                }
+            }
+          else
+            {
+              assert (cmd->status == NETCMD_STARTED);
+            }
+
           uint32_t msg_size = request_size (cmd->request.message_type);
 
           POCL_MSG_PRINT_REMOTE ("WRITER THR: WRITING MSG, TYPE: %u  ID: %zu  "
@@ -1189,7 +1209,7 @@ pocl_remote_writer_pthread (void *aa)
                                  cmd->request.msg_id, cmd->event_id, msg_size,
                                  cmd->req_waitlist_size * sizeof (uint64_t),
                                  cmd->req_extra_size, cmd->req_extra_size2);
-          assert (cmd->status == NETCMD_STARTED);
+
           cmd->request.waitlist_size = cmd->req_waitlist_size;
           if (cmd->synchronous)
             {
