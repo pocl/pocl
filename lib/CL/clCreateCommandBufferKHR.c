@@ -114,12 +114,15 @@ POname (clCreateCommandBufferKHR) (
   memcpy (cmdbuf->queues, queues, num_queues * sizeof (cl_command_queue));
   cmdbuf->num_properties = num_properties;
   POCL_FAST_INIT(cmdbuf->mutex);
-  cmdbuf->properties = (cl_command_buffer_properties_khr *)calloc (
-      num_properties,
-      sizeof (cl_command_buffer_properties_khr) * 2 * num_properties + 1);
   if (num_properties > 0)
-    memcpy (cmdbuf->properties, properties,
-            sizeof (cl_command_buffer_properties_khr) * 2 * num_properties);
+    {
+      cmdbuf->properties = (cl_command_buffer_properties_khr *)malloc (
+          (num_properties * 2 + 1)
+          * sizeof (cl_command_buffer_properties_khr));
+      memcpy (cmdbuf->properties, properties,
+              sizeof (cl_command_buffer_properties_khr)
+                  * (num_properties * 2 + 1));
+    }
 
   for (unsigned i = 0; i < num_queues; ++i)
     {
