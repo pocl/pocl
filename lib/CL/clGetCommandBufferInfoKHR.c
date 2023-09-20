@@ -23,7 +23,7 @@
 
 #include <CL/cl_ext.h>
 
-#include "pocl_cl.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clGetCommandBufferInfoKHR) (
@@ -74,14 +74,14 @@ POname (clGetCommandBufferInfoKHR) (
                    sizeof (cl_command_buffer_state_khr));
       break;
     case CL_COMMAND_BUFFER_PROPERTIES_ARRAY_KHR:
-      PARAM_SIZE (2 * sizeof (cl_command_buffer_properties_khr)
-                      * command_buffer->num_properties
-                  + 1);
-      PARAM_VALUE (command_buffer->properties,
-                   2 * sizeof (cl_command_buffer_properties_khr)
-                           * command_buffer->num_properties
-                       + 1);
-      break;
+      {
+        size_t num_properties = command_buffer->num_properties > 0
+                                    ? 2 * command_buffer->num_properties + 1
+                                    : 0;
+        POCL_RETURN_GETINFO_ARRAY (cl_command_buffer_properties_khr,
+                                   num_properties, command_buffer->properties);
+        break;
+      }
     case CL_COMMAND_BUFFER_CONTEXT_KHR:
       PARAM_SIZE (sizeof (cl_context));
       PARAM_VALUE (&ref_ctx, sizeof (cl_context));
