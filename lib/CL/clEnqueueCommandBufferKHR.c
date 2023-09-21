@@ -196,6 +196,9 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
             cmd->memobj_count, memobj_list, readonly_flag_list);
         ++sync_id;
 
+        POCL_MEM_FREE (readonly_flag_list);
+        POCL_MEM_FREE (memobj_list);
+
         if (errcode != CL_SUCCESS)
           {
             POCL_MSG_ERR ("Failed to instantiate recorded command: %i\n",

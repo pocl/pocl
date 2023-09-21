@@ -55,9 +55,12 @@ cl_event pocl_mem_manager_new_event ();
   (_cl_command_node*) calloc (1, sizeof (_cl_command_node))
 
 #define pocl_mem_manager_free_command(cmd)                                    \
-  if ((cmd) && (cmd)->buffered)                                               \
+  if ((cmd))                                                                  \
     {                                                                         \
-      POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);             \
+      if ((cmd)->buffered)                                                    \
+        {                                                                     \
+          POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);         \
+        }                                                                     \
       POCL_MEM_FREE ((cmd)->memobj_list);                                     \
       POCL_MEM_FREE ((cmd)->readonly_flag_list);                              \
     }                                                                         \

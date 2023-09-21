@@ -506,6 +506,22 @@ finish_running_cmd (network_command *running_cmd)
       TP_MSG_RECEIVED (running_cmd->reply.msg_id, running_cmd->event_id,
                        running_cmd->reply.client_did, running_cmd->reply.did,
                        running_cmd->reply.message_type, 2);
+
+      void *p = NULL;
+      switch (type)
+        {
+        case CL_COMMAND_NDRANGE_KERNEL:
+        case CL_COMMAND_TASK:
+        case CL_COMMAND_NATIVE_KERNEL:
+          p = (void *)running_cmd->req_extra_data;
+          POCL_MEM_FREE (p);
+          p = (void *)running_cmd->req_extra_data2;
+          POCL_MEM_FREE (p);
+          break;
+        default:
+          break;
+        }
+
       POCL_MEM_FREE (running_cmd->req_wait_list);
       POCL_MEM_FREE (running_cmd);
     }
@@ -1245,14 +1261,6 @@ pocl_remote_writer_pthread (void *aa)
                                   cmd->req_waitlist_size * sizeof (uint64_t),
                                   cmd->req_extra_size, cmd->req_extra_size2 };
               CHECK_WRITE (writev_full (fd, 5, ptrs, sizes, remote));
-
-              if (cmd->request.message_type == MessageType_RunKernel)
-                {
-                  void *p = (void *)cmd->req_extra_data;
-                  free (p);
-                  p = (void *)cmd->req_extra_data2;
-                  free (p);
-                }
             }
           else if (cmd->req_extra_data)
             {
