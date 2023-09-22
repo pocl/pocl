@@ -148,6 +148,12 @@ CL_API_SUFFIX__VERSION_1_2
     return (void *)&POname (clEnqueueMemAdviseINTEL);
   /* end of cl_intel_unified_shared_memory */
 
+  if (strcmp (func_name, "clCommandSVMMemfillKHR") == 0)
+    return (void *)&POname (clCommandSVMMemfillKHR);
+
+  if (strcmp (func_name, "clCommandSVMMemcpyKHR") == 0)
+    return (void *)&POname (clCommandSVMMemcpyKHR);
+
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;
 }

@@ -236,6 +236,10 @@ POCL_EXPORT
 void pocl_update_event_complete (const char *func, unsigned line,
                                  cl_event event, const char *msg);
 
+POCL_EXPORT
+int pocl_copy_event_node (_cl_command_node *dst_node,
+                          _cl_command_node *src_node);
+
 #define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
   pocl_update_event_complete (__func__, __LINE__, (__event), msg)
 
