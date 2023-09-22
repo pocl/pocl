@@ -10,17 +10,16 @@ POname(clGetExtensionFunctionAddress)(const char * func_name )
 CL_API_SUFFIX__VERSION_1_0
 {
 
-#ifdef BUILD_ICD
-  if( strcmp(func_name, "clIcdGetPlatformIDsKHR")==0 )
-    return (void *)&POname(clIcdGetPlatformIDsKHR);
-#endif
+  cl_platform_id pocl_platform;
+  cl_uint actual_num = 0;
+  POname (clGetPlatformIDs) (1, &pocl_platform, &actual_num);
+  if (actual_num != 1)
+    {
+      POCL_MSG_WARN ("Couldn't get the platform ID of PoCL platform\n");
+      return NULL;
+    }
 
-  if (strcmp (func_name, "clSetContentSizeBufferPoCL") == 0)
-    return (void *)&POname (clSetContentSizeBufferPoCL);
-
-  if( strcmp(func_name, "clGetPlatformInfo")==0 )
-    return (void *)&POname(clGetPlatformInfo);
-  
-  return NULL;
+  return POname (
+      clGetExtensionFunctionAddressForPlatform (pocl_platform, func_name));
 }
 POsymAlways(clGetExtensionFunctionAddress)

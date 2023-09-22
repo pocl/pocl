@@ -51,6 +51,7 @@
 #include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_shared.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
@@ -2215,6 +2216,7 @@ pocl_update_event_running (cl_event event)
   POCL_UNLOCK_OBJ (event);
 }
 
+/* Note: this must be kept in sync with pocl_copy_event_node */
 static void pocl_free_event_node (cl_event event)
 {
   _cl_command_node *node = event->command;
@@ -2226,11 +2228,11 @@ static void pocl_free_event_node (cl_event event)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-      pocl_aligned_free (node->command.memfill.pattern);
+      POCL_MEM_FREE (node->command.memfill.pattern);
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
-      pocl_aligned_free (node->command.svm_fill.pattern);
+      POCL_MEM_FREE (node->command.svm_fill.pattern);
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:
@@ -2252,6 +2254,58 @@ static void pocl_free_event_node (cl_event event)
     }
   pocl_mem_manager_free_command (node);
   event->command = NULL;
+}
+
+int
+pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
+{
+  // Copy variables that are freed when the command finishes
+  switch (src_node->type)
+    {
+    case CL_COMMAND_NDRANGE_KERNEL:
+    case CL_COMMAND_TASK:
+      POname (clRetainKernel) (src_node->command.run.kernel);
+      int errcode = pocl_kernel_copy_args (src_node->command.run.kernel,
+                                           &dst_node->command.run);
+      if (errcode != CL_SUCCESS)
+        return CL_OUT_OF_HOST_MEMORY;
+      break;
+
+    case CL_COMMAND_FILL_BUFFER:
+      dst_node->command.memfill.pattern
+          = pocl_aligned_malloc (src_node->command.memfill.pattern_size,
+                                 src_node->command.memfill.pattern_size);
+      if (dst_node->command.memfill.pattern == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+      memcpy (dst_node->command.memfill.pattern,
+              src_node->command.memfill.pattern,
+              src_node->command.memfill.pattern_size);
+      break;
+
+    case CL_COMMAND_SVM_MEMFILL:
+      dst_node->command.svm_fill.pattern
+          = pocl_aligned_malloc (src_node->command.svm_fill.pattern_size,
+                                 src_node->command.svm_fill.pattern_size);
+      if (dst_node->command.svm_fill.pattern == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+      memcpy (dst_node->command.svm_fill.pattern,
+              src_node->command.svm_fill.pattern,
+              src_node->command.svm_fill.pattern_size);
+      break;
+
+#if 0
+    /* these cases are currently not handled in pocl_copy_event_node,
+     * because there is no command buffer equivalent of these nodes. */
+    case CL_COMMAND_NATIVE_KERNEL:
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+    case CL_COMMAND_SVM_FREE:
+#endif
+
+    default:
+      break;
+    }
+  return CL_SUCCESS;
 }
 
 static void pocl_free_event_memobjs (cl_event event)

@@ -208,37 +208,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           }
 
         memcpy (&node->command, &cmd->command, sizeof (_cl_command_t));
-
-        // Copy variables that are freed when the command finishes
-        switch (cmd->type)
-          {
-          case CL_COMMAND_NDRANGE_KERNEL:
-            POname (clRetainKernel) (node->command.run.kernel);
-            errcode = pocl_kernel_copy_args (node->command.run.kernel,
-                                             &node->command.run);
-            if (errcode != CL_SUCCESS)
-              {
-                errcode = CL_OUT_OF_HOST_MEMORY;
-                break;
-              }
-            break;
-          case CL_COMMAND_FILL_BUFFER:
-            node->command.memfill.pattern
-                = pocl_aligned_malloc (cmd->command.memfill.pattern_size,
-                                       cmd->command.memfill.pattern_size);
-            if (node->command.memfill.pattern == NULL)
-              {
-                errcode = CL_OUT_OF_HOST_MEMORY;
-                break;
-              }
-            memcpy (node->command.memfill.pattern,
-                    cmd->command.memfill.pattern,
-                    cmd->command.memfill.pattern_size);
-            break;
-
-          default:
-            break;
-          }
+        errcode = pocl_copy_event_node (node, cmd);
 
         if (errcode != CL_SUCCESS)
           {
