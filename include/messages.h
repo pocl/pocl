@@ -315,6 +315,7 @@ extern "C"
     uint64_t size;
     uint32_t source_pid;
     uint32_t source_did;
+    uint32_t size_id;
     uint32_t dest_peer_id;
     uint32_t source_peer_id;
     uint32_t is_image;
@@ -322,10 +323,6 @@ extern "C"
     uint32_t width;
     uint32_t height;
     uint32_t depth;
-#ifdef ENABLE_RDMA
-    uint32_t peer_rkey;
-    uint64_t peer_vaddr;
-#endif
   } MigrateD2DMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) CreateBufferMsg_s
@@ -352,6 +349,7 @@ extern "C"
     uint64_t src_offset;
     uint64_t size;
     uint64_t content_size;
+    uint32_t content_size_id;
 #ifdef ENABLE_RDMA
     uint64_t client_vaddr;
     uint32_t client_rkey;
@@ -369,6 +367,7 @@ extern "C"
   {
     uint32_t src_buffer_id;
     uint32_t dst_buffer_id;
+    uint32_t size_buffer_id;
     uint64_t src_offset;
     uint64_t dst_offset;
     uint64_t size;

@@ -675,12 +675,19 @@ ERROR:
   return errcode;
 }
 
+/**
+ * @param dev Destination device
+ * @param ev_export_p Optional output parameter for the export event
+ * @param migration_size Max number of bytes to migrate (caller has to read
+ *                       content size from mem->size_buffer if applicable)
+ */
 static int
-pocl_create_migration_commands (cl_device_id dev, cl_event final_event,
-                                cl_mem mem, pocl_mem_identifier *p,
-                                const char readonly,
+pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
+                                cl_event final_event, cl_mem mem,
+                                pocl_mem_identifier *p, const char readonly,
                                 cl_command_type command_type,
-                                cl_mem_migration_flags mig_flags)
+                                cl_mem_migration_flags mig_flags,
+                                uint64_t migration_size)
 {
   int errcode = CL_SUCCESS;
 
@@ -796,7 +803,8 @@ pocl_create_migration_commands (cl_device_id dev, cl_event final_event,
         {
           mem->mem_host_ptr_version = mem->latest_version;
           /* migrate content only if needed */
-          if ((mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED) == 0)
+          if ((mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED) == 0
+              || migration_size == 0)
             {
               /* Could be that destination dev has the latest version,
                * we still need to migrate to host mem */
@@ -815,8 +823,17 @@ pocl_create_migration_commands (cl_device_id dev, cl_event final_event,
   /* otherwise, we're migrating to a device memory. */
   /* check if we can migrate to the device associated with command_queue
    * without incurring the overhead of migrating their contents */
-  if (mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED)
+  if (mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED
+      || migration_size == 0)
     p->version = mem->latest_version;
+
+  can_directly_mig = highest_d2d_mig_priority > 0;
+
+  /* Set the flag so the hostptr refcount gets incremented to keep the buffer
+   * alive until it has been read for the associated content buffer's
+   * migration. */
+  if ((mem->content_buffer != NULL) && !can_directly_mig)
+    do_need_hostptr = 1;
 
   /* if we don't need to migrate, skip to end */
   if (p->version >= mem->latest_version)
@@ -825,8 +842,6 @@ pocl_create_migration_commands (cl_device_id dev, cl_event final_event,
       do_export = 0;
       goto FINISH_VER_SETUP;
     }
-
-  can_directly_mig = highest_d2d_mig_priority > 0;
 
   /* if mem_host_ptr is outdated AND the devices can't migrate
    * between each other, we need an export command */
@@ -870,16 +885,21 @@ FINISH_VER_SETUP:
 
   if (do_need_hostptr)
     {
-      /* increase refcount the two mig commands */
+      /* increase refcount for the two mig commands and for the caller
+       * if this is a size buffer needed for content size -aware migration */
       if (do_export)
         ++mem->mem_host_ptr_refcount;
       if (do_import)
+        ++mem->mem_host_ptr_refcount;
+      if (ev_export_p)
         ++mem->mem_host_ptr_refcount;
 
       /* allocate mem_host_ptr here if needed... */
       if (mem->mem_host_ptr == NULL)
         {
           size_t align = max (mem->context->min_buffer_alignment, 16);
+          /* Always allocate mem_host_ptr for the full size of the buffer to
+           * guard against applications forgetting to check content size */
           mem->mem_host_ptr = pocl_aligned_malloc (align, mem->size);
           assert ((mem->mem_host_ptr != NULL)
                   && "Cannot allocate backing memory for mem_host_ptr!\n");
@@ -910,10 +930,17 @@ FINISH_VER_SETUP:
       cmd_export->command.migrate.mem_id
           = &mem->device_ptrs[ex_dev->global_mem_id];
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
+      cmd_export->command.migrate.migration_size = migration_size;
 
       pocl_command_enqueue (ex_cq, cmd_export);
 
       last_migration_event = ev_export;
+
+      if (ev_export_p)
+        {
+          POname (clRetainEvent) (ev_export);
+          *ev_export_p = ev_export;
+        }
     }
 
   /* enqueue a command for import.
@@ -944,12 +971,16 @@ FINISH_VER_SETUP:
               = &mem->device_ptrs[ex_dev->global_mem_id];
           cmd_import->command.migrate.dst_id
               = &mem->device_ptrs[dev->global_mem_id];
+          if (mem->size_buffer != NULL)
+            cmd_import->command.migrate.src_content_size_mem_id
+                = &mem->size_buffer->device_ptrs[ex_dev->global_mem_id];
         }
       else
         {
           cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_H2D;
           cmd_import->command.migrate.mem_id
               = &mem->device_ptrs[dev->global_mem_id];
+          cmd_import->command.migrate.migration_size = migration_size;
         }
 
       pocl_command_enqueue (dev_cq, cmd_import);
@@ -1033,12 +1064,69 @@ pocl_create_command_full (_cl_command_node **cmd,
   final_event->pocl_refcount += num_buffers;
   POCL_UNLOCK_OBJ (final_event);
 
+  cl_event *size_events = alloca (sizeof (cl_event) * num_buffers);
+  memset (size_events, 0, sizeof (cl_event) * num_buffers);
+
+  /* Always migrate content size buffers first, if they exist */
   for (i = 0; i < num_buffers; ++i)
     {
-      pocl_create_migration_commands (
-          dev, final_event, buffers[i],
-          &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
-          command_type, mig_flags);
+      if (buffers[i]->size_buffer != NULL)
+        {
+          /* Bump "last event" refcount for content size buffers that weren't
+           * explicitly given as dependencies */
+          int explicit = 0;
+          for (int j = 0; j < num_buffers; ++j)
+            {
+              if (buffers[j] == buffers[i]->size_buffer)
+                {
+                  explicit = 1;
+                  break;
+                }
+            }
+          if (!explicit)
+            {
+              POname (clRetainEvent) (final_event);
+            }
+
+          pocl_create_migration_commands (
+              dev, &size_events[i], final_event, buffers[i]->size_buffer,
+              &(buffers[i]->size_buffer)->device_ptrs[dev->global_mem_id],
+              readonly_flags[i], command_type, mig_flags,
+              buffers[i]->size_buffer->size);
+        }
+    }
+
+  for (i = 0; i < num_buffers; ++i)
+    {
+      uint64_t migration_size = buffers[i]->size;
+
+      if (buffers[i]->size_buffer != NULL)
+        {
+          /* BLOCK until size buffer has been imported to host mem! No event
+           * exists if host import is not needed. */
+          if (size_events[i] != NULL)
+            {
+              cl_device_id d = size_events[i]->queue->device;
+              d->ops->wait_event (d, size_events[i]);
+              if (buffers[i]->size_buffer->mem_host_ptr != NULL)
+                {
+                  migration_size
+                      = *(uint64_t *)buffers[i]->size_buffer->mem_host_ptr;
+                }
+              pocl_release_mem_host_ptr (buffers[i]->size_buffer);
+              POname (clReleaseEvent) (size_events[i]);
+              size_events[i] = NULL;
+            }
+        }
+
+      /* Size buffers were just migrated above, don't try to redo it */
+      if (buffers[i]->content_buffer == NULL)
+        {
+          pocl_create_migration_commands (
+              dev, NULL, final_event, buffers[i],
+              &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
+              command_type, mig_flags, migration_size);
+        }
     }
 
   return err;

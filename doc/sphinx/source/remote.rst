@@ -42,7 +42,11 @@ In multi-node scenarios, communication is optimized to avoid overloading the
 client link by using peer-to-peer connections for inter-server communication.
 The peer-to-peer connections can optionally be made more efficient by building
 the daemon with RDMA support, which then gets used when migrating buffers
-between nodes.
+between nodes. Applications that deal with variable sized data can addionally
+be written to make use of the ``cl_pocl_content_size`` extension that lets
+the runtime know that buffers don't need to be transferred in full, which
+PoCL-Remote can take advantage of both in client-server and server-to-server
+communication.
 
 More Information
 ----------------

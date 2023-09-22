@@ -373,17 +373,16 @@ cl_int pocl_network_free_image (remote_device_data_t *ddata,
 // ##################################################################################
 // ##################################################################################
 
-cl_int pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
-                                 unsigned mem_is_image, uint32_t height,
-                                 uint32_t width, uint32_t depth, size_t size,
-                                 remote_device_data_t *dest,
-                                 remote_device_data_t *source,
-                                 network_command_callback cb, void *arg,
-                                 _cl_command_node *node);
+cl_int pocl_network_migrate_d2d (
+    uint32_t cq_id, uint32_t mem_id, uint32_t size_id, unsigned mem_is_image,
+    uint32_t height, uint32_t width, uint32_t depth, size_t size,
+    remote_device_data_t *dest, remote_device_data_t *source,
+    network_command_callback cb, void *arg, _cl_command_node *node);
 
 cl_int pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
-                          uint32_t mem, void *host_ptr, size_t offset,
-                          size_t size, network_command_callback cb, void *arg,
+                          uint32_t mem, uint32_t size_id, void *host_ptr,
+                          size_t offset, size_t size,
+                          network_command_callback cb, void *arg,
                           _cl_command_node *node);
 
 cl_int pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
@@ -392,8 +391,8 @@ cl_int pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
                            _cl_command_node *node);
 
 cl_int pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
-                          uint32_t src, uint32_t dst, size_t src_offset,
-                          size_t dst_offset, size_t size,
+                          uint32_t src, uint32_t dst, uint32_t size_buf,
+                          size_t src_offset, size_t dst_offset, size_t size,
                           network_command_callback cb, void *arg,
                           _cl_command_node *node);
 

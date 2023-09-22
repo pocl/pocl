@@ -178,6 +178,7 @@ typedef struct
 {
   void *__restrict__ dst_host_ptr;
   pocl_mem_identifier *src_mem_id;
+  pocl_mem_identifier *src_content_size_mem_id;
   size_t offset;
   size_t size;
   size_t *content_size;
@@ -350,6 +351,10 @@ typedef struct
   pocl_mem_identifier *src_id;
   pocl_mem_identifier *dst_id;
   pocl_mem_identifier *mem_id;
+  /** For migrating a buffer that has a size buffer as per
+   * cl_pocl_content_size */
+  uint64_t migration_size;
+  pocl_mem_identifier *src_content_size_mem_id;
 } _cl_command_migrate;
 
 typedef struct

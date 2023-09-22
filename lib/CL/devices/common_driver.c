@@ -387,8 +387,10 @@ pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
   if (map->host_ptr == NULL)
     return CL_SUCCESS;
 
-  if ((mem->mem_host_ptr != NULL)
-      && map->host_ptr != (mem->mem_host_ptr + map->offset))
+  /* e.g. remote never has a mem_host_ptr but can have a map host_ptr */
+  if (((mem->mem_host_ptr != NULL)
+       && map->host_ptr != (mem->mem_host_ptr + map->offset))
+      || (mem->mem_host_ptr == NULL && map->host_ptr != NULL))
     pocl_aligned_free (map->host_ptr);
 
   map->host_ptr = NULL;

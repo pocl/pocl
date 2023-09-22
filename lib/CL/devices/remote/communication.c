@@ -506,6 +506,22 @@ finish_running_cmd (network_command *running_cmd)
       TP_MSG_RECEIVED (running_cmd->reply.msg_id, running_cmd->event_id,
                        running_cmd->reply.client_did, running_cmd->reply.did,
                        running_cmd->reply.message_type, 2);
+
+      void *p = NULL;
+      switch (type)
+        {
+        case CL_COMMAND_NDRANGE_KERNEL:
+        case CL_COMMAND_TASK:
+        case CL_COMMAND_NATIVE_KERNEL:
+          p = (void *)running_cmd->req_extra_data;
+          POCL_MEM_FREE (p);
+          p = (void *)running_cmd->req_extra_data2;
+          POCL_MEM_FREE (p);
+          break;
+        default:
+          break;
+        }
+
       POCL_MEM_FREE (running_cmd->req_wait_list);
       POCL_MEM_FREE (running_cmd);
     }
@@ -1181,6 +1197,26 @@ pocl_remote_writer_pthread (void *aa)
               backup_idx = 0;
             }
 
+          if (resending)
+            {
+              if (cmd->status >= NETCMD_READ)
+                {
+                  /* backup was not needed after all */
+                  /* XXX: deduplicate with code at the end of the loop? */
+                  backup[backup_idx] = NULL;
+                  backup_idx
+                      = (backup_idx + 1)
+                        % (sizeof (backup) / sizeof (network_command *));
+                  if (backup_idx == 0)
+                    resending = 0;
+                  continue;
+                }
+            }
+          else
+            {
+              assert (cmd->status == NETCMD_STARTED);
+            }
+
           uint32_t msg_size = request_size (cmd->request.message_type);
 
           POCL_MSG_PRINT_REMOTE ("WRITER THR: WRITING MSG, TYPE: %u  ID: %zu  "
@@ -1189,7 +1225,7 @@ pocl_remote_writer_pthread (void *aa)
                                  cmd->request.msg_id, cmd->event_id, msg_size,
                                  cmd->req_waitlist_size * sizeof (uint64_t),
                                  cmd->req_extra_size, cmd->req_extra_size2);
-          assert (cmd->status == NETCMD_STARTED);
+
           cmd->request.waitlist_size = cmd->req_waitlist_size;
           if (cmd->synchronous)
             {
@@ -1225,14 +1261,6 @@ pocl_remote_writer_pthread (void *aa)
                                   cmd->req_waitlist_size * sizeof (uint64_t),
                                   cmd->req_extra_size, cmd->req_extra_size2 };
               CHECK_WRITE (writev_full (fd, 5, ptrs, sizes, remote));
-
-              if (cmd->request.message_type == MessageType_RunKernel)
-                {
-                  void *p = (void *)cmd->req_extra_data;
-                  free (p);
-                  p = (void *)cmd->req_extra_data2;
-                  free (p);
-                }
             }
           else if (cmd->req_extra_data)
             {
@@ -2674,7 +2702,7 @@ pocl_network_free_image (remote_device_data_t *ddata, uint32_t image_id)
 // ##################################################################################
 
 cl_int
-pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
+pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
                           unsigned mem_is_image, uint32_t height,
                           uint32_t width, uint32_t depth, size_t size,
                           remote_device_data_t *dest,
@@ -2701,6 +2729,7 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
   req->m.migrate.depth = depth;
   req->m.migrate.width = width;
   req->m.migrate.height = height;
+  req->m.migrate.size_id = size_id;
 
   data = source->server;
   SEND_REQ_FAST;
@@ -2710,8 +2739,9 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id,
 
 cl_int
 pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
-                   uint32_t mem_id, void *host_ptr, size_t offset, size_t size,
-                   network_command_callback cb, void *arg, _cl_command_node *node)
+                   uint32_t mem_id, uint32_t size_id, void *host_ptr,
+                   size_t offset, size_t size, network_command_callback cb,
+                   void *arg, _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
   assert (size > 0);
@@ -2723,6 +2753,7 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
   req->cq_id = cq_id;
   req->m.read.src_offset = offset;
   req->m.read.size = size;
+  req->m.read.content_size_id = size_id;
 
   // REPLY
   netcmd->rep_extra_data = host_ptr;
@@ -2776,9 +2807,10 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
 
 cl_int
 pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
-                   uint32_t src_id, uint32_t dst_id, size_t src_offset,
-                   size_t dst_offset, size_t size, network_command_callback cb,
-                   void *arg, _cl_command_node *node)
+                   uint32_t src_id, uint32_t dst_id, uint32_t content_size_id,
+                   size_t src_offset, size_t dst_offset, size_t size,
+                   network_command_callback cb, void *arg,
+                   _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
 
@@ -2788,6 +2820,7 @@ pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
   req->cq_id = cq_id;
   req->m.copy.src_buffer_id = src_id;
   req->m.copy.dst_buffer_id = dst_id;
+  req->m.copy.size_buffer_id = content_size_id;
   req->m.copy.src_offset = src_offset;
   req->m.copy.dst_offset = dst_offset;
   req->m.copy.size = size;
@@ -2996,13 +3029,19 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
       req->m.run_kernel.pod_arg_size = kd->pod_total_size;
 
       netcmd->req_extra_size = (kernel_md->num_args * sizeof (uint64_t));
-      netcmd->req_extra_data = malloc (netcmd->req_extra_size);
-      memcpy ((void *)netcmd->req_extra_data, kd->arg_array,
-              netcmd->req_extra_size);
+      if (netcmd->req_extra_size != 0)
+        {
+          netcmd->req_extra_data = malloc (netcmd->req_extra_size);
+          memcpy ((void *)netcmd->req_extra_data, kd->arg_array,
+                  netcmd->req_extra_size);
+        }
       netcmd->req_extra_size2 = kd->pod_total_size;
-      netcmd->req_extra_data2 = malloc (netcmd->req_extra_size2);
-      memcpy ((void *)netcmd->req_extra_data2, kd->pod_arg_storage,
-              netcmd->req_extra_size2);
+      if (netcmd->req_extra_size2 != 0)
+        {
+          netcmd->req_extra_data2 = malloc (netcmd->req_extra_size2);
+          memcpy ((void *)netcmd->req_extra_data2, kd->pod_arg_storage,
+                  netcmd->req_extra_size2);
+        }
     }
 
   TP_NDRANGE_KERNEL (req->msg_id, ddata->local_did, cq_id,

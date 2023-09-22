@@ -1107,11 +1107,17 @@ pocl_remote_async_read (void *data, _cl_command_node *node,
                         pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                         size_t offset, size_t size)
 {
-  uintptr_t mem_id = (uintptr_t)src_mem_id->mem_ptr;
   uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+  uintptr_t mem_id = (uintptr_t)src_mem_id->mem_ptr;
+  uintptr_t size_id = 0;
 
-  return pocl_network_read (queue_id, data, mem_id, host_ptr, offset, size,
-                            remote_finish_command, data, node);
+  uint32_t content_size_id = 0;
+  if (node->command.read.src_content_size_mem_id)
+    content_size_id
+        = (uintptr_t)node->command.read.src_content_size_mem_id->mem_ptr;
+
+  return pocl_network_read (queue_id, data, mem_id, content_size_id, host_ptr,
+                            offset, size, remote_finish_command, data, node);
 }
 
 int
@@ -1154,13 +1160,17 @@ pocl_remote_async_migrate_d2d (void *dest_data, void *source_data,
                                pocl_mem_identifier *p)
 {
   uintptr_t mem_id = (uintptr_t)p->mem_ptr;
-
   uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  uint32_t size_id = 0;
+  if (mem->size_buffer != NULL)
+    size_id
+        = (uintptr_t)node->command.migrate.src_content_size_mem_id->mem_ptr;
 
   int r;
   r = pocl_network_migrate_d2d (
-      queue_id, mem_id, mem->is_image, mem->image_height, mem->image_width,
-      mem->image_depth, mem->size, dest_data, source_data,
+      queue_id, mem_id, size_id, mem->is_image, mem->image_height,
+      mem->image_width, mem->image_depth, mem->size, dest_data, source_data,
       remote_finish_command, dest_data, node);
 
   assert (r == 0);
@@ -1190,16 +1200,21 @@ pocl_remote_async_copy (void *data, _cl_command_node *node,
   uintptr_t src_id = (uintptr_t)src_mem_id->mem_ptr;
   uintptr_t dst_id = (uintptr_t)dst_mem_id->mem_ptr;
 
-  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
-
   if ((src_id == dst_id) && (src_offset == dst_offset))
     {
       return 1;
     }
 
-  int r = pocl_network_copy (queue_id, data, src_id, dst_id, src_offset,
-                             dst_offset, size, remote_finish_command, data,
-                             node);
+  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  uint32_t content_size_id = 0;
+  if (node->command.copy.src_content_size_mem_id)
+    content_size_id
+        = (uintptr_t)node->command.copy.src_content_size_mem_id->mem_ptr;
+
+  int r = pocl_network_copy (queue_id, data, src_id, dst_id, content_size_id,
+                             src_offset, dst_offset, size,
+                             remote_finish_command, data, node);
   assert (r == 0);
   return 0;
 }
@@ -1368,13 +1383,19 @@ pocl_remote_async_map_mem (void *data, _cl_command_node *node,
 
   uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
 
+  uintptr_t size_id = 0;
+  if (src_buf->size_buffer != NULL)
+    size_id = (uintptr_t)src_buf->size_buffer
+                  ->device_ptrs[node->device->global_mem_id]
+                  .mem_ptr;
+
   POCL_MSG_PRINT_MEMORY ("REMOTE: MAP memcpy() "
                          "src_id %lu + offset %zu"
                          "to dst_host_ptr %p\n",
                          mem_id, offset, host_ptr);
 
-  int r = pocl_network_read (queue_id, data, mem_id, host_ptr, offset, size,
-                             remote_finish_command, data, node);
+  int r = pocl_network_read (queue_id, data, mem_id, size_id, host_ptr, offset,
+                             size, remote_finish_command, data, node);
   assert (r == 0);
   return 0;
 }
@@ -1799,6 +1820,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
                 if (region[1] == 0)
                   region[1] = 1;
                 size_t origin[3] = { 0, 0, 0 };
+                // TODO: truncate region if it exceeds content size?
                 r = pocl_remote_async_write_image_rect (
                     d, node, m, cmd->migrate.mem_id, m->mem_host_ptr, NULL,
                     origin, region, 0, 0, 0);
@@ -1807,7 +1829,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
               {
                 r = pocl_remote_async_write (d, node, m->mem_host_ptr,
                                              cmd->migrate.mem_id, m, 0,
-                                             m->size);
+                                             cmd->migrate.migration_size);
               }
             assert (r == 0);
             break;

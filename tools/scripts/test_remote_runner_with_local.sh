@@ -49,7 +49,7 @@ echo "Pocld running with PID: $POCLD_PID"
 
 sleep 1
 
-export POCL_DEVICES="remote"
+export POCL_DEVICES="cpu remote"
 export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT/0"
 export POCL_DEBUG="warn,err,remote"
 unset POCL_ENABLE_UNINIT
