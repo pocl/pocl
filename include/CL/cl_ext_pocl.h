@@ -27,5 +27,36 @@
  ******************************************************************************/
 
 #include <CL/cl_ext.h>
-#pragma message("The PoCL extensions have been moved into cl_ext.h.  Please include cl_ext.h directly.")
 
+#ifndef __CL_EXT_POCL_H
+#define __CL_EXT_POCL_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/* cl_pocl_content_size should be defined in CL/cl_ext.h; however,
+ * if we PoCL is built against the system headers, it's possible
+ * that they have an outdated version of CL/cl_ext.h.
+ * In that case, add the extension here. */
+
+#ifndef cl_pocl_content_size
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clSetContentSizeBufferPoCL(
+    cl_mem    buffer,
+    cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
+
+typedef CL_API_ENTRY cl_int
+(CL_API_CALL *clSetContentSizeBufferPoCL_fn)(
+    cl_mem    buffer,
+    cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
+
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CL_EXT_POCL_H */
