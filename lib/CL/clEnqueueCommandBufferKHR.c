@@ -207,7 +207,6 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
             return errcode;
           }
 
-        memcpy (&node->command, &cmd->command, sizeof (_cl_command_t));
         errcode = pocl_copy_event_node (node, cmd);
 
         if (errcode != CL_SUCCESS)
