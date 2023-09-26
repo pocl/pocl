@@ -105,6 +105,9 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
             case CL_COMMAND_FILL_BUFFER:
               POCL_MEM_FREE (cmd->command.memfill.pattern);
               break;
+            case CL_COMMAND_SVM_MEMFILL:
+              POCL_MEM_FREE (cmd->command.svm_fill.pattern);
+              break;
             case CL_COMMAND_FILL_IMAGE:
               break;
             case CL_COMMAND_BARRIER:
