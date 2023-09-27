@@ -20,6 +20,18 @@ and the `documentation <http://portablecl.org/docs/html/remote.html>` for detail
 Bugfixes and minor features
 =============================
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CUDA driver (partial) OpenCL 3.0 support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CUDA driver has gained some new features:
+
+* program scope variables
+* OpenCL 2.x/3.x atomics
+* subgroup support (partial only)
+* enable FP16 & generic AS support (with SPIR-V input)
+
+
 ================
 Acknowledgements
 ================
