@@ -1743,18 +1743,18 @@ if(ENABLE_CUDA)
     set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_subgroups")
   endif()
 
+  # advertise fp16 support in CUDA device info
+  # disable this when using PoCL with CUDA device with Compute Capability < 6.0
   option(ENABLE_CUDA_FP16 "cuda fp16" ON)
-  option(ENABLE_CUDA_FP64 "cuda fp64" ON)
 
   if(ENABLE_CUDA_FP16)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp16")
     set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp16")
   endif()
 
-  if(ENABLE_CUDA_FP64)
-    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp64")
-    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp64")
-  endif()
+  # FP64 is always enabled for CUDA, it should be available since Compute Capability 1.3
+  set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp64")
 
   if(ENABLE_CUDNN)
     add_definitions(-DENABLE_CUDNN=1)
