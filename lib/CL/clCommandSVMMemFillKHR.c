@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clCommandSVMMemfillKHR()
+/* OpenCL runtime library: clCommandSVMMemFillKHR()
 
    Copyright (c) 2022-2023 Michal Babej / Intel Finland Oy
 
@@ -27,7 +27,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int
-POname (clCommandSVMMemfillKHR) (
+POname (clCommandSVMMemFillKHR) (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
     void *svm_ptr, size_t size,
     const void *pattern, size_t pattern_size,
@@ -59,4 +59,4 @@ ERROR:
   pocl_mem_manager_free_command (cmd);
   return errcode;
 }
-POsym (clCommandSVMMemfillKHR)
+POsym (clCommandSVMMemFillKHR)

@@ -191,7 +191,7 @@ POdeclsym(clEnqueueMigrateMemINTEL)
 
 /* cl_khr_command_buffer 0.9.4 */
 POdeclsym(clCommandSVMMemcpyKHR)
-POdeclsym(clCommandSVMMemfillKHR)
+POdeclsym(clCommandSVMMemFillKHR)
 
 
 #ifdef __cplusplus
