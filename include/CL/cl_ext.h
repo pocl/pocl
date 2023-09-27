@@ -321,7 +321,7 @@ typedef clCommandSVMMemcpyKHR_t *
 clCommandSVMMemcpyKHR_fn ;
 
 typedef cl_int CL_API_CALL
-clCommandSVMMemfillKHR_t(
+clCommandSVMMemFillKHR_t(
     cl_command_buffer_khr command_buffer,
     cl_command_queue command_queue,
     void *svm_ptr,
@@ -333,8 +333,8 @@ clCommandSVMMemfillKHR_t(
     cl_sync_point_khr* sync_point,
     cl_mutable_command_khr* mutable_handle);
 
-typedef clCommandSVMMemfillKHR_t *
-clCommandSVMMemfillKHR_fn ;
+typedef clCommandSVMMemFillKHR_t *
+clCommandSVMMemFillKHR_fn ;
 
 #if !defined(CL_NO_NON_ICD_DISPATCH_EXTENSION_PROTOTYPES)
 
@@ -513,7 +513,7 @@ clCommandSVMMemcpyKHR(
     cl_mutable_command_khr* mutable_handle) ;
 
 extern CL_API_ENTRY cl_int CL_API_CALL
-clCommandSVMMemfillKHR(
+clCommandSVMMemFillKHR(
     cl_command_buffer_khr command_buffer,
     cl_command_queue command_queue,
     void *svm_ptr,
