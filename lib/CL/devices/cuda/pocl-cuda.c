@@ -74,7 +74,7 @@ cudnnHandle_t cudnn;
   }
 
 #define CUDA_BUILTIN_KERNELS 6
-static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
+static const char *cuda_builtin_kernels[CUDA_BUILTIN_KERNELS]
     = { "pocl.mul.i32",
         "pocl.add.i32",
         "pocl.dnn.conv2d_int8_relu",
@@ -83,7 +83,7 @@ static const char *CudaBuiltinKernels[CUDA_BUILTIN_KERNELS]
         "pocl.sgemm_ab.tensor.f16f16f32" };
 
 #define OPENCL_BUILTIN_KERNELS 5
-static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
+static const char *opencl_builtin_kernels[OPENCL_BUILTIN_KERNELS] = {
   "pocl.abs.f32",
   // from common builtin kernels:
   "pocl.add.i8",
@@ -94,7 +94,7 @@ static const char *OpenclBuiltinKernels[OPENCL_BUILTIN_KERNELS] = {
 
 #ifdef ENABLE_CUDNN
 #define CUDNN_BUILTIN_KERNELS 1
-static const char *CudnnBuiltinKernels[CUDNN_BUILTIN_KERNELS]
+static const char *cudnn_builtin_kernels[CUDNN_BUILTIN_KERNELS]
     = { "pocl.dnn.conv2d.nchw.f32" };
 #else
 #define CUDNN_BUILTIN_KERNELS 0
@@ -160,11 +160,11 @@ typedef struct pocl_cuda_device_data_s
   int sm_maj, sm_min, warp_size;
   cl_bool available;
 
-  pocl_cuda_kernel_data_t CudaBuiltinKernelsData[CUDA_BUILTIN_KERNELS];
-  pocl_cuda_kernel_data_t CudnnBuiltinKernelsData[CUDNN_BUILTIN_KERNELS];
-  pocl_cuda_program_data_t CudaBuiltinKernelsProgram;
-  pocl_cuda_program_data_t CudnnBuiltinKernelsProgram;
-  int CudaBuiltinKernelsBuilt;
+  pocl_cuda_kernel_data_t cuda_builtin_kernels_data[CUDA_BUILTIN_KERNELS];
+  pocl_cuda_kernel_data_t cudnn_builtin_kernels_data[CUDNN_BUILTIN_KERNELS];
+  pocl_cuda_program_data_t cuda_builtin_kernels_program;
+  pocl_cuda_program_data_t cudnn_builtin_kernels_program;
+  int cuda_builtin_kernels_built;
 
 } pocl_cuda_device_data_t;
 
@@ -490,20 +490,20 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         {
           if (i > 0)
             strcat (dev->builtin_kernel_list, ";");
-          strcat (dev->builtin_kernel_list, CudaBuiltinKernels[i]);
+          strcat (dev->builtin_kernel_list, cuda_builtin_kernels[i]);
         }
       dev->num_builtin_kernels += OPENCL_BUILTIN_KERNELS;
       for (unsigned i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
         {
           strcat (dev->builtin_kernel_list, ";");
-          strcat (dev->builtin_kernel_list, OpenclBuiltinKernels[i]);
+          strcat (dev->builtin_kernel_list, opencl_builtin_kernels[i]);
         }
 #ifdef ENABLE_CUDNN
       dev->num_builtin_kernels += CUDNN_BUILTIN_KERNELS;
       for (unsigned i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
         {
           strcat(dev->builtin_kernel_list, ";");
-          strcat(dev->builtin_kernel_list, CudnnBuiltinKernels[i]);
+          strcat(dev->builtin_kernel_list, cudnn_builtin_kernels[i]);
         }
 #endif //ENABLE_CUDNN
 
@@ -1164,7 +1164,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   cl_device_id dev = program->devices[device_i];
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)dev->data;
   /* these only need to be built once per device */
-  if (ddata->CudaBuiltinKernelsBuilt)
+  if (ddata->cuda_builtin_kernels_built)
     {
       POCL_MSG_PRINT_CUDA ("CUDA builtin kernels already built\n");
       return 0;
@@ -1200,49 +1200,49 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
   if (CUDA_CHECK_ERROR (res, "cuModuleLoadData CudaBuiltinKernelsPTX"))
     return -1;
 
-  memset (&ddata->CudaBuiltinKernelsProgram, 0,
+  memset (&ddata->cuda_builtin_kernels_program, 0,
           sizeof (pocl_cuda_program_data_t));
-  ddata->CudaBuiltinKernelsProgram.module = mod;
-  ddata->CudaBuiltinKernelsProgram.module_offsets = mod; // TODO fix this
+  ddata->cuda_builtin_kernels_program.module = mod;
+  ddata->cuda_builtin_kernels_program.module_offsets = mod; // TODO fix this
 
   static size_t cuda_builtin_kernel_zero_alignments[20] = { 0 };
 
   res = cuModuleGetFunction (&ff, mod, "pocl_mul_i32");
   if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_mul_i32"))
     return -1;
-  ddata->CudaBuiltinKernelsData[0].kernel = ff;
-  ddata->CudaBuiltinKernelsData[0].kernel_offsets = ff; // TODO fix this
-  ddata->CudaBuiltinKernelsData[0].alignments
+  ddata->cuda_builtin_kernels_data[0].kernel = ff;
+  ddata->cuda_builtin_kernels_data[0].kernel_offsets = ff; // TODO fix this
+  ddata->cuda_builtin_kernels_data[0].alignments
       = cuda_builtin_kernel_zero_alignments;
-  ddata->CudaBuiltinKernelsData[0].refcount = 1;
+  ddata->cuda_builtin_kernels_data[0].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_add_i32");
   if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_add_i32"))
     return -1;
-  ddata->CudaBuiltinKernelsData[1].kernel = ff;
-  ddata->CudaBuiltinKernelsData[1].kernel_offsets = ff; // TODO fix this
-  ddata->CudaBuiltinKernelsData[1].alignments
+  ddata->cuda_builtin_kernels_data[1].kernel = ff;
+  ddata->cuda_builtin_kernels_data[1].kernel_offsets = ff; // TODO fix this
+  ddata->cuda_builtin_kernels_data[1].alignments
       = cuda_builtin_kernel_zero_alignments;
-  ddata->CudaBuiltinKernelsData[1].refcount = 1;
+  ddata->cuda_builtin_kernels_data[1].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_dnn_conv2d_int8_relu");
   if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_dnn_conv2d_int8_relu"))
     return -1;
-  ddata->CudaBuiltinKernelsData[2].kernel = ff;
-  ddata->CudaBuiltinKernelsData[2].kernel_offsets = ff; // TODO fix this
-  ddata->CudaBuiltinKernelsData[2].alignments
+  ddata->cuda_builtin_kernels_data[2].kernel = ff;
+  ddata->cuda_builtin_kernels_data[2].kernel_offsets = ff; // TODO fix this
+  ddata->cuda_builtin_kernels_data[2].alignments
       = cuda_builtin_kernel_zero_alignments;
-  ddata->CudaBuiltinKernelsData[2].refcount = 1;
+  ddata->cuda_builtin_kernels_data[2].refcount = 1;
 
   res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_local_f32");
   if (CUDA_CHECK_ERROR (res, "cuModuleGetFunction  pocl_sgemm_local_f32"))
     return -1;
-  ddata->CudaBuiltinKernelsData[3].kernel = ff;
-  ddata->CudaBuiltinKernelsData[3].kernel_offsets = ff; // TODO fix this
+  ddata->cuda_builtin_kernels_data[3].kernel = ff;
+  ddata->cuda_builtin_kernels_data[3].kernel_offsets = ff; // TODO fix this
   // 3 pointers, 3 unsigned
   static size_t sgemm_local_alignments[] = {0, 0, 0, 4, 4, 4,};
-  ddata->CudaBuiltinKernelsData[3].alignments = sgemm_local_alignments;
-  ddata->CudaBuiltinKernelsData[3].refcount = 1;
+  ddata->cuda_builtin_kernels_data[3].alignments = sgemm_local_alignments;
+  ddata->cuda_builtin_kernels_data[3].refcount = 1;
 
   if (have_sm70)
   {
@@ -1250,26 +1250,26 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
     if (CUDA_CHECK_ERROR (res,
                           "cuModuleGetFunction  pocl_sgemm_tensor_f16f16f32"))
       return -1;
-    ddata->CudaBuiltinKernelsData[4].kernel = ff;
-    ddata->CudaBuiltinKernelsData[4].kernel_offsets = ff; // TODO fix this
+    ddata->cuda_builtin_kernels_data[4].kernel = ff;
+    ddata->cuda_builtin_kernels_data[4].kernel_offsets = ff; // TODO fix this
     // 3 pointers, 3 unsigned
     static size_t sgemm_tensor_alignments[] = { 0, 0, 0, 4, 4, 4 };
-    ddata->CudaBuiltinKernelsData[4].alignments = sgemm_tensor_alignments;
-    ddata->CudaBuiltinKernelsData[4].refcount = 1;
+    ddata->cuda_builtin_kernels_data[4].alignments = sgemm_tensor_alignments;
+    ddata->cuda_builtin_kernels_data[4].refcount = 1;
 
     res = cuModuleGetFunction (&ff, mod, "pocl_sgemm_scale_tensor_f16f16f32");
     if (CUDA_CHECK_ERROR (
             res, "cuModuleGetFunction  pocl_sgemm_scale_tensor_f16f16f32"))
       return -1;
-    ddata->CudaBuiltinKernelsData[5].kernel = ff;
-    ddata->CudaBuiltinKernelsData[5].kernel_offsets = ff; // TODO fix this
+    ddata->cuda_builtin_kernels_data[5].kernel = ff;
+    ddata->cuda_builtin_kernels_data[5].kernel_offsets = ff; // TODO fix this
     // 3 pointers, 3 unsigned, 2 floats
     static size_t sgemm_tensor_scale_alignments[] = { 0, 0, 0, 4, 4, 4, 4, 4 };
-    ddata->CudaBuiltinKernelsData[5].alignments
+    ddata->cuda_builtin_kernels_data[5].alignments
         = sgemm_tensor_scale_alignments;
-    ddata->CudaBuiltinKernelsData[5].refcount = 1;
+    ddata->cuda_builtin_kernels_data[5].refcount = 1;
   }
-  ddata->CudaBuiltinKernelsBuilt = CL_TRUE;
+  ddata->cuda_builtin_kernels_built = CL_TRUE;
   return 0;
 }
 
@@ -1695,10 +1695,10 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
       /* CUDA builtins */
       for (size_t i = 0; i < CUDA_BUILTIN_KERNELS; ++i)
         {
-          if (strcmp (kernel->name, CudaBuiltinKernels[i]) == 0)
+          if (strcmp (kernel->name, cuda_builtin_kernels[i]) == 0)
             {
-              module = ddata->CudaBuiltinKernelsProgram.module;
-              kdata = &ddata->CudaBuiltinKernelsData[i];
+              module = ddata->cuda_builtin_kernels_program.module;
+              kdata = &ddata->cuda_builtin_kernels_data[i];
               function = kdata->kernel;
               break;
             }
@@ -1707,7 +1707,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
       /* CUDNN builtins */
       for (size_t i = 0; i < CUDNN_BUILTIN_KERNELS; ++i)
         {
-          if (strcmp(kernel->name, CudnnBuiltinKernels[i]) == 0)
+          if (strcmp(kernel->name, cudnn_builtin_kernels[i]) == 0)
             {
               submit_cudnn_kernel(stream, cmd, device, event);
               return;
@@ -1721,7 +1721,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
       /* handle OpenCL builtins */
       for (size_t i = 0; i < OPENCL_BUILTIN_KERNELS; ++i)
         {
-          if (strcmp (kernel->name, OpenclBuiltinKernels[i]) == 0)
+          if (strcmp (kernel->name, opencl_builtin_kernels[i]) == 0)
             {
               pocl_sanitize_builtin_kernel_name (kernel, &saved_kernel_name);
               break;
