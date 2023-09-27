@@ -1131,7 +1131,7 @@ pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
                                     cl_device_id device, gvar_init_callback_t callback)
 {
 #ifdef ENABLE_HOST_CPU_DEVICES
-  if (device->program_scope_variables_pass == CL_FALSE)
+  if (device->run_program_scope_variables_pass == CL_FALSE)
     return;
 
   if (program->global_var_total_size[dev_i] > 0 && program->gvar_storage[dev_i] == NULL)

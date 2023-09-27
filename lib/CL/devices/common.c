@@ -1273,7 +1273,7 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * for CPU devices there is no hardware limit.
    * TODO what should we set them to ?
    * setting this to >= 2^16 causes LLVM to crash in SDNode */
-  if (device->program_scope_variables_pass)
+  if (device->run_program_scope_variables_pass)
     {
       device->global_var_max_size = 64 * 1000;
       device->global_var_pref_size = max(64 * 1000, device->max_constant_buffer_size);
@@ -1610,7 +1610,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->spmd = CL_FALSE;
   dev->arg_buffer_launcher = CL_FALSE;
   dev->grid_launcher = CL_FALSE;
-  dev->workgroup_pass = CL_TRUE;
+  dev->run_workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->platform = 0;
 

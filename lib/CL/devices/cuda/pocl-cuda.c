@@ -304,7 +304,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->llvm_fp_contract_mode = "fast";
 
   dev->spmd = CL_TRUE;
-  dev->workgroup_pass = CL_FALSE;
+  dev->run_workgroup_pass = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
 
   dev->global_as_id = 1;
@@ -575,7 +575,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* this is not enabled because we're compiling program.bc and
    * handing it over to CUDA; we're not running workgroup function
    * generation. Therefore CUDA takes care of program-scope variables. */
-  dev->program_scope_variables_pass = CL_FALSE;
+  dev->run_program_scope_variables_pass = CL_FALSE;
   dev->generic_as_support = CL_TRUE;
 
   pocl_setup_opencl_c_with_version (dev, CL_TRUE);

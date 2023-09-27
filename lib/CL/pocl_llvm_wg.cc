@@ -286,7 +286,7 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
   // with context struct accesses. TODO: A cleaner and a more robust way would
   // be to add hidden context struct parameters to the builtins that need the
   // context data and fix the calls early.
-  if (device->workgroup_pass) {
+  if (device->run_workgroup_pass) {
     passes.push_back("workgroup");
     passes.push_back("always-inline");
   }
@@ -894,7 +894,7 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
   }
   assert(M);
   program->llvm_irs[device_i] = M;
-  if (dev->program_scope_variables_pass)
+  if (dev->run_program_scope_variables_pass)
     parseModuleGVarSize(program, device_i, M);
   ++llvm_ctx->number_of_IRs;
   return CL_SUCCESS;

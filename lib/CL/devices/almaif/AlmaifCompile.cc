@@ -70,7 +70,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   dev->llvm_cpu = NULL;
   dev->has_64bit_long = 0;
   dev->spmd = CL_FALSE;
-  dev->workgroup_pass = CL_TRUE;
+  dev->run_workgroup_pass = CL_TRUE;
 
   dev->arg_buffer_launcher = CL_TRUE;
   dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
