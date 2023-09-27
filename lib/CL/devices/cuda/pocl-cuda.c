@@ -559,8 +559,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                                    | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                    | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
 
-  // TODO should check from Compute Capability ??
-  dev->sub_group_independent_forward_progress = CL_TRUE;
+  dev->sub_group_independent_forward_progress =
+      (data->sm_maj >= 7) ? CL_TRUE : CL_FALSE;
 
   /* Just an arbitrary number here based on assumption of SG size 32. */
   dev->max_num_sub_groups = dev->max_work_group_size / 32;
