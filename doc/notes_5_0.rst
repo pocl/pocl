@@ -28,8 +28,9 @@ CUDA driver has gained some new features:
 
 * program scope variables
 * OpenCL 2.x/3.x atomics
-* subgroup support (partial only)
-* enable FP16 & generic AS support (with SPIR-V input)
+* initial subgroup support (only intel_sub_group_shuffle, intel_sub_group_shuffle_xor,
+  get_sub_group_local_id, sub_group_barrier, sub_group_ballot are supported)
+* enable FP16 & generic address space support (with SPIR-V input)
 
 
 ================
