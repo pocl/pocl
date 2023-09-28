@@ -81,9 +81,8 @@ endif()
 add_test(NAME "examples/example1_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/example1.bin####${CMAKE_CURRENT_SOURCE_DIR}/example1.cl"
-            "-DCMD2=${CMAKE_COMMAND}####-E####rm####-rf####${CMAKE_BINARY_DIR}/Testing/Cache"
-            "-DCMD3=${CMAKE_BINARY_DIR}/examples/example1/example1####b####${CMAKE_BINARY_DIR}/example1.bin"
-            "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
+            "-DCMD2=${CMAKE_BINARY_DIR}/examples/example1/example1####b####${CMAKE_BINARY_DIR}/example1.bin"
+            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
 set_tests_properties( "examples/example1_poclbin"

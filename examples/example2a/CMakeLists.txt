@@ -67,9 +67,8 @@ set_property(TEST "examples/example2a"
 add_test(NAME "examples/example2a_poclbin"
          COMMAND ${CMAKE_COMMAND}
             "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/example2a.bin####${CMAKE_CURRENT_SOURCE_DIR}/example2a.cl"
-            "-DCMD2=${CMAKE_COMMAND}####-E####rm####-rf####${CMAKE_BINARY_DIR}/Testing/Cache"
-            "-DCMD3=${CMAKE_BINARY_DIR}/examples/example2a/example2a####b####${CMAKE_BINARY_DIR}/example2a.bin"
-            "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2a.bin"
+            "-DCMD2=${CMAKE_BINARY_DIR}/examples/example2a/example2a####b####${CMAKE_BINARY_DIR}/example2a.bin"
+            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2a.bin"
             -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
 
 set_tests_properties( "examples/example2a_poclbin"
