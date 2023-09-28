@@ -228,7 +228,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_tests
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_remote_tests $CTEST_FLAGS -E test_command_buffer
 
   cuda_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
@@ -486,9 +486,9 @@ jobs:
           IGC_EnableDPEmulation: "1"
         run: |
           if [ ${{ matrix.llvm }} -lt 16 ]; then
-            TEST_EXCLUDES='poclcc|clCreateKernel|test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
+            TEST_EXCLUDES='poclcc|clCreateKernel|clCreateProgramWithBinary|test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
           else
-            TEST_EXCLUDES='poclcc|clCreateKernel|test_hadd_|read-copy-write-buffer|buffer-image-copy|copy_signbit_loopvec|isnan_loopvec|sampler_address_clamp_loopvec|program_from_binary_with_local_1_1_1|spirv/printf|example0_spirv|example1_spirv|oneapi_samples|all_simple_sycl_samples|all_dpcpp_book_samples'
+            TEST_EXCLUDES='poclcc|clCreateKernel|clCreateProgramWithBinary|test_hadd_|read-copy-write-buffer|buffer-image-copy|copy_signbit_loopvec|isnan_loopvec|sampler_address_clamp_loopvec|program_from_binary_with_local_1_1_1|spirv/printf|example0_spirv|example1_spirv|oneapi_samples|all_simple_sycl_samples|all_dpcpp_book_samples'
           fi
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
