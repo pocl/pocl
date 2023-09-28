@@ -102,7 +102,7 @@ VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
 bool
 VariableUniformityAnalysis::runOnFunction(Function &F) {
 
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS

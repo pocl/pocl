@@ -90,6 +90,9 @@ extern "C" {
   int pocl_llvm_generate_workgroup_function_nowrite (
       unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
       _cl_command_node *Command, void **output, int Specialize);
+
+  POCL_EXPORT
+  int pocl_llvm_run_passes_on_program (cl_program Program, unsigned DeviceI);
   /**
    * Free the LLVM IR of a program for a given device
    */

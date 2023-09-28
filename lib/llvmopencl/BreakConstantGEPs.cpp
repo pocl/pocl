@@ -246,7 +246,8 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
 bool
 BreakConstantGEPs::runOnFunction (Function & F) {
 
-  if (!pocl::Workgroup::isKernelToProcess(F)) return false;   
+  if (!pocl::isKernelToProcess(F))
+    return false;
 
   bool modified = false;
 

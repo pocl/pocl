@@ -910,7 +910,14 @@ compile_and_link_program(int compile_program,
       cl_device_id device = program->devices[device_i];
 
       if (device->ops->post_build_program)
-        device->ops->post_build_program (program, device_i);
+        {
+          errcode = device->ops->post_build_program (program, device_i);
+          if (errcode != CL_SUCCESS)
+            {
+              POCL_MSG_ERR ("Program build: post-build-program failed\n");
+              goto ERROR;
+            }
+        }
     }
 
   TP_BUILD_PROGRAM (program->context->id, program->id);

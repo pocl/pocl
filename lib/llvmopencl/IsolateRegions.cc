@@ -104,7 +104,7 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
   if (exit == NULL) return false;
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
           pocl::WorkitemHandlerChooser::POCL_WIH_CBS &&
-      Workgroup::hasWorkgroupBarriers(*exit->getParent()))
+      hasWorkgroupBarriers(*exit->getParent()))
     return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS

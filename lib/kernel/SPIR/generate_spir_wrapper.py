@@ -71,9 +71,8 @@ args = parser.parse_args()
 # function prefix used by PoCL's kernel library
 POCL_LIB_PREFIX = "_cl_"
 
-# CUDA uses the same pointer AS-mangling as SPIR
-# set to False for CUDA wrapper, True for CPU wrapper
-MANGLE_TARGET = args.target.startswith('cpu')
+# uses the same pointer AS-mangling as SPIR
+MANGLE_TARGET = True
 
 # if True, creates AS casts of pointer arguments (all are cast to AS 0)
 # set to False for CUDA wrapper, True for CPU wrapper
@@ -526,22 +525,45 @@ MANGLING_AS_SPIR = {
 	"none": ""
 }
 
-MANGLING_AS_OCL = {
-	"global": "PU8CLglobal",
-	"constant": "PU10CLconstant",
-	"local": "PU7CLlocal",
-	"private": "PU9CLprivate",
-	"generic": "PU9CLgeneric",
-	"none": ""
-}
+if args.target.startswith('cpu'):
+	MANGLING_AS_OCL = {
+		"global": "PU8CLglobal",
+		"constant": "PU10CLconstant",
+		"local": "PU7CLlocal",
+		"private": "PU9CLprivate",
+		"generic": "PU9CLgeneric",
+		"none": ""
+	}
+else:
+	MANGLING_AS_OCL = {
+		"global": "PU3AS1",
+		"constant": "PU3AS4",
+		"local": "PU3AS3",
+		"private": "P",
+		"generic": "P",
+		"none": ""
+	}
 
-LLVM_SPIR_AS = {
-	"global": " addrspace(1)",
-	"constant": " addrspace(2)",
-	"local": " addrspace(3)",
-	"generic": " addrspace(4)",
-	"private": " ",
-	"none": " "
+if args.target.startswith('cpu'):
+	LLVM_SPIR_AS = {
+		"global": " addrspace(1)",
+		"constant": " addrspace(2)",
+		"local": " addrspace(3)",
+		"generic": " addrspace(4)",
+		"private": " ",
+		"none": " "
+	}
+else:
+	LLVM_SPIR_AS = {
+		"global": " addrspace(1)",
+		"constant": " addrspace(4)",
+		"local": " addrspace(3)",
+		"generic": " ",
+		"private": " ",
+		"none": " "
+	}
+
+ALREADY_DECLARED = {
 }
 
 # some coerced args require a shuffle b/c different size in bits
@@ -678,8 +700,13 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			addr_spaces = ["global", "local", "private", "constant"]
 		else:
 			addr_spaces = ["global", "local", "private"]
+		# "local" because some functions that have "global" only don't have generic versions
 		if GENERIC_AS and "local" in addr_spaces:
 			addr_spaces.append("generic")
+
+	if SPIR_CALLING_ABI and ("generic" in addr_spaces):
+		if not ("private" in addr_spaces):
+			addr_spaces.append("private")
 
 	for AS in addr_spaces:
 
@@ -824,7 +851,14 @@ def generate_function(name, ret_type, ret_type_ext, multiAS, *args):
 			decl_ret_type = 'void'
 		else:
 			decl_ret_type = coerced_ret_type
-		print("declare %s %s(%s) local_unnamed_addr #0" % (decl_ret_type, ocl_mangled_name, decl_args))
+		
+		#if GENERIC_AS and GEN_AS_CALLEE_IDENTICAL and (AS == "generic") and ("private" in addr_spaces):
+		declaration = "declare %s %s(%s) local_unnamed_addr #0" % (decl_ret_type, ocl_mangled_name, decl_args)
+		if declaration in ALREADY_DECLARED.keys():
+			print("")
+		else:
+			print(declaration)
+			ALREADY_DECLARED[declaration] = True
 		print("")
 		print("define spir_func %s %s(%s) local_unnamed_addr #0 {" % (ret_type_ext + ret_type, spir_mangled_name, caller_args))
 
@@ -1386,6 +1420,22 @@ for mang_type in ['i', 'j', "l", "m", "f", "d"]:
 											["12memory_order", "12memory_order"])
 		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
 											("generic", "generic", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_strong", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("private", "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("private", "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_strong", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "private", "none", "none", "none", "none"),
+											['PVA'+mang_type, 'P'+mang_type, mang_type],
+											["12memory_order", "12memory_order"])
+		gen_three_variants("atomic_compare_exchange_weak", SIG_TO_LLVM_TYPE_MAP['b'], '',
+											("generic", "private", "none", "none", "none", "none"),
 											['PVA'+mang_type, 'P'+mang_type, mang_type],
 											["12memory_order", "12memory_order"])
 

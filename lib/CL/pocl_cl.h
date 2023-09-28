@@ -907,10 +907,10 @@ struct _cl_device_id {
      placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
      loads from the context struct passed as a kernel argument. This flag
      enables or disables this pass. */
-  cl_bool workgroup_pass;
+  cl_bool run_workgroup_pass;
   /* The program scope variable pass takes program-scope variables and replaces
      them by references into a buffer, and creates an initializer kernel. */
-  cl_bool program_scope_variables_pass;
+  cl_bool run_program_scope_variables_pass;
   /* if CL_TRUE, pocl_llvm_build_program will ignore pocl's OpenCL headers
    * and rely purely on Clang's OpenCL headers. For most drivers,
    * this should default to CL_FALSE. */

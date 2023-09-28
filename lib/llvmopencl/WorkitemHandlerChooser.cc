@@ -62,7 +62,7 @@ WorkitemHandlerChooser::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 WorkitemHandlerChooser::runOnFunction(Function &F)
 {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
   Kernel *K = cast<Kernel> (&F);

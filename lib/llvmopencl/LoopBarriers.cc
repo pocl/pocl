@@ -62,10 +62,10 @@ LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool
 LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
+  if (!isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
-  if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent()))
+  if (!hasWorkgroupBarriers(*L->getHeader()->getParent()))
     return false;
 
   return ProcessLoop(L, LPM);;

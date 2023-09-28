@@ -116,7 +116,8 @@ bool FlattenGlobals::runOnModule(Module &M) {
         // if it's an OpenCL kernel with OptNone attribute, assume we're debugging,
         // and don't inline the kernel into the workgroup launcher.
         // this makes it possible to debug kernel code with GDB.
-        if (pocl::Workgroup::isKernelToProcess(*f) && f->hasFnAttribute(Attribute::OptimizeNone))
+        if (pocl::isKernelToProcess(*f) &&
+            f->hasFnAttribute(Attribute::OptimizeNone))
           continue;
 
         functions_to_inline.insert(f);

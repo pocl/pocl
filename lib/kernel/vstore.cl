@@ -112,21 +112,24 @@ IMPLEMENT_VSTORE(float , __private)
 IMPLEMENT_VSTORE(double, __private)
 #endif
 
-#ifdef __opencl_c_generic_address_space
-IMPLEMENT_VSTORE(char  , __generic)
-IMPLEMENT_VSTORE(short , __generic)
-IMPLEMENT_VSTORE(int   , __generic)
+
+IF_GEN_AS(IMPLEMENT_VSTORE(char  , __generic))
+IF_GEN_AS(IMPLEMENT_VSTORE(short , __generic))
+IF_GEN_AS(IMPLEMENT_VSTORE(int   , __generic))
 #if defined(cl_khr_int64)
-IMPLEMENT_VSTORE(long  , __generic)
+IF_GEN_AS(IMPLEMENT_VSTORE(long  , __generic))
 #endif
-IMPLEMENT_VSTORE(uchar , __generic)
-IMPLEMENT_VSTORE(ushort, __generic)
-IMPLEMENT_VSTORE(uint  , __generic)
+IF_GEN_AS(IMPLEMENT_VSTORE(uchar , __generic))
+IF_GEN_AS(IMPLEMENT_VSTORE(ushort, __generic))
+IF_GEN_AS(IMPLEMENT_VSTORE(uint  , __generic))
 #if defined(cl_khr_int64)
-IMPLEMENT_VSTORE(ulong , __generic)
+IF_GEN_AS(IMPLEMENT_VSTORE(ulong , __generic))
 #endif
-IMPLEMENT_VSTORE(float , __generic)
+IF_GEN_AS(IMPLEMENT_VSTORE(float , __generic))
 #if defined(cl_khr_fp64)
-IMPLEMENT_VSTORE(double, __generic)
+IF_GEN_AS(IMPLEMENT_VSTORE(double, __generic))
 #endif
-#endif /* __opencl_c_generic_address_space */
+#if defined(cl_khr_fp16)
+IF_GEN_AS(IMPLEMENT_VSTORE(half, __generic))
+#endif
+

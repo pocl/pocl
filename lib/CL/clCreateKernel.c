@@ -109,7 +109,9 @@ POname(clCreateKernel)(cl_program program,
       cl_device_id device = program->devices[i];
       if (device->ops->create_kernel && *(device->available) == CL_TRUE)
         {
+          POCL_LOCK_OBJ (program);
           int r = device->ops->create_kernel (device, program, kernel, i);
+          POCL_UNLOCK_OBJ (program);
           POCL_GOTO_ERROR_ON ((r != CL_SUCCESS), CL_OUT_OF_RESOURCES,
                               "could not create device-specific data "
                               "for kernel %s\n",

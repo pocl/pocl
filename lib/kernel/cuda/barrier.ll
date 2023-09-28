@@ -10,3 +10,16 @@ entry:
   call void @llvm.nvvm.barrier0()
   ret void
 }
+
+define void @_Z22_cl_work_group_barrierj(i32) noduplicate {
+entry:
+  call void @llvm.nvvm.barrier0()
+  ret void
+}
+
+
+define void @_Z22_cl_work_group_barrierj12memory_scope(i32, i32) noduplicate {
+entry:
+  call void @llvm.nvvm.barrier0()
+  ret void
+}

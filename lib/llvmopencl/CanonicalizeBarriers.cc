@@ -64,7 +64,7 @@ CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 CanonicalizeBarriers::runOnFunction(Function &F)
 {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
   bool changed = false;
 

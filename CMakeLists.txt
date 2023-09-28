@@ -1250,6 +1250,7 @@ else()
   set(HOST_DEVICE_CL_VERSION_MINOR 2)
 endif()
 
+
 # Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
@@ -1709,18 +1710,57 @@ if(ENABLE_CUDA)
   # TODO unify with autotools
   set(BUILD_CUDA 1)
 
-  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
+  set(CUDA_DEVICE_CL_VERSION_MAJOR 3)
+  set(CUDA_DEVICE_CL_VERSION_MINOR 0)
+  set(CUDA_DEVICE_CL_VERSION "300")
+  set(CUDA_DEVICE_CL_STD "3.0")
+
+  # CUDA device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
+  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
+
+  # CUDA device: list of OpenCL 3.0 features that are always enabled
+  # __opencl_c_3d_image_writes  __opencl_c_images
+  set(CUDA_DEVICE_FEATURES_30 "__opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+    __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
+    __opencl_c_generic_address_space")
+
   if(ENABLE_SPIR)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_spir")
-  endif()
-  if(ENABLE_CUDNN)
-    add_definitions(-DENABLE_CUDNN=1)
   endif()
   if(ENABLE_SPIRV)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program")
   endif()
-  set(CUDA_DEVICE_CL_VERSION "120")
-  set(CUDA_DEVICE_CL_STD "1.2")
+
+  option(ENABLE_CUDA_EXPERIMENTAL_EXTENSIONS "experimental (and/or unfinished) device extensions" OFF)
+  if(ENABLE_CUDA_EXPERIMENTAL_EXTENSIONS)
+    # unfinished extensions
+    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroups")
+    #set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
+    #  cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
+  endif()
+
+  if(CUDA_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
+    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_subgroups")
+  endif()
+
+  # advertise fp16 support in CUDA device info
+  # disable this when using PoCL with CUDA device with Compute Capability < 6.0
+  option(ENABLE_CUDA_FP16 "cuda fp16" ON)
+
+  if(ENABLE_CUDA_FP16)
+    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp16")
+    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp16")
+  endif()
+
+  # FP64 is always enabled for CUDA, it should be available since Compute Capability 1.3
+  set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} __opencl_c_fp64")
+
+  if(ENABLE_CUDNN)
+    add_definitions(-DENABLE_CUDNN=1)
+  endif()
+
+
 endif()
 
 ##########################################################

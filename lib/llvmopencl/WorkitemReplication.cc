@@ -88,7 +88,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 bool
 WorkitemReplication::runOnFunction(Function &F)
 {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
   if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 

@@ -286,7 +286,7 @@ static PassManager &kernel_compiler_passes(cl_device_id device) {
   // with context struct accesses. TODO: A cleaner and a more robust way would
   // be to add hidden context struct parameters to the builtins that need the
   // context data and fix the calls early.
-  if (device->workgroup_pass) {
+  if (device->run_workgroup_pass) {
     passes.push_back("workgroup");
     passes.push_back("always-inline");
   }
@@ -620,36 +620,12 @@ int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
   return r;
 }
 
-int pocl_llvm_generate_workgroup_function_nowrite(
-    unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
-    _cl_command_node *Command, void **Output, int Specialize) {
-
-  _cl_command_run *RunCommand = &Command->command.run;
-  cl_program Program = Kernel->program;
-  cl_context ctx = Program->context;
-  PoclLLVMContextData *PoCLLLVMContext =
-      (PoclLLVMContextData *)ctx->llvm_context_data;
-  PoclCompilerMutexGuard lockHolder(&PoCLLLVMContext->Lock);
-  llvm::LLVMContext *LLVMContext = PoCLLLVMContext->Context;
-
-#ifdef DEBUG_POCL_LLVM_API
-  printf("### calling the kernel compiler for kernel %s local_x %zu "
-         "local_y %zu local_z %zu parallel_filename: %s\n",
-         kernel->name, local_x, local_y, local_z, parallel_bc_path);
-#endif
-  llvm::Module *ProgramBC = (llvm::Module *)Program->llvm_irs[DeviceI];
-
-  // Create an empty Module and copy only the kernel+callgraph from
-  // program.bc.
-  llvm::Module *ParallelBC =
-      new llvm::Module(StringRef("parallel_bc"), *LLVMContext);
-
-  ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
-  ParallelBC->setDataLayout(ProgramBC->getDataLayout());
-
-  copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC,
-                        Device->device_aux_functions);
-
+static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
+                                     _cl_command_run *RunCommand, // optional
+                                     llvm::LLVMContext *LLVMContext,
+                                     PoclLLVMContextData *PoclCtx,
+                                     cl_kernel Kernel, // optional
+                                     cl_device_id Device, int Specialize) {
   // Set to true to generate a global offset 0 specialized WG function.
   bool WGAssumeZeroGlobalOffset;
   // If set to true, the next 3 parameters define the local size to specialize
@@ -664,6 +640,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   // Set the specialization properties.
   if (Specialize) {
+    assert(RunCommand);
     WGLocalSizeX = RunCommand->pc.local_size[0];
     WGLocalSizeY = RunCommand->pc.local_size[1];
     WGLocalSizeZ = RunCommand->pc.local_size[2];
@@ -697,52 +674,52 @@ int pocl_llvm_generate_workgroup_function_nowrite(
       if (*tmp)
         concat.append(";");
     }
-    setModuleStringMetadata(ParallelBC, "device_aux_functions", concat.c_str());
+    setModuleStringMetadata(Bitcode, "device_aux_functions", concat.c_str());
   }
 
-  setModuleIntMetadata(ParallelBC, "device_address_bits", Device->address_bits);
-  setModuleBoolMetadata(ParallelBC, "device_arg_buffer_launcher",
+  setModuleIntMetadata(Bitcode, "device_address_bits", Device->address_bits);
+  setModuleBoolMetadata(Bitcode, "device_arg_buffer_launcher",
                         Device->arg_buffer_launcher);
-  setModuleBoolMetadata(ParallelBC, "device_grid_launcher",
-                        Device->grid_launcher);
-  setModuleBoolMetadata(ParallelBC, "device_is_spmd", Device->spmd);
+  setModuleBoolMetadata(Bitcode, "device_grid_launcher", Device->grid_launcher);
+  setModuleBoolMetadata(Bitcode, "device_is_spmd", Device->spmd);
 
-  setModuleStringMetadata(ParallelBC, "KernelName", Kernel->name);
-  setModuleIntMetadata(ParallelBC, "WGMaxGridDimWidth", WGMaxGridDimWidth);
-  setModuleIntMetadata(ParallelBC, "WGLocalSizeX", WGLocalSizeX);
-  setModuleIntMetadata(ParallelBC, "WGLocalSizeY", WGLocalSizeY);
-  setModuleIntMetadata(ParallelBC, "WGLocalSizeZ", WGLocalSizeZ);
-  setModuleBoolMetadata(ParallelBC, "WGDynamicLocalSize", WGDynamicLocalSize);
-  setModuleBoolMetadata(ParallelBC, "WGAssumeZeroGlobalOffset",
+  if (Kernel != nullptr)
+    setModuleStringMetadata(Bitcode, "KernelName", Kernel->name);
+
+  setModuleIntMetadata(Bitcode, "WGMaxGridDimWidth", WGMaxGridDimWidth);
+  setModuleIntMetadata(Bitcode, "WGLocalSizeX", WGLocalSizeX);
+  setModuleIntMetadata(Bitcode, "WGLocalSizeY", WGLocalSizeY);
+  setModuleIntMetadata(Bitcode, "WGLocalSizeZ", WGLocalSizeZ);
+  setModuleBoolMetadata(Bitcode, "WGDynamicLocalSize", WGDynamicLocalSize);
+  setModuleBoolMetadata(Bitcode, "WGAssumeZeroGlobalOffset",
                         WGAssumeZeroGlobalOffset);
 
-  setModuleIntMetadata(ParallelBC, "device_global_as_id", Device->global_as_id);
-  setModuleIntMetadata(ParallelBC, "device_local_as_id", Device->local_as_id);
-  setModuleIntMetadata(ParallelBC, "device_constant_as_id",
+  setModuleIntMetadata(Bitcode, "device_global_as_id", Device->global_as_id);
+  setModuleIntMetadata(Bitcode, "device_local_as_id", Device->local_as_id);
+  setModuleIntMetadata(Bitcode, "device_constant_as_id",
                        Device->constant_as_id);
-  setModuleIntMetadata(ParallelBC, "device_args_as_id", Device->args_as_id);
-  setModuleIntMetadata(ParallelBC, "device_context_as_id",
-                       Device->context_as_id);
+  setModuleIntMetadata(Bitcode, "device_args_as_id", Device->args_as_id);
+  setModuleIntMetadata(Bitcode, "device_context_as_id", Device->context_as_id);
 
-  setModuleBoolMetadata(ParallelBC, "device_side_printf",
+  setModuleBoolMetadata(Bitcode, "device_side_printf",
                         Device->device_side_printf);
-  setModuleBoolMetadata(ParallelBC, "device_alloca_locals",
+  setModuleBoolMetadata(Bitcode, "device_alloca_locals",
                         Device->device_alloca_locals);
 
-  setModuleIntMetadata(ParallelBC, "device_max_witem_dim",
+  setModuleIntMetadata(Bitcode, "device_max_witem_dim",
                        Device->max_work_item_dimensions);
-  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_0",
+  setModuleIntMetadata(Bitcode, "device_max_witem_sizes_0",
                        Device->max_work_item_sizes[0]);
-  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_1",
+  setModuleIntMetadata(Bitcode, "device_max_witem_sizes_1",
                        Device->max_work_item_sizes[1]);
-  setModuleIntMetadata(ParallelBC, "device_max_witem_sizes_2",
+  setModuleIntMetadata(Bitcode, "device_max_witem_sizes_2",
                        Device->max_work_item_sizes[2]);
 
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::TimePassesIsEnabled = true;
 #endif
   POCL_MEASURE_START(llvm_workgroup_ir_func_gen);
-  kernel_compiler_passes(Device).run(*ParallelBC);
+  kernel_compiler_passes(Device).run(*Bitcode);
   POCL_MEASURE_FINISH(llvm_workgroup_ir_func_gen);
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::reportAndResetTimings();
@@ -750,32 +727,109 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   // Print loop vectorizer remarks if enabled.
   if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
-    std::cout << getDiagString(ctx);
+    std::cerr << getDiagString(PoclCtx);
   }
+
+  return 0;
+}
+
+int pocl_llvm_generate_workgroup_function_nowrite(
+    unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
+    _cl_command_node *Command, void **Output, int Specialize) {
+
+  _cl_command_run *RunCommand = &Command->command.run;
+  cl_program Program = Kernel->program;
+  cl_context ctx = Program->context;
+  PoclLLVMContextData *PoCLLLVMContext =
+      (PoclLLVMContextData *)ctx->llvm_context_data;
+  llvm::LLVMContext *LLVMContext = PoCLLLVMContext->Context;
+  llvm::Module *ParallelBC = nullptr;
+  PoclCompilerMutexGuard lockHolder(&PoCLLLVMContext->Lock);
+
+#ifdef DEBUG_POCL_LLVM_API
+  printf("### calling generate_WG_function for kernel %s local_x %zu "
+         "local_y %zu local_z %zu parallel_filename: %s\n",
+         kernel->name, local_x, local_y, local_z, parallel_bc_path);
+#endif
+
+  llvm::Module *ProgramBC = (llvm::Module *)Program->llvm_irs[DeviceI];
+
+  // Create an empty Module and copy only the kernel+callgraph from
+  // program.bc.
+  ParallelBC = new llvm::Module(StringRef("parallel_bc"), *LLVMContext);
+
+  ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
+  ParallelBC->setDataLayout(ProgramBC->getDataLayout());
+
+  copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC,
+                        Device->device_aux_functions);
+
+  int res =
+      pocl_llvm_run_pocl_passes(ParallelBC, RunCommand, LLVMContext,
+                                PoCLLLVMContext, Kernel, Device, Specialize);
 
   std::string FinalizerCommand =
       pocl_get_string_option("POCL_BITCODE_FINALIZER", "");
-  if (FinalizerCommand != "") {
+  if (!FinalizerCommand.empty()) {
     // Run a user-defined command on the final bitcode.
     char TempParallelBCFileName[POCL_MAX_PATHNAME_LENGTH];
     int FD = -1, Err = 0;
 
     Err = pocl_mk_tempname(TempParallelBCFileName, "/tmp/pocl-parallel", ".bc",
                            &FD);
-    pocl_write_module((char *)ParallelBC, TempParallelBCFileName, 0);
+    POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
+                         "Failed to create "
+                         "temporary file %s\n",
+                         TempParallelBCFileName);
+    Err = pocl_write_module((char *)ParallelBC, TempParallelBCFileName, 0);
+    POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
+                         "Failed to write bitcode "
+                         "into temporary file %s\n",
+                         TempParallelBCFileName);
 
     std::string Command = std::regex_replace(
         FinalizerCommand, std::regex(R"(%\(bc\))"), TempParallelBCFileName);
-    system(Command.c_str());
+    Err = system(Command.c_str());
+    POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
+                         "Failed to execute "
+                         "bitcode finalizer\n");
 
+    llvm::Module *NewBitcode =
+        parseModuleIR(TempParallelBCFileName, LLVMContext);
+    POCL_RETURN_ERROR_ON((NewBitcode == nullptr), CL_FAILED,
+                         "failed to parse bitcode from finalizer\n");
     delete ParallelBC;
-    ParallelBC = parseModuleIR(TempParallelBCFileName, LLVMContext);
+    ParallelBC = NewBitcode;
   }
 
   assert(Output != NULL);
-  *Output = (void *)ParallelBC;
-  ++PoCLLLVMContext->number_of_IRs;
-  return 0;
+  if (res == 0) {
+    *Output = (void *)ParallelBC;
+    ++PoCLLLVMContext->number_of_IRs;
+  } else {
+    *Output = nullptr;
+  }
+
+  return res;
+}
+
+int pocl_llvm_run_passes_on_program(cl_program Program, unsigned DeviceI) {
+
+  llvm::Module *ProgramBC = (llvm::Module *)Program->llvm_irs[DeviceI];
+  cl_device_id Device = Program->devices[DeviceI];
+  cl_context ctx = Program->context;
+  PoclLLVMContextData *PoCLLLVMContext =
+      (PoclLLVMContextData *)ctx->llvm_context_data;
+  llvm::LLVMContext *LLVMContext = PoCLLLVMContext->Context;
+  llvm::Module *ParallelBC = nullptr;
+  PoclCompilerMutexGuard lockHolder(&PoCLLLVMContext->Lock);
+
+  return pocl_llvm_run_pocl_passes(ProgramBC,
+                                   nullptr, // RunCommand,
+                                   LLVMContext, PoCLLLVMContext,
+                                   nullptr, // Kernel,
+                                   Device,
+                                   0); // Specialize
 }
 
 int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
@@ -840,7 +894,7 @@ int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
   }
   assert(M);
   program->llvm_irs[device_i] = M;
-  if (dev->program_scope_variables_pass)
+  if (dev->run_program_scope_variables_pass)
     parseModuleGVarSize(program, device_i, M);
   ++llvm_ctx->number_of_IRs;
   return CL_SUCCESS;

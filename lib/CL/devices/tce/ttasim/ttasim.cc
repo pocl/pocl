@@ -688,7 +688,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->linker_available = CL_TRUE;
 #endif
   dev->spmd = CL_FALSE;
-  dev->workgroup_pass = CL_TRUE;
+  dev->run_workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->vendor = "TTA-Based Co-design Environment";

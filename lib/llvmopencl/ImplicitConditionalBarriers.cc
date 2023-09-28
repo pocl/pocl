@@ -89,10 +89,10 @@ ImplicitConditionalBarriers::firstNonBackedgePredecessor(
 bool
 ImplicitConditionalBarriers::runOnFunction(Function &F) {
 {
-  if (!Workgroup::isKernelToProcess(F))
+  if (!isKernelToProcess(F))
     return false;
 
-  if (!Workgroup::hasWorkgroupBarriers(F))
+  if (!hasWorkgroupBarriers(F))
     return false;
 
   if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==

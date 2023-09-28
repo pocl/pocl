@@ -32,6 +32,22 @@ sub_group_barrier (cl_mem_fence_flags flags)
   work_group_barrier (flags);
 }
 
+void _CL_OVERLOADABLE
+sub_group_barrier (cl_mem_fence_flags flags, memory_scope scope)
+    __attribute__ ((noduplicate))
+{
+  work_group_barrier (flags);
+}
+
+void _CL_OVERLOADABLE
+sub_group_barrier (memory_scope scope)
+    __attribute__ ((noduplicate))
+{
+  work_group_barrier (CLK_GLOBAL_MEM_FENCE);
+}
+
+
+
 int _CL_OVERLOADABLE
 sub_group_any (int predicate)
 {
