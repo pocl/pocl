@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
   if (ai.log_filter_arg)
     logfilter = ai.log_filter_arg;
   else
-    logfilter = getenv("POCLD_LOG_FILTER");
+    logfilter = getenv("POCLD_LOGLEVEL");
   if (!logfilter)
     logfilter = "warn,err";
   pocl_stderr_is_a_tty = isatty(fileno(stderr));
