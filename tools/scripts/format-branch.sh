@@ -14,7 +14,7 @@ esac
 PATCHY=$(mktemp /tmp/pocl.XXXXXXXX.patch)
 trap "rm -f $PATCHY" EXIT
 
-git diff master -U0 --no-color >$PATCHY
+git diff main -U0 --no-color >$PATCHY
 
 SCRIPTPATH=$( realpath "$0"  )
 RELPATH=$(dirname "$SCRIPTPATH")
