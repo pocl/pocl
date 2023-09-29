@@ -180,22 +180,20 @@ CL_API_SUFFIX__VERSION_2_1
   program->program_il = (char *)malloc (length);
   memcpy (program->program_il, il, length);
   program->program_il_size = length;
-#ifdef ENABLE_SPIRV
   errcode = pocl_cache_write_spirv (program_bc_spirv, (const char *)il,
                                     (uint64_t)length);
+#ifdef ENABLE_SPIRV
   get_program_spec_constants (program, program_bc_spirv);
 #endif
 
 ERROR:
   if (errcode_ret)
     *errcode_ret = errcode;
-#ifdef ENABLE_SPIRV
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
     {
       if (program_bc_spirv[0] != 0)
         pocl_remove (program_bc_spirv);
     }
-#endif
   return program;
 }
 POsym(clCreateProgramWithIL)
