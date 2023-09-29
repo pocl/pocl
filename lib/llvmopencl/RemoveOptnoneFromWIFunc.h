@@ -20,27 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_REMOVE_OPTNONE_H
-#define _POCL_REMOVE_OPTNONE_H
+#ifndef POCL_REMOVE_OPTNONE_H
+#define POCL_REMOVE_OPTNONE_H
 
 #include "config.h"
 
 #include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
 class RemoveOptnoneFromWIFunc : public llvm::FunctionPass {
 public:
   static char ID;
+  RemoveOptnoneFromWIFunc() : FunctionPass(ID) {};
+  virtual ~RemoveOptnoneFromWIFunc() {};
 
-  RemoveOptnoneFromWIFunc();
-  virtual ~RemoveOptnoneFromWIFunc(){};
-
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const { AU.setPreservesAll(); }
-
-  virtual bool runOnFunction(llvm::Function &F);
+  virtual bool runOnFunction(llvm::Function &F) override;
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
-}
+
+#else
+
+class RemoveOptnoneFromWIFunc
+    : public llvm::PassInfoMixin<RemoveOptnoneFromWIFunc> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
 
 #endif

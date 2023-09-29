@@ -20,35 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <set>
+#ifndef POCL_CANONICALIZE_BARRIERS_H
+#define POCL_CANONICALIZE_BARRIERS_H
 
 #include "config.h"
 
 #include "llvm/IR/Function.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class CanonicalizeBarriers : public llvm::FunctionPass {
-    
-  public:
-    static char ID;
-    
-  CanonicalizeBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    
-  private:
-    typedef std::set<llvm::Instruction *> InstructionSet;
-    
-    llvm::LoopInfo *LI;
-    llvm::DominatorTree *DT;
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-    bool ProcessFunction(llvm::Function &F);
+class CanonicalizeBarriers : public llvm::FunctionPass
+{
+public:
+  static char ID;
+  CanonicalizeBarriers() : FunctionPass(ID){};
+  virtual ~CanonicalizeBarriers(){};
 
-    friend class pocl::Workgroup;
-  };
-}
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
+
+#else
+
+class CanonicalizeBarriers : public llvm::PassInfoMixin<CanonicalizeBarriers> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+  } // namespace pocl
+
+#endif

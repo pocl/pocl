@@ -24,17 +24,20 @@
 #include <iostream>
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InlineAsm.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InlineAsm.h>
 
 #include "Kernel.h"
 #include "Barrier.h"
 #include "DebugHelpers.h"
+
+#include "pocl.h"
+#include "pocl_llvm_api.h"
 
 POP_COMPILER_DIAGS
 
@@ -165,10 +168,9 @@ verify_no_barriers(const BasicBlock *B)
  * for the regions between barriers that can be freely parallelized 
  * across work-items in the work-group.
  */
-ParallelRegion::ParallelRegionVector *
-Kernel::getParallelRegions(llvm::LoopInfo *LI) {
-  ParallelRegion::ParallelRegionVector *parallel_regions =
-    new ParallelRegion::ParallelRegionVector;
+void Kernel::getParallelRegions(
+    llvm::LoopInfo &LI,
+    ParallelRegion::ParallelRegionVector *parallel_regions) {
 
   SmallVector<BasicBlock *, 4> exit_blocks;
   getExitBlocks(exit_blocks);
@@ -207,10 +209,9 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
              computation block after a branch block) should be processed 
              first. */
           std::string bbName = "";
-          const bool IS_IN_THE_SAME_LOOP = 
-              LI->getLoopFor(barrier) != NULL &&
-              LI->getLoopFor(entry) != NULL &&
-              LI->getLoopFor(entry) == LI->getLoopFor(barrier);
+          const bool IS_IN_THE_SAME_LOOP =
+              LI.getLoopFor(barrier) != NULL && LI.getLoopFor(entry) != NULL &&
+              LI.getLoopFor(entry) == LI.getLoopFor(barrier);
 
           if (IS_IN_THE_SAME_LOOP)
             {
@@ -270,8 +271,16 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
 #ifdef DEBUG_PR_CREATION
   pocl::dumpCFG(*this, this->getName().str() + ".pregions.dot", parallel_regions);
 #endif
-  return parallel_regions;
+}
 
+ParallelRegion::ParallelRegionVector *
+Kernel::getParallelRegions(llvm::LoopInfo &LI) {
+  ParallelRegion::ParallelRegionVector *parallel_regions =
+      new ParallelRegion::ParallelRegionVector;
+
+  getParallelRegions(LI, parallel_regions);
+
+  return parallel_regions;
 }
 
 void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,

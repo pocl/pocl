@@ -20,60 +20,76 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#ifndef POCL_IMPLICIT_CONDITIONAL_BARRIERS_H
+#define POCL_IMPLICIT_CONDITIONAL_BARRIERS_H
+
 #include "config.h"
 
 #include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Analysis/PostDominators.h"
+#include "llvm/Passes/PassBuilder.h"
+
+/**
+ * Adds implicit barriers to branches to minimize the adverse effects from
+ * "peeling" to the symmetry of the work-item loops created for conditional
+ * barrier cases.
+ *
+ * In essence, the pass converts the following cases:
+
+    .[P].
+    |   |
+    a   b
+   [B]
+
+   to
+
+    .[P].
+   [B] [B]
+    |   |
+    a   b
+   [B]
+
+   Legend: [P] is a BB with the predicate.
+           [B] is a barrier.
+           a and b are regular basic blocks.
+
+   We can inject the barrier legally due to the barrier semantics:
+   'a' or 'b' are entered by all or none of the work-items. Thus,
+   the additional barrier is legal there as well.
+
+   This creates a nice static trip count work-item parallel loop around 'a' and
+   'b' instead of needing to peel the first iteration that creates
+   an asymmetric loop with dynamic iteration count.
+ */
 
 namespace pocl {
-  /**
-   * Adds implicit barriers to branches to minimize the adverse effects from
-   * "peeling" to the symmetry of the work-item loops created for conditional
-   * barrier cases.
-   *
-   * In essence, the pass converts the following cases:
-   
-      .[P].
-      |   |
-      a   b
-     [B]  
 
-     to
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-      .[P].
-     [B] [B]
-      |   |
-      a   b
-     [B]  
+class ImplicitConditionalBarriers : public llvm::FunctionPass
+{
+public:
+  static char ID;
+  ImplicitConditionalBarriers() : FunctionPass(ID){};
+  virtual ~ImplicitConditionalBarriers (){};
 
-     Legend: [P] is a BB with the predicate. 
-             [B] is a barrier. 
-             a and b are regular basic blocks. 
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-     We can inject the barrier legally due to the barrier semantics: 
-     'a' or 'b' are entered by all or none of the work-items. Thus,
-     the additional barrier is legal there as well.     
+#else
 
-     This creates a nice static trip count work-item parallel loop around 'a' and 
-     'b' instead of needing to peel the first iteration that creates
-     an asymmetric loop with dynamic iteration count.
-   */
-  class ImplicitConditionalBarriers : public llvm::FunctionPass {
-    
-  public:
-    static char ID;
-    
-  ImplicitConditionalBarriers() : FunctionPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction (llvm::Function &F);
+class ImplicitConditionalBarriers
+    : public llvm::PassInfoMixin<ImplicitConditionalBarriers> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
-  private:
-    
-    llvm::BasicBlock* firstNonBackedgePredecessor(llvm::BasicBlock *bb);
-
-    llvm::PostDominatorTreeWrapperPass *PDT;
-
-  };
+#endif
 }
+
+#endif

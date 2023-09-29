@@ -20,39 +20,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_REMOVE_BARRIER_CALLS_H
-#define _POCL_REMOVE_BARRIER_CALLS_H
+#ifndef POCL_REMOVE_BARRIER_CALLS_H
+#define POCL_REMOVE_BARRIER_CALLS_H
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include "config.h"
 
-#include <llvm/IR/Function.h>
-
-#include <llvm/Pass.h>
-
-POP_COMPILER_DIAGS
-
-
-namespace pocl {
-
-class Workgroup;
+#include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
 
 // Removes all (pseudo) barrier calls from the function. This should be called
 // for non-SPMD targets after the de-SPMD has been done and before passing the
 // program for the standard LLVM optimizations.
+
+namespace pocl {
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
 class RemoveBarrierCalls : public llvm::FunctionPass {
 public:
-
   static char ID;
+  RemoveBarrierCalls() : FunctionPass(ID) {};
+  virtual ~RemoveBarrierCalls () {};
 
-  RemoveBarrierCalls();
-
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-  virtual bool runOnFunction(llvm::Function &F);
-
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
-}
+#else
+
+class RemoveBarrierCalls : public llvm::PassInfoMixin<RemoveBarrierCalls> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
 #endif
 
+} // namespace pocl
+
+#endif

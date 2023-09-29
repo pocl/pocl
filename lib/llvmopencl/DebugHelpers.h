@@ -20,20 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_DEBUG_HELPERS_H
-#define _POCL_DEBUG_HELPERS_H
-
-#include <string>
-#if _MSC_VER
-#  include <set>
-#endif
+#ifndef POCL_DEBUG_HELPERS_H
+#define POCL_DEBUG_HELPERS_H
 
 #include "config.h"
 
-#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
+
+#include <llvm/IR/Function.h>
 
 #include "ParallelRegion.h"
+
+#include <set>
+#include <string>
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
@@ -46,6 +48,39 @@ namespace pocl {
   //
   // @return True in case the function was changed.
   bool chopBBs(llvm::Function& F, llvm::Pass &P);
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+  class PoclCFGPrinter : public llvm::ModulePass {
+  public:
+    static char ID;
+    PoclCFGPrinter() : ModulePass(ID) {}
+
+    virtual bool runOnModule(llvm::Module &F) override;
+    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+
+  private:
+    std::string Prefix;
+    void dumpModule(llvm::Module &M);
+  };
+#else
+  class PoclCFGPrinter : public llvm::PassInfoMixin<PoclCFGPrinter> {
+  public:
+    explicit PoclCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
+        : OS(OutS) {
+      Prefix = Pref.str();
+      Prefix += "_";
+    }
+    static void registerWithPB(llvm::PassBuilder &B);
+    llvm::PreservedAnalyses run(llvm::Module &M,
+                                llvm::ModuleAnalysisManager &AM);
+    static bool isRequired() { return true; }
+
+  private:
+    std::string Prefix;
+    llvm::raw_ostream &OS;
+    void dumpModule(llvm::Module &M);
+  };
+#endif
 };
 
 // Controls the debug output from Kernel.cc parallel region generation:

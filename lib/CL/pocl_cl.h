@@ -803,18 +803,6 @@ typedef struct pocl_global_mem_t {
   cl_ulong total_alloc_limit;
 } pocl_global_mem_t;
 
-/**
- * Enumeration for different modes of converting automatic locals
- */
-typedef enum
-{
-  POCL_AUTOLOCALS_TO_ARGS_NEVER = 0,
-  POCL_AUTOLOCALS_TO_ARGS_ALWAYS = 1,
-  // convert autolocals to args only if there are dynamic local memory function
-  // arguments in the kernel.
-  POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
-} pocl_autolocals_to_args_strategy;
-
 #define NUM_OPENCL_IMAGE_TYPES 6
 
 struct _cl_device_id {

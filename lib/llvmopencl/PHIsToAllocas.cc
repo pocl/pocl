@@ -20,62 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-
-#include "config.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include <llvm/IR/IRBuilder.h>
 
+#include "LLVMUtils.h"
 #include "PHIsToAllocas.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
-#include "VariableUniformityAnalysis.h"
+POP_COMPILER_DIAGS
 
-namespace {
-  static
-  llvm::RegisterPass<pocl::PHIsToAllocas> X(
-      "phistoallocas", "Convert all PHI nodes to allocas");
-}
+#define PASS_NAME "phistoallocas"
+#define PASS_CLASS pocl::PHIsToAllocas
+#define PASS_DESC "Convert all PHI nodes to allocas"
+
+//#define DEBUG_PHIS_TO_ALLOCAS
+#include <iostream>
 
 namespace pocl {
 
-char PHIsToAllocas::ID = 0;
-
 using namespace llvm;
 
-void
-PHIsToAllocas::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<pocl::WorkitemHandlerChooser>();
-  AU.addPreserved<pocl::WorkitemHandlerChooser>();
+static llvm::Instruction *
+breakPHIToAllocas(PHINode *phi, VariableUniformityAnalysisResult &VUA);
 
-  AU.addRequired<pocl::VariableUniformityAnalysis>();
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-}
-
-bool
-PHIsToAllocas::runOnFunction(Function &F) {
-  if (!isKernelToProcess(F))
-    return false;
-
+static bool needsPHIsToAllocas(Function &F, WorkitemHandlerType WIH) {
 #ifdef CBS_NO_PHIS_IN_SPLIT
   bool RunWithCBS = true;
 #else
   bool RunWithCBS = false;
 #endif
+  if (!isKernelToProcess(F))
+    return false;
 
   /* Skip PHIsToAllocas when we are not creating the work item loops,
      as it leads to worse code without benefits for the full replication method.
   */
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
-          pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS &&
-      !(RunWithCBS &&
-        getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
-            pocl::WorkitemHandlerChooser::POCL_WIH_CBS))
+  if (WIH != WorkitemHandlerType::LOOPS &&
+      !(RunWithCBS && WIH == WorkitemHandlerType::CBS))
     return false;
+
+  return true;
+}
+
+static bool runPHIsToAllocas(Function &F,
+                             VariableUniformityAnalysisResult &VUA) {
 
   typedef std::vector<llvm::Instruction* > InstructionVec;
 
@@ -95,7 +90,7 @@ PHIsToAllocas::runOnFunction(Function &F) {
   for (InstructionVec::iterator i = PHIs.begin(); i != PHIs.end();
        ++i) {
       Instruction *instr = *i;
-      BreakPHIToAllocas(dyn_cast<PHINode>(instr));
+      breakPHIToAllocas(dyn_cast<PHINode>(instr), VUA);
       changed = true;
   }  
   return changed;
@@ -114,17 +109,14 @@ PHIsToAllocas::runOnFunction(Function &F) {
  * region entry (e.g. a B-Loop) adding new basic blocks before it would 
  * break the assumption of single entry regions.
  */
-llvm::Instruction *
-PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
+static llvm::Instruction *
+breakPHIToAllocas(PHINode *phi, VariableUniformityAnalysisResult &VUA) {
 
   // Loop iteration variables can be detected only when they are
   // implemented using PHI nodes. Maintain information of the
   // split PHI nodes in the VUA by first analyzing the function
   // with the PHIs intact and propagating the uniformity info
   // of the PHI nodes.
-  VariableUniformityAnalysis &VUA = 
-      getAnalysis<VariableUniformityAnalysis>();
-
   std::string allocaName = std::string(phi->getName().str()) + ".ex_phi";
 
   llvm::Function *function = phi->getParent()->getParent();
@@ -168,5 +160,51 @@ PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
   return loadedValue;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char PHIsToAllocas::ID = 0;
 
+bool PHIsToAllocas::runOnFunction(Function &F) {
+  WorkitemHandlerType WIH =
+      getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+
+  if (!needsPHIsToAllocas(F, WIH))
+    return false;
+
+  VariableUniformityAnalysisResult &VUA =
+      getAnalysis<VariableUniformityAnalysis>().getResult();
+
+  return runPHIsToAllocas(F, VUA);
 }
+
+void PHIsToAllocas::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<pocl::WorkitemHandlerChooser>();
+  AU.addPreserved<pocl::WorkitemHandlerChooser>();
+
+  AU.addRequired<pocl::VariableUniformityAnalysis>();
+  AU.addPreserved<pocl::VariableUniformityAnalysis>();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
+                                           llvm::FunctionAnalysisManager &AM) {
+  WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
+  if (!needsPHIsToAllocas(F, WIH))
+    return PreservedAnalyses::all();
+
+  VariableUniformityAnalysisResult VUA =
+      AM.getResult<VariableUniformityAnalysis>(F);
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return runPHIsToAllocas(F, VUA) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

@@ -20,31 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <sstream>
-#include <iostream>
 
 #include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
-#include "llvm/IR/Metadata.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Analysis/PostDominators.h"
-
-#include "WorkitemHandler.h"
-#include "Kernel.h"
-#include "VariableUniformityAnalysis.h"
-#include "Barrier.h"
-#include "Workgroup.h"
-
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/Support/CommandLine.h"
+POP_COMPILER_DIAGS
+
+#include "Barrier.h"
+#include "Kernel.h"
+#include "LLVMUtils.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
+#include "Workgroup.h"
+#include "WorkitemHandler.h"
+
+#include <iostream>
+#include <map>
+#include <sstream>
+
+#include "pocl_llvm_api.h"
 
 // #define DEBUG_UNIFORMITY_ANALYSIS
 
@@ -52,40 +58,22 @@ POP_COMPILER_DIAGS
 #include "DebugHelpers.h"
 #endif
 
+#define PASS_NAME "pocl-vua"
+#define PASS_CLASS pocl::VariableUniformityAnalysis
+#define PASS_DESC                                                              \
+  "Analyses the variables of the function for uniformity (same value across "  \
+  "WIs)."
+
 namespace pocl {
 
-char VariableUniformityAnalysis::ID = 0;
-
 using namespace llvm;
-
-static
-RegisterPass<VariableUniformityAnalysis> X(
-    "uniformity", 
-    "Analyses the variables of the function for uniformity (same value across WIs).",
-    false, false);
-
-VariableUniformityAnalysis::VariableUniformityAnalysis() : FunctionPass(ID) {
-}
-
-
-void
-VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addPreserved<PostDominatorTreeWrapperPass>();
-
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addPreserved<LoopInfoWrapperPass>();
-  // required by LoopInfo:
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-}
 
 // Recursively mark the canonical induction variable PHI as uniform.
 // If there's a canonical induction variable in loops, the variable
 // update for each iteration should be uniform. Note: this does not yet
 // imply all the work-items execute the loop same number of times!
-void
-VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
+void VariableUniformityAnalysisResult::markInductionVariables(Function &F,
+                                                              llvm::Loop &L) {
 
   if (llvm::PHINode *inductionVar = L.getCanonicalInductionVariable()) {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
@@ -99,8 +87,8 @@ VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
   }
 }
 
-bool
-VariableUniformityAnalysis::runOnFunction(Function &F) {
+bool VariableUniformityAnalysisResult::runOnFunction(
+    Function &F, llvm::LoopInfo &LI, llvm::PostDominatorTree &PDT) {
 
   if (!isKernelToProcess(F))
     return false;
@@ -115,15 +103,13 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
      divergence analysis. */
   uniformityCache_[&F].clear();
 
-  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-
   for (llvm::LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
     llvm::Loop *L = *i;
     markInductionVariables(F, *L);
   }
 
   setUniform(&F, &F.getEntryBlock());
-  analyzeBBDivergence(&F, &F.getEntryBlock(), &F.getEntryBlock());
+  analyzeBBDivergence(&F, &F.getEntryBlock(), &F.getEntryBlock(), PDT);
   return false;
 }
 
@@ -137,9 +123,8 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
  * but the variables should be still replicated to avoid multiple increments
  * of the same induction variable by each work-item.
  */
-bool
-VariableUniformityAnalysis::shouldBePrivatized
-(llvm::Function *f, llvm::Value *val) {
+bool VariableUniformityAnalysisResult::shouldBePrivatized(llvm::Function *f,
+                                                          llvm::Value *val) {
   if (!isUniform(f, val)) return true;
   
   /* Check if the value is stored in stack (is an alloca or writes to an alloca). */
@@ -152,9 +137,8 @@ VariableUniformityAnalysis::shouldBePrivatized
 
   if (isa<StoreInst>(val) && 
       isa<AllocaInst>(dyn_cast<StoreInst>(val)->getPointerOperand())) return true;
-  return false;  
+  return false;
 }
-
 
 /**  
  * BB divergence analysis.
@@ -182,9 +166,9 @@ VariableUniformityAnalysis::shouldBePrivatized
  * Otherwise, assume divergent (might not be *proven* to be one!).
  *
  */
-void
-VariableUniformityAnalysis::analyzeBBDivergence
-(llvm::Function *f, llvm::BasicBlock *bb, llvm::BasicBlock *previousUniformBB) {
+void VariableUniformityAnalysisResult::analyzeBBDivergence(
+    llvm::Function *f, llvm::BasicBlock *bb,
+    llvm::BasicBlock *previousUniformBB, llvm::PostDominatorTree &PDT) {
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
   std::cerr << "### Analyzing BB divergence (bb=" << bb->getName().str()
@@ -227,8 +211,7 @@ VariableUniformityAnalysis::analyzeBBDivergence
 
   // Condition b)
   if (FoundUniforms.size() == 0) {
-    llvm::PostDominatorTreeWrapperPass *PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
-    if (PDT->getPostDomTree().dominates(bb, previousUniformBB)) {
+    if (PDT.dominates(bb, previousUniformBB)) {
       setUniform(f, bb, true);
       FoundUniforms.push_back(bb);
     }
@@ -247,14 +230,14 @@ VariableUniformityAnalysis::analyzeBBDivergence
          ++suc) {
       llvm::BasicBlock *NextBB = NextTerm->getSuccessor(suc);
       if (!isUniformityAnalyzed(f, NextBB)) {
-        analyzeBBDivergence(f, NextBB, UniformBB);
+        analyzeBBDivergence(f, NextBB, UniformBB, PDT);
       }
     }
   }
 }
 
-bool
-VariableUniformityAnalysis::isUniformityAnalyzed(llvm::Function *f, llvm::Value *v) const {
+bool VariableUniformityAnalysisResult::isUniformityAnalyzed(
+    llvm::Function *f, llvm::Value *v) const {
   UniformityIndex &cache = uniformityCache_[f];
   UniformityIndex::const_iterator i = cache.find(v);
   if (i != cache.end()) {
@@ -274,8 +257,8 @@ VariableUniformityAnalysis::isUniformityAnalyzed(llvm::Function *f, llvm::Value 
  * c) OpenCL C identifiers that are constant for all work-items in a work-group
  * 
  */
-bool 
-VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
+bool VariableUniformityAnalysisResult::isUniform(llvm::Function *f,
+                                                 llvm::Value *v) {
 
   UniformityIndex &cache = uniformityCache_[f];
   UniformityIndex::const_iterator i = cache.find(v);
@@ -458,11 +441,10 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   setUniform(f, v, true);
   return true;
 }
-  
-void
-VariableUniformityAnalysis::setUniform(llvm::Function *f, 
-                                       llvm::Value *v, 
-                                       bool isUniform) {
+
+void VariableUniformityAnalysisResult::setUniform(llvm::Function *f,
+                                                  llvm::Value *v,
+                                                  bool isUniform) {
 
   UniformityIndex &cache = uniformityCache_[f];
   cache[v] = isUniform;
@@ -482,10 +464,77 @@ VariableUniformityAnalysis::setUniform(llvm::Function *f,
 #endif
 }
 
-bool
-VariableUniformityAnalysis::doFinalization(llvm::Module& /*M*/) {
+bool VariableUniformityAnalysisResult::doFinalization(llvm::Module & /*M*/) {
   uniformityCache_.clear();
   return true;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char VariableUniformityAnalysis::ID = 0;
+
+bool VariableUniformityAnalysis::runOnFunction(Function &F) {
+  pImpl = new VariableUniformityAnalysisResult;
+  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  llvm::PostDominatorTree &PDT =
+      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
+  return pImpl->runOnFunction(F, LI, PDT);
 }
+
+void VariableUniformityAnalysis::getAnalysisUsage(
+    llvm::AnalysisUsage &AU) const {
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addPreserved<PostDominatorTreeWrapperPass>();
+
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addPreserved<LoopInfoWrapperPass>();
+  // required by LoopInfo:
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+}
+
+VariableUniformityAnalysis::~VariableUniformityAnalysis() {
+  delete pImpl;
+  pImpl = nullptr;
+}
+
+REGISTER_OLD_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::AnalysisKey VariableUniformityAnalysis::Key;
+
+VariableUniformityAnalysis::Result
+VariableUniformityAnalysis::run(llvm::Function &F,
+                                llvm::FunctionAnalysisManager &AM) {
+  llvm::LoopInfo &LI = AM.getResult<llvm::LoopAnalysis>(F);
+  llvm::PostDominatorTree &PDT =
+      AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
+
+  VariableUniformityAnalysisResult Res;
+  Res.runOnFunction(F, LI, PDT);
+  return Res;
+}
+
+bool VariableUniformityAnalysisResult::invalidate(
+    llvm::Function &F, const llvm::PreservedAnalyses PA,
+    llvm::AnalysisManager<llvm::Function>::Invalidator &Inv) {
+  // TODO: this is required by the LoopPasses that use this analysis; however,
+  // it's most likely incorrect. We should convert LoopPasses to FunctionPasses
+  // and properly invalidate VUA
+  return false;
+#if 0
+  auto PAC = PA.getChecker<VariableUniformityAnalysis>();
+  bool Preserved = (PAC.preserved() ||
+    PAC.preservedSet<AllAnalysesOn<Function>>());
+  if (!Preserved) {
+    uniformityCache_.erase(&F);
+  }
+  return !Preserved;
+#endif
+}
+
+REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

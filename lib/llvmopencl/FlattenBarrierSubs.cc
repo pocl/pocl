@@ -21,48 +21,38 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <string>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include <llvm/IR/Instructions.h>
 
-#include "Workgroup.h"
 #include "Barrier.h"
-
+#include "FlattenBarrierSubs.hh"
+#include "LLVMUtils.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
 
-using namespace llvm;
+#include "pocl_llvm_api.h"
 
-namespace {
-class FlattenBarrierSubs : public ModulePass {
-
-public:
-  static char ID;
-  FlattenBarrierSubs() : ModulePass(ID) {}
-
-  virtual bool runOnModule(Module &M);
-};
-
-} // namespace
+#include <iostream>
+#include <string>
 
 //#define DEBUG_FLATTEN_SUBS
 
-char FlattenBarrierSubs::ID = 0;
-static RegisterPass<FlattenBarrierSubs>
-    X("flatten-barrier-subs",
-      "Flatten subroutines with barriers and/or local arguments");
+#define PASS_NAME "flatten-barrier-subs"
+#define PASS_CLASS pocl::FlattenBarrierSubs
+#define PASS_DESC "Flatten subroutines with barriers and/or local arguments"
 
+namespace pocl {
+
+using namespace llvm;
 
 static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
 
@@ -106,8 +96,7 @@ static bool recursivelyInlineBarrierUsers(Function *F, bool ChangeInlineFlag) {
   return BarrierIsCalled;
 }
 
-
-bool FlattenBarrierSubs::runOnModule(Module &M) {
+static bool flattenBarrierSubs(Module &M) {
   bool Changed = false;
 
   std::string KernelName;
@@ -118,7 +107,7 @@ bool FlattenBarrierSubs::runOnModule(Module &M) {
     if (F->isDeclaration())
       continue;
 
-    if (KernelName == F->getName().str() || pocl::isKernelToProcess(*F)) {
+    if (KernelName == F->getName().str() || isKernelToProcess(*F)) {
 
 #ifdef DEBUG_FLATTEN_SUBS
       std::cerr << "### FlattenBarrierSubs Pass running on " << KernelName
@@ -130,3 +119,31 @@ bool FlattenBarrierSubs::runOnModule(Module &M) {
   }
   return Changed;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char FlattenBarrierSubs::ID = 0;
+
+bool FlattenBarrierSubs::runOnModule(Module &M) {
+  return flattenBarrierSubs(M);
+}
+
+void FlattenBarrierSubs::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+FlattenBarrierSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return flattenBarrierSubs(M) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

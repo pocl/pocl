@@ -18,75 +18,47 @@
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// LIABILITY, WHETHER IN AACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Support/CommandLine.h"
+#include <llvm/Pass.h>
+
+#include "FlattenGlobals.hh"
+#include "LLVMUtils.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+POP_COMPILER_DIAGS
 
 #include <iostream>
 #include <string>
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-#include "pocl.h"
-
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-
 #include "pocl_llvm_api.h"
-
-#include "Workgroup.h"
-
-POP_COMPILER_DIAGS
-
-using namespace llvm;
-
-namespace {
-class FlattenGlobals : public ModulePass {
-
-public:
-  static char ID;
-  FlattenGlobals() : ModulePass(ID) {}
-
-  virtual bool runOnModule(Module &M);
-};
-}
-
-char FlattenGlobals::ID = 0;
-static RegisterPass<FlattenGlobals>
-    X("flatten-globals",
-      "Kernel function flattening pass - flatten global vars' users only");
 
 //#define DEBUG_FLATTEN
 
-static const char *workgroup_variables[] = {"_local_id_x",
-                                            "_local_id_y",
-                                            "_local_id_z",
-                                            "_local_size_x",
-                                            "_local_size_y",
-                                            "_local_size_z",
-                                            "_work_dim",
-                                            "_num_groups_x",
-                                            "_num_groups_y",
-                                            "_num_groups_z",
-                                            "_group_id_x",
-                                            "_group_id_y",
-                                            "_group_id_z",
-                                            "_global_offset_x",
-                                            "_global_offset_y",
-                                            "_global_offset_z",
-                                            "_pocl_sub_group_size",
-                                            PoclGVarBufferName,
-                                            NULL};
+#define PASS_NAME "flatten-globals"
+#define PASS_CLASS pocl::FlattenGlobals
+#define PASS_DESC                                                              \
+  "Kernel function flattening pass - flatten global vars' users only"
 
-bool FlattenGlobals::runOnModule(Module &M) {
+namespace pocl {
+
+using namespace llvm;
+
+static bool flattenGlobals(Module &M) {
   SmallPtrSet<Function *, 8> functions_to_inline;
   SmallVector<Value *, 8> pending;
 
-  const char **s = workgroup_variables;
+  const char **s = WorkgroupVariablesArray;
   while (*s != NULL) {
     GlobalVariable *gv = M.getGlobalVariable(*s);
     if (gv != NULL)
@@ -148,3 +120,29 @@ bool FlattenGlobals::runOnModule(Module &M) {
 
   return true;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char FlattenGlobals::ID = 0;
+
+bool FlattenGlobals::runOnModule(Module &M) { return flattenGlobals(M); }
+
+void FlattenGlobals::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses FlattenGlobals::run(llvm::Module &M,
+                                            llvm::ModuleAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return flattenGlobals(M) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

@@ -20,36 +20,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <set>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
 #include "Barrier.h"
+#include "LLVMUtils.h"
 #include "RemoveBarrierCalls.h"
-#include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
-
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
 
-using namespace llvm;
+#include <set>
 
-namespace {
-  static
-  RegisterPass<pocl::RemoveBarrierCalls> X("remove-barriers",
-                                           "Removes all barrier calls.");
-}
+#define PASS_NAME "remove-barriers"
+#define PASS_CLASS pocl::RemoveBarrierCalls
+#define PASS_DESC "Removes all barrier calls."
 
 namespace pocl {
 
-char RemoveBarrierCalls::ID = 0;
+using namespace llvm;
 
-RemoveBarrierCalls::RemoveBarrierCalls() : FunctionPass(ID) {
-}
-
-bool
-RemoveBarrierCalls::runOnFunction(Function &F) {
+static bool removeBarrierCalls(Function &F) {
 
   // Collect the barrier calls to be removed first, not remove them
   // instantly as it'd invalidate the iterators.
@@ -64,19 +58,42 @@ RemoveBarrierCalls::runOnFunction(Function &F) {
     }
   }
 
+  bool Changed = !BarriersToRemove.empty();
   for (auto B : BarriersToRemove) {
     B->eraseFromParent();
   }
 
-  return false;
+  // TODO this was always returning false. Bug ?
+  return Changed;
+}
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char RemoveBarrierCalls::ID = 0;
+
+bool RemoveBarrierCalls::runOnFunction(Function &F) {
+  return removeBarrierCalls(F);
 }
 
 void
 RemoveBarrierCalls::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+RemoveBarrierCalls::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return removeBarrierCalls(F) ? PAChanged : PreservedAnalyses::all();
 }
 
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
+#endif
 
+} // namespace pocl

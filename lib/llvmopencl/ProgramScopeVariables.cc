@@ -32,7 +32,7 @@ const char *PoclGVarMDName = "program.scope.var.size";
 
 #include "pocl.h"
 
-#ifndef LLVM_OLDER_THAN_14_0
+#if LLVM_MAJOR > 13
 
 #include <iostream>
 #include <map>
@@ -58,17 +58,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Verifier.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#pragma GCC diagnostic pop
-
-#define DEBUG_TYPE "pocl-program-scope-vars"
-
-// #define POCL_DEBUG_PROGVARS
 
 #include "LLVMUtils.h"
 #include "ProgramScopeVariables.h"
+#pragma GCC diagnostic pop
 
 #include "pocl_llvm_api.h"
 #include "pocl_spir.h"
+
+// #define POCL_DEBUG_PROGVARS
+#define DEBUG_TYPE "pocl-program-scope-vars"
 
 using namespace llvm;
 
@@ -355,7 +354,7 @@ static size_t calculateOffsetsSizes(GVarUlongMapT &GVarOffsets,
     assert(GVar->hasInitializer());
 
     // if the current offset into the buffer is not aligned enough, fix it
-#ifdef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR < 15
     uint64_t GVarAlign = GVar->getAlignment();
 #else
     Align GVarA = GVar->getAlign().valueOrOne();
@@ -449,6 +448,7 @@ static void getInstUsers(ConstantExpr *CE,
 }
 
 static void breakConstantExprs(const GVarSetT &GVars) {
+#if LLVM_MAJOR < 17
   for (GlobalVariable *GV : GVars) {
     for (Value *U : GV->users()) {
       ConstantExpr *CE = dyn_cast<ConstantExpr>(U);
@@ -461,6 +461,14 @@ static void breakConstantExprs(const GVarSetT &GVars) {
       }
     }
   }
+#else
+  SmallVector<Constant *, 8> Cnst;
+  for (GlobalVariable *GV : GVars) {
+    Constant *CE = cast<Constant>(GV);
+    Cnst.push_back(CE);
+  }
+  convertUsersOfConstantsToInstructions(Cnst);
+#endif
 }
 
 // replaces program scope variables with [GVarBuffer+Offset] combos.

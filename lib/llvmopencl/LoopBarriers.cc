@@ -21,64 +21,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-
 #include "llvm/Analysis/LoopInfo.h"
 
-#include "LoopBarriers.h"
-#include "Barrier.h"
-#include "Workgroup.h"
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/Transforms/Scalar/LoopPassManager.h>
+#endif
 
+#include "Barrier.h"
+#include "LLVMUtils.h"
+#include "LoopBarriers.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
 
+#include <iostream>
+
 //#define DEBUG_LOOP_BARRIERS
+#define PASS_NAME "loop-barriers"
+#define PASS_CLASS pocl::LoopBarriers
+#define PASS_DESC "Add needed barriers to loops"
+
+namespace pocl {
 
 using namespace llvm;
-using namespace pocl;
 
-namespace {
-  static
-  RegisterPass<LoopBarriers> X("loop-barriers",
-                               "Add needed barriers to loops");
-}
-
-char LoopBarriers::ID = 0;
-
-void
-LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-}
-
-bool
-LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (!isKernelToProcess(*L->getHeader()->getParent()))
-    return false;
-
-  if (!hasWorkgroupBarriers(*L->getHeader()->getParent()))
-    return false;
-
-  return ProcessLoop(L, LPM);;
-}
-
-bool
-LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
+static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
   bool isBLoop = false;
   bool changed = false;
 
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
-  for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
+  for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
        i != e && !isBLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
@@ -89,7 +71,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
     }
   }
 
-  for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
+  for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
        i != e && isBLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
@@ -102,7 +84,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already
         // executed.
-        BasicBlock *preheader = L->getLoopPreheader();
+        BasicBlock *preheader = L.getLoopPreheader();
         assert((preheader != NULL) && "Non-canonicalized loop found!\n");
 #ifdef DEBUG_LOOP_BARRIERS
         std::cerr << "### adding to preheader BB" << std::endl;
@@ -115,7 +97,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
-        BasicBlock *header = L->getHeader();
+        BasicBlock *header = L.getHeader();
         if (header->getFirstNonPHI() != &header->front()) {
           Barrier::Create(header->getFirstNonPHI());
           header->setName(header->getName() + ".phibarrier");
@@ -129,13 +111,13 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
         // Add the barriers on the exiting block and the latches,
         // which might not always be the same if there is computation
         // after the exit decision.
-        BasicBlock *brexit = L->getExitingBlock();
+        BasicBlock *brexit = L.getExitingBlock();
         if (brexit != NULL) {
           Barrier::Create(brexit->getTerminator());
           brexit->setName(brexit->getName() + ".brexitbarrier");
         }
 
-        BasicBlock *latch = L->getLoopLatch();
+        BasicBlock *latch = L.getLoopLatch();
         if (latch != NULL && brexit != latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
@@ -146,7 +128,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
 
         // Modified code from llvm::LoopBase::getLoopLatch to
         // go trough all the latches.
-        BasicBlock *Header = L->getHeader();
+        BasicBlock *Header = L.getHeader();
         typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
         InvBlockTraits::ChildIteratorType PI =
           InvBlockTraits::child_begin(Header);
@@ -156,12 +138,12 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
         BasicBlock *Latch = NULL;
         for (; PI != PE; ++PI) {
           BasicBlock *N = *PI;
-          if (L->contains(N)) {
+          if (L.contains(N)) {
             Latch = N;
             // Latch found in the loop, see if the barrier dominates it
             // (otherwise if might no even belong to this "tail", see
             // forifbarrier1 graph test).
-            if (DT->dominates(j->getParent(), Latch)) {
+            if (DT.dominates(j->getParent(), Latch)) {
               Barrier::Create(Latch->getTerminator());
               Latch->setName(Latch->getName() + ".latchbarrier");
             }
@@ -177,7 +159,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
 
      If the block has proper instructions after the barrier, it
      will be split in CanonicalizeBarriers. */
-  BasicBlock *preheader = L->getLoopPreheader();
+  BasicBlock *preheader = L.getLoopPreheader();
   assert((preheader != NULL) && "Non-canonicalized loop found!\n");
 
   Instruction *t = preheader->getTerminator();
@@ -192,3 +174,52 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
 
   return changed;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char LoopBarriers::ID = 0;
+
+bool LoopBarriers::runOnLoop(Loop *L, llvm::LPPassManager &LPM) {
+  Function *K = L->getHeader()->getParent();
+  if (!isKernelToProcess(*K))
+    return false;
+
+  if (!hasWorkgroupBarriers(*K))
+    return false;
+
+  llvm::DominatorTree &DT =
+      getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  return processLoopBarriers(*L, DT);
+}
+
+void LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<DominatorTreeWrapperPass>();
+}
+
+REGISTER_OLD_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
+                                          llvm::LoopAnalysisManager &AM,
+                                          llvm::LoopStandardAnalysisResults &AR,
+                                          llvm::LPMUpdater &U) {
+
+  Function *K = L.getHeader()->getParent();
+
+  if (!isKernelToProcess(*K))
+    return PreservedAnalyses::all();
+
+  if (!hasWorkgroupBarriers(*K))
+    return PreservedAnalyses::all();
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+
+  return processLoopBarriers(L, AR.DT) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

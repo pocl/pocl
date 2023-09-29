@@ -21,21 +21,29 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#ifndef _POCL_LLVM_UTILS_H
-#define _POCL_LLVM_UTILS_H
+#ifndef POCL_LLVM_UTILS_H
+#define POCL_LLVM_UTILS_H
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/IR/DebugInfoMetadata.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Metadata.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Passes/PassPlugin.h>
+#include <llvm/Transforms/Utils/Cloning.h> // for CloneFunctionIntoAbs
+POP_COMPILER_DIAGS
 
 #include <map>
 #include <string>
 
 #include "pocl.h"
 #include "pocl_spir.h"
-// #include "_libclang_versions_checks.h"
 
-#include <llvm/IR/DebugInfoMetadata.h>
-#include <llvm/IR/DerivedTypes.h>
-#include <llvm/IR/Metadata.h>
-#include <llvm/IR/Module.h>
-#include <llvm/Transforms/Utils/Cloning.h> // for CloneFunctionIntoAbs
 
 namespace llvm {
     class Module;
@@ -46,6 +54,9 @@ namespace llvm {
 namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
+
+extern const char *WorkgroupVariablesArray[];
+extern const std::vector<std::string> WorkgroupVariablesVector;
 
 void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
@@ -92,7 +103,13 @@ llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
 llvm::DISubprogram *mimicDISubprogram(llvm::DISubprogram *Old,
                                       const llvm::StringRef &NewFuncName,
                                       llvm::DIScope *Scope = nullptr);
-}
+
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+void registerPassBuilderPasses(llvm::PassBuilder &PB);
+
+void registerFunctionAnalyses(llvm::PassBuilder &PB);
+#endif
+} // namespace pocl
 
 template <typename VectorT>
 void CloneFunctionIntoAbs(llvm::Function *NewFunc,
@@ -104,10 +121,9 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
                           llvm::ValueMapTypeRemapper *TypeMapper = nullptr,
                           llvm::ValueMaterializer *Materializer = nullptr) {
 
-
-#ifdef LLVM_OLDER_THAN_13_0
-  CloneFunctionInto(NewFunc, OldFunc, VMap, true,
-                    Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
+#if LLVM_MAJOR < 13
+  CloneFunctionInto(NewFunc, OldFunc, VMap, true, Returns, NameSuffix, CodeInfo,
+                    TypeMapper, Materializer);
 #else
                     // ClonedModule DifferentModule LocalChangesOnly
                     // GlobalChanges
@@ -118,17 +134,87 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
 #endif
 }
 
-#ifdef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR < 15
 // Globals
 #define getValueType getType()->getElementType
 #endif /* LLVM_OPAQUE_POINTERS */
 
-#ifdef LLVM_OLDER_THAN_14_0
+#if LLVM_MAJOR < 14
 #define LLVMBuildGEP2(A, B, C, D, E, F) LLVMBuildGEP(A, C, D, E, F)
 #endif
 
-#ifdef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR < 11
 #define CBS_NO_PHIS_IN_SPLIT
 #endif
+
+// macros for registering LLVM passes & analyses with old & new PM
+
+#define REGISTER_NEW_FPASS(PNAME, PCLASS, PDESC)                               \
+  void PCLASS::registerWithPB(llvm::PassBuilder &PB) {                         \
+    PB.registerPipelineParsingCallback(                                        \
+        [](::llvm::StringRef Name, ::llvm::FunctionPassManager &FPM,           \
+           llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {             \
+          if (Name == PNAME) {                                                 \
+            FPM.addPass(PCLASS());                                             \
+            return true;                                                       \
+          }                                                                    \
+          return false;                                                        \
+        });                                                                    \
+  }
+
+#define REGISTER_NEW_MPASS(PNAME, PCLASS, PDESC)                               \
+  void PCLASS::registerWithPB(llvm::PassBuilder &PB) {                         \
+    PB.registerPipelineParsingCallback(                                        \
+        [](::llvm::StringRef Name, ::llvm::ModulePassManager &MPM,             \
+           llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {             \
+          if (Name == PNAME) {                                                 \
+            MPM.addPass(PCLASS());                                             \
+            return true;                                                       \
+          } else                                                               \
+            return false;                                                      \
+        });                                                                    \
+  }
+
+#define REGISTER_NEW_LPASS(PNAME, PCLASS, PDESC)                               \
+  void PCLASS::registerWithPB(llvm::PassBuilder &PB) {                         \
+    PB.registerPipelineParsingCallback(                                        \
+        [](::llvm::StringRef Name, ::llvm::LoopPassManager &LPM,               \
+           ::llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {           \
+          if (Name == PNAME) {                                                 \
+            LPM.addPass(PCLASS());                                             \
+            return true;                                                       \
+          } else                                                               \
+            return false;                                                      \
+        });                                                                    \
+  }
+
+#define REGISTER_NEW_FANALYSIS(PNAME, PCLASS, PDESC)                           \
+  void PCLASS::registerWithPB(llvm::PassBuilder &PB) {                         \
+    PB.registerPipelineParsingCallback(                                        \
+        [](::llvm::StringRef Name, ::llvm::FunctionPassManager &FPM,           \
+           llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {             \
+          if (Name == "require<" PNAME ">") {                                  \
+            FPM.addPass(RequireAnalysisPass<PCLASS, llvm::Function>());        \
+            return true;                                                       \
+          } else                                                               \
+            return false;                                                      \
+        });                                                                    \
+    PB.registerAnalysisRegistrationCallback(                                   \
+        [](::llvm::FunctionAnalysisManager &FAM) {                             \
+          FAM.registerPass([&] { return PCLASS(); });                          \
+        });                                                                    \
+  }
+
+#define REGISTER_OLD_FPASS(PNAME, PCLASS, PDESC)                               \
+  static llvm::RegisterPass<PCLASS> X(PNAME, PDESC)
+
+#define REGISTER_OLD_MPASS(PNAME, PCLASS, PDESC)                               \
+  static llvm::RegisterPass<PCLASS> X(PNAME, PDESC)
+
+#define REGISTER_OLD_LPASS(PNAME, PCLASS, PDESC)                               \
+  static llvm::RegisterPass<PCLASS> X(PNAME, PDESC)
+
+#define REGISTER_OLD_FANALYSIS(PNAME, PCLASS, PDESC)                          \
+  static llvm::RegisterPass<PCLASS> X (PNAME, PDESC)
 
 #endif

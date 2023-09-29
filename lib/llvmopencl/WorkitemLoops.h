@@ -21,125 +21,45 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_LOOPS_H
-#define _POCL_WORKITEM_LOOPS_H
+#ifndef POCL_WORKITEM_LOOPS_H
+#define POCL_WORKITEM_LOOPS_H
 
-#include <map>
-#include <vector>
+#include "config.h"
 
-#include "pocl.h"
-
-#include <llvm/ADT/Twine.h>
-#include <llvm/Analysis/LoopInfo.h>
-#include <llvm/Transforms/Utils/ValueMapper.h>
-#include <llvm/IR/IRBuilder.h>
-
-#include "WorkitemHandler.h"
-#include "ParallelRegion.h"
-
-namespace llvm {
-  struct PostDominatorTreeWrapperPass;
-}
+#include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class WorkitemLoops : public pocl::WorkitemHandler {
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-  public:
-    static char ID;
+class WorkitemLoops : public llvm::FunctionPass {
+public:
+  static char ID;
+  WorkitemLoops() : FunctionPass(ID) {}
+  virtual ~WorkitemLoops() {}
+  llvm::StringRef getPassName() const override {
+    return "PoCL Work-Item Loops pass";
+  }
 
-  WorkitemLoops() : pocl::WorkitemHandler(ID),
-                    original_parallel_regions(nullptr) {}
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
+#else
 
-  private:
+class WorkitemLoops : public llvm::PassInfoMixin<WorkitemLoops> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::set<llvm::Instruction* > InstructionIndex;
-    typedef std::vector<llvm::Instruction* > InstructionVec;
-    typedef std::map<std::string, llvm::AllocaInst *> StrInstructionMap;
-
-    llvm::DominatorTree *DT;
-    llvm::LoopInfoWrapperPass *LI;
-
-    llvm::PostDominatorTreeWrapperPass *PDT;
-
-    llvm::DominatorTreeWrapperPass *DTP;
-
-    ParallelRegion::ParallelRegionVector *original_parallel_regions;
-
-    StrInstructionMap contextArrays;
-
-    // Points to the __pocl_local_mem_alloca pseudo function declaration, if
-    // it's been referred to in the processed module.
-    llvm::Function *LocalMemAllocaFuncDecl;
-
-    // Points to the __pocl_work_group_alloca pseudo function declaration, if
-    // it's been referred to in the processed module.
-    llvm::Function *WorkGroupAllocaFuncDecl;
-
-    // Points to the work-group size computation instruction in the entry
-    // block of the currently handled function.
-    llvm::Instruction *WGSizeInstr;
-
-    virtual bool ProcessFunction(llvm::Function &F);
-
-    void fixMultiRegionVariables(ParallelRegion *region);
-#if LLVM_MAJOR > 13
-    bool handleLocalMemAllocas(Kernel &K);
 #endif
-    void addContextSaveRestore(llvm::Instruction *instruction);
-    void releaseParallelRegions();
 
-    // Returns an instruction in the entry block which computes the
-    // total size of work-items in the work-group. If it doesn't
-    // exist, creates it to the end of the entry block.
-    llvm::Instruction *getWorkGroupSizeInstr(llvm::Function &F);
-
-    llvm::Value *GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
-                                  ParallelRegion *region);
-    llvm::Instruction *AddContextSave (llvm::Instruction *instruction,
-                                       llvm::AllocaInst *alloca);
-    llvm::Instruction *AddContextRestore (llvm::Value *val,
-                                          llvm::AllocaInst *alloca,
-                                          llvm::Type *InstType,
-                                          bool PoclWrapperStructAdded,
-                                          llvm::Instruction *before = NULL,
-                                          bool isAlloca = false);
-    llvm::AllocaInst *getContextArray(llvm::Instruction *val,
-                                      bool &PoclWrapperStructAdded);
-
-    std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
-    CreateLoopAround(ParallelRegion &region, llvm::BasicBlock *entryBB,
-                     llvm::BasicBlock *exitBB, bool peeledFirst,
-                     llvm::Value *localIdVar, size_t LocalSizeForDim,
-                     bool addIncBlock = true,
-                     llvm::Value *DynamicLocalSize = NULL);
-
-    llvm::BasicBlock *
-      AppendIncBlock
-      (llvm::BasicBlock* after, 
-       llvm::Value *localIdVar);
-
-    ParallelRegion* RegionOfBlock(llvm::BasicBlock *bb);
-
-    bool shouldNotBeContextSaved(llvm::Instruction *instr);
-
-    llvm::Type *RecursivelyAlignArrayType(llvm::Type *ArrayType,
-                                          llvm::Type *ElementType,
-                                          size_t Alignment,
-                                          const llvm::DataLayout &Layout);
-
-    std::map<llvm::Instruction*, unsigned> tempInstructionIds;
-    size_t tempInstructionIndex;
-    // An alloca in the kernel which stores the first iteration to execute
-    // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
-    // to skip the 0, 0, 0 iteration in the loops.
-    llvm::Value *localIdXFirstVar;
-  };
-}
+} // namespace pocl
 
 #endif

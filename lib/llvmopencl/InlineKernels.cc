@@ -20,12 +20,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <string>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -33,54 +32,26 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#include "config.h"
-#include "pocl_llvm_api.h"
-#define CLANG_MAJOR LLVM_MAJOR
-#include "_libclang_versions_checks.h"
-
+#include "InlineKernels.hh"
+#include "LLVMUtils.h"
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
-
-using namespace llvm;
-
-namespace {
-class InlineKernels : public FunctionPass {
-
-public:
-  static char ID;
-  InlineKernels() : FunctionPass(ID) {}
-
-  virtual bool runOnFunction(Function &F);
-};
-} // namespace
-
-char InlineKernels::ID = 0;
-static RegisterPass<InlineKernels> X("inline-kernels",
-                                     "Inline kernels which are called from "
-                                     "other kernels (only at the callsite)");
 
 //#define DEBUG_INLINE_KERNELS
 
-// Returns true in case the given function is a kernel
-static bool isOpenCLKernel(const Function *F, NamedMDNode *KernelMDs) {
+#include "pocl_llvm_api.h"
 
-  if (F->getMetadata("kernel_arg_access_qual"))
-    return true;
+#include <iostream>
+#include <string>
 
-  if (KernelMDs) {
-    for (unsigned i = 0, e = KernelMDs->getNumOperands(); i != e; ++i) {
-      if (KernelMDs->getOperand(i)->getOperand(0) == nullptr)
-        continue; // globaldce might have removed uncalled kernels
+#define PASS_NAME "inline-kernels"
+#define PASS_CLASS pocl::InlineKernels
+#define PASS_DESC                                                              \
+  "Inline kernels which are called from other kernels (only at the callsite)"
 
-      Function *k = cast<Function>(
-          dyn_cast<ValueAsMetadata>(KernelMDs->getOperand(i)->getOperand(0))
-              ->getValue());
-      if (F == k)
-        return true;
-    }
-  }
+namespace pocl {
 
-  return false;
-}
+using namespace llvm;
 
 static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
 
@@ -104,7 +75,7 @@ static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
         if (Callee == nullptr)
           continue;
 
-        if (!isOpenCLKernel(Callee, KernelMDs)) {
+        if (!pocl::isKernelToProcess(*Callee)) {
 #ifdef DEBUG_INLINE_KERNELS
           std::cerr << "NOT a kernel, NOT Inlining call "
                     << Callee->getName().str() << "\n";
@@ -121,7 +92,7 @@ static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
         std::cerr << "Inlining kernel call " << Callee->getName().str() << "\n";
 #endif
         InlineFunctionInfo IFI;
-#ifdef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR < 11
         llvm::InlineFunction(CInstr, IFI);
 #else
         llvm::InlineFunction(*CInstr, IFI);
@@ -138,7 +109,7 @@ static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
   return ChangedAny;
 }
 
-bool InlineKernels::runOnFunction(Function &F) {
+static bool inlineKernels(Function &F) {
   SmallPtrSet<Function *, 8> functions_to_inline;
   SmallVector<Value *, 8> pending;
 
@@ -167,3 +138,29 @@ bool InlineKernels::runOnFunction(Function &F) {
 
   return changed;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char InlineKernels::ID = 0;
+
+bool InlineKernels::runOnFunction(Function &F) { return inlineKernels(F); }
+
+void InlineKernels::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses InlineKernels::run(llvm::Function &F,
+                                           llvm::FunctionAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return inlineKernels(F) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

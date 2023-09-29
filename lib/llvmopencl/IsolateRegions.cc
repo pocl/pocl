@@ -20,42 +20,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-#include "pocl.h"
-
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "Barrier.h"
 #include "IsolateRegions.h"
+#include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
-
 POP_COMPILER_DIAGS
 
+#include <iostream>
+
+#include "pocl.h"
+
+#include "DebugHelpers.h"
+
 //#define DEBUG_ISOLATE_REGIONS
+
+#define PASS_NAME "isolate-regions"
+#define PASS_CLASS pocl::IsolateRegions
+#define PASS_DESC "Single-Entry Single-Exit region isolation pass."
+
+namespace pocl {
+
 using namespace llvm;
-using namespace pocl;
- 
-namespace {
-  static
-  RegisterPass<IsolateRegions> X("isolate-regions",
-					 "Single-Entry Single-Exit region isolation pass.");
-}
 
-char IsolateRegions::ID = 0;
-
-void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
+static void addDummyBefore(Region &R, llvm::BasicBlock *BB);
+static void addDummyAfter(Region &R, llvm::BasicBlock *BB);
 
 /* Ensure Single-Entry Single-Exit Regions are isolated from the
    exit node so they won't get split illegally with tail replication. 
@@ -98,18 +97,19 @@ void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
 
    
 */
-bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
 
-  llvm::BasicBlock *exit = R->getExit();
-  if (exit == NULL) return false;
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() ==
-          pocl::WorkitemHandlerChooser::POCL_WIH_CBS &&
+static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
+
+  llvm::BasicBlock *exit = R.getExit();
+  if (exit == nullptr)
+    return false;
+  if (WIH == WorkitemHandlerType::CBS &&
       hasWorkgroupBarriers(*exit->getParent()))
     return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
   std::cerr << "### processing region:" << std::endl;
-  R->dump();
+  R.dump();
   std::cerr << "### exit block:" << std::endl;
   exit->dump();
 #endif
@@ -122,7 +122,7 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
       changed = true;
   }
 
-  llvm::BasicBlock *entry = R->getEntry();
+  llvm::BasicBlock *entry = R.getEntry();
   if (entry == NULL) return changed;
 
   bool isFunctionEntry = &entry->getParent()->getEntryBlock() == entry;
@@ -132,18 +132,22 @@ bool IsolateRegions::runOnRegion(Region *R, llvm::RGPassManager&) {
     changed = true;
   }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+#ifdef DEBUG_ISOLATE_REGIONS
+  Function *F = exit->getParent();
+  dumpCFG(*F, F->getName().str() + "_after_isolateregs.dot", nullptr, nullptr);
+#endif
+#endif
   return changed;
 }
-
 
 /**
  * Adds a dummy node after the given basic block.
  */
-void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
-  llvm::BasicBlock* newEntry = 
-    SplitBlock(bb, bb->getTerminator());
-  newEntry->setName(bb->getName() + ".r_entry");
-  R->replaceEntry(newEntry);
+static void addDummyAfter(Region &R, llvm::BasicBlock *BB) {
+  llvm::BasicBlock *newEntry = SplitBlock(BB, BB->getTerminator());
+  newEntry->setName(BB->getName() + ".r_entry");
+  R.replaceEntry(newEntry);
 }
 
 /**
@@ -153,17 +157,79 @@ void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
  * in to the dummy BB in case the source BB is inside the
  * same region.
  */
-void
-IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb) {
+static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
   std::vector< llvm::BasicBlock* > regionPreds;
 
-  for (pred_iterator i = pred_begin(bb), e = pred_end(bb);
-       i != e; ++i) {
+  for (pred_iterator i = pred_begin(BB), e = pred_end(BB); i != e; ++i) {
     llvm::BasicBlock* pred = *i;
-    if (R->contains(pred))
+    if (R.contains(pred))
       regionPreds.push_back(pred);
   }
-  llvm::BasicBlock* newExit = 
-    SplitBlockPredecessors(bb, regionPreds, ".r_exit");
-  R->replaceExit(newExit);
+  llvm::BasicBlock *newExit =
+      SplitBlockPredecessors(BB, regionPreds, ".r_exit");
+  R.replaceExit(newExit);
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char IsolateRegions::ID = 0;
+
+bool IsolateRegions::runOnRegion(Region *R, RGPassManager &RGM) {
+  WorkitemHandlerType WIH =
+      getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+  return isolateRegions(*R, WIH);
+}
+
+void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<pocl::VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+static void findRegionsDepthFirst(Region *Reg, std::vector<Region *> &Regions) {
+
+  for (Region::iterator I = Reg->begin(); I != Reg->end(); ++I) {
+    findRegionsDepthFirst(I->get(), Regions);
+  }
+  Regions.push_back(Reg);
+}
+
+llvm::PreservedAnalyses IsolateRegions::run(llvm::Function &F,
+                                            llvm::FunctionAnalysisManager &AM) {
+  WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
+  RegionInfo &RI = AM.getResult<RegionInfoAnalysis>(F);
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  bool ChangedAny = false;
+
+  std::vector<Region *> Regions;
+  findRegionsDepthFirst(RI.getTopLevelRegion(), Regions);
+  unsigned NumRegions = Regions.size();
+  for (unsigned i = 0; i < NumRegions; ++i) {
+    bool ChangedCurrent = isolateRegions(*Regions[i], WIH);
+    // changing a Region changes the pointers of the loop; retrieve them again
+    if (ChangedCurrent) {
+      Regions.clear();
+      findRegionsDepthFirst(RI.getTopLevelRegion(), Regions);
+      assert(Regions.size() == NumRegions);
+    }
+    ChangedAny = ChangedAny || ChangedCurrent;
+  }
+
+#ifdef DEBUG_ISOLATE_REGIONS
+  dumpCFG(F, F.getName().str() + "_after_isolateregs.dot", nullptr, nullptr);
+#endif
+
+  return ChangedAny ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

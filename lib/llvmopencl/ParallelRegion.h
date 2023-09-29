@@ -21,21 +21,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_PARALLEL_REGION_H
-#define _POCL_PARALLEL_REGION_H
+#ifndef POCL_PARALLEL_REGION_H
+#define POCL_PARALLEL_REGION_H
 
-#include <functional>
-#include <vector>
-#include <sstream>
-
-#include "config.h"
-
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+POP_COMPILER_DIAGS
+
+#include <functional>
+#include <sstream>
+#include <vector>
+
+#include "config.h"
 
 namespace pocl {
 

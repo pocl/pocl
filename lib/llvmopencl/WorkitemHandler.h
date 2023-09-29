@@ -21,66 +21,52 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_HANDLER_H
-#define _POCL_WORKITEM_HANDLER_H
-
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#ifndef POCL_WORKITEM_HANDLER_H
+#define POCL_WORKITEM_HANDLER_H
 
 #include "config.h"
 
+#include "Kernel.h"
+
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Dominators.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
+
 #include "llvm/Support/CommandLine.h"
 
-POP_COMPILER_DIAGS
-
-namespace llvm {
-  class DominatorTree;
-}
-
 namespace pocl {
-  class Workgroup;
-  class Kernel;
 
-  class WorkitemHandler : public llvm::FunctionPass {
-  public:
+class WorkitemHandler {
+public:
+  virtual void Initialize (pocl::Kernel *K);
 
-    WorkitemHandler(char& ID);
+protected:
+  void movePhiNodes(llvm::BasicBlock *src, llvm::BasicBlock *dst);
+  bool fixUndominatedVariableUses (llvm::DominatorTree &DT, llvm::Function &F);
+  bool dominatesUse (llvm::DominatorTree &DT, llvm::Instruction &I,
+                     unsigned i);
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const = 0;
-    virtual bool runOnFunction(llvm::Function &F);
+  // The type of size_t for the current target.
+  llvm::Type *SizeT;
+  // The width of size_t for the current target.
+  int SizeTWidth;
 
-    virtual void Initialize(pocl::Kernel *K);
+  // The Module global variables that hold the place of the current local
+  // id until privatized.
+  llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
 
-  protected:
-
-    void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
-    bool fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT, llvm::Function &F);
-    bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);
-
-    // The type of size_t for the current target.
-    llvm::Type *SizeT;
-    // The width of size_t for the current target.
-    int SizeTWidth;
-
-    // The Module global variables that hold the place of the current local
-    // id until privatized.
-    llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
-
-    // Copies of compilation parameters
-    std::string KernelName;
-    unsigned long address_bits;
-    bool WGAssumeZeroGlobalOffset;
-    bool WGDynamicLocalSize;
-    bool DeviceUsingArgBufferLauncher;
-    bool DeviceIsSPMD;
-    unsigned long WGLocalSizeX;
-    unsigned long WGLocalSizeY;
-    unsigned long WGLocalSizeZ;
-    unsigned long WGMaxGridDimWidth;
-  };
+  // Copies of compilation parameters
+  std::string KernelName;
+  unsigned long address_bits;
+  bool WGAssumeZeroGlobalOffset;
+  bool WGDynamicLocalSize;
+  bool DeviceUsingArgBufferLauncher;
+  bool DeviceIsSPMD;
+  unsigned long WGLocalSizeX;
+  unsigned long WGLocalSizeY;
+  unsigned long WGLocalSizeZ;
+  unsigned long WGMaxGridDimWidth;
+};
 
   extern llvm::cl::opt<bool> AddWIMetadata;
   extern llvm::cl::opt<int> LockStepSIMDWidth;

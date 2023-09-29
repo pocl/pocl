@@ -50,8 +50,9 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 
-
-#ifndef LLVM_OLDER_THAN_11_0
+#if LLVM_VERSION_MAJOR > 15
+#include "llvm/TargetParser/Host.h"
+#elif LLVM_VERSION_MAJOR > 10
 #include "llvm/Support/Host.h"
 #endif
 

@@ -21,94 +21,45 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-
-#include "config.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Dominators.h"
-
 #include "llvm/Analysis/LoopInfo.h"
+
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/Transforms/Scalar/LoopPassManager.h>
+#endif
 
 #include "Barrier.h"
 #include "ImplicitLoopBarriers.h"
+#include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
+POP_COMPILER_DIAGS
 
 #include "pocl_runtime_config.h"
 
+#include <iostream>
+
 //#define DEBUG_ILOOP_BARRIERS
 
+#define PASS_NAME "implicit-loop-barriers"
+#define PASS_CLASS pocl::ImplicitLoopBarriers
+#define PASS_DESC "Adds implicit barriers to loops"
+
+namespace pocl {
+
 using namespace llvm;
-using namespace pocl;
-
-namespace {
-  static
-  RegisterPass<ImplicitLoopBarriers> X("implicit-loop-barriers",
-                                       "Adds implicit barriers to loops");
-}
-
-char ImplicitLoopBarriers::ID = 0;
-
-void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
-  if (!isKernelToProcess(*L->getHeader()->getParent()))
-    return false;
-
-  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
-      WorkitemHandlerChooser::POCL_WIH_CBS)
-    return false;
-
-  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
-      !hasWorkgroupBarriers(*L->getHeader()->getParent())) {
-#ifdef DEBUG_ILOOP_BARRIERS
-    std::cerr << "### ILB: The kernel has no barriers, let's not add implicit ones "
-              << "either to avoid WI context switch overheads"
-              << std::endl;
-#endif
-    return false;
-  }
-  return ProcessLoop(L, LPM);
-}
-
-/**
- * Adds a barrier to the first BB of each loop.
- *
- * Note: it's not safe to do this in case the loop is not executed
- * by all work items. Therefore this is not enabled by default.
- */
-bool ImplicitLoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM) {
-
-  bool isBLoop = false;
-  for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
-       i != e && !isBLoop; ++i) {
-    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
-         j != e; ++j) {
-      if (isa<Barrier>(j)) {
-          isBLoop = true;
-          break;
-      }
-    }
-  }
-  if (isBLoop) return false;
-
-  return AddInnerLoopBarrier(L, LPM);
-}
 
 /**
  * Adds a barrier to the beginning of the loop body to force its treatment 
@@ -126,12 +77,12 @@ bool ImplicitLoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM) {
  * a) loop exit condition does not depend on the WI and 
  * b) all or none of the WIs always enter the loop
  */
-bool ImplicitLoopBarriers::AddInnerLoopBarrier(
-  llvm::Loop *L, llvm::LPPassManager &LPM) {
+static bool addInnerLoopBarrier(llvm::Loop &L,
+                                VariableUniformityAnalysisResult &VUA) {
 
   /* Only add barriers to the innermost loops. */
 
-  if (L->getSubLoops().size() > 0)
+  if (L.getSubLoops().size() > 0)
     return false;
 
 #ifdef DEBUG_ILOOP_BARRIERS
@@ -139,16 +90,13 @@ bool ImplicitLoopBarriers::AddInnerLoopBarrier(
             << std::endl;
 #endif
 
-  BasicBlock *brexit = L->getExitingBlock();
+  BasicBlock *brexit = L.getExitingBlock();
   if (brexit == NULL) return false; /* Multiple exit points */
 
-  llvm::BasicBlock *loopEntry = L->getHeader();
+  llvm::BasicBlock *loopEntry = L.getHeader();
   if (loopEntry == NULL) return false; /* Multiple entries blocks? */
 
   llvm::Function *f = brexit->getParent();
-
-  VariableUniformityAnalysis &VUA = 
-    getAnalysis<VariableUniformityAnalysis>();
 
   /* Check if the whole loop construct is executed by all or none of the
      work-items. */
@@ -157,7 +105,7 @@ bool ImplicitLoopBarriers::AddInnerLoopBarrier(
     std::cerr << "### the loop is not uniform because loop entry '"
               << loopEntry->getName().str() << "' is not uniform; LOOP: \n"
               << std::endl;
-    L->dump();
+    L.dump();
 #endif
     return false;
   }
@@ -193,3 +141,116 @@ bool ImplicitLoopBarriers::AddInnerLoopBarrier(
   
   return false;
 }
+
+/**
+ * Adds a barrier to the first BB of each loop.
+ *
+ * Note: it's not safe to do this in case the loop is not executed
+ * by all work items. Therefore this is not enabled by default.
+ */
+static bool implicitLoopBarriers(Loop &L,
+                                 VariableUniformityAnalysisResult &VUA) {
+
+  bool isBLoop = false;
+  for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
+       i != e && !isBLoop; ++i) {
+    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end(); j != e; ++j) {
+      if (isa<Barrier>(j)) {
+        isBLoop = true;
+        break;
+      }
+    }
+  }
+  if (isBLoop)
+    return false;
+
+  return addInnerLoopBarrier(L, VUA);
+}
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char ImplicitLoopBarriers::ID = 0;
+
+bool ImplicitLoopBarriers::runOnLoop(Loop *L, llvm::LPPassManager &LPM) {
+  Function *K = L->getHeader()->getParent();
+  if (!isKernelToProcess(*K))
+    return false;
+
+  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
+  if (WIH == WorkitemHandlerType::CBS)
+    return false;
+
+  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
+      !hasWorkgroupBarriers(*K)) {
+#ifdef DEBUG_ILOOP_BARRIERS
+    std::cerr
+        << "### ILB: The kernel has no barriers, let's not add implicit ones "
+        << "either to avoid WI context switch overheads" << std::endl;
+#endif
+    return false;
+  }
+
+  VariableUniformityAnalysisResult &VUA =
+      getAnalysis<VariableUniformityAnalysis>().getResult();
+
+  return implicitLoopBarriers(*L, VUA);
+}
+
+void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+ImplicitLoopBarriers::run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
+                          llvm::LoopStandardAnalysisResults &AR,
+                          llvm::LPMUpdater &U) {
+
+  Function *K = L.getHeader()->getParent();
+
+  auto &FAMP = AM.getResult<FunctionAnalysisManagerLoopProxy>(L, AR);
+
+  if (!isKernelToProcess(*K))
+    return PreservedAnalyses::all();
+
+  if (FAMP.cachedResultExists<WorkitemHandlerChooser>(*K)) {
+    auto Res = FAMP.getCachedResult<WorkitemHandlerChooser>(*K);
+    if (Res->WIH == WorkitemHandlerType::CBS)
+      return PreservedAnalyses::all();
+  } else {
+    assert(0 && "missing cached result WIH for ImplicitLoopBarriers");
+  }
+
+  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
+      !hasWorkgroupBarriers(*K)) {
+#ifdef DEBUG_ILOOP_BARRIERS
+    std::cerr
+        << "### ILB: The kernel has no barriers, let's not add implicit ones "
+        << "either to avoid WI context switch overheads" << std::endl;
+#endif
+    return PreservedAnalyses::all();
+  }
+
+  VariableUniformityAnalysisResult *VUA = nullptr;
+  if (FAMP.cachedResultExists<VariableUniformityAnalysis>(*K)) {
+    VUA = FAMP.getCachedResult<VariableUniformityAnalysis>(*K);
+  } else {
+    assert(0 && "missing cached result VUA for ImplicitLoopBarriers");
+  }
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  return implicitLoopBarriers(L, *VUA) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

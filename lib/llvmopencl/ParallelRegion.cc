@@ -22,17 +22,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <set>
-#include <sstream>
-#include <map>
-#include <algorithm>
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -42,6 +36,14 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "Kernel.h"
 #include "DebugHelpers.h"
+POP_COMPILER_DIAGS
+
+#include <algorithm>
+#include <map>
+#include <set>
+#include <sstream>
+
+#include "pocl_llvm_api.h"
 
 using namespace std;
 using namespace llvm;
@@ -50,6 +52,7 @@ using namespace pocl;
 //#define DEBUG_REMAP
 //#define DEBUG_REPLICATE
 //#define DEBUG_PURGE
+//#define DEBUG_CREATE
 
 #include <iostream>
 
@@ -203,7 +206,7 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   BasicBlock *successor = t->getSuccessor(0);
   Function *F = successor->getParent();
 
-#ifdef LLVM_OLDER_THAN_16_0
+#if LLVM_MAJOR < 16
   Function::BasicBlockListType &bb_list =
     F->getBasicBlockList();
   for (iterator i = begin(), e = end(); i != e; ++i)
@@ -369,8 +372,9 @@ ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entr
   }
 
   new_region->LocalizeIDLoads();
-
+#ifdef DEBUG_CREATE
   assert(new_region->Verify());
+#endif
 
   return new_region;
 }
@@ -627,9 +631,9 @@ ParallelRegion::LocalIDZLoad()
   GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
       POCL_LOCAL_ID_Z_GLOBAL);
   return LocalIDZLoadInstr = builder.CreateLoad(
-#if !defined(LLVM_OLDER_THAN_15_0)
+#if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif !defined(LLVM_OLDER_THAN_13_0)
+#elif LLVM_MAJOR > 12
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -647,9 +651,9 @@ ParallelRegion::LocalIDYLoad()
   GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
       POCL_LOCAL_ID_Y_GLOBAL);
   return LocalIDYLoadInstr = builder.CreateLoad(
-#if !defined(LLVM_OLDER_THAN_15_0)
+#if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif !defined(LLVM_OLDER_THAN_13_0)
+#elif LLVM_MAJOR > 12
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -667,9 +671,9 @@ ParallelRegion::LocalIDXLoad()
   GlobalVariable *Ptr = entryBB()->getParent()->getParent()->getGlobalVariable(
       POCL_LOCAL_ID_X_GLOBAL);
   return LocalIDXLoadInstr = builder.CreateLoad(
-#if !defined(LLVM_OLDER_THAN_15_0)
+#if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif !defined(LLVM_OLDER_THAN_13_0)
+#elif LLVM_MAJOR > 12
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -707,7 +711,7 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-#ifndef LLVM_OLDER_THAN_14_0
+#if LLVM_MAJOR > 13
     AttributeList func_printf_PAL =
         AttributeList()
             .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)

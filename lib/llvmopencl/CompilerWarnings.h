@@ -19,6 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
 #ifndef POCL_COMPILER_WARNINGS_HH
 #define POCL_COMPILER_WARNINGS_HH
 
@@ -26,19 +27,19 @@
 
 #ifdef __clang__
 
-#define IGNORE_COMPILER_WARNING(X)                        \
-    DO_PRAGMA(clang diagnostic push)                      \
-    DO_PRAGMA(clang diagnostic ignored X)                 
+#define IGNORE_COMPILER_WARNING(X)                                             \
+  DO_PRAGMA(clang diagnostic push)                                             \
+  DO_PRAGMA(clang diagnostic ignored X)
 
 #elif defined(__GNUC__)
 
-#define IGNORE_COMPILER_WARNING(X)                      \
-    DO_PRAGMA(GCC diagnostic push)                      \
-    DO_PRAGMA(GCC diagnostic ignored X)                 
+#define IGNORE_COMPILER_WARNING(X)                                             \
+  DO_PRAGMA(GCC diagnostic push)                                               \
+  DO_PRAGMA(GCC diagnostic ignored X)
 
 #else
 
-#define IGNORE_COMPILER_WARNING(X) 
+#define IGNORE_COMPILER_WARNING(X)
 
 #endif
 

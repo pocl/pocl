@@ -20,32 +20,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "config.h"
-
-#include "RemoveOptnoneFromWIFunc.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
+#include "LLVMUtils.h"
+#include "RemoveOptnoneFromWIFunc.h"
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
+POP_COMPILER_DIAGS
 
 #include <iostream>
+
+#define PASS_NAME "remove-optnone"
+#define PASS_CLASS pocl::RemoveOptnoneFromWIFunc
+#define PASS_DESC "Remove optnone keyword from workitem functions."
 
 namespace pocl {
 
 using namespace llvm;
 
-namespace {
-static RegisterPass<pocl::RemoveOptnoneFromWIFunc>
-    X("remove-optnone", "Remove optnone keyword from workitem functions.");
-}
-
-char RemoveOptnoneFromWIFunc::ID = 0;
-
-RemoveOptnoneFromWIFunc::RemoveOptnoneFromWIFunc() : FunctionPass(ID) {}
-
-bool RemoveOptnoneFromWIFunc::runOnFunction(Function &F) {
+static bool removeOptnoneFromWIFunc(Function &F) {
   /* Adding "optnone" to get_global_id() solves the problem
    * that some pass in opt introduces switch tables which the
    * variable uniformity analysis cannot analyze.
@@ -63,4 +59,31 @@ bool RemoveOptnoneFromWIFunc::runOnFunction(Function &F) {
   }
   return changed;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char RemoveOptnoneFromWIFunc::ID = 0;
+
+bool RemoveOptnoneFromWIFunc::runOnFunction(Function &F) {
+  return removeOptnoneFromWIFunc(F);
 }
+
+void RemoveOptnoneFromWIFunc::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+RemoveOptnoneFromWIFunc::run(llvm::Function &F,
+                             llvm::FunctionAnalysisManager &AM) {
+  removeOptnoneFromWIFunc(F);
+  return PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

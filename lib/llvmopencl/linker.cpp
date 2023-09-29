@@ -30,11 +30,11 @@
 #include <iostream>
 #include <set>
 
-#include "config.h"
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/IR/DebugInfo.h"
@@ -50,10 +50,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
-#include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
 #include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "LLVMUtils.h"
 #include "linker.h"
@@ -102,6 +102,50 @@ static bool removeDuplicateDbgInfo(Module *Mod) {
     }
   }
   return Erased;
+}
+
+// fix mismatches between calling conv. This should not happen,
+// but sometimes can, esp with SPIR(-V) input
+static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
+  for (llvm::Module::iterator MI = Mod->begin(); MI != Mod->end(); ++MI) {
+    llvm::Function *F = &*MI;
+    if (F->isDeclaration())
+      continue;
+
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;
+           ++BI) {
+        Instruction *Instr = dyn_cast<Instruction>(BI);
+        if (!llvm::isa<CallInst>(Instr))
+          continue;
+        CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+        Function *Callee = CallInstr->getCalledFunction();
+
+        if ((Callee == nullptr) || Callee->getName().startswith("llvm.") ||
+            Callee->isDeclaration())
+          continue;
+
+        if (CallInstr->getCallingConv() != Callee->getCallingConv()) {
+          std::string CalleeName, CallerName;
+          if (F->hasName())
+            CallerName = F->getName().str();
+          else
+            CallerName = "unnamed";
+          if (Callee->hasName())
+            CalleeName = Callee->getName().str();
+          else
+            CalleeName = "unnamed";
+
+          Log.append("Warning: CallingConv mismatch: \n Caller is: ");
+          Log.append(CallerName);
+          Log.append(" and Callee is: ");
+          Log.append(CalleeName);
+          Log.append("; fixing \n");
+          CallInstr->setCallingConv(Callee->getCallingConv());
+        }
+      }
+    }
+  }
 }
 
 // Find all functions in the calltree of F, append their
@@ -452,6 +496,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
   shared_copy(Program, Lib, log, vvm);
 
   removeDuplicateDbgInfo(Program);
+
+  fixCallingConv(Program, log);
 
   return 0;
 }

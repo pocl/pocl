@@ -20,34 +20,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_PHIS_TO_ALLOCAS_H
-#define _POCL_PHIS_TO_ALLOCAS_H
+#ifndef POCL_PHIS_TO_ALLOCAS_H
+#define POCL_PHIS_TO_ALLOCAS_H
 
 #include "config.h"
 
 #include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-
-namespace llvm {
-  class Instruction;
-  class PHINode;
-}
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class PHIsToAllocas : public llvm::FunctionPass {
-  public:
-    static char ID;
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-  PHIsToAllocas() : llvm::FunctionPass(ID) {}
+class PHIsToAllocas : public llvm::FunctionPass
+{
+public:
+  static char ID;
+  PHIsToAllocas() : FunctionPass(ID) {};
+  virtual ~PHIsToAllocas() {};
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-    llvm::Instruction *BreakPHIToAllocas(llvm::PHINode* phi);
+#else
 
-  };
-}
+class PHIsToAllocas : public llvm::PassInfoMixin<PHIsToAllocas> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
 
 #endif

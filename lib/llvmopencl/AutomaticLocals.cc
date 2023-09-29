@@ -22,17 +22,15 @@
 // THE SOFTWARE.
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl_cl.h"
-#include "pocl_spir.h"
-
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/DataLayout.h"
-
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -44,95 +42,20 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "AutomaticLocals.h"
 #include "LLVMUtils.h"
 #include "Workgroup.h"
-
+#include "pocl_llvm_api.h"
 POP_COMPILER_DIAGS
 
-using namespace std;
+#define PASS_NAME "automatic-locals"
+#define PASS_CLASS pocl::AutomaticLocals
+#define PASS_DESC "Processes automatic locals"
+
+namespace pocl {
+
 using namespace llvm;
-using namespace pocl;
 
-namespace {
-  class AutomaticLocals : public ModulePass {
+using FunctionVec = std::vector<llvm::Function *>;
 
-  public:
-    static char ID;
-    pocl_autolocals_to_args_strategy autolocals_to_args;
-    AutomaticLocals(pocl_autolocals_to_args_strategy autolocals_to_args =
-                        POCL_AUTOLOCALS_TO_ARGS_ALWAYS)
-        : ModulePass(ID), autolocals_to_args(autolocals_to_args) {}
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    virtual bool runOnModule(Module &M);
-
-  private:
-    Function *processAutomaticLocals(Function *F);
-  };
-}
-
-llvm::ModulePass *pocl::createAutomaticLocalsPass(
-    pocl_autolocals_to_args_strategy autolocals_to_args) {
-  return new AutomaticLocals(autolocals_to_args);
-}
-
-char AutomaticLocals::ID = 0;
-static RegisterPass<AutomaticLocals> X("automatic-locals",
-				      "Processes automatic locals");
-
-void
-AutomaticLocals::getAnalysisUsage(AnalysisUsage &) const {
-}
-
-bool
-AutomaticLocals::runOnModule(Module &M)
-{
-  if (autolocals_to_args == POCL_AUTOLOCALS_TO_ARGS_NEVER) {
-    return false;
-  }
-  bool changed = false;
-
-  // store the new and old kernel pairs in order to regenerate
-  // all the metadata that used to point to the unmodified
-  // kernels
-  FunctionMapping kernels;
-
-  string ErrorInfo;
-  std::vector<Function*> NewFuncs;
-  for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
-    // This is to prevent recursion with llvm 3.9. The new kernels are
-    // recognized as kernelsToProcess.
-    if (find(NewFuncs.begin(), NewFuncs.end(), &*mi) != NewFuncs.end())
-      continue;
-    if (!isKernelToProcess(*mi))
-      continue;
-
-    Function *F = &*mi;
-
-    Function *new_kernel = processAutomaticLocals(F);
-    if (new_kernel != F)
-      changed = true;
-    kernels[F] = new_kernel;
-    NewFuncs.push_back(new_kernel);
-  }
-
-  if (changed)
-    {
-      regenerate_kernel_metadata(M, kernels);
-      /* Delete the old kernels. */
-      for (FunctionMapping::const_iterator i = kernels.begin(),
-             e = kernels.end(); i != e; ++i) 
-        {
-          Function *old_kernel = (*i).first;
-          Function *new_kernel = (*i).second;
-          if (old_kernel == new_kernel) continue;
-          old_kernel->eraseFromParent();
-        }
-    }
-  return changed;
-}
-
-
-Function *
-AutomaticLocals::processAutomaticLocals(Function *F) {
+static Function *processAutomaticLocals(Function *F, unsigned long Strategy) {
 
   Module *M = F->getParent();
 
@@ -163,8 +86,7 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
     return F;
   }
 
-  if (autolocals_to_args ==
-      POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT) {
+  if (Strategy == POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT) {
     bool NeedsArgOffsets = false;
     for (auto &Arg : F->args()) {
       // Check for local memory pointer.
@@ -213,3 +135,92 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
   return NewKernel;
 }
 
+static bool automaticLocals(Module &M, FunctionVec &OldKernels) {
+  unsigned long ModStrategy = 0;
+  getModuleIntMetadata(M, "device_autolocals_to_args", ModStrategy);
+
+  if (ModStrategy == POCL_AUTOLOCALS_TO_ARGS_NEVER) {
+    return false;
+  }
+  bool changed = false;
+
+  // store the new and old kernel pairs in order to regenerate
+  // all the metadata that used to point to the unmodified
+  // kernels
+  FunctionMapping kernels;
+
+  std::string ErrorInfo;
+  FunctionVec NewFuncs;
+  for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
+    // This is to prevent recursion with llvm 3.9. The new kernels are
+    // recognized as kernelsToProcess.
+    if (find(NewFuncs.begin(), NewFuncs.end(), &*mi) != NewFuncs.end())
+      continue;
+    if (!isKernelToProcess(*mi))
+      continue;
+
+    Function *F = &*mi;
+
+    Function *new_kernel = processAutomaticLocals(F, ModStrategy);
+    if (new_kernel != F)
+      changed = true;
+    kernels[F] = new_kernel;
+    NewFuncs.push_back(new_kernel);
+  }
+
+  if (changed) {
+    regenerate_kernel_metadata(M, kernels);
+    /* Delete the old kernels. */
+    for (FunctionMapping::const_iterator i = kernels.begin(), e = kernels.end();
+         i != e; ++i) {
+      Function *old_kernel = (*i).first;
+      Function *new_kernel = (*i).second;
+      if (old_kernel == new_kernel)
+        continue;
+      OldKernels.push_back(old_kernel);
+    }
+  }
+  return changed;
+}
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char AutomaticLocals::ID = 0;
+
+bool AutomaticLocals::runOnModule(Module &M) {
+  FunctionVec OldKernels;
+  bool Ret = automaticLocals(M, OldKernels);
+  for (auto K : OldKernels)
+    K->eraseFromParent();
+  return Ret;
+}
+
+void AutomaticLocals::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.setPreservesCFG();
+}
+
+REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+// One thing to note when accessing inner level IR analyses is cached results
+// for deleted IR. If a function is deleted in a module pass, its address is
+// still used as the key for cached analyses. Take care in the pass to either
+// clear the results for that function or not use inner analyses at all.
+llvm::PreservedAnalyses AutomaticLocals::run(llvm::Module &M,
+                                             llvm::ModuleAnalysisManager &AM) {
+  auto &FAM = AM.getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();
+  FunctionVec OldKernels;
+  bool Ret = automaticLocals(M, OldKernels);
+  for (auto K : OldKernels) {
+    FAM.clear(*K, "parallel.bc");
+    K->eraseFromParent();
+  }
+
+  return Ret ? PreservedAnalyses::none() : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

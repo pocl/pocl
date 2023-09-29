@@ -31,43 +31,39 @@
 #ifndef POCL_SUBCFGFORMATION_H
 #define POCL_SUBCFGFORMATION_H
 
-#include "llvm/Analysis/LoopInfo.h"
+#include "config.h"
+
 #include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
 
-constexpr size_t EntryBarrierId = 0;
-constexpr size_t ExitBarrierId = -1;
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-// performs the main CBS transformation
-class SubCFGFormationPassLegacy : public llvm::FunctionPass {
+class SubCFGFormation : public llvm::FunctionPass {
 public:
   static char ID;
+  SubCFGFormation() : FunctionPass(ID) {};
+  virtual ~SubCFGFormation(){};
 
-  explicit SubCFGFormationPassLegacy() : llvm::FunctionPass(ID) {}
-
-  llvm::StringRef getPassName() const override {
-    return "pocl sub-CFG formation pass";
-  }
-
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-
-  bool runOnFunction(llvm::Function &F) override;
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
-// enable when using new pass manager infrastructure
-#if 0
-// performs the main CBS transformation
-class SubCFGFormationPass : public llvm::PassInfoMixin<SubCFGFormationPass> {
-public:
-  explicit SubCFGFormationPass() {}
+#else
 
+class SubCFGFormation : public llvm::PassInfoMixin<SubCFGFormation> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Function &F,
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
+
 #endif
+
 } // namespace pocl
 
 #endif // POCL_SUBCFGFORMATION_H

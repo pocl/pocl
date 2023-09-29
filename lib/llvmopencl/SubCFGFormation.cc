@@ -28,20 +28,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SubCFGFormation.h"
-
-#include "Barrier.h"
-#include "LLVMUtils.h"
-#include "VariableUniformityAnalysis.h"
-#include "Workgroup.h"
-#include "WorkitemHandlerChooser.h"
-#include "pocl_llvm_api.h"
-
-#include <cstddef>
-#include <functional>
-#include <numeric>
-
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Analysis/PostDominators.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DebugInfo.h>
@@ -55,14 +46,35 @@
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/Local.h>
 #include <llvm/Transforms/Utils/LoopSimplify.h>
+POP_COMPILER_DIAGS
+
+#include "Barrier.h"
+#include "LLVMUtils.h"
+#include "SubCFGFormation.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+
+#include "pocl_llvm_api.h"
+
+#include <cstddef>
+#include <functional>
+#include <numeric>
 
 // #define DEBUG_SUBCFG_FORMATION
 
+#define PASS_NAME "subcfgformation"
+#define PASS_CLASS pocl::SubCFGFormation
+#define PASS_DESC "Form SubCFGs according to CBS"
 
-namespace {
-using namespace pocl;
+namespace pocl {
 
-static size_t NumArrayElements = 1024;
+using namespace llvm;
+
+constexpr size_t EntryBarrierId = 0;
+constexpr size_t ExitBarrierId = -1;
+
 static size_t DefaultAlignment = 64;
 static constexpr const char LoopStateMD[] = "poclLoopState";
 
@@ -77,7 +89,6 @@ static constexpr const char LocalIdGlobalNameY[] = "_local_id_y";
 static constexpr const char LocalIdGlobalNameZ[] = "_local_id_z";
 static const std::array<const char *, 3> LocalIdGlobalNames{
     LocalIdGlobalNameX, LocalIdGlobalNameY, LocalIdGlobalNameZ};
-
 
 static const std::array<char, 3> DimName{'x', 'y', 'z'};
 
@@ -452,13 +463,13 @@ public:
           &ContInstReplicaMap,
       llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
       llvm::Value *ReqdArrayElements,
-      pocl::VariableUniformityAnalysis &VecInfo);
+      pocl::VariableUniformityAnalysisResult &VecInfo);
   void fixSingleSubCfgValues(
       llvm::DominatorTree &DT,
       const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
           &RemappedInstAllocaMap,
       llvm::Value *ReqdArrayElements,
-      pocl::VariableUniformityAnalysis &VecInfo);
+      pocl::VariableUniformityAnalysisResult &VecInfo);
 
   void print() const;
   void removeDeadPhiBlocks(
@@ -661,7 +672,7 @@ bool dontArrayifyContiguousValues(
                    llvm::SmallVector<llvm::Instruction *, 8>>
         &ContInstReplicaMap,
     llvm::Instruction *AllocaIP, llvm::Value* ReqdArrayElements, llvm::Value *IndVar,
-    pocl::VariableUniformityAnalysis &VecInfo) {
+    pocl::VariableUniformityAnalysisResult &VecInfo) {
   // is cont indvar
   if (VecInfo.isPinned(I))
     return true;
@@ -720,7 +731,8 @@ void SubCFG::arrayifyMultiSubCfgValues(
                    llvm::SmallVector<llvm::Instruction *, 8>>
         &ContInstReplicaMap,
     llvm::ArrayRef<SubCFG> SubCFGs, llvm::Instruction *AllocaIP,
-    llvm::Value *ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
+    llvm::Value *ReqdArrayElements,
+    pocl::VariableUniformityAnalysisResult &VecInfo) {
   llvm::SmallPtrSet<llvm::BasicBlock *, 16> OtherCFGBlocks;
   for (auto &Cfg : SubCFGs) {
     if (&Cfg != this)
@@ -989,7 +1001,8 @@ void SubCFG::fixSingleSubCfgValues(
     llvm::DominatorTree &DT,
     const llvm::DenseMap<llvm::Instruction *, llvm::AllocaInst *>
         &RemappedInstAllocaMap,
-    llvm::Value *ReqdArrayElements, pocl::VariableUniformityAnalysis &VecInfo) {
+    llvm::Value *ReqdArrayElements,
+    pocl::VariableUniformityAnalysisResult &VecInfo) {
 
   auto *AllocaIP = LoadBB_->getParent()->getEntryBlock().getTerminator();
   auto *LoadIP = LoadBB_->getTerminator();
@@ -1263,7 +1276,7 @@ bool isAllocaSubCfgInternal(llvm::AllocaInst *Alloca,
 void arrayifyAllocas(llvm::BasicBlock *EntryBlock, llvm::DominatorTree &DT,
                      std::vector<SubCFG> &SubCfgs,
                      llvm::Value *ReqdArrayElements,
-                     pocl::VariableUniformityAnalysis &VecInfo) {
+                     pocl::VariableUniformityAnalysisResult &VecInfo) {
   auto *MDAlloca = llvm::MDNode::get(
       EntryBlock->getContext(),
       {llvm::MDString::get(EntryBlock->getContext(), "poclLoopState")});
@@ -1351,7 +1364,7 @@ getBarrierIds(llvm::BasicBlock *Entry,
 }
 void formSubCfgs(llvm::Function &F, llvm::LoopInfo &LI, llvm::DominatorTree &DT,
                  llvm::PostDominatorTree &PDT,
-                 pocl::VariableUniformityAnalysis &VUA) {
+                 pocl::VariableUniformityAnalysisResult &VUA) {
 #ifdef DEBUG_SUBCFG_FORMATION
   F.viewCFG();
 #endif
@@ -1555,28 +1568,27 @@ void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
 void markLoopParallel(llvm::Function &, llvm::Loop *) {}
 #endif
 
-static llvm::RegisterPass<pocl::SubCFGFormationPassLegacy>
-    X("subcfgformation", "Form SubCFGs according to CBS");
-} // namespace
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char SubCFGFormation::ID = 0;
 
-namespace pocl {
-void SubCFGFormationPassLegacy::getAnalysisUsage(
-    llvm::AnalysisUsage &AU) const {
+void SubCFGFormation::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<llvm::LoopInfoWrapperPass>();
   AU.addRequiredTransitive<llvm::DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<llvm::PostDominatorTreeWrapperPass>();
+
   AU.addRequired<VariableUniformityAnalysis>();
   AU.addPreserved<VariableUniformityAnalysis>();
+
   AU.addRequired<WorkitemHandlerChooser>();
   AU.addPreserved<WorkitemHandlerChooser>();
 }
 
-bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
+bool SubCFGFormation::runOnFunction(llvm::Function &F) {
   if (!isKernelToProcess(F))
     return false;
 
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() !=
-      pocl::WorkitemHandlerChooser::POCL_WIH_CBS)
+  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+  if (WIH != WorkitemHandlerType::CBS)
     return false;
   if (!hasWorkgroupBarriers(F))
     return false;
@@ -1589,7 +1601,7 @@ bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
   auto &PDT =
       getAnalysis<llvm::PostDominatorTreeWrapperPass>().getPostDomTree();
   auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>();
+  auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>().getResult();
 
   formSubCfgs(F, LI, DT, PDT, VUA);
 
@@ -1600,31 +1612,43 @@ bool SubCFGFormationPassLegacy::runOnFunction(llvm::Function &F) {
   return true;
 }
 
-char SubCFGFormationPassLegacy::ID = 0;
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
-// enable when using new pass manager infrastructure
-#if 0
+#else
+
+// enable new pass manager infrastructure
 llvm::PreservedAnalyses
-SubCFGFormationPass::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
-  auto &MAM = AM.getResult<llvm::ModuleAnalysisManagerFunctionProxy>(F);
+SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   if (!isKernelToProcess(F))
-    return llvm::PreservedAnalyses::all();
+    return PreservedAnalyses::all();
+
+  WorkitemHandlerType WIH = AM.getResult<pocl::WorkitemHandlerChooser>(F).WIH;
+  if (WIH != WorkitemHandlerType::CBS)
+    return PreservedAnalyses::all();
+
+  if (!hasWorkgroupBarriers(F))
+    return PreservedAnalyses::all();
 
   llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
 
   auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
   auto &PDT = AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
   auto &LI = AM.getResult<llvm::LoopAnalysis>(F);
+  auto &VUA = AM.getResult<pocl::VariableUniformityAnalysis>(F);
 
-  if (hasWorkgroupBarriers(F))
-    formSubCfgs(F, LI, DT, PDT);
-  else
-    createLoopsAroundKernel(F, DT, LI, PDT);
+  formSubCfgs(F, LI, DT, PDT, VUA);
 
-  llvm::PreservedAnalyses PA;
-  PA.preserve<SplitterAnnotationAnalysis>();
-  return PA;
+  for (auto *SL : LI.getLoopsInPreorder())
+    if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))
+      markLoopParallel(F, SL);
+
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return PAChanged;
 }
-#endif
-} // namespace pocl
 
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

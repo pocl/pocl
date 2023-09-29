@@ -37,10 +37,10 @@
 // problematic in other ways and redundant.
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wno-maybe-uninitialized"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/IR/Constants.h"
@@ -52,7 +52,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#pragma GCC diagnostic pop
+POP_COMPILER_DIAGS
 
 #include "UnifyPrintf.h"
 

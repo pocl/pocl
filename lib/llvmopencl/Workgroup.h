@@ -22,117 +22,41 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#ifndef _POCL_WORKGROUP_H
-#define _POCL_WORKGROUP_H
+#ifndef POCL_WORKGROUP_H
+#define POCL_WORKGROUP_H
 
 #include "config.h"
-#include "LLVMUtils.h"
 
-#include <llvm/IR/IRBuilder.h>
-#include <llvm/IR/Module.h>
-#include <llvm/Pass.h>
+#include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
 
 namespace pocl {
-  class Workgroup : public llvm::ModulePass {
-  public:
-    static char ID;
 
-    Workgroup() : ModulePass(ID) {}
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-    virtual bool runOnModule(llvm::Module &M);
+class Workgroup : public llvm::ModulePass
+{
+public:
+  static char ID;
+  Workgroup () : ModulePass (ID) {};
 
-  private:
-    llvm::Function *createWrapper(
-      llvm::Function *F, FunctionMapping &printfCache);
+  virtual bool runOnModule(llvm::Module &M) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-    void createGridLauncher(
-      llvm::Function *KernFunc, llvm::Function *WGFunc, std::string KernName);
+#else
 
-    llvm::Function*
-      createArgBufferWorkgroupLauncher(llvm::Function *Func,
-                                       std::string KernName);
+class Workgroup : public llvm::PassInfoMixin<Workgroup> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
-    void createDefaultWorkgroupLauncher(llvm::Function *F);
-    void createFastWorkgroupLauncher(llvm::Function *F);
+#endif
 
-    std::vector<llvm::Value*>
-      globalHandlesToContextStructLoads(
-        llvm::IRBuilder<> &Builder,
-        const std::vector<std::string> &&GlobalHandleNames,
-        int StructFieldIndex);
-
-    void addPlaceHolder(llvm::IRBuilder<> &Builder, llvm::Value *Value,
-                        const std::string TypeStr);
-
-    void privatizeGlobals(llvm::Function *F, llvm::IRBuilder<> &Builder,
-                          const std::vector<std::string> &&GlobalHandleNames,
-                          std::vector<llvm::Value*> PrivateValues);
-
-    void privatizeContext(llvm::Function *F);
-
-    llvm::Value *createLoadFromContext(
-      llvm::IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex);
-
-    void addGEPs(llvm::IRBuilder<> &Builder, int StructFieldIndex,
-                 const char* FormatStr);
-
-    void addRangeMetadataForPCField(llvm::Instruction *Instr,
-                                    int StructFieldIndex, int FieldIndex = -1);
-
-    LLVMValueRef createAllocaMemcpyForStruct(LLVMModuleRef M,
-                                             LLVMBuilderRef Builder,
-                                             llvm::Argument &Arg,
-                                             LLVMValueRef ArgByteOffset);
-
-    LLVMValueRef createArgBufferLoad (LLVMBuilderRef Builder,
-                                      LLVMValueRef ArgBufferPtr,
-                                      uint64_t *ArgBufferOffsets,
-                                      LLVMContextRef Ctx, LLVMValueRef F,
-                                      unsigned ParamIndex);
-
-    llvm::Value *getRequiredSubgroupSize(llvm::Function &F);
-
-    llvm::Module *M;
-    llvm::LLVMContext *C;
-
-    // Set to the hidden context argument.
-    llvm::Argument *ContextArg;
-
-    // Set to the hidden group_id_* kernel args.
-    std::vector<llvm::Value*> GroupIdArgs;
-
-    // Number of hidden args added to the work-group function.
-    unsigned HiddenArgs = 0;
-
-    // The width of the size_t data type in the current target.
-    int SizeTWidth = 64;
-    llvm::Type *SizeT = nullptr;
-    llvm::Type *PoclContextT = nullptr;
-    llvm::FunctionType *LauncherFuncT = nullptr;
-
-    // Copies of compilation parameters
-    std::string KernelName;
-    unsigned long address_bits;
-    bool WGAssumeZeroGlobalOffset;
-    bool WGDynamicLocalSize;
-    bool DeviceUsingArgBufferLauncher;
-    bool DeviceUsingGridLauncher;
-    bool DeviceIsSPMD;
-    unsigned long WGLocalSizeX;
-    unsigned long WGLocalSizeY;
-    unsigned long WGLocalSizeZ;
-    unsigned long WGMaxGridDimWidth;
-
-    unsigned long DeviceGlobalASid;
-    unsigned long DeviceLocalASid;
-    unsigned long DeviceConstantASid;
-    unsigned long DeviceContextASid;
-    unsigned long DeviceArgsASid;
-    bool DeviceSidePrintf;
-    bool DeviceAllocaLocals;
-    unsigned long DeviceMaxWItemDim;
-    unsigned long DeviceMaxWItemSizes[3];
-  };
-}
+} // namespace pocl
 
 #endif

@@ -21,40 +21,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <set>
-#include <iostream>
-
 #include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "HandleSamplerInitialization.h"
-#include "Workgroup.h"
-#include "VariableUniformityAnalysis.h"
-
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/IRBuilder.h>
 
+#include "HandleSamplerInitialization.h"
+#include "LLVMUtils.h"
+#include "VariableUniformityAnalysis.h"
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
 
-using namespace llvm;
+#include <iostream>
+#include <set>
 
-namespace {
-  static
-  RegisterPass<pocl::HandleSamplerInitialization>
-  X("handle-samplers",
-    "Handles sampler initialization calls.");
-}
+#include "pocl.h"
+
+#define PASS_NAME "handle-samplers"
+#define PASS_CLASS pocl::HandleSamplerInitialization
+#define PASS_DESC "Handles sampler initialization calls."
 
 namespace pocl {
 
-char HandleSamplerInitialization::ID = 0;
+using namespace llvm;
 
-HandleSamplerInitialization::HandleSamplerInitialization() : FunctionPass(ID) {
-}
-
-bool
-HandleSamplerInitialization::runOnFunction(Function &F) {
+static bool handleSamplerInitialization(Function &F) {
 
   // Collect the sampler init calls to handle first, do not remove them
   // instantly as it'd invalidate the iterators.
@@ -79,8 +70,8 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
 
     // get the type of the return value of __translate_sampler
     // this may not always be opencl.sampler_t, it could be a remapped type.
-#ifdef LLVM_OLDER_THAN_15_0
-#ifdef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR < 15
+#if LLVM_MAJOR < 11
     Type *type = C->getCalledValue()->getType();
 #else
     Type *type = C->getCalledOperand()->getType();
@@ -114,9 +105,34 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
   return Changed;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char HandleSamplerInitialization::ID = 0;
+
+bool HandleSamplerInitialization::runOnFunction(Function &F) {
+  return handleSamplerInitialization(F);
+}
+
 void
 HandleSamplerInitialization::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<pocl::VariableUniformityAnalysis>();
+  AU.addPreserved<WorkitemHandlerChooser>();
 }
 
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+HandleSamplerInitialization::run(llvm::Function &F,
+                                 llvm::FunctionAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  return handleSamplerInitialization(F) ? PAChanged : PreservedAnalyses::all();
 }
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

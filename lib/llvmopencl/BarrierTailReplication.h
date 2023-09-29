@@ -21,65 +21,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <map>
-#include <set>
-
 #ifndef POCL_BARRIER_TAIL_REPLICATION
 #define POCL_BARRIER_TAIL_REPLICATION
 
-#include "pocl.h"
+#include "config.h"
 
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/Cloning.h"
+#include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-  class Workgroup;
 
-  class BarrierTailReplication : public llvm::FunctionPass {
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-  public:
-    static char ID;
+class BarrierTailReplication : public llvm::FunctionPass {
+public:
+  static char ID;
+  BarrierTailReplication() : FunctionPass(ID){};
+  virtual ~BarrierTailReplication (){};
 
-    BarrierTailReplication(): FunctionPass(ID) {}
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    
-  private:
-    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
+#else
 
-    llvm::DominatorTree *DT;
-    llvm::DominatorTreeWrapperPass *DTP;
+class BarrierTailReplication
+    : public llvm::PassInfoMixin<BarrierTailReplication> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
 
-    llvm::LoopInfoWrapperPass *LI;
+#endif
 
-    bool ProcessFunction(llvm::Function &F);
-    bool FindBarriersDFS(llvm::BasicBlock *bb,
-                         BasicBlockSet &processed_bbs);
-    bool ReplicateJoinedSubgraphs(llvm::BasicBlock *dominator,
-                                  llvm::BasicBlock *subgraph_entry,
-                                  BasicBlockSet &processed_bbs);
-
-    llvm::BasicBlock* ReplicateSubgraph(llvm::BasicBlock *entry,
-                                        llvm::Function *f);
-    void FindSubgraph(BasicBlockVector &subgraph,
-                      llvm::BasicBlock *entry);
-    void ReplicateBasicBlocks(BasicBlockVector &new_graph,
-                              llvm::ValueToValueMapTy &reference_map,
-                              BasicBlockVector &graph,
-                              llvm::Function *f);
-    void UpdateReferences(const BasicBlockVector &graph,
-                          llvm::ValueToValueMapTy &reference_map);
-
-    bool CleanupPHIs(llvm::BasicBlock *BB);
-
-    friend class pocl::Workgroup;
-  };
-}
+} // namespace pocl
 
 #endif
