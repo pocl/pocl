@@ -23,10 +23,12 @@
 */
 
 #include <cassert>
+#include <sstream>
 
-#include "shared_cl_context.hh"
 #include "cmd_queue.hh"
 #include "common.hh"
+#include "shared_cl_context.hh"
+#include "spirv_parser.hh"
 #include "virtual_cl_context.hh"
 
 #define EVENT_TIMING_PRE                                                       \
@@ -146,7 +148,8 @@ public:
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
-      size_t source_size, bool is_binary, bool is_builtin, const char *options,
+      size_t source_size, bool is_binary, bool is_builtin, bool is_spirv,
+      const char *options,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
       std::unordered_map<uint64_t, std::string> &build_logs,
@@ -294,6 +297,8 @@ private:
   clKernelStruct *findKernel(uint32_t id);
   cl::Sampler *findSampler(uint32_t id);
   cl::CommandQueue *findCommandQueue(uint32_t id);
+  void updateKernelArgMDFromSPIRV(ArgumentInfo_t &MD,
+                                  const SPIRVParser::OCLArgTypeInfo &AInfo);
 };
 
 #ifdef __GNUC__
@@ -325,6 +330,84 @@ cl::Sampler *SharedCLContext::findSampler(uint32_t id) {
 cl::CommandQueue *SharedCLContext::findCommandQueue(uint32_t id) {
   auto cq_search = QueueIDMap.find(id);
   return (cq_search == QueueIDMap.end() ? nullptr : cq_search->second.get());
+}
+
+void SharedCLContext::updateKernelArgMDFromSPIRV(
+    ArgumentInfo_t &MD, const SPIRVParser::OCLArgTypeInfo &AInfo) {
+  // This is largely a copy-paste from pocl_level0_setup_metadata(),
+  // with mainly the destination datatype is changed.
+
+  cl_kernel_arg_address_qualifier Addr;
+  cl_kernel_arg_access_qualifier Access;
+  Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
+  Access = CL_KERNEL_ARG_ACCESS_NONE;
+  strncpy(MD.name, AInfo.Name.c_str(), MAX_PACKED_STRING_LEN);
+  MD.type_name[0] = 0;
+
+  switch (AInfo.Type) {
+  case SPIRVParser::OCLType::POD: {
+    MD.type = PoclRemoteArgType::POD;
+    break;
+  }
+  case SPIRVParser::OCLType::Pointer: {
+    MD.type = PoclRemoteArgType::Pointer;
+    switch (AInfo.Space) {
+    case SPIRVParser::OCLSpace::Private:
+      Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
+      break;
+    case SPIRVParser::OCLSpace::Local:
+      Addr = CL_KERNEL_ARG_ADDRESS_LOCAL;
+      break;
+    case SPIRVParser::OCLSpace::Global:
+      Addr = CL_KERNEL_ARG_ADDRESS_GLOBAL;
+      break;
+    case SPIRVParser::OCLSpace::Constant:
+      Addr = CL_KERNEL_ARG_ADDRESS_CONSTANT;
+      break;
+    case SPIRVParser::OCLSpace::Unknown:
+      Addr = CL_KERNEL_ARG_ADDRESS_PRIVATE;
+      break;
+    }
+    break;
+  }
+  case SPIRVParser::OCLType::Image: {
+    MD.type = PoclRemoteArgType::Image;
+    Addr = CL_KERNEL_ARG_ADDRESS_GLOBAL;
+    bool Readable = AInfo.Attrs.ReadableImg;
+    bool Writable = AInfo.Attrs.WriteableImg;
+    if (Readable && Writable) {
+      Access = CL_KERNEL_ARG_ACCESS_READ_WRITE;
+    }
+    if (Readable && !Writable) {
+      Access = CL_KERNEL_ARG_ACCESS_READ_ONLY;
+    }
+    if (!Readable && Writable) {
+      Access = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+    }
+    break;
+  }
+  case SPIRVParser::OCLType::Sampler: {
+    MD.type = PoclRemoteArgType::Sampler;
+    break;
+  }
+  case SPIRVParser::OCLType::Opaque: {
+    POCL_MSG_WARN("Unknown SPIR-V argument type 'Opaque', ignoring.\n");
+    MD.type = PoclRemoteArgType::POD;
+    break;
+  }
+  }
+  MD.address_qualifier = Addr;
+  MD.access_qualifier = Access;
+  MD.type_qualifier = CL_KERNEL_ARG_TYPE_NONE;
+  if (AInfo.Attrs.Constant) {
+    MD.type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
+  }
+  if (AInfo.Attrs.Restrict) {
+    MD.type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
+  }
+  if (AInfo.Attrs.Volatile) {
+    MD.type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
+  }
 }
 
 #define FIND_QUEUE                                                             \
@@ -596,14 +679,47 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
   temp = clientDevice.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
   std::strncpy(i.builtin_kernels, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
 
-  // remove SPIR support, the remote driver doesn't support it yet
-  temp = clientDevice.getInfo<CL_DEVICE_EXTENSIONS>();
-  size_t pos = temp.find("cl_khr_spir ");
-  constexpr size_t len = std::char_traits<char>::length("cl_khr_spir ");
-  if (pos != std::string::npos) {
-    temp.erase(pos, len);
+  // Filter the extensions list and drop those that are currently not
+  // supported through PoCL-R.
+  std::stringstream extsStream(clientDevice.getInfo<CL_DEVICE_EXTENSIONS>());
+  std::string extName;
+  std::string exts;
+
+  const std::vector<std::string> unsupportedExts{
+      // need to delegate
+      // device.getInfo<CL_DEVICE_QUEUE_FAMILY_PROPERTIES_INTEL>()
+      "cl_intel_command_queue_families",
+      // need to delegate various extended device queries
+      "cl_intel_device_attribute_query",
+      // need to delegate device.getInfo<CL_DEVICE_SUB_GROUP_SIZES_INTEL>()
+      "cl_intel_required_subgroup_size",
+      // USM/SVM not yet supported.
+      "cl_intel_unified_shared_memory",
+      // need to delegate device.getInfo<CL_DEVICE_{L,U}UID_KHR>()
+      "cl_khr_device_uuid",
+      // supports only SPIR-V input (cl_khr_il_program), not the old SPIRs
+      "cl_khr_spir",
+      // need to delegate
+      // device.getInfo<CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV>() etc.
+      "cl_nv_device_attribute_query",
+  };
+
+  while (getline(extsStream, extName, ' ')) {
+
+    if (std::find(unsupportedExts.begin(), unsupportedExts.end(), extName) !=
+        unsupportedExts.end())
+      continue;
+
+    if (extName == "cl_khr_il_program") {
+      std::string spirvVersions = clientDevice.getInfo<CL_DEVICE_IL_VERSION>();
+      std::strncpy(i.supported_spir_v_versions, spirvVersions.c_str(),
+                   MAX_PACKED_STRING_LEN - 1);
+    }
+    if (exts != "")
+      exts += " ";
+    exts += extName;
   }
-  std::strncpy(i.extensions, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
+  std::strncpy(i.extensions, exts.c_str(), MAX_PACKED_STRING_LEN - 1);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
   i.address_bits = clientDevice.getInfo<CL_DEVICE_ADDRESS_BITS>();
@@ -822,7 +938,8 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
 
 int SharedCLContext::buildProgram(
     uint32_t program_id, std::vector<uint32_t> &DeviceList, char *src,
-    size_t src_size, bool is_binary, bool is_builtin, const char *options,
+    size_t src_size, bool is_binary, bool is_builtin, bool is_spirv,
+    const char *options,
     std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
     std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
     std::unordered_map<uint64_t, std::string> &build_logs,
@@ -834,6 +951,7 @@ int SharedCLContext::buildProgram(
   clProgramStructPtr program_uptr(new clProgramStruct{});
   clProgramStruct *program = program_uptr.get();
   std::vector<cl::Kernel> prebuilt_kernels;
+  SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
   bool always_build_all = DeviceList.empty();
   for (auto i : DeviceList) {
@@ -858,6 +976,13 @@ int SharedCLContext::buildProgram(
   if (options == nullptr)
     options = "";
   std::string opts(options);
+
+  /* Kernel argument information is only available when building
+     from sources, but some implementations seem to return metadata
+     also for binaries/SPIR-V.
+
+     https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/
+     clGetKernelArgInfo.html*/
   opts += " -cl-kernel-arg-info";
 
   if (is_builtin) {
@@ -878,6 +1003,8 @@ int SharedCLContext::buildProgram(
       program->uptr = std::move(pp);
     }
   } else if (is_binary) {
+    POCL_MSG_PRINT_GENERAL("BUILDING BINARY WITH OPTIONS : %s\n", opts.c_str());
+
     cl::Program::Binaries plat_binaries;
     plat_binaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
@@ -885,8 +1012,6 @@ int SharedCLContext::buildProgram(
       assert(input_binaries.find(id) != input_binaries.end());
       plat_binaries[i] = input_binaries[id];
     }
-
-    POCL_MSG_PRINT_GENERAL("BUILDING BINARY WITH OPTIONS : %s\n", opts.c_str());
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, program->devices,
                                     plat_binaries, nullptr, &err));
@@ -898,10 +1023,51 @@ int SharedCLContext::buildProgram(
     p = pp.get();
     program->uptr = std::move(pp);
 
-  } else {
-    std::string source(src, src + src_size);
+  } else if (is_spirv) {
+    POCL_MSG_PRINT_GENERAL("BUILDING SPIR-V WITH OPTIONS : %s\n", opts.c_str());
 
+    cl::Program::Binaries PlatBinaries;
+    PlatBinaries.resize(DeviceList.size());
+    for (size_t i = 0; i < DeviceList.size(); ++i) {
+      uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
+      assert(input_binaries.find(id) != input_binaries.end());
+      PlatBinaries[i] = input_binaries[id];
+    }
+
+    // Expecting to see a single SPIR-V which is built for all capable
+    // devices. Strictly put, we should check the SPIR-Vs are the same
+    // for all.
+    assert(PlatBinaries.size() >= 1);
+
+    // Annoyingly cl::Program constructor expects 'char' whereas Binaries
+    // come with 'unsigned char' element type. Perhaps just copy it here
+    // to avoid problems.
+    const std::vector<char> &IL = reinterpret_cast<const std::vector<char> &>(
+        (*input_binaries.begin()).second);
+
+    clProgramPtr pp(new cl::Program(ContextWithAllDevices, IL, false, &err));
+    if (err != CL_SUCCESS) {
+      POCL_MSG_ERR("clCreateProgramWithIL() failed\n");
+      return err;
+    }
+
+    // The SPIR-V parser inputs a stream of int32_t. Do we need to
+    // realign the blob or can we assume it's aligned when reading
+    // in?
+    assert(((size_t)IL.data()) % 4 == 0);
+    if (!SPIRVParser::parseSPIRV((const int32_t *)IL.data(), IL.size() / 4,
+                                 KernelInfoMap)) {
+      POCL_MSG_WARN("Unable to parse the SPIR-V for metadata. "
+                    "Illegal SPIR-V?\n");
+      return CL_INVALID_PROGRAM;
+    }
+
+    p = pp.get();
+    program->uptr = std::move(pp);
+  } else {
     POCL_MSG_PRINT_GENERAL("BUILDING SRC WITH OPTIONS : %s\n", opts.c_str());
+
+    std::string source(src, src + src_size);
 
     clProgramPtr pp(
         new cl::Program(ContextWithAllDevices, source, false, &err));
@@ -957,7 +1123,7 @@ int SharedCLContext::buildProgram(
   }
 
   // for sources, return also the binary
-  if (!is_binary && !is_builtin) {
+  if (!is_binary && !is_builtin && !is_spirv) {
     cl::Program::Binaries binaries;
     assert(binaries.size() == 0);
 
@@ -1031,22 +1197,25 @@ int SharedCLContext::buildProgram(
   else
     assert(num_kernels == kernels.size());
 
-  // kernel metadata
-  program->kernel_meta.resize(num_kernels);
+  // Kernel metadata is guaranteed to be available only when building
+  // from sources. Let's accumulate what we get from the clGetKernelInfo etc.
+  // queries and augment with SPIR-V parser data, if building from SPIR-V.
   program->numKernels = num_kernels;
+  program->kernel_meta.resize(num_kernels);
   for (size_t i = 0; i < num_kernels; ++i) {
     KernelMetaInfo_t &temp_kernel = program->kernel_meta[i].meta;
+    cl_int ArgErr = CL_SUCCESS;
 
     /*
-            // TODO this is broken
-            err = CL_SUCCESS;
-            // PER DEVICE INFO !!!!!!!!!!!!!!!
-            cl_ulong local_mem_size = 0;
-                        kernels[i].getWorkGroupInfo<CL_KERNEL_LOCAL_MEM_SIZE>(CLDevices[0],
+    // TODO this is broken
+    err = CL_SUCCESS;
+    // PER DEVICE INFO !!!!!!!!!!!!!!!
+    cl_ulong local_mem_size = 0;
+    kernels[i].getWorkGroupInfo<CL_KERNEL_LOCAL_MEM_SIZE>(CLDevices[0],
     &err); assert (err == CL_SUCCESS); temp_kernel.total_local_size =
     local_mem_size;
 
-            std::array<size_t, 3> reqd_wg_size = { 0, 0, 0 };
+    std::array<size_t, 3> reqd_wg_size = { 0, 0, 0 };
     //kernels[i].getWorkGroupInfo<CL_KERNEL_COMPILE_WORK_GROUP_SIZE>(clientDevice,
     &err);
     //        assert (err == CL_SUCCESS);
@@ -1062,44 +1231,58 @@ int SharedCLContext::buildProgram(
     temp_kernel.total_local_size = 0;
     temp_kernel.reqd_wg_size = {0, 0, 0};
 
-    std::string kernel_name = kernels[i].getInfo<CL_KERNEL_FUNCTION_NAME>(&err);
-    assert(err == CL_SUCCESS);
-    std::strcpy(temp_kernel.name, kernel_name.c_str());
+    std::string kernel_name =
+        kernels[i].getInfo<CL_KERNEL_FUNCTION_NAME>(&ArgErr);
+    // Assume we get the name always.
+    assert(ArgErr == CL_SUCCESS);
+    std::strncpy(temp_kernel.name, kernel_name.c_str(), MAX_PACKED_STRING_LEN);
 
-    std::string a = kernels[i].getInfo<CL_KERNEL_ATTRIBUTES>(&err);
-    assert(err == CL_SUCCESS);
-    std::strcpy(temp_kernel.attributes, a.c_str());
+    std::string a = kernels[i].getInfo<CL_KERNEL_ATTRIBUTES>(&ArgErr);
+    if (ArgErr == CL_SUCCESS) {
+      std::strncpy(temp_kernel.attributes, a.c_str(), MAX_PACKED_STRING_LEN);
+    }
 
-    temp_kernel.num_args = kernels[i].getInfo<CL_KERNEL_NUM_ARGS>(&err);
-    assert(err == CL_SUCCESS);
-    assert(temp_kernel.num_args < 200);
-
-    program->kernel_meta[i].arg_meta.resize(temp_kernel.num_args);
+    size_t num_args_temp = kernels[i].getInfo<CL_KERNEL_NUM_ARGS>(&ArgErr);
+    if (ArgErr == CL_SUCCESS) {
+      temp_kernel.num_args = num_args_temp;
+      program->kernel_meta[i].arg_meta.resize(temp_kernel.num_args);
+    } else if (is_spirv) {
+      temp_kernel.num_args = KernelInfoMap[kernel_name]->ArgTypeInfo.size();
+    } else {
+      temp_kernel.num_args = 0;
+    }
 
     for (cl_uint arg_index = 0; arg_index < temp_kernel.num_args; ++arg_index) {
       ArgumentInfo_t &temp_arg = program->kernel_meta[i].arg_meta[arg_index];
+
+      if (is_spirv) {
+        updateKernelArgMDFromSPIRV(temp_arg,
+                                   KernelInfoMap[kernel_name]->ArgTypeInfo[0]);
+        continue;
+      }
+
       temp_arg.access_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ACCESS_QUALIFIER>(arg_index,
-                                                                &err);
-      assert(err == CL_SUCCESS);
+                                                                &ArgErr);
       temp_arg.address_qualifier =
           kernels[i].getArgInfo<CL_KERNEL_ARG_ADDRESS_QUALIFIER>(arg_index,
-                                                                 &err);
-      assert(err == CL_SUCCESS);
+                                                                 &ArgErr);
       temp_arg.type_qualifier =
-          kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_QUALIFIER>(arg_index, &err);
-      assert(err == CL_SUCCESS);
+          kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_QUALIFIER>(arg_index,
+                                                              &ArgErr);
 
       std::string arg_typename =
-          kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(arg_index, &err);
-      assert(err == CL_SUCCESS);
-      std::strcpy(temp_arg.type_name, arg_typename.c_str());
+          kernels[i].getArgInfo<CL_KERNEL_ARG_TYPE_NAME>(arg_index, &ArgErr);
+      if (ArgErr == CL_SUCCESS) {
+        std::strncpy(temp_arg.type_name, arg_typename.c_str(),
+                     MAX_PACKED_STRING_LEN);
+      }
 
       std::string arg_name =
-          kernels[i].getArgInfo<CL_KERNEL_ARG_NAME>(arg_index, &err);
-      assert(err == CL_SUCCESS);
-      std::strcpy(temp_arg.name, arg_name.c_str());
-
+          kernels[i].getArgInfo<CL_KERNEL_ARG_NAME>(arg_index, &ArgErr);
+      if (ArgErr == CL_SUCCESS) {
+        std::strncpy(temp_arg.name, arg_name.c_str(), MAX_PACKED_STRING_LEN);
+      }
       // TODO this is hackish, but what else can we do here
       temp_arg.type = PoclRemoteArgType::POD;
 

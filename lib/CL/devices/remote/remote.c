@@ -164,7 +164,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->build_builtin = pocl_remote_build_builtin;
   ops->free_program = pocl_remote_free_program;
   ops->setup_metadata = pocl_remote_setup_metadata;
-  ops->supports_binary = NULL;
+  ops->supports_binary = pocl_remote_supports_binary;
 
   ops->join = pocl_remote_join;
   ops->submit = pocl_remote_submit;
@@ -371,12 +371,9 @@ setup_build_logs (cl_program program, unsigned num_relevant_devices,
  */
 static unsigned
 setup_relevant_devices (cl_program program, cl_device_id device,
-
                         unsigned *build_indexes, char **build_logs,
-
                         uint32_t *relevant_devices,
                         uint32_t *relevant_platforms,
-
                         char **binaries, size_t *binary_sizes,
                         size_t *total_binary_request_size)
 {
@@ -405,9 +402,17 @@ setup_relevant_devices (cl_program program, cl_device_id device,
               binaries[num_relevant_devices] = NULL;
               binary_sizes[num_relevant_devices] = 0;
             }
+          else if (program->program_il_size > 0)
+            {
+              /* SPIR-V. */
+              binaries[num_relevant_devices] = program->program_il;
+              *total_binary_request_size += sizeof (uint32_t);
+              binary_sizes[num_relevant_devices] = program->program_il_size;
+              *total_binary_request_size += program->program_il_size;
+            }
           else
             {
-
+              /* Target-specific binaries. */
               pocl_cache_program_bc_path (program_bc_path, program, real_i);
 
               assert (pocl_exists (program_bc_path));
@@ -473,11 +478,9 @@ pocl_remote_free_program (cl_device_id device, cl_program program,
 
 int
 pocl_remote_build_source (cl_program program, cl_uint device_i,
-
                           cl_uint num_input_headers,
                           const cl_program *input_headers,
                           const char **header_include_names,
-
                           int link_program)
 {
   POCL_RETURN_ERROR_ON (
@@ -524,11 +527,8 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
 
   num_relevant_devices = setup_relevant_devices (
       program, device,
-
       build_indexes, build_logs,
-
       relevant_devices, relevant_platforms,
-
       binaries, binary_sizes, &total_binary_request_size);
 
   assert (num_relevant_devices > 0);
@@ -538,13 +538,9 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
 
   err = pocl_network_build_program (
       d, program->source, strlen (program->source), CL_FALSE, CL_FALSE,
-      prog_id, program->compiler_options,
-
-      &kernel_meta_bytes, &kernel_meta_size,
-
-      relevant_devices, relevant_platforms, num_relevant_devices,
-
-      build_logs, binaries, binary_sizes);
+      CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
+      &kernel_meta_size, relevant_devices, relevant_platforms,
+      num_relevant_devices, build_logs, binaries, binary_sizes);
 
   setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
 
@@ -633,18 +629,16 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
 
   num_relevant_devices = setup_relevant_devices (
       program, device,
-
       build_indexes, build_logs,
-
       relevant_devices, relevant_platforms,
-
       binaries, binary_sizes, &total_binary_request_size);
 
   assert (num_relevant_devices > 0);
 
   char *kernel_meta_bytes = NULL;
   size_t kernel_meta_size = 0;
-  assert (program->pocl_binaries[device_i]);
+  assert ((!spir_build && program->pocl_binaries[device_i] != NULL)
+          || (spir_build && program->program_il != NULL));
   {
     char *buffer = malloc (total_binary_request_size);
     assert (buffer);
@@ -662,14 +656,10 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
     assert ((size_t)(buf - buffer) == total_binary_request_size);
 
     err = pocl_network_build_program (
-        d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, prog_id,
-        program->compiler_options,
-
-        &kernel_meta_bytes, &kernel_meta_size,
-
-        relevant_devices, relevant_platforms, num_relevant_devices,
-
-        build_logs, NULL, NULL);
+        d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, spir_build,
+        prog_id, program->compiler_options, &kernel_meta_bytes,
+        &kernel_meta_size, relevant_devices, relevant_platforms,
+        num_relevant_devices, build_logs, NULL, NULL);
     free (buffer);
   }
 
@@ -692,8 +682,29 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
       POCL_MSG_PRINT_REMOTE ("DEV i %u real_i %u\n", i, real_i);
 
       program->data[real_i] = pd;
-      assert (program->binary_sizes[real_i]);
-      assert (program->binaries[real_i]);
+      assert ((!spir_build && program->binary_sizes[real_i] > 0)
+              || spir_build && program->program_il_size > 0);
+      assert ((!spir_build && program->binaries[real_i] != NULL)
+              || (spir_build && program->program_il != NULL));
+
+      if (spir_build)
+        {
+          /* Dump the SPIR-V given as an input. */
+          char spirv_path[POCL_MAX_PATHNAME_LENGTH];
+          pocl_cache_tempname (spirv_path, ".spv", NULL);
+
+          assert (program->program_il != NULL);
+          assert (program->program_il_size > 0);
+
+          err = pocl_write_file (spirv_path, program->program_il,
+                                 program->program_il_size, 0, 0);
+          POCL_RETURN_ERROR_ON (
+              (err != 0), CL_BUILD_PROGRAM_FAILURE,
+              "failed to write the SPIR-V file into cache\n");
+          pocl_cache_create_program_cachedir (
+              program, real_i, program->program_il, program->program_il_size,
+              spirv_path);
+        }
     }
 
   return CL_SUCCESS;
@@ -729,16 +740,12 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
 
   int err = pocl_network_build_program (
       d, program->concated_builtin_names,
-      strlen (program->concated_builtin_names), CL_FALSE, CL_TRUE, prog_id,
-      program->compiler_options,
-
-      &kernel_meta_bytes, &kernel_meta_size,
-
+      strlen (program->concated_builtin_names), CL_FALSE, CL_TRUE, CL_FALSE,
+      prog_id, program->compiler_options, &kernel_meta_bytes,
+      &kernel_meta_size,
       &d->remote_device_index,   // relevant_devices,
       &d->remote_platform_index, // relevant_platforms,,
-      1,
-
-      &build_log, NULL, 0);
+      1, &build_log, NULL, 0);
 
   if (err)
     return err;
@@ -751,6 +758,18 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
   program->data[device_i] = pd;
 
   return CL_SUCCESS;
+}
+
+int
+pocl_remote_supports_binary (cl_device_id device, size_t length,
+                             const char *binary)
+{
+  if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length)
+      && device->supported_spir_v_versions != NULL
+      && strncmp (device->supported_spir_v_versions, "SPIR-V", 6) == 0)
+    return 1;
+  /* We should delegate to the remote here to be strict. */
+  return 0;
 }
 
 int

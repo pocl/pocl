@@ -26,6 +26,8 @@
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
 
+#include "pocl_export.h"
+
 #include <map>
 #include <memory>
 #include <set>
@@ -90,6 +92,7 @@ struct OCLFuncInfo {
 typedef std::map<std::string, std::shared_ptr<OCLFuncInfo>>
     OpenCLFunctionInfoMap;
 
+POCL_EXPORT
 bool parseSPIRV(const int32_t *Stream, size_t NumWords,
                 OpenCLFunctionInfoMap &FuncInfoMap);
 

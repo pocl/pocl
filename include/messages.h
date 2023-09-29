@@ -108,6 +108,9 @@ extern "C"
     MessageType_BuildProgramFromSource,
     MessageType_BuildProgramFromBinary,
     MessageType_BuildProgramWithBuiltins,
+    // Special message type for SPIR-V IL for now. No support for
+    // vendor-specific ILs yet.
+    MessageType_BuildProgramFromSPIRV,
     MessageType_FreeProgram,
 
     // ***********************************************
@@ -217,6 +220,7 @@ extern "C"
     STRING_TYPE (vendor);
     STRING_TYPE (extensions);
     STRING_TYPE (builtin_kernels);
+    STRING_TYPE (supported_spir_v_versions);
 
     uint32_t vendor_id;
     //  uint32_t device_id;
@@ -727,6 +731,7 @@ extern "C"
 
       case MessageType_BuildProgramFromSource:
       case MessageType_BuildProgramFromBinary:
+      case MessageType_BuildProgramFromSPIRV:
       case MessageType_BuildProgramWithBuiltins:
         body = sizeof (BuildProgramMsg_t);
         break;

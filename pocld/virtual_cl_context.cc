@@ -205,7 +205,8 @@ private:
 
   void FreeBuffer(Request *req, Reply *rep);
 
-  void BuildProgram(Request *req, Reply *rep, bool is_binary, bool is_builtin);
+  void BuildProgram(Request *req, Reply *rep, bool is_binary, bool is_builtin,
+                    bool is_spirv);
 
   void FreeProgram(Request *req, Reply *rep);
 
@@ -483,15 +484,19 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_BuildProgramFromBinary:
-        BuildProgram(request, reply, true, false);
+        BuildProgram(request, reply, true, false, false);
         break;
 
       case MessageType_BuildProgramFromSource:
-        BuildProgram(request, reply, false, false);
+        BuildProgram(request, reply, false, false, false);
+        break;
+
+      case MessageType_BuildProgramFromSPIRV:
+        BuildProgram(request, reply, false, false, true);
         break;
 
       case MessageType_BuildProgramWithBuiltins:
-        BuildProgram(request, reply, false, true);
+        BuildProgram(request, reply, false, true, false);
         break;
 
       case MessageType_FreeProgram:
@@ -720,19 +725,20 @@ void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
   assert((size_t)(buf - buffer) <= buffer_size);
 
 void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
-                                    bool is_builtin) {
+                                    bool is_builtin, bool is_spirv) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(ProgramIDset, CL_INVALID_PROGRAM);
 
   BuildProgramMsg_t &m = req->req.m.build_program;
 
-  // source / binary / builtin, must provide some data
+  POCL_MSG_PRINT_GENERAL(
+      "VirtualCTX: build %s program %" PRIu32 " for %" PRIu32 " devices\n",
+      (is_binary ? "binary"
+                 : (is_builtin ? "builtin" : (is_spirv ? "SPIR-V" : "source"))),
+      id, uint32_t(m.num_devices));
+  // source / binary / builtin / SPIR-V must be provided as a payload
   assert(req->extra_size > 0);
-
   assert(m.num_devices);
-  POCL_MSG_PRINT_GENERAL("VirtualCTX: build program %" PRIu32 " for %" PRIu32
-                         " devices\n",
-                         id, uint32_t(m.num_devices));
   std::vector<uint32_t> DevList{};
   ContextVector ProgramContexts;
 
@@ -744,7 +750,7 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   size_t source_len = m.payload_size;
   char *options = req->extra_data2;
 
-  if (is_binary) {
+  if (is_binary || is_spirv) {
     source = nullptr;
     source_len = 0;
     unsigned char *buffer = (unsigned char *)req->extra_data;
@@ -778,8 +784,8 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
     }
     if (DevList.size() > 0) {
       err = SharedContextList[i]->buildProgram(
-          id, DevList, source, source_len, is_binary, is_builtin, options,
-          input_binaries, output_binaries, build_logs, num_kernels);
+          id, DevList, source, source_len, is_binary, is_builtin, is_spirv,
+          options, input_binaries, output_binaries, build_logs, num_kernels);
       if (err == CL_SUCCESS) {
         ProgramContexts.push_back(SharedContextList[i]);
       } else
@@ -818,7 +824,7 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   }
 
   if (err == CL_SUCCESS) {
-    if (!is_binary && !is_builtin) {
+    if (!is_binary && !is_builtin && !is_spirv) {
       // write binaries for source builds
       WRITE_BYTES(m.num_devices);
       for (j = 0; j < m.num_devices; ++j) {

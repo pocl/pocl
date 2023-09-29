@@ -104,7 +104,6 @@ Known Bugs/Issues
 -----------------
 
 * the "-I" option to clBuildProgram does not work
-* SPIR(-V) is not supported
 * clGetKernelWorkGroupInfo() can return incorrect information
 * clCompileProgram() and clLinkProgram() API calls are broken (this is WIP)
 * clSetKernelArg() will not return a CL_INVALID_ARG_SIZE error if arg_size does not
@@ -424,7 +423,7 @@ limited testing outside the original lab since it has not been publicly availabl
 * For the time being the client side part of PoCL-Remote must be built with the
   ``ENABLE_LOADABLE_DRIVERS`` build option set to ``OFF``.
 
-* SPIR(-V) is not supported and the respective extension is masked out from
+* The old SPIR 1.2/2.0 are not supported and the respective extension is masked out from
   remote devices' extension lists by pocld.
 
 * There is no authentication or encryption whatsoever of network traffic. Don't
