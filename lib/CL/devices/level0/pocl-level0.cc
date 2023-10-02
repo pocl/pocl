@@ -874,13 +874,13 @@ int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
         Meta->arg_info[J].access_qualifier = Access;
         Meta->arg_info[J].type_qualifier = CL_KERNEL_ARG_TYPE_NONE;
         if (FI->ArgTypeInfo[J].Attrs.Constant) {
-          Meta->arg_info[J].type_qualifier = CL_KERNEL_ARG_TYPE_CONST;
+          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
         }
         if (FI->ArgTypeInfo[J].Attrs.Restrict) {
-          Meta->arg_info[J].type_qualifier = CL_KERNEL_ARG_TYPE_RESTRICT;
+          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
         }
         if (FI->ArgTypeInfo[J].Attrs.Volatile) {
-          Meta->arg_info[J].type_qualifier = CL_KERNEL_ARG_TYPE_VOLATILE;
+          Meta->arg_info[J].type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
         }
       }
 
