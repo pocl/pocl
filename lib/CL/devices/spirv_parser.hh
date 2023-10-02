@@ -26,13 +26,13 @@
 #ifndef HIP_COMMON_HH
 #define HIP_COMMON_HH
 
-#include "pocl_export.h"
-
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
+
+namespace SPIRVParser {
 
 #ifndef HAVE_SIZE_T_3
 #define HAVE_SIZE_T_3
@@ -90,8 +90,9 @@ struct OCLFuncInfo {
 typedef std::map<std::string, std::shared_ptr<OCLFuncInfo>>
     OpenCLFunctionInfoMap;
 
-POCL_EXPORT
-bool poclParseSPIRV(int32_t *Stream, size_t NumWords,
-               OpenCLFunctionInfoMap &FuncInfoMap);
+bool parseSPIRV(const int32_t *Stream, size_t NumWords,
+                OpenCLFunctionInfoMap &FuncInfoMap);
+
+} // namespace SPIRVParser
 
 #endif

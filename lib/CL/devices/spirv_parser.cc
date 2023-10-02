@@ -36,11 +36,12 @@
 #include "spirv_parser.hh"
 
 #include "pocl_debug.h"
-#include "pocl_util.h"
 
 #define logWarn(...) POCL_MSG_WARN(__VA_ARGS__);
 #define logError(...) POCL_MSG_ERR(__VA_ARGS__);
 #define logTrace(...) POCL_MSG_PRINT_INFO(__VA_ARGS__);
+
+namespace SPIRVParser {
 
 /// Reinterpret the pointed region, starting from BaseAddr +
 /// ByteOffset, as a value of the given type.
@@ -53,6 +54,33 @@ static T copyAs(const void *BaseAddr, size_t ByteOffset = 0) {
 
 const std::string OpenCLStd{"OpenCL.std"};
 
+// Rounds up to the (power of two) alignment.
+static size_t alignValue(size_t value, size_t alignment) {
+  if (value & (alignment - 1)) {
+    value |= (alignment - 1);
+    ++value;
+  }
+  return value;
+}
+
+/* Rounds up to the next highest power of two without branching and
+ * is as fast as a BSR instruction on x86, see:
+ *
+ * https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+ */
+static size_t sizeCeil2(size_t x) {
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+#if SIZE_MAX > 0xFFFFFFFF
+  x |= x >> 32;
+#endif
+  return ++x;
+}
+
 class SPIRVtype {
 protected:
   int32_t Id_;
@@ -63,7 +91,7 @@ public:
   SPIRVtype(int32_t Id, size_t Size, uint32_t Al)
       : Id_(Id), Alignment_(Al), Size_(Size) {}
   SPIRVtype(int32_t Id, size_t Size) : Id_(Id), Size_(Size) {
-    Alignment_ = pocl_size_ceil2(Size);
+    Alignment_ = sizeCeil2(Size);
   }
   virtual ~SPIRVtype(){};
   virtual size_t size() { return Size_; }
@@ -436,7 +464,7 @@ public:
         return nullptr;
       }
       auto EltCount = EltCountOperand->interpretAsUint64();
-      auto TypeSize = pocl_align_value(EltType->size(), EltType->getAlign());
+      auto TypeSize = alignValue(EltType->size(), EltType->getAlign());
       // TODO: Should padding in the tail be discounted?
       return new SPIRVtypePOD(Word1_, TypeSize * EltCount, EltType->getAlign());
     }
@@ -462,7 +490,7 @@ public:
         TotalPackedSize += TypeSize;
 
         size_t MemberAlignment = Type->getAlign();
-        TotalSize = pocl_align_value(TotalSize, MemberAlignment);
+        TotalSize = alignValue(TotalSize, MemberAlignment);
         TotalSize += TypeSize;
         if (MemberAlignment > MaxAlignment)
           MaxAlignment = MemberAlignment;
@@ -635,8 +663,10 @@ public:
     MemModelCL_ = false;
     ParseOK_ = false;
     HeaderOK_ = parseHeader(Stream, NumWords);
-    if (!HeaderOK_)
+    if (!HeaderOK_) {
+      logError("SPIR-V parser: Corrupted header.");
       return false;
+    }
 
     // INSTRUCTION STREAM
     ParseOK_ = parseInstructionStream(Stream, NumWords);
@@ -644,8 +674,10 @@ public:
   }
 
   bool fillModuleInfo(OpenCLFunctionInfoMap &ModuleMap) {
-    if (!valid())
+    if (!valid()) {
+      logError("Corrupted SPIR-V?");
       return false;
+    }
 
     for (auto i : EntryPointMap_) {
       int32_t EntryPointID = i.first;
@@ -818,10 +850,12 @@ private:
   }
 };
 
-bool poclParseSPIRV(int32_t *Stream, size_t NumWords,
-               OpenCLFunctionInfoMap &Output) {
+bool parseSPIRV(const int32_t *Stream, size_t NumWords,
+                OpenCLFunctionInfoMap &Output) {
   SPIRVmodule Mod;
   if (!Mod.parseSPIRV(Stream, NumWords))
     return false;
   return Mod.fillModuleInfo(Output);
 }
+
+} // namespace SPIRVParser

@@ -55,6 +55,8 @@
 
 #include "spirv_parser.hh"
 
+using namespace SPIRVParser;
+
 #include "level0-compilation.hh"
 #include "level0-driver.hh"
 
@@ -696,7 +698,7 @@ int pocl_level0_setup_metadata(cl_device_id Device, cl_program Program,
   int32_t *Stream = (int32_t *)Program->program_il;
   size_t StreamSize = Program->program_il_size / 4;
   OpenCLFunctionInfoMap KernelInfoMap;
-  if (!poclParseSPIRV(Stream, StreamSize, KernelInfoMap)) {
+  if (!parseSPIRV(Stream, StreamSize, KernelInfoMap)) {
     POCL_MSG_ERR("Unable to parse SPIR-V module of the program\n");
     return 0;
   }
