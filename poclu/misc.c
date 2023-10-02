@@ -560,9 +560,11 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                              NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
 
-      if (strstr (extensions, "cl_khr_spir") == NULL)
+      if ((spir && strstr (extensions, "cl_khr_spir") == NULL)
+          || (spirv && strstr (extensions, "cl_khr_il_program") == NULL))
         {
-          printf ("SPIR not supported, cannot run the test\n");
+          printf ("SPIR%s not supported, cannot run the test\n",
+                  spirv ? "-V" : "");
           return -1;
         }
 
