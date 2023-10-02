@@ -33,6 +33,7 @@ set(SOURCES pocld.cc cmdline.h cmdline.c
             ../lib/CL/pocl_debug.c ../lib/CL/pocl_debug.h
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
+            ../lib/CL/pocl_networking.c ../lib/CL/pocl_networking.h
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
             cmd_queue.cc  cmd_queue.hh  common.cc  common.hh
