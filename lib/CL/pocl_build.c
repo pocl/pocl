@@ -702,6 +702,12 @@ compile_and_link_program(int compile_program,
         goto ERROR_CLEAN_OPTIONS;
     }
 
+  /* The build option -x spir is only needed for the old SPIR format.
+     When creating a SPIR-V program via clCreateProgramWithIL, it's not
+     needed and we just assume if the program_il blob is there, we want
+     to also build it. */
+  spir_build = spir_build || program->program_il != NULL;
+
   POCL_MSG_PRINT_LLVM ("building program with options %s\n",
                        program->compiler_options);
 
