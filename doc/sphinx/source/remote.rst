@@ -407,6 +407,21 @@ way to achieve that seems to have all machines are equipped with an Intel NIC,
 and then setup PTP (Precision time protocol). Note that PTP requires hardware
 support from *every* network device in path to achieve sub-microsecond precision.
 
+Distributed SYCL Execution Using PoCL-R
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+oneAPI DPC++ can be used to distribute SYCL applications using PoCL-R. Notably,
+only buffer-based memory management (not USM) works currently. To test it out,
+build DPC++ as instructed in the `Getting Started with oneAPI DPC++ <https://github.com/intel/llvm/blob/sycl/sycl/doc/GetStartedGuide.md>`_ document.
+
+Then, build a SYCL program of your choice as instructed in the DPC++ documentation and launch it like any OpenCL program with the PoCL-D running. Just ensure you use an OpenCL device in DPC++ and it points to a PoCL-R device::
+
+  export POCL_DEVICES=remote
+  export POCL_REMOTE0_PARAMETERS=localhost:7777/0
+  export ONEAPI_DEVICE_SELECTOR=opencl:0
+  ./simple-sycl-app
+  The results are correct!
+
 
 Implementation Notes
 --------------------
