@@ -1923,7 +1923,7 @@ int SharedCLContext::setKernelArgs(cl::Kernel *k, clKernelStruct *kernel,
             POCL_MSG_WARN("NULL PTR ARG DETECTED: KERNEL %s ARG %u / %s \n",
                           kernel->metaData->meta.name, i,
                           kernel->metaData->arg_meta[i].name);
-            err = k->setArg(i, sizeof(void *), nullptr);
+            err = k->setArg(i, cl::Buffer());
             assert(err == CL_SUCCESS);
           } else {
             cl::Buffer *b = findBuffer(buffer_id);
