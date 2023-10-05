@@ -519,7 +519,8 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_generic_AS_micro"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_s2v"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} explicit_s2v_char  explicit_s2v_uchar  explicit_s2v_short  explicit_s2v_ushort  explicit_s2v_int  explicit_s2v_uint  explicit_s2v_long  explicit_s2v_ulong  explicit_s2v_float  explicit_s2v_double)
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_math"
-         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} fpmath_float  fpmath_float2  fpmath_float4  intmath_int  intmath_int2  intmath_int4  intmath_long  intmath_long2  intmath_long4  int2float  float2int)
+         COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} fpmath fp2int int2fp intmath_int intmath_int2 intmath_int4 intmath_long intmath_long2 intmath_long4)
+
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_image"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" ${EXTRA_ARGS} readimage  readimage_int16  readimage_fp32  writeimage  writeimage_int16  writeimage_fp32  image_r8  imagereadwrite  imagereadwrite3d  readimage3d  readimage3d_int16  readimage3d_fp32  imagearraycopy  imagearraycopy3d  imagecopy  imagecopy3d  imagerandomcopy  arrayimagecopy  arrayimagecopy3d  imagenpot  imagedim_pow2  imagedim_non_pow2  image_param  image_multipass_integer_coord  image_multipass_float_coord  enqueue_map_image)
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_basic_micro_other"
@@ -559,7 +560,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_constant_false_simple  op_constant_int_simple  op_constant_uchar_simple op_constant_long_simple op_constant_float_simple         op_constant_struct_int_char_simple  op_constant_struct_struct_simple op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple  op_copy_half_simple op_fadd_float_regular  op_fmul_float_regular  op_frem_float_regular  op_fadd_float_fast  op_fadd_double_regular  op_frem_double_regular op_fsub_double_fast  op_fdiv_double_fast  op_fadd_float4_regular  op_fmul_float4_regular  op_fsub_float4_fast  op_fadd_double2_regular  op_fsub_double2_fast  op_fmod_double2_fast
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} op_constant_false_simple  op_constant_int_simple  op_constant_uchar_simple op_constant_long_simple op_constant_float_simple         op_constant_struct_int_char_simple  op_constant_struct_struct_simple op_copy_int3_simple  op_copy_struct_int_float_simple  op_copy_struct_int_char_simple  op_copy_struct_struct_simple  op_copy_half_simple op_fadd_float_regular  op_fmul_float_regular   op_fadd_float_fast  op_fadd_double_regular  op_fsub_double_fast  op_fdiv_double_fast  op_fadd_float4_regular  op_fmul_float4_regular  op_fsub_float4_fast  op_fadd_double2_regular  op_fsub_double2_fast
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_2"
