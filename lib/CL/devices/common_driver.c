@@ -617,7 +617,7 @@ pocl_llvm_convert_and_link_ir (cl_program program, cl_uint device_i,
   if (program->program_il && program->program_il_size > 0)
     {
 #ifdef ENABLE_SPIRV
-      if (!strstr (device->extensions, "cl_khr_spir"))
+      if (!strstr (device->extensions, "cl_khr_il_program"))
         {
           APPEND_TO_BUILD_LOG_RET (CL_LINK_PROGRAM_FAILURE,
                                    "SPIR support is not available"
@@ -870,23 +870,6 @@ pocl_driver_supports_binary (cl_device_id device, size_t length,
 #ifdef ENABLE_SPIRV
   if (pocl_bitcode_is_spirv_execmodel_kernel (binary, length))
     return 1;
-#endif
-
-#ifdef ENABLE_SPIR
-  /* SPIR binary is supported if the device has cl_khr_spir */
-  if (pocl_bitcode_is_triple (binary, length, "spir"))
-    {
-      if (strstr (device->extensions, "cl_khr_spir") == NULL)
-        {
-          POCL_MSG_WARN ("SPIR binary provided, but "
-                         "this device has no SPIR support\n");
-          return 0;
-        }
-      else
-        {
-          return 1;
-        }
-    }
 #endif
 
   /* LLVM IR can be supported by the driver, if the triple matches */

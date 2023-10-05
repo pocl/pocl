@@ -894,29 +894,18 @@ endif()
 
 set(SPIRV OFF)
 
-if(ENABLE_LLVM)
-  option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
+# drivers that consume SPIRV directly don't need LLVM or LLVM-SPIRV;
+# those that consume SPIRV indirectly need both, but it might be useful to disable LLVM-SPIRV translator
+if(ENABLE_LLVM AND LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
+  option(ENABLE_SPIRV "Enable SPIR-V support (default ON when available)" ON)
 else()
-  set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
+  set(ENABLE_SPIRV OFF CACHE INTERNAL "SPIR-V enabled" FORCE)
 endif()
 
-if(ENABLE_SPIR)
-
-  if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
-    option(ENABLE_SPIRV "Enable SPIR-V support (default ON when available)" ON)
-  else()
-    set(ENABLE_SPIRV OFF CACHE INTERNAL "SPIR-V enabled" FORCE)
-  endif()
-
+if(ENABLE_SPIRV)
   # required for the wrapper generator
-  if(CMAKE_VERSION VERSION_LESS 3.12.0)
-    find_program(Python3_EXECUTABLE NAMES "python3" REQUIRED)
-  else()
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
-  endif()
-
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
 endif()
-
 
 ######################################################################################
 
@@ -1328,11 +1317,6 @@ if(NOT ENABLE_CONFORMANCE)
   set( HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()
 
-if(ENABLE_SPIR)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
-  set(DEFAULT_DEVICE_EXTENSIONS "${DEFAULT_DEVICE_EXTENSIONS} cl_khr_spir")
-endif()
-
 if(ENABLE_SPIRV)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_il_program")
 endif()
@@ -1615,7 +1599,7 @@ if(ENABLE_TCE)
     endif()
   endif()
 
-  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_fp16 cl_khr_spir")
+  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_fp16")
   set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
   set(TCE_DEVICE_EXTENSION_DEFINES "")
   separate_arguments(TEMP_EXT)
@@ -1772,9 +1756,6 @@ if(ENABLE_CUDA)
      __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
   endif()
 
-  if(ENABLE_SPIR)
-    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_spir")
-  endif()
   if(ENABLE_SPIRV)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_il_program")
   endif()
@@ -2307,7 +2288,6 @@ MESSAGE(STATUS "ENABLE_OPENGL_INTEROP: ${ENABLE_OPENGL_INTEROP}")
 MESSAGE(STATUS "ENABLE_EGL_INTEROP: ${ENABLE_EGL_INTEROP}")
 
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
-MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")
 MESSAGE(STATUS "ENABLE_VALGRIND: ${ENABLE_VALGRIND}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")

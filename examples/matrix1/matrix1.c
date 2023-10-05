@@ -184,7 +184,6 @@ main (int argc, char **argv)
   long *sums = NULL;
   long i, j, sum;
   int is_binary = 0;
-  int spir = 0;
   int spirv = 0;
   int poclbin = 0;
   int use_locals = 0;
@@ -228,8 +227,6 @@ main (int argc, char **argv)
   int arg_i = 2;
   while ((argc > arg_i) && (argv[arg_i][0] == '-'))
     {
-      if (argv[arg_i][1] == 's')
-        spir = 1;
       if (argv[arg_i][1] == 'v')
         spirv = 1;
       if (argv[arg_i][1] == 'b')
@@ -243,24 +240,24 @@ main (int argc, char **argv)
       ++arg_i;
     }
 
-  if ((spir + spirv + poclbin) > 1)
+  if ((spirv + poclbin) > 1)
     {
       printf ("only one type of binary can be specified \n");
       return EXIT_FAILURE;
     }
 
-  is_binary = (spir + spirv + poclbin);
+  is_binary = (spirv + poclbin);
 
   if ((argc > arg_i) && (argv[arg_i][0] != '-'))
     explicit_binary_path = argv[arg_i];
 
-  printf ("OPTIONS: SPIR %i SPIR-V %i POCLBIN %i USE_LOCALS %i USE_REGS %i "
+  printf ("OPTIONS: SPIR-V %i POCLBIN %i USE_LOCALS %i USE_REGS %i "
           "USE_FMA %i \n"
           "EXPLICIT BINARY: %s \n",
-          spir, spirv, poclbin, use_locals, use_2d_reg_block, use_fma,
+          spirv, poclbin, use_locals, use_2d_reg_block, use_fma,
           explicit_binary_path);
 
-  if (explicit_binary_path && ((spir + spirv + poclbin) == 0))
+  if (explicit_binary_path && ((spirv + poclbin) == 0))
     {
       printf ("explicit binary given, but no binary type specified!\n");
       return EXIT_FAILURE;
@@ -402,7 +399,7 @@ main (int argc, char **argv)
 
   /*****************************************************************************/
 
-  err = poclu_load_program (context, device, "matrix1", spir, spirv, poclbin,
+  err = poclu_load_program (context, device, "matrix1", spirv, poclbin,
                             explicit_binary_path, extra_opts, &program);
   if (err != CL_SUCCESS)
     goto FINISH;

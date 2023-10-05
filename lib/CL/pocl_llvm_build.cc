@@ -784,7 +784,6 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
                                                cl_device_id device) {
   const std::string &ModTriple = p->getTargetTriple();
   if (ModTriple.find("spir") == 0) {
-#ifdef ENABLE_SPIR
     POCL_RETURN_ERROR_ON((device->endian_little == CL_FALSE),
                          CL_LINK_PROGRAM_FAILURE,
                          "SPIR is only supported on little-endian devices\n");
@@ -808,10 +807,6 @@ static int pocl_convert_spir_bitcode_to_target(llvm::Module *p,
     if (p->getModuleFlag("PIC Level") == nullptr)
       p->setPICLevel(PICLevel::BigPIC);
     return CL_SUCCESS;
-#else
-    POCL_MSG_ERR("SPIR not supported\n");
-    return CL_LINK_PROGRAM_FAILURE;
-#endif
   }
   return CL_SUCCESS;
 }

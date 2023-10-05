@@ -40,7 +40,7 @@ int
 main (int argc, char **argv)
 {
   cl_float *input = NULL, *output = NULL;
-  int i, j, err, spir, spirv, poclbin;
+  int i, j, err,  spirv, poclbin;
   cl_mem memobjs[2] = { 0 };
   size_t global_work_size[2] = { 0 };
   size_t local_work_size[2] = { 0 };
@@ -55,13 +55,12 @@ main (int argc, char **argv)
   err = poclu_get_any_device2 (&context, &device, &queue, &platform);
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
-  spir = (argc > 1 && argv[1][0] == 's');
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');
   const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
 
   const char *basename = "example2a";
-  err = poclu_load_program (context, device, basename, spir, spirv, poclbin,
+  err = poclu_load_program (context, device, basename, spirv, poclbin,
                             explicit_binary_path, NULL, &program);
 
   if (err != CL_SUCCESS)

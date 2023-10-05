@@ -58,7 +58,7 @@ main (int argc, char **argv)
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
   const char *basename = "vecadd";
-  err = poclu_load_program (context, device, basename, 0, 0, 0, NULL, NULL,
+  err = poclu_load_program (context, device, basename, 0, 0, NULL, NULL,
                             &program);
   if (err != CL_SUCCESS)
     goto FINISH;

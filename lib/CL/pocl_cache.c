@@ -480,7 +480,7 @@ build_program_compute_hash (cl_program program, unsigned device_i,
       }
 #endif
 
-#ifdef ENABLE_SPIR
+#ifdef ENABLE_SPIRV
     for (size_t i = 0; i < program->num_spec_consts; ++i)
       {
         if (program->spec_const_is_set[i])

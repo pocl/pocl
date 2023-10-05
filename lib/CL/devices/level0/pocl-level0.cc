@@ -495,12 +495,6 @@ int pocl_level0_supports_binary(cl_device_id Device, size_t Length,
   if (pocl_bitcode_is_spirv_execmodel_kernel(Binary, Length) != 0) {
     return 1;
   }
-#ifdef ENABLE_SPIR
-  if ((pocl_bitcode_is_triple(Binary, Length, "spir-unknown") != 0) ||
-      (pocl_bitcode_is_triple(Binary, Length, "spir64-unknown") != 0)) {
-    return 1;
-  }
-#endif
   // TODO : possibly support native ZE binaries
   return 0;
 }
