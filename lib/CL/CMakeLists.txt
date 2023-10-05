@@ -23,11 +23,6 @@
 #
 #=============================================================================
 
-# this is required, because we're compiling the C++ files of this directory
-# with LLVM-provided flags, which usually contain their own setting of
-# C++ standard, which may be in conflict with pocl's default C++ standard.
-unset(CMAKE_CXX_STANDARD)
-
 include_directories(AFTER "devices" ".")
 
 add_subdirectory("devices")
@@ -214,6 +209,12 @@ if(OCL_ICD_INCLUDE_DIRS)
 endif()
 
 if (ENABLE_LLVM)
+  # this is required, because we're compiling the C++ files of this directory
+  # with LLVM-provided flags, which usually contain their own setting of
+  # C++ standard, which may be in conflict with pocl's default C++ standard.
+  unset(CMAKE_CXX_STANDARD)
+  unset(CMAKE_CXX_STANDARD_REQUIRED)
+
   include_directories(${LLVM_INCLUDE_DIRS})
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
@@ -230,6 +231,9 @@ if (ENABLE_LLVM)
 
   # pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
   add_dependencies("pocl_cache" "kernellib_hash")
+
+  set(CMAKE_CXX_STANDARD ${POCL_CMAKE_CXX_STANDARD})
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 if(ENABLE_ICD)

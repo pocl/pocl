@@ -407,8 +407,8 @@ main(void)
         writer4.setArg(1, in1);
 
         cl_float2 out1;
-        out1.s0 = 0.5f;
-        out1.s1 = 2.0f;
+        out1.s[0] = 0.5f;
+        out1.s[1] = 2.0f;
         reader4.setArg(0, outBuffer4);
         reader4.setArg(1, out1);
 
@@ -433,8 +433,8 @@ main(void)
 
         queue.finish();
 
-        OneA[6] = out1.s0;
-        OneA[7] = out1.s1;
+        OneA[6] = out1.s[0];
+        OneA[7] = out1.s[1];
         matching_res = 0;
         for (unsigned i = 0; i < 8; ++i) {
           if (OneA[i] == OneB[i]) {
