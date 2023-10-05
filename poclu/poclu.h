@@ -297,7 +297,7 @@ POCLU_API int POCLU_CALL poclu_write_file (const char *filename, char *content,
  * \brief wrapper for poclu_load_program_multidev, see it for details.
  */
 int poclu_load_program (cl_context context, cl_device_id device,
-                        const char *basename, int spir, int spirv, int poclbin,
+                        const char *basename, int spirv, int poclbin,
                         const char *explicit_binary,
                         const char *extra_build_opts, cl_program *p);
 /**
@@ -325,8 +325,7 @@ int poclu_load_program (cl_context context, cl_device_id device,
  * \warning all devices need to be of the same type or else an error will be thrown.
  */
 int poclu_load_program_multidev (cl_context context, cl_device_id *devices,
-                                 cl_uint num_devices, const char *basename,
-                                 int spir, int spirv, int poclbin,
+                                 cl_uint num_devices, const char *basename, int spirv, int poclbin,
                                  const char *explicit_binary,
                                  const char *extra_build_opts, cl_program *p);
 

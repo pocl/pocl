@@ -78,10 +78,10 @@ foreach(FILE ${EXTRA_ADD_LL_FILES} barrier.ll nvvm_functions.ll subgroup.ll)
 
 endforeach()
 
-
-
-generate_cuda_spir_wrapper(SPIR_WRAPPER_FILE)
-list(APPEND KERNEL_SOURCES "${SPIR_WRAPPER_FILE}")
+if(ENABLE_SPIRV)
+  generate_cuda_spir_wrapper(SPIR_WRAPPER_FILE)
+  list(APPEND KERNEL_SOURCES "${SPIR_WRAPPER_FILE}")
+endif()
 
 # Select either NVPTX or NVPTX64
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )

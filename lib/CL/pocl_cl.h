@@ -1050,8 +1050,6 @@ struct _cl_device_id {
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 
-  /* cl_khr_spir / CL_DEVICE_SPIR_VERSIONS, only includes SPIR not SPIR-V */
-  const char *supported_spir_versions;
   /* cl_khr_il_program / CL_DEVICE_IL_VERSION, this only includes SPIR-V */
   const char *supported_spir_v_versions;
 

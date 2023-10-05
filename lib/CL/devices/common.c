@@ -1846,7 +1846,6 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_nv_device_attribute_query" },
         { CL_MAKE_VERSION (2, 0, 0), "cl_khr_depth_images" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
-        { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
         { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },

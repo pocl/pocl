@@ -49,7 +49,7 @@ main (int argc, char **argv)
   cl_float4 *srcA = NULL;
   cl_float4 *srcB = NULL;
   cl_float *dst = NULL;
-  int i, err, spir, spirv, poclbin;
+  int i, err, spirv, poclbin;
 
   cl_context context = NULL;
   cl_platform_id platform = NULL;
@@ -67,7 +67,6 @@ main (int argc, char **argv)
   cl_device_id first_dev = devices[0];
   cl_command_queue first_queue = queues[0];
 
-  spir = (argc > 1 && argv[1][0] == 's');
   spirv = (argc > 1 && argv[1][0] == 'v');
   poclbin = (argc > 1 && argv[1][0] == 'b');
   const char *explicit_binary_path = (argc > 2) ? argv[2] : NULL;
@@ -82,7 +81,7 @@ main (int argc, char **argv)
     }
   const char *basename = "example1";
   err = poclu_load_program_multidev (context, devices, num_devices, basename,
-                                     spir, spirv, poclbin,
+                                     spirv, poclbin,
                                      explicit_binary_path, NULL, &program);
 
   if (err != CL_SUCCESS)

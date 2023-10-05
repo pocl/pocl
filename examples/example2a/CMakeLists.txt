@@ -34,35 +34,19 @@ target_link_libraries("example2a" ${POCLU_LINK_OPTIONS})
 
 add_test(NAME "examples/example2a" COMMAND "example2a")
 
-if (ENABLE_SPIR)
-  add_test(NAME "examples/example2a_spir"
-           COMMAND ${CMAKE_COMMAND}
-           "-DCMD1=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example2a.spir32####-c####${CMAKE_CURRENT_SOURCE_DIR}/example2a.cl"
-           "-DCMD2=${CLANG}####${SPIR_COMMON_FLAGS}####-target####spir64-unknown-unknown####-o####${CMAKE_BINARY_DIR}/example2a.spir64####-c####${CMAKE_CURRENT_SOURCE_DIR}/example2a.cl"
-           "-DCMD3=${CMAKE_BINARY_DIR}/examples/example2a/example2a####s"
-           "-DCMD4=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example2a.spir32####${CMAKE_BINARY_DIR}/example2a.spir64"
-            -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
-  set(SPIREX "examples/example2a_spir")
-endif()
-
 set(PROPS)
 if(NOT ENABLE_ANYSAN)
   set(PROPS
     PASS_REGULAR_EXPRESSION "OK\n")
 endif()
 
-set_tests_properties( "examples/example2a" ${SPIREX}
+set_tests_properties( "examples/example2a"
   PROPERTIES
     COST 3.0
     ${PROPS}
     PROCESSORS 1
-    # devices which support SPIR
-    LABELS "internal;level0"
+    LABELS "internal;level0;tce;hsa;hsa-native;vulkan"
     DEPENDS "pocl_version_check")
-
-# devices which don't support SPIR
-set_property(TEST "examples/example2a"
-  APPEND PROPERTY LABELS "tce;hsa;hsa-native;vulkan")
 
 add_test(NAME "examples/example2a_poclbin"
          COMMAND ${CMAKE_COMMAND}

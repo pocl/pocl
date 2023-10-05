@@ -407,9 +407,7 @@ int main()
   printf("\nNON-SPIR\n");
   TEST_ASSERT(test_program(program, 0) == EXIT_SUCCESS);
 
-  CHECK_CL_ERROR(clReleaseProgram(program));
-
-FINISH:
+  CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
   CHECK_CL_ERROR (clUnloadCompiler ());

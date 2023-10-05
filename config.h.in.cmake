@@ -57,8 +57,6 @@
 
 #cmakedefine ENABLE_SLEEF
 
-#cmakedefine ENABLE_SPIR
-
 #cmakedefine ENABLE_SPIRV
 
 #cmakedefine ENABLE_VALGRIND

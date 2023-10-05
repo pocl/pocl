@@ -61,10 +61,6 @@ static const char *pocl_version
                                      ", RELOC"
 #endif
 
-#ifdef ENABLE_SPIR
-                                     ", SPIR"
-#endif
-
 #ifdef ENABLE_SPIRV
                                      ", SPIR-V"
 #endif

@@ -497,13 +497,13 @@ pocl_getpath (char *path, size_t len, const char *explicit_binary,
 int
 poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                              cl_uint num_devices, const char *basename,
-                             int spir, int spirv, int poclbin,
+                             int spirv, int poclbin,
                              const char *explicit_binary,
                              const char *extra_build_opts, cl_program *p)
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
-  char *extensions;
+  char extensions[1024];
   char path[1024];
   const char *ext;
   char final_opts[2048];
@@ -512,7 +512,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   cl_program program;
   cl_int err = CL_SUCCESS;
 
-  int from_source = (!spir && !spirv && !poclbin);
+  int from_source = (!spirv && !poclbin);
   TEST_ASSERT (num_devices > 0);
   cl_device_id device = devices[0];
   if (!from_source)
@@ -551,33 +551,20 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
   *p = NULL;
   final_opts[0] = 0;
   if (extra_build_opts != NULL)
-    strcat(final_opts, extra_build_opts);
+    strncat(final_opts, extra_build_opts, 2047);
 
-  if (spir || spirv)
+  if (spirv)
     {
       TEST_ASSERT (device != NULL);
-      strcat (final_opts, " -x spir -spir-std=1.2");
-      size_t exts_size;
-
-      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 0, NULL,
-                             &exts_size);
-
-      extensions = (char *)malloc (exts_size);
-
-      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, exts_size,
-                             extensions, NULL);
-
+      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
+                             NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
 
-      if ((spir && strstr (extensions, "cl_khr_spir") == NULL)
-          || (spirv && strstr (extensions, "cl_khr_il_program") == NULL))
+      if (spirv && strstr (extensions, "cl_khr_il_program") == NULL)
         {
-          printf ("SPIR%s not supported, cannot run the test\n",
-                  spirv ? "-V" : "");
+          printf ("SPIR-V not supported, cannot run the test\n");
           return -1;
         }
-
-      free (extensions);
 
       err = clGetDeviceInfo (device, CL_DEVICE_ENDIAN_LITTLE, sizeof (cl_bool),
                              &little_endian, NULL);
@@ -586,7 +573,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       if (little_endian == CL_FALSE)
         {
           fprintf (stderr,
-                   "SPIR can only be tested on little-endian devices\n");
+                   "SPIR-V can only be tested on little-endian devices\n");
           return 1;
         }
 
@@ -594,20 +581,10 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                              &address_bits, NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo addr bits");
 
-      if (spirv)
-      {
-        if (address_bits < 64)
-          ext = ".spirv32";
-        else
-          ext = ".spirv64";
-      }
+      if (address_bits < 64)
+        ext = ".spirv32";
       else
-      {
-        if (address_bits < 64)
-          ext = ".spir32";
-        else
-          ext = ".spir64";
-      }
+        ext = ".spirv64";
     }
 
   if (poclbin)
@@ -678,11 +655,11 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
 
 int
 poclu_load_program (cl_context context, cl_device_id device,
-                    const char *basename, int spir, int spirv, int poclbin,
+                    const char *basename, int spirv, int poclbin,
                     const char *explicit_binary, const char *extra_build_opts,
                     cl_program *p)
 {
-  return poclu_load_program_multidev (context, &device, 1, basename, spir,
+  return poclu_load_program_multidev (context, &device, 1, basename,
                                       spirv, poclbin, explicit_binary,
                                       extra_build_opts, p);
 }

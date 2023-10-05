@@ -1759,7 +1759,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                          " cl_khr_global_int32_extended_atomics"
                          " cl_khr_local_int32_base_atomics"
                          " cl_khr_local_int32_extended_atomics"
-                         " cl_khr_spir cl_khr_il_program"
+                         " cl_khr_il_program"
                          " cl_khr_3d_image_writes");
   std::string OpenCL30Features("__opencl_c_images"
                                " __opencl_c_read_write_images"
