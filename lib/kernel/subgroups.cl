@@ -59,3 +59,14 @@ sub_group_all (int predicate)
 {
   return sub_group_reduce_min ((unsigned)predicate);
 }
+#ifdef cl_intel_subgroups
+uint _CL_OVERLOADABLE
+intel_sub_group_shuffle_down(uint current, uint next, uint delta) {
+  int idx = get_sub_group_local_id() + delta;
+  uint cur_idx = (idx >= get_max_sub_group_size()) ? 0 : idx;
+  uint other_cur = sub_group_shuffle(current, cur_idx);
+  int next_idx = (idx > get_max_sub_group_size()) ? idx - get_sub_group_size() : 0;
+  uint other_next = sub_group_shuffle(next, next_idx);
+  return idx >= get_sub_group_size() ? other_cur : other_next;
+}
+#endif
