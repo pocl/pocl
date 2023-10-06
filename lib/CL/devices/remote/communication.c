@@ -42,6 +42,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_networking.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
@@ -246,8 +247,6 @@ SMALL_VECTOR_HELPERS (sampler_ids, remote_server_data_t, uint32_t, sampler_ids)
 // ##################################################################################
 
 #define PKT_THRESHOLD 1200
-
-#define SECONDS_TO_MS 1000
 
 #define NUM_SERVER_SOCKET_THREADS 4
 
@@ -553,143 +552,25 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
 
   struct addrinfo *ai;
   struct sockaddr_storage server;
-
-  struct addrinfo hint;
-  memset (&hint, 0, sizeof (struct addrinfo));
-  hint.ai_family = AF_UNSPEC;
-  hint.ai_socktype = SOCK_STREAM;
-  hint.ai_protocol = IPPROTO_TCP;
-
-  /* Check whether address is an IP or a host name since Android apparently
-   * can't resolve IP addresses without working DNS unless explicitly told
-   * that it is a numeric address */
-  int is_numeric = 1;
-  for (char *c = data->address; *c != 0; ++c)
+  int err;
+  ai = pocl_resolve_address (data->address, port, &err);
+  if (err)
     {
-      if (!isxdigit (*c) && *c != '.' && *c != ':' && *c != '[' && *c != ']')
-        {
-          is_numeric = 0;
-        }
+      POCL_MSG_ERR ("Failed to resolve address: %s\n", gai_strerror (err));
+      return err;
     }
 
-  if (is_numeric)
-    {
-      hint.ai_flags = AI_NUMERICHOST;
-    }
-  else
-    {
-      hint.ai_flags = AI_ADDRCONFIG | AI_CANONNAME | AI_V4MAPPED;
-#if defined(AI_IDN)
-      hint.ai_flags |= AI_IDN;
-#endif
-    }
-
-  char portstr[6];
-  snprintf (portstr, 6, "%5d", port);
-  int err = getaddrinfo (data->address, portstr, &hint, &ai);
-  POCL_RETURN_ERROR_ON ((err != 0), CL_INVALID_DEVICE,
-                        "getaddrinfo() returned errno: %i\n", errno);
   memcpy (&server, ai->ai_addr, ai->ai_addrlen);
   addrlen = ai->ai_addrlen;
 
   POCL_RETURN_ERROR_ON (
       ((socket_fd = socket (ai->ai_family, ai->ai_socktype, 0)) == -1),
       CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
-  if (ai->ai_family == AF_INET6)
-    {
-      POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, IPPROTO_IPV6, IPV6_V6ONLY,
-                                         &zero, sizeof (zero))),
-                            CL_INVALID_DEVICE,
-                            "setsockopt(IPV6_V6ONLY) returned errno: %i\n",
-                            errno);
-    }
   freeaddrinfo (ai);
 
-  if (is_fast)
-    {
-      POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, IPPROTO_TCP, TCP_NODELAY,
-                                         &one, sizeof (one))),
-                            CL_INVALID_DEVICE,
-                            "setsockopt(TCP_NODELAY) returned errno: %i\n",
-                            errno);
-    }
-
-#ifdef SO_PRIORITY
-  // 1- low priority, 7 - high priority (7 reserved for root)
-  int prio = 0; // valid values are in the range [1,7]
-  if (is_fast)
-    {
-      prio = 6;
-    }
-  else
-    {
-      prio = 1;
-    }
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof (prio))),
-      CL_INVALID_DEVICE, "setsockopt(SO_PRIORITY) returned errno: %i\n",
-      errno);
-#endif
-
-  // disable delayed_ack on both
-#ifdef TCP_QUICKACK
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, IPPROTO_TCP, TCP_QUICKACK, &one, sizeof (one))),
-      CL_INVALID_DEVICE, "setsockopt(TCP_QUICKACK) returned errno: %i\n",
-      errno);
-#endif
-
-  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_RCVBUF,
-                                     &bufsize, sizeof (bufsize))),
-                        CL_INVALID_DEVICE,
-                        "setsockopt(SO_RCVBUF) returned errno: %i\n", errno);
-
-  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_SNDBUF,
-                                     &bufsize, sizeof (bufsize))),
-                        CL_INVALID_DEVICE,
-                        "setsockopt(SO_SNDBUF) returned errno: %i\n", errno);
-
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof (one))),
-      CL_INVALID_DEVICE, "setsockopt(SO_KEEPALIVE) returned errno: %i\n",
-      errno);
-
-  unsigned int user_timeout = 10 * SECONDS_TO_MS;
-#if defined(TCP_USER_TIMEOUT)
-  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, IPPROTO_TCP, TCP_USER_TIMEOUT,
-                                     &user_timeout, sizeof (user_timeout))),
-                        CL_INVALID_DEVICE,
-                        "setsockopt(TCP_USER_TIMEOUT) returned errno: %i\n",
-                        errno);
-#elif defined(TCP_CONNECTIONTIMEOUT)
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, IPPROTO_TCP, TCP_CONNECTIONTIMEOUT,
-                   &user_timeout, sizeof (user_timeout))),
-      CL_INVALID_DEVICE,
-      "setsockopt(TCP_CONNECTIONTIMEOUT) returned errno: %i\n", errno);
-#endif
-
-  int retries = 5;
-#ifdef TCP_SYNCNT
-  POCL_RETURN_ERROR_ON (setsockopt (socket_fd, IPPROTO_TCP, TCP_SYNCNT,
-                                    &retries, sizeof (retries)),
-                        CL_INVALID_DEVICE,
-                        "setsockopt(TCP_SYNCNT) returned errno: %i\n", errno);
-#endif
-  POCL_RETURN_ERROR_ON (setsockopt (socket_fd, IPPROTO_TCP, TCP_KEEPCNT,
-                                    &retries, sizeof (retries)),
-                        CL_INVALID_DEVICE,
-                        "setsockopt(TCP_KEEPCNT) returned errno: %i\n", errno);
-  POCL_RETURN_ERROR_ON (
-      setsockopt (socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &one, sizeof (one)),
-      CL_INVALID_DEVICE, "setsockopt(TCP_KEEPINTVL) returned errno: %i\n",
-      errno);
-#ifdef TCP_KEEPIDLE
-  POCL_RETURN_ERROR_ON (
-      setsockopt (socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &one, sizeof (one)),
-      CL_INVALID_DEVICE, "setsockopt(TCP_KEEPINTVL) returned errno: %i\n",
-      errno);
-#endif
+  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast);
+  if (err)
+    return err;
 #endif
 
   POCL_RETURN_ERROR_ON (

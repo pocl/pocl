@@ -1108,7 +1108,7 @@ pocl_create_command_full (_cl_command_node **cmd,
           if (size_events[i] != NULL)
             {
               cl_device_id d = size_events[i]->queue->device;
-              d->ops->wait_event (d, size_events[i]);
+              POname (clWaitForEvents) (1, &size_events[i]);
               if (buffers[i]->size_buffer->mem_host_ptr != NULL)
                 {
                   migration_size

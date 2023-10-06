@@ -25,8 +25,10 @@
 #include "common.hh"
 #include "traffic_monitor.hh"
 
+#include <arpa/inet.h>
 #include <cassert>
 #include <iomanip>
+#include <netdb.h>
 #include <sstream>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -158,6 +160,31 @@ std::string hexstr(const std::string &i) {
   }
 
   return std::string(ss.str());
+}
+
+std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size) {
+  std::string ip_str(INET6_ADDRSTRLEN, '\0');
+  if (addr->sa_family == AF_INET)
+    inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr,
+              ip_str.data(), ip_str.capacity());
+  else if (addr->sa_family == AF_INET6)
+    inet_ntop(addr->sa_family, &((struct sockaddr_in6 *)addr)->sin6_addr,
+              ip_str.data(), ip_str.capacity());
+  else
+    ip_str = "[unknown address family]";
+  const char *end =
+      (const char *)memchr(ip_str.c_str(), '\0', ip_str.capacity());
+  if (end)
+    ip_str.resize(end - ip_str.c_str());
+
+  std::string host_str(NI_MAXHOST, '\0');
+  int res = getnameinfo(addr, addr_size, host_str.data(), host_str.capacity(),
+                        NULL, 0, 0);
+  end = (const char *)memchr(host_str.c_str(), '\0', host_str.capacity());
+  if (end)
+    host_str.resize(end - host_str.c_str());
+
+  return host_str + " (" + ip_str + ")";
 }
 
 #ifdef ENABLE_RDMA

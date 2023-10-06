@@ -24,6 +24,7 @@
 #include <iostream>
 #include <netdb.h>
 
+#include "pocl_networking.h"
 #include "rdma.hh"
 
 namespace rdmacm {
@@ -590,52 +591,19 @@ void ReceiveRequest::chain(const ReceiveRequest &n) {
   wr.next = &next->wr;
 }
 
-static addrinfo *get_listen_address(uint16_t port) {
-  addrinfo hint{};
-  hint.ai_family = AF_UNSPEC;
-  hint.ai_socktype = SOCK_STREAM;
-  hint.ai_flags = AI_PASSIVE;
-
-  struct addrinfo *info;
-  char portstr[6] = {};
-  snprintf(portstr, 6, "%5d", port);
-
-  int err = getaddrinfo(nullptr, portstr, &hint, &info);
-  if (err)
-    throw std::runtime_error(gai_strerror(err));
-
-  return info;
-}
-
-static addrinfo *resolve_address(const char *address, uint16_t port) {
-  addrinfo hint{};
-  hint.ai_family = AF_UNSPEC;
-  hint.ai_socktype = SOCK_STREAM;
-  hint.ai_flags = AI_ADDRCONFIG | AI_CANONNAME | AI_V4MAPPED;
-#if defined(AI_IDN)
-  hint.ai_flags |= AI_IDN;
-#endif
-  struct addrinfo *info;
-  char portstr[6] = {};
-  snprintf(portstr, 6, "%5d", port);
-
-  int err = getaddrinfo(address, portstr, &hint, &info);
-  if (err)
-    throw std::runtime_error(gai_strerror(err));
-
-  return info;
-}
-
 RdmaListener::RdmaListener()
     : listening_id(new rdmacm::Id(rdmacm::EventChannel::create())),
       listening(false) {}
 
 void RdmaListener::listen(uint16_t port) {
   assert(!listening);
+  int err;
 
-  addrinfo *ai = get_listen_address(port);
+  addrinfo *ai = pocl_resolve_address(nullptr, port, &err);
+  if (err)
+    throw std::runtime_error(gai_strerror(err));
 
-  int err = rdma_bind_addr(*listening_id, ai->ai_addr);
+  err = rdma_bind_addr(*listening_id, ai->ai_addr);
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));
@@ -682,12 +650,15 @@ RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
       qp(ibverbs::QueuePair::create(cm_id, pd)) {}
 
 RdmaConnection RdmaConnection::connect(const char *address, uint16_t port) {
-  addrinfo *ai = resolve_address(address, port);
+  int err = 0;
+  addrinfo *ai = pocl_resolve_address(address, port, &err);
+  if (err)
+    throw std::runtime_error(gai_strerror(err));
 
   rdmacm::IdPtr cm_id(new rdmacm::Id(rdmacm::EventChannel::create()));
 
   int timeout_ms = 5000;
-  int err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+  err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));
