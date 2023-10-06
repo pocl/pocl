@@ -38,6 +38,7 @@
 #endif
 
 #include "peer_handler.hh"
+#include "pocl_networking.h"
 
 #ifndef PERROR_CHECK
 #define PERROR_CHECK(cond, str)                                                \
@@ -98,34 +99,12 @@ cl_int PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
   POCL_MSG_PRINT_INFO("PH: connect to peer at %s:%d with session %s\n", address,
                       int(port), hexstr(session).c_str());
 
-  struct addrinfo hint = {};
-  hint.ai_family = AF_UNSPEC;
-  hint.ai_socktype = SOCK_STREAM;
-  hint.ai_protocol = IPPROTO_TCP;
-
-  /* Check whether address is an IP or a host name since Android apparently
-   * can't resolve IP addresses without working DNS unless explicitly told
-   * that it is a numeric address */
-  int is_numeric = 1;
-  for (const char *c = address; *c != 0; ++c) {
-    if (!isxdigit(*c) && *c != '.' && *c != ':' && *c != '[' && *c != ']') {
-      is_numeric = 0;
-    }
+  int err = 0;
+  addrinfo *ai = pocl_resolve_address(address, port, &err);
+  if (err) {
+    POCL_MSG_ERR("Failed to resolve peer address: %s\n", gai_strerror(err));
+    return -404;
   }
-
-  if (is_numeric) {
-    hint.ai_flags = AI_NUMERICHOST;
-  } else {
-    hint.ai_flags = AI_ADDRCONFIG | AI_CANONNAME | AI_V4MAPPED;
-#if defined(AI_IDN)
-    hint.ai_flags |= AI_IDN;
-#endif
-  }
-
-  char portstr[6];
-  snprintf(portstr, 6, "%5d", port);
-  struct addrinfo *ai;
-  int err = getaddrinfo(address, portstr, &hint, &ai);
   PERROR_CHECK404((err != 0), "getaddrinfo()");
 
   int peer_fd = socket(ai->ai_family, ai->ai_socktype, 0);
@@ -135,6 +114,7 @@ cl_int PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
 
   PERROR_CHECK404(connect(peer_fd, ai->ai_addr, ai->ai_addrlen) < 0,
                   "unable to connect peer");
+  freeaddrinfo(ai);
   CHECK_WRITE_RET(
       write_full(peer_fd, session.data(), SESSION_ID_LENGTH, netstat), "PH",
       -404);

@@ -27,6 +27,7 @@
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <errno.h>
 #include <sstream>
 #include <string>
@@ -52,6 +53,7 @@
 #endif
 
 #include "pocl_debug.h"
+#include "pocl_networking.h"
 #include "pocl_remote.h"
 #include "pocld_config.h"
 
@@ -159,15 +161,13 @@ int listen_peers(void *data) {
 #endif
 
   do {
-    struct sockaddr_in peer_addr;
+    struct sockaddr_storage peer_addr;
     unsigned addr_size = sizeof(peer_addr);
     int peer_fd =
         accept(listen_sock, (struct sockaddr *)&peer_addr, &addr_size);
     assert(peer_fd != -1);
-    assert(peer_addr.sin_family == AF_INET);
-    char peer_ip_str[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &peer_addr.sin_addr, peer_ip_str, sizeof(peer_ip_str));
-
+    std::string addr_string =
+        describe_sockaddr((struct sockaddr *)&peer_addr, addr_size);
     std::string session(SESSION_ID_LENGTH, '\0');
     PERROR_CHECK(
         (read_full(peer_fd, session.data(), SESSION_ID_LENGTH, nullptr) < 0),
@@ -188,11 +188,11 @@ int listen_peers(void *data) {
     if (d->incoming_peers.find(session_hex) == d->incoming_peers.end()) {
       POCL_MSG_WARN(
           "PL: Attempted peer connection to invalid session %s from %s\n",
-          session_hex.c_str(), peer_ip_str);
+          session_hex.c_str(), addr_string.c_str());
       close(peer_fd);
     } else {
       POCL_MSG_PRINT_INFO("PL: Peer connection from %s to session %s\n",
-                          peer_ip_str, session_hex.c_str());
+                          addr_string.c_str(), session_hex.c_str());
       d->incoming_peers.at(session_hex)
           ->second.push_back({peer_fd
 #ifdef ENABLE_RDMA
@@ -276,13 +276,31 @@ int main(int argc, char *argv[]) {
   // ignore sigpipe, because we want to properly shutdown on closed sockets
   signal(SIGPIPE, SIG_IGN);
 
-  struct in_addr listen_addr;
-  if (ai.address_arg)
-    listen_addr.s_addr = inet_addr(ai.address_arg);
-  else
-    listen_addr.s_addr = find_default_ip_address();
-
-  char *addr = inet_ntoa(listen_addr);
+  int error;
+  struct sockaddr_storage base_addr;
+  std::string addr;
+  socklen_t base_addrlen;
+  memset(&base_addr, 0, sizeof(base_addr));
+  if (ai.address_arg) {
+    addrinfo *resolved_address =
+        pocl_resolve_address(ai.address_arg, command_port, &error);
+    if (!error) {
+      memcpy(&base_addr, resolved_address->ai_addr,
+             resolved_address->ai_addrlen);
+      base_addrlen = resolved_address->ai_addrlen;
+      freeaddrinfo(resolved_address);
+    } else {
+      POCL_MSG_ERR("Failed to resolve listen address: %s\n",
+                   gai_strerror(error));
+      return -1;
+    }
+  } else {
+    struct sockaddr_in *fallback = (struct sockaddr_in *)&base_addr;
+    fallback->sin_family = AF_INET;
+    fallback->sin_addr.s_addr = find_default_ip_address();
+    base_addrlen = sizeof(struct sockaddr_in);
+  }
+  addr = describe_sockaddr((struct sockaddr *)&base_addr, base_addrlen);
 
   if (ai.port_arg)
     command_port = (unsigned short)ai.port_arg;
@@ -297,24 +315,37 @@ int main(int argc, char *argv[]) {
   rdma_port = command_port + 4;
 #endif
 
-  struct sockaddr_in server_addr_command, server_addr_stream,
-      client_addr_command, client_addr_stream;
+  struct sockaddr server_addr_command, server_addr_stream;
+  struct sockaddr client_addr_command, client_addr_stream;
   int server_sock_stream;
   int server_sock_command;
-  server_sock_command = socket(AF_INET, SOCK_STREAM, 0);
+
+  memcpy(&server_addr_command, &base_addr, base_addrlen);
+  if (server_addr_command.sa_family == AF_INET)
+    ((struct sockaddr_in *)&server_addr_command)->sin_port =
+        htons(command_port);
+  else if (server_addr_command.sa_family == AF_INET6)
+    ((struct sockaddr_in6 *)&server_addr_command)->sin6_port =
+        htons(command_port);
+  else {
+    POCL_MSG_ERR("SERVER: unsupported socket address family\n");
+    return -1;
+  }
+  server_sock_command = socket(server_addr_command.sa_family, SOCK_STREAM, 0);
   PERROR_CHECK((server_sock_command < 0), "command socket");
-  server_sock_stream = socket(AF_INET, SOCK_STREAM, 0);
+
+  memcpy(&server_addr_stream, &base_addr, base_addrlen);
+  if (server_addr_stream.sa_family == AF_INET)
+    ((struct sockaddr_in *)&server_addr_stream)->sin_port = htons(stream_port);
+  else if (server_addr_stream.sa_family == AF_INET6)
+    ((struct sockaddr_in6 *)&server_addr_stream)->sin6_port =
+        htons(stream_port);
+  else {
+    POCL_MSG_ERR("SERVER: unsupported socket address family\n");
+    return -1;
+  }
+  server_sock_stream = socket(server_addr_stream.sa_family, SOCK_STREAM, 0);
   PERROR_CHECK((server_sock_stream < 0), "stream socket");
-
-  memset(&server_addr_command, 0, sizeof(server_addr_command));
-  server_addr_command.sin_family = AF_INET;
-  server_addr_command.sin_port = htons(command_port);
-  server_addr_command.sin_addr.s_addr = listen_addr.s_addr;
-
-  memset(&server_addr_stream, 0, sizeof(server_addr_stream));
-  server_addr_stream.sin_family = AF_INET;
-  server_addr_stream.sin_port = htons(stream_port);
-  server_addr_stream.sin_addr.s_addr = listen_addr.s_addr;
 
   int one = 1;
 #ifdef SO_REUSEADDR
@@ -326,102 +357,19 @@ int main(int argc, char *argv[]) {
     POCL_MSG_ERR("SERVER: failed to set REUSEADDR on stream socket\n");
 #endif
 
-  unsigned len = sizeof(server_addr_command);
-  PERROR_CHECK((bind(server_sock_command,
-                     (struct sockaddr *)&server_addr_command, len) < 0),
-               "command bind");
+  PERROR_CHECK(
+      (bind(server_sock_command, (struct sockaddr *)&server_addr_command,
+            base_addrlen) < 0),
+      "command bind");
+  pocl_remote_client_set_socket_options(server_sock_command, 4 * 1024, 1);
   PERROR_CHECK((listen(server_sock_command, 10) < 0), "command listen");
 
-  len = sizeof(server_addr_stream);
   PERROR_CHECK((bind(server_sock_stream, (struct sockaddr *)&server_addr_stream,
-                     len) < 0),
+                     base_addrlen) < 0),
                "stream bind");
+  pocl_remote_client_set_socket_options(server_sock_stream, 4 * 1024 * 1024, 0);
   PERROR_CHECK((listen(server_sock_stream, 10) < 0), "stream listen");
 
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_NODELAY, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set NODELAY on command socket\n");
-#ifdef TCP_QUICKACK
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_QUICKACK, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set QUICKACK on command socket\n");
-#endif
-
-  unsigned int keepalive = 1;
-  int user_timeout = 10000;
-  int bufsize = 4 * 1024;
-  if (setsockopt(server_sock_command, SOL_SOCKET, SO_RCVBUF, &bufsize,
-                 sizeof(bufsize)))
-    POCL_MSG_ERR("SERVER: failed to set BUFSIZE on command socket\n");
-  if (setsockopt(server_sock_command, SOL_SOCKET, SO_SNDBUF, &bufsize,
-                 sizeof(bufsize)))
-    POCL_MSG_ERR("SERVER: failed to set BUFSIZE on command socket\n");
-  if (setsockopt(server_sock_command, SOL_SOCKET, SO_KEEPALIVE, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set KEEPALIVE on command socket\n");
-#if defined(TCP_SYNCNT)
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_SYNCNT, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_SYNCNT on command socket\n");
-#endif
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_KEEPCNT, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPCNT on command socket\n");
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_KEEPINTVL, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPINTVL on command socket\n");
-#if defined(TCP_KEEPIDLE)
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_KEEPIDLE, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPIDLE on command socket\n");
-#endif
-#if defined(TCP_USER_TIMEOUT)
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_USER_TIMEOUT,
-                 &user_timeout, sizeof(user_timeout)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_USER_TIMEOUT on command socket\n");
-#elif defined(TCP_CONNECTIONTIMEOUT)
-  if (setsockopt(server_sock_command, IPPROTO_TCP, TCP_CONNECTIONTIMEOUT,
-                 &user_timeout, sizeof(user_timeout)))
-    POCL_MSG_ERR(
-        "SERVER: failed to set TCP_CONNECTIONTIMEOUT on command socket\n");
-#endif
-
-  bufsize = 4 * 1024 * 1024;
-  if (setsockopt(server_sock_stream, SOL_SOCKET, SO_RCVBUF, &bufsize,
-                 sizeof(bufsize)))
-    POCL_MSG_ERR("SERVER: failed to set BUFSIZE on stream socket\n");
-  if (setsockopt(server_sock_stream, SOL_SOCKET, SO_SNDBUF, &bufsize,
-                 sizeof(bufsize)))
-    POCL_MSG_ERR("SERVER: failed to set BUFSIZE on stream socket\n");
-  if (setsockopt(server_sock_stream, SOL_SOCKET, SO_KEEPALIVE, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set KEEPALIVE on stream socket\n");
-#if defined(TCP_SYNCNT)
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_SYNCNT, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_SYNCNT on stream socket\n");
-#endif
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_KEEPCNT, &keepalive,
-                 sizeof(keepalive)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPCNT on stream socket\n");
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_KEEPINTVL, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPINTVL on stream socket\n");
-#if defined(TCP_KEEPIDLE)
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_KEEPIDLE, &one,
-                 sizeof(one)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_KEEPIDLE on stream socket\n");
-#endif
-#if defined(TCP_USER_TIMEOUT)
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_USER_TIMEOUT,
-                 &user_timeout, sizeof(user_timeout)))
-    POCL_MSG_ERR("SERVER: failed to set TCP_USER_TIMEOUT on stream socket\n");
-#elif defined(TCP_CONNECTIONTIMEOUT)
-  if (setsockopt(server_sock_stream, IPPROTO_TCP, TCP_CONNECTIONTIMEOUT,
-                 &user_timeout, sizeof(user_timeout)))
-    POCL_MSG_ERR(
-        "SERVER: failed to set TCP_CONNECTIONTIMEOUT on stream socket\n");
-#endif
 
   /***************************************************************************/
 
@@ -467,8 +415,8 @@ int main(int argc, char *argv[]) {
       ", rdma=%s:%d"
 #endif
       "\n",
-      (int)server_pid, addr, command_port, addr, stream_port, "0.0.0.0",
-      peer_port
+      (int)server_pid, addr.c_str(), command_port, addr.c_str(), stream_port,
+      "0.0.0.0", peer_port
 #ifdef ENABLE_RDMA
       ,
       "0.0.0.0", peer_rdma_port, "0.0.0.0", rdma_port
@@ -476,6 +424,7 @@ int main(int argc, char *argv[]) {
   );
 
   while (true) {
+    socklen_t len;
   RESTART1:
     fd_command = accept(server_sock_command,
                         (struct sockaddr *)&client_addr_command, &len);
@@ -490,6 +439,7 @@ int main(int argc, char *argv[]) {
         goto EXIT;
       }
     }
+    addr = describe_sockaddr((struct sockaddr *)&client_addr_command, len);
 
   RESTART2:
     fd_stream = accept(server_sock_stream,
@@ -505,8 +455,8 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    POCL_MSG_PRINT_GENERAL("FD STREAM: %d  COMMAND: %d\n", fd_stream,
-                           fd_command);
+    POCL_MSG_PRINT_GENERAL("Connection from %s, FD STREAM: %d  COMMAND: %d\n",
+                           addr.c_str(), fd_stream, fd_command);
 
     ClientHandshake_t handshake;
     if (read_full(fd_command, &handshake, sizeof(ClientHandshake_t), nullptr) <

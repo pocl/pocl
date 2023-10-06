@@ -258,6 +258,8 @@ ssize_t read_full(int fd, void *p, size_t total, TrafficMonitor *);
 
 int write_full(int fd, void *p, size_t total, TrafficMonitor *);
 
+std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size);
+
 #ifdef ENABLE_RDMA
 struct RdmaBufferData {
   char *shadow_buf;
