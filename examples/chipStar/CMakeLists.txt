@@ -134,7 +134,7 @@ ExternalProject_Add(
     "-DLAZY_JIT=ON"
     "${TS_BASEDIR}/src/${TS_NAME}"
   PATCH_COMMAND cd "${TS_BASEDIR}/src/${TS_NAME}/HIP" && git reset --hard HEAD && cd "${TS_BASEDIR}/src/${TS_NAME}" && git reset --hard HEAD && patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch
-  BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${CORECOUNT} --target all build_tests
+  BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${HOST_CPU_CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
 )
 
@@ -148,14 +148,14 @@ endif()
 
 add_test(NAME "${TS_NAME}"
          COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
-           "${TS_BUILDDIR}" "cpu" "pocl" ${CORECOUNT} 2
+           "${TS_BUILDDIR}" "cpu" "pocl" ${HOST_CPU_CORECOUNT} 2
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
 # so PoCL CPU device memory must be >= 4GB
 set_tests_properties(${TS_NAME}
   PROPERTIES
-  PROCESSORS ${CORECOUNT}
+  PROCESSORS ${HOST_CPU_CORECOUNT}
   ENVIRONMENT "POCL_CPU_MAX_CU_COUNT=1;POCL_MEMORY_LIMIT=6"
   PASS_REGULAR_EXPRESSION "100% tests passed, 0 tests failed out of"
   LABELS "chipStar")

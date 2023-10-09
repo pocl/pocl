@@ -339,11 +339,11 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i.86|AMD64|x86_64|amd64)")
 endif()
 
 include(ProcessorCount)
-ProcessorCount(CORECOUNT)
-if(CORECOUNT LESS 1)
-  set(CORECOUNT 1)
+ProcessorCount(HOST_CPU_CORECOUNT)
+if(HOST_CPU_CORECOUNT LESS 1)
+  set(HOST_CPU_CORECOUNT 1)
 endif()
-message(STATUS "Host CPU cores: ${CORECOUNT}")
+message(STATUS "Host CPU cores: ${HOST_CPU_CORECOUNT}")
 
 
 ######################################################################################
@@ -2021,8 +2021,8 @@ if(ENABLE_TESTS)
     add_subdirectory("tests")
 
     # make check & make check_tier1
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
+    add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)

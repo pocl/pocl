@@ -140,10 +140,15 @@ add_dependencies(prepare_examples ${TS_NAME})
 #################################################################################
 #################################################################################
 
+
 function(add_cts_full_tests CTS_LABEL TS_SUFFIX)
 set(EXTRA_ARGS ${ARGN})
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_allocations"
          COMMAND "${TS_BUILDDIR}/allocations/test_allocations" ${EXTRA_ARGS})
+
+if(HOST_CPU_CORECOUNT GREATER 4)
+  set(PAR_ARG "--num-worker-threads" ${HOST_CPU_CORECOUNT})
+endif()
 
 # TODO fix this in pocl's fork:::
 # on recent LLVMs, run all tests except the get_kernel_arg_info.
@@ -170,7 +175,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_compiler"
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_c11_atomics"
-         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/c11_atomics/test_c11_atomics" ${PAR_ARG} ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_computeinfo"
          COMMAND "${TS_BUILDDIR}/computeinfo/test_computeinfo" ${EXTRA_ARGS} )
@@ -179,7 +184,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_contractions"
          COMMAND "${TS_BUILDDIR}/contractions/test_contractions" ${EXTRA_ARGS} )
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_conversions"
-         COMMAND "${TS_BUILDDIR}/conversions/test_conversions" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/conversions/test_conversions" ${PAR_ARG} ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_device_partition"
          COMMAND "${TS_BUILDDIR}/device_partition/test_device_partition" ${EXTRA_ARGS})
@@ -256,10 +261,10 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_images_samplerless_reads_pitch"
 #***************************************************************************
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_integer_ops"
-         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${PAR_ARG} ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_bruteforce"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${PAR_ARG} ${EXTRA_ARGS})
 
 #***************************************************************************
 
@@ -286,7 +291,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_relationals"
          COMMAND "${TS_BUILDDIR}/relationals/test_relationals" ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_select"
-         COMMAND "${TS_BUILDDIR}/select/test_select" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/select/test_select" ${PAR_ARG} ${EXTRA_ARGS})
 
 # we don't support the old (1.2 / 2.0) spir
 #add_test(NAME "${TS_NAME}${TS_SUFFIX}_spir"
@@ -315,10 +320,10 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_SVM"
          COMMAND "${TS_BUILDDIR}/SVM/test_svm" ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_thread_dimensions"
-         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" ${PAR_ARG} ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_vectors"
-         COMMAND "${TS_BUILDDIR}/vectors/test_vectors" ${EXTRA_ARGS})
+         COMMAND "${TS_BUILDDIR}/vectors/test_vectors" ${PAR_ARG} ${EXTRA_ARGS})
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_workgroup"
          COMMAND "${TS_BUILDDIR}/workgroups/test_workgroups" ${EXTRA_ARGS})
@@ -434,6 +439,27 @@ add_cts_full_tests("conformance_suite_full_spirv" "_spirv"
                    "--compilation-mode" "spir-v"
                    "--compilation-program" "${CMAKE_BINARY_DIR}/cl_offline_compiler.sh"
                    "--compilation-cache-path" "${CACHE_DIR}")
+
+# these are only approximate costs from one particular machine.
+# CTest launches the tests in order from most expensive to least,
+# so this helps to minimize the testsuite runtime.
+set_property(TEST conformance_main_buffers PROPERTY COST 76.70)
+set_property(TEST conformance_main_generic_AS PROPERTY COST 100.44)
+set_property(TEST conformance_main_spirv_new PROPERTY COST 63.91)
+set_property(TEST conformance_main_relationals PROPERTY COST 127.25 PROCESSORS 2)
+set_property(TEST conformance_main_compiler PROPERTY COST 166.07 PROCESSORS 2)
+set_property(TEST conformance_main_basic PROPERTY COST 505.27 PROCESSORS 2)
+set_property(TEST conformance_main_images_image_streams_pitch PROPERTY COST 736.54 PROCESSORS 2)
+set_property(TEST conformance_main_images_image_streams PROPERTY COST 740.93 PROCESSORS 2)
+set_property(TEST conformance_main_thread_dimensions PROPERTY COST 1351.20 PROCESSORS 2)
+set_property(TEST conformance_main_vectors PROPERTY COST 1515.12 PROCESSORS 2)
+set_property(TEST conformance_main_select PROPERTY COST 2107.24 PROCESSORS 2)
+set_property(TEST conformance_main_integer_ops PROPERTY COST 2387.76 PROCESSORS 4)
+set_property(TEST conformance_main_c11_atomics PROPERTY COST 6528.94 PROCESSORS 3)
+set_property(TEST conformance_main_conversions PROPERTY COST 24581.43 PROCESSORS 3)
+set_property(TEST conformance_main_math_bruteforce PROPERTY COST 60000 PROCESSORS ${PARALLELISM})
+
+
 endif()
 
 #################################################################################
