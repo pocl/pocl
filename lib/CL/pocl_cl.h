@@ -333,11 +333,13 @@ typedef struct event_node event_node;
 /**
  * Enumeration for kernel argument types
  */
-typedef enum {
+typedef enum
+{
   POCL_ARG_TYPE_NONE = 0,
   POCL_ARG_TYPE_POINTER = 1,
   POCL_ARG_TYPE_IMAGE = 2,
   POCL_ARG_TYPE_SAMPLER = 3,
+  POCL_ARG_TYPE_PIPE = 4,
 } pocl_argument_type;
 
 #define ARG_IS_LOCAL(a) (a.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)

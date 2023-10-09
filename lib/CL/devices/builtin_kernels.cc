@@ -18,6 +18,12 @@
   POCL_ARG_TYPE_NONE, CL_KERNEL_ARG_ADDRESS_PRIVATE,                           \
       CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
 #define POD_ARG_32b POD_ARG, 4
+#define READ_PIPE                                                              \
+  POCL_ARG_TYPE_PIPE, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, \
+      CL_KERNEL_ARG_TYPE_NONE, 4
+#define WRITE_PIPE                                                             \
+  POCL_ARG_TYPE_PIPE, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, \
+      CL_KERNEL_ARG_TYPE_NONE, 4
 
 BIKD pocl_BIDescriptors[BIKERNELS] = {
     BIKD(POCL_CDBI_COPY_I8, "pocl.copy.i8",
@@ -251,6 +257,61 @@ BIKD pocl_BIDescriptors[BIKERNELS] = {
              BIArg("unsigned char*", "output", WRITE_BUF),
              BIArg("unsigned short", "threshold_lower", POD_ARG_32b),
              BIArg("unsigned short", "threshold_upper", POD_ARG_32b),
+         }),
+    BIKD(POCL_CDBI_STREAM_MM2S_P512,
+         "pocl.stream.mm2s.p512",
+         {
+             BIArg("char*", "in", READ_BUF),
+             BIArg("uchar64", "out", WRITE_PIPE),
+         }),
+    BIKD(POCL_CDBI_STREAM_S2MM_P512,
+         "pocl.stream.s2mm.p512",
+         {
+             BIArg("uchar64", "in", READ_PIPE),
+             BIArg("char*", "out", WRITE_BUF),
+         }),
+    BIKD(POCL_CDBI_BROADCAST_1TO2_P512,
+         "pocl.broadcast.1to2.p512",
+         {
+             BIArg("uchar64", "in", READ_PIPE),
+             BIArg("uchar64", "out0", WRITE_PIPE),
+             BIArg("uchar64", "out1", WRITE_PIPE),
+         }),
+    BIKD(POCL_CDBI_SOBEL3X3_P512,
+         "pocl.sobel3x3.p512",
+         {
+             BIArg("uchar64", "in", READ_PIPE),
+             BIArg("short32", "sobel_x", WRITE_PIPE),
+             BIArg("short32", "sobel_y", WRITE_PIPE),
+         }),
+    BIKD(POCL_CDBI_PHASE_P512,
+         "pocl.phase.p512",
+         {
+             BIArg("short32", "in_x", READ_PIPE),
+             BIArg("short32", "in_y", READ_PIPE),
+             BIArg("uchar64", "output", WRITE_PIPE),
+         }),
+    BIKD(POCL_CDBI_MAGNITUDE_P512,
+         "pocl.magnitude.p512",
+         {
+             BIArg("short32", "in_x", READ_PIPE),
+             BIArg("short32", "in_y", READ_PIPE),
+             BIArg("ushort32", "output", WRITE_PIPE),
+         }),
+    BIKD(POCL_CDBI_ORIENTED_NONMAX_P512,
+         "pocl.oriented.nonmaxsuppression.p512",
+         {
+             BIArg("ushort32", "magnitude", READ_PIPE),
+             BIArg("uchar64", "phase", READ_PIPE),
+             BIArg("uchar64", "output", WRITE_PIPE),
+             BIArg("unsigned short", "threshold_lower", POD_ARG_32b),
+             BIArg("unsigned short", "threshold_upper", POD_ARG_32b),
+         }),
+    BIKD(POCL_CDBI_GAUSSIAN3X3_P512,
+         "pocl.gaussian3x3.p512",
+         {
+             BIArg("uchar64", "in",  READ_PIPE),
+             BIArg("uchar64", "out", WRITE_PIPE),
          }),
 };
 

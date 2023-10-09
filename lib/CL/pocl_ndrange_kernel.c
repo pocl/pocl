@@ -225,7 +225,7 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
       POCL_RETURN_ERROR_ON ((!al->is_set), CL_INVALID_KERNEL_ARGS,
                             "The %i-th kernel argument is not set!\n", i);
 
-      if (a->type == POCL_ARG_TYPE_IMAGE
+      if (a->type == POCL_ARG_TYPE_IMAGE || a->type == POCL_ARG_TYPE_PIPE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
               && al->value != NULL))
         {

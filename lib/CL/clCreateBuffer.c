@@ -125,6 +125,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->size = size;
   mem->context = context;
   mem->is_image = (type != CL_MEM_OBJECT_PIPE && type != CL_MEM_OBJECT_BUFFER);
+  mem->is_pipe = (type == CL_MEM_OBJECT_PIPE);
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
 

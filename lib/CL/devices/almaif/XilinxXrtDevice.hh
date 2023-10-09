@@ -61,11 +61,16 @@ public:
   void readDataFromDevice(char *__restrict__ const Dst,
                           pocl_mem_identifier *SrcMemId, size_t Size,
                           size_t Offset) override;
+  cl_int allocatePipe(pocl_mem_identifier *P, size_t Size) override;
+  void freePipe(pocl_mem_identifier *P) override;
+  int pipeCount() override;
 
 private:
   XilinxXrtExternalRegion *ExternalXRTMemory;
   void *Kernel;
   int XilinxXrtDeviceInitDone_ = 0;
+  int PipeCount_ = 0;
+  int *AllocatedPipes_;
 };
 
 #endif

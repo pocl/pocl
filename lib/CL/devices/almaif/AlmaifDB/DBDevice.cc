@@ -154,7 +154,14 @@ cl_int DBDevice::allocateBuffer(pocl_mem_identifier *P, size_t Size) {
   Dev_->allocateBuffer(P, Size);
 }
 
+cl_int DBDevice::allocatePipe(pocl_mem_identifier *P, size_t Size) {
+  Dev_->allocatePipe(P, Size);
+}
+
+int DBDevice::pipeCount() { return Dev_->pipeCount(); }
+
 void DBDevice::freeBuffer(pocl_mem_identifier *P) { Dev_->freeBuffer(P); }
+void DBDevice::freePipe(pocl_mem_identifier *P) { Dev_->freePipe(P); }
 
 size_t DBDevice::pointerDeviceOffset(pocl_mem_identifier *P) {
   Dev_->pointerDeviceOffset(P);
