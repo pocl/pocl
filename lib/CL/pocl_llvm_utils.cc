@@ -366,7 +366,7 @@ std::string CurrentWgMethod;
 
 static bool LLVMInitialized = false;
 static bool LLVMOptionsInitialized = false;
-
+static bool LLVMUseGlobalContext = true;
 /* must be called with kernelCompilerLock locked */
 void InitializeLLVM() {
 
@@ -394,6 +394,11 @@ void InitializeLLVM() {
 #endif
     initializeTarget(Registry);
   }
+
+  if (pocl_get_bool_option("POCL_LLVM_GLOBAL_CONTEXT", 1) == 1)
+    LLVMUseGlobalContext = true;
+  else
+    LLVMUseGlobalContext = false;
 
   // Set the options only once. TODO: fix it so that each
   // device can reset their own options. Now one cannot compile
@@ -489,22 +494,16 @@ void UnInitializeLLVM() {
   LLVMInitialized = false;
 }
 
-#define GLOBAL_LLVM_CONTEXT
-
-#ifdef GLOBAL_LLVM_CONTEXT
 static PoclLLVMContextData *GlobalLLVMContext = nullptr;
 static unsigned GlobalLLVMContextRefcount = 0;
-#endif
 
 void pocl_llvm_create_context(cl_context ctx) {
 
-#ifdef GLOBAL_LLVM_CONTEXT
-  if (GlobalLLVMContext != nullptr) {
+  if (LLVMUseGlobalContext && GlobalLLVMContext != nullptr) {
     ctx->llvm_context_data = GlobalLLVMContext;
     ++GlobalLLVMContextRefcount;
     return;
   }
-#endif
 
   PoclLLVMContextData *data = new PoclLLVMContextData;
   assert(data);
@@ -533,10 +532,10 @@ void pocl_llvm_create_context(cl_context ctx) {
                                   (void *)data->poclDiagPrinter);
   assert(ctx->llvm_context_data == nullptr);
   ctx->llvm_context_data = data;
-#ifdef GLOBAL_LLVM_CONTEXT
-  GlobalLLVMContext = data;
-  ++GlobalLLVMContextRefcount;
-#endif
+  if (LLVMUseGlobalContext) {
+    GlobalLLVMContext = data;
+    ++GlobalLLVMContextRefcount;
+  }
 
   POCL_MSG_PRINT_LLVM("Created context %" PRId64 " (%p)\n", ctx->id, ctx);
 }
@@ -545,14 +544,16 @@ void pocl_llvm_release_context(cl_context ctx) {
 
   POCL_MSG_PRINT_LLVM("releasing LLVM context\n");
 
-#ifdef GLOBAL_LLVM_CONTEXT
-  --GlobalLLVMContextRefcount;
-  if (GlobalLLVMContextRefcount > 0)
-    return;
-#endif
-
   PoclLLVMContextData *data = (PoclLLVMContextData *)ctx->llvm_context_data;
-  assert(data);
+  // this can happen if clContextCreate runs into an error
+  if (data == NULL)
+    return;
+
+  if (LLVMUseGlobalContext) {
+    --GlobalLLVMContextRefcount;
+    if (GlobalLLVMContextRefcount > 0)
+      return;
+  }
 
   if (data->number_of_IRs > 0) {
     POCL_ABORT("still have references to IRs - can't release LLVM context !\n");
@@ -576,9 +577,9 @@ void pocl_llvm_release_context(cl_context ctx) {
   delete data->Context;
   delete data;
   ctx->llvm_context_data = nullptr;
-#ifdef GLOBAL_LLVM_CONTEXT
-  GlobalLLVMContext = nullptr;
-#endif
+  if (LLVMUseGlobalContext) {
+    GlobalLLVMContext = nullptr;
+  }
 }
 
 #define POCL_METADATA_ROOT "pocl_meta"
