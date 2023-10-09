@@ -341,10 +341,10 @@ cl_int pocl_network_setup_metadata (char *buffer, size_t total_size,
 
 cl_int pocl_network_build_program (
     remote_device_data_t *ddata, const void *payload, size_t payload_size,
-    int is_binary, int is_builtin, uint32_t prog_id, const char *options,
-    char **kernel_meta_bytes, size_t *kernel_meta_size, uint32_t *devices,
-    uint32_t *platforms, size_t num_devices, char **build_log, char **binaries,
-    size_t *binary_sizes);
+    int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
+    const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
+    uint32_t *devices, uint32_t *platforms, size_t num_devices,
+    char **build_log, char **binaries, size_t *binary_sizes);
 
 cl_int pocl_network_free_program (remote_device_data_t *ddata,
                                   uint32_t prog_id);

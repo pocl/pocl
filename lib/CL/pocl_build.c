@@ -519,8 +519,6 @@ setup_kernel_metadata (cl_program program)
         }
       else
         {
-          assert (program->source || program->binaries[device_i]
-                  || (program->num_builtin_kernels > 0));
           if (device->ops->setup_metadata
               && device->ops->setup_metadata (device, program, device_i))
             {
@@ -704,6 +702,12 @@ compile_and_link_program(int compile_program,
         goto ERROR_CLEAN_OPTIONS;
     }
 
+  /* The build option -x spir is only needed for the old SPIR format.
+     When creating a SPIR-V program via clCreateProgramWithIL, it's not
+     needed and we just assume if the program_il blob is there, we want
+     to also build it. */
+  spir_build = spir_build || program->program_il != NULL;
+
   POCL_MSG_PRINT_LLVM ("building program with options %s\n",
                        program->compiler_options);
 
@@ -878,7 +882,7 @@ compile_and_link_program(int compile_program,
         }
 
       /* Maintain a 'last_accessed' file in every program's
-       * cache directory. Will be useful for cache pruning script
+       * cache directory. Will be useful for a cache pruning script
        * that flushes old directories based on LRU */
       if (!program->builtin_kernel_names)
         pocl_cache_update_program_last_access (program, device_i);

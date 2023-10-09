@@ -1836,6 +1836,9 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   device->driver_version = strdup (devinfo.driver_version);
   device->vendor = strdup (devinfo.vendor);
   device->extensions = strdup (devinfo.extensions);
+  device->supported_spir_v_versions
+      = strdup (devinfo.supported_spir_v_versions);
+
   if (devinfo.builtin_kernels[0])
     device->builtin_kernel_list = strdup (devinfo.builtin_kernels);
 
@@ -2207,11 +2210,12 @@ pocl_network_setup_peer_mesh ()
 cl_int
 pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
                             size_t payload_size, int is_binary, int is_builtin,
-                            uint32_t prog_id, const char *options,
-                            char **kernel_meta_bytes, size_t *kernel_meta_size,
-                            uint32_t *devices, uint32_t *platforms,
-                            size_t num_devices, char **build_logs,
-                            char **binaries, size_t *binary_sizes)
+                            int is_spirv, uint32_t prog_id,
+                            const char *options, char **kernel_meta_bytes,
+                            size_t *kernel_meta_size, uint32_t *devices,
+                            uint32_t *platforms, size_t num_devices,
+                            char **build_logs, char **binaries,
+                            size_t *binary_sizes)
 {
   size_t i, j;
   REMOTE_SERV_DATA2;
@@ -2224,10 +2228,14 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
   POCL_MEASURE_START (REMOTE_BUILD_PROGRAM);
 
   ID_REQUEST (ReadBuffer, prog_id);
-  nc.request.message_type
-      = (is_builtin ? MessageType_BuildProgramWithBuiltins
-                    : (is_binary ? MessageType_BuildProgramFromBinary
-                                 : MessageType_BuildProgramFromSource));
+  if (is_spirv)
+    nc.request.message_type = MessageType_BuildProgramFromSPIRV;
+  else if (is_builtin)
+    nc.request.message_type = MessageType_BuildProgramWithBuiltins;
+  else if (is_binary)
+    nc.request.message_type = MessageType_BuildProgramFromBinary;
+  else
+    nc.request.message_type = MessageType_BuildProgramFromSource;
 
   nc.request.m.build_program.payload_size = payload_size;
   nc.request.m.build_program.options_len = options ? strlen (options) : 0;

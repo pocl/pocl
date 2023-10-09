@@ -33,6 +33,7 @@ set(SOURCES pocld.cc cmdline.h cmdline.c
             ../lib/CL/pocl_debug.c ../lib/CL/pocl_debug.h
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
+            ../lib/CL/devices/spirv_parser.hh ../lib/CL/devices/spirv_parser.cc
             ../lib/CL/pocl_networking.c ../lib/CL/pocl_networking.h
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
@@ -64,6 +65,8 @@ list(APPEND P_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR})
 list(APPEND P_INCLUDE_DIRECTORIES ${CMAKE_BINARY_DIR})
 # pocl_debug.h + dependencies
 list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL")
+# spirv_parser.hh
+list(APPEND P_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/../lib/CL/devices")
 
 ############################################
 

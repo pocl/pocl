@@ -74,6 +74,8 @@ const char *request_to_str(RequestMessageType type) {
     return "BuildProgramFromSource";
   case MessageType_BuildProgramFromBinary:
     return "BuildProgramFromBinary";
+  case MessageType_BuildProgramFromSPIRV:
+    return "BuildProgramFromSPIRV";
   case MessageType_BuildProgramWithBuiltins:
     return "BuildProgramWithBuiltins";
   case MessageType_FreeProgram:
@@ -234,6 +236,7 @@ void RequestQueueThread::readThread() {
     }
     if (req->message_type == MessageType_BuildProgramFromBinary ||
         req->message_type == MessageType_BuildProgramFromSource ||
+        req->message_type == MessageType_BuildProgramFromSPIRV ||
         req->message_type == MessageType_BuildProgramWithBuiltins) {
       request->extra_size = req->m.build_program.payload_size;
     }
@@ -280,7 +283,8 @@ void RequestQueueThread::readThread() {
 
     // options
     if (req->message_type == MessageType_BuildProgramFromBinary ||
-        req->message_type == MessageType_BuildProgramFromSource) {
+        req->message_type == MessageType_BuildProgramFromSource ||
+        req->message_type == MessageType_BuildProgramFromSPIRV) {
       request->extra_size2 = req->m.build_program.options_len;
     }
     /*****************************/
@@ -319,6 +323,7 @@ void RequestQueueThread::readThread() {
     case MessageType_FreeKernel:
     case MessageType_BuildProgramFromSource:
     case MessageType_BuildProgramFromBinary:
+    case MessageType_BuildProgramFromSPIRV:
     case MessageType_BuildProgramWithBuiltins:
     case MessageType_FreeProgram:
     case MessageType_MigrateD2D:

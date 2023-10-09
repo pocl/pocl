@@ -115,11 +115,10 @@ mitigated somewhat by building PoCL with RDMA support enabled, if RDMA is
 supported by the networking hardware.
 </p>
 
-<h4>Known Limitations</h4>
+<h4>Known Limitations (as of 2023-10-03)</h4>
 <ul>
 <li>There is no traffic encryption or user authentication on the daemon side, making PoCL-R currently
 not suitable for use outside of closed private networks/clusters.</li>
-<li>SPIR-V is not yet supported.</li>
 <li>PoCL must be built with LOADABLE_DRIVERS=OFF, else initialisation of the remote backend fails.</li>
 <li>While printf does somewhat work, it will likely behave differently from what applications expect.</li>
 </ul>
