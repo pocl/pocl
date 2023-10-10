@@ -1065,8 +1065,18 @@ pocl_create_command_full (_cl_command_node **cmd,
   final_event->pocl_refcount += num_buffers;
   POCL_UNLOCK_OBJ (final_event);
 
-  cl_event *size_events = alloca (sizeof (cl_event) * num_buffers);
-  memset (size_events, 0, sizeof (cl_event) * num_buffers);
+  cl_event *size_events = NULL;
+  /* Temporary copy of the buffer list just for keeping track of which buffers
+   * were migrated in the size buffer migration phase */
+  int *already_migrated = NULL;
+  if (num_buffers > 0)
+    {
+      size_events = alloca (sizeof (cl_event) * num_buffers);
+      memset (size_events, 0, sizeof (cl_event) * num_buffers);
+
+      already_migrated = alloca (sizeof (int) * num_buffers);
+      memset (already_migrated, 0, sizeof (int) * num_buffers);
+    }
 
   /* Always migrate content size buffers first, if they exist */
   for (i = 0; i < num_buffers; ++i)
@@ -1080,6 +1090,7 @@ pocl_create_command_full (_cl_command_node **cmd,
             {
               if (buffers[j] == buffers[i]->size_buffer)
                 {
+                  already_migrated[j] = 1;
                   explicit = 1;
                   break;
                 }
@@ -1101,6 +1112,11 @@ pocl_create_command_full (_cl_command_node **cmd,
     {
       uint64_t migration_size = buffers[i]->size;
 
+      /* If both a content buffer and its associated size buffer are explicitly
+       * listed in buffers, the size buffer was already migrated above. */
+      if (already_migrated[i])
+        continue;
+
       if (buffers[i]->size_buffer != NULL)
         {
           /* BLOCK until size buffer has been imported to host mem! No event
@@ -1120,14 +1136,10 @@ pocl_create_command_full (_cl_command_node **cmd,
             }
         }
 
-      /* Size buffers were just migrated above, don't try to redo it */
-      if (buffers[i]->content_buffer == NULL)
-        {
-          pocl_create_migration_commands (
-              dev, NULL, final_event, buffers[i],
-              &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
-              command_type, mig_flags, migration_size);
-        }
+      pocl_create_migration_commands (
+          dev, NULL, final_event, buffers[i],
+          &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
+          command_type, mig_flags, migration_size);
     }
 
   return err;
