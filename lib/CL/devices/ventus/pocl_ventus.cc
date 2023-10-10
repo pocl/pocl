@@ -636,10 +636,10 @@ step5 make a writefile for chisel
       assert(0 == err);
     }*/
 
-    /**********************************************************************************************************
-     * 这个是kernel函数的入口地址，可以在终端执行nm -s object.riscv看到kernel函数的入口
-     * clCreateKernel.c line 79
-    ***********************************************************************************************************/
+  /**********************************************************************************************************
+   * 这个是kernel函数的入口地址，可以在终端执行nm -s object.riscv看到kernel函数的入口
+   * clCreateKernel.c line 79
+   ***********************************************************************************************************/
 	uint32_t kernel_entry;
   #ifdef __linux__
     std::string kernel_name(meta->name);
@@ -687,8 +687,6 @@ step5 make a writefile for chisel
     POCL_MSG_ERR("This operate system is not supported now by ventus, please use linux! \n");
     exit(1);
   #endif
-  /***********************************************************************************************************/
-
 
 	//pass in vmem file
 	char filename[]="object.riscv";
@@ -722,7 +720,7 @@ step5 make a writefile for chisel
 	c_num_buffer=c_num_buffer+1;
 	assert(c_num_buffer<=c_max_num_buffer);
   #endif
-
+  /***********************************************************************************************************/
   
   
 //prepare privatemem
