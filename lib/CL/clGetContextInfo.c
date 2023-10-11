@@ -56,7 +56,8 @@ POname(clGetContextInfo)(cl_context context,
       }
     else
       {
-        *param_value_size_ret = 0;
+        if (param_value_size_ret != NULL)
+          *param_value_size_ret = 0;
         return CL_SUCCESS;
       }
   default:
