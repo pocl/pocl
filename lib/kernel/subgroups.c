@@ -135,6 +135,16 @@ SUB_GROUP_SHUFFLE_T (int)
 SUB_GROUP_SHUFFLE_T (uint)
 SUB_GROUP_SHUFFLE_T (long)
 SUB_GROUP_SHUFFLE_T (ulong)
+#ifdef cl_khr_fp16
+SUB_GROUP_SHUFFLE_T (half)
+/* OpenCL C mangles half 'h' whereas C (clang) mangles it 'fp16'.
+   We need to provide a wrapper for the OpenCL C compatible mangling. */
+half
+_Z23intel_sub_group_shuffleDhj (half val, uint mask)
+{
+  return intel_sub_group_shuffle (val, mask);
+}
+#endif
 SUB_GROUP_SHUFFLE_T (float)
 SUB_GROUP_SHUFFLE_T (double)
 
@@ -213,6 +223,23 @@ SUB_GROUP_BROADCAST_T (double)
 SUB_GROUP_REDUCE_T (add, a + b)
 SUB_GROUP_REDUCE_T (min, a > b ? b : a)
 SUB_GROUP_REDUCE_T (max, a > b ? a : b)
+
+#ifdef cl_khr_fp16
+SUB_GROUP_REDUCE_OT (add, a + b, half)
+SUB_GROUP_REDUCE_OT (max, a > b ? a : b, half)
+
+half
+_Z20sub_group_reduce_maxDh (half val)
+{
+  return sub_group_reduce_max (val);
+}
+
+half
+_Z20sub_group_reduce_addDh (half val)
+{
+  return sub_group_reduce_add (val);
+}
+#endif
 
 #define SUB_GROUP_SCAN_INCLUSIVE_OT(OPNAME, OPERATION, TYPE)                  \
   __attribute__ ((always_inline))                                             \

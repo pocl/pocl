@@ -1,7 +1,7 @@
 /* OpenCL runtime library: compile_and_link_program()
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos,
-                 2011-2019 Pekka Jääskeläinen
+                 2011-2023 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -91,8 +91,15 @@ static const char cl_program_link_options[] =
   "-cl-finite-math-only "
   "-cl-fast-relaxed-math ";
 
-static const char cl_parameters_not_yet_supported_by_clang[] =
-  "-cl-uniform-work-group-size ";
+/* TODO: In case of a PoCL-R, we should pass on unhandled
+   target-specific/extension-specific options to the
+   native driver's clBuildProgram() call. Might be difficult
+   to filter the kept ones as the set of target devices can
+   be diverse. */
+static const char cl_parameters_not_yet_supported_by_clang[]
+    = "-cl-uniform-work-group-size "
+      "-cl-no-subgroup-ifp "
+      "-cl-intel-no-prera-scheduling";
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 
