@@ -34,14 +34,25 @@
 
 #define OCL_C_AS
 
+#if 0
 /* The OpenCL printf routine.
  *
  * For debugging
  * Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
-
-int printf(const char *format, ...);
-#define DEBUG_PRINTF(args) (printf args)
 */
+extern int dprintf(int fd, const char *format, ...);
+extern int vdprintf(int fd, const char *format, va_list ap);
+int debugprintf(const char *fmt, ...)
+{
+  int ret;
+  va_list vargs;
+  va_start(vargs, fmt);
+  ret = vdprintf(2, fmt, vargs);
+  va_end(vargs);
+  return ret;
+}
+#define DEBUG_PRINTF(args) (debugprintf args)
+#endif
 
 #define DEBUG_PRINTF(args) ((void)0)
 
