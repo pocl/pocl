@@ -31,17 +31,10 @@
 
 #define NULL ((void*)0)
 
-#if __clang_major__ > 9
 /* Produce a SPIR-V compliant bitcode where the format string is
    in the constant address space (2 in SPIR-V). Address space cast
    in Workgroup.cc in case of native compilation. */
 #define PRINTF_FMT_STR_AS __attribute__ ((address_space (2)))
-#else
-/* Use the default address space with the older LLVMs. No SPIR-V
-   support. */
-#define PRINTF_FMT_STR_AS
-
-#endif
 
 #ifdef PRINTF_BUFFER_AS_ID
 #define PRINTF_BUFFER_AS __attribute__ ((address_space (PRINTF_BUFFER_AS_ID)))
