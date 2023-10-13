@@ -134,10 +134,10 @@ struct network_command
   const char *req_extra_data;
   const char *req_extra_data2;
   char *rep_extra_data;
-  size_t req_waitlist_size;
-  size_t req_extra_size;
-  size_t req_extra_size2;
-  size_t rep_extra_size;
+  uint64_t req_waitlist_size;
+  uint64_t req_extra_size;
+  uint64_t req_extra_size2;
+  uint64_t rep_extra_size;
   /* Points to an (optional) dynamic strings section appened after the message.
    */
   char *strings;

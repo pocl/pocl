@@ -121,6 +121,7 @@ void RdmaRequestThread::rdmaReaderThread() {
     case MessageType_FreeKernel:
     case MessageType_BuildProgramFromSource:
     case MessageType_BuildProgramFromBinary:
+    case MessageType_BuildProgramFromSPIRV:
     case MessageType_BuildProgramWithBuiltins:
     case MessageType_FreeProgram:
     case MessageType_MigrateD2D:

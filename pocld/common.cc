@@ -171,7 +171,7 @@ std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size) {
     inet_ntop(addr->sa_family, &((struct sockaddr_in6 *)addr)->sin6_addr,
               ip_str.data(), ip_str.capacity());
   else
-    ip_str = "[unknown address family]";
+    ip_str = "[unknown address family " + std::to_string(addr->sa_family) + "]";
   const char *end =
       (const char *)memchr(ip_str.c_str(), '\0', ip_str.capacity());
   if (end)

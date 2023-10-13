@@ -89,9 +89,7 @@ public:
 
 class VirtualCLContext : public VirtualContextBase {
   ReplyQueueThreadUPtr write_slow;
-  RequestQueueThreadUPtr read_slow;
   ReplyQueueThreadUPtr write_fast;
-  RequestQueueThreadUPtr read_fast;
 #ifdef ENABLE_RDMA
   RdmaReplyThreadUPtr write_rdma;
   RdmaRequestThreadUPtr read_rdma;
@@ -266,11 +264,6 @@ size_t VirtualCLContext::init(client_connections_t conns,
   write_fast = ReplyQueueThreadUPtr(
       new ReplyQueueThread(command_fd, this, &exit_helper, netstat, "WT_F"));
 
-  read_slow = RequestQueueThreadUPtr(
-      new RequestQueueThread(stream_fd, this, &exit_helper, netstat, "C_RT_S"));
-  read_fast = RequestQueueThreadUPtr(new RequestQueueThread(
-      command_fd, this, &exit_helper, netstat, "C_RT_F"));
-
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
                                           &exit_helper, netstat));
@@ -297,9 +290,8 @@ size_t VirtualCLContext::initPlatforms() {
   DeviceCounts.resize(PlatformList.size());
 
   for (size_t i = 0; i < PlatformList.size(); ++i) {
-    SharedContextBase *p =
-        createSharedCLContext(&(PlatformList[i]), i, this,
-                              write_slow.get(), write_fast.get());
+    SharedContextBase *p = createSharedCLContext(
+        &(PlatformList[i]), i, this, write_slow.get(), write_fast.get());
 
     SharedContextList[i] = p;
     DeviceCounts[i] = (uint32_t)(p->numDevices());
@@ -315,7 +307,7 @@ size_t VirtualCLContext::initPlatforms() {
 }
 
 int VirtualCLContext::clientInfo(int fd_command) {
-  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Req RECVING \n");
+  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Req RECVING\n");
   // initial ServerInfo reply/response
   RequestMsg_t req;
   ssize_t readb;
@@ -1044,7 +1036,6 @@ void VirtualCLContext::MigrateD2D(Request *req) {
       storage = new char[m.size];
       req->extra_data = storage;
 #endif
-      req->extra_size = m.size;
 
 #ifndef RDMA_USE_SVM
       SharedContextBase *src = SharedContextList[m.source_pid];
@@ -1073,6 +1064,10 @@ void VirtualCLContext::MigrateD2D(Request *req) {
       src->waitAndDeleteEvent(fake_ev_id);
 #endif
     }
+
+    /* Write extra_size after possible content size has been read, just before
+     * pushing the request on */
+    req->extra_size = m.size;
 
     // .... and now we can push the writeBuffer to the queue
     if (m.dest_peer_id == peer_id) {

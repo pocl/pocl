@@ -57,6 +57,7 @@ using float_time_point = std::chrono::time_point<Time, float_sec>;
 
 #include "common_cl.hh"
 #include "pocl_debug.h"
+#include "request.hh"
 #include "session.hh"
 
 #ifdef ENABLE_RDMA
@@ -296,59 +297,6 @@ struct peer_listener_data_t {
 #endif
 };
 
-class Request {
-
-public:
-  RequestMsg_t req;
-
-  uint64_t *waitlist;
-  uint32_t waitlist_size;
-
-  char *extra_data;
-  size_t extra_size;
-
-  char *extra_data2;
-  size_t extra_size2;
-
-  // server host timestamps for network comm
-  uint64_t read_start_timestamp_ns;
-  uint64_t read_end_timestamp_ns;
-
-  Request()
-      : req(), waitlist(nullptr), waitlist_size(0), extra_data(nullptr),
-        extra_size(0), extra_data2(nullptr), extra_size2(0) {}
-
-  // Deep copying constructor
-  Request(const Request &r)
-      : req(r.req), waitlist(nullptr), waitlist_size(r.waitlist_size),
-        extra_data(nullptr), extra_size(r.extra_size), extra_data2(nullptr),
-        extra_size2(r.extra_size2) {
-    if (r.waitlist) {
-      waitlist = new uint64_t[waitlist_size];
-      std::memcpy(waitlist, r.waitlist, sizeof(uint64_t) * waitlist_size);
-    }
-
-    if (r.extra_data) {
-      extra_data = new char[extra_size];
-      std::memcpy(extra_data, r.extra_data, extra_size);
-    }
-
-    if (r.extra_data2) {
-      extra_data = new char[extra_size2];
-      std::memcpy(extra_data2, r.extra_data2, extra_size2);
-    }
-  }
-
-  ~Request() {
-    if (waitlist)
-      delete[] waitlist;
-    if (extra_data)
-      delete[] extra_data;
-    if (extra_data2)
-      delete[] extra_data2;
-  }
-};
-
 class Reply {
 
 public:
@@ -401,6 +349,7 @@ class ExitHelper {
 public:
   ExitHelper() : exit_status(0), requested_exit(0){};
 
+  /** Set exit request flag and reason, if they weren't already set */
   int requestExit(const char *msg, int status) {
     std::unique_lock<std::mutex> lock(exit_mutex);
 

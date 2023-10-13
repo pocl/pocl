@@ -62,6 +62,8 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
   if (address == NULL)
     hint.ai_flags = AI_PASSIVE;
   hint.ai_flags |= AI_NUMERICSERV;
+  if (address == NULL)
+    hint.ai_flags = AI_PASSIVE;
 
   struct addrinfo *info;
   char portstr[6] = {};
@@ -133,6 +135,17 @@ pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast)
                    &user_timeout, sizeof (user_timeout))),
       -1, "setsockopt(TCP_CONNECTIONTIMEOUT) returned errno: %i\n", errno);
 #endif
+  struct timeval tv;
+  tv.tv_sec = user_timeout;
+  tv.tv_usec = 0;
+  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_RCVTIMEO,
+                                     (const char *)&tv, sizeof (tv))),
+                        -1, "setsockopt(SO_RCVTIMEO) returned errno: %i\n",
+                        errno);
+  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_SNDTIMEO,
+                                     (const char *)&tv, sizeof (tv))),
+                        -1, "setsockopt(SO_SNDTIMEO) returned errno: %i\n",
+                        errno);
 
   int retries = 5;
 #ifdef TCP_SYNCNT
