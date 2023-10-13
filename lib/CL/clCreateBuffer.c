@@ -38,6 +38,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   cl_mem mem = NULL;
   int errcode = CL_SUCCESS;
   unsigned i;
+  cl_mem_flags stdflags = flags;
 
   POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_BUFFER_SIZE);
 
@@ -47,9 +48,11 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
     flags = CL_MEM_READ_WRITE;
 
   /* validate flags */
-  POCL_GOTO_ERROR_ON ((flags > (1 << 10) - 1), CL_INVALID_VALUE,
-                      "Flags must "
-                      "be < 1024 (there are only 10 flags)\n");
+  if (flags & CL_MEM_PINNED)
+    stdflags = flags ^ CL_MEM_PINNED;
+
+  POCL_GOTO_ERROR_ON ((stdflags > (1 << 10) - 1), CL_INVALID_VALUE,
+                      "There are only 10 non-SVM flags)\n");
 
   POCL_GOTO_ERROR_ON (
       ((flags & CL_MEM_READ_WRITE)
@@ -125,6 +128,10 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
 
+  if (flags & CL_MEM_PINNED)
+    {
+      mem->is_device_pinned = 1;
+    }
   /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
    *
    * The user is responsible for ensuring that data passed into and out of
@@ -155,9 +162,9 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
     }
 
   /* If ALLOC flag is present, try to pre-allocate host-visible
-   * memory from a driver (could be pinned memory).
-   * First driver to allocate wins; if none of the drivers
-   * do it, we allocate it via malloc */
+   * backing store memory from a driver.
+   * First driver to allocate for a physical memory wins; if none of
+   * the drivers do it, we allocate the backing store via malloc */
   if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
       POCL_MSG_PRINT_MEMORY (
@@ -171,6 +178,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
           if (mem->device_ptrs[dev->global_mem_id].mem_ptr != NULL)
             continue;
           int err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
+
           if ((err == CL_SUCCESS) && (mem->mem_host_ptr))
             break;
         }
@@ -180,6 +188,28 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
                           "Cannot allocate backing memory!\n");
       mem->mem_host_ptr_version = 0;
       mem->latest_version = 0;
+    }
+
+  /* With CL_MEM_PINNED we must proactively allocate the device memory so it
+     gets the fixed address range assigned, even if the buffer was never used.
+     The address can be queried via clGetMemobjInfo() and used inside data
+     structures. */
+  if (flags & CL_MEM_PINNED)
+    {
+      POCL_MSG_PRINT_MEMORY ("Trying driver allocation for CL_MEM_PINNED\n");
+      unsigned i;
+      for (i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          assert (dev->ops->alloc_mem_obj != NULL);
+          // skip already allocated
+          if (mem->device_ptrs[dev->global_mem_id].mem_ptr != NULL)
+            continue;
+          int err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
+
+          POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
+                              "Out of device memory?");
+        }
     }
 
   /* if COPY_HOST_PTR is present but no copying happened,

@@ -323,7 +323,8 @@ cl_int pocl_network_setup_devinfo (cl_device_id device,
                                    uint32_t did);
 
 cl_int pocl_network_create_buffer (remote_device_data_t *d, uint32_t mem_id,
-                                   uint32_t mem_flags, uint64_t mem_size);
+                                   uint32_t mem_flags, uint64_t mem_size,
+                                   void **device_addr);
 
 cl_int pocl_network_free_buffer (remote_device_data_t *d, uint32_t mem_id);
 

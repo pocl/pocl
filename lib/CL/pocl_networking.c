@@ -59,6 +59,8 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
 
   hint.ai_flags = is_numeric ? AI_NUMERICHOST
                              : (AI_ADDRCONFIG | AI_CANONNAME | AI_V4MAPPED);
+  if (address == NULL)
+    hint.ai_flags = AI_PASSIVE;
   hint.ai_flags |= AI_NUMERICSERV;
 
   struct addrinfo *info;

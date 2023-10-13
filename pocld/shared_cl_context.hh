@@ -68,7 +68,7 @@ public:
   /************************************************************************/
 
   virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
-                           void *host_ptr) = 0;
+                           void *host_ptr, void **device_addr) = 0;
 
   virtual int freeBuffer(uint32_t buffer_id) = 0;
 

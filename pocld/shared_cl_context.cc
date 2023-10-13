@@ -23,6 +23,7 @@
 */
 
 #include <cassert>
+#include <map>
 #include <sstream>
 
 #include "cmd_queue.hh"
@@ -77,12 +78,17 @@ class SharedCLContext final : public SharedContextBase {
 
   std::vector<cl::Device> CLDevices;
 
-  std::unordered_map<uint32_t, clBufferPtr> BufferIDmap;
   std::unordered_map<uint32_t, clSamplerPtr> SamplerIDmap;
   std::unordered_map<uint32_t, clImagePtr> ImageIDmap;
   std::unordered_map<uint32_t, clProgramStructPtr> ProgramIDmap;
   std::unordered_map<uint32_t, clKernelStructPtr> KernelIDmap;
   std::unordered_map<uint32_t, clCommandQueuePtr> QueueIDMap;
+
+  std::unordered_map<BufferId_t, clBufferPtr> BufferIDmap;
+  std::unordered_map<BufferId_t, void *> SVMBackingStoreMap;
+  // A mutex guarding the access to the above two buffer maps.
+  // TODO: check that the more fine grained mutex suffices here.
+  std::mutex BufferMapMutex;
 
   std::mutex EventmapMutex;
   std::unordered_map<uint64_t, EventPair> Eventmap;
@@ -142,7 +148,7 @@ public:
   /************************************************************************/
 
   virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
-                           void *host_ptr) override;
+                           void *host_ptr, void **device_addr) override;
 
   virtual int freeBuffer(uint32_t buffer_id) override;
 
@@ -719,6 +725,22 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
       exts += " ";
     exts += extName;
   }
+
+  if (clientDevice.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+      CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+    if (exts != "")
+      exts += " ";
+    // We can implement the simple PoC device raw pointer extension
+    // which doesn't require host side virtual address space
+    // reservation by emulating it with the driver's clSVMAlloc().
+    exts += "cl_pocl_pinned_buffers";
+  }
+
+  if (exts.size() > MAX_PACKED_STRING_LEN - 1)
+    POCL_MSG_WARN(
+        "Couldn't fit all extensions (needs %zu) to a packed string (max %d)!",
+        exts.size(), MAX_PACKED_STRING_LEN);
+
   std::strncpy(i.extensions, exts.c_str(), MAX_PACKED_STRING_LEN - 1);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
@@ -1556,7 +1578,37 @@ int SharedCLContext::freeImage(uint32_t image_id) {
 }
 
 int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
-                                  cl_mem_flags flags, void *host_ptr) {
+                                  cl_mem_flags flags, void *host_ptr,
+                                  void **device_addr) {
+  const bool PinnedAllocation = flags & CL_MEM_PINNED;
+  if (PinnedAllocation) {
+    // The backing drivers likely do not recognize the pocl PoC extension and
+    // needn't.
+    flags ^= CL_MEM_PINNED;
+    // Implement pinned memory with SVM allocations.
+    // TODO: Support for platforms where some of the devices support pinning,
+    // and some not. We have to split the context for the allocation in
+    // that case.
+#ifdef ENABLE_RDMA
+    // TODO: What extra consideration we need for RDMA which uses SVM
+    // also for the shadow buffers for the regular cl_mem?
+    POCL_ABORT_UNIMPLEMENTED(
+        "CL_MEM_PINNED not yet implemented for PoCL-R RDMA.");
+#endif
+    host_ptr =
+        clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE, size, 0);
+    assert(device_addr != nullptr);
+    *device_addr = host_ptr;
+
+    if (*device_addr == nullptr) {
+      POCL_MSG_ERR(
+          "Error when creating a CG SVM allocation for a pinned buffer.");
+      return CL_OUT_OF_RESOURCES;
+    }
+    POCL_MSG_PRINT_INFO("Allocated a pinned buffer using CG SVM at %p.",
+                        host_ptr);
+  }
+
   // since the buffer data is initialized by clEnqueueWrite (because migration
   // handling in client), we cannot use any HOST_* flags here.
   flags = flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
@@ -1564,6 +1616,7 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
   // when RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
   flags = flags |
           (cl_bitfield)(host_ptr ? CL_MEM_USE_HOST_PTR : CL_MEM_ALLOC_HOST_PTR);
+
   cl_int err;
   clBufferPtr buf(
       new cl::Buffer(ContextWithAllDevices, flags, size, host_ptr, &err));
@@ -1574,8 +1627,10 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
   }
 
   {
-    std::unique_lock<std::mutex> lock(MainMutex);
+    std::unique_lock<std::mutex> lock(BufferMapMutex);
     BufferIDmap[buffer_id] = std::move(buf);
+    if (PinnedAllocation)
+      SVMBackingStoreMap[buffer_id] = host_ptr;
   }
 
   POCL_MSG_PRINT_INFO("P %u Create Buffer %" PRIu32 "\n", plat_id, buffer_id);
@@ -1584,10 +1639,14 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
 
 int SharedCLContext::freeBuffer(uint32_t buffer_id) {
   {
-    std::unique_lock<std::mutex> lock(MainMutex);
+    std::unique_lock<std::mutex> lock(BufferMapMutex);
     if (BufferIDmap.erase(buffer_id) == 0) {
       POCL_MSG_ERR("P %u Free Buffer %" PRIu32 "\n", plat_id, buffer_id);
       return CL_INVALID_MEM_OBJECT;
+    }
+    if (SVMBackingStoreMap.find(buffer_id) != SVMBackingStoreMap.end()) {
+      clSVMFree(ContextWithAllDevices.get(), SVMBackingStoreMap[buffer_id]);
+      SVMBackingStoreMap.erase(buffer_id);
     }
   }
   POCL_MSG_PRINT_INFO("P %u Free Buffer %" PRIu32 "\n", plat_id, buffer_id);
@@ -1986,6 +2045,14 @@ int SharedCLContext::runKernel(
   if (has_new_args) {
     int r = setKernelArgs(k, kernel, arg_count, args, pod_size, pod_buf);
     assert(r == CL_SUCCESS);
+  }
+
+  {
+    std::unique_lock<std::mutex> lock(BufferMapMutex);
+    std::vector<void *> SVMPtrs;
+    for (auto &S : SVMBackingStoreMap)
+      SVMPtrs.push_back(S.second);
+    k->setSVMPointers(SVMPtrs);
   }
 
   {

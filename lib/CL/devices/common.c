@@ -1831,7 +1831,8 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_image2d_from_buffer" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
-        { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" } };
+        { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
+        { CL_MAKE_VERSION (0, 1, 0), "cl_pocl_pinned_buffers" }};
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);
@@ -1978,7 +1979,7 @@ pocl_setup_builtin_kernels_with_version (cl_device_id dev)
         {
           POCL_MSG_WARN ("Built-in kernel name cannot fit in to the "
                          "cl_name_version array. Length of built-in kernel "
-                         "name is %u, and the concatenated length is %u\n",
+                         "name is %zu, and the concatenated length is %d\n",
                          strlen (token), CL_NAME_VERSION_MAX_NAME_SIZE - 1);
           token[CL_NAME_VERSION_MAX_NAME_SIZE - 1] = '\0';
         }

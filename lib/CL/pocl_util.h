@@ -341,6 +341,27 @@ void pocl_str_tolower (char *out, const char *in);
     }                                                                         \
   while (0)
 
+/* Version for handling only the size checking and returning.
+   Assigning the data and returning is left to the caller. */
+#define POCL_RETURN_GETINFO_SIZE_CHECK(__SIZE__)                              \
+do                                                                            \
+  {                                                                           \
+    if (param_value)                                                          \
+      {                                                                       \
+        POCL_RETURN_ERROR_ON (                                                \
+            (param_value_size < __SIZE__), CL_INVALID_VALUE,                  \
+            "param_value_size (%zu) smaller than actual size (%zu)\n",        \
+            param_value_size, __SIZE__);                                      \
+      }                                                                       \
+    if (param_value_size_ret)                                                 \
+      {                                                                       \
+        *param_value_size_ret = __SIZE__;                                     \
+        if (param_value == NULL)                                              \
+          return CL_SUCCESS;                                                  \
+      }                                                                       \
+  }                                                                           \
+while (0)
+
 #define POCL_RETURN_GETINFO_SIZE(__SIZE__, __POINTER__)                 \
   POCL_RETURN_GETINFO_INNER(__SIZE__,                                   \
     memcpy(param_value, __POINTER__, __SIZE__))

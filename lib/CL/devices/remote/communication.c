@@ -1988,7 +1988,8 @@ pocl_network_free_device (cl_device_id device)
 
 cl_int
 pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
-                            uint32_t mem_flags, uint64_t mem_size)
+                            uint32_t mem_flags, uint64_t mem_size,
+                            void **device_addr)
 {
   // = (remote_device_data_t *)device->data;
   REMOTE_SERV_DATA2;
@@ -2017,6 +2018,12 @@ pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
   CHECK_REPLY (CreateBuffer);
 
   SET_REMOTE_ID (buffer, mem_id);
+
+  if (mem_flags & CL_MEM_PINNED)
+    {
+      assert (device_addr != NULL);
+      *device_addr = (void *)netcmd->reply.m.create_buffer.device_addr;
+    }
 
 #ifdef ENABLE_RDMA
   rdma_buffer_info_t *s = malloc (sizeof (rdma_buffer_info_t));

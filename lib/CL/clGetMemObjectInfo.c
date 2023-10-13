@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clGetDeviceInfo()
 
    Copyright (c) 2012 Erik Schnetter
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -69,6 +70,23 @@ POname (clGetMemObjectInfo) (
   case CL_MEM_PROPERTIES:
     POCL_RETURN_GETINFO_ARRAY (cl_mem_properties, memobj->num_properties,
                                memobj->properties);
+  case CL_MEM_DEVICE_PTRS:
+    {
+      POCL_RETURN_ERROR_COND (!memobj->is_device_pinned,
+                              CL_INVALID_MEM_OBJECT);
+      POCL_RETURN_GETINFO_SIZE_CHECK (memobj->context->num_devices
+                                      * sizeof (cl_mem_pinning));
+      cl_mem_pinning *pinnings = (cl_mem_pinning *)param_value;
+      cl_context context = memobj->context;
+      for (size_t i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
+          pinnings[i].device = dev;
+          pinnings[i].address = p->device_addr;
+        }
+      return CL_SUCCESS;
+    }
   }
   return CL_INVALID_VALUE;
 }

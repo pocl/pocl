@@ -441,6 +441,9 @@ struct EventPair {
 
 std::string hexstr(const std::string &);
 
+// Type for the buffer allocation identifier.
+typedef uint32_t BufferId_t;
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

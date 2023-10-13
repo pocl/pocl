@@ -676,7 +676,13 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 #endif
 
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
-  FOR_EACH_CONTEXT_DO(createBuffer(id, m.size, m.flags, nullptr));
+
+  uint64_t devaddr;
+  FOR_EACH_CONTEXT_DO(
+      createBuffer(id, m.size, m.flags, nullptr, (void **)&devaddr));
+  // Do not pass pointer to device_addr directly above since
+  // it's a packed struct and the address might be unaligned.
+  rep->rep.m.create_buffer.device_addr = devaddr;
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
   FOR_EACH_CONTEXT_UNDO(freeBuffer(id));
 
@@ -686,8 +692,8 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
     CreateRdmaBufferReply_t *ext = new CreateRdmaBufferReply_t;
-    ext->server_vaddr = (uint64_t)shadow_buf.get();
     ext->server_rkey = shadow_region->rkey();
+    ext->server_vaddr = (uint64_t)shadow_buf.get();
     rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_data = (char *)(ext);

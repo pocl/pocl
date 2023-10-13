@@ -42,7 +42,7 @@ extern "C"
 
 #define ENUM_TYPE uint8_t
 
-#define MAX_PACKED_STRING_LEN 1024
+#define MAX_PACKED_STRING_LEN (4 * 1024)
 
 #define SESSION_ID_LENGTH 16
 
@@ -334,6 +334,11 @@ extern "C"
     uint64_t size;
     uint32_t flags;
   } CreateBufferMsg_t;
+
+  typedef struct __attribute__ ((packed, aligned (8))) CreateBufferReply_s
+  {
+    uint64_t device_addr;
+  } CreateBufferReply_t;
 
 #ifdef ENABLE_RDMA
   typedef struct __attribute__ ((packed, aligned (8))) CreateRdmaBufferReply_s
@@ -674,6 +679,10 @@ extern "C"
     uint64_t server_read_start_timestamp_ns;
     uint64_t server_read_end_timestamp_ns;
     uint64_t server_write_start_timestamp_ns;
+    union
+    {
+      CreateBufferReply_t create_buffer;
+    } m;
   } ReplyMsg_t;
 
   /* ########################## */

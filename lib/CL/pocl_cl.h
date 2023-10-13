@@ -952,8 +952,9 @@ struct _cl_device_id {
      Used for indexing arrays in data structures with device specific
      entries. */
   int dev_id;
-  int global_mem_id; /* identifier for device global memory */
-  /* pointer to an accounting struct for global memory */
+  /* Identifier for a physical device global memory. */
+  int global_mem_id;
+  /* Pointer to an accounting struct for global memory */
   pocl_global_mem_t *global_memory;
   /* Does the device have 64bit longs */
   int has_64bit_long;
@@ -1391,7 +1392,7 @@ struct _cl_mem {
   uint mem_host_ptr_refcount;
   int mem_host_ptr_is_svm;
 
-  /* array of device-specific memory bookkeeping structs.
+  /* Array of device-specific memory allocation bookkeeping structs.
      The location of some device's struct is determined by
      the device's global_mem_id. */
   pocl_mem_identifier *device_ptrs;
@@ -1440,6 +1441,11 @@ struct _cl_mem {
    * valid through the entire lifetime of the buffer,
    * we can make some assumptions and optimizations */
   cl_bool mem_host_ptr_is_permanent;
+
+  /* If the allocation was requested to be permanent on the device
+     global memory (until freed). This is set via CL_MEM_PINNED
+     flag of cl_pocl_pinned_buffers extension. */
+  cl_bool is_device_pinned;
 
   /* Image flags */
   cl_bool                 is_image;
