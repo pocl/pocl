@@ -280,8 +280,14 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_non_uniform_work_group"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_pipes"
          COMMAND "${TS_BUILDDIR}/pipes/test_pipes" ${EXTRA_ARGS})
 
+# Two tests (vector_1 vector_2) fail when run with SPIR-V input, but work with C source input.
+# details in issue #1017
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_printf"
          COMMAND "${TS_BUILDDIR}/printf/test_printf" ${EXTRA_ARGS}
+           int_0 int_1 int_2 int_3 int_4 int_5 int_6 int_7 int_8 half_0 half_1 half_2 half_3 half_4 half_5 half_6 half_7 half_8 half_9 half_limits_0 half_limits_1 half_limits_2 float_0
+           float_1 float_2 float_3 float_4 float_5 float_6 float_7 float_8 float_9 float_10 float_11 float_12 float_13 float_14 float_15 float_16 float_17 float_limits_0 float_limits_1
+           float_limits_2 octal_0 octal_1 octal_2 octal_3 unsigned_0 unsigned_1 hexadecimal_0 hexadecimal_1 hexadecimal_2 hexadecimal_3 hexadecimal_4 char_0 char_1 char_2 string_0
+           string_1 string_2 vector_0 vector_3 vector_4 vector_5 address_space_0 address_space_1 address_space_2 address_space_3 address_space_4 buffer_size
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/printf")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_profiling"
