@@ -32,43 +32,76 @@
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
-  unsigned i;
-  for (i=0; i < program->num_devices; i++)
+  unsigned assoc_i, dev_i;
+  for (assoc_i = 0; assoc_i < program->associated_num_devices; assoc_i++)
     {
-      if (program->devices[i]->ops->build_poclbinary)
-        program->devices[i]->ops->build_poclbinary (program, i);
+      int program_device = 0;
+      for (dev_i = 0; dev_i < program->num_devices; ++dev_i)
+        {
+          if (program->devices[dev_i] == program->associated_devices[assoc_i])
+            {
+              program_device = 1;
+              break;
+            }
+        }
+      if (!program_device)
+        {
+          sizes[assoc_i] = 0;
+          continue;
+        }
 
-      if (!program->pocl_binaries[i] && program->binaries[i])
-        pocl_binary_sizeof_binary (program, i);
+      if (program->associated_devices[assoc_i]->ops->build_poclbinary)
+        program->associated_devices[assoc_i]->ops->build_poclbinary (program,
+                                                                     dev_i);
 
-      if (program->pocl_binaries[i])
-        sizes[i] = program->pocl_binary_sizes[i];
+      if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
+        pocl_binary_sizeof_binary (program, dev_i);
+
+      if (program->pocl_binaries[dev_i])
+        sizes[assoc_i] = program->pocl_binary_sizes[dev_i];
       else
-        sizes[i] = 0;
+        sizes[assoc_i] = 0;
     }
 }
 
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
-  unsigned i;
+  unsigned assoc_i, dev_i;
   size_t res;
-  for (i=0; i < program->num_devices; i++)
+  for (assoc_i = 0; assoc_i < program->associated_num_devices; assoc_i++)
     {
-      if (program->devices[i]->ops->build_poclbinary)
-        program->devices[i]->ops->build_poclbinary (program, i);
-
-      if (!program->pocl_binaries[i] && program->binaries[i])
+      int program_device = 0;
+      for (dev_i = 0; dev_i < program->num_devices; ++dev_i)
         {
-          pocl_binary_serialize(program, i, &res);
-          if (program->pocl_binary_sizes[i])
-            assert(program->pocl_binary_sizes[i] == res);
-          program->pocl_binary_sizes[i] = res;
+          if (program->devices[dev_i] == program->associated_devices[assoc_i])
+            {
+              program_device = 1;
+              break;
+            }
+        }
+      if (!program_device)
+        {
+          binaries[assoc_i] = NULL;
+          continue;
         }
 
-      if (program->pocl_binaries[i])
-        memcpy(binaries[i], program->pocl_binaries[i], program->pocl_binary_sizes[i]);
+      if (program->associated_devices[assoc_i]->ops->build_poclbinary)
+        program->associated_devices[assoc_i]->ops->build_poclbinary (program,
+                                                                     dev_i);
+
+      if (!program->pocl_binaries[dev_i] && program->binaries[dev_i])
+        {
+          pocl_binary_serialize (program, dev_i, &res);
+          if (program->pocl_binary_sizes[dev_i])
+            assert (program->pocl_binary_sizes[dev_i] == res);
+          program->pocl_binary_sizes[dev_i] = res;
+        }
+
+      if (program->pocl_binaries[dev_i])
+        memcpy (binaries[assoc_i], program->pocl_binaries[dev_i],
+                program->pocl_binary_sizes[dev_i]);
       else
-        binaries[i] = NULL;
+        binaries[assoc_i] = NULL;
     }
 }
 
@@ -105,7 +138,8 @@ POname(clGetProgramInfo)(cl_program program,
     {
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
-      size_t const value_size = sizeof(size_t) * program->num_devices;
+      size_t const value_size
+          = sizeof (size_t) * program->associated_num_devices;
       POCL_RETURN_GETINFO_INNER (
           value_size, get_binary_sizes (program, (size_t *)param_value));
     }
@@ -114,7 +148,8 @@ POname(clGetProgramInfo)(cl_program program,
     {
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
-      size_t const value_size = sizeof(unsigned char *) * program->num_devices;
+      size_t const value_size
+          = sizeof (unsigned char *) * program->associated_num_devices;
       POCL_RETURN_GETINFO_INNER (
           value_size, get_binaries (program, (unsigned char **)param_value));
     }

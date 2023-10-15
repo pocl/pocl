@@ -87,9 +87,6 @@ POname(clGetProgramBuildInfo)(cl_program            program,
     
   case CL_PROGRAM_BUILD_LOG:
     {
-      POCL_RETURN_ERROR_ON((program->build_status == CL_BUILD_NONE),
-                           CL_INVALID_PROGRAM,
-                           "Program was not built");
       if (program->builtin_kernel_names != NULL)
         {
           POCL_RETURN_GETINFO_STR ("");
