@@ -652,7 +652,9 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
           POCL_LOCK (d->cq_lock);
           CDL_DELETE (d->command_list, node);
           CDL_PREPEND (d->ready_list, node);
+          POCL_UNLOCK_OBJ (event);
           basic_command_scheduler (d);
+          POCL_LOCK_OBJ (event);
           POCL_UNLOCK (d->cq_lock);
         }
       return;
