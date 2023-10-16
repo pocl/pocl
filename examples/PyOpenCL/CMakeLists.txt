@@ -35,10 +35,10 @@ set(EXAMPLES_USE_GIT_MASTER 1)
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE
     GIT_REPOSITORY "https://github.com/inducer/pyopencl.git"
-    GIT_TAG v2022.3
+    GIT_TAG v2023.1.4
     GIT_SUBMODULES "pyopencl/compyte")
 else()
-  set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2022.3.tar.gz")
+  set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2023.1.4.tar.gz")
 endif()
 
 if(NOT TESTS_USE_ICD)
@@ -67,6 +67,8 @@ if(VIRTUALENV)
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
     ${FETCH_SOURCE}
+
+    PATCH_COMMAND /bin/sh -c "patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/CL_UNORM_INT24.patch || echo patch already applied"
 
     # have to use external scripts, because CMake has /bin/sh hardcoded,
     # and /bin/sh on Ubuntu is dash, which doesn't support "source"
