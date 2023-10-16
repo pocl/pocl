@@ -78,6 +78,15 @@ int vt_buf_alloc(vt_device_h hdevice, uint64_t size, uint64_t *vaddr, int BUF_TY
 /// @return 若无错误则返回0，否则返回-1
 int vt_buf_free(vt_device_h hdevice, uint64_t size, uint64_t *vaddr, uint64_t taskID, uint64_t kernelID);
 
+/// @brief 【已实现】释放指定的buffer
+/// @param hbuffer 指向设备的指针
+/// @param size buffer大小
+/// @param vaddr 要释放的设备端内存的起始地址
+/// @param taskID context ID
+/// @param kernelID kernel IDD
+/// @return 若无错误则返回0，否则返回-1
+int vt_one_buf_free(vt_device_h hdevice, uint64_t size, uint64_t *vaddr, uint64_t taskID, uint64_t kernelID);
+
 /// @brief 【已实现】将数据从buffer复制到设备内存
 /// @param hdevice 指向设备的指针
 /// @param dev_vaddr 设备端保存数据的起始虚拟地址
