@@ -1,0 +1,14 @@
+diff --git a/src/wrap_constants.cpp b/src/wrap_constants.cpp
+index 2c06f2f..17f4253 100644
+--- a/src/wrap_constants.cpp
++++ b/src/wrap_constants.cpp
+@@ -750,9 +750,6 @@ void pyopencl_expose_constants(py::module_ &m)
+     ADD_ATTR( , UNSIGNED_INT32);
+     ADD_ATTR( , HALF_FLOAT);
+     ADD_ATTR( , FLOAT);
+-#if PYOPENCL_CL_VERSION >= 0x1020
+-    ADD_ATTR( , UNORM_INT24);
+-#endif
+ #if PYOPENCL_CL_VERSION >= 0x2010
+     ADD_ATTR( , UNORM_INT_101010_2);
+ #endif
