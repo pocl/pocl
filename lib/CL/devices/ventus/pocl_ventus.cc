@@ -1163,6 +1163,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 	ss_cmd << " -w ";
 #endif
   ss_cmd << " -D__opencl_c_generic_address_space=1 -D__opencl_c_named_address_space_builtins=1 ";
+  ss_cmd << " -D__OPENCL_VERSION__=" << device->version_as_int << " ";
 	ss_cmd << program->compiler_options << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
