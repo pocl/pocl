@@ -254,7 +254,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
                       " __opencl_c_generic_address_space");
   dev->extensions = strdup (extensions); // no extention support now
 
-  dev->profile = "FULL_PROFILE";
+  dev->profile = "EMBEDDED_PROFILE";
   dev->endian_little = CL_TRUE;
 
   dev->max_mem_alloc_size = 500 * 1024 * 1024; //100M
