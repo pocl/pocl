@@ -129,7 +129,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->run_native = NULL;
   /***********************No need to modify for now*************************/
 
-  ops->copy = NULL;
+  ops->copy = pocl_ventus_driver_copy;
   ops->copy_with_size = NULL;
   ops->copy_rect = NULL;
 
@@ -1101,6 +1101,30 @@ void pocl_ventus_write(void *data,
   assert(0 == err);
 }
 
+void
+pocl_ventus_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                  pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                  size_t dst_offset, size_t src_offset, size_t size)
+{
+    vt_device_data_t *d = (vt_device_data_t *)data;
+    char *__restrict__ src_ptr = (char *)src_mem_id->mem_ptr;
+    char *__restrict__ dst_ptr = (char *)dst_mem_id->mem_ptr;
+
+    if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
+        return;
+
+    void *host_ptr = malloc(size);
+    uint64_t dev_src_addr  = (uint64_t)(*(uint64_t *)src_ptr);
+    uint64_t dev_dst_addr  = (uint64_t)(*(uint64_t *)dst_ptr);
+
+    int err = vt_copy_from_dev(d->vt_device, dev_src_addr + src_offset, host_ptr, size, 0, 0);
+    assert(0 == err);
+
+    err = vt_copy_to_dev(d->vt_device, dev_dst_addr + dst_offset, host_ptr, size, 0, 0);
+    assert(0 == err);
+
+    free(host_ptr);
+}
 
 
 int pocl_ventus_setup_metadata  (cl_device_id device, cl_program program,
