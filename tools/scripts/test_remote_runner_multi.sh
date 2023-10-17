@@ -23,6 +23,7 @@ BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
 
+PUBLIC_IP=$(ip route get 9.9.9.9 | tr -s ' ' | cut -d' ' -f7)
 PORT1=12000
 PORT2=22000
 
@@ -43,12 +44,12 @@ export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
-$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT1 -v error,warn,general &
+$BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT1 -v error,warn,general &
 POCLD_PID1=$!
 
 echo "Pocld running with PID: $POCLD_PID1"
 
-$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT2 -v error,warn,general &
+$BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT2 -v error,warn,general &
 POCLD_PID2=$!
 
 echo "Pocld running with PID: $POCLD_PID2"
@@ -56,8 +57,8 @@ echo "Pocld running with PID: $POCLD_PID2"
 sleep 1
 
 export POCL_DEVICES="remote remote"
-export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT1/0"
-export POCL_REMOTE1_PARAMETERS="127.0.0.1:$PORT2/0"
+export POCL_REMOTE0_PARAMETERS="$PUBLIC_IP:$PORT1/0"
+export POCL_REMOTE1_PARAMETERS="$PUBLIC_IP:$PORT2/0"
 export POCL_DEBUG=warn,err,remote
 unset POCL_ENABLE_UNINIT
 
