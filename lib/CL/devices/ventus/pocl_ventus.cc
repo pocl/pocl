@@ -121,9 +121,9 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->free = pocl_ventus_free;
 
   ops->read = pocl_ventus_read;
-  ops->read_rect = NULL;
+  ops->read_rect = pocl_ventus_read_rect;
   ops->write = pocl_ventus_write;
-  ops->write_rect = NULL;
+  ops->write_rect = pocl_ventus_write_rect;
 
   ops->run = pocl_ventus_run; 
   ops->run_native = NULL;
@@ -131,12 +131,12 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 
   ops->copy = pocl_ventus_driver_copy;
   ops->copy_with_size = NULL;
-  ops->copy_rect = NULL;
+  ops->copy_rect = pocl_ventus_copy_rect;
 
   ops->memfill = NULL;
-  ops->map_mem = NULL;
-  ops->unmap_mem = NULL;
-  ops->get_mapping_ptr = NULL;
+  ops->map_mem = pocl_ventus_map_mem;
+  ops->unmap_mem = pocl_driver_unmap_mem;
+  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = NULL;
 
   /* for ventus,pocl does not need to compile the kernel,so they are set to NULL */
@@ -1025,7 +1025,7 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   by the OpenCL runtime and not be directly accessible 
   to the host program.*/
   if (flags & CL_MEM_USE_HOST_PTR) {
-    abort(); //TODO
+//    abort(); //TODO
   } else {
     vt_buf_free(d->vt_device,memobj->size,&dev_mem_addr,0,0);
     free(memobj->mem_host_ptr);
@@ -1124,6 +1124,175 @@ pocl_ventus_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst
     assert(0 == err);
 
     free(host_ptr);
+}
+
+void
+pocl_ventus_read_rect (void *data, void *__restrict__ const host_ptr,
+                       pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                       const size_t *__restrict__ const buffer_origin,
+                       const size_t *__restrict__ const host_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const buffer_row_pitch,
+                       size_t const buffer_slice_pitch,
+                       size_t const host_row_pitch,
+                       size_t const host_slice_pitch)
+{
+    cl_mem_flags flags = src_buf->flags;
+    void *__restrict__ device_ptr = src_mem_id->mem_ptr;
+
+    if (flags & CL_MEM_USE_HOST_PTR) {
+        device_ptr = src_buf->mem_host_ptr;
+    }
+
+    char const *__restrict const adjusted_device_ptr
+        = (char const *)device_ptr + buffer_origin[2] * buffer_slice_pitch
+        + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
+    char *__restrict__ const adjusted_host_ptr
+        = (char *)host_ptr + host_origin[2] * host_slice_pitch
+        + host_origin[1] * host_row_pitch + host_origin[0];
+    size_t j, k;
+
+    /* TODO: handle overlaping regions */
+    if ((buffer_row_pitch == host_row_pitch && host_row_pitch == region[0])
+                && (buffer_slice_pitch == host_slice_pitch
+                && host_slice_pitch == (region[1] * region[0]))) {
+        memcpy (adjusted_host_ptr, adjusted_device_ptr,
+                region[2] * region[1] * region[0]);
+    } else {
+        for (k = 0; k < region[2]; ++k)
+            for (j = 0; j < region[1]; ++j)
+                memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+                        adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+                        region[0]);
+    }
+}
+
+void
+pocl_ventus_write_rect (void *data, const void *__restrict__ const host_ptr,
+                        pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                        const size_t *__restrict__ const buffer_origin,
+                        const size_t *__restrict__ const host_origin,
+                        const size_t *__restrict__ const region,
+                        size_t const buffer_row_pitch,
+                        size_t const buffer_slice_pitch,
+                        size_t const host_row_pitch,
+                        size_t const host_slice_pitch)
+{
+    vt_device_data_t *d = (vt_device_data_t *)data;
+    void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
+    uint64_t dev_addr = (uint64_t)(*(uint64_t *)device_ptr);
+
+    char *buff = (char *)malloc(dst_buf->size);
+    int err = vt_copy_from_dev(d->vt_device, dev_addr, buff, dst_buf->size, 0, 0);
+    assert(0 == err);
+
+    char *__restrict const adjusted_device_ptr
+        = buff + buffer_origin[0]
+        + buffer_row_pitch * buffer_origin[1]
+        + buffer_slice_pitch * buffer_origin[2];
+    char const *__restrict__ const adjusted_host_ptr
+        = (char const *)host_ptr + host_origin[0]
+        + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
+    size_t j, k;
+
+    /* TODO: handle overlaping regions */
+    if ((buffer_row_pitch == host_row_pitch && host_row_pitch == region[0])
+                && (buffer_slice_pitch == host_slice_pitch
+                && host_slice_pitch == (region[1] * region[0]))) {
+        memcpy (adjusted_device_ptr, adjusted_host_ptr, region[2] * region[1] * region[0]);
+    } else {
+        for (k = 0; k < region[2]; ++k) {
+            for (j = 0; j < region[1]; ++j) {
+                memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+                        adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
+                        region[0]);
+            }
+        }
+    }
+
+    err = vt_copy_to_dev(d->vt_device, dev_addr, buff, dst_buf->size, 0, 0);
+    assert(0 == err);
+    free(buff);
+}
+
+void
+pocl_ventus_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
+                       cl_mem src_buf,
+                       const size_t *__restrict__ const dst_origin,
+                       const size_t *__restrict__ const src_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const dst_row_pitch,
+                       size_t const dst_slice_pitch,
+                       size_t const src_row_pitch,
+                       size_t const src_slice_pitch)
+{
+    int err;
+    vt_device_data_t *d = (vt_device_data_t *)data;
+    void *__restrict__ src_ptr = src_mem_id->mem_ptr;
+    void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+    uint64_t dev_src_addr  = (uint64_t)(*(uint64_t *)src_ptr);
+    uint64_t dev_dst_addr  = (uint64_t)(*(uint64_t *)dst_ptr);
+    char *src_buff = (char *)malloc(src_buf->size);
+    char *dst_buff = (char *)malloc(dst_buf->size);
+
+    err = vt_copy_from_dev(d->vt_device, dev_src_addr, src_buff, src_buf->size, 0, 0);
+    assert(0 == err);
+    err = vt_copy_from_dev(d->vt_device, dev_dst_addr, dst_buff, dst_buf->size, 0, 0);
+    assert(0 == err);
+
+    char const *__restrict const adjusted_src_ptr
+        = (char const *)src_buff + src_origin[0] + src_row_pitch * src_origin[1]
+        + src_slice_pitch * src_origin[2];
+    char *__restrict__ const adjusted_dst_ptr
+        = (char *)dst_buff + dst_origin[0] + dst_row_pitch * dst_origin[1]
+        + dst_slice_pitch * dst_origin[2];
+
+    size_t j, k;
+
+    /* TODO: handle overlaping regions */
+    if ((src_row_pitch == dst_row_pitch && dst_row_pitch == region[0])
+                && (src_slice_pitch == dst_slice_pitch
+                && dst_slice_pitch == (region[1] * region[0]))) {
+        memcpy (adjusted_dst_ptr, adjusted_src_ptr,
+                region[2] * region[1] * region[0]);
+    } else {
+        for (k = 0; k < region[2]; ++k)
+            for (j = 0; j < region[1]; ++j)
+                memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
+                        adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
+                        region[0]);
+    }
+
+    err = vt_copy_to_dev(d->vt_device, dev_dst_addr, dst_buff, dst_buf->size, 0, 0);
+    assert(0 == err);
+
+    free(src_buff);
+    free(dst_buff);
+}
+
+cl_int
+pocl_ventus_map_mem (void *data, pocl_mem_identifier *src_mem_id,
+                                 cl_mem src_buf, mem_mapping_t *map)
+{
+    struct vt_device_data_t *d = (struct vt_device_data_t *)data;
+    char *__restrict__ src_device_ptr = (char *)src_mem_id->mem_ptr;
+    uint64_t dev_addr = (*((uint64_t *)(src_mem_id->mem_ptr))) + map->offset;
+
+    assert (map->host_ptr);
+
+    if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) {
+        return CL_SUCCESS;
+    }
+
+    if (map->host_ptr != (src_device_ptr + map->offset)) {
+        int err = vt_copy_from_dev(d->vt_device, dev_addr, map->host_ptr, map->size, 0, 0);
+        if (err) {
+            return CL_MAP_FAILURE;
+        }
+    }
+
+    return CL_SUCCESS;
 }
 
 
