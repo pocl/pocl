@@ -33,6 +33,10 @@ CUDA driver has gained some new features:
 * enable FP16 & generic address space support (with SPIR-V input)
 
 
+* PoCL currently reports `cl_khr_spir` for SPIR 1.x/2.0 support, but this has
+  never been tested properly and will be removed in the next release. SPIR-V
+  remains the supported option.
+
 ================
 Acknowledgements
 ================
