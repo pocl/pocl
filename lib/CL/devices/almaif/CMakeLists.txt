@@ -40,18 +40,26 @@ set(ALMAIF_SOURCES "AlmaifShared.hh"
                   "EmulationRegion.hh"
                   "EmulationDevice.cc"
                   "EmulationDevice.hh"
-                  "XrtDevice.hh"
+                  "XilinxXrtDevice.hh"
                   "AlmaifCompile.cc"
                   "AlmaifCompile.hh"
-                  "openasip/AlmaifCompileTCE.hh"
+                  "openasip/AlmaifCompileOpenasip.hh"
                   )
 
 if(HAVE_XRT)
     add_compile_options(-I${XRT_INCLUDEDIR})
     set(ALMAIF_SOURCES ${ALMAIF_SOURCES}
-                      "XrtDevice.cc"
-                      "XrtRegion.cc"
-                      "XrtRegion.hh"
+                      "XilinxXrtDevice.cc"
+                      "XilinxXrtRegion.cc"
+                      "XilinxXrtRegion.hh"
+                      "XilinxXrtExternalRegion.cc"
+                      "XilinxXrtExternalRegion.hh"
+                      "AlmaifDB/DBDevice.hh"
+                      "AlmaifDB/DBDevice.cc"
+                      "AlmaifDB/AlmaIFBitstreamDatabaseManager.cc"
+                      "AlmaifDB/AlmaIFBitstreamDatabaseManager.hh"
+                      "AlmaifDB/tiny-json.c"
+                      "AlmaifDB/tiny-json.h"
                       )
 endif()
 
@@ -63,7 +71,7 @@ if(ENABLE_TCE)
                       "openasip/TTASimRegion.hh"
                       "openasip/TTASimControlRegion.cc"
                       "openasip/TTASimControlRegion.hh"
-                      "openasip/AlmaifCompileTCE.cc"
+                      "openasip/AlmaifCompileOpenasip.cc"
                       )
 endif()
 
@@ -74,7 +82,7 @@ endif(MSVC)
 
 add_pocl_device_library(pocl-devices-almaif ${ALMAIF_SOURCES})
 
-if(HAVE_XRT})
+if(HAVE_XRT)
     target_link_libraries(pocl-devices-almaif PRIVATE "${XRT_LIBDIR}/libxrt_coreutil.so")
 endif()
 

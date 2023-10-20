@@ -37,12 +37,13 @@
 #endif
 
 #ifdef ENABLE_COMPILER
-#include "openasip/AlmaifCompileTCE.hh"
+#include "openasip/AlmaifCompileOpenasip.hh"
 #endif
 
 extern int pocl_offline_compile;
 
-int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameters) {
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
+                             const std::string &parameters) {
   AlmaifData *d = (AlmaifData *)dev->data;
 
   d->compilationData = (compilation_data_t *)pocl_aligned_malloc(
@@ -86,8 +87,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   d->compilationData->current_kernel = NULL;
   SETUP_DEVICE_CL_VERSION(1, 2);
 
-  // dev->available = CL_TRUE;
-  dev->available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
+  d->Available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
 
   dev->compiler_available = true;
   dev->linker_available = true;
@@ -97,12 +97,12 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
 
 #ifdef ENABLE_COMPILER
   // TODO tce specific
-  adi->initialize_device = pocl_almaif_tce_initialize;
-  adi->cleanup_device = pocl_almaif_tce_cleanup;
-  adi->compile_kernel = pocl_almaif_tce_compile;
+  adi->initialize_device = pocl_almaif_openasip_initialize;
+  adi->cleanup_device = pocl_almaif_openasip_cleanup;
+  adi->compile_kernel = pocl_almaif_openasip_compile;
   if (pocl_get_bool_option("POCL_ALMAIF_STANDALONE", 0)) {
     adi->produce_standalone_program =
-        pocl_almaif_tce_produce_standalone_program;
+        pocl_almaif_openasip_produce_standalone_program;
   }
   // backend specific init
   POCL_MSG_PRINT_ALMAIF("Starting device specific initializion\n");
@@ -111,8 +111,8 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   POCL_MSG_PRINT_ALMAIF("Device specific initializion done\n");
 
   SHA1_digest_t digest;
-  pocl_almaif_tce_device_hash(parameters, dev->llvm_target_triplet,
-                              (char *)digest);
+  pocl_almaif_openasip_device_hash(parameters.c_str(), dev->llvm_target_triplet,
+                                   (char *)digest);
   POCL_MSG_PRINT_ALMAIF("ALMAIF TCE DEVICE HASH=%s", (char *)digest);
   adi->build_hash = strdup((char *)digest);
 
@@ -134,8 +134,8 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameter
   dev->ops->build_poclbinary = pocl_driver_build_poclbinary;
   dev->ops->build_binary = pocl_almaif_build_binary;
 #ifdef ENABLE_COMPILER
-  dev->ops->compile_kernel = pocl_almaif_tce_compile;
-  dev->ops->init_build = pocl_tce_init_build;
+  dev->ops->compile_kernel = pocl_almaif_openasip_compile;
+  dev->ops->init_build = pocl_almaif_openasip_init_build;
 #endif
   return CL_SUCCESS;
 }

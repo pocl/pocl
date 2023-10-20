@@ -32,6 +32,7 @@
 #include "pocl_types.h"
 
 #include <stdlib.h>
+#include <string>
 
 struct almaif_kernel_data_s;
 
@@ -40,8 +41,8 @@ public:
   AlmaIFDevice();
   virtual ~AlmaIFDevice();
 
-  virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
-                                   _cl_command_node *cmd);
+  virtual void loadProgramToDevice(almaif_kernel_data_s *KernelData,
+                                   cl_kernel Kernel, _cl_command_node *Command);
 
   AlmaIFRegion *ControlMemory;
   AlmaIFRegion *InstructionMemory;
@@ -63,22 +64,35 @@ public:
 
   void printMemoryDump();
 
-  virtual void writeDataToDevice(size_t dst, const char *__restrict__ const src,
-                                 size_t size);
-  virtual void readDataFromDevice(char *__restrict__ const dst, size_t src,
-                                  size_t size);
+  virtual void writeDataToDevice(pocl_mem_identifier *DstMemId,
+                                 const char *__restrict__ const Src,
+                                 size_t Size, size_t Offset);
+  virtual void readDataFromDevice(char *__restrict__ const Dst,
+                                  pocl_mem_identifier *SrcMemId, size_t Size,
+                                  size_t Offset);
+
+  virtual void discoverDeviceParameters();
+
+  virtual bool isDBDevice() { return false; }
+
+  // Allocate buffer from AlmaIFDevice's DataMemory or ExternalMemory
+  virtual cl_int allocateBuffer(pocl_mem_identifier *P, size_t Size);
+  // Free buffer from AlmaIFDevice's DataMemory or ExternalMemory
+  virtual void freeBuffer(pocl_mem_identifier *P);
+  // Retuns the offset of the allocated buffer, to be used as a kernel argument
+  virtual size_t pointerDeviceOffset(pocl_mem_identifier *P);
 
 protected:
-  virtual void discoverDeviceParameters();
-  uintptr_t imem_start;
-  uint32_t imem_size;
-  uintptr_t cq_start;
-  uint32_t cq_size;
-  uintptr_t dmem_start;
-  uint32_t dmem_size;
+  uintptr_t ImemStart;
+  uint32_t ImemSize;
+  uintptr_t CQStart;
+  uint32_t CQSize;
+  uintptr_t DmemStart;
+  uint32_t DmemSize;
 
 private:
-  void preread_images(const char *kernel_cachedir, almaif_kernel_data_s *kd);
+  void prereadImages(const std::string &KernelCacheDir,
+                     almaif_kernel_data_s *KernelData);
 };
 
 #endif

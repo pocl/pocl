@@ -1,10 +1,12 @@
+
+Change logs have been moved to doc/notes*.rst
+
 4.1 Unreleased
 =================
 
 Notable User Facing Changes
 ---------------------------
 - Added support for Coarse-Grained buffer SVM on CUDA devices.
-
 Notable Fixes
 -------------
 

@@ -37,8 +37,8 @@ TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine &mach,
                                          TTASimDevice *parent) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Initializing TTASimControlRegion\n");
-  PhysAddress = 0;
-  Size = ALMAIF_DEFAULT_CTRL_SIZE;
+  PhysAddress_ = 0;
+  Size_ = ALMAIF_DEFAULT_CTRL_SIZE;
   parent_ = parent;
   assert(parent_ != nullptr &&
          "simulator parent handle NULL, is the sim opened properly?");
@@ -49,17 +49,17 @@ TTASimControlRegion::TTASimControlRegion(const TTAMachine::Machine &mach,
 uint32_t TTASimControlRegion::Read32(size_t offset) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
   auto value = ControlRegisters_[offset / sizeof(uint32_t)];
   return value;
 }
 
 void TTASimControlRegion::Write32(size_t offset, uint32_t value) {
   POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Writing to physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
 
   if (offset == ALMAIF_CONTROL_REG_COMMAND) {
     switch (value) {
@@ -84,9 +84,9 @@ void TTASimControlRegion::Write16(size_t offset, uint16_t value) {
 uint64_t TTASimControlRegion::Read64(size_t offset) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("MMAP: Reading from physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
   auto value = reinterpret_cast<uint64_t *>(
       ControlRegisters_)[offset / sizeof(uint64_t)];
   return value;
@@ -114,66 +114,66 @@ void TTASimControlRegion::setupControlRegisters(
   bool hasPrivateMem = false;
   bool sharedDataAndCq = false;
   bool relativeAddressing = true;
-  int dmem_size = 0;
-  int cq_size = 0;
-  int imem_size = 0;
+  int DmemSize = 0;
+  int CQSize = 0;
+  int ImemSize = 0;
   const TTAMachine::Machine::AddressSpaceNavigator &nav =
       mach.addressSpaceNavigator();
   for (int i = 0; i < nav.count(); i++) {
     TTAMachine::AddressSpace *as = nav.item(i);
     if (as->hasNumericalId(TTA_ASID_GLOBAL)) {
       if (as->end() == UINT32_MAX) {
-        dmem_size = pow(2, 15); // TODO magic number from almaifintegrator.cc
+        DmemSize = pow(2, 15); // TODO magic number from almaifintegrator.cc
         relativeAddressing = false;
       } else {
-        dmem_size = as->end() + 1;
+        DmemSize = as->end() + 1;
       }
       if (as->hasNumericalId(TTA_ASID_CQ)) {
         sharedDataAndCq = true;
       }
     } else if (as->hasNumericalId(TTA_ASID_CQ)) {
-      cq_size = as->end() + 1;
+      CQSize = as->end() + 1;
     } else if (as->hasNumericalId(TTA_ASID_PRIVATE)) {
       hasPrivateMem = true;
     } else if (as->name() == "instructions") {
 
-      imem_size = (as->end() + 1) * as->width();
+      ImemSize = (as->end() + 1) * as->width();
     }
   }
 
-  int segment_size = dmem_size > imem_size ? dmem_size : imem_size;
+  int segment_size = DmemSize > ImemSize ? DmemSize : ImemSize;
 
-  int dmem_start, cq_start;
+  int DmemStart, CQStart;
   if (relativeAddressing) {
-    dmem_start = 0;
-    cq_start = 0;
+    DmemStart = 0;
+    CQStart = 0;
   } else {
-    cq_start = 2 * segment_size;
-    dmem_start = 3 * segment_size;
+    CQStart = 2 * segment_size;
+    DmemStart = 3 * segment_size;
   }
 
   if (!hasPrivateMem) {
     // No private mem, so the latter half of the dmem is reserved for it
     int fallback_mem_size = pocl_get_int_option("POCL_ALMAIF_PRIVATE_MEM_SIZE",
                                                 ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
-    dmem_size -= fallback_mem_size;
+    DmemSize -= fallback_mem_size;
     POCL_MSG_PRINT_ALMAIF(
         "Almaif: No separate private mem found. Setting it to %d\n",
         fallback_mem_size);
   }
   if (sharedDataAndCq) {
     // No separate Cq so reserve small slice of dmem for it
-    cq_size = 4 * AQL_PACKET_LENGTH;
-    dmem_size -= cq_size;
-    cq_start = dmem_start + dmem_size;
+    CQSize = 4 * AQL_PACKET_LENGTH;
+    DmemSize -= CQSize;
+    CQStart = DmemStart + DmemSize;
   }
 
-  int imem_start = 0;
+  int ImemStart = 0;
 
   if (!relativeAddressing) {
     unsigned default_baseaddress = 0x40000000; // TODO get from env variable
-    cq_start += default_baseaddress;
-    dmem_start += default_baseaddress;
+    CQStart += default_baseaddress;
+    DmemStart += default_baseaddress;
   }
 
   memset(ControlRegisters_, 0, ALMAIF_DEFAULT_CTRL_SIZE);
@@ -183,12 +183,12 @@ void TTASimControlRegion::setupControlRegisters(
   ControlRegisters_[ALMAIF_INFO_IF_TYPE / 4] = 3;
   ControlRegisters_[ALMAIF_INFO_CORE_COUNT / 4] = 1;
   ControlRegisters_[ALMAIF_INFO_CTRL_SIZE / 4] = 1024;
-  ControlRegisters_[ALMAIF_INFO_IMEM_SIZE / 4] = imem_size;
-  ControlRegisters_[ALMAIF_INFO_IMEM_START_LOW / 4] = imem_start;
-  ControlRegisters_[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] = cq_size;
-  ControlRegisters_[ALMAIF_INFO_CQMEM_START_LOW / 4] = cq_start;
-  ControlRegisters_[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
-  ControlRegisters_[ALMAIF_INFO_DMEM_START_LOW / 4] = dmem_start;
+  ControlRegisters_[ALMAIF_INFO_IMEM_SIZE / 4] = ImemSize;
+  ControlRegisters_[ALMAIF_INFO_IMEM_START_LOW / 4] = ImemStart;
+  ControlRegisters_[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] = CQSize;
+  ControlRegisters_[ALMAIF_INFO_CQMEM_START_LOW / 4] = CQStart;
+  ControlRegisters_[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = DmemSize;
+  ControlRegisters_[ALMAIF_INFO_DMEM_START_LOW / 4] = DmemStart;
   ControlRegisters_[ALMAIF_INFO_FEATURE_FLAGS_LOW / 4] =
       (relativeAddressing) ? 0 : 1;
   ControlRegisters_[ALMAIF_INFO_PTR_SIZE / 4] = 4;

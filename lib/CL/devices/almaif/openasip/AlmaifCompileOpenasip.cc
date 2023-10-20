@@ -1,4 +1,4 @@
-/* AlmaifCompileTCE.cc - compiler support for custom devices
+/* AlmaifCompileOpenasip.cc - compiler support for custom devices
 
    Copyright (c) 2022 Topi Leppänen / Tampere University
 
@@ -20,7 +20,6 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-
 
 #include "stdint.h"
 #include "unistd.h"
@@ -50,41 +49,40 @@
 
 #include "../AlmaifCompile.hh"
 #include "../AlmaifShared.hh"
-#include "AlmaifCompileTCE.hh"
+#include "AlmaifCompileOpenasip.hh"
 
 #include "TTASimDevice.hh"
 
-int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
+int pocl_almaif_openasip_initialize(cl_device_id device,
+                                    const std::string &parameters) {
   AlmaifData *d = (AlmaifData *)(device->data);
 
-  tce_backend_data_t *bd = (tce_backend_data_t *)pocl_aligned_malloc(
-      HOST_CPU_CACHELINE_SIZE, sizeof(tce_backend_data_t));
+  openasip_backend_data_t *bd = new openasip_backend_data_t();
   if (bd == NULL) {
-    POCL_MSG_WARN("couldn't allocate tce_backend_data\n");
+    POCL_MSG_WARN("couldn't allocate openasip_backend_data\n");
     return CL_OUT_OF_HOST_MEMORY;
   }
 
-  POCL_INIT_LOCK(bd->tce_compile_lock);
+  POCL_INIT_LOCK(bd->openasip_compile_lock);
 
   if (1) // pocl_offline_compile
   {
-    assert(parameters);
+    assert(parameters != "");
     /* Convert the filename from env variable to absolute filename.
      * This is required, since generatebits must be run in
      * destination (output) directory with ADF argument */
-    bd->machine_file = realpath(parameters, NULL);
-    if ((bd->machine_file == NULL) || (!pocl_exists(bd->machine_file)))
-      POCL_ABORT("Can't find ADF file: %s\n", bd->machine_file);
+    char *tmp_path = realpath(parameters.c_str(), NULL);
+    if ((tmp_path == NULL) || (!pocl_exists(tmp_path)))
+      POCL_ABORT("Can't find ADF file: %s\n", tmp_path);
+    bd->machine_file.assign(tmp_path);
+    free(tmp_path);
 
-    size_t len = strlen(bd->machine_file);
-    assert(len > 0);
-    // char* dev_name = malloc (len+20);
-    // snprintf (dev_name, 1024, "ALMAIF TCE: %s", bd->machine_file);
+    // snprintf (dev_name, 1024, "ALMAIF openasip: %s", bd->machine_file);
 
     /* grep the ADF file for endiannes flag */
     char *content = NULL;
     uint64_t size = 0;
-    pocl_read_file(bd->machine_file, &content, &size);
+    pocl_read_file(bd->machine_file.c_str(), &content, &size);
     if ((size == 0) || (content == NULL))
       POCL_ABORT("Can't read ADF file: %s\n", bd->machine_file);
 
@@ -100,12 +98,12 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
                          bd->core_count);
     POCL_MEM_FREE(content);
   } else {
-    bd->machine_file = NULL;
+    bd->machine_file = "";
     device->max_compute_units =
         d->Dev->ControlMemory->Read32(ALMAIF_INFO_CORE_COUNT);
   }
 
-  device->long_name = device->short_name = "ALMAIF TCE";
+  device->long_name = device->short_name = "ALMAIF OPENASIP";
   device->vendor = "pocl";
   device->extensions = TCE_DEVICE_EXTENSIONS;
   if (device->endian_little) {
@@ -121,42 +119,24 @@ int pocl_almaif_tce_initialize(cl_device_id device, const char *parameters) {
   d->compilationData->backend_data = (void *)bd;
   device->builtins_sources_path = "tce_builtins.cl";
 
-  device->device_side_printf = 1;
-  device->printf_buffer_size = PRINTF_BUFFER_SIZE;
-  chunk_info_t *chunk = NULL;
-  chunk = pocl_alloc_buffer(d->Dev->AllocRegions, device->printf_buffer_size);
-  if (chunk == NULL) {
-    POCL_ABORT("Almaif: Can't allocate %z bytes for printf buffer\n",
-               device->printf_buffer_size);
-  } else {
-    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %d from %d\n",
-                         device->printf_buffer_size, chunk->start_address);
-    d->printf_buffer = chunk;
-  }
-
-  d->printf_position = pocl_alloc_buffer(d->Dev->AllocRegions, 4);
-  if (d->printf_position == NULL) {
-    POCL_ABORT("Almaif: Can't allocate 4 bytes for printf index\n");
-  }
-
   return 0;
 }
 
-int pocl_almaif_tce_cleanup(cl_device_id device) {
+int pocl_almaif_openasip_cleanup(cl_device_id device) {
   void *data = device->data;
   AlmaifData *d = (AlmaifData *)data;
 
-  pocl_free_chunk((chunk_info_t *)d->printf_buffer);
-  pocl_free_chunk((chunk_info_t *)d->printf_position);
+  if (device->device_side_printf) {
+    pocl_free_chunk((chunk_info_t *)d->PrintfBuffer);
+    pocl_free_chunk((chunk_info_t *)d->PrintfPosition);
+  }
 
-  tce_backend_data_t *bd =
-      (tce_backend_data_t *)d->compilationData->backend_data;
+  openasip_backend_data_t *bd =
+      (openasip_backend_data_t *)d->compilationData->backend_data;
 
-  POCL_DESTROY_LOCK(bd->tce_compile_lock);
+  POCL_DESTROY_LOCK(bd->openasip_compile_lock);
 
-  POCL_MEM_FREE(bd->machine_file);
-
-  pocl_aligned_free(bd);
+  delete bd;
 
   return 0;
 }
@@ -165,77 +145,74 @@ int pocl_almaif_tce_cleanup(cl_device_id device) {
 #define OFFSET_ARG(c) SUBST(c)
 #define MAX_CMDLINE_LEN (32 * POCL_MAX_PATHNAME_LENGTH)
 
-void tceccCommandLine(char *commandline, size_t max_cmdline_len,
-                      _cl_command_run *run_cmd, AlmaifData *D,
-                      const char *tempDir, const char *inputSrc,
-                      const char *outputTpef, const char *machine_file,
-                      int is_multicore, int little_endian,
-                      const char *extraParams, bool standalone_mode) {
-
-  const char *mainC;
+std::string oaccCommandLine(_cl_command_run *run_cmd, AlmaifData *D,
+                            const std::string &tempDir,
+                            const std::string &inputSrc,
+                            const std::string &outputTpef,
+                            const std::string &machine_file, int is_multicore,
+                            int little_endian, const std::string &extraParams,
+                            bool standalone_mode) {
+  std::string mainC;
   if (is_multicore)
     mainC = "tta_device_main_dthread.c";
   else
     mainC = "tta_device_main.c";
 
-  char deviceMainSrc[POCL_MAX_PATHNAME_LENGTH];
-  const char *poclIncludePathSwitch;
+  std::string deviceMainSrc;
+  std::string poclIncludePathSwitch;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
-    snprintf(deviceMainSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s%s", SRCDIR,
-             "/lib/CL/devices/almaif/openasip/", mainC);
-    assert(access(deviceMainSrc, R_OK) == 0);
-    poclIncludePathSwitch = " -I " SRCDIR "/include"
-                            " -I " SRCDIR "/lib/CL/devices/almaif/openasip";
+    deviceMainSrc =
+        std::string(SRCDIR) + "/lib/CL/devices/almaif/openasip/" + mainC;
+    assert(access(deviceMainSrc.c_str(), R_OK) == 0);
+    poclIncludePathSwitch = " -I " + std::string(SRCDIR) + "/include" + " -I " +
+                            std::string(SRCDIR) +
+                            "/lib/CL/devices/almaif/openasip";
   } else {
-    snprintf(deviceMainSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s%s",
-             POCL_INSTALL_PRIVATE_DATADIR, "/", mainC);
-    assert(access(deviceMainSrc, R_OK) == 0);
-    poclIncludePathSwitch = " -I " POCL_INSTALL_PRIVATE_DATADIR "/include";
+    deviceMainSrc = std::string(POCL_INSTALL_PRIVATE_DATADIR) + "/" + mainC;
+    assert(access(deviceMainSrc.c_str(), R_OK) == 0);
+    poclIncludePathSwitch =
+        " -I " + std::string(POCL_INSTALL_PRIVATE_DATADIR) + "/include";
   }
 
-  char extraFlags[MAX_CMDLINE_LEN];
-  const char *multicoreFlags = "";
+  std::string extraFlags;
+  std::string multicoreFlags = "";
   if (is_multicore)
     multicoreFlags = " -ldthread -lsync-lu -llockunit";
 
-  char preprocessor_directives[MAX_CMDLINE_LEN];
-  set_preprocessor_directives(preprocessor_directives, D, machine_file,
-                              standalone_mode);
+  std::string preprocessor_directives =
+      set_preprocessor_directives(D, machine_file, standalone_mode);
 
-  const char *userFlags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
-  const char *endianFlags = little_endian ? "--little-endian" : "";
-  snprintf(extraFlags, MAX_CMDLINE_LEN, "%s %s %s %s %s -k dummy_argbuffer",
-           extraParams, multicoreFlags, userFlags, endianFlags,
-           preprocessor_directives);
+  const std::string userFlags =
+      pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
+  const std::string endianFlags = little_endian ? "--little-endian" : "";
+  extraFlags = extraParams + " " + multicoreFlags + " " + userFlags + " " +
+               endianFlags + " " + preprocessor_directives +
+               " -k dummy_argbuffer";
 
-  char kernelObjSrc[POCL_MAX_PATHNAME_LENGTH];
-  snprintf(kernelObjSrc, POCL_MAX_PATHNAME_LENGTH, "%s%s", tempDir,
-           "/../descriptor.so.kernel_obj.c");
+  std::string kernelObjSrc = tempDir + "/../descriptor.so.kernel_obj.c";
 
-  char kernelMdSymbolName[POCL_MAX_PATHNAME_LENGTH];
-  snprintf(kernelMdSymbolName, POCL_MAX_PATHNAME_LENGTH, "_%s_md",
-           run_cmd->kernel->name);
+  std::string kernelMdSymbolName =
+      "_" + std::string(run_cmd->kernel->name) + "_md";
 
-  char programBcFile[POCL_MAX_PATHNAME_LENGTH];
-  snprintf(programBcFile, POCL_MAX_PATHNAME_LENGTH, "%s%s", tempDir,
-           "/program.bc");
+  std::string programBcFile = tempDir + "/program.bc";
 
   /* Compile in steps to save the program.bc for automated exploration
      use case when producing the kernel capture scripts. */
 
-  snprintf(commandline, max_cmdline_len,
-           "tcecc -llwpr %s %s %s %s -k %s -g -O3 --emit-llvm -o %s %s;"
-           "tcecc -a %s %s -O3 -o %s %s\n",
-           poclIncludePathSwitch, deviceMainSrc, kernelObjSrc, inputSrc,
-           kernelMdSymbolName, programBcFile, extraFlags,
-
-           machine_file, programBcFile, outputTpef, extraFlags);
+  std::string commandline =
+      "oacc -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " +
+      kernelObjSrc + " " + inputSrc + " -k " + kernelMdSymbolName +
+      " -g -O3 --emit-llvm" + " -o " + programBcFile + " " + extraFlags + ";" +
+      "oacc -a " + machine_file + " " + programBcFile + " -O3 -o " +
+      outputTpef + " " + extraFlags + "\n";
+  return commandline;
 }
 
-void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
-                                      _cl_command_node *command,
-                                      cl_kernel kernel, cl_device_id device,
-                                      int specialize) {
+void pocl_openasip_write_kernel_descriptor(char *content, size_t content_size,
+                                           _cl_command_node *command,
+                                           cl_kernel kernel,
+                                           cl_device_id device,
+                                           int specialize) {
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous standalone devices which
   // need the definitions to accompany the kernels, for the launcher
@@ -280,8 +257,8 @@ void pocl_tce_write_kernel_descriptor(char *content, size_t content_size,
                               content_len);
 }
 
-void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
-                             cl_device_id device, int specialize) {
+void pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
+                                  cl_device_id device, int specialize) {
 
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL) {
     POCL_ABORT("Almaif: trying to compile non-ndrange command\n");
@@ -289,8 +266,8 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
 
   void *data = cmd->device->data;
   AlmaifData *d = (AlmaifData *)data;
-  tce_backend_data_t *bd =
-      (tce_backend_data_t *)d->compilationData->backend_data;
+  openasip_backend_data_t *bd =
+      (openasip_backend_data_t *)d->compilationData->backend_data;
 
   if (!kernel)
     kernel = cmd->command.run.kernel;
@@ -299,13 +276,13 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   assert(kernel);
   assert(device);
   POCL_MSG_PRINT_ALMAIF("COMPILATION BEFORE WG FUNC\n");
-  POCL_LOCK(bd->tce_compile_lock);
+  POCL_LOCK(bd->openasip_compile_lock);
   int error = pocl_llvm_generate_workgroup_function(
       cmd->program_device_i, device, kernel, cmd, specialize);
 
   POCL_MSG_PRINT_ALMAIF("COMPILATION AFTER WG FUNC\n");
   if (error) {
-    POCL_UNLOCK(bd->tce_compile_lock);
+    POCL_UNLOCK(bd->openasip_compile_lock);
     POCL_ABORT("TCE: pocl_llvm_generate_workgroup_function()"
                " failed for kernel %s\n",
                kernel->name);
@@ -333,29 +310,29 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
 
   if (!pocl_exists(assemblyFileName)) {
     char descriptor_content[64 * 1024];
-    pocl_tce_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
-                                     kernel, device, specialize);
+    pocl_openasip_write_kernel_descriptor(descriptor_content, (64 * 1024), cmd,
+                                          kernel, device, specialize);
 
     error = snprintf(inputBytecode, POCL_MAX_PATHNAME_LENGTH, "%s%s", cachedir,
                      POCL_PARALLEL_BC_FILENAME);
 
-    char commandLine[MAX_CMDLINE_LEN];
-    tceccCommandLine(commandLine, MAX_CMDLINE_LEN, &cmd->command.run, d,
-                     tempDir,
-                     inputBytecode, // inputSrc
-                     assemblyFileName, bd->machine_file, bd->core_count > 1,
-                     device->endian_little, "", false);
+    std::string commandLine =
+        oaccCommandLine(&cmd->command.run, d, tempDir,
+                        inputBytecode, // inputSrc
+                        assemblyFileName, bd->machine_file, bd->core_count > 1,
+                        device->endian_little, "", false);
 
-    POCL_MSG_PRINT_ALMAIF("build command: \n%s", commandLine);
+    POCL_MSG_PRINT_ALMAIF("build command: \n%s", commandLine.c_str());
 
-    error = system(commandLine);
+    error = system(commandLine.c_str());
     if (error != 0)
-      POCL_ABORT("Error while running tcecc.\n");
+      POCL_ABORT("Error while running oacc.\n");
 
     // Dump disassembled tpef for debugging
-    char tcedisasmCmd[MAX_CMDLINE_LEN];
-    snprintf(tcedisasmCmd, MAX_CMDLINE_LEN, "tcedisasm -n %s %s", bd->machine_file, assemblyFileName);
-    error = system(tcedisasmCmd);
+    char OpenasipDisAsmCmd[MAX_CMDLINE_LEN];
+    snprintf(OpenasipDisAsmCmd, MAX_CMDLINE_LEN, "tcedisasm -n %s %s",
+             bd->machine_file.c_str(), assemblyFileName);
+    error = system(OpenasipDisAsmCmd);
     if (error != 0)
         POCL_MSG_WARN("Error while running tcedisasm.\n");
   }
@@ -383,16 +360,17 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
                    assemblyFileName);
     }
 
-    char wg_func_name[4 * POCL_MAX_PATHNAME_LENGTH];
-    snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
-             cmd->command.run.kernel->name);
+    std::string wg_func_name =
+        std::string(cmd->command.run.kernel->name) + "_workgroup_argbuffer";
     if (prog->hasProcedure(wg_func_name)) {
         const TTAProgram::Procedure &proc = prog->procedure(wg_func_name);
         int kernel_address = proc.startAddress().location();
 
-        char content[64];
-        snprintf(content, 64, "kernel address = %d", kernel_address);
-        pocl_write_file(md_path, content, strlen(content), 0, 0);
+        std::string md_path = std::string(cachedir) + "/kernel_address.txt";
+        std::string content =
+            "kernel address = " + std::to_string(kernel_address);
+        pocl_write_file(md_path.c_str(), content.c_str(), content.length(), 0,
+                        0);
     } else {
         POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
                    wg_func_name);
@@ -406,15 +384,13 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
            "/parallel.img");
 
   if (!pocl_exists(imem_file)) {
-    char genbits_command[POCL_MAX_PATHNAME_LENGTH * 8];
-    // --dmemwidthinmaus 4
-    snprintf(genbits_command, (POCL_MAX_PATHNAME_LENGTH * 8),
-             "SAVEDIR=$PWD; cd %s; generatebits --dmemwidthinmaus 4 "
-             "--piformat=bin2n --diformat=bin2n --program "
-             "parallel.tpef %s ; cd $SAVEDIR",
-             cachedir, bd->machine_file);
-    POCL_MSG_PRINT_ALMAIF("running genbits: \n %s \n", genbits_command);
-    error = system(genbits_command);
+    std::string genbits_command =
+        "SAVEDIR=$PWD; cd " + std::string(cachedir) +
+        "; generatebits --dmemwidthinmaus 4 " +
+        "--piformat=bin2n --diformat=bin2n --program " + "parallel.tpef " +
+        bd->machine_file + "; cd $SAVEDIR";
+    POCL_MSG_PRINT_ALMAIF("running genbits: \n %s \n", genbits_command.c_str());
+    error = system(genbits_command.c_str());
     if (error != 0)
       POCL_ABORT("Error while running generatebits.\n");
   }
@@ -422,7 +398,7 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
   error = pocl_exists(imem_file);
   assert(error != 0 && "parallel.img does not exist!");
 
-  POCL_UNLOCK(bd->tce_compile_lock);
+  POCL_UNLOCK(bd->openasip_compile_lock);
 }
 
 /* This is a version number that is supposed to increase when there is
@@ -430,8 +406,8 @@ void pocl_almaif_tce_compile(_cl_command_node *cmd, cl_kernel kernel,
  * incompatible (e.g. a change in generated device image file names, etc) */
 #define POCL_TCE_ALMAIF_BINARY_VERSION "2"
 
-int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
-                                char *output) {
+int pocl_almaif_openasip_device_hash(const char *adf_file,
+                                     const char *llvm_triplet, char *output) {
 
   SHA1_CTX ctx;
   uint8_t bin_dig[SHA1_DIGEST_SIZE];
@@ -464,10 +440,10 @@ int pocl_almaif_tce_device_hash(const char *adf_file, const char *llvm_triplet,
   return 0;
 }
 
-char *pocl_tce_init_build(void *data) {
+char *pocl_almaif_openasip_init_build(void *data) {
   AlmaifData *D = (AlmaifData *)data;
-  tce_backend_data_t *bd =
-      (tce_backend_data_t *)D->compilationData->backend_data;
+  openasip_backend_data_t *bd =
+      (openasip_backend_data_t *)D->compilationData->backend_data;
   assert(bd);
 
   TCEString mach_tmpdir = Environment::llvmtceCachePath();
@@ -491,11 +467,11 @@ char *pocl_tce_init_build(void *data) {
     char tempfile[POCL_MAX_PATHNAME_LENGTH];
     pocl_mk_tempname(tempfile, mach_tmpdir.c_str(), ".devext", NULL);
 
-    std::string tceopgenCmd = std::string("tceopgen > ") + tempfile;
+    std::string OpenasipOpgenCmd = std::string("tceopgen > ") + tempfile;
 
-    POCL_MSG_PRINT_TCE("Running: %s \n", tceopgenCmd.c_str());
+    POCL_MSG_PRINT_TCE("Running: %s \n", OpenasipOpgenCmd.c_str());
 
-    error = system(tceopgenCmd.c_str());
+    error = system(OpenasipOpgenCmd.c_str());
     if (error == -1)
       return NULL;
 
@@ -521,11 +497,11 @@ char *pocl_tce_init_build(void *data) {
   return include_switch;
 }
 
-void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
-                                                _cl_command_node *cmd,
-                                                pocl_context32 *pc,
-                                                size_t arg_size,
-                                                void *arguments) {
+void pocl_almaif_openasip_produce_standalone_program(AlmaifData *D,
+                                                     _cl_command_node *cmd,
+                                                     pocl_context32 *pc,
+                                                     size_t arg_size,
+                                                     void *arguments) {
   _cl_command_run *run_cmd = &cmd->command.run;
 
   static int runCounter = 0;
@@ -538,8 +514,8 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   TCEString fname = baseFname + ".c";
   TCEString parallel_bc = tempDir + "/parallel.bc";
 
-  tce_backend_data_t *bd =
-      (tce_backend_data_t *)D->compilationData->backend_data;
+  openasip_backend_data_t *bd =
+      (openasip_backend_data_t *)D->compilationData->backend_data;
 
   std::ofstream out(fname.c_str());
 
@@ -701,10 +677,9 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   TCEString inputFiles = fname + " " + parallel_bc;
   std::ofstream scriptout(buildScriptFname.c_str());
 
-  char commandLine[MAX_CMDLINE_LEN];
-  tceccCommandLine(commandLine, MAX_CMDLINE_LEN, run_cmd, D, tempDir.c_str(),
-                   inputFiles.c_str(), "standalone.tpef", bd->machine_file,
-                   bd->core_count > 1, 1, " -D_STANDALONE_MODE=1", true);
+  std::string commandLine = oaccCommandLine(
+      run_cmd, D, tempDir.c_str(), inputFiles.c_str(), "standalone.tpef",
+      bd->machine_file, bd->core_count > 1, 1, " -D_STANDALONE_MODE=1", true);
   scriptout << commandLine;
   scriptout.close();
 
@@ -724,9 +699,10 @@ void pocl_almaif_tce_produce_standalone_program(AlmaifData *D,
   ++runCounter;
 }
 
-void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf,
-                                 bool standalone_mode) {
+std::string set_preprocessor_directives(AlmaifData *d, const std::string &adf,
+                                        bool standalone_mode) {
   TTAMachine::Machine *mach = NULL;
+  std::string output = "";
   try {
     mach = TTAMachine::Machine::loadFromADF(adf);
   } catch (Exception &e) {
@@ -762,15 +738,15 @@ void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf,
     POCL_ABORT("Couldn't find the global address space from machine\n");
   }
 
-  int AQL_queue_length = d->Dev->CQMemory->Size / AQL_PACKET_LENGTH - 1;
-  unsigned dmem_size = d->Dev->DataMemory->Size;
-  unsigned cq_size = d->Dev->CQMemory->Size;
+  int AQL_queue_length = d->Dev->CQMemory->Size() / AQL_PACKET_LENGTH - 1;
+  unsigned DmemSize = d->Dev->DataMemory->Size();
+  unsigned CQSize = d->Dev->CQMemory->Size();
 
   bool relativeAddressing = d->Dev->RelativeAddressing;
   int i = 0;
-  i = snprintf(output, MAX_CMDLINE_LEN, "-DQUEUE_LENGTH=%i ", AQL_queue_length);
+  output += "-DQUEUE_LENGTH=" + std::to_string(AQL_queue_length) + " ";
   if (!separatePrivateMem) {
-    unsigned initsp = dmem_size;
+    unsigned initsp = DmemSize;
     unsigned private_mem_start = 0;
     if (!standalone_mode) {
       // The standalone mode, cannot separate the automatic allocation of
@@ -783,42 +759,47 @@ void set_preprocessor_directives(char *output, AlmaifData *d, const char *adf,
       int private_mem_size = pocl_get_int_option(
           "POCL_ALMAIF_PRIVATE_MEM_SIZE", ALMAIF_DEFAULT_PRIVATE_MEM_SIZE);
       initsp += private_mem_size;
-      private_mem_start += dmem_size;
+      private_mem_start += DmemSize;
       if (!separateCQMem) {
-        initsp += cq_size;
-        private_mem_start += cq_size;
+        initsp += CQSize;
+        private_mem_start += CQSize;
       }
     }
 
     if (!relativeAddressing) {
-      initsp += d->Dev->DataMemory->PhysAddress;
-      private_mem_start += d->Dev->DataMemory->PhysAddress;
+      initsp += d->Dev->DataMemory->PhysAddress();
+      private_mem_start += d->Dev->DataMemory->PhysAddress();
     }
-    i +=
-        snprintf(output + i, MAX_CMDLINE_LEN, "--init-sp=%u --data-start=%s,%u",
-                 initsp, private_as_name, private_mem_start);
+    output += "--init-sp=";
+    output += std::to_string(initsp);
+    output += " --data-start=";
+    output += private_as_name;
+    output += ",";
+    output += std::to_string(private_mem_start);
   }
   if (!relativeAddressing && standalone_mode) {
     // Appends to the data-start option
-    char data_start_option_string[MAX_CMDLINE_LEN];
+    std::string data_start_option_string;
     if (!separatePrivateMem) {
-      strcpy(data_start_option_string, ",");
+      data_start_option_string = ",";
     } else {
-      strcpy(data_start_option_string, " --data-start=");
+      data_start_option_string = " --data-start=";
     }
-    i += snprintf(output + i, MAX_CMDLINE_LEN,
-                  "%s%s,${STANDALONE_GLOBAL_AS_OFFSET}",
-                  data_start_option_string, global_as_name);
+    output += data_start_option_string + global_as_name +
+              ",${STANDALONE_GLOBAL_AS_OFFSET}";
   }
 
   if (!separateCQMem) {
-    unsigned queue_start = d->Dev->CQMemory->PhysAddress;
+    unsigned queue_start = d->Dev->CQMemory->PhysAddress();
     if (relativeAddressing) {
-      queue_start -= d->Dev->DataMemory->PhysAddress;
+      queue_start -= d->Dev->DataMemory->PhysAddress();
     }
-    i += snprintf(output + i, MAX_CMDLINE_LEN, " -DQUEUE_START=%u ",
-                  queue_start);
+    output += " -DQUEUE_START=";
+    output += std::to_string(queue_start);
+    output += " ";
   }
 
   delete mach;
+
+  return output;
 }

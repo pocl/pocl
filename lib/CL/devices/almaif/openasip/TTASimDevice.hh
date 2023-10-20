@@ -32,7 +32,7 @@ class SimulatorCLI;
 
 class TTASimDevice : public AlmaIFDevice {
 public:
-  TTASimDevice(char *adf_name);
+  TTASimDevice(const std::string &adf_name);
   ~TTASimDevice() override;
 
   virtual void loadProgramToDevice(almaif_kernel_data_s *kd, cl_kernel kernel,
@@ -51,7 +51,7 @@ public:
   void stopProgram();
 
 private:
-  void loadProgram(char *loadProgram);
+  void loadProgram(const std::string &loadProgram);
 };
 
 #endif

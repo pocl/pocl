@@ -32,7 +32,7 @@
 //#include <sys/stat.h>
 #include <fcntl.h>
 
-MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
+MMAPDevice::MMAPDevice(size_t base_address, const std::string &kernel_name) {
   int mem_fd = -1;
   mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
   if (mem_fd == -1) {
@@ -42,23 +42,19 @@ MMAPDevice::MMAPDevice(size_t base_address, char *kernel_name) {
 
   discoverDeviceParameters();
 
-  InstructionMemory = new MMAPRegion(imem_start, imem_size, mem_fd);
-  CQMemory = new MMAPRegion(cq_start, cq_size, mem_fd);
-  DataMemory = new MMAPRegion(dmem_start, dmem_size, mem_fd);
+  InstructionMemory = new MMAPRegion(ImemStart, ImemSize, mem_fd);
+  CQMemory = new MMAPRegion(CQStart, CQSize, mem_fd);
+  DataMemory = new MMAPRegion(DmemStart, DmemSize, mem_fd);
 
-  unsigned img_file_name_length = strlen(kernel_name) + 5;
-  char *file_name = (char *)malloc(img_file_name_length);
-  assert(file_name);
-  snprintf(file_name, img_file_name_length, "%s.img", kernel_name);
+  std::string file_name = kernel_name + ".img";
 
-  if (pocl_exists(file_name)) {
+  if (pocl_exists(file_name.c_str())) {
     POCL_MSG_PRINT_ALMAIF(
         "Almaif: Found built-in kernel firmaware. Loading it in\n");
     ((MMAPRegion *)InstructionMemory)->initRegion(file_name);
   } else {
     POCL_MSG_PRINT_ALMAIF("Almaif: No default firmware found. Skipping\n");
   }
-  free(file_name);
 
   if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {
     char *region_params =

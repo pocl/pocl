@@ -54,6 +54,8 @@
 #define __cq__ __attribute__ ((address_space (5)))
 #define __buffer__ __attribute__ ((address_space (1)))
 
+// NOTE: This enum contains highly experimental built-in kernel IDs, that are
+// subject to change in future PoCL releases without any deprecation period.
 enum BuiltinKernelId : uint16_t
 {
   // CD = custom device, BI = built-in
@@ -77,7 +79,14 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_MUL_I16 = 15,
   POCL_CDBI_STREAMOUT_I32 = 16,
   POCL_CDBI_STREAMIN_I32 = 17,
-  POCL_CDBI_LAST = 18,
+  POCL_CDBI_VOTE_U32 = 18,
+  POCL_CDBI_VOTE_U8 = 19,
+  POCL_CDBI_DNN_CONV2D_NCHW_F32 = 20,
+  POCL_CDBI_OPENVX_SCALEIMAGE_NN_U8 = 21,
+  POCL_CDBI_OPENVX_SCALEIMAGE_BL_U8 = 22,
+  POCL_CDBI_OPENVX_TENSORCONVERTDEPTH_WRAP_U8_F32 = 23,
+  POCL_CDBI_OPENVX_MINMAXLOC_R1_U8 = 24,
+  POCL_CDBI_LAST = 25,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
 
@@ -224,10 +233,6 @@ main ()
 #endif
 
           uint32_t kernel_id = packet->kernel_object_low;
-          if (kernel_id > POCL_CDBI_MUL_I32)
-            {
-              continue;
-            }
 
           __buffer__ uint32_t *kernarg_ptr
               = (__buffer__ uint32_t *)(packet->kernarg_address_low);
@@ -235,24 +240,69 @@ main ()
           __buffer__ uint32_t *arg0 = (__buffer__ uint32_t *)kernarg_ptr[0];
           __buffer__ uint32_t *arg1 = (__buffer__ uint32_t *)kernarg_ptr[1];
           __buffer__ uint32_t *arg2 = (__buffer__ uint32_t *)kernarg_ptr[2];
+          __buffer__ uint32_t *arg3 = (__buffer__ uint32_t *)kernarg_ptr[3];
+          __buffer__ uint32_t *arg4 = (__buffer__ uint32_t *)kernarg_ptr[4];
 
-          uint32_t dim_x = packet->grid_size_x;
+          // Check how many dimensions are in use, and set the unused ones
+          // to 1.
+          int dim_x = packet->grid_size_x;
+          int dim_y = (packet->dimensions >= 2) ? (packet->grid_size_y) : 1;
+          int dim_z = (packet->dimensions == 3) ? (packet->grid_size_z) : 1;
 
-          for (int idx = 0; idx < dim_x; idx++)
+          uint8_t min = 255;
+          uint8_t max = 0;
+          uint32_t minlocx, minlocy, maxlocx, maxlocy;
+          for (int z = 0; z < dim_z; z++)
             {
-              // Do the operation based on the kernel_object (integer id)
-              switch (kernel_id)
+              for (int y = 0; y < dim_y; y++)
                 {
-                case (POCL_CDBI_COPY_I8):
-                  arg1[idx] = arg0[idx];
-                  break;
-                case (POCL_CDBI_ADD_I32):
-                  arg2[idx] = arg0[idx] + arg1[idx];
-                  break;
-                case (POCL_CDBI_MUL_I32):
-                  arg2[idx] = arg0[idx] * arg1[idx];
-                  break;
+                  for (int x = 0; x < dim_x; x++)
+                    {
+                      // Linearize grid
+                      int idx = z * dim_y * dim_x + dim_x * y + x;
+                      // Do the operation based on the kernel_object (integer
+                      // id)
+                      switch (kernel_id)
+                        {
+                        case (POCL_CDBI_COPY_I8):
+                          arg1[idx] = arg0[idx];
+                          break;
+                        case (POCL_CDBI_ADD_I32):
+                          arg2[idx] = arg0[idx] + arg1[idx];
+                          break;
+                        case (POCL_CDBI_MUL_I32):
+                          arg2[idx] = arg0[idx] * arg1[idx];
+                          break;
+                        case (POCL_CDBI_OPENVX_MINMAXLOC_R1_U8):
+                          {
+                            uint8_t pixel = ((__buffer__ uint8_t *)arg0)[idx];
+                            if (pixel < min)
+                              {
+                                min = pixel;
+                                minlocx = x;
+                                minlocy = y;
+                              }
+                            if (pixel > max)
+                              {
+                                max = pixel;
+                                maxlocx = x;
+                                maxlocy = y;
+                              }
+                          }
+                          break;
+                        }
+                    }
                 }
+            }
+
+          if (kernel_id == POCL_CDBI_OPENVX_MINMAXLOC_R1_U8)
+            {
+              arg1[0] = min;
+              arg2[0] = max;
+              arg3[0] = minlocx;
+              arg3[1] = minlocy;
+              arg4[0] = maxlocx;
+              arg4[1] = maxlocy;
             }
 #ifdef BASE_ADDRESS
           cc_l = control_region[ALMAIF_STATUS_REG_CC_LOW / 4];

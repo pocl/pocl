@@ -179,7 +179,7 @@ First, set CMAKE variable VIVADO_PATH to point to the directory with the
 you can set ENABLE_TCE to 1 to enable
 RTL and firmware generation of various OpenASIP TTA cores with different memory configurations.
 Then, you can simulate them with ttasim instruction set simulator by running
-``LLVM=1 ../tools/scripts/run_almaif_tests`` from the build directory.
+``../tools/scripts/run_almaif_tests`` from the build directory.
 
 2. If you have Vitis HLS installed, set VITIS_HLS_PATH to point to the directory
 with the vitis_hls executable.
@@ -249,8 +249,40 @@ Example usage of the mode can be found in examples/accel/CMakelists.txt, which
 generates standalone tests using both ttasim and RTL simulator (ghdl) to run the
 example0 kernel on various TTA configurations.
 
-Wrapping new hardware component
--------------------------------
+
+Using a bitstream database
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can use the AlmaIF-driver with the cross-vendor bitstream databases generated
+with the `AFOCL-project <http://github.com/cpc/AFOCL>`_.
+That project generates a directory-based database with a json-based metadata.
+The database contains the bitstreams and firmware-files necessary to implement
+the set of built-in kernels defined in the json-file.
+
+The bistream database device will report all the built-in kernel implementations it can
+find from the database in clGetDeviceInfo's CL_DEVICE_BUILT_IN_KERNELS-query.
+The bitstream database device ("0xF") will automatically fetch bitstream from the database
+and reconfigure the FPGA when user enqueues a built-in kernel for execution.
+Therefore, the user does not need to handle the bitstream binaries themselves,
+since the OpenCL implementation reconfigures the FPGA behind-the-scenes.
+
+To use AFOCL-databases in PoCL, it is enough to point the Almaif-driver to the database
+with the env variable::
+
+  POCL_DEVICES=almaif POCL_ALMAIF0_PARAMETERS=0xF,<path/to/afocl-db> ./accel_example
+
+At the moment, the public AlmaIF-driver and AFOCL include support only for
+Xilinx Alveo U280 device, but adding support for other Alveo devices should be easy.
+In the AFOCL publication the methodology was also demonstrated with Intel Arria 10,
+but the code for that is not yet upstreamed. The driver is built to hide the
+vendor-specific details from the end user, with different AlmaIFDevice backends
+taking care of vendor-specific details.
+For more information about the bitstream database,
+see our :ref:`AFOCL-publication (2023) <publications>`.
+
+
+Wrapping a new hardware component
+---------------------------------
 
 This section will walk through the addition of new implementation for an existing
 built-in kernel.
@@ -310,7 +342,18 @@ in your academic work, please cite the following publication::
       AUTHOR = {Topi Leppänen and Atro Lotvonen and Panagiotis Mousouliotis and Joonas Multanen and Georgios Keramidas and Pekka Jääskeläinen},
     }
 
+.. _publications:
+
 The other relevant publications::
+
+    @ARTICLE{afocl2023,
+      AUTHOR={Leppänen, Topi and Multanen, Joonas and Leppänen, Leevi and Jääskeläinen, Pekka},
+      TITLE={{AFOCL}: Portable {OpenCL} Programming of {FPGAs} via Automated Built-in Kernel Management},
+      BOOKTITLE={2023 IEEE Nordic Circuits and Systems Conference ({NorCAS})},
+      YEAR={2023},
+      PAGES={1-7},
+      DOI={10.1109/NorCAS58970.2023.10305457}
+    }
 
     @ARTICLE{leppanen2022,
       AUTHOR={Leppänen, Topi and Lotvonen, Atro and Jääskeläinen, Pekka},

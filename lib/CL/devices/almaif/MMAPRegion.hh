@@ -26,6 +26,7 @@
 #define MMAPREGION_H
 
 #include <stdlib.h>
+#include <string>
 
 #include "pocl_types.h"
 
@@ -49,7 +50,7 @@ public:
   virtual void CopyInMem(size_t source, size_t destination,
                          size_t bytes) override;
 
-  virtual void initRegion(char *init_file);
+  virtual void initRegion(const std::string &init_file);
 
 protected:
   MMAPRegion();

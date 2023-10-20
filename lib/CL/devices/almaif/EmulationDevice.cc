@@ -54,9 +54,9 @@ EmulationDevice::EmulationDevice() {
 
   discoverDeviceParameters();
 
-  InstructionMemory = new EmulationRegion(imem_start, imem_size);
-  CQMemory = new EmulationRegion(cq_start, cq_size);
-  DataMemory = new EmulationRegion(dmem_start, dmem_size);
+  InstructionMemory = new EmulationRegion(ImemStart, ImemSize);
+  CQMemory = new EmulationRegion(CQStart, CQSize);
+  DataMemory = new EmulationRegion(DmemStart, DmemSize);
 }
 
 EmulationDevice::~EmulationDevice() {
@@ -79,8 +79,8 @@ void *emulate_almaif(void *E_void) {
   void *base_address = E->emulating_address;
 
   uint32_t ctrl_size = 1024;
-  uint32_t imem_size = 0;
-  uint32_t dmem_size = EMULATING_MAX_SIZE * 3 / 4;
+  uint32_t ImemSize = 0;
+  uint32_t DmemSize = EMULATING_MAX_SIZE * 3 / 4;
   // The accelerator can choose the size of the queue (must be a power-of-two)
   // Can be even 1, to make the packet handling easiest with static offsets
   uint32_t queue_length = 3;
@@ -89,14 +89,14 @@ void *emulate_almaif(void *E_void) {
   // The accelerator can set the starting addresses
   // Even the order can be changed if the accelerator wants to
   // Here packing the memory regions tighly as an example.
-  uintptr_t imem_start = (uintptr_t)base_address + ctrl_size;
-  uintptr_t cqmem_start = imem_start + imem_size;
-  uintptr_t dmem_start = cqmem_start + cqmem_size;
+  uintptr_t ImemStart = (uintptr_t)base_address + ctrl_size;
+  uintptr_t cqmem_start = ImemStart + ImemSize;
+  uintptr_t DmemStart = cqmem_start + cqmem_size;
 
   volatile uint32_t *Control = (uint32_t *)base_address;
-  //volatile uint8_t *Instruction = (uint8_t *)imem_start;
+  // volatile uint8_t *Instruction = (uint8_t *)ImemStart;
   volatile uint32_t *CQ = (uint32_t *)cqmem_start;
-  //volatile uint8_t *Data = (uint8_t *)dmem_start;
+  // volatile uint8_t *Data = (uint8_t *)DmemStart;
 
   // Set initial values for info registers:
   Control[ALMAIF_INFO_DEV_CLASS / 4] = 0xE; // Unused
@@ -113,16 +113,16 @@ void *emulate_almaif(void *E_void) {
   // that are written BEFORE hw reset is deasserted.
   // E.g. program binaries of a processor-based accelerator
   Control[ALMAIF_INFO_IMEM_SIZE / 4] = 0;
-  Control[ALMAIF_INFO_IMEM_START_LOW / 4] = (uint32_t)imem_start;
-  Control[ALMAIF_INFO_IMEM_START_HIGH / 4] = (uint32_t)(imem_start >> 32);
+  Control[ALMAIF_INFO_IMEM_START_LOW / 4] = (uint32_t)ImemStart;
+  Control[ALMAIF_INFO_IMEM_START_HIGH / 4] = (uint32_t)(ImemStart >> 32);
 
   Control[ALMAIF_INFO_CQMEM_SIZE_LOW / 4] = cqmem_size;
   Control[ALMAIF_INFO_CQMEM_START_LOW / 4] = (uint32_t)cqmem_start;
   Control[ALMAIF_INFO_CQMEM_START_HIGH / 4] = (uint32_t)(cqmem_start >> 32);
 
-  Control[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = dmem_size;
-  Control[ALMAIF_INFO_DMEM_START_LOW / 4] = (uint32_t)dmem_start;
-  Control[ALMAIF_INFO_DMEM_START_HIGH / 4] = (uint32_t)(dmem_start >> 32);
+  Control[ALMAIF_INFO_DMEM_SIZE_LOW / 4] = DmemSize;
+  Control[ALMAIF_INFO_DMEM_START_LOW / 4] = (uint32_t)DmemStart;
+  Control[ALMAIF_INFO_DMEM_START_HIGH / 4] = (uint32_t)(DmemStart >> 32);
 
   uint32_t feature_flags_low = ALMAIF_FF_BIT_AXI_MASTER;
   Control[ALMAIF_INFO_FEATURE_FLAGS_LOW / 4] = feature_flags_low;

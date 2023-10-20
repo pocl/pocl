@@ -70,22 +70,17 @@ private:
   TTASimDevice *d_;
 };
 
-TTASimDevice::TTASimDevice(char *adf_name) {
+TTASimDevice::TTASimDevice(const std::string &adf_name) {
 
 #ifdef ALMAIF_TTASimMMAP_DEBUG
   POCL_MSG_PRINT_ALMAIF("TTASimMMAP: Initializing TTASimMMAPregion with Address "
                        "%zu and Size %zu\n",
                        Address, RegionSize);
 #endif
-  unsigned adf_name_length = strlen(adf_name) + 5;
-  char *adf_char = (char *)malloc(adf_name_length);
-  assert(adf_char);
-  snprintf(adf_char, adf_name_length, "%s.adf", adf_name);
+  std::string adf_char = adf_name + ".adf";
 
   simulator_ = new SimpleSimulatorFrontend(adf_char, false);
   assert(simulator_ != NULL && "simulator null\n");
-
-  free(adf_char);
 
   simulatorCLI_ = new SimulatorCLI(simulator_->frontend());
 
@@ -124,27 +119,24 @@ TTASimDevice::TTASimDevice(char *adf_name) {
   // Doesn't exist and should not ever be accessed
   InstructionMemory = nullptr;
   if ((global_as != cq_as) && !RelativeAddressing) {
-    CQMemory = new TTASimRegion(0, cq_size, cq_mem);
+    CQMemory = new TTASimRegion(0, CQSize, cq_mem);
   } else {
-    CQMemory = new TTASimRegion(cq_start, cq_size, cq_mem);
+    CQMemory = new TTASimRegion(CQStart, CQSize, cq_mem);
   }
-  DataMemory = new TTASimRegion(dmem_start, dmem_size, mem);
+  DataMemory = new TTASimRegion(DmemStart, DmemSize, mem);
 
   // For built-in kernel use-case. If the firmware.tpef exists, load it in
 
-  int tpef_file_length = strlen(adf_name) + 6;
-  char *tpef_file = (char *)malloc(tpef_file_length);
-  assert(tpef_file);
-  snprintf(tpef_file, tpef_file_length, "%s.tpef", adf_name);
-  if (pocl_exists(tpef_file)) {
+  std::string tpef_file = adf_name + ".tpef";
+  if (pocl_exists(tpef_file.c_str())) {
     POCL_MSG_PRINT_ALMAIF(
         "Almaif: Found built-in kernel firmware for ttasim. Loading it in.\n");
     loadProgram(tpef_file);
   } else {
-    POCL_MSG_PRINT_ALMAIF("File %s not found. Skipping program initialization\n",
-                         tpef_file);
+    POCL_MSG_PRINT_ALMAIF(
+        "File %s not found. Skipping program initialization\n",
+        tpef_file.c_str());
   }
-  free(tpef_file);
 
   if (!RelativeAddressing) {
     if (pocl_is_option_set("POCL_ALMAIF_EXTERNALREGION")) {
@@ -191,7 +183,7 @@ TTASimDevice::~TTASimDevice() {
   delete simulatorCLI_;
 }
 
-void TTASimDevice::loadProgram(char *tpef_file) {
+void TTASimDevice::loadProgram(const std::string &tpef_file) {
   if (simulator_->isRunning())
     ControlMemory->Write32(ALMAIF_CONTROL_REG_COMMAND, ALMAIF_RESET_CMD);
   while (simulator_->isRunning())
@@ -200,7 +192,7 @@ void TTASimDevice::loadProgram(char *tpef_file) {
      over all the simulations. */
   // if (currentProgram != NULL)
   //  globalCycleCount += simulator_.cycleCount();
-  simulator_->loadProgram(tpef_file);
+  simulator_->loadProgram(tpef_file.c_str());
 }
 
 void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
@@ -234,9 +226,7 @@ void TTASimDevice::loadProgramToDevice(almaif_kernel_data_s *kd,
 
   loadProgram(tpef_file);
 
-  char wg_func_name[120];
-  snprintf(wg_func_name, sizeof(wg_func_name), "%s_workgroup_argbuffer",
-           kernel->name);
+  std::string wg_func_name = std::string(kernel->name) + "_workgroup_argbuffer";
   const TTAProgram::Program *prog = &simulator_->program();
   if (prog->hasProcedure(wg_func_name)) {
     const TTAProgram::Procedure &proc = prog->procedure(wg_func_name);
