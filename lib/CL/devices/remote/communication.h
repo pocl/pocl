@@ -138,6 +138,9 @@ struct network_command
   size_t req_extra_size;
   size_t req_extra_size2;
   size_t rep_extra_size;
+  /* Points to an (optional) dynamic strings section appened after the message.
+   */
+  char *strings;
   network_command_status_t status;
   uint64_t client_write_start_timestamp_ns;
   uint64_t client_write_end_timestamp_ns;

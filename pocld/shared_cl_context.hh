@@ -92,7 +92,8 @@ public:
 
   virtual int freeQueue(uint32_t queue_id) = 0;
 
-  virtual int getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) = 0;
+  virtual int getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
+                            std::vector<std::string>& strings) = 0;
 
   virtual int createSampler(uint32_t sampler_id, uint32_t normalized,
                             uint32_t address, uint32_t filter) = 0;

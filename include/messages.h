@@ -42,7 +42,7 @@ extern "C"
 
 #define ENUM_TYPE uint8_t
 
-#define MAX_PACKED_STRING_LEN (4 * 1024)
+#define MAX_PACKED_STRING_LEN 1024
 
 #define SESSION_ID_LENGTH 16
 
@@ -213,14 +213,15 @@ extern "C"
 
     /* ######## device properties ############## */
 
-    STRING_TYPE (name);
-    STRING_TYPE (opencl_c_version);
-    STRING_TYPE (device_version);
-    STRING_TYPE (driver_version);
-    STRING_TYPE (vendor);
-    STRING_TYPE (extensions);
-    STRING_TYPE (builtin_kernels);
-    STRING_TYPE (supported_spir_v_versions);
+    /* Offsets to the strings-section. */
+    uint64_t name;
+    uint64_t opencl_c_version;
+    uint64_t device_version;
+    uint64_t driver_version;
+    uint64_t vendor;
+    uint64_t extensions;
+    uint64_t builtin_kernels;
+    uint64_t supported_spir_v_versions;
 
     uint32_t vendor_id;
     //  uint32_t device_id;
@@ -672,6 +673,12 @@ extern "C"
 
     uint64_t data_size;
     uint32_t obj_id;
+
+    /* If the reply has a dynamic pool of c-strings after the end of
+       the structure's fields, this is set to its size. */
+    /* The actual strings will be appended after the object as a sequence
+       of 0-terminated strings.*/
+    uint64_t strings_size;
 
     // remote server timing data from libOpenCL
     EventTiming_t timing;

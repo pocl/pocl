@@ -1089,12 +1089,35 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   DeviceInfo_t info{};
 
-  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info);
+  // The device info contains various potentially long strings such as the
+  // built-in kernels and the extensions lists. Handle them with a separate
+  // dynamic string section at the end of the reply.
+  std::vector<std::string> strings;
 
-  rep->extra_data = new char[sizeof(info)];
+  // Store an empty string at offset 0.
+  strings.push_back("");
+  // The first string starts at offset 1.
+  rep->rep.strings_size = 1;
+
+  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info, strings);
+
+  for (const std::string &str : strings)
+    rep->rep.strings_size += str.size() + 1;
+
+  rep->extra_size = sizeof(info) + rep->rep.strings_size;
+  rep->extra_data = new char[rep->extra_size];
   std::memcpy(rep->extra_data, &info, sizeof(info));
-  rep->extra_size = sizeof(info);
-  replyData(rep, MessageType_DeviceInfoReply, sizeof(info));
+  char *strings_pos = rep->extra_data + sizeof(info);
+  for (const std::string& str : strings) {
+    // Append the strings to the string part of the reply, and
+    // ensure that the strings are separated with \0.
+    std::memcpy(strings_pos, str.c_str(), str.size());
+    strings_pos += str.size();
+    *strings_pos = 0;
+    strings_pos++;
+  }
+
+  replyData(rep, MessageType_DeviceInfoReply, rep->extra_size);
 }
 
 /****************************************************************************************************************/

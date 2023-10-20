@@ -773,8 +773,16 @@ pocl_remote_reader_pthread (void *aa)
       // READ EXTRA DATA
       if (running_cmd->reply.data_size > 0)
         {
-          assert (running_cmd->rep_extra_data != NULL);
-          assert (running_cmd->rep_extra_size >= running_cmd->reply.data_size);
+          if (running_cmd->reply.strings_size > 0)
+            {
+              /* Allocate the memory for the reply here since only now we
+                 know the string pool's size. */
+              assert (running_cmd->rep_extra_data == NULL);
+              running_cmd->rep_extra_data
+                  = (char *)malloc (running_cmd->reply.data_size);
+              running_cmd->strings
+                  = running_cmd->rep_extra_data + running_cmd->rep_extra_size;
+            }
           running_cmd->rep_extra_size = running_cmd->reply.data_size;
           readb = read_full (fd, running_cmd->rep_extra_data,
                              running_cmd->reply.data_size, remote);
@@ -1794,7 +1802,7 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
   return 0;
 }
 
-#define D(x) device->x = devinfo.x
+#define D(x) device->x = devinfo->x
 
 cl_int
 pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
@@ -1810,9 +1818,10 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   // request device info
   ID_REQUEST (DeviceInfo, did);
 
-  DeviceInfo_t devinfo;
-  memset (&devinfo, 0, sizeof (DeviceInfo_t));
-  netcmd->rep_extra_data = (char *)&devinfo;
+  DeviceInfo_t *devinfo;
+  /* Allocate the data in pocl_remote_reader_pthread() when we know the
+     string section length. */
+  netcmd->rep_extra_data = NULL;
   netcmd->rep_extra_size = sizeof (DeviceInfo_t);
 
   SEND_REQ_FAST;
@@ -1821,26 +1830,30 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
 
   CHECK_REPLY (DeviceInfo);
 
-  assert (netcmd->reply.data_size > 0);
-  assert (netcmd->reply.data_size == sizeof (DeviceInfo_t));
+  assert (netcmd->rep_extra_data != NULL);
+  assert (netcmd->reply.data_size >= sizeof (DeviceInfo_t));
+
+  devinfo = (DeviceInfo_t *)netcmd->rep_extra_data;
 
   device->host_unified_memory = 0;
   device->execution_capabilities = CL_EXEC_KERNEL;
 
-  device->long_name = device->short_name = strdup (devinfo.name);
+#define GET_STRING(ATTR) strdup ((char *)netcmd->strings + ATTR)
+
+  device->long_name = device->short_name = GET_STRING (devinfo->name);
   // TODO use the actual values reported from the device
   {
     cl_device_id dev = device;
     SETUP_DEVICE_CL_VERSION (1, 2);
   }
-  device->driver_version = strdup (devinfo.driver_version);
-  device->vendor = strdup (devinfo.vendor);
-  device->extensions = strdup (devinfo.extensions);
+  device->driver_version = GET_STRING (devinfo->driver_version);
+  device->vendor = GET_STRING (devinfo->vendor);
+  device->extensions = GET_STRING (devinfo->extensions);
   device->supported_spir_v_versions
-      = strdup (devinfo.supported_spir_v_versions);
+      = GET_STRING (devinfo->supported_spir_v_versions);
 
-  if (devinfo.builtin_kernels[0])
-    device->builtin_kernel_list = strdup (devinfo.builtin_kernels);
+  if (devinfo->builtin_kernels != 0)
+    device->builtin_kernel_list = GET_STRING (devinfo->builtin_kernels);
 
   // This one is deprecated (and seems to be always 128)
   device->min_data_type_align_size = 128;
@@ -1866,7 +1879,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   D (error_correction_support);
 
   cl_device_type t = CL_DEVICE_TYPE_CPU;
-  switch (devinfo.type)
+  switch (devinfo->type)
     {
     case CPU:
       t = CL_DEVICE_TYPE_CPU;
@@ -1885,7 +1898,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   device->type = t;
 
   device->profile
-      = (devinfo.full_profile ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
+      = (devinfo->full_profile ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
   device->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   device->compiler_available = 1;
   device->linker_available = 1;
@@ -1902,9 +1915,9 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   D (max_work_item_dimensions);
   D (max_work_group_size);
 
-  device->max_work_item_sizes[0] = devinfo.max_work_item_size_x;
-  device->max_work_item_sizes[1] = devinfo.max_work_item_size_y;
-  device->max_work_item_sizes[2] = devinfo.max_work_item_size_z;
+  device->max_work_item_sizes[0] = devinfo->max_work_item_size_x;
+  device->max_work_item_sizes[1] = devinfo->max_work_item_size_y;
+  device->max_work_item_sizes[2] = devinfo->max_work_item_size_z;
 
   D (native_vector_width_char);
   D (native_vector_width_short);
@@ -1926,8 +1939,11 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   // ####################################################
   // ####################################################
 
-  if (devinfo.image_support == CL_FALSE)
-    return 0;
+  if (devinfo->image_support == CL_FALSE)
+    {
+      free (devinfo);
+      return 0;
+    }
 
   D (max_read_image_args);
   D (max_write_image_args);
@@ -1943,7 +1959,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   size_t i, j;
   for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
     {
-      ImgFormatInfo_t p = devinfo.supported_image_formats[i];
+      ImgFormatInfo_t p = devinfo->supported_image_formats[i];
       if (p.num_formats == 0)
         continue;
 
@@ -1964,7 +1980,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
 
   // LLVM triple + cpu type => for compilation
   //  build hash => for binaries
-
+  free (devinfo);
   return 0;
 }
 

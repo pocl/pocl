@@ -172,7 +172,8 @@ public:
 
   virtual int freeQueue(uint32_t queue_id) override;
 
-  virtual int getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) override;
+  virtual int getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
+                            std::vector<std::string>& strings) override;
 
   virtual int createSampler(uint32_t sampler_id, uint32_t normalized,
                             uint32_t address, uint32_t filter) override;
@@ -655,7 +656,8 @@ static void appendImageFormats(DeviceInfo_t &devi, unsigned i,
 }
 #undef DI
 
-int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
+int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
+                                   std::vector<std::string>& strings) {
 
   bool is_nvidia = false;
   bool is_pocl_CPU = false;
@@ -665,25 +667,28 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
 
   std::string temp;
 
-  temp = clientDevice.getInfo<CL_DEVICE_NAME>();
-  std::strncpy(i.name, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
+  uint64_t string_offset = 1;
+#define PUSH_STRING(ATTR, SRC_STR)                                             \
+  do {                                                                         \
+    ATTR = string_offset;                                                      \
+    strings.push_back(SRC_STR);                                                \
+    string_offset += strings.back().size() + 1;                                \
+  } while (false)
 
-  temp = clientDevice.getInfo<CL_DEVICE_OPENCL_C_VERSION>();
-  std::strncpy(i.opencl_c_version, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
-
+  PUSH_STRING(i.name, clientDevice.getInfo<CL_DEVICE_NAME>());
+  PUSH_STRING(i.opencl_c_version, clientDevice.getInfo<CL_DEVICE_OPENCL_C_VERSION>());
   temp = clientDevice.getInfo<CL_DEVICE_VERSION>();
-  std::strncpy(i.device_version, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
+  PUSH_STRING(i.device_version, temp);
   is_pocl_CPU = (temp.find("pocl") != std::string::npos);
 
   temp = clientDevice.getInfo<CL_DRIVER_VERSION>();
-  std::strncpy(i.driver_version, temp.c_str(), MAX_PACKED_STRING_LEN);
+  PUSH_STRING(i.driver_version, temp);
 
   temp = clientDevice.getInfo<CL_DEVICE_VENDOR>();
-  std::strncpy(i.vendor, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
+  PUSH_STRING(i.vendor, temp);
   is_nvidia = (temp.find("NVIDIA") != std::string::npos);
 
-  temp = clientDevice.getInfo<CL_DEVICE_BUILT_IN_KERNELS>();
-  std::strncpy(i.builtin_kernels, temp.c_str(), MAX_PACKED_STRING_LEN - 1);
+  PUSH_STRING(i.builtin_kernels, clientDevice.getInfo<CL_DEVICE_BUILT_IN_KERNELS>());
 
   // Filter the extensions list and drop those that are currently not
   // supported through PoCL-R.
@@ -717,9 +722,7 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
       continue;
 
     if (extName == "cl_khr_il_program") {
-      std::string spirvVersions = clientDevice.getInfo<CL_DEVICE_IL_VERSION>();
-      std::strncpy(i.supported_spir_v_versions, spirvVersions.c_str(),
-                   MAX_PACKED_STRING_LEN - 1);
+      PUSH_STRING(i.supported_spir_v_versions, clientDevice.getInfo<CL_DEVICE_IL_VERSION>());
     }
     if (exts != "")
       exts += " ";
@@ -736,12 +739,7 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i) {
     exts += "cl_pocl_pinned_buffers";
   }
 
-  if (exts.size() > MAX_PACKED_STRING_LEN - 1)
-    POCL_MSG_WARN(
-        "Couldn't fit all extensions (needs %zu) to a packed string (max %d)!",
-        exts.size(), MAX_PACKED_STRING_LEN);
-
-  std::strncpy(i.extensions, exts.c_str(), MAX_PACKED_STRING_LEN - 1);
+  PUSH_STRING(i.extensions, exts);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
   i.address_bits = clientDevice.getInfo<CL_DEVICE_ADDRESS_BITS>();

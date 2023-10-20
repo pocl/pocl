@@ -23,12 +23,8 @@
 
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
-#define CL_TARGET_OPENCL_VERSION 300
-#define CL_HPP_MINIMUM_OPENCL_VERSION 300
-#define CL_HPP_TARGET_OPENCL_VERSION 300
 
-// Ensure we use the PoCL's headers since the system headers might be too
-// old for getting the OpenCL v3.0 version in.
+#include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
 #include <cstdio>
