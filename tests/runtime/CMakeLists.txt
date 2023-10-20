@@ -252,6 +252,15 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
       DEPENDS "pocl_version_check"
       LABELS "remote"
       RESOURCE_LOCK "pocld_ports")
+
+  if(ENABLE_RDMA)
+    set_tests_properties(
+      "remote/test_buffer_migration"
+      "remote/test_buffer_ping_pong"
+      "remote/test_cl_pocl_content_size_migration_remote_remote"
+      PROPERTIES
+        LABELS "remote_rdma")
+  endif()
 endif()
 
 if(NOT ENABLE_ANYSAN)
