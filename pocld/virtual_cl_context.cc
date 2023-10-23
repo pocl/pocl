@@ -1111,10 +1111,9 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   for (const std::string& str : strings) {
     // Append the strings to the string part of the reply, and
     // ensure that the strings are separated with \0.
-    std::memcpy(strings_pos, str.c_str(), str.size());
-    strings_pos += str.size();
-    *strings_pos = 0;
-    strings_pos++;
+    // str.c_str() is guaranteed to have a null byte after its last position
+    std::memcpy(strings_pos, str.c_str(), str.size() + 1);
+    strings_pos += str.size() + 1;
   }
 
   replyData(rep, MessageType_DeviceInfoReply, rep->extra_size);
