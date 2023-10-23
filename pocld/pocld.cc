@@ -265,18 +265,58 @@ class PoclDaemon {
 public:
   ~PoclDaemon();
 
-  int setup(struct sockaddr &base_addr, socklen_t base_addrlen,
-            struct ServerPorts &ports);
+  /**
+   * Sets up client listener sockets, binds them to the given address/ports and
+   * begins listening for connection requests. Launches threads for listening
+   * for P2P server connections and RDMAcm connections (both client and server)
+   * and finally launches the main I/O thread running
+   * `readAllClientSocketsThread()`
+   */
+  int launch(struct sockaddr &base_addr, socklen_t base_addrlen,
+             struct ServerPorts &ports);
 
-  int run();
-
+  /**
+   * Main function of the client I/O thread. Polls client sockets for new
+   * connections and open connections for new requests. Pushes requests to their
+   * respective context once they are fully read.
+   *
+   * The main loop within this function consists of 3 phases: the poll(), the
+   * reads and the reaping of closed fds.
+   *
+   * First, a vector of pollfd descriptors is constructed for all open sockets.
+   * This vector is cached across iterations and rebuilt from scratch whenever
+   * the list of open fds changes. Once the list is constructed (if needed),
+   * poll(2) is invoked, putting the thread to sleep until something happens.
+   *
+   * Once poll returns, two things happen: if there are new connection requests
+   * on the client listener sockets, they are accepted. Once both fds of the
+   * (command, stream) pairs have been obtained, the client handshake is
+   * performed and the fds are associated with a new or existing client context
+   * based on the handshake.
+   *
+   * After the special case of the listener sockets, if there are further events
+   * in the poll result, the respective fds are handed to Result::read for
+   * reading a piece of the next command sent over that socket. Similar to the
+   * pollfd list, the function keeps a list of in-flight Requests for this
+   * purpose. If there are any read errors or poll results indicating that a
+   * socket was closed, the corresponding fd is pushed into a list for cleanup.
+   *
+   * Finally, the function goes over the "dead" fds list, closes them and
+   * removes the fd and its in-flight Request.
+   */
   void readAllClientSocketsThread();
+
+  /** Block until the main I/O thread exits. */
+  void waitForExit() {
+    if (client_sockets_th.joinable())
+      client_sockets_th.join();
+  }
 
   /* returns client context on success, nullptr on error */
   VirtualContextBase *performClientSetup(int command_fd, int stream_fd);
 
 private:
-  /** File descriptor for the socket that listens for incoming cliend
+  /** File descriptor for the socket that listens for incoming client
    * connections (for low-latency connections) */
   int clients_listen_command_fd;
   /** File descriptor for the socket that listens for incoming client
@@ -317,8 +357,8 @@ PoclDaemon::~PoclDaemon() {
   }
 }
 
-int PoclDaemon::setup(struct sockaddr &base_addr, socklen_t base_addrlen,
-                      struct ServerPorts &ports) {
+int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
+                       struct ServerPorts &ports) {
   listen_ports = {ports};
   struct sockaddr server_addr_command, server_addr_stream;
   memcpy(&server_addr_command, &base_addr, base_addrlen);
@@ -379,8 +419,18 @@ int PoclDaemon::setup(struct sockaddr &base_addr, socklen_t base_addrlen,
 #ifdef ENABLE_RDMA
   peer_listener_data.peer_rdma_port = listen_ports.peer_rdma;
   peer_listener_data.rdma_listener.reset(new RdmaListener);
+  client_rdma_event_th = std::move(std::thread(
+      listen_rdmacm_events<VirtualContextBase *>, rdma_listener.eventChannel(),
+      std::ref(cm_id_to_vctx), std::ref(cm_id_to_vctx_mutex)));
   rdma_listener.listen(listen_ports.rdma);
+  pl_rdma_event_th = std::move(
+      std::thread(listen_rdmacm_events<VirtualContextBase *>,
+                  peer_listener_data.rdma_listener->eventChannel(),
+                  std::ref(peer_listener_data.peer_cm_id_to_vctx),
+                  std::ref(peer_listener_data.peer_cm_id_to_vctx_mutex)));
 #endif
+  peer_listener_th =
+      std::move(std::thread(listen_peers, (void *)&peer_listener_data));
 
   pid_t server_pid;
   server_pid = getpid();
@@ -399,22 +449,6 @@ int PoclDaemon::setup(struct sockaddr &base_addr, socklen_t base_addrlen,
 #endif
   );
 
-  return 0;
-}
-
-int PoclDaemon::run() {
-#ifdef ENABLE_RDMA
-  pl_rdma_event_th = std::move(
-      std::thread(listen_rdmacm_events<VirtualContextBase *>,
-                  peer_listener_data.rdma_listener->eventChannel(),
-                  std::ref(peer_listener_data.peer_cm_id_to_vctx),
-                  std::ref(peer_listener_data.peer_cm_id_to_vctx_mutex)));
-  client_rdma_event_th = std::move(std::thread(
-      listen_rdmacm_events<VirtualContextBase *>, rdma_listener.eventChannel(),
-      std::ref(cm_id_to_vctx), std::ref(cm_id_to_vctx_mutex)));
-#endif
-  peer_listener_th =
-      std::move(std::thread(listen_peers, (void *)&peer_listener_data));
   client_sockets_th =
       std::move(std::thread(&PoclDaemon::readAllClientSocketsThread, this));
 
@@ -841,10 +875,9 @@ int main(int argc, char *argv[]) {
   }
 
   PoclDaemon server;
-  if ((error = server.setup(base_addr, base_addrlen, listen_ports)))
-    return error;
-  if ((error = server.run()))
+  if ((error = server.launch(base_addr, base_addrlen, listen_ports)))
     return error;
 
+  server.waitForExit();
   return 0;
 }
