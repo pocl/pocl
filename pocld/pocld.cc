@@ -239,16 +239,28 @@ int listen_rdmacm_events(rdmacm::EventChannelPtr cm_channel,
 }
 #endif
 
+/** Helper struct to hold the port numbers that the server listens on */
 struct ServerPorts {
+  /** Port for "fast" incoming client connections (small commands, low latency
+   * settings) */
   uint16_t command;
+  /** Port for "slow" incoming client connections (bulk data transfer, large
+   * internal buffers) */
   uint16_t stream;
+  /** Port for incoming P2P server connections */
   uint16_t peer;
 #ifdef ENABLE_RDMA
+  /** Port for incoming P2P server RDMAcm connections */
   uint16_t peer_rdma;
+  /** Port for incoming client RDMAcm connections */
   uint16_t rdma;
 #endif
 };
 
+/**
+ * A Wrapper class to hold all state of a single server instance. This is mainly
+ * for keeping shared variables in one place and out of global scope.
+ */
 class PoclDaemon {
 public:
   ~PoclDaemon();
@@ -264,8 +276,13 @@ public:
   VirtualContextBase *performClientSetup(int command_fd, int stream_fd);
 
 private:
+  /** File descriptor for the socket that listens for incoming cliend
+   * connections (for low-latency connections) */
   int clients_listen_command_fd;
+  /** File descriptor for the socket that listens for incoming client
+   * connections (bulk transfers connections) */
   int clients_listen_stream_fd;
+  /** Port numbers that the server is listening on */
   struct ServerPorts listen_ports;
   ExitHelper exit_helper;
   std::unordered_map<std::string, VirtualContextBase *> client_contexts;
@@ -554,6 +571,8 @@ void PoclDaemon::readAllClientSocketsThread() {
           exit_helper.requestExit("Client listener socket closed", 0);
           return false;
         } else if (ev & POLLIN) {
+          /* Listening sockets return a POLLIN result when there are pending
+           * connections to accept() */
           struct sockaddr client_address;
           socklen_t client_address_length = sizeof(client_address);
           /* NOTE: address length MUST be initialized to the size of the storage
@@ -561,6 +580,8 @@ void PoclDaemon::readAllClientSocketsThread() {
           int newfd = accept(pfd.fd, &client_address, &client_address_length);
           if (newfd > 0) {
             // XXX: rework (eliminate?) handshakes and just store new fds
+            // return newly obtained fd to the caller via out parameter
+            // See callsite below for detailed explanation.
             hack = newfd;
             // open_client_fds.push_back(newfd);
             // fds_changed = true;
@@ -578,6 +599,16 @@ void PoclDaemon::readAllClientSocketsThread() {
 
     /* We always put our client listener sockets in the list first so let's
      * handle accepting incoming connections separately here. */
+    /*
+     * In order to associate the correct "command" and "stream" socket fds with
+     * the same context, we hold onto the last opened fd of each listener socket
+     * (via the out parameter in accept_new_connection out) and once we have
+     * both, create a new context with them (or update and existing one,
+     * depending on handshake). This is obviously a race condition and should be
+     * eliminated, but that will require redesigning the handshake process so
+     * until that happens please try to avoid several clients connecting at the
+     * exact same moment.
+     */
     /* clients_listen_command_fd */
     if (!accept_new_connection(pfds[0], 4 * 1024, 1, pending_client_command))
       continue;
@@ -692,7 +723,7 @@ void PoclDaemon::readAllClientSocketsThread() {
               }
               }
 
-              /* r is now someone else's problem */
+              /* r is now someone else's responsibility, simply "leak" it */
               incomplete_requests[i] = new Request;
             } else {
               POCL_MSG_ERR("Client sent request for nonexistent context, "

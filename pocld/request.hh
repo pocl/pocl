@@ -35,29 +35,54 @@
 class Request {
 
 public:
+  /** Size, in bytes, of the main request body (up to sizeof RequestMsg_t) */
   uint32_t req_size;
+  /** Tracker for how many bytes of req_size have been read from the network
+   * socket */
   size_t req_size_read;
+  /** Main body of the reuqest */
   RequestMsg_t req;
+  /** Tracker for how many bytes of the main request body have been read from
+   * the network socket */
   size_t req_read;
 
+  /** List of event ids that must complete before this Request can be processed
+   */
   uint64_t *waitlist;
+  /** Number of items in the waitlist */
   uint64_t waitlist_size;
+  /** Tracker for how many bytes of the waitlist have been read */
   size_t waitlist_read;
 
+  /** Auxiliary data required for the Request (buffer contents, program binaries
+   * etc) */
   char *extra_data;
+  /** Size of the auxiliary data buffer */
   uint64_t extra_size;
+  /** Tracker for how many bytes of the auxiliary data buffer have been read
+   * from the network socket */
   size_t extra_read;
 
+  /** Second auxiliary data required for the Request */
   char *extra_data2;
+  /** Size of the second auxiliary data buffer */
   uint64_t extra_size2;
+  /** Tracker for how many bytes of the second auxiliary data buffer have been
+   * read from the network socket */
   size_t extra_read2;
 
-  // server host timestamps for network comm
+  /** Server side timestamp for when reading the request from the network socket
+   * started */
   uint64_t read_start_timestamp_ns;
+  /** Server side timestamp for when the last bit of data for the request has
+   * been successfully read from the network socket. */
   uint64_t read_end_timestamp_ns;
 
+  /** Flag indicating that the request has been fully read from the network
+   * socket. Set at the very end of the read() function. */
   bool fully_read;
 
+  /// Default constructor that initializes all  fields to zero
   Request()
       : req_size(0), req_size_read(0), req(), req_read(0), waitlist(nullptr),
         waitlist_size(0), waitlist_read(0), extra_data(nullptr), extra_size(0),
@@ -65,7 +90,7 @@ public:
         read_start_timestamp_ns(0), read_end_timestamp_ns(0),
         fully_read(false) {}
 
-  // Deep copying constructor
+  /// Deep copying constructor
   Request(const Request &r)
       : req_size(r.req_size), req(r.req), req_size_read(r.req_size_read),
         waitlist(nullptr), waitlist_size(r.waitlist_size),
@@ -101,6 +126,9 @@ public:
       delete[] extra_data2;
   }
 
+  /** Incrementally reads the request from given fd. Returns true on success and
+   * false if an error occurs while reading. Call repeatedly until `fully_read`
+   * gets set to true. */
   bool read(int fd);
 };
 

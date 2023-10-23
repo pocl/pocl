@@ -281,6 +281,9 @@ struct peer_connection_t {
 
 class VirtualContextBase;
 
+/** Holds the port numbers for the peer listener threads as well as some state
+ * that is shared between the client and peer listeners in order to match up
+ * peer connections with the client sessions they belong to. */
 struct peer_listener_data_t {
   unsigned short port;
   unsigned short peer_rdma_port;
