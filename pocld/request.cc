@@ -165,10 +165,6 @@ bool Request::read(int fd) {
   Request *request = this;
   RequestMsg_t *req = &request->req;
 
-  RETURN_UNLESS_DONE(reentrant_read(fd, &request->req_size,
-                                    sizeof(request->req_size),
-                                    &request->req_size_read));
-
   if (!request->read_start_timestamp_ns) {
     auto now1 = std::chrono::system_clock::now();
     request->read_start_timestamp_ns =
@@ -176,6 +172,10 @@ bool Request::read(int fd) {
             now1.time_since_epoch())
             .count();
   }
+
+  RETURN_UNLESS_DONE(reentrant_read(fd, &request->req_size,
+                                    sizeof(request->req_size),
+                                    &request->req_size_read));
 
   RETURN_UNLESS_DONE(
       reentrant_read(fd, req, request->req_size, &request->req_read));
