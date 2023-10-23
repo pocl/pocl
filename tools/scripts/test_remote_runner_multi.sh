@@ -102,4 +102,6 @@ kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 kill -9 $POCLD_PID1 1>/dev/null 2>&1
 kill -9 $POCLD_PID2 1>/dev/null 2>&1
 
+wait -f
+
 exit $RESULT
