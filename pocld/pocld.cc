@@ -740,20 +740,25 @@ void PoclDaemon::readAllClientSocketsThread() {
     }
 
     /* reap dead fds */
-    for (size_t i = 0; i < open_client_fds.size(); ++i) {
+    fds_changed |= !dead_fds.empty();
+    size_t left_to_reap = dead_fds.size();
+    for (size_t i = 0; i < open_client_fds.size() && left_to_reap; ++i) {
       int fd = open_client_fds[i];
       for (int d : dead_fds) {
         if (d == fd) {
-          fds_changed = true;
           close(fd);
           std::swap(open_client_fds[i], open_client_fds.back());
           open_client_fds.pop_back();
+          /* Contexts can outlive their client connection (client may reconnect
+           * later) so don't destroy them here, only remove them from the socket
+           * bookkeeping list. */
           std::swap(socket_contexts[i], socket_contexts.back());
           socket_contexts.pop_back();
           std::swap(incomplete_requests[i], incomplete_requests.back());
           delete incomplete_requests.back();
           incomplete_requests.pop_back();
           --i;
+          --left_to_reap;
         }
       }
     }
