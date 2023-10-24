@@ -34,7 +34,7 @@ endif ()
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
+set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
@@ -46,13 +46,21 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images)
 
+set(CXX_PROGRAMS_TO_BUILD test_pinned_buffers)
+
 add_compile_options(${OPENCL_CFLAGS})
 
-foreach(PROG ${PROGRAMS_TO_BUILD})
+foreach(PROG ${C_PROGRAMS_TO_BUILD})
   if(MSVC)
     set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
   endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
+  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+endforeach()
+
+foreach(PROG ${CXX_PROGRAMS_TO_BUILD})
+  set_source_files_properties( "${PROG}.cpp" PROPERTIES LANGUAGE CXX )
+  add_executable("${PROG}" "${PROG}.cpp")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
@@ -126,6 +134,8 @@ add_test(NAME "runtime/test_command_buffer" COMMAND "test_command_buffer")
 
 add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_images")
 
+add_test(NAME "runtime/test_pinned_buffers" COMMAND "test_pinned_buffers")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -141,6 +151,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
+  "runtime/test_pinned_buffers"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -157,6 +168,7 @@ set_tests_properties(
   "runtime/clEnqueueNativeKernel"
   "runtime/test_command_buffer"
   "runtime/test_command_buffer_images"
+  "runtime/test_pinned_buffers"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
@@ -214,6 +226,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer")
   add_test(NAME "remote/test_command_buffer_images"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
+  add_test(NAME "remote/test_pinned_buffers"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_pinned_buffers")
 
   set_tests_properties(
     "remote/clCreateSubDevices"
@@ -227,6 +241,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/clEnqueueNativeKernel"
     "remote/test_command_buffer"
     "remote/test_command_buffer_images"
+    "remote/test_pinned_buffers"
     PROPERTIES SKIP_RETURN_CODE 77)
 
   set_tests_properties(
@@ -245,6 +260,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
+    "remote/test_pinned_buffers"
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"
       COST 2.0

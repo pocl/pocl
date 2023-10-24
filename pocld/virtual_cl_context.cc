@@ -676,7 +676,13 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 #endif
 
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
-  FOR_EACH_CONTEXT_DO(createBuffer(id, m.size, m.flags, nullptr));
+
+  uint64_t devaddr;
+  FOR_EACH_CONTEXT_DO(
+      createBuffer(id, m.size, m.flags, nullptr, (void **)&devaddr));
+  // Do not pass pointer to device_addr directly above since
+  // it's a packed struct and the address might be unaligned.
+  rep->rep.m.create_buffer.device_addr = devaddr;
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
   FOR_EACH_CONTEXT_UNDO(freeBuffer(id));
 
@@ -686,8 +692,8 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
     CreateRdmaBufferReply_t *ext = new CreateRdmaBufferReply_t;
-    ext->server_vaddr = (uint64_t)shadow_buf.get();
     ext->server_rkey = shadow_region->rkey();
+    ext->server_vaddr = (uint64_t)shadow_buf.get();
     rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_data = (char *)(ext);
@@ -1083,12 +1089,34 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   DeviceInfo_t info{};
 
-  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info);
+  // The device info contains various potentially long strings such as the
+  // built-in kernels and the extensions lists. Handle them with a separate
+  // dynamic string section at the end of the reply.
+  std::vector<std::string> strings;
 
-  rep->extra_data = new char[sizeof(info)];
+  // Store an empty string at offset 0.
+  strings.push_back("");
+  // The first string starts at offset 1.
+  rep->rep.strings_size = 1;
+
+  SharedContextList[req->req.pid]->getDeviceInfo(req->req.did, info, strings);
+
+  for (const std::string &str : strings)
+    rep->rep.strings_size += str.size() + 1;
+
+  rep->extra_size = sizeof(info) + rep->rep.strings_size;
+  rep->extra_data = new char[rep->extra_size];
   std::memcpy(rep->extra_data, &info, sizeof(info));
-  rep->extra_size = sizeof(info);
-  replyData(rep, MessageType_DeviceInfoReply, sizeof(info));
+  char *strings_pos = rep->extra_data + sizeof(info);
+  for (const std::string& str : strings) {
+    // Append the strings to the string part of the reply, and
+    // ensure that the strings are separated with \0.
+    // str.c_str() is guaranteed to have a null byte after its last position
+    std::memcpy(strings_pos, str.c_str(), str.size() + 1);
+    strings_pos += str.size() + 1;
+  }
+
+  replyData(rep, MessageType_DeviceInfoReply, rep->extra_size);
 }
 
 /****************************************************************************************************************/

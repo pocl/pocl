@@ -91,6 +91,14 @@ typedef struct pocl_mem_identifier
      it's not */
   void *mem_ptr;
 
+  /* If mem_ptr represents an address in the device global memory which
+     is pinned for the lifetime of the buffer. */
+  int is_pinned;
+
+  /* The device-side memory address (if known). If is_pinned is true, this
+     must be a valid value (note: 0 can be a valid address!). */
+  void *device_addr;
+
   /* Content version tracking. Every write use (clEnqWriteBuffer,
    * clMapBuffer(CL_MAP_WRITE), write_only image, read/write buffers as kernel
    * args etc) increases the version; read uses do not. At command enqueue

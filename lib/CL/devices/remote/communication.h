@@ -138,6 +138,9 @@ struct network_command
   size_t req_extra_size;
   size_t req_extra_size2;
   size_t rep_extra_size;
+  /* Points to an (optional) dynamic strings section appened after the message.
+   */
+  char *strings;
   network_command_status_t status;
   uint64_t client_write_start_timestamp_ns;
   uint64_t client_write_end_timestamp_ns;
@@ -323,7 +326,8 @@ cl_int pocl_network_setup_devinfo (cl_device_id device,
                                    uint32_t did);
 
 cl_int pocl_network_create_buffer (remote_device_data_t *d, uint32_t mem_id,
-                                   uint32_t mem_flags, uint64_t mem_size);
+                                   uint32_t mem_flags, uint64_t mem_size,
+                                   void **device_addr);
 
 cl_int pocl_network_free_buffer (remote_device_data_t *d, uint32_t mem_id);
 

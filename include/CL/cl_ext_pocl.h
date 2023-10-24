@@ -1,5 +1,8 @@
 /*******************************************************************************
  * Copyright (c) 2021 Tampere University
+ *               2023 Pekka Jääskeläinen / Intel Finland Oy
+ *
+ * PoCL-specific proof-of-concept (draft) or finalized OpenCL extensions.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -53,6 +56,44 @@ typedef CL_API_ENTRY cl_int
     cl_mem    buffer,
     cl_mem    content_size_buffer) CL_API_SUFFIX__VERSION_1_2;
 
+#endif
+
+/* cl_pocl_pinned_buffers (proof-of-concept/draft) stage */
+
+#ifndef cl_pocl_pinned_buffers
+#define cl_pocl_pinned_buffers 1
+#define CL_POCL_PINNED_BUFFERS_EXTENSION_NAME "cl_pocl_pinned_buffers"
+
+/* TODO: We need also platform/runtime extension due to the new buffer
+   creation flags. */
+
+/* clCreateBuffer(): A new cl_mem_flag CL_MEM_PINNED:
+
+   This flag specifies that the buffer must be persistently allocated
+   in the device's physical memory for its lifetime. That is, the buffer's
+   device address will remain the same and the space is reserved until
+   the buffer is freed. The device-specific buffer content updates are
+   still performed by implicit or explicit buffer migrations performed by
+   the runtime or the client code. If any of the devices in the context
+   does not support pinning, an error (TO DEFINE) is returned.
+*/
+#define CL_MEM_PINNED (1 << 31)
+
+/* clGetMemObjectInfo(): A new query CL_MEM_DEVICE_PTR:
+
+Returns a list of pinned device addresses for a buffer allocated
+with CL_MEM_PINNED. If the buffer was not created with CL_MEM_PINNED,
+returns CL_INVALID_MEM_OBJECT.
+*/
+#define CL_MEM_DEVICE_PTRS 0xff01
+
+typedef struct _cl_mem_pinning
+{
+  cl_device_id device;
+  void *address;
+} cl_mem_pinning;
+
+/* cl_pocl_pinned_buffers */
 #endif
 
 #ifdef __cplusplus

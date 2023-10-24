@@ -79,7 +79,8 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
     }
   else
     {
-      r = pocl_network_create_buffer (d, mem->id, mem->flags, mem->size);
+      r = pocl_network_create_buffer (d, mem->id, mem->flags, mem->size,
+                                      &p->device_addr);
     }
 
   if (r != 0)
