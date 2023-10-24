@@ -746,8 +746,8 @@ pocl_broadcast (cl_event brc_event)
   while ((target = brc_event->notify_list))
     {
       cl_event target_event = target->event;
-      POname (clRetainEvent) (target_event);
       POCL_UNLOCK_OBJ (brc_event);
+      POname (clRetainEvent) (target_event);
 
       pocl_lock_events_inorder (brc_event, target_event);
       if (target != brc_event->notify_list)
