@@ -71,7 +71,7 @@ bool CommandQueue::TryRun(Request *request) {
 }
 
 void CommandQueue::RunCommand(Request *request) {
-  Reply *reply = new Reply;
+  Reply *reply = new Reply(request);
   int slow = 0;
 
   POCL_MSG_PRINT_GENERAL("CQ %" PRIu32 " DID %" PRIu32
@@ -164,10 +164,6 @@ void CommandQueue::RunCommand(Request *request) {
     assert(false && "unknown message type");
   }
 
-  reply->rep.did = request->req.did;
-  reply->rep.client_did = request->req.client_did;
-  reply->rep.pid = request->req.pid;
-  reply->rep.msg_id = request->req.msg_id;
   // TODO: move this to reply thread?
   // Probably not necessary since we can only have the real event by this
   // point...
@@ -179,10 +175,6 @@ void CommandQueue::RunCommand(Request *request) {
   if (request->req.message_type != MessageType_MigrateD2D)
     assert(p.native.get());
   reply->event = p.native;
-
-  // Defer freeing Request until Reply is freed, in case request->extra_data is
-  // used by the backing OpenCL implementation, like in WriteBuffer and such
-  reply->req = request;
 
   ReplyQueueThread *rqt = (slow ? write_slow : write_fast);
   rqt->pushReply(reply);

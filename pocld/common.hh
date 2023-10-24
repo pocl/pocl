@@ -311,13 +311,22 @@ public:
   // server host timestamps for network comm
   uint64_t write_start_timestamp_ns;
 
-  Reply()
-      : rep(), req(nullptr), extra_data(nullptr), extra_size(0),
-        event(nullptr) {}
+  /** Explicitly delete default constructor since there is no need for it and
+   * actually using it is likely to lead to accessing uninitialized fields. */
+  Reply() = delete;
+  Reply(Request *r)
+      : rep(), req(r), extra_data(nullptr), extra_size(0), event(nullptr) {
+    assert(req);
+    rep.client_did = req->req.client_did;
+    rep.did = req->req.did;
+    rep.pid = req->req.pid;
+    rep.msg_id = req->req.msg_id;
+    rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
+    rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
+  }
 
   ~Reply() {
-    if (req)
-      delete req;
+    delete req;
     if (extra_data)
       delete[] extra_data;
   }

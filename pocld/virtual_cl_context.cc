@@ -385,9 +385,9 @@ void VirtualCLContext::broadcastToPeers(const Request &req) {
 }
 
 void VirtualCLContext::unknownRequest(Request *req) {
-  Reply *rep = new Reply;
+  Reply *rep = new Reply(req);
+  POCL_MSG_ERR("Unknown request type: %d\n", req->req.message_type);
   replyFail(&rep->rep, &req->req, CL_INVALID_OPERATION);
-  delete req;
   write_fast->pushReply(rep);
 }
 
@@ -407,7 +407,7 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
   if ((pid < PlatformList.size()) && (did < DeviceCounts[pid]))
     return 0;
 
-  Reply *reply = new Reply;
+  Reply *reply = new Reply(req);
 
   int err =
       (pid < PlatformList.size() ? CL_INVALID_DEVICE : CL_INVALID_PLATFORM);
@@ -418,7 +418,6 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
                uint64_t(req->req.msg_id), uint32_t(req->req.pid),
                uint32_t(req->req.did));
 
-  delete req;
   write_fast->pushReply(reply);
   return 1;
 }
@@ -443,9 +442,11 @@ int VirtualCLContext::run() {
       main_que.pop_front();
       lock.unlock();
 
+      reply = nullptr;
       if (request->req.message_type != MessageType_MigrateD2D &&
-          request->req.message_type != MessageType_RdmaBufferRegistration)
-        reply = new Reply;
+          request->req.message_type != MessageType_RdmaBufferRegistration) {
+        reply = new Reply(request);
+      }
 
       // PROCESSS REQUEST, then PUSH REPLY to WRITE Q
 
@@ -520,7 +521,6 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_MigrateD2D:
-        reply = nullptr;
         MigrateD2D(request);
         break;
 
@@ -538,14 +538,12 @@ int VirtualCLContext::run() {
 #endif
         // Just ignore, this does not require a reply
         delete request;
-        reply = nullptr;
         continue;
 
       default:
         reply->rep.data_size = 0;
         reply->rep.fail_details = CL_INVALID_OPERATION;
         reply->rep.failed = 1;
-        reply->rep.obj_id = request->req.obj_id;
         reply->rep.message_type = MessageType_Failure;
         reply->extra_data = nullptr;
         reply->extra_size = 0;
@@ -554,13 +552,8 @@ int VirtualCLContext::run() {
       }
 
       if (reply) {
-        reply->rep.client_did = request->req.client_did;
-        reply->rep.did = request->req.did;
-        reply->rep.pid = request->req.pid;
-        reply->rep.msg_id = request->req.msg_id;
-        reply->req = request;
         write_fast->pushReply(reply);
-        // Reply frees the request when done
+        // Reply frees the request when destroyed
       }
 
     } else {
