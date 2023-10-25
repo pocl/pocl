@@ -67,7 +67,7 @@ ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://gitlab.freedesktop.org/mesa/piglit.git"
-  GIT_TAG "main"
+  GIT_TAG "24207f5be"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS ${EXTRA_CFLAGS}"
