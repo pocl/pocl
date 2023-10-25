@@ -64,7 +64,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
         "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -DNDEBUG -Wno-deprecated-declarations -Wno-narrowing"
         "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -ggdb -Wno-deprecated-declarations -Wno-narrowing"
         -DBUILD_OPENCL=ON -DBUILD_OPENCV=OFF -DBUILD_BOLT=OFF -DBUILD_AMP=OFF
-        INSTALL_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install.sh "${TS_ROOT}"
+        INSTALL_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install.sh "${TS_ROOT}" "${CMAKE_BUILD_TYPE}"
     )
 
     set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
