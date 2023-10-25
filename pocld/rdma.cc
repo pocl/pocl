@@ -298,7 +298,7 @@ QueuePair::~QueuePair() { rdma_destroy_qp(*cm_id); }
 } // namespace ibverbs
 
 ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr)
-    : sge{((mr->accessFlags() | ibverbs::MemoryRegion::Access::ZeroBased).val
+    : sge{((mr->accessFlags() & ibverbs::MemoryRegion::Access::ZeroBased).val
                ? 0
                : (uint64_t)((ibv_mr *)**mr)->addr),
           (uint32_t)mr->handle->length, mr->handle->lkey},
@@ -306,7 +306,7 @@ ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr)
 
 ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr,
                                        ptrdiff_t offset, uint32_t length)
-    : sge{((mr->accessFlags() | ibverbs::MemoryRegion::Access::ZeroBased).val
+    : sge{((mr->accessFlags() & ibverbs::MemoryRegion::Access::ZeroBased).val
                ? 0
                : (uint64_t)((ibv_mr *)**mr)->addr) +
               (int64_t)offset,
