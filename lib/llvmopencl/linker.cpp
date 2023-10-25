@@ -365,8 +365,8 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
 
 using namespace pocl;
 
-int link(llvm::Module *Program, const llvm::Module *Lib,
-         std::string &log, const char **DevAuxFuncs) {
+int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
+         const char **DevAuxFuncs, bool DeviceSidePrintf) {
 
   assert(Program);
   assert(Lib);
@@ -498,6 +498,16 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
   removeDuplicateDbgInfo(Program);
 
   fixCallingConv(Program, log);
+
+  if (DeviceSidePrintf) {
+    /* Rename printf function to something else than "printf". Note that it has
+     * to be done here, can't be done in the sources via macro, because Clang
+     * refuses to compile it. */
+    Function *CalledPrintf = Program->getFunction("printf");
+    if (CalledPrintf) {
+      CalledPrintf->setName("_cl_printf");
+    }
+  }
 
   return 0;
 }

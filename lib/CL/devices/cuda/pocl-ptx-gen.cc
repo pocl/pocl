@@ -23,7 +23,6 @@
 
 #include "config.h"
 
-#include "LLVMUtils.h"
 #include "common.h"
 #include "pocl-ptx-gen.h"
 #include "pocl.h"
@@ -35,8 +34,8 @@
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
@@ -46,9 +45,6 @@
 #else
 #include "llvm/Support/TargetRegistry.h"
 #endif
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/TargetSelect.h"
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
 #endif
@@ -57,9 +53,10 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
+
+#include "LLVMUtils.h"
 
 #include <set>
 #include <optional>
@@ -703,7 +700,7 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
     return -1;
   }
 
-  // llvm::legacy::PassManager Passes;
+  llvm::legacy::PassManager Passes;
 
   // Run internalize to mark all non-kernel functions as internal.
   auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
@@ -725,8 +722,11 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
       llvm::MDNode::get(Context, {FourMD, NameMD, OneMD});
   Module->addModuleFlag(ReflectFlag);
 
+  // run the InternalizePass
+  Passes.run(*Module);
+
   // Run optimization passes to clean up unused functions etc.
-  populateModulePM(Passes, Module, 3, 0);
+  populateModulePM(nullptr, Module, 3, 0);
 
   return 0;
 }

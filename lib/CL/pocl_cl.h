@@ -51,8 +51,7 @@
 #endif
 
 #include <CL/cl_egl.h>
-#include <CL/cl_ext.h>
-#include <CL/cl_gl.h>
+#include <CL/opencl.h>
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2

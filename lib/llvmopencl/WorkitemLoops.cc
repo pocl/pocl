@@ -1161,7 +1161,7 @@ WorkitemLoopsImpl::getContextArray(llvm::Instruction *instruction,
 #if LLVM_MAJOR > 14
                      .value_or(TypeSize(0, false))
                      .getFixedValue();
-#elif LLVM_MAJOR > 12
+#elif LLVM_MAJOR > 11
                      .getValueOr(TypeSize(0, false))
                      .getFixedValue();
 #else

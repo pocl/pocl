@@ -189,7 +189,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   }
 #endif
 
-  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions))
+  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions,
+           Device->device_side_printf != CL_FALSE))
     return true;
 
   raw_string_ostream OS(Log);
@@ -519,6 +520,7 @@ int pocl_llvm_build_program(cl_program program,
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
+  la->Freestanding = true; // -ffree-standing
   la->AsmBlocks = true;  // -fasm (?)
 
   // setLangDefaults overrides to FPM_On for OpenCL.

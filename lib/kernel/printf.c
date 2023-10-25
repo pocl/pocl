@@ -186,9 +186,11 @@ __pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
 {
   DEBUG_PRINTF (("[printf:format=%s]\n", format));
   char bf[BUFSIZE];
+  for (unsigned i = 0; i < BUFSIZE; ++i)
+    bf[i] = 0;
   p->bf = bf;
-  char ch;
-  unsigned errcode;
+  char ch = 0;
+  unsigned errcode = 0;
 
   while ((ch = *format++))
     {
@@ -219,6 +221,7 @@ __pocl_printf_format_full (const PRINTF_FMT_STR_AS char *restrict format,
               flags.zero = 0;
               flags.uc = 0;
               flags.always_sign = 0;
+              flags.nonzeroparam = 0;
               for (;;)
                 {
                   switch (ch)

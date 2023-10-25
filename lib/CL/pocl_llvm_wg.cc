@@ -121,7 +121,7 @@ void clearTargetMachines() {
 
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(cl_device_id device, Triple &triple) {
+static TargetMachine *GetTargetMachine(cl_device_id device, Triple triple) {
 
   if (targetMachines.find(device) != targetMachines.end())
     return targetMachines[device];
@@ -177,8 +177,9 @@ class PoclModulePassManager {
   PassInstrumentationCallbacks PIC;
   PrintPassOptions PrintPassOpts;
   PipelineTuningOptions PTO;
+  std::unique_ptr<TargetLibraryInfoImpl> TLII;
   std::unique_ptr<StandardInstrumentations> SI;
-  TargetMachine *Machine = nullptr;
+  llvm::TargetMachine *Machine = nullptr;
   llvm::LLVMContext Context; // for SI
   std::unique_ptr<PassBuilder> PassB;
   unsigned OptimizeLevel;
@@ -187,18 +188,17 @@ class PoclModulePassManager {
 
 public:
   PoclModulePassManager() = default;
-  llvm::Error build(const std::string &PoclPipeline, unsigned OLevel,
-                    unsigned SLevel, cl_device_id Dev);
+  llvm::Error build(std::string PoclPipeline, unsigned OLevel, unsigned SLevel,
+                    cl_device_id Dev);
   void run(llvm::Module &Bitcode);
 };
 
-llvm::Error PoclModulePassManager::build(const std::string &PoclPipeline,
+llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
                                          unsigned OLevel, unsigned SLevel,
                                          cl_device_id Dev) {
   // Need to setup the target info for target specific passes. */
   Triple DevTriple(Dev->llvm_target_triplet);
   Machine = GetTargetMachine(Dev, DevTriple);
-  assert(Machine);
 
   PTO.LoopUnrolling = false;
 #if LLVM_MAJOR > 16
@@ -233,20 +233,51 @@ llvm::Error PoclModulePassManager::build(const std::string &PoclPipeline,
   PassB.reset(new PassBuilder(Machine, PTO));
   PassBuilder &PB = *PassB.get();
 
+#if 0
+  // TODO figure out why this doesn't work. Used to work with old PM,
+  // but with the new PM, it still tries to use printf libcall
   // Register our TargetLibraryInfoImpl.
-  TargetLibraryInfoImpl TLII(DevTriple);
+  TLII.reset(new TargetLibraryInfoImpl(DevTriple));
   // Disables automated generation of libcalls from code patterns.
   // TCE doesn't have a runtime linker which could link the libs later on.
   // Also the libcalls might be harmful for WG autovectorization where we
   // want to try to vectorize the code it converts to e.g. a memset or
   // a memcpy
-  TLII.disableAllFunctions();
+  TLII->disableAllFunctions();
   // Analysis pass providing the \c TargetLibraryInfo:
   // TargetLibraryAnalysis
 
+  bool res;
+  if (Machine) {
+    PB.registerPipelineParsingCallback(
+        [](::llvm::StringRef Name, ::llvm::FunctionPassManager &FPM,
+           llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {
+          if (Name == "require<targetir>") {
+            FPM.addPass(RequireAnalysisPass<TargetIRAnalysis, llvm::Function>());
+            return true;
+          } else
+            return false;
+        });
+    PB.registerAnalysisRegistrationCallback(
+        [this](::llvm::FunctionAnalysisManager &FAM) {
+          FAM.registerPass([=] { return TargetIRAnalysis(Machine->getTargetIRAnalysis()); });
+        });
+
+    res = FAM.registerPass([=] { return TargetIRAnalysis(Machine->getTargetIRAnalysis()); });
+    assert(res && "TIRA already registered!");
+  }
+
+  // early register here, this will automatically override later registrations
+  res = FAM.registerPass([=] { return TargetLibraryAnalysis(*TLII); });
+  assert(res && "TLII already registered!");
+  PB.registerAnalysisRegistrationCallback(
+      [this](::llvm::FunctionAnalysisManager &FAM) {
+        FAM.registerPass([=] { return TargetLibraryAnalysis(*TLII); });
+      });
+
+  PoclPipeline = "function(require<targetir>),function(require<targetlibinfo>)," + PoclPipeline;
+#endif
   pocl::registerFunctionAnalyses(PB);
-  // early register here, this will automatically skip later registrations
-  FAM.registerPass([&] { return TargetLibraryAnalysis(TLII); });
 
   // Register all the basic analyses with the managers.
   PB.registerModuleAnalyses(MAM);
