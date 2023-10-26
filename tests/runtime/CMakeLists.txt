@@ -284,6 +284,11 @@ if(NOT ENABLE_ANYSAN)
   "function 1.*first include.*function 2.*second include")
 endif()
 
+if(ENABLE_ASAN)
+  set_tests_properties("runtime/clCreateSubDevices"
+    PROPERTIES DISABLED 1)
+endif()
+
 if(NOT HAVE_WORKING_IMAGES_WITH_SPIR)
   set_tests_properties("runtime/clGetKernelArgInfo"
     PROPERTIES DISABLED 1)
