@@ -301,6 +301,7 @@ void cpu_setup_vector_widths(cl_device_id dev) {
     if (features["avx512f"])
       lane_width = 64;
   }
+  dev->native_vector_width_in_bits = lane_width * 8;
 
   dev->native_vector_width_char = dev->preferred_vector_width_char =
       VECWIDTH(cl_char);

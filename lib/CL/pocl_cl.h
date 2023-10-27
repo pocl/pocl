@@ -1006,6 +1006,12 @@ struct _cl_device_id {
   unsigned local_as_id;
   unsigned constant_as_id;
 
+  /* optional device property for devices using PoCL's LLVM stack.
+   * if nonzero, functions with arguments larger than
+   * this will be force-inlined.
+   */
+  unsigned native_vector_width_in_bits;
+
   /* The address space where the argument data is passed. */
   unsigned args_as_id;
 

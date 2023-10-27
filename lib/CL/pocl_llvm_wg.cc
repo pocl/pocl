@@ -439,6 +439,9 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
      threads will overwrite the static variable and produce garbage results.
   */
 
+  // NOTE: if you add a new pass here,
+  // don't forget to register it in registerPassBuilderPasses
+  addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
   addPass(Passes, "remove-optnone");
   addPass(Passes, "optimize-wi-func-calls");
@@ -998,6 +1001,10 @@ static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
                         Device->arg_buffer_launcher);
   setModuleBoolMetadata(Bitcode, "device_grid_launcher", Device->grid_launcher);
   setModuleBoolMetadata(Bitcode, "device_is_spmd", Device->spmd);
+
+  if (Device->native_vector_width_in_bits)
+    setModuleIntMetadata(Bitcode, "device_native_vec_width",
+                         Device->native_vector_width_in_bits);
 
   if (Kernel != nullptr)
     setModuleStringMetadata(Bitcode, "KernelName", Kernel->name);

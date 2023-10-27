@@ -49,6 +49,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "InlineKernels.hh"
 #include "IsolateRegions.h"
 #include "LoopBarriers.h"
+#include "MinLegalVecSize.hh"
 #include "OptimizeWorkItemFuncCalls.h"
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
@@ -518,6 +519,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   InlineKernels::registerWithPB(PB);
   IsolateRegions::registerWithPB(PB);
   LoopBarriers::registerWithPB(PB);
+  FixMinVecSize::registerWithPB(PB);
   OptimizeWorkItemFuncCalls::registerWithPB(PB);
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);

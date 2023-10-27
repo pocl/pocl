@@ -113,8 +113,9 @@ static bool inlineKernels(Function &F) {
   SmallPtrSet<Function *, 8> functions_to_inline;
   SmallVector<Value *, 8> pending;
 
+  Module *M = F.getParent();
   std::string KernelName;
-  getModuleStringMetadata(*F.getParent(), "KernelName", KernelName);
+  getModuleStringMetadata(*M, "KernelName", KernelName);
 
   if (F.getName().str() != KernelName)
     return false;
