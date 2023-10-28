@@ -333,8 +333,10 @@ static int compileProgramBcToSpv(cl_program Program, cl_uint DeviceI,
   // generate program.spv
   CompilationArgs.clear();
   CompilationArgs.push_back(LLVM_SPIRV);
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   CompilationArgs.push_back("--opaque-pointers");
+#endif
 #endif
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(ProgramSpvPathTemp);
@@ -366,8 +368,10 @@ compileProgramSpvToBc(cl_program Program, cl_uint DeviceI,
   // generate program.spv
   CompilationArgs.clear();
   CompilationArgs.push_back(LLVM_SPIRV);
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   CompilationArgs.push_back("--opaque-pointers");
+#endif
 #endif
   CompilationArgs.push_back("-r");
   CompilationArgs.push_back("-o");

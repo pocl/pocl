@@ -182,7 +182,7 @@ static uint64_t getAndFixLargestVecSize(llvm::Function *F, unsigned Justify) {
 // the kernels htemselves are
 static bool fixMinVecSize(Module &M) {
 
-  uint64_t DeviceNativeVectorWidth = 0;
+  unsigned long DeviceNativeVectorWidth = 0;
   if (!getModuleIntMetadata(M, "device_native_vec_width",
                             DeviceNativeVectorWidth))
     return false;

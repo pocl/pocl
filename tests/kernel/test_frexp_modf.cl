@@ -5,6 +5,6 @@ void test_frexp_modf() {
     frac = frexp(a, &exp);
     float x;
     frac2 = modf(b, &x);
-    printf("frexp(8e2f): %.1f %d\n", frac, exp);
-    printf("modf(1.5f): %.1f %1f\n", frac2, x);
+    printf("frexp(8e2f): %f %d\n", frac, exp);
+    printf("modf(1.5f): %f %f\n", frac2, x);
 }

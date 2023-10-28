@@ -56,6 +56,10 @@
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
 
+#if LLVM_MAJOR >= 17
+#include <llvm/Transforms/IPO/Internalize.h>
+#endif
+
 #include "LLVMUtils.h"
 
 #include <set>
@@ -700,15 +704,6 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
     return -1;
   }
 
-  llvm::legacy::PassManager Passes;
-
-  // Run internalize to mark all non-kernel functions as internal.
-  auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
-    const llvm::Function *F = llvm::dyn_cast<llvm::Function>(&GV);
-    return (F != nullptr && pocl::isKernelToProcess(*F));
-  };
-  Passes.add(llvm::createInternalizePass(PreserveKernel));
-
   // Add NVVM reflect module flags to set math options.
   // TODO: Determine correct FTZ value from frontend compiler options.
   llvm::LLVMContext &Context = Module->getContext();
@@ -722,8 +717,20 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
       llvm::MDNode::get(Context, {FourMD, NameMD, OneMD});
   Module->addModuleFlag(ReflectFlag);
 
+  // Run internalize to mark all non-kernel functions as internal.
+  auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
+    const llvm::Function *F = llvm::dyn_cast<llvm::Function>(&GV);
+    return (F != nullptr && pocl::isKernelToProcess(*F));
+  };
+
+#if LLVM_MAJOR < 17
+  llvm::legacy::PassManager Passes;
+  Passes.add(llvm::createInternalizePass(PreserveKernel));
   // run the InternalizePass
   Passes.run(*Module);
+#else
+  internalizeModule(*Module, PreserveKernel);
+#endif
 
   // Run optimization passes to clean up unused functions etc.
   populateModulePM(nullptr, Module, 3, 0);
@@ -953,12 +960,16 @@ void mapLibDeviceCalls(llvm::Module *Module) {
 
     {"frexp", "__nv_frexp"},
     {"frexpf", "__nv_frexpf"},
+    {"llvm.frexp.f64.i32", "frexp_f64_i32"},
+    {"llvm.frexp.f32.i32", "frexpf_f32_i32"},
 
     {"tgamma", "__nv_tgamma"},
     {"tgammaf", "__nv_tgammaf"},
 
     {"ldexp", "__nv_ldexp"},
     {"ldexpf", "__nv_ldexpf"},
+    {"llvm.ldexp.f64.i32", "__nv_ldexp"},
+    {"llvm.ldexp.f32.i32", "__nv_ldexpf"},
 
     {"modf", "__nv_modf"},
     {"modff", "__nv_modff"},

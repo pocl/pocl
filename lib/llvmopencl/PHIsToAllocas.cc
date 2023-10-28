@@ -41,6 +41,11 @@ POP_COMPILER_DIAGS
 #define PASS_DESC "Convert all PHI nodes to allocas"
 
 //#define DEBUG_PHIS_TO_ALLOCAS
+
+// Skip PHIsToAllocas when we are not creating the work item loops,
+// as it leads to worse code without benefits for the full replication method.
+// Note: re-enabling this causes workgroup/cond_barriers_in_for_cbs to fail
+//#define CBS_NO_PHIS_IN_SPLIT
 #include <iostream>
 
 namespace pocl {
@@ -59,9 +64,6 @@ static bool needsPHIsToAllocas(Function &F, WorkitemHandlerType WIH) {
   if (!isKernelToProcess(F))
     return false;
 
-  /* Skip PHIsToAllocas when we are not creating the work item loops,
-     as it leads to worse code without benefits for the full replication method.
-  */
   if (WIH != WorkitemHandlerType::LOOPS &&
       !(RunWithCBS && WIH == WorkitemHandlerType::CBS))
     return false;

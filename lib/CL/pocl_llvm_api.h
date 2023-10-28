@@ -88,9 +88,6 @@ POCL_EXPORT bool getModuleStringMetadata (const llvm::Module &mod,
 POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
                                         const char *key, bool &data);
 
-void clearKernelPasses();
-void clearTargetMachines();
-
 POCL_EXPORT void populateModulePM (void *Passes, void *Module, unsigned OptL,
                                    unsigned SizeL, bool Vectorize = true);
 

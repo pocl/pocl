@@ -94,11 +94,20 @@ POP_COMPILER_DIAGS
 // each work-group IR function generation. Requires LLVM > 7.
 // #define DUMP_LLVM_PASS_TIMINGS
 
-#define CODEGEN_FILE_TYPE_NS llvm
+// Enable extra debugging of the new PM's run: prints each pass as it's run,
+// plus the analysis it required, in a "tree like" fashion.
+// #define DEBUG_NEW_PASS_MANAGER
+
+// Use a separate PM instance to run the default optimization pipeline
+// TODO: this MUST be left enabled for now; disabling causes a few tests fail
+// should be investigated
+#define SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
+
+// use a separate instance of llvm::TargetMachine; disabling this
+// may cause test failures / random crashes / ASanitizer complaints
+#define PER_STAGE_TARGET_MACHINE
 
 using namespace llvm;
-
-static std::map<cl_device_id, llvm::TargetMachine *> targetMachines;
 
 /* FIXME: these options should come from the cl_device, and
  * cl_program's options. */
@@ -112,26 +121,16 @@ static llvm::TargetOptions GetTargetOptions() {
   return Options;
 }
 
-void clearTargetMachines() {
-  for (auto i = targetMachines.begin(), e = targetMachines.end(); i != e; ++i) {
-    delete (llvm::TargetMachine *)i->second;
-  }
-  targetMachines.clear();
-}
-
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(cl_device_id device, Triple triple) {
-
-  if (targetMachines.find(device) != targetMachines.end())
-    return targetMachines[device];
+static TargetMachine *GetTargetMachine(cl_device_id device) {
 
   std::string Error;
-  // Triple TheTriple(device->llvm_target_triplet);
+  Triple DevTriple(device->llvm_target_triplet);
 
   std::string MCPU = device->llvm_cpu ? device->llvm_cpu : "";
 
-  const Target *TheTarget = TargetRegistry::lookupTarget("", triple, Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget("", DevTriple, Error);
 
   // In LLVM 3.4 and earlier, the target registry falls back to
   // the cpp backend in case a proper match was not found. In
@@ -139,34 +138,22 @@ static TargetMachine *GetTargetMachine(cl_device_id device, Triple triple) {
   // because it can be an off-tree target not registered at
   // this point (read: TCE).
   if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
-    return 0;
+    return nullptr;
   }
 
   TargetMachine *TM = TheTarget->createTargetMachine(
-      triple.getTriple(), MCPU, StringRef(""), GetTargetOptions(), Reloc::PIC_,
-      CodeModel::Small, CodeGenOpt::Aggressive);
+      DevTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
+      Reloc::PIC_, CodeModel::Small, CodeGenOpt::Aggressive);
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
   if (device->ops->init_target_machine)
     device->ops->init_target_machine(device->data, TM);
-  targetMachines[device] = TM;
 
   return TM;
 }
-/* helpers copied from LLVM opt END */
 
-/**
- * Prepare the kernel compiler passes.
- *
- * The passes are created only once per program run per device.
- * The returned pass manager should not be modified, only the Module
- * should be optimized using it.
- */
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-static std::map<cl_device_id, legacy::PassManager *> kernelPasses;
-#else
-
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 class PoclModulePassManager {
   // Create the analysis managers.
   LoopAnalysisManager LAM;
@@ -174,13 +161,17 @@ class PoclModulePassManager {
   CGSCCAnalysisManager CGAM;
   ModuleAnalysisManager MAM;
   ModulePassManager PM;
-  PassInstrumentationCallbacks PIC;
-  PrintPassOptions PrintPassOpts;
   PipelineTuningOptions PTO;
   std::unique_ptr<TargetLibraryInfoImpl> TLII;
   std::unique_ptr<StandardInstrumentations> SI;
-  llvm::TargetMachine *Machine = nullptr;
+#ifdef PER_STAGE_TARGET_MACHINE
+  std::unique_ptr<llvm::TargetMachine> Machine;
+#endif
+#ifdef DEBUG_NEW_PASS_MANAGER
+  PrintPassOptions PrintPassOpts;
+  PassInstrumentationCallbacks PIC;
   llvm::LLVMContext Context; // for SI
+#endif
   std::unique_ptr<PassBuilder> PassB;
   unsigned OptimizeLevel;
   unsigned SizeLevel;
@@ -188,17 +179,26 @@ class PoclModulePassManager {
 
 public:
   PoclModulePassManager() = default;
-  llvm::Error build(std::string PoclPipeline, unsigned OLevel, unsigned SLevel,
+  llvm::Error build(std::string PoclPipeline,
+                    unsigned OLevel, unsigned SLevel,
+#ifndef PER_STAGE_TARGET_MACHINE
+                    TargetMachine *TM,
+#endif
                     cl_device_id Dev);
   void run(llvm::Module &Bitcode);
 };
 
 llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
                                          unsigned OLevel, unsigned SLevel,
+#ifndef PER_STAGE_TARGET_MACHINE
+                                         TargetMachine *TM,
+#endif
                                          cl_device_id Dev) {
-  // Need to setup the target info for target specific passes. */
-  Triple DevTriple(Dev->llvm_target_triplet);
-  Machine = GetTargetMachine(Dev, DevTriple);
+
+#ifdef PER_STAGE_TARGET_MACHINE
+  Machine.reset(GetTargetMachine(Dev));
+  TargetMachine *TM = Machine.get();
+#endif
 
   PTO.LoopUnrolling = false;
 #if LLVM_MAJOR > 16
@@ -215,7 +215,7 @@ llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
   OptimizeLevel = OLevel;
   SizeLevel = SLevel;
 
-#if 0
+#ifdef DEBUG_NEW_PASS_MANAGER
   PrintPassOpts.Verbose = true;
   PrintPassOpts.SkipAnalyses = false;
   PrintPassOpts.Indent = true;
@@ -229,8 +229,11 @@ llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
   // Take a look at the PassBuilder constructor parameters for more
   // customization, e.g. specifying a TargetMachine or various debugging
   // options.
-  // PassB.reset(new PassBuilder(Machine, PTO, std::nullopt, &PIC));
-  PassB.reset(new PassBuilder(Machine, PTO));
+#ifdef DEBUG_NEW_PASS_MANAGER
+  PassB.reset(new PassBuilder(TM, PTO, std::nullopt, &PIC));
+#else
+  PassB.reset(new PassBuilder(TM, PTO));
+#endif
   PassBuilder &PB = *PassB.get();
 
 #if 0
@@ -277,6 +280,7 @@ llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
 
   PoclPipeline = "function(require<targetir>),function(require<targetlibinfo>)," + PoclPipeline;
 #endif
+
   pocl::registerFunctionAnalyses(PB);
 
   // Register all the basic analyses with the managers.
@@ -288,25 +292,52 @@ llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
 
   pocl::registerPassBuilderPasses(PB);
 
+#ifndef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
+  OptimizationLevel Opt;
+  if (SizeLevel > 0)
+    PoclPipeline += ",default<Os>";
+  else {
+    switch (OptimizeLevel) {
+    case 0:
+      PoclPipeline += ",default<O0>";
+      break;
+    case 1:
+      PoclPipeline += ",default<O1>";
+      break;
+    case 2:
+      PoclPipeline += ",default<O2>";
+      break;
+    case 3:
+    default:
+      PoclPipeline += ",default<O3>";
+      break;
+    }
+  }
+#endif
+
   return PB.parsePassPipeline(PM, StringRef(PoclPipeline));
 }
 
 void PoclModulePassManager::run(llvm::Module &Bitcode) {
   PM.run(Bitcode, MAM);
+#ifdef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
   populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel, SizeLevel,
                    Vectorize);
+#endif
 }
 
 class TwoStagePoclModulePassManager {
   PoclModulePassManager Stage1;
   PoclModulePassManager Stage2;
-
+#ifndef PER_STAGE_TARGET_MACHINE
+  std::unique_ptr<llvm::TargetMachine> Machine;
+#endif
 public:
   TwoStagePoclModulePassManager() = default;
   llvm::Error build(cl_device_id Dev, const std::string &S1_Pipeline,
                     unsigned S1_OLevel, unsigned S1_SLevel,
-                    const std::string &S2_Pipeline, unsigned S2_OLevel,
-                    unsigned S2_SLevel);
+                    const std::string &S2_Pipeline,
+                    unsigned S2_OLevel, unsigned S2_SLevel);
   void run(llvm::Module &Bitcode);
 };
 
@@ -314,11 +345,26 @@ llvm::Error TwoStagePoclModulePassManager::build(
     cl_device_id Dev, const std::string &S1_Pipeline, unsigned S1_OLevel,
     unsigned S1_SLevel, const std::string &S2_Pipeline, unsigned S2_OLevel,
     unsigned S2_SLevel) {
-  llvm::Error E1 = Stage1.build(S1_Pipeline, S1_OLevel, S1_SLevel, Dev);
+
+#ifndef PER_STAGE_TARGET_MACHINE
+  Machine.reset(GetTargetMachine(Dev));
+  TargetMachine *TMach = Machine.get();
+#endif
+  llvm::Error E1 = Stage1.build(S1_Pipeline,
+                                S1_OLevel, S1_SLevel,
+#ifndef PER_STAGE_TARGET_MACHINE
+                                TMach,
+#endif
+                                Dev);
   if (E1)
     return E1;
 
-  return Stage2.build(S2_Pipeline, S2_OLevel, S2_SLevel, Dev);
+  return Stage2.build(S2_Pipeline,
+                      S2_OLevel, S2_SLevel,
+#ifndef PER_STAGE_TARGET_MACHINE
+                      TMach,
+#endif
+                      Dev);
 }
 
 void TwoStagePoclModulePassManager::run(llvm::Module &Bitcode) {
@@ -326,16 +372,7 @@ void TwoStagePoclModulePassManager::run(llvm::Module &Bitcode) {
   Stage2.run(Bitcode);
 }
 
-static std::map<cl_device_id, TwoStagePoclModulePassManager *> kernelPasses;
 #endif
-
-void clearKernelPasses() {
-  for (auto i = kernelPasses.begin(), e = kernelPasses.end(); i != e; ++i) {
-    delete i->second;
-  }
-
-  kernelPasses.clear();
-}
 
 enum class PassType {
   Module,
@@ -345,7 +382,7 @@ enum class PassType {
 };
 
 // for legacy PM, add each Pass to the pass pipeline;
-// for new PM, additionally they must be registered in registerPassBuilderPasses
+// for new PM, add them with proper nesting...  X(Y(...))
 static void addPass(std::vector<std::string> &Passes, std::string PassName,
                     PassType T = PassType::Function) {
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
@@ -439,7 +476,7 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
      threads will overwrite the static variable and produce garbage results.
   */
 
-  // NOTE: if you add a new pass here,
+  // NOTE: if you add a new PoCL pass here,
   // don't forget to register it in registerPassBuilderPasses
   addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
@@ -472,13 +509,15 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
   addPass(Passes, "STANDARD_OPTS");
 #else
-  // addPass(Passes, "default<O1>", PassType::Module);
+  // the optimization for new PM is handled separately
 #endif
 }
 
 static void addStage2PassesToPipeline(cl_device_id Dev,
                                       std::vector<std::string> &Passes) {
 
+  // NOTE: if you add a new PoCL pass here,
+  // don't forget to register it in registerPassBuilderPasses
   if (Dev->spmd == CL_FALSE) {
     addPass(Passes, "simplifycfg");
     addPass(Passes, "loop-simplify");
@@ -534,6 +573,12 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     addPass(Passes, "remove-barriers");
   }
 
+  // verify & print the module
+#if 0
+  addPass(Passes, "verify", PassType::Module);
+  addPass(Passes, "print", PassType::Module);
+#endif
+
   // Add the work group launcher functions and privatize the pseudo variable
   // (local id) accesses. We have to do this late because we rely on aggressive
   // inlining to expose the _{local,group}_id accesses which will be replaced
@@ -544,12 +589,6 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
     addPass(Passes, "workgroup", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
   }
-
-  // verify & print the module
-#if 0
-  addPass(Passes, "verify");
-  addPass(Passes, "print");
-#endif
 
   // Attempt to move all allocas to the entry block to avoid the need for
   // dynamic stack which is problematic for some architectures.
@@ -575,29 +614,23 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   addPass(Passes, "remove-barriers");
 
 #else
-  // addPass(Passes, "default<O3>", PassType::Module);
+  // the optimization for new PM is handled separately
 #endif
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-static legacy::PassManager &getKernelCompilerPasses(cl_device_id device) {
+static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
 
-  legacy::PassManager *PM = nullptr;
-  PassRegistry *Registry = nullptr;
-
-  if (kernelPasses.find(device) != kernelPasses.end()) {
-    return *kernelPasses[device];
-  }
-
-  PM = new legacy::PassManager();
-  Registry = PassRegistry::getPassRegistry();
+  PassRegistry *Registry = PassRegistry::getPassRegistry();
+  legacy::PassManager PM;
 
   // Need to setup the target info for target specific passes. */
   Triple triple(device->llvm_target_triplet);
-  TargetMachine *Machine = GetTargetMachine(device, triple);
+  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(device));
+  llvm::TargetMachine *Machine = TM.get();
 
   if (Machine)
-    PM->add(
+    PM.add(
         createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
 
   /* Disables automated generation of libcalls from code patterns.
@@ -607,7 +640,7 @@ static legacy::PassManager &getKernelCompilerPasses(cl_device_id device) {
      a memcpy */
   TargetLibraryInfoImpl TLII(triple);
   TLII.disableAllFunctions();
-  PM->add(new TargetLibraryInfoWrapperPass(TLII));
+  PM.add(new TargetLibraryInfoWrapperPass(TLII));
 
   std::vector<std::string> Passes;
   addStage1PassesToPipeline(device, Passes);
@@ -624,7 +657,7 @@ static legacy::PassManager &getKernelCompilerPasses(cl_device_id device) {
       bool Vectorize =
           ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
            (device->spmd == CL_FALSE));
-      populateModulePM(PM, nullptr, 3, 0, Vectorize);
+      populateModulePM(&PM, nullptr, 3, 0, Vectorize);
       continue;
     }
 
@@ -632,17 +665,20 @@ static legacy::PassManager &getKernelCompilerPasses(cl_device_id device) {
     if (PIs) {
       // std::cout << "-"<<Passes[i] << " ";
       Pass *thispass = PIs->createPass();
-      PM->add(thispass);
+      PM.add(thispass);
     } else {
       std::cerr << "Failed to create kernel compiler pass " << Passes[i]
                 << std::endl;
-      POCL_ABORT("FAIL\n");
+      return false;
     }
   }
 
+  PM.run(Mod);
+  return true;
+}
 #else
 
-static std::string getPipelineString(const std::vector<std::string> &Passes) {
+static std::string convertPassesToPipelineString(const std::vector<std::string> &Passes) {
   std::string Pipeline;
   for (auto It = Passes.begin(); It != Passes.end(); ++It) {
     Pipeline.append(*It);
@@ -653,31 +689,27 @@ static std::string getPipelineString(const std::vector<std::string> &Passes) {
   return Pipeline;
 }
 
-static TwoStagePoclModulePassManager &
-getKernelCompilerPasses(cl_device_id device) {
-
-  if (kernelPasses.find(device) != kernelPasses.end()) {
-    return *kernelPasses[device];
-  }
+static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
 
   // use new pass manager
-  TwoStagePoclModulePassManager *PM = new TwoStagePoclModulePassManager();
+  TwoStagePoclModulePassManager PM;
   std::vector<std::string> Passes1;
   addStage1PassesToPipeline(device, Passes1);
-  std::string P1 = getPipelineString(Passes1);
+  std::string P1 = convertPassesToPipelineString(Passes1);
   std::vector<std::string> Passes2;
   addStage2PassesToPipeline(device, Passes2);
-  std::string P2 = getPipelineString(Passes2);
+  std::string P2 = convertPassesToPipelineString(Passes2);
 
-  Error E = PM->build(device, P1, 2, 0, P2, 3, 0);
+  Error E = PM.build(device, P1, 2, 0, P2, 3, 0);
   if (E) {
-    POCL_ABORT("LLVM: failed to create compilation pipeline");
+    std::cerr << "LLVM: failed to create compilation pipeline";
+    return false;
   }
 
-#endif
-  kernelPasses[device] = PM;
-  return *PM;
+  PM.run(Mod);
+  return true;
 }
+#endif
 
 void pocl_destroy_llvm_module(void *modp, cl_context ctx) {
 
@@ -840,13 +872,17 @@ static int convertBitcodeToSpv(char* TempBitcodePath,
   char AllowedExtOption[] = ALLOW_EXTS;
   // TODO ze_device_module_properties_t.spirvVersionSupported
   char MaxSPIRVOption[] = "--spirv-max-version=1.2";
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   char OpaquePtrsOption[] = "--opaque-pointers";
 #endif
+#endif
   char OutputOption[] = { '-', 'o', 0 };
   char *CmdArgs[] = { LLVMspirv, AllowedExtOption,
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
                       OpaquePtrsOption,
+#endif
 #endif
                       MaxSPIRVOption, OutputOption,
                       TempSpirvPath, TempBitcodePath, NULL };
@@ -1044,7 +1080,7 @@ static int pocl_llvm_run_pocl_passes(llvm::Module *Bitcode,
   llvm::TimePassesIsEnabled = true;
 #endif
   POCL_MEASURE_START(llvm_workgroup_ir_func_gen);
-  getKernelCompilerPasses(Device).run(*Bitcode);
+  runKernelCompilerPasses(Device, *Bitcode);
   POCL_MEASURE_FINISH(llvm_workgroup_ir_func_gen);
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::reportAndResetTimings();
@@ -1264,8 +1300,8 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   legacy::PassManager PMObj;
   initPassManagerForCodeGen(PMObj, Device);
 
-  llvm::Triple Triple(Device->llvm_target_triplet);
-  llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
+  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(Device));
+  llvm::TargetMachine *Target = TM.get();
 
   // First try direct object code generation from LLVM, if supported by the
   // LLVM backend for the target.
@@ -1276,7 +1312,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   bool cannotEmitFile;
 
   cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-                                  CODEGEN_FILE_TYPE_NS::CGFT_ObjectFile);
+                                  llvm::CGFT_ObjectFile);
 
   LLVMGeneratesObjectFiles = !cannotEmitFile;
 
@@ -1308,7 +1344,7 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   // to produce the binary.
 
   if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-                                  CODEGEN_FILE_TYPE_NS::CGFT_AssemblyFile)) {
+                                  llvm::CGFT_AssemblyFile)) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }
 

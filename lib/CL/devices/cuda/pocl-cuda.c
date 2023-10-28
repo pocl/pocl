@@ -99,6 +99,12 @@ static const char *cudnn_builtin_kernels[CUDNN_BUILTIN_KERNELS]
 #define CUDNN_BUILTIN_KERNELS 0
 #endif
 
+/* The frexp functions are wrappers required because the __nv_frexp and the
+ * LLVM's frexp intrinsics have different signatures. */
+static const char *cuda_native_device_aux_funcs[] =
+  {"frexpf_f32_i32", "frexp_f64_i32", NULL};
+
+
 void pocl_cuda_svm_copy_async (CUstream, void *restrict, const void *restrict,
                                size_t);
 
@@ -312,6 +318,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->global_as_id = 1;
   dev->local_as_id = 3;
   dev->constant_as_id = 1;
+  dev->device_aux_functions = cuda_native_device_aux_funcs;
 
   /* TODO: Get images working */
   dev->image_support = CL_FALSE;

@@ -499,8 +499,6 @@ one times!
 */
 
 void UnInitializeLLVM() {
-  clearKernelPasses();
-  clearTargetMachines();
   LLVMInitialized = false;
 }
 
