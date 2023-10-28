@@ -1677,7 +1677,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
   strcat(kernellib, dev->llvm_target_triplet);
 
-  strcat(kernellib, '-');
+  strcat(kernellib, "-");
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
   char* kernellib_variant = pocl_get_distro_kernellib_variant ();
   dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
