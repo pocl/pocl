@@ -989,7 +989,6 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     }
   else
     {
-#if !defined(KERNELLIB_HOST_DISTRO_VARIANTS) && !defined(HOST_CPU_FORCED)
       if (device->kernellib_fallback_name && pocl_exists(kernellib_fallback.c_str()))
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
@@ -997,7 +996,6 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
           lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
         }
       else
-#endif
         POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
     }
   assert (lib != NULL);
