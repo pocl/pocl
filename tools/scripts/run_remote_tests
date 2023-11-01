@@ -27,7 +27,4 @@
 #
 # The current tests are run through a wrapper script that handles setting the
 # necessary environment variables so there is not much left to do here.
-#
-# Parallel testing doesn't seem to work reliably due to pocld not always
-# dying fast enough (?).
-ctest -j1 -L remote
+ctest -L remote $@
