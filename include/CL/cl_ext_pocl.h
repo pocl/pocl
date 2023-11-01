@@ -58,11 +58,11 @@ typedef CL_API_ENTRY cl_int
 
 #endif
 
-/* cl_pocl_pinned_buffers (proof-of-concept/draft) stage */
+/* cl_pocl_pinned_buffers (experimental stage) */
 
 #ifndef cl_pocl_pinned_buffers
 #define cl_pocl_pinned_buffers 1
-#define CL_POCL_PINNED_BUFFERS_EXTENSION_NAME "cl_pocl_pinned_buffers"
+#define CL_POCL_PINNED_BUFFERS_EXTENSION_NAME "cl_exp_pinned_buffers"
 
 /* TODO: We need also platform/runtime extension due to the new buffer
    creation flags. */
