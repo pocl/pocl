@@ -128,6 +128,8 @@ void EventChannel::finalizeNewConnection(rdma_cm_id *cm_id) {
   std::scoped_lock l(new_connection_mutex, shared_queue_mutex);
   auto &conn = new_connection_queue.at(cm_id);
   shared_queue.insert(shared_queue.cend(), conn.begin(), conn.end());
+  new_connection_queue.erase(cm_id);
+  shared_queue_cond.notify_all();
 }
 
 rdma_cm_event *EventChannel::getNext() {
@@ -202,14 +204,14 @@ const MemoryRegion::Access MemoryRegion::Access::RelaxedOrdering = {
 
 MemoryRegion::MemoryRegion(ProtectionDomainPtr pd, void *addr, size_t length,
                            MemoryRegion::Access access)
-    : handle(nullptr), flags(access) {
+    : pd(pd), handle(nullptr), flags(access) {
   handle = ibv_reg_mr(*pd, addr, length, access.val);
   assert(handle && "Is your pinned memory limit too low?");
 }
 
 MemoryRegion::MemoryRegion(ProtectionDomainPtr pd, uint64_t offset,
                            size_t length, int fd, MemoryRegion::Access access)
-    : handle(nullptr), flags(access) {
+    : pd(pd), handle(nullptr), flags(access) {
   handle = ibv_reg_dmabuf_mr(*pd, offset, length, /*iova*/ 0, fd, access.val);
   assert(handle);
 }
@@ -625,6 +627,7 @@ RdmaConnection RdmaListener::accept() {
   event = listening_id->cm_channel->getNextForNewConnection(nullptr);
   assert(event->event == RDMA_CM_EVENT_CONNECT_REQUEST);
   incoming_id.reset(new rdmacm::Id(listening_id->cm_channel, event->id));
+  RdmaConnection connection(incoming_id);
   rdma_ack_cm_event(event);
 
   rdma_conn_param parameters = {};
@@ -642,7 +645,7 @@ RdmaConnection RdmaListener::accept() {
   rdma_ack_cm_event(event);
   listening_id->cm_channel->finalizeNewConnection(*incoming_id);
 
-  return RdmaConnection(incoming_id);
+  return connection;
 }
 
 RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
