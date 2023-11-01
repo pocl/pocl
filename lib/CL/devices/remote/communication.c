@@ -1841,11 +1841,27 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
 #define GET_STRING(ATTR) strdup ((char *)netcmd->strings + ATTR)
 
   device->long_name = device->short_name = GET_STRING (devinfo->name);
-  // TODO use the actual values reported from the device
-  {
-    cl_device_id dev = device;
-    SETUP_DEVICE_CL_VERSION (1, 2);
-  }
+
+  char *remote_dev_version = GET_STRING (devinfo->device_version);
+  unsigned dev_ver_major, dev_ver_minor;
+  if (remote_dev_version == NULL
+      || sscanf (remote_dev_version, "OpenCL %u.%u", &dev_ver_major,
+                 &dev_ver_minor)
+             != 2)
+    {
+      /* Illegal version string from the remote device, we should not add it
+         to the platform. */
+      POCL_MSG_PRINT_REMOTE (
+          "Illegal version string '%s' from a remote device,"
+          "skipping the device.",
+          remote_dev_version);
+      return -1;
+    }
+  cl_device_id dev = device;
+  SETUP_DEVICE_CL_VERSION (dev_ver_major, dev_ver_minor);
+  /* Use the remote's device version for the first part of the version string.
+   */
+  device->version = remote_dev_version;
   device->driver_version = GET_STRING (devinfo->driver_version);
   device->vendor = GET_STRING (devinfo->vendor);
   device->extensions = GET_STRING (devinfo->extensions);
