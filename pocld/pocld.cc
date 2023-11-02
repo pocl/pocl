@@ -130,7 +130,7 @@ in_addr_t find_default_ip_address() {
 int listen_peers(void *data) {
   peer_listener_data_t *d = (peer_listener_data_t *)data;
 
-  int listen_sock = socket(AF_INET, SOCK_STREAM, 0);
+  int listen_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   PERROR_CHECK((listen_sock < 0), "peer listener socket");
 
   struct sockaddr_in listen_addr = {};
@@ -373,7 +373,7 @@ int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
     return -1;
   }
   clients_listen_command_fd =
-      socket(server_addr_command.sa_family, SOCK_STREAM, 0);
+      socket(server_addr_command.sa_family, SOCK_STREAM, IPPROTO_TCP);
   PERROR_CHECK((clients_listen_command_fd < 0), "command socket");
 
   memcpy(&server_addr_stream, &base_addr, base_addrlen);
@@ -387,7 +387,7 @@ int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
     return -1;
   }
   clients_listen_stream_fd =
-      socket(server_addr_stream.sa_family, SOCK_STREAM, 0);
+      socket(server_addr_stream.sa_family, SOCK_STREAM, IPPROTO_TCP);
   PERROR_CHECK((clients_listen_stream_fd < 0), "stream socket");
 
   int one = 1;

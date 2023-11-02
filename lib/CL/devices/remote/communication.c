@@ -564,7 +564,7 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   addrlen = ai->ai_addrlen;
 
   POCL_RETURN_ERROR_ON (
-      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, 0)) == -1),
+      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP)) == -1),
       CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
   freeaddrinfo (ai);
 
