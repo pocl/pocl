@@ -79,7 +79,9 @@ cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
                               int *device_image_support, void *host_ptr,
                               int host_ptr_is_svm, cl_int *errcode_ret);
 
-cl_int pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command);
+cl_int pocl_kernel_copy_args (cl_kernel kernel,
+                              struct pocl_argument *src_arguments,
+                              _cl_command_run *command);
 
 cl_int pocl_ndrange_kernel_common (
     cl_command_buffer_khr command_buffer, cl_command_queue command_queue,

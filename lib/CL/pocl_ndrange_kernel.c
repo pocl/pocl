@@ -271,7 +271,9 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
 }
 
 cl_int
-pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command)
+pocl_kernel_copy_args (cl_kernel kernel,
+                       struct pocl_argument *src_arguments,
+                       _cl_command_run *command)
 {
   /* Copy the currently set kernel arguments because the same kernel
      object can be reused for new launches with different arguments. */
@@ -284,7 +286,7 @@ pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command)
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument *arg = &command->arguments[i];
-      memcpy (arg, &kernel->dyn_arguments[i], sizeof (pocl_argument));
+      memcpy (arg, &src_arguments[i], sizeof (pocl_argument));
 
       if (arg->value != NULL)
         {
@@ -300,7 +302,7 @@ pocl_kernel_copy_args (cl_kernel kernel, _cl_command_run *command)
             arg_alloc_size = arg_alignment;
 
           arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
-          memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
+          memcpy (arg->value, src_arguments[i].value, arg->size);
         }
     }
 
@@ -412,7 +414,8 @@ pocl_ndrange_kernel_common (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  errcode = pocl_kernel_copy_args (kernel, &(*cmd)->command.run);
+  errcode = pocl_kernel_copy_args (kernel, kernel->dyn_arguments,
+                                   &(*cmd)->command.run);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

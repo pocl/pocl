@@ -2278,7 +2278,12 @@ pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
     case CL_COMMAND_NDRANGE_KERNEL:
     case CL_COMMAND_TASK:
       POname (clRetainKernel) (src_node->command.run.kernel);
+      /* note: this must use the arguments stored in the src_node,
+       * NOT the ones in kernel->dyn_arguments; these might differ,
+       * because the user could clSetKernelArg() right after
+       * clCommandNDRangeKernelKHR(). */
       int errcode = pocl_kernel_copy_args (src_node->command.run.kernel,
+                                           src_node->command.run.arguments,
                                            &dst_node->command.run);
       if (errcode != CL_SUCCESS)
         return CL_OUT_OF_HOST_MEMORY;
