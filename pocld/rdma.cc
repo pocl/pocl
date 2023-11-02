@@ -605,7 +605,13 @@ void RdmaListener::listen(uint16_t port) {
   if (err)
     throw std::runtime_error(gai_strerror(err));
 
-  err = rdma_bind_addr(*listening_id, ai->ai_addr);
+  /* Try binding returned addresses until one works or we run out */
+  for (addrinfo *a = ai; a != nullptr; a = a->ai_next) {
+    err = rdma_bind_addr(*listening_id, a->ai_addr);
+    if (!err)
+      break;
+  }
+
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));
@@ -654,14 +660,17 @@ RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
 
 RdmaConnection RdmaConnection::connect(const char *address, uint16_t port) {
   int err = 0;
+  int timeout_ms = 5000;
   addrinfo *ai = pocl_resolve_address(address, port, &err);
   if (err)
     throw std::runtime_error(gai_strerror(err));
 
   rdmacm::IdPtr cm_id(new rdmacm::Id(rdmacm::EventChannel::create()));
 
-  int timeout_ms = 5000;
-  err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+  /* Try resolving returned addresses until one works or we run out. */
+  for (addrinfo *a = ai; a != nullptr && !err; a = a->ai_next) {
+    err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+  }
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));

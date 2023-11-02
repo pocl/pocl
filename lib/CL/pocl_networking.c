@@ -39,9 +39,6 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
   memset (&hint, 0, sizeof (hint));
   hint.ai_family = AF_UNSPEC;
   hint.ai_socktype = SOCK_STREAM;
-  /* Apparently asking for AF_UNSPEC,SOCK_STREAM can return AF_UNIX addresses
-   * which won't work with TCP. Explicitly request TCP sockets instead. */
-  hint.ai_protocol = IPPROTO_TCP;
 
   int is_numeric = 0;
 #ifdef ANDROID
@@ -65,8 +62,6 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
   if (address == NULL)
     hint.ai_flags = AI_PASSIVE;
   hint.ai_flags |= AI_NUMERICSERV;
-  if (address == NULL)
-    hint.ai_flags = AI_PASSIVE;
 
   struct addrinfo *info;
   char portstr[6] = {};

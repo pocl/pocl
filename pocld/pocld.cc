@@ -272,7 +272,7 @@ public:
    * and finally launches the main I/O thread running
    * `readAllClientSocketsThread()`
    */
-  int launch(struct sockaddr &base_addr, socklen_t base_addrlen,
+  int launch(struct sockaddr_storage &base_addr, socklen_t base_addrlen,
              struct ServerPorts &ports);
 
   /**
@@ -357,15 +357,15 @@ PoclDaemon::~PoclDaemon() {
   }
 }
 
-int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
-                       struct ServerPorts &ports) {
+int PoclDaemon::launch(struct sockaddr_storage &base_addr,
+                       socklen_t base_addrlen, struct ServerPorts &ports) {
   listen_ports = {ports};
-  struct sockaddr server_addr_command, server_addr_stream;
+  struct sockaddr_storage server_addr_command, server_addr_stream;
   memcpy(&server_addr_command, &base_addr, base_addrlen);
-  if (server_addr_command.sa_family == AF_INET)
+  if (server_addr_command.ss_family == AF_INET)
     ((struct sockaddr_in *)&server_addr_command)->sin_port =
         htons(ports.command);
-  else if (server_addr_command.sa_family == AF_INET6)
+  else if (server_addr_command.ss_family == AF_INET6)
     ((struct sockaddr_in6 *)&server_addr_command)->sin6_port =
         htons(ports.command);
   else {
@@ -373,13 +373,13 @@ int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
     return -1;
   }
   clients_listen_command_fd =
-      socket(server_addr_command.sa_family, SOCK_STREAM, IPPROTO_TCP);
+      socket(server_addr_command.ss_family, SOCK_STREAM, IPPROTO_TCP);
   PERROR_CHECK((clients_listen_command_fd < 0), "command socket");
 
   memcpy(&server_addr_stream, &base_addr, base_addrlen);
-  if (server_addr_stream.sa_family == AF_INET)
+  if (server_addr_stream.ss_family == AF_INET)
     ((struct sockaddr_in *)&server_addr_stream)->sin_port = htons(ports.stream);
-  else if (server_addr_stream.sa_family == AF_INET6)
+  else if (server_addr_stream.ss_family == AF_INET6)
     ((struct sockaddr_in6 *)&server_addr_stream)->sin6_port =
         htons(ports.stream);
   else {
@@ -387,7 +387,7 @@ int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
     return -1;
   }
   clients_listen_stream_fd =
-      socket(server_addr_stream.sa_family, SOCK_STREAM, IPPROTO_TCP);
+      socket(server_addr_stream.ss_family, SOCK_STREAM, IPPROTO_TCP);
   PERROR_CHECK((clients_listen_stream_fd < 0), "stream socket");
 
   int one = 1;
@@ -401,19 +401,21 @@ int PoclDaemon::launch(struct sockaddr &base_addr, socklen_t base_addrlen,
 #endif
 
   PERROR_CHECK(
-      (bind(clients_listen_command_fd, &server_addr_command, base_addrlen) < 0),
+      (bind(clients_listen_command_fd, (struct sockaddr *)&server_addr_command,
+            base_addrlen) < 0),
       "command bind");
   pocl_remote_client_set_socket_options(clients_listen_command_fd, 4 * 1024, 1);
   PERROR_CHECK((listen(clients_listen_command_fd, 10) < 0), "command listen");
 
-  PERROR_CHECK(
-      (bind(clients_listen_stream_fd, &server_addr_stream, base_addrlen) < 0),
-      "stream bind");
+  PERROR_CHECK((bind(clients_listen_stream_fd,
+                     (struct sockaddr *)&server_addr_stream, base_addrlen) < 0),
+               "stream bind");
   pocl_remote_client_set_socket_options(clients_listen_stream_fd,
                                         4 * 1024 * 1024, 0);
   PERROR_CHECK((listen(clients_listen_stream_fd, 10) < 0), "stream listen");
 
-  std::string addr_string = describe_sockaddr(&base_addr, base_addrlen);
+  std::string addr_string =
+      describe_sockaddr((struct sockaddr *)&base_addr, base_addrlen);
 
   peer_listener_data.port = listen_ports.peer;
 #ifdef ENABLE_RDMA
@@ -850,22 +852,49 @@ int main(int argc, char *argv[]) {
 #endif
 
   int error;
-  struct sockaddr base_addr;
-  std::string addr;
+  /* NOTE: struct sockaddr does NOT have enough space for all address types */
+  struct sockaddr_storage base_addr = {};
   socklen_t base_addrlen;
-  memset(&base_addr, 0, sizeof(base_addr));
   if (ai.address_arg) {
     addrinfo *resolved_address =
         pocl_resolve_address(ai.address_arg, listen_ports.command, &error);
     if (!error) {
-      memcpy(&base_addr, resolved_address->ai_addr,
-             resolved_address->ai_addrlen);
-      base_addrlen = resolved_address->ai_addrlen;
+      /* Unfortunately getaddrinfo does not guarantee that the returned
+       * addresses would actually WORK. For example misconfigured IPv4-only
+       * setups sometimes return IPv6 addresses that are not bindable. As a
+       * workaround, iterate over the returned addresses until one is found that
+       * works. */
+      bool found_bindable_address = false;
+      std::vector<int> bind_errors;
+      for (addrinfo *ai = resolved_address;
+           ai != nullptr && !found_bindable_address; ai = ai->ai_next) {
+        memcpy(&base_addr, resolved_address->ai_addr,
+               resolved_address->ai_addrlen);
+        base_addrlen = resolved_address->ai_addrlen;
+        int tmp = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
+        if (!tmp)
+          continue;
+        error = bind(tmp, ai->ai_addr, ai->ai_addrlen);
+        if (!error)
+          found_bindable_address = true;
+        else
+          bind_errors.push_back(errno);
+        close(tmp);
+      }
       freeaddrinfo(resolved_address);
+      if (!found_bindable_address) {
+        POCL_MSG_ERR("Requested listen address %s did not resolve to any "
+                     "bindable address:\n",
+                     ai.address_arg);
+        int idx = 0;
+        for (int e : bind_errors)
+          POCL_MSG_ERR("resolved address %d: %s\n", idx++, strerror(e));
+        return EXIT_FAILURE;
+      }
     } else {
       POCL_MSG_ERR("Failed to resolve listen address: %s\n",
                    gai_strerror(error));
-      return -1;
+      return EXIT_FAILURE;
     }
   } else {
     struct sockaddr_in *fallback = (struct sockaddr_in *)&base_addr;
