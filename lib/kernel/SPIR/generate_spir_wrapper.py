@@ -117,6 +117,10 @@ SINGLE_ARG = [
 	"native_log", "native_log2", "native_log10",
 	"native_recip", "native_rsqrt",
 	"native_sin", "native_sqrt", "native_tan",
+	"half_exp", "half_exp2","half_exp10",
+	"half_log", "half_log10", "half_log2",
+	"half_cos", "half_recip", "half_rsqrt",
+	"half_sin", "half_sqrt", "half_tan",
 	"degrees", "radians", "sign"
 ]
 
@@ -130,6 +134,7 @@ DUAL_ARG = [
 	"fdim", "fmax", "fmax_common", "fmin", "fmin_common", "fmod",
 	"hypot", "nextafter", "pow", "powr",
 	"maxmag", "minmag", "remainder",
+	"half_divide", "half_powr",
 	"native_divide", "native_powr",
 	"max", "min", "step"
 ]
