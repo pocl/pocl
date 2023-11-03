@@ -134,6 +134,22 @@ ExternalProject_Add(
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
+# unfortunately, math_brute_force is not thread-safe;
+# run each test separately with 1 worker thread
+# math_brute_force/test_bruteforce -p
+set(MATH_FUNC_LIST acos acosh acospi asin asinh asinpi atan atanh atanpi atan2 atan2pi
+  cbrt ceil copysign cos cosh cospi exp exp2 exp10 expm1 fabs fdim
+  floor fma fmax fmin fmod fract frexp hypot ilogb isequal isfinite
+  isgreater isgreaterequal isinf isless islessequal islessgreater isnan
+  isnormal isnotequal isordered isunordered ldexp lgamma lgamma_r log
+  log2 log10 log1p logb mad maxmag minmag modf nan nextafter pow pown
+  powr remainder remquo rint rootn round rsqrt signbit sin sincos sinh
+  sinpi sqrt sqrt_cr tan tanh tanpi trunc half_cos half_divide half_exp
+  half_exp2 half_exp10 half_log half_log2 half_log10 half_powr
+  half_recip half_rsqrt half_sin half_sqrt half_tan add subtract divide
+  divide_cr multiply assignment not)
+
+
 #################################################################################
 #################################################################################
 ########################   FULL   ###############################################
@@ -263,8 +279,14 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_images_samplerless_reads_pitch"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_integer_ops"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" ${PAR_ARG} ${EXTRA_ARGS})
 
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_bruteforce"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${PAR_ARG} ${EXTRA_ARGS})
+#***************************************************************************
+
+unset(CTS_MATH_TESTS_FULL)
+foreach(MATH_FUNC ${MATH_FUNC_LIST})
+  list(APPEND CTS_MATH_TESTS_FULL "${TS_NAME}${TS_SUFFIX}_math_full_${MATH_FUNC}")
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_full_${MATH_FUNC}"
+           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} --num-worker-threads 1 ${MATH_FUNC})
+endforeach()
 
 #***************************************************************************
 
@@ -407,7 +429,6 @@ set(CTS_FULL_LIST
     "${TS_NAME}${TS_SUFFIX}_images_samplerless_reads"
     "${TS_NAME}${TS_SUFFIX}_images_samplerless_reads_pitch"
     "${TS_NAME}${TS_SUFFIX}_integer_ops"
-    "${TS_NAME}${TS_SUFFIX}_math_bruteforce"
     "${TS_NAME}${TS_SUFFIX}_mem_host_flags"
     "${TS_NAME}${TS_SUFFIX}_multiples"
     "${TS_NAME}${TS_SUFFIX}_printf"
@@ -416,6 +437,7 @@ set(CTS_FULL_LIST
     "${TS_NAME}${TS_SUFFIX}_select"
     "${TS_NAME}${TS_SUFFIX}_thread_dimensions"
     "${TS_NAME}${TS_SUFFIX}_vectors"
+    ${CTS_MATH_TESTS_FULL}
     ${OCL_30_TESTS_FULL})
 
 foreach(CTSTEST IN LISTS CTS_FULL_LIST)
@@ -463,7 +485,6 @@ set_property(TEST conformance_main_select PROPERTY COST 2107.24 PROCESSORS 2)
 set_property(TEST conformance_main_integer_ops PROPERTY COST 2387.76 PROCESSORS 4)
 set_property(TEST conformance_main_c11_atomics PROPERTY COST 6528.94 PROCESSORS 3)
 set_property(TEST conformance_main_conversions PROPERTY COST 24581.43 PROCESSORS 3)
-set_property(TEST conformance_main_math_bruteforce PROPERTY COST 60000 PROCESSORS ${PARALLELISM})
 
 
 endif()
@@ -691,197 +712,13 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_conversion_micro_double_ulong"
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_conversion_micro_long_double"
          COMMAND "${TS_BUILDDIR}/conversions/test_conversions" ${EXTRA_ARGS} -m -w long_double long_sat_double long_rte_double long_sat_rte_double long_rtp_double long_sat_rtp_double long_rtn_double long_sat_rtn_double long_rtz_double long_sat_rtz_double )
 
-# tests math on vectors of 4 floats for micro testsuite
-# vectors of 4, wimpy mode
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_add"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w add)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_assignment"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w assignment)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_cbrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w cbrt)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_ceil"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w ceil)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_copysign"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w copysign)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_cos"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w cos)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_cosh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w cosh)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_cospi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w cospi)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_divide"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w divide)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_exp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w exp)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_expm1"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w expm1)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fabs"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fabs)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fdim"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fdim)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_floor"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w floor)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fma"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fma)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fmax"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fmax)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fmin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fmin)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_fract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w fract)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_frexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w frexp)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_hypot"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w hypot)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_ilogb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w ilogb)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isequal)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isfinite"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isfinite)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isgreater)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isgreaterequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isgreaterequal)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isinf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isinf)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isless"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isless)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_islessequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w islessequal)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_islessgreater"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w islessgreater)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isnan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isnan)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isnormal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isnormal)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isnotequal"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isnotequal)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isordered)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_isunordered"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w isunordered)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_ldexp"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w ldexp)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_log"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w log)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_log10"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w log10)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_log1p"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w log1p)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_log2"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w log2)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_logb"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w logb)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_mad"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w mad)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_maxmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w maxmag)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_minmag"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w minmag)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_modf"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w modf)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_multiply"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w multiply)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_nan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w nan)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_nextafter"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w nextafter)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_not"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w not)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_pown"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w pown)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_rint"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w rint)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_rootn"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w rootn)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_round"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w round)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_rsqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w rsqrt)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_signbit"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w signbit)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_sin"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w sin)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_sinh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w sinh)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_sinpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w sinpi)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_sqrt"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w sqrt)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_subtract"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w subtract)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_tan"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w tan)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_tanh"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w tanh)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_tanpi"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w tanpi)
-
-add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_trunc"
-         COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS}  -4 -w trunc)
+# for micro testsuite, tests math on vectors of 4 floats, in wimpy mode
+unset(CTS_MATH_TESTS_MICRO)
+foreach(MATH_FUNC ${MATH_FUNC_LIST})
+  list(APPEND CTS_MATH_TESTS_MICRO "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}")
+  add_test(NAME "${TS_NAME}${TS_SUFFIX}_math_micro_${MATH_FUNC}"
+           COMMAND "${TS_BUILDDIR}/math_brute_force/test_bruteforce" ${EXTRA_ARGS} --num-worker-threads 1 -4 -w ${MATH_FUNC})
+endforeach()
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_events_micro"
          COMMAND "${TS_BUILDDIR}/events/test_events" ${EXTRA_ARGS} event_get_execute_status  event_get_write_array_status  event_get_read_array_status  event_get_info  event_wait_for_execute  event_wait_for_array  event_flush  event_finish_execute  event_finish_array  event_release_before_done  event_enqueue_marker  event_enqueue_marker_with_event_list  event_enqueue_barrier_with_event_list)
@@ -956,72 +793,10 @@ set(CTS_MICRO_LIST
 
     ${OCL_30_TESTS_MICRO}
 
+    ${CTS_MATH_TESTS_MICRO}
+
     "${TS_NAME}${TS_SUFFIX}_basic_micro_memory"
     "${TS_NAME}${TS_SUFFIX}_basic_micro_other"
-
-    "${TS_NAME}${TS_SUFFIX}_math_micro_add"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_assignment"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_cbrt"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_ceil"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_copysign"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_cos"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_cosh"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_cospi"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_divide"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_exp"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_expm1"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fabs"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fdim"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_floor"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fma"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fmax"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fmin"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_fract"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_frexp"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_hypot"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_ilogb"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isequal"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isfinite"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isgreater"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isgreaterequal"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isinf"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isless"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_islessequal"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_islessgreater"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isnan"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isnormal"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isnotequal"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isordered"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_isunordered"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_ldexp"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_log"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_log10"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_log1p"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_log2"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_logb"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_mad"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_maxmag"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_minmag"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_modf"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_multiply"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_nan"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_nextafter"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_not"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_pown"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_rint"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_rootn"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_round"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_rsqrt"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_signbit"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_sin"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_sinh"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_sinpi"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_sqrt"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_subtract"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_tan"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_tanh"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_tanpi"
-    "${TS_NAME}${TS_SUFFIX}_math_micro_trunc"
 
     "${TS_NAME}${TS_SUFFIX}_conversion_micro_uint_uchar"
     "${TS_NAME}${TS_SUFFIX}_conversion_micro_short_char"
