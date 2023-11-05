@@ -1410,7 +1410,6 @@ repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
       maxcoord = max (maxcoord, (int4)1);
       ijk1 = ijk1 % maxcoord;
       float4 unused;
-      float arraysize_f = convert_float (array_size);
       float4 abc = fract ((uvw - (float4) (0.5f)), &unused);
       float4 one_m = (float4) (1.0f) - abc;
 
@@ -1505,7 +1504,6 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       ijk0 = max (ijk0, (int4)0);
       ijk1 = min (ijk1, (maxcoord - (int4) (1)));
       float4 unused;
-      float arraysize_f = convert_float (array_size);
       float4 abc = fract ((uvw - (float4) (0.5f)), &unused);
       float4 one_m = (float4) (1.0f) - abc;
       uint4 res;
