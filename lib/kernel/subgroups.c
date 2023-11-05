@@ -329,7 +329,7 @@ sub_group_ballot (int predicate)
   if (get_sub_group_local_id () == 0)
     {
       flags[get_sub_group_id ()] = 0;
-      uint *f = &flags[get_sub_group_id ()];
+      uint *f = (uint*) (flags + get_sub_group_id ());
       for (uint i = 0; i < get_sub_group_size () && i < 128; ++i)
         {
           f[i / 32] |= res[get_first_llid () + i] << (i % 32);
