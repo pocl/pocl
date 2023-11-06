@@ -107,7 +107,7 @@ cl_int PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
   }
   PERROR_CHECK404((err != 0), "getaddrinfo()");
 
-  int peer_fd = socket(ai->ai_family, ai->ai_socktype, 0);
+  int peer_fd = socket(ai->ai_family, ai->ai_socktype, IPPROTO_TCP);
   PERROR_CHECK404((peer_fd < 0), "peer socket");
 
   set_socket_options(peer_fd, "PH_outgoing");

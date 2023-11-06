@@ -46,8 +46,10 @@ void RdmaRequestThread::rdmaReaderThread() {
   /************ Prepare & enqueue work requests for commands ****************/
   // must be <= qp_init_attr.cap.max_recv_wr
   const size_t NUM_OUTSTANDING_REQUESTS = 5;
-  RdmaBuffer<RequestMsg_t> requests_buf(connection->protectionDomain(),
-                                        NUM_OUTSTANDING_REQUESTS);
+  RdmaBuffer<RequestMsg_t> requests_buf(
+      connection->protectionDomain(), NUM_OUTSTANDING_REQUESTS,
+      ibverbs::MemoryRegion::Access::LocalRead |
+          ibverbs::MemoryRegion::Access::LocalWrite);
 
   // When the other end attempts to make an IBV_SEND request, there must be an
   // outstanding work request on the receiving end, else the send request
@@ -121,6 +123,7 @@ void RdmaRequestThread::rdmaReaderThread() {
     case MessageType_FreeKernel:
     case MessageType_BuildProgramFromSource:
     case MessageType_BuildProgramFromBinary:
+    case MessageType_BuildProgramFromSPIRV:
     case MessageType_BuildProgramWithBuiltins:
     case MessageType_FreeProgram:
     case MessageType_MigrateD2D:

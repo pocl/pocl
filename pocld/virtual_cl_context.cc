@@ -89,9 +89,7 @@ public:
 
 class VirtualCLContext : public VirtualContextBase {
   ReplyQueueThreadUPtr write_slow;
-  RequestQueueThreadUPtr read_slow;
   ReplyQueueThreadUPtr write_fast;
-  RequestQueueThreadUPtr read_fast;
 #ifdef ENABLE_RDMA
   RdmaReplyThreadUPtr write_rdma;
   RdmaRequestThreadUPtr read_rdma;
@@ -266,11 +264,6 @@ size_t VirtualCLContext::init(client_connections_t conns,
   write_fast = ReplyQueueThreadUPtr(
       new ReplyQueueThread(command_fd, this, &exit_helper, netstat, "WT_F"));
 
-  read_slow = RequestQueueThreadUPtr(
-      new RequestQueueThread(stream_fd, this, &exit_helper, netstat, "C_RT_S"));
-  read_fast = RequestQueueThreadUPtr(new RequestQueueThread(
-      command_fd, this, &exit_helper, netstat, "C_RT_F"));
-
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
                                           &exit_helper, netstat));
@@ -297,9 +290,8 @@ size_t VirtualCLContext::initPlatforms() {
   DeviceCounts.resize(PlatformList.size());
 
   for (size_t i = 0; i < PlatformList.size(); ++i) {
-    SharedContextBase *p =
-        createSharedCLContext(&(PlatformList[i]), i, this,
-                              write_slow.get(), write_fast.get());
+    SharedContextBase *p = createSharedCLContext(
+        &(PlatformList[i]), i, this, write_slow.get(), write_fast.get());
 
     SharedContextList[i] = p;
     DeviceCounts[i] = (uint32_t)(p->numDevices());
@@ -315,7 +307,7 @@ size_t VirtualCLContext::initPlatforms() {
 }
 
 int VirtualCLContext::clientInfo(int fd_command) {
-  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Req RECVING \n");
+  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Req RECVING\n");
   // initial ServerInfo reply/response
   RequestMsg_t req;
   ssize_t readb;
@@ -393,9 +385,9 @@ void VirtualCLContext::broadcastToPeers(const Request &req) {
 }
 
 void VirtualCLContext::unknownRequest(Request *req) {
-  Reply *rep = new Reply;
+  Reply *rep = new Reply(req);
+  POCL_MSG_ERR("Unknown request type: %d\n", req->req.message_type);
   replyFail(&rep->rep, &req->req, CL_INVALID_OPERATION);
-  delete req;
   write_fast->pushReply(rep);
 }
 
@@ -415,7 +407,7 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
   if ((pid < PlatformList.size()) && (did < DeviceCounts[pid]))
     return 0;
 
-  Reply *reply = new Reply;
+  Reply *reply = new Reply(req);
 
   int err =
       (pid < PlatformList.size() ? CL_INVALID_DEVICE : CL_INVALID_PLATFORM);
@@ -426,7 +418,6 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
                uint64_t(req->req.msg_id), uint32_t(req->req.pid),
                uint32_t(req->req.did));
 
-  delete req;
   write_fast->pushReply(reply);
   return 1;
 }
@@ -451,9 +442,11 @@ int VirtualCLContext::run() {
       main_que.pop_front();
       lock.unlock();
 
+      reply = nullptr;
       if (request->req.message_type != MessageType_MigrateD2D &&
-          request->req.message_type != MessageType_RdmaBufferRegistration)
-        reply = new Reply;
+          request->req.message_type != MessageType_RdmaBufferRegistration) {
+        reply = new Reply(request);
+      }
 
       // PROCESSS REQUEST, then PUSH REPLY to WRITE Q
 
@@ -528,7 +521,6 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_MigrateD2D:
-        reply = nullptr;
         MigrateD2D(request);
         break;
 
@@ -546,14 +538,12 @@ int VirtualCLContext::run() {
 #endif
         // Just ignore, this does not require a reply
         delete request;
-        reply = nullptr;
         continue;
 
       default:
         reply->rep.data_size = 0;
         reply->rep.fail_details = CL_INVALID_OPERATION;
         reply->rep.failed = 1;
-        reply->rep.obj_id = request->req.obj_id;
         reply->rep.message_type = MessageType_Failure;
         reply->extra_data = nullptr;
         reply->extra_size = 0;
@@ -562,13 +552,8 @@ int VirtualCLContext::run() {
       }
 
       if (reply) {
-        reply->rep.client_did = request->req.client_did;
-        reply->rep.did = request->req.did;
-        reply->rep.pid = request->req.pid;
-        reply->rep.msg_id = request->req.msg_id;
-        reply->req = request;
         write_fast->pushReply(reply);
-        // Reply frees the request when done
+        // Reply frees the request when destroyed
       }
 
     } else {
@@ -1044,7 +1029,6 @@ void VirtualCLContext::MigrateD2D(Request *req) {
       storage = new char[m.size];
       req->extra_data = storage;
 #endif
-      req->extra_size = m.size;
 
 #ifndef RDMA_USE_SVM
       SharedContextBase *src = SharedContextList[m.source_pid];
@@ -1073,6 +1057,10 @@ void VirtualCLContext::MigrateD2D(Request *req) {
       src->waitAndDeleteEvent(fake_ev_id);
 #endif
     }
+
+    /* Write extra_size after possible content size has been read, just before
+     * pushing the request on */
+    req->extra_size = m.size;
 
     // .... and now we can push the writeBuffer to the queue
     if (m.dest_peer_id == peer_id) {

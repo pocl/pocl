@@ -128,6 +128,8 @@ void EventChannel::finalizeNewConnection(rdma_cm_id *cm_id) {
   std::scoped_lock l(new_connection_mutex, shared_queue_mutex);
   auto &conn = new_connection_queue.at(cm_id);
   shared_queue.insert(shared_queue.cend(), conn.begin(), conn.end());
+  new_connection_queue.erase(cm_id);
+  shared_queue_cond.notify_all();
 }
 
 rdma_cm_event *EventChannel::getNext() {
@@ -202,14 +204,14 @@ const MemoryRegion::Access MemoryRegion::Access::RelaxedOrdering = {
 
 MemoryRegion::MemoryRegion(ProtectionDomainPtr pd, void *addr, size_t length,
                            MemoryRegion::Access access)
-    : handle(nullptr), flags(access) {
+    : pd(pd), handle(nullptr), flags(access) {
   handle = ibv_reg_mr(*pd, addr, length, access.val);
   assert(handle && "Is your pinned memory limit too low?");
 }
 
 MemoryRegion::MemoryRegion(ProtectionDomainPtr pd, uint64_t offset,
                            size_t length, int fd, MemoryRegion::Access access)
-    : handle(nullptr), flags(access) {
+    : pd(pd), handle(nullptr), flags(access) {
   handle = ibv_reg_dmabuf_mr(*pd, offset, length, /*iova*/ 0, fd, access.val);
   assert(handle);
 }
@@ -298,7 +300,7 @@ QueuePair::~QueuePair() { rdma_destroy_qp(*cm_id); }
 } // namespace ibverbs
 
 ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr)
-    : sge{((mr->accessFlags() | ibverbs::MemoryRegion::Access::ZeroBased).val
+    : sge{((mr->accessFlags() & ibverbs::MemoryRegion::Access::ZeroBased).val
                ? 0
                : (uint64_t)((ibv_mr *)**mr)->addr),
           (uint32_t)mr->handle->length, mr->handle->lkey},
@@ -306,7 +308,7 @@ ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr)
 
 ScatterGatherEntry::ScatterGatherEntry(ibverbs::MemoryRegionPtr mr,
                                        ptrdiff_t offset, uint32_t length)
-    : sge{((mr->accessFlags() | ibverbs::MemoryRegion::Access::ZeroBased).val
+    : sge{((mr->accessFlags() & ibverbs::MemoryRegion::Access::ZeroBased).val
                ? 0
                : (uint64_t)((ibv_mr *)**mr)->addr) +
               (int64_t)offset,
@@ -603,7 +605,13 @@ void RdmaListener::listen(uint16_t port) {
   if (err)
     throw std::runtime_error(gai_strerror(err));
 
-  err = rdma_bind_addr(*listening_id, ai->ai_addr);
+  /* Try binding returned addresses until one works or we run out */
+  for (addrinfo *a = ai; a != nullptr; a = a->ai_next) {
+    err = rdma_bind_addr(*listening_id, a->ai_addr);
+    if (!err)
+      break;
+  }
+
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));
@@ -625,6 +633,7 @@ RdmaConnection RdmaListener::accept() {
   event = listening_id->cm_channel->getNextForNewConnection(nullptr);
   assert(event->event == RDMA_CM_EVENT_CONNECT_REQUEST);
   incoming_id.reset(new rdmacm::Id(listening_id->cm_channel, event->id));
+  RdmaConnection connection(incoming_id);
   rdma_ack_cm_event(event);
 
   rdma_conn_param parameters = {};
@@ -642,7 +651,7 @@ RdmaConnection RdmaListener::accept() {
   rdma_ack_cm_event(event);
   listening_id->cm_channel->finalizeNewConnection(*incoming_id);
 
-  return RdmaConnection(incoming_id);
+  return connection;
 }
 
 RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
@@ -651,14 +660,17 @@ RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
 
 RdmaConnection RdmaConnection::connect(const char *address, uint16_t port) {
   int err = 0;
+  int timeout_ms = 5000;
   addrinfo *ai = pocl_resolve_address(address, port, &err);
   if (err)
     throw std::runtime_error(gai_strerror(err));
 
   rdmacm::IdPtr cm_id(new rdmacm::Id(rdmacm::EventChannel::create()));
 
-  int timeout_ms = 5000;
-  err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+  /* Try resolving returned addresses until one works or we run out. */
+  for (addrinfo *a = ai; a != nullptr && !err; a = a->ai_next) {
+    err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+  }
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));

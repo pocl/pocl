@@ -105,7 +105,7 @@ void Peer::writerThread() {
     assert((r->waitlist_size > 0 && r->waitlist) ^
            ((!r->waitlist_size) && (!r->waitlist)));
     if (r->waitlist_size > 0 && r->waitlist) {
-      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
+      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu64 "\n",
                              r->waitlist_size);
       CHECK_WRITE(write_full(fd, r->waitlist,
                              r->waitlist_size * sizeof(uint64_t), netstat),

@@ -332,10 +332,10 @@ private:
   friend class ::ScatterGatherEntry;
 
   MemoryRegion(ProtectionDomainPtr pd, void *addr, size_t length,
-               Access access = Access::LocalRead | Access::ZeroBased);
+               Access access = Access::LocalRead);
 
   MemoryRegion(ProtectionDomainPtr pd, uint64_t offset, size_t length, int fd,
-               Access access = Access::LocalRead | Access::ZeroBased);
+               Access access = Access::LocalRead);
 
   ibv_mr *operator*() { return handle; }
 
@@ -353,9 +353,9 @@ public:
    * @param length Length of the memory region to be registered
    * @param access Bitfield of access qualifiers
    */
-  static MemoryRegionPtr
-  register_ptr(ProtectionDomainPtr pd, void *addr, size_t length,
-               Access access = Access::LocalRead | Access::ZeroBased) {
+  static MemoryRegionPtr register_ptr(ProtectionDomainPtr pd, void *addr,
+                                      size_t length,
+                                      Access access = Access::LocalRead) {
     return std::shared_ptr<MemoryRegion>(
         new MemoryRegion(pd, addr, length, access));
   }
@@ -370,8 +370,7 @@ public:
    */
   static MemoryRegionPtr register_dmabuf(ProtectionDomainPtr pd,
                                          uint64_t offset, size_t length, int fd,
-                                         Access access = Access::LocalRead |
-                                                         Access::ZeroBased) {
+                                         Access access = Access::LocalRead) {
     return std::shared_ptr<MemoryRegion>(
         new MemoryRegion(pd, offset, length, fd, access));
   }
@@ -395,8 +394,7 @@ private:
 public:
   RdmaBuffer(ibverbs::ProtectionDomainPtr pd, size_t elements,
              ibverbs::MemoryRegion::Access access =
-                 ibverbs::MemoryRegion::Access::LocalRead |
-                 ibverbs::MemoryRegion::Access::ZeroBased) {
+                 ibverbs::MemoryRegion::Access::LocalRead) {
     ptr.reset(new T[elements]);
     size = elements;
     mr = ibverbs::MemoryRegion::register_ptr(pd, (void *)ptr.get(),
@@ -654,7 +652,7 @@ public:
   AtomicCompareAndSwap(uint64_t wr_id,
                        const std::vector<ScatterGatherEntry> &sg_list,
                        uint64_t remote_addr, uint32_t rkey, uint64_t compare,
-                       uint64_t swap, Flags flags);
+                       uint64_t swap, Flags = Flags::None);
 
   /**
    * Constructs a WorkRequest with opcode IBV_WR_ATOMIC_FETCH_AND_ADD: A 64
@@ -676,7 +674,7 @@ public:
    */
   static WorkRequest AtomicFetchAndAdd(
       uint64_t wr_id, const std::vector<ScatterGatherEntry> &sg_list,
-      uint64_t remote_addr, uint32_t rkey, uint64_t add, Flags flags);
+      uint64_t remote_addr, uint32_t rkey, uint64_t add, Flags = Flags::None);
 
   /**
    * @param next WorkRequest that should be performed after this. A copy of

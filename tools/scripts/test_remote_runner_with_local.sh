@@ -42,7 +42,7 @@ export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
-$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error,warn,general &
+$BUILD_DIR/pocld/pocld -a localhost -p $PORT -v error,warn,general &
 POCLD_PID=$!
 
 echo "Pocld running with PID: $POCLD_PID"
@@ -50,7 +50,7 @@ echo "Pocld running with PID: $POCLD_PID"
 sleep 1
 
 export POCL_DEVICES="cpu remote"
-export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT/0"
+export POCL_REMOTE0_PARAMETERS="localhost:$PORT/0"
 export POCL_DEBUG="warn,err,remote"
 unset POCL_ENABLE_UNINIT
 
@@ -89,5 +89,7 @@ sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 kill -9 $POCLD_PID 1>/dev/null 2>&1
+
+wait -f
 
 exit $RESULT

@@ -31,21 +31,19 @@
 #include <dlfcn.h>
 
 #include <algorithm>
+#include <atomic>
+#include <cassert>
+#include <chrono>
+#include <condition_variable>
 #include <deque>
+#include <iostream>
+#include <memory>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-
-#include <atomic>
-#include <condition_variable>
-#include <mutex>
-
-#include <algorithm>
-#include <chrono>
-#include <iostream>
-#include <memory>
-#include <thread>
 
 using Time = std::chrono::steady_clock;
 using ms = std::chrono::milliseconds;
@@ -57,6 +55,7 @@ using float_time_point = std::chrono::time_point<Time, float_sec>;
 
 #include "common_cl.hh"
 #include "pocl_debug.h"
+#include "request.hh"
 #include "session.hh"
 
 #ifdef ENABLE_RDMA
@@ -280,6 +279,9 @@ struct peer_connection_t {
 
 class VirtualContextBase;
 
+/** Holds the port numbers for the peer listener threads as well as some state
+ * that is shared between the client and peer listeners in order to match up
+ * peer connections with the client sessions they belong to. */
 struct peer_listener_data_t {
   unsigned short port;
   unsigned short peer_rdma_port;
@@ -296,59 +298,6 @@ struct peer_listener_data_t {
 #endif
 };
 
-class Request {
-
-public:
-  RequestMsg_t req;
-
-  uint64_t *waitlist;
-  uint32_t waitlist_size;
-
-  char *extra_data;
-  size_t extra_size;
-
-  char *extra_data2;
-  size_t extra_size2;
-
-  // server host timestamps for network comm
-  uint64_t read_start_timestamp_ns;
-  uint64_t read_end_timestamp_ns;
-
-  Request()
-      : req(), waitlist(nullptr), waitlist_size(0), extra_data(nullptr),
-        extra_size(0), extra_data2(nullptr), extra_size2(0) {}
-
-  // Deep copying constructor
-  Request(const Request &r)
-      : req(r.req), waitlist(nullptr), waitlist_size(r.waitlist_size),
-        extra_data(nullptr), extra_size(r.extra_size), extra_data2(nullptr),
-        extra_size2(r.extra_size2) {
-    if (r.waitlist) {
-      waitlist = new uint64_t[waitlist_size];
-      std::memcpy(waitlist, r.waitlist, sizeof(uint64_t) * waitlist_size);
-    }
-
-    if (r.extra_data) {
-      extra_data = new char[extra_size];
-      std::memcpy(extra_data, r.extra_data, extra_size);
-    }
-
-    if (r.extra_data2) {
-      extra_data = new char[extra_size2];
-      std::memcpy(extra_data2, r.extra_data2, extra_size2);
-    }
-  }
-
-  ~Request() {
-    if (waitlist)
-      delete[] waitlist;
-    if (extra_data)
-      delete[] extra_data;
-    if (extra_data2)
-      delete[] extra_data2;
-  }
-};
-
 class Reply {
 
 public:
@@ -360,13 +309,22 @@ public:
   // server host timestamps for network comm
   uint64_t write_start_timestamp_ns;
 
-  Reply()
-      : rep(), req(nullptr), extra_data(nullptr), extra_size(0),
-        event(nullptr) {}
+  /** Explicitly delete default constructor since there is no need for it and
+   * actually using it is likely to lead to accessing uninitialized fields. */
+  Reply() = delete;
+  Reply(Request *r)
+      : rep(), req(r), extra_data(nullptr), extra_size(0), event(nullptr) {
+    assert(req);
+    rep.client_did = req->req.client_did;
+    rep.did = req->req.did;
+    rep.pid = req->req.pid;
+    rep.msg_id = req->req.msg_id;
+    rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
+    rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
+  }
 
   ~Reply() {
-    if (req)
-      delete req;
+    delete req;
     if (extra_data)
       delete[] extra_data;
   }
@@ -401,6 +359,7 @@ class ExitHelper {
 public:
   ExitHelper() : exit_status(0), requested_exit(0){};
 
+  /** Set exit request flag and reason, if they weren't already set */
   int requestExit(const char *msg, int status) {
     std::unique_lock<std::mutex> lock(exit_mutex);
 

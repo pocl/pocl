@@ -234,10 +234,6 @@ void ReplyQueueThread::writeThread() {
                 .count();
 
         reply->rep.timing = timing;
-        reply->rep.server_read_start_timestamp_ns =
-            reply->req->read_start_timestamp_ns;
-        reply->rep.server_read_end_timestamp_ns =
-            reply->req->read_end_timestamp_ns;
         reply->rep.server_write_start_timestamp_ns =
             reply->write_start_timestamp_ns;
 
