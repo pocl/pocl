@@ -697,16 +697,62 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->data = (void*)(uintptr_t)j;
   hsa_agent_t agent = hsa_agents[j];
 
-  uint32_t cache_sizes[4];
-  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
-                        &cache_sizes));
-  // The only nonzero value on Kaveri is the first (L1)
-  dev->global_mem_cache_size = cache_sizes[0];
+  hsa_device_type_t hsa_device;
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &hsa_device));
+  switch (hsa_device) {
+  case HSA_DEVICE_TYPE_CPU: dev->type = CL_DEVICE_TYPE_CPU; break;
+  case HSA_DEVICE_TYPE_GPU: dev->type = CL_DEVICE_TYPE_GPU; break;
+  case HSA_DEVICE_TYPE_DSP: dev->type = CL_DEVICE_TYPE_CUSTOM; break;
+  default: POCL_ABORT("Unknown HSA device type %x\n", hsa_device);
+  }
 
+  uint8_t hsa_extensions[128];
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_EXTENSIONS, &hsa_extensions));
 
-  char *name = (char*)malloc (64*sizeof(char));
-  dev->short_name = dev->long_name = name;
-  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, name));
+#if 0
+  printf("EXT:\n");
+  for (int i = 0; i < 128; ++i) {
+    uint8_t byte = hsa_extensions[i];
+    if (byte)
+      printf("0x%03X: %c%c%c%c%c%c%c%c\n", 8*i,
+        '0' + !!(byte & 0x01),
+        '0' + !!(byte & 0x02),
+        '0' + !!(byte & 0x04),
+        '0' + !!(byte & 0x08),
+        '0' + !!(byte & 0x10),
+        '0' + !!(byte & 0x20),
+        '0' + !!(byte & 0x40),
+        '0' + !!(byte & 0x80));
+  }
+  puts("");
+#endif
+
+  {
+    uint32_t wavefront;
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_WAVEFRONT_SIZE, &wavefront));
+    dev->preferred_wg_size_multiple = wavefront;
+  }
+
+  {
+    uint32_t cache_sizes[4];
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
+                          &cache_sizes));
+    // The only nonzero value on Kaveri is the first (L1)
+    dev->global_mem_cache_size = cache_sizes[0];
+  }
+
+  {
+    char *name = (char*)malloc (64*sizeof(char));
+
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_VENDOR_NAME, name));
+    dev->vendor = strdup(name);
+    if (!strcmp(name, "AMD"))
+      dev->vendor_id = AMD_VENDOR_ID;
+
+    HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, name));
+    dev->short_name = dev->long_name = strdup(name);
+    free(name);
+  }
   get_hsa_device_features (dev->long_name, dev);
 
   if (dev->llvm_target_triplet != NULL) {
@@ -721,8 +767,6 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->kernellib_subdir = "amdgcn";
     }
   }
-
-  dev->type = CL_DEVICE_TYPE_GPU;
 
   // Enable when it's actually implemented AND if supported by
   // the target agent (check with hsa_agent_extension_supported).
@@ -775,6 +819,20 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
                                      &temp));
       dev->global_mem_cacheline_size = temp;
 
+      /* TODO: in recent ROCm versions AMD seems to use the HSA_AMD_AGENT_INFO_COOPERATIVE_COMPUTE_UNIT_COUNT
+       * instead of HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT. See also the HSA_COOP_CU_COUNT environment
+       * varibale discussed e.g. in https://docs.amd.com/en/docs-5.0.2/CHANGELOG.html
+       * On RDNA{1,2,3} devices, the hardware collects pairs of CUs into WorkGroup Processors (WGP),
+       * and the COOPERATIVE number corresponds to the number of WGPs.
+       * The distinction is important when allocating and using LDS, because instructions are different
+       * depending on whether wavefronts are in CU or WGP mode.
+       * (Weirdly, the HSA property comment talks about 'reliability', but AFAICS from the ISA documentation
+       * the distinction is merely one of performance, and which one is more convenient depends on use case)
+       * FIXME: how can this be exposed in OpenCL?
+       * NOTE: Mesa reports the CU count, whereas AMD ROCm 5.7.0 reports the WGP count
+       * both for CL_DEVICE_MAX_COMPUTE_UNITS and CL_DEVICE_MAX_REAL_TIME_COMPUTE_UNITS_AMD.
+       * Which one we should use probably depends on what the compiler produces.
+       */
       HSA_CHECK (hsa_agent_get_info (
           agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT, &temp));
       dev->max_compute_units = temp;
