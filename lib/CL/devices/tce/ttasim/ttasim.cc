@@ -212,9 +212,11 @@ public:
     if (machine_->isLittleEndian()) {
       dev->endian_little = CL_TRUE;
       dev->llvm_target_triplet = "tcele-tut-llvm";
+      dev->kernellib_name = "kernel-tcele-tut-llvm";
     } else {
       dev->endian_little = CL_FALSE;
       dev->llvm_target_triplet = "tce-tut-llvm";
+      dev->kernellib_name = "kernel-tce-tut-llvm";
       /* with fp-contract=on we get calls to fma with processors which do not
        * have fma instructions. These ruin the performance.
        *
@@ -222,6 +224,8 @@ public:
        */
       dev->llvm_fp_contract_mode = "off";
     }
+    dev->kernellib_fallback_name = NULL;
+    dev->kernellib_subdir = "tce";
 
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
     needsByteSwap = ((dev->endian_little == CL_TRUE) ? true : false);

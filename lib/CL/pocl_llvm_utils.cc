@@ -160,7 +160,7 @@ char *pocl_get_llvm_cpu_name() {
 
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
 const struct kernellib_features {
-  const char *kernellib_name;
+  const char *kernellib_variant;
   const char *cpu_name;
   const char *features[12];
 } kernellib_feature_map[] = {
@@ -198,7 +198,7 @@ const struct kernellib_features {
     {NULL}};
 
 /* for "distro" style kernel libs, return which kernellib to use, at runtime */
-const char *pocl_get_distro_kernellib_name() {
+const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
 
 #if defined(__x86_64__)
@@ -213,14 +213,14 @@ const char *pocl_get_distro_kernellib_name() {
   const char *custom = pocl_get_string_option("POCL_KERNELLIB_NAME", NULL);
 
   const kernellib_features *best_match = NULL;
-  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
+  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_variant;
        ++kf) {
     bool matches = true;
     for (const char *const *f = kf->features; *f; ++f)
       matches &= Features[*f];
     if (matches) {
       best_match = kf;
-      if (custom && !strcmp(custom, kf->kernellib_name))
+      if (custom && !strcmp(custom, kf->kernellib_variant))
         break;
     }
   }
@@ -231,12 +231,12 @@ const char *pocl_get_distro_kernellib_name() {
     return NULL;
   }
 
-  return best_match->kernellib_name;
+  return best_match->kernellib_variant;
 }
 
 /* for "distro" style kernel libs, return which target cpu to use for a given
  * kernellib */
-const char *pocl_get_distro_cpu_name(const char *kernellib_name) {
+const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   StringMap<bool> Features;
 
 #if defined(__x86_64__)
@@ -249,14 +249,14 @@ const char *pocl_get_distro_cpu_name(const char *kernellib_name) {
 #endif
 
   const kernellib_features *best_match = NULL;
-  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_name;
+  for (const kernellib_features *kf = kernellib_feature_map; kf->kernellib_variant;
        ++kf) {
-    if (!strcmp(kernellib_name, kf->kernellib_name))
+    if (!strcmp(kernellib_variant, kf->kernellib_variant))
       return kf->cpu_name;
   }
 
   POCL_MSG_WARN("Can't find a cpu name matching the kernellib (%s)\n",
-                kernellib_name);
+                kernellib_variant);
   return NULL;
 }
 #endif
