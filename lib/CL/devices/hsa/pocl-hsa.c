@@ -458,7 +458,7 @@ pocl_hsa_build_hash (cl_device_id device)
 // Detect the HSA device and populate its properties to the device
 // struct.
 static void
-get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
+get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
 {
 
 #define COPY_ATTR(ATTR) dev->ATTR = supported_hsa_devices[i].ATTR
@@ -703,8 +703,10 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   // The only nonzero value on Kaveri is the first (L1)
   dev->global_mem_cache_size = cache_sizes[0];
 
-  dev->short_name = dev->long_name = (char*)malloc (64*sizeof(char));
-  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name));
+
+  char *name = (char*)malloc (64*sizeof(char));
+  dev->short_name = dev->long_name = name;
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, name));
   get_hsa_device_features (dev->long_name, dev);
 
   if (dev->llvm_target_triplet != NULL) {
@@ -1486,7 +1488,7 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_hsa_reinit (unsigned j, cl_device_id device)
+pocl_hsa_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   assert (device->data == NULL);
   device->data = init_dev_data (device, j);
