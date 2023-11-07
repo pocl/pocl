@@ -474,10 +474,10 @@ get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
     {
       if (strcmp(dev_name, supported_hsa_devices[i].long_name) == 0)
         {
-	  COPY_ATTR (llvm_cpu);
-	  COPY_ATTR (llvm_target_triplet);
-	  COPY_ATTR (spmd);
-	  COPY_ATTR (autolocals_to_args);
+          COPY_ATTR (llvm_cpu);
+          COPY_ATTR (llvm_target_triplet);
+          COPY_ATTR (spmd);
+          COPY_ATTR (autolocals_to_args);
           COPY_ATTR (device_alloca_locals);
           COPY_ATTR (context_as_id);
           COPY_ATTR (args_as_id);
@@ -500,10 +500,10 @@ get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (endian_little);
           COPY_ATTR (preferred_wg_size_multiple);
           COPY_ATTR (extensions);
-	  COPY_ATTR (final_linkage_flags);
-	  COPY_ATTR (device_aux_functions);
-	  COPY_ATTR (device_side_printf);
-	  COPY_ATTR (printf_buffer_size);
+          COPY_ATTR (final_linkage_flags);
+          COPY_ATTR (device_aux_functions);
+          COPY_ATTR (device_side_printf);
+          COPY_ATTR (printf_buffer_size);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);
@@ -517,7 +517,7 @@ get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
   if (!found)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
-			  dev_name);
+                          dev_name);
       POCL_ABORT ("We found a device for which we don't have device "
                   "OpenCL attribute information (compute unit count, "
                   "constant buffer size etc), and there's no way to get all "
