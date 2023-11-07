@@ -2535,7 +2535,7 @@ pocl_cuda_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   res = cuMemAllocManaged (&dptr, size, CU_MEM_ATTACH_GLOBAL);
   CUDA_CHECK_ERROR (res, "pocl_cuda_svm_alloc cuMemAllocManaged");
   if (res != CUDA_SUCCESS)
-    dptr = NULL;
+    dptr = 0;
   return (void *)dptr;
 }
 

@@ -1128,7 +1128,11 @@ Workgroup::createAllocaMemcpyForStruct(LLVMModuleRef M, LLVMBuilderRef Builder,
   llvm::Type *TypeInArg = Arg.getParamByValType();
 #endif
   const DataLayout &DL = Arg.getParent()->getParent()->getDataLayout();
-  unsigned alignment = DL.getABITypeAlignment(TypeInArg);
+#ifdef LLVM_OLDER_THAN_15_0
+  uint64_t alignment = DL.getABITypeAlignment(TypeInArg);
+#else
+  uint64_t alignment = DL.getABITypeAlign(TypeInArg).value();
+#endif
   uint64_t StoreSize = DL.getTypeStoreSize(TypeInArg);
   LLVMValueRef Size =
       LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), StoreSize, 0);

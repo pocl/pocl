@@ -111,15 +111,15 @@ typedef intptr_t ssize_t;
 /* Conversion flags */
 typedef struct
 {
-  char zero : 1;        /**  Leading zeros */
-  char alt : 1;         /**  alternate form */
-  char align_left : 1;  /**  0 == align right (default), 1 == align left */
-  char uc : 1;          /**  Upper case (for base16 only) */
-  char always_sign : 1; /**  plus flag (always display sign) */
-  char sign : 1;        /**   the actual sign **/
-  char space : 1;       /** If the first character of a signed conversion is not
+  unsigned char zero : 1;        /**  Leading zeros */
+  unsigned char alt : 1;         /**  alternate form */
+  unsigned char align_left : 1;  /**  0 == align right (default), 1 == align left */
+  unsigned char uc : 1;          /**  Upper case (for base16 only) */
+  unsigned char always_sign : 1; /**  plus flag (always display sign) */
+  unsigned char sign : 1;        /**   the actual sign **/
+  unsigned char space : 1;       /** If the first character of a signed conversion is not
                           a sign, print a space */
-  char nonzeroparam : 1; /** number to print is not zero */
+  unsigned char nonzeroparam : 1; /** number to print is not zero */
 } flags_t;
 
 typedef struct

@@ -59,30 +59,36 @@
 #ifdef cl_khr_fp16
 #define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, half  , half, int    , IMPLEMENT_SIGNBIT_BUILTIN_HALF)
+#undef __IF_ASTYPE_HELPERS
 #define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, half2 , half, short2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half3 , half, short3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half4 , half, short4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half8 , half, short8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, half16, half, short16, IMPLEMENT_SIGNBIT_DIRECT)
+#undef __IF_ASTYPE_HELPERS
 #endif
 
 #define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, float  , float, int  , IMPLEMENT_SIGNBIT_BUILTIN_FLOAT)
+#undef __IF_ASTYPE_HELPERS
 #define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, float2 , float, int2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float3 , float, int3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float4 , float, int4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float8 , float, int8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, float16, float, int16, IMPLEMENT_SIGNBIT_DIRECT)
+#undef __IF_ASTYPE_HELPERS
 
 #ifdef cl_khr_fp64
 #define __IF_ASTYPE_HELPERS(X)
 IMPLEMENT_DIRECT(signbit, double  , double, int   , IMPLEMENT_SIGNBIT_BUILTIN_DOUBLE)
+#undef __IF_ASTYPE_HELPERS
 #define __IF_ASTYPE_HELPERS(X) X
 IMPLEMENT_DIRECT(signbit, double2 , double, long2 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double3 , double, long3 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double4 , double, long4 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double8 , double, long8 , IMPLEMENT_SIGNBIT_DIRECT)
 IMPLEMENT_DIRECT(signbit, double16, double, long16, IMPLEMENT_SIGNBIT_DIRECT)
+#undef __IF_ASTYPE_HELPERS
 #endif
