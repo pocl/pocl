@@ -39,7 +39,6 @@
 #include "pocl_runtime_config.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
-#include "builtin_kernels.hh"
 
 #include <string.h>
 #include <fcntl.h>
