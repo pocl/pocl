@@ -1861,6 +1861,16 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   SETUP_DEVICE_CL_VERSION (dev_ver_major, dev_ver_minor);
   /* Use the remote's device version for the first part of the version string.
    */
+  if (dev_ver_major >= 3)
+    {
+      /* The minimums for OpenCL 3.0 compliant devices. TODO: fetch
+         the actually supported capabilities. */
+      device->atomic_memory_capabilities
+          = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+      device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                          | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                          | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+    }
   device->version = remote_dev_version;
   device->driver_version = GET_STRING (devinfo->driver_version);
   device->vendor = GET_STRING (devinfo->vendor);
