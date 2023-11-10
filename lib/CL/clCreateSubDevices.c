@@ -143,7 +143,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
        memcpy(new_devs[i], in_device, sizeof(struct _cl_device_id));
        /* this must be done AFTER the clone, otherwise we end up with
         * lock states and refcounts copied from parent device */
-       POCL_INIT_OBJECT (new_devs[i]);
+       POCL_INIT_OBJECT (new_devs[i], in_device);
 
        new_devs[i]->parent_device = in_device;
        if (in_device->builtin_kernel_list)

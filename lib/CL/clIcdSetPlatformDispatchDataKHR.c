@@ -1,8 +1,6 @@
-/* network_discovery.h - part of pocl-remote driver that performs network
-   discovery to find remote servers and their devices.
+/* OpenCL runtime library: clIcdSetPlatformDispatchDataKHR()
 
-
-   Copyright (c) 2023-2024 Yashvardhan Agarwal / Tampere University
+   Copyright (c) 2023-2025 Brice Videau / Argonne National Laboratory
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,29 +21,23 @@
    IN THE SOFTWARE.
 */
 
-#ifndef NETWORK_DISCOVERY_H
-#define NETWORK_DISCOVERY_H
+#include "devices/devices.h"
+#include "pocl_cl.h"
 
-#include "pocl_networking.h"
-#include <CL/cl.h>
+#ifdef BUILD_ICD
+POCL_EXPORT CL_API_ENTRY cl_int CL_API_CALL
+POname (clIcdSetPlatformDispatchDataKHR) (cl_platform_id platform,
+                                          void *disp_data)
+{
+  cl_platform_id pocl_platform;
 
-#define POCL_REMOTE_DNS_SRV_TYPE_ENV "_pocl._tcp"
-#define POCL_REMOTE_SEARCH_DOMAINS_ENV "POCL_REMOTE_SEARCH_DOMAINS"
-
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
-#define SERVER_ID_SIZE 32
-
-cl_int init_network_discovery (
-  cl_int (*add_discovered_device) (const char *, unsigned, cl_platform_id),
-  cl_int (*reconnect_callback) (const char *),
-  unsigned pocl_dev_type_idx,
-  cl_platform_id pocl_dev_platform);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
-
+  POCL_RETURN_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
+  POname (clGetPlatformIDs) (1, &pocl_platform, NULL);
+  POCL_RETURN_ERROR_ON ((platform != pocl_platform), CL_INVALID_PLATFORM,
+                        "Can only set dispatch data of the POCL platform\n");
+  platform->disp_data = disp_data;
+  pocl_set_devices_dispatch_data (disp_data);
+  return CL_SUCCESS;
+}
+POsymICD (clIcdSetPlatformDispatchDataKHR)
 #endif
