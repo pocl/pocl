@@ -45,7 +45,7 @@ const char *pocl_get_device_name (unsigned index);
  * The devices are shared across contexts, thus must implement resource
  * management internally also across multiple contexts.
  */
-cl_int pocl_init_devices();
+cl_int pocl_init_devices(cl_platform_id platform);
 
 cl_int pocl_uninit_devices ();
 

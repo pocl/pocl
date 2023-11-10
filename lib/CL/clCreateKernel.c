@@ -64,7 +64,7 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
                      "clCreateKernel couldn't allocate memory");
 
-  POCL_INIT_OBJECT (kernel);
+  POCL_INIT_OBJECT (kernel, program);
 
   for (i = 0; i < program->num_kernels; ++i)
     if (strcmp (program->kernel_meta[i].name, kernel_name) == 0)

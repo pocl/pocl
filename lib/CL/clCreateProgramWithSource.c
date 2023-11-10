@@ -52,7 +52,7 @@ POname(clCreateProgramWithSource)(cl_context context,
     goto ERROR;
   }
 
-  POCL_INIT_OBJECT(program);
+  POCL_INIT_OBJECT(program, context);
 
   for (i = 0; i < count; ++i)
     {
