@@ -47,7 +47,7 @@ typedef struct compilation_data_s {
   /* device-specific callbacks */
   void (*compile_kernel)(_cl_command_node *cmd, cl_kernel kernel,
                          cl_device_id device, int specialize);
-  int (*initialize_device)(cl_device_id device, const char *parameters);
+  int (*initialize_device)(cl_device_id device, const std::string &parameters);
   int (*cleanup_device)(cl_device_id device);
 
   void (*produce_standalone_program)(AlmaifData *D, _cl_command_node *cmd,
@@ -70,7 +70,8 @@ typedef struct almaif_kernel_data_s {
   uint32_t kernel_md_offset;
 } almaif_kernel_data_t;
 
-int pocl_almaif_compile_init(unsigned j, cl_device_id dev, const char *parameters);
+int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
+                             const std::string &parameters);
 cl_int pocl_almaif_compile_uninit(unsigned j, cl_device_id dev);
 
 extern "C" {
@@ -85,8 +86,6 @@ int pocl_almaif_free_kernel(cl_device_id device, cl_program program,
 int pocl_almaif_build_binary(cl_program program, cl_uint device_i,
                              int link_program, int spir_build);
 
-void preread_images(const char *kernel_cachedir, void *d_void,
-                    almaif_kernel_data_t *kd);
 char *pocl_almaif_compile_build_hash(cl_device_id device);
 
 #endif

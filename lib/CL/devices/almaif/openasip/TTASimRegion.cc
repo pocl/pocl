@@ -37,8 +37,8 @@ TTASimRegion::TTASimRegion(size_t Address, size_t RegionSize,
       "TTASim: Initializing TTASimRegion with Address %zu "
       "and Size %zu and memptr %p\n",
       Address, RegionSize, (void*)mem.get());
-  PhysAddress = Address;
-  Size = RegionSize;
+  PhysAddress_ = Address;
+  Size_ = RegionSize;
   mem_ = mem;
   assert(mem != nullptr && "memory handle NULL, is the sim opened properly?");
 }
@@ -46,57 +46,57 @@ TTASimRegion::TTASimRegion(size_t Address, size_t RegionSize,
 uint32_t TTASimRegion::Read32(size_t offset) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading from physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
   assert(mem_ != nullptr && "No memory handle; read before mapping?");
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
 
   uint64_t result = 0;
-  mem_->read(PhysAddress + offset, 4, result);
+  mem_->read(PhysAddress_ + offset, 4, result);
   return result;
 }
 
 void TTASimRegion::Write32(size_t offset, uint32_t value) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
-  mem_->writeDirectlyLE(PhysAddress + offset, 4, value);
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
+  mem_->writeDirectlyLE(PhysAddress_ + offset, 4, value);
 }
 
 void TTASimRegion::Write16(size_t offset, uint16_t value) {
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
 
-  mem_->writeDirectlyLE(PhysAddress + offset, 2, value);
+  mem_->writeDirectlyLE(PhysAddress_ + offset, 2, value);
 }
 
 uint64_t TTASimRegion::Read64(size_t offset) {
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading from physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
 
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
 
   uint64_t result = 0;
-  mem_->read(PhysAddress + offset, 8, result);
+  mem_->read(PhysAddress_ + offset, 8, result);
   return result;
 }
 
 void TTASimRegion::Write64(size_t offset, uint64_t value) {
 
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Writing to physical address 0x%zx with "
-                            "offset 0x%zx\n",
-                            PhysAddress, offset);
+                             "offset 0x%zx\n",
+                             PhysAddress_, offset);
   assert(mem_ != nullptr && "No memory handle; write before mapping?");
-  assert(offset < Size && "Attempt to access data outside MMAP'd buffer");
-  mem_->writeDirectlyLE(PhysAddress + offset, 8, value);
+  assert(offset < Size_ && "Attempt to access data outside MMAP'd buffer");
+  mem_->writeDirectlyLE(PhysAddress_ + offset, 8, value);
 }
 
 void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
@@ -104,10 +104,10 @@ void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
   POCL_MSG_PRINT_ALMAIF_MMAP(
       "TTASim: Writing 0x%zx bytes to buffer at 0x%zx with "
       "address 0x%zx\n",
-      bytes, PhysAddress, destination);
+      bytes, PhysAddress_, destination);
   auto src = (uint8_t *)source;
-  size_t offset = destination - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside TTASim Region");
+  size_t offset = destination - PhysAddress_;
+  assert(offset < Size_ && "Attempt to access data outside TTASim Region");
 
   for (size_t i = 0; i < bytes; ++i) {
     mem_->writeDirectlyLE(destination + i, 1, (Memory::MAU)src[i]);
@@ -117,11 +117,11 @@ void TTASimRegion::CopyToMMAP(size_t destination, const void *source,
 void TTASimRegion::CopyFromMMAP(void *destination, size_t source,
                                 size_t bytes) {
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Reading 0x%zx bytes from buffer at 0x%zx "
-                            "with address 0x%zx\n",
-                            bytes, PhysAddress, source);
+                             "with address 0x%zx\n",
+                             bytes, PhysAddress_, source);
   auto dst = (uint8_t *)destination;
-  size_t offset = source - PhysAddress;
-  assert(offset < Size && "Attempt to access data outside TTASim Region");
+  size_t offset = source - PhysAddress_;
+  assert(offset < Size_ && "Attempt to access data outside TTASim Region");
 
   for (size_t i = 0; i < bytes; ++i) {
     dst[i] = mem_->read(source + i);
@@ -132,11 +132,11 @@ void TTASimRegion::CopyInMem(size_t source, size_t destination, size_t bytes) {
   POCL_MSG_PRINT_ALMAIF_MMAP("TTASim: Copying 0x%zx bytes from 0x%zx "
                             "to 0x%zx\n",
                             bytes, source, destination);
-  size_t src_offset = source - PhysAddress;
-  size_t dst_offset = destination - PhysAddress;
-  assert(src_offset < Size && (src_offset + bytes) <= Size &&
+  size_t src_offset = source - PhysAddress_;
+  size_t dst_offset = destination - PhysAddress_;
+  assert(src_offset < Size_ && (src_offset + bytes) <= Size_ &&
          "Attempt to access data outside TTASim Region");
-  assert(dst_offset < Size && (dst_offset + bytes) <= Size &&
+  assert(dst_offset < Size_ && (dst_offset + bytes) <= Size_ &&
          "Attempt to access data outside TTASim Region");
   for (size_t i = 0; i < bytes; ++i) {
     Memory::MAU m = mem_->read(source + i);

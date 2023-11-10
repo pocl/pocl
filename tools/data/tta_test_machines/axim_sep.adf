@@ -1000,7 +1000,7 @@
   <address-space name="instructions">
     <width>8</width>
     <min-address>0</min-address>
-    <max-address>4095</max-address>
+    <max-address>2047</max-address>
   </address-space>
 
   <address-space name="data">

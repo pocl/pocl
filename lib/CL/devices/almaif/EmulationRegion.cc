@@ -26,7 +26,7 @@
 // Used in emulator to hack the MMAP to work with just virtually contiguous
 // memory
 EmulationRegion::EmulationRegion(size_t Address, size_t RegionSize) {
-  PhysAddress = Address;
+  PhysAddress_ = Address;
   Data = (void *)Address;
-  Size = RegionSize;
+  Size_ = RegionSize;
 }

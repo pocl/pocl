@@ -32,7 +32,7 @@ private:
   ~MMAPDevice();
 
 public:
-  MMAPDevice(size_t base_address, char *kernel_name);
+  MMAPDevice(size_t base_address, const std::string &kernel_name);
 };
 
 #endif

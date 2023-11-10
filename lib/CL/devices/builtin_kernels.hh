@@ -38,8 +38,7 @@
 
 #include <vector>
 
-enum BuiltinKernelId : uint16_t
-{
+enum BuiltinKernelId : uint16_t {
   // CD = custom device, BI = built-in
   // 1D array byte copy, get_global_size(0) defines the size of data to copy
   // kernel prototype: pocl.copy(char *input, char *output)
@@ -68,6 +67,11 @@ enum BuiltinKernelId : uint16_t
   POCL_CDBI_OPENVX_SCALEIMAGE_BL_U8 = 22,
   POCL_CDBI_OPENVX_TENSORCONVERTDEPTH_WRAP_U8_F32 = 23,
   POCL_CDBI_OPENVX_MINMAXLOC_R1_U8 = 24,
+  POCL_CDBI_SOBEL3X3_U8 = 25,
+  POCL_CDBI_PHASE_U8 = 26,
+  POCL_CDBI_MAGNITUDE_U16 = 27,
+  POCL_CDBI_ORIENTED_NONMAX_U16 = 28,
+  POCL_CDBI_CANNY_U8 = 29,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };

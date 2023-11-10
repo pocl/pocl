@@ -27,5 +27,9 @@
 AlmaIFRegion::~AlmaIFRegion() {}
 
 bool AlmaIFRegion::isInRange(size_t dst) {
-  return ((dst >= PhysAddress) && (dst < (PhysAddress + Size)));
+  return ((dst >= PhysAddress_) && (dst < (PhysAddress_ + Size_)));
 }
+
+size_t AlmaIFRegion::PhysAddress() { return PhysAddress_; }
+
+size_t AlmaIFRegion::Size() { return Size_; }

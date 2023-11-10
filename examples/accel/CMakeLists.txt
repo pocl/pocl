@@ -138,7 +138,7 @@ endif ()
         bitstreams/${core_name}.bit
       COMMAND cp vivado_${core_name}_1/vivado_${core_name}_1.gen/sources_1/bd/toplevel/hw_handoff/toplevel.hwh
         bitstreams/${core_name}.hwh
-      DEPENDS ${ADF} ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl)
+      DEPENDS ${core_name}_rtl ${CMAKE_CURRENT_SOURCE_DIR}/generate_project.tcl)
     add_custom_target(${core_name}_bs DEPENDS bitstreams/${core_name}.bit)
 
     add_dependencies(bitstreams ${core_name}_bs)

@@ -44,9 +44,12 @@ public:
   virtual void CopyInMem(size_t source, size_t destination, size_t bytes) = 0;
 
   virtual bool isInRange(size_t dst);
+  virtual size_t PhysAddress();
+  virtual size_t Size();
 
-  size_t PhysAddress;
-  size_t Size;
+protected:
+  size_t PhysAddress_;
+  size_t Size_;
 };
 
 #endif

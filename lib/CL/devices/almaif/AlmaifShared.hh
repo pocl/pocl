@@ -127,6 +127,13 @@ struct AQLQueueInfo {
 
 #define ALMAIF_DRIVER_SLEEP 200
 
+enum ALMAIF_DEVICE_TYPE : size_t {
+  POCL_ALMAIFDEVICE_XRT = 0xA,
+  POCL_ALMAIFDEVICE_TTASIM = 0xB,
+  POCL_ALMAIFDEVICE_EMULATION = 0xE,
+  POCL_ALMAIFDEVICE_BITSTREAMDATABASE = 0xF,
+};
+
 struct CommandMetadata {
   uint32_t completion_signal;
   uint32_t reserved0;
@@ -179,6 +186,8 @@ struct AlmaifData {
 
   AlmaIFDevice *Dev;
 
+  cl_bool Available;
+
   std::set<BIKD *> SupportedKernels;
   // List of commands ready to be executed.
   _cl_command_node *ReadyList;
@@ -190,8 +199,8 @@ struct AlmaifData {
   // Lock for device-side command queue manipulation
   pocl_lock_t AQLQueueLock;
 
-  void *printf_buffer;
-  void *printf_position;
+  void *PrintfBuffer;
+  void *PrintfPosition;
 
   emulation_data_t EmulationData;
 
