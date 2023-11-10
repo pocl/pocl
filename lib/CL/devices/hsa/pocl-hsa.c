@@ -447,6 +447,42 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .device_aux_functions
                 = (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs) } };
 
+static void
+configure_probably_amd_hsa_device(const char* dev_name, struct _cl_device_id* dev)
+{
+	dev->llvm_cpu = dev_name;
+	dev->llvm_target_triplet
+		= (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa");
+	dev->spmd = CL_TRUE;
+	dev->arg_buffer_launcher = CL_TRUE;
+	dev->grid_launcher = CL_TRUE;
+	dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER;
+	dev->device_alloca_locals = CL_FALSE;
+	dev->context_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+	dev->args_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+	dev->has_64bit_long = 1;
+	dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
+	dev->max_constant_buffer_size = 65536;
+	dev->local_mem_type = CL_LOCAL;
+	dev->endian_little = CL_TRUE;
+	dev->extensions = HSA_DEVICE_EXTENSIONS;
+	dev->device_side_printf = !HSAIL_ENABLED;
+	dev->execution_capabilities = CL_EXEC_KERNEL;
+	dev->printf_buffer_size = PRINTF_BUFFER_SIZE * 1024;
+	dev->preferred_vector_width_char = 4;
+	dev->preferred_vector_width_short = 2;
+	dev->preferred_vector_width_int = 1;
+	dev->preferred_vector_width_long = 1;
+	dev->preferred_vector_width_float = 1;
+	dev->preferred_vector_width_double = 1;
+	dev->native_vector_width_char = 4;
+	dev->native_vector_width_short = 2;
+	dev->native_vector_width_int = 1;
+	dev->native_vector_width_long = 1;
+	dev->native_vector_width_float = 1;
+	dev->native_vector_width_double = 1;
+}
+
 char *
 pocl_hsa_build_hash (cl_device_id device)
 {
@@ -514,17 +550,27 @@ get_hsa_device_features(const char* dev_name, struct _cl_device_id* dev)
           break;
         }
     }
-  if (!found)
-    {
-      POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
-                          dev_name);
-      POCL_ABORT ("We found a device for which we don't have device "
-                  "OpenCL attribute information (compute unit count, "
-                  "constant buffer size etc), and there's no way to get all "
-                  "the required info from HSA API. Please create a "
-                  "new entry with the information in supported_hsa_devices, "
-                  "and send a note/patch to pocl developers. Thanks!\n");
-    }
+  if (found)
+    return;
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
+                      dev_name);
+  /* AMD GPUs have device names in the form gfxMMmm
+   * where MM (one or two digits) and mm (two digits) are architectural version
+   * (the one exposed as CL_DEVICE_GFXIP_MAJOR_AMD and CL_DEVICE_GFXIP_MINOR_AMD
+   * device properties in the cl_amd_device_attribute_query).
+   * If the HSA_AGENT_INFO_VENDOR_NAME identified an AMD product,
+   */
+  if (!strncmp(dev_name, "gfx", 3) && dev->vendor_id == AMD_VENDOR_ID) {
+    configure_probably_amd_hsa_device(dev_name, dev);
+  } else {
+    POCL_ABORT ("We found a device for which we don't have device "
+                "OpenCL attribute information (compute unit count, "
+                "constant buffer size etc), and there's no way to get all "
+                "the required info from HSA API. Please create a "
+                "new entry with the information in supported_hsa_devices, "
+                "and send a note/patch to pocl developers. Thanks!\n");
+  }
 }
 
 unsigned int
