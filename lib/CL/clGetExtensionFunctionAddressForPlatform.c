@@ -50,6 +50,12 @@ CL_API_SUFFIX__VERSION_1_2
 #ifdef BUILD_ICD
   if (strcmp (func_name, "clIcdGetPlatformIDsKHR") == 0)
     return (void *)&POname(clIcdGetPlatformIDsKHR);
+
+  if (strcmp (func_name, "clIcdGetFunctionAddressForPlatformKHR") == 0)
+    return (void *)&POname(clIcdGetFunctionAddressForPlatformKHR);
+
+  if (strcmp (func_name, "clIcdSetPlatformDispatchDataKHR") == 0)
+    return (void *)&POname(clIcdSetPlatformDispatchDataKHR);
 #endif
 
 #ifdef BUILD_PROXY
