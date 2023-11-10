@@ -106,8 +106,8 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
-  
-  POCL_INIT_OBJECT(program);
+
+  POCL_INIT_OBJECT (program, context);
 
   if ((program->binary_sizes = (size_t *)calloc (num_devices, sizeof (size_t)))
           == NULL
