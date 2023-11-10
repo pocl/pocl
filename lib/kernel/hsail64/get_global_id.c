@@ -29,7 +29,6 @@ get_global_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
-      /* TODO: add get_global_offset(X) to these! */
     case 0: return __builtin_hsail_workitemabsid(0) + get_global_offset(0);
     case 1: return __builtin_hsail_workitemabsid(1) + get_global_offset(1);
     case 2: return __builtin_hsail_workitemabsid(2) + get_global_offset(2);
