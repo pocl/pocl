@@ -381,6 +381,10 @@ macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
   custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
 endmacro()
 
+macro(custom_try_compile_clangxx_silent SOURCE1 SOURCE2 RES_VAR)
+  custom_try_compile_c_cxx_silent("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+endmacro()
+
 # clang++ try-compile macro
 macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
