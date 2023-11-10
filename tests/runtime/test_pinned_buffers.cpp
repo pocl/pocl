@@ -193,6 +193,7 @@ int main(void) {
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
+    AllOK = false;
   }
 
   CHECK_CL_ERROR (clUnloadCompiler ());

@@ -50,14 +50,14 @@ main(void)
       TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
 
 #if CL_VERSION_3_0
-      char device_version[128];
-      err = clGetDeviceInfo (devices[j], CL_DEVICE_VERSION, 128,
+      char device_version[1000];
+      err = clGetDeviceInfo (devices[j], CL_DEVICE_VERSION, 1000,
                              device_version, NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
-      if (strcmp (device_version, "OpenCL 3.0") == 0)
+      if (strncmp (device_version, "OpenCL 3.0", 9) == 0)
         {
 
-          /* OpenCl 3.0 queries */
+          /* OpenCL 3.0 queries */
           cl_device_atomic_capabilities atomic_memory_capability;
           err = clGetDeviceInfo (devices[j],
                                  CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES,
