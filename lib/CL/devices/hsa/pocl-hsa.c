@@ -380,7 +380,7 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
     = { [0] = { .long_name = "Spectre",
                 .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
                 .llvm_target_triplet
-                = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
+                = (HSAIL_ENABLED ? "hsail64" : "amdgcn-amd-amdhsa"),
                 .spmd = CL_TRUE,
                 .autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER,
                 .device_alloca_locals = CL_FALSE,
@@ -452,7 +452,7 @@ configure_probably_amd_hsa_device(const char* dev_name, struct _cl_device_id* de
 {
 	dev->llvm_cpu = dev_name;
 	dev->llvm_target_triplet
-		= (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa");
+		= (HSAIL_ENABLED ? "hsail64" : "amdgcn-amd-amdhsa");
 	dev->spmd = CL_TRUE;
 	dev->arg_buffer_launcher = CL_TRUE;
 	dev->grid_launcher = CL_TRUE;
@@ -807,8 +807,8 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->kernellib_fallback_name = NULL;
       dev->kernellib_subdir = "hsail64";
     }
-    if (strcmp(dev->llvm_target_triplet, "amdgcn--amdhsa") == 0) {
-      dev->kernellib_name = "kernel-amdgcn--amdhsa";
+    if (strcmp(dev->llvm_target_triplet, "amdgcn-amd-amdhsa") == 0) {
+      dev->kernellib_name = "kernel-amdgcn-amd-amdhsa";
       dev->kernellib_fallback_name = NULL;
       dev->kernellib_subdir = "amdgcn";
     }
