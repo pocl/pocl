@@ -677,8 +677,10 @@ public:
       uint64_t remote_addr, uint32_t rkey, uint64_t add, Flags = Flags::None);
 
   /**
+   * Recursively appends a WorkRequest to this chain of requests.
+   *
    * @param next WorkRequest that should be performed after this. A copy of
-   * next will be stored in this.
+   * next will be stored in the previous tail of the chain.
    */
   void chain(const WorkRequest &next);
 };

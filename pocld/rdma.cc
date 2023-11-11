@@ -343,24 +343,36 @@ void WorkRequest::initWithSgList(uint64_t id, ibv_wr_opcode op,
   wr.send_flags = flags;
   mr_list.reserve(sg_list.size());
   ibv_sg_list.reserve(sg_list.size());
+  uint64_t total_length = 0;
   for (const ScatterGatherEntry &sge : sg_list) {
     mr_list.push_back(sge.mr);
     ibv_sg_list.push_back(sge.sge);
+    /* 0 is a special value that means 2^31 in sge */
+    total_length += (sge.sge.length == 0) ? 0x80000000 : sge.sge.length;
   }
-  wr.num_sge = sg_list.size();
-  wr.sg_list = ibv_sg_list.data();
+  if (total_length > 0) {
+    wr.num_sge = sg_list.size();
+    wr.sg_list = ibv_sg_list.data();
+  } else {
+    wr.num_sge = 0;
+    wr.sg_list = nullptr;
+  }
 }
 
 void WorkRequest::chain(const WorkRequest &n) {
-  next.reset(new WorkRequest(n));
-  wr.next = &next->wr;
+  if (next.get()) {
+    next->chain(n);
+  } else {
+    next.reset(new WorkRequest(n));
+    wr.next = &next->wr;
+  }
 }
 
 #define COMPUTE_TOTAL_SG_LENGTH                                                \
   size_t total_sg_length = 0;                                                  \
   do {                                                                         \
     for (const ScatterGatherEntry &sge : sg_list) {                            \
-      total_sg_length += sge.sge.length ? sge.sge.length : INT32_MAX;          \
+      total_sg_length += sge.sge.length ? sge.sge.length : 0x80000000;         \
     }                                                                          \
   } while (0)
 
@@ -420,7 +432,7 @@ WorkRequest WorkRequest::RdmaWrite(
    */
 
   COMPUTE_TOTAL_SG_LENGTH;
-  assert(total_sg_length < INT32_MAX);
+  assert(total_sg_length <= 0x80000000);
 
   WorkRequest w;
   w.initWithSgList(wr_id, IBV_WR_RDMA_WRITE, sg_list, flags);
@@ -464,7 +476,7 @@ WorkRequest::RdmaRead(uint64_t wr_id,
    */
 
   COMPUTE_TOTAL_SG_LENGTH;
-  assert(total_sg_length < INT32_MAX);
+  assert(total_sg_length <= 0x80000000);
 
   WorkRequest w;
   w.initWithSgList(wr_id, IBV_WR_RDMA_READ, sg_list, flags);
