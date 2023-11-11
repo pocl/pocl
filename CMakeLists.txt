@@ -1616,6 +1616,9 @@ if(ENABLE_HSA)
   if (HSAIL_ENABLED)
     set(OCL_TARGETS "${OCL_TARGETS} hsail64")
   endif()
+  if (AMD_HSA)
+    set(OCL_TARGETS "${OCL_TARGETS} amdgcn-amd-amdhsa")
+  endif()
   # this is for config.h
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
