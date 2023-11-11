@@ -11,7 +11,7 @@ extern "C" {
   int
   exec_dot_product_kernel (cl_context context, cl_device_id device,
                            cl_command_queue cmd_queue, cl_program program,
-                           int n, cl_float4 *srcA, cl_float4 *srcB,
+                           int n, int iter, cl_float4 *srcA, cl_float4 *srcB,
                            cl_float *dst)
   {
     cl_kernel kernel = NULL;
@@ -53,13 +53,17 @@ extern "C" {
     global_work_size[0] = n;
     local_work_size[0] = 2;
 
-    err = clEnqueueNDRangeKernel (cmd_queue, kernel, 1, NULL, global_work_size,
-                                  local_work_size, 0, NULL, NULL);
-    CHECK_CL_ERROR2 (err);
+    for (i = 0; i < iter; ++i)
+      {
+        err = clEnqueueNDRangeKernel (cmd_queue, kernel, 1, NULL,
+                                      global_work_size, local_work_size, 0,
+                                      NULL, NULL);
+        CHECK_CL_ERROR2 (err);
 
-    err = clEnqueueReadBuffer (cmd_queue, memobjs[2], CL_TRUE, 0,
-                               n * sizeof (cl_float), dst, 0, NULL, NULL);
-    CHECK_CL_ERROR2 (err);
+        err = clEnqueueReadBuffer (cmd_queue, memobjs[2], CL_TRUE, 0,
+                                   n * sizeof (cl_float), dst, 0, NULL, NULL);
+        CHECK_CL_ERROR2 (err);
+      }
 
     poclu_bswap_cl_float_array (device, (cl_float *)dst, n);
     poclu_bswap_cl_float_array (device, (cl_float *)srcA, 4 * n);

@@ -8,8 +8,8 @@
 
 // Simple version
 __kernel void
-myGEMM2 (const __global float *A, const __global float *B, __global float *C,
-         uint M, uint N, uint K)
+myGEMM2 (const __global float *restrict A, const __global float *restrict B,
+         __global float *restrict C, uint M, uint N, uint K)
 
 {
   // Thread identifiers
@@ -46,8 +46,8 @@ myGEMM2 (const __global float *A, const __global float *B, __global float *C,
 
 // Tiled and coalesced version
 __kernel void
-myGEMM4 (const __global float *A, const __global float *B, __global float *C,
-         uint M, uint N, uint K)
+myGEMM4 (const __global float *restrict A, const __global float *restrict B,
+         __global float *restrict C, uint M, uint N, uint K)
 {
 
   // Thread identifiers
@@ -119,8 +119,8 @@ myGEMM4 (const __global float *A, const __global float *B, __global float *C,
 
 // Simple transpose kernel for a P * Q matrix
 __kernel void
-transpose (const ITYPE P, const ITYPE Q, const __global float *input,
-           __global float *output)
+transpose (const ITYPE P, const ITYPE Q, const __global float *restrict input,
+           __global float *restrict output)
 {
 
   // Thread identifiers
@@ -192,8 +192,8 @@ transpose (const ITYPE P, const ITYPE Q, const __global float *input,
 
 // Use 2D register blocking (further increase in work per thread)
 kernel void
-myGEMM6 (const __global float *A, const __global float *B, __global float *C,
-         uint M, uint N, uint K)
+myGEMM6 (const __global float *restrict A, const __global float *restrict B,
+         __global float *restrict C, uint M, uint N, uint K)
 {
   // Thread identifiers
   const ITYPE tidm = get_local_id (0);          // Local row ID (max: TSM/WPTM)

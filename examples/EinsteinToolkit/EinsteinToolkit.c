@@ -571,8 +571,9 @@ void setup(const char* program_source1, const char* program_source2)
   clGetPlatformInfo(platform_id, CL_PLATFORM_VENDOR,
                     platform_vendor_length, platform_vendor, NULL);
   printf("OpenCL platform vendor: %s\n", platform_vendor);
-  
-  cmd_queue = clCreateCommandQueue(context, device_id, 0, NULL);
+
+  cmd_queue = clCreateCommandQueue (context, device_id,
+                                    CL_QUEUE_PROFILING_ENABLE, NULL);
   assert(cmd_queue);
 
 

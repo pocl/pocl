@@ -74,3 +74,18 @@ if (ENABLE_TCE)
     APPEND PROPERTY LABELS "tce;almaif")
 endif()
 
+
+add_test("examples/example0_binary" "example0" "b" "${CMAKE_BINARY_DIR}/offline/example0.pb")
+
+set_tests_properties( "examples/example0_binary"
+  PROPERTIES
+    COST 3.0
+    ${PROPS}
+    PROCESSORS 1
+    LABELS "poclbin"
+    REQUIRED_FILES "${CMAKE_BINARY_DIR}/offline/example0.pb"
+    DEPENDS "pocl_version_check")
+
+# hybrid compilation but not on SPIR
+set_property(TEST "examples/example0"
+  APPEND PROPERTY LABELS "hybrid")

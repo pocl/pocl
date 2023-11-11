@@ -42,35 +42,96 @@
 #ifndef min
 #define min(X, Y) X < Y ? X : Y
 #endif
+#define WPT_L (local_wg / 4)
+
+#define WPT_R 8
+
+int
+create_buf (cl_context context, cl_command_queue cmd_queue,
+            cl_svm_mem_flags flags, size_t size, void *src, int use_svm,
+            void **retval)
+{
+  void *r = NULL;
+  int err = CL_SUCCESS;
+  *retval = NULL;
+  if (use_svm)
+    {
+      printf ("Using SVM\n");
+      flags
+          = flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY);
+      r = clSVMAlloc (context, flags, size, 0);
+      TEST_ASSERT (r != NULL);
+      if (src)
+        {
+          err = clEnqueueSVMMemcpy (cmd_queue, CL_TRUE, r, src, size, 0, NULL,
+                                    NULL);
+          CHECK_CL_ERROR2 (err);
+        }
+    }
+  else
+    {
+      r = clCreateBuffer (context, flags, size, src, &err);
+      CHECK_CL_ERROR2 (err);
+    }
+  *retval = r;
+
+ERROR:
+  return err;
+}
+
+int
+read_buf (cl_command_queue cmd_queue, void *dst, void *src, size_t size,
+          int use_svm)
+{
+  int err = CL_SUCCESS;
+  if (use_svm)
+    {
+      err = clEnqueueSVMMemcpy (cmd_queue, CL_TRUE, dst, src, size, 0, NULL,
+                                NULL);
+      CHECK_CL_ERROR2 (err);
+    }
+  else
+    {
+      err = clEnqueueReadBuffer (cmd_queue, src, CL_TRUE, 0, size, dst, 0,
+                                 NULL, NULL);
+      CHECK_CL_ERROR2 (err);
+    }
+ERROR:
+  return err;
+}
+
+#define ITERS 30
 
 int
 exec_matrix_kernel (cl_context context, cl_device_id device,
                     cl_command_queue cmd_queue, cl_program program, cl_uint n,
                     cl_float *srcA, cl_float *srcB, cl_float *dst,
                     const char *kernel_name, const size_t *global_work_size,
-                    const size_t *local_work_size, int transpose)
+                    const size_t *local_work_size, int transpose, int use_svm)
 {
   cl_kernel kernel = NULL;
-  cl_mem memobjs[3] = { 0, 0, 0 };
+  void *memobjs[3] = { 0, 0, 0 };
+  void *temp = NULL;
   cl_int err = CL_SUCCESS;
-  cl_mem temp = NULL;
+  size_t buf_size = sizeof (cl_float) * n * n;
 
   poclu_bswap_cl_float_array (device, (cl_float *)srcA, n * n);
   poclu_bswap_cl_float_array (device, (cl_float *)srcB, n * n);
 
-  memobjs[0]
-      = clCreateBuffer (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                        sizeof (cl_float) * n * n, srcA, &err);
+  err = create_buf (context, cmd_queue,
+                    CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, buf_size, srcA,
+                    use_svm, &memobjs[0]);
   CHECK_CL_ERROR2 (err);
 
   if (transpose)
     {
-      temp = clCreateBuffer (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                             sizeof (cl_float) * n * n, srcB, &err);
+      err = create_buf (context, cmd_queue,
+                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, buf_size,
+                        srcB, use_svm, &temp);
       CHECK_CL_ERROR2 (err);
 
-      memobjs[1] = clCreateBuffer (context, CL_MEM_READ_WRITE,
-                                   sizeof (cl_float) * n * n, NULL, &err);
+      err = create_buf (context, cmd_queue, CL_MEM_READ_WRITE, buf_size, NULL,
+                        use_svm, &memobjs[1]);
       CHECK_CL_ERROR2 (err);
 
       kernel = clCreateKernel (program, "transpose", NULL);
@@ -82,11 +143,23 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
       err = clSetKernelArg (kernel, 1, sizeof (cl_uint), (void *)&n);
       CHECK_CL_ERROR2 (err);
 
-      err = clSetKernelArg (kernel, 2, sizeof (cl_mem), (void *)&temp);
-      CHECK_CL_ERROR2 (err);
+      if (use_svm)
+        {
+          err = clSetKernelArgSVMPointer (kernel, 2, temp);
+          CHECK_CL_ERROR2 (err);
 
-      err = clSetKernelArg (kernel, 3, sizeof (cl_mem), (void *)&memobjs[1]);
-      CHECK_CL_ERROR2 (err);
+          err = clSetKernelArgSVMPointer (kernel, 3, memobjs[1]);
+          CHECK_CL_ERROR2 (err);
+        }
+      else
+        {
+          err = clSetKernelArg (kernel, 2, sizeof (cl_mem), (void *)&temp);
+          CHECK_CL_ERROR2 (err);
+
+          err = clSetKernelArg (kernel, 3, sizeof (cl_mem),
+                                (void *)&memobjs[1]);
+          CHECK_CL_ERROR2 (err);
+        }
 
       size_t global[2] = { n, n };
       size_t local[2] = { 8, 8 };
@@ -96,28 +169,41 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
     }
   else
     {
-      memobjs[1]
-          = clCreateBuffer (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                            sizeof (cl_float) * n * n, srcB, &err);
+      err = create_buf (context, cmd_queue,
+                        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, buf_size,
+                        srcB, use_svm, &memobjs[1]);
       CHECK_CL_ERROR2 (err);
     }
 
-  memobjs[2] = clCreateBuffer (context, CL_MEM_WRITE_ONLY,
-                               sizeof (cl_float) * n * n, NULL, &err);
+  err = create_buf (context, cmd_queue, CL_MEM_WRITE_ONLY, buf_size, NULL,
+                    use_svm, &memobjs[2]);
   CHECK_CL_ERROR2 (err);
 
-  kernel = clCreateKernel (program, kernel_name, NULL);
+  kernel = clCreateKernel (program, kernel_name, &err);
   CHECK_CL_ERROR2 (err);
 
-  err = clSetKernelArg (kernel, 0, sizeof (cl_mem), (void *)&memobjs[0]);
-  CHECK_CL_ERROR2 (err);
+  if (use_svm)
+    {
+      err = clSetKernelArgSVMPointer (kernel, 0, memobjs[0]);
+      CHECK_CL_ERROR2 (err);
 
-  err = clSetKernelArg (kernel, 1, sizeof (cl_mem), (void *)&memobjs[1]);
-  CHECK_CL_ERROR2 (err);
+      err = clSetKernelArgSVMPointer (kernel, 1, memobjs[1]);
+      CHECK_CL_ERROR2 (err);
 
-  err = clSetKernelArg (kernel, 2, sizeof (cl_mem), (void *)&memobjs[2]);
-  CHECK_CL_ERROR2 (err);
+      err = clSetKernelArgSVMPointer (kernel, 2, memobjs[2]);
+      CHECK_CL_ERROR2 (err);
+    }
+  else
+    {
+      err = clSetKernelArg (kernel, 0, sizeof (cl_mem), (void *)&memobjs[0]);
+      CHECK_CL_ERROR2 (err);
 
+      err = clSetKernelArg (kernel, 1, sizeof (cl_mem), (void *)&memobjs[1]);
+      CHECK_CL_ERROR2 (err);
+
+      err = clSetKernelArg (kernel, 2, sizeof (cl_mem), (void *)&memobjs[2]);
+      CHECK_CL_ERROR2 (err);
+    }
   err = clSetKernelArg (kernel, 3, sizeof (cl_uint), (void *)&n);
   CHECK_CL_ERROR2 (err);
 
@@ -127,30 +213,41 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
   err = clSetKernelArg (kernel, 5, sizeof (cl_uint), (void *)&n);
   CHECK_CL_ERROR2 (err);
 
-  cl_event ev;
-
   printf ("gws: %lu %lu lws: %lu %lu\n", global_work_size[0],
           global_work_size[1], local_work_size[0], local_work_size[1]);
-  err = clEnqueueNDRangeKernel (cmd_queue, kernel, 2, NULL, global_work_size,
-                                local_work_size, 0, NULL, &ev);
-  CHECK_CL_ERROR2 (err);
 
-  err = clEnqueueReadBuffer (cmd_queue, memobjs[2], CL_TRUE, 0,
-                             n * n * sizeof (cl_float), dst, 0, NULL, NULL);
-  CHECK_CL_ERROR2 (err);
+  cl_event events[ITERS];
+  for (size_t i = 0; i < ITERS; ++i)
+    {
+      err = clEnqueueNDRangeKernel (cmd_queue, kernel, 2, NULL,
+                                    global_work_size, local_work_size, 0, NULL,
+                                    &events[i]);
+      CHECK_CL_ERROR2 (err);
+    }
+
+  err = read_buf (cmd_queue, dst, memobjs[2], buf_size, use_svm);
 
   cl_ulong startTime;
   cl_ulong endTime;
+  cl_ulong minTime = 1UL << 30;
 
   // Get kernel profiling info
-  err = clGetEventProfilingInfo (ev, CL_PROFILING_COMMAND_START,
-                                 sizeof (cl_ulong), &startTime, 0);
-  CHECK_CL_ERROR2 (err);
-  err = clGetEventProfilingInfo (ev, CL_PROFILING_COMMAND_END,
-                                 sizeof (cl_ulong), &endTime, 0);
-  CHECK_CL_ERROR2 (err);
+  for (size_t i = 0; i < ITERS; ++i)
+    {
+      err = clGetEventProfilingInfo (events[i], CL_PROFILING_COMMAND_START,
+                                     sizeof (cl_ulong), &startTime, 0);
+      CHECK_CL_ERROR2 (err);
+      err = clGetEventProfilingInfo (events[i], CL_PROFILING_COMMAND_END,
+                                     sizeof (cl_ulong), &endTime, 0);
+      CHECK_CL_ERROR2 (err);
+      if (endTime - startTime < minTime)
+        {
+          minTime = endTime - startTime;
+        }
+      clReleaseEvent (events[i]);
+    }
 
-  cl_ulong ev_nsec = endTime - startTime;
+  cl_ulong ev_nsec = minTime;
   double nsec = (double)ev_nsec;
   double msec = ev_nsec / 1000000.0;
   size_t f = 2UL * n * n * n;
@@ -161,16 +258,26 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
   printf ("Performance: %lf GFLOPS/s  | Time: %lf  msec  | Total Ops to "
           "execute: %lf G \n",
           perf, msec, gflops);
-  clReleaseEvent (ev);
 
   poclu_bswap_cl_float_array (device, (cl_float *)dst, n * n);
 
 ERROR:
-  if (temp)
-    clReleaseMemObject (temp);
-  clReleaseMemObject (memobjs[0]);
-  clReleaseMemObject (memobjs[1]);
-  clReleaseMemObject (memobjs[2]);
+  if (use_svm)
+    {
+      if (temp)
+        clSVMFree (context, temp);
+      clSVMFree (context, memobjs[0]);
+      clSVMFree (context, memobjs[1]);
+      clSVMFree (context, memobjs[2]);
+    }
+  else
+    {
+      if (temp)
+        clReleaseMemObject (temp);
+      clReleaseMemObject (memobjs[0]);
+      clReleaseMemObject (memobjs[1]);
+      clReleaseMemObject (memobjs[2]);
+    }
   clReleaseKernel (kernel);
   return err;
 }
@@ -190,6 +297,7 @@ main (int argc, char **argv)
   int use_locals = 0;
   int use_2d_reg_block = 0;
   int use_fma = 0;
+  int use_svm = 0;
   cl_int err;
 
   cl_context context = NULL;
@@ -198,8 +306,11 @@ main (int argc, char **argv)
   cl_command_queue queue = NULL;
   cl_program program = NULL;
   size_t max_wg_size = 0;
+  size_t TSM = 0;
+  size_t TSK = 0;
   cl_ulong local_mem_size = 0;
   unsigned local_wg = 0;
+  unsigned explicit_local_wg = 0;
   long matrix_size = 0;
   const char *explicit_binary_path = NULL;
 
@@ -216,7 +327,8 @@ main (int argc, char **argv)
 
   if (matrix_size < 64 || matrix_size > 65536 || errno)
     {
-      printf ("USAGE: matrix1 MATRIX_SIZE [options] [path-to-binary]\n"
+      printf ("USAGE: matrix1 MATRIX_SIZE [LOCAL_WG_SIZE] [options] "
+              "[path-to-binary]\n"
               "Matrix width must be power-of-4, in [64, 65536] range\n");
       return EXIT_FAILURE;
     }
@@ -226,6 +338,24 @@ main (int argc, char **argv)
   long matrix_2d_size = matrix_size * matrix_size;
 
   int arg_i = 2;
+  if ((argc > 2) && argv[2][0] != '-')
+    {
+      errno = 0;
+      explicit_local_wg = strtol (argv[2], NULL, 10);
+      if (explicit_local_wg < 1 || explicit_local_wg > 1024 || errno)
+        {
+          printf (
+              "USAGE: matrix1 MATRIX_SIZE [LOCAL_WG_SIZE] [options] "
+              "[path-to-binary]\n"
+              "Explicit local-WG-size must be power-of-2, in [1, 64] range\n");
+          return EXIT_FAILURE;
+        }
+      else
+        {
+          ++arg_i;
+        }
+    }
+
   while ((argc > arg_i) && (argv[arg_i][0] == '-'))
     {
       if (argv[arg_i][1] == 's')
@@ -240,6 +370,8 @@ main (int argc, char **argv)
         use_2d_reg_block = 1;
       if (argv[arg_i][1] == 'f')
         use_fma = 1;
+      if (argv[arg_i][1] == 'M')
+        use_svm = 1;
       ++arg_i;
     }
 
@@ -255,10 +387,10 @@ main (int argc, char **argv)
     explicit_binary_path = argv[arg_i];
 
   printf ("OPTIONS: SPIR %i SPIR-V %i POCLBIN %i USE_LOCALS %i USE_REGS %i "
-          "USE_FMA %i \n"
+          "USE_FMA %i USE_SVM %i EXPLICIT_LWG %u\n"
           "EXPLICIT BINARY: %s \n",
-          spir, spirv, poclbin, use_locals, use_2d_reg_block, use_fma,
-          explicit_binary_path);
+          spir, spirv, poclbin, use_locals, use_2d_reg_block, use_fma, use_svm,
+          explicit_local_wg, explicit_binary_path);
 
   if (explicit_binary_path && ((spir + spirv + poclbin) == 0))
     {
@@ -278,32 +410,100 @@ main (int argc, char **argv)
 
   /**************************************************************************/
 
-  local_wg = 1;
-  while (local_wg * local_wg < max_wg_size)
-    local_wg <<= 1;
-
-  if (local_wg * local_wg > max_wg_size)
-    local_wg >>= 1;
-
-  assert (local_wg > 0);
-
-  if (is_binary)
+  if (explicit_local_wg)
     {
-      use_fma = 0;
+      local_wg = explicit_local_wg;
+      assert (local_wg > 0);
 
-      local_wg = 32;
-      printf ("Binary local_wg: %u \n", local_wg);
-      if (local_wg * local_wg > max_wg_size)
+      TSM = local_wg * WPT_R;
+      TSK = local_wg;
+
+      /* regs */
+      if ((use_2d_reg_block && (local_wg * local_wg * WPT_R > max_wg_size))
+          /* locals */
+          || (use_locals && (local_wg * 4 > max_wg_size))
+          /* simple */
+          || (!use_2d_reg_block && !use_locals
+              && (local_wg * local_wg > max_wg_size)))
         {
           printf ("Local WG size of the binary exceeds this "
                   "device's capabilities.\nTest SKIPPED\n");
           return 0;
         }
+
+      if (use_locals && (local_wg * local_wg * 8 > local_mem_size))
+        {
+          printf ("required local memory exceeds this device's "
+                  "capabilities.\n");
+          return -1;
+        }
+
+      if (use_2d_reg_block && ((TSM * TSK * 8) > local_mem_size))
+        {
+          printf ("required local memory exceeds this device's "
+                  "capabilities.\n");
+          return -1;
+        }
     }
   else
     {
-      printf ("Autodetected local_wg: %u max wg size: %lu\n", local_wg,
-              max_wg_size);
+      local_wg = 1;
+      size_t minsize = (max_wg_size < matrix_size ? max_wg_size : matrix_size);
+      if (!use_locals && !use_2d_reg_block)
+        {
+          while (local_wg * local_wg < minsize)
+            local_wg <<= 1;
+          while (local_wg * local_wg > minsize)
+            local_wg >>= 1;
+        }
+
+      if (use_locals)
+        {
+          while (local_wg * 4 < minsize)
+            local_wg <<= 1;
+          while (local_wg * 4 > minsize)
+            local_wg >>= 1;
+          /* 8 = 2x array: float[local_wg][local_wg] */
+          while (local_wg * local_wg * 8 > local_mem_size)
+            local_wg >>= 1;
+        }
+
+      if (use_2d_reg_block)
+        {
+          while (local_wg * local_wg * WPT_R < minsize)
+            local_wg <<= 1;
+          while (local_wg * local_wg * WPT_R > minsize)
+            local_wg >>= 1;
+          // TSM * TSK * 8
+          while (local_wg
+                 && ((local_wg * local_wg * WPT_R * 8) > local_mem_size))
+            local_wg >>= 1;
+
+          if (local_wg == 0)
+            {
+              printf ("this machine doesn't have the resources to run the REG "
+                      "version.\n");
+              return -1;
+            }
+
+          TSM = local_wg * WPT_R;
+          TSK = local_wg;
+
+          /* 2 buffers x sizeof(float) * [TSK][TSM] */
+          // tune TSK. can be tuned independently of local WG size
+          while ((TSK < WPT_R) && ((TSM * TSK * 8) < local_mem_size))
+            TSK <<= 1;
+        }
+
+      assert (local_wg > 0);
+      printf ("Autodetected local_wg: %u \n", local_wg);
+    }
+
+  float div = (float)matrix_size / (float)local_wg;
+  if (matrix_size % ((unsigned)div) != 0)
+    {
+      printf ("matrix size must be divisible by local_wg \n");
+      return -1;
     }
 
   /**************************************************************************/
@@ -320,7 +520,7 @@ main (int argc, char **argv)
     {
       printf ("Using simplest kernel (myGEMM2)\n");
       global_work_size[0] = global_work_size[1] = matrix_size;
-      local_work_size[0] = local_work_size[1] = local_wg; // TODO
+      local_work_size[0] = local_work_size[1] = local_wg;
       kernel_name = "myGEMM2";
       if (use_fma)
         strcpy (extra_opts, fma);
@@ -333,28 +533,10 @@ main (int argc, char **argv)
 
       printf ("Using locals (myGEMM4)\n");
 
-      if (is_binary)
-        {
-          if (local_wg * local_wg * 8 > local_mem_size)
-            {
-              printf ("required local memory exceeds this device's "
-                      "capabilities.\n");
-              return 0;
-            }
-        }
-      else
-        {
-          /* 8 = 2x array: float[local_wg][local_wg] */
-          while (local_wg * local_wg * 8 > local_mem_size)
-            local_wg >>= 1;
-        }
-
-#define WPT (local_wg / 4)
       global_work_size[0] = matrix_size;
-      global_work_size[1] = matrix_size / WPT;
+      global_work_size[1] = matrix_size / WPT_L;
       local_work_size[0] = local_wg;
       local_work_size[1] = 4;
-#undef WPT
 
       snprintf (extra_opts, 1024, "%s-DMYGEMM4 -DLOCAL_SIZE=%u", fma,
                 local_wg);
@@ -368,30 +550,10 @@ main (int argc, char **argv)
 
       printf ("using 2d reg block (myGEMM6)\n");
 
-#define WPT 8
       /* const size_t global[2] = { M/WPTM, N/WPTN }; */
       /* const size_t local[2] = { TSM/WPTM, TSN/WPTN }; */
-      global_work_size[0] = global_work_size[1] = matrix_size / WPT;
-      local_wg >>= 2;
+      global_work_size[0] = global_work_size[1] = matrix_size / WPT_R;
       local_work_size[0] = local_work_size[1] = local_wg;
-      size_t TSM = local_wg * WPT;
-      size_t TSK = local_wg;
-
-      if (is_binary)
-        {
-          if ((TSM * TSK * 2 * 4) > local_mem_size)
-            {
-              printf ("required local memory exceeds this device's "
-                      "capabilities.\n");
-              return 0;
-            }
-        }
-      else
-        {
-          /* 2 buffers x sizeof(float) * [TSK][TSM] */
-          while ((TSK < 8) && (TSM * TSK * 2 * 4 < local_mem_size))
-            TSK <<= 1;
-        }
 
       snprintf (extra_opts, 1024, "%s-DMYGEMM6 -DTSM=%zu -DTSN=%zu -DTSK=%zu",
                 fma, TSM, TSM, TSK);
@@ -448,7 +610,7 @@ main (int argc, char **argv)
 
   if (exec_matrix_kernel (context, device, queue, program, matrix_size, srcA,
                           srcB, dst, kernel_name, global_work_size,
-                          local_work_size, use_2d_reg_block))
+                          local_work_size, use_2d_reg_block, use_svm))
     {
       printf ("Error running the tests\n");
       err = 1;
