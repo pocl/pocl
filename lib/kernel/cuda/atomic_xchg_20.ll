@@ -104,7 +104,7 @@ entry:
 
 
 
-define float @_Z29__pocl_atomic_exchange__localPU3AS3VU7_Atomicff12memory_order12memory_scope(double addrspace(3)* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
+define float @_Z29__pocl_atomic_exchange__localPU3AS3VU7_Atomicff12memory_order12memory_scope(float addrspace(3)* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
 entry:
   %iptr = bitcast float addrspace(3)* %0 to i32 addrspace(3)*
   %ival = bitcast float %1 to i32
@@ -113,7 +113,7 @@ entry:
   ret float %fres
 }
 
-define float @_Z30__pocl_atomic_exchange__globalPU3AS1VU7_Atomicff12memory_order12memory_scope(double addrspace(1)* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
+define float @_Z30__pocl_atomic_exchange__globalPU3AS1VU7_Atomicff12memory_order12memory_scope(float addrspace(1)* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
 entry:
   %iptr = bitcast float addrspace(1)* %0 to i32 addrspace(1)*
   %ival = bitcast float %1 to i32
@@ -122,7 +122,7 @@ entry:
   ret float %fres
 }
 
-define float @_Z31__pocl_atomic_exchange__genericPVU7_Atomicff12memory_order12memory_scope(double* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
+define float @_Z31__pocl_atomic_exchange__genericPVU7_Atomicff12memory_order12memory_scope(float* noundef %0, float noundef %1, i32 noundef %2, i32 noundef %3) local_unnamed_addr #0 {
 entry:
   %iptr = bitcast float* %0 to i32*
   %ival = bitcast float %1 to i32
