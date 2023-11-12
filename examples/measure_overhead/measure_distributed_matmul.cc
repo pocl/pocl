@@ -348,14 +348,13 @@ bool measure_platform(cl::Platform &platform, int index) {
     std::vector<std::chrono::steady_clock::time_point> starts(
         options.sample_count);
     std::vector<double> times(options.sample_count);
+    print_progress(0, options.sample_count);
     for (int i = 0; i < options.sample_count; ++i) {
       using namespace std::chrono;
       starts[i] = steady_clock::now();
       run_iteration(kern, command_queues, buffers, partitions, events_by_device,
                     i);
-    }
 
-    for (int i = 0; i < options.sample_count; ++i) {
       for (size_t j = 0; j < partitions.size(); ++j) {
         command_queues[i * partitions.size() + j].finish();
       }
@@ -363,6 +362,7 @@ bool measure_platform(cl::Platform &platform, int index) {
       steady_clock::duration iter_duration = steady_clock::now() - starts[i];
       times[i] =
           duration_cast<duration<double, std::micro>>(iter_duration).count();
+      print_progress(i+1, options.sample_count);
     }
 
     print_measurements("host-measured timing:", times, 2);
@@ -400,7 +400,6 @@ bool measure_platform(cl::Platform &platform, int index) {
         if (e.get() == nullptr)
           continue;
         e.wait();
-        print_progress(j + 1, options.sample_count);
         size_t ticks = e.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
                        e.getProfilingInfo<CL_PROFILING_COMMAND_START>();
         device_times[j] = double(ticks) / 1e3;
