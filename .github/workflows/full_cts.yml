@@ -23,7 +23,7 @@ jobs:
   build:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, x64, medium]
-    timeout-minutes: 1200
+    timeout-minutes: 1440
     strategy:
       fail-fast: false
       matrix:
