@@ -77,7 +77,7 @@ void print_progress(int p, int total, int width = 80) {
 
 struct {
   int platform_index = -1;
-  int sample_count = 1;
+  size_t sample_count = 1;
   // This is the square root of the number of integers in the buffer, not bytes.
   size_t matrix_size = 128;
   int show_result = 0;
@@ -348,14 +348,13 @@ bool measure_platform(cl::Platform &platform, int index) {
     std::vector<std::chrono::steady_clock::time_point> starts(
         options.sample_count);
     std::vector<double> times(options.sample_count);
-    for (int i = 0; i < options.sample_count; ++i) {
+    print_progress(0, options.sample_count);
+    for (size_t i = 0; i < options.sample_count; ++i) {
       using namespace std::chrono;
       starts[i] = steady_clock::now();
       run_iteration(kern, command_queues, buffers, partitions, events_by_device,
                     i);
-    }
 
-    for (int i = 0; i < options.sample_count; ++i) {
       for (size_t j = 0; j < partitions.size(); ++j) {
         command_queues[i * partitions.size() + j].finish();
       }
@@ -363,6 +362,7 @@ bool measure_platform(cl::Platform &platform, int index) {
       steady_clock::duration iter_duration = steady_clock::now() - starts[i];
       times[i] =
           duration_cast<duration<double, std::micro>>(iter_duration).count();
+      print_progress(i+1, options.sample_count);
     }
 
     print_measurements("host-measured timing:", times, 2);
@@ -395,12 +395,11 @@ bool measure_platform(cl::Platform &platform, int index) {
       for (cl::CommandQueue &cq : command_queues)
         cq.finish();
       std::vector<double> device_times(options.sample_count);
-      for (int j = 0; j < events_by_device[i].size(); ++j) {
+      for (size_t j = 0; j < events_by_device[i].size(); ++j) {
         cl::Event &e = events_by_device[i][j];
         if (e.get() == nullptr)
           continue;
         e.wait();
-        print_progress(j + 1, options.sample_count);
         size_t ticks = e.getProfilingInfo<CL_PROFILING_COMMAND_END>() -
                        e.getProfilingInfo<CL_PROFILING_COMMAND_START>();
         device_times[j] = double(ticks) / 1e3;

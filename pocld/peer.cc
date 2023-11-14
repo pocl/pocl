@@ -159,10 +159,10 @@ void Peer::rdmaWriterThread() {
 
     /************** set up buffer contents transfer *************/
     ptrdiff_t src_offset = transfer_src_offset(r->req);
-    uint32_t data_size = transfer_size(r->req);
+    uint64_t data_size = transfer_size(r->req);
 
     POCL_MSG_PRINT_GENERAL("%s: RDMA WRITE FOR MESSAGE ID: %" PRIu64
-                           ", SIZE: %" PRIu32 "\n",
+                           ", SIZE: %" PRIu64 "\n",
                            id_str.c_str(), uint64_t(r->req.msg_id), data_size);
     RdmaBufferData local;
     {
@@ -191,9 +191,22 @@ void Peer::rdmaWriterThread() {
       remote = it->second;
     }
 
-    WorkRequest data_wr =
-        WorkRequest::RdmaWrite(0, {{local.shadow_region, 0, data_size}},
-                               remote.address + src_offset, remote.rkey);
+    /* 0 is a special value that means 2^31 in the sg_list. Messages of >2^31
+     * bytes are not allowed with RDMA_WRITE. */
+    uint32_t write_size = data_size >= 0x80000000 ? 0 : uint32_t(data_size);
+    std::vector<ScatterGatherEntry> sg_list;
+    if (data_size > 0)
+      sg_list.push_back({local.shadow_region, 0, write_size});
+    WorkRequest data_wr = WorkRequest::RdmaWrite(
+        0, std::move(sg_list), remote.address + src_offset, remote.rkey);
+    for (uint64_t i = 1; i * 0x80000000 < data_size; ++i) {
+      uint64_t offset = i * 0x80000000;
+      uint64_t remain = data_size - offset;
+      write_size = remain >= 0x80000000 ? 0 : uint32_t(remain);
+      data_wr.chain(WorkRequest::RdmaWrite(
+          0, {{local.shadow_region, (ptrdiff_t)offset, write_size}},
+          remote.address + src_offset + offset, remote.rkey));
+    }
     data_wr.chain(std::move(cmd_wr));
 
     /******************* submit work requests *******************/

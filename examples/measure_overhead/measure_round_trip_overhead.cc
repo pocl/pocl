@@ -34,19 +34,25 @@
 #include <iostream>
 #include <string>
 
-void print_help(const char *name) {
-  std::cerr << "Usage: " << name << " [-p platform_index] [-d device_index] "
-            << "[-s sample_count]" << std::endl
-            << "-p specifies which platform to use." << std::endl
-            << "-d specifies which device to use." << std::endl
-            << "-s sets the number of samples measured." << std::endl;
-}
-
 struct {
   int platform_index = -1;
   int device_index = -1;
   int sample_count = 1000;
+  int warmup = 10;
 } options;
+
+void print_help(const char *name) {
+  std::cerr << "Usage: " << name << " [-p platform_index] [-d device_index] "
+            << "[-s sample_count]" << std::endl
+            << "-p specifies which platform to use. (default:"
+            << options.platform_index << ")" << std::endl
+            << "-d specifies which device to use. (default:"
+            << options.device_index << ")" << std::endl
+            << "-s sets the number of samples measured. (default: "
+            << options.sample_count << ")" << std::endl
+            << "-w sets the number of warmup rounds to do. (default: "
+            << options.warmup << ")" << std::endl;
+}
 
 bool parse_args(char **argv) {
   const char *name = *argv++;
@@ -172,9 +178,11 @@ bool measure_device(cl::Device &device, int index) {
     cl::Kernel kern(prog, "empty_kernel");
     kern.setArg(0, TESTMAGIC);
     kern.setArg(1, output);
-    cl_int err = cq.enqueueNDRangeKernel(kern, cl::NullRange, cl::NDRange(1),
-                                         cl::NullRange, nullptr, nullptr);
-    cq.finish();
+    for (int i = 0; i < options.warmup; ++i) {
+      cl_int err = cq.enqueueNDRangeKernel(kern, cl::NullRange, cl::NDRange(1),
+                                           cl::NullRange, nullptr, nullptr);
+      cq.finish();
+    }
 
     measure_round_trip_latency(cq, kern);
     int result = 0;

@@ -47,6 +47,7 @@ add_subdirectory("example1")
 add_subdirectory("example2")
 add_subdirectory("example2a")
 add_subdirectory("matrix1")
+add_subdirectory("measure_overhead")
 
 if(ENABLE_ALMAIF_DEVICE)
   add_subdirectory("accel")

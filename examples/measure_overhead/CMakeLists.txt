@@ -31,9 +31,9 @@ add_executable("measure_distributed_matmul" measure_distributed_matmul.cc common
 
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set_property(TARGET measure_round_trip_overhead PROPERTY CXX_STANDARD 11)
-set_property(TARGET measure_migration_overhead PROPERTY CXX_STANDARD 11)
-set_property(TARGET measure_distributed_matmul PROPERTY CXX_STANDARD 11)
+set_property(TARGET measure_round_trip_overhead PROPERTY CXX_STANDARD 17)
+set_property(TARGET measure_migration_overhead PROPERTY CXX_STANDARD 17)
+set_property(TARGET measure_distributed_matmul PROPERTY CXX_STANDARD 17)
 
 target_link_libraries("measure_round_trip_overhead" ${POCLU_LINK_OPTIONS})
 target_link_libraries("measure_migration_overhead" ${POCLU_LINK_OPTIONS})

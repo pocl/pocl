@@ -34,26 +34,57 @@
 #include <iomanip>
 #include <iostream>
 #include <random>
+#include <sstream>
 #include <string>
+
+enum pattern_mode { MODE_ROTATE = 0, MODE_SHUFFLE };
+
+struct {
+  int platform_index = -1;
+  pattern_mode mode = MODE_ROTATE;
+  int sample_count = 1000;
+  int warmup_rounds = 10;
+  // This is the number of integers in the buffer, not bytes.
+  size_t buffer_size = 256;
+} options;
 
 void print_help(const char *name) {
   std::cerr << "Usage: " << name << " [-p platform_index] [-m mode] "
             << "[-s sample_count] [-b buffer_size]" << std::endl
-            << "-p specifies which platform to use." << std::endl
+            << "-p specifies which platform to use. (default:"
+            << options.platform_index << ")" << std::endl
             << "-m specifies which mode is used. Available modes:" << std::endl
             << "\trotate (default, rotates all buffers to the next device)"
             << std::endl
             << "\tshuffle (reassigns buffers randomly)" << std::endl
-            << "-s sets the number of samples measured." << std::endl
+            << "-s sets the number of samples measured. (default:"
+            << options.sample_count << ")" << std::endl
             << "-b sets the size of the test buffer. "
             << "This number is rounded up to the next multiple of "
-            << sizeof(int) << "." << std::endl;
+            << sizeof(uint32_t) << ". (default: " << options.buffer_size << ")"
+            << std::endl;
 }
 
-void print_progress(int p, int total, int width = 80) {
+void print_progress(
+    int p, int total,
+    std::chrono::time_point<std::chrono::steady_clock> starttime,
+    int width = 80) {
   std::string total_str = std::to_string(total);
   std::string p_str = std::to_string(p);
-  int bar_width = width - total_str.size() * 2 - 4;
+  auto elapsed = std::chrono::steady_clock::now() - starttime;
+  auto remtime =
+      (elapsed) * (double(total) / std::max(double(p), 1e-9)) - elapsed;
+  std::chrono::hours hours =
+      std::chrono::duration_cast<std::chrono::hours>(remtime);
+  std::chrono::minutes mins =
+      std::chrono::duration_cast<std::chrono::minutes>(remtime - hours);
+  std::chrono::seconds secs =
+      std::chrono::duration_cast<std::chrono::seconds>(remtime - hours - mins);
+  std::stringstream remss;
+  remss << std::setw(3) << hours.count() << ":" << std::setw(2)
+        << std::setfill('0') << mins.count() << ":" << std::setw(2)
+        << std::setfill('0') << secs.count();
+  int bar_width = width - total_str.size() * 2 - 4 - 10;
 
   std::cerr << '\r';
   if (bar_width > 1) {
@@ -71,21 +102,10 @@ void print_progress(int p, int total, int width = 80) {
     std::cerr << "] ";
   }
   std::cerr << std::setfill(' ') << std::setw(total_str.size()) << p_str << "/"
-            << total_str << std::flush;
+            << total_str << " " << remss.str() << std::flush;
   if (p == total)
     std::cerr << std::endl;
 }
-
-enum pattern_mode { MODE_ROTATE = 0, MODE_SHUFFLE };
-
-struct {
-  int platform_index = -1;
-  pattern_mode mode = MODE_SHUFFLE;
-  int sample_count = 1000;
-  int warmup_rounds = 10;
-  // This is the number of integers in the buffer, not bytes.
-  size_t buffer_size = 256;
-} options;
 
 bool parse_args(char **argv) {
   const char *name = *argv++;
@@ -196,6 +216,8 @@ void run_iteration(cl::Kernel &kern,
     kern.setArg(0, buf.buffer);
     cq.enqueueNDRangeKernel(kern, cl::NullRange, cl::NDRange(1), cl::NullRange,
                             nullptr, &buf.last_write_event);
+    cq.finish();
+    // std::cout << i << ": " << timings.back() << std::endl;
 
     // uint32_t post_kernel;
     // std::vector<cl::Event> kern_event = {buf.last_write_event};
@@ -242,10 +264,9 @@ bool measure_platform(cl::Platform &platform, int index) {
     cl::Kernel kern(prog, "acc_kernel");
 
     std::vector<cl::CommandQueue> command_queues(devices.size());
-    std::vector<uint32_t> init_val(options.buffer_size, 0);
-    testing_buffer buffer = {
-        cl::Buffer(ctx, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-                   sizeof(uint32_t) * options.buffer_size, init_val.data())};
+    testing_buffer buffer = {cl::Buffer(ctx, CL_MEM_READ_WRITE,
+                                        options.buffer_size * sizeof(uint32_t),
+                                        nullptr)};
     std::vector<std::vector<double>> timings_by_device(devices.size());
     for (size_t i = 0; i < devices.size(); ++i) {
       command_queues[i] = cl::CommandQueue(ctx, devices[i],
@@ -255,15 +276,26 @@ bool measure_platform(cl::Platform &platform, int index) {
     }
     command_queues[command_queues.size() - 1].enqueueMigrateMemObjects(
         {buffer.buffer}, 0);
+    uint32_t zero = 0;
+    int err = command_queues[command_queues.size() - 1].enqueueFillBuffer(
+        buffer.buffer, zero, 0, sizeof(zero));
 
     // warm up
-    for (int i = 0; i < options.warmup_rounds; ++i)
+    auto starttime = std::chrono::steady_clock::now();
+    print_progress(0, options.sample_count + options.warmup_rounds, starttime);
+    for (int i = 0; i < options.warmup_rounds; ++i) {
       run_iteration(kern, command_queues, buffer, timings_by_device);
+      print_progress(i + 1, options.sample_count + options.warmup_rounds,
+                     starttime);
+    }
     for (int i = 0; i < timings_by_device.size(); ++i)
       timings_by_device[i].clear();
 
-    for (int i = 0; i < options.sample_count; ++i)
+    for (int i = 0; i < options.sample_count; ++i) {
       run_iteration(kern, command_queues, buffer, timings_by_device);
+      print_progress(i + 1 + options.warmup_rounds,
+                     options.sample_count + options.warmup_rounds, starttime);
+    }
 
     // Print per-device info
     std::vector<double> all_times;
@@ -289,7 +321,7 @@ bool measure_platform(cl::Platform &platform, int index) {
     for (cl::CommandQueue &cq : command_queues)
       cq.finish();
   } catch (cl::Error &err) {
-    std::cerr << err.what() << std::endl;
+    std::cerr << err.what() << " = " << err.err() << std::endl;
     return false;
   }
   return true;
