@@ -55,7 +55,7 @@ SharedContextBase *createSharedCLContext(cl::Platform *platform, size_t pid,
 #define INIT_VARS                                                              \
   int err = CL_SUCCESS;                                                        \
   size_t i, j;                                                                 \
-  uint32_t id = req->req.obj_id;
+  uint64_t id = req->req.obj_id;
 
 #define FOR_EACH_CONTEXT_DO(CODE)                                              \
   for (i = 0; i < SharedContextList.size(); ++i) {                             \
@@ -649,7 +649,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
       POCL_MSG_ERR("%s", e.what());
       err = 1;
       replyFail(&rep->rep, &req->req, CL_MEM_OBJECT_ALLOCATION_FAILURE);
-      FOR_EACH_CONTEXT_DO(freeBuffer(id));
+      FOR_EACH_CONTEXT_DO(freeBuffer(id, false));
       return;
     }
 
@@ -669,7 +669,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   // it's a packed struct and the address might be unaligned.
   rep->rep.m.create_buffer.device_addr = devaddr;
   TP_CREATE_BUFFER(req->req.msg_id, req->req.client_did, id);
-  FOR_EACH_CONTEXT_UNDO(freeBuffer(id));
+  FOR_EACH_CONTEXT_UNDO(freeBuffer(id, false));
 
   RETURN_IF_ERR;
   BufferIDset.insert(id);
@@ -688,10 +688,11 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 
 void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
   INIT_VARS;
-  CHECK_ID_EXISTS(BufferIDset, CL_INVALID_MEM_OBJECT);
+  if (!req->req.m.free_buffer.is_svm)
+    CHECK_ID_EXISTS(BufferIDset, CL_INVALID_MEM_OBJECT);
 
   TP_FREE_BUFFER(req->req.msg_id, req->req.client_did, id);
-  FOR_EACH_CONTEXT_DO(freeBuffer(id));
+  FOR_EACH_CONTEXT_DO(freeBuffer(id, req->req.m.free_buffer.is_svm));
   TP_FREE_BUFFER(req->req.msg_id, req->req.client_did, id);
 
   BufferIDset.erase(id);
@@ -723,7 +724,7 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   BuildProgramMsg_t &m = req->req.m.build_program;
 
   POCL_MSG_PRINT_GENERAL(
-      "VirtualCTX: build %s program %" PRIu32 " for %" PRIu32 " devices\n",
+      "VirtualCTX: build %s program %" PRIu64 " for %" PRIu32 " devices\n",
       (is_binary ? "binary"
                  : (is_builtin ? "builtin" : (is_spirv ? "SPIR-V" : "source"))),
       id, uint32_t(m.num_devices));
@@ -1037,7 +1038,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
         // TODO we should probably wait for events in DST SharedCLcontext
         // before launching readBuffer in SRC SharedCLcontext
         // enqueue a read buffer in the *source* context ...
-        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id,
+        err = src->readBuffer(fake_ev_id, def_queue_id, mem_obj_id, 0,
                               size_buffer_id, m.size, 0, storage, &content_size,
                               evt, 0, nullptr);
         m.size = content_size;

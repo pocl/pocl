@@ -215,7 +215,11 @@ bool Request::read(int fd) {
     break;
   case MessageType_RunKernel:
     if (req->m.run_kernel.has_new_args) {
-      request->extra_size = req->m.run_kernel.args_num * sizeof(uint64_t);
+      /* The arguments itself come in through extra data, as well as an array of
+         flags which inform whether an argument (buffer) is an
+         SVM pointer or not. */
+      request->extra_size = req->m.run_kernel.args_num * sizeof(uint64_t) +
+                            req->m.run_kernel.args_num * sizeof(unsigned char);
       request->extra_size2 = req->m.run_kernel.pod_arg_size;
     }
     break;

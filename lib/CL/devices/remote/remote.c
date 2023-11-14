@@ -2,6 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -32,6 +33,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 #include <unistd.h>
 
 #include "common_driver.h"
@@ -100,6 +102,23 @@ ERROR:
 }
 
 void
+pocl_remote_svm_free (cl_device_id device, void *svm_ptr)
+{
+  remote_device_data_t *d = (remote_device_data_t *)device->data;
+
+  /* This is a device-side svm pointer that identifies the
+     object on device side. */
+  uint64_t mem_id = (uint64_t)svm_ptr;
+
+  POCL_MSG_PRINT_MEMORY ("REMOTE DEVICE FREE SVM PTR %p\n", svm_ptr);
+
+  POCL_LOCK (d->mem_lock);
+  int r = pocl_network_free_buffer (d, mem_id, 1);
+  assert (r == 0);
+  POCL_UNLOCK (d->mem_lock);
+}
+
+void
 pocl_remote_free (cl_device_id device, cl_mem mem)
 {
   remote_device_data_t *d = (remote_device_data_t *)device->data;
@@ -116,7 +135,7 @@ pocl_remote_free (cl_device_id device, cl_mem mem)
     }
   else
     {
-      r = pocl_network_free_buffer (d, mem->id);
+      r = pocl_network_free_buffer (d, mem->id, 0);
     }
   assert (r == 0);
 
@@ -126,6 +145,58 @@ pocl_remote_free (cl_device_id device, cl_mem mem)
   p->mem_ptr = NULL;
   p->version = 0;
   POCL_UNLOCK (d->mem_lock);
+}
+
+void *
+pocl_remote_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+
+{
+  remote_device_data_t *ddata = (remote_device_data_t *)dev->data;
+  assert (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER);
+  /* When SVM is enabled, the remote will allocate all allocations from the
+     preallocated SVM memory pool. This includes both SVM allocations and
+     cl_mem buffer allocations. Thus, we can use the regular buffer
+     allocation routine to preserve the SVM allocation from the remote
+     since we know it will be allocated from that SVM pool.
+
+     The pinned physical address will be the remote SVM address using
+     which we will map it to the local region based on the offset between
+     the client and remote SVM memory pools. */
+
+  cl_int err;
+  cl_mem allocation = POname (clCreateBuffer) (
+      ddata->device_context, CL_MEM_READ_WRITE | CL_MEM_PINNED, size, NULL,
+      &err);
+
+  if (err != CL_SUCCESS)
+    {
+      POCL_MSG_WARN (
+          "Unable to allocate an SVM allocation from the remote.\n");
+      return NULL;
+    }
+
+  cl_mem_pinning pinning_info;
+  err = POname (clGetMemObjectInfo (allocation, CL_MEM_DEVICE_PTRS,
+                                    sizeof (cl_mem_pinning), &pinning_info,
+                                    NULL));
+
+  if (err != CL_SUCCESS || pinning_info.address == 0)
+    {
+      POCL_MSG_WARN ("Unable to fetch the device ptr on the remote SVM "
+                     "allocation.\n");
+      return NULL;
+    }
+
+  /* We trust the server does the right thing and allocates the
+     piece from the preallocated SVM pool. */
+  assert (ddata->device_svm_region_start_addr <= (size_t)pinning_info.address
+          && ddata->device_svm_region_start_addr
+                     + ddata->device_svm_region_size
+                 > (size_t)pinning_info.address);
+
+  /* TODO: Store the buffer handles so we can free them later. */
+  /* Convert the remote SVM pool address to the host SVM pool address. */
+  return (void *)(pinning_info.address - ddata->svm_region_offset);
 }
 
 /*****************************************************************************/
@@ -148,6 +219,8 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   // ops->reinit = pocl_remote_reinit;
 
   ops->alloc_mem_obj = pocl_remote_alloc_mem_obj;
+  ops->svm_alloc = pocl_remote_svm_alloc;
+  ops->svm_free = pocl_remote_svm_free;
   ops->free = pocl_remote_free;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
@@ -233,6 +306,120 @@ pocl_remote_update_event (cl_device_id device, cl_event event)
     }
 }
 
+/**
+ * \brief Allocates a memory region from the client and the remote device that
+ * are used to map SVM allocations.
+ *
+ * First allocates a pinned region from the remote. Then it tries to mmap() a
+ * similar size region at the same starting address on the client. Since this
+ * is done at best-effort without guaranteed success, we often end up with an
+ * offset which needs to be added to all the memory accesses of kernels to
+ * adjust to the difference between the starting addressess of the host and
+ * device regions where the SVM allocations are mapped. This should be called
+ * after a point where we have initialized enough of the device that we can use
+ * it for buffer creation.
+ *
+ * \param [inout] device the device to update the pool info to.
+ * \returns zero on a successful mapping.
+ *
+ */
+static int
+setup_svm_memory_pool (cl_device_id device)
+{
+  remote_device_data_t *ddata = device->data;
+
+  if (ddata->device_svm_region_start_addr == 0
+      || ddata->device_svm_region_size == 0)
+    {
+      return -1;
+    }
+
+  /* The device context is a shadow context where we store the
+     SVM allocations, just for maintaining their lifetime.  */
+  /* TODO: where can we unallocate it? */
+  cl_int err;
+  ddata->device_context
+      = POname (clCreateContext) (NULL, 1, &device, NULL, NULL, &err);
+
+  if (err != CL_SUCCESS)
+    {
+      POCL_MSG_PRINT_REMOTE ("Unable to create a device context.\n");
+      return -1;
+    }
+#if 0
+  /* We might want to expand the SVM size via multiple allocations.
+     If CG SVM is enabled, we will allocate also cl_mems from this
+     space, thus should get hold of it entirely. */
+  size_t dev_region_size = device->max_mem_alloc_size;
+
+  /* TODO: Align the size on client page boundary. */
+
+  cl_mem dev_region =
+    ddata->pinned_device_allocation =
+    POname(clCreateBuffer)(ddata->device_context, CL_MEM_READ_WRITE | CL_MEM_PINNED,
+                           dev_region_size, NULL, &err);
+
+  /* TODO: have a max for the allocation. global_mem_size can be huge for CPU
+     devices. */
+  /* TODO: Attempt to allocate smalled regions if failed here. */
+
+  if (err != CL_SUCCESS)
+    {
+      POCL_MSG_PRINT_REMOTE ("Unable to create a pinned memory pool on the remote "
+                             "device.\n");
+      return -1;
+    }
+
+  cl_mem_pinning pinning_info;
+  err =
+    POname(clGetMemObjectInfo(dev_region, CL_MEM_DEVICE_PTRS, sizeof (cl_mem_pinning),
+                              &pinning_info, NULL));
+
+  if (err != CL_SUCCESS || pinning_info.address == 0)
+    {
+      POCL_MSG_PRINT_REMOTE ("Unable to fetch the device ptr on the remote pinned "
+                             "allocation.\n");
+      return -1;
+    }
+
+  ddata->device_svm_region_start_addr = pinning_info.address;
+  ddata->device_svm_region_size = dev_region_size;
+#endif
+
+  ddata->host_svm_region_start_addr = 0;
+  ddata->host_svm_region_size = 0;
+
+  void *requested_address = (void *)ddata->device_svm_region_start_addr;
+
+  POCL_MSG_PRINT_REMOTE (
+      "Attempting to mmap a local memory pool of size %zu MB at '%p'.\n",
+      ddata->device_svm_region_size / (1024 * 1024), requested_address);
+
+  void *addr
+      = mmap (requested_address, ddata->device_svm_region_size,
+              PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+  /* TODO: Try mapping a smaller region than the device's in the host. */
+  if (addr == MAP_FAILED)
+    {
+      perror ("mmap error");
+      /* TODO: free the pinned buffer. */
+      POCL_MSG_PRINT_REMOTE (
+          "Unable to mmap() a local memory pool for remote CG SVM.\n");
+      return -2;
+    }
+
+  ddata->host_svm_region_start_addr = (size_t)addr;
+  ddata->host_svm_region_size = ddata->device_svm_region_size;
+  ddata->svm_region_offset = ddata->device_svm_region_start_addr
+                             - ddata->host_svm_region_start_addr;
+
+  POCL_MSG_PRINT_REMOTE (
+      "Client-side CG SVM region allocated at '%p'. SVM pool offset: %zd.\n",
+      addr, ddata->svm_region_offset);
+
+  return 0;
+}
+
 static void *pocl_remote_driver_pthread (void *cldev);
 
 cl_int
@@ -274,8 +461,10 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
   POCL_INIT_LOCK (d->mem_lock);
 
-  pocl_network_setup_devinfo (device, d, d->server, d->remote_platform_index,
-                              d->remote_device_index);
+  if (pocl_network_setup_devinfo (device, d, d->server,
+                                  d->remote_platform_index,
+                                  d->remote_device_index))
+    return CL_INVALID_DEVICE;
 
   assert (device->short_name);
   char *res = calloc (1000, sizeof (char));
@@ -287,6 +476,26 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   d->work_queue = NULL;
 
   POCL_CREATE_THREAD (d->driver_thread_id, pocl_remote_driver_pthread, device);
+
+  /* Setup SVM. */
+
+  /* CG SVM is implemented via pinned device memory pools and SPIR-V
+     manipulation (TODO: document more thoroughly after landing with a working
+     solution). */
+  if (setup_svm_memory_pool (device) == 0 && d->svm_region_offset == 0)
+    {
+      /* TODO: We should ensure remote has the first priority as we need to
+         delegate the initial allocation down to the remote device driver
+         which dictates the position in VMem. How to ensure the CPU device
+         doesn't steal the SVM allocation priority? */
+      device->svm_allocation_priority = 1;
+      device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+
+      /* We currently need d->svm_region_offset == 0 since there is no
+         SPIR-V modification implemented yet to fix the offset in
+         server side. It means that we sometimes get CG SVM and sometimes
+         won't, depending on the mmap() luck on the host side. */
+    }
 
   return CL_SUCCESS;
 }
@@ -829,6 +1038,7 @@ pocl_remote_create_kernel (cl_device_id device, cl_program program,
     }
 
   kd->arg_array = calloc ((kernel->meta->num_args), sizeof (uint64_t));
+  kd->ptr_is_svm = calloc ((kernel->meta->num_args), sizeof (unsigned char));
 
   return pocl_network_create_kernel (device->data, kernel->name, prog_id,
                                      kern_id, kd);
@@ -852,6 +1062,7 @@ pocl_remote_free_kernel (cl_device_id device, cl_program program,
   int err = pocl_network_free_kernel (device->data, kd, kern_id, prog_id);
 
   POCL_MEM_FREE (kd->arg_array);
+  POCL_MEM_FREE (kd->ptr_is_svm);
   POCL_MEM_FREE (kd->pod_arg_storage);
   POCL_MEM_FREE (kd);
   kernel->data[device_i] = NULL;
@@ -1136,8 +1347,9 @@ pocl_remote_async_read (void *data, _cl_command_node *node,
     content_size_id
         = (uintptr_t)node->command.read.src_content_size_mem_id->mem_ptr;
 
-  return pocl_network_read (queue_id, data, mem_id, content_size_id, host_ptr,
-                            offset, size, remote_finish_command, data, node);
+  return pocl_network_read (queue_id, data, mem_id, 0, content_size_id,
+                            host_ptr, offset, size, remote_finish_command,
+                            data, node);
 }
 
 int
@@ -1207,7 +1419,7 @@ pocl_remote_async_write (void *data, _cl_command_node *node,
 
   uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
 
-  return pocl_network_write (queue_id, data, mem_id, host_ptr, offset, size,
+  return pocl_network_write (queue_id, data, mem_id, 0, host_ptr, offset, size,
                              remote_finish_command, data, node);
 }
 
@@ -1391,6 +1603,25 @@ pocl_remote_async_memfill (void *data, _cl_command_node *node,
 }
 
 int
+pocl_remote_async_map_svm_buffer (remote_device_data_t *data,
+                                  _cl_command_node *node)
+{
+  void *svm_ptr = node->command.svm_map.svm_ptr;
+  size_t buf_size = node->command.svm_map.size;
+  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  POCL_MSG_PRINT_MEMORY ("REMOTE: MAP SVM buf read "
+                         "svm_ptr %p of size %zu\n",
+                         svm_ptr, buf_size);
+
+  int r = pocl_network_read (queue_id, data, 0, 1, 0,
+                             node->command.svm_map.svm_ptr, 0, buf_size,
+                             remote_finish_command, data, node);
+  assert (r == 0);
+  return 0;
+}
+
+int
 pocl_remote_async_map_mem (void *data, _cl_command_node *node,
                            pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                            mem_mapping_t *map)
@@ -1414,15 +1645,37 @@ pocl_remote_async_map_mem (void *data, _cl_command_node *node,
                          "to dst_host_ptr %p\n",
                          mem_id, offset, host_ptr);
 
-  int r = pocl_network_read (queue_id, data, mem_id, size_id, host_ptr, offset,
-                             size, remote_finish_command, data, node);
+  int r = pocl_network_read (queue_id, data, mem_id, 0, size_id, host_ptr,
+                             offset, size, remote_finish_command, data, node);
+  assert (r == 0);
+  return 0;
+}
+
+/**
+ * Unmaps an SVM buffer.
+ *
+ * Synchronizes the client-side content to the remote SVM allocation.
+ */
+int
+pocl_remote_async_unmap_svm_buffer (remote_device_data_t *data,
+                                    _cl_command_node *node)
+{
+  uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
+
+  void *svm_ptr = node->command.svm_unmap.svm_ptr;
+  size_t buf_size = node->command.svm_unmap.size;
+  POCL_MSG_PRINT_MEMORY ("REMOTE: UNMAP SVM buf write "
+                         "svm_ptr %p of size %zu\n",
+                         svm_ptr, buf_size);
+  int r = pocl_network_write (queue_id, data, 0, 1, svm_ptr, 0, buf_size,
+                              remote_finish_command, data, node);
   assert (r == 0);
   return 0;
 }
 
 int
 pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
-                             pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                             pocl_mem_identifier *dst_mem_id,
                              mem_mapping_t *map)
 {
   /* it could be CL_MAP_READ | CL_MAP_WRITE(..invalidate) which has to be
@@ -1433,7 +1686,7 @@ pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
       return 1;
     }
 
-  uintptr_t mem_id = (uintptr_t)dst_mem_id->mem_ptr;
+  uintptr_t mem_id = dst_mem_id ? 0 : (uintptr_t)dst_mem_id->mem_ptr;
 
   void *host_ptr = map->host_ptr;
   assert (host_ptr != NULL);
@@ -1445,8 +1698,8 @@ pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
   POCL_MSG_PRINT_MEMORY ("REMOTE: UNMAP memcpy() "
                          "host_ptr %p to mem_id %lu + offset %zu\n",
                          host_ptr, mem_id, offset);
-  int r = pocl_network_write (queue_id, data, mem_id, host_ptr, offset, size,
-                              remote_finish_command, data, node);
+  int r = pocl_network_write (queue_id, data, mem_id, 0, host_ptr, offset,
+                              size, remote_finish_command, data, node);
   assert (r == 0);
   return 0;
 }
@@ -1487,10 +1740,12 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
 
   char *pod_arg_pointer = kd->pod_arg_storage;
   uint64_t *arg_array = kd->arg_array;
+  unsigned char *ptr_is_svm = kd->ptr_is_svm;
 
   /* Process the kernel arguments.  */
   for (i = 0; i < kernel_md->num_args; ++i)
     {
+      ptr_is_svm[i] = 0;
       al = &(cmd->command.run.arguments[i]);
       assert (al->is_set > 0);
       if (ARG_IS_LOCAL (kernel_md->arg_info[i]))
@@ -1498,9 +1753,16 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
           requires_kernarg_update = 1;
           arg_array[i] = al->size;
         }
+      else if (al->is_svm)
+        {
+          arg_array[i] = (uint64_t) * (void **)al->value;
+          requires_kernarg_update = 1;
+          ptr_is_svm[i] = 1;
+        }
       else if ((kernel_md->arg_info[i].type == POCL_ARG_TYPE_POINTER)
                || (kernel_md->arg_info[i].type == POCL_ARG_TYPE_IMAGE))
         {
+          /* cl_mem and cl_image refer to opaque identifiers */
           uint32_t mem_id = 0;
           if (al->value)
             {
@@ -1937,7 +2199,6 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
           || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
         {
           if (pocl_remote_async_unmap_mem (d, node, cmd->unmap.mem_id,
-                                           event->mem_objs[0],
                                            cmd->unmap.mapping)
               > 0)
             goto EARLY_FINISH;
@@ -2010,13 +2271,23 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
         goto EARLY_FINISH;
       return;
 
+    case CL_COMMAND_SVM_UNMAP:
+      if (pocl_remote_async_unmap_svm_buffer (d, node) > 0)
+        goto EARLY_FINISH;
+      return;
+
+    case CL_COMMAND_SVM_MAP:
+      if (pocl_remote_async_map_svm_buffer (d, node) > 0)
+        goto EARLY_FINISH;
+      return;
+
     case CL_COMMAND_MARKER:
     case CL_COMMAND_BARRIER:
     case CL_COMMAND_COMMAND_BUFFER_KHR:
       goto EARLY_FINISH;
 
     default:
-      POCL_ABORT ("bug in code, unknown command\n");
+      POCL_ABORT_UNIMPLEMENTED ("Unimplemented remote command.\n");
     }
 
 EARLY_FINISH:

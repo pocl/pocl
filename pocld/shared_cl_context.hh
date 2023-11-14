@@ -2,6 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -70,7 +71,7 @@ public:
   virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
                            void *host_ptr, void **device_addr) = 0;
 
-  virtual int freeBuffer(uint32_t buffer_id) = 0;
+  virtual int freeBuffer(uint64_t buffer_id, bool is_svm) = 0;
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
@@ -121,16 +122,16 @@ public:
   /**********************************************************************/
   /**********************************************************************/
 
-  virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                         uint32_t size_id, size_t size, size_t offset,
-                         void *host_ptr, uint64_t *content_size,
+  virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
+                         int is_svm, uint32_t size_id, size_t size,
+                         size_t offset, void *host_ptr, uint64_t *content_size,
                          EventTiming_t &evt, uint32_t waitlist_size,
                          uint64_t *waitlist) = 0;
 
-  virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                          size_t size, size_t offset, void *host_ptr,
-                          EventTiming_t &evt, uint32_t waitlist_size,
-                          uint64_t *waitlist) = 0;
+  virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
+                          int is_svm, size_t size, size_t offset,
+                          void *host_ptr, EventTiming_t &evt,
+                          uint32_t waitlist_size, uint64_t *waitlist) = 0;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
                          uint32_t dst_buffer_id,
@@ -168,10 +169,11 @@ public:
 
   virtual int runKernel(uint64_t ev_id, uint32_t cq_id, uint32_t device_id,
                         uint16_t has_new_args, size_t arg_count, uint64_t *args,
-                        size_t pod_size, char *pod_buf, EventTiming_t &evt,
-                        uint32_t kernel_id, uint32_t waitlist_size,
-                        uint64_t *waitlist, unsigned dim,
-                        const sizet_vec3 &offset, const sizet_vec3 &global,
+                        unsigned char *is_svm_ptr, size_t pod_size,
+                        char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
+                        uint32_t waitlist_size, uint64_t *waitlist,
+                        unsigned dim, const sizet_vec3 &offset,
+                        const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) = 0;
 
   /**********************************************************************/

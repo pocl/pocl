@@ -2,6 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -231,7 +232,7 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
       TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.size, CL_RUNNING);
       RETURN_IF_ERR_CODE(backend->writeBuffer(
-          req->req.event_id, queue_id, req->req.obj_id, m.size, 0,
+          req->req.event_id, queue_id, req->req.obj_id, 0, m.size, 0,
           req->extra_data, evt_timing, req->waitlist_size, req->waitlist));
       TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.size, CL_FINISHED);
@@ -275,8 +276,8 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readBuffer(
-      req->req.event_id, queue_id, req->req.obj_id, m.content_size_id, m.size,
-      m.src_offset, host_ptr, &m.size, evt_timing, req->waitlist_size,
+      req->req.event_id, queue_id, req->req.obj_id, m.is_svm, m.content_size_id,
+      m.size, m.src_offset, host_ptr, &m.size, evt_timing, req->waitlist_size,
       req->waitlist));
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_FINISHED);
@@ -296,9 +297,10 @@ void CommandQueue::WriteBuffer(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                   req->req.obj_id, m.size, CL_RUNNING);
-  RETURN_IF_ERR_CODE(backend->writeBuffer(
-      req->req.event_id, queue_id, req->req.obj_id, m.size, m.dst_offset, data,
-      evt_timing, req->waitlist_size, req->waitlist));
+  RETURN_IF_ERR_CODE(
+      backend->writeBuffer(req->req.event_id, queue_id, req->req.obj_id,
+                           req->req.m.write.is_svm, m.size, m.dst_offset, data,
+                           evt_timing, req->waitlist_size, req->waitlist));
   TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                   req->req.obj_id, m.size, CL_FINISHED);
 
@@ -431,8 +433,10 @@ void CommandQueue::RunKernel(uint32_t queue_id, Request *req, Reply *rep) {
                     CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->runKernel(
       req->req.event_id, queue_id, dev_id, m.has_new_args, m.args_num,
-      (uint64_t *)req->extra_data, m.pod_arg_size, req->extra_data2, evt_timing,
-      req->req.obj_id, req->waitlist_size, req->waitlist, dim, offset, global,
+      (uint64_t *)req->extra_data,
+      (unsigned char *)req->extra_data + m.args_num * sizeof(uint64_t),
+      m.pod_arg_size, req->extra_data2, evt_timing, req->req.obj_id,
+      req->waitlist_size, req->waitlist, dim, offset, global,
       (m.has_local ? &local : nullptr)));
   TP_NDRANGE_KERNEL(req->req.msg_id, req->req.client_did, queue_id, ker_id,
                     CL_FINISHED);

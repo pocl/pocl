@@ -2,6 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -26,6 +27,7 @@
 #include <map>
 #include <sstream>
 
+#include "bufalloc.h"
 #include "cmd_queue.hh"
 #include "common.hh"
 #include "shared_cl_context.hh"
@@ -75,8 +77,10 @@ const static sizet_vec3 zero_origin = {0, 0, 0};
 
 class SharedCLContext final : public SharedContextBase {
   cl::Context ContextWithAllDevices;
+  cl::Context ContextWithSVMDevices;
 
   std::vector<cl::Device> CLDevices;
+  std::vector<cl::Device> CLDevicesWithSVMSupport;
 
   std::unordered_map<uint32_t, clSamplerPtr> SamplerIDmap;
   std::unordered_map<uint32_t, clImagePtr> ImageIDmap;
@@ -104,8 +108,19 @@ class SharedCLContext final : public SharedContextBase {
   bool hasImageSupport;
   std::string name;
 
+  // The size of the memory pool.
+  size_t SVMPoolSize;
+  // If size of the memory pool is non zero, all allocations, including the
+  // cl_mem allocations will be allocated from a contiguous region starting
+  // from this address.
+  void *SVMPool;
+
+  // Bufalloc memory book keeping for allocations from the SVM pool.
+  memory_region_t SVMRegion;
+
   int setKernelArgs(cl::Kernel *k, clKernelStruct *kernel, size_t arg_count,
-                    uint64_t *args, size_t pod_size, char *pod_buf);
+                    uint64_t *args, unsigned char *is_svm_ptr, size_t pod_size,
+                    char *pod_buf);
 
 public:
   SharedCLContext(cl::Platform *p, unsigned plat_id, VirtualContextBase *v,
@@ -150,7 +165,7 @@ public:
   virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
                            void *host_ptr, void **device_addr) override;
 
-  virtual int freeBuffer(uint32_t buffer_id) override;
+  virtual int freeBuffer(uint64_t buffer_id, bool is_svm) override;
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
@@ -201,16 +216,16 @@ public:
   /**********************************************************************/
   /**********************************************************************/
 
-  virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                         uint32_t size_id, size_t size, size_t offset,
-                         void *host_ptr, uint64_t *content_size,
+  virtual int readBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
+                         int is_svm, uint32_t size_id, size_t size,
+                         size_t offset, void *host_ptr, uint64_t *content_size,
                          EventTiming_t &evt, uint32_t waitlist_size,
                          uint64_t *waitlist) override;
 
-  virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t buffer_id,
-                          size_t size, size_t offset, void *host_ptr,
-                          EventTiming_t &evt, uint32_t waitlist_size,
-                          uint64_t *waitlist) override;
+  virtual int writeBuffer(uint64_t ev_id, uint32_t cq_id, uint64_t buffer_id,
+                          int is_svm, size_t size, size_t offset,
+                          void *host_ptr, EventTiming_t &evt,
+                          uint32_t waitlist_size, uint64_t *waitlist) override;
 
   virtual int copyBuffer(uint64_t ev_id, uint32_t cq_id, uint32_t src_buffer_id,
                          uint32_t dst_buffer_id,
@@ -250,10 +265,11 @@ public:
 
   virtual int runKernel(uint64_t ev_id, uint32_t cq_id, uint32_t device_id,
                         uint16_t has_new_args, size_t arg_count, uint64_t *args,
-                        size_t pod_size, char *pod_buf, EventTiming_t &evt,
-                        uint32_t kernel_id, uint32_t waitlist_size,
-                        uint64_t *waitlist, unsigned dim,
-                        const sizet_vec3 &offset, const sizet_vec3 &global,
+                        unsigned char *is_svm_ptr, size_t pod_size,
+                        char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
+                        uint32_t waitlist_size, uint64_t *waitlist,
+                        unsigned dim, const sizet_vec3 &offset,
+                        const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) override;
 
   /**********************************************************************/
@@ -420,28 +436,29 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
 #define FIND_QUEUE                                                             \
   cq = findCommandQueue(cq_id);                                                \
   if (cq == nullptr) {                                                         \
-    POCL_MSG_ERR("CAN't FIND QUEUE %" PRIu32 " \n", cq_id);                    \
+    POCL_MSG_ERR("CAN'T FIND QUEUE %" PRIu32 " \n", cq_id);                    \
     return CL_INVALID_COMMAND_QUEUE;                                           \
   }
 
 #define FIND_BUFFER                                                            \
   b = findBuffer(buffer_id);                                                   \
   if (b == nullptr) {                                                          \
-    POCL_MSG_ERR("CAN't FIND BUFFER %" PRIu32 " \n", buffer_id);               \
+    POCL_MSG_ERR("CAN'T FIND BUFFER %" PRIu64 " \n", (uint64_t)buffer_id);     \
     return CL_INVALID_MEM_OBJECT;                                              \
   }
 
 #define FIND_BUFFER2(prefix)                                                   \
   prefix = findBuffer(prefix##_buffer_id);                                     \
   if (prefix == nullptr) {                                                     \
-    POCL_MSG_ERR("CAN't FIND BUFFER %" PRIu32 " \n", prefix##_buffer_id);      \
+    POCL_MSG_ERR("CAN'T FIND BUFFER %" PRIu64 " \n",                           \
+                 (uint64_t)prefix##_buffer_id);                                \
     return CL_INVALID_MEM_OBJECT;                                              \
   }
 
 #define FIND_KERNEL                                                            \
   kernel = findKernel(kernel_id);                                              \
   if (kernel == nullptr) {                                                     \
-    POCL_MSG_ERR("CAN't FIND KERNEL %" PRIu32 " for DEV %" PRIu32 " \n",       \
+    POCL_MSG_ERR("CAN'T FIND KERNEL %" PRIu32 " for DEV %" PRIu32 " \n",       \
                  kernel_id, device_id);                                        \
     return CL_INVALID_KERNEL;                                                  \
   }                                                                            \
@@ -495,10 +512,10 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                                  ReplyQueueThread *s, ReplyQueueThread *f) {
   p->getDevices(CL_DEVICE_TYPE_ALL, &CLDevices);
 
-  cl_context_properties properties[] = {
+  cl_context_properties Properties[] = {
       CL_CONTEXT_PLATFORM, reinterpret_cast<intptr_t>(p->operator()()),
       0}; // TODO properties
-  ContextWithAllDevices = cl::Context(CLDevices, properties);
+  ContextWithAllDevices = cl::Context(CLDevices, Properties);
 
   hasImageSupport = false;
   slow = s;
@@ -531,6 +548,49 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
         ContextWithAllDevices, CLDevices[i])); // TODO QUEUE_PROPERTIES
     QueueThreadMap[DEFAULT_QUE_ID + i] =
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
+  }
+
+  size_t MaxSVMAllocSize = SIZE_MAX;
+  for (auto Dev : CLDevices) {
+    std::string Extensions = CLDevices[0].getInfo<CL_DEVICE_EXTENSIONS>();
+    if (Extensions.find("cl_khr_il_program") == std::string::npos)
+      continue;
+    if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER == 0)
+      continue;
+    CLDevicesWithSVMSupport.push_back(Dev);
+    size_t MaxMemAllocSize = Dev.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+    if (MaxMemAllocSize < MaxSVMAllocSize)
+      MaxSVMAllocSize = MaxMemAllocSize;
+  }
+
+  if (CLDevicesWithSVMSupport.size() > 0) {
+    // Create a pinned contiguous region to map CG SVM allocations
+    // to. Communicate the start address and the size to the client
+    // so it can setup its own SVM region on its side.
+
+    // Do we need a separate context with the SVM devices only? clSVMAlloc()
+    // should allocate only from SVM-capable devices, right? The specs is
+    // not very clear here. It gets difficult if we have multiple CL contexts
+    // at the same time, so we might need to restrict SVM support only to
+    // cases where all the remote (at least one a single node) devices support
+    // the SVM allocation.
+    // ContextWithSVMDevices = cl::Context(CLDevicesWithSVMSupport, Properties);
+
+    SVMPool = clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE,
+                         MaxSVMAllocSize, 0);
+    if (SVMPool != nullptr) {
+      SVMPoolSize = MaxSVMAllocSize;
+      pocl_init_mem_region(&SVMRegion, (memory_address_t)SVMPool, SVMPoolSize);
+      // Always align to the maximum required alignment of clSVMAlloc().
+      SVMRegion.alignment = 128;
+      POCL_MSG_PRINT_REMOTE("PoCL-D allocated an SVM pool of size %zu at %p.\n",
+                            SVMPoolSize, SVMPool);
+    } else {
+      SVMPoolSize = 0;
+      POCL_MSG_PRINT_REMOTE(
+          "Unable to allocate an SVM pool over the remote devices.\n");
+    }
   }
 }
 
@@ -729,16 +789,6 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
     exts += extName;
   }
 
-  if (clientDevice.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
-      CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
-    if (exts != "")
-      exts += " ";
-    // We can implement the simple PoC device raw pointer extension
-    // which doesn't require host side virtual address space
-    // reservation by emulating it with the driver's clSVMAlloc().
-    exts += "cl_pocl_pinned_buffers";
-  }
-
   PUSH_STRING(i.extensions, exts);
 
   i.vendor_id = clientDevice.getInfo<CL_DEVICE_VENDOR_ID>();
@@ -774,6 +824,23 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
   i.max_write_image_args =
       clientDevice.getInfo<CL_DEVICE_MAX_WRITE_IMAGE_ARGS>();
   i.max_samplers = clientDevice.getInfo<CL_DEVICE_MAX_SAMPLERS>();
+
+  if (clientDevice.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+      CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+    if (exts != "")
+      exts += " ";
+    // We can implement the simple PoC device raw pointer extension
+    // which doesn't require host side virtual address space
+    // reservation by emulating it with the driver's clSVMAlloc().
+    exts += CL_POCL_PINNED_BUFFERS_EXTENSION_NAME;
+
+    // For coarse grain SVM.
+    i.svm_pool_start_address = (uint64_t)SVMPool;
+    i.svm_pool_size = SVMPoolSize;
+  } else {
+    i.svm_pool_start_address = 0;
+    i.svm_pool_size = 0;
+  }
 
   i.max_work_item_dimensions =
       clientDevice.getInfo<CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS>();
@@ -1593,8 +1660,19 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
     POCL_ABORT_UNIMPLEMENTED(
         "CL_MEM_PINNED not yet implemented for PoCL-R RDMA.");
 #endif
-    host_ptr =
-        clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE, size, 0);
+    if (SVMPool != nullptr) {
+      // If we have enabled the remote CG SVM implementation, allocate
+      // everything from the large SVM memory pool.
+      chunk_info_t *Chunk = pocl_alloc_buffer_from_region(&SVMRegion, size);
+
+      if (Chunk == nullptr)
+        host_ptr = nullptr;
+      else
+        host_ptr = (void *)Chunk->start_address;
+    } else {
+      host_ptr =
+          clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE, size, 0);
+    }
     assert(device_addr != nullptr);
     *device_addr = host_ptr;
 
@@ -1603,7 +1681,7 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
           "Error when creating a CG SVM allocation for a pinned buffer.");
       return CL_OUT_OF_RESOURCES;
     }
-    POCL_MSG_PRINT_INFO("Allocated a pinned buffer using CG SVM at %p.",
+    POCL_MSG_PRINT_INFO("Allocated a pinned buffer using CG SVM at %p.\n",
                         host_ptr);
   }
 
@@ -1635,19 +1713,33 @@ int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
   return 0;
 }
 
-int SharedCLContext::freeBuffer(uint32_t buffer_id) {
-  {
-    std::unique_lock<std::mutex> lock(BufferMapMutex);
-    if (BufferIDmap.erase(buffer_id) == 0) {
-      POCL_MSG_ERR("P %u Free Buffer %" PRIu32 "\n", plat_id, buffer_id);
-      return CL_INVALID_MEM_OBJECT;
+int SharedCLContext::freeBuffer(uint64_t buffer_id, bool is_svm) {
+  std::unique_lock<std::mutex> lock(BufferMapMutex);
+  if (is_svm) {
+    // TODO: is this an already adjusted pointer?
+    void *dev_addr = (void *)buffer_id;
+    POCL_MSG_PRINT_INFO("P %u Free SVM Buffer %" PRIu64 "\n", plat_id,
+                        buffer_id);
+    if (SVMPool != nullptr) {
+      memory_region_t *Region =
+          pocl_free_buffer(&SVMRegion, (memory_address_t)dev_addr);
+      if (Region == nullptr || Region != &SVMRegion) {
+        POCL_MSG_ERR(
+            "Did not find the SVM chunk to free at %p. A double free attempt?",
+            dev_addr);
+      }
+    } else {
+      clSVMFree(ContextWithAllDevices.get(), (void *)buffer_id);
     }
-    if (SVMBackingStoreMap.find(buffer_id) != SVMBackingStoreMap.end()) {
-      clSVMFree(ContextWithAllDevices.get(), SVMBackingStoreMap[buffer_id]);
-      SVMBackingStoreMap.erase(buffer_id);
-    }
+  } else if (BufferIDmap.erase(buffer_id) == 0) {
+    POCL_MSG_ERR("P %u Free Buffer %" PRIu64 "\n", plat_id, buffer_id);
+    return CL_INVALID_MEM_OBJECT;
   }
-  POCL_MSG_PRINT_INFO("P %u Free Buffer %" PRIu32 "\n", plat_id, buffer_id);
+  if (SVMBackingStoreMap.find(buffer_id) != SVMBackingStoreMap.end()) {
+    clSVMFree(ContextWithAllDevices.get(), SVMBackingStoreMap[buffer_id]);
+    SVMBackingStoreMap.erase(buffer_id);
+  }
+  POCL_MSG_PRINT_INFO("P %u Free Buffer %" PRIu64 "\n", plat_id, buffer_id);
   return 0;
 }
 
@@ -1694,60 +1786,123 @@ int SharedCLContext::migrateMemObject(uint64_t ev_id, uint32_t cq_id,
 }
 
 int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
-                                uint32_t buffer_id,
+                                uint64_t buffer_id, int is_svm,
                                 uint32_t content_size_buffer_id, size_t size,
                                 size_t offset, void *host_ptr,
                                 uint64_t *out_size, EventTiming_t &evt,
                                 uint32_t waitlist_size, uint64_t *waitlist) {
+
   cl::Buffer *b = nullptr;
   cl::CommandQueue *cq = nullptr;
   std::vector<cl::Event> dependencies;
-
   {
     FIND_QUEUE;
-    FIND_BUFFER;
   }
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
-  if (content_size_buffer_id != 0) {
-    cl::Buffer *content_size = nullptr;
-    FIND_BUFFER2(content_size);
+  if (!is_svm) {
+    {
+      FIND_BUFFER;
+    }
+    if (content_size_buffer_id != 0) {
+      cl::Buffer *content_size = nullptr;
+      FIND_BUFFER2(content_size);
 
-    uint64_t content_bytes = 0;
-    // TODO: blocks on all previous commands
-    cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(content_bytes),
-                          &content_bytes);
-    POCL_MSG_PRINT_GENERAL("READ BUFFER SIZE %" PRIuS
-                           " WITH CONTENT SIZE %" PRIu64 "\n",
-                           size, content_bytes);
-    if (offset > content_bytes)
-      size = 0;
-    else if (content_bytes < offset + size)
-      size = content_bytes - offset;
+      uint64_t content_bytes = 0;
+      // TODO: blocks on all previous commands
+      cq->enqueueReadBuffer(*content_size, CL_TRUE, 0, sizeof(content_bytes),
+                            &content_bytes);
+      POCL_MSG_PRINT_GENERAL("READ BUFFER SIZE %" PRIuS
+                             " WITH CONTENT SIZE %" PRIu64 "\n",
+                             size, content_bytes);
+      if (offset > content_bytes)
+        size = 0;
+      else if (content_bytes < offset + size)
+        size = content_bytes - offset;
+    }
+
+    if (out_size)
+      *out_size = size;
+    EVENT_TIMING("readBuffer",
+                 cq->enqueueReadBuffer(*b, CL_FALSE, offset, size, host_ptr,
+                                       &dependencies, &event));
+  } else {
+    void *svm_ptr = (void *)buffer_id;
+    cl_int Err = clEnqueueSVMMap(cq->get(), CL_TRUE, CL_MAP_WRITE, svm_ptr,
+                                 size, 0, NULL, NULL);
+
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR("Couldn't map SVM region at '%p' (size %zu).\n", svm_ptr,
+                   size);
+      return -1;
+    }
+
+    Err = clEnqueueSVMMemcpy(cq->get(), CL_TRUE, host_ptr, svm_ptr, size, 0,
+                             NULL, NULL);
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR(
+          "SVM memcpy failed when migrating data from '%p' (size %zu).\n",
+          svm_ptr, size);
+      return -1;
+    }
+
+    EVENT_TIMING("readBuffer (SVM)",
+                 cq->enqueueUnmapSVM(svm_ptr, &dependencies, &event));
   }
-
-  if (out_size)
-    *out_size = size;
-  EVENT_TIMING("readBuffer",
-               cq->enqueueReadBuffer(*b, CL_FALSE, offset, size, host_ptr,
-                                     &dependencies, &event));
 }
 
 int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
-                                 uint32_t buffer_id, size_t size, size_t offset,
-                                 void *host_ptr, EventTiming_t &evt,
-                                 uint32_t waitlist_size, uint64_t *waitlist) {
-  cl::Buffer *b = nullptr;
+                                 uint64_t buffer_id, int is_svm, size_t size,
+                                 size_t offset, void *host_ptr,
+                                 EventTiming_t &evt, uint32_t waitlist_size,
+                                 uint64_t *waitlist) {
+
   cl::CommandQueue *cq = nullptr;
   std::vector<cl::Event> dependencies;
   {
     FIND_QUEUE;
-    FIND_BUFFER;
   }
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
-  EVENT_TIMING("writeBuffer",
-               cq->enqueueWriteBuffer(*b, CL_FALSE, offset, size, host_ptr,
-                                      &dependencies, &event));
+
+  if (!is_svm) {
+    cl::Buffer *b = nullptr;
+    { FIND_BUFFER; }
+    EVENT_TIMING("writeBuffer",
+                 cq->enqueueWriteBuffer(*b, CL_FALSE, offset, size, host_ptr,
+                                        &dependencies, &event));
+  } else {
+    // TODO: SVM updates should be written directly to the (host mapped) SVM
+    // region when reading the data from network. Now there's an extra copy!
+
+    // Map the region to host first so we can update it. buffer_id is the SVM
+    // device pointer instead of a cl_mem.
+
+    // TODO: we could use async ops? But will be the request
+    // extra_data buffer alive until the commands get finished?
+
+    void *device_svm_ptr = (void *)buffer_id;
+    cl_int Err = clEnqueueSVMMap(cq->get(), CL_TRUE, CL_MAP_WRITE,
+                                 device_svm_ptr, size, 0, NULL, NULL);
+
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR("Couldn't map SVM region at '%p' (size %zu).\n",
+                   device_svm_ptr, size);
+      return -1;
+    }
+
+    Err = clEnqueueSVMMemcpy(cq->get(), CL_TRUE, device_svm_ptr, host_ptr, size,
+                             0, NULL, NULL);
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR(
+          "SVM memcpy failed when migrating data at '%p' (size %zu).\n",
+          device_svm_ptr, size);
+      return -1;
+    }
+
+    EVENT_TIMING("writeBuffer (SVM)",
+                 cq->enqueueUnmapSVM(device_svm_ptr, &dependencies, &event));
+  }
+  return 0;
 }
 
 int SharedCLContext::copyBuffer(uint64_t ev_id, uint32_t cq_id,
@@ -1917,7 +2072,8 @@ int SharedCLContext::fillBuffer(uint64_t ev_id, uint32_t cq_id,
 
 int SharedCLContext::setKernelArgs(cl::Kernel *k, clKernelStruct *kernel,
                                    size_t arg_count, uint64_t *args,
-                                   size_t pod_size, char *pod_buf) {
+                                   unsigned char *is_svm_ptr, size_t pod_size,
+                                   char *pod_buf) {
   cl_int err;
 
   assert(arg_count == kernel->numArgs);
@@ -1963,8 +2119,20 @@ int SharedCLContext::setKernelArgs(cl::Kernel *k, clKernelStruct *kernel,
         break;
       }
       case PoclRemoteArgType::Pointer: {
-        if (kernel->metaData->arg_meta[i].address_qualifier ==
-            CL_KERNEL_ARG_ADDRESS_LOCAL) {
+        if (is_svm_ptr[i]) {
+          void *svm_ptr = (void *)(args[i]);
+          POCL_MSG_PRINT_GENERAL("Setting ARG %u type POINTER (SVM), %p\n", i,
+                                 svm_ptr);
+          err = ::clSetKernelArgSVMPointer(k->get(), i, svm_ptr);
+          if (err != CL_SUCCESS) {
+            POCL_MSG_ERR(
+                "SVM pointer arg %d could not be set to '%p' error code: %d.\n",
+                i, svm_ptr, err);
+          }
+          // Assert in a server based on input data is a bit... smelly.
+          assert(err == CL_SUCCESS);
+        } else if (kernel->metaData->arg_meta[i].address_qualifier ==
+                   CL_KERNEL_ARG_ADDRESS_LOCAL) {
           POCL_MSG_PRINT_GENERAL(
               "Setting ARG %u type POINTER (LOCAL), size: %" PRIu64 "\n", i,
               args[i]);
@@ -2018,10 +2186,11 @@ int SharedCLContext::setKernelArgs(cl::Kernel *k, clKernelStruct *kernel,
 
 int SharedCLContext::runKernel(
     uint64_t ev_id, uint32_t cq_id, uint32_t device_id, uint16_t has_new_args,
-    size_t arg_count, uint64_t *args, size_t pod_size, char *pod_buf,
-    EventTiming_t &evt, uint32_t kernel_id, uint32_t waitlist_size,
-    uint64_t *waitlist, unsigned dim, const sizet_vec3 &offset,
-    const sizet_vec3 &global, const sizet_vec3 *local) {
+    size_t arg_count, uint64_t *args, unsigned char *is_svm_ptr,
+    size_t pod_size, char *pod_buf, EventTiming_t &evt, uint32_t kernel_id,
+    uint32_t waitlist_size, uint64_t *waitlist, unsigned dim,
+    const sizet_vec3 &offset, const sizet_vec3 &global,
+    const sizet_vec3 *local) {
   cl::Kernel *k = nullptr;
   clKernelStruct *kernel = nullptr;
   cl::CommandQueue *cq = nullptr;
@@ -2041,13 +2210,16 @@ int SharedCLContext::runKernel(
 
   std::unique_lock<std::mutex> kernelLock(kernel->Lock);
   if (has_new_args) {
-    int r = setKernelArgs(k, kernel, arg_count, args, pod_size, pod_buf);
+    int r = setKernelArgs(k, kernel, arg_count, args, is_svm_ptr, pod_size,
+                          pod_buf);
     assert(r == CL_SUCCESS);
   }
 
   {
-    std::unique_lock<std::mutex> lock(BufferMapMutex);
+    std::unique_lock<std::mutex> Lock(BufferMapMutex);
     std::vector<void *> SVMPtrs;
+    if (SVMPool != nullptr)
+      SVMPtrs.push_back(SVMPool);
     for (auto &S : SVMBackingStoreMap)
       SVMPtrs.push_back(S.second);
     k->setSVMPointers(SVMPtrs);

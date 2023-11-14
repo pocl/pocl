@@ -2,6 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -233,6 +234,13 @@ extern "C"
     uint64_t global_mem_size;
     uint32_t global_mem_cacheline_size;
 
+    /* The starting address of a region from which coarse grain SVM
+       allocations should be made. */
+    uint64_t svm_pool_start_address;
+    /* And the size of it. Set to 0 in case CG SVM is not supported
+       by the remote device. */
+    uint64_t svm_pool_size;
+
     uint64_t double_fp_config;
     uint64_t single_fp_config;
     uint64_t half_fp_config;
@@ -352,6 +360,9 @@ extern "C"
   typedef struct __attribute__ ((packed, aligned (8))) FreeBufferMsg_s
   {
     uint64_t padding;
+    /* If set to 1, the id of the buffer is the device side SVM allocation
+       address to free, otherwise a cl_mem id.*/
+    unsigned char is_svm;
   } FreeBufferMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) ReadBufferMsg_s
@@ -364,6 +375,10 @@ extern "C"
     uint64_t client_vaddr;
     uint32_t client_rkey;
 #endif
+    /* If set to 1, the buffer to be written is an SVM buffer, not a cl_mem
+       one. In that case, the obj_id of the request is set to the raw svm pool
+       offset adjusted (remote VM) pointer instead of a cl_mem object id. */
+    unsigned char is_svm;
   } ReadBufferMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) WriteBufferMsg_s
@@ -371,6 +386,10 @@ extern "C"
     uint64_t dst_offset;
     uint64_t size;
     uint64_t content_size;
+    /* If set to 1, the buffer to be written is an SVM buffer, not a cl_mem
+       one. In that case, the obj_id of the request is set to the raw svm pool
+       offset adjusted (remote VM) pointer instead of a cl_mem object id. */
+    unsigned char is_svm;
   } WriteBufferMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) CopyBufferMsg_s
@@ -558,7 +577,7 @@ extern "C"
     uint32_t waitlist_size;
 
     uint32_t message_type;
-    uint32_t obj_id;
+    uint64_t obj_id;
     uint32_t cq_id;
 
     union
@@ -672,7 +691,8 @@ extern "C"
     int32_t fail_details;
 
     uint64_t data_size;
-    uint32_t obj_id;
+    /* This has to be 64b since freeBuffer() uses it for the SVM pointer. */
+    uint64_t obj_id;
 
     /* If the reply has a dynamic pool of c-strings after the end of
        the structure's fields, this is set to its size. */

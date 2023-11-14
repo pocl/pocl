@@ -3,6 +3,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -34,6 +35,7 @@
 #include <netinet/tcp.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -168,7 +170,7 @@ static uint64_t last_peer_id = 42;
   req->did = ddata->remote_device_index;                                      \
   req->client_did = ddata->local_did;                                         \
   req->pid = ddata->remote_platform_index;                                    \
-  req->obj_id = req_id;
+  req->obj_id = (uint64_t)req_id;
 
 #define REQUEST_PEERCONN                                                      \
   RequestMsg_t *req = &netcmd->request;                                       \
@@ -176,7 +178,7 @@ static uint64_t last_peer_id = 42;
   req->message_type = MessageType_ConnectPeer;                                \
   req->msg_id = POCL_ATOMIC_INC (last_message_id);                            \
   req->event_id = netcmd->event_id;                                           \
-  req->obj_id = (uint32_t)(-1);
+  req->obj_id = (uint64_t)(-1);
 
 #define SEND_REQ_SLOW                                                         \
   POCL_LOCK (data->slow_write_queue->mutex);                                  \
@@ -1384,7 +1386,7 @@ stop_engines (remote_server_data_t *d)
   req->message_type = MessageType_Shutdown;
   req->msg_id = POCL_ATOMIC_INC (last_message_id);
   req->event_id = (uint64_t)(-1);
-  req->obj_id = (uint32_t)(-1);
+  req->obj_id = (uint64_t)(-1);
   SEND_REQ_FAST;
   wait_on_netcmd (netcmd);
 
@@ -1884,6 +1886,9 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
   // This one is deprecated (and seems to be always 128)
   device->min_data_type_align_size = 128;
 
+  ddata->device_svm_region_start_addr = devinfo->svm_pool_start_address;
+  ddata->device_svm_region_size = devinfo->svm_pool_size;
+
   D (vendor_id);
   // TODO
   // D(device_id);
@@ -2005,7 +2010,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
     }
 
   // LLVM triple + cpu type => for compilation
-  //  build hash => for binaries
+  // build hash => for binaries
   free (devinfo);
   return 0;
 }
@@ -2080,18 +2085,28 @@ pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
   return CL_SUCCESS;
 }
 
+/**
+ * Frees a remote buffer.
+ *
+ * @param mem_id Is either the cl_mem identifier or an SVM device-side
+ * address (in that case @param is_svm is set to 1).
+ */
 cl_int
-pocl_network_free_buffer (remote_device_data_t *ddata, uint32_t mem_id)
+pocl_network_free_buffer (remote_device_data_t *ddata, uint64_t mem_id,
+                          int is_svm)
 {
   REMOTE_SERV_DATA2;
 
-  RETURN_IF_NOT_REMOTE_ID (buffer, mem_id);
+  if (!is_svm)
+    RETURN_IF_NOT_REMOTE_ID (buffer, mem_id);
 
   CREATE_SYNC_NETCMD;
 
   POCL_MEASURE_START (REMOTE_FREE);
 
   ID_REQUEST (FreeBuffer, mem_id);
+
+  req->m.free_buffer.is_svm = is_svm;
 
   SEND_REQ_FAST;
 
@@ -2101,14 +2116,17 @@ pocl_network_free_buffer (remote_device_data_t *ddata, uint32_t mem_id)
 
   CHECK_REPLY (FreeBuffer);
 
-  UNSET_REMOTE_ID (buffer, mem_id);
+  if (!is_svm)
+    {
+      UNSET_REMOTE_ID (buffer, mem_id);
 
 #ifdef ENABLE_RDMA
-  rdma_buffer_info_t *s;
-  HASH_FIND (hh, data->rdma_keys, &mem_id, sizeof (uint32_t), s);
-  HASH_DEL (data->rdma_keys, s);
-  free (s);
+      rdma_buffer_info_t *s;
+      HASH_FIND (hh, data->rdma_keys, &mem_id, sizeof (uint32_t), s);
+      HASH_DEL (data->rdma_keys, s);
+      free (s);
 #endif
+    }
 
   return 0;
 }
@@ -2677,9 +2695,10 @@ pocl_network_migrate_d2d (uint32_t cq_id, uint32_t mem_id, uint32_t size_id,
 
 cl_int
 pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
-                   uint32_t mem_id, uint32_t size_id, void *host_ptr,
-                   size_t offset, size_t size, network_command_callback cb,
-                   void *arg, _cl_command_node *node)
+                   uint32_t mem_id, int is_svm, uint32_t size_id,
+                   void *host_ptr, size_t offset, size_t size,
+                   network_command_callback cb, void *arg,
+                   _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
   assert (size > 0);
@@ -2693,6 +2712,9 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
   req->m.read.size = size;
   req->m.read.content_size_id = size_id;
 
+  req->m.read.is_svm = is_svm;
+  if (is_svm)
+    req->obj_id = (uint64_t)host_ptr + ddata->svm_region_offset;
   // REPLY
   netcmd->rep_extra_data = host_ptr;
   netcmd->rep_extra_size = size;
@@ -2707,9 +2729,9 @@ pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
 
 cl_int
 pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
-                    uint32_t mem_id, const void *host_ptr, size_t offset,
-                    size_t size, network_command_callback cb, void *arg,
-                    _cl_command_node *node)
+                    uint32_t mem_id, int is_svm, const void *host_ptr,
+                    size_t offset, size_t size, network_command_callback cb,
+                    void *arg, _cl_command_node *node)
 {
   REMOTE_SERV_DATA2;
 
@@ -2719,6 +2741,10 @@ pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
   req->cq_id = cq_id;
   req->m.write.dst_offset = offset;
   req->m.write.size = size;
+
+  req->m.write.is_svm = is_svm;
+  if (is_svm)
+    req->obj_id = (uint64_t)host_ptr + ddata->svm_region_offset;
 
   // REQUEST
   netcmd->req_extra_data = host_ptr;
@@ -2966,12 +2992,22 @@ pocl_network_run_kernel (uint32_t cq_id, remote_device_data_t *ddata,
       req->m.run_kernel.args_num = kernel_md->num_args;
       req->m.run_kernel.pod_arg_size = kd->pod_total_size;
 
-      netcmd->req_extra_size = (kernel_md->num_args * sizeof (uint64_t));
+      /* Push the arguments as extra data, as well as an array of
+         flags which inform whether an argument (buffer) is an
+         SVM pointer or not. */
+      netcmd->req_extra_size
+          = (kernel_md->num_args * sizeof (uint64_t))
+            + (kernel_md->num_args * sizeof (unsigned char));
       if (netcmd->req_extra_size != 0)
         {
           netcmd->req_extra_data = malloc (netcmd->req_extra_size);
+          unsigned char *ptr_is_svm_pos
+              = (void *)netcmd->req_extra_data
+                + kernel_md->num_args * sizeof (uint64_t);
           memcpy ((void *)netcmd->req_extra_data, kd->arg_array,
-                  netcmd->req_extra_size);
+                  kernel_md->num_args * sizeof (uint64_t));
+          memcpy (ptr_is_svm_pos, kd->ptr_is_svm,
+                  kernel_md->num_args * sizeof (unsigned char));
         }
       netcmd->req_extra_size2 = kd->pod_total_size;
       if (netcmd->req_extra_size2 != 0)
