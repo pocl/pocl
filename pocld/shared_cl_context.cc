@@ -564,7 +564,8 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
       MaxSVMAllocSize = MaxMemAllocSize;
   }
 
-  if (CLDevicesWithSVMSupport.size() > 0) {
+  // The CG SVM support for PoCL-Remote is a WiP. Disable brutally for now.
+  if (false && CLDevicesWithSVMSupport.size() > 0) {
     // Create a pinned contiguous region to map CG SVM allocations
     // to. Communicate the start address and the size to the client
     // so it can setup its own SVM region on its side.
