@@ -1,12 +1,13 @@
 /* OpenCL runtime/device driver library: custom buffer allocator
 
    Copyright (c) 2011 Tampere University of Technology
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 /**
  * This file implements a customized memory allocator for OpenCL buffers.
@@ -27,10 +28,8 @@
  * @file bufalloc.h
  */
 
-#ifndef BUFALLOC_H
-#define BUFALLOC_H
-
-#include "pocl_cl.h"
+#ifndef POCL_BUFALLOC_H
+#define POCL_BUFALLOC_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +39,7 @@ extern "C" {
 
 #ifndef __TCE_STANDALONE__
 
+#include "pocl_threads.h"
 
 typedef pocl_lock_t ba_lock_t;
 
@@ -126,6 +126,7 @@ struct chunk_info
    itself. */
 struct memory_region
 {
+  /* TODO: Enable dynamic number of chunks for host-side allocation. */
   chunk_info_t all_chunks[MAX_CHUNKS_IN_REGION];
   chunk_info_t *chunks;
   chunk_info_t *free_chunks; /* A pointer to a head of a linked list of
@@ -159,6 +160,13 @@ memory_region_t *pocl_free_buffer (memory_region_t *regions, memory_address_t ad
 POCL_EXPORT
 void pocl_free_chunk (chunk_info_t *chunk);
 
+/**
+ * Initializes a memory allocation region (address space) with default
+ * attributes.
+ *
+ * @param start The starting address.
+ * @param size Size of the address space.
+ */
 POCL_EXPORT
 void pocl_init_mem_region (
     memory_region_t *region, memory_address_t start, size_t size);
