@@ -33,13 +33,23 @@ if(NOT HAVE_GIT)
   return()
 endif()
 
+if(NOT BASH)
+  message(STATUS "Disabling testsuite ${TS_NAME}, can't find bash shell")
+  return()
+endif()
+
+if(NOT PATCH_EXEC)
+  message(STATUS "Disabling testsuite ${TS_NAME}, can't find patch command")
+  return()
+endif()
+
 if(ENABLE_ICD AND (NOT OPENCL_LIBRARIES))
   message(STATUS "Disabling ${TS_NAME}, can't find OpenCL library")
   return()
 endif()
 
 if(NOT ENABLE_LLVM)
-  message(STATUS "Disabling ${TS_NAME}, needs ENABLE_LLVM=ON")
+  message(STATUS "Disabling ${TS_NAME}, needs PoCL built with LLVM")
   return()
 endif()
 
@@ -48,9 +58,18 @@ if(NOT ENABLE_HOST_CPU_DEVICES)
   return()
 endif()
 
+if((LLVM_VERSION_MAJOR GREATER_EQUAL 16) AND HOST_CPU_ENABLE_CL_KHR_FP16)
+  message(STATUS "${TS_NAME}: fp16 enabled")
+else()
+  message(STATUS "Disabling ${TS_NAME}, needs at least LLVM 16 (for fp16 support in CPU device)")
+  return()
+endif()
+
 if(ENABLE_HOST_CPU_DEVICES AND (ENABLE_CONFORMANCE))
   message(WARNING "${TS_NAME} + CPU driver with ENABLE_CONFORMANCE=ON will fail some tests")
 endif()
+
+
 
 find_package(Python3 3.8 COMPONENTS Interpreter Development)
 if(NOT Python3_FOUND)
@@ -73,20 +92,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "f1ff1ef4749392e5c656663c0c1be5a286c69cd4")
-endif()
-
-# if we have disabled FP16, disable also the FP16 tests in chipStar
-# disable hipMultiThreadAddCallback test, it's fixed but in later commit
-# TODO this assumes we're using CPU device
-if(HOST_CPU_ENABLE_CL_KHR_FP16)
-  set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
-    "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests.txt"
-    "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
-else()
-  set(CHIP_SPV_INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy
-    "${CMAKE_CURRENT_SOURCE_DIR}/failed_tests_fp16_disabled.txt"
-    "${TS_BUILDDIR}/test_lists/cpu_pocl_failed_tests.txt")
+  set(CHIP_GIT_TAG "b44bf5827ab5016aa0ff330081a21bc8ddf8f519")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chipStar
@@ -122,7 +128,6 @@ if(CMAKE_CXX_COMPILER_LAUNCHER)
   list(APPEND UPSTREAM_CMAKE_ARGS "-DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}")
 endif()
 
-# TODO: hardcoded -j8
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -130,10 +135,11 @@ ExternalProject_Add(
   GIT_TAG "${CHIP_GIT_TAG}"
   CONFIGURE_COMMAND "${CMAKE_COMMAND}" ${CMAKE_CALL_ENV}
     ${UPSTREAM_CMAKE_ARGS}
-    "-DLLVM_CONFIG=${LLVM_CONFIG}"
-    "-DLAZY_JIT=ON"
+    "-DLLVM_CONFIG_BIN=${LLVM_CONFIG}"
+    "-DCHIP_EXT_FLOAT_ATOMICS=OFF"
     "${TS_BASEDIR}/src/${TS_NAME}"
-  PATCH_COMMAND cd "${TS_BASEDIR}/src/${TS_NAME}/HIP" && git reset --hard HEAD && cd "${TS_BASEDIR}/src/${TS_NAME}" && git reset --hard HEAD && patch -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch
+  UPDATE_COMMAND ${CMAKE_COMMAND} -E echo "update step disabled"
+  PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_BASEDIR}/src/${TS_NAME}/PATCHED ] $<SEMICOLON> then ${PATCH_EXEC} -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch $<SEMICOLON> ${CMAKE_COMMAND} -E touch ${TS_BASEDIR}/src/${TS_NAME}/PATCHED $<SEMICOLON> fi"
   BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${HOST_CPU_CORECOUNT} --target all build_tests
   INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
 )
@@ -148,7 +154,8 @@ endif()
 
 add_test(NAME "${TS_NAME}"
          COMMAND "${Python3_EXECUTABLE}" "${TS_SRCDIR}/scripts/check.py"
-           "${TS_BUILDDIR}" "cpu" "pocl" ${HOST_CPU_CORECOUNT} 2
+           --num-threads ${HOST_CPU_CORECOUNT} --num-tries 1 --timeout 400 -m off 
+           "${TS_BUILDDIR}" "cpu" "pocl"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # Unit_hipMemset_SetMemoryWithOffset require CL_DEVICE_MAX_MEM_ALLOC_SIZE of >= 1GB,
