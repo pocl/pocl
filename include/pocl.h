@@ -394,6 +394,7 @@ typedef struct
 typedef struct
 {
   void* svm_ptr;
+  size_t size;
 } _cl_command_svm_unmap;
 
 typedef struct

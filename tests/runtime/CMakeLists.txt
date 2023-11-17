@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2023 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images)
 
-set(CXX_PROGRAMS_TO_BUILD test_pinned_buffers)
+set(CXX_PROGRAMS_TO_BUILD test_pinned_buffers test_svm)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -136,6 +136,8 @@ add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_
 
 add_test(NAME "runtime/test_pinned_buffers" COMMAND "test_pinned_buffers")
 
+add_test(NAME "runtime/test_svm" COMMAND "test_svm")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -151,7 +153,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
-  "runtime/test_pinned_buffers"
+  "runtime/test_pinned_buffers" "runtime/test_svm"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -169,6 +171,7 @@ set_tests_properties(
   "runtime/test_command_buffer"
   "runtime/test_command_buffer_images"
   "runtime/test_pinned_buffers"
+  "runtime/test_svm"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
@@ -228,6 +231,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
   add_test(NAME "remote/test_pinned_buffers"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_pinned_buffers")
+  add_test(NAME "remote/test_svm"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
 
   set_tests_properties(
     "remote/clCreateSubDevices"
@@ -242,6 +247,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_command_buffer"
     "remote/test_command_buffer_images"
     "remote/test_pinned_buffers"
+    "remote/test_svm"
     PROPERTIES SKIP_RETURN_CODE 77)
 
   set_tests_properties(
@@ -260,7 +266,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
-    "remote/test_pinned_buffers"
+    "remote/test_pinned_buffers" "remote/test_svm"
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"
       COST 2.0

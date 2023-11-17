@@ -1,12 +1,13 @@
 /* OpenCL runtime/device driver library: custom buffer allocator
 
    Copyright (c) 2011-2020 pocl contributors
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 /**
  * This file implements a customized memory allocator for OpenCL buffers.
@@ -62,18 +63,20 @@
  * also for the case where there's a single region (basically heap) that
  * grows towards the stack or the global data area of the memory.
  *
- * @author Pekka Jääskeläinen 2011-2012
- *
  * @file bufalloc.c
  */
 
 #include "bufalloc.h"
 #include "utlist.h"
 
-//#define DEBUG_BUFALLOC
-
+/* #define DEBUG_BUFALLOC */
 
 #include <stdio.h>
+
+#ifndef BUFALLOC_NO_SUB_CHUNKS
+/* We need malloc() for create_sub_chunk(). */
+#include <stdlib.h>
+#endif
 
 void
 print_chunk (chunk_info_t *chunk)
@@ -166,7 +169,7 @@ append_new_chunk (memory_region_t *region,
   DL_APPEND (region->chunks, region->last_chunk);
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### after append_new_chunk (%x, %u)\n", region, size);
+  printf ("#### after append_new_chunk (%p, %lu)\n", region, size);
   print_chunks (region->chunks);
   printf ("\n");
 #endif
@@ -221,7 +224,7 @@ pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
       chunk->is_allocated = 1;
 
 #ifdef DEBUG_BUFALLOC
-      printf ("#### after reusing a chunk in region %x\n", region);
+      printf ("#### after reusing a chunk in region %p\n", region);
       print_chunks (region->chunks);
       printf ("\n");
 #endif
@@ -332,13 +335,18 @@ coalesce_chunks (chunk_info_t* first,
 }
 #endif
 
+/**
+ * Finds a region with a chunk with the given address and frees it.
+ *
+ * @return the region where the chunk was found. NULL if not found.
+ */
 memory_region_t *
 pocl_free_buffer (memory_region_t *regions, memory_address_t addr)
 {
   memory_region_t *region = NULL;
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### free_buffer(%p, %x)\n", regions, addr);
+  printf ("#### free_buffer(%p, %lu)\n", regions, addr);
 #endif
 
   LL_FOREACH (regions, region)
@@ -355,8 +363,8 @@ pocl_free_buffer (memory_region_t *regions, memory_address_t addr)
 #endif
               BA_UNLOCK (region->lock);
 #ifdef DEBUG_BUFALLOC
-              printf ("#### region %x after free_buffer at addr %x\n",
-                      region, addr);
+              printf ("#### region %p after free_buffer at addr %lu\n", region,
+                      addr);
               print_chunks (region->chunks);
               printf ("\n");
 #endif
@@ -387,7 +395,7 @@ pocl_free_chunk (chunk_info_t *chunk)
   BA_UNLOCK (region->lock);
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### after pocl_free_chunk (%x)\n", chunk);
+  printf ("#### after pocl_free_chunk (%p)\n", chunk);
   print_chunks (region->chunks);
   printf ("\n");
 #endif
@@ -426,7 +434,7 @@ pocl_init_mem_region (memory_region_t *region, memory_address_t start,
     DL_APPEND (region->free_chunks, &region->all_chunks[i]);
 
 #ifdef DEBUG_BUFALLOC
-  printf ("#### memory region %x created. start: %x size: %u\n",
-          region, start, size);
+  printf ("#### memory region %p created. start: %lu size: %lu\n", region,
+          start, size);
 #endif
 }

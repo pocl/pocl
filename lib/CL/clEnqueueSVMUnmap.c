@@ -52,7 +52,8 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_svm_check_pointer (context, svm_ptr, 1, NULL);
+  size_t svm_buf_size;
+  errcode = pocl_svm_check_pointer (context, svm_ptr, 1, &svm_buf_size);
   if (errcode != CL_SUCCESS)
     return errcode;
 
@@ -73,10 +74,10 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
     }
 
   cmd->command.svm_unmap.svm_ptr = svm_ptr;
+  cmd->command.svm_unmap.size = svm_buf_size;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
-
 }
 POsym(clEnqueueSVMUnmap)
 

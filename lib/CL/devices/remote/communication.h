@@ -3,6 +3,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
+   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -278,6 +279,29 @@ typedef struct remote_device_data_s
   unsigned remote_platform_index;
   unsigned local_did;
 
+  /* SVM support: The SVM memory pool regions in the remote device's
+     and host's memories. */
+  size_t device_svm_region_start_addr;
+  size_t device_svm_region_size;
+
+  /* A context to store device-wide data (currently only the pinned memory
+     buffer for the SVM allocations). */
+  cl_context device_context;
+  cl_mem pinned_device_allocation;
+
+  size_t host_svm_region_start_addr;
+  size_t host_svm_region_size;
+
+  /* The difference between host and device SVM region starting
+     addresses (device minus host start address). That is, this offset
+     must be added to host SVM addresses to end up with a device SVM
+     address and vice versa. The addition can wraparound, which is defined
+     behavior with unsigned values in C. Ideally, this offset would
+     be always zero to avoid address translation overheads, but
+     it's difficult to guarantee, so generally we must be ready for
+     a non-zero offset and deal with it. */
+  size_t svm_region_offset;
+
   // migrated -> ready to launch queue
   _cl_command_node *work_queue;
   // finished queue
@@ -299,6 +323,8 @@ typedef struct kernel_data_s
   char *pod_arg_storage;
   uint64_t pod_total_size;
   uint64_t *arg_array;
+  /* Per-arg flag set to 1 if the pointer set as a raw SVM pointer. */
+  unsigned char *ptr_is_svm;
 } kernel_data_t;
 
 typedef struct program_data_s
@@ -329,7 +355,8 @@ cl_int pocl_network_create_buffer (remote_device_data_t *d, uint32_t mem_id,
                                    uint32_t mem_flags, uint64_t mem_size,
                                    void **device_addr);
 
-cl_int pocl_network_free_buffer (remote_device_data_t *d, uint32_t mem_id);
+cl_int pocl_network_free_buffer (remote_device_data_t *d, uint64_t mem_id,
+                                 int is_svm);
 
 cl_int pocl_network_create_kernel (remote_device_data_t *ddata,
                                    const char *name, uint32_t prog_id,
@@ -384,14 +411,15 @@ cl_int pocl_network_migrate_d2d (
     network_command_callback cb, void *arg, _cl_command_node *node);
 
 cl_int pocl_network_read (uint32_t cq_id, remote_device_data_t *ddata,
-                          uint32_t mem, uint32_t size_id, void *host_ptr,
-                          size_t offset, size_t size,
+                          uint32_t mem, int is_svm, uint32_t size_id,
+                          void *host_ptr, size_t offset, size_t size,
                           network_command_callback cb, void *arg,
                           _cl_command_node *node);
 
 cl_int pocl_network_write (uint32_t cq_id, remote_device_data_t *ddata,
-                           uint32_t mem, const void *host_ptr, size_t offset,
-                           size_t size, network_command_callback cb, void *arg,
+                           uint32_t mem, int is_svm, const void *host_ptr,
+                           size_t offset, size_t size,
+                           network_command_callback cb, void *arg,
                            _cl_command_node *node);
 
 cl_int pocl_network_copy (uint32_t cq_id, remote_device_data_t *ddata,
