@@ -293,6 +293,25 @@ extern uint64_t last_object_id;
 #elif SIZE_MAX == UINT32_MAX
 #define CL_ICD2_TAG_KHR ((size_t)UINT32_C(0x434C3331))
 #endif
+typedef void * CL_API_CALL
+clGetFunctionAddressForPlatformKHR_t(
+    cl_platform_id platform,
+    const char* function_name);
+
+typedef clGetFunctionAddressForPlatformKHR_t *
+clGetFunctionAddressForPlatformKHR_fn;
+
+extern clGetFunctionAddressForPlatformKHR_t clGetFunctionAddressForPlatformKHR;
+
+typedef cl_int CL_API_CALL
+clSetPlatformDispatchDataKHR_t(
+    cl_platform_id platform,
+    void *disp_data);
+
+typedef clSetPlatformDispatchDataKHR_t *
+clSetPlatformDispatchDataKHR_fn;
+
+extern clSetPlatformDispatchDataKHR_t clSetPlatformDispatchDataKHR;
 #endif
 
 #ifdef BUILD_ICD

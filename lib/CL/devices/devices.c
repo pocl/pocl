@@ -676,3 +676,12 @@ ERROR:
   POCL_UNLOCK (pocl_init_lock);
   return errcode;
 }
+
+#ifdef BUILD_ICD
+void pocl_set_devices_dispatch_data(void *disp_data)
+{
+  for (unsigned int i = 0; i < pocl_num_devices; i++) {
+    pocl_devices[i].disp_data = disp_data;
+  }
+}
+#endif

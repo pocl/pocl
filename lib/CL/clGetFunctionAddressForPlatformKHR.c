@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clGetFunctionAddressForPlatformKHR()
 
-   Copyright (c) 2017 Michal Babej / Tampere University of Technology
+   Copyright (c) 2023 Brice Videau / Argonne National Laboratory
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

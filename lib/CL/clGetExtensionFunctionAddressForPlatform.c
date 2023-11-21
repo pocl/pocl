@@ -53,6 +53,9 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (strcmp (func_name, "clGetFunctionAddressForPlatformKHR") == 0)
     return (void *)&POname(clGetFunctionAddressForPlatformKHR);
+
+  if (strcmp (func_name, "clSetPlatformDispatchDataKHR") == 0)
+    return (void *)&POname(clSetPlatformDispatchDataKHR);
 #endif
 
 #ifdef BUILD_PROXY

@@ -32,16 +32,6 @@
 extern "C" {
 #endif
 
-typedef void * CL_API_CALL
-clGetFunctionAddressForPlatformKHR_t(
-    cl_platform_id platform,
-    const char* function_name);
-
-typedef clGetFunctionAddressForPlatformKHR_t *
-clGetFunctionAddressForPlatformKHR_fn;
-
-extern clGetFunctionAddressForPlatformKHR_t clGetFunctionAddressForPlatformKHR;
-
 POdeclsym(clBuildProgram)
 POdeclsym(clLinkProgram)
 POdeclsym(clCompileProgram)
@@ -112,6 +102,7 @@ POdeclsym(clGetSamplerInfo)
 POdeclsym(clGetSupportedImageFormats)
 POdeclsymICD(clIcdGetPlatformIDsKHR)
 POdeclsymICD(clGetFunctionAddressForPlatformKHR)
+POdeclsymICD(clSetPlatformDispatchDataKHR)
 POdeclsym(clReleaseCommandQueue)
 POdeclsymExport(clReleaseContext)
 POdeclsymExport(clReleaseDevice)
