@@ -1275,7 +1275,8 @@ endif()
 # Host CPU device: extensions only enabled when conformance is OFF
 if((NOT ENABLE_CONFORMANCE) AND (HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3))
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
-cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size")
+cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size \
+cl_ext_float_atomics")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
@@ -1339,6 +1340,16 @@ if(HOST_CPU_ENABLE_CL_KHR_FP64)
   set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_fp64")
 endif()
 
+
+
+if(HOST_DEVICE_EXTENSIONS MATCHES "cl_ext_float_atomics")
+  set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max")
+  if(HOST_CPU_ENABLE_CL_KHR_FP64)
+    set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+  endif()
+  # __opencl_c_ext_fp16_global_atomic_add __opencl_c_ext_fp16_local_atomic_add __opencl_c_ext_fp16_global_atomic_min_max __opencl_c_ext_fp16_local_atomic_min_max
+endif()
+
 # don't include cl_khr_int64 in HOST_DEVICE_EXTENSIONS list, because
 # such extension doesn't exist in official extension list
 # for FULL profile, int64 is always enabled;
@@ -1388,6 +1399,7 @@ if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
 endif()
 
 ####################################################################
+
 
 set(EXTRA_HOST_AS_FLAGS "" CACHE STRING "Extra parameters to as for code generation in the host. (default: empty)")
 set(EXTRA_HOST_LD_FLAGS "" CACHE STRING "Extra parameter to compiler to generate loadable module. (default: empty)")

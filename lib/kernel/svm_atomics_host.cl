@@ -86,24 +86,40 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_int  *o
 
 #  define ATOMIC_TYPE atomic_int
 #  define NONATOMIC_TYPE int
-#  define IS_INT
 #  include "svm_atomics_host.cl"
-#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_uint
 #  define NONATOMIC_TYPE uint
-#  define IS_UINT
 #  include "svm_atomics_host.cl"
-#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_float
 #  define NONATOMIC_TYPE float
 #  define NON_INTEGER
+#  define ATOMIC_LOOP(OP, ADDR, OPERAND, ORDER, SCOPE) \
+  union \
+  { \
+    uint u32; \
+    float f32; \
+  } next, expected, current; \
+  __builtin_memcpy_inline(&current.f32, (const Q void *)ADDR, sizeof(uint)); \
+  do \
+    { \
+      expected.f32 = current.f32;    \
+      next.f32 = OP(expected.f32, OPERAND); \
+      current.u32                      \
+          = QUAL(__pocl_atomic_compare_exchange_strong) ((volatile Q atomic_uint *)ADDR, \
+                                     (private uint *)&expected.u32, \
+                                     next.u32, \
+                                     ORDER, ORDER, SCOPE); \
+    } \
+  while (current.u32 != expected.u32); \
+  return current.f32;
 #  include "svm_atomics_host.cl"
+#  undef ATOMIC_LOOP
 #  undef NON_INTEGER
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
@@ -112,17 +128,13 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_int  *o
 
 #  define ATOMIC_TYPE atomic_long
 #  define NONATOMIC_TYPE long
-#  define IS_INT
 #  include "svm_atomics_host.cl"
-#  undef IS_INT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
 #  define ATOMIC_TYPE atomic_ulong
 #  define NONATOMIC_TYPE ulong
-#  define IS_UINT
 #  include "svm_atomics_host.cl"
-#  undef IS_UINT
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
 
@@ -133,7 +145,27 @@ void _CL_OVERLOADABLE QUAL(__pocl_atomic_flag_clear) ( volatile Q atomic_int  *o
 #  define ATOMIC_TYPE atomic_double
 #  define NONATOMIC_TYPE double
 #  define NON_INTEGER
+#  define ATOMIC_LOOP(OP, ADDR, OPERAND, ORDER, SCOPE) \
+  union \
+  { \
+    ulong u64; \
+    double f64; \
+  } next, expected, current; \
+  __builtin_memcpy_inline(&current.f64, (const Q void *)ADDR, sizeof(ulong)); \
+  do \
+    { \
+      expected.f64 = current.f64;    \
+      next.f64 = OP(expected.f64, OPERAND); \
+      current.u64                      \
+          = QUAL(__pocl_atomic_compare_exchange_strong) ((volatile Q atomic_ulong *)ADDR, \
+                                     (private ulong *)&expected.u64, \
+                                     next.u64, \
+                                     ORDER, ORDER, SCOPE); \
+    } \
+  while (current.u64 != expected.u64); \
+  return current.f64;
 #  include "svm_atomics_host.cl"
+#  undef ATOMIC_LOOP
 #  undef NON_INTEGER
 #  undef ATOMIC_TYPE
 #  undef NONATOMIC_TYPE
@@ -187,6 +219,48 @@ bool _CL_OVERLOADABLE QUAL(__pocl_atomic_compare_exchange_weak) ( volatile Q ATO
 {
   return __c11_atomic_compare_exchange_weak(object,  expected, desired, CONV_ORDER(success), CONV_ORDER(failure));
 }
+
+// available on integers, but also floats with cl_ext_float_atomics;
+// this needs different implementation for floats/doubles
+#if (defined(NON_INTEGER) && defined(cl_ext_float_atomics))
+
+
+
+NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_add) ( volatile Q ATOMIC_TYPE  *object,
+  NONATOMIC_TYPE  operand,
+  memory_order order,
+  memory_scope scope)
+{
+  return __opencl_atomic_fetch_add(object, operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_sub) ( volatile Q ATOMIC_TYPE  *object,
+  NONATOMIC_TYPE  operand,
+  memory_order order,
+  memory_scope scope)
+{
+  return __opencl_atomic_fetch_sub(object, operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_min) ( volatile Q ATOMIC_TYPE  *object,
+  NONATOMIC_TYPE  operand,
+  memory_order order,
+  memory_scope scope)
+{
+  //return __opencl_atomic_fetch_min(object, operand, order, scope);
+  ATOMIC_LOOP(fmin, object, operand, order, scope);
+}
+
+NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_max) ( volatile Q ATOMIC_TYPE  *object,
+  NONATOMIC_TYPE  operand,
+  memory_order order,
+  memory_scope scope)
+{
+  //return __opencl_atomic_fetch_max(object, operand, order, scope);
+  ATOMIC_LOOP(fmax, object, operand, order, scope);
+}
+
+#endif
 
 #ifndef NON_INTEGER
 
