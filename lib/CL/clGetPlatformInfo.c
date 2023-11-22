@@ -135,11 +135,7 @@ static const char *pocl_version
 
 static const cl_name_version pocl_platform_extensions[] = {
 #ifdef BUILD_ICD
-#ifdef CL_ICD2_TAG_KHR
   { CL_MAKE_VERSION (2, 0, 0), "cl_khr_icd" },
-#else
-  { CL_MAKE_VERSION (1, 0, 0), "cl_khr_icd" },
-#endif
 #endif
   { CL_MAKE_VERSION (1, 0, 0), "cl_pocl_content_size" }
 };

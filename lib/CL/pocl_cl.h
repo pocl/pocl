@@ -288,11 +288,8 @@ extern uint64_t last_object_id;
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifndef CL_ICD2_TAG_KHR
-#if SIZE_MAX == UINT64_MAX
-#define CL_ICD2_TAG_KHR ((size_t)UINT64_C(0x4F50454E434C3331))
-#elif SIZE_MAX == UINT32_MAX
-#define CL_ICD2_TAG_KHR ((size_t)UINT32_C(0x434C3331))
-#endif
+#define CL_ICD2_TAG_KHR ((size_t)0x4F50454E434C3331ULL)
+
 typedef void * CL_API_CALL
 clGetFunctionAddressForPlatformKHR_t(
     cl_platform_id platform,
