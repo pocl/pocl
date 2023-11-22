@@ -284,34 +284,6 @@ atom_cmpxchg (volatile Q T *p, T cmp, T val)
   return cmp;
 }
 
-#if (__clang_major__ < 10)
-
-__attribute__((overloadable))
-T atomic_min (volatile Q T *p, T val)
-{
-  T min,old;
-  do {
-    old = min = *p;
-    if (val < min)
-      old = atomic_cmpxchg(p, min, val);
-  } while (old != min);
-  return old;
-}
-
-__attribute__((overloadable))
-T atomic_max (volatile Q T *p, T val)
-{
-  T max,old;
-  do {
-    old = max = *p;
-    if (val > max)
-      old = atomic_cmpxchg(p, max, val);
-  } while (old != max);
-  return old;
-}
-
-#else
-
 __attribute__ ((overloadable)) T
 atomic_min (volatile Q T *p, T val)
 {
@@ -324,7 +296,6 @@ atomic_max (volatile Q T *p, T val)
   return __atomic_fetch_max (p, val, __ATOMIC_ACQ_REL);
 }
 
-#endif
 
 __attribute__ ((overloadable)) T
 atom_min (volatile Q T *p, T val)

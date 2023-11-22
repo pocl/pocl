@@ -176,6 +176,16 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
 
+  case CL_DEVICE_SINGLE_FP_ATOMIC_CAPABILITIES_EXT:
+    POCL_RETURN_GETINFO(cl_device_fp_atomic_capabilities_ext,
+                        device->single_fp_atomic_caps);
+  case CL_DEVICE_DOUBLE_FP_ATOMIC_CAPABILITIES_EXT:
+    POCL_RETURN_GETINFO(cl_device_fp_atomic_capabilities_ext,
+                        device->double_fp_atomic_caps);
+  case CL_DEVICE_HALF_FP_ATOMIC_CAPABILITIES_EXT:
+    POCL_RETURN_GETINFO(cl_device_fp_atomic_capabilities_ext,
+                        device->half_fp_atomic_caps);
+
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
    

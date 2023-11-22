@@ -1847,6 +1847,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_spir" },
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
         { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
+        { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },
         { CL_MAKE_VERSION (0, 1, 0), "cl_pocl_pinned_buffers" }};
 
 const size_t OPENCL_EXTENSIONS_NUM
@@ -1953,6 +1954,18 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_generic_address_space" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_subgroups" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_work_group_collective_functions" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_global_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_global_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_global_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_local_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_local_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_add" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_global_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_global_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_global_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp16_local_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp32_local_atomic_min_max" },
+  { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_min_max" },
 };
 
 const size_t OPENCL_FEATURES_NUM
