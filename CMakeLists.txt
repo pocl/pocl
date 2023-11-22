@@ -1732,7 +1732,10 @@ if(ENABLE_CUDA)
   set(CUDA_DEVICE_CL_STD "3.0")
 
   # CUDA device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
-  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
+  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
+    cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
+    cl_khr_local_int32_extended_atomics cl_khr_int64_base_atomics \
+    cl_khr_int64_extended_atomics cl_nv_device_attribute_query")
 
   # CUDA device: list of OpenCL 3.0 features that are always enabled
   # __opencl_c_images should not be included since we don't support images yet,
@@ -1742,6 +1745,15 @@ if(ENABLE_CUDA)
   set(CUDA_DEVICE_FEATURES_30 "__opencl_c_images __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
     __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
     __opencl_c_generic_address_space")
+
+  if(LLVM_VERSION VERSION_GREATER_EQUAL 17.0)
+    set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_ext_float_atomics")
+    set(CUDA_DEVICE_FEATURES_30 "${CUDA_DEVICE_FEATURES_30} \
+     __opencl_c_ext_fp32_global_atomic_add __opencl_c_ext_fp32_local_atomic_add \
+     __opencl_c_ext_fp32_global_atomic_min_max __opencl_c_ext_fp32_local_atomic_min_max \
+     __opencl_c_ext_fp64_global_atomic_add __opencl_c_ext_fp64_local_atomic_add \
+     __opencl_c_ext_fp64_global_atomic_min_max __opencl_c_ext_fp64_local_atomic_min_max")
+  endif()
 
   if(ENABLE_SPIR)
     set(CUDA_DEVICE_EXTENSIONS "${CUDA_DEVICE_EXTENSIONS} cl_khr_spir")
