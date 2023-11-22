@@ -39,4 +39,5 @@ POname (clSetPlatformDispatchDataKHR) (cl_platform_id  platform,
   pocl_set_devices_dispatch_data(disp_data);
   return CL_SUCCESS;
 }
+POsymICD(clSetPlatformDispatchDataKHR)
 #endif
