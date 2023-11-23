@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clIcdSetPlatformDispatchDataKHR()
+/* OpenCL runtime library: clSetPlatformDispatchDataKHR()
 
    Copyright (c) 2023 Brice Videau / Argonne National Laboratory
 
@@ -26,19 +26,28 @@
 
 #ifdef BUILD_ICD
 POCL_EXPORT CL_API_ENTRY cl_int CL_API_CALL
-POname (clIcdSetPlatformDispatchDataKHR) (cl_platform_id platform,
-                                          void *disp_data)
+POname (clIcdDestroyInstancePlatformKHR) (cl_platform_id platform)
 {
   cl_platform_id pocl_platform;
-
   POCL_RETURN_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
   POname (clGetPlatformIDs) (1, &pocl_platform, NULL);
   POCL_RETURN_ERROR_ON ((!POCL_PLATFORM_VALID (platform, pocl_platform)),
                         CL_INVALID_PLATFORM,
-                        "Can only set dispatch data of the POCL platform\n");
-  platform->disp_data = disp_data;
-  pocl_set_devices_dispatch_data (platform, disp_data);
+                        "Can only release instance of the POCL platform\n");
+  POCL_RETURN_ERROR_ON ((!platform->instance), CL_INVALID_PLATFORM,
+                        "Can only release instance of the POCL platform\n");
+  for (unsigned i = 0; i < platform->num_devices; i++)
+    {
+      cl_device_id device = platform->devices[i];
+      POCL_DESTROY_OBJECT (device);
+      POCL_MEM_FREE (device->builtin_kernel_list);
+      POCL_MEM_FREE (device->builtin_kernels_with_version);
+      POCL_MEM_FREE (device);
+    }
+  POCL_MEM_FREE (platform->devices);
+  POCL_MEM_FREE (platform);
+
   return CL_SUCCESS;
 }
-POsymICD (clIcdSetPlatformDispatchDataKHR)
+POsymICD (clIcdDestroyInstancePlatformKHR)
 #endif

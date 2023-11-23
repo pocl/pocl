@@ -52,7 +52,7 @@ POname (clIcdGetFunctionAddressForPlatformKHR) (cl_platform_id platform,
     }
 
   assert (pocl_platform);
-  if (platform != pocl_platform)
+  if (!POCL_PLATFORM_VALID (platform, pocl_platform))
     {
       POCL_MSG_WARN ("Requested Function Address not "
                      "for PoCL platform, ignoring\n");

@@ -305,6 +305,20 @@ clIcdSetPlatformDispatchDataKHR_t (cl_platform_id platform, void *disp_data);
 typedef clIcdSetPlatformDispatchDataKHR_t *clIcdSetPlatformDispatchDataKHR_fn;
 
 extern clIcdSetPlatformDispatchDataKHR_t clIcdSetPlatformDispatchDataKHR;
+
+typedef cl_platform_id CL_API_CALL clIcdCreateInstancePlatformKHR_t (
+    cl_platform_id platform, cl_int *errcode_ret);
+
+typedef clIcdCreateInstancePlatformKHR_t *clIcdCreateInstancePlatformKHR_fn;
+
+extern clIcdCreateInstancePlatformKHR_t clIcdCreateInstancePlatformKHR;
+
+typedef cl_int CL_API_CALL
+clIcdDestroyInstancePlatformKHR_t (cl_platform_id platform);
+
+typedef clIcdDestroyInstancePlatformKHR_t *clIcdDestroyInstancePlatformKHR_fn;
+
+extern clIcdDestroyInstancePlatformKHR_t clIcdDestroyInstancePlatformKHR;
 #endif
 
 #ifdef BUILD_ICD
@@ -312,12 +326,16 @@ extern clIcdSetPlatformDispatchDataKHR_t clIcdSetPlatformDispatchDataKHR;
 #  define POCL_ICD_OBJECT_PLATFORM_ID POCL_ICD_OBJECT
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
+#  define POCL_PLATFORM_VALID(platform, pocl_platform)                        \
+    ((platform)->dispatch == (pocl_platform)->dispatch)
 #else
 #  define POCL_ICD_OBJECT
 #  define POCL_ICD_OBJECT_DISP_DATA
 #  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long id;
 #  define POsymICD(name)
 #  define POdeclsymICD(name)
+#  define POCL_PLATFORM_VALID(platform, pocl_platform)                        \
+    ((platform) == (pocl_platform))
 #endif
 
 #include "pocl_intfn.h"
@@ -1150,6 +1168,9 @@ typedef struct
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
+  cl_bool instance;
+  unsigned num_devices;
+  cl_device_id *devices;
 };
 
 typedef struct _context_destructor_callback context_destructor_callback_t;

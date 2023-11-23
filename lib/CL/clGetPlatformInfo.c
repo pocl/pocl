@@ -191,7 +191,8 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
   POCL_RETURN_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
 
   POname (clGetPlatformIDs) (1, &tmp_platform, NULL);
-  POCL_RETURN_ERROR_ON ((platform != tmp_platform), CL_INVALID_PLATFORM,
+  POCL_RETURN_ERROR_ON ((!POCL_PLATFORM_VALID (platform, tmp_platform)),
+                        CL_INVALID_PLATFORM,
                         "Can only return info about the POCL platform\n");
 
   switch (param_name)

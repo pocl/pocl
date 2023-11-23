@@ -225,10 +225,11 @@ struct _cl_icd_dispatch pocl_dispatch = {
 #endif
 };
 
-static struct _cl_platform_id _platforms[1] = { { &pocl_dispatch, NULL } };
+static struct _cl_platform_id _platforms[1]
+    = { { &pocl_dispatch, NULL, CL_FALSE, 0, NULL } };
 #else
 
-static struct _cl_platform_id _platforms[1] = {{ 1 }};
+static struct _cl_platform_id _platforms[1] = { { 1, CL_FALSE, 0, NULL } };
 #endif
 
 #ifdef __GNUC__

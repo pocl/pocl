@@ -73,7 +73,7 @@ context_set_properties (cl_context context,
               /* pocl just have one platform */
               platform_found = CL_FALSE;
               for (i=0; i<num_platforms; i++)
-                if ((cl_platform_id)p[1] == platforms[i])
+                if (POCL_PLATFORM_VALID ((cl_platform_id)p[1], platforms[i]))
                   platform_found = CL_TRUE;
 
               if (platform_found == CL_FALSE)
@@ -139,8 +139,27 @@ POname(clCreateContext)(const cl_context_properties * properties,
   unsigned i = 0;
   cl_int errcode = 0;
   cl_context context = NULL;
-  cl_platform_id platform;
-  POname (clGetPlatformIDs) (1, &platform, NULL);
+  cl_platform_id platform = NULL;
+  cl_platform_id tmp_platform;
+
+  POname (clGetPlatformIDs) (1, &tmp_platform, NULL);
+  if (properties)
+    {
+      const cl_context_properties *property = (cl_context_properties *)NULL;
+      for (property = properties; property && property[0]; property += 2)
+        {
+          if ((cl_context_properties)CL_CONTEXT_PLATFORM == property[0])
+            {
+              platform = (cl_platform_id)property[1];
+              POCL_GOTO_ERROR_ON (
+                  (!POCL_PLATFORM_VALID (platform, tmp_platform)),
+                  CL_INVALID_PLATFORM,
+                  "Specified platform is not a POCL platform\n");
+            }
+        }
+    }
+  if (!platform)
+    platform = tmp_platform;
 
   POCL_LOCK (pocl_context_handling_lock);
 
@@ -152,20 +171,23 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
-  errcode = pocl_init_devices (platform);
-  /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
-   * pocl_init_devices() returns if no devices could be probed. Hence,
-   * remap this error to CL_INVALID_DEVICE. Note that this particular
-   * situation should never arise, since an application should issue
-   * clGetDeviceIDs before clCreateContext, and we would have returned
-   * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
-   * not to handle it.
-   */
+  if (!platform->instance)
+    {
+      errcode = pocl_init_devices (platform);
+      /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
+       * pocl_init_devices() returns if no devices could be probed. Hence,
+       * remap this error to CL_INVALID_DEVICE. Note that this particular
+       * situation should never arise, since an application should issue
+       * clGetDeviceIDs before clCreateContext, and we would have returned
+       * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
+       * not to handle it.
+       */
 
-  if (errcode == CL_DEVICE_NOT_FOUND)
-    errcode = CL_INVALID_DEVICE;
-  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
-                      "Could not initialize devices\n");
+      if (errcode == CL_DEVICE_NOT_FOUND)
+        errcode = CL_INVALID_DEVICE;
+      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                          "Could not initialize devices\n");
+    }
 
   for (i = 0; i < num_devices; ++i)
     {

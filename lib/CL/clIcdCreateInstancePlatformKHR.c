@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clIcdSetPlatformDispatchDataKHR()
+/* OpenCL runtime library: clSetPlatformDispatchDataKHR()
 
    Copyright (c) 2023 Brice Videau / Argonne National Laboratory
 
@@ -25,20 +25,43 @@
 #include "pocl_cl.h"
 
 #ifdef BUILD_ICD
-POCL_EXPORT CL_API_ENTRY cl_int CL_API_CALL
-POname (clIcdSetPlatformDispatchDataKHR) (cl_platform_id platform,
-                                          void *disp_data)
+POCL_EXPORT CL_API_ENTRY cl_platform_id CL_API_CALL
+POname (clIcdCreateInstancePlatformKHR) (cl_platform_id platform,
+                                         cl_int *errcode_ret)
 {
+  int errcode = CL_SUCCESS;
   cl_platform_id pocl_platform;
+  cl_platform_id new_platform = NULL;
 
-  POCL_RETURN_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
+  POCL_GOTO_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
   POname (clGetPlatformIDs) (1, &pocl_platform, NULL);
-  POCL_RETURN_ERROR_ON ((!POCL_PLATFORM_VALID (platform, pocl_platform)),
-                        CL_INVALID_PLATFORM,
-                        "Can only set dispatch data of the POCL platform\n");
-  platform->disp_data = disp_data;
-  pocl_set_devices_dispatch_data (platform, disp_data);
-  return CL_SUCCESS;
+  POCL_GOTO_ERROR_ON ((!POCL_PLATFORM_VALID (platform, pocl_platform)),
+                      CL_INVALID_PLATFORM,
+                      "Can only create instance of the POCL platform\n");
+
+  errcode = pocl_init_devices (platform);
+  if (errcode)
+    goto ERROR;
+
+  new_platform = (cl_platform_id)calloc (1, sizeof (struct _cl_platform_id));
+  POCL_GOTO_ERROR_COND ((new_platform == NULL), CL_OUT_OF_HOST_MEMORY);
+
+  errcode = pocl_get_instance_devices (platform, &new_platform->num_devices,
+                                       &new_platform->devices);
+  if (errcode)
+    goto ERROR;
+
+  *errcode_ret = CL_SUCCESS;
+  return new_platform;
+
+ERROR:
+  POCL_MEM_FREE (new_platform);
+  if (errcode_ret)
+    {
+      *errcode_ret = errcode;
+    }
+
+  return NULL;
 }
-POsymICD (clIcdSetPlatformDispatchDataKHR)
+POsymICD (clIcdCreateInstancePlatformKHR)
 #endif

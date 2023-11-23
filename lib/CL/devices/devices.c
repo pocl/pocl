@@ -121,6 +121,7 @@ extern const char *remote_device_name_ptr;
 
 /* the enabled devices */
 struct _cl_device_id *pocl_devices = NULL;
+static cl_device_id *pocl_device_ids = NULL;
 unsigned int pocl_num_devices = 0;
 
 #ifdef ENABLE_LOADABLE_DRIVERS
@@ -308,8 +309,8 @@ int pocl_device_get_env_count(const char *dev_type)
 }
 
 unsigned int
-pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
-                  unsigned int num_devices)
+pocl_get_devices (cl_platform_id platform, cl_device_type device_type,
+                  cl_device_id *devices, unsigned int num_devices)
 {
   unsigned int i, dev_added = 0;
 
@@ -319,24 +320,25 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (i = 0; i < pocl_num_devices; ++i)
+  for (i = 0; i < platform->num_devices; ++i)
     {
-      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile
+          && (*platform->devices[i]->available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         {
-          devices[dev_added] = &pocl_devices[i];
+          devices[dev_added] = platform->devices[i];
           ++dev_added;
           break;
         }
 
-      if (pocl_devices[i].type & device_type_tmp)
+      if (platform->devices[i]->type & device_type_tmp)
         {
             if (dev_added < num_devices)
               {
-                devices[dev_added] = &pocl_devices[i];
-                ++dev_added;
+              devices[dev_added] = platform->devices[i];
+              ++dev_added;
               }
             else
               {
@@ -348,7 +350,8 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
 }
 
 unsigned int
-pocl_get_device_type_count(cl_device_type device_type)
+pocl_get_device_type_count (cl_platform_id platform,
+                            cl_device_type device_type)
 {
   unsigned int count = 0;
   unsigned int i;
@@ -359,15 +362,16 @@ pocl_get_device_type_count(cl_device_type device_type)
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (i = 0; i < pocl_num_devices; ++i)
+  for (i = 0; i < platform->num_devices; ++i)
     {
-      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile
+          && (*platform->devices[i]->available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         return 1;
 
-      if (pocl_devices[i].type & device_type_tmp)
+      if (platform->devices[i]->type & device_type_tmp)
         {
            ++count;
         }
@@ -619,6 +623,11 @@ pocl_init_devices (cl_platform_id platform)
   POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
                       "no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
 
+  pocl_device_ids
+      = (cl_device_id *)calloc (pocl_num_devices, sizeof (cl_device_id));
+  POCL_GOTO_ERROR_ON ((pocl_device_ids == NULL), CL_OUT_OF_HOST_MEMORY,
+                      "Can not allocate memory for device IDs\n");
+
   pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   POCL_GOTO_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
                       "Can not allocate memory for devices\n");
@@ -668,7 +677,12 @@ pocl_init_devices (cl_platform_id platform)
 #ifdef BUILD_REMOTE_CLIENT
   pocl_remote_setup_peer_mesh ();
 #endif
-
+  for (unsigned i = 0; i < pocl_num_devices; i++)
+    {
+      pocl_device_ids[i] = pocl_devices + i;
+    }
+  platform->num_devices = pocl_num_devices;
+  platform->devices = pocl_device_ids;
   first_init_done = 1;
   devices_active = 1;
 ERROR:
@@ -679,11 +693,55 @@ ERROR:
 
 #ifdef BUILD_ICD
 void
-pocl_set_devices_dispatch_data (void *disp_data)
+pocl_set_devices_dispatch_data (cl_platform_id platform, void *disp_data)
 {
-  for (unsigned int i = 0; i < pocl_num_devices; i++)
+  for (unsigned int i = 0; i < platform->num_devices; i++)
     {
-      pocl_devices[i].disp_data = disp_data;
+      platform->devices[i]->disp_data = disp_data;
     }
+}
+
+cl_int
+pocl_get_instance_devices (cl_platform_id platform, unsigned *num_devices,
+                           cl_device_id **devices)
+{
+  int errcode = CL_SUCCESS;
+  cl_device_id *new_devs = NULL;
+  new_devs = calloc (platform->num_devices, sizeof (cl_device_id));
+  POCL_RETURN_ERROR_COND ((new_devs == NULL), CL_OUT_OF_HOST_MEMORY);
+  for (unsigned i = 0; i < pocl_num_devices; i++)
+    {
+      cl_device_id in_device = platform->devices[i];
+      new_devs[i] = (cl_device_id)calloc (1, sizeof (struct _cl_device_id));
+      POCL_GOTO_ERROR_COND ((new_devs[i] == NULL), CL_OUT_OF_HOST_MEMORY);
+
+      memcpy (new_devs[i], in_device, sizeof (struct _cl_device_id));
+      POCL_INIT_OBJECT (new_devs[i], in_device);
+      if (in_device->builtin_kernel_list)
+        {
+          new_devs[i]->builtin_kernel_list
+              = strdup (in_device->builtin_kernel_list);
+          new_devs[i]->builtin_kernels_with_version = malloc (
+              in_device->num_builtin_kernels * sizeof (cl_name_version));
+          memcpy (new_devs[i]->builtin_kernels_with_version,
+                  in_device->builtin_kernels_with_version,
+                  in_device->num_builtin_kernels * sizeof (cl_name_version));
+        }
+    }
+  *devices = new_devs;
+  *num_devices = platform->num_devices;
+  return CL_SUCCESS;
+ERROR:
+  for (unsigned i = 0; i < pocl_num_devices; i++)
+    {
+      if (new_devs[i])
+        {
+          POCL_MEM_FREE (new_devs[i]->builtin_kernel_list);
+          POCL_MEM_FREE (new_devs[i]->builtin_kernels_with_version);
+          POCL_MEM_FREE (new_devs[i]);
+        }
+    }
+  POCL_MEM_FREE (new_devs);
+  return errcode;
 }
 #endif

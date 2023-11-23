@@ -36,16 +36,38 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
                         void *user_data,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  int errcode;
-  cl_platform_id platform;
-  POname (clGetPlatformIDs) (1, &platform, NULL);
+  int errcode = CL_SUCCESS;
+  cl_platform_id platform = NULL;
+  cl_platform_id tmp_platform;
 
-  errcode = pocl_init_devices (platform);
-  /* see clCreateContext.c for explanation */
-  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_INVALID_DEVICE,
-                      "Could not initialize devices\n");
+  POname (clGetPlatformIDs) (1, &tmp_platform, NULL);
+  if (properties)
+    {
+      const cl_context_properties *property = (cl_context_properties *)NULL;
+      for (property = properties; property && property[0]; property += 2)
+        {
+          if ((cl_context_properties)CL_CONTEXT_PLATFORM == property[0])
+            {
+              platform = (cl_platform_id)property[1];
+              POCL_GOTO_ERROR_ON (
+                  (!POCL_PLATFORM_VALID (platform, tmp_platform)),
+                  CL_INVALID_PLATFORM,
+                  "Specified platform is not a POCL platform\n");
+            }
+        }
+    }
+  if (!platform)
+    platform = tmp_platform;
 
-  unsigned num_devices = pocl_get_device_type_count (device_type);
+  if (!platform->instance)
+    {
+      errcode = pocl_init_devices (platform);
+      /* see clCreateContext.c for explanation */
+      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_INVALID_DEVICE,
+                          "Could not initialize devices\n");
+    }
+
+  unsigned num_devices = pocl_get_device_type_count (platform, device_type);
 
   if (num_devices == 0)
     {
@@ -67,7 +89,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   cl_device_id *devs
       = (cl_device_id *)alloca (num_devices * sizeof (cl_device_id));
 
-  pocl_get_devices (device_type, devs, num_devices);
+  pocl_get_devices (platform, device_type, devs, num_devices);
 
   return POname (clCreateContext) (properties, num_devices, devs, pfn_notify,
                                    user_data, errcode_ret);

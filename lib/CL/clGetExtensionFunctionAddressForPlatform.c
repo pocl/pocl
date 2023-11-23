@@ -40,7 +40,7 @@ CL_API_SUFFIX__VERSION_1_2
     }
 
   assert (pocl_platform);
-  if (platform != pocl_platform)
+  if (!POCL_PLATFORM_VALID (platform, pocl_platform))
     {
       POCL_MSG_WARN ("Requested Function Address not "
                      "for PoCL platform, ignoring\n");
@@ -56,6 +56,12 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (strcmp (func_name, "clIcdSetPlatformDispatchDataKHR") == 0)
     return (void *)&POname(clIcdSetPlatformDispatchDataKHR);
+
+  if (strcmp (func_name, "clIcdCreateInstancePlatformKHR") == 0)
+    return (void *)&POname(clIcdCreateInstancePlatformKHR);
+
+  if (strcmp (func_name, "clIcdDestroyInstancePlatformKHR") == 0)
+    return (void *)&POname(clIcdDestroyInstancePlatformKHR);
 #endif
 
 #ifdef BUILD_PROXY

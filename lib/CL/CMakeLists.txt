@@ -183,6 +183,8 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueMigrateMemINTEL.c"
                    "clIcdGetFunctionAddressForPlatformKHR.c"
                    "clIcdSetPlatformDispatchDataKHR.c"
+                   "clIcdCreateInstancePlatformKHR.c"
+                   "clIcdDestroyInstancePlatformKHR.c"
 )
 
 if(ANDROID)

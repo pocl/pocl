@@ -44,20 +44,25 @@ POname(clGetDeviceIDs)(cl_platform_id   platform,
   POCL_RETURN_ERROR_COND((num_devices == NULL && devices == NULL), CL_INVALID_VALUE);
 
   POname (clGetPlatformIDs) (1, &tmp_platform, NULL);
-  POCL_RETURN_ERROR_ON ((platform != tmp_platform), CL_INVALID_PLATFORM,
+  POCL_RETURN_ERROR_ON ((!POCL_PLATFORM_VALID (platform, tmp_platform)),
+                        CL_INVALID_PLATFORM,
                         "Can only return devices from the POCL platform\n");
 
-  int err = pocl_init_devices (platform);
-  if (err)
-    return err;
+  if (!platform->instance)
+    {
+      int err = pocl_init_devices (platform);
+      if (err)
+        return err;
+    }
 
-  total_num = pocl_get_device_type_count(device_type);
+  total_num = pocl_get_device_type_count (platform, device_type);
 
   if (total_num == 0)
       return CL_DEVICE_NOT_FOUND;
 
   if (devices != NULL)
-    devices_added = pocl_get_devices(device_type, devices, num_entries);
+      devices_added
+          = pocl_get_devices (platform, device_type, devices, num_entries);
 
   if (num_devices != NULL)
     *num_devices = total_num;

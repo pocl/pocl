@@ -51,19 +51,26 @@ cl_int pocl_uninit_devices ();
 
 /**
  * \brief Get the count of devices for a specific type
+ * \param platform the platform to query the devices from
  * \param device_type the device type for which we want the count of devices
  * \return the count of devices for this type
  */
-unsigned int pocl_get_device_type_count(cl_device_type device_type);
+unsigned int pocl_get_device_type_count (cl_platform_id platform,
+                                         cl_device_type device_type);
 
 /**
  * \brief Get a certain amount of devices for a specific type
+ * \param platform the platform to query the devices from
  * \param type Type of devices wanted
  * \param devices Array of pointer to devices
  * \param num_devices Number of devices queried
- * \return The real number of devices added to devices array which match the specified type
+ * \return The real number of devices added to devices array which match the
+ * specified type
  */
-unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices);
+unsigned int pocl_get_devices (cl_platform_id platform,
+                               cl_device_type device_type,
+                               struct _cl_device_id **devices,
+                               unsigned int num_devices);
 
 /**
  * \brief Return the count of a specific device in the env var POCL_DEVICES
@@ -77,9 +84,21 @@ int pocl_device_get_env_count(const char *dev_type);
 #ifdef BUILD_ICD
 /**
  * \brief Set the disp_data field of devices if they are initialized
+ * \param platform the platform to set the device dispatch data from
  * \param disp_data the value to set the field to
  */
-void pocl_set_devices_dispatch_data (void *disp_data);
+void pocl_set_devices_dispatch_data (cl_platform_id platform, void *disp_data);
+
+/**
+ * \brief get a instance copy of pocl_devices
+ * \param platform the platform to create the instance devices from
+ * \param num_devices the number of devices returned
+ * \param devices a pointer to a location that will hold the device list
+ * \return CL_SUCCESS or an error otherwise
+ */
+cl_int pocl_get_instance_devices (cl_platform_id platform,
+                                  unsigned *num_devices,
+                                  cl_device_id **devices);
 #endif
 
 /* the environment variable that lists the enabled devices */
