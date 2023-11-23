@@ -151,17 +151,18 @@ static bool addInnerLoopBarrier(llvm::Loop &L,
 static bool implicitLoopBarriers(Loop &L,
                                  VariableUniformityAnalysisResult &VUA) {
 
-  bool isBLoop = false;
-  for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
-       i != e && !isBLoop; ++i) {
-    for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end(); j != e; ++j) {
-      if (isa<Barrier>(j)) {
-        isBLoop = true;
+  bool IsBLoop = false;
+  for (Loop::block_iterator LI = L.block_begin(), LE = L.block_end();
+       LI != LE && !IsBLoop; ++LI) {
+    for (BasicBlock::iterator BBI = (*LI)->begin(), BBE = (*LI)->end();
+         BBI != BBE; ++BBI) {
+      if (isa<Barrier>(BBI)) {
+        IsBLoop = true;
         break;
       }
     }
   }
-  if (isBLoop)
+  if (IsBLoop)
     return false;
 
   return addInnerLoopBarrier(L, VUA);

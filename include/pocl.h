@@ -534,8 +534,8 @@ typedef enum
 {
   POCL_AUTOLOCALS_TO_ARGS_NEVER = 0,
   POCL_AUTOLOCALS_TO_ARGS_ALWAYS = 1,
-  // convert autolocals to args only if there are dynamic local memory function
-  // arguments in the kernel.
+  /* convert autolocals to args only if there are dynamic local memory
+   * function arguments in the kernel. */
   POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
 } pocl_autolocals_to_args_strategy;
 

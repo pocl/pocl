@@ -170,7 +170,7 @@ verify_no_barriers(const BasicBlock *B)
  */
 void Kernel::getParallelRegions(
     llvm::LoopInfo &LI,
-    ParallelRegion::ParallelRegionVector *parallel_regions) {
+    ParallelRegion::ParallelRegionVector *ParallelRegions) {
 
   SmallVector<BasicBlock *, 4> exit_blocks;
   getExitBlocks(exit_blocks);
@@ -196,7 +196,7 @@ void Kernel::getParallelRegions(
 
       found_barriers.insert(exit);
       exit = NULL;
-      parallel_regions->push_back(PR);
+      ParallelRegions->push_back(PR);
       BasicBlock *entry = PR->entryBB();
       int found_predecessors = 0;
       BasicBlock *loop_barrier = NULL;
@@ -275,12 +275,12 @@ void Kernel::getParallelRegions(
 
 ParallelRegion::ParallelRegionVector *
 Kernel::getParallelRegions(llvm::LoopInfo &LI) {
-  ParallelRegion::ParallelRegionVector *parallel_regions =
+  ParallelRegion::ParallelRegionVector *ParallelRegions =
       new ParallelRegion::ParallelRegionVector;
 
-  getParallelRegions(LI, parallel_regions);
+  getParallelRegions(LI, ParallelRegions);
 
-  return parallel_regions;
+  return ParallelRegions;
 }
 
 void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
@@ -292,10 +292,10 @@ void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
 
   llvm::Module* M = getParent();
 
-  unsigned long address_bits;
-  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+  unsigned long AddressBits;
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
-  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
+  llvm::Type *SizeT = IntegerType::get(M->getContext(), AddressBits);
 
   GV = M->getGlobalVariable("_local_size_x");
   if (GV != NULL) {

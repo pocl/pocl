@@ -41,10 +41,10 @@ public:
   virtual void Initialize (pocl::Kernel *K);
 
 protected:
-  void movePhiNodes(llvm::BasicBlock *src, llvm::BasicBlock *dst);
+  void movePhiNodes(llvm::BasicBlock *Src, llvm::BasicBlock *Dst);
   bool fixUndominatedVariableUses (llvm::DominatorTree &DT, llvm::Function &F);
-  bool dominatesUse (llvm::DominatorTree &DT, llvm::Instruction &I,
-                     unsigned i);
+  bool dominatesUse (llvm::DominatorTree &DT, llvm::Instruction &Inst,
+                     unsigned OpNum);
 
   // The type of size_t for the current target.
   llvm::Type *SizeT;
@@ -57,7 +57,7 @@ protected:
 
   // Copies of compilation parameters
   std::string KernelName;
-  unsigned long address_bits;
+  unsigned long AddressBits;
   bool WGAssumeZeroGlobalOffset;
   bool WGDynamicLocalSize;
   bool DeviceUsingArgBufferLauncher;

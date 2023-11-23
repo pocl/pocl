@@ -71,8 +71,6 @@ typedef llvm::AliasResult AliasResult;
 /// different work items are not aliasing.
 ///
 
-// LLVM 3.8+
-
 class WorkItemAAResult : public AAResultB {
     friend AAResultB;
 
@@ -176,10 +174,10 @@ WorkItemAAResult::alias(const Location &LocA, const Location &LocB) {
 
 char WorkItemAliasAnalysis::ID = 0;
 
-bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &f) {
+bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &F) {
   auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
-  auto tli = TLIWP.getTLI(f);
-  Result.reset(new WorkItemAAResult(tli));
+  auto TLI = TLIWP.getTLI(F);
+  Result.reset(new WorkItemAAResult(TLI));
   return false;
 }
 

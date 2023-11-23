@@ -58,13 +58,13 @@ static bool flattenGlobals(Module &M) {
   SmallPtrSet<Function *, 8> functions_to_inline;
   SmallVector<Value *, 8> pending;
 
-  const char **s = WorkgroupVariablesArray;
-  while (*s != NULL) {
-    GlobalVariable *gv = M.getGlobalVariable(*s);
-    if (gv != NULL)
-      pending.push_back(gv);
+  const char **GVs = WorkgroupVariablesArray;
+  while (*GVs != NULL) {
+    GlobalVariable *GV = M.getGlobalVariable(*GVs);
+    if (GV != NULL)
+      pending.push_back(GV);
 
-    ++s;
+    ++GVs;
   }
 
   while (!pending.empty()) {

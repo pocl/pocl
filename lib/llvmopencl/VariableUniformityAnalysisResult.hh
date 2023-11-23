@@ -41,13 +41,13 @@ class VariableUniformityAnalysisResult {
 public:
   bool runOnFunction(llvm::Function &F, llvm::LoopInfo &LI,
                      llvm::PostDominatorTree &PDT);
-  bool isUniform(llvm::Function *f, llvm::Value *v);
-  void setUniform(llvm::Function *f, llvm::Value *v, bool isUniform = true);
-  void analyzeBBDivergence(llvm::Function *f, llvm::BasicBlock *bb,
-                           llvm::BasicBlock *previousUniformBB,
+  bool isUniform(llvm::Function *F, llvm::Value *V);
+  void setUniform(llvm::Function *F, llvm::Value *V, bool isUniform = true);
+  void analyzeBBDivergence(llvm::Function *F, llvm::BasicBlock *BB,
+                           llvm::BasicBlock *PreviousUniformBB,
                            llvm::PostDominatorTree &PDT);
 
-  bool shouldBePrivatized(llvm::Function *f, llvm::Value *val);
+  bool shouldBePrivatized(llvm::Function *F, llvm::Value *Val);
   bool doFinalization(llvm::Module &M);
   void markInductionVariables(llvm::Function &F, llvm::Loop &L);
   ~VariableUniformityAnalysisResult() { uniformityCache_.clear(); }
@@ -59,7 +59,7 @@ public:
 #endif
 
 private:
-  bool isUniformityAnalyzed(llvm::Function *f, llvm::Value *val) const;
+  bool isUniformityAnalyzed(llvm::Function *F, llvm::Value *V) const;
 
   using UniformityIndex = std::map<llvm::Value *, bool>;
   using UniformityCache = std::map<llvm::Function *, UniformityIndex>;

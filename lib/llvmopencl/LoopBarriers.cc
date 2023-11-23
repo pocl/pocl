@@ -57,22 +57,22 @@ namespace pocl {
 using namespace llvm;
 
 static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
-  bool isBLoop = false;
-  bool changed = false;
+  bool IsBarLoop = false;
+  bool Changed = false;
 
   for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
-       i != e && !isBLoop; ++i) {
+       i != e && !IsBarLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (isa<Barrier>(j)) {
-          isBLoop = true;
+          IsBarLoop = true;
           break;
       }
     }
   }
 
   for (Loop::block_iterator i = L.block_begin(), e = L.block_end();
-       i != e && isBLoop; ++i) {
+       i != e && IsBarLoop; ++i) {
     for (BasicBlock::iterator j = (*i)->begin(), e = (*i)->end();
          j != e; ++j) {
       if (isa<Barrier>(j)) {
@@ -84,23 +84,23 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
         // Add a barrier on the preheader to ensure all WIs reach
         // the loop header with all the previous code already
         // executed.
-        BasicBlock *preheader = L.getLoopPreheader();
-        assert((preheader != NULL) && "Non-canonicalized loop found!\n");
+        BasicBlock *Preheader = L.getLoopPreheader();
+        assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 #ifdef DEBUG_LOOP_BARRIERS
         std::cerr << "### adding to preheader BB" << std::endl;
         preheader->dump();
         std::cerr << "### before instr" << std::endl;
         preheader->getTerminator()->dump();
 #endif
-        Barrier::Create(preheader->getTerminator());
-        preheader->setName(preheader->getName() + ".loopbarrier");
+        Barrier::Create(Preheader->getTerminator());
+        Preheader->setName(Preheader->getName() + ".loopbarrier");
 
         // Add a barrier after the PHI nodes on the header (the replicated
         // headers will be merged afterwards).
-        BasicBlock *header = L.getHeader();
-        if (header->getFirstNonPHI() != &header->front()) {
-          Barrier::Create(header->getFirstNonPHI());
-          header->setName(header->getName() + ".phibarrier");
+        BasicBlock *Header = L.getHeader();
+        if (Header->getFirstNonPHI() != &Header->front()) {
+          Barrier::Create(Header->getFirstNonPHI());
+          Header->setName(Header->getName() + ".phibarrier");
           // Split the block to  create a replicable region of
           // the loop contents in case the phi node contains a
           // branch (that can be to inside the region).
@@ -111,41 +111,41 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
         // Add the barriers on the exiting block and the latches,
         // which might not always be the same if there is computation
         // after the exit decision.
-        BasicBlock *brexit = L.getExitingBlock();
-        if (brexit != NULL) {
-          Barrier::Create(brexit->getTerminator());
-          brexit->setName(brexit->getName() + ".brexitbarrier");
+        BasicBlock *BrExit = L.getExitingBlock();
+        if (BrExit != NULL) {
+          Barrier::Create(BrExit->getTerminator());
+          BrExit->setName(BrExit->getName() + ".brexitbarrier");
         }
 
-        BasicBlock *latch = L.getLoopLatch();
-        if (latch != NULL && brexit != latch) {
+        BasicBlock *Latch = L.getLoopLatch();
+        if (Latch != NULL && BrExit != Latch) {
           // This loop has only one latch. Do not check for dominance, we
           // are probably running before BTR.
-          Barrier::Create(latch->getTerminator());
-          latch->setName(latch->getName() + ".latchbarrier");
-          return changed;
+          Barrier::Create(Latch->getTerminator());
+          Latch->setName(Latch->getName() + ".latchbarrier");
+          return Changed;
         }
 
         // Modified code from llvm::LoopBase::getLoopLatch to
         // go trough all the latches.
-        BasicBlock *Header = L.getHeader();
+        BasicBlock *Header2 = L.getHeader();
         typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
         InvBlockTraits::ChildIteratorType PI =
-          InvBlockTraits::child_begin(Header);
+          InvBlockTraits::child_begin(Header2);
         InvBlockTraits::ChildIteratorType PE =
-          InvBlockTraits::child_end(Header);
+          InvBlockTraits::child_end(Header2);
 
-        BasicBlock *Latch = NULL;
+        BasicBlock *Latch2 = nullptr;
         for (; PI != PE; ++PI) {
           BasicBlock *N = *PI;
           if (L.contains(N)) {
-            Latch = N;
+            Latch2 = N;
             // Latch found in the loop, see if the barrier dominates it
             // (otherwise if might no even belong to this "tail", see
             // forifbarrier1 graph test).
-            if (DT.dominates(j->getParent(), Latch)) {
-              Barrier::Create(Latch->getTerminator());
-              Latch->setName(Latch->getName() + ".latchbarrier");
+            if (DT.dominates(j->getParent(), Latch2)) {
+              Barrier::Create(Latch2->getTerminator());
+              Latch2->setName(Latch2->getName() + ".latchbarrier");
             }
           }
         }
@@ -159,20 +159,20 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
 
      If the block has proper instructions after the barrier, it
      will be split in CanonicalizeBarriers. */
-  BasicBlock *preheader = L.getLoopPreheader();
-  assert((preheader != NULL) && "Non-canonicalized loop found!\n");
+  BasicBlock *Preheader = L.getLoopPreheader();
+  assert((Preheader != NULL) && "Non-canonicalized loop found!\n");
 
-  Instruction *t = preheader->getTerminator();
-  Instruction *prev = NULL;
-  if (&preheader->front() != t)
-    prev = t->getPrevNode();
-  if (prev && isa<Barrier>(prev)) {
-      BasicBlock *new_b = SplitBlock(preheader, t);
-      new_b->setName(preheader->getName() + ".postbarrier_dummy");
+  Instruction *Inst = Preheader->getTerminator();
+  Instruction *PrevInst = NULL;
+  if (&Preheader->front() != Inst)
+    PrevInst = Inst->getPrevNode();
+  if (PrevInst && isa<Barrier>(PrevInst)) {
+      BasicBlock *NewBB = SplitBlock(Preheader, Inst);
+      NewBB->setName(Preheader->getName() + ".postbarrier_dummy");
       return true;
   }
 
-  return changed;
+  return Changed;
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER

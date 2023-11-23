@@ -107,17 +107,17 @@ static Function *processAutomaticLocals(Function *F, unsigned long Strategy) {
   NewKernel->takeName(F);
 
   ValueToValueMapTy VV;
-  Function::arg_iterator j = NewKernel->arg_begin();
-  for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
-       i != e; ++i) {
-    j->setName(i->getName());
-    VV[&*i] = &*j;
-    ++j;
+  Function::arg_iterator J = NewKernel->arg_begin();
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I) {
+    J->setName(I->getName());
+    VV[&*I] = &*J;
+    ++J;
   }
 
-  for (int i = 0; j != NewKernel->arg_end(); ++i, ++j) {
-    j->setName("_local" + Twine(i));
-    VV[Locals[i]] = &*j;
+  for (int I = 0; J != NewKernel->arg_end(); ++I, ++J) {
+    J->setName("_local" + Twine(I));
+    VV[Locals[I]] = &*J;
   }
 
   SmallVector<ReturnInst *, 1> RI;
@@ -142,45 +142,45 @@ static bool automaticLocals(Module &M, FunctionVec &OldKernels) {
   if (ModStrategy == POCL_AUTOLOCALS_TO_ARGS_NEVER) {
     return false;
   }
-  bool changed = false;
+  bool Changed = false;
 
   // store the new and old kernel pairs in order to regenerate
   // all the metadata that used to point to the unmodified
   // kernels
-  FunctionMapping kernels;
+  FunctionMapping KernelsMap;
 
   std::string ErrorInfo;
   FunctionVec NewFuncs;
-  for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
+  for (Module::iterator MI = M.begin(), me = M.end(); MI != me; ++MI) {
     // This is to prevent recursion with llvm 3.9. The new kernels are
     // recognized as kernelsToProcess.
-    if (find(NewFuncs.begin(), NewFuncs.end(), &*mi) != NewFuncs.end())
+    if (find(NewFuncs.begin(), NewFuncs.end(), &*MI) != NewFuncs.end())
       continue;
-    if (!isKernelToProcess(*mi))
+    if (!isKernelToProcess(*MI))
       continue;
 
-    Function *F = &*mi;
+    Function *F = &*MI;
 
-    Function *new_kernel = processAutomaticLocals(F, ModStrategy);
-    if (new_kernel != F)
-      changed = true;
-    kernels[F] = new_kernel;
-    NewFuncs.push_back(new_kernel);
+    Function *NewKernel = processAutomaticLocals(F, ModStrategy);
+    if (NewKernel != F)
+      Changed = true;
+    KernelsMap[F] = NewKernel;
+    NewFuncs.push_back(NewKernel);
   }
 
-  if (changed) {
-    regenerate_kernel_metadata(M, kernels);
+  if (Changed) {
+    regenerate_kernel_metadata(M, KernelsMap);
     /* Delete the old kernels. */
-    for (FunctionMapping::const_iterator i = kernels.begin(), e = kernels.end();
-         i != e; ++i) {
-      Function *old_kernel = (*i).first;
-      Function *new_kernel = (*i).second;
-      if (old_kernel == new_kernel)
+    for (FunctionMapping::const_iterator I = KernelsMap.begin(), E = KernelsMap.end();
+         I != E; ++I) {
+      Function *OldKernel = I->first;
+      Function *NewKernel = I->second;
+      if (OldKernel == NewKernel)
         continue;
-      OldKernels.push_back(old_kernel);
+      OldKernels.push_back(OldKernel);
     }
   }
-  return changed;
+  return Changed;
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER

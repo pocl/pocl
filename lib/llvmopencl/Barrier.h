@@ -45,9 +45,9 @@ namespace pocl {
                             llvm::Module &M) {
       llvm::Function *F = M.getFunction(BARRIER_FUNCTION_NAME);
       if (F != NULL) {
-        for (llvm::Function::use_iterator i = F->use_begin(), e = F->use_end();
-             i != e; ++i)
-          B.push_back(llvm::cast<Barrier>(*i));
+        for (llvm::Function::use_iterator I = F->use_begin(), E = F->use_end();
+             I != E; ++I)
+          B.push_back(llvm::cast<Barrier>(*I));
       }
     }
     /**
@@ -61,10 +61,10 @@ namespace pocl {
       if (InsertBefore != &InsertBefore->getParent()->front() && 
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
-      llvm::FunctionCallee f =
+      llvm::FunctionCallee FC =
         M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()));
-      llvm::Function *F = llvm::cast<llvm::Function>(f.getCallee());
+      llvm::Function *F = llvm::cast<llvm::Function>(FC.getCallee());
       F->addFnAttr(llvm::Attribute::NoDuplicate);
       F->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       return llvm::cast<pocl::Barrier>
@@ -90,37 +90,37 @@ namespace pocl {
 
 
 
-    static bool hasOnlyBarrier(const llvm::BasicBlock *bb) {
-      return endsWithBarrier(bb) && bb->size() == 2;
+    static bool hasOnlyBarrier(const llvm::BasicBlock *BB) {
+      return endsWithBarrier(BB) && BB->size() == 2;
     }
 
-    static bool hasBarrier(const llvm::BasicBlock *bb) 
+    static bool hasBarrier(const llvm::BasicBlock *BB)
     {
-      for (llvm::BasicBlock::const_iterator i = bb->begin(), e = bb->end();
-           i != e; ++i) 
+      for (llvm::BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+           I != E; ++I)
         {
-          if (llvm::isa<Barrier>(i)) return true;
+          if (llvm::isa<Barrier>(I)) return true;
         }
       return false;
     }
 
     // Returns true in case the given basic block starts with a barrier,
     // that is, contains a branch instruction after possible PHI nodes.
-    static bool startsWithBarrier(const llvm::BasicBlock *bb) {
-      const llvm::Instruction *i = bb->getFirstNonPHI();
-      if (i == NULL) 
+    static bool startsWithBarrier(const llvm::BasicBlock *BB) {
+      const llvm::Instruction *Inst = BB->getFirstNonPHI();
+      if (Inst == NULL)
         return false;
-      return llvm::isa<Barrier>(i);
+      return llvm::isa<Barrier>(Inst);
     }
 
     // Returns true in case the given basic block ends with a barrier,
     // that is, contains only a branch instruction after a barrier call.
-    static bool endsWithBarrier(const llvm::BasicBlock *bb) {
-      const llvm::Instruction *t = bb->getTerminator();
-      if (t == NULL) 
+    static bool endsWithBarrier(const llvm::BasicBlock *BB) {
+      const llvm::Instruction *Inst = BB->getTerminator();
+      if (Inst == NULL)
         return false;
-      return bb->size() > 1 && t->getPrevNode() != NULL && 
-          llvm::isa<Barrier>(t->getPrevNode());
+      return BB->size() > 1 && Inst->getPrevNode() != NULL &&
+          llvm::isa<Barrier>(Inst->getPrevNode());
     }
   };
 

@@ -91,14 +91,14 @@ private:
 };
 
 bool WorkitemReplicationImpl::runOnFunction(Function &F) {
-  bool changed = processFunction(F);
+  bool Changed = processFunction(F);
 #ifdef DUMP_RESULT_CFG
   FunctionPass* cfgPrinter = createCFGPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif
 
-  changed |= fixUndominatedVariableUses(DT, F);
-  return changed;
+  Changed |= fixUndominatedVariableUses(DT, F);
+  return Changed;
 }
 
 bool WorkitemReplicationImpl::processFunction(Function &F) {
@@ -119,13 +119,13 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
         original_bbs.push_back(&*i);
   }
 
-  ParallelRegion::ParallelRegionVector *original_parallel_regions =
+  ParallelRegion::ParallelRegionVector *OriginalParallelRegions =
       K->getParallelRegions(LI);
 
   std::vector<ParallelRegion::ParallelRegionVector> parallel_regions(
       workitem_count);
 
-  parallel_regions[0] = *original_parallel_regions;
+  parallel_regions[0] = *OriginalParallelRegions;
 
   //pocl::dumpCFG(F, F.getName().str() + ".before_repl.dot", original_parallel_regions);
 
@@ -145,8 +145,8 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
   // Measure the required context (variables alive in more than one region).
 
   for (SmallVector<ParallelRegion *, 8>::iterator
-         i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
+         i = OriginalParallelRegions->begin(),
+           e = OriginalParallelRegions->end();
        i != e; ++i) {
     ParallelRegion *pr = (*i);
     
@@ -187,8 +187,8 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
           continue;
 	  
         for (SmallVector<ParallelRegion *, 8>::iterator
-               i = original_parallel_regions->begin(), 
-               e = original_parallel_regions->end();
+               i = OriginalParallelRegions->begin(),
+               e = OriginalParallelRegions->end();
              i != e; ++i) {
           ParallelRegion *original = (*i);
           ParallelRegion *replicated =
@@ -208,8 +208,8 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
   }
   if (AddWIMetadata) {
     for (SmallVector<ParallelRegion *, 8>::iterator
-          i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
+          i = OriginalParallelRegions->begin(),
+           e = OriginalParallelRegions->end();
         i != e; ++i) {
       ParallelRegion *original = (*i);  
       original->AddIDMetadata(M->getContext(), 0, 0, 0);
@@ -297,8 +297,8 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
       delete p;
     }
   }
-  delete original_parallel_regions;
-  original_parallel_regions = nullptr;
+  delete OriginalParallelRegions;
+  OriginalParallelRegions = nullptr;
 
   return true;
 }

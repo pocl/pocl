@@ -57,13 +57,13 @@ using namespace llvm;
  *
  * This is used to include loops in the conditional parallel region.
  */
-static BasicBlock *firstNonBackedgePredecessor(llvm::BasicBlock *bb,
+static BasicBlock *firstNonBackedgePredecessor(llvm::BasicBlock *BB,
                                                DominatorTree &DT) {
 
-  pred_iterator I = pred_begin(bb), E = pred_end(bb);
+  pred_iterator I = pred_begin(BB), E = pred_end(BB);
   if (I == E)
     return NULL;
-  while (DT.dominates(bb, *I) && I != E)
+  while (DT.dominates(BB, *I) && I != E)
     ++I;
   if (I == E)
     return NULL;
@@ -76,57 +76,57 @@ static bool implicitConditionalBarriers(Function &F,
                                         llvm::DominatorTree &DT) {
 
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
-  BarrierBlockIndex conditionalBarriers;
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    if (!Barrier::hasBarrier(b)) continue;
+  BarrierBlockIndex ConditionalBarriers;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    BasicBlock *BB = &*FI;
+    if (!Barrier::hasBarrier(BB)) continue;
 
     // Unconditional barrier postdominates the entry node.
-    if (PDT.dominates(b, &F.getEntryBlock()))
+    if (PDT.dominates(BB, &F.getEntryBlock()))
       continue;
 
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### found a conditional barrier";
-    b->dump();
+    BB->dump();
 #endif
-    conditionalBarriers.push_back(b);
+    ConditionalBarriers.push_back(BB);
   }
 
-  if (conditionalBarriers.size() == 0) return false;
+  if (ConditionalBarriers.size() == 0) return false;
 
-  bool changed = false;
+  bool Changed = false;
 
-  for (BarrierBlockIndex::const_iterator i = conditionalBarriers.begin();
-       i != conditionalBarriers.end(); ++i) {
-    BasicBlock *b = *i;
+  for (BarrierBlockIndex::const_iterator i = ConditionalBarriers.begin();
+       i != ConditionalBarriers.end(); ++i) {
+    BasicBlock *BB = *i;
     // Trace upwards from the barrier until one encounters another
     // barrier or the split point that makes the barrier conditional. 
     // In case of the latter, add a new barrier to both branches of the split point. 
 
     // BB before which to inject the barrier.
-    BasicBlock *pos = b;
-    if (pred_begin(b) == pred_end(b)) {
+    BasicBlock *Pos = BB;
+    if (pred_begin(BB) == pred_end(BB)) {
 #ifdef DEBUG_COND_BARRIERS
       b->dump();
 #endif
-      assert (pred_begin(b) == pred_end(b));
+      assert (pred_begin(BB) == pred_end(BB));
     }
-    BasicBlock *pred = firstNonBackedgePredecessor(b, DT);
+    BasicBlock *Pred = firstNonBackedgePredecessor(BB, DT);
 
-    while (!Barrier::hasOnlyBarrier(pred) && PDT.dominates(b, pred)) {
+    while (!Barrier::hasOnlyBarrier(Pred) && PDT.dominates(BB, Pred)) {
 
 #ifdef DEBUG_COND_BARRIERS
       std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
 #endif
-      pos = pred;
+      Pos = Pred;
       // If our BB post dominates the given block, we know it is not the
       // branching block that makes the barrier conditional.
-      pred = firstNonBackedgePredecessor(pred, DT);
+      Pred = firstNonBackedgePredecessor(Pred, DT);
 
-      if (pred == b) break; // Traced across a loop edge, skip this case.
+      if (Pred == BB) break; // Traced across a loop edge, skip this case.
     }
 
-    if (Barrier::hasOnlyBarrier(pos)) continue;
+    if (Barrier::hasOnlyBarrier(Pos)) continue;
     // Inject a barrier at the beginning of the BB and let the
     // CanonicalizeBarrier to clean it up (split to a separate BB).
 
@@ -134,19 +134,19 @@ static bool implicitConditionalBarriers(Function &F,
     // TODO: investigate. It might related to the alloca-converted
     // PHIs. It has a loop that is autoconverted to a b-loop and the
     // conditional barrier is inserted after the loop short cut check.
-    Barrier::Create(pos->getFirstNonPHI());
+    Barrier::Create(Pos->getFirstNonPHI());
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### added an implicit barrier to the BB" << std::endl;
     pos->dump();
 #endif
 
-    changed = true;
+    Changed = true;
   }
 
 //  F.dump();
 //  F.viewCFGOnly();
 
-  return changed;
+  return Changed;
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER

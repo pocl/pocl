@@ -154,7 +154,7 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 
 
 #if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
-class PoclModulePassManager {
+class PoCLModulePassManager {
   // Create the analysis managers.
   LoopAnalysisManager LAM;
   FunctionAnalysisManager FAM;
@@ -178,7 +178,7 @@ class PoclModulePassManager {
   bool Vectorize;
 
 public:
-  PoclModulePassManager() = default;
+  PoCLModulePassManager() = default;
   llvm::Error build(std::string PoclPipeline,
                     unsigned OLevel, unsigned SLevel,
 #ifndef PER_STAGE_TARGET_MACHINE
@@ -188,7 +188,7 @@ public:
   void run(llvm::Module &Bitcode);
 };
 
-llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
+llvm::Error PoCLModulePassManager::build(std::string PoclPipeline,
                                          unsigned OLevel, unsigned SLevel,
 #ifndef PER_STAGE_TARGET_MACHINE
                                          TargetMachine *TM,
@@ -318,7 +318,7 @@ llvm::Error PoclModulePassManager::build(std::string PoclPipeline,
   return PB.parsePassPipeline(PM, StringRef(PoclPipeline));
 }
 
-void PoclModulePassManager::run(llvm::Module &Bitcode) {
+void PoCLModulePassManager::run(llvm::Module &Bitcode) {
   PM.run(Bitcode, MAM);
 #ifdef SEPARATE_OPTIMIZATION_FROM_POCL_PASSES
   populateModulePM(nullptr, (void *)&Bitcode, OptimizeLevel, SizeLevel,
@@ -326,14 +326,29 @@ void PoclModulePassManager::run(llvm::Module &Bitcode) {
 #endif
 }
 
-class TwoStagePoclModulePassManager {
-  PoclModulePassManager Stage1;
-  PoclModulePassManager Stage2;
+/**
+ * @brief The TwoStagePoCLModulePassManager class for running the full pipeline
+ *
+ * the full pipeline of PoCL LLVM passes looks like this:
+ *  <pocl passes, LLVM optimization, pocl passes, LLVM optimization>
+ *
+ * this is how it worked with the old PM; however, running
+ * all of these with a single PassManager (with new PM) leads
+ * to crashes and/or failing tests. This class splits the execution of
+ * the pipeline into two halfs (stages) so both contain some pocl-passes plus
+ * the LLVM optimization passes, and uses a separate PassManager
+ * instance for both (see class PoCLModulePassManager).
+ * @note see also comment for SEPARATE_OPTIMIZATION_FROM_POCL_PASSES macro,
+ * which (if enabled) further separates optimization pipeline into its own PM
+ */
+class TwoStagePoCLModulePassManager {
+  PoCLModulePassManager Stage1;
+  PoCLModulePassManager Stage2;
 #ifndef PER_STAGE_TARGET_MACHINE
   std::unique_ptr<llvm::TargetMachine> Machine;
 #endif
 public:
-  TwoStagePoclModulePassManager() = default;
+  TwoStagePoCLModulePassManager() = default;
   llvm::Error build(cl_device_id Dev, const std::string &S1_Pipeline,
                     unsigned S1_OLevel, unsigned S1_SLevel,
                     const std::string &S2_Pipeline,
@@ -341,7 +356,7 @@ public:
   void run(llvm::Module &Bitcode);
 };
 
-llvm::Error TwoStagePoclModulePassManager::build(
+llvm::Error TwoStagePoCLModulePassManager::build(
     cl_device_id Dev, const std::string &S1_Pipeline, unsigned S1_OLevel,
     unsigned S1_SLevel, const std::string &S2_Pipeline, unsigned S2_OLevel,
     unsigned S2_SLevel) {
@@ -367,7 +382,7 @@ llvm::Error TwoStagePoclModulePassManager::build(
                       Dev);
 }
 
-void TwoStagePoclModulePassManager::run(llvm::Module &Bitcode) {
+void TwoStagePoCLModulePassManager::run(llvm::Module &Bitcode) {
   Stage1.run(Bitcode);
   Stage2.run(Bitcode);
 }
@@ -411,8 +426,8 @@ static void addPass(std::vector<std::string> &Passes, std::string PassName,
 #endif
 }
 
-// for legacy PM, add each Analysis to the pass pipeline;
-// for new PM, add them with proper nesting...  X(Y(Require<>))
+// for legacy PM, add each Analysis to the pass pipeline like a normal Pass;
+// for new PM, add them with proper nesting & analysis wrapper: X(Y(Require<>))
 static void addAnalysis(std::vector<std::string> &Passes, std::string PassName,
                         PassType T = PassType::Function) {
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
@@ -442,6 +457,8 @@ static void addAnalysis(std::vector<std::string> &Passes, std::string PassName,
 #endif
 }
 
+// add the first part of the PoCL passes (up until 1st optimization in old PM)
+// for old PM, also adds optimizations; for new PM it's handled separately
 static void addStage1PassesToPipeline(cl_device_id Dev,
                                       std::vector<std::string> &Passes) {
   /* The kernel compiler passes to run, in order.
@@ -513,6 +530,8 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
 #endif
 }
 
+// add the second part of the PoCL passes (after 1st, up to 2nd optimization in old PM)
+// for old PM, also adds optimizations; for new PM it's handled separately
 static void addStage2PassesToPipeline(cl_device_id Dev,
                                       std::vector<std::string> &Passes) {
 
@@ -619,14 +638,14 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
+static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod) {
 
   PassRegistry *Registry = PassRegistry::getPassRegistry();
   legacy::PassManager PM;
 
   // Need to setup the target info for target specific passes. */
-  Triple triple(device->llvm_target_triplet);
-  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(device));
+  Triple DevTriple(Device->llvm_target_triplet);
+  std::unique_ptr<llvm::TargetMachine> TM(GetTargetMachine(Device));
   llvm::TargetMachine *Machine = TM.get();
 
   if (Machine)
@@ -638,13 +657,13 @@ static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
      Also the libcalls might be harmful for WG autovectorization where we
      want to try to vectorize the code it converts to e.g. a memset or
      a memcpy */
-  TargetLibraryInfoImpl TLII(triple);
+  TargetLibraryInfoImpl TLII(DevTriple);
   TLII.disableAllFunctions();
   PM.add(new TargetLibraryInfoWrapperPass(TLII));
 
   std::vector<std::string> Passes;
-  addStage1PassesToPipeline(device, Passes);
-  addStage2PassesToPipeline(device, Passes);
+  addStage1PassesToPipeline(Device, Passes);
+  addStage2PassesToPipeline(Device, Passes);
 
   // Now actually add the listed passes to the PassManager.
   for (unsigned i = 0; i < Passes.size(); ++i) {
@@ -656,14 +675,13 @@ static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
       // stage.
       bool Vectorize =
           ((CurrentWgMethod == "loopvec" || CurrentWgMethod == "cbs") &&
-           (device->spmd == CL_FALSE));
+           (Device->spmd == CL_FALSE));
       populateModulePM(&PM, nullptr, 3, 0, Vectorize);
       continue;
     }
 
     const PassInfo *PIs = Registry->getPassInfo(StringRef(Passes[i]));
     if (PIs) {
-      // std::cout << "-"<<Passes[i] << " ";
       Pass *thispass = PIs->createPass();
       PM.add(thispass);
     } else {
@@ -678,6 +696,8 @@ static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
 }
 #else
 
+// old PM uses a vector of strings directly; new PM requires a single string
+// vector.join(",")
 static std::string convertPassesToPipelineString(const std::vector<std::string> &Passes) {
   std::string Pipeline;
   for (auto It = Passes.begin(); It != Passes.end(); ++It) {
@@ -689,18 +709,17 @@ static std::string convertPassesToPipelineString(const std::vector<std::string> 
   return Pipeline;
 }
 
-static bool runKernelCompilerPasses(cl_device_id device, llvm::Module &Mod) {
+static bool runKernelCompilerPasses(cl_device_id Device, llvm::Module &Mod) {
 
-  // use new pass manager
-  TwoStagePoclModulePassManager PM;
+  TwoStagePoCLModulePassManager PM;
   std::vector<std::string> Passes1;
-  addStage1PassesToPipeline(device, Passes1);
+  addStage1PassesToPipeline(Device, Passes1);
   std::string P1 = convertPassesToPipelineString(Passes1);
   std::vector<std::string> Passes2;
-  addStage2PassesToPipeline(device, Passes2);
+  addStage2PassesToPipeline(Device, Passes2);
   std::string P2 = convertPassesToPipelineString(Passes2);
 
-  Error E = PM.build(device, P1, 2, 0, P2, 3, 0);
+  Error E = PM.build(Device, P1, 2, 0, P2, 3, 0);
   if (E) {
     std::cerr << "LLVM: failed to create compilation pipeline";
     return false;

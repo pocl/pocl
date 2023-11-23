@@ -53,7 +53,7 @@ namespace pocl {
 using namespace llvm;
 
 static llvm::Instruction *
-breakPHIToAllocas(PHINode *phi, VariableUniformityAnalysisResult &VUA);
+breakPHIToAllocas(PHINode *Phi, VariableUniformityAnalysisResult &VUA);
 
 static bool needsPHIsToAllocas(Function &F, WorkitemHandlerType WIH) {
 #ifdef CBS_NO_PHIS_IN_SPLIT
@@ -112,54 +112,54 @@ static bool runPHIsToAllocas(Function &F,
  * break the assumption of single entry regions.
  */
 static llvm::Instruction *
-breakPHIToAllocas(PHINode *phi, VariableUniformityAnalysisResult &VUA) {
+breakPHIToAllocas(PHINode *Phi, VariableUniformityAnalysisResult &VUA) {
 
   // Loop iteration variables can be detected only when they are
   // implemented using PHI nodes. Maintain information of the
   // split PHI nodes in the VUA by first analyzing the function
   // with the PHIs intact and propagating the uniformity info
   // of the PHI nodes.
-  std::string allocaName = std::string(phi->getName().str()) + ".ex_phi";
+  std::string AllocaName = std::string(Phi->getName().str()) + ".ex_phi";
 
-  llvm::Function *function = phi->getParent()->getParent();
+  llvm::Function *Function = Phi->getParent()->getParent();
 
-  const bool OriginalPHIWasUniform = VUA.isUniform(function, phi);
+  const bool OriginalPHIWasUniform = VUA.isUniform(Function, Phi);
 
-  IRBuilder<> builder(&*(function->getEntryBlock().getFirstInsertionPt()));
+  IRBuilder<> Builder(&*(Function->getEntryBlock().getFirstInsertionPt()));
 
-  llvm::Instruction *alloca = 
-    builder.CreateAlloca(phi->getType(), 0, allocaName);
+  llvm::Instruction *AllocaI =
+    Builder.CreateAlloca(Phi->getType(), 0, AllocaName);
 
-  for (unsigned incoming = 0; incoming < phi->getNumIncomingValues(); 
-       ++incoming) {
-      Value *val = phi->getIncomingValue(incoming);
-      BasicBlock *incomingBB = phi->getIncomingBlock(incoming);
-      builder.SetInsertPoint(incomingBB->getTerminator());
-      llvm::Instruction *store = builder.CreateStore(val, alloca);
+  for (unsigned Incoming = 0; Incoming < Phi->getNumIncomingValues();
+       ++Incoming) {
+      Value *Val = Phi->getIncomingValue(Incoming);
+      BasicBlock *IncomingBB = Phi->getIncomingBlock(Incoming);
+      Builder.SetInsertPoint(IncomingBB->getTerminator());
+      llvm::Instruction *Store = Builder.CreateStore(Val, AllocaI);
       if (OriginalPHIWasUniform)
-          VUA.setUniform(function, store);
+          VUA.setUniform(Function, Store);
   }
-  builder.SetInsertPoint(phi);
+  Builder.SetInsertPoint(Phi);
 
-  llvm::Instruction *loadedValue = builder.CreateLoad(phi->getType(), alloca);
-  phi->replaceAllUsesWith(loadedValue);
+  llvm::Instruction *LoadedValue = Builder.CreateLoad(Phi->getType(), AllocaI);
+  Phi->replaceAllUsesWith(LoadedValue);
 
   if (OriginalPHIWasUniform) {
 #ifdef DEBUG_PHIS_TO_ALLOCAS
       std::cout << "PHIsToAllocas: Original PHI was uniform" << std::endl
                 << "original:";
-      phi->dump();
+      Phi->dump();
       std::cout << "alloca:";
-      alloca->dump();
+      AllocaI->dump();
       std::cout << "loadedValue:";
-      loadedValue->dump();
+      LoadedValue->dump();
 #endif
-      VUA.setUniform(function, alloca);
-      VUA.setUniform(function, loadedValue);
+      VUA.setUniform(Function, AllocaI);
+      VUA.setUniform(Function, LoadedValue);
   }
-  phi->eraseFromParent();
+  Phi->eraseFromParent();
 
-  return loadedValue;
+  return LoadedValue;
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER

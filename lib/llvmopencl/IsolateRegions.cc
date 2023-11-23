@@ -100,25 +100,25 @@ static void addDummyAfter(Region &R, llvm::BasicBlock *BB);
 
 static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
 
-  llvm::BasicBlock *exit = R.getExit();
-  if (exit == nullptr)
+  llvm::BasicBlock *Exit = R.getExit();
+  if (Exit == nullptr)
     return false;
   if (WIH == WorkitemHandlerType::CBS &&
-      hasWorkgroupBarriers(*exit->getParent()))
+      hasWorkgroupBarriers(*Exit->getParent()))
     return false;
 
 #ifdef DEBUG_ISOLATE_REGIONS
   std::cerr << "### processing region:" << std::endl;
   R.dump();
   std::cerr << "### exit block:" << std::endl;
-  exit->dump();
+  Exit->dump();
 #endif
-  bool isFunctionExit = exit->getTerminator()->getNumSuccessors() == 0;
+  bool isFunctionExit = Exit->getTerminator()->getNumSuccessors() == 0;
 
   bool changed = false;
 
-  if (Barrier::hasBarrier(exit) || isFunctionExit) {
-      addDummyBefore(R, exit);
+  if (Barrier::hasBarrier(Exit) || isFunctionExit) {
+      addDummyBefore(R, Exit);
       changed = true;
   }
 
@@ -145,9 +145,9 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
  * Adds a dummy node after the given basic block.
  */
 static void addDummyAfter(Region &R, llvm::BasicBlock *BB) {
-  llvm::BasicBlock *newEntry = SplitBlock(BB, BB->getTerminator());
-  newEntry->setName(BB->getName() + ".r_entry");
-  R.replaceEntry(newEntry);
+  llvm::BasicBlock *NewEntry = SplitBlock(BB, BB->getTerminator());
+  NewEntry->setName(BB->getName() + ".r_entry");
+  R.replaceEntry(NewEntry);
 }
 
 /**
@@ -158,16 +158,16 @@ static void addDummyAfter(Region &R, llvm::BasicBlock *BB) {
  * same region.
  */
 static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
-  std::vector< llvm::BasicBlock* > regionPreds;
+  std::vector< llvm::BasicBlock* > RegionPreds;
 
-  for (pred_iterator i = pred_begin(BB), e = pred_end(BB); i != e; ++i) {
-    llvm::BasicBlock* pred = *i;
-    if (R.contains(pred))
-      regionPreds.push_back(pred);
+  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
+    llvm::BasicBlock* Pred = *PI;
+    if (R.contains(Pred))
+      RegionPreds.push_back(Pred);
   }
-  llvm::BasicBlock *newExit =
-      SplitBlockPredecessors(BB, regionPreds, ".r_exit");
-  R.replaceExit(newExit);
+  llvm::BasicBlock *NewExit =
+      SplitBlockPredecessors(BB, RegionPreds, ".r_exit");
+  R.replaceExit(NewExit);
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER

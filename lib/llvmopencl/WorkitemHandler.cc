@@ -60,7 +60,7 @@ WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
 
-  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
   getModuleStringMetadata(*M, "KernelName", KernelName);
   getModuleIntMetadata(*M, "WGMaxGridDimWidth", WGMaxGridDimWidth);
@@ -78,7 +78,7 @@ WorkitemHandler::Initialize(Kernel *K) {
   if (WGLocalSizeZ == 0)
     WGLocalSizeZ = 1;
 
-  SizeTWidth = address_bits;
+  SizeTWidth = AddressBits;
   SizeT = IntegerType::get(M->getContext(), SizeTWidth);
 
   assert ((SizeTWidth == 32 || SizeTWidth == 64) &&
@@ -90,24 +90,24 @@ WorkitemHandler::Initialize(Kernel *K) {
   LocalIdXGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, LocalIdType);
 }
 
-bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &I,
-                                   unsigned i) {
+bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &Inst,
+                                   unsigned OpNum) {
 
-  Instruction *Op = cast<Instruction>(I.getOperand(i));
+  Instruction *Op = cast<Instruction>(Inst.getOperand(OpNum));
   BasicBlock *OpBlock = Op->getParent();
-  PHINode *PN = dyn_cast<PHINode>(&I);
+  PHINode *PN = dyn_cast<PHINode>(&Inst);
 
   // DT can handle non phi instructions for us.
   if (!PN) 
     {
       // Definition must dominate use unless use is unreachable!
-      return Op->getParent() == I.getParent() || DT.dominates(Op, &I);
+      return Op->getParent() == Inst.getParent() || DT.dominates(Op, &Inst);
     }
 
   // PHI nodes are more difficult than other nodes because they actually
   // "use" the value in the predecessor basic blocks they correspond to.
-  unsigned j = PHINode::getIncomingValueNumForOperand(i);
-  BasicBlock *PredBB = PN->getIncomingBlock(j);
+  unsigned Val = PHINode::getIncomingValueNumForOperand(OpNum);
+  BasicBlock *PredBB = PN->getIncomingBlock(Val);
   return (PredBB && DT.dominates(OpBlock, PredBB));
 }
 
@@ -241,9 +241,9 @@ bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
  * of the replicated BB because it has only one entry.
  */
 void
-WorkitemHandler::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) {
-  while (PHINode *PN = dyn_cast<PHINode>(src->begin())) 
-    PN->moveBefore(dst->getFirstNonPHI());
+WorkitemHandler::movePhiNodes(llvm::BasicBlock* Src, llvm::BasicBlock* Dst) {
+  while (PHINode *PN = dyn_cast<PHINode>(Src->begin()))
+    PN->moveBefore(Dst->getFirstNonPHI());
 }
 
 

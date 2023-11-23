@@ -45,7 +45,7 @@ namespace pocl {
     getParallelRegions(llvm::LoopInfo &LI);
     void
     getParallelRegions(llvm::LoopInfo &LI,
-                       ParallelRegion::ParallelRegionVector *parallel_regions);
+                       ParallelRegion::ParallelRegionVector *ParallelRegions);
 
     void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
                               size_t LocalSizeZ);

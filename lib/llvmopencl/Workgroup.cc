@@ -98,7 +98,7 @@ public:
 
 private:
   llvm::Function *createWrapper(llvm::Function *F,
-                                FunctionMapping &printfCache);
+                                FunctionMapping &PrintfCache);
 
   void createGridLauncher(llvm::Function *KernFunc, llvm::Function *WGFunc,
                           std::string KernName);
@@ -164,7 +164,7 @@ private:
 
   // Copies of compilation parameters
   std::string KernelName;
-  unsigned long address_bits;
+  unsigned long AddressBits;
   bool WGAssumeZeroGlobalOffset;
   bool WGDynamicLocalSize;
   bool DeviceUsingArgBufferLauncher;
@@ -191,7 +191,7 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
   this->M = &M;
   this->C = &M.getContext();
 
-  getModuleIntMetadata(M, "device_address_bits", address_bits);
+  getModuleIntMetadata(M, "device_address_bits", AddressBits);
   getModuleBoolMetadata(M, "device_arg_buffer_launcher",
                         DeviceUsingArgBufferLauncher);
   getModuleBoolMetadata(M, "device_grid_launcher",
@@ -222,7 +222,7 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
   getModuleIntMetadata(M, "device_max_witem_sizes_2", DeviceMaxWItemSizes[2]);
 
   HiddenArgs = 0;
-  SizeTWidth = address_bits;
+  SizeTWidth = AddressBits;
   SizeT = IntegerType::get(*C, SizeTWidth);
 
   llvm::Type *Int32T = Type::getInt32Ty(*C);
@@ -259,17 +259,17 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
   // Store the new and old kernel pairs in order to regenerate
   // all the metadata that used to point to the unmodified
   // kernels.
-  FunctionMapping kernels;
+  FunctionMapping KernelsMap;
 
   // Mapping of all functions which have been transformed to take
   // extra printf arguments.
-  FunctionMapping printfCache;
+  FunctionMapping PrintfCache;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     Function &OrigKernel = *i;
     if (!isKernelToProcess(OrigKernel)) continue;
-    Function *L = createWrapper(&OrigKernel, printfCache);
-    kernels[&OrigKernel] = L;
+    Function *L = createWrapper(&OrigKernel, PrintfCache);
+    KernelsMap[&OrigKernel] = L;
 
     privatizeContext(L);
 
@@ -295,18 +295,18 @@ bool WorkgroupImpl::runOnModule(Module &M, FunctionVec &OldKernels) {
   }
 
   if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
-    regenerate_kernel_metadata(M, kernels);
+    regenerate_kernel_metadata(M, KernelsMap);
   }
 
   // Delete the old kernels. They are inlined into the wrapper, and
   // they contain references to global variables (_local_id_x etc)
-  for (FunctionMapping::const_iterator i = kernels.begin(), e = kernels.end();
+  for (FunctionMapping::const_iterator i = KernelsMap.begin(), e = KernelsMap.end();
        i != e; ++i) {
-    Function *old_kernel = (*i).first;
-    Function *new_kernel = (*i).second;
+    Function *OldKernel = i->first;
+    Function *NewKernel = i->second;
     // this should not happen
-    assert(old_kernel != new_kernel);
-    OldKernels.push_back(old_kernel);
+    assert(OldKernel != NewKernel);
+    OldKernels.push_back(OldKernel);
   }
 
   return true;
@@ -692,51 +692,50 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
 // Create a wrapper for the kernel and add pocl-specific hidden arguments.
 // Also inlines the wrapped function to the wrapper.
 Function *WorkgroupImpl::createWrapper(Function *F,
-                                       FunctionMapping &printfCache) {
+                                       FunctionMapping &PrintfCache) {
 
-  SmallVector<Type *, 8> sv;
+  SmallVector<Type *, 8> FuncParams;
   LLVMContext &C = M->getContext();
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
-    sv.push_back(i->getType());
+    FuncParams.push_back(i->getType());
 
   if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
-    sv.push_back(PointerType::get(PoclContextT, DeviceContextASid));
+    FuncParams.push_back(PointerType::get(PoclContextT, DeviceContextASid));
     HiddenArgs = 1;
   } else {
     // pocl_context
-    sv.push_back(PointerType::get(PoclContextT, DeviceContextASid));
+    FuncParams.push_back(PointerType::get(PoclContextT, DeviceContextASid));
     // group_x
-    sv.push_back(SizeT);
+    FuncParams.push_back(SizeT);
     // group_y
-    sv.push_back(SizeT);
+    FuncParams.push_back(SizeT);
     // group_z
-    sv.push_back(SizeT);
+    FuncParams.push_back(SizeT);
 
     // we might not have all of the globals anymore in the module in case the
     // kernel does not refer to them and they are optimized away
     HiddenArgs = 4;
   }
 
-  FunctionType *ft =
-      FunctionType::get(Type::getVoidTy(C), ArrayRef<Type *>(sv), false);
+  FunctionType *FuncT =
+      FunctionType::get(Type::getVoidTy(C), ArrayRef<Type *>(FuncParams), false);
 
-  std::string funcName = "";
-  funcName = F->getName().str();
+  std::string FuncName = F->getName().str();
   Function *L = NULL;
   if (!DeviceUsingArgBufferLauncher && DeviceIsSPMD) {
-    Function *F = M->getFunction(funcName);
-    F->setName(funcName + "_original");
-    L = Function::Create(ft, Function::ExternalLinkage, funcName, M);
+    Function *F = M->getFunction(FuncName);
+    F->setName(FuncName + "_original");
+    L = Function::Create(FuncT, Function::ExternalLinkage, FuncName, M);
   } else {
-    L = Function::Create(ft, Function::ExternalLinkage,
-                         "_pocl_kernel_" + funcName, M);
+    L = Function::Create(FuncT, Function::ExternalLinkage,
+                         "_pocl_kernel_" + FuncName, M);
   }
 
-  SmallVector<Value *, 8> arguments;
+  SmallVector<Value *, 8> FuncArgs;
   Function::arg_iterator ai = L->arg_begin();
   for (unsigned i = 0, e = F->arg_size(); i != e; ++i) {
-    arguments.push_back(&*ai);
+    FuncArgs.push_back(&*ai);
     ++ai;
   }
 
@@ -769,16 +768,16 @@ Function *WorkgroupImpl::createWrapper(Function *F,
 
   IRBuilder<> Builder(BasicBlock::Create(C, "", L));
 
-  Value *pb, *pbp, *pbc;
+  Value *PrintfBuf, *PrintfBufPos, *PrintfBufCapa;
   if (DeviceSidePrintf) {
-    pb = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
-    pbp = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
-    pbc = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
+    PrintfBuf = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
+    PrintfBufPos = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
+    PrintfBufCapa = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
   } else {
-    pb = pbp = pbc = nullptr;
+    PrintfBuf = PrintfBufPos = PrintfBufCapa = nullptr;
   }
 
-  CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(arguments));
+  CallInst *CI = Builder.CreateCall(F, ArrayRef<Value *>(FuncArgs));
   Builder.CreateRetVoid();
 
   if (L->getSubprogram() != nullptr && F->getSubprogram() != nullptr) {
@@ -795,8 +794,9 @@ Function *WorkgroupImpl::createWrapper(Function *F,
 #endif
 
   if (DeviceSidePrintf) {
-    Function *poclPrintf = M->getFunction("__pocl_printf");
-    replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, *M, L, printfCache);
+    Function *FoclPrintfFun = M->getFunction("__pocl_printf");
+    replacePrintfCalls(PrintfBuf, PrintfBufPos, PrintfBufCapa,
+                       true, FoclPrintfFun, *M, L, PrintfCache);
   }
 
   // SPMD machines might need a special calling convention to mark the

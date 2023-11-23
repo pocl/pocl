@@ -499,11 +499,14 @@ const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     PoclGVarBufferName,
                                     NULL};
 
-const std::vector<std::string> WorkgroupVariablesVector(WorkgroupVariablesArray,
-                                                WorkgroupVariablesArray+NumWorkgroupVariables);
+const std::vector<std::string>
+    WorkgroupVariablesVector(WorkgroupVariablesArray,
+                             WorkgroupVariablesArray+NumWorkgroupVariables);
 
 
 #if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+// register all PoCL analyses & passes with an LLVM PassBuilder instance,
+// so that it can parse them from string representation
 void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   AllocasToEntry::registerWithPB(PB);
   AutomaticLocals::registerWithPB(PB);

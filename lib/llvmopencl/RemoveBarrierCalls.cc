@@ -63,7 +63,6 @@ static bool removeBarrierCalls(Function &F) {
     B->eraseFromParent();
   }
 
-  // TODO this was always returning false. Bug ?
   return Changed;
 }
 

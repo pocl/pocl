@@ -267,6 +267,8 @@ void PoclCFGPrinter::registerWithPB(llvm::PassBuilder &PB) {
           MPM.addPass(PoclCFGPrinter(llvm::errs()));
           return true;
         }
+        // the string X in "print<pocl-cfg;X>" will be passed to constructor;
+        // this can be used to run multiple times and dump to different files
         if (Name.consume_front("print<pocl-cfg;") && Name.consume_back(">")) {
           MPM.addPass(PoclCFGPrinter(llvm::errs(), Name));
           return true;
