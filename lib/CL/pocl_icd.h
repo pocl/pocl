@@ -16,7 +16,11 @@
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 
 #  define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,
-#  define POCL_INIT_ICD_OBJECT(__obj__) (__obj__)->dispatch=&pocl_dispatch
+#  define POCL_INIT_ICD_OBJECT(__obj__, __parent__)                            \
+do {                                                                           \
+  (__obj__)->dispatch = (__parent__)->dispatch;                                \
+  (__obj__)->disp_data = (__parent__)->disp_data;                              \
+} while(0)
 
 /* Define the ICD dispatch structure that gets filled below.
  * Prefer to get it from ocl-icd, as that has compile time type checking

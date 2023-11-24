@@ -45,7 +45,7 @@ const char *pocl_get_device_name (unsigned index);
  * The devices are shared across contexts, thus must implement resource
  * management internally also across multiple contexts.
  */
-cl_int pocl_init_devices();
+cl_int pocl_init_devices(cl_platform_id platform);
 
 cl_int pocl_uninit_devices ();
 
@@ -74,6 +74,14 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
 POCL_EXPORT
 int pocl_device_get_env_count(const char *dev_type);
 
+
+#ifdef BUILD_ICD
+/**
+ * \brief Set the disp_data field of devices if they are initialized
+ * \param disp_data the value to set the field to
+ */
+void pocl_set_devices_dispatch_data(void *disp_data);
+#endif
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"

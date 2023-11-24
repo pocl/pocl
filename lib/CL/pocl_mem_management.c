@@ -28,11 +28,11 @@
 
 #ifndef USE_POCL_MEMMANAGER
 
-cl_event pocl_mem_manager_new_event ()
+cl_event pocl_mem_manager_new_event (cl_context ctx)
 {
   cl_event ev = (cl_event) calloc (1, sizeof (struct _cl_event));
   if (ev != NULL)
-    POCL_INIT_OBJECT(ev);
+    POCL_INIT_OBJECT(ev, ctx);
   return ev;
 }
 
@@ -73,7 +73,7 @@ void pocl_init_mem_manager (void)
   POCL_UNLOCK(pocl_init_lock);
 }
 
-cl_event pocl_mem_manager_new_event ()
+cl_event pocl_mem_manager_new_event (cl_context ctx)
 {
   cl_event ev = NULL;
   POCL_LOCK (mm->event_lock);
@@ -81,13 +81,13 @@ cl_event pocl_mem_manager_new_event ()
     {
       LL_DELETE (mm->event_list, ev);
       POCL_UNLOCK (mm->event_lock);
-      POCL_INIT_OBJECT (ev); /* reinit the pocl_lock mutex */
+      POCL_INIT_OBJECT (ev, ctx); /* reinit the pocl_lock mutex */
       return ev;
     }
   POCL_UNLOCK (mm->event_lock);
 
   ev = (struct _cl_event*) calloc (1, sizeof (struct _cl_event));
-  POCL_INIT_OBJECT(ev);
+  POCL_INIT_OBJECT(ev, ctx);
   return ev;
 }
 

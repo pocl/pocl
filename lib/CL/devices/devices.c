@@ -478,7 +478,7 @@ FINISH:
 }
 
 cl_int
-pocl_init_devices ()
+pocl_init_devices (cl_platform_id platform)
 {
   int errcode = CL_SUCCESS;
 
@@ -642,7 +642,7 @@ pocl_init_devices ()
              it to point to some other device's global memory id in case of
              a shared global memory. */
           dev->global_mem_id = dev_index;
-          POCL_INIT_OBJECT (dev);
+          POCL_INIT_OBJECT (dev, platform);
           dev->driver_version = POCL_VERSION_FULL;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
@@ -676,3 +676,12 @@ ERROR:
   POCL_UNLOCK (pocl_init_lock);
   return errcode;
 }
+
+#ifdef BUILD_ICD
+void pocl_set_devices_dispatch_data(void *disp_data)
+{
+  for (unsigned int i = 0; i < pocl_num_devices; i++) {
+    pocl_devices[i].disp_data = disp_data;
+  }
+}
+#endif

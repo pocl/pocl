@@ -210,13 +210,13 @@ extern uint64_t last_object_id;
 
 #ifdef BUILD_ICD
 /* Most (all?) object must also initialize the ICD field */
-#  define POCL_INIT_OBJECT(__OBJ__)                \
+#  define POCL_INIT_OBJECT(__OBJ__, __PARENT__)    \
     do {                                           \
       POCL_INIT_OBJECT_NO_ICD(__OBJ__);            \
-      POCL_INIT_ICD_OBJECT(__OBJ__);               \
+      POCL_INIT_ICD_OBJECT(__OBJ__, __PARENT__);   \
     } while (0)
 #else
-#  define POCL_INIT_OBJECT(__OBJ__)                \
+#  define POCL_INIT_OBJECT(__OBJ__, __PARENT__)    \
       POCL_INIT_OBJECT_NO_ICD(__OBJ__)
 #endif
 
@@ -287,13 +287,38 @@ extern uint64_t last_object_id;
 
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
+#ifndef CL_ICD2_TAG_KHR
+#define CL_ICD2_TAG_KHR ((size_t)0x4F50454E434C3331ULL)
+
+typedef void * CL_API_CALL
+clGetFunctionAddressForPlatformKHR_t(
+    cl_platform_id platform,
+    const char* function_name);
+
+typedef clGetFunctionAddressForPlatformKHR_t *
+clGetFunctionAddressForPlatformKHR_fn;
+
+extern clGetFunctionAddressForPlatformKHR_t clGetFunctionAddressForPlatformKHR;
+
+typedef cl_int CL_API_CALL
+clSetPlatformDispatchDataKHR_t(
+    cl_platform_id platform,
+    void *disp_data);
+
+typedef clSetPlatformDispatchDataKHR_t *
+clSetPlatformDispatchDataKHR_fn;
+
+extern clSetPlatformDispatchDataKHR_t clSetPlatformDispatchDataKHR;
+#endif
+
 #ifdef BUILD_ICD
-#  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch; void *disp_data;
 #  define POCL_ICD_OBJECT_PLATFORM_ID POCL_ICD_OBJECT
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
 #else
 #  define POCL_ICD_OBJECT
+#  define POCL_ICD_OBJECT_DISP_DATA
 #  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long id;
 #  define POsymICD(name)
 #  define POdeclsymICD(name)

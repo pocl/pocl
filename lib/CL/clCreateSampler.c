@@ -61,7 +61,7 @@ CL_API_SUFFIX__VERSION_1_0
   sampler = (cl_sampler)calloc (1, sizeof (struct _cl_sampler));
   POCL_GOTO_ERROR_COND ((sampler == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_INIT_OBJECT (sampler);
+  POCL_INIT_OBJECT (sampler, context);
   POname (clRetainContext) (context);
   sampler->context = context;
   sampler->normalized_coords = normalized_coords;

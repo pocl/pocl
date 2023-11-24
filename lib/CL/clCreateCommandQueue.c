@@ -74,7 +74,7 @@ POname(clCreateCommandQueue)(cl_context context,
     goto ERROR;
   }
 
-  POCL_INIT_OBJECT(command_queue);
+  POCL_INIT_OBJECT(command_queue, context);
 
   command_queue->context = context;
   command_queue->device = device;

@@ -97,7 +97,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
   POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_INIT_OBJECT (mem);
+  POCL_INIT_OBJECT (mem, buffer);
   mem->context = buffer->context;
   mem->parent = buffer;
   mem->type = CL_MEM_OBJECT_BUFFER;
