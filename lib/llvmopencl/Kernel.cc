@@ -197,23 +197,23 @@ void Kernel::getParallelRegions(
       found_barriers.insert(exit);
       exit = NULL;
       ParallelRegions->push_back(PR);
-      BasicBlock *entry = PR->entryBB();
+      BasicBlock *Entry = PR->entryBB();
       int found_predecessors = 0;
       BasicBlock *loop_barrier = NULL;
-      for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
+      for (pred_iterator i = pred_begin(Entry), e = pred_end(Entry);
            i != e; ++i) {
-        BasicBlock *barrier = (*i);
-        if (!found_barriers.count(barrier)) {
+        BasicBlock *Barrier = (*i);
+        if (!found_barriers.count(Barrier)) {
           /* If this is a loop header block we might have edges from two 
              unprocessed barriers. The one inside the loop (coming from a 
              computation block after a branch block) should be processed 
              first. */
           std::string bbName = "";
-          const bool IS_IN_THE_SAME_LOOP =
-              LI.getLoopFor(barrier) != NULL && LI.getLoopFor(entry) != NULL &&
-              LI.getLoopFor(entry) == LI.getLoopFor(barrier);
+          bool IsInTheSameLoop =
+              LI.getLoopFor(Barrier) != NULL && LI.getLoopFor(Entry) != NULL &&
+              LI.getLoopFor(Entry) == LI.getLoopFor(Barrier);
 
-          if (IS_IN_THE_SAME_LOOP)
+          if (IsInTheSameLoop)
             {
 #ifdef DEBUG_PR_CREATION
               std::cout << "### found a barrier inside the loop:" << std::endl;
@@ -224,7 +224,7 @@ void Kernel::getParallelRegions(
                 // save the previously found inner loop barrier
                 exit_blocks.push_back(loop_barrier);
               }
-              loop_barrier = barrier;
+              loop_barrier = Barrier;
             }
           else
             {
@@ -232,7 +232,7 @@ void Kernel::getParallelRegions(
               std::cout << "### found a barrier:" << std::endl;
               std::cout << barrier->getName().str() << std::endl;
 #endif
-              exit = barrier;
+              exit = Barrier;
             }
           ++found_predecessors;
         }

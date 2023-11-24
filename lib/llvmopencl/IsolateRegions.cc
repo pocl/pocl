@@ -158,7 +158,7 @@ static void addDummyAfter(Region &R, llvm::BasicBlock *BB) {
  * same region.
  */
 static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
-  std::vector< llvm::BasicBlock* > RegionPreds;
+  std::vector<llvm::BasicBlock*> RegionPreds;
 
   for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE; ++PI) {
     llvm::BasicBlock* Pred = *PI;

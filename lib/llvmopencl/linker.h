@@ -39,11 +39,11 @@
  *
  * log is used to report errors if we run into undefined symbols
  */
-int link(llvm::Module *krn, const llvm::Module *lib, std::string &log,
+int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
          const char **DevAuxFuncs, bool DeviceSidePrintf);
 
-int copyKernelFromBitcode(const char *name, llvm::Module *parallel_bc,
-                          const llvm::Module *program,
+int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
+                          const llvm::Module *Program,
                           const char **DevAuxFuncs);
 
 bool moveProgramScopeVarsOutOfProgramBc(llvm::LLVMContext *Context,

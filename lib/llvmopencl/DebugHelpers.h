@@ -25,11 +25,10 @@
 
 #include "config.h"
 
-#include "llvm/IR/Module.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
-#include "llvm/Passes/PassBuilder.h"
-
+#include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/Function.h>
 
 #include "ParallelRegion.h"
@@ -50,10 +49,10 @@ namespace pocl {
   bool chopBBs(llvm::Function& F, llvm::Pass &P);
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-  class PoclCFGPrinter : public llvm::ModulePass {
+  class PoCLCFGPrinter : public llvm::ModulePass {
   public:
     static char ID;
-    PoclCFGPrinter() : ModulePass(ID) {}
+    PoCLCFGPrinter() : ModulePass(ID) {}
 
     virtual bool runOnModule(llvm::Module &F) override;
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
@@ -63,9 +62,9 @@ namespace pocl {
     void dumpModule(llvm::Module &M);
   };
 #else
-  class PoclCFGPrinter : public llvm::PassInfoMixin<PoclCFGPrinter> {
+  class PoCLCFGPrinter : public llvm::PassInfoMixin<PoCLCFGPrinter> {
   public:
-    explicit PoclCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
+    explicit PoCLCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
         : OS(OutS) {
       Prefix = Pref.str();
       Prefix += "_";

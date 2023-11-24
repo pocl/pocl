@@ -349,24 +349,23 @@ class TwoStagePoCLModulePassManager {
 #endif
 public:
   TwoStagePoCLModulePassManager() = default;
-  llvm::Error build(cl_device_id Dev, const std::string &S1_Pipeline,
-                    unsigned S1_OLevel, unsigned S1_SLevel,
-                    const std::string &S2_Pipeline,
-                    unsigned S2_OLevel, unsigned S2_SLevel);
+  llvm::Error build(cl_device_id Dev, const std::string &Stage1Pipeline,
+                    unsigned Stage1OLevel, unsigned Stage1SLevel,
+                    const std::string &Stage2Pipeline,
+                    unsigned Stage2OLevel, unsigned Stage2SLevel);
   void run(llvm::Module &Bitcode);
 };
 
-llvm::Error TwoStagePoCLModulePassManager::build(
-    cl_device_id Dev, const std::string &S1_Pipeline, unsigned S1_OLevel,
-    unsigned S1_SLevel, const std::string &S2_Pipeline, unsigned S2_OLevel,
-    unsigned S2_SLevel) {
+llvm::Error TwoStagePoCLModulePassManager::build(cl_device_id Dev,
+    const std::string &Stage1Pipeline, unsigned Stage1OLevel, unsigned Stage1SLevel,
+    const std::string &Stage2Pipeline, unsigned Stage2OLevel, unsigned Stage2SLevel) {
 
 #ifndef PER_STAGE_TARGET_MACHINE
   Machine.reset(GetTargetMachine(Dev));
   TargetMachine *TMach = Machine.get();
 #endif
-  llvm::Error E1 = Stage1.build(S1_Pipeline,
-                                S1_OLevel, S1_SLevel,
+  llvm::Error E1 = Stage1.build(Stage1Pipeline,
+                                Stage1OLevel, Stage1SLevel,
 #ifndef PER_STAGE_TARGET_MACHINE
                                 TMach,
 #endif
@@ -374,8 +373,8 @@ llvm::Error TwoStagePoCLModulePassManager::build(
   if (E1)
     return E1;
 
-  return Stage2.build(S2_Pipeline,
-                      S2_OLevel, S2_SLevel,
+  return Stage2.build(Stage2Pipeline,
+                      Stage2OLevel, Stage2SLevel,
 #ifndef PER_STAGE_TARGET_MACHINE
                       TMach,
 #endif

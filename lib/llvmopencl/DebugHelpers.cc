@@ -223,7 +223,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &) {
   return fchanged;
 }
 
-void PoclCFGPrinter::dumpModule(llvm::Module &M) {
+void PoCLCFGPrinter::dumpModule(llvm::Module &M) {
   for (llvm::Function &F : M) {
     std::string Name;
     if (F.hasName())
@@ -237,40 +237,40 @@ void PoclCFGPrinter::dumpModule(llvm::Module &M) {
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char PoclCFGPrinter::ID = 0;
+char PoCLCFGPrinter::ID = 0;
 
-bool PoclCFGPrinter::runOnModule(Module &M) {
+bool PoCLCFGPrinter::runOnModule(Module &M) {
   dumpModule(M);
   return false;
 }
 
-void PoclCFGPrinter::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+void PoCLCFGPrinter::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
-static llvm::RegisterPass<PoclCFGPrinter>
+static llvm::RegisterPass<PoCLCFGPrinter>
     X("print-pocl-cfg", "Print PoCL-style CFG of the Module");
 
 #else
 
-llvm::PreservedAnalyses PoclCFGPrinter::run(llvm::Module &M,
+llvm::PreservedAnalyses PoCLCFGPrinter::run(llvm::Module &M,
                                             llvm::ModuleAnalysisManager &AM) {
   dumpModule(M);
   return PreservedAnalyses::all();
 }
 
-void PoclCFGPrinter::registerWithPB(llvm::PassBuilder &PB) {
+void PoCLCFGPrinter::registerWithPB(llvm::PassBuilder &PB) {
   PB.registerPipelineParsingCallback(
       [](::llvm::StringRef Name, ::llvm::ModulePassManager &MPM,
          llvm::ArrayRef<::llvm::PassBuilder::PipelineElement>) {
         if (Name == "print<pocl-cfg>") {
-          MPM.addPass(PoclCFGPrinter(llvm::errs()));
+          MPM.addPass(PoCLCFGPrinter(llvm::errs()));
           return true;
         }
         // the string X in "print<pocl-cfg;X>" will be passed to constructor;
         // this can be used to run multiple times and dump to different files
         if (Name.consume_front("print<pocl-cfg;") && Name.consume_back(">")) {
-          MPM.addPass(PoclCFGPrinter(llvm::errs(), Name));
+          MPM.addPass(PoCLCFGPrinter(llvm::errs(), Name));
           return true;
         }
 

@@ -365,7 +365,7 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
 
 using namespace pocl;
 
-int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
+int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
          const char **DevAuxFuncs, bool DeviceSidePrintf) {
 
   assert(Program);
@@ -453,7 +453,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
             PointerType *RetPT =
                 dyn_cast<PointerType>(Call->getFunctionType()->getReturnType());
             if (ArgPT == nullptr || RetPT == nullptr) {
-              log.append("Invalid use of operator __to_{local,global,private}");
+              Log.append("Invalid use of operator __to_{local,global,private}");
               found_all_undefined = false;
               break;
             }
@@ -482,9 +482,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
              !f->getName().equals(pocl_sampler_handler) &&
              !f->getName().startswith(llvm_intrins))
            ) {
-          log.append("Cannot find symbol ");
-          log.append(r.str());
-          log.append(" in kernel library\n");
+          Log.append("Cannot find symbol ");
+          Log.append(r.str());
+          Log.append(" in kernel library\n");
           found_all_undefined = false;
         }
       }
@@ -493,11 +493,11 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   if (!found_all_undefined)
     return 1;
 
-  shared_copy(Program, Lib, log, vvm);
+  shared_copy(Program, Lib, Log, vvm);
 
   removeDuplicateDbgInfo(Program);
 
-  fixCallingConv(Program, log);
+  fixCallingConv(Program, Log);
 
   if (DeviceSidePrintf) {
     /* Rename printf function to something else than "printf". Note that it has
@@ -512,8 +512,8 @@ int link(llvm::Module *Program, const llvm::Module *Lib, std::string &log,
   return 0;
 }
 
-int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
-                          const llvm::Module *program,
+int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
+                          const llvm::Module *Program,
                           const char **DevAuxFuncs) {
   ValueToValueMapTy vvm;
 
@@ -522,44 +522,44 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   // both program and lib to find which actually are used.
   DB_PRINT("cloning the global variables:\n");
   llvm::Module::const_global_iterator gi,ge;
-  for (gi=program->global_begin(), ge=program->global_end(); gi != ge; gi++) {
+  for (gi=Program->global_begin(), ge=Program->global_end(); gi != ge; gi++) {
     DB_PRINT(" %s\n", gi->getName().data());
     GlobalVariable *GV = new GlobalVariable(
-      *parallel_bc, gi->getValueType(), gi->isConstant(),
+      *ParallelBC, gi->getValueType(), gi->isConstant(),
       gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
       gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*gi);
     vvm[&*gi]=GV;
   }
 
-  const StringRef kernel_name(name);
-  copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
+  const StringRef KernelName(Name);
+  copy_func_callgraph(KernelName, Program, ParallelBC, vvm);
 
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      copy_func_callgraph(*Func++, program, parallel_bc, vvm);
+      copy_func_callgraph(*Func++, Program, ParallelBC, vvm);
     }
   }
 
-  std::string log;
-  shared_copy(parallel_bc, program, log, vvm);
+  std::string Log;
+  shared_copy(ParallelBC, Program, Log, vvm);
 
   if (pocl_get_bool_option("POCL_LLVM_ALWAYS_INLINE", 0)) {
     llvm::Module::iterator MI, ME;
-    for (MI = parallel_bc->begin(), ME = parallel_bc->end(); MI != ME; ++MI) {
+    for (MI = ParallelBC->begin(), ME = ParallelBC->end(); MI != ME; ++MI) {
       Function *F = &*MI;
       if (F->isDeclaration())
           continue;
       // inline all except the kernel
-      if (F->getName() != name) {
+      if (F->getName() != Name) {
           F->addFnAttr(Attribute::AlwaysInline);
       }
     }
 
     llvm::legacy::PassManager Passes;
     Passes.add(createAlwaysInlinerLegacyPass());
-    Passes.run(*parallel_bc);
+    Passes.run(*ParallelBC);
   }
   return 0;
 }

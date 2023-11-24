@@ -28,11 +28,10 @@
 
 #include "Kernel.h"
 
-#include "llvm/IR/Function.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
-
-#include "llvm/Support/CommandLine.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
 
 namespace pocl {
 

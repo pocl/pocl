@@ -25,13 +25,13 @@
 
 #include "config.h"
 
-#include "llvm/IR/Function.h"
-#include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
-#include "llvm/Passes/PassBuilder.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-#include "llvm/Analysis/LoopPass.h"
+#include <llvm/Analysis/LoopPass.h>
 #endif
 
 namespace pocl {

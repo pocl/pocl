@@ -120,8 +120,8 @@ bool BarrierTailReplicationImpl::ProcessFunction(Function &F) {
   return FindBarriersDFS(&F.getEntryBlock(), processed_bbs);
 }
 
-static bool blockHasBarrier(const BasicBlock *bb) {
-  for (BasicBlock::const_iterator i = bb->begin(), e = bb->end(); i != e; ++i) {
+static bool blockHasBarrier(const BasicBlock *BB) {
+  for (BasicBlock::const_iterator i = BB->begin(), e = BB->end(); i != e; ++i) {
     if (isa<Barrier>(i))
       return true;
   }

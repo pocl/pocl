@@ -26,13 +26,12 @@
 
 #include "config.h"
 
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/IR/GlobalValue.h"
-
-#include "llvm/Support/Casting.h"
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/ValueSymbolTable.h>
+#include <llvm/IR/GlobalValue.h>
+#include <llvm/Support/Casting.h>
 
 #define BARRIER_FUNCTION_NAME "pocl.barrier"
 

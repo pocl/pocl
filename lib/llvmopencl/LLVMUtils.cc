@@ -531,7 +531,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
   WorkitemReplication::registerWithPB(PB);
-  PoclCFGPrinter::registerWithPB(PB);
+  PoCLCFGPrinter::registerWithPB(PB);
 }
 
 void registerFunctionAnalyses(llvm::PassBuilder &PB) {
