@@ -8,8 +8,10 @@
    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
    sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -19,11 +21,13 @@
    IN THE SOFTWARE.
 */
 
+#include <atomic>
 #include <cstdint>
 #include <mutex>
 #include <sys/socket.h>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 #include "common.hh"
 #ifdef ENABLE_RDMA
@@ -49,8 +53,13 @@ struct ServerPorts {
 #endif
 };
 
+struct SocketParams {
+  int BufSize;
+  int IsFast;
+};
+
 /**
- * A Wrapper class to hold all state of a single server instance. This is mainly
+ * A wrapper class to hold all state of a single server instance. This is mainly
  * for keeping shared variables in one place and out of global scope.
  */
 class PoclDaemon {
@@ -64,8 +73,7 @@ public:
    * and finally launches the main I/O thread running
    * `readAllClientSocketsThread()`
    */
-  int launch(struct sockaddr_storage &base_addr, socklen_t base_addrlen,
-             struct ServerPorts &ports);
+  int launch(std::string ListenAddress, struct ServerPorts &ports);
 
   /**
    * Main function of the client I/O thread. Polls client sockets for new
@@ -100,26 +108,30 @@ public:
 
   /** Block until the main I/O thread exits. */
   void waitForExit() {
-    if (client_sockets_th.joinable())
-      client_sockets_th.join();
+    if (ClientPoller.joinable())
+      ClientPoller.join();
   }
 
-  /* returns client context on success, nullptr on error */
-  VirtualContextBase *performClientSetup(int command_fd, int stream_fd);
+  /* returns nullptr on error */
+  VirtualContextBase *performSessionSetup(int fd, Request *R);
 
 private:
-  /** File descriptor for the socket that listens for incoming client
-   * connections (for low-latency connections) */
-  int clients_listen_command_fd;
-  /** File descriptor for the socket that listens for incoming client
-   * connections (bulk transfers connections) */
-  int clients_listen_stream_fd;
-  /** Port numbers that the server is listening on */
-  struct ServerPorts listen_ports;
   ExitHelper exit_helper;
-  std::unordered_map<std::string, VirtualContextBase *> client_contexts;
-  std::unordered_map<std::string, std::thread> client_session_threads;
-  std::thread client_sockets_th;
+  /** Port numbers that the server is listening on */
+  struct ServerPorts ListenPorts;
+  std::vector<int> OpenClientFds;
+  /** Hacky helper for keeping track of which context is associated with the
+   * socket at a given index so the contexts can be dropped when the socket
+   * disconnects if reconnecting is not allowed. */
+  std::vector<VirtualContextBase *> SocketContexts;
+  size_t NumListenFds;
+  std::vector<SocketParams> ListenFdParams;
+  std::mutex SessionListMtx;
+  std::unordered_map<uint64_t, VirtualContextBase *> ClientSessions;
+  std::unordered_map<uint64_t, std::thread> ClientSessionThreads;
+  std::unordered_map<uint64_t, std::array<uint8_t, AUTHKEY_LENGTH>> SessionKeys;
+  std::atomic_uint64_t LastSessionId;
+  std::thread ClientPoller;
   peer_listener_data_t peer_listener_data;
   std::thread peer_listener_th;
 #ifdef ENABLE_RDMA

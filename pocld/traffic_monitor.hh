@@ -24,8 +24,10 @@
 #ifndef POCLD_TRAFFIC_MONITOR_HH
 #define POCLD_TRAFFIC_MONITOR_HH
 
+#include <atomic>
 #include <filesystem>
 #include <string>
+#include <thread>
 
 #include "common.hh"
 

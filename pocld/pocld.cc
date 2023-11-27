@@ -22,73 +22,19 @@
    IN THE SOFTWARE.
 */
 
-#include <cassert>
 #include <csignal>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <errno.h>
 #include <unistd.h>
 
-#include <arpa/inet.h>
-#include <netdb.h>
-
 #ifdef __linux__
-#include <dlfcn.h>
-#include <ifaddrs.h>
-#include <libgen.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
 #include <sys/resource.h>
-#include <sys/time.h>
 #endif
 
 #include "pocl_debug.h"
-#include "pocl_networking.h"
-#include "pocl_remote.h"
 #include "pocld_config.h"
 
 #include "cmdline.h"
 #include "daemon.hh"
-
-in_addr_t find_default_ip_address() {
-  struct in_addr listen_addr;
-  listen_addr.s_addr = inet_addr("127.0.0.1");
-
-#ifdef __linux__
-  struct ifaddrs *ifa = NULL;
-  int err = getifaddrs(&ifa);
-
-  if (err == 0 && ifa) {
-    struct ifaddrs *p;
-
-    for (p = ifa; p != NULL; p = p->ifa_next) {
-      if ((p->ifa_flags & IFF_UP) == 0)
-        continue;
-      if (p->ifa_flags & IFF_LOOPBACK)
-        continue;
-      if ((p->ifa_flags & IFF_RUNNING) == 0)
-        continue;
-
-      struct sockaddr *saddr = p->ifa_addr;
-      if (saddr == NULL || saddr->sa_family != AF_INET)
-        continue;
-
-      struct sockaddr_in *saddr_in = (struct sockaddr_in *)saddr;
-      if (saddr_in->sin_addr.s_addr == 0)
-        continue;
-      else {
-        listen_addr.s_addr = saddr_in->sin_addr.s_addr;
-        break;
-      }
-    }
-    freeifaddrs(ifa);
-  } else
-    POCL_MSG_ERR("getifaddrs() failed or returned no data.\n");
-#endif
-
-  return listen_addr.s_addr;
-}
 
 int main(int argc, char *argv[]) {
   struct gengetopt_args_info ai;
@@ -137,59 +83,10 @@ int main(int argc, char *argv[]) {
 #endif
 
   int error;
-  /* NOTE: struct sockaddr does NOT have enough space for all address types */
-  struct sockaddr_storage base_addr = {};
-  socklen_t base_addrlen;
-  if (ai.address_arg) {
-    addrinfo *resolved_address =
-        pocl_resolve_address(ai.address_arg, listen_ports.command, &error);
-    if (!error) {
-      /* Unfortunately getaddrinfo does not guarantee that the returned
-       * addresses would actually WORK. For example misconfigured IPv4-only
-       * setups sometimes return IPv6 addresses that are not bindable. As a
-       * workaround, iterate over the returned addresses until one is found that
-       * works. */
-      bool found_bindable_address = false;
-      std::vector<int> bind_errors;
-      for (addrinfo *ai = resolved_address;
-           ai != nullptr && !found_bindable_address; ai = ai->ai_next) {
-        memcpy(&base_addr, resolved_address->ai_addr,
-               resolved_address->ai_addrlen);
-        base_addrlen = resolved_address->ai_addrlen;
-        int tmp = socket(ai->ai_family, SOCK_STREAM, IPPROTO_TCP);
-        if (!tmp)
-          continue;
-        error = bind(tmp, ai->ai_addr, ai->ai_addrlen);
-        if (!error)
-          found_bindable_address = true;
-        else
-          bind_errors.push_back(errno);
-        close(tmp);
-      }
-      freeaddrinfo(resolved_address);
-      if (!found_bindable_address) {
-        POCL_MSG_ERR("Requested listen address %s did not resolve to any "
-                     "bindable address:\n",
-                     ai.address_arg);
-        int idx = 0;
-        for (int e : bind_errors)
-          POCL_MSG_ERR("resolved address %d: %s\n", idx++, strerror(e));
-        return EXIT_FAILURE;
-      }
-    } else {
-      POCL_MSG_ERR("Failed to resolve listen address: %s\n",
-                   gai_strerror(error));
-      return EXIT_FAILURE;
-    }
-  } else {
-    struct sockaddr_in *fallback = (struct sockaddr_in *)&base_addr;
-    fallback->sin_family = AF_INET;
-    fallback->sin_addr.s_addr = find_default_ip_address();
-    base_addrlen = sizeof(struct sockaddr_in);
-  }
-
   PoclDaemon server;
-  if ((error = server.launch(base_addr, base_addrlen, listen_ports)))
+  if ((error = server.launch(
+           std::move(std::string(ai.address_arg ? ai.address_arg : "")),
+           listen_ports)))
     return error;
 
   server.waitForExit();

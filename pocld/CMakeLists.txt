@@ -29,7 +29,7 @@ project(pocld)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(SOURCES pocld.cc cmdline.h cmdline.c daemon.hh daemon.cc
+set(SOURCES pocld.cc daemon.hh daemon.cc cmdline.h cmdline.c
             ../lib/CL/pocl_debug.c ../lib/CL/pocl_debug.h
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
@@ -39,10 +39,10 @@ set(SOURCES pocld.cc cmdline.h cmdline.c daemon.hh daemon.cc
             ../lib/CL/pocl_runtime_config.c
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
-            cmd_queue.cc  cmd_queue.hh  common.cc  common.hh
+            cmd_queue.cc cmd_queue.hh common.cc common.hh
             request.hh request.cc
-            reply_th.cc  reply_th.hh  request_th.cc request_th.hh
-            peer_handler.cc  peer_handler.hh session.cc session.hh
+            reply_th.cc reply_th.hh request_th.cc request_th.hh
+            peer_handler.cc peer_handler.hh
             peer.cc peer.hh tracing.h traffic_monitor.hh traffic_monitor.cc)
 
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF

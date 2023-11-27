@@ -71,7 +71,6 @@ void EventChannel::poll_loop() {
       return;
     }
     // TODO: consider recovering from errors somehow?
-
     if (event->event == RDMA_CM_EVENT_DEVICE_REMOVAL)
       throw std::runtime_error("RDMAcm device has been removed");
 
@@ -325,8 +324,8 @@ const WorkRequest::Flags WorkRequest::Flags::OffloadIpChecksum = {
 WorkRequest::WorkRequest() : wr{} {}
 
 WorkRequest::WorkRequest(const WorkRequest &other)
-    : wr{other.wr}, mr_list{other.mr_list},
-      ibv_sg_list{other.ibv_sg_list}, next{} {
+    : wr{other.wr}, mr_list{other.mr_list}, ibv_sg_list{other.ibv_sg_list},
+      next{} {
   wr.sg_list = ibv_sg_list.data();
   if (other.next) {
     next.reset(new WorkRequest(*other.next));
@@ -680,25 +679,22 @@ RdmaConnection RdmaConnection::connect(const char *address, uint16_t port) {
     throw std::runtime_error(gai_strerror(err));
 
   rdmacm::IdPtr cm_id(new rdmacm::Id(rdmacm::EventChannel::create()));
+  rdma_cm_event *event = nullptr;
 
   /* Try resolving returned addresses until one works or we run out. */
   for (addrinfo *a = ai; a != nullptr && !err; a = a->ai_next) {
     err = rdma_resolve_addr(*cm_id, NULL, ai->ai_addr, timeout_ms);
+    // This is the active side of the connection and there won't be any other
+    // IDs on this event channel so we'll just use the shared queue
+    event = cm_id->cm_channel->getNext();
+    if (event->event != RDMA_CM_EVENT_ADDR_RESOLVED)
+      err = -1;
+
+    rdma_ack_cm_event(event);
   }
   freeaddrinfo(ai);
   if (err)
     throw std::runtime_error(strerror(errno));
-
-  // This is the active side of the connection and there won't be any other
-  // IDs on this event channel so we'll just use the shared queue
-  rdma_cm_event *event = cm_id->cm_channel->getNext();
-  if (event->event != RDMA_CM_EVENT_ADDR_RESOLVED)
-    throw std::runtime_error(
-        std::string("Unexpected RDMAcm event while waiting for "
-                    "RDMA_CM_EVENT_ADDR_RESOLVED: ") +
-        rdma_event_str(event->event));
-
-  rdma_ack_cm_event(event);
 
   // This fills out our ibv_context i.e. cm_id->verbs
   err = rdma_resolve_route(*cm_id, timeout_ms);

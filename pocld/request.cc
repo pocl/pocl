@@ -22,9 +22,12 @@
 */
 
 #include <cassert>
+#include <cerrno>
+#include <chrono>
+#include <unistd.h>
 
-#include "common.hh"
 #include "messages.h"
+#include "pocl_debug.h"
 #include "request.hh"
 #include "tracing.h"
 
@@ -32,6 +35,10 @@
 
 const char *request_to_str(RequestMessageType type) {
   switch (type) {
+  case MessageType_InvalidRequest:
+    return "INVALID REQUEST";
+  case MessageType_CreateOrAttachSession:
+    return "CreateOrAttachSession";
   case MessageType_ServerInfo:
     return "ServerInfo";
   case MessageType_DeviceInfo:
@@ -228,6 +235,7 @@ bool Request::read(int fd) {
   case MessageType_BuildProgramFromSource:
   case MessageType_BuildProgramFromSPIRV:
     request->extra_size2 = req->m.build_program.options_len;
+    /* intentional fall through to setting payload (i.e. binary) size */
   case MessageType_BuildProgramWithBuiltins:
     request->extra_size = req->m.build_program.payload_size;
     break;
@@ -294,7 +302,7 @@ bool Request::read(int fd) {
   POCL_MSG_PRINT_GENERAL("ALL READS COMPLETE FOR ID: %" PRIu64 ", fd=%d\n",
                          uint64_t(req->msg_id), fd);
 
-  fully_read = true;
+  IsFullyRead = true;
   return true;
 }
 
