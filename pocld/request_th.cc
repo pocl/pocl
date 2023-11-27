@@ -23,7 +23,6 @@
    IN THE SOFTWARE.
 */
 
-#include <cassert>
 #include <poll.h>
 #include <sys/socket.h>
 
@@ -80,7 +79,7 @@ void RequestQueueThread::readThread() {
       continue;
 
     Request *request = new Request;
-    while (!request->fully_read) {
+    while (!request->IsFullyRead) {
       if (!request->read(fd)) {
         delete request;
         continue;

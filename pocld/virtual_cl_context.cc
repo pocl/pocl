@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <memory>
+#include <unordered_set>
 
 #include "common.hh"
 
@@ -35,9 +36,9 @@
 #include "shared_cl_context.hh"
 #include "virtual_cl_context.hh"
 
+#include "daemon.hh"
 #include "peer_handler.hh"
 #include "reply_th.hh"
-#include "request_th.hh"
 #include "tracing.h"
 #include "traffic_monitor.hh"
 
@@ -88,6 +89,7 @@ public:
 #endif
 
 class VirtualCLContext : public VirtualContextBase {
+  PoclDaemon *Daemon;
   ReplyQueueThreadUPtr write_slow;
   ReplyQueueThreadUPtr write_fast;
 #ifdef ENABLE_RDMA
@@ -96,8 +98,8 @@ class VirtualCLContext : public VirtualContextBase {
 #endif
   PeerHandlerUPtr peers;
   uint32_t peer_id;
-  std::atomic_int *command_fd;
-  std::atomic_int *stream_fd;
+  std::atomic_int command_fd;
+  std::atomic_int stream_fd;
 
   ExitHelper exit_helper;
 
@@ -157,7 +159,11 @@ public:
   }
 
   /****************************************************************************************************************/
-  virtual size_t init(client_connections_t conns, ClientHandshake_t handshake);
+  virtual size_t init(PoclDaemon *d, ClientConnections_t conns,
+                      uint64_t session, CreateOrAttachSessionMsg_t &params);
+
+  virtual void updateSockets(std::optional<int> command_fd,
+                             std::optional<int> stream_fd) override;
 
   virtual void nonQueuedPush(Request *req) override;
 
@@ -186,13 +192,11 @@ public:
   };
 
 private:
-  int clientInfo(int fd_command);
-
-  int initialMessage(int fd_command);
-
   int checkPlatformDeviceValidity(Request *req);
 
   size_t initPlatforms();
+
+  void ServerInfo(Request *req, Reply *rep);
 
   void ConnectPeer(Request *req, Reply *rep);
 
@@ -230,25 +234,25 @@ private:
 #pragma GCC visibility pop
 #endif
 
-size_t VirtualCLContext::init(client_connections_t conns,
-                              ClientHandshake_t handshake) {
+size_t VirtualCLContext::init(PoclDaemon *d, ClientConnections_t conns,
+                              uint64_t session,
+                              CreateOrAttachSessionMsg_t &params) {
 
+  Daemon = d;
   current_printf_position = 0;
   TotalDevices = 0;
   command_fd = conns.fd_command;
   stream_fd = conns.fd_stream;
+  peer_id = params.peer_id;
 #ifdef ENABLE_RDMA
-  client_uses_rdma = handshake.rdma_supported;
+  client_uses_rdma = params.use_rdma;
   if (client_uses_rdma) {
     client_rdma = conns.rdma;
   }
 #endif
 
-  std::string id_string = hexstr(
-      std::string((const char *)handshake.session_id, SESSION_ID_LENGTH));
+  std::string id_string = std::to_string(session);
   netstat = new TrafficMonitor(&exit_helper, id_string);
-
-  clientInfo(*command_fd);
 
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
@@ -261,22 +265,28 @@ size_t VirtualCLContext::init(client_connections_t conns,
   }
 #endif
   write_slow = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(stream_fd, this, &exit_helper, netstat, "WT_S"));
+      new ReplyQueueThread(&stream_fd, this, &exit_helper, netstat, "WT_S"));
   write_fast = ReplyQueueThreadUPtr(
-      new ReplyQueueThread(command_fd, this, &exit_helper, netstat, "WT_F"));
+      new ReplyQueueThread(&command_fd, this, &exit_helper, netstat, "WT_F"));
 
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
                                           &exit_helper, netstat));
   initPlatforms();
 
-  initialMessage(*command_fd);
-
   POCL_MSG_PRINT_INFO("Created shared contexts for %" PRIuS
                       " platforms / %" PRIuS " devices\n",
                       PlatformList.size(), TotalDevices);
 
   return TotalDevices;
+}
+
+void VirtualCLContext::updateSockets(std::optional<int> fd_command,
+                                     std::optional<int> fd_stream) {
+  if (fd_command.has_value())
+    command_fd = fd_command.value();
+  if (fd_stream.has_value())
+    stream_fd = fd_stream.value();
 }
 
 size_t VirtualCLContext::initPlatforms() {
@@ -306,46 +316,10 @@ size_t VirtualCLContext::initPlatforms() {
   return PlatformList.size();
 }
 
-int VirtualCLContext::clientInfo(int fd_command) {
-  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Req RECVING\n");
-  // initial ServerInfo reply/response
-  RequestMsg_t req;
-  ssize_t readb;
-
-  readb = read_full(fd_command, &req, sizeof(RequestMsg_t), netstat);
-  assert(static_cast<size_t>(readb) == sizeof(RequestMsg_t));
-  assert(req.message_type == MessageType_ServerInfo);
-  readb = read_full(fd_command, &req.m.server_info, sizeof(ServerInfoMsg_t),
-                    netstat);
-  assert(static_cast<size_t>(readb) == sizeof(ServerInfoMsg_t));
-
-  peer_id = req.m.server_info.peer_id;
-
-  return 0;
-}
-
-int VirtualCLContext::initialMessage(int fd_command) {
-  POCL_MSG_PRINT_GENERAL("VCTX: ServerInfo Rep SENDING\n");
-
-  ReplyMsg_t rep;
-  ssize_t writeb;
-  // clear memory
-  std::memset(&rep, 0, sizeof(ReplyMsg_t));
-  rep.message_type = MessageType_ServerInfoReply;
-  rep.obj_id = PlatformList.size();
-  rep.data_size = PlatformList.size() * sizeof(uint32_t);
-  writeb = write_full(fd_command, &rep, sizeof(ReplyMsg_t), netstat);
-  assert(writeb == 0);
-  writeb = write_full(fd_command, (void *)(DeviceCounts.data()), rep.data_size,
-                      netstat);
-  assert(writeb == 0);
-
-  return 0;
-}
-
 void VirtualCLContext::nonQueuedPush(Request *req) {
 
-  if (checkPlatformDeviceValidity(req))
+  if (req->req.message_type != MessageType_ServerInfo &&
+      checkPlatformDeviceValidity(req))
     return;
 
   POCL_MSG_PRINT_GENERAL("VCTX NON-QUEUED PUSH (msg: %" PRIu64 ")\n",
@@ -426,7 +400,6 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
 /****************************************************************************************************************/
 
 int VirtualCLContext::run() {
-
   Reply *reply;
   while (1) {
 
@@ -451,6 +424,9 @@ int VirtualCLContext::run() {
       // PROCESSS REQUEST, then PUSH REPLY to WRITE Q
 
       switch (request->req.message_type) {
+      case MessageType_ServerInfo:
+        ServerInfo(request, reply);
+        break;
 
       case MessageType_DeviceInfo:
         DeviceInfo(request, reply);
@@ -570,11 +546,11 @@ int VirtualCLContext::run() {
 
 void VirtualCLContext::ConnectPeer(Request *req, Reply *rep) {
   INIT_VARS;
-  std::string session = std::string(
-      reinterpret_cast<const char *>(&req->req.m.connect_peer.session[0]),
-      SESSION_ID_LENGTH);
+  std::array<uint8_t, AUTHKEY_LENGTH> authkey;
+  std::memcpy(authkey.data(), req->req.m.connect_peer.authkey, AUTHKEY_LENGTH);
   err = peers->connectPeer(req->req.msg_id, req->req.m.connect_peer.address,
-                           session, req->req.m.connect_peer.port);
+                           req->req.m.connect_peer.port,
+                           req->req.m.connect_peer.session, authkey);
   RETURN_IF_ERR;
   replyOK(rep, MessageType_ConnectPeerReply);
 }
@@ -1073,6 +1049,13 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 /****************************************************************************************************************/
 /****************************************************************************************************************/
 
+void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
+  rep->extra_size = PlatformList.size() * sizeof(uint32_t);
+  rep->extra_data = (char *)(DeviceCounts.data());
+  replyData(rep, MessageType_ServerInfoReply, PlatformList.size(),
+            rep->extra_size);
+}
+
 void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
   DeviceInfo_t info{};
 
@@ -1109,10 +1092,12 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
 /****************************************************************************************************************/
 /****************************************************************************************************************/
 
-VirtualContextBase *createVirtualContext(client_connections_t conns,
-                                         ClientHandshake_t handshake) {
+VirtualContextBase *createVirtualContext(PoclDaemon *d,
+                                         ClientConnections_t conns,
+                                         uint64_t session,
+                                         CreateOrAttachSessionMsg_t &params) {
   VirtualCLContext *vctx = new VirtualCLContext();
-  vctx->init(conns, handshake);
+  vctx->init(d, conns, session, params);
   return vctx;
 }
 

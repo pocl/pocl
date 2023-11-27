@@ -24,9 +24,7 @@
 #ifndef PEER_HH
 #define PEER_HH
 
-#include <condition_variable>
-#include <memory>
-#include <mutex>
+#include <thread>
 
 #include "common.hh"
 #include "guarded_queue.hh"
@@ -44,7 +42,7 @@
 #endif
 
 class Peer {
-  uint32_t id;
+  uint64_t id;
   uint32_t handler_id;
   std::atomic_int fd;
   VirtualContextBase *ctx;
@@ -69,11 +67,11 @@ class Peer {
 #endif
 public:
 #ifdef ENABLE_RDMA
-  Peer(uint32_t id, uint32_t handler_id, VirtualContextBase *ctx,
+  Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
        ExitHelper *eh, int fd, TrafficMonitor *tm,
        std::shared_ptr<RdmaConnection> conn);
 #else
-  Peer(uint32_t id, uint32_t handler_id, VirtualContextBase *ctx,
+  Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
        ExitHelper *eh, int fd, TrafficMonitor *tm);
 #endif
   ~Peer();

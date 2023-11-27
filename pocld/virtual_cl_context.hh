@@ -26,6 +26,7 @@
 #define POCL_REMOTE_VIRTUAL_CL_HH
 
 #include "common.hh"
+#include <optional>
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -37,6 +38,8 @@ class VirtualContextBase {
 
 public:
   virtual ~VirtualContextBase() {}
+
+  virtual void updateSockets(std::optional<int>, std::optional<int>) = 0;
 
   virtual void nonQueuedPush(Request *req) = 0;
 

@@ -25,6 +25,14 @@
 #ifndef POCL_REMOTE_REPLY_TH_HH
 #define POCL_REMOTE_REPLY_TH_HH
 
+#include <atomic>
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
 #include "common.hh"
 #include "traffic_monitor.hh"
 #include "virtual_cl_context.hh"

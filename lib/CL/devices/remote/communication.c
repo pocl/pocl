@@ -24,7 +24,6 @@
    IN THE SOFTWARE.
 */
 #include <assert.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -153,6 +152,8 @@ static uint64_t last_peer_id = 42;
 #define REQUEST(type)                                                         \
   RequestMsg_t *req = &netcmd->request;                                       \
   memset (req, 0, sizeof (RequestMsg_t));                                     \
+  req->session = data->session;                                               \
+  memcpy (req->authkey, data->authkey, AUTHKEY_LENGTH);                       \
   req->message_type = MessageType_##type;                                     \
   req->msg_id = POCL_ATOMIC_INC (last_message_id);                            \
   req->event_id = netcmd->event_id;                                           \
@@ -164,6 +165,8 @@ static uint64_t last_peer_id = 42;
 #define ID_REQUEST(type, req_id)                                              \
   RequestMsg_t *req = &netcmd->request;                                       \
   memset (req, 0, sizeof (RequestMsg_t));                                     \
+  req->session = data->session;                                               \
+  memcpy (req->authkey, data->authkey, AUTHKEY_LENGTH);                       \
   req->message_type = MessageType_##type;                                     \
   req->msg_id = POCL_ATOMIC_INC (last_message_id);                            \
   req->event_id = netcmd->event_id;                                           \
@@ -175,6 +178,8 @@ static uint64_t last_peer_id = 42;
 #define REQUEST_PEERCONN                                                      \
   RequestMsg_t *req = &netcmd->request;                                       \
   memset (req, 0, sizeof (RequestMsg_t));                                     \
+  req->session = data->session;                                               \
+  memcpy (req->authkey, data->authkey, AUTHKEY_LENGTH);                       \
   req->message_type = MessageType_ConnectPeer;                                \
   req->msg_id = POCL_ATOMIC_INC (last_message_id);                            \
   req->event_id = netcmd->event_id;                                           \
@@ -530,7 +535,7 @@ finish_running_cmd (network_command *running_cmd)
 
 static cl_int
 pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
-                      int bufsize, int is_fast)
+                      int bufsize, int is_fast, ReplyMsg_t *reply_out)
 {
   const int32_t one = 1;
   const int32_t zero = 0;
@@ -579,6 +584,25 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
       (connect (socket_fd, (struct sockaddr *)&server, addrlen) == -1),
       CL_INVALID_DEVICE, "connect() returned errno: %i\n", errno);
 
+  RequestMsg_t hs;
+  ReplyMsg_t hsr;
+  memset (&hs, 0, sizeof (RequestMsg_t));
+  hs.message_type = MessageType_CreateOrAttachSession;
+  hs.m.get_session.peer_id = data->peer_id;
+  hs.session = data->session;
+  hs.m.get_session.fast_socket = is_fast;
+  memcpy (hs.authkey, data->authkey, AUTHKEY_LENGTH);
+  ssize_t readb, writeb;
+  uint32_t req_len = request_size (hs.message_type);
+  writeb = write_full (socket_fd, &req_len, sizeof (req_len), NULL);
+  assert ((size_t)(writeb) == 0);
+  writeb = write_full (socket_fd, &hs, req_len, NULL);
+  assert ((size_t)(writeb) == 0);
+  readb = read_full (socket_fd, &hsr, sizeof (hsr), NULL);
+  assert ((size_t)(readb) == sizeof (hsr));
+  if (reply_out)
+    memcpy (reply_out, &hsr, sizeof (ReplyMsg_t));
+
   *fd = socket_fd;
 
   return 0;
@@ -617,57 +641,20 @@ pocl_remote_reconnect_sockets (remote_server_data_t *remote)
   close (remote->fast_socket_fd);
   close (remote->slow_socket_fd);
 
-  char session_str[2 * SESSION_ID_LENGTH + 1];
-  for (uint8_t *b = (uint8_t *)remote->session, i = 0; i < SESSION_ID_LENGTH;
-       ++i)
-    snprintf (session_str + (2 * i), 3, "%02x", *b++);
-  POCL_MSG_PRINT_REMOTE ("Attempting to reconnect with session id %s\n",
-                         session_str);
+  uint64_t session = 0;
+  POCL_MSG_PRINT_REMOTE ("Attempting to connect to session %" PRIu64
+                         " on %s\n",
+                         remote->session, remote->address_with_port);
 
   // Got the lock, reconnect
   int status = 0;
   status |= pocl_network_connect (remote, &remote->fast_socket_fd,
-                                  remote->fast_port, NETWORK_BUF_SIZE_FAST, 1);
+                                  remote->fast_port, NETWORK_BUF_SIZE_FAST, 1,
+                                  NULL);
   status |= pocl_network_connect (remote, &remote->slow_socket_fd,
-                                  remote->slow_port, NETWORK_BUF_SIZE_SLOW, 0);
+                                  remote->slow_port, NETWORK_BUF_SIZE_SLOW, 0,
+                                  NULL);
   // TODO: reconnect RDMA somehow?
-
-  if (status != CL_SUCCESS)
-    {
-      // Try again next iteration
-      remote->threads_awaiting_reconnect -= 1;
-      return;
-    }
-
-  ClientHandshake_t hs, hsr;
-  memset (&hs, 0, sizeof (ClientHandshake_t));
-  memcpy (hs.session_id, remote->session, SESSION_ID_LENGTH);
-#ifdef ENABLE_RDMA
-  // TODO: reenable once client rdma works the same way as server rdma again
-  // TODO: reconnecting RDMA is probably very broken
-  hs.rdma_supported = 0;
-#else
-  hs.rdma_supported = 0;
-#endif
-
-  ssize_t readb, writeb;
-  writeb = write_full (remote->fast_socket_fd, &hsr,
-                       sizeof (ClientHandshake_t), remote);
-  if (writeb != sizeof (ClientHandshake_t))
-    status |= CL_DEVICE_NOT_FOUND;
-
-  readb = read_full (remote->fast_socket_fd, &hs, SESSION_ID_LENGTH, remote);
-  if (readb != SESSION_ID_LENGTH)
-    status |= CL_DEVICE_NOT_FOUND;
-
-  for (uint8_t *b = (uint8_t *)&hsr.session_id, i = 0; i < SESSION_ID_LENGTH;
-       ++i)
-    snprintf (session_str + (2 * i), 3, "%02x", *b++);
-  POCL_MSG_PRINT_REMOTE ("Remote replied with session id %s\n", session_str);
-
-  // Make sure we actually got the same session back
-  if (memcmp (hsr.session_id, remote->session, SESSION_ID_LENGTH) != 0)
-    status |= CL_DEVICE_NOT_FOUND;
 
   if (status == CL_SUCCESS)
     {
@@ -1480,30 +1467,12 @@ find_or_create_server (const char *address_with_port, unsigned port,
   d->fast_port = port;
   d->slow_port = port + 1;
 
-  if (pocl_network_connect (d, &d->fast_socket_fd, d->fast_port,
-                            NETWORK_BUF_SIZE_FAST, 1))
-    {
-      POCL_MSG_ERR ("Could not connect to server\n");
-      POCL_MEM_FREE (d);
-      return NULL;
-    }
-
-  if (pocl_network_connect (d, &d->slow_socket_fd, d->slow_port,
-                            NETWORK_BUF_SIZE_SLOW, 0))
-    {
-      POCL_MSG_ERR ("Could not connect to server\n");
-      POCL_MEM_FREE (d);
-      return NULL;
-    }
-
-  ClientHandshake_t hs, hsr;
-  memset (&hs, 0, sizeof (ClientHandshake_t));
 #ifdef ENABLE_RDMA
   // TODO: re-enable once client RDMA has been reworked to match server
   // communication
   if (CL_TRUE || rdma_init_id (&d->rdma_data) == 0)
     {
-      hs.rdma_supported = 0;
+      // hs.m.get_session.use_rdma = 0;
     }
   else
     {
@@ -1511,26 +1480,41 @@ find_or_create_server (const char *address_with_port, unsigned port,
                     "without RDMA\n");
     }
 #endif
-  ssize_t readb, writeb;
-  writeb = write (d->fast_socket_fd, &hs, sizeof (ClientHandshake_t));
-  assert ((size_t)(writeb) == sizeof (ClientHandshake_t));
-  readb = read (d->fast_socket_fd, &hsr, sizeof (ClientHandshake_t));
-  assert ((size_t)(readb) == sizeof (ClientHandshake_t));
-  memcpy (d->session, hsr.session_id, SESSION_ID_LENGTH);
+
+  ReplyMsg_t hsr;
+  if (pocl_network_connect (d, &d->fast_socket_fd, d->fast_port,
+                            NETWORK_BUF_SIZE_FAST, 1, &hsr))
+    {
+      POCL_MSG_ERR ("Could not connect to server\n");
+      POCL_MEM_FREE (d);
+      return NULL;
+    }
+
+  memcpy (d->authkey, hsr.m.get_session.authkey, AUTHKEY_LENGTH);
+  d->session = hsr.m.get_session.session;
 
   {
-    char tmp[2 * SESSION_ID_LENGTH + 1] = "................................";
-    for (uint8_t *b = d->session, i = 0; i < SESSION_ID_LENGTH; ++i)
+    char tmp[2 * AUTHKEY_LENGTH + 1] = "................................";
+    for (uint8_t *b = d->authkey, i = 0; i < AUTHKEY_LENGTH; ++i)
       snprintf (tmp + (2 * i), 3, "%02x", *b++);
-    POCL_MSG_PRINT_REMOTE ("Received session id %s\n", tmp);
+    POCL_MSG_PRINT_REMOTE ("Received session id %" PRIu64 ", key %s\n",
+                           hsr.m.get_session.session, tmp);
   }
 
-  d->peer_port = hsr.peer_port;
+  d->peer_port = hsr.m.get_session.peer_port;
+
+  if (pocl_network_connect (d, &d->slow_socket_fd, d->slow_port,
+                            NETWORK_BUF_SIZE_SLOW, 0, NULL))
+    {
+      POCL_MSG_ERR ("Could not connect to server\n");
+      POCL_MEM_FREE (d);
+      return NULL;
+    }
 
   DL_APPEND (servers, d);
 
 #ifdef ENABLE_RDMA
-  d->use_rdma = hsr.rdma_supported;
+  d->use_rdma = 0; // hsr.m.create_session.rdma_supported;
   if (d->use_rdma)
     {
       // TODO: RDMA connect could be moved to its own function
@@ -1616,8 +1600,8 @@ find_or_create_server (const char *address_with_port, unsigned port,
       struct rdma_conn_param conn_param = {};
       conn_param.initiator_depth = 1;
       conn_param.retry_count = 5;
-      conn_param.private_data = d->session;
-      conn_param.private_data_len = SESSION_ID_LENGTH;
+      conn_param.private_data = d->authkey;
+      conn_param.private_data_len = AUTHKEY_LENGTH;
 
       error = rdma_connect (d->rdma_data.cm_id, &conn_param);
       if (error)
@@ -1649,15 +1633,15 @@ find_or_create_server (const char *address_with_port, unsigned port,
   RequestMsg_t req;
   memset (&req, 0, sizeof (RequestMsg_t));
   req.message_type = MessageType_ServerInfo;
-  ServerInfoMsg_t server_info;
-  memset (&server_info, 0, sizeof (ServerInfoMsg_t));
-  server_info.peer_id = d->peer_id;
+  req.session = d->session;
+  memcpy (req.authkey, d->authkey, AUTHKEY_LENGTH);
+  uint32_t msg_size = request_size (req.message_type);
 
-  writeb = write (d->fast_socket_fd, &req, sizeof (RequestMsg_t));
-  assert ((size_t)(writeb) == sizeof (RequestMsg_t));
-
-  writeb = write (d->fast_socket_fd, &server_info, sizeof (ServerInfoMsg_t));
-  assert ((size_t)(writeb) == sizeof (ServerInfoMsg_t));
+  ssize_t writeb, readb;
+  writeb = write (d->fast_socket_fd, &msg_size, sizeof (msg_size));
+  assert ((size_t)(writeb) == sizeof (msg_size));
+  writeb = write (d->fast_socket_fd, &req, msg_size);
+  assert ((size_t)(writeb) == msg_size);
 
   ReplyMsg_t rep;
   readb = read (d->fast_socket_fd, &rep, sizeof (ReplyMsg_t));
@@ -2276,8 +2260,7 @@ pocl_network_setup_peer_mesh ()
           CREATE_SYNC_NETCMD;
           REQUEST_PEERCONN;
           req->m.connect_peer.port = tgt->peer_port;
-          memcpy (req->m.connect_peer.session, tgt->session,
-                  SESSION_ID_LENGTH);
+          req->m.connect_peer.session = tgt->session;
           strncpy (req->m.connect_peer.address, tgt->peer_address,
                    MAX_REMOTE_PARAM_LENGTH);
           SEND_REQ_FAST;

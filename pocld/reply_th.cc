@@ -23,7 +23,6 @@
 */
 
 #include <algorithm>
-#include <cassert>
 #include <queue>
 
 #include "common.hh"
@@ -158,7 +157,7 @@ void ReplyQueueThread::writeThread() {
     if (backup.empty())
       resending = false;
     std::unique_lock<std::mutex> lock(io_mutex);
-    if (io_inflight.size() > 0 || resending) {
+    if ((io_inflight.size() > 0 || resending) && fd >= 0) {
       Reply *reply = io_inflight[i];
       lock.unlock();
 
