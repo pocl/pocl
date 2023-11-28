@@ -331,6 +331,7 @@ setup_svm_memory_pool (cl_device_id device)
   if (ddata->device_svm_region_start_addr == 0
       || ddata->device_svm_region_size == 0)
     {
+      POCL_MSG_PRINT_REMOTE ("Device side SVM region missing.\n");
       return -1;
     }
 
@@ -346,46 +347,6 @@ setup_svm_memory_pool (cl_device_id device)
       POCL_MSG_PRINT_REMOTE ("Unable to create a device context.\n");
       return -1;
     }
-#if 0
-  /* We might want to expand the SVM size via multiple allocations.
-     If CG SVM is enabled, we will allocate also cl_mems from this
-     space, thus should get hold of it entirely. */
-  size_t dev_region_size = device->max_mem_alloc_size;
-
-  /* TODO: Align the size on client page boundary. */
-
-  cl_mem dev_region =
-    ddata->pinned_device_allocation =
-    POname(clCreateBuffer)(ddata->device_context, CL_MEM_READ_WRITE | CL_MEM_PINNED,
-                           dev_region_size, NULL, &err);
-
-  /* TODO: have a max for the allocation. global_mem_size can be huge for CPU
-     devices. */
-  /* TODO: Attempt to allocate smalled regions if failed here. */
-
-  if (err != CL_SUCCESS)
-    {
-      POCL_MSG_PRINT_REMOTE ("Unable to create a pinned memory pool on the remote "
-                             "device.\n");
-      return -1;
-    }
-
-  cl_mem_pinning pinning_info;
-  err =
-    POname(clGetMemObjectInfo(dev_region, CL_MEM_DEVICE_PTRS, sizeof (cl_mem_pinning),
-                              &pinning_info, NULL));
-
-  if (err != CL_SUCCESS || pinning_info.address == 0)
-    {
-      POCL_MSG_PRINT_REMOTE ("Unable to fetch the device ptr on the remote pinned "
-                             "allocation.\n");
-      return -1;
-    }
-
-  ddata->device_svm_region_start_addr = pinning_info.address;
-  ddata->device_svm_region_size = dev_region_size;
-#endif
-
   ddata->host_svm_region_start_addr = 0;
   ddata->host_svm_region_size = 0;
 
@@ -484,11 +445,10 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
      solution). */
   if (setup_svm_memory_pool (device) == 0 && d->svm_region_offset == 0)
     {
-      /* TODO: We should ensure remote has the first priority as we need to
+      /* We should ensure remote has the first priority as we need to
          delegate the initial allocation down to the remote device driver
-         which dictates the position in VMem. How to ensure the CPU device
-         doesn't steal the SVM allocation priority? */
-      device->svm_allocation_priority = 1;
+         which dictates the position in VMem. */
+      device->svm_allocation_priority = 10;
       device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
 
       /* We currently need d->svm_region_offset == 0 since there is no
@@ -1696,8 +1656,8 @@ pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
   uint32_t queue_id = (uint32_t)node->sync.event.event->queue->id;
 
   POCL_MSG_PRINT_MEMORY ("REMOTE: UNMAP memcpy() "
-                         "host_ptr %p to mem_id %lu + offset %zu\n",
-                         host_ptr, mem_id, offset);
+                         "host_ptr %p to mem_id %lu + offset %zu size %zu\n",
+                         host_ptr, mem_id, offset, size);
   int r = pocl_network_write (queue_id, data, mem_id, 0, host_ptr, offset,
                               size, remote_finish_command, data, node);
   assert (r == 0);

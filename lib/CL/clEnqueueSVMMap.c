@@ -71,23 +71,19 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
         return CL_SUCCESS;
     }
 
-  _cl_command_node *cmd = NULL;
+  pocl_svm_ptr *svm_ptr_pocl = pocl_find_svm_ptr_in_context (context, svm_ptr);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MAP,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 0, NULL, NULL);
-
-  if (errcode != CL_SUCCESS)
+  if (svm_ptr_pocl
+      != NULL) /* If it's nullptr, it must be a system allocation. */
     {
-      POCL_MEM_FREE(cmd);
-      return errcode;
+      assert (svm_ptr_pocl->shadow_cl_mem != NULL);
+      POname (clEnqueueMapBuffer (
+          command_queue, svm_ptr_pocl->shadow_cl_mem, CL_FALSE, 0 /* TODO */,
+          svm_ptr - svm_ptr_pocl->svm_ptr, size, num_events_in_wait_list,
+          event_wait_list, event, &errcode));
+      if (errcode != CL_SUCCESS)
+        return errcode;
     }
-
-  cmd->command.svm_map.svm_ptr = svm_ptr;
-  cmd->command.svm_map.size = size;
-  cmd->command.svm_map.flags = map_flags;
-
-  pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_map == CL_TRUE)
     return POname(clFinish)(command_queue);

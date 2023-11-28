@@ -1,12 +1,13 @@
 /* OpenCL runtime library: clEnqueueSVMMemcpy()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
@@ -66,32 +67,45 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
   if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
     POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
 
-  if (command_buffer == NULL)
+  /* Utilize the shadow buffers for implementing the copy in a similar
+     way as buffer copies are. */
+
+  pocl_svm_ptr *src_svm_ptr = pocl_find_svm_ptr_in_context (context, src_ptr);
+  pocl_svm_ptr *dst_svm_ptr = pocl_find_svm_ptr_in_context (context, dst_ptr);
+
+  if (src_svm_ptr != NULL && dst_svm_ptr != NULL)
     {
-      errcode = pocl_check_event_wait_list (
-          command_queue, num_items_in_wait_list, event_wait_list);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-      errcode = pocl_create_command (cmd, command_queue, command_type, event,
-                                     num_items_in_wait_list, event_wait_list,
-                                     0, NULL, NULL);
+      /* A copy between SVM regions. Use the basic buffer copy using the shadow
+         buffers. */
+      errcode = pocl_copy_buffer_common (
+          NULL, command_queue, src_svm_ptr->shadow_cl_mem,
+          dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
+          dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
+          event_wait_list, event, NULL, NULL, cmd);
+    }
+  else if (dst_svm_ptr != NULL)
+    {
+      /* Read from a host address to the SVM region. */
+      /* TODO: Command buffering. clEnqueueWriteBuffer is not supported by
+         the command buffer specs. We should extend the spec to include it. */
+      errcode = POname (clEnqueueWriteBuffer) (
+          command_queue, dst_svm_ptr->shadow_cl_mem,
+          CL_FALSE, /* We will clFinish() later. */
+          dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
+          num_items_in_wait_list, event_wait_list, event);
     }
   else
     {
-      errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, command_type,
-          num_items_in_wait_list, sync_point_wait_list, 0, NULL, NULL);
+      /* Copy between non-SVM allocated host pointers. Can be a system SVM
+         or any region of memory (even if the device wouldn't support system
+         SVM?). The spec doesn't seem to disallow the case. */
+      /* TODO: Command buffering, async copy. */
+      POname (clFinish) (command_queue);
+      memcpy (dst_ptr, src_ptr, size);
+      errcode = CL_SUCCESS;
     }
-  if (errcode != CL_SUCCESS)
-    return errcode;
 
-  _cl_command_node *c = *cmd;
-
-  c->command.svm_memcpy.src = src_ptr;
-  c->command.svm_memcpy.dst = dst_ptr;
-  c->command.svm_memcpy.size = size;
-
-  return CL_SUCCESS;
+  return errcode;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -110,7 +124,8 @@ POname (clEnqueueSVMMemcpy) (cl_command_queue command_queue, cl_bool blocking,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
+  if (cmd != NULL)
+    pocl_command_enqueue (command_queue, cmd);
 
   if (blocking)
     POname (clFinish) (command_queue);

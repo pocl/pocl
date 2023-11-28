@@ -1143,6 +1143,9 @@ struct _pocl_svm_ptr
 {
   void *svm_ptr;
   size_t size;
+  /* A CL_MEM_PINNED cl_mem with device and host ptr the same. This is for
+     internal book keeping and automated migration purposes. */
+  cl_mem shadow_cl_mem;
   struct _pocl_svm_ptr *prev, *next;
 };
 
