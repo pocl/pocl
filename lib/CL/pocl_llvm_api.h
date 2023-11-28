@@ -88,8 +88,21 @@ POCL_EXPORT bool getModuleStringMetadata (const llvm::Module &mod,
 POCL_EXPORT bool getModuleBoolMetadata (const llvm::Module &mod,
                                         const char *key, bool &data);
 
-void clearKernelPasses();
-void clearTargetMachines();
+/**
+ * Creates a PassBuilder and populates a PassManager with LLMV optimization
+ * passes. Optionally runs it on a Module.
+ *
+ * Passes - optional. If non-NULL, it must be a pointer to PassManager which
+ * the PassBuilder will use, otherwise a hidden PM is used. Currently only
+ * required in one place (runKernelCompilerPasses for legacy PM).
+ * Module - optional. If non-NULL, it must be a pointer to Module.
+ * The constructed PassManager instance will run the passes on the Module.
+ * OptL - optimize for speed (0 to 3 are valid)
+ * SizeL - optimize for size
+ * Vectorize - whether to invoke the vectorizer (only used for legacy PM)
+ */
+POCL_EXPORT void populateModulePM (void *Passes, void *Module, unsigned OptL,
+                                   unsigned SizeL, bool Vectorize = true);
 
 extern std::string CurrentWgMethod;
 

@@ -22,15 +22,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <sstream>
-#include <iostream>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
@@ -41,6 +37,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "WorkitemHandler.h"
 #include "Kernel.h"
 #include "DebugHelpers.h"
+POP_COMPILER_DIAGS
+
+#include "pocl_llvm_api.h"
+
+#include <iostream>
+#include <sstream>
 
 POP_COMPILER_DIAGS
 
@@ -53,20 +55,12 @@ cl::opt<bool> AddWIMetadata(
     cl::desc("Adds a work item identifier to each of the instruction in "
              "work items."));
 
-WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID) {
-}
-
-bool
-WorkitemHandler::runOnFunction(Function &) {
-  return false;
-}
-
 void
 WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
 
-  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
   getModuleStringMetadata(*M, "KernelName", KernelName);
   getModuleIntMetadata(*M, "WGMaxGridDimWidth", WGMaxGridDimWidth);
@@ -84,7 +78,7 @@ WorkitemHandler::Initialize(Kernel *K) {
   if (WGLocalSizeZ == 0)
     WGLocalSizeZ = 1;
 
-  SizeTWidth = address_bits;
+  SizeTWidth = AddressBits;
   SizeT = IntegerType::get(M->getContext(), SizeTWidth);
 
   assert ((SizeTWidth == 32 || SizeTWidth == 64) &&
@@ -96,28 +90,25 @@ WorkitemHandler::Initialize(Kernel *K) {
   LocalIdXGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, LocalIdType);
 }
 
+bool WorkitemHandler::dominatesUse(llvm::DominatorTree &DT, Instruction &Inst,
+                                   unsigned OpNum) {
 
-bool
-WorkitemHandler::dominatesUse
-(llvm::DominatorTreeWrapperPass *DTP, Instruction &I, unsigned i) {
-  DominatorTree *DT = &DTP->getDomTree();
-  Instruction *Op = cast<Instruction>(I.getOperand(i));
+  Instruction *Op = cast<Instruction>(Inst.getOperand(OpNum));
   BasicBlock *OpBlock = Op->getParent();
-  PHINode *PN = dyn_cast<PHINode>(&I);
+  PHINode *PN = dyn_cast<PHINode>(&Inst);
 
   // DT can handle non phi instructions for us.
   if (!PN) 
     {
       // Definition must dominate use unless use is unreachable!
-      return Op->getParent() == I.getParent() ||
-        DT->dominates(Op, &I);
+      return Op->getParent() == Inst.getParent() || DT.dominates(Op, &Inst);
     }
 
   // PHI nodes are more difficult than other nodes because they actually
   // "use" the value in the predecessor basic blocks they correspond to.
-  unsigned j = PHINode::getIncomingValueNumForOperand(i);
-  BasicBlock *PredBB = PN->getIncomingBlock(j);
-  return (PredBB && DT->dominates(OpBlock, PredBB));
+  unsigned Val = PHINode::getIncomingValueNumForOperand(OpNum);
+  BasicBlock *PredBB = PN->getIncomingBlock(Val);
+  return (PredBB && DT.dominates(OpBlock, PredBB));
 }
 
 /* Fixes the undominated variable uses.
@@ -157,12 +148,15 @@ WorkitemHandler::dominatesUse
    the old one. This should ensure the reachability without 
    the costly dominance analysis.
 */
-bool
-WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
-                                            llvm::Function &F)
-{
+bool WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree &DT,
+                                                 llvm::Function &F) {
   bool changed = false;
-  DT->runOnFunction(F);
+#if LLVM_VERSION_MAJOR < 11
+  DT.releaseMemory();
+#else
+  DT.reset();
+#endif
+  DT.recalculate(F);
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
     {
@@ -247,9 +241,9 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
  * of the replicated BB because it has only one entry.
  */
 void
-WorkitemHandler::movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst) {
-  while (PHINode *PN = dyn_cast<PHINode>(src->begin())) 
-    PN->moveBefore(dst->getFirstNonPHI());
+WorkitemHandler::movePhiNodes(llvm::BasicBlock* Src, llvm::BasicBlock* Dst) {
+  while (PHINode *PN = dyn_cast<PHINode>(Src->begin()))
+    PN->moveBefore(Dst->getFirstNonPHI());
 }
 
 

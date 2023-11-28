@@ -22,50 +22,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <string>
-#include <set>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Module.h"
 
+#include "Flatten.hh"
+#include "LLVMUtils.h"
 #include "Workgroup.h"
-
+#include "WorkitemHandlerChooser.h"
 POP_COMPILER_DIAGS
 
-using namespace llvm;
+#include <iostream>
+#include <set>
+#include <string>
 
-namespace {
-  class Flatten : public ModulePass {
-
-  public:
-    static char ID;
-    Flatten() : ModulePass(ID) {}
-
-    virtual bool runOnModule(Module &M);
-  };
-
-}
-
-char Flatten::ID = 0;
-static RegisterPass<Flatten>
-    X("flatten-inline-all",
-      "Kernel function flattening pass - flatten everything");
+#include "pocl_llvm_api.h"
 
 //#define DEBUG_FLATTEN
 
-bool
-Flatten::runOnModule(Module &M)
-{
+#define PASS_NAME "flatten-inline-all"
+#define PASS_CLASS pocl::FlattenAll
+#define PASS_DESC "Kernel function flattening pass - flatten everything"
+
+namespace pocl {
+
+using namespace llvm;
+
+static bool flattenAll(Module &M) {
   bool changed = false;
 
   std::string DevAuxFunctionsList;
@@ -108,7 +97,7 @@ Flatten::runOnModule(Module &M)
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
     }
-#ifdef LLVM_OLDER_THAN_14_0
+#if LLVM_MAJOR < 14
     f->removeAttributes(AttributeList::FunctionIndex,
                         Attrs.addAttribute(M.getContext(), replaceThisAttr));
     f->addFnAttr(replacementAttr);
@@ -123,3 +112,28 @@ Flatten::runOnModule(Module &M)
   return changed;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char FlattenAll::ID = 0;
+
+bool FlattenAll::runOnModule(Module &M) { return flattenAll(M); }
+
+void FlattenAll::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses FlattenAll::run(llvm::Module &M,
+                                        llvm::ModuleAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return flattenAll(M) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

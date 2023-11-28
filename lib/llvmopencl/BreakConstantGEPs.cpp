@@ -16,17 +16,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "break-constgeps"
-
-#include <iostream>
-#include <map>
-#include <utility>
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
@@ -36,22 +30,30 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/InstIterator.h"
 
 #include "BreakConstantGEPs.h"
+#include "LLVMUtils.h"
 #include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+POP_COMPILER_DIAGS
 
-using namespace llvm;
+#include <iostream>
+#include <map>
+#include <utility>
 
-// Identifier variable for the pass
-char BreakConstantGEPs::ID = 0;
+#define DEBUG_TYPE "break-constgeps"
+
+#define PASS_NAME "break-constgeps"
+#define PASS_CLASS pocl::BreakConstantGEPs
+#define PASS_DESC "Remove GEP Constant Expressions"
 
 // Statistics
 STATISTIC (GEPChanges,   "Number of Converted GEP Constant Expressions");
 STATISTIC (TotalChanges, "Number of Converted Constant Expressions");
 
-POP_COMPILER_DIAGS
+namespace pocl {
 
-// Register the pass
-static RegisterPass<BreakConstantGEPs> P ("break-constgeps",
-                                          "Remove GEP Constant Expressions");
+using namespace llvm;
+
+static bool breakConstantGEPs(Function &F);
 
 //
 // Function: hasConstantGEP()
@@ -243,8 +245,7 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
 //  true  - The function was modified.
 //  false - The function was not modified.
 //
-bool
-BreakConstantGEPs::runOnFunction (Function & F) {
+static bool breakConstantGEPs(Function &F) {
 
   if (!pocl::isKernelToProcess(F))
     return false;
@@ -332,4 +333,31 @@ BreakConstantGEPs::runOnFunction (Function & F) {
   return modified;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char BreakConstantGEPs::ID = 0;
 
+bool BreakConstantGEPs::runOnFunction(Function &F) {
+  return breakConstantGEPs(F);
+}
+
+void BreakConstantGEPs::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+  AU.setPreservesCFG();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+llvm::PreservedAnalyses
+BreakConstantGEPs::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserveSet<CFGAnalyses>();
+  return breakConstantGEPs(F) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC)
+
+#endif
+
+} // namespace pocl

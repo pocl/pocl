@@ -1,29 +1,28 @@
 /* pocl-ptx-gen.cc - PTX code generation functions
 
-   Copyright (c) 2016-2017 James Price / University of Bristol
+    Copyright (c) 2016-2017 James Price / University of Bristol
 
-   Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
-   furnished to do so, subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to
+    deal in the Software without restriction, including without limitation the
+    rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+    sell copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-   The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
 
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE.
 */
 
 #include "config.h"
 
-#include "LLVMUtils.h"
 #include "common.h"
 #include "pocl-ptx-gen.h"
 #include "pocl.h"
@@ -35,7 +34,6 @@
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Metadata.h"
@@ -47,24 +45,22 @@
 #else
 #include "llvm/Support/TargetRegistry.h"
 #endif
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/TargetSelect.h"
 #ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
 #endif
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-
-#include <llvm/PassInfo.h>
-#include <llvm/PassRegistry.h>
 
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
-#include <llvm/IR/LegacyPassManager.h>
+
+#if LLVM_MAJOR >= 17
+#include <llvm/Transforms/IPO/Internalize.h>
+#endif
+
+#include "LLVMUtils.h"
 
 #include <set>
 #include <optional>
@@ -708,15 +704,6 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
     return -1;
   }
 
-  llvm::legacy::PassManager Passes;
-
-  // Run internalize to mark all non-kernel functions as internal.
-  auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
-    const llvm::Function *F = llvm::dyn_cast<llvm::Function>(&GV);
-    return (F != nullptr && pocl::isKernelToProcess(*F));
-  };
-  Passes.add(llvm::createInternalizePass(PreserveKernel));
-
   // Add NVVM reflect module flags to set math options.
   // TODO: Determine correct FTZ value from frontend compiler options.
   llvm::LLVMContext &Context = Module->getContext();
@@ -730,13 +717,24 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
       llvm::MDNode::get(Context, {FourMD, NameMD, OneMD});
   Module->addModuleFlag(ReflectFlag);
 
-  // Run optimization passes to clean up unused functions etc.
-  llvm::PassManagerBuilder Builder;
-  Builder.OptLevel = 3;
-  Builder.SizeLevel = 0;
-  Builder.populateModulePassManager(Passes);
+  // Run internalize to mark all non-kernel functions as internal.
+  auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
+    const llvm::Function *F = llvm::dyn_cast<llvm::Function>(&GV);
+    return (F != nullptr && pocl::isKernelToProcess(*F));
+  };
 
+#if LLVM_MAJOR < 17
+  llvm::legacy::PassManager Passes;
+  Passes.add(llvm::createInternalizePass(PreserveKernel));
+  // run the InternalizePass
   Passes.run(*Module);
+#else
+  internalizeModule(*Module, PreserveKernel);
+#endif
+
+  // Run optimization passes to clean up unused functions etc.
+  populateModulePM(nullptr, Module, 3, 0);
+
   return 0;
 }
 
@@ -962,12 +960,16 @@ void mapLibDeviceCalls(llvm::Module *Module) {
 
     {"frexp", "__nv_frexp"},
     {"frexpf", "__nv_frexpf"},
+    {"llvm.frexp.f64.i32", "frexp_f64_i32"},
+    {"llvm.frexp.f32.i32", "frexpf_f32_i32"},
 
     {"tgamma", "__nv_tgamma"},
     {"tgammaf", "__nv_tgammaf"},
 
     {"ldexp", "__nv_ldexp"},
     {"ldexpf", "__nv_ldexpf"},
+    {"llvm.ldexp.f64.i32", "__nv_ldexp"},
+    {"llvm.ldexp.f32.i32", "__nv_ldexpf"},
 
     {"modf", "__nv_modf"},
     {"modff", "__nv_modff"},

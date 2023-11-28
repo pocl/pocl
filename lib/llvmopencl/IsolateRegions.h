@@ -23,22 +23,44 @@
 #ifndef POCL_ISOLATE_REGIONS_H
 #define POCL_ISOLATE_REGIONS_H
 
-#include "llvm/Analysis/RegionPass.h"
+#include "config.h"
+
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+#include <llvm/Analysis/RegionPass.h>
+#endif
 
 namespace pocl {
 
-  class IsolateRegions : public llvm::RegionPass {
-  public:
-    static char ID;
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-    IsolateRegions() : RegionPass(ID) {}
+class IsolateRegions : public llvm::RegionPass
+{
+public:
+  static char ID;
+  IsolateRegions() : RegionPass(ID) {};
+  virtual ~IsolateRegions() {};
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnRegion(llvm::Region *R, llvm::RGPassManager&);
-    void addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb);
-    void addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb);
+  virtual bool runOnRegion(llvm::Region *F, llvm::RGPassManager &RGM) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-  };
-}
+#else
+
+class IsolateRegions : public llvm::PassInfoMixin<IsolateRegions> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
 
 #endif

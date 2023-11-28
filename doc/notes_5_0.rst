@@ -49,7 +49,11 @@ CUDA driver has gained some new features:
    Aalborg, Denmark, 2023, pp. 1-7,
    doi: 10.1109/NorCAS58970.2023.10305457
 
+=============================
+Deprecation notice
+=============================
 
+Support for LLVM versions 10 to 13 inclusive is deprecated and will be removed in next PoCL release.
 
 ================
 Acknowledgements

@@ -22,16 +22,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <vector>
-
-#include "pocl.h"
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -47,78 +43,136 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
-#define DEBUG_TYPE "workitem-loops"
-
-#include "WorkitemLoops.h"
-#include "Workgroup.h"
 #include "Barrier.h"
-#include "Kernel.h"
-#include "WorkitemHandlerChooser.h"
-
-//#define DUMP_CFGS
-
 #include "DebugHelpers.h"
-
-//#define DEBUG_WORK_ITEM_LOOPS
-
+#include "Kernel.h"
+#include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+#include "WorkitemLoops.h"
+POP_COMPILER_DIAGS
+
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+
+#define DEBUG_TYPE "workitem-loops"
+//#define DUMP_CFGS
+//#define DEBUG_WORK_ITEM_LOOPS
 
 // this must be at least the alignment of largest OpenCL type (= 128 bytes)
 #define CONTEXT_ARRAY_ALIGN MAX_EXTENDED_ALIGNMENT
 
+#define PASS_NAME "workitemloops"
+#define PASS_CLASS pocl::WorkitemLoops
+#define PASS_DESC "Workitem loop generation pass"
+
+namespace pocl {
+
 using namespace llvm;
-using namespace pocl;
-
-namespace {
-static RegisterPass<WorkitemLoops> X("workitemloops",
-                                     "Workitem loop generation pass");
-}
-
-char WorkitemLoops::ID = 0;
 
 // Magic function used to allocate "local memory" dynamically. Used with SG/WG
 // shuffles as temporary storage.
-const char *POCL_LOCAL_MEM_ALLOCA_FUNC_NAME = "__pocl_local_mem_alloca";
+static const char *POCL_LOCAL_MEM_ALLOCA_FUNC_NAME = "__pocl_local_mem_alloca";
 
 // Another, which multiplies the size by the number of WIs in the WG.
-const char *POCL_WORK_GROUP_ALLOCA_FUNC_NAME = "__pocl_work_group_alloca";
+static const char *POCL_WORK_GROUP_ALLOCA_FUNC_NAME =
+    "__pocl_work_group_alloca";
 
-void
-WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
-{
-  AU.addRequired<PostDominatorTreeWrapperPass>();
+class WorkitemLoopsImpl : public pocl::WorkitemHandler {
+public:
+  WorkitemLoopsImpl(llvm::DominatorTree &DT, llvm::LoopInfo &LI,
+                    llvm::PostDominatorTree &PDT,
+                    VariableUniformityAnalysisResult &VUA)
+      : WorkitemHandler(), DT(DT), LI(LI), PDT(PDT), VUA(VUA) {}
+  virtual bool runOnFunction(llvm::Function &F);
 
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addRequired<DominatorTreeWrapperPass>();
+private:
+  using BasicBlockVector = std::vector<llvm::BasicBlock *>;
+  using InstructionIndex = std::set<llvm::Instruction *>;
+  using InstructionVec = std::vector<llvm::Instruction *>;
+  using StrInstructionMap = std::map<std::string, llvm::AllocaInst *>;
 
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
+  llvm::DominatorTree &DT;
+  llvm::LoopInfo &LI;
+  llvm::PostDominatorTree &PDT;
+  VariableUniformityAnalysisResult &VUA;
 
-  AU.addRequired<pocl::WorkitemHandlerChooser>();
-  AU.addPreserved<pocl::WorkitemHandlerChooser>();
+  ParallelRegion::ParallelRegionVector OriginalParallelRegions;
 
-}
+  StrInstructionMap ContextArrays;
 
-bool WorkitemLoops::runOnFunction(Function &F) {
+  // Points to the __pocl_local_mem_alloca pseudo function declaration, if
+  // it's been referred to in the processed module.
+  llvm::Function *LocalMemAllocaFuncDecl;
 
-  if (!isKernelToProcess(F))
-    return false;
+  // Points to the __pocl_work_group_alloca pseudo function declaration, if
+  // it's been referred to in the processed module.
+  llvm::Function *WorkGroupAllocaFuncDecl;
 
-  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
-  if (WIH != pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS &&
-      !(WIH == pocl::WorkitemHandlerChooser::POCL_WIH_CBS &&
-        !hasWorkgroupBarriers(F)))
-    return false;
+  // Points to the work-group size computation instruction in the entry
+  // block of the currently handled function.
+  llvm::Instruction *WGSizeInstr;
 
-  DTP = &getAnalysis<DominatorTreeWrapperPass>();
-  DT = &DTP->getDomTree();
-  LI = &getAnalysis<LoopInfoWrapperPass>();
+  bool processFunction(llvm::Function &F);
 
-  PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
+  void fixMultiRegionVariables(ParallelRegion *region);
+#if LLVM_MAJOR > 13
+  bool handleLocalMemAllocas(Kernel &K);
+#endif
+  void addContextSaveRestore(llvm::Instruction *instruction);
+  void releaseParallelRegions();
 
+  // Returns an instruction in the entry block which computes the
+  // total size of work-items in the work-group. If it doesn't
+  // exist, creates it to the end of the entry block.
+  llvm::Instruction *getWorkGroupSizeInstr(llvm::Function &F);
+
+  llvm::Value *getLinearWiIndex(llvm::IRBuilder<> &Builder, llvm::Module *M,
+                                ParallelRegion *Region);
+  llvm::Instruction *addContextSave(llvm::Instruction *Instruction,
+                                    llvm::AllocaInst *AllocaI);
+  llvm::Instruction *
+  addContextRestore(llvm::Value *Val, llvm::AllocaInst *AllocaI,
+                    llvm::Type *InstType, bool PoclWrapperStructAdded,
+                    llvm::Instruction *Before = nullptr, bool isAlloca = false);
+  llvm::AllocaInst *getContextArray(llvm::Instruction *Inst,
+                                    bool &PoclWrapperStructAdded);
+
+  std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
+  createLoopAround(ParallelRegion &Region, llvm::BasicBlock *EntryBB,
+                   llvm::BasicBlock *ExitBB, bool PeeledFirst,
+                   llvm::Value *LocalIdVar, size_t LocalSizeForDim,
+                   bool AddIncBlock = true,
+                   llvm::Value *DynamicLocalSize = nullptr);
+
+  llvm::BasicBlock *appendIncBlock(llvm::BasicBlock *After,
+                                   llvm::Value *LocalIdVar);
+
+  ParallelRegion *regionOfBlock(llvm::BasicBlock *BB);
+
+  bool shouldNotBeContextSaved(llvm::Instruction *Instr);
+
+  llvm::Type *recursivelyAlignArrayType(llvm::Type *ArrayType,
+                                        llvm::Type *ElementType,
+                                        size_t Alignment,
+                                        const llvm::DataLayout &Layout);
+
+  std::map<llvm::Instruction *, unsigned> TempInstructionIds;
+  size_t TempInstructionIndex;
+  // An alloca in the kernel which stores the first iteration to execute
+  // in the inner (dimension 0) loop. This is set to 1 in an peeled iteration
+  // to skip the 0, 0, 0 iteration in the loops.
+  llvm::Value *LocalIdXFirstVar;
+};
+
+bool WorkitemLoopsImpl::runOnFunction(Function &F) {
   WGSizeInstr = nullptr;
 
-  tempInstructionIndex = 0;
+  TempInstructionIndex = 0;
 
   LocalMemAllocaFuncDecl =
       F.getParent()->getFunction(POCL_LOCAL_MEM_ALLOCA_FUNC_NAME);
@@ -126,7 +180,7 @@ bool WorkitemLoops::runOnFunction(Function &F) {
   WorkGroupAllocaFuncDecl =
       F.getParent()->getFunction(POCL_WORK_GROUP_ALLOCA_FUNC_NAME);
 
-  bool Changed = ProcessFunction(F);
+  bool Changed = processFunction(F);
 
 #if LLVM_MAJOR > 13
   Changed |= handleLocalMemAllocas(cast<Kernel>(F));
@@ -134,31 +188,33 @@ bool WorkitemLoops::runOnFunction(Function &F) {
 
 #ifdef DUMP_CFGS
   dumpCFG(F, F.getName().str() + "_after_wiloops.dot",
-          original_parallel_regions);
+          &OriginalParallelRegions);
 #endif
 
-  Changed |= fixUndominatedVariableUses(DTP, F);
+  Changed |= fixUndominatedVariableUses(DT, F);
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
   Changed |= chopBBs(F, *this);
   F.viewCFG();
 #endif
-  contextArrays.clear();
-  tempInstructionIds.clear();
+  ContextArrays.clear();
+  TempInstructionIds.clear();
 
   releaseParallelRegions();
   return Changed;
 }
 
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
-WorkitemLoops::CreateLoopAround
-(ParallelRegion &region,
- llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB,
- bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
- bool addIncBlock, llvm::Value *DynamicLocalSize)
-{
-  assert (localIdVar != NULL);
+WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
+                                    llvm::BasicBlock *EntryBB,
+                                    llvm::BasicBlock *ExitBB,
+                                    bool PeeledFirst,
+                                    llvm::Value *LocalIdVar,
+                                    size_t LocalSizeForDim,
+                                    bool AddIncBlock,
+                                    llvm::Value *DynamicLocalSize) {
+  assert (LocalIdVar != NULL);
 
   /*
 
@@ -207,34 +263,38 @@ WorkitemLoops::CreateLoopAround
     enable easy vectorization of loading the context data when there are parallel iterations.
   */     
 
-  llvm::BasicBlock *loopBodyEntryBB = entryBB;
-  llvm::LLVMContext &C = loopBodyEntryBB->getContext();
-  llvm::Function *F = loopBodyEntryBB->getParent();
-  loopBodyEntryBB->setName(std::string("pregion_for_entry.") + entryBB->getName().str());
+  llvm::BasicBlock *LoopBodyEntryBB = EntryBB;
+  llvm::LLVMContext &C = LoopBodyEntryBB->getContext();
+  llvm::Function *F = LoopBodyEntryBB->getParent();
+  LoopBodyEntryBB->setName(std::string("pregion_for_entry.") + EntryBB->getName().str());
 
-  assert (exitBB->getTerminator()->getNumSuccessors() == 1);
+  assert (ExitBB->getTerminator()->getNumSuccessors() == 1);
 
-  llvm::BasicBlock *oldExit = exitBB->getTerminator()->getSuccessor(0);
+  llvm::BasicBlock *oldExit = ExitBB->getTerminator()->getSuccessor(0);
 
   llvm::BasicBlock *forInitBB = 
-    BasicBlock::Create(C, "pregion_for_init", F, loopBodyEntryBB);
+    BasicBlock::Create(C, "pregion_for_init", F, LoopBodyEntryBB);
 
   llvm::BasicBlock *loopEndBB = 
-    BasicBlock::Create(C, "pregion_for_end", F, exitBB);
+    BasicBlock::Create(C, "pregion_for_end", F, ExitBB);
 
   llvm::BasicBlock *forCondBB = 
-    BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
+    BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
 
-
-  DTP->runOnFunction(*F);
+#if LLVM_VERSION_MAJOR < 11
+  DT.releaseMemory();
+#else
+  DT.reset();
+#endif
+  DT.recalculate(*F);
 
   /* Collect the basic blocks in the parallel region that dominate the
      exit. These are used in determining whether load instructions may
      be executed unconditionally in the parallel loop (see below). */
   llvm::SmallPtrSet<llvm::BasicBlock *, 8> dominatesExitBB;
-  for (auto bb: region) {
-    if (DT->dominates(bb, exitBB)) {
-      dominatesExitBB.insert(bb);
+  for (auto BB: Region) {
+    if (DT.dominates(BB, ExitBB)) {
+      dominatesExitBB.insert(BB);
     }
   }
 
@@ -244,8 +304,8 @@ WorkitemLoops::CreateLoopAround
      old basic block so we preserve the old loops. */
   BasicBlockVector preds;
   llvm::pred_iterator PI = 
-    llvm::pred_begin(entryBB), 
-    E = llvm::pred_end(entryBB);
+    llvm::pred_begin(EntryBB),
+    E = llvm::pred_end(EntryBB);
 
   for (; PI != E; ++PI)
     {
@@ -259,36 +319,36 @@ WorkitemLoops::CreateLoopAround
       llvm::BasicBlock *bb = *i;
       /* Do not fix loop edges inside the region. The loop
          is replicated as a whole to the body of the wi-loop.*/
-      if (DT->dominates(loopBodyEntryBB, bb))
+      if (DT.dominates(LoopBodyEntryBB, bb))
         continue;
-      bb->getTerminator()->replaceUsesOfWith(loopBodyEntryBB, forInitBB);
+      bb->getTerminator()->replaceUsesOfWith(LoopBodyEntryBB, forInitBB);
     }
 
   IRBuilder<> builder(forInitBB);
 
-  if (peeledFirst) {
-    builder.CreateStore(builder.CreateLoad(SizeT, localIdXFirstVar), localIdVar);
-    builder.CreateStore(ConstantInt::get(SizeT, 0), localIdXFirstVar);
+  if (PeeledFirst) {
+      builder.CreateStore(builder.CreateLoad(SizeT, LocalIdXFirstVar), LocalIdVar);
+      builder.CreateStore(ConstantInt::get(SizeT, 0), LocalIdXFirstVar);
 
     if (WGDynamicLocalSize) {
       llvm::Value *cmpResult;
-      cmpResult = builder.CreateICmpULT(builder.CreateLoad(SizeT, localIdVar),
+      cmpResult = builder.CreateICmpULT(builder.CreateLoad(SizeT, LocalIdVar),
                                         builder.CreateLoad(SizeT, DynamicLocalSize));
 
-      builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+      builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
     } else {
-      builder.CreateBr(loopBodyEntryBB);
+      builder.CreateBr(LoopBodyEntryBB);
     }
   } else {
-    builder.CreateStore(ConstantInt::get(SizeT, 0), localIdVar);
+    builder.CreateStore(ConstantInt::get(SizeT, 0), LocalIdVar);
 
-    builder.CreateBr(loopBodyEntryBB);
+    builder.CreateBr(LoopBodyEntryBB);
   }
 
-  exitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
-  if (addIncBlock)
+  ExitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
+  if (AddIncBlock)
     {
-      AppendIncBlock(exitBB, localIdVar);
+    appendIncBlock(ExitBB, LocalIdVar);
     }
 
   builder.SetInsertPoint(forCondBB);
@@ -296,15 +356,15 @@ WorkitemLoops::CreateLoopAround
   llvm::Value *cmpResult;
   if (!WGDynamicLocalSize)
     cmpResult = builder.CreateICmpULT(
-                  builder.CreateLoad(SizeT, localIdVar),
+                  builder.CreateLoad(SizeT, LocalIdVar),
                     ConstantInt::get(SizeT, LocalSizeForDim));
   else
     cmpResult = builder.CreateICmpULT(
-                  builder.CreateLoad(SizeT, localIdVar),
+                  builder.CreateLoad(SizeT, LocalIdVar),
                     builder.CreateLoad(SizeT, DynamicLocalSize));
   
   Instruction *loopBranch =
-      builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+      builder.CreateCondBr(cmpResult, LoopBodyEntryBB, loopEndBB);
 
   /* Add the metadata to mark a parallel loop. The metadata 
      refer to a loop-unique dummy metadata that is not merged
@@ -337,7 +397,7 @@ WorkitemLoops::CreateLoopAround
       return dominatesExitBB.count(insn->getParent());
     };
 
-  region.AddParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
+  Region.AddParallelLoopMetadata(AccessGroupMD, IsLoadUnconditionallySafe);
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -345,37 +405,27 @@ WorkitemLoops::CreateLoopAround
   return std::make_pair(forInitBB, loopEndBB);
 }
 
-ParallelRegion*
-WorkitemLoops::RegionOfBlock(llvm::BasicBlock *bb)
-{
+ParallelRegion *WorkitemLoopsImpl::regionOfBlock(llvm::BasicBlock *BB) {
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
-    if (region->HasBlock(bb)) return region;
-  } 
-  return NULL;
+           PRI = OriginalParallelRegions.begin(),
+           PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI) {
+    ParallelRegion *region = (*PRI);
+    if (region->HasBlock(BB)) return region;
+  }
+  return nullptr;
 }
 
-void WorkitemLoops::releaseParallelRegions() {
-  if (original_parallel_regions) {
-    for (auto i = original_parallel_regions->begin(),
-              e = original_parallel_regions->end();
-              i != e; ++i) {
-      ParallelRegion *p = *i;
-      delete p;
-    }
-
-    delete original_parallel_regions;
-    original_parallel_regions = nullptr;
+void WorkitemLoopsImpl::releaseParallelRegions() {
+  for (auto PRI = OriginalParallelRegions.begin(),
+            PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI) {
+    ParallelRegion *P = *PRI;
+    delete P;
   }
 }
 
-bool
-WorkitemLoops::ProcessFunction(Function &F)
-{
+bool WorkitemLoopsImpl::processFunction(Function &F) {
   Kernel *K = cast<Kernel> (&F);
 
   llvm::Module *M = K->getParent();
@@ -392,16 +442,16 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   releaseParallelRegions();
 
-  original_parallel_regions = K->getParallelRegions(&LI->getLoopInfo());
+  K->getParallelRegions(LI, &OriginalParallelRegions);
 
 #ifdef DUMP_CFGS
   F.dump();
   dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
-          original_parallel_regions);
+          &OriginalParallelRegions);
 #endif
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
-  localIdXFirstVar = builder.CreateAlloca(SizeT, 0, ".pocl.local_id_x_init");
+  LocalIdXFirstVar = builder.CreateAlloca(SizeT, 0, ".pocl.local_id_x_init");
 
   //  F.viewCFGOnly();
 
@@ -412,11 +462,11 @@ WorkitemLoops::ProcessFunction(Function &F)
 
 #if 0
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(),
-           e = original_parallel_regions->end();
-       i != e; ++i) 
+           PRI = OriginalParallelRegions.begin(),
+           PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI)
   {
-    ParallelRegion *region = (*i);
+    ParallelRegion *region = (*PRI);
     region->InjectRegionPrintF();
     region->InjectVariablePrintouts();
   }
@@ -427,17 +477,16 @@ WorkitemLoops::ProcessFunction(Function &F)
   std::map<llvm::BasicBlock*, int> entryCounts;
 
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i) 
-  {
-    ParallelRegion *region = (*i);
+           PRI = OriginalParallelRegions.begin(),
+           PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI) {
+    ParallelRegion *Region = (*PRI);
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### Adding context save/restore for PR: ";
-    region->dumpNames();
+    Region->dumpNames();
 #endif
-    fixMultiRegionVariables(region);
-    entryCounts[region->entryBB()]++;
+    fixMultiRegionVariables(Region);
+    entryCounts[Region->entryBB()]++;
   }
 
 #if 0
@@ -446,13 +495,12 @@ WorkitemLoops::ProcessFunction(Function &F)
 #endif
   std::map<ParallelRegion*, bool> peeledRegion;
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e;  ++i) 
-  {
+           PRI = OriginalParallelRegions.begin(),
+           PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI) {
 
     llvm::ValueToValueMapTy reference_map;
-    ParallelRegion *original = (*i);
+    ParallelRegion *original = (*PRI);
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
     std::cerr << "### handling region:" << std::endl;
@@ -500,12 +548,11 @@ WorkitemLoops::ProcessFunction(Function &F)
 
         for (; PI != E; ++PI)
           {
-            llvm::BasicBlock *bb = *PI;
-            if (DT->dominates(original->entryBB(), bb) &&
-                (RegionOfBlock(original->entryBB()) == 
-                 RegionOfBlock(bb)))
+            llvm::BasicBlock *BB = *PI;
+            if (DT.dominates(original->entryBB(), BB) &&
+                (regionOfBlock(original->entryBB()) == regionOfBlock(BB)))
               continue;
-            preds.push_back(bb);
+            preds.push_back(BB);
           }
 
         unsigned unrollCount;
@@ -527,7 +574,7 @@ WorkitemLoops::ProcessFunction(Function &F)
         if (unrollCount > 1) {
             ParallelRegion *prev = original;
             llvm::BasicBlock *lastBB =
-                AppendIncBlock(original->exitBB(), LocalIdXGlobal);
+                appendIncBlock(original->exitBB(), LocalIdXGlobal);
             original->AddBlockAfter(lastBB, original->exitBB());
             original->SetExitBB(lastBB);
 
@@ -560,7 +607,7 @@ WorkitemLoops::ProcessFunction(Function &F)
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
                                 0, true);
 
-      l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+      l = createLoopAround(*original, l.first, l.second, peelFirst,
                            LocalIdXGlobal, WGLocalSizeX, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_y");
@@ -568,7 +615,7 @@ WorkitemLoops::ProcessFunction(Function &F)
         gv = new GlobalVariable(*M, SizeT, false, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_y");
 
-      l = CreateLoopAround(*original, l.first, l.second,
+      l = createLoopAround(*original, l.first, l.second,
                            false, LocalIdYGlobal, WGLocalSizeY, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_z");
@@ -578,22 +625,22 @@ WorkitemLoops::ProcessFunction(Function &F)
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
                                 0, true);
 
-      l = CreateLoopAround(*original, l.first, l.second,
+      l = createLoopAround(*original, l.first, l.second,
                            false, LocalIdZGlobal, WGLocalSizeZ, !unrolled, gv);
 
     } else {
       if (WGLocalSizeX > 1) {
-        l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+        l = createLoopAround(*original, l.first, l.second, peelFirst,
                              LocalIdXGlobal, WGLocalSizeX, !unrolled);
       }
 
       if (WGLocalSizeY > 1) {
-        l = CreateLoopAround(*original, l.first, l.second, false,
+        l = createLoopAround(*original, l.first, l.second, false,
                              LocalIdYGlobal, WGLocalSizeY);
       }
 
       if (WGLocalSizeZ > 1) {
-        l = CreateLoopAround(*original, l.first, l.second, false,
+        l = createLoopAround(*original, l.first, l.second, false,
                              LocalIdZGlobal, WGLocalSizeZ);
       }
     }
@@ -619,16 +666,15 @@ WorkitemLoops::ProcessFunction(Function &F)
   // that initializes the local ids and the first iteration
   // counter
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
-       i != e; ++i)
-  {
-    ParallelRegion *pr = (*i);
+           PRI = OriginalParallelRegions.begin(),
+       PRE = OriginalParallelRegions.end();
+       PRI != PRE; ++PRI) {
+    ParallelRegion *PR = (*PRI);
 
-    if (!peeledRegion[pr]) continue;
-    pr->insertPrologue(0, 0, 0);
-    builder.SetInsertPoint(&*(pr->entryBB()->getFirstInsertionPt()));
-    builder.CreateStore(ConstantInt::get(SizeT, 1), localIdXFirstVar);
+    if (!peeledRegion[PR]) continue;
+    PR->insertPrologue(0, 0, 0);
+    builder.SetInsertPoint(&*(PR->entryBB()->getFirstInsertionPt()));
+    builder.CreateStore(ConstantInt::get(SizeT, 1), LocalIdXFirstVar);
   }
 
   if (!WGDynamicLocalSize)
@@ -644,7 +690,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 //
 // Each such variable gets a slot in the stack frame. The variable
 // is restored from the stack whenever it's used.
-void WorkitemLoops::fixMultiRegionVariables(ParallelRegion *Region) {
+void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
 
   InstructionIndex InstructionsInRegion;
   InstructionVec InstructionsToFix;
@@ -686,7 +732,7 @@ void WorkitemLoops::fixMultiRegionVariables(ParallelRegion *Region) {
             // to context save it to pass the private data over.
             (InstructionsInRegion.find(User) ==
              InstructionsInRegion.end() &&
-             RegionOfBlock(User->getParent()) != NULL)) {
+             regionOfBlock(User->getParent()) != NULL)) {
           InstructionsToFix.push_back(Instr);
           break;
         }
@@ -709,7 +755,7 @@ void WorkitemLoops::fixMultiRegionVariables(ParallelRegion *Region) {
 #if LLVM_MAJOR > 13
 // Convert calls to the __pocl_{work_group,local_mem}_alloca() pseudo function
 // to allocas.
-bool WorkitemLoops::handleLocalMemAllocas(Kernel &K) {
+bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
 
   std::vector<CallInst *> InstructionsToFix;
 
@@ -756,10 +802,9 @@ bool WorkitemLoops::handleLocalMemAllocas(Kernel &K) {
 }
 #endif
 
-llvm::Value *
-WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
-                               ParallelRegion *region)
-{
+llvm::Value *WorkitemLoopsImpl::getLinearWiIndex(llvm::IRBuilder<> &Builder,
+                                                 llvm::Module *M,
+                                                 ParallelRegion *Region) {
   GlobalVariable *LocalSizeXPtr =
     cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeT));
   GlobalVariable *LocalSizeYPtr =
@@ -767,8 +812,8 @@ WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
 
   assert(LocalSizeXPtr != NULL && LocalSizeYPtr != NULL);
 
-  LoadInst* LoadX = builder.CreateLoad(SizeT, LocalSizeXPtr, "ls_x");
-  LoadInst* LoadY = builder.CreateLoad(SizeT, LocalSizeYPtr, "ls_y");
+  LoadInst* LoadX = Builder.CreateLoad(SizeT, LocalSizeXPtr, "ls_x");
+  LoadInst* LoadY = Builder.CreateLoad(SizeT, LocalSizeYPtr, "ls_y");
 
   /* Form linear index from xyz coordinates:
        local_size_x * local_size_y * local_id_z  (z dimension)
@@ -776,29 +821,31 @@ WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
      + local_id_x                                (x dimension)
   */
   Value* LocalSizeXTimesY =
-    builder.CreateBinOp(Instruction::Mul, LoadX, LoadY, "ls_xy");
+    Builder.CreateBinOp(Instruction::Mul, LoadX, LoadY, "ls_xy");
 
   Value* ZPart =
-    builder.CreateBinOp(Instruction::Mul, LocalSizeXTimesY,
-                        region->LocalIDZLoad(),
+    Builder.CreateBinOp(Instruction::Mul, LocalSizeXTimesY,
+                        Region->LocalIDZLoad(),
                         "tmp");
 
   Value* YPart =
-    builder.CreateBinOp(Instruction::Mul, LoadX, region->LocalIDYLoad(),
+    Builder.CreateBinOp(Instruction::Mul, LoadX,
+                        Region->LocalIDYLoad(),
                         "ls_x_y");
 
   Value* ZYSum =
-    builder.CreateBinOp(Instruction::Add, ZPart, YPart,
+    Builder.CreateBinOp(Instruction::Add, ZPart, YPart,
                         "zy_sum");
 
-  return builder.CreateBinOp(Instruction::Add, ZYSum, region->LocalIDXLoad(),
+  return Builder.CreateBinOp(Instruction::Add, ZYSum, Region->LocalIDXLoad(),
                              "linear_xyz_idx");
 }
 
-llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
-                                                 llvm::AllocaInst *alloca) {
+llvm::Instruction *
+WorkitemLoopsImpl::addContextSave(llvm::Instruction *Inst,
+                                  llvm::AllocaInst *AllocaI) {
 
-  if (isa<AllocaInst>(instruction)) {
+  if (isa<AllocaInst>(Inst)) {
     // If the variable to be context saved is itself an alloca, we have created
     // one big alloca that stores the data of all the work-items and return
     // pointers to that array. Thus, we need no initialization code other than
@@ -807,7 +854,7 @@ llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
   }
 
   /* Save the produced variable to the array. */
-  BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction))->getIterator();
+  BasicBlock::iterator definition = (dyn_cast<Instruction>(Inst))->getIterator();
   ++definition;
   while (isa<PHINode>(definition)) ++definition;
 
@@ -816,14 +863,14 @@ llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
 
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
-  ParallelRegion *region = RegionOfBlock(instruction->getParent());
+  ParallelRegion *region = regionOfBlock(Inst->getParent());
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
   if (WGDynamicLocalSize)
     {
-      Module *M = alloca->getParent()->getParent()->getParent();
-      gepArgs.push_back(GetLinearWiIndex(builder, M, region));
+      Module *M = AllocaI->getParent()->getParent()->getParent();
+      gepArgs.push_back(getLinearWiIndex(builder, M, region));
     }
   else
     {
@@ -834,27 +881,27 @@ llvm::Instruction *WorkitemLoops::AddContextSave(llvm::Instruction *instruction,
     }
 
     return builder.CreateStore(
-        instruction,
-#ifdef LLVM_OLDER_THAN_15_0
-        builder.CreateGEP(alloca->getType()->getPointerElementType(), alloca,
+        Inst,
+#if LLVM_MAJOR < 15
+        builder.CreateGEP(AllocaI->getType()->getPointerElementType(), AllocaI,
                           gepArgs));
 #else
-        builder.CreateGEP(alloca->getAllocatedType(), alloca, gepArgs));
+        builder.CreateGEP(AllocaI->getAllocatedType(), AllocaI, gepArgs));
 #endif
 }
 
-llvm::Instruction *WorkitemLoops::AddContextRestore(
-    llvm::Value *val, llvm::AllocaInst *alloca, llvm::Type *InstType,
-    bool PoclWrapperStructAdded, llvm::Instruction *before, bool isAlloca) {
+llvm::Instruction *WorkitemLoopsImpl::addContextRestore(llvm::Value *Val,
+    llvm::AllocaInst *AllocaI, llvm::Type *InstType,
+    bool PoclWrapperStructAdded, llvm::Instruction *Before, bool isAlloca) {
 
-  assert(val != NULL);
-  assert(alloca != NULL);
-  IRBuilder<> builder(alloca);
-  if (before != NULL) {
-    builder.SetInsertPoint(before);
-  } else if (isa<Instruction>(val)) {
-    builder.SetInsertPoint(dyn_cast<Instruction>(val));
-    before = dyn_cast<Instruction>(val);
+  assert(Val != NULL);
+  assert(AllocaI != NULL);
+  IRBuilder<> builder(AllocaI);
+  if (Before != NULL) {
+    builder.SetInsertPoint(Before);
+  } else if (isa<Instruction>(Val)) {
+    builder.SetInsertPoint(dyn_cast<Instruction>(Val));
+    Before = dyn_cast<Instruction>(Val);
   } else {
     assert(false && "Unknown context restore location!");
   }
@@ -863,14 +910,14 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(
 
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
-  ParallelRegion *region = RegionOfBlock(before->getParent());
+  ParallelRegion *region = regionOfBlock(Before->getParent());
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
   if (WGDynamicLocalSize)
     {
-      Module *M = alloca->getParent()->getParent()->getParent();
-      gepArgs.push_back(GetLinearWiIndex(builder, M, region));
+      Module *M = AllocaI->getParent()->getParent()->getParent();
+      gepArgs.push_back(getLinearWiIndex(builder, M, region));
     }
   else
     {
@@ -882,16 +929,16 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(
 
   if (PoclWrapperStructAdded)
     gepArgs.push_back(
-      ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
+      ConstantInt::get(Type::getInt32Ty(AllocaI->getContext()), 0));
 
-#ifdef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR < 15
   llvm::Instruction *gep = dyn_cast<Instruction>(
     builder.CreateGEP(
-      alloca->getType()->getPointerElementType(), alloca, gepArgs));
+      AllocaI->getType()->getPointerElementType(), AllocaI, gepArgs));
 #else
   llvm::Instruction *gep = dyn_cast<Instruction>(
     builder.CreateGEP(
-      alloca->getAllocatedType(), alloca, gepArgs));
+      AllocaI->getAllocatedType(), AllocaI, gepArgs));
 #endif
 
 
@@ -909,8 +956,9 @@ llvm::Instruction *WorkitemLoops::AddContextRestore(
 //
 // PoCLWrapperStructAdded will be set to true in case a wrapper struct was
 // added to enforce proper alignment to the elements of the array.
-llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
-                                                 bool &PoclWrapperStructAdded) {
+llvm::AllocaInst *
+WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
+                                   bool &PoclWrapperStructAdded) {
   PoclWrapperStructAdded = false;
   /*
    * Unnamed temp instructions need a generated name for the
@@ -919,30 +967,30 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
   std::ostringstream var;
   var << ".";
 
-  if (std::string(instruction->getName().str()) != "")
+  if (std::string(Inst->getName().str()) != "")
     {
-      var << instruction->getName().str();
+      var << Inst->getName().str();
     }
-  else if (tempInstructionIds.find(instruction) != tempInstructionIds.end())
+  else if (TempInstructionIds.find(Inst) != TempInstructionIds.end())
     {
-      var << tempInstructionIds[instruction];
+      var << TempInstructionIds[Inst];
     }
   else
     {
-      tempInstructionIds[instruction] = tempInstructionIndex++;
-      var << tempInstructionIds[instruction];
+      TempInstructionIds[Inst] = TempInstructionIndex++;
+      var << TempInstructionIds[Inst];
     }
 
   var << ".pocl_context";
   std::string varName = var.str();
 
-  if (contextArrays.find(varName) != contextArrays.end())
-    return contextArrays[varName];
+  if (ContextArrays.find(varName) != ContextArrays.end())
+    return ContextArrays[varName];
 
-  BasicBlock &bb = instruction->getParent()->getParent()->getEntryBlock();
+  BasicBlock &bb = Inst->getParent()->getParent()->getEntryBlock();
   IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
-  Function *FF = instruction->getParent()->getParent();
-  Module *M = instruction->getParent()->getParent()->getParent();
+  Function *FF = Inst->getParent()->getParent();
+  Module *M = Inst->getParent()->getParent()->getParent();
   const llvm::DataLayout &Layout = M->getDataLayout();
   DICompileUnit *CU = nullptr;
   std::unique_ptr<DIBuilder> DB;
@@ -964,7 +1012,7 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
               cast<MetadataAsValue>(CI->getOperand(0))->getMetadata();
           if (isa<ValueAsMetadata>(Meta)) {
             Value *V = cast<ValueAsMetadata>(Meta)->getValue();
-            if (instruction == V) {
+            if (Inst == V) {
               DebugVal = V;
               DebugCall = CI;
               break;
@@ -985,7 +1033,7 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
 #endif
 
   llvm::Type *elementType;
-  if (isa<AllocaInst>(instruction))
+  if (isa<AllocaInst>(Inst))
     {
       /* If the variable to be context saved was itself an alloca,
          create one big alloca that stores the data of all the 
@@ -996,11 +1044,11 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
          unique stack space to all the work-items when its wiloop
          iteration is executed. */
       elementType = 
-        dyn_cast<AllocaInst>(instruction)->getAllocatedType();
+        dyn_cast<AllocaInst>(Inst)->getAllocatedType();
     } 
   else 
     {
-      elementType = instruction->getType();
+      elementType = Inst->getType();
     }
 
   /* 3D context array. In case the elementType itself is an array or struct,
@@ -1009,9 +1057,9 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
    * Because of that, we cannot simply allocate x*y*z*(size), we must
    * enlarge the type to fit the alignment. */
   Type *AllocType = elementType;
-  AllocaInst *InstCast = dyn_cast<AllocaInst>(instruction);
+  AllocaInst *InstCast = dyn_cast<AllocaInst>(Inst);
   if (InstCast) {
-#ifdef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR < 15
     unsigned Alignment = InstCast->getAlignment();
 #else
     unsigned Alignment = InstCast->getAlign().value();
@@ -1096,7 +1144,7 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element
      size. */
-#ifndef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR > 10
   Alloca->setAlignment(llvm::Align(CONTEXT_ARRAY_ALIGN));
 #else
   Alloca->setAlignment(llvm::MaybeAlign(CONTEXT_ARRAY_ALIGN));
@@ -1113,10 +1161,10 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
       size_t sizeBits;
       sizeBits = Alloca
                      ->getAllocationSizeInBits(M->getDataLayout())
-#if !defined(LLVM_OLDER_THAN_15_0)
+#if LLVM_MAJOR > 14
                      .value_or(TypeSize(0, false))
                      .getFixedValue();
-#elif !defined(LLVM_OLDER_THAN_12_0)
+#elif LLVM_MAJOR > 11
                      .getValueOr(TypeSize(0, false))
                      .getFixedValue();
 #else
@@ -1127,7 +1175,7 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
 
       // if (size == 0) WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ * 8 *
       // Alloca->getAllocatedType()->getScalarSizeInBits();
-#ifdef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR < 15
       size_t alignBits = Alloca->getAlignment() * 8;
 #else
       size_t alignBits = Alloca->getAlign().value() * 8;
@@ -1170,7 +1218,7 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
       }
     }
 
-    contextArrays[varName] = Alloca;
+    ContextArrays[varName] = Alloca;
     return Alloca;
 }
 
@@ -1187,14 +1235,14 @@ llvm::AllocaInst *WorkitemLoops::getContextArray(llvm::Instruction *instruction,
 // TODO: rematerialize some values such as extended values of global
 // variables (especially global id which is computed from local id) or kernel
 // argument values instead of allocating stack space for them
-void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
+void WorkitemLoopsImpl::addContextSaveRestore(llvm::Instruction *Instr) {
 
   //
 
   // Allocate the context data array for the variable.
   bool PoclWrapperStructAdded = false;
   llvm::AllocaInst *Alloca = getContextArray(Instr, PoclWrapperStructAdded);
-  llvm::Instruction *TheStore = AddContextSave(Instr, Alloca);
+  llvm::Instruction *TheStore = addContextSave(Instr, Alloca);
 
   InstructionVec Uses;
   // Restore the produced variable before each use to ensure the correct
@@ -1223,7 +1271,7 @@ void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
     // itself must be a "work group variable", that is, not dependent on the
     // work item. Most likely an iteration variable of a for loop with a
     // barrier.
-    if (RegionOfBlock(UserI->getParent()) == NULL) continue;
+    if (regionOfBlock(UserI->getParent()) == NULL) continue;
 
     PHINode* Phi = dyn_cast<PHINode>(UserI);
     if (Phi != NULL) {
@@ -1240,7 +1288,7 @@ void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
 
       // PHINodes at region entries are broken down earlier.
       assert ("Cannot add context restore for a PHI node at the region entry!"
-              && RegionOfBlock(
+               && regionOfBlock(
                 Phi->getParent())->entryBB() != Phi->getParent());
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### adding context restore code before PHI" << std::endl;
@@ -1258,7 +1306,7 @@ void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
       assert(IncomingBB != NULL);
       ContextRestoreLocation = IncomingBB->getTerminator();
     }
-    llvm::Value *LoadedValue = AddContextRestore(
+    llvm::Value *LoadedValue = addContextRestore(
       UserI, Alloca, Instr->getType(),
       PoclWrapperStructAdded, ContextRestoreLocation,
       isa<AllocaInst>(Instr));
@@ -1271,7 +1319,7 @@ void WorkitemLoops::addContextSaveRestore(llvm::Instruction *Instr) {
   }
 }
 
-bool WorkitemLoops::shouldNotBeContextSaved(llvm::Instruction *Instr) {
+bool WorkitemLoopsImpl::shouldNotBeContextSaved(llvm::Instruction *Instr) {
 
   if (isa<BranchInst>(Instr)) return true;
 
@@ -1296,9 +1344,6 @@ bool WorkitemLoops::shouldNotBeContextSaved(llvm::Instruction *Instr) {
        Load->getPointerOperand() == LocalIdXGlobal))
     return true;
 
-  VariableUniformityAnalysis &VUA =
-    getAnalysis<VariableUniformityAnalysis>();
-
   // In case of uniform variables (same value for all work-items), there is no
   // point to create a context array slot for them, but just use the original
   // value everywhere.
@@ -1321,35 +1366,33 @@ bool WorkitemLoops::shouldNotBeContextSaved(llvm::Instruction *Instr) {
   return false;
 }
 
-llvm::BasicBlock *
-WorkitemLoops::AppendIncBlock
-(llvm::BasicBlock* after, llvm::Value *localIdVar)
-{
-  llvm::LLVMContext &C = after->getContext();
+llvm::BasicBlock *WorkitemLoopsImpl::appendIncBlock(llvm::BasicBlock *After,
+                                                    llvm::Value *LocalIdVar) {
+  llvm::LLVMContext &C = After->getContext();
 
-  llvm::BasicBlock *oldExit = after->getTerminator()->getSuccessor(0);
+  llvm::BasicBlock *oldExit = After->getTerminator()->getSuccessor(0);
   assert (oldExit != NULL);
 
   llvm::BasicBlock *forIncBB =
-    BasicBlock::Create(C, "pregion_for_inc", after->getParent());
+    BasicBlock::Create(C, "pregion_for_inc", After->getParent());
 
-  after->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
+  After->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
 
   IRBuilder<> builder(oldExit);
 
   builder.SetInsertPoint(forIncBB);
   /* Create the iteration variable increment */
   builder.CreateStore(builder.CreateAdd(
-                        builder.CreateLoad(SizeT, localIdVar),
+                        builder.CreateLoad(SizeT, LocalIdVar),
                         ConstantInt::get(SizeT, 1)),
-                      localIdVar);
+                      LocalIdVar);
 
   builder.CreateBr(oldExit);
 
   return forIncBB;
 }
 
-llvm::Instruction *WorkitemLoops::getWorkGroupSizeInstr(llvm::Function &F) {
+llvm::Instruction *WorkitemLoopsImpl::getWorkGroupSizeInstr(llvm::Function &F) {
 
   if (WGSizeInstr != nullptr)
       return WGSizeInstr;
@@ -1381,3 +1424,76 @@ llvm::Instruction *WorkitemLoops::getWorkGroupSizeInstr(llvm::Function &F) {
 
   return WGSizeInstr;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
+char WorkitemLoops::ID = 0;
+
+void WorkitemLoops::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addRequired<LoopInfoWrapperPass>();
+
+  AU.addRequired<VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
+
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+bool WorkitemLoops::runOnFunction(llvm::Function &F) {
+  if (!isKernelToProcess(F))
+    return false;
+
+  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+  if (WIH != WorkitemHandlerType::LOOPS &&
+      !(WIH == WorkitemHandlerType::CBS && !hasWorkgroupBarriers(F)))
+    return false;
+
+  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &PDT =
+      getAnalysis<llvm::PostDominatorTreeWrapperPass>().getPostDomTree();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
+  auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>().getResult();
+
+  WorkitemLoopsImpl WIL(DT, LI, PDT, VUA);
+  return WIL.runOnFunction(F);
+}
+
+#undef DEBUG_TYPE
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+// enable new pass manager infrastructure
+llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
+                                           llvm::FunctionAnalysisManager &AM) {
+  if (!isKernelToProcess(F))
+    return llvm::PreservedAnalyses::all();
+
+  WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
+  if (WIH != WorkitemHandlerType::LOOPS &&
+      !(WIH == WorkitemHandlerType::CBS && !hasWorkgroupBarriers(F)))
+    return llvm::PreservedAnalyses::all();
+
+  auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
+  auto &PDT = AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
+  auto &LI = AM.getResult<llvm::LoopAnalysis>(F);
+  auto &VUA = AM.getResult<VariableUniformityAnalysis>(F);
+
+  llvm::PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+
+  WorkitemLoopsImpl WIL(DT, LI, PDT, VUA);
+  return WIL.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
+}
+
+#undef DEBUG_TYPE
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

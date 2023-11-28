@@ -35,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [15, 16]
+        llvm: [16, 17]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
@@ -52,6 +52,8 @@ jobs:
           - llvm: 13
             config: basic
           - llvm: 14
+            config: basic
+          - llvm: 15
             config: basic
         exclude:
           - llvm: 16
@@ -280,7 +282,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [15, 16]
+        llvm: [16, 17]
         config: [cuda]
 
     steps:
@@ -322,8 +324,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # for now, only 15 is enabled
-        llvm: [15]
+        # only 16 is enabled, but 15 should also work
+        llvm: [16]
         config: [openasip]
 
     steps:
@@ -401,57 +403,14 @@ jobs:
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_vulkan_tests $CTEST_FLAGS
 
 
-  # only for LLVM up to 15
-  arm64_old_matrix:
-    name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
-    runs-on: [self-hosted, linux, arm64, debian]
-    strategy:
-      fail-fast: false
-      matrix:
-        llvm: [15]
-        config: [basic]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Run CMake
-        id: cmake
-        run: |
-          runCMake() {
-            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
-            -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/opt/LLVM_${{ matrix.llvm }}0/bin/llvm-config \
-            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
-          }
-
-          rm -rf ${{ github.workspace }}/build
-          mkdir ${{ github.workspace }}/build
-          runCMake -DENABLE_ICD=1
-
-      - name: Run Build
-        id: build
-        run: |
-          cd ${{ github.workspace }}/build && make -j$(nproc)
-
-      - name: Run Tests
-        id: ctest
-        run: |
-          runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E test_shuffle_half_
-          }
-          rm -rf ${{ env.POCL_CACHE_DIR }}
-          mkdir ${{ env.POCL_CACHE_DIR }}
-          runCTest -L internal
-
   # this one is only for LLVM 16+
-  arm64_new_matrix:
+  arm64_matrix:
     name: LLVM ${{ matrix.llvm }} - ARM64 ${{ matrix.config }}
     runs-on: [self-hosted, linux, arm64, ubuntu]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16]
+        llvm: [16, 17]
         config: [basic]
 
     steps:
@@ -487,13 +446,13 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           runCTest -L internal
 
-  level_zero_test:
+  level_zero_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, level_zero]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [14, 15, 16]
+        llvm: [16, 17]
         config: [level_zero]
 
     steps:

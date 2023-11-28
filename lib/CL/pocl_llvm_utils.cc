@@ -22,47 +22,56 @@
    THE SOFTWARE.
 */
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/StringRef.h>
+#include <llvm/ADT/StringMap.h>
+#if LLVM_VERSION_MAJOR < 16
+#include <llvm/ADT/Triple.h>
+#else
+#include <llvm/TargetParser/Triple.h>
+#endif
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/Signals.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DiagnosticInfo.h>
+#include <llvm/IR/DiagnosticPrinter.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/IRReader/IRReader.h>
+#include <llvm/Bitcode/BitcodeReader.h>
+#include <llvm/Bitcode/BitcodeWriter.h>
+#include <llvm/Support/raw_os_ostream.h>
+#include <llvm/PassRegistry.h>
+#include <llvm/InitializePasses.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm-c/Core.h>
+
+#if LLVM_VERSION_MAJOR < 16
+#include <llvm/IR/LegacyPassManager.h>
+#include <llvm/PassInfo.h>
+#include <llvm/PassRegistry.h>
+#include <llvm/Support/Host.h>
+#else
+#include <llvm/Analysis/CGSCCPassManager.h>
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/TargetParser/Host.h>
+#endif
+
 #include "config.h"
 #include "pocl_debug.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
+
 #include <unistd.h>
-
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include <llvm/ADT/StringRef.h>
-#include <llvm/ADT/StringMap.h>
-
-#include <llvm/Support/Host.h>
-#include <llvm/Support/TargetSelect.h>
-#include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/Signals.h>
-
-#include <llvm/IR/Constants.h>
-#include <llvm/IR/DiagnosticInfo.h>
-#include <llvm/IR/DiagnosticPrinter.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-
-#include <llvm/Target/TargetMachine.h>
-
-#include <llvm/IRReader/IRReader.h>
-
-#include <llvm/Bitcode/BitcodeReader.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
-
-#include <llvm/Support/raw_os_ostream.h>
-#include <llvm/PassRegistry.h>
-
-#include <llvm/IR/LegacyPassManager.h>
-#define PassManager legacy::PassManager
-
-#include <llvm/InitializePasses.h>
-#include <llvm/Support/CommandLine.h>
-#include <llvm-c/Core.h>
 
 using namespace llvm;
 
@@ -292,6 +301,7 @@ void cpu_setup_vector_widths(cl_device_id dev) {
     if (features["avx512f"])
       lane_width = 64;
   }
+  dev->native_vector_width_in_bits = lane_width * 8;
 
   dev->native_vector_width_char = dev->preferred_vector_width_char =
       VECWIDTH(cl_char);
@@ -489,8 +499,6 @@ one times!
 */
 
 void UnInitializeLLVM() {
-  clearKernelPasses();
-  clearTargetMachines();
   LLVMInitialized = false;
 }
 

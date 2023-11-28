@@ -20,13 +20,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_KERNEL_H
-#define _POCL_KERNEL_H
+#ifndef POCL_KERNEL_H
+#define POCL_KERNEL_H
 
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/Dominators.h"
-
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/ADT/SmallVector.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Dominators.h>
+POP_COMPILER_DIAGS
 #include "ParallelRegion.h"
 
 namespace pocl {
@@ -36,8 +41,11 @@ namespace pocl {
     void getExitBlocks(llvm::SmallVectorImpl<llvm::BasicBlock *> &B);
     ParallelRegion *createParallelRegionBefore(llvm::BasicBlock *B);
 
-    ParallelRegion::ParallelRegionVector*
-      getParallelRegions(llvm::LoopInfo *LI);
+    ParallelRegion::ParallelRegionVector *
+    getParallelRegions(llvm::LoopInfo &LI);
+    void
+    getParallelRegions(llvm::LoopInfo &LI,
+                       ParallelRegion::ParallelRegionVector *ParallelRegions);
 
     void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
                               size_t LocalSizeZ);

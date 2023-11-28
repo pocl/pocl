@@ -24,10 +24,10 @@
 #include <iostream>
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -35,37 +35,29 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "Barrier.h"
 #include "CanonicalizeBarriers.h"
+#include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 
 POP_COMPILER_DIAGS
 
+#include <set>
+
+#define PASS_NAME "canon-barriers"
+#define PASS_CLASS pocl::CanonicalizeBarriers
+#define PASS_DESC "Barrier canonicalization pass"
+
+namespace pocl {
+
 using namespace llvm;
-using namespace pocl;
 
-namespace {
-  static
-  RegisterPass<CanonicalizeBarriers> X("barriers",
-                                       "Barrier canonicalization pass");
-}
+static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler);
+static bool processFunction(Function &F, WorkitemHandlerType Handler);
 
-char CanonicalizeBarriers::ID = 0;
+using InstructionSet = std::set<llvm::Instruction *>;
 
-void
-CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
-{
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-bool
-CanonicalizeBarriers::runOnFunction(Function &F)
-{
-  if (!isKernelToProcess(F))
-    return false;
+static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
   bool changed = false;
 
   BasicBlock *entry = &F.getEntryBlock();
@@ -109,18 +101,14 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     }
   }
 
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  return ProcessFunction(F) || changed;
+  return processFunction(F, Handler) || changed;
 }
 
 // Canonicalize barriers: ensure all barriers are in a separate BB
 // containing only the barrier and the terminator, with just one
 // predecessor. This allows us to use those BBs as markers only, 
 // they will not be replicated.
-bool
-CanonicalizeBarriers::ProcessFunction(Function &F) {
-
-  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
+static bool processFunction(Function &F, WorkitemHandlerType Handler) {
 
   bool changed = false;
 
@@ -154,8 +142,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
 
     const bool HasNonBranchInstructionsAfterBarrier =
         t->getPrevNode() != *i ||
-        (WIH == WorkitemHandlerChooser::POCL_WIH_CBS &&
-         t->getNumSuccessors() > 1);
+        (Handler == WorkitemHandlerType::CBS && t->getNumSuccessors() > 1);
 
     if (HasNonBranchInstructionsAfterBarrier) {
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode());
@@ -217,3 +204,42 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
 
   return changed;
 }
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char CanonicalizeBarriers::ID = 0;
+
+void CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+bool CanonicalizeBarriers::runOnFunction(Function &F) {
+  if (!pocl::isKernelToProcess(F))
+    return false;
+  WorkitemHandlerType WIH =
+      getAnalysis<WorkitemHandlerChooser>().chosenHandler();
+  return canonicalizeBarriers(F, WIH);
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+CanonicalizeBarriers::run(llvm::Function &F,
+                          llvm::FunctionAnalysisManager &AM) {
+  if (!pocl::isKernelToProcess(F))
+    return PreservedAnalyses::all();
+  WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  return canonicalizeBarriers(F, WIH) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

@@ -21,24 +21,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_ALLOCAS_TO_ENTRY_H
-#define _POCL_ALLOCAS_TO_ENTRY_H
+#ifndef POCL_ALLOCAS_TO_ENTRY_H
+#define POCL_ALLOCAS_TO_ENTRY_H
 
 #include "config.h"
 
-#include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-  class AllocasToEntry : public llvm::FunctionPass {
-  public:
-    static char ID;
 
-    AllocasToEntry();
-    virtual ~AllocasToEntry() {};
-    virtual bool runOnFunction(llvm::Function &F);
-  };
-}
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
+class AllocasToEntry : public llvm::FunctionPass
+{
+public:
+  static char ID;
+  AllocasToEntry () : FunctionPass (ID){};
+  virtual ~AllocasToEntry(){};
+
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage (llvm::AnalysisUsage &AU) const override;
+};
+
+#else
+
+class AllocasToEntry : public llvm::PassInfoMixin<AllocasToEntry> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+  } // namespace pocl
 
 #endif

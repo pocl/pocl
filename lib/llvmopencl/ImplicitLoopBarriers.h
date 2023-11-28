@@ -20,25 +20,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <set>
+#ifndef POCL_IMPLICIT_LOOP_BARRIERS_H
+#define POCL_IMPLICIT_LOOP_BARRIERS_H
 
-#include "llvm/Analysis/LoopPass.h"
+#include "config.h"
+
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+#include <llvm/Analysis/LoopPass.h>
+#else
+#include <llvm/Analysis/LoopAnalysisManager.h>
+#include <llvm/Transforms/Scalar/LoopPassManager.h>
+#endif
 
 namespace pocl {
-  class ImplicitLoopBarriers : public llvm::LoopPass {
-    
-  public:
-    static char ID;
-    
-  ImplicitLoopBarriers() : LoopPass(ID) {}
-    
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
 
-  private:
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-    bool ProcessLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
-    bool AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM);
+class ImplicitLoopBarriers : public llvm::LoopPass
+{
+public:
+  static char ID;
+  ImplicitLoopBarriers() : LoopPass(ID){};
+  virtual ~ImplicitLoopBarriers (){};
 
-  };
-}
+  virtual bool runOnLoop(llvm::Loop *L, llvm::LPPassManager &LPM) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
+
+#else
+
+class ImplicitLoopBarriers : public llvm::PassInfoMixin<ImplicitLoopBarriers> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
+                              llvm::LoopStandardAnalysisResults &AR,
+                              llvm::LPMUpdater &U);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
+
+#endif

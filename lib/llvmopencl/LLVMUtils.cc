@@ -21,22 +21,55 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "LLVMUtils.h"
-#include "Barrier.h"
-
-#include "pocl_llvm_api.h"
-#include "pocl_spir.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DebugInfoMetadata.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/Module.h>
-
 #include <llvm/ADT/SmallSet.h>
+
+// include all passes & analysis
+#include "AllocasToEntry.h"
+#include "AutomaticLocals.h"
+#include "BarrierTailReplication.h"
+#include "BreakConstantGEPs.h"
+#include "CanonicalizeBarriers.h"
+#include "DebugHelpers.h"
+#include "Flatten.hh"
+#include "FlattenBarrierSubs.hh"
+#include "FlattenGlobals.hh"
+#include "HandleSamplerInitialization.h"
+#include "ImplicitConditionalBarriers.h"
+#include "ImplicitLoopBarriers.h"
+#include "InlineKernels.hh"
+#include "IsolateRegions.h"
+#include "LoopBarriers.h"
+#include "MinLegalVecSize.hh"
+#include "OptimizeWorkItemFuncCalls.h"
+#include "PHIsToAllocas.h"
+#include "ParallelRegion.h"
+#include "RemoveBarrierCalls.h"
+#include "RemoveOptnoneFromWIFunc.h"
+#include "SubCFGFormation.h"
+#include "VariableUniformityAnalysis.h"
+#include "WorkItemAliasAnalysis.h"
+#include "Workgroup.h"
+#include "WorkitemHandlerChooser.h"
+#include "WorkitemLoops.h"
+#include "WorkitemReplication.h"
+
+#include "LLVMUtils.h"
+POP_COMPILER_DIAGS
+
+#include "Barrier.h"
+
+#include "pocl_llvm_api.h"
+#include "pocl_spir.h"
 
 #include <iostream>
 #include <set>
@@ -174,7 +207,7 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
         continue;
       if (Callee->isDeclaration())
         continue;
-#ifdef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR < 11
       if (FSet.count(Callee) > 0)
 #else
       if (FSet.contains(Callee))
@@ -200,7 +233,7 @@ bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   for (auto &U : Uses) {
     if (Instruction *I = dyn_cast<Instruction>(U->getUser()))
     {
-#ifdef LLVM_OLDER_THAN_11_0
+#if LLVM_MAJOR < 11
       if (CalledFunctionSet.count(I->getFunction()) > 0)
 #else
       if (CalledFunctionSet.contains(I->getFunction()))
@@ -444,4 +477,68 @@ bool hasWorkgroupBarriers(const llvm::Function &F) {
   }
   return false;
 }
+
+constexpr unsigned NumWorkgroupVariables = 18;
+const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
+                                    "_local_id_y",
+                                    "_local_id_z",
+                                    "_local_size_x",
+                                    "_local_size_y",
+                                    "_local_size_z",
+                                    "_work_dim",
+                                    "_num_groups_x",
+                                    "_num_groups_y",
+                                    "_num_groups_z",
+                                    "_group_id_x",
+                                    "_group_id_y",
+                                    "_group_id_z",
+                                    "_global_offset_x",
+                                    "_global_offset_y",
+                                    "_global_offset_z",
+                                    "_pocl_sub_group_size",
+                                    PoclGVarBufferName,
+                                    NULL};
+
+const std::vector<std::string>
+    WorkgroupVariablesVector(WorkgroupVariablesArray,
+                             WorkgroupVariablesArray+NumWorkgroupVariables);
+
+
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+// register all PoCL analyses & passes with an LLVM PassBuilder instance,
+// so that it can parse them from string representation
+void registerPassBuilderPasses(llvm::PassBuilder &PB) {
+  AllocasToEntry::registerWithPB(PB);
+  AutomaticLocals::registerWithPB(PB);
+  BarrierTailReplication::registerWithPB(PB);
+  BreakConstantGEPs::registerWithPB(PB);
+  CanonicalizeBarriers::registerWithPB(PB);
+  FlattenAll::registerWithPB(PB);
+  FlattenBarrierSubs::registerWithPB(PB);
+  FlattenGlobals::registerWithPB(PB);
+  HandleSamplerInitialization::registerWithPB(PB);
+  ImplicitConditionalBarriers::registerWithPB(PB);
+  ImplicitLoopBarriers::registerWithPB(PB);
+  InlineKernels::registerWithPB(PB);
+  IsolateRegions::registerWithPB(PB);
+  LoopBarriers::registerWithPB(PB);
+  FixMinVecSize::registerWithPB(PB);
+  OptimizeWorkItemFuncCalls::registerWithPB(PB);
+  PHIsToAllocas::registerWithPB(PB);
+  RemoveBarrierCalls::registerWithPB(PB);
+  RemoveOptnoneFromWIFunc::registerWithPB(PB);
+  SubCFGFormation::registerWithPB(PB);
+  Workgroup::registerWithPB(PB);
+  WorkitemLoops::registerWithPB(PB);
+  WorkitemReplication::registerWithPB(PB);
+  PoCLCFGPrinter::registerWithPB(PB);
 }
+
+void registerFunctionAnalyses(llvm::PassBuilder &PB) {
+  VariableUniformityAnalysis::registerWithPB(PB);
+  WorkitemHandlerChooser::registerWithPB(PB);
+  WorkItemAliasAnalysis::registerWithPB(PB);
+}
+#endif
+
+} // namespace pocl

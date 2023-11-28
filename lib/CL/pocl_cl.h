@@ -51,8 +51,7 @@
 #endif
 
 #include <CL/cl_egl.h>
-#include <CL/cl_ext.h>
-#include <CL/cl_gl.h>
+#include <CL/opencl.h>
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -828,18 +827,6 @@ typedef struct pocl_global_mem_t {
   cl_ulong total_alloc_limit;
 } pocl_global_mem_t;
 
-/**
- * Enumeration for different modes of converting automatic locals
- */
-typedef enum
-{
-  POCL_AUTOLOCALS_TO_ARGS_NEVER = 0,
-  POCL_AUTOLOCALS_TO_ARGS_ALWAYS = 1,
-  // convert autolocals to args only if there are dynamic local memory function
-  // arguments in the kernel.
-  POCL_AUTOLOCALS_TO_ARGS_ONLY_IF_DYNAMIC_LOCALS_PRESENT = 2,
-} pocl_autolocals_to_args_strategy;
-
 #define NUM_OPENCL_IMAGE_TYPES 6
 
 struct _cl_device_id {
@@ -1043,6 +1030,12 @@ struct _cl_device_id {
   unsigned global_as_id;
   unsigned local_as_id;
   unsigned constant_as_id;
+
+  /* optional device property for devices using PoCL's LLVM stack.
+   * if nonzero, functions with arguments larger than
+   * this will be force-inlined.
+   */
+  unsigned native_vector_width_in_bits;
 
   /* The address space where the argument data is passed. */
   unsigned args_as_id;

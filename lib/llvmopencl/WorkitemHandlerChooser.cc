@@ -21,70 +21,65 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 
-#define DEBUG_TYPE "workitem-loops"
-
+#include "CanonicalizeBarriers.h"
+#include "Kernel.h"
+#include "LLVMUtils.h"
+#include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
 #include "WorkitemReplication.h"
-#include "Workgroup.h"
-#include "CanonicalizeBarriers.h"
-#include "Kernel.h"
+POP_COMPILER_DIAGS
 
-using namespace llvm;
-using namespace pocl;
+#include "pocl_llvm_api.h"
 
-namespace {
-static RegisterPass<WorkitemHandlerChooser>
-    X("workitem-handler-chooser",
-      "Finds the best way to handle work-items to produce a multi-WG function.",
-      false, false);
-}
+#include <iostream>
+
+#define DEBUG_TYPE "workitem-loops"
+
+#define PASS_NAME "workitem-handler-chooser"
+#define PASS_CLASS pocl::WorkitemHandlerChooser
+#define PASS_DESC                                                              \
+  "Finds the best way to handle work-items to produce a multi-WG function."
 
 namespace pocl {
 
-char WorkitemHandlerChooser::ID = 0;
+using namespace llvm;
 
-void
-WorkitemHandlerChooser::getAnalysisUsage(AnalysisUsage &AU) const
-{
-  AU.setPreservesAll();
-}
-
-
-bool
-WorkitemHandlerChooser::runOnFunction(Function &F)
-{
+static WorkitemHandlerType runWorkitemHandlerChooser(Function &F) {
   if (!isKernelToProcess(F))
-    return false;
+    return WorkitemHandlerType::INVALID;
 
-  Kernel *K = cast<Kernel> (&F);
+  WorkitemHandlerType Result = WorkitemHandlerType::INVALID;
+  unsigned long WGLocalSizeX = 0;
+  unsigned long WGLocalSizeY = 0;
+  unsigned long WGLocalSizeZ = 0;
+  bool WGDynamicLocalSize = false;
 
-  /* FIXME: this is not thread safe. We cannot compile multiple kernels at
-     the same time with the same instances of these passes as they store
-     to private attributes and use global values to pass in the dimensions.
-     In the LLVMAPI version this logic should be at higher-level when
-     constructing the passes for the kernel, or done fully inside a single
-     FunctionPass that delegates to other passes. */    
-  Initialize(K);
+  getModuleIntMetadata(*F.getParent(), "WGLocalSizeX", WGLocalSizeX);
+  getModuleIntMetadata(*F.getParent(), "WGLocalSizeY", WGLocalSizeY);
+  getModuleIntMetadata(*F.getParent(), "WGLocalSizeZ", WGLocalSizeZ);
+  getModuleBoolMetadata(*F.getParent(), "WGDynamicLocalSize",
+                        WGDynamicLocalSize);
 
   std::string method = "auto";
   if (getenv("POCL_WORK_GROUP_METHOD") != NULL)
     {
       method = getenv("POCL_WORK_GROUP_METHOD");
       if ((method == "repl" || method == "workitemrepl") && !WGDynamicLocalSize)
-        chosenHandler_ = POCL_WIH_FULL_REPLICATION;
+        Result = WorkitemHandlerType::FULL_REPLICATION;
       else if (method == "loops" || method == "workitemloops" || method == "loopvec")
-        chosenHandler_ = POCL_WIH_LOOPS;
+        Result = WorkitemHandlerType::LOOPS;
       else if (method == "cbs")
-        chosenHandler_ = POCL_WIH_CBS;
+        Result = WorkitemHandlerType::CBS;
       else if (method != "auto")
         {
           std::cerr << "Unknown work group generation method. Using 'auto'." << std::endl;
@@ -102,13 +97,51 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
 
       if (!WGDynamicLocalSize &&
           WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ <= ReplThreshold) {
-        chosenHandler_ = POCL_WIH_FULL_REPLICATION;
+        Result = WorkitemHandlerType::FULL_REPLICATION;
       } else {
-        chosenHandler_ = POCL_WIH_LOOPS;
+        Result = WorkitemHandlerType::LOOPS;
       }
     }
+    return Result;
+}
 
+/**********************************************************************/
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char WorkitemHandlerChooser::ID = 0;
+
+bool WorkitemHandlerChooser::runOnFunction(Function &F) {
+  chosenHandler_.WIH = runWorkitemHandlerChooser(F);
   return false;
 }
 
+void WorkitemHandlerChooser::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
 }
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::AnalysisKey WorkitemHandlerChooser::Key;
+
+WorkitemHandlerResult
+WorkitemHandlerChooser::run(llvm::Function &F,
+                            llvm::FunctionAnalysisManager &AM) {
+  return runWorkitemHandlerChooser(F);
+}
+
+bool WorkitemHandlerResult::invalidate(
+    llvm::Function &F, const llvm::PreservedAnalyses PA,
+    llvm::AnalysisManager<llvm::Function>::Invalidator &Inv) {
+  // Check whether the analysis has been explicitly invalidated.
+  // Otherwise, it stays valid
+  auto PAC = PA.getChecker<WorkitemHandlerChooser>();
+  return !PAC.preservedWhenStateless();
+}
+
+REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

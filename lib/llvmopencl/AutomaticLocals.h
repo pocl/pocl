@@ -20,11 +20,42 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#include "pocl_cl.h"
+#ifndef POCL_AUTOMATIC_LOCALS_H
+#define POCL_AUTOMATIC_LOCALS_H
+
+#include "config.h"
+
+#include <llvm/IR/Module.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
 
-llvm::ModulePass *
-createAutomaticLocalsPass(pocl_autolocals_to_args_strategy autolocals_to_args);
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
+class AutomaticLocals : public llvm::ModulePass {
+
+public:
+  static char ID;
+  AutomaticLocals() : ModulePass(ID) {}
+  virtual ~AutomaticLocals(){};
+
+  virtual bool runOnModule(llvm::Module &M) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
+
+#else
+
+class AutomaticLocals : public llvm::PassInfoMixin<AutomaticLocals> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
 } // namespace pocl
+
+#endif

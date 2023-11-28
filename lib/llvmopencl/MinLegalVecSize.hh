@@ -1,14 +1,13 @@
-// Header for Workgroup.cc module pass.
+// LLVM module pass. Sets AlwaysInline on functions that have arguments whose size
+// exceeds the largest available register size of the Target
 //
-// Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2011-2018 Pekka Jääskeläinen
-//               2023 Pekka Jääskeläinen / Intel Finland Oy
+// Copyright (c) 2023 Michal Babej / Intel Finland Oy
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to
-// deal in the Software without restriction, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-// sell copies of the Software, and to permit persons to whom the Software is
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
@@ -18,12 +17,12 @@
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-// IN THE SOFTWARE.
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
 
-#ifndef POCL_WORKGROUP_H
-#define POCL_WORKGROUP_H
+#ifndef POCL_MIN_VEC_SIZE_H
+#define POCL_MIN_VEC_SIZE_H
 
 #include "config.h"
 
@@ -36,19 +35,18 @@ namespace pocl {
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-class Workgroup : public llvm::ModulePass
-{
+class FixMinVecSize : public llvm::ModulePass {
 public:
   static char ID;
-  Workgroup () : ModulePass (ID) {};
+  FixMinVecSize() : ModulePass(ID){};
 
-  virtual bool runOnModule(llvm::Module &M) override;
+  virtual bool runOnModule(llvm::Module &F) override;
   virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
 #else
 
-class Workgroup : public llvm::PassInfoMixin<Workgroup> {
+class FixMinVecSize : public llvm::PassInfoMixin<FixMinVecSize> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);

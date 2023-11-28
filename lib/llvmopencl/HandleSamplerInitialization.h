@@ -20,33 +20,47 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_HANDLE_SAMPLER_INITIALIZATION_H
-#define _POCL_HANDLE_SAMPLER_INITIALIZATION_H
+#ifndef POCL_HANDLE_SAMPLER_INITIALIZATION_H
+#define POCL_HANDLE_SAMPLER_INITIALIZATION_H
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include "config.h"
 
 #include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
-
-POP_COMPILER_DIAGS
+#include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-
-class Workgroup;
 
 // Currently removes the __translate_sampler_initializer calls introduced in Clang 4.0.
 // They usually trivially map to the given constant i32. The pass can be extended for
 // per-target handling of samplers.
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+
 class HandleSamplerInitialization : public llvm::FunctionPass {
 public:
-
   static char ID;
-  HandleSamplerInitialization();
+  HandleSamplerInitialization() : FunctionPass(ID){};
+  virtual ~HandleSamplerInitialization(){};
 
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-  virtual bool runOnFunction(llvm::Function &F);
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
-}
+#else
+
+class HandleSamplerInitialization
+    : public llvm::PassInfoMixin<HandleSamplerInitialization> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
+
 #endif

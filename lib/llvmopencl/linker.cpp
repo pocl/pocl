@@ -30,11 +30,11 @@
 #include <iostream>
 #include <set>
 
-#include "config.h"
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/IR/DebugInfo.h"
@@ -50,10 +50,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassInfo.h>
 #include <llvm/PassRegistry.h>
 #include <llvm/Transforms/IPO/AlwaysInliner.h>
-#include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 
 #include "pocl_cl.h"
+#include "pocl_llvm_api.h"
 
 #include "LLVMUtils.h"
 #include "linker.h"
@@ -102,6 +102,50 @@ static bool removeDuplicateDbgInfo(Module *Mod) {
     }
   }
   return Erased;
+}
+
+// fix mismatches between calling conv. This should not happen,
+// but sometimes can, esp with SPIR(-V) input
+static void fixCallingConv(llvm::Module *Mod, std::string &Log) {
+  for (llvm::Module::iterator MI = Mod->begin(); MI != Mod->end(); ++MI) {
+    llvm::Function *F = &*MI;
+    if (F->isDeclaration())
+      continue;
+
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;
+           ++BI) {
+        Instruction *Instr = dyn_cast<Instruction>(BI);
+        if (!llvm::isa<CallInst>(Instr))
+          continue;
+        CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+        Function *Callee = CallInstr->getCalledFunction();
+
+        if ((Callee == nullptr) || Callee->getName().startswith("llvm.") ||
+            Callee->isDeclaration())
+          continue;
+
+        if (CallInstr->getCallingConv() != Callee->getCallingConv()) {
+          std::string CalleeName, CallerName;
+          if (F->hasName())
+            CallerName = F->getName().str();
+          else
+            CallerName = "unnamed";
+          if (Callee->hasName())
+            CalleeName = Callee->getName().str();
+          else
+            CalleeName = "unnamed";
+
+          Log.append("Warning: CallingConv mismatch: \n Caller is: ");
+          Log.append(CallerName);
+          Log.append(" and Callee is: ");
+          Log.append(CalleeName);
+          Log.append("; fixing \n");
+          CallInstr->setCallingConv(Callee->getCallingConv());
+        }
+      }
+    }
+  }
 }
 
 // Find all functions in the calltree of F, append their
@@ -321,8 +365,8 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
 
 using namespace pocl;
 
-int link(llvm::Module *Program, const llvm::Module *Lib,
-         std::string &log, const char **DevAuxFuncs) {
+int link(llvm::Module *Program, const llvm::Module *Lib, std::string &Log,
+         const char **DevAuxFuncs, bool DeviceSidePrintf) {
 
   assert(Program);
   assert(Lib);
@@ -409,7 +453,7 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
             PointerType *RetPT =
                 dyn_cast<PointerType>(Call->getFunctionType()->getReturnType());
             if (ArgPT == nullptr || RetPT == nullptr) {
-              log.append("Invalid use of operator __to_{local,global,private}");
+              Log.append("Invalid use of operator __to_{local,global,private}");
               found_all_undefined = false;
               break;
             }
@@ -438,9 +482,9 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
              !f->getName().equals(pocl_sampler_handler) &&
              !f->getName().startswith(llvm_intrins))
            ) {
-          log.append("Cannot find symbol ");
-          log.append(r.str());
-          log.append(" in kernel library\n");
+          Log.append("Cannot find symbol ");
+          Log.append(r.str());
+          Log.append(" in kernel library\n");
           found_all_undefined = false;
         }
       }
@@ -449,15 +493,27 @@ int link(llvm::Module *Program, const llvm::Module *Lib,
   if (!found_all_undefined)
     return 1;
 
-  shared_copy(Program, Lib, log, vvm);
+  shared_copy(Program, Lib, Log, vvm);
 
   removeDuplicateDbgInfo(Program);
+
+  fixCallingConv(Program, Log);
+
+  if (DeviceSidePrintf) {
+    /* Rename printf function to something else than "printf". Note that it has
+     * to be done here, can't be done in the sources via macro, because Clang
+     * refuses to compile it. */
+    Function *CalledPrintf = Program->getFunction("printf");
+    if (CalledPrintf) {
+      CalledPrintf->setName("_cl_printf");
+    }
+  }
 
   return 0;
 }
 
-int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
-                          const llvm::Module *program,
+int copyKernelFromBitcode(const char* Name, llvm::Module *ParallelBC,
+                          const llvm::Module *Program,
                           const char **DevAuxFuncs) {
   ValueToValueMapTy vvm;
 
@@ -466,44 +522,44 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
   // both program and lib to find which actually are used.
   DB_PRINT("cloning the global variables:\n");
   llvm::Module::const_global_iterator gi,ge;
-  for (gi=program->global_begin(), ge=program->global_end(); gi != ge; gi++) {
+  for (gi=Program->global_begin(), ge=Program->global_end(); gi != ge; gi++) {
     DB_PRINT(" %s\n", gi->getName().data());
     GlobalVariable *GV = new GlobalVariable(
-      *parallel_bc, gi->getValueType(), gi->isConstant(),
+      *ParallelBC, gi->getValueType(), gi->isConstant(),
       gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
       gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
     GV->copyAttributesFrom(&*gi);
     vvm[&*gi]=GV;
   }
 
-  const StringRef kernel_name(name);
-  copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
+  const StringRef KernelName(Name);
+  copy_func_callgraph(KernelName, Program, ParallelBC, vvm);
 
   if (DevAuxFuncs) {
     const char **Func = DevAuxFuncs;
     while (*Func != nullptr) {
-      copy_func_callgraph(*Func++, program, parallel_bc, vvm);
+      copy_func_callgraph(*Func++, Program, ParallelBC, vvm);
     }
   }
 
-  std::string log;
-  shared_copy(parallel_bc, program, log, vvm);
+  std::string Log;
+  shared_copy(ParallelBC, Program, Log, vvm);
 
   if (pocl_get_bool_option("POCL_LLVM_ALWAYS_INLINE", 0)) {
     llvm::Module::iterator MI, ME;
-    for (MI = parallel_bc->begin(), ME = parallel_bc->end(); MI != ME; ++MI) {
+    for (MI = ParallelBC->begin(), ME = ParallelBC->end(); MI != ME; ++MI) {
       Function *F = &*MI;
       if (F->isDeclaration())
           continue;
       // inline all except the kernel
-      if (F->getName() != name) {
+      if (F->getName() != Name) {
           F->addFnAttr(Attribute::AlwaysInline);
       }
     }
 
     llvm::legacy::PassManager Passes;
     Passes.add(createAlwaysInlinerLegacyPass());
-    Passes.run(*parallel_bc);
+    Passes.run(*ParallelBC);
   }
   return 0;
 }

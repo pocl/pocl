@@ -574,7 +574,7 @@ endif()
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
 set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
-                "-emit-llvm" "-ffp-contract=off" "-DPRINTF_IMMEDIATE_FLUSH")
+                "-ffreestanding" "-emit-llvm" "-ffp-contract=off" "-DPRINTF_IMMEDIATE_FLUSH")
 
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 

@@ -198,6 +198,9 @@
 
 #cmakedefine LLVM_MAJOR @LLVM_VERSION_MAJOR@
 
+// minimum LLVM version at which to enable new PM
+#define MIN_LLVM_NEW_PASSMANAGER 14
+
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 
 #ifndef LLVM_VERSION

@@ -21,44 +21,157 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <iostream>
-
 #include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-
-#include "pocl.h"
-
-#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/Analysis/PostDominators.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
-
-POP_COMPILER_DIAGS
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Barrier.h"
 #include "ImplicitConditionalBarriers.h"
+#include "LLVMUtils.h"
 #include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
+POP_COMPILER_DIAGS
+
+#include <iostream>
+
+#include "pocl.h"
 
 //#define DEBUG_COND_BARRIERS
 
-using namespace llvm;
-using namespace pocl;
+#define PASS_NAME "implicit-cond-barriers"
+#define PASS_CLASS pocl::ImplicitConditionalBarriers
+#define PASS_DESC "Adds implicit barriers to branches."
 
-namespace {
-  static
-  RegisterPass<ImplicitConditionalBarriers> X("implicit-cond-barriers",
-                                              "Adds implicit barriers to branches.");
+namespace pocl {
+
+using namespace llvm;
+
+/**
+ * Finds a predecessor that does not come from a back edge.
+ *
+ * This is used to include loops in the conditional parallel region.
+ */
+static BasicBlock *firstNonBackedgePredecessor(llvm::BasicBlock *BB,
+                                               DominatorTree &DT) {
+
+  pred_iterator I = pred_begin(BB), E = pred_end(BB);
+  if (I == E)
+    return NULL;
+  while (DT.dominates(BB, *I) && I != E)
+    ++I;
+  if (I == E)
+    return NULL;
+  else
+    return *I;
 }
 
+static bool implicitConditionalBarriers(Function &F,
+                                        llvm::PostDominatorTree &PDT,
+                                        llvm::DominatorTree &DT) {
+
+  typedef std::vector<BasicBlock*> BarrierBlockIndex;
+  BarrierBlockIndex ConditionalBarriers;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    BasicBlock *BB = &*FI;
+    if (!Barrier::hasBarrier(BB)) continue;
+
+    // Unconditional barrier postdominates the entry node.
+    if (PDT.dominates(BB, &F.getEntryBlock()))
+      continue;
+
+#ifdef DEBUG_COND_BARRIERS
+    std::cerr << "### found a conditional barrier";
+    BB->dump();
+#endif
+    ConditionalBarriers.push_back(BB);
+  }
+
+  if (ConditionalBarriers.size() == 0) return false;
+
+  bool Changed = false;
+
+  for (BarrierBlockIndex::const_iterator i = ConditionalBarriers.begin();
+       i != ConditionalBarriers.end(); ++i) {
+    BasicBlock *BB = *i;
+    // Trace upwards from the barrier until one encounters another
+    // barrier or the split point that makes the barrier conditional. 
+    // In case of the latter, add a new barrier to both branches of the split point. 
+
+    // BB before which to inject the barrier.
+    BasicBlock *Pos = BB;
+    if (pred_begin(BB) == pred_end(BB)) {
+#ifdef DEBUG_COND_BARRIERS
+      b->dump();
+#endif
+      assert (pred_begin(BB) == pred_end(BB));
+    }
+    BasicBlock *Pred = firstNonBackedgePredecessor(BB, DT);
+
+    while (!Barrier::hasOnlyBarrier(Pred) && PDT.dominates(BB, Pred)) {
+
+#ifdef DEBUG_COND_BARRIERS
+      std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
+#endif
+      Pos = Pred;
+      // If our BB post dominates the given block, we know it is not the
+      // branching block that makes the barrier conditional.
+      Pred = firstNonBackedgePredecessor(Pred, DT);
+
+      if (Pred == BB) break; // Traced across a loop edge, skip this case.
+    }
+
+    if (Barrier::hasOnlyBarrier(Pos)) continue;
+    // Inject a barrier at the beginning of the BB and let the
+    // CanonicalizeBarrier to clean it up (split to a separate BB).
+
+    // mri-q of parboil breaks in case injected at the beginning
+    // TODO: investigate. It might related to the alloca-converted
+    // PHIs. It has a loop that is autoconverted to a b-loop and the
+    // conditional barrier is inserted after the loop short cut check.
+    Barrier::Create(Pos->getFirstNonPHI());
+#ifdef DEBUG_COND_BARRIERS
+    std::cerr << "### added an implicit barrier to the BB" << std::endl;
+    pos->dump();
+#endif
+
+    Changed = true;
+  }
+
+//  F.dump();
+//  F.viewCFGOnly();
+
+  return Changed;
+}
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 char ImplicitConditionalBarriers::ID = 0;
 
-void
-ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
-{
+bool ImplicitConditionalBarriers::runOnFunction(Function &F) {
+  if (!pocl::isKernelToProcess(F))
+    return false;
+
+  if (!pocl::hasWorkgroupBarriers(F))
+    return false;
+
+  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
+  if (WIH == WorkitemHandlerType::CBS)
+    return false;
+
+  llvm::PostDominatorTree &PDT =
+      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
+  llvm::DominatorTree &DT =
+      getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+
+  return implicitConditionalBarriers(F, PDT, DT);
+}
+
+void ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<PostDominatorTreeWrapperPass>();
   AU.addPreserved<PostDominatorTreeWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
@@ -68,113 +181,39 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addPreserved<WorkitemHandlerChooser>();
 }
 
-/**
- * Finds a predecessor that does not come from a back edge.
- *
- * This is used to include loops in the conditional parallel region.
- */
-BasicBlock*
-ImplicitConditionalBarriers::firstNonBackedgePredecessor(
-    llvm::BasicBlock *bb) {
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
-    DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+#else
 
-    pred_iterator I = pred_begin(bb), E = pred_end(bb);
-    if (I == E) return NULL;
-    while (DT->dominates(bb, *I) && I != E) ++I;
-    if (I == E) return NULL;
-    else return *I;
-}
+llvm::PreservedAnalyses
+ImplicitConditionalBarriers::run(llvm::Function &F,
+                                 llvm::FunctionAnalysisManager &FAM) {
 
-bool
-ImplicitConditionalBarriers::runOnFunction(Function &F) {
-{
   if (!isKernelToProcess(F))
-    return false;
+    return PreservedAnalyses::all();
 
   if (!hasWorkgroupBarriers(F))
-    return false;
+    return PreservedAnalyses::all();
 
-  if (getAnalysis<WorkitemHandlerChooser>().chosenHandler() ==
-      WorkitemHandlerChooser::POCL_WIH_CBS)
-    return false;
+  WorkitemHandlerType WIH = FAM.getResult<WorkitemHandlerChooser>(F).WIH;
+  if (WIH == WorkitemHandlerType::CBS)
+    return PreservedAnalyses::all();
 
-  PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
+  llvm::PostDominatorTree &PDT = FAM.getResult<PostDominatorTreeAnalysis>(F);
+  llvm::DominatorTree &DT = FAM.getResult<DominatorTreeAnalysis>(F);
 
-  typedef std::vector<BasicBlock*> BarrierBlockIndex;
-  BarrierBlockIndex conditionalBarriers;
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    if (!Barrier::hasBarrier(b)) continue;
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+  PAChanged.preserve<PostDominatorTreeAnalysis>();
+  PAChanged.preserve<DominatorTreeAnalysis>();
 
-    // Unconditional barrier postdominates the entry node.
-    if (PDT->getPostDomTree().dominates(b, &F.getEntryBlock())) continue;
-
-#ifdef DEBUG_COND_BARRIERS
-    std::cerr << "### found a conditional barrier";
-    b->dump();
-#endif
-    conditionalBarriers.push_back(b);
-  }
-
-  if (conditionalBarriers.size() == 0) return false;
-
-  bool changed = false;
-
-  for (BarrierBlockIndex::const_iterator i = conditionalBarriers.begin();
-       i != conditionalBarriers.end(); ++i) {
-    BasicBlock *b = *i;
-    // Trace upwards from the barrier until one encounters another
-    // barrier or the split point that makes the barrier conditional. 
-    // In case of the latter, add a new barrier to both branches of the split point. 
-
-    // BB before which to inject the barrier.
-    BasicBlock *pos = b;
-    if (pred_begin(b) == pred_end(b)) {
-#ifdef DEBUG_COND_BARRIERS
-      b->dump();
-#endif
-      assert (pred_begin(b) == pred_end(b));
-    }
-    BasicBlock *pred = firstNonBackedgePredecessor(b);
-
-    while (!Barrier::hasOnlyBarrier(pred) && PDT->getPostDomTree().dominates(b, pred)) {
-
-#ifdef DEBUG_COND_BARRIERS
-      std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
-#endif
-      pos = pred;
-      // If our BB post dominates the given block, we know it is not the
-      // branching block that makes the barrier conditional.
-      pred = firstNonBackedgePredecessor(pred);
-
-      if (pred == b) break; // Traced across a loop edge, skip this case.
-
-    }
-
-    if (Barrier::hasOnlyBarrier(pos)) continue;
-    // Inject a barrier at the beginning of the BB and let the
-    // CanonicalizeBarrier to clean it up (split to a separate BB).
-
-    // mri-q of parboil breaks in case injected at the beginning
-    // TODO: investigate. It might related to the alloca-converted
-    // PHIs. It has a loop that is autoconverted to a b-loop and the
-    // conditional barrier is inserted after the loop short cut check.
-    Barrier::Create(pos->getFirstNonPHI());
-#ifdef DEBUG_COND_BARRIERS
-    std::cerr << "### added an implicit barrier to the BB" << std::endl;
-    pos->dump();
-#endif
-
-    changed = true;
-  }
-
-//  F.dump();
-//  F.viewCFGOnly();
-
-  return changed;
+  return implicitConditionalBarriers(F, PDT, DT) ? PAChanged
+                                                 : PreservedAnalyses::all();
 }
 
-}
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
+#endif
 
+} // namespace pocl

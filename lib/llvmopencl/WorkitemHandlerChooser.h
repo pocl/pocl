@@ -20,34 +20,57 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_HANDLER_CHOOSER_H
-#define _POCL_WORKITEM_HANDLER_CHOOSER_H
+#ifndef POCL_WORKITEM_HANDLER_CHOOSER_H
+#define POCL_WORKITEM_HANDLER_CHOOSER_H
+
+#include "config.h"
+
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
 
 #include "WorkitemHandler.h"
 
 namespace pocl {
-  class Workgroup;
 
-  class WorkitemHandlerChooser : public pocl::WorkitemHandler {
-  public:
-    static char ID;
+enum class WorkitemHandlerType { FULL_REPLICATION, LOOPS, CBS, INVALID };
+// this is required because we can only return class/struct from LLVM Analysis
+struct WorkitemHandlerResult {
+  WorkitemHandlerType WIH;
+  WorkitemHandlerResult() : WIH(WorkitemHandlerType::LOOPS) {}
+  WorkitemHandlerResult(WorkitemHandlerType A) : WIH(A) {}
+#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
+  bool invalidate(llvm::Function &F, const llvm::PreservedAnalyses PA,
+                  llvm::AnalysisManager<llvm::Function>::Invalidator &Inv);
+#endif
+};
 
-    enum WorkitemHandlerType {
-      POCL_WIH_FULL_REPLICATION,
-      POCL_WIH_LOOPS,
-      POCL_WIH_CBS
-    };
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+class WorkitemHandlerChooser : public llvm::FunctionPass {
+  WorkitemHandlerResult chosenHandler_;
 
-    WorkitemHandlerChooser()
-        : pocl::WorkitemHandler(ID), chosenHandler_(POCL_WIH_LOOPS) {}
+public:
+  static char ID;
+  WorkitemHandlerChooser() : FunctionPass(ID) {}
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    
-    WorkitemHandlerType chosenHandler() { return chosenHandler_; }
-  private:
-    WorkitemHandlerType chosenHandler_;
-  };
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+
+  WorkitemHandlerType chosenHandler() { return chosenHandler_.WIH; }
+};
+#else
+class WorkitemHandlerChooser
+    : public llvm::AnalysisInfoMixin<WorkitemHandlerChooser> {
+public:
+  static llvm::AnalysisKey Key;
+  using Result = WorkitemHandlerResult;
+
+  static void registerWithPB(llvm::PassBuilder &PB);
+  Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+#endif
 }
 
 #endif

@@ -16,13 +16,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BREAKCONSTANTGEPS_H
-#define BREAKCONSTANTGEPS_H
+#ifndef POCL_BREAKCONSTANTGEPS_H
+#define POCL_BREAKCONSTANTGEPS_H
 
 #include "config.h"
 
-#include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 //
 // Pass: BreakConstantGEPs
@@ -31,22 +33,32 @@
 //  This pass modifies a function so that it uses GEP instructions instead of
 //  GEP constant expressions.
 //
-struct BreakConstantGEPs : public llvm::FunctionPass
-{
-  private:
-    // Private methods
+namespace pocl {
 
-    // Private variables
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-  public:
-    static char ID;
-    BreakConstantGEPs() : FunctionPass(ID) {}
-    llvm::StringRef getPassName() const override {return "Remove Constant GEP Expressions";}
-  virtual bool runOnFunction (llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override {
-      // This pass does not modify the control-flow graph of the function
-      AU.setPreservesCFG();
-    }
+class BreakConstantGEPs : public llvm::FunctionPass {
+public:
+  static char ID;
+  BreakConstantGEPs() : FunctionPass(ID){};
+  virtual ~BreakConstantGEPs(){};
+
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
+
+#else
+
+class BreakConstantGEPs : public llvm::PassInfoMixin<BreakConstantGEPs> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+
+#endif
+
+} // namespace pocl
 
 #endif

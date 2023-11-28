@@ -1,8 +1,7 @@
-// Header for Workgroup.cc module pass.
+// Header for AllocasToEntry, an LLVM pass to move allocas to the function
+// entry node.
 //
-// Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2011-2018 Pekka Jääskeläinen
-//               2023 Pekka Jääskeläinen / Intel Finland Oy
+// Copyright (c) 2013 Pekka Jääskeläinen / TUT
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to
@@ -22,36 +21,48 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 
-#ifndef POCL_WORKGROUP_H
-#define POCL_WORKGROUP_H
+#ifndef POCL_WORKITEM_ALIAS_ANALYSIS_H
+#define POCL_WORKITEM_ALIAS_ANALYSIS_H
 
 #include "config.h"
 
-#include <llvm/IR/Module.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
 
+class WorkItemAAResult;
+
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-class Workgroup : public llvm::ModulePass
-{
+/// Legacy wrapper pass to provide the (WorkItemAAWrapperPass) object.
+class WorkItemAliasAnalysis : public llvm::FunctionPass {
+  std::unique_ptr<WorkItemAAResult> Result;
+
 public:
   static char ID;
-  Workgroup () : ModulePass (ID) {};
 
-  virtual bool runOnModule(llvm::Module &M) override;
+  WorkItemAliasAnalysis();
+  virtual ~WorkItemAliasAnalysis();
+
+  WorkItemAAResult &getResult();
+
+  virtual bool runOnFunction(llvm::Function &F) override;
   virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
 };
 
 #else
 
-class Workgroup : public llvm::PassInfoMixin<Workgroup> {
+class WorkItemAliasAnalysis
+    : public llvm::AnalysisInfoMixin<WorkItemAliasAnalysis> {
 public:
-  static void registerWithPB(llvm::PassBuilder &B);
-  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
+  static llvm::AnalysisKey Key;
+  using Result = WorkItemAAResult;
+  static void registerWithPB(llvm::PassBuilder &PB);
+
+  Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
 

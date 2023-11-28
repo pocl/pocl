@@ -21,36 +21,33 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "config.h"
-#include "pocl.h"
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+
+#include "LLVMUtils.h"
+#include "OptimizeWorkItemFuncCalls.h"
+#include "VariableUniformityAnalysis.h"
+#include "WorkitemHandlerChooser.h"
+POP_COMPILER_DIAGS
 
 #include <iostream>
 #include <map>
 #include <set>
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include <llvm/IR/Constants.h>
-#include <llvm/IR/Instructions.h>
-
-#include "OptimizeWorkItemFuncCalls.h"
+#define PASS_NAME "optimize-wi-func-calls"
+#define PASS_CLASS pocl::OptimizeWorkItemFuncCalls
+#define PASS_DESC "Optimize work-item function calls."
 
 namespace pocl {
 
 using namespace llvm;
 
-namespace {
-static RegisterPass<pocl::OptimizeWorkItemFuncCalls>
-    X("optimize-wi-func-calls", "Optimize work-item function calls.");
-}
-
-char OptimizeWorkItemFuncCalls::ID = 0;
-
-OptimizeWorkItemFuncCalls::OptimizeWorkItemFuncCalls() : FunctionPass(ID) {}
-
-bool
-OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
+static bool optimizeWorkItemFuncCalls(Function &F) {
 
   // Let's avoid reoptimizing pocl_printf in the kernel compiler. It should
   // be optimized already in the bitcode library, and we do not want to
@@ -176,4 +173,32 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
   return Changed;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char OptimizeWorkItemFuncCalls::ID = 0;
+
+bool OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
+  return optimizeWorkItemFuncCalls(F);
 }
+
+void OptimizeWorkItemFuncCalls::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addPreserved<WorkitemHandlerChooser>();
+}
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::PreservedAnalyses
+OptimizeWorkItemFuncCalls::run(llvm::Function &F,
+                               llvm::FunctionAnalysisManager &AM) {
+  PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+
+  return optimizeWorkItemFuncCalls(F) ? PAChanged : PreservedAnalyses::all();
+}
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

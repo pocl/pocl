@@ -21,47 +21,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef _POCL_WORKITEM_REPLICATION_H
-#define _POCL_WORKITEM_REPLICATION_H
+#ifndef POCL_WORKITEM_REPLICATION_H
+#define POCL_WORKITEM_REPLICATION_H
 
-#include <map>
-#include <vector>
+#include "config.h"
 
-#include "pocl.h"
-
-#include "llvm/IR/Dominators.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-
-#include "WorkitemHandler.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-  class Workgroup;
 
-  class WorkitemReplication : public pocl::WorkitemHandler {
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-  public:
-    static char ID;
+class WorkitemReplication : public llvm::FunctionPass {
+public:
+  static char ID;
+  WorkitemReplication() : FunctionPass(ID) {}
+  virtual ~WorkitemReplication() {}
+  llvm::StringRef getPassName() const override {
+    return "PoCL Work-Item Replication pass";
+  }
 
-  WorkitemReplication() : pocl::WorkitemHandler(ID) {}
+  virtual bool runOnFunction(llvm::Function &F) override;
+  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
+};
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
+#else
+class WorkitemReplication : public llvm::PassInfoMixin<WorkitemReplication> {
+public:
+  static void registerWithPB(llvm::PassBuilder &B);
+  llvm::PreservedAnalyses run(llvm::Function &F,
+                              llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+#endif
 
-
-  private:
-
-    llvm::DominatorTree *DT;
-    llvm::DominatorTreeWrapperPass *DTP;
-    llvm::LoopInfoWrapperPass *LI;
-
-    typedef std::set<llvm::BasicBlock *> BasicBlockSet;
-    typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
-    typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
-
-    virtual bool ProcessFunction(llvm::Function &F);
-  };
-}
+} // namespace pocl
 
 #endif

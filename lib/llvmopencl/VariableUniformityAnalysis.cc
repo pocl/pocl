@@ -20,31 +20,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <sstream>
-#include <iostream>
 
 #include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
-#include "llvm/IR/Metadata.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Analysis/PostDominators.h"
-
-#include "WorkitemHandler.h"
-#include "Kernel.h"
-#include "VariableUniformityAnalysis.h"
-#include "Barrier.h"
-#include "Workgroup.h"
-
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/Support/CommandLine.h"
+POP_COMPILER_DIAGS
+
+#include "Barrier.h"
+#include "Kernel.h"
+#include "LLVMUtils.h"
+#include "VariableUniformityAnalysis.h"
+#include "VariableUniformityAnalysisResult.hh"
+#include "Workgroup.h"
+#include "WorkitemHandler.h"
+
+#include <iostream>
+#include <map>
+#include <sstream>
+
+#include "pocl_llvm_api.h"
 
 // #define DEBUG_UNIFORMITY_ANALYSIS
 
@@ -52,40 +58,22 @@ POP_COMPILER_DIAGS
 #include "DebugHelpers.h"
 #endif
 
+#define PASS_NAME "pocl-vua"
+#define PASS_CLASS pocl::VariableUniformityAnalysis
+#define PASS_DESC                                                              \
+  "Analyses the variables of the function for uniformity (same value across "  \
+  "WIs)."
+
 namespace pocl {
 
-char VariableUniformityAnalysis::ID = 0;
-
 using namespace llvm;
-
-static
-RegisterPass<VariableUniformityAnalysis> X(
-    "uniformity", 
-    "Analyses the variables of the function for uniformity (same value across WIs).",
-    false, false);
-
-VariableUniformityAnalysis::VariableUniformityAnalysis() : FunctionPass(ID) {
-}
-
-
-void
-VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addPreserved<PostDominatorTreeWrapperPass>();
-
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addPreserved<LoopInfoWrapperPass>();
-  // required by LoopInfo:
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-}
 
 // Recursively mark the canonical induction variable PHI as uniform.
 // If there's a canonical induction variable in loops, the variable
 // update for each iteration should be uniform. Note: this does not yet
 // imply all the work-items execute the loop same number of times!
-void
-VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
+void VariableUniformityAnalysisResult::markInductionVariables(Function &F,
+                                                              llvm::Loop &L) {
 
   if (llvm::PHINode *inductionVar = L.getCanonicalInductionVariable()) {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
@@ -99,8 +87,8 @@ VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
   }
 }
 
-bool
-VariableUniformityAnalysis::runOnFunction(Function &F) {
+bool VariableUniformityAnalysisResult::runOnFunction(
+    Function &F, llvm::LoopInfo &LI, llvm::PostDominatorTree &PDT) {
 
   if (!isKernelToProcess(F))
     return false;
@@ -115,15 +103,13 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
      divergence analysis. */
   uniformityCache_[&F].clear();
 
-  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-
   for (llvm::LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
     llvm::Loop *L = *i;
     markInductionVariables(F, *L);
   }
 
   setUniform(&F, &F.getEntryBlock());
-  analyzeBBDivergence(&F, &F.getEntryBlock(), &F.getEntryBlock());
+  analyzeBBDivergence(&F, &F.getEntryBlock(), &F.getEntryBlock(), PDT);
   return false;
 }
 
@@ -137,10 +123,9 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
  * but the variables should be still replicated to avoid multiple increments
  * of the same induction variable by each work-item.
  */
-bool
-VariableUniformityAnalysis::shouldBePrivatized
-(llvm::Function *f, llvm::Value *val) {
-  if (!isUniform(f, val)) return true;
+bool VariableUniformityAnalysisResult::shouldBePrivatized(llvm::Function *F,
+                                                          llvm::Value *Val) {
+  if (!isUniform(F, Val)) return true;
   
   /* Check if the value is stored in stack (is an alloca or writes to an alloca). */
   /* It should be enough to context save the initial alloca and the stores to
@@ -148,13 +133,12 @@ VariableUniformityAnalysis::shouldBePrivatized
      How the value (based on which of those allocas) is computed does not matter as
      we are deadling with uniform computation. */
 
-  if (isa<AllocaInst>(val)) return true;
+  if (isa<AllocaInst>(Val)) return true;
 
-  if (isa<StoreInst>(val) && 
-      isa<AllocaInst>(dyn_cast<StoreInst>(val)->getPointerOperand())) return true;
-  return false;  
+  if (isa<StoreInst>(Val) &&
+      isa<AllocaInst>(dyn_cast<StoreInst>(Val)->getPointerOperand())) return true;
+  return false;
 }
-
 
 /**  
  * BB divergence analysis.
@@ -182,9 +166,9 @@ VariableUniformityAnalysis::shouldBePrivatized
  * Otherwise, assume divergent (might not be *proven* to be one!).
  *
  */
-void
-VariableUniformityAnalysis::analyzeBBDivergence
-(llvm::Function *f, llvm::BasicBlock *bb, llvm::BasicBlock *previousUniformBB) {
+void VariableUniformityAnalysisResult::analyzeBBDivergence(
+    llvm::Function *F, llvm::BasicBlock *BB,
+    llvm::BasicBlock *PreviousUniformBB, llvm::PostDominatorTree &PDT) {
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
   std::cerr << "### Analyzing BB divergence (bb=" << bb->getName().str()
@@ -192,7 +176,7 @@ VariableUniformityAnalysis::analyzeBBDivergence
             << std::endl;
 #endif
 
-  auto Term = previousUniformBB->getTerminator();
+  auto Term = PreviousUniformBB->getTerminator();
   if (Term == NULL) {
     // this is most likely a function with a single basic block, the entry
     // node, which ends with a ret
@@ -212,52 +196,51 @@ VariableUniformityAnalysis::analyzeBBDivergence
 
   // Condition c)
   if ((BrInst && (!BrInst->isConditional() ||
-                  isUniform(f, BrInst->getCondition()))) ||
-      (SwInst && isUniform(f, SwInst->getCondition()))) {
+                  isUniform(F, BrInst->getCondition()))) ||
+      (SwInst && isUniform(F, SwInst->getCondition()))) {
     // This is a branch with a uniform condition, propagate the uniformity
     // to the BB of interest.
     for (unsigned suc = 0, end = Term->getNumSuccessors(); suc < end; ++suc) {
       llvm::BasicBlock *Successor = Term->getSuccessor(suc);
       // TODO: should we check that there are no divergent entries to this
       // BB even though if the currently checked condition is uniform?
-      setUniform(f, Successor, true);
+      setUniform(F, Successor, true);
       FoundUniforms.push_back(Successor);
     }
   }
 
   // Condition b)
   if (FoundUniforms.size() == 0) {
-    llvm::PostDominatorTreeWrapperPass *PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
-    if (PDT->getPostDomTree().dominates(bb, previousUniformBB)) {
-      setUniform(f, bb, true);
-      FoundUniforms.push_back(bb);
+    if (PDT.dominates(BB, PreviousUniformBB)) {
+      setUniform(F, BB, true);
+      FoundUniforms.push_back(BB);
     }
   }
 
   /* Assume diverging. */
-  if (!isUniformityAnalyzed(f, bb))
-    setUniform(f, bb, false);
+  if (!isUniformityAnalyzed(F, BB))
+    setUniform(F, BB, false);
 
   for (auto UniformBB : FoundUniforms) {
 
     // Propagate the Uniform BB data downwards.
     auto NextTerm = UniformBB->getTerminator();
 
-    for (unsigned suc = 0, end = NextTerm->getNumSuccessors(); suc < end;
-         ++suc) {
-      llvm::BasicBlock *NextBB = NextTerm->getSuccessor(suc);
-      if (!isUniformityAnalyzed(f, NextBB)) {
-        analyzeBBDivergence(f, NextBB, UniformBB);
+    for (unsigned Suc = 0, End = NextTerm->getNumSuccessors(); Suc < End;
+         ++Suc) {
+      llvm::BasicBlock *NextBB = NextTerm->getSuccessor(Suc);
+      if (!isUniformityAnalyzed(F, NextBB)) {
+        analyzeBBDivergence(F, NextBB, UniformBB, PDT);
       }
     }
   }
 }
 
-bool
-VariableUniformityAnalysis::isUniformityAnalyzed(llvm::Function *f, llvm::Value *v) const {
-  UniformityIndex &cache = uniformityCache_[f];
-  UniformityIndex::const_iterator i = cache.find(v);
-  if (i != cache.end()) {
+bool VariableUniformityAnalysisResult::isUniformityAnalyzed(
+    llvm::Function *F, llvm::Value *V) const {
+  UniformityIndex &Cache = uniformityCache_[F];
+  UniformityIndex::const_iterator I = Cache.find(V);
+  if (I != Cache.end()) {
     return true;
   }
   return false;
@@ -274,33 +257,33 @@ VariableUniformityAnalysis::isUniformityAnalyzed(llvm::Function *f, llvm::Value 
  * c) OpenCL C identifiers that are constant for all work-items in a work-group
  * 
  */
-bool 
-VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
+bool VariableUniformityAnalysisResult::isUniform(llvm::Function *F,
+                                                 llvm::Value *V) {
 
-  UniformityIndex &cache = uniformityCache_[f];
-  UniformityIndex::const_iterator i = cache.find(v);
-  if (i != cache.end()) {
-    return (*i).second;
+  UniformityIndex &Cache = uniformityCache_[F];
+  UniformityIndex::const_iterator I = Cache.find(V);
+  if (I != Cache.end()) {
+    return (*I).second;
   }
 
-  if (llvm::BasicBlock *bb = dyn_cast<llvm::BasicBlock>(v)) {
-    if (bb == &f->getEntryBlock()) {
-      setUniform(f, v, true);
+  if (llvm::BasicBlock *BB = dyn_cast<llvm::BasicBlock>(V)) {
+    if (BB == &F->getEntryBlock()) {
+      setUniform(F, V, true);
       return true;
     }
   }
 
-  if (isa<llvm::Argument>(v)) {
-    setUniform(f, v, true);
+  if (isa<llvm::Argument>(V)) {
+    setUniform(F, V, true);
     return true;
   }
 
-  if (isa<llvm::ConstantInt>(v)) {
-    setUniform(f, v, true);
+  if (isa<llvm::ConstantInt>(V)) {
+    setUniform(F, V, true);
     return true;
   }
 
-  if (isa<llvm::AllocaInst>(v)) {
+  if (isa<llvm::AllocaInst>(V)) {
     /* Allocas might or might not be divergent. These are produced 
        from work-item private arrays or the PHIsToAllocas. It depends
        what is written to them whether they are really divergent. 
@@ -323,10 +306,10 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
        our initial assumption was wrong, restore the cache from the backup.
     */
     UniformityCache backupCache(uniformityCache_);
-    setUniform(f, v);
+    setUniform(F, V);
 
     bool isUniformAlloca = true;
-    llvm::Instruction *instruction = dyn_cast<llvm::AllocaInst>(v);
+    llvm::Instruction *instruction = dyn_cast<llvm::AllocaInst>(V);
     for (Instruction::use_iterator ui = instruction->use_begin(),
            ue = instruction->use_end();
          ui != ue; ++ui) {
@@ -335,9 +318,9 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
       
       llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(user);
       if (store) {
-        if (!isUniform(f, store->getValueOperand()) || 
-            !isUniform(f, store->getParent())) {
-          if (!isUniform(f, store->getParent())) {
+        if (!isUniform(F, store->getValueOperand()) ||
+            !isUniform(F, store->getParent())) {
+          if (!isUniform(F, store->getParent())) {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
             std::cerr << "### alloca was written in a non-uniform BB" << std::endl;
             store->getParent()->dump();
@@ -384,15 +367,15 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
       // restore the old uniform data as our guess was wrong
       uniformityCache_ = backupCache;
     }
-    setUniform(f, v, isUniformAlloca);
+    setUniform(F, V, isUniformAlloca);
     
     return isUniformAlloca;
   }
 
   /* TODO: global memory loads are uniform in case they are accessing
      the higher scope ids (group_id_?). */
-  if (isa<llvm::LoadInst>(v)) {
-    llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(v);
+  if (isa<llvm::LoadInst>(V)) {
+    llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(V);
     llvm::Value *pointer = load->getPointerOperand();
     llvm::Module *M = load->getParent()->getParent()->getParent();
 
@@ -411,12 +394,12 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
         pointer == M->getGlobalVariable("_local_size_z") ||
         pointer == M->getGlobalVariable(PoclGVarBufferName)) {
 
-      setUniform(f, v, true);
+      setUniform(F, V, true);
       return true;
     }
   }
 
-  if (isa<llvm::PHINode>(v)) {
+  if (isa<llvm::PHINode>(V)) {
     /* TODO: PHINodes need control flow analysis:
        even if the values are uniform, the selected
        value depends on the preceeding basic block which
@@ -427,13 +410,13 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
        TODO: PHINodes can depend (indirectly or directly) on itself in loops 
        so it would need infinite recursion checking.
     */
-    setUniform(f, v, false);
+    setUniform(F, V, false);
     return false;
   }
 
-  llvm::Instruction *instr = dyn_cast<llvm::Instruction>(v);
+  llvm::Instruction *instr = dyn_cast<llvm::Instruction>(V);
   if (instr == NULL) {
-    setUniform(f, v, false);
+    setUniform(F, V, false);
     return false;
   }
 
@@ -442,7 +425,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   // constrained), but their semantics have ordering: Each work-item should get
   // their own value from that memory location.
   if (instr->isAtomic()) {
-      setUniform(f, v, false);
+      setUniform(F, V, false);
       return false;
   }
 
@@ -450,22 +433,21 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   // and figure out their uniformity recursively
   for (unsigned opr = 0; opr < instr->getNumOperands(); ++opr) {    
     llvm::Value *operand = instr->getOperand(opr);
-    if (!isUniform(f, operand)) {
-      setUniform(f, v, false);
+    if (!isUniform(F, operand)) {
+      setUniform(F, V, false);
       return false;
     }
   }
-  setUniform(f, v, true);
+  setUniform(F, V, true);
   return true;
 }
-  
-void
-VariableUniformityAnalysis::setUniform(llvm::Function *f, 
-                                       llvm::Value *v, 
-                                       bool isUniform) {
 
-  UniformityIndex &cache = uniformityCache_[f];
-  cache[v] = isUniform;
+void VariableUniformityAnalysisResult::setUniform(llvm::Function *F,
+                                                  llvm::Value *V,
+                                                  bool isUniform) {
+
+  UniformityIndex &Cache = uniformityCache_[F];
+  Cache[V] = isUniform;
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
   std::cerr << "### ";
@@ -474,18 +456,85 @@ VariableUniformityAnalysis::setUniform(llvm::Function *f,
   else
     std::cerr << "varying ";
 
-  if (isa<llvm::BasicBlock>(v)) {
-    std::cerr << "BB: " << v->getName().str() << std::endl;
+  if (isa<llvm::BasicBlock>(V)) {
+    std::cerr << "BB: " << V->getName().str() << std::endl;
   } else {
-    v->dump();
+    V->dump();
   }
 #endif
 }
 
-bool
-VariableUniformityAnalysis::doFinalization(llvm::Module& /*M*/) {
+bool VariableUniformityAnalysisResult::doFinalization(llvm::Module & /*M*/) {
   uniformityCache_.clear();
   return true;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char VariableUniformityAnalysis::ID = 0;
+
+bool VariableUniformityAnalysis::runOnFunction(Function &F) {
+  pImpl = new VariableUniformityAnalysisResult;
+  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+  llvm::PostDominatorTree &PDT =
+      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
+  return pImpl->runOnFunction(F, LI, PDT);
 }
+
+void VariableUniformityAnalysis::getAnalysisUsage(
+    llvm::AnalysisUsage &AU) const {
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addPreserved<PostDominatorTreeWrapperPass>();
+
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addPreserved<LoopInfoWrapperPass>();
+  // required by LoopInfo:
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addPreserved<DominatorTreeWrapperPass>();
+}
+
+VariableUniformityAnalysis::~VariableUniformityAnalysis() {
+  delete pImpl;
+  pImpl = nullptr;
+}
+
+REGISTER_OLD_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+llvm::AnalysisKey VariableUniformityAnalysis::Key;
+
+VariableUniformityAnalysis::Result
+VariableUniformityAnalysis::run(llvm::Function &F,
+                                llvm::FunctionAnalysisManager &AM) {
+  llvm::LoopInfo &LI = AM.getResult<llvm::LoopAnalysis>(F);
+  llvm::PostDominatorTree &PDT =
+      AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
+
+  VariableUniformityAnalysisResult Res;
+  Res.runOnFunction(F, LI, PDT);
+  return Res;
+}
+
+bool VariableUniformityAnalysisResult::invalidate(
+    llvm::Function &F, const llvm::PreservedAnalyses PA,
+    llvm::AnalysisManager<llvm::Function>::Invalidator &Inv) {
+  // TODO: this is required by the LoopPasses that use this analysis; however,
+  // it's most likely incorrect. We should convert LoopPasses to FunctionPasses
+  // and properly invalidate VUA
+  return false;
+#if 0
+  auto PAC = PA.getChecker<VariableUniformityAnalysis>();
+  bool Preserved = (PAC.preserved() ||
+    PAC.preservedSet<AllAnalysesOn<Function>>());
+  if (!Preserved) {
+    uniformityCache_.erase(&F);
+  }
+  return !Preserved;
+#endif
+}
+
+REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

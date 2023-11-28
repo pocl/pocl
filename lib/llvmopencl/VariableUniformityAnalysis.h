@@ -25,58 +25,60 @@
 
 #include "config.h"
 
-#include <map>
-
-#include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
+#include <llvm/IR/Function.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Pass.h>
+#include <llvm/Passes/PassBuilder.h>
 
 namespace llvm {
 class Loop;
 }
 
+/**
+ * Analyses the variables in the function to figure out if a variable
+ * value is
+ *
+ * a) 'uniform', i.e., always same for all work-items in the *same work-group*
+ * b) 'varying', i.e., somehow dependent on the work-item id
+ *
+ * For safety, 'variable' is assumed, unless certain of a).
+ *
+ * VAU is an "accumulating" pass; it gathers uniformity information of
+ * instructions in a way that it needs not to be invalidated even though
+ * the CFG is modified. Thus, in case the semantics of the original
+ * information does not change, it is safe for passes to set this pass
+ * preserved even though new instructions are added or the CFG manipulated.
+ */
+
 namespace pocl {
-  /**
-   * Analyses the variables in the function to figure out if a variable
-   * value is
-   *
-   * a) 'uniform', i.e., always same for all work-items in the *same work-group*
-   * b) 'varying', i.e., somehow dependent on the work-item id
-   *
-   * For safety, 'variable' is assumed, unless certain of a).
-   *
-   * VAU is an "accumulating" pass; it gathers uniformity information of
-   * instructions in a way that it needs not to be invalidated even though
-   * the CFG is modified. Thus, in case the semantics of the original
-   * information does not change, it is safe for passes to set this pass
-   * preserved even though new instructions are added or the CFG manipulated.
-   */
-  class VariableUniformityAnalysis : public llvm::FunctionPass {
-  public:
-    static char ID;
 
-    VariableUniformityAnalysis();
+class VariableUniformityAnalysisResult;
 
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-    virtual bool runOnFunction(llvm::Function &F);
-    virtual bool isUniform(llvm::Function *f, llvm::Value* v);
-    virtual void setUniform(llvm::Function *f, llvm::Value *v, bool isUniform=true);
-    virtual void analyzeBBDivergence(llvm::Function *f, 
-                                     llvm::BasicBlock *bb, 
-                                     llvm::BasicBlock *previousUniformBB);
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+class VariableUniformityAnalysis : public llvm::FunctionPass {
+  VariableUniformityAnalysisResult *pImpl = nullptr;
 
-    virtual bool shouldBePrivatized(llvm::Function *f, llvm::Value *val);
-    virtual bool doFinalization(llvm::Module& M);
-    virtual void markInductionVariables(llvm::Function &F, llvm::Loop &L);
+public:
+  static char ID;
+  VariableUniformityAnalysis() : FunctionPass(ID) {};
+  bool runOnFunction(llvm::Function &F);
+  void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
 
-  private:
+  VariableUniformityAnalysisResult &getResult() { return *pImpl; }
+  ~VariableUniformityAnalysis();
+};
+#else
+class VariableUniformityAnalysis
+    : public llvm::AnalysisInfoMixin<VariableUniformityAnalysis> {
+public:
+  static llvm::AnalysisKey Key;
+  using Result = VariableUniformityAnalysisResult;
+  static void registerWithPB(llvm::PassBuilder &PB);
+  Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
+  static bool isRequired() { return true; }
+};
+#endif
 
-    bool isUniformityAnalyzed(llvm::Function *f, llvm::Value *val) const;
-
-    typedef std::map<llvm::Value*, bool> UniformityIndex;
-    typedef std::map<llvm::Function *, UniformityIndex> UniformityCache;
-    mutable UniformityCache uniformityCache_;
-
-  };
-}
+} // namespace pocl
 
 #endif

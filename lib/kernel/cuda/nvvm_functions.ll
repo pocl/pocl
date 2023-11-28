@@ -85,3 +85,27 @@ entry:
   %0 = call i32 @llvm.nvvm.read.ptx.sreg.nctaid.z()
   ret i32 %0
 }
+
+declare float @__nv_frexpf(float %a, i32* %b)
+
+define { float, i32 } @frexpf_f32_i32(float %a) {
+entry:
+  %0 = alloca i32, align 4
+  %1 = call float @__nv_frexpf(float %a, i32* %0)
+  %2 = load i32, i32* %0
+  %3 = insertvalue { float, i32 } undef, float %1, 0
+  %4 = insertvalue { float, i32 } %3, i32 %2, 1
+  ret { float, i32 } %4
+}
+
+declare double @__nv_frexp(double %a, i32* %b)
+
+define { double, i32 } @frexp_f64_i32(double %a) {
+entry:
+  %0 = alloca i32, align 4
+  %1 = call double @__nv_frexp(double %a, i32* %0)
+  %2 = load i32, i32* %0
+  %3 = insertvalue { double, i32 } undef, double %1, 0
+  %4 = insertvalue { double, i32 } %3, i32 %2, 1
+  ret { double, i32 } %4
+}

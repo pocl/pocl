@@ -50,8 +50,9 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Verifier.h>
 
-
-#ifndef LLVM_OLDER_THAN_11_0
+#if LLVM_VERSION_MAJOR > 15
+#include "llvm/TargetParser/Host.h"
+#elif LLVM_VERSION_MAJOR > 10
 #include "llvm/Support/Host.h"
 #endif
 
@@ -188,7 +189,8 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   }
 #endif
 
-  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions))
+  if (link(Mod, BuiltinLib, Log, Device->device_aux_functions,
+           Device->device_side_printf != CL_FALSE))
     return true;
 
   raw_string_ostream OS(Log);
@@ -518,6 +520,7 @@ int pocl_llvm_build_program(cl_program program,
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
+  la->Freestanding = true; // -ffree-standing
   la->AsmBlocks = true;  // -fasm (?)
 
   // setLangDefaults overrides to FPM_On for OpenCL.

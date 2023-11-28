@@ -22,97 +22,86 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+#include <llvm/ADT/Statistic.h>
+#include <llvm/Analysis/CFGPrinter.h>
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/Analysis/PostDominators.h>
+#include <llvm/IR/DataLayout.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/ValueSymbolTable.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+
+#include "Barrier.h"
+#include "DebugHelpers.h"
+#include "Kernel.h"
+#include "LLVMUtils.h"
+#include "VariableUniformityAnalysis.h"
+#include "Workgroup.h"
+#include "WorkitemHandler.h"
+#include "WorkitemHandlerChooser.h"
+#include "WorkitemReplication.h"
+POP_COMPILER_DIAGS
+
 #include <iostream>
 #include <map>
 #include <sstream>
 #include <vector>
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-
-#include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-
 #define DEBUG_TYPE "workitem"
-
-#include "WorkitemReplication.h"
-#include "Workgroup.h"
-#include "Barrier.h"
-#include "Kernel.h"
-#include "WorkitemHandlerChooser.h"
-#include "DebugHelpers.h"
-#include "VariableUniformityAnalysis.h"
-
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
 //#define DEBUG_PR_REPLICATION
 
-#ifdef DUMP_RESULT_CFG
-#include "llvm/Analysis/CFGPrinter.h"
-#endif
-
-POP_COMPILER_DIAGS
-
-using namespace llvm;
-using namespace pocl;
-
 STATISTIC(ContextValues, "Number of SSA values which have to be context-saved");
 STATISTIC(ContextSize, "Context size per workitem in bytes");
 
-namespace {
-  static
-  RegisterPass<WorkitemReplication> X("workitemrepl", "Workitem replication pass");
-}
+#define PASS_NAME "workitemrepl"
+#define PASS_CLASS pocl::WorkitemReplication
+#define PASS_DESC "Workitem replication pass"
 
-char WorkitemReplication::ID = 0;
+namespace pocl {
 
-void
-WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
-{
-  AU.addRequired<DominatorTreeWrapperPass>();
+using namespace llvm;
 
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addRequired<pocl::WorkitemHandlerChooser>();
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-}
+class WorkitemReplicationImpl : public WorkitemHandler {
+public:
+  WorkitemReplicationImpl(llvm::DominatorTree &DT, llvm::LoopInfo &LI,
+                          llvm::PostDominatorTree &PDT)
+      : DT(DT), LI(LI), PDT(PDT) {}
+  bool runOnFunction(Function &F);
 
-bool
-WorkitemReplication::runOnFunction(Function &F)
-{
-  if (!isKernelToProcess(F))
-    return false;
+private:
+  llvm::DominatorTree &DT;
+  llvm::LoopInfo &LI;
+  llvm::PostDominatorTree &PDT;
 
-  if (getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler() != 
-      pocl::WorkitemHandlerChooser::POCL_WIH_FULL_REPLICATION)
-    return false;
+  typedef std::set<llvm::BasicBlock *> BasicBlockSet;
+  typedef std::vector<llvm::BasicBlock *> BasicBlockVector;
+  typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
-  DTP = &getAnalysis<DominatorTreeWrapperPass>();
-  DT = &DTP->getDomTree();
+  virtual bool processFunction(llvm::Function &F);
+};
 
-  LI = &getAnalysis<LoopInfoWrapperPass>();
-
-  bool changed = ProcessFunction(F);
+bool WorkitemReplicationImpl::runOnFunction(Function &F) {
+  bool Changed = processFunction(F);
 #ifdef DUMP_RESULT_CFG
   FunctionPass* cfgPrinter = createCFGPrinterPass();
   cfgPrinter->runOnFunction(F);
 #endif
 
-  changed |= fixUndominatedVariableUses(DTP, F);
-  return changed;
+  Changed |= fixUndominatedVariableUses(DT, F);
+  return Changed;
 }
 
-bool
-WorkitemReplication::ProcessFunction(Function &F)
-{
+bool WorkitemReplicationImpl::processFunction(Function &F) {
   Module *M = F.getParent();
 
 //  F.viewCFG();
@@ -130,13 +119,13 @@ WorkitemReplication::ProcessFunction(Function &F)
         original_bbs.push_back(&*i);
   }
 
-  ParallelRegion::ParallelRegionVector* original_parallel_regions =
-    K->getParallelRegions(&LI->getLoopInfo());
+  ParallelRegion::ParallelRegionVector *OriginalParallelRegions =
+      K->getParallelRegions(LI);
 
   std::vector<ParallelRegion::ParallelRegionVector> parallel_regions(
       workitem_count);
 
-  parallel_regions[0] = *original_parallel_regions;
+  parallel_regions[0] = *OriginalParallelRegions;
 
   //pocl::dumpCFG(F, F.getName().str() + ".before_repl.dot", original_parallel_regions);
 
@@ -156,8 +145,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   // Measure the required context (variables alive in more than one region).
 
   for (SmallVector<ParallelRegion *, 8>::iterator
-         i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
+         i = OriginalParallelRegions->begin(),
+           e = OriginalParallelRegions->end();
        i != e; ++i) {
     ParallelRegion *pr = (*i);
     
@@ -198,8 +187,8 @@ WorkitemReplication::ProcessFunction(Function &F)
           continue;
 	  
         for (SmallVector<ParallelRegion *, 8>::iterator
-               i = original_parallel_regions->begin(), 
-               e = original_parallel_regions->end();
+               i = OriginalParallelRegions->begin(),
+               e = OriginalParallelRegions->end();
              i != e; ++i) {
           ParallelRegion *original = (*i);
           ParallelRegion *replicated =
@@ -219,8 +208,8 @@ WorkitemReplication::ProcessFunction(Function &F)
   }
   if (AddWIMetadata) {
     for (SmallVector<ParallelRegion *, 8>::iterator
-          i = original_parallel_regions->begin(), 
-           e = original_parallel_regions->end();
+          i = OriginalParallelRegions->begin(),
+           e = OriginalParallelRegions->end();
         i != e; ++i) {
       ParallelRegion *original = (*i);  
       original->AddIDMetadata(M->getContext(), 0, 0, 0);
@@ -308,9 +297,76 @@ WorkitemReplication::ProcessFunction(Function &F)
       delete p;
     }
   }
-  delete original_parallel_regions;
-  original_parallel_regions = nullptr;
+  delete OriginalParallelRegions;
+  OriginalParallelRegions = nullptr;
 
   return true;
 }
 
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+char WorkitemReplication::ID = 0;
+
+void WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addRequired<LoopInfoWrapperPass>();
+
+  AU.addRequired<WorkitemHandlerChooser>();
+  AU.addPreserved<WorkitemHandlerChooser>();
+
+  AU.addRequired<VariableUniformityAnalysis>();
+  AU.addPreserved<VariableUniformityAnalysis>();
+}
+
+bool WorkitemReplication::runOnFunction(llvm::Function &F) {
+  if (!isKernelToProcess(F))
+    return false;
+
+  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
+  if (WIH != WorkitemHandlerType::FULL_REPLICATION)
+    return false;
+
+  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
+  auto &PDT =
+      getAnalysis<llvm::PostDominatorTreeWrapperPass>().getPostDomTree();
+  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
+
+  WorkitemReplicationImpl WIR(DT, LI, PDT);
+  return WIR.runOnFunction(F);
+}
+
+#undef DEBUG_TYPE
+
+REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#else
+
+// enable new pass manager infrastructure
+llvm::PreservedAnalyses
+WorkitemReplication::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
+  if (!isKernelToProcess(F))
+    return llvm::PreservedAnalyses::all();
+
+  WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
+  if (WIH != WorkitemHandlerType::FULL_REPLICATION)
+    return llvm::PreservedAnalyses::all();
+
+  auto &DT = AM.getResult<llvm::DominatorTreeAnalysis>(F);
+  auto &PDT = AM.getResult<llvm::PostDominatorTreeAnalysis>(F);
+  auto &LI = AM.getResult<llvm::LoopAnalysis>(F);
+
+  llvm::PreservedAnalyses PAChanged = PreservedAnalyses::none();
+  PAChanged.preserve<VariableUniformityAnalysis>();
+  PAChanged.preserve<WorkitemHandlerChooser>();
+
+  WorkitemReplicationImpl WIR(DT, LI, PDT);
+  return WIR.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
+}
+
+#undef DEBUG_TYPE
+
+REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
+
+#endif
+
+} // namespace pocl

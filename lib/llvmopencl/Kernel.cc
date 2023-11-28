@@ -24,17 +24,20 @@
 #include <iostream>
 
 #include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
+#include <llvm/ADT/Twine.h>
+POP_COMPILER_DIAGS
+
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "pocl.h"
-#include "pocl_llvm_api.h"
-
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InlineAsm.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InlineAsm.h>
 
 #include "Kernel.h"
 #include "Barrier.h"
 #include "DebugHelpers.h"
+
+#include "pocl.h"
+#include "pocl_llvm_api.h"
 
 POP_COMPILER_DIAGS
 
@@ -165,10 +168,9 @@ verify_no_barriers(const BasicBlock *B)
  * for the regions between barriers that can be freely parallelized 
  * across work-items in the work-group.
  */
-ParallelRegion::ParallelRegionVector *
-Kernel::getParallelRegions(llvm::LoopInfo *LI) {
-  ParallelRegion::ParallelRegionVector *parallel_regions =
-    new ParallelRegion::ParallelRegionVector;
+void Kernel::getParallelRegions(
+    llvm::LoopInfo &LI,
+    ParallelRegion::ParallelRegionVector *ParallelRegions) {
 
   SmallVector<BasicBlock *, 4> exit_blocks;
   getExitBlocks(exit_blocks);
@@ -194,25 +196,24 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
 
       found_barriers.insert(exit);
       exit = NULL;
-      parallel_regions->push_back(PR);
-      BasicBlock *entry = PR->entryBB();
+      ParallelRegions->push_back(PR);
+      BasicBlock *Entry = PR->entryBB();
       int found_predecessors = 0;
       BasicBlock *loop_barrier = NULL;
-      for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
+      for (pred_iterator i = pred_begin(Entry), e = pred_end(Entry);
            i != e; ++i) {
-        BasicBlock *barrier = (*i);
-        if (!found_barriers.count(barrier)) {
+        BasicBlock *Barrier = (*i);
+        if (!found_barriers.count(Barrier)) {
           /* If this is a loop header block we might have edges from two 
              unprocessed barriers. The one inside the loop (coming from a 
              computation block after a branch block) should be processed 
              first. */
           std::string bbName = "";
-          const bool IS_IN_THE_SAME_LOOP = 
-              LI->getLoopFor(barrier) != NULL &&
-              LI->getLoopFor(entry) != NULL &&
-              LI->getLoopFor(entry) == LI->getLoopFor(barrier);
+          bool IsInTheSameLoop =
+              LI.getLoopFor(Barrier) != NULL && LI.getLoopFor(Entry) != NULL &&
+              LI.getLoopFor(Entry) == LI.getLoopFor(Barrier);
 
-          if (IS_IN_THE_SAME_LOOP)
+          if (IsInTheSameLoop)
             {
 #ifdef DEBUG_PR_CREATION
               std::cout << "### found a barrier inside the loop:" << std::endl;
@@ -223,7 +224,7 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
                 // save the previously found inner loop barrier
                 exit_blocks.push_back(loop_barrier);
               }
-              loop_barrier = barrier;
+              loop_barrier = Barrier;
             }
           else
             {
@@ -231,7 +232,7 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
               std::cout << "### found a barrier:" << std::endl;
               std::cout << barrier->getName().str() << std::endl;
 #endif
-              exit = barrier;
+              exit = Barrier;
             }
           ++found_predecessors;
         }
@@ -270,8 +271,16 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
 #ifdef DEBUG_PR_CREATION
   pocl::dumpCFG(*this, this->getName().str() + ".pregions.dot", parallel_regions);
 #endif
-  return parallel_regions;
+}
 
+ParallelRegion::ParallelRegionVector *
+Kernel::getParallelRegions(llvm::LoopInfo &LI) {
+  ParallelRegion::ParallelRegionVector *ParallelRegions =
+      new ParallelRegion::ParallelRegionVector;
+
+  getParallelRegions(LI, ParallelRegions);
+
+  return ParallelRegions;
 }
 
 void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
@@ -283,10 +292,10 @@ void Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY,
 
   llvm::Module* M = getParent();
 
-  unsigned long address_bits;
-  getModuleIntMetadata(*M, "device_address_bits", address_bits);
+  unsigned long AddressBits;
+  getModuleIntMetadata(*M, "device_address_bits", AddressBits);
 
-  llvm::Type *SizeT = IntegerType::get(M->getContext(), address_bits);
+  llvm::Type *SizeT = IntegerType::get(M->getContext(), AddressBits);
 
   GV = M->getGlobalVariable("_local_size_x");
   if (GV != NULL) {
