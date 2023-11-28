@@ -139,8 +139,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
   unsigned i = 0;
   cl_int errcode = 0;
   cl_context context = NULL;
-  cl_platform_id platform;
-  POname (clGetPlatformIDs) (1, &platform, NULL);
 
   POCL_LOCK (pocl_context_handling_lock);
 
@@ -152,7 +150,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
-  errcode = pocl_init_devices(platform);
+  errcode = pocl_init_devices();
   /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
    * pocl_init_devices() returns if no devices could be probed. Hence,
    * remap this error to CL_INVALID_DEVICE. Note that this particular
@@ -176,7 +174,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
   context = (cl_context)calloc (1, sizeof (struct _cl_context));
   POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_INIT_OBJECT(context, devices[0]);
+  POCL_INIT_OBJECT(context);
 
   errcode = context_set_properties (context, properties);
   if (errcode)

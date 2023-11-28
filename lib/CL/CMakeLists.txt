@@ -181,8 +181,6 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueMemcpyINTEL.c"
                    "clEnqueueMemAdviseINTEL.c"
                    "clEnqueueMigrateMemINTEL.c"
-                   "clGetFunctionAddressForPlatformKHR.c"
-                   "clSetPlatformDispatchDataKHR.c"
 )
 
 if(ANDROID)

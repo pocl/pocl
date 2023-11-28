@@ -105,7 +105,7 @@ POname (clCreateCommandBufferKHR) (
       goto ERROR;
     }
 
-  POCL_INIT_OBJECT (cmdbuf, queues[0]);
+  POCL_INIT_OBJECT (cmdbuf);
 
   cmdbuf->state = CL_COMMAND_BUFFER_STATE_RECORDING_KHR;
   cmdbuf->num_queues = num_queues;

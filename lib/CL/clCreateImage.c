@@ -191,7 +191,7 @@ pocl_create_image_internal (cl_context context, cl_mem_flags flags,
 
         mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
         POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
-        POCL_INIT_OBJECT (mem, context);
+        POCL_INIT_OBJECT (mem);
 
         cl_mem b = image_desc->buffer;
         mem->is_image = CL_TRUE;

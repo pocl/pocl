@@ -37,10 +37,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   int errcode;
-  cl_platform_id platform;
-  POname (clGetPlatformIDs) (1, &platform, NULL);
 
-  errcode = pocl_init_devices(platform);
+  errcode = pocl_init_devices();
   /* see clCreateContext.c for explanation */
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_INVALID_DEVICE,
                       "Could not initialize devices\n");
@@ -60,7 +58,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
       cl_context context = (cl_context)calloc (1, sizeof (struct _cl_context));
       POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
-      POCL_INIT_OBJECT (context, platform);
+      POCL_INIT_OBJECT (context);
       return context;
     }
 
