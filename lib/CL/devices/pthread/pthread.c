@@ -205,7 +205,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   /* OpenCL 2.0 properties */
   device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
                      | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_ATOMICS;
+                     | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM | CL_DEVICE_SVM_ATOMICS;
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics")
       != NULL) {
