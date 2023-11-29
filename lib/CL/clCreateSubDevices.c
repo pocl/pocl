@@ -185,6 +185,10 @@ POname(clCreateSubDevices)(cl_device_id in_device,
          new_devs[i]->core_start = sum;
        sum += new_devs[i]->core_count;
      }
+     for (i = 0; i < count_devices; ++i)
+     {
+       POname (clRetainDevice) (in_device);
+     }
 
      memcpy(out_devices, new_devs, count_devices*sizeof(cl_device_id));
      POCL_MEM_FREE(new_devs);
