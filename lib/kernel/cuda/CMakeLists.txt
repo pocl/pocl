@@ -27,11 +27,24 @@ include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_GENERIC})
 
-foreach(FILE printf_base.c atomics.cl)
+if(LLVM_VERSION VERSION_LESS 17.0)
+  set(EXTRA_ADD_LL_FILES
+    atomic_add.ll      atomic_and.ll      atomic_cmpxchg.ll      atomic_min.ll      atomic_max.ll      atomic_or.ll      atomic_sub.ll      atomic_xchg.ll       atomic_xor.ll
+    atomic_add_20.ll   atomic_and_20.ll   atomic_cmpxchg_20.ll   atomic_min_20.ll   atomic_max_20.ll   atomic_or_20.ll   atomic_sub_20.ll   atomic_xchg_20.ll    atomic_xor_20.ll
+    atomic_dec.ll      atomic_inc.ll)
+  set(EXTRA_REMOVE_CL_FILES atomics.cl)
+  set(EXTRA_ADD_CL_FILES svm_atomics.cl)
+else()
+  set(EXTRA_ADD_LL_FILES)
+  set(EXTRA_ADD_CL_FILES svm_atomics.cl svm_atomics_host.cl)
+  set(EXTRA_REMOVE_CL_FILES)
+endif()
+
+foreach(FILE printf_base.c ${EXTRA_REMOVE_CL_FILES})
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
-list(APPEND KERNEL_SOURCES svm_atomics.cl)
+list(APPEND KERNEL_SOURCES ${EXTRA_ADD_CL_FILES})
 
 foreach(FILE
   async_work_group_copy.cl async_work_group_strided_copy.cl
@@ -51,13 +64,8 @@ foreach(FILE
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
-foreach(FILE
-  atomic_add.ll      atomic_and.ll      atomic_cmpxchg.ll      atomic_min.ll      atomic_max.ll      atomic_or.ll      atomic_sub.ll      atomic_xchg.ll       atomic_xor.ll
-  atomic_add_20.ll   atomic_and_20.ll   atomic_cmpxchg_20.ll   atomic_min_20.ll   atomic_max_20.ll   atomic_or_20.ll   atomic_sub_20.ll   atomic_xchg_20.ll    atomic_xor_20.ll
 
-  atomic_dec.ll atomic_inc.ll
-
-  barrier.ll nvvm_functions.ll subgroup.ll)
+foreach(FILE ${EXTRA_ADD_LL_FILES} barrier.ll nvvm_functions.ll subgroup.ll)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 
@@ -69,6 +77,8 @@ foreach(FILE
   endif()
 
 endforeach()
+
+
 
 generate_cuda_spir_wrapper(SPIR_WRAPPER_FILE)
 list(APPEND KERNEL_SOURCES "${SPIR_WRAPPER_FILE}")

@@ -445,6 +445,18 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                           | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
                           | CL_FP_DENORM;
 
+  if (strstr (CUDA_DEVICE_EXTENSIONS, "cl_ext_float_atomics")
+      != NULL) {
+    dev->single_fp_atomic_caps = dev->double_fp_atomic_caps =
+      CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT |
+      CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT |
+      CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+      CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT |
+      CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT |
+      CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+  }
+
+
   dev->local_mem_type = CL_LOCAL;
 
 #ifdef ENABLE_SPIRV
