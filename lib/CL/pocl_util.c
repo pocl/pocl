@@ -496,7 +496,7 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
     return CL_INVALID_CONTEXT;
 
   assert (event != NULL);
-  *event = pocl_mem_manager_new_event (context);
+  *event = pocl_mem_manager_new_event ();
   if (*event == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 

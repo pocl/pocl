@@ -37,7 +37,7 @@
 */
 #ifdef BUILD_ICD
 struct _cl_icd_dispatch pocl_dispatch = {
-  (void*)CL_ICD2_TAG_KHR,
+  &POname(clGetPlatformIDs),
   &POname(clGetPlatformInfo),
   &POname(clGetDeviceIDs),
   &POname(clGetDeviceInfo),
@@ -225,7 +225,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
 #endif
 };
 
-static struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch, NULL}};
+static struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else
 
 static struct _cl_platform_id _platforms[1] = {{ 1 }};

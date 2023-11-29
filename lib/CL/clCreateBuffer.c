@@ -113,7 +113,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem = (cl_mem)calloc (1, sizeof (struct _cl_mem));
   POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  POCL_INIT_OBJECT (mem, context);
+  POCL_INIT_OBJECT (mem);
   mem->type = type;
   mem->flags = flags;
   mem->device_supports_this_image = device_image_support;

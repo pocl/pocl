@@ -58,7 +58,7 @@ POname (clCloneKernel) (cl_kernel source_kernel,
   kernel = (cl_kernel)calloc (1, sizeof (struct _cl_kernel));
   POCL_GOTO_ERROR_ON ((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
                       "clCloneKernel couldn't allocate memory");
-  POCL_INIT_OBJECT (kernel, source_kernel);
+  POCL_INIT_OBJECT (kernel);
 
   kernel->meta = source_kernel->meta;
   kernel->data = (void **)calloc (program->num_devices, sizeof (void *));

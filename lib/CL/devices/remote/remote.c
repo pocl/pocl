@@ -1686,7 +1686,7 @@ pocl_remote_async_unmap_mem (void *data, _cl_command_node *node,
       return 1;
     }
 
-  uintptr_t mem_id = dst_mem_id ? 0 : (uintptr_t)dst_mem_id->mem_ptr;
+  uintptr_t mem_id = dst_mem_id == NULL ? 0 : (uintptr_t)dst_mem_id->mem_ptr;
 
   void *host_ptr = map->host_ptr;
   assert (host_ptr != NULL);
