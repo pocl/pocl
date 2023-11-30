@@ -222,14 +222,18 @@ if [ -e "${CL_DEV_INFO}" ]; then
 
 fi
 
+SOURCE_BASE=$(basename ${SOURCE})
+TEMP_BC_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.XXXXXX.bc)
+
 if [ "$DEBUG" = "true" ]; then
   echo "SOURCE: ${SOURCE}"
+  echo "TEMP_BC: ${TEMP_BC_FILE}"
   echo "OUTPUT: ${OUTPUT}"
 fi
 
-ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${SOURCE}.bc -emit-llvm -c ${SOURCE}"
+ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
-LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${OUTPUT} ${SOURCE}.bc"
+LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${OUTPUT} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @CLANG@ ${ALL_OPTIONS}"
@@ -240,5 +244,7 @@ if [ "$DEBUG" = "true" ]; then
   echo "Running @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
 fi
 @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
+
+rm -f ${TEMP_BC_FILE}
 
 exit 0
