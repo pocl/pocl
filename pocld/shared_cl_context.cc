@@ -1345,7 +1345,7 @@ int SharedCLContext::buildProgram(
 
       if (is_spirv) {
         updateKernelArgMDFromSPIRV(temp_arg,
-                                   KernelInfoMap[kernel_name]->ArgTypeInfo[0]);
+                                   KernelInfoMap[kernel_name]->ArgTypeInfo[arg_index]);
         continue;
       }
 
