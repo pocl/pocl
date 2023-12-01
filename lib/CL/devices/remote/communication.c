@@ -2224,6 +2224,9 @@ pocl_network_setup_metadata (char *buffer, size_t total_size,
               case Image:
                 t = POCL_ARG_TYPE_IMAGE;
                 break;
+              default:
+                POCL_MSG_ERR ("Couldn't detect argument type?");
+                return CL_BUILD_ERROR;
               }
             p[i].arg_info[j].type = t;
 
