@@ -398,8 +398,8 @@ function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
     set(LLC_F "-mcpu=pentium3")
 
   elseif("${VARIANT}" STREQUAL "sse2")
-    set(CLANG_F "${CLANG_MARCH_FLAG}athlon64")
-    set(LLC_F "-mcpu=athlon64")
+    set(CLANG_F "${CLANG_MARCH_FLAG}x86-64")
+    set(LLC_F "-mcpu=x86-64")
 
   elseif("${VARIANT}" STREQUAL "ssse3")
     set(CLANG_F "${CLANG_MARCH_FLAG}core2")
