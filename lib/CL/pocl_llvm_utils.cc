@@ -192,7 +192,7 @@ const struct kernellib_features {
 #endif
 #if defined(__i386__) || defined(__x86_64__)
     "sse2",
-    "athlon64",
+    "x86-64",
     {"sse2", NULL},
     "ssse3",
     "core2",
