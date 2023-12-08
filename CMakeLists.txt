@@ -1214,6 +1214,12 @@ if(ARM32 OR (LLC_TRIPLE MATCHES "^arm"))
   endif()
 endif()
 
+# Option for users to define Clang's --target-abi argument.
+# Not required on most platforms, but can be useful on RISC-V
+if(NOT DEFINED HOST_CPU_TARGET_ABI)
+  set(HOST_CPU_TARGET_ABI "")
+endif()
+
 # FP16 support requires _Float16 type
 # LLVM <15 doesn't support _Float16;
 # LLVM 15 crashes on some code; LLVM 16 seems to work
@@ -1233,7 +1239,6 @@ if(HOST_CPU_SUPPORTS_DOUBLE)
 else()
   set(HOST_CPU_ENABLE_CL_KHR_FP64 0)
 endif()
-
 if(HOST_CPU_ENABLE_CL_KHR_FP16)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_HAS_FLOAT16_TYPE")
 endif()

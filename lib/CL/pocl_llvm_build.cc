@@ -412,6 +412,8 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-triple=" << device->llvm_target_triplet << " ";
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
+  if (device->llvm_abi != NULL)
+    ss << "-target-abi " << device->llvm_abi << " ";
 
   std::string AllBuildOpts = ss.str();
 
