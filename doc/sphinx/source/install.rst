@@ -70,7 +70,7 @@ Supported LLVM versions
   Note that pocl aims to support **the latest LLVM version** at the time
   of pocl release, **plus the previous** LLVM version. All older LLVM
   versions are supported with "best effort" basis; there might not be
-  build bots continuously testing the code base nor anyone fixing their
+  CI continuously testing the code base nor anyone fixing their
   possible breakage.
 
 Configure & Build
@@ -291,30 +291,23 @@ The string after "HSTR:" is the device build hash.
 , `HOST_DEVICE_BUILD_HASH` can be set to anything you want. Reason being, fixed function
 accelerators don't require compiling OpenCL kernels, therefore, no hash will ever be matched. 
 
-Cross-compile pocl
+Cross-compile PoCL
 ------------------
 It's now possible to cross-compile pocl on x86-64 to run on ARM/MIPS/etc,
 There is a ToolchainExample.cmake file;
 copy it under different name, then follow the instructions in the file.
 
-
 Known build-time issues
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 There are unsolved issues and bugs in pocl. See the bug listing
 for a complete listing at https://github.com/pocl/pocl/issues
 
-building / running in Docker
---------------------------------
+Building & running in Docker
+-----------------------------
 
-Install Docker
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* install docker for your distribution
-* start the docker daemon
-* make sure you have enough space (default location is usually ``/var/lib/docker``,
-  required storage for standard pocl build is about 1.5 GB per container,
-  and more than 10GB for TCE/PHSA builds)
+Make sure you have enough space (default location is usually ``/var/lib/docker``,
+required storage for standard pocl build is about 1.5 GB per container)
 
 Build & start Pocl container
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -343,3 +336,50 @@ Dockerfiles are named according to what they build, or the release they're based
   (the latest available in that release).
 * `conformance`: builds & installs Pocl, then runs conformance test suite
   (the shortest version of it)
+
+ARM 32/64bit support
+-----------------------------
+
+Status:
+
+PoCL builds (as of Dec 2023) on ODROID XU3 and ODROID C2
+and almost all tests pass.
+
+ARM specific build notes:
+
+* DO NOT use Clang/LLVM downloaded directly from llvm.org, they only work
+  on the distro where they were compiled. Ubuntu LTS these days ships multiple llvm
+  versions even quite recent ones; get Clang+LLVM from your distro's package
+  manager or build it yourself.
+
+* LLVM might not recognize your cpu, in which case CMake will complain.
+  Run cmake with -DLLC_HOST_CPU=<yourcpu>. "yourcpu" must be something LLVM recognizes,
+  usually it's simply "cortex-aXX" like cortex-a15 etc. You can get the full list by
+  running `llc -mcpu=help`.
+
+RISC-V support
+-----------------------------
+
+Status:
+
+PoCL builds (as of Dec 2023) on Starfive VisionFive 2 using Ubuntu 23.10 preinstalled image,
+with LLVM 17 and GCC 13.2; of the internal tests, 98% tests pass, 4 tests fail out of 253.
+In particular, tests using printf with vector arguments are broken ATM. Other boards / CPUs
+have not been tested. RISC Vector extension is not supported.
+
+RISC-V specific build notes:
+
+* Avoid older LLVM and GCC versions (like GCC 11 / Clang 14 on the official
+  Starfive Debian images) as much as possible. Code generation is much
+  better with recent versions, and your experience will generally better
+
+* LLVM might not recognize your CPU, in which case CMake will complain.
+  Run cmake with -DLLC_HOST_CPU=<yourcpu>. "yourcpu" must be something LLVM recognizes;
+  you can get the full list by running `llc -mcpu=help`.
+
+* on RISC-V, PoCL additionally needs to pass a target ABI flag to the compiler. There is
+  some autodetection in PoCL but right now it's limited, and Clang unfortunately does not
+  always get the defaults correctly. If you get errors similar to:
+    "can't link double-float modules with soft-float modules"
+  from linker, then most likely PoCL used the incorrect ABI. You can explicitly
+  specify the ABI to use with the HOST_CPU_TARGET_ABI CMake option.

@@ -37,6 +37,7 @@ CPU driver new features:
 
 * cl_ext_float_atomics has been implemented (with support for fp32 & fp64)
 * cl_khr_command_buffer has been updated to 0.9.4
+* experimental support for RISC-V
 
 Other:
 
