@@ -39,6 +39,9 @@ extern "C" {
   POCL_EXPORT
   char *pocl_get_llvm_cpu_name ();
 
+  POCL_EXPORT
+  const char *pocl_get_llvm_cpu_abi ();
+
   /* For distro builds, return the kernellib variant based on the host CPU */
   POCL_EXPORT
   const char *pocl_get_distro_kernellib_variant ();

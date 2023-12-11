@@ -1689,6 +1689,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   strcat(kernellib, OCL_KERNEL_TARGET_CPU);
 #else
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
+  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
   strcpy(kernellib_fallback, kernellib);
   strcat(kernellib_fallback, OCL_KERNEL_TARGET_CPU);
   strcat(kernellib, dev->llvm_cpu);

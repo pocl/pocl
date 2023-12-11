@@ -144,6 +144,33 @@ static int getModuleTriple(const char *input_stream, size_t size,
   return 0;
 }
 
+const char *pocl_get_llvm_cpu_abi() {
+  if (strlen(HOST_CPU_TARGET_ABI) > 0)
+    return HOST_CPU_TARGET_ABI;
+  else {
+#if defined(__riscv) && (HOST_DEVICE_ADDRESS_BITS == 64)
+
+#ifdef __riscv_float_abi_soft
+    return "lp64";
+#endif
+
+#ifdef __riscv_float_abi_single
+    return "lp64f";
+#endif
+
+#ifdef __riscv_float_abi_double
+    return "lp64d";
+#endif
+
+#ifdef __riscv_float_abi_quad
+    return "lp64q";
+#endif
+
+#endif
+    return nullptr;
+  }
+}
+
 char *pocl_get_llvm_cpu_name() {
   const char *custom = pocl_get_string_option("POCL_LLVM_CPU_NAME", NULL);
   StringRef r = custom ? StringRef(custom) : llvm::sys::getHostCPUName();

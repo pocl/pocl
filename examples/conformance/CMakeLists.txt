@@ -329,7 +329,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_select"
 #add_test(NAME "${TS_NAME}${TS_SUFFIX}_spir"
 #         COMMAND "${TS_BUILDDIR}/spir/test_spir")
 
-if(HAVE_SPIRV_TOOLS)
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
 
 # this test requires a fix in llvm-spirv
 # https://github.com/KhronosGroup/SPIRV-LLVM-Translator/pull/1630
@@ -393,7 +393,7 @@ set(OCL_30_TESTS_FULL
     "${TS_NAME}${TS_SUFFIX}_cl_khr_semaphore"
 )
 
-if(HAVE_SPIRV_TOOLS)
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
   list(APPEND OCL_30_TESTS_FULL
     "${TS_NAME}${TS_SUFFIX}_spirv_new")
 endif()
@@ -621,13 +621,15 @@ set_property(TEST conformance_main_printf  PROPERTY COST 77.03 )
 set_property(TEST conformance_main_profiling  PROPERTY COST 190.40 )
 set_property(TEST conformance_main_relationals  PROPERTY COST 3356.48 )
 set_property(TEST conformance_main_select  PROPERTY COST 2964.93 )
-set_property(TEST conformance_main_spirv_new  PROPERTY COST 362.24 )
 set_property(TEST conformance_main_subgroups  PROPERTY COST 167.60 )
 set_property(TEST conformance_main_SVM  PROPERTY COST 26.91 )
 set_property(TEST conformance_main_thread_dimensions  PROPERTY COST 3093.49 )
 set_property(TEST conformance_main_vectors  PROPERTY COST 13271.49 )
 set_property(TEST conformance_main_workgroup  PROPERTY COST 0.15 )
 
+if(ENABLE_SPIRV AND HAVE_SPIRV_TOOLS)
+  set_property(TEST conformance_main_spirv_new  PROPERTY COST 362.24 )
+endif()
 
 if(HAVE_SPIRV_TOOLS)
   set(CACHE_DIR "${CMAKE_BINARY_DIR}/CTS_FULL_CACHE")

@@ -938,6 +938,7 @@ struct _cl_device_id {
   const char* kernellib_fallback_name; /* bitcode kernel fallback library name */
   const char* kernellib_subdir; /* bitcode kernel library subdir */
   const char* llvm_cpu; /* the llvm CPU variant to use */
+  const char *llvm_abi; /* the ABI to use */
   const char* llvm_fp_contract_mode; /* the floating point contract mde to use */
 
   /* A running number (starting from zero) across all the device instances.
