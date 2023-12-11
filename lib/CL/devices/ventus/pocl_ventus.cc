@@ -850,7 +850,11 @@ step5 make a writefile for chisel
         }
     }
 
-for (i = 0; i < meta->num_args; ++i)
+    err |= vt_one_buf_free(d->vt_device, KNL_MAX_METADATA_SIZE, &knl_dev_mem_addr, 0, 0);
+    err |= vt_one_buf_free(d->vt_device, pds_src_size, &pds_dev_mem_addr, 0, 0);
+    err |= vt_one_buf_free(d->vt_device, abuf_size, &arg_dev_mem_addr, 0, 0);
+    assert(0 == err);
+    for (i = 0; i < meta->num_args; ++i)
     {
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
