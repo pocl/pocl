@@ -542,7 +542,6 @@ step5 make a writefile for chisel
         {
           size_t s = meta->local_sizes[i]; //TODO: create local_buf at ddr, and map argument to this addr.
           size_t j = meta->num_args + i;
-          *(size_t *)(arguments[j]) = s;
         }
     }
   else
@@ -644,7 +643,7 @@ step5 make a writefile for chisel
 	uint32_t kernel_entry;
   #ifdef __linux__
     std::string kernel_name(meta->name);
-    std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
+    std::string kernel_entry_cmd = std::string(R"(nm -s object.riscv | grep -w 'T' | grep -w )") +kernel_name+ std::string(R"( | grep -o '^[^ ]*')");
     FILE *fp0 = popen(kernel_entry_cmd.c_str(), "r");
     if(fp0 == NULL) {
         POCL_MSG_ERR("running compile kernel failed");
