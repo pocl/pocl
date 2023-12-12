@@ -1093,8 +1093,10 @@ void pocl_ventus_write(void *data,
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   void *tmp_data = malloc(size);
-  memcpy(tmp_data, host_ptr, size);
-  dst_buf->mem_host_ptr = tmp_data;
+  if (!(CL_MEM_USE_HOST_PTR & dst_buf->flags)) {
+    memcpy(tmp_data, host_ptr, size);
+    dst_buf->mem_host_ptr = tmp_data;
+  }
 
   int err = vt_copy_to_dev(d->vt_device,*((uint64_t*)(dst_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
