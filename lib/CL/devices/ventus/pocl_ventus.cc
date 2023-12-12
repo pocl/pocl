@@ -251,7 +251,8 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   char extensions[1024];
   extensions[0] = 0;
   strcat (extensions, "cl_khr_fp64"
-                      " __opencl_c_generic_address_space");
+                      " __opencl_c_generic_address_space"
+                      " __opencl_c_named_address_space_builtins");
   dev->extensions = strdup (extensions); // no extention support now
 
   dev->profile = "EMBEDDED_PROFILE";
@@ -1161,6 +1162,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 #ifdef POCL_DEBUG_FLAG_GENERAL
 	ss_cmd << " -w ";
 #endif
+  ss_cmd << " -D__opencl_c_generic_address_space=1 -D__opencl_c_named_address_space_builtins=1 ";
 	ss_cmd << program->compiler_options << std::endl;
 	POCL_MSG_PRINT_LLVM("running \"%s\"\n", ss_cmd.str().c_str());
 
