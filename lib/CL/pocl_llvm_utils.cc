@@ -145,6 +145,7 @@ static int getModuleTriple(const char *input_stream, size_t size,
 }
 
 const char *pocl_get_llvm_cpu_abi() {
+#ifdef HOST_CPU_TARGET_ABI
   if (strlen(HOST_CPU_TARGET_ABI) > 0)
     return HOST_CPU_TARGET_ABI;
   else {
@@ -166,9 +167,10 @@ const char *pocl_get_llvm_cpu_abi() {
     return "lp64q";
 #endif
 
-#endif
-    return nullptr;
+#endif // __riscv
   }
+#endif // HOST_CPU_TARGET_ABI
+  return nullptr;
 }
 
 char *pocl_get_llvm_cpu_name() {
