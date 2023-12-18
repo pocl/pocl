@@ -409,8 +409,8 @@ int main()
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
-  char extensions[1024];
-  err = clGetDeviceInfo(did, CL_DEVICE_EXTENSIONS, 1024, extensions, NULL);
+  char extensions[1000];
+  err = clGetDeviceInfo(did, CL_DEVICE_EXTENSIONS, 10000, extensions, NULL);
   CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
   if (strstr(extensions, "cl_khr_spir") == NULL)
     {

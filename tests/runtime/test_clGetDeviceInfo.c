@@ -43,9 +43,11 @@ main(void)
 
       TEST_ASSERT(global_memsize > 0);
 
-      min_max_mem_alloc_size = 128*1024*1024;
-      if (min_max_mem_alloc_size < global_memsize/4)
-        min_max_mem_alloc_size = global_memsize/4;
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
+      min_max_mem_alloc_size = MAX (
+          MIN (1024 * 1024 * 1024, global_memsize / 4), 32 * 1024 * 1024);
 
       TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
 
