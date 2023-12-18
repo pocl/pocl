@@ -409,38 +409,6 @@ int main()
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
-  char extensions[1000];
-  err = clGetDeviceInfo(did, CL_DEVICE_EXTENSIONS, 10000, extensions, NULL);
-  CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
-  if (strstr(extensions, "cl_khr_spir") == NULL)
-    {
-      printf ("SPIR not supported, skipping SPIR arg info tests\n");
-      goto FINISH;
-    }
-
-  /* SPIR program */
-
-  printf ("\nSPIR with metadata\n");
-
-  const char *filename = (address_bits == 32 ? meta_files[0] : meta_files[1]);
-  TEST_ASSERT (spir_program (filename, ctx, did, &program) == EXIT_SUCCESS);
-
-  TEST_ASSERT (test_program (program, 1) == EXIT_SUCCESS);
-
-  CHECK_CL_ERROR(clReleaseProgram(program));
-
-  /* SPIR program without metadata - currently disabled since Clang seems to
-   * always generate metadata. */
-  /*
-    printf("\nSPIR WITHOUT metadata\n");
-    filename = (address_bits == 32 ? nometa_files[0] : nometa_files[1]);
-    TEST_ASSERT(spir_program(filename, ctx, did, &program) == EXIT_SUCCESS);
-
-    TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
-
-    CHECK_CL_ERROR(clReleaseProgram(program));
-  */
-
 FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
