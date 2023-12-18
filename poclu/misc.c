@@ -502,7 +502,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
-  char extensions[1024];
+  char extensions[10000];
   char path[1024];
   const char *ext;
   char final_opts[2048];
@@ -556,7 +556,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
     {
       TEST_ASSERT (device != NULL);
       strcat (final_opts, " -x spir -spir-std=1.2");
-      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
+      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 10000, extensions,
                              NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
 
