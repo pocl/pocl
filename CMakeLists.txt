@@ -1092,7 +1092,7 @@ if (APPLE AND NOT ENABLE_ICD AND VISIBILITY_HIDDEN)
   add_compile_definitions("-DCL_API_CALL=__attribute__ ((visibility (\"default\")))")
 endif()
 
-if(ENABLE_ICD OR ENABLE_PROXY_DEVICE)
+if(ENABLE_ICD OR ENABLE_PROXY_DEVICE OR ANDROID)
   set(POCL_LIBRARY_NAME "pocl")
 else()
   set(POCL_LIBRARY_NAME "OpenCL")
