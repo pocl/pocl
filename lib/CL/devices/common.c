@@ -1679,7 +1679,7 @@ pocl_init_default_device_infos (cl_device_id dev)
 
   strcat(kernellib, "-");
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char* kernellib_variant = pocl_get_distro_kernellib_variant ();
+  const char* kernellib_variant = pocl_get_distro_kernellib_variant ();
   dev->llvm_cpu = pocl_get_distro_cpu_name (kernellib_variant);
   strcat(kernellib, kernellib_variant);
   if (!kernellib_variant)
@@ -1689,21 +1689,21 @@ pocl_init_default_device_infos (cl_device_id dev)
   strcat(kernellib, OCL_KERNEL_TARGET_CPU);
 #else
   dev->llvm_cpu = pocl_get_llvm_cpu_name ();
-  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
   strcpy(kernellib_fallback, kernellib);
   strcat(kernellib_fallback, OCL_KERNEL_TARGET_CPU);
   strcat(kernellib, dev->llvm_cpu);
 #endif
-
   dev->kernellib_name = strdup(kernellib);
   dev->kernellib_fallback_name = strdup(kernellib_fallback);
   dev->kernellib_subdir = "host";
+  dev->llvm_abi = pocl_get_llvm_cpu_abi ();
 
 #else /* No compiler, no CPU info */
   dev->kernellib_name = NULL;
   dev->kernellib_fallback_name = NULL;
   dev->kernellib_subdir = "host";
   dev->llvm_cpu = NULL;
+  dev->llvm_abi = NULL;
   dev->llvm_target_triplet = "";
 #endif
 
