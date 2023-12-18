@@ -212,7 +212,6 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 
-extern pocl_lock_t pocl_runtime_config_lock;
 extern pocl_lock_t pocl_context_handling_lock;
 
 POCL_EXPORT int pocl_offline_compile = 0;
@@ -506,7 +505,6 @@ pocl_init_devices ()
     }
   else
     {
-      POCL_INIT_LOCK (pocl_runtime_config_lock);
       POCL_INIT_LOCK (pocl_context_handling_lock);
     }
 
