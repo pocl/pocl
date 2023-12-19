@@ -1,7 +1,7 @@
 <%inherit file="basic_page.makt" />
 <p>PoCL is a portable open source (MIT-licensed) implementation of the
 OpenCL standard. In addition to
-being an easily portable multi-device (truely heterogeneous)
+being an easily portable/layered multi-device
 open-source OpenCL implementation, a major goal of this project is
 improving interoperability of diversity of OpenCL-capable devices by
 integrating them to a single centrally orchestrated platform. Also
@@ -9,18 +9,21 @@ one of the key goals is to enhance performance portability
 of OpenCL programs across device types utilizing runtime and compiler
 techniques.</p>
 
-<p>PoCL currently supports various CPUs, NVIDIA GPUs via libCUDA,
-Intel GPUs via Level Zero and TCE ASIPs (<a href="http://openasip.org">OpenASIP</a>)
-at different feature coverage levels.
-It is also known to have multiple (private) adaptations in active production
-use.</p>
+<p>PoCL currently supports various CPU architectures (x86, ARM, RISC-V),
+NVIDIA GPUs via libCUDA, Intel GPUs via Level Zero and TCE ASIPs
+(<a href="http://openasip.org">OpenASIP</a>) at different feature coverage
+levels. It also supports <a href="http://portablecl.org/docs/html/remote.html">a
+remote backend</a> for distributed OpenCL execution. PoCL is also known to
+have multiple (private) adaptations in active production use.</p>
 
-<p>PoCL uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
+<p>PoCL uses <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
 <a href="http://llvm.org">LLVM</a> for kernel compiler implementation,
 and as a portability layer. Thus, if your desired target has an LLVM backend, it
 should be able to get OpenCL support easily by using PoCL.</p>
 
 <h1>News</h1>
+
+<h2>2023-12-19: <a href="http://portablecl.org/docs/html/notes_5_0.html">Portable Computing Language (PoCL) v5.0 released</a></h2>
 
 <h2>2023-09-04: <a href="remote-backend.html">No-MPI OpenCL-Only Distributed Computing With PoCL-Remote</a></h2>
 
