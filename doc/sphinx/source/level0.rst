@@ -6,7 +6,7 @@ Level Zero driver
 
 This driver uses libze and LLVM/Clang to run OpenCL code on GPU devices via Level Zero API.
 
-The implementation is not yet complete.
+The implementation is work-in-progress, but usable for various applications.
 
 Installation
 -------------
