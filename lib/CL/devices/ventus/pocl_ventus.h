@@ -90,6 +90,11 @@ void pocl_ventus_write(void *data,
                        cl_mem dst_buf,
                        size_t offset, 
                        size_t size);
+void
+pocl_ventus_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                       pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                       size_t dst_offset, size_t src_offset, size_t size);
+
 
 #ifdef __cplusplus
 }
