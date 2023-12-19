@@ -96,21 +96,21 @@ The current version has been tested with various programs, such as:
 The image support in particular is quite new and very lightly tested.
 The same applies for multi-device setup.
 
-printf() support exists, but please note that the "standard output" (stdout) is
-shared per client-server connection, so if multiple remote devices launch
-kernels with printf() simultaneously, the output order is undefined.
+printf() support exists, but please note that the "standard output" (stdout) of the server-side OpenCL will be printed to the PoCL-D stdout. Furthermore, the stdout is shared with all client-server connection, so if multiple client
+devices launch kernels with printf() simultaneously, the output order is
+undefined.
 
-Known Bugs/Issues
------------------
+Known Bugs/Issues/WiP
+---------------------
 
-* the "-I" option to clBuildProgram does not work
+* The "-I" option to clBuildProgram does not work
 * clGetKernelWorkGroupInfo() can return incorrect information
-* clCompileProgram() and clLinkProgram() API calls are broken (this is WIP)
+* clCompileProgram() and clLinkProgram() API calls are broken
 * clSetKernelArg() will not return a CL_INVALID_ARG_SIZE error if arg_size does not
   match the size of the data type for an argument that is not a memory object.
   Fixing this would require involving LLVM on the client side, as argument size
   information cannot be retrieved from OpenCL API runtime calls.
-* there are some hardcoded limits (max devices per server) - this is WIP
+* There are some hardcoded limits (max devices per server)
 
 Known Bugs/Issues in OpenCL Implementations
 --------------------------------------------
@@ -150,9 +150,8 @@ installing some extra packages before building pocl.
 
 To build the remote *client*::
 
-    git clone [the repository with pocl that has the PoCL-Remote]
     mkdir build; cd build;
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 ..
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_ICD=1 -DENABLE_REMOTE_CLIENT=1 ..
     make -j$(nproc)
 
 This should produce **lib/CL/libpocl.so** (the client library that implements
@@ -160,7 +159,6 @@ the OpenCL runtime API).
 
 To build the remote *server*::
 
-    git clone [the repository with pocl that has the PoCL-Remote]
     mkdir build; cd build;
     cmake ../pocld
 
@@ -436,7 +434,7 @@ limited testing outside the original lab since it has not been publicly availabl
   This is a key bottleneck that will be resolved in a future version.
 
 * For the time being the client side part of PoCL-Remote must be built with the
-  ``ENABLE_LOADABLE_DRIVERS`` build option set to ``OFF``.
+  ``ENABLE_LOADABLE_DRIVERS`` build option set to ``OFF``. See `issue 1297 <https://github.com/pocl/pocl/issues/1297>`_.
 
 * The old SPIR 1.2/2.0 are not supported and the respective extension is masked out from
   remote devices' extension lists by pocld.
