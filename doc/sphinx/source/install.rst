@@ -360,9 +360,7 @@ ARM specific build notes:
 RISC-V support
 -----------------------------
 
-Status:
-
-PoCL builds (as of Dec 2023) on Starfive VisionFive 2 using Ubuntu 23.10 preinstalled image,
+The RISC-V support has been tested (as of Dec 2023) on Starfive VisionFive 2 using Ubuntu 23.10 preinstalled image,
 with LLVM 17 and GCC 13.2; of the internal tests, 98% tests pass, 4 tests fail out of 253.
 In particular, tests using printf with vector arguments are broken ATM. Other boards / CPUs
 have not been tested. RISC Vector extension is not supported.
