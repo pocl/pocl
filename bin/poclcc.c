@@ -30,7 +30,7 @@
 #include <errno.h>
 
 #include "config.h"
-#ifdef BUILD_PROXY
+#ifdef RENAME_POCL
 #include "rename_opencl.h"
 #endif
 #include "poclu.h"

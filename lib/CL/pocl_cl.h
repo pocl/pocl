@@ -269,13 +269,13 @@ extern uint64_t last_object_id;
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 
-#  if !defined(BUILD_ICD) && !defined(BUILD_PROXY)
+#if !defined(BUILD_ICD) && !defined(RENAME_POCL)
 #    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
 #  else
 #    define POsym(name)
 #  endif
 
-#  if !defined(BUILD_PROXY)
+#if !defined(RENAME_POCL)
 #    define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
 #  else
 #    define POsymAlways(name)

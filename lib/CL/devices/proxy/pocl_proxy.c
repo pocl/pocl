@@ -20,8 +20,12 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-
 #include "config.h"
+
+#if !defined(RENAME_POCL)
+#include "libopencl_stub/rename_stub.h"
+#endif
+
 #include "pocl_proxy.h"
 #include "common.h"
 #include "devices.h"

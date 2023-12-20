@@ -298,6 +298,8 @@ option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requi
 
 option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" OFF)
 
+OPTION(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
+
 ##########################################################
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -1506,7 +1508,14 @@ if(ENABLE_PROXY_DEVICE)
     endif()
 
   endif()
+  if(NOT DEFINED PROXY_USE_LIBOPENCL_STUB)
+    set(RENAME_POCL 1)
+  endif()
+  if(RENAME_POCL AND PROXY_USE_LIBOPENCL_STUB)
+    message(FATAL_ERROR "RENAME_POCL and PROXY_USE_LIBOPENCL_STUB can not be used together")
+  endif()
   set(BUILD_PROXY 1)
+
   set(OCL_DRIVERS "${OCL_DRIVERS} proxy")
 endif()
 
@@ -2266,6 +2275,7 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 MESSAGE(STATUS "ENABLE_HWLOC: ${ENABLE_HWLOC}")
+MESSAGE(STATUS "RENAME_POCL: ${RENAME_POCL}")
 if(ARM)
 MESSAGE(STATUS "ENABLE_FP64: ${ENABLE_FP64}")
 endif()
