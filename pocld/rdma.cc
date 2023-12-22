@@ -669,6 +669,8 @@ RdmaConnection::RdmaConnection(rdmacm::IdPtr cm_id)
       qp(ibverbs::QueuePair::create(cm_id, pd)) {}
 
 RdmaConnection RdmaConnection::connect(const char *address, uint16_t port) {
+  assert(strcmp(address, "127.0.0.1") != 0 && strcmp(address, "::1") != 0 &&
+         strcmp(address, "localhost") != 0 && "not supported by RDMA");
   int err = 0;
   int timeout_ms = 5000;
   addrinfo *ai = pocl_resolve_address(address, port, &err);
