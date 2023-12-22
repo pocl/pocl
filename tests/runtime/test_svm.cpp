@@ -24,6 +24,8 @@
 // Enable OpenCL C++ exceptions
 #define CL_HPP_ENABLE_EXCEPTIONS
 
+#include "pocl_opencl.h"
+
 #include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
@@ -32,8 +34,6 @@
 #include <iostream>
 #include <map>
 #include <random>
-
-#include "pocl_opencl.h"
 
 #define BUF_SIZE 16
 
