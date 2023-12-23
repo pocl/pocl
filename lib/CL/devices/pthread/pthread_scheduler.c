@@ -180,6 +180,7 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
@@ -188,6 +189,7 @@ pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
   PTHREAD_CHECK (pthread_cond_broadcast (&scheduler.wake_pool));
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
+#endif
 
 /* if subd is not a subdevice, returns 1
  * if subd is subdevice, takes a look at the subdevice CUs
@@ -208,6 +210,7 @@ shall_we_run_this (thread_data *td, cl_device_id subd)
   return 1;
 }
 
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
 /* Maximum and minimum chunk sizes for get_wg_index_range().
  * Each pthread driver's thread fetches work from a kernel's WG pool in
  * chunks, this determines the limits (scaled up by # of threads). */
@@ -354,6 +357,81 @@ work_group_scheduler (kernel_run_command *k,
   return 1;
 }
 
+#else /* OPENMP enabled scheduler */
+
+static int
+work_group_scheduler (kernel_run_command *k,
+                     struct pool_thread_data *thread_data)
+{
+  cl_kernel kernel = k->kernel;
+  cl_program program = kernel->program;
+  pocl_kernel_metadata_t *meta = k->kernel->meta;
+
+#pragma omp parallel
+{
+  void *arguments[meta->num_args + meta->num_locals + 1];
+  void *arguments2[meta->num_args + meta->num_locals + 1];
+  struct pocl_context pc;
+  void *local_mem = malloc(scheduler.local_mem_size);
+
+  setup_kernel_arg_array_with_locals (
+      (void **)&arguments, (void **)&arguments2, k, local_mem,
+      scheduler.local_mem_size);
+  memcpy (&pc, &k->pc, sizeof (struct pocl_context));
+
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
+  assert (pc.printf_buffer_capacity > 0);
+  pc.printf_buffer = malloc (pc.printf_buffer_capacity);
+  assert (pc.printf_buffer != NULL);
+  uint32_t position = 0;
+  pc.printf_buffer_position = &position;
+#else
+  pc.printf_buffer = NULL;
+  pc.printf_buffer_position = NULL;
+#endif
+
+  unsigned rm = pocl_save_rm ();
+  pocl_set_default_rm ();
+  unsigned ftz = pocl_save_ftz ();
+  pocl_set_ftz (program->flush_denorms);
+
+  size_t x, y, z;
+  /* runtime = set scheduling according to environment variable OMP_SCHEDULE */
+#pragma omp for collapse(3) schedule(runtime)
+  for (z = 0; z < pc.num_groups[2]; ++z)
+    for (y = 0; y < pc.num_groups[1]; ++y)
+      for (x = 0; x < pc.num_groups[0]; ++x)
+        ((pocl_workgroup_func)k->workgroup)
+             ((uint8_t *)arguments, (uint8_t *)&pc, x, y, z);
+
+  pocl_restore_rm (rm);
+  pocl_restore_ftz (ftz);
+
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
+  if (position > 0)
+  {
+    write (STDOUT_FILENO, pc.printf_buffer, position);
+    position = 0;
+  }
+#endif
+
+  free_kernel_arg_array_with_locals ((void **)&arguments,
+                                    (void **)&arguments2,
+                                    k);
+
+  free (local_mem);
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
+  free (pc.printf_buffer);
+#endif
+} // #pragma omp parallel
+
+return 0;
+}
+
+
+#endif
+
+
 static void
 finalize_kernel_command (struct pool_thread_data *thread_data,
                          kernel_run_command *k)
@@ -373,7 +451,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
   free_kernel_run_command (k);
 }
 
-static void
+static kernel_run_command *
 pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 {
   kernel_run_command *run_cmd;
@@ -391,7 +469,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
       POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
                                       "NDRange Kernel        ");
 
-      return;
+      return NULL;
     }
 
   /* initialize the program gvars if required */
@@ -425,7 +503,10 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   pocl_update_event_running (cmd->sync.event.event);
 
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
   pthread_scheduler_push_kernel (run_cmd);
+#endif
+  return run_cmd;
 }
 
 /*
@@ -484,8 +565,8 @@ check_kernel_queue_for_device (thread_data *td)
 static int
 pthread_scheduler_get_work (thread_data *td)
 {
-  _cl_command_node *cmd;
-  kernel_run_command *run_cmd;
+  _cl_command_node *cmd = NULL;
+  kernel_run_command *run_cmd = NULL;
 
   /* execute kernel if available */
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
@@ -494,6 +575,7 @@ pthread_scheduler_get_work (thread_data *td)
 RETRY:
   do_exit = scheduler.thread_pool_shutdown_requested;
 
+#ifndef ENABLE_HOST_CPU_DEVICES_OPENMP
   run_cmd = check_kernel_queue_for_device (td);
   /* execute kernel if available */
   if (run_cmd)
@@ -511,6 +593,7 @@ RETRY:
           POCL_FAST_LOCK (scheduler.wq_lock_fast);
         }
     }
+#endif
 
   /* execute a command if available */
   cmd = check_cmd_queue_for_device (td);
@@ -522,7 +605,14 @@ RETRY:
 
       if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
         {
+#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+          run_cmd = pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+          work_group_scheduler (run_cmd, td);
+          finalize_kernel_command (td, run_cmd);
+          run_cmd = NULL;
+#else
           pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+#endif
         }
       else
         {

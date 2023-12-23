@@ -47,6 +47,8 @@
 
 #cmakedefine ENABLE_POCL_FLOAT_CONVERSION
 
+#cmakedefine ENABLE_PRINTF_IMMEDIATE_FLUSH
+
 #cmakedefine ENABLE_RELOCATION
 
 #cmakedefine ENABLE_EGL_INTEROP

@@ -59,7 +59,7 @@ pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
 {
   pocl_pthread_init_device_ops (ops);
 
-  ops->device_name = "tbb";
+  ops->device_name = "cpu-tbb";
 
   /* implementation that differs from pthread */
   ops->probe = pocl_tbb_probe;
@@ -70,6 +70,7 @@ pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
   ops->submit = pocl_tbb_submit;
   ops->notify = pocl_tbb_notify;
 }
+
 
 unsigned int
 pocl_tbb_probe (struct pocl_device_ops *ops)

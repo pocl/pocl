@@ -227,6 +227,10 @@ option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zer
 
 option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
 
+option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (cpu & cpu-minimal)." ON)
+
+option(ENABLE_HOST_CPU_DEVICES_OPENMP "Enables OpenMP support for Host CPU devices (cpu driver only, cpu-minimal driver remains single-threaded)" OFF)
+
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
@@ -242,6 +246,8 @@ option(ENABLE_REMOTE_CLIENT "Build the client library of the remote driver" OFF)
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
+
+option(ENABLE_PRINTF_IMMEDIATE_FLUSH "if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
@@ -288,8 +294,6 @@ option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special ci
 
 option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
 
-option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
-
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
 option(ENABLE_TESTS "Build tests. Defaults to ON" ON)
@@ -301,8 +305,6 @@ option(ENABLE_RDMA "Enable usage of RDMA libraries for memory allocations. Requi
 option(ENABLE_TRAFFIC_MONITOR "Enable network traffic monitoring & logging in remote device" OFF)
 
 OPTION(RENAME_POCL "rename PoCL's ocl functions to PO<ocl_function>. Allows an user to call both PoCL and another ocl application" OFF)
-
-option(ENABLE_HOST_CPU_DEVICES_OPENMP "Enables OpenMP support for some Host CPU devices" OFF)
 
 ##########################################################
 

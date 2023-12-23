@@ -219,8 +219,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_basic_run (void *data, _cl_command_node *cmd)
 {
-  struct data *d;
-  struct pocl_argument *al;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)data;
+  struct pocl_argument *al = NULL;
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
@@ -236,9 +236,6 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
     return;
 
   assert (data != NULL);
-  d = (struct data *) data;
-
-  d->current_kernel = kernel;
 
   void **arguments = (void **)malloc (sizeof (void *)
                                       * (meta->num_args + meta->num_locals));
@@ -341,12 +338,18 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);
-  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
-  assert (pc->printf_buffer_capacity > 0);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
+#else
+  pc->printf_buffer = NULL;
+  pc->printf_buffer_position = NULL;
+#endif
+
+  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
+  assert (pc->printf_buffer_capacity > 0);
   pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
@@ -363,11 +366,13 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
 
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   if (position > 0)
     {
       write (STDOUT_FILENO, pc->printf_buffer, position);
       position = 0;
     }
+#endif
 
   for (i = 0; i < meta->num_args; ++i)
     {

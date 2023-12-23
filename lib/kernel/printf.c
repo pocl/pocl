@@ -28,7 +28,7 @@
 
 #include <stdarg.h>
 
-#ifdef PRINTF_IMMEDIATE_FLUSH
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
 #include <unistd.h>
 #endif
 
@@ -706,6 +706,8 @@ error:;
 /**************************************************************************/
 /**************************************************************************/
 
+#define IMM_FLUSH_BUFFER_SIZE 16384
+
 /* This is the actual printf function that will be used,
  * after the external (buffer) variables are handled in a LLVM pass. */
 
@@ -716,24 +718,30 @@ __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
 {
   param_t p = { 0 };
 
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
+  char buf[IMM_FLUSH_BUFFER_SIZE];
+  p.printf_buffer = buf;
+  p.printf_buffer_capacity = IMM_FLUSH_BUFFER_SIZE;
+  p.printf_buffer_index = 0;
+#else
   p.printf_buffer = (PRINTF_BUFFER_AS char *)__buffer;
   p.printf_buffer_capacity = __buffer_capacity;
   p.printf_buffer_index = *(PRINTF_BUFFER_AS uint32_t *)__buffer_index;
+#endif
 
   va_list va;
   va_start (va, fmt);
   int r = __pocl_printf_format_full (fmt, &p, va);
   va_end (va);
 
-#ifdef PRINTF_IMMEDIATE_FLUSH
+#ifdef ENABLE_PRINTF_IMMEDIATE_FLUSH
   if (p.printf_buffer_index > 0)
     {
       write (STDOUT_FILENO, p.printf_buffer, p.printf_buffer_index);
-      p.printf_buffer_index = 0;
     }
-#endif
-
+#else
   *(PRINTF_BUFFER_AS uint32_t *)__buffer_index = p.printf_buffer_index;
+#endif
 
   return r;
 }
