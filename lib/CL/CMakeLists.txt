@@ -23,6 +23,7 @@
 #
 #=============================================================================
 
+
 include_directories(AFTER "devices" ".")
 
 add_subdirectory("devices")
@@ -285,6 +286,11 @@ if(HAVE_64BIT_ATOMICS_WITH_LIB)
   list(APPEND POCL_PRIVATE_LINK_LIST "atomic")
 endif()
 
+if(ANDROID)
+  find_library(ANDROID_LOG_LIB log)
+  list(APPEND POCL_PRIVATE_LINK_LIST ${ANDROID_LOG_LIB})
+endif()
+
 list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})
 
 # see lib/CMakeLists.txt
@@ -292,15 +298,8 @@ set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
 
 #################################################################
 
-# most Android systems have their own libOpenCL, often directly linked
-# to the graphics drivers, which in turn are linked into every GUI program
-# ...and the libOpenCL is not an ICD, therefore building dynamically
-# on Android is pointless.
-if(ANDROID)
-  add_library("${POCL_LIBRARY_NAME}" STATIC ${LIBPOCL_OBJS})
-else()
-  add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
-endif()
+add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
+
 harden("${POCL_LIBRARY_NAME}")
 
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"

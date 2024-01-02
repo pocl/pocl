@@ -280,4 +280,6 @@
 
 #cmakedefine LLVM_OPAQUE_POINTERS
 
+#cmakedefine RENAME_POCL
+
 #endif

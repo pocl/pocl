@@ -26,8 +26,11 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include <sys/time.h>
 
 #include "pocl_debug.h"
 #include "pocl_networking.h"

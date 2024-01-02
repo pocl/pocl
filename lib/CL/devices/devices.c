@@ -534,8 +534,7 @@ pocl_init_devices ()
     sleep (delay);
 #endif
 
-
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
 
 #ifdef ENABLE_HOST_CPU_DEVICES
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))

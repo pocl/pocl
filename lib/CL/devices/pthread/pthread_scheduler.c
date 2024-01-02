@@ -565,7 +565,7 @@ pocl_pthread_driver_thread (void *p)
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                        scheduler.local_mem_size);
-#ifdef __linux__
+#if defined(__linux__) && !defined(__ANDROID__)
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))
     {
       cpu_set_t set;

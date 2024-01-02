@@ -20,8 +20,12 @@
    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
    IN THE SOFTWARE.
 */
-
 #include "config.h"
+
+#if !defined(RENAME_POCL)
+#include "libopencl_stub/rename_stub.h"
+#endif
+
 #include "pocl_proxy.h"
 #include "common.h"
 #include "devices.h"
@@ -510,7 +514,7 @@ pocl_proxy_get_device_info (cl_device_id device, proxy_device_data_t *d)
 
   // TODO queue properties
   device->queue_properties = CL_QUEUE_PROFILING_ENABLE;
-  DIboolptr (available, CL_DEVICE_AVAILABLE);
+  DIbool (available[0], CL_DEVICE_AVAILABLE);
   DIbool (compiler_available, CL_DEVICE_COMPILER_AVAILABLE);
   DIbool (linker_available, CL_DEVICE_LINKER_AVAILABLE);
 
@@ -650,7 +654,7 @@ pocl_proxy_uninit (unsigned j, cl_device_id device)
 }
 
 cl_int
-pocl_proxy_reinit (unsigned j, cl_device_id device)
+pocl_proxy_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   return CL_SUCCESS;
 }

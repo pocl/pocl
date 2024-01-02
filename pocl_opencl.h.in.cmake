@@ -1,6 +1,6 @@
-#cmakedefine ENABLE_PROXY_DEVICE
+#cmakedefine RENAME_POCL
 
-#ifdef ENABLE_PROXY_DEVICE
+#ifdef RENAME_POCL
 #include "rename_opencl.h"
 #endif
 

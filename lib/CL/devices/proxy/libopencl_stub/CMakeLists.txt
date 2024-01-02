@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2021 Michal Babej / Tampere University
+#   Copyright (c) 2023 PoCL Developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,18 +23,8 @@
 #
 #=============================================================================
 
-if(MSVC)
-  set_source_files_properties( pocl_proxy.h pocl_proxy.c PROPERTIES LANGUAGE CXX )
-endif(MSVC)
+# create the libopencl stub library and call it libOpenCL so that PoCL can link
+# to it. This is fine since the stub is only intended to be used when there is
+# system lib to be found
+add_library(OpenCL STATIC libopencl.c libopencl.h)
 
-add_pocl_device_library("pocl-devices-proxy" pocl_proxy.h pocl_proxy.c )
-
-# an option parameter to link to libopencl-stub instead.
-# source code: https://github.com/krrishnarraj/libopencl-stub
-OPTION(PROXY_USE_LIBOPENCL_STUB "link the proxy device to libopencl-stub instead of system opencl" OFF)
-if(PROXY_USE_LIBOPENCL_STUB)
-
-    add_subdirectory(libopencl_stub)
-    target_link_libraries("pocl-devices-proxy" libopencl_stub/libOpenCL.a)
-
-endif()
