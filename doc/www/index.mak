@@ -25,6 +25,9 @@ should be able to get OpenCL support easily by using PoCL.</p>
 
 <h2>2023-12-19: <a href="http://portablecl.org/docs/html/notes_5_0.html">Portable Computing Language (PoCL) v5.0 released</a></h2>
 
+<p>PoCL v5.0 is out! The release notes can be read <a href="http://portablecl.org/docs/html/notes_5_0.html">here</a>
+and a packaged release is available <a href="https://github.com/pocl/pocl/releases/tag/v5.0">here.</a></p>
+
 <h2>2023-09-04: <a href="remote-backend.html">No-MPI OpenCL-Only Distributed Computing With PoCL-Remote</a></h2>
 
 <p>PoCL now has a new backend that allows transparently
