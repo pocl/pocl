@@ -95,6 +95,41 @@ pocl_ventus_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst
                        pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                        size_t dst_offset, size_t src_offset, size_t size);
 
+void
+pocl_ventus_read_rect (void *data, void *__restrict__ const host_ptr,
+                       pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                       const size_t *__restrict__ const buffer_origin,
+                       const size_t *__restrict__ const host_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const buffer_row_pitch,
+                       size_t const buffer_slice_pitch,
+                       size_t const host_row_pitch,
+                       size_t const host_slice_pitch);
+void
+pocl_ventus_write_rect (void *data, const void *__restrict__ const host_ptr,
+                        pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                        const size_t *__restrict__ const buffer_origin,
+                        const size_t *__restrict__ const host_origin,
+                        const size_t *__restrict__ const region,
+                        size_t const buffer_row_pitch,
+                        size_t const buffer_slice_pitch,
+                        size_t const host_row_pitch,
+                        size_t const host_slice_pitch);
+void
+pocl_ventus_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf, pocl_mem_identifier *src_mem_id,
+                       cl_mem src_buf,
+                       const size_t *__restrict__ const dst_origin,
+                       const size_t *__restrict__ const src_origin,
+                       const size_t *__restrict__ const region,
+                       size_t const dst_row_pitch,
+                       size_t const dst_slice_pitch,
+                       size_t const src_row_pitch,
+                       size_t const src_slice_pitch);
+cl_int
+pocl_ventus_map_mem (void *data, pocl_mem_identifier *src_mem_id,
+                     cl_mem src_buf, mem_mapping_t *map);
+
 
 #ifdef __cplusplus
 }
