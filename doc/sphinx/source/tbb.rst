@@ -34,16 +34,8 @@ Examples::
 3) Configuration
 ~~~~~~~~~~~~~~~~
 
-When building the tbb device, it will be set as the default device for PoCL. It
-is strongly recommended to **NOT** create more TBB devices as the TBB device
+When building the tbb device, it will be set as the default device for PoCL instead of pthread driver.
+It is strongly recommended to **NOT** create more TBB devices as the TBB device
 always uses all cores and has no subdevice support.
 
-Optionally, set the ``POCL_TBB_PARTITIONER`` environment variable to one of
-``affinity``,``auto``,``simple``,``static`` to select a partitioner. If no
-partitioner is selected, the TBB library will select the auto partitioner by
-default. More information can be found in the
-`related documentation <https://www.threadingbuildingblocks.org/docs/help/reference/algorithms/partitioners.html>`_.
-
-Use optionally ``POCL_TBB_GRAIN_SIZE`` to specify a grain size for all
-dimensions. More information can be found in the
-`related documentation <https://www.threadingbuildingblocks.org/docs/help/tbb_userguide/Controlling_Chunking.html>`_.
+The TBB driver can be tuned with at runtime with environment variables, see :ref:`pocl-env-variables`.

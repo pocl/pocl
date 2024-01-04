@@ -71,23 +71,45 @@ pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
   ops->notify = pocl_tbb_notify;
 }
 
+static std::vector<tbb::numa_node_id> numa_indexes;
+
+static unsigned last_initialized_numa_index = 0;
+static int one_device_per_numa_node = 0;
 
 unsigned int
 pocl_tbb_probe (struct pocl_device_ops *ops)
 {
-  int env_count = pocl_device_get_env_count(ops->device_name);
+  int env_count = pocl_device_get_env_count (ops->device_name);
+  one_device_per_numa_node = pocl_get_int_option ("POCL_TBB_DEV_PER_NUMA_NODE",
+                                                  CL_TRUE);
 
-  /* Env was not specified, default behavior was to use 1 tbb device */
-  if (env_count < 0)
-    return 1;
-
-  if (env_count > 1)
-    POCL_MSG_WARN ("Using more than one tbb device which is strongly discouraged.");
+  if (one_device_per_numa_node) {
+    /* Use one TBB device per NUMA node. */
+    numa_indexes = tbb::info::numa_nodes();
+    /* Env was not specified -> default to number of NUMA nodes */
+    if (env_count < 0) {
+      env_count = numa_indexes.size();
+    }
+    /* disallow more devices than NUMA nodes */
+    if (env_count > numa_indexes.size()) {
+      POCL_MSG_WARN ("Requested more TBB devices than available NUMA nodes\n");
+      env_count = numa_indexes.size();
+    }
+  } else {
+    /* Use one TBB device for the whole system. */
+    /* if Env was not specified -> default is 1 TBB device */
+    if (env_count < 0)
+      env_count = 1;
+    /* disallow more than one; it's possible, but makes no sense */
+    if (env_count > 1) {
+      POCL_MSG_WARN ("Not using redundant TBB devices\n");
+      env_count = 1;
+    }
+  }
 
   return env_count;
 }
 
-char scheduler_initialized = 0;
 static cl_bool tbb_available = CL_TRUE;
 static cl_bool tbb_unavailable = CL_FALSE;
 
@@ -101,28 +123,33 @@ pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
     return CL_INVALID_DEVICE;
   }
 
-  /* device->max_compute_units was set up by topology_detect,
-     but we use the TBB library (result should be the same).
-     task_area initialization is optional and max_concurrency
-     can be retrieved without prior initialization. */
-  tbb::task_arena ta;
+  pocl_tbb_scheduler_data *dd = new pocl_tbb_scheduler_data;
+  if (one_device_per_numa_node) {
+    assert(last_initialized_numa_index < numa_indexes.size());
+    dd->numa_idx = numa_indexes[last_initialized_numa_index];
+    dd->arena.initialize(tbb::task_arena::constraints(dd->numa_idx));
+  } else {
+    dd->numa_idx = UINT32_MAX;
+    dd->arena.initialize();
+  }
+  device->data = (void *)dd;
+
   //ta.initialize ();
-  device->max_compute_units = ta.max_concurrency ();
+  device->max_compute_units = dd->arena.max_concurrency();
   /* subdevices not supported ATM */
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
 
-  if (!scheduler_initialized)
-    {
-      scheduler_initialized = 1;
-      pocl_init_dlhandle_cache ();
-      pocl_init_kernel_run_command_manager ();
-      tbb_scheduler_init (device);
-    }
+  pocl_init_dlhandle_cache ();
+  pocl_init_kernel_run_command_manager ();
+  tbb_scheduler_init (device);
+
   /* system mem as global memory */
   device->global_mem_id = 0;
-  POCL_MSG_PRINT_INFO ("TBB device %u initialized\n", j);
+  POCL_MSG_PRINT_INFO ("TBB device %u initialized\n",
+                        last_initialized_numa_index);
+  ++last_initialized_numa_index;
   device->available = &tbb_available;
   return err;
 }
@@ -130,25 +157,14 @@ pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
 cl_int
 pocl_tbb_uninit (unsigned j, cl_device_id device)
 {
-  if (scheduler_initialized)
-    {
-      tbb_scheduler_uninit ();
-      scheduler_initialized = 0;
-    }
-
-  device->data = NULL;
+  tbb_scheduler_uninit (device);
   return CL_SUCCESS;
 }
 
 cl_int
 pocl_tbb_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
-  if (!scheduler_initialized)
-    {
-      tbb_scheduler_init (device);
-      scheduler_initialized = 1;
-    }
-
+  tbb_scheduler_init (device);
   return CL_SUCCESS;
 }
 
