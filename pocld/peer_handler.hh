@@ -79,7 +79,12 @@ public:
 #endif
 };
 
+#if 0
+// TOFIX: peers cannot be freed without crashing, let them leak for now.
 typedef std::unique_ptr<PeerHandler> PeerHandlerUPtr;
+#else
+typedef PeerHandler *PeerHandlerUPtr;
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

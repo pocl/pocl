@@ -140,6 +140,11 @@ int main(int argc, char **argv)
     {
       printf (
           "This test requires a cl device with at least 2 compute units\n");
+      err = clReleaseCommandQueue(q);
+      CHECK_OPENCL_ERROR_IN("clReleaseCommandQueue");
+      err = clReleaseContext(ctx);
+      CHECK_OPENCL_ERROR_IN("clReleaseContext");
+      CHECK_CL_ERROR (clUnloadCompiler ());
       return 77;
     }
 
@@ -151,6 +156,11 @@ int main(int argc, char **argv)
   if (max_subs < 2)
     {
       printf ("This test requires a cl device with at least 2 subdevices\n");
+      err = clReleaseCommandQueue(q);
+      CHECK_OPENCL_ERROR_IN("clReleaseCommandQueue");
+      err = clReleaseContext(ctx);
+      CHECK_OPENCL_ERROR_IN("clReleaseContext");
+      CHECK_CL_ERROR (clUnloadCompiler ());
       return 77;
     }
 

@@ -135,7 +135,7 @@ public:
   SharedCLContext(cl::Platform *p, unsigned plat_id, VirtualContextBase *v,
                   ReplyQueueThread *s, ReplyQueueThread *f);
 
-  ~SharedCLContext() = default;
+  virtual ~SharedCLContext();
 
   virtual cl::Context getHandle() const override {
     return ContextWithAllDevices;
@@ -624,6 +624,14 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
       POCL_MSG_PRINT_REMOTE(
           "Unable to allocate an SVM pool over the remote devices.\n");
     }
+  }
+}
+
+SharedCLContext::~SharedCLContext() {
+  if (SVMPool != nullptr) {
+    POCL_MSG_PRINT_MEMORY("Freeing the SVMPool.\n");
+    clSVMFree(ContextWithAllDevices.get(), SVMPool);
+    clReleaseMemObject(SVMRegionBuffer);
   }
 }
 

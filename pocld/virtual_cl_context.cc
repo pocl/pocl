@@ -147,7 +147,8 @@ public:
 
     // make sure no shared context tries to broadcast stuff
     std::unique_lock<std::mutex> lock(main_mutex);
-    peers.reset();
+    // TOFIX: peers cannot be freed without crashing, let them leak for now.
+    // peers.reset();
     for (auto i : SharedContextList) {
       delete i;
     }
@@ -267,7 +268,6 @@ size_t VirtualCLContext::init(client_connections_t conns,
   peers = PeerHandlerUPtr(new PeerHandler(peer_id, conns.incoming_peer_mutex,
                                           conns.incoming_peer_queue, this,
                                           &exit_helper, netstat));
-
   initPlatforms();
 
   initialMessage(*command_fd);

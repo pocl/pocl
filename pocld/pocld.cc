@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <errno.h>
+#include <set>
 #include <sstream>
 #include <string>
 #include <unistd.h>
@@ -56,6 +57,7 @@
 #include "pocl_debug.h"
 #include "pocl_networking.h"
 #include "pocl_remote.h"
+#include "pocl_runtime_config.h"
 #include "pocld_config.h"
 
 #include "cmdline.h"
@@ -775,6 +777,9 @@ void PoclDaemon::readAllClientSocketsThread() {
       }
     }
 
+    // Collect vtxs that were used by connections to free those that are
+    // not used by any connection when reconnect is not supported.
+    std::set<VirtualContextBase *> DroppedVCtxs;
     /* reap dead fds */
     fds_changed |= !dead_fds.empty();
     size_t left_to_reap = dead_fds.size();
@@ -785,17 +790,32 @@ void PoclDaemon::readAllClientSocketsThread() {
           close(fd);
           std::swap(open_client_fds[i], open_client_fds.back());
           open_client_fds.pop_back();
+          std::swap(socket_contexts[i], socket_contexts.back());
           /* Contexts can outlive their client connection (client may reconnect
            * later) so don't destroy them here, only remove them from the socket
            * bookkeeping list. */
-          std::swap(socket_contexts[i], socket_contexts.back());
+          VirtualContextBase *vctx = socket_contexts.back();
+          DroppedVCtxs.insert(vctx);
           socket_contexts.pop_back();
+
           std::swap(incomplete_requests[i], incomplete_requests.back());
           delete incomplete_requests.back();
           incomplete_requests.pop_back();
           --i;
           --left_to_reap;
         }
+      }
+    }
+
+    if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 1)) {
+      // Free unusued vctxs if reconnect is not enabled.
+      for (auto VContext : DroppedVCtxs) {
+        if (std::find(socket_contexts.begin(), socket_contexts.end(),
+                      VContext) != socket_contexts.end())
+          continue;
+        VContext->requestExit(0,
+                              "Client disconnected and reconnect not enabled.");
+        delete VContext;
       }
     }
   }
