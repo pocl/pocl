@@ -30,6 +30,7 @@
 #include "bufalloc.h"
 #include "cmd_queue.hh"
 #include "common.hh"
+#include "pocl_runtime_config.h"
 #include "shared_cl_context.hh"
 #include "spirv_parser.hh"
 #include "virtual_cl_context.hh"
@@ -48,7 +49,7 @@
     }                                                                          \
   }                                                                            \
   if (err == CL_SUCCESS)                                                       \
-    POCL_MSG_PRINT_INFO(msg " event %" PRIu64 "\n", ev_id);                    \
+    POCL_MSG_PRINT_EVENTS(msg " event %" PRIu64 "\n", ev_id);                  \
   else {                                                                       \
     POCL_MSG_ERR("%s = %d, event %" PRIu64 "\n", msg, err, ev_id);             \
   }                                                                            \
@@ -90,6 +91,10 @@ class SharedCLContext final : public SharedContextBase {
 
   std::unordered_map<BufferId_t, clBufferPtr> BufferIDmap;
   std::unordered_map<BufferId_t, void *> SVMBackingStoreMap;
+  // Index for finding the buffer ids of shadow subbuffers of SVM
+  // chunks.
+  std::unordered_map<void *, BufferId_t> SVMShadowBufferIDMap;
+
   // A mutex guarding the access to the above two buffer maps.
   // TODO: check that the more fine grained mutex suffices here.
   std::mutex BufferMapMutex;
@@ -117,6 +122,10 @@ class SharedCLContext final : public SharedContextBase {
 
   // Bufalloc memory book keeping for allocations from the SVM pool.
   memory_region_t SVMRegion;
+
+  // The parent cl_mem wrapping the entire SVM region from which
+  // subbuffers are internally allocated for client buffer requests.
+  cl_mem SVMRegionBuffer;
 
   int setKernelArgs(cl::Kernel *k, clKernelStruct *kernel, size_t arg_count,
                     uint64_t *args, unsigned char *is_svm_ptr, size_t pod_size,
@@ -162,8 +171,8 @@ public:
 
   /************************************************************************/
 
-  virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
-                           void *host_ptr, void **device_addr) override;
+  virtual int createBuffer(BufferId_t BufferID, size_t Size, uint64_t Flags,
+                           void *HostPtr, void **DeviceAddr) override;
 
   virtual int freeBuffer(uint64_t buffer_id, bool is_svm) override;
 
@@ -322,6 +331,9 @@ private:
   cl::CommandQueue *findCommandQueue(uint32_t id);
   void updateKernelArgMDFromSPIRV(ArgumentInfo_t &MD,
                                   const SPIRVParser::OCLArgTypeInfo &AInfo);
+  int createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
+                                cl_mem_flags Flags, void *HostPtr,
+                                void **DeviceAddr);
 };
 
 #ifdef __GNUC__
@@ -478,6 +490,10 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
     return CL_INVALID_MEM_OBJECT;                                              \
   }
 
+/**
+ * Maps the client-side id-based events to local OpenCL platform's events
+ * in the given waitlist.
+ */
 std::vector<cl::Event>
 SharedCLContext::remapWaitlist(size_t num_events, uint64_t *ids, uint64_t dep) {
   std::vector<cl::Event> v;
@@ -487,14 +503,14 @@ SharedCLContext::remapWaitlist(size_t num_events, uint64_t *ids, uint64_t dep) {
   for (size_t i = 0; i < num_events; ++i) {
     auto e = Eventmap.find(ids[i]);
     if (e != Eventmap.end()) {
-      POCL_MSG_PRINT_GENERAL("%" PRIu64 " depends on %s event %" PRIu64 "\n",
-                             dep, e->second.native.get() ? "native" : "user",
-                             ids[i]);
+      POCL_MSG_PRINT_EVENTS("%" PRIu64 " depends on %s event %" PRIu64 "\n",
+                            dep, e->second.native.get() ? "native" : "user",
+                            ids[i]);
       v.push_back(e->second.native.get() ? e->second.native : e->second.user);
     } else {
-      POCL_MSG_PRINT_GENERAL("Creating placeholder user event for %" PRIu64
-                             "'s dependency on %" PRIu64 "\n",
-                             dep, ids[i]);
+      POCL_MSG_PRINT_EVENTS("Creating placeholder user event for %" PRIu64
+                            "'s dependency on %" PRIu64 "\n",
+                            dep, ids[i]);
       cl::UserEvent u(ContextWithAllDevices);
       Eventmap.insert({ids[i], {cl::Event(), u}});
       v.push_back(u);
@@ -503,9 +519,6 @@ SharedCLContext::remapWaitlist(size_t num_events, uint64_t *ids, uint64_t dep) {
 
   return v;
 }
-
-/****************************************************************************************************************/
-/****************************************************************************************************************/
 
 SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                                  VirtualContextBase *v,
@@ -550,9 +563,16 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
         CommandQueueUPtr(new CommandQueue(this, (DEFAULT_QUE_ID + i), i, s, f));
   }
 
+  if (!pocl_get_bool_option("POCLD_COARSE_GRAIN_SVM", 0)) {
+    SVMPool = nullptr;
+    SVMPoolSize = 0;
+    return;
+  }
+
   size_t MaxSVMAllocSize = SIZE_MAX;
   for (auto Dev : CLDevices) {
     std::string Extensions = CLDevices[0].getInfo<CL_DEVICE_EXTENSIONS>();
+    // Require SPIR-V to perform compiler-based SVM trickery.
     if (Extensions.find("cl_khr_il_program") == std::string::npos)
       continue;
     if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
@@ -564,8 +584,7 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
       MaxSVMAllocSize = MaxMemAllocSize;
   }
 
-  // The CG SVM support for PoCL-Remote is a WiP. Disable brutally for now.
-  if (false && CLDevicesWithSVMSupport.size() > 0) {
+  if (CLDevicesWithSVMSupport.size() > 0) {
     // Create a pinned contiguous region to map CG SVM allocations
     // to. Communicate the start address and the size to the client
     // so it can setup its own SVM region on its side.
@@ -585,8 +604,21 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
       pocl_init_mem_region(&SVMRegion, (memory_address_t)SVMPool, SVMPoolSize);
       // Always align to the maximum required alignment of clSVMAlloc().
       SVMRegion.alignment = 128;
-      POCL_MSG_PRINT_REMOTE("PoCL-D allocated an SVM pool of size %zu at %p.\n",
-                            SVMPoolSize, SVMPool);
+      cl_int Err;
+      SVMRegionBuffer = clCreateBuffer(ContextWithAllDevices.get(),
+                                       CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+                                       MaxSVMAllocSize, SVMPool, &Err);
+      if (Err != CL_SUCCESS) {
+        POCL_MSG_ERR(
+            "Unable to allocate a parent SVM cl_mem buffer with size %zu.\n",
+            SVMPoolSize);
+        SVMPoolSize = 0;
+        clSVMFree(ContextWithAllDevices.get(), SVMPool);
+        SVMPool = nullptr;
+      } else
+        POCL_MSG_PRINT_MEMORY(
+            "PoCL-D allocated an SVM pool of size %zu at %p.\n", SVMPoolSize,
+            SVMPool);
     } else {
       SVMPoolSize = 0;
       POCL_MSG_PRINT_REMOTE(
@@ -667,16 +699,16 @@ void SharedCLContext::notifyEvent(uint64_t id, cl_int status) {
       assert(e->second.user.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() >
              CL_COMPLETE);
       e->second.user.setStatus(status);
-      POCL_MSG_PRINT_GENERAL("%" PRIu64 ": updating existing user event\n", id);
+      POCL_MSG_PRINT_EVENTS("%" PRIu64 ": updating existing user event\n", id);
     } else {
-      POCL_MSG_PRINT_GENERAL(
+      POCL_MSG_PRINT_EVENTS(
           "%" PRIu64 ": only native event exists, doing nothing\n", id);
     }
   } else {
     cl::UserEvent u(ContextWithAllDevices);
     u.setStatus(status);
     Eventmap.insert({id, {cl::Event(), u}});
-    POCL_MSG_PRINT_GENERAL(
+    POCL_MSG_PRINT_EVENTS(
         "no event %" PRIu64 " found, creating new user event\n", id);
   }
   for (auto &q : QueueThreadMap) {
@@ -774,6 +806,8 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       // need to delegate
       // device.getInfo<CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV>() etc.
       "cl_nv_device_attribute_query",
+      // pinned buffers are supported only if CG SVM can be enabled
+      CL_POCL_PINNED_BUFFERS_EXTENSION_NAME,
   };
 
   while (getline(extsStream, extName, ' ')) {
@@ -826,16 +860,8 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       clientDevice.getInfo<CL_DEVICE_MAX_WRITE_IMAGE_ARGS>();
   i.max_samplers = clientDevice.getInfo<CL_DEVICE_MAX_SAMPLERS>();
 
-  if (clientDevice.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
-      CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
-    if (exts != "")
-      exts += " ";
-    // We can implement the simple PoC device raw pointer extension
-    // which doesn't require host side virtual address space
-    // reservation by emulating it with the driver's clSVMAlloc().
-    exts += CL_POCL_PINNED_BUFFERS_EXTENSION_NAME;
-
-    // For coarse grain SVM.
+  if (SVMPool != nullptr) {
+    // For distributed coarse grain SVM.
     i.svm_pool_start_address = (uint64_t)SVMPool;
     i.svm_pool_size = SVMPoolSize;
   } else {
@@ -1643,111 +1669,212 @@ int SharedCLContext::freeImage(uint32_t image_id) {
   return 0;
 }
 
-int SharedCLContext::createBuffer(uint32_t buffer_id, size_t size,
-                                  cl_mem_flags flags, void *host_ptr,
-                                  void **device_addr) {
-  const bool PinnedAllocation = flags & CL_MEM_PINNED;
-  if (PinnedAllocation) {
-    // The backing drivers likely do not recognize the pocl PoC extension and
-    // needn't.
-    flags ^= CL_MEM_PINNED;
-    // Implement pinned memory with SVM allocations.
-    // TODO: Support for platforms where some of the devices support pinning,
-    // and some not. We have to split the context for the allocation in
-    // that case.
+/**
+ * Creates a buffer from the preallocated SVM region.
+ *
+ * When SVM is enabled, both types of buffers (SVM and cl_mem) are allocated
+ * from the preallocated SVM region. This is in contrast to when SVM is not
+ * enabled, normal cl_mem allocation API is used also on the server side.
+ */
+int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
+                                               cl_mem_flags Flags,
+                                               void *HostPtr,
+                                               void **DeviceAddr) {
+
+  // The backing drivers might not recognize the pocl PoC extension and
+  // needn't as we implement the pinning with SVM allocations.
+  Flags ^= CL_MEM_PINNED;
+  bool SVMWrapper = false;
+  if (HostPtr != nullptr && ((size_t)HostPtr >= (size_t)SVMPool &&
+                             (size_t)HostPtr < (size_t)SVMPool + SVMPoolSize)) {
+    // This is a host-side pointer inside the SVM region, meaning an cl_mem
+    // wrapped SVM pointer request. No need to allocate a new SVM host_ptr for
+    // the internal buffer, just use the one already SVM allocated and wrap it
+    // to a subbuffer.
+    SVMWrapper = true;
+  } else {
 #ifdef ENABLE_RDMA
     // TODO: What extra consideration we need for RDMA which uses SVM
     // also for the shadow buffers for the regular cl_mem?
-    POCL_ABORT_UNIMPLEMENTED(
-        "CL_MEM_PINNED not yet implemented for PoCL-R RDMA.");
+    POCL_ABORT_UNIMPLEMENTED("SVM mode not yet implemented for PoCL-R RDMA.");
 #endif
-    if (SVMPool != nullptr) {
-      // If we have enabled the remote CG SVM implementation, allocate
-      // everything from the large SVM memory pool.
-      chunk_info_t *Chunk = pocl_alloc_buffer_from_region(&SVMRegion, size);
 
-      if (Chunk == nullptr)
-        host_ptr = nullptr;
-      else
-        host_ptr = (void *)Chunk->start_address;
-    } else {
-      host_ptr =
-          clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE, size, 0);
-    }
-    assert(device_addr != nullptr);
-    *device_addr = host_ptr;
+    // Allocate everything from the SVM memory pool.
+    chunk_info_t *Chunk = pocl_alloc_buffer_from_region(&SVMRegion, Size);
 
-    if (*device_addr == nullptr) {
-      POCL_MSG_ERR(
-          "Error when creating a CG SVM allocation for a pinned buffer.");
+    HostPtr = Chunk == nullptr ? nullptr : (void *)Chunk->start_address;
+
+    assert(DeviceAddr != nullptr);
+    *DeviceAddr = HostPtr;
+
+    if (HostPtr == nullptr) {
+      POCL_MSG_ERR("Error when creating a CG SVM allocation.");
       return CL_OUT_OF_RESOURCES;
     }
-    POCL_MSG_PRINT_INFO("Allocated a pinned buffer using CG SVM at %p.\n",
-                        host_ptr);
+    POCL_MSG_PRINT_MEMORY(
+        "Allocated a %zu byte chunk from the CG region at %p.\n", Size,
+        HostPtr);
   }
 
-  // since the buffer data is initialized by clEnqueueWrite (because migration
-  // handling in client), we cannot use any HOST_* flags here.
-  flags = flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
+  // Since the buffer data is initialized by clEnqueueWrite (because migration
+  // handling is done in the client side), we cannot use any HOST_* flags here.
+  Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
                                 CL_MEM_READ_ONLY);
-  // when RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
-  flags = flags |
-          (cl_bitfield)(host_ptr ? CL_MEM_USE_HOST_PTR : CL_MEM_ALLOC_HOST_PTR);
 
-  cl_int err;
-  clBufferPtr buf(
-      new cl::Buffer(ContextWithAllDevices, flags, size, host_ptr, &err));
-  if (err != CL_SUCCESS) {
-    POCL_MSG_ERR("P %u Create Buffer %" PRIu32 " = %d\n", plat_id, buffer_id,
-                 err);
-    return err;
+  // Allocate a subbuffer (server-side) from the parent SVM buffer for each
+  // client-side allocation.
+
+  cl_int Err;
+  cl_buffer_region SubBufRegion;
+  SubBufRegion.origin = (size_t)HostPtr - (size_t)SVMPool;
+  SubBufRegion.size = Size;
+  cl_mem SubBuf =
+      clCreateSubBuffer(SVMRegionBuffer, Flags, CL_BUFFER_CREATE_TYPE_REGION,
+                        &SubBufRegion, &Err);
+  clBufferPtr Buf(new cl::Buffer(SubBuf));
+  if (Err != CL_SUCCESS) {
+    POCL_MSG_ERR(
+        "P %u clCreateSubBuffer with origin %zx and size %zu failed %lu"
+        " = %d\n",
+        plat_id, SubBufRegion.origin, SubBufRegion.size, BufferID, Err);
+    return Err;
   }
 
   {
-    std::unique_lock<std::mutex> lock(BufferMapMutex);
-    BufferIDmap[buffer_id] = std::move(buf);
-    if (PinnedAllocation)
-      SVMBackingStoreMap[buffer_id] = host_ptr;
+    std::unique_lock<std::mutex> Lock(BufferMapMutex);
+    BufferIDmap[BufferID] = std::move(Buf);
+    if (!SVMWrapper) {
+      // There can be multiple buffers pointing to the
+      // same host ptr since cl_mem can wrap SVMs buffers.
+
+      // For freeing client-side SVM allocations properly, we want to uniquely
+      // identify its subbuffer to allow it to be found when the client calls
+      // clSVMFree() with a raw SVM pointer.
+      SVMShadowBufferIDMap[HostPtr] = BufferID;
+    }
+    SVMBackingStoreMap[BufferID] = HostPtr;
   }
 
-  POCL_MSG_PRINT_INFO("P %u Create Buffer %" PRIu32 "\n", plat_id, buffer_id);
+  POCL_MSG_PRINT_MEMORY("P %u Created an SVM-Backed %sSubBuffer %lu"
+                        " ptr %p\n",
+                        plat_id, SVMWrapper ? "SVM Wrapper " : "", BufferID,
+                        HostPtr);
   return 0;
 }
 
-int SharedCLContext::freeBuffer(uint64_t buffer_id, bool is_svm) {
-  std::unique_lock<std::mutex> lock(BufferMapMutex);
-  if (is_svm) {
-    // TODO: is this an already adjusted pointer?
-    void *dev_addr = (void *)buffer_id;
-    POCL_MSG_PRINT_INFO("P %u Free SVM Buffer %" PRIu64 "\n", plat_id,
-                        buffer_id);
-    if (SVMPool != nullptr) {
+int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
+                                  cl_mem_flags Flags, void *HostPtr,
+                                  void **DeviceAddr) {
+
+  if (SVMPool != nullptr)
+    return createBufferFromSVMRegion(BufferID, Size, Flags, HostPtr,
+                                     DeviceAddr);
+
+  // If there is a client-side host pointer in non-SVM mode, we should
+  // not pass it to the server side buffer as it points to the client
+  // memory.
+  HostPtr = nullptr;
+
+  // Since the buffer data is initialized by clEnqueueWrite (because migration
+  // handling is done in the client side), we cannot use any HOST_* flags here.
+  Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
+                                CL_MEM_READ_ONLY);
+  // when RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
+  Flags = Flags |
+          (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR : CL_MEM_ALLOC_HOST_PTR);
+
+  cl_int Err;
+  clBufferPtr Buf(
+      new cl::Buffer(ContextWithAllDevices, Flags, Size, HostPtr, &Err));
+  if (Err != CL_SUCCESS) {
+    POCL_MSG_ERR("P %u Create Buffer (size %zu, host ptr %p) failed %zu = %d\n",
+                 plat_id, Size, HostPtr, BufferID, Err);
+    return Err;
+  }
+
+  {
+    std::unique_lock<std::mutex> Lock(BufferMapMutex);
+    BufferIDmap[BufferID] = std::move(Buf);
+    if (HostPtr)
+      SVMBackingStoreMap[BufferID] = HostPtr;
+  }
+
+  POCL_MSG_PRINT_MEMORY("P %u Created Buffer %lu host_ptr %p\n", plat_id,
+                        BufferID, HostPtr);
+  return 0;
+}
+
+int SharedCLContext::freeBuffer(BufferId_t BufferId, bool IsSVMFree) {
+  std::unique_lock<std::mutex> Lock(BufferMapMutex);
+
+  if (SVMPool != nullptr) {
+
+    void *DeviceSVMAddrToFree = nullptr;
+    void *BufHostPtr = nullptr;
+    if (IsSVMFree) {
+      // Calling clSVMFree() directly from the client code: Free both the
+      // bookkeeping subbuffer and the underlying SVM chunk.
+      BufHostPtr = DeviceSVMAddrToFree = (void *)BufferId;
+      POCL_MSG_PRINT_MEMORY("P %u SVMPool SVMFreeing raw SVM ptr at %p\n",
+                            plat_id, BufHostPtr);
+
+    } else {
+      // A cl_mem free. If it's a SVMWrapper, we should just free the
+      // subbuffer, but leave the backing SVM allocation alone.
+      cl::Buffer *Buf = findBuffer(BufferId);
+      assert(Buf != nullptr);
+
+      BufHostPtr = Buf->getInfo<CL_MEM_HOST_PTR>();
+      if (SVMShadowBufferIDMap.find(Buf->getInfo<CL_MEM_HOST_PTR>()) !=
+              SVMShadowBufferIDMap.end() &&
+          SVMShadowBufferIDMap[BufHostPtr] == BufferId) {
+        DeviceSVMAddrToFree = Buf->getInfo<CL_MEM_HOST_PTR>();
+      }
+      POCL_MSG_PRINT_MEMORY(
+          "P %u SVMPool freeing buffer id %lu (backing store at %p%s)\n",
+          plat_id, BufferId, BufHostPtr,
+          DeviceSVMAddrToFree != nullptr ? ", owner" : "");
+    }
+
+    if (!IsSVMFree && BufferIDmap.erase(BufferId) == 0) {
+      POCL_MSG_ERR("Did not find the book keeping subbuffer to free at %p (buf "
+                   "id %zu).\n",
+                   BufHostPtr, BufferId);
+    }
+
+    if (DeviceSVMAddrToFree != nullptr) {
+      // This is the SVM chunk "owner" (the initial SVM allocation).
+
+      // TODO: apply host-device SVM offset adjustment
       memory_region_t *Region =
-          pocl_free_buffer(&SVMRegion, (memory_address_t)dev_addr);
+          pocl_free_buffer(&SVMRegion, (memory_address_t)DeviceSVMAddrToFree);
+
       if (Region == nullptr || Region != &SVMRegion) {
         POCL_MSG_ERR(
             "Did not find the SVM chunk to free at %p. A double free attempt?",
-            dev_addr);
+            DeviceSVMAddrToFree);
+        return 0;
       }
-    } else {
-      clSVMFree(ContextWithAllDevices.get(), (void *)buffer_id);
+      SVMShadowBufferIDMap.erase(BufHostPtr);
     }
-  } else if (BufferIDmap.erase(buffer_id) == 0) {
-    POCL_MSG_ERR("P %u Free Buffer %" PRIu64 "\n", plat_id, buffer_id);
-    return CL_INVALID_MEM_OBJECT;
+    return 0;
+  } else {
+    POCL_MSG_PRINT_MEMORY("P %u Freeing a cl_mem buffer id %zu\n", plat_id,
+                          BufferId);
+
+    if (BufferIDmap.erase(BufferId) == 0) {
+      POCL_MSG_ERR("P %u Unable to free cl_mem Buffer %" PRIu64 "\n", plat_id,
+                   BufferId);
+      return CL_INVALID_MEM_OBJECT;
+    }
+    // Free the possible RDMA backing store for the buffer.
+    if (SVMBackingStoreMap.find(BufferId) != SVMBackingStoreMap.end()) {
+      clSVMFree(ContextWithAllDevices.get(), SVMBackingStoreMap[BufferId]);
+      SVMBackingStoreMap.erase(BufferId);
+    }
   }
-  if (SVMBackingStoreMap.find(buffer_id) != SVMBackingStoreMap.end()) {
-    clSVMFree(ContextWithAllDevices.get(), SVMBackingStoreMap[buffer_id]);
-    SVMBackingStoreMap.erase(buffer_id);
-  }
-  POCL_MSG_PRINT_INFO("P %u Free Buffer %" PRIu64 "\n", plat_id, buffer_id);
   return 0;
 }
-
-/****************************************************************************************************************/
-/****************************************************************************************************************/
-/****************************************************************************************************************/
-/****************************************************************************************************************/
 
 int SharedCLContext::migrateMemObject(uint64_t ev_id, uint32_t cq_id,
                                       uint32_t mem_obj_id, unsigned is_image,
@@ -1866,20 +1993,42 @@ int SharedCLContext::writeBuffer(uint64_t ev_id, uint32_t cq_id,
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   if (!is_svm) {
+
     cl::Buffer *b = nullptr;
     { FIND_BUFFER; }
+
+    if (b->getInfo<CL_MEM_USES_SVM_POINTER>()) {
+      void *buf_host_ptr = b->getInfo<CL_MEM_HOST_PTR>();
+      // memcpy(buf_host_ptr, host_ptr, size);
+      //  TODO: The host view is not updated with the below enqueueWriteBuffer.
+      //  could that lead to race conditions if the server host view is synched
+      //  wrongly to the GPU memory although we want the explict copies. For
+      //  example after the writebuffer there would be an implicit unmap which
+      //  would then overwrite the device view with whatever is in the server
+      //  host memory.
+    }
+
+#if 1
     EVENT_TIMING("writeBuffer",
-                 cq->enqueueWriteBuffer(*b, CL_FALSE, offset, size, host_ptr,
+                 cq->enqueueWriteBuffer(*b, CL_TRUE, offset, size, host_ptr,
                                         &dependencies, &event));
+#endif
+
+    // cq->finish();
   } else {
+
+    // TODO: we should not get writebuffer requests with is_svm on anymore.
+    // this branch is obsolete.
+    assert("We should not request SVM copies direcrly anymore." && false);
+
     // TODO: SVM updates should be written directly to the (host mapped) SVM
     // region when reading the data from network. Now there's an extra copy!
 
     // Map the region to host first so we can update it. buffer_id is the SVM
     // device pointer instead of a cl_mem.
 
-    // TODO: we could use async ops? But will be the request
-    // extra_data buffer alive until the commands get finished?
+    // TODO: we could use async ops? But will the request
+    // extra_data buffer be alive until the commands get finished?
 
     void *device_svm_ptr = (void *)buffer_id;
     cl_int Err = clEnqueueSVMMap(cq->get(), CL_TRUE, CL_MAP_WRITE,
@@ -2200,6 +2349,7 @@ int SharedCLContext::runKernel(
     FIND_QUEUE;
     FIND_KERNEL;
   }
+
   dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
 
   EVENT_TIMING_PRE;
@@ -2225,7 +2375,6 @@ int SharedCLContext::runKernel(
       SVMPtrs.push_back(S.second);
     k->setSVMPointers(SVMPtrs);
   }
-
   {
     err = cq->enqueueNDRangeKernel(
         *k, o, (dim == 2 ? g2 : (dim < 2 ? g1 : g3)),
@@ -2234,7 +2383,6 @@ int SharedCLContext::runKernel(
              : cl::NDRange((*local)[0], (*local)[1], (*local)[2])),
         &dependencies, &event);
   }
-
   {
     std::unique_lock<std::mutex> lock(EventmapMutex);
     auto map_result = Eventmap.insert({ev_id, {event, cl::UserEvent()}});
@@ -2244,9 +2392,9 @@ int SharedCLContext::runKernel(
   }
 
   if (err == CL_SUCCESS)
-    POCL_MSG_PRINT_INFO("NDRangeKernel: ID %" PRIu32 ", CQ: %" PRIu32
-                        " event: %" PRIu64 " \n",
-                        kernel_id, cq_id, ev_id);
+    POCL_MSG_PRINT_EVENTS("NDRangeKernel: ID %" PRIu32 ", CQ: %" PRIu32
+                          " event: %" PRIu64 " \n",
+                          kernel_id, cq_id, ev_id);
   else {
     int e;
     std::string name = k->getInfo<CL_KERNEL_FUNCTION_NAME>(&e);

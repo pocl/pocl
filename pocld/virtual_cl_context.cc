@@ -368,8 +368,8 @@ void VirtualCLContext::queuedPush(Request *req) {
 }
 
 void VirtualCLContext::notifyEvent(uint64_t event_id, cl_int status) {
-  POCL_MSG_PRINT_GENERAL("Updating event %" PRIu64 " status to %d\n", event_id,
-                         status);
+  POCL_MSG_PRINT_EVENTS("Updating event %" PRIu64 " status to %d\n", event_id,
+                        status);
   for (auto ctx : SharedContextList) {
     ctx->notifyEvent(event_id, status);
   }
@@ -664,7 +664,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
 
   uint64_t devaddr;
   FOR_EACH_CONTEXT_DO(
-      createBuffer(id, m.size, m.flags, nullptr, (void **)&devaddr));
+      createBuffer(id, m.size, m.flags, (void *)m.host_ptr, (void **)&devaddr));
   // Do not pass pointer to device_addr directly above since
   // it's a packed struct and the address might be unaligned.
   rep->rep.m.create_buffer.device_addr = devaddr;
@@ -863,8 +863,6 @@ void VirtualCLContext::FreeProgram(Request *req, Reply *rep) {
   RETURN_IF_ERR;
   replyOK(rep, MessageType_FreeProgramReply);
 }
-
-/****************************************************************************************************************/
 
 void VirtualCLContext::CreateKernel(Request *req, Reply *rep) {
   INIT_VARS;

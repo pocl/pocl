@@ -73,14 +73,21 @@ int main(void) {
 
     for (cl::Device &Dev : Devices) {
       std::string Exts = Dev.getInfo<CL_DEVICE_EXTENSIONS>();
-      if (Exts.find("cl_pocl_pinned_buffers") != std::string::npos) {
+      std::cout << Dev.getInfo<CL_DEVICE_NAME>() << " "
+                << Dev.getInfo<CL_DEVICE_VERSION>() << ": ";
+      if (Exts.find(CL_POCL_PINNED_BUFFERS_EXTENSION_NAME) !=
+          std::string::npos) {
+        std::cout << "suitable" << std::endl;
         SuitableDevices.push_back(Dev);
         break;
+      } else {
+        std::cout << CL_POCL_PINNED_BUFFERS_EXTENSION_NAME << " not supported"
+                  << std::endl;
       }
     }
 
     if (SuitableDevices.empty()) {
-      std::cout << "No devices with cl_pocl_pinned_buffers found.";
+      std::cout << "No suitable devices found.";
       return 77;
     }
     int PinnedBufferHost[BUF_SIZE];

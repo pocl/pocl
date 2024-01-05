@@ -23,7 +23,7 @@ BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
 
-PUBLIC_IP=$(ip route get 9.9.9.9 | tr -s ' ' | awk '{ print $(NF - 2) }')
+PUBLIC_IP=$(ip route get 9.9.9.9 | head -1 | tr -s ' ' | awk '{ print $(NF - 2) }')
 
 # If POCLD_PORT is defined, use a prelaunched PoCL-D at that port.
 if [ -z "$POCLD_PORT" ]; then

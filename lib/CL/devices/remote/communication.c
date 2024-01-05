@@ -1111,7 +1111,8 @@ pocl_remote_writer_pthread (void *aa)
           uint32_t msg_size = request_size (cmd->request.message_type);
 
           POCL_MSG_PRINT_REMOTE ("WRITER THR: WRITING MSG, TYPE: %u  ID: %zu  "
-                                 "EVENT: %zu  SIZE: %u + %zu + %zu + %zu\n",
+                                 "EVENT: %zu  SIZE: msg_size: %u + waitlist: "
+                                 "%zu + extra: %zu + extra2: %zu\n",
                                  cmd->request.message_type,
                                  cmd->request.msg_id, cmd->event_id, msg_size,
                                  cmd->req_waitlist_size * sizeof (uint64_t),
@@ -2034,22 +2035,23 @@ pocl_network_free_device (cl_device_id device)
 // SYNCHRONOUS
 
 cl_int
-pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
-                            uint32_t mem_flags, uint64_t mem_size,
+pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
                             void **device_addr)
 {
   // = (remote_device_data_t *)device->data;
   REMOTE_SERV_DATA2;
 
-  RETURN_IF_REMOTE_ID (buffer, mem_id);
+  RETURN_IF_REMOTE_ID (buffer, mem->id);
 
   CREATE_SYNC_NETCMD;
 
   POCL_MEASURE_START (REMOTE_ALLOC);
 
-  ID_REQUEST (CreateBuffer, mem_id);
-  nc.request.m.create_buffer.flags = mem_flags;
-  nc.request.m.create_buffer.size = mem_size;
+  ID_REQUEST (CreateBuffer, mem->id);
+  nc.request.m.create_buffer.flags = mem->flags;
+  nc.request.m.create_buffer.size = mem->size;
+  nc.request.m.create_buffer.host_ptr = mem->mem_host_ptr;
+
 #ifdef ENABLE_RDMA
   CreateRdmaBufferReply_t info;
   nc.rep_extra_data = (char *)&info;
@@ -2064,9 +2066,9 @@ pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
 
   CHECK_REPLY (CreateBuffer);
 
-  SET_REMOTE_ID (buffer, mem_id);
+  SET_REMOTE_ID (buffer, mem->id);
 
-  if (mem_flags & CL_MEM_PINNED)
+  if (mem->flags & CL_MEM_PINNED)
     {
       assert (device_addr != NULL);
       *device_addr = (void *)netcmd->reply.m.create_buffer.device_addr;
@@ -2074,12 +2076,12 @@ pocl_network_create_buffer (remote_device_data_t *ddata, uint32_t mem_id,
 
 #ifdef ENABLE_RDMA
   rdma_buffer_info_t *s = malloc (sizeof (rdma_buffer_info_t));
-  s->mem_id = mem_id;
+  s->mem_id = mem->id;
   s->remote_vaddr = info.server_vaddr;
   s->remote_rkey = info.server_rkey;
   // NOTE: mem_id here is the name of the struct field holding the hashmap key,
   // not the local variable
-  HASH_ADD (hh, data->rdma_keys, mem_id, sizeof (uint32_t), s);
+  HASH_ADD (hh, data->rdma_keys, mem->id, sizeof (uint32_t), s);
 #endif
 
   return CL_SUCCESS;

@@ -96,7 +96,7 @@ typedef struct pocl_mem_identifier
   int is_pinned;
 
   /* The device-side memory address (if known). If is_pinned is true, this
-     must be a valid value (note: 0 can be a valid address!). */
+     must be a valid value (note: 0 means invalid address). */
   void *device_addr;
 
   /* Content version tracking. Every write use (clEnqWriteBuffer,

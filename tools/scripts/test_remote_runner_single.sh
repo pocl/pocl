@@ -48,7 +48,7 @@ export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
 if [ -z $POCLD_PORT ]; then
-    $BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error,warn,general &
+    $BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error &
     POCLD_PID=$!
     echo "PoCL-D launched with PID: $POCLD_PID"
 fi
@@ -57,12 +57,10 @@ sleep 1
 
 export POCL_DEVICES="remote"
 export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT/0"
-export POCL_DEBUG="warn,err,remote"
+export POCL_DEBUG="err"
 unset POCL_ENABLE_UNINIT
 
 echo "Running $BUILD_DIR/$TEST_BINARY"
-
-sleep 1
 
 $BUILD_DIR/$TEST_BINARY $@ &
 EXAMPLE_PID=$!

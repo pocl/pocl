@@ -227,9 +227,27 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
 
       if (a->type == POCL_ARG_TYPE_IMAGE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
-              && al->value != NULL && al->is_svm == 0))
+              && al->value != NULL))
         {
-          cl_mem buf = *(cl_mem *)(al->value);
+          cl_mem buf;
+          if (al->is_svm)
+            {
+              void *ptr = *(void **)(al->value);
+              pocl_svm_ptr *svm_ptr
+                  = pocl_find_svm_ptr_in_context (command_queue->context, ptr);
+
+              if (svm_ptr == NULL)
+                {
+                  POCL_MSG_PRINT_MEMORY (
+                      "Couldn't find the shadow cl_mem for an SVM ptr, "
+                      "assuming system SVM.\n");
+                  continue;
+                }
+              else
+                buf = svm_ptr->shadow_cl_mem;
+            }
+          else
+            buf = *(cl_mem *)(al->value);
 
           if (a->type == POCL_ARG_TYPE_IMAGE)
             {
@@ -266,6 +284,23 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
           memobj_list[(*memobj_count)++] = buf;
         }
     }
+
+  /* Migrate buffers related to SVM pointers set with clSetKernelExecInfo(). */
+  struct _pocl_ptr_list_node *n;
+  DL_FOREACH (kernel->svm_ptrs, n)
+  {
+    pocl_svm_ptr *svm_ptr
+        = pocl_find_svm_ptr_in_context (command_queue->context, n->ptr);
+
+    if (svm_ptr == NULL)
+      {
+        POCL_MSG_PRINT_MEMORY ("Couldn't find the shadow cl_mem for an "
+                               "clSetKernelExecInfo-set SVM ptr, "
+                               "assuming system SVM.\n");
+        continue;
+      }
+    memobj_list[(*memobj_count)++] = svm_ptr->shadow_cl_mem;
+  }
 
   return CL_SUCCESS;
 }

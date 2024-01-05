@@ -1,25 +1,26 @@
 /* OpenCL runtime library: clSetKernelArg()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-                 2013 Pekka Jääskeläinen / Tampere University of Technology
-   
+                 2013 Pekka Jääskeläinen / Tampere University
+                 2023 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "config.h"
@@ -139,11 +140,11 @@ POname(clSetKernelArg)(cl_kernel kernel,
   if (pi->type == POCL_ARG_TYPE_POINTER || pi->type == POCL_ARG_TYPE_IMAGE
       || pi->type == POCL_ARG_TYPE_SAMPLER)
     {
-      POCL_RETURN_ERROR_ON (((!is_local) && (arg_size != sizeof (cl_mem))),
-                            CL_INVALID_ARG_SIZE,
-                            "Arg %u is pointer/buffer/image, but arg_size is "
-                            "not sizeof(cl_mem)\n",
-                            arg_index);
+      POCL_RETURN_ERROR_ON (
+          ((!is_local) && (arg_size != sizeof (cl_mem))), CL_INVALID_ARG_SIZE,
+          "Arg %u is pointer/buffer/image, but arg_size (%zu) is "
+          "not sizeof(cl_mem) == %zu\n",
+          arg_index, arg_size, sizeof (cl_mem));
       if (ptr_value)
         {
           POCL_RETURN_ERROR_ON (
