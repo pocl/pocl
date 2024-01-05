@@ -233,8 +233,6 @@ int TestCGSVM() {
     AllOK = false;
   }
 
-  CHECK_CL_ERROR(clUnloadCompiler());
-
   if (AllOK) {
     printf("PASSED\n");
     return EXIT_SUCCESS;
@@ -330,8 +328,6 @@ int TestSimpleKernel_CGSVM() {
               << std::endl;
     AllOK = false;
   }
-
-  CHECK_CL_ERROR(clUnloadCompiler());
 
   if (AllOK)
     return EXIT_SUCCESS;
@@ -438,8 +434,6 @@ int TestCLMem_SVM() {
               << std::endl;
     AllOK = false;
   }
-
-  CHECK_CL_ERROR(clUnloadCompiler());
 
   if (AllOK)
     return EXIT_SUCCESS;
@@ -625,8 +619,6 @@ int TestFGSVM() {
     AllOK = false;
   }
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
-
   if (!AllOK)
     return EXIT_FAILURE;
   else
@@ -764,8 +756,6 @@ int TestSSVM() {
     AllOK = false;
   }
 
-  CHECK_CL_ERROR(clUnloadCompiler());
-
   if (!AllOK)
     return EXIT_FAILURE;
   else
@@ -795,5 +785,7 @@ int main() {
     return EXIT_FAILURE;
 
   std::cout << "OK" << std::endl;
+  CHECK_CL_ERROR(clUnloadCompiler());
+ 
   return EXIT_SUCCESS;
 }
