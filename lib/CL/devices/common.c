@@ -1710,6 +1710,7 @@ pocl_init_default_device_infos (cl_device_id dev,
 #ifdef ENABLE_LLVM
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+  dev->kernellib_fallback_name = NULL;
 
   char kernellib[POCL_MAX_PATHNAME_LENGTH] = "kernel-";
   char kernellib_fallback[POCL_MAX_PATHNAME_LENGTH];
@@ -1730,9 +1731,9 @@ pocl_init_default_device_infos (cl_device_id dev,
   strcpy(kernellib_fallback, kernellib);
   strcat(kernellib_fallback, OCL_KERNEL_TARGET_CPU);
   strcat(kernellib, dev->llvm_cpu);
+  dev->kernellib_fallback_name = strdup(kernellib_fallback);
 #endif
   dev->kernellib_name = strdup(kernellib);
-  dev->kernellib_fallback_name = strdup(kernellib_fallback);
   dev->kernellib_subdir = "host";
   dev->llvm_abi = pocl_get_llvm_cpu_abi ();
 
