@@ -72,7 +72,7 @@ add_dependencies(prepare_examples ${TS_NAME})
 
 set(SKIP_TEST_EXPR "fig_2_9_host_selector|fig_2_10_cpu_selector|fig_3_10_in_order|fig_2_23_fallback|fig_10_3_optional_kernel_lambda_elements|fig_10_8_opencl_object_interop|fig_10_9_kernel_lambda_build_options|fig_14_8_one_reduction|fig_14_17_nd_range_reduction|fig_14_24_local_unpack")
 add_test(NAME all_dpcpp_book_samples
-         COMMAND "${CMAKE_CTEST_COMMAND}"
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
          -E "${SKIP_TEST_EXPR}"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
