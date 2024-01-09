@@ -65,7 +65,7 @@ set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
 add_test(NAME all_simple_sycl_samples
-         COMMAND "${CMAKE_CTEST_COMMAND}"
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 set_tests_properties(
