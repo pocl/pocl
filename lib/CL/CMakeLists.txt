@@ -302,6 +302,10 @@ add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
 
 harden("${POCL_LIBRARY_NAME}")
 
+if(UNIX AND (NOT APPLE))
+  target_link_options("${POCL_LIBRARY_NAME}" PRIVATE "LINKER:--exclude-libs,ALL")
+endif()
+
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
   VERSION "${LIB_BUILD_VERSION}"
   LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")

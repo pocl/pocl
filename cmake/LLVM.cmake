@@ -274,9 +274,6 @@ foreach(LIBNAME ${CLANG_LIBNAMES})
     message(FATAL_ERROR "Could not find Clang library ${LIBNAME}, perhaps wrong setting of STATIC_LLVM ?")
   endif()
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  if(UNIX AND (NOT APPLE))
-    set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
-  endif()
 endforeach()
 
 ####################################################################
