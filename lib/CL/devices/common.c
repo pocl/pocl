@@ -1708,7 +1708,7 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 
 #ifdef ENABLE_SPIRV
-  dev->supported_spir_v_versions = "SPIR-V_1.2";
+  dev->supported_spir_v_versions = "SPIR-V_1.2 SPIR-V_1.1 SPIR-V_1.0";
 #else
   dev->supported_spir_v_versions = "";
 #endif
