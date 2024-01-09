@@ -125,6 +125,10 @@ FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
+  free(srcA);
+  free(srcB);
+  free(dst);
+
 
   return err;
 }
