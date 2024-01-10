@@ -29,8 +29,8 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sched.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef _WIN32
 #  include <unistd.h>
@@ -42,10 +42,10 @@
 #include "common_utils.h"
 #include "config.h"
 #include "devices.h"
-#include "pocl_mem_management.h"
-#include "pocl_util.h"
 #include "pocl-pthread.h"
 #include "pocl-pthread_scheduler.h"
+#include "pocl_mem_management.h"
+#include "pocl_util.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -110,8 +110,8 @@ pocl_pthread_probe (struct pocl_device_ops *ops)
 
 static cl_device_partition_property pthread_partition_properties[2]
     = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
-
 static int scheduler_initialized = 0;
+
 static cl_bool pthread_available = CL_TRUE;
 static cl_bool pthread_unavailable = CL_FALSE;
 
@@ -127,12 +127,17 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (ret != CL_SUCCESS)
     return ret;
 
+  pocl_init_dlhandle_cache ();
+  pocl_init_kernel_run_command_manager ();
+
   /* pthread has elementary partitioning support,
-     but only if not build with OpenMP */
+   * but only if OpenMP is disabled */
 #ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
+  device->partition_type = NULL;
+  device->partition_properties = NULL;
 #else
   device->max_sub_devices = device->max_compute_units;
   device->num_partition_properties = 2;
@@ -140,10 +145,9 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 #endif
+
   if (!scheduler_initialized)
     {
-      pocl_init_dlhandle_cache();
-      pocl_init_kernel_run_command_manager();
       ret = pthread_scheduler_init (device);
       if (ret == CL_SUCCESS)
         {
@@ -161,7 +165,7 @@ pocl_pthread_uninit (unsigned j, cl_device_id device)
 {
   if (scheduler_initialized)
     {
-      pthread_scheduler_uninit ();
+      pthread_scheduler_uninit (device);
       scheduler_initialized = 0;
     }
 
@@ -173,6 +177,7 @@ cl_int
 pocl_pthread_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
   cl_int ret = CL_SUCCESS;
+
   if (!scheduler_initialized)
     {
       ret = pthread_scheduler_init (device);
@@ -181,6 +186,7 @@ pocl_pthread_reinit (unsigned j, cl_device_id device, const char *parameters)
           scheduler_initialized = 1;
         }
     }
+
   return ret;
 }
 
