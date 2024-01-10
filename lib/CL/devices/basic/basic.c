@@ -47,15 +47,16 @@
 #include "pocl_mem_management.h"
 #include "pocl_timing.h"
 #include "pocl_workgroup_func.h"
-#include "common_utils.h"
 
 #include "common_driver.h"
+#include "common_utils.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
-typedef struct {
+typedef struct
+{
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
   /* List of commands not yet ready to be executed */
@@ -189,7 +190,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
       first_basic_init = 0;
     }
 
-  d = (pocl_basic_data_t *) calloc (1, sizeof (pocl_basic_data_t));
+  d = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -206,7 +207,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   /* cpu-minimal driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
-     basic devices can be still used for task level parallelism 
+     basic devices can be still used for task level parallelism
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
   device->max_sub_devices = 0;
@@ -408,7 +409,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
         POCL_MEM_FREE (arguments[meta->num_args + i]);
       }
-  free(arguments);
+  free (arguments);
 
   pocl_release_dlhandle_cache (cmd);
 }
@@ -437,7 +438,7 @@ pocl_basic_run_native (void *data, _cl_command_node *cmd)
 cl_int
 pocl_basic_uninit (unsigned j, cl_device_id device)
 {
-  pocl_basic_data_t *d = (pocl_basic_data_t*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
   POCL_DESTROY_LOCK (d->cq_lock);
   pocl_aligned_free (d->printf_buffer);
   POCL_MEM_FREE(d);
@@ -448,7 +449,8 @@ pocl_basic_uninit (unsigned j, cl_device_id device)
 cl_int
 pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
-  pocl_basic_data_t *d = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
+  pocl_basic_data_t *d
+      = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -463,8 +465,8 @@ pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
   return CL_SUCCESS;
 }
 
-
-static void basic_command_scheduler (pocl_basic_data_t *d)
+static void
+basic_command_scheduler (pocl_basic_data_t *d)
 {
   _cl_command_node *node;
   
@@ -503,7 +505,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 
 void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
 {
-  pocl_basic_data_t *d = (pocl_basic_data_t*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   basic_command_scheduler (d);
@@ -513,7 +515,7 @@ void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_basic_join (cl_device_id device, cl_command_queue cq)
 {
-  pocl_basic_data_t *d = (pocl_basic_data_t*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   basic_command_scheduler (d);
@@ -525,7 +527,7 @@ pocl_basic_join (cl_device_id device, cl_command_queue cq)
 void
 pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  pocl_basic_data_t *d = (pocl_basic_data_t*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
   _cl_command_node * volatile node = event->command;
 
   if (finished->status < CL_COMPLETE)

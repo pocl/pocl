@@ -71,7 +71,6 @@
 #include "tbb/tbb.h"
 #endif
 
-
 #ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
 #endif

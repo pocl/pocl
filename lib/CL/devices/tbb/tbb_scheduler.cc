@@ -64,9 +64,8 @@ void tbb_scheduler_init(cl_device_id device) {
   /* safety margin - aligning pointers later (in kernel arg setup)
    * may require more local memory than actual local mem size.
    * TODO fix this */
-  dd->local_mem_size =
-      device->local_mem_size +
-      device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
+  dd->local_mem_size = device->local_mem_size +
+                       device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
 
   dd->num_tbb_threads = dd->arena.max_concurrency();
 
@@ -75,16 +74,12 @@ void tbb_scheduler_init(cl_device_id device) {
   dd->printf_buf_size =
       (1 + (dd->printf_buf_size - 1) / MAX_EXTENDED_ALIGNMENT) *
       MAX_EXTENDED_ALIGNMENT;
-  dd->local_mem_size =
-      (1 + (dd->local_mem_size - 1) / MAX_EXTENDED_ALIGNMENT) *
-      MAX_EXTENDED_ALIGNMENT;
-  dd->printf_buf_global_ptr =
-      reinterpret_cast<uchar *>(pocl_aligned_malloc(
-          MAX_EXTENDED_ALIGNMENT,
-          dd->printf_buf_size * dd->num_tbb_threads));
+  dd->local_mem_size = (1 + (dd->local_mem_size - 1) / MAX_EXTENDED_ALIGNMENT) *
+                       MAX_EXTENDED_ALIGNMENT;
+  dd->printf_buf_global_ptr = reinterpret_cast<uchar *>(pocl_aligned_malloc(
+      MAX_EXTENDED_ALIGNMENT, dd->printf_buf_size * dd->num_tbb_threads));
   dd->local_mem_global_ptr = reinterpret_cast<char *>(pocl_aligned_malloc(
-      MAX_EXTENDED_ALIGNMENT,
-      dd->local_mem_size * dd->num_tbb_threads));
+      MAX_EXTENDED_ALIGNMENT, dd->local_mem_size * dd->num_tbb_threads));
 
   /* create one meta thread per device to serve as an async interface thread. */
   pthread_create(&dd->meta_thread, NULL, pocl_tbb_driver_thread, device);
@@ -92,8 +87,7 @@ void tbb_scheduler_init(cl_device_id device) {
   dd->grain_size = 0;
   if (pocl_is_option_set("POCL_TBB_GRAIN_SIZE")) {
     dd->grain_size = pocl_get_int_option("POCL_TBB_GRAIN_SIZE", 1);
-    POCL_MSG_PRINT_GENERAL("TBB: using a grain size of %u\n",
-                           dd->grain_size);
+    POCL_MSG_PRINT_GENERAL("TBB: using a grain size of %u\n", dd->grain_size);
   }
 
   dd->selected_partitioner = pocl_tbb_partitioner::NONE;
@@ -164,10 +158,10 @@ public:
     const size_t my_thread_id = tbb::this_task_arena::current_thread_index();
     void *arguments[meta->num_args + meta->num_locals + 1];
     void *arguments2[meta->num_args + meta->num_locals + 1];
-    char *local_mem = dd->local_mem_global_ptr +
-                      (dd->local_mem_size * my_thread_id);
-    uchar *printf_buffer = dd->printf_buf_global_ptr +
-                           (dd->printf_buf_size * my_thread_id);
+    char *local_mem =
+        dd->local_mem_global_ptr + (dd->local_mem_size * my_thread_id);
+    uchar *printf_buffer =
+        dd->printf_buf_global_ptr + (dd->printf_buf_size * my_thread_id);
     struct pocl_context pc;
 
     setup_kernel_arg_array_with_locals((void **)&arguments,
@@ -213,8 +207,8 @@ public:
     free_kernel_arg_array_with_locals((void **)&arguments, (void **)&arguments2,
                                       k);
   }
-  WorkGroupScheduler(kernel_run_command *k,
-                     const pocl_tbb_scheduler_data *dd) : my_k(k), dd(dd) {}
+  WorkGroupScheduler(kernel_run_command *k, const pocl_tbb_scheduler_data *dd)
+      : my_k(k), dd(dd) {}
 };
 
 static void finalize_kernel_command(kernel_run_command *k) {
@@ -222,8 +216,8 @@ static void finalize_kernel_command(kernel_run_command *k) {
 
   pocl_release_dlhandle_cache(k->cmd);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->sync.event.event,
-                                  "NDRange Kernel        ");
+  POCL_UPDATE_EVENT_COMPLETE_MSG(k->cmd->sync.event.event,
+                                 "NDRange Kernel        ");
   free_kernel_run_command(k);
 }
 
@@ -239,24 +233,23 @@ static kernel_run_command *pocl_tbb_prepare_kernel(pocl_tbb_scheduler_data *dd,
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   // if WGs == 0, return early to avoid having to uninitialize anything
-  if (num_groups == 0)
-    {
-      pocl_update_event_running (cmd->sync.event.event);
+  if (num_groups == 0) {
+    pocl_update_event_running(cmd->sync.event.event);
 
-      POCL_UPDATE_EVENT_COMPLETE_MSG (cmd->sync.event.event,
-                                      "NDRange Kernel        ");
+    POCL_UPDATE_EVENT_COMPLETE_MSG(cmd->sync.event.event,
+                                   "NDRange Kernel        ");
 
-      return NULL;
-    }
+    return NULL;
+  }
 
   /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel (program, dev_i, cmd->device,
-                                      pocl_cpu_gvar_init_callback);
+  pocl_driver_build_gvar_init_kernel(program, dev_i, cmd->device,
+                                     pocl_cpu_gvar_init_callback);
 
   char *saved_name = NULL;
-  pocl_sanitize_builtin_kernel_name (kernel, &saved_name);
-  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
-  pocl_restore_builtin_kernel_name (kernel, saved_name);
+  pocl_sanitize_builtin_kernel_name(kernel, &saved_name);
+  pocl_check_kernel_dlhandle_cache(cmd, 1, 1);
+  pocl_restore_builtin_kernel_name(kernel, saved_name);
 
   run_cmd = new_kernel_run_command();
   run_cmd->data = dd;
@@ -275,7 +268,7 @@ static kernel_run_command *pocl_tbb_prepare_kernel(pocl_tbb_scheduler_data *dd,
 
   setup_kernel_arg_array(run_cmd);
 
-  pocl_update_event_running (cmd->sync.event.event);
+  pocl_update_event_running(cmd->sync.event.event);
 
   return (run_cmd);
 }
@@ -287,35 +280,38 @@ static void tbb_exec_command(pocl_tbb_scheduler_data *dd,
   if (dd->grain_size) {
     if (dd->selected_partitioner == pocl_tbb_partitioner::NONE) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size,
-                            0, run_cmd->pc.num_groups[1], dd->grain_size,
-                            0, run_cmd->pc.num_groups[2], dd->grain_size),
+                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[2], dd->grain_size),
                         WorkGroupScheduler(run_cmd, dd));
     } else if (dd->selected_partitioner == pocl_tbb_partitioner::AFFINITY) {
       tbb::affinity_partitioner ap;
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size,
-                            0, run_cmd->pc.num_groups[1], dd->grain_size,
-                            0, run_cmd->pc.num_groups[2], dd->grain_size),
+                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[2], dd->grain_size),
                         WorkGroupScheduler(run_cmd, dd), ap);
     } else if (dd->selected_partitioner == pocl_tbb_partitioner::AUTO) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size,
-                            0, run_cmd->pc.num_groups[1], dd->grain_size,
-                            0, run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd), tbb::auto_partitioner());
+                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[2], dd->grain_size),
+                        WorkGroupScheduler(run_cmd, dd),
+                        tbb::auto_partitioner());
     } else if (dd->selected_partitioner == pocl_tbb_partitioner::SIMPLE) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size,
-                            0, run_cmd->pc.num_groups[1], dd->grain_size,
-                            0, run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd), tbb::simple_partitioner());
+                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[2], dd->grain_size),
+                        WorkGroupScheduler(run_cmd, dd),
+                        tbb::simple_partitioner());
     } else if (dd->selected_partitioner == pocl_tbb_partitioner::STATIC) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size,
-                            0, run_cmd->pc.num_groups[1], dd->grain_size,
-                            0, run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd), tbb::static_partitioner());
+                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
+                            run_cmd->pc.num_groups[2], dd->grain_size),
+                        WorkGroupScheduler(run_cmd, dd),
+                        tbb::static_partitioner());
     }
   } else { /* if (dd->grain_size) */
     if (dd->selected_partitioner == pocl_tbb_partitioner::NONE) {
@@ -369,21 +365,17 @@ RETRY:
     DL_DELETE(dd->work_queue, cmd);
     POCL_FAST_UNLOCK(dd->wq_lock_fast);
 
-    assert (pocl_command_is_ready (cmd->sync.event.event));
+    assert(pocl_command_is_ready(cmd->sync.event.event));
 
     if (cmd->type == CL_COMMAND_NDRANGE_KERNEL) {
-      assert ((void*)dd == (void*)cmd->device->data);
+      assert((void *)dd == (void *)cmd->device->data);
       run_cmd = pocl_tbb_prepare_kernel(dd, cmd);
       if (run_cmd) {
-        dd->arena.execute([run_cmd, dd]() {
-            tbb_exec_command(dd, run_cmd);
-        });
-      finalize_kernel_command(run_cmd);
+        dd->arena.execute([run_cmd, dd]() { tbb_exec_command(dd, run_cmd); });
+        finalize_kernel_command(run_cmd);
       }
     } else {
-      dd->arena.execute([cmd]() {
-        pocl_exec_command(cmd);
-      });
+      dd->arena.execute([cmd]() { pocl_exec_command(cmd); });
     }
 
     POCL_FAST_LOCK(dd->wq_lock_fast);

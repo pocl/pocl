@@ -33,7 +33,8 @@
 #include "pocl_cl.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 POCL_EXPORT

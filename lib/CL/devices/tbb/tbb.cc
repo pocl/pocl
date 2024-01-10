@@ -30,8 +30,8 @@
 
 #include <assert.h>
 #include <pthread.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -54,10 +54,8 @@
 #include "pocl_llvm.h"
 #endif
 
-void
-pocl_tbb_init_device_ops(struct pocl_device_ops *ops)
-{
-  pocl_pthread_init_device_ops (ops);
+void pocl_tbb_init_device_ops(struct pocl_device_ops *ops) {
+  pocl_pthread_init_device_ops(ops);
 
   ops->device_name = "cpu-tbb";
 
@@ -76,12 +74,10 @@ static std::vector<tbb::numa_node_id> numa_indexes;
 static unsigned last_initialized_numa_index = 0;
 static int one_device_per_numa_node = 0;
 
-unsigned int
-pocl_tbb_probe (struct pocl_device_ops *ops)
-{
-  int env_count = pocl_device_get_env_count (ops->device_name);
-  one_device_per_numa_node = pocl_get_int_option ("POCL_TBB_DEV_PER_NUMA_NODE",
-                                                  CL_TRUE);
+unsigned int pocl_tbb_probe(struct pocl_device_ops *ops) {
+  int env_count = pocl_device_get_env_count(ops->device_name);
+  one_device_per_numa_node =
+      pocl_get_int_option("POCL_TBB_DEV_PER_NUMA_NODE", CL_TRUE);
 
   if (one_device_per_numa_node) {
     /* Use one TBB device per NUMA node. */
@@ -92,7 +88,7 @@ pocl_tbb_probe (struct pocl_device_ops *ops)
     }
     /* disallow more devices than NUMA nodes */
     if (env_count > numa_indexes.size()) {
-      POCL_MSG_WARN ("Requested more TBB devices than available NUMA nodes\n");
+      POCL_MSG_WARN("Requested more TBB devices than available NUMA nodes\n");
       env_count = numa_indexes.size();
     }
   } else {
@@ -102,7 +98,7 @@ pocl_tbb_probe (struct pocl_device_ops *ops)
       env_count = 1;
     /* disallow more than one; it's possible, but makes no sense */
     if (env_count > 1) {
-      POCL_MSG_WARN ("Not using redundant TBB devices\n");
+      POCL_MSG_WARN("Not using redundant TBB devices\n");
       env_count = 1;
     }
   }
@@ -113,13 +109,11 @@ pocl_tbb_probe (struct pocl_device_ops *ops)
 static cl_bool tbb_available = CL_TRUE;
 static cl_bool tbb_unavailable = CL_FALSE;
 
-cl_int
-pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
-{
+cl_int pocl_tbb_init(unsigned j, cl_device_id device, const char *parameters) {
   device->available = &tbb_unavailable;
-  cl_int err = pocl_cpu_init_common (device);
+  cl_int err = pocl_cpu_init_common(device);
   if (err) {
-    POCL_MSG_ERR ("pocl_cpu_init_common failed\n");
+    POCL_MSG_ERR("pocl_cpu_init_common failed\n");
     return CL_INVALID_DEVICE;
   }
 
@@ -134,79 +128,66 @@ pocl_tbb_init (unsigned j, cl_device_id device, const char* parameters)
   }
   device->data = (void *)dd;
 
-  //ta.initialize ();
   device->max_compute_units = dd->arena.max_concurrency();
   /* subdevices not supported ATM */
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;
   device->num_partition_types = 0;
 
-  pocl_init_dlhandle_cache ();
-  pocl_init_kernel_run_command_manager ();
-  tbb_scheduler_init (device);
+  pocl_init_dlhandle_cache();
+  pocl_init_kernel_run_command_manager();
+  tbb_scheduler_init(device);
 
   /* system mem as global memory */
   device->global_mem_id = 0;
-  POCL_MSG_PRINT_INFO ("TBB device %u initialized\n",
-                        last_initialized_numa_index);
+  POCL_MSG_PRINT_INFO("TBB device %u initialized\n",
+                      last_initialized_numa_index);
   ++last_initialized_numa_index;
   device->available = &tbb_available;
   return err;
 }
 
-cl_int
-pocl_tbb_uninit (unsigned j, cl_device_id device)
-{
-  tbb_scheduler_uninit (device);
+cl_int pocl_tbb_uninit(unsigned j, cl_device_id device) {
+  tbb_scheduler_uninit(device);
   return CL_SUCCESS;
 }
 
-cl_int
-pocl_tbb_reinit (unsigned j, cl_device_id device, const char *parameters)
-{
-  tbb_scheduler_init (device);
+cl_int pocl_tbb_reinit(unsigned j, cl_device_id device,
+                       const char *parameters) {
+  tbb_scheduler_init(device);
   return CL_SUCCESS;
 }
 
-void
-pocl_tbb_submit (_cl_command_node *node, cl_command_queue cq)
-{
+void pocl_tbb_submit(_cl_command_node *node, cl_command_queue cq) {
   node->ready = 1;
-  if (pocl_command_is_ready (node->sync.event.event))
-    {
-      pocl_update_event_submitted (node->sync.event.event);
-      tbb_scheduler_push_command (node);
-    }
-  POCL_UNLOCK_OBJ (node->sync.event.event);
+  if (pocl_command_is_ready(node->sync.event.event)) {
+    pocl_update_event_submitted(node->sync.event.event);
+    tbb_scheduler_push_command(node);
+  }
+  POCL_UNLOCK_OBJ(node->sync.event.event);
   return;
 }
 
-void
-pocl_tbb_notify (cl_device_id device, cl_event event, cl_event finished)
-{
-   int wake_thread = 0;
+void pocl_tbb_notify(cl_device_id device, cl_event event, cl_event finished) {
+  int wake_thread = 0;
   _cl_command_node *node = event->command;
 
-  if (finished->status < CL_COMPLETE)
-    {
-      pocl_update_event_failed (event);
-      return;
-    }
+  if (finished->status < CL_COMPLETE) {
+    pocl_update_event_failed(event);
+    return;
+  }
 
   if (!node->ready)
     return;
 
-  if (pocl_command_is_ready (node->sync.event.event))
-    {
-      if (event->status == CL_QUEUED)
-        {
-          pocl_update_event_submitted (event);
-          wake_thread = 1;
-        }
+  if (pocl_command_is_ready(node->sync.event.event)) {
+    if (event->status == CL_QUEUED) {
+      pocl_update_event_submitted(event);
+      wake_thread = 1;
     }
-  if (wake_thread)
-    {
-      tbb_scheduler_push_command (node);
-    }
+  }
+  if (wake_thread) {
+    tbb_scheduler_push_command(node);
+  }
   return;
 }

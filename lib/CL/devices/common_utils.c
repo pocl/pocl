@@ -40,8 +40,8 @@ static kernel_run_command *volatile kernel_pool = 0;
 static int kernel_pool_initialized = 0;
 static pocl_lock_t kernel_pool_lock;
 
-
-void pocl_init_kernel_run_command_manager ()
+void
+pocl_init_kernel_run_command_manager ()
 {
   if (!kernel_pool_initialized)
     {
@@ -50,7 +50,8 @@ void pocl_init_kernel_run_command_manager ()
     }
 }
 
-void pocl_init_thread_argument_manager ()
+void
+pocl_init_thread_argument_manager ()
 {
   if (!kernel_pool_initialized)
     {
@@ -114,7 +115,7 @@ pocl_cpu_init_common (cl_device_id device)
   pocl_init_default_device_infos (device);
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
-  {
+    {
       /* In reality there is no independent SG progress implemented in this
          version because we can only have one SG in flight at a time, but it's
          a corner case which allows us to advertise it for full CTS compliance.
@@ -123,7 +124,7 @@ pocl_cpu_init_common (cl_device_id device)
 
       /* Just an arbitrary number here based on assumption of SG size 32. */
       device->max_num_sub_groups = device->max_work_group_size / 32;
-  }
+    }
 
   /* 0 is the host memory shared with all drivers that use it */
   device->global_mem_id = 0;
@@ -172,22 +173,22 @@ pocl_cpu_init_common (cl_device_id device)
                      | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM
                      | CL_DEVICE_SVM_ATOMICS;
 
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics")
-      != NULL) {
-      device->single_fp_atomic_caps = device->double_fp_atomic_caps =
-          CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT |
-          CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT |
-          CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-          CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT |
-          CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT |
-          CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
-  }
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics") != NULL)
+    {
+      device->single_fp_atomic_caps = device->double_fp_atomic_caps
+          = CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT
+            | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
+            | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+    }
 
 #endif
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
       != NULL)
-  {
+    {
       device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
                                 | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
 
@@ -198,7 +199,7 @@ pocl_cpu_init_common (cl_device_id device)
       device->single_shared_usm_capabs
           = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
             | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
-  }
+    }
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout
@@ -213,9 +214,8 @@ pocl_cpu_init_common (cl_device_id device)
   /* device->max_compute_units was set up by topology_detect,
    * but if the user requests, lower it */
   /* if hwloc/topology detection failed, use a fixed maximum */
-      int fallback = (device->max_compute_units == 0)
-                     ? FALLBACK_MAX_THREAD_COUNT
-                     : device->max_compute_units;
+  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
+                                                  : device->max_compute_units;
 
   /* old env variable */
   int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
