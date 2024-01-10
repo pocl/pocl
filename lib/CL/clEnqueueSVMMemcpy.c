@@ -127,6 +127,10 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
       c->command.svm_memcpy.dst = dst_ptr;
       c->command.svm_memcpy.size = size;
     }
+
+  if (event != NULL)
+    (*event)->command_type = command_type;
+
   return errcode;
 }
 
@@ -145,9 +149,6 @@ POname (clEnqueueSVMMemcpy) (cl_command_queue command_queue, cl_bool blocking,
       num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  if (event != NULL)
-    (*event)->command_type = CL_COMMAND_SVM_MEMCPY;
 
   if (cmd != NULL)
     pocl_command_enqueue (command_queue, cmd);

@@ -2,13 +2,14 @@
  * \brief poclu_misc - misc generic OpenCL helper functions
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
-   Copyright (c) 2014 Kalle Raiskila
+                 2014 Kalle Raiskila
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+ deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -18,9 +19,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ IN THE SOFTWARE.
 
    \file
 */
@@ -502,7 +503,7 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
-  char extensions[10000];
+  char *extensions;
   char path[1024];
   const char *ext;
   char final_opts[2048];
@@ -556,8 +557,16 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
     {
       TEST_ASSERT (device != NULL);
       strcat (final_opts, " -x spir -spir-std=1.2");
-      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 10000, extensions,
-                             NULL);
+      size_t exts_size;
+
+      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 0, NULL,
+                             &exts_size);
+
+      extensions = (char *)malloc (exts_size);
+
+      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, exts_size,
+                             extensions, NULL);
+
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
 
       if ((spir && strstr (extensions, "cl_khr_spir") == NULL)
@@ -567,6 +576,8 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
                   spirv ? "-V" : "");
           return -1;
         }
+
+      free (extensions);
 
       err = clGetDeviceInfo (device, CL_DEVICE_ENDIAN_LITTLE, sizeof (cl_bool),
                              &little_endian, NULL);

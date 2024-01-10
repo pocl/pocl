@@ -2048,6 +2048,17 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
   POCL_MEASURE_START (REMOTE_ALLOC);
 
   ID_REQUEST (CreateBuffer, mem->id);
+
+  assert (mem->size > 0);
+  assert (mem->flags != 0);
+
+  assert (mem->mem_host_ptr == 0 || (mem->flags & CL_MEM_USES_SVM_POINTER != 0)
+          || (size_t)mem->mem_host_ptr < ddata->device_svm_region_start_addr
+          || (size_t)mem->mem_host_ptr
+                 > ddata->device_svm_region_start_addr
+                       + ddata->device_svm_region_start_addr
+                       + ddata->device_svm_region_size);
+
   nc.request.m.create_buffer.flags = mem->flags;
   nc.request.m.create_buffer.size = mem->size;
   nc.request.m.create_buffer.host_ptr = mem->mem_host_ptr;
@@ -2081,7 +2092,7 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
   s->remote_rkey = info.server_rkey;
   // NOTE: mem_id here is the name of the struct field holding the hashmap key,
   // not the local variable
-  HASH_ADD (hh, data->rdma_keys, mem->id, sizeof (uint32_t), s);
+  HASH_ADD (hh, data->rdma_keys, mem_id, sizeof (uint32_t), s);
 #endif
 
   return CL_SUCCESS;

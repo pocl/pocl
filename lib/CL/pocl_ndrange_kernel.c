@@ -229,9 +229,11 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
               && al->value != NULL))
         {
-          cl_mem buf;
+          cl_mem buf = *(cl_mem *)(al->value);
           if (al->is_svm)
             {
+              /* Find the shadow cl_mem wrapper which is used for tracking
+                 migrations. */
               void *ptr = *(void **)(al->value);
               pocl_svm_ptr *svm_ptr
                   = pocl_find_svm_ptr_in_context (command_queue->context, ptr);
@@ -246,9 +248,9 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
               else
                 buf = svm_ptr->shadow_cl_mem;
             }
-          else
-            buf = *(cl_mem *)(al->value);
 
+          if (buf == NULL) /* Likely USM. */
+            continue;
           if (a->type == POCL_ARG_TYPE_IMAGE)
             {
               POCL_RETURN_ON_UNSUPPORTED_IMAGE (buf, realdev);

@@ -120,6 +120,19 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_GOTO_ERROR_ON ((ptr == NULL), CL_OUT_OF_RESOURCES,
                       "Device failed to allocate USM memory");
 
+  /* Create a shadow cl_mem object for keeping track of the USM
+     allocation and to implement automated migrations, cl_pocl_content_size,
+     etc. for USM using the same code paths as with cl_mems. */
+  cl_mem clmem_shadow = POname (clCreateBuffer) (
+      context, CL_MEM_PINNED | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, size,
+      ptr, &errcode);
+
+  if (errcode != CL_SUCCESS)
+    {
+      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.");
+      return NULL;
+    }
+
   pocl_svm_ptr *item = calloc (1, sizeof (pocl_svm_ptr));
   POCL_GOTO_ERROR_ON ((item == NULL), CL_OUT_OF_HOST_MEMORY,
                       "out of host memory\n");
@@ -127,6 +140,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   POCL_LOCK_OBJ (context);
   item->svm_ptr = ptr;
   item->size = size;
+  item->shadow_cl_mem = clmem_shadow;
   DL_APPEND (context->svm_ptrs, item);
   POCL_UNLOCK_OBJ (context);
   POname (clRetainContext) (context);

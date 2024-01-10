@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueMemcpyINTEL()
 
    Copyright (c) 2023 Michal Babej / Intel Finland Oy
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -42,7 +43,8 @@ POname (clEnqueueMemcpyINTEL) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
+  if (cmd != NULL)
+    pocl_command_enqueue (command_queue, cmd);
 
   if (blocking)
     POname (clFinish) (command_queue);

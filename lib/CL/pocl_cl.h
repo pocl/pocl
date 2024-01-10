@@ -1446,7 +1446,7 @@ struct _cl_mem {
 
   /* If the allocation was requested to be permanent on the device
      global memory (until freed). This is set via CL_MEM_PINNED
-     flag of cl_pocl_pinned_buffers extension. */
+     flag of the cl_ext_pinned_buffers extension. */
   cl_bool is_device_pinned;
 
   /* Image flags */

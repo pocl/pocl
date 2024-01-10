@@ -789,11 +789,13 @@ void PoclDaemon::readAllClientSocketsThread() {
         if (d == fd) {
           close(fd);
           std::swap(open_client_fds[i], open_client_fds.back());
+
+          // Contexts can outlive their client connection (client may reconnect
+          // later) so don't destroy them here, only remove them from the socket
+          // bookkeeping list.
+
           open_client_fds.pop_back();
           std::swap(socket_contexts[i], socket_contexts.back());
-          /* Contexts can outlive their client connection (client may reconnect
-           * later) so don't destroy them here, only remove them from the socket
-           * bookkeeping list. */
           VirtualContextBase *vctx = socket_contexts.back();
           DroppedVCtxs.insert(vctx);
           socket_contexts.pop_back();
