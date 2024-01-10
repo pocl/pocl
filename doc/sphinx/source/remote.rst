@@ -59,7 +59,7 @@ There is also a full length journal article under review which describes the
 published version (for example its RDMA support). A preprint of the article is
 available in `arXiv <https://doi.org/10.48550/arXiv.2309.00407>`__.
 
-If you use PoCL-R in a research paper, please cite the introductory paper with the following format::
+In publications, when referring to PoCL-R, please cite the introductory paper with the following format::
 
   @InProceedings{10.1007/978-3-031-04580-6_6,
   author="Solanti, Jan and Babej, Michal and Ikkala, Julius and Malamal Vadakital, Vinod Kumar and J{\"a}{\"a}skel{\"a}inen, Pekka",

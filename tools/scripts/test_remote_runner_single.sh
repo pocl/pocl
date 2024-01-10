@@ -23,7 +23,12 @@ BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
 
-PORT=12000
+# If POCLD_PORT is defined, use a prelaunched PoCL-D at that port.
+if [ -z "$POCLD_PORT" ]; then
+ PORT=12000
+else
+ PORT=$POCLD_PORT
+fi
 
 echo "Running in $BUILD_DIR with PORT: $PORT"
 
@@ -42,21 +47,20 @@ export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
-$BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error,warn,general &
-POCLD_PID=$!
-
-echo "Pocld running with PID: $POCLD_PID"
+if [ -z $POCLD_PORT ]; then
+    $BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error &
+    POCLD_PID=$!
+    echo "PoCL-D launched with PID: $POCLD_PID"
+fi
 
 sleep 1
 
 export POCL_DEVICES="remote"
 export POCL_REMOTE0_PARAMETERS="127.0.0.1:$PORT/0"
-export POCL_DEBUG="warn,err,remote"
+export POCL_DEBUG="err"
 unset POCL_ENABLE_UNINIT
 
 echo "Running $BUILD_DIR/$TEST_BINARY"
-
-sleep 1
 
 $BUILD_DIR/$TEST_BINARY $@ &
 EXAMPLE_PID=$!
@@ -81,14 +85,19 @@ if [ -e "/proc/$EXAMPLE_PID" ]; then
   kill $EXAMPLE_PID
 fi
 
-if [ -e "/proc/$POCLD_PID" ]; then
-  kill $POCLD_PID
+if [ -z $POCLD_PORT ]; then
+  if [ -e "/proc/$POCLD_PID" ]; then
+     kill $POCLD_PID
+  fi
 fi
 
 sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
-kill -9 $POCLD_PID 1>/dev/null 2>&1
+
+if [ -z $POCLD_PORT ]; then
+    kill -9 $POCLD_PID 1>/dev/null 2>&1
+fi
 
 wait -f
 

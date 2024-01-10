@@ -1874,7 +1874,7 @@ pocl_find_svm_ptr_in_context (cl_context context, const void *host_ptr)
   pocl_svm_ptr *item = NULL;
   DL_FOREACH (context->svm_ptrs, item)
   {
-    if (item->svm_ptr == host_ptr)
+    if (item->svm_ptr <= host_ptr && item->svm_ptr + item->size > host_ptr)
       {
         break;
       }

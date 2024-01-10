@@ -1835,7 +1835,8 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_extended_types" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_vote" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_ballot" },
-        { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_non_uniform_arithmetic" },
+        { CL_MAKE_VERSION (1, 0, 0),
+          "cl_khr_subgroup_non_uniform_arithmetic" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_shuffle_relative" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_khr_subgroup_clustered_reduce" },
@@ -1849,7 +1850,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
         { CL_MAKE_VERSION (2, 1, 0), "cl_khr_il_program" },
         { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },
-        { CL_MAKE_VERSION (0, 1, 0), "cl_pocl_pinned_buffers" }};
+        { CL_MAKE_VERSION (0, 1, 0), CL_POCL_PINNED_BUFFERS_EXTENSION_NAME } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);

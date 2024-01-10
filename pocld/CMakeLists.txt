@@ -36,6 +36,7 @@ set(SOURCES pocld.cc cmdline.h cmdline.c
             ../lib/CL/devices/spirv_parser.hh ../lib/CL/devices/spirv_parser.cc
             ../lib/CL/devices/bufalloc.h ../lib/CL/devices/bufalloc.c
             ../lib/CL/pocl_networking.c ../lib/CL/pocl_networking.h
+            ../lib/CL/pocl_runtime_config.c
             shared_cl_context.cc shared_cl_context.hh
             virtual_cl_context.cc virtual_cl_context.hh
             cmd_queue.cc  cmd_queue.hh  common.cc  common.hh

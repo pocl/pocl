@@ -1,12 +1,13 @@
 /* OpenCL runtime library: clSVMAlloc()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,12 +17,13 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "devices.h"
+#include "pocl_cl.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -105,11 +107,30 @@ POname(clSVMAlloc)(cl_context context,
       return NULL;
     }
 
+  /* Create a shadow cl_mem object for keeping track of the SVM
+     allocation and to implement automated migrations, cl_pocl_content_size,
+     etc. for CG SVM using the same code paths as with cl_mems. */
+
+  /* TODO: FOR REMOTE: This bounces down to the server again although we should
+     just return quickly with the ptr set. */
+  cl_int errcode = CL_SUCCESS;
+  cl_mem clmem_shadow = POname (clCreateBuffer) (
+      context, CL_MEM_PINNED | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, size,
+      ptr, &errcode);
+
+  if (errcode != CL_SUCCESS)
+    {
+      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.");
+      return NULL;
+    }
+
   POCL_LOCK_OBJ (context);
   item->svm_ptr = ptr;
   item->size = size;
+  item->shadow_cl_mem = clmem_shadow;
   DL_APPEND (context->svm_ptrs, item);
   POCL_UNLOCK_OBJ (context);
+
   POname (clRetainContext) (context);
 
   POCL_MSG_PRINT_MEMORY ("Allocated SVM: PTR %p, SIZE %zu, FLAGS %" PRIu64

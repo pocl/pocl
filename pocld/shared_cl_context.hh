@@ -68,10 +68,10 @@ public:
 
   /************************************************************************/
 
-  virtual int createBuffer(uint32_t buffer_id, size_t size, uint64_t flags,
+  virtual int createBuffer(BufferId_t BufferID, size_t size, uint64_t flags,
                            void *host_ptr, void **device_addr) = 0;
 
-  virtual int freeBuffer(uint64_t buffer_id, bool is_svm) = 0;
+  virtual int freeBuffer(BufferId_t BufferID, bool is_svm) = 0;
 
   virtual int buildProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,

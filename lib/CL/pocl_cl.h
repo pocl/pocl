@@ -1144,6 +1144,9 @@ struct _pocl_svm_ptr
 {
   void *svm_ptr;
   size_t size;
+  /* A CL_MEM_PINNED cl_mem with device and host ptr the same. This is for
+     internal book keeping and automated migration purposes. */
+  cl_mem shadow_cl_mem;
   struct _pocl_svm_ptr *prev, *next;
 };
 
@@ -1443,7 +1446,7 @@ struct _cl_mem {
 
   /* If the allocation was requested to be permanent on the device
      global memory (until freed). This is set via CL_MEM_PINNED
-     flag of cl_pocl_pinned_buffers extension. */
+     flag of the cl_ext_pinned_buffers extension. */
   cl_bool is_device_pinned;
 
   /* Image flags */
@@ -1602,6 +1605,13 @@ struct _cl_program {
   char *spec_const_is_set;
 };
 
+typedef struct _pocl_ptr_list_node pocl_ptr_list;
+struct _pocl_ptr_list_node
+{
+  void *ptr;
+  struct _pocl_ptr_list_node *prev, *next;
+};
+
 struct _cl_kernel {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -1636,6 +1646,10 @@ struct _cl_kernel {
    */
   char *dyn_argument_storage;
   void **dyn_argument_offsets;
+
+  /* The SVM allocations accessed by the kernel which were set explicitly
+     using clSetKernelExecInfo(). */
+  pocl_ptr_list *svm_ptrs;
 
   /* for program's linked list of kernels */
   struct _cl_kernel *next;

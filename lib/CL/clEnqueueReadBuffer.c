@@ -93,7 +93,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   cmd->command.read.offset = offset;
   cmd->command.read.size = size;
 
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_read)
     POname(clFinish) (command_queue);

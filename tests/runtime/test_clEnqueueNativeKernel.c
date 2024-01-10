@@ -93,6 +93,12 @@ int main(int argc, char **argv) {
   if ((cap & CL_EXEC_NATIVE_KERNEL) == 0)
     {
       printf ("device doesn't support executing native kernels, exiting\n");
+      free(h_a);
+      free(h_b);
+      free(h_c);
+      CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+      CHECK_CL_ERROR (clReleaseContext (ctx));
+      CHECK_CL_ERROR (clUnloadCompiler ());
       return 77;
     }
 

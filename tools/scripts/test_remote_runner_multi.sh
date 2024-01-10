@@ -23,16 +23,28 @@ BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
 
-PUBLIC_IP=$(ip route get 9.9.9.9 | tr -s ' ' | cut -d' ' -f7)
-PORT1=12000
-PORT2=22000
+PUBLIC_IP=$(ip route get 9.9.9.9 | head -1 | tr -s ' ' | awk '{ print $(NF - 2) }')
+
+# If POCLD_PORT is defined, use a prelaunched PoCL-D at that port.
+if [ -z "$POCLD_PORT" ]; then
+    PORT1=12000
+    if [ ! -e "$BUILD_DIR/pocld/pocld" ]; then
+        echo "Can't find server binary at $BUILD_DIR/pocld/pocld"
+        exit 1
+    fi
+
+else
+ PORT1=$POCLD_PORT
+fi
+
+if [ -z "$POCLD_PORT2" ]; then
+ PORT2=22000
+else
+ PORT2=$POCLD_PORT2
+fi
 
 echo "Running in $BUILD_DIR with PORT1: $PORT1 PORT2: $PORT2"
 
-if [ ! -e "$BUILD_DIR/pocld/pocld" ]; then
-  echo "Can't find server binary at $BUILD_DIR/pocld/pocld"
-  exit 1
-fi
 
 if [ ! -e "$BUILD_DIR/$TEST_BINARY" ]; then
   echo "Can't find test binary at $BUILD_DIR/$TEST_BINARY"
@@ -44,15 +56,17 @@ export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
-$BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT1 -v error,warn,general &
-POCLD_PID1=$!
+if [ -z "$POCLD_PORT" ]; then
+    $BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT1 -v error,warn,general &
+    POCLD_PID1=$!
+    echo "Pocld running with PID: $POCLD_PID1"
+fi
 
-echo "Pocld running with PID: $POCLD_PID1"
-
-$BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT2 -v error,warn,general &
-POCLD_PID2=$!
-
-echo "Pocld running with PID: $POCLD_PID2"
+if [ -z "$POCLD_PORT2" ]; then
+    $BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT2 -v error,warn,general &
+    POCLD_PID2=$!
+    echo "Pocld running with PID: $POCLD_PID2"
+fi
 
 sleep 1
 
@@ -89,19 +103,29 @@ if [ -e "/proc/$EXAMPLE_PID" ]; then
   kill $EXAMPLE_PID
 fi
 
-if [ -e "/proc/$POCLD_PID1" ]; then
-  kill $POCLD_PID1
+if [ -z "$POCLD_PORT" ]; then
+    if [ -e "/proc/$POCLD_PID1" ]; then
+        kill $POCLD_PID1
+    fi
 fi
 
-if [ -e "/proc/$POCLD_PID2" ]; then
-  kill $POCLD_PID2
+if [ -z "$POCLD_PORT2" ]; then
+    if [ -e "/proc/$POCLD_PID2" ]; then
+        kill $POCLD_PID2
+    fi
 fi
 
 sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
-kill -9 $POCLD_PID1 1>/dev/null 2>&1
-kill -9 $POCLD_PID2 1>/dev/null 2>&1
+
+if [ -z "$POCLD_PORT" ]; then
+    kill -9 $POCLD_PID1 1>/dev/null 2>&1
+fi
+
+if [ -z "$POCLD_PORT" ]; then
+    kill -9 $POCLD_PID2 1>/dev/null 2>&1
+fi
 
 wait -f
 

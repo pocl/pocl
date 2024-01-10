@@ -342,6 +342,11 @@ extern "C"
   {
     uint64_t size;
     uint32_t flags;
+    /* If non-zero, a previously allocated SVM pointer to be wrapped as
+       the backing store for the buffer OR a pointer to a host-side
+       backing store. Should set to CL_MEM_USES_SVM_POINTER to flags,
+       if the former. */
+    uint64_t host_ptr;
   } CreateBufferMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) CreateBufferReply_s

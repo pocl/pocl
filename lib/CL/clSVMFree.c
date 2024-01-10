@@ -66,6 +66,7 @@ POname(clSVMFree)(cl_context context,
       return;
     }
 
+  POname (clReleaseMemObject) (item->shadow_cl_mem);
   POCL_MEM_FREE (item);
 
   POname (clReleaseContext) (context);

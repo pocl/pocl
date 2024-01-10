@@ -1216,4 +1216,3 @@ pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
                 0, 0, 0);
 #endif
 }
-
