@@ -28,7 +28,6 @@ if(MSVC)
 endif(MSVC)
 
 add_pocl_device_library(pocl-devices-tbb tbb.h tbb.cc tbb_scheduler.cc)
-set_target_properties(pocl-devices-tbb PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO)
 target_include_directories(pocl-devices-tbb PRIVATE "${TBB_INCLUDE_DIRS}")
 
 if(ENABLE_LOADABLE_DRIVERS)

@@ -27,7 +27,3 @@ if(MSVC)
   set_source_files_properties( basic.h basic.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_pocl_device_library("pocl-devices-basic" basic.h basic.c)
-
-if(ENABLE_LOADABLE_DRIVERS)
-  target_link_libraries(pocl-devices-basic PRIVATE pocl-devices-topology)
-endif()

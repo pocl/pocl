@@ -78,24 +78,16 @@ if(BUILD_REMOTE_CLIENT)
   add_subdirectory("remote")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-remote>")
-  if(ENABLE_RDMA)
+  if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_RDMA)
     list(APPEND POCL_DEVICES_LINK_LIST RDMAcm::RDMAcm IBVerbs::verbs)
   endif()
 endif()
 
 # for these drivers, use HWLOC if found
 if(ENABLE_HOST_CPU_DEVICES)
+  # topology is always enabled with CPU drivers, and works also without HWLOC
   add_subdirectory("topology")
   if(NOT ENABLE_LOADABLE_DRIVERS)
-    set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-      "$<TARGET_OBJECTS:pocl-devices-topology>")
-    if(Hwloc_FOUND)
-      if(Hwloc_LDFLAGS)
-        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-      else()
-        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
-      endif()
-    endif()
     if(ENABLE_HOST_CPU_DEVICES_OPENMP)
       list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_CXX)
     endif()

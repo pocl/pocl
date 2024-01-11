@@ -195,6 +195,18 @@ endif()
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>")
 
+if(ENABLE_HOST_CPU_DEVICES)
+  # always link into libpocl if any CPU device is enabled
+  list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices-topology>")
+  if(Hwloc_FOUND)
+    if(Hwloc_LDFLAGS)
+      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
+    else()
+      list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
+    endif()
+  endif()
+endif()
+
 if(ENABLE_LOADABLE_DRIVERS)
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:pocl-devices>")
 else()
