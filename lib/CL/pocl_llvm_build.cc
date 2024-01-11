@@ -179,7 +179,6 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
   if (unifyPrintfFingerPrint(Mod, BuiltinLib))
     return true;
 
-#ifndef LLVM_OLDER_THAN_14_0
   if (Device->run_program_scope_variables_pass) {
     size_t TotalGVarBytes = 0;
     if (runProgramScopeVariablesPass(Mod, Device->global_as_id,
@@ -187,7 +186,6 @@ static bool generateProgramBC(PoclLLVMContextData *Context, llvm::Module *Mod,
       return true;
     Program->global_var_total_size[device_i] = TotalGVarBytes;
   }
-#endif
 
   if (link(Mod, BuiltinLib, Log, Device->device_aux_functions,
            Device->device_side_printf != CL_FALSE))
@@ -315,7 +313,7 @@ int pocl_llvm_build_program(cl_program program,
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
-#if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   ss << "-opaque-pointers ";
 #else
@@ -497,18 +495,14 @@ int pocl_llvm_build_program(cl_program program,
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   llvm::Triple triple (device->llvm_target_triplet);
 
-#ifndef LLVM_OLDER_THAN_15_0
+#if LLVM_MAJOR >= 15
   LangOptions::setLangDefaults(*la, clang::Language::OpenCL, triple,
                                po.Includes, clang::LangStandard::lang_opencl12);
 #else
   pocl_build.setLangDefaults(*la,
                              clang::InputKind(clang::Language::OpenCL),
                              triple,
-#ifndef LLVM_OLDER_THAN_12_0
                              po.Includes,
-#else
-                             po,
-#endif
                              clang::LangStandard::lang_opencl12);
 #endif
 
@@ -528,23 +522,11 @@ int pocl_llvm_build_program(cl_program program,
   // setLangDefaults overrides to FPM_On for OpenCL.
   // So, we need to manually set it after
   if (fp_contract == "fast") {
-#ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_Fast);
-#else
-    la->setDefaultFPContractMode(LangOptions::FPC_Fast);
-#endif
   } else if (fp_contract == "on") {
-#ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_On);
-#else
-    la->setDefaultFPContractMode(LangOptions::FPC_On);
-#endif
   } else if (fp_contract == "off") {
-#ifndef LLVM_OLDER_THAN_11_0
     la->setDefaultFPContractMode(LangOptions::FPM_Off);
-#else
-    la->setDefaultFPContractMode(LangOptions::FPC_Off);
-#endif
   }
 
   la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);

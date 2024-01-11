@@ -121,31 +121,18 @@ void CloneFunctionIntoAbs(llvm::Function *NewFunc,
                           llvm::ValueMapTypeRemapper *TypeMapper = nullptr,
                           llvm::ValueMaterializer *Materializer = nullptr) {
 
-#if LLVM_MAJOR < 13
-  CloneFunctionInto(NewFunc, OldFunc, VMap, true, Returns, NameSuffix, CodeInfo,
-                    TypeMapper, Materializer);
-#else
                     // ClonedModule DifferentModule LocalChangesOnly
                     // GlobalChanges
   CloneFunctionInto(NewFunc, OldFunc, VMap,
                     (sameModule ? llvm::CloneFunctionChangeType::GlobalChanges
                                 : llvm::CloneFunctionChangeType::DifferentModule),
                     Returns, NameSuffix, CodeInfo, TypeMapper, Materializer);
-#endif
 }
 
 #if LLVM_MAJOR < 15
 // Globals
 #define getValueType getType()->getElementType
 #endif /* LLVM_OPAQUE_POINTERS */
-
-#if LLVM_MAJOR < 14
-#define LLVMBuildGEP2(A, B, C, D, E, F) LLVMBuildGEP(A, C, D, E, F)
-#endif
-
-#if LLVM_MAJOR < 11
-#define CBS_NO_PHIS_IN_SPLIT
-#endif
 
 // macros for registering LLVM passes & analyses with old & new PM
 

@@ -44,10 +44,6 @@ else()
       "llvm-config-mp-16.0" "llvm-config-16" "llvm-config160"
       "llvm-config-mp-15.0" "llvm-config-15" "llvm-config150"
       "llvm-config-mp-14.0" "llvm-config-14" "llvm-config140"
-      "llvm-config-mp-13.0" "llvm-config-13" "llvm-config130"
-      "llvm-config-mp-12.0" "llvm-config-12" "llvm-config120"
-      "llvm-config-mp-11.0" "llvm-config-11" "llvm-config110"
-      "llvm-config-mp-10.0" "llvm-config-10" "llvm-config100"
       "llvm-config"
     DOC "llvm-config executable")
 endif()
@@ -174,19 +170,7 @@ if(WIN32)
 endif(WIN32)
 
 # required for sources..
-if(LLVM_VERSION MATCHES "^10[.]")
-  set(LLVM_MAJOR 10)
-  set(LLVM_10_0 1)
-elseif(LLVM_VERSION MATCHES "^11[.]")
-  set(LLVM_MAJOR 11)
-  set(LLVM_11_0 1)
-elseif(LLVM_VERSION MATCHES "^12[.]")
-  set(LLVM_MAJOR 12)
-  set(LLVM_12_0 1)
-elseif(LLVM_VERSION MATCHES "^13[.]")
-  set(LLVM_MAJOR 13)
-  set(LLVM_13_0 1)
-elseif(LLVM_VERSION MATCHES "^14[.]")
+if(LLVM_VERSION MATCHES "^14[.]")
   set(LLVM_MAJOR 14)
   set(LLVM_14_0 1)
 elseif(LLVM_VERSION MATCHES "^15[.]")
@@ -202,7 +186,7 @@ elseif(LLVM_VERSION MATCHES "^18[.]")
   set(LLVM_MAJOR 18)
   set(LLVM_18_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 10.0 and 18.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 14.0 and 18.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################

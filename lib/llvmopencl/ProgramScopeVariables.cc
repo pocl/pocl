@@ -32,8 +32,6 @@ const char *PoclGVarMDName = "program.scope.var.size";
 
 #include "pocl.h"
 
-#if LLVM_MAJOR > 13
-
 #include <iostream>
 #include <map>
 #include <random>
@@ -606,5 +604,3 @@ int runProgramScopeVariablesPass(
 
   return 0;
 }
-
-#endif

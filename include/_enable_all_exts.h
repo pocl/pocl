@@ -48,11 +48,6 @@
 #  pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
 #endif
 
-#if (__clang_major__ > 4)
-
 #ifdef cl_khr_3d_image_writes
 #  pragma OPENCL EXTENSION cl_khr_3d_image_writes : enable
 #endif
-
-#endif
-

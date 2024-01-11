@@ -92,11 +92,7 @@ static bool inlineKernelCalls(Function &F, NamedMDNode *KernelMDs) {
         std::cerr << "Inlining kernel call " << Callee->getName().str() << "\n";
 #endif
         InlineFunctionInfo IFI;
-#if LLVM_MAJOR < 11
-        llvm::InlineFunction(CInstr, IFI);
-#else
         llvm::InlineFunction(*CInstr, IFI);
-#endif
         ChangedIter = true;
         ChangedAny = true;
         break;

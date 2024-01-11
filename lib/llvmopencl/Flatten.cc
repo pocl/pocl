@@ -97,15 +97,9 @@ static bool flattenAll(Module &M) {
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
     }
-#if LLVM_MAJOR < 14
-    f->removeAttributes(AttributeList::FunctionIndex,
-                        Attrs.addAttribute(M.getContext(), replaceThisAttr));
-    f->addFnAttr(replacementAttr);
-#else
     f->setAttributes(f->getAttributes()
                          .removeFnAttribute(M.getContext(), replaceThisAttr)
                          .addFnAttribute(f->getContext(), replacementAttr));
-#endif
 
     f->setLinkage(linkage);
   }
