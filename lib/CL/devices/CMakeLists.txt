@@ -87,10 +87,8 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES)
   # topology is always enabled with CPU drivers, and works also without HWLOC
   add_subdirectory("topology")
-  if(NOT ENABLE_LOADABLE_DRIVERS)
-    if(ENABLE_HOST_CPU_DEVICES_OPENMP)
-      list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_CXX)
-    endif()
+  if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_HOST_CPU_DEVICES_OPENMP)
+    list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_CXX)
   endif()
 endif()
 
