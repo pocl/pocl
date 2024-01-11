@@ -43,14 +43,6 @@ jobs:
         # asan, tsan, ubsan = sanitizers
         config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chipstar]
         include:
-          - llvm: 10
-            config: basic
-          - llvm: 11
-            config: basic
-          - llvm: 12
-            config: basic
-          - llvm: 13
-            config: basic
           - llvm: 14
             config: basic
           - llvm: 15
