@@ -52,10 +52,6 @@ namespace pocl {
 
 using namespace llvm;
 
-#if LLVM_MAJOR < 14
-static bool fixMinVecSize(Module &M) { return false; }
-#else
-
 static void setFunctionMinLegalVecAttr(llvm::Function *F, uint64_t Value) {
   Attribute replacementAttr = Attribute::get(
       F->getContext(), "min-legal-vector-width", std::to_string(Value));
@@ -258,7 +254,6 @@ static bool fixMinVecSize(Module &M) {
 
   return false;
 }
-#endif
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 char FixMinVecSize::ID = 0;

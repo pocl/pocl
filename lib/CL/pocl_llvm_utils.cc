@@ -443,7 +443,7 @@ void InitializeLLVM() {
     initializeAnalysis(Registry);
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
-#ifdef LLVM_OLDER_THAN_16_0
+#if LLVM_MAJOR < 16
     initializeInstrumentation(Registry);
 #endif
     initializeTarget(Registry);
@@ -527,11 +527,6 @@ void InitializeLLVM() {
       assert(O && "could not find LLVM option 'debug'");
       O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
     }
-#if LLVM_MAJOR == 9
-    O = opts["unroll-threshold"];
-    assert(O && "could not find LLVM option 'unroll-threshold'");
-    O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
-#endif
   }
 }
 
@@ -562,7 +557,7 @@ void pocl_llvm_create_context(cl_context ctx) {
 
   data->Context = new llvm::LLVMContext();
   assert(data->Context);
-#if (CLANG_MAJOR == 15) || (CLANG_MAJOR == 16)
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
 #ifdef LLVM_OPAQUE_POINTERS
   data->Context->setOpaquePointers(true);
 #else

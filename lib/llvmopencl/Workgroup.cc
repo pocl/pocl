@@ -30,9 +30,6 @@ POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Analysis/ConstantFolding.h>
 #include <llvm/IR/BasicBlock.h>
-#if LLVM_VERSION_MAJOR < 11
-#include <llvm/IR/CallSite.h>
-#endif
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/DerivedTypes.h>
@@ -426,22 +423,16 @@ llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
       Ptr = Builder.CreateConstGEP1_64(
-#if LLVM_MAJOR > 12
           GEPType,
-#endif
           GEP, 0);
     else
       Ptr = Builder.CreateConstGEP2_64(
-#if LLVM_MAJOR > 12
           GEPType,
-#endif
           GEP, 0, FieldIndex);
   } else {
     if (FieldIndex == -1)
       Ptr = Builder.CreateConstGEP1_32(
-#if LLVM_MAJOR > 12
           GEPType,
-#endif
           GEP, 0);
     else
       Ptr = Builder.CreateConstGEP2_32(
@@ -449,7 +440,6 @@ llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
           GEP, 0, FieldIndex);
   }
 
-#if LLVM_MAJOR > 12
   Type *FinalType = GEPType;
   if (FieldIndex >= 0) {
     ArrayType *AT = nullptr;
@@ -457,12 +447,9 @@ llvm::Value *WorkgroupImpl::createLoadFromContext(IRBuilder<> &Builder,
     assert(AT);
     FinalType = AT->getArrayElementType();
   }
-#endif
 
   Load = Builder.CreateLoad(
-#if LLVM_MAJOR > 12
       FinalType,
-#endif
       Ptr);
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
@@ -605,13 +592,8 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
 
         CallInst *NewCI = CallInst::Create(poclPrintf, ops);
         NewCI->setCallingConv(poclPrintf->getCallingConv());
-#if LLVM_MAJOR < 11
-        CallSite CS(CallInstr);
-        NewCI->setTailCall(CS.isTailCall());
-#else
         auto *CB = dyn_cast<CallBase>(CallInstr);
         NewCI->setTailCall(CB->isTailCall());
-#endif
 
         replaceCIMap.insert(
             std::pair<CallInst *, CallInst *>(CallInstr, NewCI));
@@ -787,11 +769,7 @@ Function *WorkgroupImpl::createWrapper(Function *F,
   }
   // needed for printf
   InlineFunctionInfo IFI;
-#if LLVM_MAJOR < 11
-  InlineFunction(CI, IFI);
-#else
   InlineFunction(*CI, IFI);
-#endif
 
   if (DeviceSidePrintf) {
     Function *FoclPrintfFun = M->getFunction("__pocl_printf");
@@ -1093,11 +1071,7 @@ void WorkgroupImpl::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
       Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
                                  ElementCount,
-#if LLVM_MAJOR > 10
                                  llvm::Align(
-#else
-                                 llvm::MaybeAlign(
-#endif
                                  MAX_EXTENDED_ALIGNMENT),
                                  "local_arg", Block);
     } else {
@@ -1246,12 +1220,8 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[1] = CARG1;
     args[2] = Size;
 
-#if LLVM_MAJOR < 14
-    LLVMValueRef Call4 = LLVMBuildCall(Builder, MemCpy4, args, 3, "");
-#else
     LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy4);
     LLVMValueRef Call4 = LLVMBuildCall2(Builder, FnTy, MemCpy4, args, 3, "");
-#endif
   } else {
     LLVMTypeRef i8PtrAS0 = LLVMPointerType(Int8Type, 0);
     LLVMTypeRef i8PtrAS1 = LLVMPointerType(Int8Type, DeviceArgsASid);
@@ -1265,12 +1235,8 @@ LLVMValueRef WorkgroupImpl::createAllocaMemcpyForStruct(
     args[1] = CARG1;
     args[2] = Size;
 
-#if LLVM_MAJOR < 14
-    LLVMValueRef Call1 = LLVMBuildCall(Builder, MemCpy1, args, 3, "");
-#else
     LLVMTypeRef FnTy = LLVMGetCalledFunctionType(MemCpy1);
     LLVMValueRef Call1 = LLVMBuildCall2(Builder, FnTy, MemCpy1, args, 3, "");
-#endif
   }
 
   return LocalArgAlloca;
@@ -1324,12 +1290,8 @@ LLVMValueRef WorkgroupImpl::createArgBufferLoad(LLVMBuilderRef Builder,
     LLVMTypeRef DestTy = LLVMPointerType(ParamType, DeviceArgsASid);
     LLVMValueRef ArgOffsetBitcast =
         LLVMBuildPointerCast(Builder, ArgByteOffset, DestTy, "arg_ptr");
-#if LLVM_MAJOR < 14
-    return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
-#else
     LLVMTypeRef LoadTy = ParamType;
     return LLVMBuildLoad2(Builder, LoadTy, ArgOffsetBitcast, "");
-#endif
   }
 }
 
@@ -1428,14 +1390,9 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
       LLVMTypeRef AllocaType = LLVMGetElementType(ParamType);
       // The buffer size passed from the runtime is a byte size, we
       // need to convert it to an element count for the alloca.
-#if LLVM_MAJOR < 14
-      LLVMValueRef LocalArgByteSize =
-          LLVMBuildLoad(Builder, SizeOffsetBitcast, "byte_size");
-#else
       LLVMTypeRef LoadTy = SizeIntType;
       LLVMValueRef LocalArgByteSize =
           LLVMBuildLoad2(Builder, LoadTy, SizeOffsetBitcast, "byte_size");
-#endif
       uint64_t ElementSize = LLVMStoreSizeOfType(DataLayout, AllocaType);
       LLVMValueRef ElementCount =
           LLVMBuildUDiv(Builder, LocalArgByteSize,
@@ -1452,11 +1409,7 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
       LLVMValueRef LocalArgAlloca = wrap(new llvm::AllocaInst(
           unwrap(AllocaType), LLVMGetPointerAddressSpace(ParamType),
           unwrap(ElementCount),
-#if LLVM_MAJOR > 10
           llvm::Align(
-#else
-            llvm::MaybeAlign(
-#endif
               MAX_EXTENDED_ALIGNMENT),
           "local_arg", unwrap(Block)));
       Args[i] = LocalArgAlloca;
@@ -1481,12 +1434,8 @@ WorkgroupImpl::createArgBufferWorkgroupLauncher(Function *Func,
 
   assert (i == ArgCount);
 
-#if LLVM_MAJOR < 14
-  LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
-#else
   LLVMTypeRef FnTy = wrap(Func->getFunctionType());
   LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, F, Args, ArgCount, "");
-#endif
   LLVMBuildRetVoid(Builder);
 
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
@@ -1571,20 +1520,12 @@ void WorkgroupImpl::createGridLauncher(Function *KernFunc, Function *WGFunc,
       LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
       LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
 
-#if LLVM_MAJOR < 14
-  LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 4, "");
-#else
   LLVMTypeRef FnTy = LLVMGetCalledFunctionType(RunnerFunc);
   LLVMValueRef Call = LLVMBuildCall2(Builder, FnTy, RunnerFunc, Args, 4, "");
-#endif
   LLVMBuildRetVoid(Builder);
 
   InlineFunctionInfo IFI;
-#if LLVM_MAJOR > 10
   InlineFunction(*dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
-#else
-  InlineFunction(dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
-#endif
 }
 
 /**

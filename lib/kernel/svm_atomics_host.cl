@@ -228,11 +228,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_add) ( volatile Q ATOMI
   memory_order order,
   memory_scope scope)
 {
-#if (__clang_major__ >= 13)
   return __opencl_atomic_fetch_add(object, operand, order, scope);
-#else
-  ATOMIC_LOOP(QUAL(__pocl_fadd), object, operand, order, scope);
-#endif
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_sub) ( volatile Q ATOMIC_TYPE  *object,
@@ -240,11 +236,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_sub) ( volatile Q ATOMI
   memory_order order,
   memory_scope scope)
 {
-#if (__clang_major__ >= 13)
   return __opencl_atomic_fetch_sub(object, operand, order, scope);
-#else
-  ATOMIC_LOOP(QUAL(__pocl_fsub), object, operand, order, scope);
-#endif
 }
 
 NONATOMIC_TYPE _CL_OVERLOADABLE QUAL(__pocl_atomic_fetch_min) ( volatile Q ATOMIC_TYPE  *object,

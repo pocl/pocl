@@ -93,11 +93,7 @@ char WorkItemAAResult::ID = 0;
  * Then they can not alias.
  */
 
-#if LLVM_MAJOR < 13
-#define NO_ALIAS NoAlias
-#else
 #define NO_ALIAS AliasResult::Kind::NoAlias
-#endif
 
 AliasResult
 WorkItemAAResult::alias(const Location &LocA, const Location &LocB) {

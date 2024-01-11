@@ -504,16 +504,6 @@ ParallelRegion::AddParallelLoopMetadata(
         continue;
       }
 
-#if LLVM_VERSION_MAJOR < 13 &&                                                 \
-    !(LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR >= 0 &&                   \
-      LLVM_VERSION_PATCH >= 1)
-      // This check will skip insertion of metadata on loads inside conditions
-      // before LLVM 12.0.1.
-      if (ii->mayReadFromMemory() && !IsLoadUnconditionallySafe(&*ii)) {
-        continue;
-      }
-#endif
-
       MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
       MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
       if (OldMD != nullptr) {
@@ -633,7 +623,7 @@ ParallelRegion::LocalIDZLoad()
   return LocalIDZLoadInstr = builder.CreateLoad(
 #if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif LLVM_MAJOR > 12
+#else
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -653,7 +643,7 @@ ParallelRegion::LocalIDYLoad()
   return LocalIDYLoadInstr = builder.CreateLoad(
 #if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif LLVM_MAJOR > 12
+#else
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -673,7 +663,7 @@ ParallelRegion::LocalIDXLoad()
   return LocalIDXLoadInstr = builder.CreateLoad(
 #if LLVM_MAJOR > 14
              Ptr->getValueType(),
-#elif LLVM_MAJOR > 12
+#else
              Ptr->getType()->getPointerElementType(),
 #endif
              Ptr);
@@ -711,18 +701,11 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-#if LLVM_MAJOR > 13
     AttributeList func_printf_PAL =
         AttributeList()
             .addAttributeAtIndex(M->getContext(), 1U, Attribute::NoCapture)
             .addAttributeAtIndex(M->getContext(), 4294967295U,
                                  Attribute::NoUnwind);
-#else
-    AttributeList func_printf_PAL =
-        AttributeList()
-            .addAttribute(M->getContext(), 1U, Attribute::NoCapture)
-            .addAttribute(M->getContext(), 4294967295U, Attribute::NoUnwind);
-#endif
 
     printfFunc->setAttributes(func_printf_PAL);
   }

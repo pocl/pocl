@@ -120,9 +120,7 @@ private:
   bool processFunction(llvm::Function &F);
 
   void fixMultiRegionVariables(ParallelRegion *region);
-#if LLVM_MAJOR > 13
   bool handleLocalMemAllocas(Kernel &K);
-#endif
   void addContextSaveRestore(llvm::Instruction *instruction);
   void releaseParallelRegions();
 
@@ -182,9 +180,7 @@ bool WorkitemLoopsImpl::runOnFunction(Function &F) {
 
   bool Changed = processFunction(F);
 
-#if LLVM_MAJOR > 13
   Changed |= handleLocalMemAllocas(cast<Kernel>(F));
-#endif
 
 #ifdef DUMP_CFGS
   dumpCFG(F, F.getName().str() + "_after_wiloops.dot",
@@ -281,11 +277,7 @@ WorkitemLoopsImpl::createLoopAround(ParallelRegion &Region,
   llvm::BasicBlock *forCondBB = 
     BasicBlock::Create(C, "pregion_for_cond", F, ExitBB);
 
-#if LLVM_VERSION_MAJOR < 11
-  DT.releaseMemory();
-#else
   DT.reset();
-#endif
   DT.recalculate(*F);
 
   /* Collect the basic blocks in the parallel region that dominate the
@@ -752,7 +744,6 @@ void WorkitemLoopsImpl::fixMultiRegionVariables(ParallelRegion *Region) {
   }
 }
 
-#if LLVM_MAJOR > 13
 // Convert calls to the __pocl_{work_group,local_mem}_alloca() pseudo function
 // to allocas.
 bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
@@ -800,7 +791,6 @@ bool WorkitemLoopsImpl::handleLocalMemAllocas(Kernel &K) {
   }
   return Changed;
 }
-#endif
 
 llvm::Value *WorkitemLoopsImpl::getLinearWiIndex(llvm::IRBuilder<> &Builder,
                                                  llvm::Module *M,
@@ -1144,11 +1134,7 @@ WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element
      size. */
-#if LLVM_MAJOR > 10
   Alloca->setAlignment(llvm::Align(CONTEXT_ARRAY_ALIGN));
-#else
-  Alloca->setAlignment(llvm::MaybeAlign(CONTEXT_ARRAY_ALIGN));
-#endif
 
     if (DebugVal && DebugCall && !WGDynamicLocalSize) {
 
@@ -1164,11 +1150,9 @@ WorkitemLoopsImpl::getContextArray(llvm::Instruction *Inst,
 #if LLVM_MAJOR > 14
                      .value_or(TypeSize(0, false))
                      .getFixedValue();
-#elif LLVM_MAJOR > 11
+#else
                      .getValueOr(TypeSize(0, false))
                      .getFixedValue();
-#else
-                     .getValueOr(0);
 #endif
 
       assert(sizeBits != 0);

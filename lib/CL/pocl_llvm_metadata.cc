@@ -680,7 +680,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
                    WGSizeHint->getOperand(2))->getValue()))->getLimitedValue();
     }
 
-#ifndef LLVM_OLDER_THAN_11_0
     llvm::MDNode *VecTypeHint = KernelFunction->getMetadata("vec_type_hint");
     if (VecTypeHint != nullptr) {
       llvm::Value *VTHvalue = nullptr;
@@ -762,7 +761,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
         }
       }
     }
-#endif
 
     if (reqdx || reqdy || reqdz) {
       meta->reqd_wg_size[0] = reqdx;
@@ -784,7 +782,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
               << ", " << wghintz << " )))";
     }
 
-#ifndef LLVM_OLDER_THAN_11_0
     if (vectypehint.size() > 0) {
       strncpy(meta->vectypehint, vectypehint.c_str(),
               sizeof(meta->vectypehint));
@@ -792,7 +789,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
         attrstr << " ";
       attrstr << "__attribute__ ((vec_type_hint (" << vectypehint << ")))";
     }
-#endif
 
     std::string r = attrstr.str();
     if (r.size() > 0) {

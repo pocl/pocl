@@ -1235,44 +1235,33 @@ if(HOST_CPU_ENABLE_CL_KHR_FP16)
 endif()
 
 # set the host device OpenCL version (and OpenCL C version too)
-# ..... to enable OpenCL C 3.0 language for the CPU device,
-# it must have compiler capable of 3.0
-# theoretically LLVM 12 is enough, but it lacks
-# https://reviews.llvm.org/D106778
-# and so it fails the C11 atomics tests of the CTS
-# with '... unknown call to _cl_atomic_store_explicit' or similar
-if(LLVM_VERSION VERSION_GREATER_EQUAL 14.0)
-  set(HOST_DEVICE_CL_VERSION_MAJOR 3)
-  set(HOST_DEVICE_CL_VERSION_MINOR 0)
-else()
-  set(HOST_DEVICE_CL_VERSION_MAJOR 1)
-  set(HOST_DEVICE_CL_VERSION_MINOR 2)
-endif()
-
+# LLVM 14 has sufficient OpenCL 3.0 support, so just enable it
+set(HOST_DEVICE_CL_VERSION_MAJOR 3)
+set(HOST_DEVICE_CL_VERSION_MINOR 0)
 
 # Host CPU device: list of extensions that are always enabled, for both OpenCL 1.2 and 3.0
 set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics \
 cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics \
-cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes cl_khr_command_buffer \
+cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes \
+cl_khr_command_buffer cl_khr_subgroups cl_intel_unified_shared_memory \
 cl_exp_pinned_buffers")
 
 # Host CPU device: list of OpenCL 3.0 features that are always enabled
+# TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
+# for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
+# .... seems like a bug in CTS, but needs to be investigated.
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
-  __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
-  __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
-  __opencl_c_generic_address_space")
-
-# Host CPU device: these extensions are always enabled but require OpenCL 3.0
-# (or they need 2.x, but PoCL only supports 1.2 and 3.0)
-if(HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroups cl_intel_unified_shared_memory")
-endif()
+__opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
+__opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
+__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
+__opencl_c_read_write_images")
 
 # Host CPU device: extensions only enabled when conformance is OFF
-if((NOT ENABLE_CONFORMANCE) AND (HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3))
+if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size \
 cl_ext_float_atomics")
+#  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
@@ -1304,17 +1293,6 @@ endif()
 
 if(HOST_DEVICE_EXTENSIONS MATCHES "cl_khr_subgroup")
   set(HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_subgroups")
-endif()
-
-# TODO: __opencl_c_atomic_scope_all_devices works with CPU device but not others
-# for now it's included because CTS test 'C11 atomics' subtest 'atomic_flag' requires it
-# .... seems like a bug in CTS, but needs to be investigated.
-if((NOT ENABLE_CONFORMANCE) OR (HOST_DEVICE_CL_VERSION_MAJOR EQUAL 3))
-  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_atomic_scope_all_devices")
-endif()
-
-if(NOT ENABLE_CONFORMANCE)
-  set( HOST_DEVICE_FEATURES_30 "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()
 
 if(ENABLE_SPIRV)

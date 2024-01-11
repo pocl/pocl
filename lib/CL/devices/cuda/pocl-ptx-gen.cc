@@ -40,14 +40,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/Linker/Linker.h"
-#ifndef LLVM_OLDER_THAN_14_0
 #include "llvm/MC/TargetRegistry.h"
-#else
-#include "llvm/Support/TargetRegistry.h"
-#endif
-#ifndef LLVM_OLDER_THAN_11_0
 #include "llvm/Support/Alignment.h"
-#endif
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO.h"
@@ -158,13 +152,8 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
     POCL_MSG_PRINT_INFO("NVVM module:\n%s\n", ModuleString.c_str());
   }
 
-#ifdef LLVM_OLDER_THAN_11_0
-  llvm::StringRef Triple =
-      (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
-#else
   std::string Triple =
       (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
-#endif
 
   std::string Error;
   // Get NVPTX target.
@@ -203,15 +192,9 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   // Run passes.
   Passes.run(*Module);
 
-#ifdef LLVM_OLDER_THAN_11_0
-  std::string PTX = PTXStream.str();
-  const char *Content = PTX.c_str();
-  size_t ContentSize = PTX.size();
-#else
   llvm::StringRef PTX = PTXStream.str();
   const char *Content = PTX.data();
   size_t ContentSize = PTX.size();
-#endif
 
   if (pocl_write_file(PTXFilename, Content, ContentSize, 0, 0)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to write final PTX into %s\n",
@@ -295,25 +278,13 @@ void fixPrintF(llvm::Module *Module) {
 #endif
 
   // Create i32 to hold current argument index.
-#ifdef LLVM_OLDER_THAN_11_0
-  llvm::AllocaInst *ArgIndexPtr =
-      new llvm::AllocaInst(I32, 0, llvm::ConstantInt::get(I32, 1));
-  ArgIndexPtr->insertBefore(&*NewPrintF->begin()->begin());
-#else
   llvm::AllocaInst *ArgIndexPtr =
       new llvm::AllocaInst(I32, 0, llvm::ConstantInt::get(I32, 1), llvm::Align(4));
   ArgIndexPtr->insertBefore(&*NewPrintF->begin()->begin());
-#endif
 
-#ifdef LLVM_OLDER_THAN_11_0
-  llvm::StoreInst *ArgIndexInit =
-      new llvm::StoreInst(llvm::ConstantInt::get(I32, 0), ArgIndexPtr);
-  ArgIndexInit->insertAfter(ArgIndexPtr);
-#else
   llvm::StoreInst *ArgIndexInit =
       new llvm::StoreInst(llvm::ConstantInt::get(I32, 0), ArgIndexPtr, false, llvm::Align(4));
   ArgIndexInit->insertAfter(ArgIndexPtr);
-#endif
 
   // Replace calls to _cl_va_arg with reads from new i64 array argument.
   llvm::Function *VaArgFunc = Module->getFunction("__cl_va_arg");
@@ -329,13 +300,8 @@ void fixPrintF(llvm::Module *Module) {
         continue;
 
       // Get current argument index.
-#ifdef LLVM_OLDER_THAN_11_0
-      llvm::LoadInst *ArgIndex = new llvm::LoadInst(ArgIndexPtr);
-      ArgIndex->insertBefore(Call);
-#else
       llvm::LoadInst *ArgIndex = new llvm::LoadInst(I32, ArgIndexPtr, "poclCudaLoad", false, llvm::Align(4));
       ArgIndex->insertBefore(Call);
-#endif
       // Get pointer to argument data.
       llvm::Value *ArgOut = Call->getArgOperand(1);
       llvm::GetElementPtrInst *ArgIn =
@@ -348,29 +314,19 @@ void fixPrintF(llvm::Module *Module) {
       ArgOut = ArgOutBC;
 
       // Load argument.
-#ifdef LLVM_OLDER_THAN_11_0
-      llvm::LoadInst *ArgValue = new llvm::LoadInst(ArgIn);
-      ArgValue->insertAfter(ArgIn);
-      llvm::StoreInst *ArgStore = new llvm::StoreInst(ArgValue, ArgOut);
-      ArgStore->insertAfter(ArgOutBC);
-#else
       llvm::LoadInst *ArgValue = new llvm::LoadInst(I64, ArgIn, "poclCudaArgLoad", false, llvm::Align(8));
       ArgValue->insertAfter(ArgIn);
       llvm::StoreInst *ArgStore = new llvm::StoreInst(ArgValue, ArgOut, false, llvm::Align(8));
       ArgStore->insertAfter(ArgOutBC);
-#endif
+
       // Increment argument index.
       llvm::BinaryOperator *Inc = llvm::BinaryOperator::Create(
           llvm::BinaryOperator::Add, ArgIndex, llvm::ConstantInt::get(I32, 1));
       Inc->insertAfter(ArgIndex);
 
-#ifdef LLVM_OLDER_THAN_11_0
-      llvm::StoreInst *StoreInc = new llvm::StoreInst(Inc, ArgIndexPtr);
-      StoreInc->insertAfter(Inc);
-#else
       llvm::StoreInst *StoreInc = new llvm::StoreInst(Inc, ArgIndexPtr, false, llvm::Align(4));
       StoreInc->insertAfter(Inc);
-#endif
+
       // Remove call to _cl_va_arg.
       Call->eraseFromParent();
     }
@@ -394,15 +350,9 @@ void fixPrintF(llvm::Module *Module) {
 
     // Allocate array for arguments.
     // TODO: Deal with vector arguments.
-#ifdef LLVM_OLDER_THAN_11_0
-    llvm::AllocaInst *Args =
-        new llvm::AllocaInst(I64, 0, llvm::ConstantInt::get(I32, NumArgs));
-    Args->insertBefore(Call);
-#else
     llvm::AllocaInst *Args =
         new llvm::AllocaInst(I64, 0, llvm::ConstantInt::get(I32, NumArgs), llvm::Align(8));
     Args->insertBefore(Call);
-#endif
 
     // Loop over arguments (skipping format).
     for (unsigned A = 0; A < NumArgs; A++) {
@@ -440,13 +390,8 @@ void fixPrintF(llvm::Module *Module) {
       }
 #endif
       // Store argument to i64 array.
-#ifdef LLVM_OLDER_THAN_11_0
-      llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr);
-      Store->insertBefore(Call);
-#else
       llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr, false, llvm::Align(8));
       Store->insertBefore(Call);
-#endif
     }
 
     // Fix address space of undef format values.

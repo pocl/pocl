@@ -207,11 +207,7 @@ recursivelyFindCalledFunctions(llvm::SmallSet<llvm::Function *, 12> &FSet,
         continue;
       if (Callee->isDeclaration())
         continue;
-#if LLVM_MAJOR < 11
-      if (FSet.count(Callee) > 0)
-#else
       if (FSet.contains(Callee))
-#endif
         continue;
       FSet.insert(Callee);
       recursivelyFindCalledFunctions(FSet, Callee);
@@ -233,11 +229,7 @@ bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F) {
   for (auto &U : Uses) {
     if (Instruction *I = dyn_cast<Instruction>(U->getUser()))
     {
-#if LLVM_MAJOR < 11
-      if (CalledFunctionSet.count(I->getFunction()) > 0)
-#else
       if (CalledFunctionSet.contains(I->getFunction()))
-#endif
         return true;
     }
   }
