@@ -18,3 +18,4 @@ TCE devices and fixed-function accelerators.
    vulkan
    level0
    remote
+   android
