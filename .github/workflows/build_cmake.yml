@@ -266,7 +266,7 @@ jobs:
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ctest -L remote_rdma
+          cd ${{ github.workspace }}/build && ctest $CTEST_FLAGS -L remote_rdma
 
   cuda_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
