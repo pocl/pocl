@@ -1,3 +1,5 @@
+.. _remote-label:
+
 =============
 Remote Driver
 =============
@@ -112,6 +114,8 @@ Known Bugs/Issues/WiP
   information cannot be retrieved from OpenCL API runtime calls.
 * There are some hardcoded limits (max devices per server)
 
+.. _remote-issues-label:
+
 Known Bugs/Issues in OpenCL Implementations
 --------------------------------------------
 
@@ -216,50 +220,7 @@ Then you can run the simple dot product in example1::
 Android Build (Client Only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Download Android NDK (or install via package management). Note that older
-versions of NDK may not work (r18 works; r10 does not).
-
-Git checkout pocl remote branch.
-
-Replace variables with actual paths::
-
-    export ANDROID_NDK=<path to extracted android NDK zip>
-    export POCL_REPO=<path to git checkout of pocl>
-    export ABI=arm64-v8a
-    export API=23
-
-You may also change the Android API level and the ABI (cpu architecture),
-but older Android API may not work (only tested with 23). Then run CMake::
-
-    cmake -DENABLE_LLVM=0 -DENABLE_ICD=0 -DENABLE_REMOTE_CLIENT=1 -DENABLE_REMOTE_SERVER=0 -DENABLE_HOST_CPU_DEVICES=0 -DCMAKE_MAKE_PROGRAM=$ANDROID_NDK/prebuilt/linux-x86_64/bin/make -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake -DANDROID_NDK=$ANDROID_NDK -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=$ABI -DANDROID_NATIVE_API_LEVEL=$API $POCL_REPO
-    make -j$(nproc)
-
-Now there is a static library lib/CL/libOpenCL.a (or libpocl.a), you need to
-import this as an external prebuilt library, and build your native OpenCL code
-in your Android project against it.
-The way to do this seems to be::
-
-    LOCAL_PATH := $(call my-dir)
-
-    include $(CLEAR_VARS)
-    LOCAL_MODULE    := libOpenCL
-    LOCAL_SRC_FILES := libOpenCL.a
-
-    include $(PREBUILT_STATIC_LIBRARY)
-    include $(CLEAR_VARS)
-
-    LOCAL_MODULE := your-app-name
-    LOCAL_SRC_FILES := your-native-sources
-    LOCAL_C_INCLUDES := native-includes
-
-    LOCAL_STATIC_LIBRARIES := libOpenCL
-    include $(BUILD_SHARED_LIBRARY)
-
-The reason for having a static library is that if you use a dynamic one,
-it will quite possibly not load at all (because the lib<GPU-driver>.so will
-load before libOpenCL.so, and this library on Android usually provides all
-OpenCL symbols, so the dynamic linker will resolve all symbols from the GPU
-driver and not bother loading pocl's libOpenCL at all).
+See :ref:`android-label` on how to do this.
 
 Windows build (server only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
