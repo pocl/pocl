@@ -59,7 +59,7 @@ For newer Android versions (Android 12 and up), you also need to add::
 
 to the ``<applications>`` element of the `AndroidManifest.xml`
 
-Once you know that your phone comes with an OpenCL library, it possible to use the proxy device. To build the proxy device add the
+Once you know that your phone comes with an OpenCL library, it's possible to use the proxy device. To build the proxy device add the
 following CMake options to the ones mentioned before: ``-DENABLE_PROXY_DEVICE=YES -DVISIBILITY_HIDDEN=NO``. This will build
 the proxy device and pocl as a static library. If you want to use JOCL, you need to also add ``-DPROXY_USE_LIBOPENCL_STUB=YES``
 and set ``-DBUILD_SHARED_LIBS=YES``. This will build a dynamic library of pocl.
