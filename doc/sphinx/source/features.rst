@@ -1,9 +1,7 @@
-Supported features and devices
-===============================
+===========================================
+Supported OpenCL features, device drivers 
+===========================================
 
-Pocl currently supports CPUs (x86-64 with full 3.0 / 1.2 conformance, ARM 32b/64b ligthly tested),
-NVidia GPUs via CUDA backend, Intel GPUs via Level Zero backend, certain CPU/GPU devices via Vulkan backend,
-TCE devices and fixed-function accelerators.
 
 .. toctree::
    :maxdepth: 2
@@ -11,12 +9,4 @@ TCE devices and fixed-function accelerators.
    opencl_status
    conformance
    extensions
-   tbb
-   hsa
-   cuda
-   almaif
-   proxy
-   vulkan
-   level0
-   remote
-   android
+   drivers

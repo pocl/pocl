@@ -188,7 +188,7 @@ pocl.
  *         **cpu**      Execution of OpenCL kernels on the host CPU using
                         (by default) all available CPU threads.
 
- *         **cpu-tbb**  Uses the Intel Threading Building Blocks library for
+ *         **cpu-tbb**  Uses the Intel Threading Building Blocks library
                         for task scheduling on the host CPU.
 
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
@@ -297,10 +297,10 @@ pocl.
 - **POCL_TBB_PARTITIONER** can be set to one of ``affinity``,``auto``,
   ``simple``,``static`` to select a partitioner. If no
   partitioner is selected, the TBB library will select the auto partitioner by
-  default. More information can be found in the `related documentation <https://github.com/oneapi-src/oneTBB/blob/master/doc/main/tbb_userguide/Partitioner_Summary.rst>`_.
+  default. More information can be found in TBB documentation.
 
 - **POCL_TBB_GRAIN_SIZE** can be set specify a grain size for all
-  dimensions. More information can be found in the `related documentation <https://github.com/oneapi-src/oneTBB/blob/master/doc/main/tbb_userguide/Controlling_Chunking_os.rst>`_.
+  dimensions. More information can be found in TBB documentation.
 
 - **POCL_TBB_DEV_PER_NUMA_NODE** can be set to either 0 or 1 (default). If set,
   PoCL TBB driver creates a separate OpenCL device per each NUMA node.

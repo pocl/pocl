@@ -378,6 +378,8 @@ RISC-V specific build notes:
 * on RISC-V, PoCL additionally needs to pass a target ABI flag to the compiler. There is
   some autodetection in PoCL but right now it's limited, and Clang unfortunately does not
   always get the defaults correctly. If you get errors similar to:
-    "can't link double-float modules with soft-float modules"
+
+      "can't link double-float modules with soft-float modules"
+
   from linker, then most likely PoCL used the incorrect ABI. You can explicitly
   specify the ABI to use with the HOST_CPU_TARGET_ABI CMake option.
