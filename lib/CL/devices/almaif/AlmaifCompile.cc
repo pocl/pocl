@@ -85,7 +85,7 @@ int pocl_almaif_compile_init(unsigned j, cl_device_id dev,
   dev->final_linkage_flags = NULL;
 
   d->compilationData->current_kernel = NULL;
-  SETUP_DEVICE_CL_VERSION(1, 2);
+  SETUP_DEVICE_CL_VERSION(dev, 1, 2);
 
   d->Available = pocl_offline_compile ? CL_FALSE : CL_TRUE;
 

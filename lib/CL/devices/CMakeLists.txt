@@ -160,12 +160,15 @@ set(POCL_DEVICES_SOURCES
   devices.h  devices.c
   bufalloc.c  bufalloc.h
   common.h  common.c
-  common_utils.h common_utils.c
   pocl_local_size.h  pocl_local_size.c
   common_driver.h  common_driver.c
   builtin_kernels.cc builtin_kernels.hh
   spirv.hh  spirv_parser.hh  spirv_parser.cc
   cpuinfo.c  cpuinfo.h)
+
+if(ENABLE_HOST_CPU_DEVICES)
+  list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
+endif()
 
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
   list(APPEND POCL_DEVICES_SOURCES signal_handlers.c)

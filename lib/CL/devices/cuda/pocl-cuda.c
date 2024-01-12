@@ -296,8 +296,10 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   assert (dev->data == NULL);
 
-  pocl_init_default_device_infos (dev);
-  dev->extensions = CUDA_DEVICE_EXTENSIONS;
+  pocl_init_default_device_infos (dev, CUDA_DEVICE_EXTENSIONS);
+
+  SETUP_DEVICE_CL_VERSION (dev, CUDA_DEVICE_CL_VERSION_MAJOR,
+                           CUDA_DEVICE_CL_VERSION_MINOR);
 
   dev->vendor = "NVIDIA Corporation";
   dev->vendor_id = 0x10de; /* the PCIID for NVIDIA */
@@ -345,9 +347,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
        snprintf (name, 255, "Unavailable CUDA device #%d", j);
      dev->long_name = dev->short_name = name;
   }
-
-  SETUP_DEVICE_CL_VERSION (CUDA_DEVICE_CL_VERSION_MAJOR,
-                           CUDA_DEVICE_CL_VERSION_MINOR);
 
   /* Get other device properties */
   if (ret != CL_INVALID_DEVICE)

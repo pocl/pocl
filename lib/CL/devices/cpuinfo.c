@@ -65,7 +65,7 @@ static const char *pci_bus_root_vendor_file = "/sys/bus/pci/devices/0000:00:00.0
 #else
  #define FREQSTRING "cpu MHz"
  #define MODELSTRING "model name"
- #define DEFAULTVENDOR "Unknown x86"
+ #define DEFAULTVENDOR "PoCL Project"
  #define DEFAULTVENDORID 0x0
  #define VENDORSTRING "vendor_id"
 #endif
@@ -305,7 +305,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   /* default vendor and vendor_id, in case it cannot be found by other means */
   device->vendor = cpuvendor_default;
   if (device->vendor_id == 0)
-    device->vendor_id = DEFAULTVENDORID;
+    device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
 
   /* read contents of /proc/cpuinfo */
   if (access (cpuinfo, R_OK) != 0)

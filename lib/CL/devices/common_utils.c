@@ -112,7 +112,11 @@ cl_int
 pocl_cpu_init_common (cl_device_id device)
 {
   int ret = CL_SUCCESS;
-  pocl_init_default_device_infos (device);
+
+  pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
+
+  SETUP_DEVICE_CL_VERSION (device, HOST_DEVICE_CL_VERSION_MAJOR,
+                           HOST_DEVICE_CL_VERSION_MINOR)
 
   if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
     {
@@ -233,8 +237,6 @@ pocl_cpu_init_common (cl_device_id device)
 
   pocl_cpuinfo_detect_device_info (device);
   pocl_set_buffer_image_limits (device);
-  device->vendor = "PoCL";
-  device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
 
   device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
                                                 device->local_mem_size);

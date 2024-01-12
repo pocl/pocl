@@ -1467,16 +1467,16 @@ static const cl_image_format supported_image_formats[] = {
 #endif
 
 void
-pocl_init_default_device_infos (cl_device_id dev)
+pocl_init_default_device_infos (cl_device_id dev,
+                                const char *device_extensions)
 {
   size_t i;
 
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
   dev->final_linkage_flags = final_ld_flags;
-  dev->extensions = DEFAULT_DEVICE_EXTENSIONS;
+  dev->extensions = device_extensions;
 
-  SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
   /*
     The hard restriction will be the context data which is
     stored in stack that can be as small as 8K in Linux.
@@ -1510,7 +1510,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->native_vector_width_long = POCL_DEVICES_NATIVE_VECTOR_WIDTH_LONG;
   dev->native_vector_width_float = POCL_DEVICES_NATIVE_VECTOR_WIDTH_FLOAT;
 
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+  if (strstr (device_extensions, "cl_khr_fp64") == NULL)
     {
       dev->native_vector_width_double = 0;
       dev->preferred_vector_width_double = 0;
@@ -1523,7 +1523,7 @@ pocl_init_default_device_infos (cl_device_id dev)
           = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
     }
 
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+  if (strstr (device_extensions, "cl_khr_fp16") == NULL)
     {
       dev->preferred_vector_width_half = 0;
       dev->native_vector_width_half = 0;
@@ -1576,7 +1576,7 @@ pocl_init_default_device_infos (cl_device_id dev)
 #endif
 #endif
 
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL)
+  if (strstr (device_extensions, "cl_khr_fp16") == NULL)
     {
       dev->half_fp_config = 0;
     }
@@ -1585,7 +1585,7 @@ pocl_init_default_device_infos (cl_device_id dev)
       dev->half_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
     }
 
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL)
+  if (strstr (device_extensions, "cl_khr_fp64") == NULL)
     {
       dev->double_fp_config = 0;
     }

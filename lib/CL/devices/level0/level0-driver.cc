@@ -1410,7 +1410,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     : ClDev(dev), DeviceHandle(DeviceH), Driver(Drv),
       MemfillProgram(nullptr), ImagefillProgram(nullptr) {
 
-  SETUP_DEVICE_CL_VERSION(3, 0);
+  SETUP_DEVICE_CL_VERSION(dev, 3, 0);
 
   ClDev->available = &this->Available;
   ContextHandle = Drv->getContextHandle();

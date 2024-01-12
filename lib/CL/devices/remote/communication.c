@@ -1860,8 +1860,7 @@ pocl_network_setup_devinfo (cl_device_id device, remote_device_data_t *ddata,
           remote_dev_version);
       return -1;
     }
-  cl_device_id dev = device;
-  SETUP_DEVICE_CL_VERSION (dev_ver_major, dev_ver_minor);
+  SETUP_DEVICE_CL_VERSION (device, dev_ver_major, dev_ver_minor);
   /* Use the remote's device version for the first part of the version string.
    */
   if (dev_ver_major >= 3)
