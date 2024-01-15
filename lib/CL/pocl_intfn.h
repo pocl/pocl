@@ -217,6 +217,9 @@ POdeclsym(clEnqueueSVMMemcpyRectPOCL)
 /* cl_ext_buffer_device_address */
 POdeclsym (clSetKernelArgDevicePointerEXT);
 
+/* cl_exp_defined_builtin_kernels */
+POdeclsym (clCreateBuiltinKernelWithAttributesEXP)
+
 #ifdef __cplusplus
 }
 #endif

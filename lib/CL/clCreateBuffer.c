@@ -350,8 +350,239 @@ ERROR:
 
   return mem;
 }
-POsym (clCreateBuffer)
+POsym (clCreateBuffer);
 
+// TBC: We probably want to limit tensor rank - should it be
+//      documented in the spec or queried at runtime?
+#define MAX_TENSOR_RANK (8u)
+
+// Check the tensor layout is well defined. Return non-zero if there
+// is an error.
+static int
+check_tensor_layout (cl_uint rank, const cl_tensor_shape *shape,
+                     const cl_tensor_layout_base *tlayout)
+{
+  // Checked already at check_tensor_desc().
+  assert (rank > 0 && rank <= MAX_TENSOR_RANK);
+
+  // '!tlayout' is same as tlayout->stype == CL_TENSOR_LAYOUT_OPAQUE.
+  if (!tlayout || tlayout->stype == CL_TENSOR_LAYOUT_OPAQUE)
+    {
+      // TODO: check memory flags.
+      //
+      // * CL_MEM_{COPY,HOST}_host_ptr -> Error due to unspecified
+      //   mapping of the host data to tensor coordinates.
+      //
+      // * CL_MEM_ALLOC_HOST_PTR -> Error for the same reason as for
+      //   CL_MEM_{COPY,HOST}_host_ptr. Could be valid but not
+      //   sensible as users may not know how the tensor elements are
+      //   mapped to the allocation. Perhaps, we could support this
+      //   case, if we extend the clGetMemObjectInfo() to return the
+      //   datalayout the driver picked (and wants to expose)?
+      return 0;
+    }
+
+  // Not currently supporting any tensor layout extensions.
+  POCL_RETURN_ERROR_ON (tlayout->next, 1,
+                        "Unsupported tensor layout extension.");
+
+  switch (tlayout->stype)
+    {
+    case CL_TENSOR_LAYOUT_OPAQUE:
+    default:
+      return 0;
+    case CL_TENSOR_LAYOUT_BLAS:
+      {
+        cl_tensor_layout_blas *blas_layout = (cl_tensor_layout_blas *)tlayout;
+
+        POCL_RETURN_ERROR_ON (!blas_layout->leading_dims, 1,
+                              "NULL leading_dims array!");
+        POCL_RETURN_ERROR_ON (!blas_layout->leading_strides, 1,
+                              "NULL leading_strides array!");
+
+        // Check leading_dims array does not point out-of-rank dimensions
+        // nor the same dimension index does not appear twice.
+        //
+        // tensor_rank == 4: leading_dims = {0, 2, 1} --> Ok.
+        // tensor_rank == 4: leading_dims = {0, 4, 1} --> error.
+        // tensor_rank == 4: leading_dims = {1, 1, 0} --> error.
+        unsigned defined_dims = 0;
+        const cl_tensor_dim *ld = blas_layout->leading_dims;
+        for (unsigned i = 0; i < rank - 1; i++)
+          {
+            POCL_RETURN_ERROR_ON (ld[i] >= rank, 1,
+                                  "out-of-bounds tensor dimension!");
+            POCL_RETURN_ERROR_ON ((defined_dims & (1u << ld[i])), 1,
+                                  "Dimension defined twice!");
+            defined_dims |= (1u << ld[i]);
+          }
+
+        const size_t *ls = blas_layout->leading_strides;
+        size_t prev_stride = 0;
+        for (unsigned i = 0; i < rank - 1; i++)
+          {
+            // Check the stride configuration does not cause aliasing.
+            POCL_RETURN_ERROR_ON (ls[i] <= shape[ld[i]] * prev_stride, 1,
+                                  "Invalid stride value.");
+            prev_stride = ls[i];
+          }
+
+        return 0;
+      }
+    }
+  assert (!"Unreachable!");
+}
+
+// Checks validity the the tensor shape. Returns non-zero on error.
+static int
+check_tensor_desc (const cl_tensor_desc *tdesc)
+{
+  // Invalid to pass NULL tensor description in clCreateBufferWithProperties.
+  POCL_RETURN_ERROR_ON ((!tdesc), 1, "tensor desc is NULL.");
+
+  // Currently no tensor extensions.
+  POCL_RETURN_ERROR_ON ((tdesc->stype != CL_TENSOR_DESC_BASE || tdesc->next),
+                        1, "Unsupported tensor extension.");
+
+  // TBC: Should there be upper limit for tensor rank?
+  POCL_RETURN_ERROR_ON ((tdesc->rank > MAX_TENSOR_RANK), 1,
+                        "Unsupported tensor rank.");
+
+  POCL_RETURN_ERROR_ON ((!tdesc->shape), 1,
+                        "Tensor shape array must not be NULL!");
+
+  for (unsigned i = 0; i < tdesc->rank; i++)
+    POCL_RETURN_ERROR_ON ((tdesc->shape[i] == 0), 1,
+                          "Tensor shape must be fully specified!");
+
+  POCL_RETURN_ERROR_ON (
+      (check_tensor_layout (tdesc->rank, tdesc->shape,
+                            (const cl_tensor_layout_base *)tdesc->layout)),
+      1, "invalid tensor layout.");
+
+  return 0;
+}
+
+static void *
+duplicate (const void *src, size_t num_objects, size_t object_size)
+{
+  void *new_objects = calloc (num_objects, object_size);
+  if (!new_objects)
+    return NULL;
+  memcpy (new_objects, src, object_size * num_objects);
+  return new_objects;
+}
+
+#define DUPLICATE(source_ptr, num_objects, object_type)                       \
+  duplicate ((source_ptr), (num_objects), sizeof (object_type));
+
+// Duplicates the tensor description (deep copy). The 'tdesc' must be valid.
+static cl_tensor_desc *
+duplicate_tensor_desc (const cl_tensor_desc *tdesc)
+{
+  if (!tdesc)
+    return NULL;
+
+  assert (!tdesc->next && "UNIMPLEMENTED: deep copy of tensor extensions.");
+
+  cl_tensor_desc *new_tdesc = DUPLICATE (tdesc, 1, cl_tensor_desc);
+  cl_tensor_shape *new_shape
+      = DUPLICATE (tdesc->shape, tdesc->rank, cl_tensor_dim);
+  cl_tensor_layout_blas *new_layout = NULL;
+  cl_tensor_dim *new_ld_dims = NULL;
+  size_t *new_ld_strides = NULL;
+
+  if (!new_tdesc || !new_shape)
+    goto error;
+
+  new_tdesc->shape = new_shape;
+  if (!tdesc->layout)
+    return new_tdesc;
+
+  switch (((const cl_tensor_layout_base *)tdesc->layout)->stype)
+    {
+    default:
+    case CL_TENSOR_LAYOUT_OPAQUE:
+      return NULL;
+
+    case CL_TENSOR_LAYOUT_BLAS:
+      {
+        cl_tensor_layout_blas *blas_layout
+            = (cl_tensor_layout_blas *)tdesc->layout;
+        new_layout = DUPLICATE (blas_layout, 1, cl_tensor_layout_blas);
+        new_ld_dims = DUPLICATE (blas_layout->leading_dims, tdesc->rank - 1,
+                                 cl_tensor_dim);
+        new_ld_strides = DUPLICATE (blas_layout->leading_strides,
+                                    tdesc->rank - 1, size_t);
+
+        if (!new_layout || !new_ld_dims || !new_ld_strides)
+          goto error;
+
+        new_layout->leading_dims = new_ld_dims;
+        new_layout->leading_strides = new_ld_strides;
+        new_tdesc->layout = new_layout;
+        return new_tdesc;
+      }
+    }
+  assert (!"Unreachable!");
+  return NULL;
+
+error:
+  free (new_tdesc);
+  free (new_shape);
+  free (new_layout);
+  free (new_ld_dims);
+  free (new_ld_strides);
+  return NULL;
+}
+
+static cl_int
+parse_properties (const cl_mem_properties *prop_ptr, cl_mem target)
+{
+  // Assuming cl_mem::num_properties and cl_mem::properties are zero prior
+  // parsing.
+  assert (target->num_properties == 0 && "Already parsed cl_mem properties?");
+
+  if (!prop_ptr)
+    {
+      return CL_SUCCESS;
+    }
+
+  if (*prop_ptr == 0)
+    {
+      target->num_properties = 1;
+      target->properties[0] = 0;
+      return CL_SUCCESS;
+    }
+
+  while (*prop_ptr)
+    {
+      switch (*prop_ptr)
+        {
+        default:
+          return CL_INVALID_PROPERTY;
+        case CL_MEM_TENSOR:
+          {
+            const cl_tensor_desc *tdesc = (const cl_tensor_desc *)prop_ptr[1];
+            prop_ptr += 2; // = CL_MEM_TENSOR and its value.
+
+            POCL_RETURN_ERROR_ON ((check_tensor_desc (tdesc)),
+                                  CL_INVALID_PROPERTY,
+                                  "invalid tensor description.");
+
+            target->tensor_desc = duplicate_tensor_desc (tdesc);
+            POCL_RETURN_ERROR_ON (
+                (!target->tensor_desc), CL_OUT_OF_HOST_MEMORY,
+                "Couldn't allocate space for tensor description.");
+
+            target->is_tensor = 1;
+            return CL_SUCCESS;
+          }
+        }
+    }
+  assert (!"Unreachable!");
+  return CL_OUT_OF_HOST_MEMORY;
+}
 
 CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
                                cl_context                context,
@@ -363,19 +594,16 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBufferWithProperties)(
 CL_API_SUFFIX__VERSION_3_0
 {
   int errcode;
-  /* pocl doesn't support any extra properties ATM */
-  POCL_GOTO_ERROR_ON ((properties && properties[0] != 0), CL_INVALID_PROPERTY,
-                      "PoCL doesn't support any properties on buffers yet\n");
 
   cl_mem mem_ret = POname(clCreateBuffer) (context, flags, size,
                                            host_ptr, errcode_ret);
   if (mem_ret == NULL)
     return NULL;
 
-  if (properties && properties[0] == 0)
+  if ((errcode = parse_properties (properties, mem_ret)) != CL_SUCCESS)
     {
-      mem_ret->num_properties = 1;
-      mem_ret->properties[0] = 0;
+      POname (clReleaseMemObject) (mem_ret);
+      goto ERROR;
     }
 
   return mem_ret;
