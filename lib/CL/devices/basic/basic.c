@@ -223,11 +223,17 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_basic_run (void *data, _cl_command_node *cmd)
 {
+  cl_kernel kernel = cmd->command.run.kernel;
+  if (kernel->custom_runner)
+    {
+      kernel->custom_runner (cmd, kernel->custom_runner_data);
+      return;
+    }
+
   pocl_basic_data_t *d = (pocl_basic_data_t *)data;
   struct pocl_argument *al = NULL;
   size_t x, y, z;
   unsigned i;
-  cl_kernel kernel = cmd->command.run.kernel;
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
