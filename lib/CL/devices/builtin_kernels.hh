@@ -80,6 +80,8 @@ enum BuiltinKernelId : uint16_t {
   POCL_CDBI_MAGNITUDE_P512 = 35,
   POCL_CDBI_ORIENTED_NONMAX_P512 = 36,
   POCL_CDBI_GAUSSIAN3X3_P512 = 37,
+  POCL_CDBI_DBK_KHR_GEMM = 38,
+  POCL_CDBI_DBK_KHR_MATMUL = 39,
   POCL_CDBI_LAST,
   POCL_CDBI_JIT_COMPILER = 0xFFFF
 };
@@ -113,9 +115,9 @@ struct BIArg : public pocl_argument_info
 // BIKD = Built-in Kernel Descriptor
 struct BIKD : public pocl_kernel_metadata_t
 {
-  BIKD (BuiltinKernelId KernelId, const char *KernelName,
-        const std::vector<pocl_argument_info> &ArgInfos,
-        unsigned local_mem_size = 0);
+  BIKD(BuiltinKernelId KernelId, const char *KernelName,
+       const std::vector<pocl_argument_info> &ArgInfos,
+       unsigned local_mem_size = 0, bool isa_dbk = false);
 
   ~BIKD() {
     for (size_t i = 0; i < num_args; ++i) {
@@ -128,7 +130,6 @@ struct BIKD : public pocl_kernel_metadata_t
 
   BuiltinKernelId KernelId;
 };
-
 
 #define BIKERNELS POCL_CDBI_LAST
 POCL_EXPORT extern BIKD pocl_BIDescriptors[BIKERNELS];

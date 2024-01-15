@@ -52,9 +52,9 @@ if(OPENCL_HEADER_VERSION GREATER 299)
 endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
-  test_subbuffers test_compile_n_link)
+  test_subbuffers test_compile_n_link test_dbk_matmul)
 
-add_compile_options(${OPENCL_CFLAGS})
+add_compile_options(${OPENCL_CFLAGS} -I${CMAKE_SOURCE_DIR}/include)
 
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   if(MSVC)
