@@ -222,11 +222,17 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_basic_run (void *data, _cl_command_node *cmd)
 {
+  cl_kernel kernel = cmd->command.run.kernel;
+  if (kernel->custom_runner)
+    {
+      kernel->custom_runner (cmd, kernel->custom_runner_data);
+      return;
+    }
+
   pocl_basic_data_t *d = (pocl_basic_data_t *)data;
   struct pocl_argument *al = NULL;
   size_t x, y, z;
   unsigned i;
-  cl_kernel kernel = cmd->command.run.kernel;
   cl_program program = kernel->program;
   pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
@@ -492,7 +498,11 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   pocl_basic_data_t *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+    {
+      cl_kernel kernel = node->command.run.kernel;
+      if (!kernel->custom_runner)
+        pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
+    }
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);

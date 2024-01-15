@@ -14,10 +14,11 @@
 #define WRITE_BUF                                                              \
   POCL_ARG_TYPE_POINTER, CL_KERNEL_ARG_ADDRESS_GLOBAL,                         \
       CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_RESTRICT
-#define POD_ARG                                                                \
+#define POD_ARG_ATTRS                                                          \
   POCL_ARG_TYPE_NONE, CL_KERNEL_ARG_ADDRESS_PRIVATE,                           \
       CL_KERNEL_ARG_ACCESS_NONE, CL_KERNEL_ARG_TYPE_NONE
-#define POD_ARG_32b POD_ARG, 4
+#define POD_ARG(num_bits) POD_ARG_ATTRS, ((num_bits + 7u) / 8u)
+#define POD_ARG_32b POD_ARG(32)
 #define READ_PIPE                                                              \
   POCL_ARG_TYPE_PIPE, CL_KERNEL_ARG_ADDRESS_GLOBAL, CL_KERNEL_ARG_ACCESS_NONE, \
       CL_KERNEL_ARG_TYPE_NONE, 4
@@ -313,14 +314,34 @@ BIKD pocl_BIDescriptors[BIKERNELS] = {
              BIArg("uchar64", "in",  READ_PIPE),
              BIArg("uchar64", "out", WRITE_PIPE),
          }),
+    BIKD(POCL_CDBI_DBK_KHR_GEMM,
+         "khr_gemm",
+         {
+           // The types are placeholders
+           BIArg("unsigned char*", "a", READ_BUF),
+           BIArg("unsigned char*", "b", READ_BUF),
+           BIArg("unsigned char*", "c_in", READ_BUF),
+           BIArg("unsigned char*", "c_out", WRITE_BUF),
+         },
+         0,
+         /* isa_dbk= */ true),
+    BIKD(POCL_CDBI_DBK_KHR_MATMUL,
+         "khr_matmul",
+         {
+           BIArg("unsigned char*", "a", READ_BUF),
+           BIArg("unsigned char*", "b", READ_BUF),
+           BIArg("unsigned char*", "c", WRITE_BUF),
+         },
+         0,
+         /* isa_dbk= */ true),
 };
 
 BIKD::BIKD(BuiltinKernelId KernelIdentifier, const char *KernelName,
            const std::vector<pocl_argument_info> &ArgInfos,
-           unsigned local_mem_size)
+           unsigned local_mem_size, bool isa_dbk)
     : KernelId(KernelIdentifier) {
 
-  builtin_kernel = 1;
+  builtin_kernel = isa_dbk ? POCL_DBK : POCL_BIK;
   builtin_max_global_work = {0, 0, 0};
   name = strdup(KernelName);
   num_args = ArgInfos.size();

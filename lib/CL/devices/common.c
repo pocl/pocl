@@ -1765,8 +1765,10 @@ pocl_init_default_device_infos (cl_device_id dev,
           = strdup ("pocl.add.i8;"
                     "org.khronos.openvx.scale_image.nn.u8;"
                     "org.khronos.openvx.scale_image.bl.u8;"
-                    "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32");
-      dev->num_builtin_kernels = 4;
+                    "org.khronos.openvx.tensor_convert_depth.wrap.u8.f32;"
+                    "khr_gemm;"
+                    "khr_matmul;");
+      dev->num_builtin_kernels = 6;
     }
 }
 
@@ -1893,7 +1895,9 @@ static const cl_name_version OPENCL_EXTENSIONS[]
       { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_svm_rect" },
       { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_svm" },
       { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_buffer" },
-      { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_exec" } };
+      { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_exec" },
+      { CL_MAKE_VERSION (0, 1, 0), "cl_exp_tensor" },
+      { CL_MAKE_VERSION (0, 1, 0), "cl_exp_defined_builtin_kernels" } };
 
 const size_t OPENCL_EXTENSIONS_NUM
     = sizeof (OPENCL_EXTENSIONS) / sizeof (OPENCL_EXTENSIONS[0]);

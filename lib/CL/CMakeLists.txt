@@ -196,6 +196,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMemcpyRectPOCL.c"
                    "clEnqueueSVMMemfillRectPOCL.c"
                    "clSetKernelArgDevicePointer.c"
+                   "clCreateBuiltinKernelWithAttributes.cc"
 )
 
 if(ANDROID)
@@ -280,6 +281,12 @@ endif(MSVC)
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
+
+# TEMPORARY HACK:
+set(LIBXSMM_DIR "/mnt/md1/linehill/pocl-space/install-libxsmm")
+target_include_directories(libpocl_unlinked_objs
+  PRIVATE "${LIBXSMM_DIR}/include")
+
 harden("libpocl_unlinked_objs")
 
 #################################################################
@@ -318,6 +325,17 @@ if(ANDROID)
 endif()
 
 list(APPEND POCL_PRIVATE_LINK_LIST ${LIBMATH} ${CMAKE_DL_LIBS} ${PTHREAD_LIBRARY})
+
+# TEMPORARY HACK:
+set(LIBXSMM "${LIBXSMM_DIR}/lib/libxsmm.a")
+
+# Link a BLAS library for xsmm
+#
+# TODO: BLAS is optional for libxsmm but what limitations would be
+#       imposed if the BLAS is dropped?
+find_library(LIBBLAS NAMES blas REQUIRED)
+
+list(APPEND POCL_PRIVATE_LINK_LIST ${LIBXSMM} ${LIBBLAS})
 
 # see lib/CMakeLists.txt
 set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
