@@ -24,10 +24,10 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( tbb.h tbb.cc tbb_scheduler.cc PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( tbb.h tbb.c tbb_scheduler.cc PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_pocl_device_library(pocl-devices-tbb tbb.h tbb.cc tbb_scheduler.cc)
+add_pocl_device_library(pocl-devices-tbb tbb.h tbb.c tbb_scheduler.cc)
 target_include_directories(pocl-devices-tbb PRIVATE "${TBB_INCLUDE_DIRS}")
 
 if(ENABLE_LOADABLE_DRIVERS)

@@ -25,54 +25,66 @@
 #ifndef POCL_TBB_SCHEDULER_H
 #define POCL_TBB_SCHEDULER_H
 
-#include "common_utils.h"
 #include "pocl_cl.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
 
-enum class pocl_tbb_partitioner : unsigned
+#ifdef __cplusplus
+extern "C"
 {
-  NONE,
-  AFFINITY,
-  AUTO,
-  SIMPLE,
-  STATIC
-};
+#endif
 
-struct pocl_tbb_scheduler_data
-{
-  pthread_cond_t wake_meta_thread
+  typedef enum
+  {
+    TBB_PART_NONE,
+    TBB_PART_AFFINITY,
+    TBB_PART_AUTO,
+    TBB_PART_SIMPLE,
+    TBB_PART_STATIC
+  } pocl_tbb_partitioner;
+
+  void *TBBDriverThread (void *Dev);
+
+  struct TBBArena;
+
+  typedef struct
+  {
+    pthread_cond_t wake_meta_thread
+        __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    POCL_FAST_LOCK_T wq_lock_fast
+        __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    _cl_command_node *work_queue;
+
+    size_t local_mem_size __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+    char *local_mem_global_ptr;
+
+    uchar *printf_buf_global_ptr;
+    unsigned printf_buf_size;
+
+    unsigned grain_size;
+    unsigned num_tbb_threads;
+    pocl_tbb_partitioner selected_partitioner;
+
+    struct TBBArena *tbb_arena;
+
+    pthread_t meta_thread;
+    int meta_thread_shutdown_requested;
+  } pocl_tbb_scheduler_data
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  POCL_FAST_LOCK_T wq_lock_fast
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  _cl_command_node *work_queue
-      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  unsigned printf_buf_size;
-  uchar *printf_buf_global_ptr;
+  size_t tbb_get_numa_nodes ();
 
-  size_t local_mem_size;
-  char *local_mem_global_ptr;
+  size_t tbb_get_num_threads (pocl_tbb_scheduler_data *SchedData);
 
-  unsigned grain_size;
-  unsigned num_tbb_threads;
-  pocl_tbb_partitioner selected_partitioner;
-  tbb::numa_node_id numa_idx;
-  tbb::task_arena arena;
+  void tbb_init_arena (pocl_tbb_scheduler_data *SchedData, int OnePerNode);
 
-  pthread_t meta_thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  int meta_thread_shutdown_requested;
-} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  void tbb_release_arena (pocl_tbb_scheduler_data *SchedData);
 
-/* Initializes scheduler. Must be called before any kernel enqueue */
-void tbb_scheduler_init (cl_device_id device);
-
-void tbb_scheduler_uninit (cl_device_id device);
-
-/* Gives ready-to-execute command for scheduler */
-void tbb_scheduler_push_command (_cl_command_node *cmd);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

@@ -47,359 +47,312 @@
 #include "tbb_scheduler.h"
 #include "utlist.h"
 
-static void *pocl_tbb_driver_thread(void *dev);
-
 /* External functions declared in tbb_dd->h */
 
-void tbb_scheduler_init(cl_device_id device) {
-  pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
-  POCL_FAST_INIT(dd->wq_lock_fast);
-  dd->work_queue = NULL;
+struct TBBArena {
+  tbb::numa_node_id NumaIdx;
+  tbb::task_arena Arena;
+};
 
-  POCL_INIT_COND(dd->wake_meta_thread);
+static std::vector<tbb::numa_node_id> numa_indexes;
 
-  dd->printf_buf_size = device->printf_buffer_size;
-  assert(device->printf_buffer_size > 0);
+static unsigned last_initialized_numa_index = 0;
 
-  /* safety margin - aligning pointers later (in kernel arg setup)
-   * may require more local memory than actual local mem size.
-   * TODO fix this */
-  dd->local_mem_size = device->local_mem_size +
-                       device->max_parameter_size * MAX_EXTENDED_ALIGNMENT;
+size_t tbb_get_numa_nodes() {
+  numa_indexes = tbb::info::numa_nodes();
+  return numa_indexes.size();
+}
 
-  dd->num_tbb_threads = dd->arena.max_concurrency();
-
-  /* alloc local memory for all threads making sure the memory for each thread
-   * is aligned. */
-  dd->printf_buf_size =
-      (1 + (dd->printf_buf_size - 1) / MAX_EXTENDED_ALIGNMENT) *
-      MAX_EXTENDED_ALIGNMENT;
-  dd->local_mem_size = (1 + (dd->local_mem_size - 1) / MAX_EXTENDED_ALIGNMENT) *
-                       MAX_EXTENDED_ALIGNMENT;
-  dd->printf_buf_global_ptr = reinterpret_cast<uchar *>(pocl_aligned_malloc(
-      MAX_EXTENDED_ALIGNMENT, dd->printf_buf_size * dd->num_tbb_threads));
-  dd->local_mem_global_ptr = reinterpret_cast<char *>(pocl_aligned_malloc(
-      MAX_EXTENDED_ALIGNMENT, dd->local_mem_size * dd->num_tbb_threads));
-
-  /* create one meta thread per device to serve as an async interface thread. */
-  pthread_create(&dd->meta_thread, NULL, pocl_tbb_driver_thread, device);
-
-  dd->grain_size = 0;
-  if (pocl_is_option_set("POCL_TBB_GRAIN_SIZE")) {
-    dd->grain_size = pocl_get_int_option("POCL_TBB_GRAIN_SIZE", 1);
-    POCL_MSG_PRINT_GENERAL("TBB: using a grain size of %u\n", dd->grain_size);
+void tbb_init_arena(pocl_tbb_scheduler_data *SchedData, int OnePerNode) {
+  TBBArena *TBBA = new TBBArena;
+  SchedData->tbb_arena = TBBA;
+  if (OnePerNode) {
+    assert(last_initialized_numa_index < numa_indexes.size());
+    TBBA->NumaIdx = numa_indexes[last_initialized_numa_index];
+    TBBA->Arena.initialize(tbb::task_arena::constraints(TBBA->NumaIdx));
+  } else {
+    TBBA->NumaIdx = UINT32_MAX;
+    TBBA->Arena.initialize();
   }
-
-  dd->selected_partitioner = pocl_tbb_partitioner::NONE;
-  const char *ptr = pocl_get_string_option("POCL_TBB_PARTITIONER", "");
-  if (strlen(ptr) > 0) {
-    if (strncmp(ptr, "affinity", 8) == 0) {
-      dd->selected_partitioner = pocl_tbb_partitioner::AFFINITY;
-      POCL_MSG_PRINT_GENERAL("TBB: using affinity partitioner\n");
-    } else if (strncmp(ptr, "auto", 4) == 0) {
-      dd->selected_partitioner = pocl_tbb_partitioner::AUTO;
-      POCL_MSG_PRINT_GENERAL("TBB: using auto partitioner\n");
-    } else if (strncmp(ptr, "simple", 6) == 0) {
-      dd->selected_partitioner = pocl_tbb_partitioner::SIMPLE;
-      POCL_MSG_PRINT_GENERAL("TBB: using simple partitioner\n");
-    } else if (strncmp(ptr, "static", 6) == 0) {
-      dd->selected_partitioner = pocl_tbb_partitioner::STATIC;
-      POCL_MSG_PRINT_GENERAL("TBB: using static partitioner\n");
-    } else {
-      POCL_MSG_WARN(
-          "TBB: Malformed string in POCL_TBB_PARTITIONER env var: %s\n", ptr);
-    }
-  }
+  ++last_initialized_numa_index;
 }
 
-void tbb_scheduler_uninit(cl_device_id device) {
-  pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
-
-  POCL_FAST_LOCK(dd->wq_lock_fast);
-  dd->meta_thread_shutdown_requested = 1;
-  POCL_BROADCAST_COND(dd->wake_meta_thread);
-  POCL_FAST_UNLOCK(dd->wq_lock_fast);
-
-  POCL_JOIN_THREAD(dd->meta_thread);
-
-  POCL_FAST_DESTROY(dd->wq_lock_fast);
-  POCL_DESTROY_COND(dd->wake_meta_thread);
-
-  dd->meta_thread_shutdown_requested = 0;
-  dd->work_queue = NULL;
-
-  pocl_aligned_free(dd->printf_buf_global_ptr);
-  pocl_aligned_free(dd->local_mem_global_ptr);
+size_t tbb_get_num_threads(pocl_tbb_scheduler_data *SchedData) {
+  TBBArena *TBBA = SchedData->tbb_arena;
+  return TBBA->Arena.max_concurrency();
 }
-
-/* TBB doesn't support subdevices, so push_command can use cond_signal */
-void tbb_scheduler_push_command(_cl_command_node *cmd) {
-  cl_device_id device = cmd->device;
-  pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
-  POCL_FAST_LOCK(dd->wq_lock_fast);
-  DL_APPEND(dd->work_queue, cmd);
-  POCL_SIGNAL_COND(dd->wake_meta_thread);
-  POCL_FAST_UNLOCK(dd->wq_lock_fast);
-}
-
 /* Internal functions */
 
 /* The sole purpose of this embedded class is to provide a function object that
  * can be executed on a blocked_range by TBB's parallel_for() according to
  * https://www.threadingbuildingblocks.org/docs/help/tbb_userguide/parallel_for.html */
 class WorkGroupScheduler {
-  kernel_run_command *my_k;
-  const pocl_tbb_scheduler_data *dd;
+  kernel_run_command *RunCmd;
+  const pocl_tbb_scheduler_data *SchedData;
 
 public:
   void operator()(const tbb::blocked_range3d<size_t> &r) const {
-    kernel_run_command *k = my_k;
-    pocl_kernel_metadata_t *meta = k->kernel->meta;
-    const size_t my_thread_id = tbb::this_task_arena::current_thread_index();
-    void *arguments[meta->num_args + meta->num_locals + 1];
-    void *arguments2[meta->num_args + meta->num_locals + 1];
-    char *local_mem =
-        dd->local_mem_global_ptr + (dd->local_mem_size * my_thread_id);
-    uchar *printf_buffer =
-        dd->printf_buf_global_ptr + (dd->printf_buf_size * my_thread_id);
-    struct pocl_context pc;
+    kernel_run_command *K = RunCmd;
+    pocl_kernel_metadata_t *Meta = K->kernel->meta;
+    const size_t CurThreadID = tbb::this_task_arena::current_thread_index();
+    void *Arguments[Meta->num_args + Meta->num_locals + 1];
+    void *Arguments2[Meta->num_args + Meta->num_locals + 1];
+    char *LocalMem = SchedData->local_mem_global_ptr +
+                     (SchedData->local_mem_size * CurThreadID);
+    uchar *PrintfBuffer = SchedData->printf_buf_global_ptr +
+                          (SchedData->printf_buf_size * CurThreadID);
+    struct pocl_context PC;
 
-    setup_kernel_arg_array_with_locals((void **)&arguments,
-                                       (void **)&arguments2, k, local_mem,
-                                       dd->local_mem_size);
-    memcpy(&pc, &k->pc, sizeof(struct pocl_context));
+    setup_kernel_arg_array_with_locals((void **)&Arguments,
+                                       (void **)&Arguments2, K, LocalMem,
+                                       SchedData->local_mem_size);
+    memcpy(&PC, &K->pc, sizeof(struct pocl_context));
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
     // capacity and position already set up
-    pc.printf_buffer = printf_buffer;
-    uint32_t position = 0;
-    pc.printf_buffer_position = &position;
-    assert(pc.printf_buffer != NULL);
-    assert(pc.printf_buffer_capacity > 0);
-    assert(pc.printf_buffer_position != NULL);
+    PC.printf_buffer = PrintfBuffer;
+    uint32_t Position = 0;
+    PC.printf_buffer_position = &Position;
+    assert(PC.printf_buffer != NULL);
+    assert(PC.printf_buffer_capacity > 0);
+    assert(PC.printf_buffer_position != NULL);
 #else
-    pc.printf_buffer = NULL;
-    pc.printf_buffer_position = NULL;
+    PC.printf_buffer = NULL;
+    PC.printf_buffer_position = NULL;
 #endif
 
     /* Flush to zero is only set once at the start of the kernel execution
      * because FTZ is a compilation option. */
-    unsigned flush = k->kernel->program->flush_denorms;
-    pocl_set_ftz(flush);
+    unsigned Flush = K->kernel->program->flush_denorms;
+    pocl_set_ftz(Flush);
 
-    for (size_t x = r.pages().begin(); x != r.pages().end(); x++) {
-      for (size_t y = r.rows().begin(); y != r.rows().end(); y++) {
-        for (size_t z = r.cols().begin(); z != r.cols().end(); z++) {
+    for (size_t X = r.pages().begin(); X != r.pages().end(); X++) {
+      for (size_t Y = r.rows().begin(); Y != r.rows().end(); Y++) {
+        for (size_t Z = r.cols().begin(); Z != r.cols().end(); Z++) {
           /* Rounding mode must be reset after every iteration
            * since it can be changed during kernel execution. */
           pocl_set_default_rm();
-          k->workgroup((uint8_t *)arguments, (uint8_t *)&pc, x, y, z);
+          K->workgroup((uint8_t *)Arguments, (uint8_t *)&PC, X, Y, Z);
         }
       }
     }
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
-    if (position > 0) {
-      write(STDOUT_FILENO, pc.printf_buffer, position);
+    if (Position > 0) {
+      write(STDOUT_FILENO, PC.printf_buffer, Position);
     }
 #endif
 
-    free_kernel_arg_array_with_locals((void **)&arguments, (void **)&arguments2,
-                                      k);
+    free_kernel_arg_array_with_locals((void **)&Arguments,
+                                      (void **)&Arguments2,
+                                      K);
   }
-  WorkGroupScheduler(kernel_run_command *k, const pocl_tbb_scheduler_data *dd)
-      : my_k(k), dd(dd) {}
+  WorkGroupScheduler(kernel_run_command *K, const pocl_tbb_scheduler_data *D)
+      : RunCmd(K), SchedData(D) {}
 };
 
-static void finalize_kernel_command(kernel_run_command *k) {
-  free_kernel_arg_array(k);
+static void finalizeKernelCommand(kernel_run_command *RunCmd) {
+  free_kernel_arg_array(RunCmd);
 
-  pocl_release_dlhandle_cache(k->cmd);
+  pocl_release_dlhandle_cache(RunCmd->cmd);
 
-  POCL_UPDATE_EVENT_COMPLETE_MSG(k->cmd->sync.event.event,
+  POCL_UPDATE_EVENT_COMPLETE_MSG(RunCmd->cmd->sync.event.event,
                                  "NDRange Kernel        ");
-  free_kernel_run_command(k);
+  free_kernel_run_command(RunCmd);
 }
 
-static kernel_run_command *pocl_tbb_prepare_kernel(pocl_tbb_scheduler_data *dd,
-                                                   _cl_command_node *cmd) {
+static kernel_run_command *
+prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
+                     _cl_command_node *Cmd) {
 
-  kernel_run_command *run_cmd;
-  cl_kernel kernel = cmd->command.run.kernel;
-  struct pocl_context *pc = &cmd->command.run.pc;
-  cl_program program = kernel->program;
-  cl_uint dev_i = cmd->program_device_i;
+  kernel_run_command *RunCmd;
+  cl_kernel Kernel = Cmd->command.run.kernel;
+  struct pocl_context *PC = &Cmd->command.run.pc;
+  cl_program Program = Kernel->program;
+  cl_uint DevI = Cmd->program_device_i;
 
-  size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
+  size_t NumGroups = PC->num_groups[0] * PC->num_groups[1] * PC->num_groups[2];
 
   // if WGs == 0, return early to avoid having to uninitialize anything
-  if (num_groups == 0) {
-    pocl_update_event_running(cmd->sync.event.event);
+  if (NumGroups == 0) {
+    pocl_update_event_running(Cmd->sync.event.event);
 
-    POCL_UPDATE_EVENT_COMPLETE_MSG(cmd->sync.event.event,
+    POCL_UPDATE_EVENT_COMPLETE_MSG(Cmd->sync.event.event,
                                    "NDRange Kernel        ");
 
     return NULL;
   }
 
   /* initialize the program gvars if required */
-  pocl_driver_build_gvar_init_kernel(program, dev_i, cmd->device,
+  pocl_driver_build_gvar_init_kernel(Program, DevI, Cmd->device,
                                      pocl_cpu_gvar_init_callback);
 
-  char *saved_name = NULL;
-  pocl_sanitize_builtin_kernel_name(kernel, &saved_name);
-  pocl_check_kernel_dlhandle_cache(cmd, 1, 1);
-  pocl_restore_builtin_kernel_name(kernel, saved_name);
+  char *SavedName = NULL;
+  pocl_sanitize_builtin_kernel_name(Kernel, &SavedName);
+  pocl_check_kernel_dlhandle_cache(Cmd, 1, 1);
+  pocl_restore_builtin_kernel_name(Kernel, SavedName);
 
-  run_cmd = new_kernel_run_command();
-  run_cmd->data = dd;
-  run_cmd->kernel = kernel;
-  run_cmd->device = cmd->device;
-  run_cmd->pc = *pc;
-  run_cmd->cmd = cmd;
-  run_cmd->pc.printf_buffer = NULL;
-  run_cmd->pc.printf_buffer_capacity = dd->printf_buf_size;
-  run_cmd->pc.printf_buffer_position = NULL;
-  run_cmd->pc.global_var_buffer = (uchar *)program->gvar_storage[dev_i];
-  run_cmd->workgroup =
-      reinterpret_cast<pocl_workgroup_func>(cmd->command.run.wg);
-  run_cmd->kernel_args = cmd->command.run.arguments;
-  run_cmd->next = NULL;
+  RunCmd = new_kernel_run_command();
+  RunCmd->data = SchedData;
+  RunCmd->kernel = Kernel;
+  RunCmd->device = Cmd->device;
+  RunCmd->pc = *PC;
+  RunCmd->cmd = Cmd;
+  RunCmd->pc.printf_buffer = NULL;
+  RunCmd->pc.printf_buffer_capacity = SchedData->printf_buf_size;
+  RunCmd->pc.printf_buffer_position = NULL;
+  RunCmd->pc.global_var_buffer = (uchar *)Program->gvar_storage[DevI];
+  RunCmd->workgroup =
+      reinterpret_cast<pocl_workgroup_func>(Cmd->command.run.wg);
+  RunCmd->kernel_args = Cmd->command.run.arguments;
+  RunCmd->next = NULL;
 
-  setup_kernel_arg_array(run_cmd);
+  setup_kernel_arg_array(RunCmd);
 
-  pocl_update_event_running(cmd->sync.event.event);
+  pocl_update_event_running(Cmd->sync.event.event);
 
-  return (run_cmd);
+  return RunCmd;
 }
 
-static void tbb_exec_command(pocl_tbb_scheduler_data *dd,
-                             kernel_run_command *run_cmd) {
+static void execCommand(pocl_tbb_scheduler_data *SchedData,
+                        kernel_run_command *RunCmd) {
   /* Note: Grain size variation could be allowed for each dimension
    * individually. */
-  if (dd->grain_size) {
-    if (dd->selected_partitioner == pocl_tbb_partitioner::NONE) {
+  if (SchedData->grain_size) {
+    if (SchedData->selected_partitioner ==
+        pocl_tbb_partitioner::TBB_PART_NONE) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd));
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::AFFINITY) {
-      tbb::affinity_partitioner ap;
+                            0, RunCmd->pc.num_groups[0], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[1], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[2], SchedData->grain_size),
+                        WorkGroupScheduler(RunCmd, SchedData));
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_AFFINITY) {
+      tbb::affinity_partitioner AP;
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd), ap);
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::AUTO) {
+                            0, RunCmd->pc.num_groups[0], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[1], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[2], SchedData->grain_size),
+                        WorkGroupScheduler(RunCmd, SchedData), AP);
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_AUTO) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd),
+                            0, RunCmd->pc.num_groups[0], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[1], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[2], SchedData->grain_size),
+                        WorkGroupScheduler(RunCmd, SchedData),
                         tbb::auto_partitioner());
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::SIMPLE) {
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_SIMPLE) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd),
+                            0, RunCmd->pc.num_groups[0], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[1], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[2], SchedData->grain_size),
+                        WorkGroupScheduler(RunCmd, SchedData),
                         tbb::simple_partitioner());
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::STATIC) {
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_STATIC) {
       tbb::parallel_for(tbb::blocked_range3d<size_t>(
-                            0, run_cmd->pc.num_groups[0], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[1], dd->grain_size, 0,
-                            run_cmd->pc.num_groups[2], dd->grain_size),
-                        WorkGroupScheduler(run_cmd, dd),
+                            0, RunCmd->pc.num_groups[0], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[1], SchedData->grain_size,
+                            0, RunCmd->pc.num_groups[2], SchedData->grain_size),
+                        WorkGroupScheduler(RunCmd, SchedData),
                         tbb::static_partitioner());
     }
-  } else { /* if (dd->grain_size) */
-    if (dd->selected_partitioner == pocl_tbb_partitioner::NONE) {
+  } else { /* if (SchedData->grain_size) */
+    if (SchedData->selected_partitioner ==
+        pocl_tbb_partitioner::TBB_PART_NONE) {
       tbb::parallel_for(
-          tbb::blocked_range3d<size_t>(0, run_cmd->pc.num_groups[0], 0,
-                                       run_cmd->pc.num_groups[1], 0,
-                                       run_cmd->pc.num_groups[2]),
-          WorkGroupScheduler(run_cmd, dd));
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::AFFINITY) {
-      tbb::affinity_partitioner ap;
+          tbb::blocked_range3d<size_t>(0, RunCmd->pc.num_groups[0], 0,
+                                       RunCmd->pc.num_groups[1], 0,
+                                       RunCmd->pc.num_groups[2]),
+          WorkGroupScheduler(RunCmd, SchedData));
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_AFFINITY) {
+      tbb::affinity_partitioner AP;
       tbb::parallel_for(
-          tbb::blocked_range3d<size_t>(0, run_cmd->pc.num_groups[0], 0,
-                                       run_cmd->pc.num_groups[1], 0,
-                                       run_cmd->pc.num_groups[2]),
-          WorkGroupScheduler(run_cmd, dd), ap);
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::AUTO) {
+          tbb::blocked_range3d<size_t>(0, RunCmd->pc.num_groups[0], 0,
+                                       RunCmd->pc.num_groups[1], 0,
+                                       RunCmd->pc.num_groups[2]),
+          WorkGroupScheduler(RunCmd, SchedData), AP);
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_AUTO) {
       tbb::parallel_for(
-          tbb::blocked_range3d<size_t>(0, run_cmd->pc.num_groups[0], 0,
-                                       run_cmd->pc.num_groups[1], 0,
-                                       run_cmd->pc.num_groups[2]),
-          WorkGroupScheduler(run_cmd, dd), tbb::auto_partitioner());
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::SIMPLE) {
+          tbb::blocked_range3d<size_t>(0, RunCmd->pc.num_groups[0], 0,
+                                       RunCmd->pc.num_groups[1], 0,
+                                       RunCmd->pc.num_groups[2]),
+          WorkGroupScheduler(RunCmd, SchedData), tbb::auto_partitioner());
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_SIMPLE) {
       tbb::parallel_for(
-          tbb::blocked_range3d<size_t>(0, run_cmd->pc.num_groups[0], 0,
-                                       run_cmd->pc.num_groups[1], 0,
-                                       run_cmd->pc.num_groups[2]),
-          WorkGroupScheduler(run_cmd, dd), tbb::simple_partitioner());
-    } else if (dd->selected_partitioner == pocl_tbb_partitioner::STATIC) {
+          tbb::blocked_range3d<size_t>(0, RunCmd->pc.num_groups[0], 0,
+                                       RunCmd->pc.num_groups[1], 0,
+                                       RunCmd->pc.num_groups[2]),
+          WorkGroupScheduler(RunCmd, SchedData), tbb::simple_partitioner());
+    } else if (SchedData->selected_partitioner ==
+               pocl_tbb_partitioner::TBB_PART_STATIC) {
       tbb::parallel_for(
-          tbb::blocked_range3d<size_t>(0, run_cmd->pc.num_groups[0], 0,
-                                       run_cmd->pc.num_groups[1], 0,
-                                       run_cmd->pc.num_groups[2]),
-          WorkGroupScheduler(run_cmd, dd), tbb::static_partitioner());
+          tbb::blocked_range3d<size_t>(0, RunCmd->pc.num_groups[0], 0,
+                                       RunCmd->pc.num_groups[1], 0,
+                                       RunCmd->pc.num_groups[2]),
+          WorkGroupScheduler(RunCmd, SchedData), tbb::static_partitioner());
     }
   }
 }
 
-static int tbb_scheduler_get_work(pocl_tbb_scheduler_data *dd) {
-  _cl_command_node *cmd;
-  kernel_run_command *run_cmd;
+static int runSingleCommand(pocl_tbb_scheduler_data *SchedData) {
+  _cl_command_node *Cmd;
+  kernel_run_command *RunCmd;
+  TBBArena *TBBA = SchedData->tbb_arena;
 
-  POCL_FAST_LOCK(dd->wq_lock_fast);
-  int do_exit = 0;
+  POCL_FAST_LOCK(SchedData->wq_lock_fast);
+  int DoExit = 0;
 
 RETRY:
-  do_exit = dd->meta_thread_shutdown_requested;
+  DoExit = SchedData->meta_thread_shutdown_requested;
 
   /* execute a command if available */
-  cmd = dd->work_queue;
-  if (cmd) {
-    DL_DELETE(dd->work_queue, cmd);
-    POCL_FAST_UNLOCK(dd->wq_lock_fast);
+  Cmd = SchedData->work_queue;
+  if (Cmd) {
+    DL_DELETE(SchedData->work_queue, Cmd);
+    POCL_FAST_UNLOCK(SchedData->wq_lock_fast);
 
-    assert(pocl_command_is_ready(cmd->sync.event.event));
+    assert(pocl_command_is_ready(Cmd->sync.event.event));
 
-    if (cmd->type == CL_COMMAND_NDRANGE_KERNEL) {
-      assert((void *)dd == (void *)cmd->device->data);
-      run_cmd = pocl_tbb_prepare_kernel(dd, cmd);
-      if (run_cmd) {
-        dd->arena.execute([run_cmd, dd]() { tbb_exec_command(dd, run_cmd); });
-        finalize_kernel_command(run_cmd);
+    if (Cmd->type == CL_COMMAND_NDRANGE_KERNEL) {
+      assert((void *)SchedData == (void *)Cmd->device->data);
+      RunCmd = prepareKernelCommand(SchedData, Cmd);
+      if (RunCmd) {
+        TBBA->Arena.execute(
+            [RunCmd, SchedData]() { execCommand(SchedData, RunCmd); });
+        finalizeKernelCommand(RunCmd);
       }
     } else {
-      dd->arena.execute([cmd]() { pocl_exec_command(cmd); });
+      TBBA->Arena.execute([Cmd]() { pocl_exec_command(Cmd); });
     }
 
-    POCL_FAST_LOCK(dd->wq_lock_fast);
+    POCL_FAST_LOCK(SchedData->wq_lock_fast);
   }
 
   /* if no command was available, sleep */
-  if ((cmd == NULL) && (do_exit == 0)) {
-    pthread_cond_wait(&dd->wake_meta_thread, &dd->wq_lock_fast);
+  if ((Cmd == NULL) && (DoExit == 0)) {
+    pthread_cond_wait(&SchedData->wake_meta_thread, &SchedData->wq_lock_fast);
     goto RETRY;
   }
 
-  POCL_FAST_UNLOCK(dd->wq_lock_fast);
+  POCL_FAST_UNLOCK(SchedData->wq_lock_fast);
 
-  return do_exit;
+  return DoExit;
 }
 
-static void *pocl_tbb_driver_thread(void *dev) {
-  int do_exit = 0;
-  cl_device_id device = (cl_device_id)dev;
-  pocl_tbb_scheduler_data *dd = (pocl_tbb_scheduler_data *)device->data;
+void *TBBDriverThread(void *Dev) {
+  int DoExit = 0;
+  cl_device_id Device = (cl_device_id)Dev;
+  pocl_tbb_scheduler_data *SchedData = (pocl_tbb_scheduler_data *)Device->data;
 
   while (1) {
-    do_exit = tbb_scheduler_get_work(dd);
-    if (do_exit) {
+    DoExit = runSingleCommand(SchedData);
+    if (DoExit) {
       pthread_exit(NULL);
     }
   }
