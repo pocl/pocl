@@ -31,6 +31,9 @@
 #include <string.h>
 #include <unistd.h>
 
+// required for older versions of TBB
+#define TBB_PREVIEW_NUMA_SUPPORT 1
+
 #include <tbb/blocked_range3d.h>
 #include <tbb/parallel_for.h>
 #include <tbb/partitioner.h>
@@ -143,8 +146,7 @@ public:
     }
 #endif
 
-    free_kernel_arg_array_with_locals((void **)&Arguments,
-                                      (void **)&Arguments2,
+    free_kernel_arg_array_with_locals((void **)&Arguments, (void **)&Arguments2,
                                       K);
   }
   WorkGroupScheduler(kernel_run_command *K, const pocl_tbb_scheduler_data *D)
