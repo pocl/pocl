@@ -1079,7 +1079,7 @@ else()
   set(TESTS_USE_ICD 0)
 endif()
 
-if (APPLE AND NOT ENABLE_ICD AND VISIBILITY_HIDDEN)
+if (APPLE AND VISIBILITY_HIDDEN)
   add_compile_definitions("-DCL_API_CALL=__attribute__ ((visibility (\"default\")))")
 endif()
 

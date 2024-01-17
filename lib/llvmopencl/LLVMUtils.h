@@ -68,6 +68,7 @@ void eraseFunctionAndCallers(llvm::Function *Function);
 
 bool isAutomaticLocal(llvm::Function *F, llvm::GlobalVariable &Var);
 
+POCL_EXPORT
 bool isGVarUsedByFunction(llvm::GlobalVariable *GVar, llvm::Function *F);
 
 // Checks if the given argument of Func is a local buffer.

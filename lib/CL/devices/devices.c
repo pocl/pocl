@@ -100,9 +100,6 @@
 
 #ifdef BUILD_REMOTE_CLIENT
 #include "remote/remote.h"
-extern cl_int pocl_remote_setup_peer_mesh ();
-// from remote/remote.c
-extern const char *remote_device_name_ptr;
 #endif
 
 #define MAX_DEV_NAME_LEN 64
@@ -660,12 +657,11 @@ pocl_init_devices ()
 
           ++dev_index;
         }
+      if (pocl_device_ops[i].post_init != NULL)
+        {
+          pocl_device_ops[i].post_init(&pocl_device_ops[i]);
+        }
     }
-
-#ifdef BUILD_REMOTE_CLIENT
-  pocl_remote_setup_peer_mesh ();
-#endif
-
   first_init_done = 1;
   devices_active = 1;
 ERROR:

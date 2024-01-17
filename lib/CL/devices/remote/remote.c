@@ -228,6 +228,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
 
   ops->probe = pocl_remote_probe;
   ops->init = pocl_remote_init;
+  ops->post_init = pocl_remote_setup_peer_mesh;
   // ops->uninit = pocl_remote_uninit;
   // ops->reinit = pocl_remote_reinit;
 
@@ -488,7 +489,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 }
 
 cl_int
-pocl_remote_setup_peer_mesh ()
+pocl_remote_setup_peer_mesh (struct pocl_device_ops *ops)
 {
   return pocl_network_setup_peer_mesh ();
 }
