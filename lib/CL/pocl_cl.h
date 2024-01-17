@@ -434,6 +434,8 @@ struct pocl_device_ops {
    *  parameters : optional environment with device-specific parameters
    */
   cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
+  /* Device type initialization after all devices have been initialized */
+  cl_int (*post_init) (struct pocl_device_ops *ops);
   /* uninitializes the driver for a particular device. May free hardware resources. */
   cl_int (*uninit) (unsigned j, cl_device_id device);
   /* reinitializes the driver for a particular device. Called after uninit;

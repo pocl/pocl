@@ -64,6 +64,7 @@ int pocl_cache_write_spirv (char *spirv_path,
                             const char *spirv_content,
                             uint64_t file_size);
 
+POCL_EXPORT
 int pocl_cache_write_generic_objfile (char *objfile_path,
                                       const char *objfile_content,
                                       uint64_t objfile_size);
