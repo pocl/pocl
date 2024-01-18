@@ -151,7 +151,7 @@ pocl.
 
 - **POCL_CPU_LOCAL_MEM_SIZE**
 
- Set the local memory size of the CPU devices (cpu, cpu-minimal) to the
+ Set the local memory size of the CPU devices (cpu, cpu-minimal, cpu-tbb) to the
  given amount in bytes instead of the default one.
 
 - **POCL_CPU_MAX_CU_COUNT**
@@ -186,9 +186,9 @@ pocl.
                            kernels on the host CPU. No multithreading.
 
  *         **cpu**      Execution of OpenCL kernels on the host CPU using
-                        (by default) all available CPU threads.
+                        (by default) all available CPU threads via pthread library.
 
- *         **cpu-tbb**  Uses the Intel Threading Building Blocks library
+ *         **cpu-tbb**  Uses the Intel Threading Building Blocks (or oneTBB) library
                         for task scheduling on the host CPU.
 
  *         **cuda**     An experimental driver that uses libcuda to execute on NVIDIA GPUs.
@@ -294,16 +294,16 @@ pocl.
   Default 0. If set to an integer N > 0, libpocl will make a pause of N seconds
   once, when it's loading. Useful e.g. to set up a LTTNG tracing session.
 
-- **POCL_TBB_PARTITIONER** can be set to one of ``affinity``,``auto``,
-  ``simple``,``static`` to select a partitioner. If no
-  partitioner is selected, the TBB library will select the auto partitioner by
-  default. More information can be found in TBB documentation.
+- **POCL_TBB_DEV_PER_NUMA_NODE** can be set to either 0 or 1 (default). If set,
+  PoCL TBB driver creates a separate OpenCL device per each NUMA node.
 
 - **POCL_TBB_GRAIN_SIZE** can be set specify a grain size for all
   dimensions. More information can be found in TBB documentation.
 
-- **POCL_TBB_DEV_PER_NUMA_NODE** can be set to either 0 or 1 (default). If set,
-  PoCL TBB driver creates a separate OpenCL device per each NUMA node.
+- **POCL_TBB_PARTITIONER** can be set to one of ``affinity``,``auto``,
+  ``simple``,``static`` to select a partitioner. If no
+  partitioner is selected, the TBB library will select the auto partitioner by
+  default. More information can be found in TBB documentation.
 
 - **POCL_TRACING**, **POCL_TRACING_OPT** and **POCL_TRACING_FILTER**
 

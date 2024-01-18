@@ -1,11 +1,29 @@
-==========
-TBB device
-==========
+**********************
+CPU device drivers
+**********************
 
-The TBB device uses the Intel Threading Building Blocks open source (Apache 2.0)
-library for work-group and kernel-level task scheduling.
+========================
+'cpu' driver
+========================
 
-The TBB device scheduling characteristics can be fine tuned with environment
+This is the default CPU driver, using the pthread library for multithreaded execution.
+This driver is the most mature and passes almost entirely the conformance test suite.
+
+========================
+'cpu-minimal' driver
+========================
+
+A minimalistic example CPU device driver for executing kernels on the host CPU. Does not
+support multithreading.
+
+========================
+'cpu-tbb' driver
+========================
+
+This driver uses the Intel Threading Building Blocks (currently named oneTBB) open source library
+for work-group and kernel-level task scheduling.
+
+The scheduling characteristics can be fine tuned with environment
 variables (see below) to achieve a higher performance.
 
 Building PoCL with TBB
