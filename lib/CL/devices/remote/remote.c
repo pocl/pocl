@@ -481,7 +481,9 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
       strncpy (exts_w_pinned + strlen (device->extensions) + 1,
                CL_POCL_PINNED_BUFFERS_EXTENSION_NAME,
                strlen (CL_POCL_PINNED_BUFFERS_EXTENSION_NAME));
-      free (device->extensions);
+      // the const char * to void * cast is fine here since this value is
+      // set in pocl_network_setup_devinfo with a strdup.
+      free ((void *)device->extensions);
       device->extensions = exts_w_pinned;
     }
 
