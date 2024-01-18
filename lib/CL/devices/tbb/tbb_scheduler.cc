@@ -57,27 +57,27 @@ struct TBBArena {
   tbb::task_arena Arena;
 };
 
-static std::vector<tbb::numa_node_id> numa_indexes;
+static std::vector<tbb::numa_node_id> NumaIndexes;
 
-static unsigned last_initialized_numa_index = 0;
+static unsigned LastInitializedNumaIndex = 0;
 
 size_t tbb_get_numa_nodes() {
-  numa_indexes = tbb::info::numa_nodes();
-  return numa_indexes.size();
+  NumaIndexes = tbb::info::numa_nodes();
+  return NumaIndexes.size();
 }
 
 void tbb_init_arena(pocl_tbb_scheduler_data *SchedData, int OnePerNode) {
   TBBArena *TBBA = new TBBArena;
   SchedData->tbb_arena = TBBA;
   if (OnePerNode) {
-    assert(last_initialized_numa_index < numa_indexes.size());
-    TBBA->NumaIdx = numa_indexes[last_initialized_numa_index];
+    assert(LastInitializedNumaIndex < NumaIndexes.size());
+    TBBA->NumaIdx = NumaIndexes[LastInitializedNumaIndex];
     TBBA->Arena.initialize(tbb::task_arena::constraints(TBBA->NumaIdx));
   } else {
     TBBA->NumaIdx = UINT32_MAX;
     TBBA->Arena.initialize();
   }
-  ++last_initialized_numa_index;
+  ++LastInitializedNumaIndex;
 }
 
 size_t tbb_get_num_threads(pocl_tbb_scheduler_data *SchedData) {

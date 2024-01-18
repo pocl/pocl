@@ -247,7 +247,7 @@ option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
 
-option(ENABLE_PRINTF_IMMEDIATE_FLUSH "if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
+option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
