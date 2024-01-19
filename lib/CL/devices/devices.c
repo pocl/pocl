@@ -67,6 +67,9 @@
 #ifdef BUILD_PTHREAD
 #include "pthread/pocl-pthread.h"
 #endif
+#ifdef BUILD_TBB
+#include "tbb/tbb.h"
+#endif
 
 #ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
@@ -149,6 +152,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef TCE_AVAILABLE
   INIT_DEV (ttasim),
 #endif
+#ifdef BUILD_TBB
+  INIT_DEV (tbb),
+#endif
 #ifdef BUILD_HSA
   INIT_DEV (hsa),
 #endif
@@ -174,12 +180,15 @@ static init_device_ops pocl_devices_init_ops[] = {
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
 
-char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
+char pocl_device_types[POCL_NUM_DEVICE_TYPES][33] = {
 #ifdef BUILD_BASIC
   "basic",
 #endif
 #ifdef BUILD_PTHREAD
   "pthread",
+#endif
+#ifdef BUILD_TBB
+  "tbb",
 #endif
 #ifdef TCE_AVAILABLE
   "ttasim",

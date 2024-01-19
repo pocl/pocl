@@ -1087,7 +1087,7 @@ pocl_vulkan_init (unsigned j, cl_device_id dev, const char *parameters)
   size_t i;
   int err;
 
-  SETUP_DEVICE_CL_VERSION (HOST_DEVICE_CL_VERSION_MAJOR,
+  SETUP_DEVICE_CL_VERSION (dev, HOST_DEVICE_CL_VERSION_MAJOR,
                            HOST_DEVICE_CL_VERSION_MINOR)
 
   pocl_vulkan_device_data_t *d;

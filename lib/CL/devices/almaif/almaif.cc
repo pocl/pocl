@@ -253,7 +253,7 @@ cl_int pocl_almaif_unmap_mem(void *data, pocl_mem_identifier *dst_mem_id,
 
 cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
-  SETUP_DEVICE_CL_VERSION(1, 2);
+  SETUP_DEVICE_CL_VERSION(dev, 1, 2);
   dev->type = CL_DEVICE_TYPE_CUSTOM;
   dev->long_name = (char *)"memory mapped custom device";
   dev->short_name = "almaif";

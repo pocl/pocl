@@ -124,6 +124,14 @@ static const char *pocl_version
                                      ", RDMA"
 #endif
 
+#ifdef BUILD_TBB
+                                     ", TBB"
+#endif
+
+#ifdef ENABLE_HOST_CPU_DEVICES_OPENMP
+                                     ", OpenMP"
+#endif
+
 #ifdef POCL_DEBUG_MESSAGES
                                      ", POCL_DEBUG"
 #endif

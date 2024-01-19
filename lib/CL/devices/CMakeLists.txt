@@ -65,28 +65,30 @@ if(BUILD_ALMAIF)
     "$<TARGET_OBJECTS:pocl-devices-almaif>")
 endif()
 
+if(BUILD_TBB)
+  add_subdirectory("tbb")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-tbb>")
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${TBB_IMPORTED_TARGETS})
+  endif()
+endif()
+
 if(BUILD_REMOTE_CLIENT)
   add_subdirectory("remote")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-remote>")
-  if(ENABLE_RDMA)
+  if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_RDMA)
     list(APPEND POCL_DEVICES_LINK_LIST RDMAcm::RDMAcm IBVerbs::verbs)
   endif()
 endif()
 
 # for these drivers, use HWLOC if found
 if(ENABLE_HOST_CPU_DEVICES)
+  # topology is always enabled with CPU drivers, and works also without HWLOC
   add_subdirectory("topology")
-  if(NOT ENABLE_LOADABLE_DRIVERS)
-    set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
-      "$<TARGET_OBJECTS:pocl-devices-topology>")
-    if(Hwloc_FOUND)
-      if(Hwloc_LDFLAGS)
-        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-      else()
-        list(APPEND POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
-      endif()
-    endif()
+  if((NOT ENABLE_LOADABLE_DRIVERS) AND ENABLE_HOST_CPU_DEVICES_OPENMP)
+    list(APPEND POCL_DEVICES_LINK_LIST OpenMP::OpenMP_CXX)
   endif()
 endif()
 
@@ -163,6 +165,10 @@ set(POCL_DEVICES_SOURCES
   builtin_kernels.cc builtin_kernels.hh
   spirv.hh  spirv_parser.hh  spirv_parser.cc
   cpuinfo.c  cpuinfo.h)
+
+if(ENABLE_HOST_CPU_DEVICES)
+  list(APPEND POCL_DEVICES_SOURCES common_utils.h common_utils.c)
+endif()
 
 if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
   list(APPEND POCL_DEVICES_SOURCES signal_handlers.c)

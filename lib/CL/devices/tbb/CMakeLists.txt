@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2021 pocl developers
+#   Copyright (c) 2021 PoCL developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,12 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( basic.h basic.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( tbb.h tbb.c tbb_scheduler.cc PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_pocl_device_library("pocl-devices-basic" basic.h basic.c)
+
+add_pocl_device_library(pocl-devices-tbb tbb.h tbb.c tbb_scheduler.cc)
+target_include_directories(pocl-devices-tbb PRIVATE "${TBB_INCLUDE_DIRS}")
+
+if(ENABLE_LOADABLE_DRIVERS)
+  target_link_libraries(pocl-devices-tbb PRIVATE pocl-devices-pthread ${TBB_IMPORTED_TARGETS})
+endif()

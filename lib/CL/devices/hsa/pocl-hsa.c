@@ -678,10 +678,10 @@ init_dev_data (cl_device_id dev, int count)
 cl_int
 pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 {
-  pocl_init_default_device_infos (dev);
+  pocl_init_default_device_infos (dev, HSA_DEVICE_EXTENSIONS);
 
-  SETUP_DEVICE_CL_VERSION(HSA_DEVICE_CL_VERSION_MAJOR,
-                          HSA_DEVICE_CL_VERSION_MINOR)
+  SETUP_DEVICE_CL_VERSION (dev, HSA_DEVICE_CL_VERSION_MAJOR,
+                           HSA_DEVICE_CL_VERSION_MINOR);
 
   dev->spmd = CL_TRUE;
   dev->arg_buffer_launcher = CL_FALSE;

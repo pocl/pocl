@@ -30,30 +30,21 @@ exist, but some might have "dummy" implementations (they always return an error)
 Unimplemented extensions
 ------------------------
 
-  * OpenCL 1.x SPIR 1.2 / 2.0 extension
   * OpenGL interoperability extension
   * DirectX interoperability extension
 
-SPIR and SPIR-V support
+SPIR-V support
 =========================
 
-There is now extensive support available for SPIR and SPIR-V.
-
-Note that SPIR 1.2 and 2.0 are unsupported (though they may accidentally work);
-"SPIR" in the following text refers to LLVM IR bitcode with SPIR target,
-the exact format of which is LLVM-version-dependent. The binary format
-of SPIR-V is independent of LLVM; for this reason SPIR-V is the preferred format.
+There is now extensive support available for SPIR-V.
 
 Note that SPIR-V format supports different "capabilities" which in effect
 are different "dialects" of SPIR-V. The CPU driver supports the "Kernel" dialect,
 produced by llvm-spirv, Vulkan driver supports the "Shader" dialect produced
 by clspv.
 
-How to build PoCL with SPIR/SPIR-V support (CPU / CUDA devices)
+How to build PoCL with SPIR-V support (CPU / CUDA devices)
 ----------------------------------------------------------------
-
-Support for SPIR target is built into LLVM; PoCL built with LLVM automatically supports it.
-If you don't require SPIR-V support, you may skip this part.
 
 Support for SPIR-V binaries depends on functional llvm-spirv translator and some packages.
 See :ref:`pocl-install` for additional requirements for SPIR-V support.
@@ -81,7 +72,7 @@ then when running CMake on PoCL sources, add to the command line: ``-DLLVM_SPIRV
 Compiling source to SPIR/SPIR-V
 --------------------------------
 
-PoCL's own binary format doesn't use SPIR or SPIR-V, but it's possible
+PoCL's own binary format doesn't use SPIR-V, but it's possible
 to compile OpenCL sources directly to SPIR (LLVM IR with SPIR target),
 using Clang::
 
@@ -98,12 +89,6 @@ The SPIR binary from previous command can be further compiled to SPIR-V with::
 
     llvm-spirv -o SPIRV_OUTPUT.spv SPIR_OUTPUT.bc
 
-Using SPIR/SPIR-V with PoCL
-----------------------------
-
-From OpenCL API perspective, PoCL accepts SPIR binaries via  ``clCreateProgramWithBinary`` API.
-SPIR-V is accepted only by the ``clCreateProgramWithIL`` API call. This works even
-if PoCL only reports OpenCL 1.2 support.
 
 Limitations
 -------------

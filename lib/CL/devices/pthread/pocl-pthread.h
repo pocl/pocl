@@ -24,8 +24,8 @@
 #ifndef POCL_PTHREAD_H
 #define POCL_PTHREAD_H
 
-#include "pocl_cl.h"
 #include "config.h"
+#include "pocl_cl.h"
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)

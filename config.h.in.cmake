@@ -6,6 +6,7 @@
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
+#cmakedefine BUILD_TBB
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ALMAIF
 #cmakedefine BUILD_VULKAN
@@ -45,6 +46,8 @@
 #cmakedefine ENABLE_POCL_BUILDING
 
 #cmakedefine ENABLE_POCL_FLOAT_CONVERSION
+
+#cmakedefine ENABLE_PRINTF_IMMEDIATE_FLUSH
 
 #cmakedefine ENABLE_RELOCATION
 
@@ -100,12 +103,6 @@
 
 #cmakedefine ENABLE_LOADABLE_DRIVERS
 
-/* TODO FIXME: required for pocl_init_default_device_infos(),
- * (along with a bunch of host-CPU variables) even if
- * the CPU driver is not compiled. */
-#undef HOST_DEVICE_EXTENSIONS
-#define HOST_DEVICE_EXTENSIONS ""
-
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
@@ -117,13 +114,14 @@
 
 #endif
 
-#if defined(BUILD_BASIC) || defined(BUILD_PTHREAD)
+#if defined(ENABLE_HOST_CPU_DEVICES)
+
+#cmakedefine ENABLE_HOST_CPU_DEVICES_OPENMP
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
 
 #define HOST_CLANG_FLAGS  "@HOST_CLANG_FLAGS@"
 
-#undef HOST_DEVICE_EXTENSIONS
 #define HOST_DEVICE_EXTENSIONS "@HOST_DEVICE_EXTENSIONS@"
 
 #define HOST_DEVICE_FEATURES_30 "@HOST_DEVICE_FEATURES_30@"

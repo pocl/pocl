@@ -49,12 +49,14 @@
 #include "pocl_workgroup_func.h"
 
 #include "common_driver.h"
+#include "common_utils.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
-struct data {
+typedef struct
+{
   /* List of commands ready to be executed */
   _cl_command_node *ready_list;
   /* List of commands not yet ready to be executed */
@@ -62,14 +64,11 @@ struct data {
   /* Lock for command list related operations */
   pocl_lock_t cq_lock;
 
-  /* Currently loaded kernel. */
-  cl_kernel current_kernel;
-
   /* printf buffer */
   void *printf_buffer;
 
   cl_bool available;
-};
+} pocl_basic_data_t;
 
 typedef struct _pocl_basic_usm_allocation_t
 {
@@ -128,7 +127,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
-  ops->build_hash = pocl_basic_build_hash;
+  ops->build_hash = pocl_cpu_build_hash;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
   ops->get_device_info_ext = pocl_basic_get_device_info_ext;
@@ -161,15 +160,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->fill_image = pocl_basic_fill_image;
 }
 
-char *
-pocl_basic_build_hash (cl_device_id device)
-{
-  char* res = calloc(1000, sizeof(char));
-  snprintf (res, 1000, "cpu-minimal-%s-%s", HOST_DEVICE_BUILD_HASH,
-            device->llvm_cpu);
-  return res;
-}
-
 unsigned int
 pocl_basic_probe(struct pocl_device_ops *ops)
 {
@@ -189,7 +179,7 @@ pocl_basic_probe(struct pocl_device_ops *ops)
 cl_int
 pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 {
-  struct data *d;
+  pocl_basic_data_t *d;
   cl_int ret = CL_SUCCESS;
   int err;
   static int first_basic_init = 1;
@@ -200,135 +190,24 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
       first_basic_init = 0;
     }
 
-  d = (struct data *) calloc (1, sizeof (struct data));
+  d = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  d->current_kernel = NULL;
   d->available = CL_TRUE;
+
   device->data = d;
   device->available = &d->available;
 
-  pocl_init_default_device_infos (device);
-
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
-    {
-      /* In reality there is no independent SG progress implemented in this
-         version because we can only have one SG in flight at a time, but it's
-         a corner case which allows us to advertise it for full CTS compliance.
-       */
-      device->sub_group_independent_forward_progress = CL_TRUE;
-
-      /* Just an arbitrary number here based on assumption of SG size 32. */
-      device->max_num_sub_groups = device->max_work_group_size / 32;
-    }
-
-  /* 0 is the host memory shared with all drivers that use it */
-  device->global_mem_id = 0;
-
-  device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
-  device->extensions = HOST_DEVICE_EXTENSIONS;
-
-#if (HOST_DEVICE_CL_VERSION_MAJOR >= 3)
-  device->features = HOST_DEVICE_FEATURES_30;
-  device->run_program_scope_variables_pass = CL_TRUE;
-  device->generic_as_support = CL_TRUE;
-
-  pocl_setup_opencl_c_with_version (device, CL_TRUE);
-  pocl_setup_features_with_version (device);
-#else
-  pocl_setup_opencl_c_with_version (device, CL_FALSE);
-#endif
-
-  pocl_setup_extensions_with_version (device);
-
-  pocl_setup_builtin_kernels_with_version (device);
-
-  pocl_setup_ils_with_version (device);
-
-  device->on_host_queue_props
-      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
-
-#if (!defined(ENABLE_CONFORMANCE)                                             \
-     || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
-  /* full memory consistency model for atomic memory and fence operations
-  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility */
-  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE
-                                       | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
-  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
-                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
-                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM
-                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP
-                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
-
-  device->svm_allocation_priority = 1;
-
-  /* OpenCL 2.0 properties */
-  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
-                     | CL_DEVICE_SVM_ATOMICS;
-
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics")
-      != NULL) {
-    device->single_fp_atomic_caps = device->double_fp_atomic_caps =
-      CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT |
-      CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT |
-      CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
-      CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT |
-      CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT |
-      CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
-  }
-#endif
-
-  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
-      != NULL)
-    {
-      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
-                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
-
-      device->device_usm_capabs
-          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
-            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
-
-      device->single_shared_usm_capabs
-          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
-            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
-    }
-
-  /* hwloc probes OpenCL device info at its initialization in case
-     the OpenCL extension is enabled. This causes to printout
-     an unimplemented property error because hwloc is used to
-     initialize global_mem_size which it is not yet. Just put
-     a nonzero there for now. */
-  device->global_mem_size = 1;
-  err = pocl_topology_detect_device_info(device);
-  if (err)
-    ret = CL_INVALID_DEVICE;
+  ret = pocl_cpu_init_common (device);
+  if (ret != CL_SUCCESS)
+    return ret;
 
   POCL_INIT_LOCK (d->cq_lock);
 
-  assert (device->printf_buffer_size > 0);
-  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                          device->printf_buffer_size);
-  assert (d->printf_buffer != NULL);
-
-  pocl_cpuinfo_detect_device_info(device);
-  pocl_set_buffer_image_limits(device);
-
-  device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
-                                                device->local_mem_size);
-
-  if (device->vendor_id == 0)
-    device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
-
-  /* The basic driver represents only one "compute unit" as
+  /* cpu-minimal driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
-     basic devices can be still used for task level parallelism 
+     basic devices can be still used for task level parallelism
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
   device->max_sub_devices = 0;
@@ -341,8 +220,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 void
 pocl_basic_run (void *data, _cl_command_node *cmd)
 {
-  struct data *d;
-  struct pocl_argument *al;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)data;
+  struct pocl_argument *al = NULL;
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
@@ -358,9 +237,6 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
     return;
 
   assert (data != NULL);
-  d = (struct data *) data;
-
-  d->current_kernel = kernel;
 
   void **arguments = (void **)malloc (sizeof (void *)
                                       * (meta->num_args + meta->num_locals));
@@ -463,12 +339,18 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         }
     }
 
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);
-  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
-  assert (pc->printf_buffer_capacity > 0);
   uint32_t position = 0;
   pc->printf_buffer_position = &position;
+#else
+  pc->printf_buffer = NULL;
+  pc->printf_buffer_position = NULL;
+#endif
+
+  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
+  assert (pc->printf_buffer_capacity > 0);
   pc->global_var_buffer = program->gvar_storage[dev_i];
 
   unsigned rm = pocl_save_rm ();
@@ -485,11 +367,13 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
 
+#ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
   if (position > 0)
     {
       write (STDOUT_FILENO, pc->printf_buffer, position);
       position = 0;
     }
+#endif
 
   for (i = 0; i < meta->num_args; ++i)
     {
@@ -525,7 +409,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
         POCL_MEM_FREE (arguments[meta->num_args + i]);
       }
-  free(arguments);
+  free (arguments);
 
   pocl_release_dlhandle_cache (cmd);
 }
@@ -554,7 +438,7 @@ pocl_basic_run_native (void *data, _cl_command_node *cmd)
 cl_int
 pocl_basic_uninit (unsigned j, cl_device_id device)
 {
-  struct data *d = (struct data*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
   POCL_DESTROY_LOCK (d->cq_lock);
   pocl_aligned_free (d->printf_buffer);
   POCL_MEM_FREE(d);
@@ -565,11 +449,11 @@ pocl_basic_uninit (unsigned j, cl_device_id device)
 cl_int
 pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
 {
-  struct data *d = (struct data *)calloc (1, sizeof (struct data));
+  pocl_basic_data_t *d
+      = (pocl_basic_data_t *)calloc (1, sizeof (pocl_basic_data_t));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  d->current_kernel = NULL;
 
   assert (device->printf_buffer_size > 0);
   d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
@@ -581,8 +465,8 @@ pocl_basic_reinit (unsigned j, cl_device_id device, const char *parameters)
   return CL_SUCCESS;
 }
 
-
-static void basic_command_scheduler (struct data *d) 
+static void
+basic_command_scheduler (pocl_basic_data_t *d)
 {
   _cl_command_node *node;
   
@@ -603,7 +487,7 @@ static void basic_command_scheduler (struct data *d)
 void
 pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  struct data *d = node->device->data;
+  pocl_basic_data_t *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
@@ -621,7 +505,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 
 void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
 {
-  struct data *d = (struct data*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   basic_command_scheduler (d);
@@ -631,7 +515,7 @@ void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_basic_join (cl_device_id device, cl_command_queue cq)
 {
-  struct data *d = (struct data*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
 
   POCL_LOCK (d->cq_lock);
   basic_command_scheduler (d);
@@ -643,7 +527,7 @@ pocl_basic_join (cl_device_id device, cl_command_queue cq)
 void
 pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  struct data *d = (struct data*)device->data;
+  pocl_basic_data_t *d = (pocl_basic_data_t *)device->data;
   _cl_command_node * volatile node = event->command;
 
   if (finished->status < CL_COMPLETE)

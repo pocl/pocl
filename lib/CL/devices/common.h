@@ -32,14 +32,14 @@
 #include "pocl_image_types.h"
 #undef __CBUILD__
 
-#define XSETUP_DEVICE_CL_VERSION(A, B)                                        \
-  dev->version_as_int = (A * 100) + (B * 10);                                 \
-  dev->version_as_cl = CL_MAKE_VERSION (A, B, 0);                             \
-  dev->version = "OpenCL " #A "." #B " PoCL";                                 \
-  dev->opencl_c_version_as_opt = "CL" #A "." #B;                              \
-  dev->opencl_c_version_as_cl = CL_MAKE_VERSION (A, B, 0);
+#define XSETUP_DEVICE_CL_VERSION(D, A, B)                                     \
+  D->version_as_int = (A * 100) + (B * 10);                                   \
+  D->version_as_cl = CL_MAKE_VERSION (A, B, 0);                               \
+  D->version = "OpenCL " #A "." #B " PoCL";                                   \
+  D->opencl_c_version_as_opt = "CL" #A "." #B;                                \
+  D->opencl_c_version_as_cl = CL_MAKE_VERSION (A, B, 0);
 
-#define SETUP_DEVICE_CL_VERSION(a, b) XSETUP_DEVICE_CL_VERSION(a, b)
+#define SETUP_DEVICE_CL_VERSION(D, a, b) XSETUP_DEVICE_CL_VERSION (D, a, b)
 
 #define POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR    1
 #define POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT   1
@@ -71,6 +71,9 @@ void pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
 POCL_EXPORT
 void pocl_exec_command (_cl_command_node *node);
+
+POCL_EXPORT
+char *pocl_cpu_build_hash (cl_device_id device);
 
 POCL_EXPORT
 void pocl_broadcast (cl_event event);
@@ -110,7 +113,8 @@ void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 void pocl_print_system_memory_stats();
 
 POCL_EXPORT
-void pocl_init_default_device_infos (cl_device_id dev);
+void pocl_init_default_device_infos (cl_device_id dev,
+                                     const char *device_extensions);
 
 POCL_EXPORT
 void pocl_setup_opencl_c_with_version (cl_device_id dev, int supports_30);

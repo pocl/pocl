@@ -275,7 +275,7 @@ depending which style of parameter passing is desired:
  arguments are for PHSA's context data, and the third one is the argument
  buffer.
 
-*NOTE: There's a plan to remove the "fast" workgroup function and unify the way the
+NOTE: There's a plan to remove the "fast" workgroup function and unify the way the
 workgroups are called from the host code.
 
 Assisting transformations

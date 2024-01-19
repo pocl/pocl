@@ -1,7 +1,8 @@
-/* pthread_utils.c - utilities for the pthread driver
+/* common_utils.c - common utilities for CPU device drivers
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2019 Pekka Jääskeläinen
+                 2011-2019 Pekka Jääskeläinen and
+                 2021 Tobias Baumann / Zuse Institute Berlin
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,20 +24,24 @@
 */
 
 #include <string.h>
-#include "pocl-pthread_utils.h"
-#include "utlist.h"
-#include "common.h"
-#include "pocl-pthread.h"
-#include "pocl_mem_management.h"
 
+#include "common.h"
+#include "common_utils.h"
+#include "cpuinfo.h"
+#include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+#include "topology/pocl_topology.h"
+#include "utlist.h"
+
+/* NOTE: k->lock is probably unnecessary for the tbb device */
 #ifdef USE_POCL_MEMMANAGER
 
 static kernel_run_command *volatile kernel_pool = 0;
 static int kernel_pool_initialized = 0;
 static pocl_lock_t kernel_pool_lock;
 
-
-void pocl_init_kernel_run_command_manager (void)
+void
+pocl_init_kernel_run_command_manager ()
 {
   if (!kernel_pool_initialized)
     {
@@ -45,7 +50,8 @@ void pocl_init_kernel_run_command_manager (void)
     }
 }
 
-void pocl_init_thread_argument_manager (void)
+void
+pocl_init_thread_argument_manager ()
 {
   if (!kernel_pool_initialized)
     {
@@ -95,6 +101,147 @@ align_ptr (char *p)
       r += MAX_EXTENDED_ALIGNMENT;
     }
   return (char *)r;
+}
+
+#define FALLBACK_MAX_THREAD_COUNT 8
+
+/* initializes CPU-specific device info struct members, that cannot / should
+   not be initialized in pocl_init_default_device_infos() */
+
+cl_int
+pocl_cpu_init_common (cl_device_id device)
+{
+  int ret = CL_SUCCESS;
+
+  pocl_init_default_device_infos (device, HOST_DEVICE_EXTENSIONS);
+
+  SETUP_DEVICE_CL_VERSION (device, HOST_DEVICE_CL_VERSION_MAJOR,
+                           HOST_DEVICE_CL_VERSION_MINOR)
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_khr_subgroup") != NULL)
+    {
+      /* In reality there is no independent SG progress implemented in this
+         version because we can only have one SG in flight at a time, but it's
+         a corner case which allows us to advertise it for full CTS compliance.
+       */
+      device->sub_group_independent_forward_progress = CL_TRUE;
+
+      /* Just an arbitrary number here based on assumption of SG size 32. */
+      device->max_num_sub_groups = device->max_work_group_size / 32;
+    }
+
+  /* 0 is the host memory shared with all drivers that use it */
+  device->global_mem_id = 0;
+
+  device->version_of_latest_passed_cts = HOST_DEVICE_LATEST_CTS_PASS;
+  device->extensions = HOST_DEVICE_EXTENSIONS;
+
+  device->features = HOST_DEVICE_FEATURES_30;
+  device->run_program_scope_variables_pass = CL_TRUE;
+  device->generic_as_support = CL_TRUE;
+
+  pocl_setup_opencl_c_with_version (device, CL_TRUE);
+  pocl_setup_features_with_version (device);
+
+  pocl_setup_extensions_with_version (device);
+
+  pocl_setup_builtin_kernels_with_version (device);
+
+  pocl_setup_ils_with_version (device);
+
+  device->on_host_queue_props
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
+
+#if (!defined(ENABLE_CONFORMANCE)                                             \
+     || (defined(ENABLE_CONFORMANCE) && (HOST_DEVICE_CL_VERSION_MAJOR >= 3)))
+  /* full memory consistency model for atomic memory and fence operations
+  https://www.khronos.org/registry/OpenCL/specs/3.0-unified/html/OpenCL_API.html#opencl-3.0-backwards-compatibility*/
+  device->atomic_memory_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE
+                                       | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES;
+  device->atomic_fence_capabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED
+                                       | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
+                                       | CL_DEVICE_ATOMIC_ORDER_SEQ_CST
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM 
+                                       | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP 
+                                       | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+
+  device->svm_allocation_priority = 1;
+
+  /* OpenCL 2.0 properties */
+  device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                     | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM
+                     | CL_DEVICE_SVM_ATOMICS;
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_ext_float_atomics") != NULL)
+    {
+      device->single_fp_atomic_caps = device->double_fp_atomic_caps
+          = CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT
+            | CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT
+            | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT
+            | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT;
+    }
+
+#endif
+
+  if (strstr (HOST_DEVICE_EXTENSIONS, "cl_intel_unified_shared_memory")
+      != NULL)
+    {
+      device->host_usm_capabs = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+                                | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->device_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+
+      device->single_shared_usm_capabs
+          = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL
+            | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL;
+    }
+
+  /* hwloc probes OpenCL device info at its initialization in case
+     the OpenCL extension is enabled. This causes to printout
+     an unimplemented property error because hwloc is used to
+     initialize global_mem_size which it is not yet. Just put
+     a nonzero there for now. */
+  device->global_mem_size = 1;
+  int err = pocl_topology_detect_device_info (device);
+  if (err)
+    return CL_INVALID_DEVICE;
+
+  /* device->max_compute_units was set up by topology_detect,
+   * but if the user requests, lower it */
+  /* if hwloc/topology detection failed, use a fixed maximum */
+  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
+                                                  : device->max_compute_units;
+
+  /* old env variable */
+  int max_threads = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", 0);
+
+  if (max_threads <= 0)
+    max_threads = pocl_get_int_option ("POCL_CPU_MAX_CU_COUNT", fallback);
+
+  /* old env variable */
+  int min_threads = pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 0);
+  if (min_threads <= 0)
+    min_threads = pocl_get_int_option ("POCL_CPU_MIN_CU_COUNT", 1);
+
+  device->max_compute_units
+      = max ((unsigned)max_threads, (unsigned)min_threads);
+
+  pocl_cpuinfo_detect_device_info (device);
+  pocl_set_buffer_image_limits (device);
+
+  device->local_mem_size = pocl_get_int_option ("POCL_CPU_LOCAL_MEM_SIZE",
+                                                device->local_mem_size);
+
+  return ret;
 }
 
 /* called from kernel setup code.

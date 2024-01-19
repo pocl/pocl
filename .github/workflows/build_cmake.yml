@@ -77,7 +77,13 @@ jobs:
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1
+            if [ "${{ matrix.llvm }}" == "14" ]; then
+              runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
+            elif [ "${{ matrix.llvm }}" == "15" ]; then
+              runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
+            else
+              runCMake -DENABLE_ICD=1
+            fi
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then

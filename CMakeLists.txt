@@ -104,8 +104,8 @@ if(UNIX)
   endif()
 endif()
 
-set(MAJOR_VERSION 5)
-set(MINOR_VERSION 1)
+set(MAJOR_VERSION 6)
+set(MINOR_VERSION 0)
 set(VERSION_SUFFIX_FIXED_TEXT "-pre")
 set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT}")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
@@ -225,6 +225,12 @@ option(ENABLE_VULKAN "Experimental and incomplete driver that uses the Vulkan AP
 
 option(ENABLE_LEVEL0 "Experimental and incomplete driver that uses the Level Zero API for controlling the device. Please refer to the user manual for the status and open tasks" OFF)
 
+option(ENABLE_TBB_DEVICE "Enable the Intel TBB device driver." OFF)
+
+option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (cpu & cpu-minimal)." ON)
+
+option(ENABLE_HOST_CPU_DEVICES_OPENMP "Enables OpenMP support for Host CPU devices (cpu driver only, cpu-minimal driver remains single-threaded)" OFF)
+
 option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
 
 option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
@@ -240,6 +246,8 @@ option(ENABLE_REMOTE_CLIENT "Build the client library of the remote driver" OFF)
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
+
+option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
@@ -285,8 +293,6 @@ option(DEVELOPER_MODE "This will SIGNIFICANTLY reduce PoCL's performance, but sp
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
 option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
-
-option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
 option(ENABLE_POCLCC "Build poclcc. Defaults to ON" ON)
 
@@ -462,6 +468,45 @@ setup_cached_var(ENABLE_HWLOC "Using hwloc"
         "Hwloc found, but requested build without it")
 
 include(sanitizers)
+
+######################################################################################
+
+if(ENABLE_TBB_DEVICE)
+  # related documentation: https://github.com/oneapi-src/oneTBB/tree/tbb_2020/cmake#binary-package-integration
+  find_package(TBB REQUIRED)
+  if(TARGET TBB::tbb)
+    set(TBB_IMPORTED_TARGETS TBB::tbb)
+  elseif(NOT TBB_FOUND AND PKG_CONFIG_FOUND)
+    message(STATUS "searching for TBB with pkg-config")
+    pkg_check_modules(TBB tbb>=2015)
+    if(TBB_FOUND)
+      set(TBB_IMPORTED_TARGETS "${TBB_LIBRARIES}" CACHE STRING "TBB libraries" FORCE)
+    endif()
+  endif()
+
+  if(NOT TBB_INCLUDE_DIRS)
+    get_target_property(TBB_INCLUDE_DIRS TBB::tbb INTERFACE_INCLUDE_DIRECTORIES)
+  endif()
+  if(NOT TBB_LIBRARIES)
+    get_target_property(TBB_LIBRARIES TBB::tbb IMPORTED_LOCATION_RELEASE)
+  endif()
+
+  if(NOT TBB_FOUND)
+    message(FATAL_ERROR "Can't find TBB libraries")
+  endif()
+
+  message(STATUS "Found TBB library: ${TBB_LIBRARIES} with include dirs: ${TBB_INCLUDE_DIRS}" )
+
+  # The tbb device depends on the pthread device which depends on the basic device. ENABLE_HOST_CPU_DEVICES enables both.
+  set(ENABLE_HOST_CPU_DEVICES 1)
+endif()
+
+if(ENABLE_HOST_CPU_DEVICES_OPENMP)
+  find_package(OpenMP)
+  if(NOT OpenMP_CXX_FOUND)
+    message(FATAL_ERROR "ENABLE_HOST_CPU_DEVICES_OPENMP specified but OpenMP not found.")
+  endif()
+endif()
 
 ######################################################################################
 
@@ -1400,6 +1445,11 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(BUILD_PTHREAD 1)
 endif()
 
+if(ENABLE_TBB_DEVICE)
+  set(BUILD_TBB 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} tbb")
+endif()
+
 # The almaif device could be built by default, but it's implemented in C++,
 # thus requires a C++ compiler, so let's not.
 if(ENABLE_ALMAIF_DEVICE)
@@ -1870,7 +1920,7 @@ endif()
 # 12:0:10 == 3.1 (the libpocl.so will be named libpocl.so.2.10.X )
 # 13:0:11 == 4.0 (the libpocl.so will be named libpocl.so.2.11.X )
 # 14:0:12 == 5.0 (the libpocl.so will be named libpocl.so.2.12.X )
-# 15:0:13 == 5.1 (the libpocl.so will be named libpocl.so.2.13.X )
+# 15:0:13 == 6.0 (the libpocl.so will be named libpocl.so.2.13.X )
 
 set(LIB_CURRENT_VERSION 15)
 set(LIB_REVISION_VERSION 0)

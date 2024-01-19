@@ -22,12 +22,11 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-
 #ifndef POCL_PTHREAD_SCHEDULER_H
 #define POCL_PTHREAD_SCHEDULER_H
 
-#include "pocl-pthread_utils.h"
+#include "common_utils.h"
+#include "pocl_cl.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -38,7 +37,7 @@ typedef struct pool_thread_data thread_data;
 /* Initializes scheduler. Must be called before any kernel enqueue */
 cl_int pthread_scheduler_init (cl_device_id device);
 
-void pthread_scheduler_uninit ();
+void pthread_scheduler_uninit (cl_device_id device);
 
 /* Gives ready-to-execute command for scheduler */
 void pthread_scheduler_push_command (_cl_command_node *cmd);

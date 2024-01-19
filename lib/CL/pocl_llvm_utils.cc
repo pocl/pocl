@@ -357,14 +357,14 @@ void cpu_setup_vector_widths(cl_device_id dev) {
       VECWIDTH(cl_long);
   dev->native_vector_width_float = dev->preferred_vector_width_float =
       VECWIDTH(float);
-  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp64") == NULL) {
+  if (strstr(dev->extensions, "cl_khr_fp64") == NULL) {
     dev->native_vector_width_double = dev->preferred_vector_width_double = 0;
   } else {
     dev->native_vector_width_double = dev->preferred_vector_width_double =
         VECWIDTH(double);
   }
 
-  if (strstr(HOST_DEVICE_EXTENSIONS, "cl_khr_fp16") == NULL) {
+  if (strstr(dev->extensions, "cl_khr_fp16") == NULL) {
     dev->native_vector_width_half = dev->preferred_vector_width_half = 0;
   } else {
     dev->native_vector_width_half = dev->preferred_vector_width_half =
