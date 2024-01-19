@@ -8,6 +8,7 @@ CPU device drivers
 
 This is the default CPU driver, using the pthread library for multithreaded execution.
 This driver is the most mature and passes almost entirely the conformance test suite.
+Building of this driver is enabled by default, but can be disabled by -DENABLE_HOST_CPU_DEVICES=0.
 
 ========================
 'cpu-minimal' driver
