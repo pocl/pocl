@@ -1051,7 +1051,9 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
 void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
   rep->extra_size = PlatformList.size() * sizeof(uint32_t);
-  rep->extra_data = (char *)(DeviceCounts.data());
+  uint32_t *Counts = new uint32_t[DeviceCounts.size()];
+  std::copy(DeviceCounts.begin(), DeviceCounts.end(), Counts);
+  rep->extra_data = (char *)(Counts);
   replyData(rep, MessageType_ServerInfoReply, PlatformList.size(),
             rep->extra_size);
 }
