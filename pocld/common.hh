@@ -303,7 +303,7 @@ class Reply {
 public:
   ReplyMsg_t rep;
   Request *req;
-  char *extra_data;
+  std::unique_ptr<uint8_t[]> extra_data;
   size_t extra_size;
   cl::Event event;
   // server host timestamps for network comm
@@ -325,8 +325,6 @@ public:
 
   ~Reply() {
     delete req;
-    if (extra_data)
-      delete[] extra_data;
   }
 };
 

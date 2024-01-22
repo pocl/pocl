@@ -545,7 +545,7 @@ int VirtualCLContext::run() {
         reply->rep.fail_details = CL_INVALID_OPERATION;
         reply->rep.failed = 1;
         reply->rep.message_type = MessageType_Failure;
-        reply->extra_data = nullptr;
+        reply->extra_data.reset();
         reply->extra_size = 0;
         POCL_MSG_ERR("Unknown message type received: %" PRIu32 "\n",
                      uint32_t(request->req.message_type));
@@ -681,7 +681,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
     ext->server_vaddr = (uint64_t)shadow_buf.get();
     rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_size = sizeof(CreateRdmaBufferReply_t);
-    rep->extra_data = (char *)(ext);
+    rep->extra_data.reset((uint8_t *)(ext));
   }
 #endif
 }
@@ -787,7 +787,8 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   TP_BUILD_PROGRAM(req->req.msg_id, req->req.client_did, id);
 
   // output reply
-  char *buffer = new char[MAX_REMOTE_BUILDPROGRAM_SIZE];
+  rep->extra_data.reset((uint8_t*)new char[MAX_REMOTE_BUILDPROGRAM_SIZE]);
+  char *buffer = (char*)(rep->extra_data.get());
   size_t buffer_size = MAX_REMOTE_BUILDPROGRAM_SIZE;
   char *buf = buffer;
 
@@ -837,7 +838,6 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
     ProgramContexts.clear();
   }
 
-  rep->extra_data = buffer;
   rep->extra_size = (buf - buffer);
 
   RETURN_IF_ERR_DATA;
@@ -1092,9 +1092,9 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
     rep->rep.strings_size += str.size() + 1;
 
   rep->extra_size = sizeof(info) + rep->rep.strings_size;
-  rep->extra_data = new char[rep->extra_size];
-  std::memcpy(rep->extra_data, &info, sizeof(info));
-  char *strings_pos = rep->extra_data + sizeof(info);
+  rep->extra_data.reset(new uint8_t[rep->extra_size]);
+  std::memcpy(rep->extra_data.get(), &info, sizeof(info));
+  char *strings_pos = (char *)rep->extra_data.get() + sizeof(info);
   for (const std::string& str : strings) {
     // Append the strings to the string part of the reply, and
     // ensure that the strings are separated with \0.
