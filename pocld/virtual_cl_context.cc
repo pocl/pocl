@@ -105,7 +105,6 @@ class VirtualCLContext : public VirtualContextBase {
 
   std::vector<cl::Platform> PlatformList;
   std::vector<SharedContextBase *> SharedContextList;
-  std::vector<uint32_t> DeviceCounts;
   size_t TotalDevices;
 
   size_t current_printf_position;
@@ -297,15 +296,13 @@ size_t VirtualCLContext::initPlatforms() {
   }
 
   SharedContextList.resize(PlatformList.size());
-  DeviceCounts.resize(PlatformList.size());
 
   for (size_t i = 0; i < PlatformList.size(); ++i) {
     SharedContextBase *p = createSharedCLContext(
         &(PlatformList[i]), i, this, write_slow.get(), write_fast.get());
 
     SharedContextList[i] = p;
-    DeviceCounts[i] = (uint32_t)(p->numDevices());
-    TotalDevices += DeviceCounts[i];
+    TotalDevices += (uint32_t)(p->numDevices());
   }
 
   POCL_MSG_PRINT_GENERAL("Initialized %" PRIuS
@@ -372,13 +369,13 @@ int VirtualCLContext::checkPlatformDeviceValidity(Request *req) {
       peer_id == req->req.m.migrate.source_peer_id) {
     uint32_t pid = req->req.m.migrate.source_pid;
     uint32_t did = req->req.m.migrate.source_pid;
-    if ((pid < PlatformList.size()) && (did < DeviceCounts[pid]))
+    if ((pid < PlatformList.size()) && (did < SharedContextList[pid]->numDevices()))
       return 0;
   }
 
   uint32_t pid = req->req.pid;
   uint32_t did = req->req.did;
-  if ((pid < PlatformList.size()) && (did < DeviceCounts[pid]))
+  if ((pid < PlatformList.size()) && (did < SharedContextList[pid]->numDevices()))
     return 0;
 
   Reply *reply = new Reply(req);
@@ -1051,8 +1048,10 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
 void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
   rep->extra_size = PlatformList.size() * sizeof(uint32_t);
-  uint32_t *Counts = new uint32_t[DeviceCounts.size()];
-  std::copy(DeviceCounts.begin(), DeviceCounts.end(), Counts);
+  uint32_t *Counts = new uint32_t[PlatformList.size()];
+  for (size_t i = 0; i < PlatformList.size(); ++i) {
+    Counts[i] = SharedContextList.at(i)->numDevices();
+  }
   rep->extra_data.reset((char *)(Counts));
   replyData(rep, MessageType_ServerInfoReply, PlatformList.size(),
             rep->extra_size);
