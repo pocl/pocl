@@ -370,8 +370,8 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
 	  if (numVar) {
 	    return std::stoull(numVar);
 	  } else {
-	    std::cerr << "Warning: environment variable NUM_THREAD is not found" << std::endl;
-	    return 32;
+	    POCL_MSG_ERR("environment variable NUM_THREAD is not found\n");
+	    return 32ull;
 	  }
 	}();
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
