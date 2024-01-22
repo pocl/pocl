@@ -657,7 +657,7 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
     ext->server_vaddr = (uint64_t)shadow_buf.get();
     rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
     rep->extra_size = sizeof(CreateRdmaBufferReply_t);
-    rep->extra_data = (char *)(ext);
+    rep->extra_data.reset((char *)(ext));
   }
 #endif
 }
@@ -813,7 +813,7 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
     ProgramContexts.clear();
   }
 
-  rep->extra_data = buffer;
+  rep->extra_data.reset(buffer);
   rep->extra_size = (buf - buffer);
 
   RETURN_IF_ERR_DATA;
@@ -1053,7 +1053,7 @@ void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
   rep->extra_size = PlatformList.size() * sizeof(uint32_t);
   uint32_t *Counts = new uint32_t[DeviceCounts.size()];
   std::copy(DeviceCounts.begin(), DeviceCounts.end(), Counts);
-  rep->extra_data = (char *)(Counts);
+  rep->extra_data.reset((char *)(Counts));
   replyData(rep, MessageType_ServerInfoReply, PlatformList.size(),
             rep->extra_size);
 }
@@ -1077,9 +1077,9 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
     rep->rep.strings_size += str.size() + 1;
 
   rep->extra_size = sizeof(info) + rep->rep.strings_size;
-  rep->extra_data = new char[rep->extra_size];
-  std::memcpy(rep->extra_data, &info, sizeof(info));
-  char *strings_pos = rep->extra_data + sizeof(info);
+  rep->extra_data.reset(new char[rep->extra_size]);
+  std::memcpy(rep->extra_data.get(), &info, sizeof(info));
+  char *strings_pos = rep->extra_data.get() + sizeof(info);
   for (const std::string& str : strings) {
     // Append the strings to the string part of the reply, and
     // ensure that the strings are separated with \0.
