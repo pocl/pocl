@@ -365,7 +365,15 @@ pocl_ventus_run (void *data, _cl_command_node *cmd)
   else
       knl_name_list[meta->name] = 0;
 
-    uint64_t num_thread=32;
+    uint64_t num_thread=[]{
+	  char* numVar = std::getenv("NUM_THREAD");
+	  if (numVar) {
+	    return std::stoull(numVar);
+	  } else {
+	    std::cerr << "Warning: environment variable NUM_THREAD is not found" << std::endl;
+	    return 32;
+	  }
+	}();
     uint64_t num_warp=(pc->local_size[0]*pc->local_size[1]*pc->local_size[2] + num_thread-1)/ num_thread;
     uint64_t num_workgroups[3];
     num_workgroups[0]=pc->num_groups[0];num_workgroups[1]=pc->num_groups[1];num_workgroups[2]=pc->num_groups[2];
