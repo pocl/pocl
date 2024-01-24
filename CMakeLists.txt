@@ -1520,12 +1520,17 @@ if(ENABLE_PROXY_DEVICE)
     endif()
 
   endif()
-  if(NOT DEFINED PROXY_USE_LIBOPENCL_STUB)
-    set(RENAME_POCL 1)
-  endif()
+
   if(RENAME_POCL AND PROXY_USE_LIBOPENCL_STUB)
     message(FATAL_ERROR "RENAME_POCL and PROXY_USE_LIBOPENCL_STUB can not be used together")
   endif()
+
+  if(NOT PROXY_USE_LIBOPENCL_STUB)
+    set(RENAME_POCL ON )
+  else()
+    set(RENAME_POCL OFF )
+  endif()
+
   set(BUILD_PROXY 1)
 
   set(OCL_DRIVERS "${OCL_DRIVERS} proxy")
