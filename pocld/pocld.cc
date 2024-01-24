@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+#ifdef POCL_DEBUG_MESSAGES
   const char *logfilter = NULL;
   if (ai.log_filter_arg)
     logfilter = ai.log_filter_arg;
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]) {
     logfilter = "";
   pocl_stderr_is_a_tty = isatty(fileno(stderr));
   pocl_debug_messages_setup(logfilter);
+#endif
 
 #ifdef __linux__
   // to avoid cores at abort

@@ -270,7 +270,7 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
 #else
   char *host_ptr = new char[m.size];
 #endif
-  rep->extra_data.reset(host_ptr);
+  rep->extra_data.reset((uint8_t*)host_ptr);
   rep->extra_size = m.size;
 
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
@@ -335,7 +335,7 @@ void CommandQueue::ReadBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
 #else
   char *host_ptr = new char[m.host_bytes];
 #endif
-  rep->extra_data.reset(host_ptr);
+  rep->extra_data.reset((uint8_t *)host_ptr);
   rep->extra_size = m.host_bytes;
 
   TP_READ_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
@@ -473,7 +473,7 @@ void CommandQueue::ReadImageRect(uint32_t queue_id, Request *req, Reply *rep) {
   COPY_VEC3(img_region, m.region);
 
   char *host_ptr = new char[m.host_bytes];
-  rep->extra_data.reset(host_ptr);
+  rep->extra_data.reset((uint8_t *)host_ptr);
   rep->extra_size = m.host_bytes;
 
   TP_READ_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
