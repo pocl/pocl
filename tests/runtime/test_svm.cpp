@@ -97,7 +97,7 @@ int TestCGSVM() {
     std::uniform_int_distribution<> Distrib(1, MaxSize);
 
     std::map<char*, size_t> Allocs;
-    for (int i = 0; i < NumAllocs; ++i) {
+    for (size_t i = 0; i < NumAllocs; ++i) {
       size_t AllocSize = Distrib(Gen);
 
       char *Buf = (char*)::clSVMAlloc(Context.get(), CL_MEM_READ_WRITE,
@@ -485,7 +485,7 @@ int TestFGSVM() {
     std::uniform_int_distribution<> Distrib(1, MaxSize);
 
     std::map<char *, size_t> Allocs;
-    for (int i = 0; i < NumAllocs; ++i) {
+    for (size_t i = 0; i < NumAllocs; ++i) {
       size_t AllocSize = Distrib(Gen);
 
       char *Buf = (char *)::clSVMAlloc(

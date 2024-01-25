@@ -29,10 +29,8 @@
 #include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
-#include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <random>
 
 #define BUF_SIZE 16
 
@@ -113,8 +111,8 @@ int main(void) {
     cl::Kernel GetAddrKernel(Program, "get_addr");
 
     cl::Buffer PinnedCLBuffer = cl::Buffer(
-        Context, CL_MEM_READ_WRITE | CL_MEM_PINNED | CL_MEM_COPY_HOST_PTR,
-        BUF_SIZE * sizeof(cl_int), (void *)&PinnedBufferHost[0]);
+        Context, (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_PINNED | CL_MEM_COPY_HOST_PTR),
+        (size_t)BUF_SIZE * sizeof(cl_int), (void *)&PinnedBufferHost[0]);
 
     if (getDeviceAddressFromHost(PinnedCLBuffer) == nullptr) {
       std::cerr << "Pinned buffers should get allocated immediately to get the "
