@@ -77,7 +77,7 @@ typedef CL_API_ENTRY cl_int
    the runtime or the client code. If any of the devices in the context
    does not support pinning, an error (TO DEFINE) is returned.
 */
-#define CL_MEM_PINNED (1 << 31)
+#define CL_MEM_PINNED (1ul << 31)
 
 /* clGetMemObjectInfo(): A new query CL_MEM_DEVICE_PTR:
 
