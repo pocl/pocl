@@ -29,7 +29,7 @@ project(pocld)
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
-set(SOURCES pocld.cc cmdline.h cmdline.c
+set(SOURCES pocld.cc cmdline.h cmdline.c daemon.hh daemon.cc
             ../lib/CL/pocl_debug.c ../lib/CL/pocl_debug.h
             ../lib/CL/pocl_threads.c ../lib/CL/pocl_threads.h
             ../lib/CL/pocl_timing.c ../lib/CL/pocl_timing.h
