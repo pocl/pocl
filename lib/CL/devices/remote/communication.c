@@ -2035,13 +2035,6 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
   assert (mem->size > 0);
   assert (mem->flags != 0);
 
-  assert (mem->mem_host_ptr == 0 || (mem->flags & CL_MEM_USES_SVM_POINTER != 0)
-          || (size_t)mem->mem_host_ptr < ddata->device_svm_region_start_addr
-          || (size_t)mem->mem_host_ptr
-                 > ddata->device_svm_region_start_addr
-                       + ddata->device_svm_region_start_addr
-                       + ddata->device_svm_region_size);
-
   nc.request.m.create_buffer.flags = mem->flags;
   nc.request.m.create_buffer.size = mem->size;
   // see https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer_002dInteger-Conversion.html
