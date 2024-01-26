@@ -376,7 +376,8 @@ cl_int pocl_network_build_program (
     int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
     const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
     uint32_t *devices, uint32_t *platforms, size_t num_devices,
-    char **build_log, char **binaries, size_t *binary_sizes);
+    char **build_log, char **binaries, size_t *binary_sizes,
+    size_t svm_region_offset);
 
 cl_int pocl_network_free_program (remote_device_data_t *ddata,
                                   uint32_t prog_id);

@@ -80,7 +80,7 @@ public:
       std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
       std::unordered_map<uint64_t, std::string> &build_logs,
-      size_t &num_kernels) = 0;
+      size_t &num_kernels, uint64_t SVMRegionOffset) = 0;
 
   virtual int freeProgram(uint32_t program_id) = 0;
 

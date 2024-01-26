@@ -2267,6 +2267,14 @@ pocl_network_setup_peer_mesh ()
   return CL_SUCCESS;
 }
 
+/**
+ * Build a program remotely.
+ *
+ * Non-obvious parameters:
+ * \param [i] svm_region_offset Nonzero if the build process should adjust
+ * the memory accessess of the program to account for an offset between
+ * the SVM regions.
+ */
 cl_int
 pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
                             size_t payload_size, int is_binary, int is_builtin,
@@ -2275,7 +2283,7 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
                             size_t *kernel_meta_size, uint32_t *devices,
                             uint32_t *platforms, size_t num_devices,
                             char **build_logs, char **binaries,
-                            size_t *binary_sizes)
+                            size_t *binary_sizes, size_t svm_region_offset)
 {
   size_t i, j;
   REMOTE_SERV_DATA2;
@@ -2299,6 +2307,7 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
 
   nc.request.m.build_program.payload_size = payload_size;
   nc.request.m.build_program.options_len = options ? strlen (options) : 0;
+  nc.request.m.build_program.svm_region_offset = svm_region_offset;
 
   nc.request.m.build_program.num_devices = num_devices;
   assert (num_devices < MAX_REMOTE_DEVICES);

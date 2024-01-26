@@ -559,6 +559,9 @@ extern "C"
   {
     uint64_t payload_size;
     uint64_t options_len;
+    // nonzero, if the program's memory accesses should be offset-adjusted
+    // to match the SVM region starts in the remote device and the host
+    uint64_t svm_region_offset;
     uint32_t num_devices;
     uint32_t devices[MAX_REMOTE_DEVICES];
     uint32_t platforms[MAX_REMOTE_DEVICES];

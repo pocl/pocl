@@ -752,7 +752,8 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
     if (DevList.size() > 0) {
       err = SharedContextList[i]->buildProgram(
           id, DevList, source, source_len, is_binary, is_builtin, is_spirv,
-          options, input_binaries, output_binaries, build_logs, num_kernels);
+          options, input_binaries, output_binaries, build_logs, num_kernels,
+          m.svm_region_offset);
       if (err == CL_SUCCESS) {
         ProgramContexts.push_back(SharedContextList[i]);
       } else

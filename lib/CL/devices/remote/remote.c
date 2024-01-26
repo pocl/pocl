@@ -458,7 +458,7 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   /* CG SVM is implemented via pinned device memory pools and SPIR-V
      manipulation (TODO: document more thoroughly after landing with a working
      solution). */
-  if (setup_svm_memory_pool (device) == 0 && d->svm_region_offset == 0)
+  if (setup_svm_memory_pool (device) == 0)
     {
       /* We currently need d->svm_region_offset == 0 since there are no
          means implemented yet to cope with an offset. It means that we
@@ -740,7 +740,8 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
       d, program->source, strlen (program->source), CL_FALSE, CL_FALSE,
       CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
       &kernel_meta_size, relevant_devices, relevant_platforms,
-      num_relevant_devices, build_logs, binaries, binary_sizes);
+      num_relevant_devices, build_logs, binaries, binary_sizes,
+      d->svm_region_offset);
 
   setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
 
@@ -859,7 +860,7 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
         d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, spir_build,
         prog_id, program->compiler_options, &kernel_meta_bytes,
         &kernel_meta_size, relevant_devices, relevant_platforms,
-        num_relevant_devices, build_logs, NULL, NULL);
+        num_relevant_devices, build_logs, NULL, NULL, d->svm_region_offset);
     free (buffer);
   }
 
@@ -945,7 +946,7 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
       &kernel_meta_size,
       &d->remote_device_index,   // relevant_devices,
       &d->remote_platform_index, // relevant_platforms,,
-      1, &build_log, NULL, 0);
+      1, &build_log, NULL, 0, 0);
 
   if (err)
     return err;
