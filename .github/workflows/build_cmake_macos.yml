@@ -36,9 +36,9 @@ jobs:
         config: [basic, devel]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
           mamba-version: "*"
