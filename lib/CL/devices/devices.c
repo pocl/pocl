@@ -22,6 +22,7 @@
    THE SOFTWARE.
 */
 
+#include "utlist.h"
 #define _GNU_SOURCE
 
 #include <string.h>
@@ -120,6 +121,7 @@
 
 
 /* the enabled devices */
+/* Head for the pocl_devices linked list*/
 struct _cl_device_id *pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
 
@@ -132,8 +134,16 @@ unsigned int pocl_num_devices = 0;
 const char *
 pocl_get_device_name (unsigned index)
 {
+
   if (index < pocl_num_devices)
-    return pocl_devices[index].long_name;
+    {
+      cl_device_id device = pocl_devices;
+      for (unsigned i = 0; device != NULL; device = device->next, i++)
+        {
+          if (i == index)
+            return device->long_name;
+        }
+    }
   else
     return NULL;
 }
@@ -316,7 +326,8 @@ unsigned int
 pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
                   unsigned int num_devices)
 {
-  unsigned int i, dev_added = 0;
+  unsigned int dev_added = 0;
+  cl_device_id device;
 
   cl_device_type device_type_tmp = device_type;
   if (device_type_tmp == CL_DEVICE_TYPE_ALL)
@@ -324,23 +335,23 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (i = 0; i < pocl_num_devices; ++i)
+  for (device = pocl_devices; device != NULL; device = device->next)
     {
-      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile && (*device->available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         {
-          devices[dev_added] = &pocl_devices[i];
+          devices[dev_added] = device;
           ++dev_added;
           break;
         }
 
-      if (pocl_devices[i].type & device_type_tmp)
+      if (device->type & device_type_tmp)
         {
             if (dev_added < num_devices)
               {
-                devices[dev_added] = &pocl_devices[i];
+                devices[dev_added] = device;
                 ++dev_added;
               }
             else
@@ -356,7 +367,7 @@ unsigned int
 pocl_get_device_type_count(cl_device_type device_type)
 {
   unsigned int count = 0;
-  unsigned int i;
+  cl_device_id device;
 
   cl_device_type device_type_tmp = device_type;
   if (device_type_tmp == CL_DEVICE_TYPE_ALL)
@@ -364,15 +375,15 @@ pocl_get_device_type_count(cl_device_type device_type)
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (i = 0; i < pocl_num_devices; ++i)
+  for (device = pocl_devices; device != NULL; device = device->next)
     {
-      if (!pocl_offline_compile && (*pocl_devices[i].available == CL_FALSE))
+      if (!pocl_offline_compile && (*device->available == CL_FALSE))
         continue;
 
       if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
         return 1;
 
-      if (pocl_devices[i].type & device_type_tmp)
+      if (device->type & device_type_tmp)
         {
            ++count;
         }
@@ -393,18 +404,18 @@ pocl_uninit_devices ()
 
   POCL_MSG_PRINT_GENERAL ("UNINIT all devices\n");
 
-  unsigned i, j, dev_index;
+  unsigned i, j;
+  cl_device_id device = pocl_devices;
 
-  dev_index = 0;
   cl_device_id d;
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
       if (pocl_devices_init_ops[i] == NULL)
         continue;
       assert (pocl_device_ops[i].init);
-      for (j = 0; j < device_count[i]; ++j)
+      for (j = 0; device != NULL; device = device->next, j++)
         {
-          d = &pocl_devices[dev_index];
+          d = device;
           if (*(d->available) == CL_FALSE)
               continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
@@ -421,7 +432,6 @@ pocl_uninit_devices ()
               dlclose (pocl_device_handles[i]);
             }
 #endif
-          ++dev_index;
         }
     }
 
@@ -446,9 +456,9 @@ pocl_reinit_devices ()
 
   POCL_MSG_WARN ("REINIT all devices\n");
 
-  unsigned i, j, dev_index;
+  unsigned i, j;
+  cl_device_id device = pocl_devices;
 
-  dev_index = 0;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = { 0 };
   cl_device_id d;
@@ -457,9 +467,9 @@ pocl_reinit_devices ()
     {
       pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert (pocl_device_ops[i].init);
-      for (j = 0; j < device_count[i]; ++j)
+      for (j = 0; device != NULL; device = device->next)
         {
-          d = &pocl_devices[dev_index];
+          d = device;
           if (*(d->available) == CL_FALSE)
             continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
@@ -471,8 +481,6 @@ pocl_reinit_devices ()
               retval = ret;
               goto FINISH;
             }
-
-          ++dev_index;
         }
     }
 
@@ -622,10 +630,6 @@ pocl_init_devices ()
   POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
                       "no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
 
-  pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
-  POCL_GOTO_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
-                      "Can not allocate memory for devices\n");
-
   dev_index = 0;
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
@@ -637,7 +641,9 @@ pocl_init_devices ()
 
       for (j = 0; j < device_count[i]; ++j)
         {
-          cl_device_id dev = &pocl_devices[dev_index];
+          cl_device_id dev;
+          dev = (cl_device_id)calloc (1, sizeof (*dev));
+
           dev->ops = &pocl_device_ops[i];
           dev->dev_id = dev_index;
           /* The default value for the global memory space identifier is
@@ -658,11 +664,15 @@ pocl_init_devices ()
                < 0),
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
 
-          errcode = pocl_devices[dev_index].ops->init (
-              j, &pocl_devices[dev_index], getenv (env_name));
+          errcode = dev->ops->init (j, dev, getenv (env_name));
           POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
                               "Device %i / %s initialization failed!", j,
                               dev_name);
+
+          if (CL_SUCCESS == errcode)
+            {
+              LL_APPEND (pocl_devices, dev);
+            }
 
           ++dev_index;
         }

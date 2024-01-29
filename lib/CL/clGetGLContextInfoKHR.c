@@ -40,9 +40,10 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clGetGLContextInfoKHR) (
         cl_device_id *dev_array
             = alloca (sizeof (cl_device_id) * pocl_num_devices);
         unsigned j = 0;
-        for (unsigned i = 0; i < pocl_num_devices; ++i)
+        for (cl_device_id device = pocl_devices; device != NULL;
+             device = device->next)
           {
-            cl_device_id dev = &pocl_devices[i];
+            cl_device_id dev = device;
             if (dev->ops->get_gl_context_assoc != NULL
                 && dev->ops->get_gl_context_assoc (
                        dev, CL_DEVICES_FOR_GL_CONTEXT_KHR, properties)
@@ -65,9 +66,10 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clGetGLContextInfoKHR) (
     case CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR:
       {
         cl_device_id found = NULL;
-        for (unsigned i = 0; i < pocl_num_devices; ++i)
+        for (cl_device_id device = pocl_devices; device != NULL;
+             device = device->next)
           {
-            cl_device_id dev = &pocl_devices[i];
+            cl_device_id dev = device;
             if (dev->ops->get_gl_context_assoc != NULL
                 && dev->ops->get_gl_context_assoc (
                        dev, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, properties)

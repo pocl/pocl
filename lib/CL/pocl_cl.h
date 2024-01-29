@@ -1094,6 +1094,8 @@ struct _cl_device_id {
   cl_device_unified_shared_memory_capabilities_intel single_shared_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel cross_shared_usm_capabs;
   cl_device_unified_shared_memory_capabilities_intel system_shared_usm_capabs;
+
+  struct _cl_device_id *next;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
