@@ -19,6 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# exit immediately on error, see
+# https://www.davidpashley.com/articles/writing-robust-shell-scripts/
+set -e
+
 BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
@@ -47,8 +51,8 @@ export POCL_BUILDING=1
 export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
-if [ -z $POCLD_PORT ]; then
-    $BUILD_DIR/pocld/pocld -a 127.0.0.1 -p $PORT -v error &
+if [ -z "$POCLD_PORT" ]; then
+    "$BUILD_DIR/pocld/pocld" -a 127.0.0.1 -p "$PORT" -v error &
     POCLD_PID=$!
     echo "PoCL-D launched with PID: $POCLD_PID"
 fi
@@ -62,8 +66,11 @@ unset POCL_ENABLE_UNINIT
 
 echo "Running $BUILD_DIR/$TEST_BINARY"
 
-$BUILD_DIR/$TEST_BINARY $@ &
+"$BUILD_DIR/$TEST_BINARY" "$@" &
 EXAMPLE_PID=$!
+
+# kill returns nonzero on success
+set +e
 
 RESULT=3
 WAIT=1
@@ -85,9 +92,9 @@ if [ -e "/proc/$EXAMPLE_PID" ]; then
   kill $EXAMPLE_PID
 fi
 
-if [ -z $POCLD_PORT ]; then
+if [ -z "$POCLD_PORT" ]; then
   if [ -e "/proc/$POCLD_PID" ]; then
-     kill $POCLD_PID
+     kill "$POCLD_PID"
   fi
 fi
 
@@ -95,8 +102,8 @@ sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 
-if [ -z $POCLD_PORT ]; then
-    kill -9 $POCLD_PID 1>/dev/null 2>&1
+if [ -z "$POCLD_PORT" ]; then
+    kill -9 "$POCLD_PID" 1>/dev/null 2>&1
 fi
 
 wait -f

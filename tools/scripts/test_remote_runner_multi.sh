@@ -19,6 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# exit immediately on error, see
+# https://www.davidpashley.com/articles/writing-robust-shell-scripts/
+set -e
+
 BUILD_DIR=$1
 TEST_BINARY=$2
 shift 2
@@ -57,13 +61,13 @@ export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
 if [ -z "$POCLD_PORT" ]; then
-    $BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT1 -v error,warn,general &
+    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT1" -v error,warn,general &
     POCLD_PID1=$!
     echo "Pocld running with PID: $POCLD_PID1"
 fi
 
 if [ -z "$POCLD_PORT2" ]; then
-    $BUILD_DIR/pocld/pocld -a $PUBLIC_IP -p $PORT2 -v error,warn,general &
+    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT2" -v error,warn,general &
     POCLD_PID2=$!
     echo "Pocld running with PID: $POCLD_PID2"
 fi
@@ -80,8 +84,11 @@ echo "Running $BUILD_DIR/$TEST_BINARY"
 
 sleep 1
 
-$BUILD_DIR/$TEST_BINARY $@ &
+"$BUILD_DIR/$TEST_BINARY" "$@" &
 EXAMPLE_PID=$!
+
+# kill returns nonzero on success
+set +e
 
 RESULT=3
 WAIT=1
@@ -105,13 +112,13 @@ fi
 
 if [ -z "$POCLD_PORT" ]; then
     if [ -e "/proc/$POCLD_PID1" ]; then
-        kill $POCLD_PID1
+        kill "$POCLD_PID1"
     fi
 fi
 
 if [ -z "$POCLD_PORT2" ]; then
     if [ -e "/proc/$POCLD_PID2" ]; then
-        kill $POCLD_PID2
+        kill "$POCLD_PID2"
     fi
 fi
 
@@ -120,11 +127,11 @@ sleep 2
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 
 if [ -z "$POCLD_PORT" ]; then
-    kill -9 $POCLD_PID1 1>/dev/null 2>&1
+    kill -9 "$POCLD_PID1" 1>/dev/null 2>&1
 fi
 
-if [ -z "$POCLD_PORT" ]; then
-    kill -9 $POCLD_PID2 1>/dev/null 2>&1
+if [ -z "$POCLD_PORT2" ]; then
+    kill -9 "$POCLD_PID2" 1>/dev/null 2>&1
 fi
 
 wait -f
