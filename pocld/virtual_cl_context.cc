@@ -1050,11 +1050,11 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
 void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
   rep->extra_size = PlatformList.size() * sizeof(uint32_t);
-  uint32_t *Counts = new uint32_t[PlatformList.size()];
+  rep->extra_data.reset(new uint8_t[rep->extra_size]);
+  uint32_t *Counts = (uint32_t *)rep->extra_data.get();
   for (size_t i = 0; i < PlatformList.size(); ++i) {
     Counts[i] = SharedContextList.at(i)->numDevices();
   }
-  rep->extra_data.reset((uint8_t *)Counts);
   replyData(rep, MessageType_ServerInfoReply, PlatformList.size(),
             rep->extra_size);
 }
