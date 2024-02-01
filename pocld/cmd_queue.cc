@@ -59,8 +59,8 @@ void CommandQueue::notify() {
 }
 
 bool CommandQueue::TryRun(Request *request) {
-  size_t unknown_events = request->waitlist_size;
-  for (size_t i = 0; i < request->waitlist_size; ++i) {
+  size_t unknown_events = request->req.waitlist_size;
+  for (size_t i = 0; i < request->req.waitlist_size; ++i) {
     if (backend->isCommandReceived(request->waitlist[i]))
       unknown_events -= 1;
   }
@@ -198,7 +198,7 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
     // direct mig within 1 platform
     RETURN_IF_ERR_CODE(backend->migrateMemObject(
         req->req.event_id, queue_id, req->req.obj_id, m.is_image, evt_timing,
-        req->waitlist_size, req->waitlist));
+        req->req.waitlist_size, req->waitlist.data()));
     // TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
     // req->req.obj_id, m.size, CL_FINISHED);
   }
@@ -207,11 +207,13 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
   else {
     // after data is read
     assert(m.is_external);
+    void *host_ptr;
 #ifdef ENABLE_RDMA
-    req->extra_data = backend->getRdmaShadowPtr(req->req.obj_id);
+    host_ptr = backend->getRdmaShadowPtr(req->req.obj_id);
     req->extra_size = m.size;
 #else
-    assert(req->extra_data);
+    assert(req->extra_data.size() >= req->extra_size);
+    host_ptr = req->extra_data.data();
 #endif
     // finish the migration by import
     if (m.is_image) {
@@ -223,8 +225,8 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
                           CL_RUNNING);
       RETURN_IF_ERR_CODE(backend->writeImageRect(
           req->req.event_id, queue_id, req->req.obj_id, origin, region,
-          req->extra_data, req->extra_size, evt_timing, req->waitlist_size,
-          req->waitlist));
+          host_ptr, req->extra_size, evt_timing, req->req.waitlist_size,
+          req->waitlist.data()));
       TP_WRITE_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                           req->req.obj_id, m.width, m.height, m.depth,
                           CL_FINISHED);
@@ -232,15 +234,15 @@ void CommandQueue::MigrateMemObj(uint32_t queue_id, Request *req, Reply *rep) {
       TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.size, CL_RUNNING);
       RETURN_IF_ERR_CODE(backend->writeBuffer(
-          req->req.event_id, queue_id, req->req.obj_id, 0, m.size, 0,
-          req->extra_data, evt_timing, req->waitlist_size, req->waitlist));
+          req->req.event_id, queue_id, req->req.obj_id, 0, m.size, 0, host_ptr,
+          evt_timing, req->req.waitlist_size, req->waitlist.data()));
       TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.size, CL_FINISHED);
     }
   }
 #ifdef ENABLE_RDMA
-  // unset the RDMA-controlled ptr so it does not get freed after replying
-  req->extra_data = nullptr;
+  // unset size from the request, since the request's extra_data is not used
+  req->extra_size = 0;
 #endif
 #endif
 
@@ -277,8 +279,8 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
                  req->req.obj_id, m.size, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readBuffer(
       req->req.event_id, queue_id, req->req.obj_id, m.is_svm, m.content_size_id,
-      m.size, m.src_offset, host_ptr, &m.size, evt_timing, req->waitlist_size,
-      req->waitlist));
+      m.size, m.src_offset, host_ptr, &m.size, evt_timing,
+      req->req.waitlist_size, req->waitlist.data()));
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_FINISHED);
 
@@ -290,17 +292,17 @@ void CommandQueue::WriteBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   EventTiming_t evt_timing{};
 
 #ifdef ENABLE_RDMA
-  void *data = backend->clientUsesRdma() ? nullptr : req->extra_data;
+  void *data = backend->clientUsesRdma() ? nullptr : req->extra_data.data();
 #else
-  void *data = req->extra_data;
+  void *data = req->extra_data.data();
 #endif
 
   TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                   req->req.obj_id, m.size, CL_RUNNING);
-  RETURN_IF_ERR_CODE(
-      backend->writeBuffer(req->req.event_id, queue_id, req->req.obj_id,
-                           req->req.m.write.is_svm, m.size, m.dst_offset, data,
-                           evt_timing, req->waitlist_size, req->waitlist));
+  RETURN_IF_ERR_CODE(backend->writeBuffer(
+      req->req.event_id, queue_id, req->req.obj_id, req->req.m.write.is_svm,
+      m.size, m.dst_offset, data, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_WRITE_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                   req->req.obj_id, m.size, CL_FINISHED);
 
@@ -316,7 +318,7 @@ void CommandQueue::CopyBuffer(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->copyBuffer(
       req->req.event_id, queue_id, m.src_buffer_id, m.dst_buffer_id,
       m.size_buffer_id, m.size, m.src_offset, m.dst_offset, evt_timing,
-      req->waitlist_size, req->waitlist));
+      req->req.waitlist_size, req->waitlist.data()));
   TP_COPY_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  m.src_buffer_id, m.dst_buffer_id, m.size, CL_FINISHED);
 
@@ -344,7 +346,7 @@ void CommandQueue::ReadBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->readBufferRect(
       req->req.event_id, queue_id, req->req.obj_id, buffer_origin, region,
       m.buffer_row_pitch, m.buffer_slice_pitch, host_ptr, m.host_bytes,
-      evt_timing, req->waitlist_size, req->waitlist));
+      evt_timing, req->req.waitlist_size, req->waitlist.data()));
   TP_READ_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.region.x, m.region.y, m.region.z,
                       CL_FINISHED);
@@ -361,9 +363,9 @@ void CommandQueue::WriteBufferRect(uint32_t queue_id, Request *req,
   COPY_VEC3(region, m.region);
 
 #ifdef ENABLE_RDMA
-  void *data = backend->clientUsesRdma() ? nullptr : req->extra_data;
+  void *data = backend->clientUsesRdma() ? nullptr : req->extra_data.data();
 #else
-  void *data = req->extra_data;
+  void *data = req->extra_data.data();
 #endif
 
   TP_WRITE_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
@@ -372,7 +374,7 @@ void CommandQueue::WriteBufferRect(uint32_t queue_id, Request *req,
   RETURN_IF_ERR_CODE(backend->writeBufferRect(
       req->req.event_id, queue_id, req->req.obj_id, buffer_origin, region,
       m.buffer_row_pitch, m.buffer_slice_pitch, data, req->extra_size,
-      evt_timing, req->waitlist_size, req->waitlist));
+      evt_timing, req->req.waitlist_size, req->waitlist.data()));
   TP_WRITE_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
                        req->req.obj_id, m.region.x, m.region.y, m.region.z,
                        CL_FINISHED);
@@ -394,7 +396,8 @@ void CommandQueue::CopyBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->copyBufferRect(
       req->req.event_id, queue_id, m.dst_buffer_id, m.src_buffer_id, dst_origin,
       src_origin, region, m.dst_row_pitch, m.dst_slice_pitch, m.src_row_pitch,
-      m.src_slice_pitch, evt_timing, req->waitlist_size, req->waitlist));
+      m.src_slice_pitch, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_COPY_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
                       m.src_buffer_id, m.dst_buffer_id, m.region.x, m.region.y,
                       m.region.z, CL_FINISHED);
@@ -408,10 +411,10 @@ void CommandQueue::FillBuffer(uint32_t queue_id, Request *req, Reply *rep) {
 
   TP_FILL_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_RUNNING);
-  RETURN_IF_ERR_CODE(
-      backend->fillBuffer(req->req.event_id, queue_id, req->req.obj_id,
-                          m.dst_offset, m.size, req->extra_data, m.pattern_size,
-                          evt_timing, req->waitlist_size, req->waitlist));
+  RETURN_IF_ERR_CODE(backend->fillBuffer(
+      req->req.event_id, queue_id, req->req.obj_id, m.dst_offset, m.size,
+      req->extra_data.data(), m.pattern_size, evt_timing,
+      req->req.waitlist_size, req->waitlist.data()));
   TP_FILL_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_FINISHED);
 
@@ -433,11 +436,11 @@ void CommandQueue::RunKernel(uint32_t queue_id, Request *req, Reply *rep) {
                     CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->runKernel(
       req->req.event_id, queue_id, dev_id, m.has_new_args, m.args_num,
-      (uint64_t *)req->extra_data,
-      (unsigned char *)req->extra_data + m.args_num * sizeof(uint64_t),
-      m.pod_arg_size, req->extra_data2, evt_timing, req->req.obj_id,
-      req->waitlist_size, req->waitlist, dim, offset, global,
-      (m.has_local ? &local : nullptr)));
+      (uint64_t *)req->extra_data.data(),
+      (unsigned char *)req->extra_data.data() + m.args_num * sizeof(uint64_t),
+      m.pod_arg_size, (char *)req->extra_data2.data(), evt_timing,
+      req->req.obj_id, req->req.waitlist_size, req->waitlist.data(), dim,
+      offset, global, (m.has_local ? &local : nullptr)));
   TP_NDRANGE_KERNEL(req->req.msg_id, req->req.client_did, queue_id, ker_id,
                     CL_FINISHED);
 
@@ -458,7 +461,8 @@ void CommandQueue::FillImage(uint32_t queue_id, Request *req, Reply *rep) {
   assert(req->extra_size == 16);
   RETURN_IF_ERR_CODE(backend->fillImage(
       req->req.event_id, queue_id, req->req.obj_id, img_origin, img_region,
-      req->extra_data, evt_timing, req->waitlist_size, req->waitlist));
+      req->extra_data.data(), evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_FILL_IMAGE(req->req.msg_id, req->req.client_did, queue_id, req->req.obj_id,
                 CL_FINISHED);
 
@@ -481,7 +485,8 @@ void CommandQueue::ReadImageRect(uint32_t queue_id, Request *req, Reply *rep) {
                      CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readImageRect(
       req->req.event_id, queue_id, req->req.obj_id, img_origin, img_region,
-      host_ptr, m.host_bytes, evt_timing, req->waitlist_size, req->waitlist));
+      host_ptr, m.host_bytes, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_READ_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      req->req.obj_id, m.region.x, m.region.y, m.region.z,
                      CL_FINISHED);
@@ -502,8 +507,8 @@ void CommandQueue::WriteImageRect(uint32_t queue_id, Request *req, Reply *rep) {
   RETURN_IF_ERR_CODE(backend->writeImageRect(
       req->req.event_id, queue_id, req->req.obj_id, img_origin, img_region,
       // m.IMAGE_row_pitch, m.IMAGE_slice_pitch,
-      req->extra_data, req->extra_size, evt_timing, req->waitlist_size,
-      req->waitlist));
+      req->extra_data.data(), req->extra_size, evt_timing,
+      req->req.waitlist_size, req->waitlist.data()));
   TP_WRITE_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.region.x, m.region.y, m.region.z,
                       CL_FINISHED);
@@ -524,7 +529,8 @@ void CommandQueue::CopyBuffer2Image(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyBuffer2Image(
       req->req.event_id, queue_id, req->req.obj_id, m.src_buf_id, img_origin,
-      img_region, m.src_offset, evt_timing, req->waitlist_size, req->waitlist));
+      img_region, m.src_offset, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_COPY_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      m.src_buf_id, req->req.obj_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);
@@ -545,7 +551,8 @@ void CommandQueue::CopyImage2Buffer(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyImage2Buffer(
       req->req.event_id, queue_id, req->req.obj_id, m.dst_buf_id, img_origin,
-      img_region, m.dst_offset, evt_timing, req->waitlist_size, req->waitlist));
+      img_region, m.dst_offset, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_COPY_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      req->req.obj_id, m.dst_buf_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);
@@ -567,7 +574,8 @@ void CommandQueue::CopyImage2Image(uint32_t queue_id, Request *req,
                      m.region.z, CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->copyImage2Image(
       req->req.event_id, queue_id, m.dst_image_id, m.src_image_id, dst_origin,
-      src_origin, img_region, evt_timing, req->waitlist_size, req->waitlist));
+      src_origin, img_region, evt_timing, req->req.waitlist_size,
+      req->waitlist.data()));
   TP_COPY_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      m.src_image_id, m.dst_image_id, m.region.x, m.region.y,
                      m.region.z, CL_FINISHED);

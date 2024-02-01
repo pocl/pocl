@@ -102,30 +102,29 @@ void Peer::writerThread() {
     CHECK_WRITE(write_full(fd, &msg_size, sizeof(uint32_t), netstat), "PHW");
     CHECK_WRITE(write_full(fd, &r->req, msg_size, netstat), "PHW");
 
-    assert((r->waitlist_size > 0 && r->waitlist) ^
-           ((!r->waitlist_size) && (!r->waitlist)));
-    if (r->waitlist_size > 0 && r->waitlist) {
-      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu64 "\n",
-                             r->waitlist_size);
-      CHECK_WRITE(write_full(fd, r->waitlist,
-                             r->waitlist_size * sizeof(uint64_t), netstat),
+    assert(r->waitlist.size() == r->req.waitlist_size);
+    if (r->req.waitlist_size > 0) {
+      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
+                             r->req.waitlist_size);
+      CHECK_WRITE(write_full(fd, r->waitlist.data(),
+                             r->req.waitlist_size * sizeof(uint64_t), netstat),
                   "PHW");
     }
 
-    // assert((r->extra_size > 0 && r->extra_data) ^
-    //            ((!r->extra_size) && (!r->extra_data)));
+    assert(r->extra_data.size() >= r->extra_size);
     if (r->extra_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA: %" PRIuS "\n", r->extra_size);
-      CHECK_WRITE(write_full(fd, r->extra_data, r->extra_size, netstat), "PHW");
+      CHECK_WRITE(write_full(fd, r->extra_data.data(), r->extra_size, netstat),
+                  "PHW");
     }
 
-    assert((r->extra_size2 > 0 && r->extra_data2) ^
-           ((!r->extra_size2) && (!r->extra_data2)));
-    if (r->extra_size2 > 0 && r->extra_data2) {
+    assert(r->extra_data2.size() >= r->extra_size2);
+    if (r->extra_size2 > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA2: %" PRIuS "\n",
                              r->extra_size2);
-      CHECK_WRITE(write_full(fd, r->extra_data2, r->extra_size2, netstat),
-                  "PHW");
+      CHECK_WRITE(
+          write_full(fd, r->extra_data2.data(), r->extra_size2, netstat),
+          "PHW");
     }
 
     delete r;

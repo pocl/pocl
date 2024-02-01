@@ -197,7 +197,6 @@ bool Request::read(int fd) {
                          uint64_t(req->msg_id), request_to_str(t),
                          request->req_read, request->req_size);
 
-  request->waitlist_size = req->waitlist_size;
   switch (req->message_type) {
   case MessageType_WriteBuffer:
     request->extra_size = req->m.write.size;
@@ -249,27 +248,27 @@ bool Request::read(int fd) {
 
   /*****************************/
   if (req->waitlist_size > 0) {
-    if (!request->waitlist)
-      request->waitlist = new uint64_t[request->waitlist_size];
-    POCL_MSG_PRINT_GENERAL(
-        "READING WAIT LIST FOR ID: %" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
-        uint64_t(req->msg_id), request->waitlist_read, request->waitlist_size);
-    RETURN_UNLESS_DONE(reentrant_read(fd, request->waitlist,
-                                      request->waitlist_size * sizeof(uint64_t),
-                                      &request->waitlist_read));
+    request->waitlist.resize(req->waitlist_size);
+    POCL_MSG_PRINT_GENERAL("READING WAIT LIST FOR ID: %" PRIu64 " = %" PRIuS
+                           "/%" PRIu32 "\n",
+                           uint64_t(req->msg_id), request->waitlist_read,
+                           request->req.waitlist_size);
+    RETURN_UNLESS_DONE(
+        reentrant_read(fd, request->waitlist.data(),
+                       request->req.waitlist_size * sizeof(uint64_t),
+                       &request->waitlist_read));
   }
   /*****************************/
 
   /*****************************/
   if (request->extra_size > 0) {
-    if (!request->extra_data)
-      request->extra_data = new char[request->extra_size + 1];
-
+    request->extra_data.resize(request->extra_size + 1);
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA FOR ID: %" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
         uint64_t(req->msg_id), request->extra_read, request->extra_size);
-    RETURN_UNLESS_DONE(reentrant_read(
-        fd, request->extra_data, request->extra_size, &request->extra_read));
+    RETURN_UNLESS_DONE(reentrant_read(fd, request->extra_data.data(),
+                                      request->extra_size,
+                                      &request->extra_read));
     /* Always add a null byte at the end - it is needed for strings and it does
      * not harm other things */
     request->extra_data[request->extra_size] = 0;
@@ -278,14 +277,13 @@ bool Request::read(int fd) {
 
   /*****************************/
   if (request->extra_size2 > 0) {
-    if (!request->extra_data2)
-      request->extra_data2 = new char[request->extra_size2 + 1];
-
+    request->extra_data2.resize(request->extra_size2 + 1);
     POCL_MSG_PRINT_GENERAL(
         "READING EXTRA2 FOR ID:%" PRIu64 " = %" PRIuS "/%" PRIu64 "\n",
         uint64_t(req->msg_id), request->extra_read2, request->extra_size2);
-    RETURN_UNLESS_DONE(reentrant_read(
-        fd, request->extra_data2, request->extra_size2, &request->extra_read2));
+    RETURN_UNLESS_DONE(reentrant_read(fd, request->extra_data2.data(),
+                                      request->extra_size2,
+                                      &request->extra_read2));
     /* Always add null byte here too, just in case extra2 is a string */
     request->extra_data2[request->extra_size2] = 0;
   }

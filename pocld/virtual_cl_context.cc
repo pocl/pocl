@@ -713,14 +713,14 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   std::unordered_map<uint64_t, std::vector<unsigned char>> input_binaries;
   std::unordered_map<uint64_t, std::string> build_logs;
   size_t num_kernels = 0;
-  char *source = req->extra_data;
+  char *source = (char *)(req->extra_data.data());
   size_t source_len = m.payload_size;
-  char *options = req->extra_data2;
+  char *options = (char *)(req->extra_data2.data());
 
   if (is_binary || is_spirv) {
-    source = nullptr;
     source_len = 0;
-    unsigned char *buffer = (unsigned char *)req->extra_data;
+    unsigned char *buffer = (unsigned char *)source;
+    source = nullptr;
     assert(req->extra_size == m.payload_size);
     unsigned char *buf = buffer;
     size_t buffer_size = m.payload_size;
@@ -820,6 +820,8 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   ProgramPlatformBuildMap[id] = std::move(ProgramContexts);
   replyData(rep, MessageType_BuildProgramReply, id, rep->extra_size);
 }
+#undef WRITE_BYTES
+#undef WRITE_STRING
 
 void VirtualCLContext::FreeProgram(Request *req, Reply *rep) {
   INIT_VARS;
@@ -851,7 +853,8 @@ void VirtualCLContext::CreateKernel(Request *req, Reply *rep) {
 
   TP_CREATE_KERNEL(req->req.msg_id, req->req.client_did, id);
   for (i = 0; i < contexts.size(); ++i) {
-    err = contexts[i]->createKernel(id, m.prog_id, req->extra_data);
+    err = contexts[i]->createKernel(id, m.prog_id,
+                                    (const char *)(req->extra_data.data()));
     if (err != CL_SUCCESS)
       break;
   }
@@ -991,7 +994,7 @@ void VirtualCLContext::MigrateD2D(Request *req) {
           (m.is_image == 0 ? "Buffer" : "Image"), uint32_t(m.source_pid),
           uint32_t(m.source_did), fake_ev_id, uint64_t(r.msg_id));
 #ifdef ENABLE_RDMA
-      req->extra_data = nullptr;
+      req->extra_data.clear();
 #ifndef RDMA_USE_SVM
       // No SVM, we have actual shadow buffers. Write data to shadow buffer but
       // do not pass it along as extra_data, rdma thread will fetch the
@@ -1000,8 +1003,8 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 #endif
 #else
       // No RDMA, no persistent shadow buffers
-      storage = new char[m.size];
-      req->extra_data = storage;
+      req->extra_data.resize(m.size);
+      storage = (char *)(req->extra_data.data());
 #endif
 
 #ifndef RDMA_USE_SVM

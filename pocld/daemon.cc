@@ -567,7 +567,7 @@ void PoclDaemon::readAllClientSocketsThread() {
           if (newfd > 0) {
             OpenClientFds.push_back(newfd);
             SocketContexts.push_back(nullptr);
-            IncompleteRequests.push_back(new Request);
+            IncompleteRequests.push_back(new Request());
             FdsChanged = true;
             /* XXX: Set these based on CreateOrAttachSession request instead? */
             pocl_remote_client_set_socket_options(newfd, Params.BufSize,
@@ -725,8 +725,8 @@ void PoclDaemon::readAllClientSocketsThread() {
                 }
               }
 
-              /* r is now someone else's responsibility, simply "leak" it */
-              IncompleteRequests[i] = new Request;
+              /* R is now someone else's responsibility, simply "leak" it */
+              IncompleteRequests[i] = new Request();
             }
           } else {
             POCL_MSG_ERR("Something went wrong while reading request, closing "
