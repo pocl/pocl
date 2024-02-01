@@ -2268,22 +2268,26 @@ pocl_network_setup_peer_mesh ()
 }
 
 /**
- * Build a program remotely.
+ * Build, compile or link a program remotely.
  *
- * Non-obvious parameters:
- * \param [i] svm_region_offset Nonzero if the build process should adjust
- * the memory accessess of the program to account for an offset between
- * the SVM regions.
+ * \param [i] payload The sources or binaries, if compiling/building, or a list
+ * of program ids, if linking only. \param [i] is_binary, is_builtin, is_spirv
+ * Define the input type. If we are only linking previously compiled programs,
+ * setting these have no difference. \param [i] svm_region_offset Nonzero
+ * offset if the build process should adjust the memory accessess of the
+ * program to account for the offset between the SVM regions. \param [i]
+ * compile_only Set to 1 if compiling without linking. Otherwise 0. \param [i]
+ * link_only
+ *
  */
 cl_int
-pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
-                            size_t payload_size, int is_binary, int is_builtin,
-                            int is_spirv, uint32_t prog_id,
-                            const char *options, char **kernel_meta_bytes,
-                            size_t *kernel_meta_size, uint32_t *devices,
-                            uint32_t *platforms, size_t num_devices,
-                            char **build_logs, char **binaries,
-                            size_t *binary_sizes, size_t svm_region_offset)
+pocl_network_build_or_link_program (
+    remote_device_data_t *ddata, const void *payload, size_t payload_size,
+    int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
+    const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
+    uint32_t *devices, uint32_t *platforms, size_t num_devices,
+    char **build_logs, char **binaries, size_t *binary_sizes,
+    size_t svm_region_offset, int compile_only, int link_only)
 {
   size_t i, j;
   REMOTE_SERV_DATA2;
@@ -2296,14 +2300,19 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
   POCL_MEASURE_START (REMOTE_BUILD_PROGRAM);
 
   ID_REQUEST (ReadBuffer, prog_id);
-  if (is_spirv)
-    nc.request.message_type = MessageType_BuildProgramFromSPIRV;
+  if (link_only)
+    nc.request.message_type = MessageType_LinkProgram;
+  else if (is_spirv)
+    nc.request.message_type = compile_only ?
+      MessageType_CompileProgramFromSPIRV : MessageType_BuildProgramFromSPIRV;
   else if (is_builtin)
     nc.request.message_type = MessageType_BuildProgramWithBuiltins;
   else if (is_binary)
     nc.request.message_type = MessageType_BuildProgramFromBinary;
   else
-    nc.request.message_type = MessageType_BuildProgramFromSource;
+    nc.request.message_type = compile_only
+                                  ? MessageType_CompileProgramFromSource
+                                  : MessageType_BuildProgramFromSource;
 
   nc.request.m.build_program.payload_size = payload_size;
   nc.request.m.build_program.options_len = options ? strlen (options) : 0;
@@ -2325,13 +2334,14 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
       = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, MAX_BUILD_SIZE);
   nc.rep_extra_size = MAX_BUILD_SIZE;
 
-  POCL_MSG_PRINT_REMOTE ("BuildProgram %p\n", netcmd);
+  POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram %p\n", netcmd);
 
   SEND_REQ_FAST;
 
   wait_on_netcmd (netcmd);
 
-  POCL_MSG_PRINT_REMOTE ("BuildProgram reply DATA: %zu\n", nc.reply.data_size);
+  POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram reply DATA: %zu\n",
+                         nc.reply.data_size);
   POCL_MEASURE_FINISH (REMOTE_BUILD_PROGRAM);
 
   char *buffer = nc.rep_extra_data;

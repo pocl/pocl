@@ -254,7 +254,8 @@ typedef struct remote_server_data_s
     }                                                                         \
   while (0)
 
-#define UNSET_REMOTE_ID(map, id)                                              \
+
+#define UNSET_REMOTE_ID(map, id)                                        \
   do                                                                          \
     {                                                                         \
       small_vector_remove_##map##_ids (data, id);                             \
@@ -371,13 +372,13 @@ cl_int pocl_network_setup_metadata (char *buffer, size_t total_size,
                                     cl_program program, size_t *num_kernels,
                                     pocl_kernel_metadata_t **kernel_meta);
 
-cl_int pocl_network_build_program (
+cl_int pocl_network_build_or_link_program (
     remote_device_data_t *ddata, const void *payload, size_t payload_size,
     int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
     const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
     uint32_t *devices, uint32_t *platforms, size_t num_devices,
     char **build_log, char **binaries, size_t *binary_sizes,
-    size_t svm_region_offset);
+    size_t svm_region_offset, int compile_only, int link_only);
 
 cl_int pocl_network_free_program (remote_device_data_t *ddata,
                                   uint32_t prog_id);

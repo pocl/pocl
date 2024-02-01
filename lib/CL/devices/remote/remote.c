@@ -248,7 +248,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->free_queue = pocl_remote_free_queue;
 
   ops->build_source = pocl_remote_build_source;
-  // ops->link_program = pocl_remote_link_program;
+  ops->link_program = pocl_remote_link_program;
   ops->build_binary = pocl_remote_build_binary;
   ops->build_builtin = pocl_remote_build_builtin;
   ops->free_program = pocl_remote_free_program;
@@ -610,20 +610,23 @@ setup_relevant_devices (cl_program program, cl_device_id device,
               binary_sizes[num_relevant_devices] = program->program_il_size;
               *total_binary_request_size += program->program_il_size;
             }
-          else
+          else if (program->binary_sizes[real_i] > 0)
             {
               /* Target-specific binaries. */
               pocl_cache_program_bc_path (program_bc_path, program, real_i);
 
               assert (pocl_exists (program_bc_path));
               assert (program->binaries[real_i]);
-              assert (program->binary_sizes[real_i] > 0);
 
               binaries[num_relevant_devices] = program->binaries[real_i];
               *total_binary_request_size += sizeof (uint32_t);
               binary_sizes[num_relevant_devices]
                   = program->binary_sizes[real_i];
               *total_binary_request_size += program->binary_sizes[real_i];
+            }
+          else
+            {
+              /* Linking pre-compiled programs. */
             }
           relevant_platforms[num_relevant_devices]
               = ddata->remote_platform_index;
@@ -683,10 +686,6 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
                           const char **header_include_names,
                           int link_program)
 {
-  POCL_RETURN_ERROR_ON (
-      (!link_program), CL_BUILD_PROGRAM_FAILURE,
-      "remote driver does not support clCompileProgram ATM\n");
-
   cl_device_id device = program->devices[device_i];
   remote_device_data_t *d = device->data;
   assert (strncmp (device->ops->device_name, remote_device_name, 7) == 0);
@@ -736,12 +735,12 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
   char *kernel_meta_bytes = NULL;
   size_t kernel_meta_size = 0;
 
-  err = pocl_network_build_program (
+  err = pocl_network_build_or_link_program (
       d, program->source, strlen (program->source), CL_FALSE, CL_FALSE,
       CL_FALSE, prog_id, program->compiler_options, &kernel_meta_bytes,
       &kernel_meta_size, relevant_devices, relevant_platforms,
       num_relevant_devices, build_logs, binaries, binary_sizes,
-      d->svm_region_offset);
+      d->svm_region_offset, !link_program, 0);
 
   setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
 
@@ -795,11 +794,8 @@ pocl_remote_build_source (cl_program program, cl_uint device_i,
 
 int
 pocl_remote_build_binary (cl_program program, cl_uint device_i,
-                          int link_program, int spir_build)
+                          int link_program, int spirv_build)
 {
-  POCL_RETURN_ERROR_ON (
-      (!link_program), CL_BUILD_PROGRAM_FAILURE,
-      "remote driver does not support clCompileProgram ATM\n");
   cl_device_id device = program->devices[device_i];
   remote_device_data_t *d = device->data;
   assert (strncmp (device->ops->device_name, remote_device_name, 7) == 0);
@@ -838,8 +834,8 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
 
   char *kernel_meta_bytes = NULL;
   size_t kernel_meta_size = 0;
-  assert ((!spir_build && program->pocl_binaries[device_i] != NULL)
-          || (spir_build && program->program_il != NULL));
+  assert ((!spirv_build && program->pocl_binaries[device_i] != NULL)
+          || (spirv_build && program->program_il != NULL));
   {
     char *buffer = malloc (total_binary_request_size);
     assert (buffer);
@@ -856,11 +852,12 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
 
     assert ((size_t)(buf - buffer) == total_binary_request_size);
 
-    err = pocl_network_build_program (
-        d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, spir_build,
+    err = pocl_network_build_or_link_program (
+        d, buffer, total_binary_request_size, CL_TRUE, CL_FALSE, spirv_build,
         prog_id, program->compiler_options, &kernel_meta_bytes,
         &kernel_meta_size, relevant_devices, relevant_platforms,
-        num_relevant_devices, build_logs, NULL, NULL, d->svm_region_offset);
+        num_relevant_devices, build_logs, NULL, NULL, d->svm_region_offset,
+        !link_program, 0);
     free (buffer);
   }
 
@@ -883,12 +880,12 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
       POCL_MSG_PRINT_REMOTE ("DEV i %u real_i %u\n", i, real_i);
 
       program->data[real_i] = pd;
-      assert ((!spir_build && program->binary_sizes[real_i] > 0)
-              || spir_build && program->program_il_size > 0);
-      assert ((!spir_build && program->binaries[real_i] != NULL)
-              || (spir_build && program->program_il != NULL));
+      assert ((!spirv_build && program->binary_sizes[real_i] > 0)
+              || spirv_build && program->program_il_size > 0);
+      assert ((!spirv_build && program->binaries[real_i] != NULL)
+              || (spirv_build && program->program_il != NULL));
 
-      if (spir_build)
+      if (spirv_build)
         {
           /* Dump the SPIR-V given as an input. */
           char spirv_path[POCL_MAX_PATHNAME_LENGTH];
@@ -939,14 +936,14 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
 
   char *build_log = NULL;
 
-  int err = pocl_network_build_program (
+  int err = pocl_network_build_or_link_program (
       d, program->concated_builtin_names,
       strlen (program->concated_builtin_names), CL_FALSE, CL_TRUE, CL_FALSE,
       prog_id, program->compiler_options, &kernel_meta_bytes,
       &kernel_meta_size,
       &d->remote_device_index,   // relevant_devices,
       &d->remote_platform_index, // relevant_platforms,,
-      1, &build_log, NULL, 0, 0);
+      1, &build_log, NULL, 0, 0, 0, 0);
 
   if (err)
     return err;
@@ -957,6 +954,120 @@ pocl_remote_build_builtin (cl_program program, cl_uint device_i)
   pd->refcount = 1;
 
   program->data[device_i] = pd;
+
+  return CL_SUCCESS;
+}
+
+int pocl_remote_link_program (cl_program program, cl_uint device_i,
+                              cl_uint num_input_programs,
+                              const cl_program *input_programs, int create_library)
+{
+  /* Refer to the programs via their program ids, assuming they are found on
+     the server side after compiling with clCompileProgram(). */
+  cl_device_id device = program->devices[device_i];
+  remote_device_data_t *d = device->data;
+  assert (strncmp (device->ops->device_name, remote_device_name, 7) == 0);
+
+  if (program->data[device_i] != NULL)
+    {
+      POCL_MSG_PRINT_LLVM ("Program already linked for device %u \n",
+                           device_i);
+      return CL_SUCCESS;
+    }
+  uint32_t target_prog_id = program->id;
+  assert (target_prog_id);
+
+  unsigned i, j;
+  unsigned num_relevant_devices = 0;
+  unsigned num_devices = program->num_devices;
+
+  uint32_t relevant_devices[num_devices];
+  uint32_t relevant_platforms[num_devices];
+
+  unsigned build_indexes[num_devices];
+  char *build_logs[num_devices];
+
+  char *binaries[num_devices];
+  size_t binary_sizes[num_devices];
+
+  size_t total_binary_request_size = sizeof (uint32_t);
+  int err;
+
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+
+  /* We are creating a new program out of the previously compiled programs,
+     there is no build dir for the linked program yet. */
+  create_build_hash (program, device, device_i);
+  pocl_cache_create_program_cachedir (program, device_i, NULL, 0,
+                                      program_bc_path);
+
+  num_relevant_devices = setup_relevant_devices (
+      program, device, build_indexes, build_logs, relevant_devices,
+      relevant_platforms, binaries, binary_sizes, &total_binary_request_size);
+
+  assert (num_relevant_devices > 0);
+
+  char *kernel_meta_bytes = NULL;
+  size_t kernel_meta_size = 0;
+
+  uint32_t input_prog_ids[num_input_programs + 1];
+  input_prog_ids[0] = num_input_programs;
+  for (i = 0; i < num_input_programs; ++i)
+    input_prog_ids[i + 1] = input_programs[i]->id;
+
+  total_binary_request_size
+      = sizeof (uint32_t) + sizeof (uint32_t) * num_input_programs;
+
+  err = pocl_network_build_or_link_program (
+      d, (const void *)&input_prog_ids[0], total_binary_request_size, 0, 0, 0,
+      target_prog_id, program->compiler_options, &kernel_meta_bytes,
+      &kernel_meta_size, relevant_devices, relevant_platforms,
+      num_relevant_devices, build_logs, binaries, binary_sizes, 0, 0, 1);
+
+  ///////////////////////////////////////////////////////////////////////////
+
+  setup_build_logs (program, num_relevant_devices, build_indexes, build_logs);
+
+  if (err)
+    return err;
+
+  program_data_t *pd = malloc (sizeof (program_data_t));
+  pd->kernel_meta_bytes = kernel_meta_bytes;
+  pd->kernel_meta_size = kernel_meta_size;
+  pd->refcount = num_relevant_devices;
+
+  /* Dump the binaries to the cache, similarly like this was a source build,
+     only the "sources" were the precompiled programs. */
+  {
+    char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
+    char temp_path[POCL_MAX_PATHNAME_LENGTH];
+
+    for (i = 0; i < num_relevant_devices; ++i)
+      {
+        unsigned real_i = build_indexes[i];
+        assert (real_i < program->num_devices);
+        POCL_MSG_PRINT_REMOTE ("DEV i %u real_i %u\n", i, real_i);
+
+        program->data[real_i] = pd;
+        program->binary_sizes[real_i] = binary_sizes[i];
+        binary_sizes[i] = 0;
+        program->binaries[real_i] = binaries[i];
+        binaries[i] = NULL;
+
+        assert (program->binary_sizes[real_i] > 0);
+        POCL_MSG_PRINT_REMOTE ("BINARY SIZE [%u]: %zu \n", real_i,
+                               program->binary_sizes[real_i]);
+
+        if (pocl_exists (program_bc_path) == 0)
+          {
+            err = pocl_cache_write_generic_objfile (
+                temp_path, (char *)program->binaries[real_i],
+                program->binary_sizes[real_i]);
+            assert (err == 0);
+            pocl_rename (temp_path, program_bc_path);
+          }
+      }
+  }
 
   return CL_SUCCESS;
 }

@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <sstream>
 
@@ -181,14 +182,15 @@ public:
 
   virtual int freeBuffer(uint64_t buffer_id, bool is_svm) override;
 
-  virtual int buildProgram(
+  virtual int buildOrLinkProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
       size_t source_size, bool is_binary, bool is_builtin, bool is_spirv,
       const char *options,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
       std::unordered_map<uint64_t, std::string> &build_logs,
-      size_t &num_kernels, uint64_t svm_region_offset) override;
+      size_t &num_kernels, uint64_t svm_region_offset, bool CompileOnly = false,
+      bool LinkOnly = false) override;
 
   virtual int freeProgram(uint32_t program_id) override;
 
@@ -1185,14 +1187,14 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   return true;
 }
 
-int SharedCLContext::buildProgram(
+int SharedCLContext::buildOrLinkProgram(
     uint32_t program_id, std::vector<uint32_t> &DeviceList, char *src,
     size_t src_size, bool is_binary, bool is_builtin, bool is_spirv,
     const char *options,
-    std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
+    std::unordered_map<uint64_t, std::vector<unsigned char>> &InputBinaries,
     std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
     std::unordered_map<uint64_t, std::string> &build_logs, size_t &num_kernels,
-    uint64_t SVMRegionOffset) {
+    uint64_t SVMRegionOffset, bool CompileOnly, bool LinkOnly) {
 
   cl_int err = 0;
   cl::Program *p = nullptr;
@@ -1202,14 +1204,14 @@ int SharedCLContext::buildProgram(
   std::vector<cl::Kernel> prebuilt_kernels;
   SPIRVParser::OpenCLFunctionInfoMap KernelInfoMap;
 
-  bool always_build_all = DeviceList.empty();
+  bool AlwaysBuildAll = DeviceList.empty();
   for (auto i : DeviceList) {
     std::string vendor = CLDevices[i].getInfo<CL_DEVICE_VENDOR>();
     std::string device_version = CLDevices[i].getInfo<CL_DEVICE_VERSION>();
     if (vendor.find("NVIDIA") != std::string::npos &&
         !(device_version.find("PoCL") != std::string::npos &&
           device_version.find("CUDA") != std::string::npos))
-      always_build_all = true;
+      AlwaysBuildAll = true;
   }
 
   POCL_MSG_PRINT_INFO("P %u Building Program %" PRIu32 "\n", plat_id,
@@ -1235,12 +1237,42 @@ int SharedCLContext::buildProgram(
      clGetKernelArgInfo.html*/
   opts += " -cl-kernel-arg-info";
 
-  if (SVMRegionOffset > 0 && !is_builtin && !is_binary) {
+  if (LinkOnly) {
+    // Collect the previously built programs from the server-side cache and link
+    // them.
+    std::vector<cl_program> InputPrograms;
+    for (auto &E : InputBinaries) {
+      uint32_t ClientProgramID = E.first;
+      if (ProgramIDmap.find(ClientProgramID) == ProgramIDmap.end()) {
+        POCL_MSG_ERR("Unable to find program with id %u in the ID map.",
+                     ClientProgramID);
+      }
+      InputPrograms.push_back(ProgramIDmap[ClientProgramID]->uptr->get());
+    }
+
+    cl_program LinkedProgram = ::clLinkProgram(
+        ContextWithAllDevices.get(), 0, nullptr, options,
+        static_cast<cl_uint>(InputPrograms.size()),
+        reinterpret_cast<const cl_program *>(InputPrograms.data()), nullptr,
+        nullptr, &err);
+
+    if (err != CL_SUCCESS) {
+      POCL_MSG_ERR("clLinkProgram() failed\n");
+      return err;
+    }
+
+    clProgramPtr Prog(new cl::Program(LinkedProgram));
+
+    p = Prog.get();
+    program->uptr = std::move(Prog);
+
+  } else if (SVMRegionOffset > 0 && !is_builtin && !is_binary) {
     std::vector<char> SVMOffsettedSPIRV;
+
 
     // Adjust the SVM region offset to the kernel code.
     bool SuccessfulOffsetting = createSPIRVWithSVMOffset(
-        is_spirv ? &(*input_binaries.begin()).second : nullptr, src, src_size,
+        is_spirv ? &(*InputBinaries.begin()).second : nullptr, src, src_size,
         SVMRegionOffset, SVMOffsettedSPIRV, options);
 
     assert(SuccessfulOffsetting && SVMOffsettedSPIRV.size() > 0);
@@ -1291,8 +1323,8 @@ int SharedCLContext::buildProgram(
     plat_binaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
       uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
-      assert(input_binaries.find(id) != input_binaries.end());
-      plat_binaries[i] = input_binaries[id];
+      assert(InputBinaries.find(id) != InputBinaries.end());
+      plat_binaries[i] = InputBinaries[id];
     }
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, program->devices,
@@ -1312,8 +1344,8 @@ int SharedCLContext::buildProgram(
     PlatBinaries.resize(DeviceList.size());
     for (size_t i = 0; i < DeviceList.size(); ++i) {
       uint64_t id = ((uint64_t)plat_id << 32) + DeviceList[i];
-      assert(input_binaries.find(id) != input_binaries.end());
-      PlatBinaries[i] = input_binaries[id];
+      assert(InputBinaries.find(id) != InputBinaries.end());
+      PlatBinaries[i] = InputBinaries[id];
     }
 
     // Expecting to see a single SPIR-V which is built for all capable
@@ -1325,7 +1357,7 @@ int SharedCLContext::buildProgram(
     // come with an 'unsigned char' element type. Perhaps just copy it here
     // to avoid problems.
     const std::vector<char> &IL = reinterpret_cast<const std::vector<char> &>(
-        (*input_binaries.begin()).second);
+        (*InputBinaries.begin()).second);
 
     clProgramPtr pp(new cl::Program(ContextWithAllDevices, IL, false, &err));
     if (err != CL_SUCCESS) {
@@ -1363,13 +1395,32 @@ int SharedCLContext::buildProgram(
     program->uptr = std::move(pp);
   }
 
-  // build
-  if (always_build_all) {
-    // XXX: hacky workaround for wonky behaviour with certain drivers
-    // when compiling a program for only a subset of the context's devices
-    err = p->build(opts.c_str());
-  } else {
-    err = p->build(program->devices, opts.c_str());
+  if (!LinkOnly) {
+    // build
+    if (AlwaysBuildAll) {
+      // XXX: hacky workaround for wonky behaviour with certain drivers
+      // when compiling a program for only a subset of the context's devices
+      err = CompileOnly ? p->compile(opts.c_str()) : p->build(opts.c_str());
+    } else {
+      if (CompileOnly) {
+        // cl2.hpp doesn't have device-limiting versions of compile()
+        // reported in https://github.com/KhronosGroup/OpenCL-CLHPP/issues/285
+
+        std::size_t NumDevices = program->devices.size();
+        std::vector<cl_device_id> DeviceIDs(NumDevices);
+
+        for (std::size_t DeviceIndex = 0; DeviceIndex < NumDevices;
+             ++DeviceIndex) {
+          DeviceIDs[DeviceIndex] = (program->devices[DeviceIndex])();
+        }
+
+        err = ::clCompileProgram(p->get(), NumDevices, DeviceIDs.data(),
+                                 opts.c_str(), 0, nullptr, nullptr, nullptr,
+                                 nullptr);
+      } else {
+        err = p->build(program->devices, opts.c_str());
+      }
+    }
   }
 
   // even if build failed, return build log
@@ -1394,7 +1445,7 @@ int SharedCLContext::buildProgram(
   }
 
   if (err != CL_SUCCESS) {
-    POCL_MSG_ERR("clBuildProgram() FAILED \n");
+    POCL_MSG_ERR("cl{Link|Build|Compile}Program() FAILED \n");
     return err;
   }
 
