@@ -5,4 +5,5 @@ purpose "remote OpenCLserver"
 # Options
 option "address" a "Listen address" string optional
 option "port" p "Listen port" int optional
+option "vsock" s "Whether use VSOCK rather than TCP" flag off
 option "log_filter" v "Program log category filter" string optional

@@ -36,12 +36,15 @@ const char *gengetopt_args_info_help[]
         "  -V, --version            Print version and exit",
         "  -a, --address=STRING     Listen address",
         "  -p, --port=INT           Listen port",
+        "  -s, --vsock              Whether use VSOCK rather than TCP  "
+        "(default=off)",
         "  -v, --log_filter=STRING  Program log category filter",
         0 };
 
 typedef enum
 {
   ARG_NO,
+  ARG_FLAG,
   ARG_STRING,
   ARG_INT
 } cmdline_parser_arg_type;
@@ -63,6 +66,7 @@ clear_given (struct gengetopt_args_info *args_info)
   args_info->version_given = 0;
   args_info->address_given = 0;
   args_info->port_given = 0;
+  args_info->vsock_given = 0;
   args_info->log_filter_given = 0;
 }
 
@@ -73,6 +77,7 @@ clear_args (struct gengetopt_args_info *args_info)
   args_info->address_arg = NULL;
   args_info->address_orig = NULL;
   args_info->port_orig = NULL;
+  args_info->vsock_flag = 0;
   args_info->log_filter_arg = NULL;
   args_info->log_filter_orig = NULL;
 }
@@ -85,7 +90,8 @@ init_args_info (struct gengetopt_args_info *args_info)
   args_info->version_help = gengetopt_args_info_help[1];
   args_info->address_help = gengetopt_args_info_help[2];
   args_info->port_help = gengetopt_args_info_help[3];
-  args_info->log_filter_help = gengetopt_args_info_help[4];
+  args_info->vsock_help = gengetopt_args_info_help[4];
+  args_info->log_filter_help = gengetopt_args_info_help[5];
 }
 
 void
@@ -224,6 +230,8 @@ cmdline_parser_dump (FILE *outfile, struct gengetopt_args_info *args_info)
     write_into_file (outfile, "address", args_info->address_orig, 0);
   if (args_info->port_given)
     write_into_file (outfile, "port", args_info->port_orig, 0);
+  if (args_info->vsock_given)
+    write_into_file (outfile, "vsock", 0, 0);
   if (args_info->log_filter_given)
     write_into_file (outfile, "log_filter", args_info->log_filter_orig, 0);
 
@@ -1034,6 +1042,9 @@ update_arg (void *field, char **orig_field, unsigned int *field_given,
 
   switch (arg_type)
     {
+    case ARG_FLAG:
+      *((int *)field) = !*((int *)field);
+      break;
     case ARG_INT:
       if (val)
         *((int *)field) = strtol (val, &stop_char, 0);
@@ -1069,6 +1080,7 @@ update_arg (void *field, char **orig_field, unsigned int *field_given,
   switch (arg_type)
     {
     case ARG_NO:
+    case ARG_FLAG:
       break;
     default:
       if (value && orig_field)
@@ -1137,17 +1149,20 @@ cmdline_parser_internal (int argc, char **argv,
     {
       int option_index = 0;
 
-      static struct option long_options[]
-          = { { "help", 0, NULL, 'h' },       { "version", 0, NULL, 'V' },
-              { "address", 1, NULL, 'a' },    { "port", 1, NULL, 'p' },
-              { "log_filter", 1, NULL, 'v' }, { 0, 0, 0, 0 } };
+      static struct option long_options[] = { { "help", 0, NULL, 'h' },
+                                              { "version", 0, NULL, 'V' },
+                                              { "address", 1, NULL, 'a' },
+                                              { "port", 1, NULL, 'p' },
+                                              { "vsock", 0, NULL, 's' },
+                                              { "log_filter", 1, NULL, 'v' },
+                                              { 0, 0, 0, 0 } };
 
       custom_optarg = optarg;
       custom_optind = optind;
       custom_opterr = opterr;
       custom_optopt = optopt;
 
-      c = custom_getopt_long (argc, argv, "hVa:p:v:", long_options,
+      c = custom_getopt_long (argc, argv, "hVa:p:sv:", long_options,
                               &option_index);
 
       optarg = custom_optarg;
@@ -1188,6 +1203,16 @@ cmdline_parser_internal (int argc, char **argv,
                           &(local_args_info.port_given), optarg, 0, 0, ARG_INT,
                           check_ambiguity, override, 0, 0, "port", 'p',
                           additional_error))
+            goto failure;
+
+          break;
+        case 's': /* Whether use VSOCK rather than TCP.  */
+
+          if (update_arg ((void *)&(args_info->vsock_flag), 0,
+                          &(args_info->vsock_given),
+                          &(local_args_info.vsock_given), optarg, 0, 0,
+                          ARG_FLAG, check_ambiguity, override, 1, 0, "vsock",
+                          's', additional_error))
             goto failure;
 
           break;

@@ -48,10 +48,14 @@ extern "C"
     int port_arg;             /**< @brief Listen port.  */
     char *port_orig; /**< @brief Listen port original value given at command
                         line.  */
-    const char *port_help; /**< @brief Listen port help description.  */
-    char *log_filter_arg;  /**< @brief Program log category filter.  */
-    char *log_filter_orig; /**< @brief Program log category filter original
-                              value given at command line.  */
+    const char *port_help;  /**< @brief Listen port help description.  */
+    int vsock_flag;         /**< @brief Whether use VSOCK rather than TCP
+                               (default=off).  */
+    const char *vsock_help; /**< @brief Whether use VSOCK rather than TCP help
+                               description.  */
+    char *log_filter_arg;   /**< @brief Program log category filter.  */
+    char *log_filter_orig;  /**< @brief Program log category filter original
+                               value given at command line.  */
     const char *log_filter_help; /**< @brief Program log category filter help
                                     description.  */
 
@@ -59,6 +63,7 @@ extern "C"
     unsigned int version_given;    /**< @brief Whether version was given.  */
     unsigned int address_given;    /**< @brief Whether address was given.  */
     unsigned int port_given;       /**< @brief Whether port was given.  */
+    unsigned int vsock_given;      /**< @brief Whether vsock was given.  */
     unsigned int log_filter_given; /**< @brief Whether log_filter was given. */
   };
 
