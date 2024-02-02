@@ -513,8 +513,7 @@ void PoclDaemon::readAllClientSocketsThread() {
   std::vector<struct pollfd> pfds;
 
   SocketContexts.clear();
-  SocketContexts.push_back(nullptr);
-  SocketContexts.push_back(nullptr);
+  SocketContexts.resize(NumListenFds, nullptr);
 
   while (!exit_helper.exit_requested()) {
     /* Changes to the list of sockets should be relatively rare so let's
@@ -530,6 +529,11 @@ void PoclDaemon::readAllClientSocketsThread() {
       }
       FdsChanged = false;
     }
+
+    /* These *really* ought to stay consistent */
+    assert(pfds.size() == OpenClientFds.size() &&
+           SocketContexts.size() == OpenClientFds.size() &&
+           IncompleteRequests.size() == OpenClientFds.size());
 
     /* Just block forever. If/when a socket is closed - including the client
      * listeners - it triggers a POLLERR/POLLHUP/POLLRDHUP/POLLNVAL. */
@@ -620,8 +624,8 @@ void PoclDaemon::readAllClientSocketsThread() {
                 int Fast = R->req.m.get_session.fast_socket;
                 uint64_t Session = R->req.session;
                 if (Session == 0) {
-                  VirtualContextBase *ctx;
-                  if ((ctx = performSessionSetup(pfds[i].fd, R)) == nullptr) {
+                  VirtualContextBase *ctx = performSessionSetup(pfds[i].fd, R);
+                  if (ctx == nullptr) {
                     DroppedFds.push_back(pfds[i].fd);
                   } else {
                     SocketContexts[i] = ctx;
