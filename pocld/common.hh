@@ -77,7 +77,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -94,7 +94,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -112,7 +112,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
       if (rep->extra_size == 0)                                                \
-        rep->extra_data = nullptr;                                             \
+        rep->extra_data.clear();                                               \
       return;                                                                  \
     }                                                                          \
   } while (0)
@@ -127,7 +127,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -145,7 +145,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -309,8 +309,8 @@ class Reply {
 
 public:
   ReplyMsg_t rep;
-  Request *req;
-  std::unique_ptr<uint8_t[]> extra_data;
+  std::unique_ptr<Request> req;
+  std::vector<uint8_t> extra_data;
   size_t extra_size;
   cl::Event event;
   // server host timestamps for network comm
@@ -320,18 +320,14 @@ public:
    * actually using it is likely to lead to accessing uninitialized fields. */
   Reply() = delete;
   Reply(Request *r)
-      : rep(), req(r), extra_data(nullptr), extra_size(0), event(nullptr) {
-    assert(req);
+      : rep(), req(r), extra_size(0), event(nullptr) {
+    assert(req.get());
     rep.client_did = req->req.client_did;
     rep.did = req->req.did;
     rep.pid = req->req.pid;
     rep.msg_id = req->req.msg_id;
     rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
     rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
-  }
-
-  ~Reply() {
-    delete req;
   }
 };
 

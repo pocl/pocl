@@ -267,13 +267,17 @@ void CommandQueue::ReadBuffer(uint32_t queue_id, Request *req, Reply *rep) {
      m.size;
         }
   */
-#ifdef ENABLE_RDMA
-  char *host_ptr = backend->clientUsesRdma() ? nullptr : new char[m.size];
-#else
-  char *host_ptr = new char[m.size];
-#endif
-  rep->extra_data.reset((uint8_t*)host_ptr);
   rep->extra_size = m.size;
+  char *host_ptr = nullptr;
+#ifdef ENABLE_RDMA
+  if (!backend->clientUsesRdma()) {
+    rep->extra_data.resize(rep->extra_size);
+    host_ptr = (char*)rep->extra_data.data();
+  }
+#else
+  rep->extra_data.resize(rep->extra_size);
+  host_ptr = (char*)rep->extra_data.data();
+#endif
 
   TP_READ_BUFFER(req->req.msg_id, req->req.client_did, queue_id,
                  req->req.obj_id, m.size, CL_RUNNING);
@@ -332,13 +336,17 @@ void CommandQueue::ReadBufferRect(uint32_t queue_id, Request *req, Reply *rep) {
   COPY_VEC3(buffer_origin, m.buffer_origin);
   COPY_VEC3(region, m.region);
 
-#ifdef ENABLE_RDMA
-  char *host_ptr = backend->clientUsesRdma() ? nullptr : new char[m.host_bytes];
-#else
-  char *host_ptr = new char[m.host_bytes];
-#endif
-  rep->extra_data.reset((uint8_t *)host_ptr);
   rep->extra_size = m.host_bytes;
+  char *host_ptr = nullptr;
+#ifdef ENABLE_RDMA
+  if (!backend->clientUsesRdma()) {
+    rep->extra_data.resize(rep->extra_size);
+    host_ptr = (char*)rep->extra_data.data();
+  }
+#else
+  rep->extra_data.resize(rep->extra_size);
+  host_ptr = (char*)rep->extra_data.data();
+#endif
 
   TP_READ_BUFFER_RECT(req->req.msg_id, req->req.client_did, queue_id,
                       req->req.obj_id, m.region.x, m.region.y, m.region.z,
@@ -476,17 +484,15 @@ void CommandQueue::ReadImageRect(uint32_t queue_id, Request *req, Reply *rep) {
   COPY_VEC3(img_origin, m.origin);
   COPY_VEC3(img_region, m.region);
 
-  char *host_ptr = new char[m.host_bytes];
-  rep->extra_data.reset((uint8_t *)host_ptr);
   rep->extra_size = m.host_bytes;
+  rep->extra_data.resize(rep->extra_size);
 
   TP_READ_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      req->req.obj_id, m.region.x, m.region.y, m.region.z,
                      CL_RUNNING);
   RETURN_IF_ERR_CODE(backend->readImageRect(
       req->req.event_id, queue_id, req->req.obj_id, img_origin, img_region,
-      host_ptr, m.host_bytes, evt_timing, req->req.waitlist_size,
-      req->waitlist.data()));
+      rep->extra_data.data(), m.host_bytes, evt_timing, req->req.waitlist_size, req->waitlist.data()));
   TP_READ_IMAGE_RECT(req->req.msg_id, req->req.client_did, queue_id,
                      req->req.obj_id, m.region.x, m.region.y, m.region.z,
                      CL_FINISHED);

@@ -242,11 +242,11 @@ void ReplyQueueThread::writeThread() {
             id_str.c_str());
 
         // TODO: handle reconnecting & resending when RDMA is used
-        if (reply->extra_data.get()) {
+        if (reply->extra_size > 0 && !reply->extra_data.empty()) {
           POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
                               id_str.c_str(), reply->extra_size);
           CHECK_WRITE_RETRY(
-              write_full(fd, reply->extra_data.get(), reply->extra_size, netstat),
+              write_full(fd, reply->extra_data.data(), reply->extra_size, netstat),
               id_str.c_str());
         }
         POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",

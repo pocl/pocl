@@ -520,7 +520,7 @@ int VirtualCLContext::run() {
         reply->rep.fail_details = CL_INVALID_OPERATION;
         reply->rep.failed = 1;
         reply->rep.message_type = MessageType_Failure;
-        reply->extra_data.reset();
+        reply->extra_data.clear();
         reply->extra_size = 0;
         POCL_MSG_ERR("Unknown message type received: %" PRIu32 "\n",
                      uint32_t(request->req.message_type));
@@ -651,12 +651,12 @@ void VirtualCLContext::CreateBuffer(Request *req, Reply *rep) {
   replyID(rep, MessageType_CreateBufferReply, id);
 #ifdef ENABLE_RDMA
   if (client_uses_rdma) {
-    CreateRdmaBufferReply_t *ext = new CreateRdmaBufferReply_t;
+    rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
+    rep->extra_size = rep->rep.data_size;
+    rep->extra_data.resize(rep->extra_size, 0);
+    CreateRdmaBufferReply_t *ext = (CreateRdmaBufferReply_t *)rep->extra_data.data();
     ext->server_rkey = shadow_region->rkey();
     ext->server_vaddr = (uint64_t)shadow_buf.get();
-    rep->rep.data_size = sizeof(CreateRdmaBufferReply_t);
-    rep->extra_size = sizeof(CreateRdmaBufferReply_t);
-    rep->extra_data.reset((uint8_t *)(ext));
   }
 #endif
 }
@@ -762,8 +762,8 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   TP_BUILD_PROGRAM(req->req.msg_id, req->req.client_did, id);
 
   // output reply
-  rep->extra_data.reset((uint8_t*)new char[MAX_REMOTE_BUILDPROGRAM_SIZE]);
-  char *buffer = (char*)(rep->extra_data.get());
+  rep->extra_data.resize(MAX_REMOTE_BUILDPROGRAM_SIZE);
+  char *buffer = (char*)(rep->extra_data.data());
   size_t buffer_size = MAX_REMOTE_BUILDPROGRAM_SIZE;
   char *buf = buffer;
 
@@ -1053,8 +1053,8 @@ void VirtualCLContext::MigrateD2D(Request *req) {
 
 void VirtualCLContext::ServerInfo(Request *req, Reply *rep) {
   rep->extra_size = PlatformList.size() * sizeof(uint32_t);
-  rep->extra_data.reset(new uint8_t[rep->extra_size]);
-  uint32_t *Counts = (uint32_t *)rep->extra_data.get();
+  rep->extra_data.resize(rep->extra_size);
+  uint32_t *Counts = (uint32_t *)rep->extra_data.data();
   for (size_t i = 0; i < PlatformList.size(); ++i) {
     Counts[i] = SharedContextList.at(i)->numDevices();
   }
@@ -1081,9 +1081,9 @@ void VirtualCLContext::DeviceInfo(Request *req, Reply *rep) {
     rep->rep.strings_size += str.size() + 1;
 
   rep->extra_size = sizeof(info) + rep->rep.strings_size;
-  rep->extra_data.reset(new uint8_t[rep->extra_size]);
-  std::memcpy(rep->extra_data.get(), &info, sizeof(info));
-  char *strings_pos = (char *)rep->extra_data.get() + sizeof(info);
+  rep->extra_data.resize(rep->extra_size);
+  std::memcpy(rep->extra_data.data(), &info, sizeof(info));
+  char *strings_pos = (char *)rep->extra_data.data() + sizeof(info);
   for (const std::string& str : strings) {
     // Append the strings to the string part of the reply, and
     // ensure that the strings are separated with \0.
