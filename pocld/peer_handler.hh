@@ -24,7 +24,6 @@
 #ifndef POCL_REMOTE_PEER_HANDLER_HH
 #define POCL_REMOTE_PEER_HANDLER_HH
 
-#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -33,7 +32,6 @@
 
 #include "common.hh"
 #include "peer.hh"
-#include "request_th.hh"
 #include "traffic_monitor.hh"
 #include "virtual_cl_context.hh"
 
@@ -47,27 +45,28 @@ class PeerHandler {
   std::thread listen_thread;
   ExitHelper *eh;
 
-  std::mutex *incoming_mutex;
-  std::pair<std::condition_variable, std::vector<peer_connection_t>>
-      *incoming_fds;
+  std::mutex *NewConnectionsMutex;
+  std::pair<std::condition_variable, std::vector<PeerConnection>>
+      *NewConnections;
 
-  std::mutex peermap_mutex;
-  std::unordered_map<uint32_t, std::unique_ptr<Peer>> peers;
+  std::mutex PeermapMutex;
+  std::unordered_map<uint32_t, std::unique_ptr<Peer>> Peers;
 
-  std::thread incoming_peer_handler;
-  void handle_incoming_peers();
+  std::thread IncomingPeerHandler;
+  void handleIncomingPeers();
 
   TrafficMonitor *netstat;
 
 public:
-  PeerHandler(uint32_t id, std::mutex *m,
-              std::pair<std::condition_variable, std::vector<peer_connection_t>>
-                  *incoming,
-              VirtualContextBase *c, ExitHelper *eh, TrafficMonitor *tm);
+  PeerHandler(
+      uint32_t id, std::mutex *m,
+      std::pair<std::condition_variable, std::vector<PeerConnection>> *incoming,
+      VirtualContextBase *c, ExitHelper *eh, TrafficMonitor *tm);
   ~PeerHandler();
 
-  cl_int connectPeer(uint64_t msg_id, const char *const address,
-                     std::string &session, uint16_t port);
+  cl_int connectPeer(uint64_t msg_id, const char *const address, uint16_t port,
+                     uint64_t session,
+                     const std::array<uint8_t, AUTHKEY_LENGTH> &authkey);
   void pushRequest(Request *r, uint32_t peer_id);
   void broadcast(const Request &r);
 #ifdef ENABLE_RDMA

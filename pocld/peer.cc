@@ -24,10 +24,10 @@
 
 #include <cassert>
 #include <sstream>
+#include <sys/socket.h>
 
 #include "common.hh"
 #include "peer.hh"
-#include "peer_handler.hh"
 #include "shared_cl_context.hh"
 
 #ifdef ENABLE_RDMA
@@ -37,13 +37,13 @@
 const char *request_to_str(RequestMessageType type);
 
 #ifdef ENABLE_RDMA
-Peer::Peer(uint32_t id, uint32_t handler_id, VirtualContextBase *ctx,
+Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
            ExitHelper *eh, int fd, TrafficMonitor *tm,
            std::shared_ptr<RdmaConnection> conn)
     : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm),
       rdma(conn)
 #else
-Peer::Peer(uint32_t id, uint32_t handler_id, VirtualContextBase *ctx,
+Peer::Peer(uint64_t id, uint32_t handler_id, VirtualContextBase *ctx,
            ExitHelper *eh, int fd, TrafficMonitor *tm)
     : id(id), handler_id(handler_id), ctx(ctx), eh(eh), fd(fd), netstat(tm)
 #endif
@@ -94,7 +94,7 @@ void Peer::writerThread() {
     uint32_t msg_size = request_size(r->req.message_type);
     POCL_MSG_PRINT_GENERAL(
         "PHW: SENDING MESSAGE, ID: %" PRIu64 " TYPE: %s SIZE: %" PRIu32
-        ", TO %" PRIu32 "\n",
+        ", TO %" PRIu64 "\n",
         uint64_t(r->req.msg_id),
         request_to_str(static_cast<RequestMessageType>(r->req.message_type)),
         msg_size, id);
@@ -102,30 +102,29 @@ void Peer::writerThread() {
     CHECK_WRITE(write_full(fd, &msg_size, sizeof(uint32_t), netstat), "PHW");
     CHECK_WRITE(write_full(fd, &r->req, msg_size, netstat), "PHW");
 
-    assert((r->waitlist_size > 0 && r->waitlist) ^
-           ((!r->waitlist_size) && (!r->waitlist)));
-    if (r->waitlist_size > 0 && r->waitlist) {
-      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu64 "\n",
-                             r->waitlist_size);
-      CHECK_WRITE(write_full(fd, r->waitlist,
-                             r->waitlist_size * sizeof(uint64_t), netstat),
+    assert(r->waitlist.size() == r->req.waitlist_size);
+    if (r->req.waitlist_size > 0) {
+      POCL_MSG_PRINT_GENERAL("PHW: WRITING WAIT LIST: %" PRIu32 "\n",
+                             r->req.waitlist_size);
+      CHECK_WRITE(write_full(fd, r->waitlist.data(),
+                             r->req.waitlist_size * sizeof(uint64_t), netstat),
                   "PHW");
     }
 
-    // assert((r->extra_size > 0 && r->extra_data) ^
-    //            ((!r->extra_size) && (!r->extra_data)));
+    assert(r->extra_data.size() >= r->extra_size);
     if (r->extra_size > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA: %" PRIuS "\n", r->extra_size);
-      CHECK_WRITE(write_full(fd, r->extra_data, r->extra_size, netstat), "PHW");
+      CHECK_WRITE(write_full(fd, r->extra_data.data(), r->extra_size, netstat),
+                  "PHW");
     }
 
-    assert((r->extra_size2 > 0 && r->extra_data2) ^
-           ((!r->extra_size2) && (!r->extra_data2)));
-    if (r->extra_size2 > 0 && r->extra_data2) {
+    assert(r->extra_data2.size() >= r->extra_size2);
+    if (r->extra_size2 > 0) {
       POCL_MSG_PRINT_GENERAL("PHW: WRITING EXTRA2: %" PRIuS "\n",
                              r->extra_size2);
-      CHECK_WRITE(write_full(fd, r->extra_data2, r->extra_size2, netstat),
-                  "PHW");
+      CHECK_WRITE(
+          write_full(fd, r->extra_data2.data(), r->extra_size2, netstat),
+          "PHW");
     }
 
     delete r;
@@ -245,7 +244,7 @@ void Peer::notifyBufferRegistration(uint32_t buf_id, uint32_t rkey,
                                     uint64_t vaddr) {
   std::unique_lock<std::mutex> l(remote_regions_mutex);
   RdmaRemoteBufferData d = {vaddr, rkey};
-  POCL_MSG_PRINT_GENERAL("PEER_%" PRIu32
+  POCL_MSG_PRINT_GENERAL("PEER_%" PRIu64
                          ": storing remote rdma info mem_object=%" PRIu32
                          " rkey=0x%08" PRIx32 "\n",
                          this->id, buf_id, rkey);
@@ -261,13 +260,13 @@ bool Peer::rdmaRegisterBuffer(uint32_t buf_id, char *buf, size_t size) {
             ibverbs::MemoryRegion::Access::RemoteRead |
             ibverbs::MemoryRegion::Access::RemoteWrite);
   } catch (const std::runtime_error &e) {
-    POCL_MSG_ERR("PEER_%" PRIu32 " Register memory region (ptr=%p, size=%" PRIuS
+    POCL_MSG_ERR("PEER_%" PRIu64 " Register memory region (ptr=%p, size=%" PRIuS
                  ") failed: %s\n",
                  this->id, buf, size, e.what());
     return false;
   }
 
-  POCL_MSG_PRINT_GENERAL("PEER_%" PRIu32
+  POCL_MSG_PRINT_GENERAL("PEER_%" PRIu64
                          ": storing local memory region ptr=%p, rkey=%08" PRIu32
                          " mem_obj=%" PRIu32 "\n",
                          this->id, (void *)buf, mem_region->rkey(), buf_id);

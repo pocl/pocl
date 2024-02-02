@@ -25,8 +25,10 @@
 #ifndef POCL_REMOTE_REQUEST_HH
 #define POCL_REMOTE_REQUEST_HH
 
-#include "messages.h"
 #include <cstring>
+#include <vector>
+
+#include "messages.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -48,15 +50,13 @@ public:
 
   /** List of event ids that must complete before this Request can be processed
    */
-  uint64_t *waitlist;
-  /** Number of items in the waitlist */
-  uint64_t waitlist_size;
+  std::vector<uint64_t> waitlist;
   /** Tracker for how many bytes of the waitlist have been read */
   size_t waitlist_read;
 
   /** Auxiliary data required for the Request (buffer contents, program binaries
    * etc) */
-  char *extra_data;
+  std::vector<uint8_t> extra_data;
   /** Size of the auxiliary data buffer */
   uint64_t extra_size;
   /** Tracker for how many bytes of the auxiliary data buffer have been read
@@ -64,8 +64,8 @@ public:
   size_t extra_read;
 
   /** Second auxiliary data required for the Request */
-  char *extra_data2;
-  /** Size of the second auxiliary data buffer */
+  std::vector<uint8_t> extra_data2;
+  /** Size of the auxiliary data buffer */
   uint64_t extra_size2;
   /** Tracker for how many bytes of the second auxiliary data buffer have been
    * read from the network socket */
@@ -80,51 +80,7 @@ public:
 
   /** Flag indicating that the request has been fully read from the network
    * socket. Set at the very end of the read() function. */
-  bool fully_read;
-
-  /// Default constructor that initializes all  fields to zero
-  Request()
-      : req_size(0), req_size_read(0), req(), req_read(0), waitlist(nullptr),
-        waitlist_size(0), waitlist_read(0), extra_data(nullptr), extra_size(0),
-        extra_read(0), extra_data2(nullptr), extra_size2(0), extra_read2(0),
-        read_start_timestamp_ns(0), read_end_timestamp_ns(0),
-        fully_read(false) {}
-
-  /// Deep copying constructor
-  Request(const Request &r)
-      : req_size(r.req_size), req(r.req), req_size_read(r.req_size_read),
-        waitlist(nullptr), waitlist_size(r.waitlist_size),
-        waitlist_read(r.waitlist_read), extra_data(nullptr),
-        extra_size(r.extra_size), extra_read(r.extra_read),
-        extra_data2(nullptr), extra_size2(r.extra_size2),
-        extra_read2(r.extra_read2),
-        read_start_timestamp_ns(r.read_start_timestamp_ns),
-        read_end_timestamp_ns(r.read_end_timestamp_ns),
-        fully_read(r.fully_read) {
-    if (r.waitlist) {
-      waitlist = new uint64_t[waitlist_size];
-      std::memcpy(waitlist, r.waitlist, sizeof(uint64_t) * waitlist_size);
-    }
-
-    if (r.extra_data) {
-      extra_data = new char[extra_size];
-      std::memcpy(extra_data, r.extra_data, extra_size);
-    }
-
-    if (r.extra_data2) {
-      extra_data = new char[extra_size2];
-      std::memcpy(extra_data2, r.extra_data2, extra_size2);
-    }
-  }
-
-  ~Request() {
-    if (waitlist)
-      delete[] waitlist;
-    if (extra_data)
-      delete[] extra_data;
-    if (extra_data2)
-      delete[] extra_data2;
-  }
+  bool IsFullyRead;
 
   /** Incrementally reads the request from given fd. Returns true on success and
    * false if an error occurs while reading. Call repeatedly until `fully_read`

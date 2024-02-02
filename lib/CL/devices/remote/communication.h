@@ -28,6 +28,7 @@
 #define POCL_REMOTE_COMMUNICATION_H
 
 #include "messages.h"
+#include "pocl.h"
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
@@ -180,7 +181,8 @@ typedef struct remote_server_data_s
   struct remote_server_data_s *next;
   struct remote_server_data_s *prev;
 
-  uint8_t session[SESSION_ID_LENGTH];
+  uint64_t session;
+  uint8_t authkey[AUTHKEY_LENGTH];
   uint32_t available;
   sync_t setup_lock;
   int threads_awaiting_reconnect;

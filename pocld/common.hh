@@ -30,20 +30,16 @@
 
 #include <dlfcn.h>
 
-#include <algorithm>
-#include <atomic>
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
-#include <deque>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
+
+#include "common_cl.hh"
 
 using Time = std::chrono::steady_clock;
 using ms = std::chrono::milliseconds;
@@ -53,13 +49,10 @@ using float_time_point = std::chrono::time_point<Time, float_sec>;
 
 #define MS_PER_S 1000
 
-#include "common_cl.hh"
 #include "pocl_debug.h"
 #include "request.hh"
-#include "session.hh"
 
 #ifdef ENABLE_RDMA
-#include "guarded_queue.hh"
 #include "rdma.hh"
 #endif
 
@@ -84,7 +77,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -101,7 +94,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -119,7 +112,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
       if (rep->extra_size == 0)                                                \
-        rep->extra_data = nullptr;                                             \
+        rep->extra_data.clear();                                               \
       return;                                                                  \
     }                                                                          \
   } while (0)
@@ -134,7 +127,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -152,7 +145,7 @@ uint64_t transfer_size(const RequestMsg_t &msg);
       rep->rep.failed = 1;                                                     \
       rep->rep.obj_id = 0;                                                     \
       rep->rep.message_type = MessageType_Failure;                             \
-      rep->extra_data = nullptr;                                               \
+      rep->extra_data.clear();                                                 \
       rep->extra_size = 0;                                                     \
       return;                                                                  \
     }                                                                          \
@@ -270,9 +263,22 @@ struct RdmaRemoteBufferData {
 };
 #endif
 
-struct peer_connection_t {
-  int fd;
+struct PeerConnection {
+  int Fd;
+  uint64_t PeerId;
 #ifdef ENABLE_RDMA
+  std::shared_ptr<RdmaConnection> Rdma;
+#endif
+};
+
+struct ClientConnections_t {
+  int fd_command;
+  int fd_stream;
+  std::mutex *incoming_peer_mutex;
+  std::pair<std::condition_variable, std::vector<PeerConnection>>
+      *incoming_peer_queue;
+#ifdef ENABLE_RDMA
+  // TODO this does not really work with reconnecting
   std::shared_ptr<RdmaConnection> rdma;
 #endif
 };
@@ -286,13 +292,14 @@ struct peer_listener_data_t {
   unsigned short port;
   unsigned short peer_rdma_port;
   std::mutex mutex;
-  std::unordered_map<std::string, std::pair<std::condition_variable,
-                                            std::vector<peer_connection_t>> *>
+  std::unordered_map<uint64_t, std::pair<std::condition_variable,
+                                         std::vector<PeerConnection>> *>
       incoming_peers;
+  std::unordered_map<uint64_t, uint64_t> SessionPeerId;
 #ifdef ENABLE_RDMA
   std::shared_ptr<RdmaListener> rdma_listener;
   std::mutex vctx_map_mutex;
-  std::unordered_map<std::string, VirtualContextBase *> vctx_map;
+  std::unordered_map<uint64_t, VirtualContextBase *> vctx_map;
   std::mutex peer_cm_id_to_vctx_mutex;
   std::unordered_map<rdma_cm_id *, VirtualContextBase *> peer_cm_id_to_vctx;
 #endif
@@ -302,8 +309,8 @@ class Reply {
 
 public:
   ReplyMsg_t rep;
-  Request *req;
-  char *extra_data;
+  std::unique_ptr<Request> req;
+  std::vector<uint8_t> extra_data;
   size_t extra_size;
   cl::Event event;
   // server host timestamps for network comm
@@ -313,20 +320,14 @@ public:
    * actually using it is likely to lead to accessing uninitialized fields. */
   Reply() = delete;
   Reply(Request *r)
-      : rep(), req(r), extra_data(nullptr), extra_size(0), event(nullptr) {
-    assert(req);
+      : rep(), req(r), extra_size(0), event(nullptr) {
+    assert(req.get());
     rep.client_did = req->req.client_did;
     rep.did = req->req.did;
     rep.pid = req->req.pid;
     rep.msg_id = req->req.msg_id;
     rep.server_read_start_timestamp_ns = req->read_start_timestamp_ns;
     rep.server_read_end_timestamp_ns = req->read_end_timestamp_ns;
-  }
-
-  ~Reply() {
-    delete req;
-    if (extra_data)
-      delete[] extra_data;
   }
 };
 
@@ -398,7 +399,7 @@ struct EventPair {
   cl::UserEvent user;
 };
 
-std::string hexstr(const std::string &);
+std::string hexdigits(std::string, uint8_t);
 
 // Type for the buffer allocation identifier, a running number starting from
 // 0. Note: In some parts functions, the input can be declared as a buffer

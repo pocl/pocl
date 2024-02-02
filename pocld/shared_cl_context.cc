@@ -24,7 +24,6 @@
 */
 
 #include <cassert>
-#include <map>
 #include <sstream>
 
 #include "bufalloc.h"
@@ -575,8 +574,8 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
     // Require SPIR-V to perform compiler-based SVM trickery.
     if (Extensions.find("cl_khr_il_program") == std::string::npos)
       continue;
-    if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
-        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER == 0)
+    if ((Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+        CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) == 0)
       continue;
     CLDevicesWithSVMSupport.push_back(Dev);
     size_t MaxMemAllocSize = Dev.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();

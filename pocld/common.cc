@@ -27,9 +27,7 @@
 
 #include <arpa/inet.h>
 #include <cassert>
-#include <iomanip>
 #include <netdb.h>
-#include <sstream>
 #include <sys/uio.h>
 #include <unistd.h>
 
@@ -152,14 +150,11 @@ void replyData(Reply *rep, EventTiming_t &evt, ReplyMessageType t,
   replyData(rep, evt, t, 0, data_size);
 }
 
-std::string hexstr(const std::string &i) {
-  std::stringstream ss;
-  ss << std::hex << std::setfill('0');
-  for (char b : i) {
-    ss << std::setw(2) << (int)(uint8_t)b;
-  }
-
-  return std::string(ss.str());
+static const char *const hex_digits = "0123456789abcdef";
+std::string hexdigits(std::string acc, uint8_t x) {
+  acc.push_back(hex_digits[(x & 0xf0) >> 4]);
+  acc.push_back(hex_digits[(x & 0x0f) >> 0]);
+  return std::move(acc);
 }
 
 std::string describe_sockaddr(struct sockaddr *addr, unsigned addr_size) {

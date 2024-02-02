@@ -21,9 +21,7 @@
    IN THE SOFTWARE.
 */
 
-#include <cassert>
 #include <chrono>
-#include <sstream>
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -37,6 +35,7 @@
 #include <net/if.h>
 #endif
 
+#include "common.hh"
 #include "peer_handler.hh"
 #include "pocl_networking.h"
 
@@ -64,15 +63,13 @@
 
 const char *request_to_str(RequestMessageType type);
 
-PeerHandler::PeerHandler(uint32_t id, std::mutex *m,
-                         std::pair<std::condition_variable,
-                                   std::vector<peer_connection_t>> *incoming,
-                         VirtualContextBase *c, ExitHelper *e,
-                         TrafficMonitor *tm)
-    : id(id), incoming_mutex(m), incoming_fds(incoming), ctx(c), eh(e),
+PeerHandler::PeerHandler(
+    uint32_t id, std::mutex *m,
+    std::pair<std::condition_variable, std::vector<PeerConnection>> *incoming,
+    VirtualContextBase *c, ExitHelper *e, TrafficMonitor *tm)
+    : id(id), NewConnectionsMutex(m), NewConnections(incoming), ctx(c), eh(e),
       netstat(tm) {
-  incoming_peer_handler =
-      std::thread(&PeerHandler::handle_incoming_peers, this);
+  IncomingPeerHandler = std::thread(&PeerHandler::handleIncomingPeers, this);
 }
 
 const void set_socket_options(int fd, const char *label) {
@@ -94,30 +91,35 @@ const void set_socket_options(int fd, const char *label) {
     POCL_MSG_ERR("%s: failed to set SNDBUF on socket\n", label);
 }
 
-cl_int PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
-                                std::string &session, uint16_t port) {
-  POCL_MSG_PRINT_INFO("PH: connect to peer at %s:%d with session %s\n", address,
-                      int(port), hexstr(session).c_str());
+cl_int
+PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
+                         uint16_t port, uint64_t session,
+                         const std::array<uint8_t, AUTHKEY_LENGTH> &authkey) {
+  POCL_MSG_PRINT_INFO("PH: connect to peer at %s:%d with session %" PRIu64 "\n",
+                      address, int(port), session);
 
   int err = 0;
-  addrinfo *ai = pocl_resolve_address(address, port, &err);
+  addrinfo *res = pocl_resolve_address(address, port, &err);
   if (err) {
     POCL_MSG_ERR("Failed to resolve peer address: %s\n", gai_strerror(err));
     return -404;
   }
   PERROR_CHECK404((err != 0), "getaddrinfo()");
 
-  int peer_fd = socket(ai->ai_family, ai->ai_socktype, IPPROTO_TCP);
-  PERROR_CHECK404((peer_fd < 0), "peer socket");
+  int PeerFd = -1;
+  for (addrinfo *ai = res; ai; ai = ai->ai_next) {
+    PeerFd = socket(ai->ai_family, ai->ai_socktype, IPPROTO_TCP);
+    if (PeerFd >= 0) {
+      if (connect(PeerFd, ai->ai_addr, ai->ai_addrlen) == 0) {
+        set_socket_options(PeerFd, "PH_outgoing");
+        break;
+      } else
+        PeerFd = -1;
+    }
+  }
 
-  set_socket_options(peer_fd, "PH_outgoing");
-
-  PERROR_CHECK404(connect(peer_fd, ai->ai_addr, ai->ai_addrlen) < 0,
-                  "unable to connect peer");
-  freeaddrinfo(ai);
-  CHECK_WRITE_RET(
-      write_full(peer_fd, session.data(), SESSION_ID_LENGTH, netstat), "PH",
-      -404);
+  freeaddrinfo(res);
+  PERROR_CHECK404((PeerFd < 0), "connect peer socket");
 
 #ifdef ENABLE_RDMA
   POCL_MSG_PRINT_GENERAL("PH: Attempting RDMAcm connection to %s:%d\n", address,
@@ -131,83 +133,66 @@ cl_int PeerHandler::connectPeer(uint64_t msg_id, const char *const address,
   }
 #endif
 
-  POCL_MSG_PRINT_GENERAL("PH: Peer handshake SEND\n");
-  PeerHandshake_t request = {
-      msg_id, static_cast<uint32_t>(MessageType_PeerHandshake), id};
+  RequestMsg_t Req = {};
+  Req.msg_id = msg_id;
+  Req.message_type = MessageType_PeerHandshake;
+  Req.session = session;
+  std::memcpy(Req.authkey, authkey.data(), AUTHKEY_LENGTH);
+  Req.m.peer_handshake.peer_id = id;
+  uint32_t RequestSize = request_size(Req.message_type);
   CHECK_WRITE_RET(
-      write_full(peer_fd, &request, sizeof(PeerHandshake_t), netstat), "PH",
+      write_full(PeerFd, &RequestSize, sizeof(RequestSize), netstat), "PH",
       -404);
+  CHECK_WRITE_RET(write_full(PeerFd, &Req, RequestSize, netstat), "PH", -404);
 
-  POCL_MSG_PRINT_GENERAL("PH: Peer handshake reply RECV\n");
-  PeerHandshake_t reply = {};
+  ReplyMsg_t Reply = {};
   ssize_t readb;
-  CHECK_READ_RET(readb,
-                 read_full(peer_fd, &reply, sizeof(PeerHandshake_t), netstat),
-                 "PH", -404);
-  assert(static_cast<size_t>(readb) == sizeof(PeerHandshake_t));
-  assert(reply.message_type ==
-         static_cast<uint32_t>(MessageType_PeerHandshake));
-  assert(reply.msg_id == request.msg_id);
+  CHECK_READ_RET(readb, read_full(PeerFd, &Reply, sizeof(Reply), netstat), "PH",
+                 -404);
 
-  std::unique_lock<std::mutex> map_lock(peermap_mutex);
+  std::unique_lock<std::mutex> map_lock(PeermapMutex);
 #ifdef ENABLE_RDMA
-  peers[reply.peer_id].reset(
-      new Peer(reply.peer_id, id, ctx, eh, peer_fd, netstat, rdma));
+  Peers[Reply.m.peer_handshake.peer_id].reset(new Peer(
+      Reply.m.peer_handshake.peer_id, id, ctx, eh, PeerFd, netstat, rdma));
 #else
-  peers[reply.peer_id].reset(
-      new Peer(reply.peer_id, id, ctx, eh, peer_fd, netstat));
+  Peers[Reply.m.peer_handshake.peer_id].reset(
+      new Peer(Reply.m.peer_handshake.peer_id, id, ctx, eh, PeerFd, netstat));
 #endif
 
   POCL_MSG_PRINT_INFO("PH: peer %" PRIu32 " is now connected at %s\n",
-                      uint32_t(reply.peer_id), address);
+                      uint32_t(Reply.m.peer_handshake.peer_id), address);
 
   return CL_SUCCESS;
 }
 
-void PeerHandler::handle_incoming_peers() {
+void PeerHandler::handleIncomingPeers() {
   while (!eh->exit_requested()) {
-    std::unique_lock<std::mutex> l(*incoming_mutex);
-    if (incoming_fds->second.empty()) {
-      incoming_fds->first.wait_for(l, std::chrono::seconds(1));
+    std::unique_lock<std::mutex> l(*NewConnectionsMutex);
+    if (NewConnections->second.empty()) {
+      NewConnections->first.wait_for(l, std::chrono::seconds(1));
       continue;
     }
-    peer_connection_t conn = incoming_fds->second.back();
-    incoming_fds->second.pop_back();
+    PeerConnection Conn = NewConnections->second.back();
+    NewConnections->second.pop_back();
     l.unlock();
 
-    POCL_MSG_PRINT_GENERAL("PHL: Peer handshake RECV\n");
-    ssize_t readb;
-    PeerHandshake_t request = {};
-    CHECK_READ_RET(
-        readb, read_full(conn.fd, &request, sizeof(PeerHandshake_t), netstat),
-        "PHL", void());
-    assert(static_cast<size_t>(readb) == sizeof(PeerHandshake_t));
-    assert(request.message_type ==
-           static_cast<uint32_t>(MessageType_PeerHandshake));
-
-    POCL_MSG_PRINT_GENERAL("PHL: Peer handshake reply SEND\n");
-    PeerHandshake_t reply = {
-        request.msg_id, static_cast<uint32_t>(MessageType_PeerHandshakeReply),
-        id};
-    CHECK_WRITE_RET(
-        write_full(conn.fd, &reply, sizeof(PeerHandshake_t), netstat), "PHL",
-        void());
+    /* Handshake Request/Reply is handled by peer listener thread before
+     * sending the fd here */
 
 #ifdef ENABLE_RDMA
-    Peer *p =
-        new Peer(request.peer_id, id, ctx, eh, conn.fd, netstat, conn.rdma);
+    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Fd, netstat, Conn.Rdma);
 #else
-    Peer *p = new Peer(request.peer_id, id, ctx, eh, conn.fd, netstat);
+    Peer *p = new Peer(Conn.PeerId, id, ctx, eh, Conn.Fd, netstat);
 #endif
-    std::unique_lock<std::mutex> map_lock(peermap_mutex);
-    peers[request.peer_id].reset(p);
+    std::unique_lock<std::mutex> map_lock(PeermapMutex);
+    Peers[Conn.PeerId].reset(p);
   }
 }
 
 void PeerHandler::pushRequest(Request *r, uint32_t peer_id) {
-  std::unique_lock<std::mutex> lock(peermap_mutex);
-  auto it = peers.find(peer_id);
-  if (it != peers.end()) {
+  std::unique_lock<std::mutex> lock(PeermapMutex);
+  auto it = Peers.find(peer_id);
+  if (it != Peers.end()) {
     lock.unlock();
     it->second->pushRequest(r);
   } else {
@@ -218,8 +203,8 @@ void PeerHandler::pushRequest(Request *r, uint32_t peer_id) {
 }
 
 void PeerHandler::broadcast(const Request &r) {
-  std::unique_lock<std::mutex> lock(peermap_mutex);
-  for (auto &it : peers) {
+  std::unique_lock<std::mutex> lock(PeermapMutex);
+  for (auto &it : Peers) {
     // The writer thread deletes all requets so create a clone for every
     // peer out there... This could be rewritten to not require cloning
     // but that would require some additional signaling which would likely
@@ -233,9 +218,9 @@ void PeerHandler::broadcast(const Request &r) {
 void PeerHandler::notifyRdmaBufferRegistration(uint32_t peer_id,
                                                uint32_t buf_id, uint32_t rkey,
                                                uint64_t vaddr) {
-  std::unique_lock<std::mutex> lock(peermap_mutex);
-  auto it = peers.find(peer_id);
-  if (it != peers.end()) {
+  std::unique_lock<std::mutex> lock(PeermapMutex);
+  auto it = Peers.find(peer_id);
+  if (it != Peers.end()) {
     lock.unlock();
     POCL_MSG_PRINT_GENERAL(
         "PH: Received RDMA registration info mem_obj=%" PRIu32 ", "
@@ -250,8 +235,8 @@ void PeerHandler::notifyRdmaBufferRegistration(uint32_t peer_id,
 }
 
 bool PeerHandler::rdmaRegisterBuffer(uint32_t id, char *ptr, size_t size) {
-  std::unique_lock<std::mutex> lock(peermap_mutex);
-  for (auto &it : peers) {
+  std::unique_lock<std::mutex> lock(PeermapMutex);
+  for (auto &it : Peers) {
     if (!it.second->rdmaRegisterBuffer(id, ptr, size))
       return false;
   }
@@ -259,8 +244,8 @@ bool PeerHandler::rdmaRegisterBuffer(uint32_t id, char *ptr, size_t size) {
 }
 
 void PeerHandler::rdmaUnregisterBuffer(uint32_t id) {
-  std::unique_lock<std::mutex> lock(peermap_mutex);
-  for (auto &it : peers) {
+  std::unique_lock<std::mutex> lock(PeermapMutex);
+  for (auto &it : Peers) {
     it.second->rdmaUnregisterBuffer(id);
   }
 }
@@ -269,7 +254,7 @@ void PeerHandler::rdmaUnregisterBuffer(uint32_t id) {
 PeerHandler::~PeerHandler() {
   eh->requestExit("PH Shutdown", 0);
   listen_thread.join();
-  for (auto &t : peers) {
+  for (auto &t : Peers) {
     t.second.reset();
   }
 }

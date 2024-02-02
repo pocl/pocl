@@ -23,7 +23,6 @@
 */
 
 #include <algorithm>
-#include <cassert>
 #include <queue>
 
 #include "common.hh"
@@ -158,7 +157,7 @@ void ReplyQueueThread::writeThread() {
     if (backup.empty())
       resending = false;
     std::unique_lock<std::mutex> lock(io_mutex);
-    if (io_inflight.size() > 0 || resending) {
+    if ((io_inflight.size() > 0 || resending) && fd >= 0) {
       Reply *reply = io_inflight[i];
       lock.unlock();
 
@@ -243,11 +242,11 @@ void ReplyQueueThread::writeThread() {
             id_str.c_str());
 
         // TODO: handle reconnecting & resending when RDMA is used
-        if (reply->extra_data) {
+        if (reply->extra_size > 0 && !reply->extra_data.empty()) {
           POCL_MSG_PRINT_INFO("%s: WRITING EXTRA: %" PRIuS " \n",
                               id_str.c_str(), reply->extra_size);
           CHECK_WRITE_RETRY(
-              write_full(fd, reply->extra_data, reply->extra_size, netstat),
+              write_full(fd, reply->extra_data.data(), reply->extra_size, netstat),
               id_str.c_str());
         }
         POCL_MSG_PRINT_GENERAL("%s: MESSAGE FULLY WRITTEN, ID: %" PRIu64 "\n",

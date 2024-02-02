@@ -23,7 +23,6 @@
    IN THE SOFTWARE.
 */
 
-#include <cassert>
 #include <poll.h>
 #include <sys/socket.h>
 
@@ -60,7 +59,6 @@ void RequestQueueThread::readThread() {
   int fd = *this->fd;
   int oldfd = fd;
   while (1) {
-  RETRY:
     fd = *this->fd;
     if (fd != oldfd) {
       POCL_MSG_PRINT_GENERAL("%s: FD change detected: %d -> %d\n",
@@ -79,8 +77,8 @@ void RequestQueueThread::readThread() {
     if (!(pfd.revents & POLLIN))
       continue;
 
-    Request *request = new Request;
-    while (!request->fully_read) {
+    Request *request = new Request();
+    while (!request->IsFullyRead) {
       if (!request->read(fd)) {
         delete request;
         continue;
