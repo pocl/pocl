@@ -86,10 +86,11 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
          structures. The SVM pointer should have been requested previously
          via svm_alloc. */
 
-      /* TODO: We should ensure the host pointer is actually an SVM allocation.
-       */
-      mem->mem_host_ptr = host_ptr;
+      /* Fix the remote buffer's host pointer should point to the remote's SVM pool,
+         so the remote->device migrations work as intended. */
+      mem->mem_host_ptr = host_ptr + d->svm_region_offset;
       r = pocl_network_create_buffer (d, mem, &p->device_addr);
+      mem->mem_host_ptr = host_ptr - d->svm_region_offset;
     }
   else
     {
@@ -117,11 +118,12 @@ pocl_remote_svm_free (cl_device_id device, void *svm_ptr)
 {
   remote_device_data_t *d = (remote_device_data_t *)device->data;
 
+  POCL_MSG_PRINT_MEMORY ("Remove free SVM PTR (client %p remote %p)\n",
+                         svm_ptr, svm_ptr + d->svm_region_offset);
+
   /* This is a device-side svm pointer that identifies the
      object on device side. */
-  uint64_t mem_id = (uint64_t)svm_ptr;
-
-  POCL_MSG_PRINT_MEMORY ("REMOTE DEVICE FREE SVM PTR %p\n", svm_ptr);
+  uint64_t mem_id = (uint64_t)svm_ptr + d->svm_region_offset;
 
   POCL_LOCK (d->mem_lock);
   int r = pocl_network_free_buffer (d, mem_id, 1);
@@ -1805,6 +1807,7 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
   int requires_kernarg_update = 0;
 
   pocl_kernel_metadata_t *kernel_md = kernel->meta;
+  remote_device_data_t *ddata = (remote_device_data_t *)data;
 
   kernel_data_t *kd = (kernel_data_t *)(kernel->data[dev_i]);
   assert (kd != NULL);
@@ -1845,6 +1848,11 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
       else if (al->is_svm)
         {
           arg_array[i] = (uint64_t) * (void **)al->value;
+          POCL_MSG_PRINT_MEMORY (
+              "Adding SVM pool offset to an SVM ptr arg %u (%p to %p)\n", i,
+              (void *)arg_array[i],
+              (char *)arg_array[i] + ddata->svm_region_offset);
+          arg_array[i] = arg_array[i] + ddata->svm_region_offset;
           requires_kernarg_update = 1;
           ptr_is_svm[i] = 1;
         }
