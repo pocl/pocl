@@ -325,8 +325,9 @@ pocl.
               Use POCL_TRACING_OPT=<file> to set the
               output file. If not specified, it defaults to
               pocl_trace_event.log
-    lttng  -- LTTNG tracepoint support. When activated, a lttng session
-              must be started. The following tracepoints are available:
+    lttng  -- LTTNG tracepoint support. Requires pocl to be built with ``-DENABLE_LTTNG=YES``.
+              When activated, a lttng session must be started.
+              The following tracepoints are available:
                - pocl_trace:ndrange_kernel -> Kernel execution
                - pocl_trace:read_buffer    -> Read buffer
                - pocl_trace:write_buffer   -> Write buffer
