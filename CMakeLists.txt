@@ -1002,16 +1002,23 @@ set(PTHREAD_LIBRARY Threads::Threads)
 
 ######################################################################################
 # LTTNG
+option(ENABLE_LTTNG "build pocl with the LTTng tracing option" OFF)
+if(ENABLE_LTTNG)
+  if(NOT UNIX)
+    message(FATAL_ERROR "ENABLE_LTTNG enabled, but is only available on Unix")
+  endif()
 
-if(UNIX)
   if(PKG_CONFIG_EXECUTABLE)
     pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
   endif()
   if(LTTNG_UST_FOUND)
     set(HAVE_LTTNG_UST 1)
   else()
-    set(HAVE_LTTNG_UST 0)
+    message(FATAL_ERROR "ENABLE_LTTNG enabled, but could not find library")
   endif()
+
+else()
+  set(HAVE_LTTNG_UST 0)
 endif()
 
 ######################################################################################
@@ -1520,12 +1527,17 @@ if(ENABLE_PROXY_DEVICE)
     endif()
 
   endif()
-  if(NOT DEFINED PROXY_USE_LIBOPENCL_STUB)
-    set(RENAME_POCL 1)
-  endif()
+
   if(RENAME_POCL AND PROXY_USE_LIBOPENCL_STUB)
     message(FATAL_ERROR "RENAME_POCL and PROXY_USE_LIBOPENCL_STUB can not be used together")
   endif()
+
+  if(NOT PROXY_USE_LIBOPENCL_STUB)
+    set(RENAME_POCL ON )
+  else()
+    set(RENAME_POCL OFF )
+  endif()
+
   set(BUILD_PROXY 1)
 
   set(OCL_DRIVERS "${OCL_DRIVERS} proxy")
@@ -2184,7 +2196,6 @@ MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
-MESSAGE(STATUS "HAVE_LTTNG_UST: ${HAVE_LTTNG_UST}")
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")
@@ -2302,6 +2313,7 @@ MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
+MESSAGE(STATUS "ENABLE_LTTNG: ${ENABLE_LTTNG}")
 MESSAGE(STATUS "ENABLE_POCL_BUILDING: ${ENABLE_POCL_BUILDING}")
 MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
 MESSAGE(STATUS "ENABLE_RELOCATION: ${ENABLE_RELOCATION}")

@@ -286,8 +286,7 @@ To install lttng on Ubuntu, run this as root / sudo::
 
      apt install lttng-tools lttng-modules-dkms liblttng-ust-dev liblttng-ctl-dev
 
-You must now rebuild pocl. It should pick up LTTNG automatically, if it does not,
-clean the build directory and rerun cmake.
+You must now run cmake with ``-DENABLE_LTTNG=YES`` and rebuild pocl.
 
 
 Using LTTNG

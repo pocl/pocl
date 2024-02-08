@@ -240,6 +240,9 @@ use ";" as separator (you'll have to escape it for bash).
   a time is untested. Using together with ``-DENABLE_ICD=OFF -DENABLE_LOADABLE_DRIVERS=OFF``
   is highly recommended to avoid issues with loading order of sanitizer libraries.
 
+- ``-DENABLE_LTTNG=ON/OFF`` - compile pocl with LTTng support for tracing. Requires LTTng to be installed
+  on the host machine.
+
 - ``-DENABLE_{CUDA,TCE,HSA,VULKAN,LEVEL0}=ON/OFF`` - enable various (non-CPU) backends.
   Usually requires some additional build dependencies; see their documentation.
 
