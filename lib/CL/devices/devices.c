@@ -144,8 +144,7 @@ pocl_get_device_name (unsigned index)
             return device->long_name;
         }
     }
-  else
-    return NULL;
+  return NULL;
 }
 
 /* Init function prototype */

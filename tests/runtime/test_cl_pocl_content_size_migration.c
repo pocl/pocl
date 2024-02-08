@@ -141,7 +141,7 @@ main (void)
   CHECK_CL_ERROR (clReleaseMemObject (buf_content_dst));
   CHECK_CL_ERROR (clReleaseMemObject (buf_content_src));
   CHECK_CL_ERROR (clReleaseMemObject (buf_size));
-  for (int i = 0; i < num_devices; ++i)
+  for (cl_uint i = 0; i < num_devices; ++i)
     CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadCompiler ());

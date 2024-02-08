@@ -482,7 +482,7 @@ pocl_driver_svm_copy (cl_device_id dev,
 /* load LLVM IR binary from disk, deletes existing in-memory IR */
 static int
 pocl_reload_program_bc (char *program_bc_path, cl_program program,
-                      cl_uint device_i)
+                        cl_uint device_i)
 {
   char *temp_binary = NULL;
   uint64_t temp_size = 0;
@@ -491,7 +491,7 @@ pocl_reload_program_bc (char *program_bc_path, cl_program program,
     return -1;
   if (program->binaries[device_i])
     POCL_MEM_FREE (program->binaries[device_i]);
-  program->binaries[device_i] = temp_binary;
+  program->binaries[device_i] = (unsigned char*)temp_binary;
   program->binary_sizes[device_i] = temp_size;
   return 0;
 }

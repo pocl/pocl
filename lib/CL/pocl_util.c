@@ -1086,7 +1086,7 @@ pocl_create_command_full (_cl_command_node **cmd,
           /* Bump "last event" refcount for content size buffers that weren't
            * explicitly given as dependencies */
           int explicit = 0;
-          for (int j = 0; j < num_buffers; ++j)
+          for (size_t j = 0; j < num_buffers; ++j)
             {
               if (buffers[j] == buffers[i]->size_buffer)
                 {
