@@ -77,35 +77,30 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  /* Utilize the SVM shadow buffers to share code with cl_mem buffer fill
+     code. */
+
+  pocl_svm_ptr *dst_svm_ptr = pocl_find_svm_ptr_in_context (context, svm_ptr);
+
   void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
   POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  if (command_buffer == NULL)
-    {
-      errcode = pocl_check_event_wait_list (
-          command_queue, num_items_in_wait_list, event_wait_list);
-      if (errcode != CL_SUCCESS)
-        return errcode;
-      errcode = pocl_create_command (cmd, command_queue, command_type, event,
-                                     num_items_in_wait_list, event_wait_list,
-                                     0, NULL, NULL);
-    }
+  size_t offset = svm_ptr - dst_svm_ptr->svm_ptr;
+  if (command_buffer)
+    errcode = POname (clCommandFillBufferKHR) (
+        command_buffer, command_queue, dst_svm_ptr->shadow_cl_mem, pattern,
+        pattern_size, offset, size, num_items_in_wait_list,
+        sync_point_wait_list, sync_point, NULL);
   else
-    {
-      errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, command_type,
-          num_items_in_wait_list, sync_point_wait_list, 0, NULL, NULL);
-    }
+    errcode = POname (clEnqueueFillBuffer) (
+        command_queue, dst_svm_ptr->shadow_cl_mem, pattern, pattern_size,
+        offset, size, num_items_in_wait_list, event_wait_list, event);
+
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  _cl_command_node *c = *cmd;
-
-  memcpy (cmd_pattern, pattern, pattern_size);
-  c->command.svm_fill.svm_ptr = svm_ptr;
-  c->command.svm_fill.size = size;
-  c->command.svm_fill.pattern = cmd_pattern;
-  c->command.svm_fill.pattern_size = pattern_size;
+  if (event != NULL)
+    (*event)->command_type = command_type;
 
   return CL_SUCCESS;
 }
@@ -117,18 +112,9 @@ POname (clEnqueueSVMMemFill) (cl_command_queue command_queue, void *svm_ptr,
                               const cl_event *event_wait_list,
                               cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-  cl_int errcode;
-  _cl_command_node *cmd = NULL;
-
-  errcode = pocl_svm_memfill_common (
-      NULL, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size, pattern,
-      pattern_size, num_events_in_wait_list, event_wait_list, event, NULL,
-      NULL, &cmd);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  pocl_command_enqueue (command_queue, cmd);
-
-  return CL_SUCCESS;
+  return pocl_svm_memfill_common (NULL, command_queue, CL_COMMAND_SVM_MEMFILL,
+                                  svm_ptr, size, pattern, pattern_size,
+                                  num_events_in_wait_list, event_wait_list,
+                                  event, NULL, NULL, NULL);
 }
 POsym(clEnqueueSVMMemFill)

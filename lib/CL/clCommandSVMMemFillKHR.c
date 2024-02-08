@@ -41,22 +41,9 @@ POname (clCommandSVMMemFillKHR) (
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_svm_memfill_common (
+  return pocl_svm_memfill_common (
       command_buffer, command_queue, CL_COMMAND_SVM_MEMFILL, svm_ptr, size,
       pattern, pattern_size, num_sync_points_in_wait_list, NULL, NULL,
       sync_point_wait_list, sync_point, &cmd);
-
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  return CL_SUCCESS;
-
-ERROR:
-  pocl_mem_manager_free_command (cmd);
-  return errcode;
 }
 POsym (clCommandSVMMemFillKHR)
