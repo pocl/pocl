@@ -681,7 +681,10 @@ void PoclDaemon::readAllClientSocketsThread() {
                   case MessageType_BuildProgramFromSource:
                   case MessageType_BuildProgramFromBinary:
                   case MessageType_BuildProgramFromSPIRV:
+                  case MessageType_CompileProgramFromSource:
+                  case MessageType_CompileProgramFromSPIRV:
                   case MessageType_BuildProgramWithBuiltins:
+                  case MessageType_LinkProgram:
                   case MessageType_FreeProgram:
                   case MessageType_MigrateD2D:
                   case MessageType_RdmaBufferRegistration:
@@ -774,7 +777,11 @@ void PoclDaemon::readAllClientSocketsThread() {
     }
     DroppedFds.clear();
 
-    if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 1)) {
+    // TODO: The reconnect should have a time window as it holds resources.
+    // Especially with SVM on, it will hold the SVMPool which can be a large
+    // chunk of virt mem. Let's not enable reconnect by default until this is
+    // sanitized.
+    if (!pocl_get_bool_option("POCLD_ALLOW_CLIENT_RECONNECT", 0)) {
       // Free unusued vctxs if reconnect is not enabled.
       for (auto VContext : DroppedVCtxs) {
         if (std::find(SocketContexts.begin(), SocketContexts.end(), VContext) !=

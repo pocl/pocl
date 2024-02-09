@@ -75,10 +75,16 @@ const char *request_to_str(RequestMessageType type) {
 
   case MessageType_BuildProgramFromSource:
     return "BuildProgramFromSource";
+  case MessageType_CompileProgramFromSource:
+    return "CompileProgramFromSource";
   case MessageType_BuildProgramFromBinary:
     return "BuildProgramFromBinary";
   case MessageType_BuildProgramFromSPIRV:
     return "BuildProgramFromSPIRV";
+  case MessageType_CompileProgramFromSPIRV:
+    return "CompileProgramFromSPIRV";
+  case MessageType_LinkProgram:
+    return "LinkProgram";
   case MessageType_BuildProgramWithBuiltins:
     return "BuildProgramWithBuiltins";
   case MessageType_FreeProgram:
@@ -233,6 +239,9 @@ bool Request::read(int fd) {
   case MessageType_BuildProgramFromBinary:
   case MessageType_BuildProgramFromSource:
   case MessageType_BuildProgramFromSPIRV:
+  case MessageType_CompileProgramFromSPIRV:
+  case MessageType_CompileProgramFromSource:
+  case MessageType_LinkProgram:
     request->extra_size2 = req->m.build_program.options_len;
     /* intentional fall through to setting payload (i.e. binary) size */
   case MessageType_BuildProgramWithBuiltins:

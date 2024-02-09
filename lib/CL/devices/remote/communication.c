@@ -2035,13 +2035,6 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
   assert (mem->size > 0);
   assert (mem->flags != 0);
 
-  assert (mem->mem_host_ptr == 0 || (mem->flags & CL_MEM_USES_SVM_POINTER != 0)
-          || (size_t)mem->mem_host_ptr < ddata->device_svm_region_start_addr
-          || (size_t)mem->mem_host_ptr
-                 > ddata->device_svm_region_start_addr
-                       + ddata->device_svm_region_start_addr
-                       + ddata->device_svm_region_size);
-
   nc.request.m.create_buffer.flags = mem->flags;
   nc.request.m.create_buffer.size = mem->size;
   // see https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer_002dInteger-Conversion.html
@@ -2274,15 +2267,27 @@ pocl_network_setup_peer_mesh ()
   return CL_SUCCESS;
 }
 
+/**
+ * Build, compile or link a program remotely.
+ *
+ * \param [i] payload The sources or binaries, if compiling/building, or a list
+ * of program ids, if linking only. \param [i] is_binary, is_builtin, is_spirv
+ * Define the input type. If we are only linking previously compiled programs,
+ * setting these have no difference. \param [i] svm_region_offset Nonzero
+ * offset if the build process should adjust the memory accessess of the
+ * program to account for the offset between the SVM regions. \param [i]
+ * compile_only Set to 1 if compiling without linking. Otherwise 0. \param [i]
+ * link_only
+ *
+ */
 cl_int
-pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
-                            size_t payload_size, int is_binary, int is_builtin,
-                            int is_spirv, uint32_t prog_id,
-                            const char *options, char **kernel_meta_bytes,
-                            size_t *kernel_meta_size, uint32_t *devices,
-                            uint32_t *platforms, size_t num_devices,
-                            char **build_logs, char **binaries,
-                            size_t *binary_sizes)
+pocl_network_build_or_link_program (
+    remote_device_data_t *ddata, const void *payload, size_t payload_size,
+    int is_binary, int is_builtin, int is_spirv, uint32_t prog_id,
+    const char *options, char **kernel_meta_bytes, size_t *kernel_meta_size,
+    uint32_t *devices, uint32_t *platforms, size_t num_devices,
+    char **build_logs, char **binaries, size_t *binary_sizes,
+    size_t svm_region_offset, int compile_only, int link_only)
 {
   size_t i, j;
   REMOTE_SERV_DATA2;
@@ -2295,17 +2300,23 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
   POCL_MEASURE_START (REMOTE_BUILD_PROGRAM);
 
   ID_REQUEST (ReadBuffer, prog_id);
-  if (is_spirv)
-    nc.request.message_type = MessageType_BuildProgramFromSPIRV;
+  if (link_only)
+    nc.request.message_type = MessageType_LinkProgram;
+  else if (is_spirv)
+    nc.request.message_type = compile_only ?
+      MessageType_CompileProgramFromSPIRV : MessageType_BuildProgramFromSPIRV;
   else if (is_builtin)
     nc.request.message_type = MessageType_BuildProgramWithBuiltins;
   else if (is_binary)
     nc.request.message_type = MessageType_BuildProgramFromBinary;
   else
-    nc.request.message_type = MessageType_BuildProgramFromSource;
+    nc.request.message_type = compile_only
+                                  ? MessageType_CompileProgramFromSource
+                                  : MessageType_BuildProgramFromSource;
 
   nc.request.m.build_program.payload_size = payload_size;
   nc.request.m.build_program.options_len = options ? strlen (options) : 0;
+  nc.request.m.build_program.svm_region_offset = svm_region_offset;
 
   nc.request.m.build_program.num_devices = num_devices;
   assert (num_devices < MAX_REMOTE_DEVICES);
@@ -2323,13 +2334,14 @@ pocl_network_build_program (remote_device_data_t *ddata, const void *payload,
       = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, MAX_BUILD_SIZE);
   nc.rep_extra_size = MAX_BUILD_SIZE;
 
-  POCL_MSG_PRINT_REMOTE ("BuildProgram %p\n", netcmd);
+  POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram %p\n", netcmd);
 
   SEND_REQ_FAST;
 
   wait_on_netcmd (netcmd);
 
-  POCL_MSG_PRINT_REMOTE ("BuildProgram reply DATA: %zu\n", nc.reply.data_size);
+  POCL_MSG_PRINT_REMOTE ("Compile/Build/LinkProgram reply DATA: %zu\n",
+                         nc.reply.data_size);
   POCL_MEASURE_FINISH (REMOTE_BUILD_PROGRAM);
 
   char *buffer = nc.rep_extra_data;

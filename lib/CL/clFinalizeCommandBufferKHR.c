@@ -47,10 +47,10 @@ POname (clFinalizeCommandBufferKHR) (cl_command_buffer_khr command_buffer)
   POCL_RETURN_ERROR_COND ((finalized_devs == NULL), CL_OUT_OF_HOST_MEMORY);
 
   cl_command_queue *q = command_buffer->queues;
-  for (int i = 0; i < command_buffer->num_queues; ++i, ++q)
+  for (cl_uint i = 0; i < command_buffer->num_queues; ++i, ++q)
     {
       int is_done = 0;
-      for (int j = 0; j < num_finalized; ++j)
+      for (unsigned int j = 0; j < num_finalized; ++j)
         {
           if (finalized_devs[j] == (*q)->device)
             is_done = 1;

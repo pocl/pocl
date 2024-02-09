@@ -207,8 +207,9 @@ private:
 
   void FreeBuffer(Request *req, Reply *rep);
 
-  void BuildProgram(Request *req, Reply *rep, bool is_binary, bool is_builtin,
-                    bool is_spirv);
+  void BuildOrLinkProgram(Request *req, Reply *rep, bool is_binary,
+                          bool is_builtin, bool is_spirv,
+                          bool CompileOnly = false, bool LinkOnly = false);
 
   void FreeProgram(Request *req, Reply *rep);
 
@@ -452,19 +453,31 @@ int VirtualCLContext::run() {
         break;
 
       case MessageType_BuildProgramFromBinary:
-        BuildProgram(request, reply, true, false, false);
+        BuildOrLinkProgram(request, reply, true, false, false);
         break;
 
       case MessageType_BuildProgramFromSource:
-        BuildProgram(request, reply, false, false, false);
+        BuildOrLinkProgram(request, reply, false, false, false);
+        break;
+
+      case MessageType_CompileProgramFromSource:
+        BuildOrLinkProgram(request, reply, false, false, false, true);
         break;
 
       case MessageType_BuildProgramFromSPIRV:
-        BuildProgram(request, reply, false, false, true);
+        BuildOrLinkProgram(request, reply, false, false, true);
+        break;
+
+      case MessageType_CompileProgramFromSPIRV:
+        BuildOrLinkProgram(request, reply, false, false, true, true);
         break;
 
       case MessageType_BuildProgramWithBuiltins:
-        BuildProgram(request, reply, false, true, false);
+        BuildOrLinkProgram(request, reply, false, true, false);
+        break;
+
+      case MessageType_LinkProgram:
+        BuildOrLinkProgram(request, reply, false, false, false, false, true);
         break;
 
       case MessageType_FreeProgram:
@@ -691,15 +704,18 @@ void VirtualCLContext::FreeBuffer(Request *req, Reply *rep) {
   buf += len;                                                                  \
   assert((size_t)(buf - buffer) <= buffer_size);
 
-void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
-                                    bool is_builtin, bool is_spirv) {
+void VirtualCLContext::BuildOrLinkProgram(Request *req, Reply *rep,
+                                          bool is_binary, bool is_builtin,
+                                          bool is_spirv, bool CompileOnly,
+                                          bool LinkOnly) {
   INIT_VARS;
   CHECK_ID_NOT_EXISTS(ProgramIDset, CL_INVALID_PROGRAM);
 
   BuildProgramMsg_t &m = req->req.m.build_program;
 
   POCL_MSG_PRINT_GENERAL(
-      "VirtualCTX: build %s program %" PRIu64 " for %" PRIu32 " devices\n",
+      "VirtualCTX: %s %s program %" PRIu64 " for %" PRIu32 " devices\n",
+      LinkOnly ? "link" : (CompileOnly ? "compile" : "build"),
       (is_binary ? "binary"
                  : (is_builtin ? "builtin" : (is_spirv ? "SPIR-V" : "source"))),
       id, uint32_t(m.num_devices));
@@ -709,15 +725,27 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
   std::vector<uint32_t> DevList{};
   ContextVector ProgramContexts;
 
-  std::unordered_map<uint64_t, std::vector<unsigned char>> output_binaries;
-  std::unordered_map<uint64_t, std::vector<unsigned char>> input_binaries;
+  std::unordered_map<uint64_t, std::vector<unsigned char>> OutputBinaries;
+  std::unordered_map<uint64_t, std::vector<unsigned char>> InputBinaries;
   std::unordered_map<uint64_t, std::string> build_logs;
   size_t num_kernels = 0;
   char *source = (char *)(req->extra_data.data());
   size_t source_len = m.payload_size;
   char *options = (char *)(req->extra_data2.data());
 
-  if (is_binary || is_spirv) {
+  if (LinkOnly) {
+    // We receive N client cl_program IDs to link. The first
+    // 32b int is the number.
+    assert(m.payload_size > sizeof(uint32_t));
+    uint32_t NumPrograms = *((uint32_t *)req->extra_data.data());
+    assert(m.payload_size == sizeof(uint32_t) + sizeof(uint32_t) * NumPrograms);
+
+    // Just add the program ids as keys.
+    for (size_t i = 0; i < NumPrograms; ++i) {
+      uint32_t ClientProgramID = ((uint32_t *)req->extra_data.data())[i + 1];
+      InputBinaries[ClientProgramID] = std::vector<unsigned char>();
+    }
+  } else if (is_binary || is_spirv) {
     source_len = 0;
     unsigned char *buffer = (unsigned char *)source;
     source = nullptr;
@@ -738,7 +766,7 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
       buf += bin_size;
       assert((buf - buffer) <= (size_t)m.payload_size);
       uint64_t id = ((uint64_t)m.platforms[i] << 32) + m.devices[i];
-      input_binaries[id] = std::move(binary);
+      InputBinaries[id] = std::move(binary);
     }
   }
 
@@ -750,9 +778,10 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
         DevList.push_back(m.devices[j]);
     }
     if (DevList.size() > 0) {
-      err = SharedContextList[i]->buildProgram(
+      err = SharedContextList[i]->buildOrLinkProgram(
           id, DevList, source, source_len, is_binary, is_builtin, is_spirv,
-          options, input_binaries, output_binaries, build_logs, num_kernels);
+          options, InputBinaries, OutputBinaries, build_logs, num_kernels,
+          m.svm_region_offset, CompileOnly, LinkOnly);
       if (err == CL_SUCCESS) {
         ProgramContexts.push_back(SharedContextList[i]);
       } else
@@ -793,17 +822,17 @@ void VirtualCLContext::BuildProgram(Request *req, Reply *rep, bool is_binary,
 
   if (err == CL_SUCCESS) {
     if (!is_binary && !is_builtin && !is_spirv) {
-      // write binaries for source builds
+      // write binaries for source builds and linkage results
       WRITE_BYTES(m.num_devices);
       for (j = 0; j < m.num_devices; ++j) {
         uint64_t id = (((uint64_t)m.platforms[j]) << 32) + m.devices[j];
         POCL_MSG_PRINT_GENERAL(
             "Looking for binary for Dev ID: %" PRIu32 " / %" PRIu32 " \n",
             uint32_t(m.platforms[j]), uint32_t(m.devices[j]));
-        uint32_t binary_size = output_binaries[id].size();
+        uint32_t binary_size = OutputBinaries[id].size();
         WRITE_BYTES(binary_size);
         assert(binary_size);
-        WRITE_STRING(output_binaries[id].data(), binary_size);
+        WRITE_STRING(OutputBinaries[id].data(), binary_size);
       }
     }
   } else {

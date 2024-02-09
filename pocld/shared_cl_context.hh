@@ -73,14 +73,15 @@ public:
 
   virtual int freeBuffer(BufferId_t BufferID, bool is_svm) = 0;
 
-  virtual int buildProgram(
+  virtual int buildOrLinkProgram(
       uint32_t program_id, std::vector<uint32_t> &DeviceList, char *source,
       size_t source_size, bool is_binary, bool is_builtin, bool is_spirv,
       const char *options,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &input_binaries,
       std::unordered_map<uint64_t, std::vector<unsigned char>> &output_binaries,
       std::unordered_map<uint64_t, std::string> &build_logs,
-      size_t &num_kernels) = 0;
+      size_t &num_kernels, uint64_t SVMRegionOffset, bool CompileOnly,
+      bool LinkOnly) = 0;
 
   virtual int freeProgram(uint32_t program_id) = 0;
 

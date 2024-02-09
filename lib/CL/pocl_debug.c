@@ -52,7 +52,8 @@ void pocl_debug_messages_setup(const char *debug) {
   }
   /* else parse */
   char *tokenize = strdup(debug);
-  for (int i = 0; i < strlen(tokenize); i++) {
+  for (size_t i = 0; i < strlen (tokenize); i++)
+  {
     tokenize[i] = tolower(tokenize[i]);
   }
   char *ptr = NULL;

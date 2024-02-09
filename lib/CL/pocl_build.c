@@ -723,7 +723,7 @@ compile_and_link_program(int compile_program,
     }
   else
     {
-      // convert subdevices to devices and remove duplicates
+      /* convert subdevices to devices and remove duplicates */
       cl_uint real_num_devices = 0;
       unique_devlist = pocl_unique_device_list (device_list, num_devices,
                                                 &real_num_devices);

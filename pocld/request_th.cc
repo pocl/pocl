@@ -101,6 +101,9 @@ void RequestQueueThread::readThread() {
     case MessageType_BuildProgramFromSource:
     case MessageType_BuildProgramFromBinary:
     case MessageType_BuildProgramFromSPIRV:
+    case MessageType_CompileProgramFromSource:
+    case MessageType_CompileProgramFromSPIRV:
+    case MessageType_LinkProgram:
     case MessageType_BuildProgramWithBuiltins:
     case MessageType_FreeProgram:
     case MessageType_MigrateD2D:
