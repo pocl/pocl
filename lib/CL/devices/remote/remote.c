@@ -86,10 +86,12 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
          structures. The SVM pointer should have been requested previously
          via svm_alloc. */
 
-      /* Fix the remote buffer's host pointer should point to the remote's SVM pool,
+      /* Fix the remote buffer's host pointer to point to the remote's SVM pool,
          so the remote->device migrations work as intended. */
       mem->mem_host_ptr = host_ptr + d->svm_region_offset;
       r = pocl_network_create_buffer (d, mem, &p->device_addr);
+      /* Set it back, since the client might inspect the host pointer, which
+         should now point again to the host region. */
       mem->mem_host_ptr = host_ptr - d->svm_region_offset;
     }
   else
@@ -118,7 +120,7 @@ pocl_remote_svm_free (cl_device_id device, void *svm_ptr)
 {
   remote_device_data_t *d = (remote_device_data_t *)device->data;
 
-  POCL_MSG_PRINT_MEMORY ("Remove free SVM PTR (client %p remote %p)\n",
+  POCL_MSG_PRINT_MEMORY ("Remote free SVM PTR (client %p remote %p)\n",
                          svm_ptr, svm_ptr + d->svm_region_offset);
 
   /* This is a device-side svm pointer that identifies the
