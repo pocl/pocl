@@ -517,9 +517,10 @@ ${TYPEDEF}" "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
     #message(FATAL_ERROR "SIZEOF: ${SIZEOF_STDOUT} RES: ${RESULT}")
     if(NOT ${RESULT})
       message(SEND_ERROR "Could not determine align of(${TYPE})")
+      set(${OUT_VAR} "0" CACHE INTERNAL "Align of ${TYPE}")
+    else()
+      set(${OUT_VAR} "${RESULT}" CACHE INTERNAL "Align of ${TYPE}")
     endif()
-
-    set(${OUT_VAR} "${RESULT}" CACHE INTERNAL "Align of ${TYPE}")
 
   endif()
 
