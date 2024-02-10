@@ -61,6 +61,11 @@ add_subdirectory("matadd")
 add_subdirectory("boxadd")
 add_subdirectory("EinsteinToolkit")
 
+set(GIT_OPTIONS GIT_SHALLOW ON)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
+  list(APPEND GIT_OPTIONS GIT_REMOTE_UPDATE_STRATEGY CHECKOUT)
+endif()
+
 # TODO:   opencl-book-samples
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0

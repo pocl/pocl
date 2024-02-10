@@ -36,6 +36,7 @@ if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE
     GIT_REPOSITORY "https://github.com/inducer/pyopencl.git"
     GIT_TAG v2023.1.4
+    ${GIT_OPTIONS}
     GIT_SUBMODULES "pyopencl/compyte")
 else()
   set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2023.1.4.tar.gz")

@@ -53,6 +53,7 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/bashbaug/simple-sycl-samples.git"
   GIT_TAG ${REPO_TAG}
+  ${GIT_OPTIONS}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}
     "${TS_BASEDIR}/src/${TS_NAME}"

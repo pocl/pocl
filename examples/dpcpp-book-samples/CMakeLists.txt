@@ -53,6 +53,7 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/Apress/data-parallel-CPP.git"
   GIT_TAG ${REPO_TAG}
+  ${GIT_OPTIONS}
   PATCH_COMMAND ${PATCH_EXEC} -i "${CMAKE_CURRENT_SOURCE_DIR}/dpcpp.patch" -p1 --merge -d "${TS_SRCDIR}"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}
