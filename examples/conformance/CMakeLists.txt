@@ -918,6 +918,7 @@ set(CTS_MICRO_LIST
     "${TS_NAME}${TS_SUFFIX}_buffers_micro_var2"
     "${TS_NAME}${TS_SUFFIX}_buffers_micro_map_read"
     "${TS_NAME}${TS_SUFFIX}_buffers_micro_map_write"
+    "${TS_NAME}${TS_SUFFIX}_cl_khr_command_buffer"
     "${TS_NAME}${TS_SUFFIX}_commonfns"
     "${TS_NAME}${TS_SUFFIX}_compiler_micro"
     "${TS_NAME}${TS_SUFFIX}_computeinfo"
