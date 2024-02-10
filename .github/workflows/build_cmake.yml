@@ -493,4 +493,4 @@ jobs:
           fi
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j4 $CTEST_FLAGS -E $TEST_EXCLUDES
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j1 $CTEST_FLAGS -E $TEST_EXCLUDES
