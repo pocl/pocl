@@ -425,8 +425,8 @@ VirtualContextBase *PoclDaemon::performSessionSetup(int fd, Request *R) {
   std::random_device rd;
   std::default_random_engine dice(rd());
   std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
-  for (int i = 0; i < authkey.size(); i++) {
-    authkey[i] = dist(dice);
+  for (uint8_t &b : authkey) {
+    b = dist(dice);
   }
   session = ++LastSessionId;
   SessionKeys.insert(std::make_pair(session, authkey));
@@ -592,7 +592,7 @@ void PoclDaemon::readAllClientSocketsThread() {
     bool CriticalError = false;
     for (size_t i = 0; i < NumListenFds && !CriticalError && NumEventFds > 0;
          ++i) {
-      CriticalError = !accept_new_connection(pfds[i], ListenFdParams[i]);
+      CriticalError = !accept_new_connection(pfds.at(i), ListenFdParams.at(i));
     }
     if (CriticalError)
       break;
@@ -603,32 +603,34 @@ void PoclDaemon::readAllClientSocketsThread() {
     /* Incoming connections have been handled, take care of pending reads on
      * connected client sockets. */
     for (size_t i = NumListenFds; i < pfds.size() && NumEventFds > 0; ++i) {
-      int ev = pfds[i].revents;
-      pfds[i].revents = 0; /* reset to 0 for the next polling round */
+      int ev = pfds.at(i).revents;
+      pfds.at(i).revents = 0; /* reset to 0 for the next polling round */
       if (ev) {
         --NumEventFds;
         /* Collect dead fds but don't remove them from the list of open fds yet
          * lest the indices of pfds no logner match */
         if (ev & POLLFD_ERROR_BITS) {
           POCL_MSG_PRINT_GENERAL(
-              "Poll says fd=%d is dead (0x%X), removing it.\n", pfds[i].fd, ev);
-          DroppedFds.push_back(pfds[i].fd);
+              "Poll says fd=%d is dead (0x%X), removing it.\n", pfds.at(i).fd,
+              ev);
+          DroppedFds.push_back(pfds.at(i).fd);
           continue;
         }
 
         if (ev & POLLIN) {
           Request *R = IncompleteRequests.at(i);
-          if (R->read(pfds[i].fd)) {
+          if (R->read(pfds.at(i).fd)) {
             if (R->IsFullyRead) {
               if (R->req.message_type == MessageType_CreateOrAttachSession) {
                 int Fast = R->req.m.get_session.fast_socket;
                 uint64_t Session = R->req.session;
                 if (Session == 0) {
-                  VirtualContextBase *ctx = performSessionSetup(pfds[i].fd, R);
+                  VirtualContextBase *ctx =
+                      performSessionSetup(pfds.at(i).fd, R);
                   if (ctx == nullptr) {
-                    DroppedFds.push_back(pfds[i].fd);
+                    DroppedFds.push_back(pfds.at(i).fd);
                   } else {
-                    SocketContexts[i] = ctx;
+                    SocketContexts.at(i) = ctx;
                   }
                 } else {
                   std::unique_lock<std::mutex> L(SessionListMtx);
@@ -640,12 +642,12 @@ void PoclDaemon::readAllClientSocketsThread() {
                       std::optional<int> command_fd;
                       std::optional<int> stream_fd;
                       if (Fast)
-                        command_fd = pfds[i].fd;
+                        command_fd = pfds.at(i).fd;
                       else
-                        stream_fd = pfds[i].fd;
+                        stream_fd = pfds.at(i).fd;
                       assert(cit != ClientSessions.end());
                       cit->second->updateSockets(command_fd, stream_fd);
-                      SocketContexts[i] = cit->second;
+                      SocketContexts.at(i) = cit->second;
                     }
                   }
                   L.unlock();
@@ -654,7 +656,7 @@ void PoclDaemon::readAllClientSocketsThread() {
                   Reply.m.get_session.session = Session;
                   memcpy(Reply.m.get_session.authkey, R->req.authkey,
                          AUTHKEY_LENGTH);
-                  write_full(pfds[i].fd, &Reply, sizeof(Reply), nullptr);
+                  write_full(pfds.at(i).fd, &Reply, sizeof(Reply), nullptr);
                 }
                 delete R;
               } else {
@@ -730,12 +732,12 @@ void PoclDaemon::readAllClientSocketsThread() {
               }
 
               /* R is now someone else's responsibility, simply "leak" it */
-              IncompleteRequests[i] = new Request();
+              IncompleteRequests.at(i) = new Request();
             }
           } else {
             POCL_MSG_ERR("Something went wrong while reading request, closing "
                          "connection\n");
-            DroppedFds.push_back(pfds[i].fd);
+            DroppedFds.push_back(pfds.at(i).fd);
           }
         }
       }
@@ -745,7 +747,7 @@ void PoclDaemon::readAllClientSocketsThread() {
     FdsChanged |= !DroppedFds.empty();
     size_t left_to_reap = DroppedFds.size();
     for (size_t i = 0; left_to_reap; ++i) {
-      int fd = OpenClientFds[i];
+      int fd = OpenClientFds.at(i);
       for (int d : DroppedFds) {
         if (d == fd) {
           close(fd);
@@ -756,15 +758,15 @@ void PoclDaemon::readAllClientSocketsThread() {
           // directly removing to avoid unnecessarily copying the entire rest
           // of the vector around.
 
-          std::swap(OpenClientFds[i], OpenClientFds.back());
+          std::swap(OpenClientFds.at(i), OpenClientFds.back());
           OpenClientFds.pop_back();
 
-          std::swap(SocketContexts[i], SocketContexts.back());
+          std::swap(SocketContexts.at(i), SocketContexts.back());
           VirtualContextBase *vctx = SocketContexts.back();
           DroppedVCtxs.insert(vctx);
           SocketContexts.pop_back();
 
-          std::swap(IncompleteRequests[i], IncompleteRequests.back());
+          std::swap(IncompleteRequests.at(i), IncompleteRequests.back());
           delete IncompleteRequests.back();
           IncompleteRequests.pop_back();
           --i;
