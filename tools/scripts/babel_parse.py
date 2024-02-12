@@ -1,17 +1,89 @@
 #!/usr/bin/env python3
 
+# A python script to parse text traces generated with the LTTng tracer
+# on pocl. For usage run './babel_parse.py -h'
+
 import re
 import json
 import argparse
 
+
+# different regexes that parse the arguments of a lttng trace
+
 pocl_msg_regex = re.compile(
     "^{ msg_id = (?P<msg_id>0x[0-9A-Fa-f]+), event_id = (?P<event_id>0x[0-9A-Fa-f]+), local_did = (?P<local_did>0x[0-9A-Fa-f]+), remote_did = (?P<remote_did>0x[0-9A-Fa-f]+), type = (?P<type>0x[0-9A-Fa-f]+), status = (?P<status>0x[0-9A-Fa-f]+) }$")
 
-pocl_free_regex = re.compile(
+pocl_free_object_regex = re.compile(
     "^{ context_id = (?P<context_id>0x[0-9A-Fa-f]+), (buffer|kernel|queue|program|)_id = (?P<id>0x[0-9A-Fa-f]+) }$")
 
-pocl_kernel_regex = re.compile(
+pocl_kernel_create_regex = re.compile(
     "^{ context_id = (?P<context_id>0x[0-9A-Fa-f]+), kernel_id = (?P<id>0x[0-9A-Fa-f]+), kernel_name = \"(?P<kernel_name>\S+)\" }$")
+
+pocl_buffer_regex = re.compile(
+    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), obj_id = (?P<obj_id>0x[0-9A-Fa-f]+) }$")
+
+pocl_ndrange_kernel_regex = re.compile(
+    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), kernel_id = (?P<kernel_id>0x[0-9A-Fa-f]+), kernel_name = \"(?P<kernel_name>\S+)\" }$")
+
+pocl_copy_regex = re.compile(
+    "^{ event_id = (?P<event_id>0x[0-9A-Fa-f]+), evt_status = (?P<evt_status>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), queue_id = (?P<queue_id>0x[0-9A-Fa-f]+), src_id = (?P<src_id>0x[0-9A-Fa-f]+), dest_id = (?P<dest_id>0x[0-9A-Fa-f]+) }$")
+
+
+def pocl_parse_status_and_return(dict, event_status):
+    """
+    A function that parses the event status and creates
+    dictionaries with different phases set based on the status
+    @param dict The dictionary with most values already set
+    @param event_status the cl status of the event
+    @return a list of dictionaries with their phase set
+    """
+    if event_status == 0:
+        # if the status is cl_finish, also add a line to
+        # indicate the enqueue bar is done and exit
+        dict_copy = dict.copy()
+        dict_copy["ph"] = "e"
+
+        dict["name"] = "running"
+        dict["ph"] = "e"
+        return [dict, dict_copy]
+    elif event_status == 1:
+        dict_copy = dict.copy()
+        dict_copy["name"] = "running"
+        dict_copy["ph"] = "b"
+
+        dict["name"] = "submitted"
+        dict["ph"] = "e"
+        return [dict, dict_copy]
+    elif event_status == 2:
+        dict_copy = dict.copy()
+        dict_copy["name"] = "submitted"
+        dict_copy["ph"] = "b"
+
+        dict["name"] = "queued"
+        dict["ph"] = "e"
+        return [dict, dict_copy]
+    else:
+        # add an overshadowing bar for the entire
+        # execution
+        dict_copy = dict.copy()
+        dict_copy["ph"] = "b"
+
+        dict["name"] = "queued"
+        dict["ph"] = "b"
+        return [dict_copy, dict]
+
+
+def set_dict_values(dict, inp_dict):
+    """
+    function that sets the common values of cl commands
+    @param dict the dictionary to be filled
+    @param inp_dict the dictionary with common values
+    that are copied to the dict
+    """
+    dict["cat"] = "event"
+    dict["id"] = int(inp_dict["event_id"], 16)
+    dict["pid"] = int(inp_dict["dev_id"], 16)
+    dict["args"] = inp_dict
 
 
 def parse_pocl_trace_data(trace_type, string, dict):
@@ -22,20 +94,18 @@ def parse_pocl_trace_data(trace_type, string, dict):
     @param dict: resulting dictionary with relevant key value pairs
     """
 
-    # prefix used to indicate that the device is not local
-    pocld_pid_prefix = 1000
-
     if (trace_type == "msg_received" or
             trace_type == "msg_sent"):
         res = pocl_msg_regex.match(string)
         if res is None:
             print("could not parse msg_received trace point, possibly the type has changed?")
-            return False
+            return None
 
         res_dict = res.groupdict()
-        dict["cat"] = "msg"
-        # dict["scope"] = int(res_dict["local_did"], 16)
-        dict["id"] = int(res_dict["msg_id"], 16)
+
+        dict["cat"] = "event"
+        dict["id"] = int(res_dict["event_id"], 16)
+
         dict["pid"] = int(res_dict["local_did"], 16)
         status = int(res_dict["status"], 16)
 
@@ -50,7 +120,7 @@ def parse_pocl_trace_data(trace_type, string, dict):
                 dict["ph"] = "e"
             else:
                 print("Unknown msg_received status")
-                return False
+                return None
         else:
             status = int(res_dict["status"], 16)
             if status == 0:
@@ -59,10 +129,11 @@ def parse_pocl_trace_data(trace_type, string, dict):
                 dict["ph"] = "e"
             else:
                 print("Unknown msg_received status")
-                return False
+                return None
 
         dict["args"] = res_dict
-        return True
+        return [dict]
+
     elif (trace_type == "free_buffer" or
           trace_type == "free_queue" or
           trace_type == "free_program" or
@@ -70,11 +141,11 @@ def parse_pocl_trace_data(trace_type, string, dict):
           trace_type == "create_queue" or
           trace_type == "build_program" or
           trace_type == "create_program"):
-        res = pocl_free_regex.match(string)
+        res = pocl_free_object_regex.match(string)
 
         if res is None:
             print("could not parse pocl trace point: " + string)
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "event"
@@ -82,14 +153,15 @@ def parse_pocl_trace_data(trace_type, string, dict):
         dict["pid"] = int(res_dict["context_id"], 16)
         dict["ph"] = "i"
         dict["args"] = res_dict
-        return True
+        return [dict]
+
     elif (trace_type == "free_kernel" or
           trace_type == "create_kernel"):
-        res = pocl_kernel_regex.match(string)
+        res = pocl_kernel_create_regex.match(string)
 
         if res is None:
             print("could not parse pocl trace point: " + string)
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "event"
@@ -98,11 +170,66 @@ def parse_pocl_trace_data(trace_type, string, dict):
         dict["pid"] = int(res_dict["context_id"], 16)
         dict["ph"] = "i"
         dict["args"] = res_dict
-        return True
+        return [dict]
+
+    elif (trace_type == "read_buffer" or
+          trace_type == "write_buffer" or
+          trace_type == "fill_buffer" or
+          trace_type == "read_buffer_rect" or
+          trace_type == "write_buffer_rect" or
+          trace_type == "read_image_rect" or
+          trace_type == "write_image_rect" or
+          trace_type == "fill_image" or
+          trace_type == "map_image" or
+          trace_type == "map_buffer" or
+          trace_type == "unmap_memobj"
+    ):
+
+        res = pocl_buffer_regex.match(string)
+        if res is None:
+            print("could not parse buffer trace point: " + string)
+            return None
+
+        res_dict = res.groupdict()
+        set_dict_values(dict, res_dict)
+        event_status = int(res_dict["evt_status"], 16)
+
+        return pocl_parse_status_and_return(dict, event_status)
+
+    elif trace_type == "ndrange_kernel":
+
+        res = pocl_ndrange_kernel_regex.match(string)
+        if res is None:
+            print("could not parse ndrange kernel trace point: " + string)
+            return None
+
+        res_dict = res.groupdict()
+        set_dict_values(dict, res_dict)
+        dict["name"] = res_dict["kernel_name"]
+
+        event_status = int(res_dict["evt_status"], 16)
+
+        return pocl_parse_status_and_return(dict, event_status)
+
+    elif (trace_type == "copy_image_rect" or
+          trace_type == "copy_buffer" or
+          trace_type == "copy_buffer_rect" or
+          trace_type == "copy_image2buf" or
+          trace_type == "copy_buf2image"):
+
+        res = pocl_copy_regex.match(string)
+        if res is None:
+            print("could not parse buffer trace point: " + string)
+            return None
+
+        res_dict = res.groupdict()
+        set_dict_values(dict, res_dict)
+        event_status = int(res_dict["evt_status"], 16)
+        return pocl_parse_status_and_return(dict, event_status)
 
     else:
         print("pocl_trace: unknown message type: " + trace_type)
-        return False
+        return None
 
 
 pocld_msg_regex = re.compile(
@@ -118,7 +245,7 @@ pocld_free_regex = re.compile(
     "^{ msg_id = (?P<msg_id>0x[0-9A-Fa-f]+), dev_id = (?P<dev_id>0x[0-9A-Fa-f]+), (buffer|kernel|queue|program|)_id = (?P<id>0x[0-9A-Fa-f]+) }$")
 
 
-def parse_event_status(status):
+def pocld_parse_event_status(status):
     """
     Convert the status number to an appropriate phase
     letter.
@@ -133,7 +260,7 @@ def parse_event_status(status):
     elif status == 3:
         return "e"
     else:
-        print("unknown event status: " + status)
+        print("unknown event status: {}".format(status))
         return "e"
 
 
@@ -154,7 +281,7 @@ def parse_pocld_trace_data(trace_type, string, dict):
 
         if res is None:
             print("could not parse pocld msg_received trace point")
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "msg"
@@ -162,7 +289,7 @@ def parse_pocld_trace_data(trace_type, string, dict):
         dict["pid"] = int(res_dict["dev_id"], 16) + pocld_pid_prefix
         dict["ph"] = "n"
         dict["args"] = res_dict
-        return True
+        return [dict]
 
     elif (trace_type == "write_buffer" or
           trace_type == "read_buffer" or
@@ -171,30 +298,30 @@ def parse_pocld_trace_data(trace_type, string, dict):
 
         if res is None:
             print("could not parse pocld write_buffer trace point")
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "event"
         dict["id"] = int(res_dict["msg_id"], 16)
         dict["pid"] = int(res_dict["dev_id"], 16) + pocld_pid_prefix
-        dict["ph"] = parse_event_status(int(res_dict["event_status"]))
+        dict["ph"] = pocld_parse_event_status(int(res_dict["event_status"]))
         dict["args"] = res_dict
-        return True
+        return [dict]
 
     elif (trace_type == "ndrange_kernel"):
         res = pocld_ndrange_kernel_regex.match(string)
 
         if res is None:
             print("could not parse pocld write_buffer trace point")
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "event"
         dict["id"] = int(res_dict["msg_id"], 16)
         dict["pid"] = int(res_dict["dev_id"], 16) + pocld_pid_prefix
-        dict["ph"] = parse_event_status(int(res_dict["event_status"]))
+        dict["ph"] = pocld_parse_event_status(int(res_dict["event_status"]))
         dict["args"] = res_dict
-        return True
+        return [dict]
 
     elif (trace_type == "free_buffer" or
           trace_type == "free_kernel" or
@@ -208,7 +335,7 @@ def parse_pocld_trace_data(trace_type, string, dict):
 
         if res is None:
             print("could not parse pocld trace point: " + string)
-            return False
+            return None
 
         res_dict = res.groupdict()
         dict["cat"] = "event"
@@ -216,11 +343,11 @@ def parse_pocld_trace_data(trace_type, string, dict):
         dict["pid"] = int(res_dict["dev_id"], 16) + pocld_pid_prefix
         dict["ph"] = "i"
         dict["args"] = res_dict
-        return True
+        return [dict]
 
     else:
         print("pocld_trace: unknown message type: " + trace_type)
-        return False
+        return None
 
 
 line_regex = re.compile(
@@ -228,6 +355,7 @@ line_regex = re.compile(
 # used to store the earliest timestamp recorded
 # which is used as the starting point
 start_time = 0
+
 
 def parse_line(line):
     """
@@ -254,12 +382,12 @@ def parse_line(line):
         # ts divided by 1000 since chrome profiler expects time microseconds
         ret_dict = {"ts": ts / 1000, "name": regex_dict["trace_type"]}
         if regex_dict["tracer_name"] == "pocl_trace":
-            parse_res = parse_pocl_trace_data(regex_dict["trace_type"], regex_dict["trace_data"], ret_dict)
+            parsed_lines = parse_pocl_trace_data(regex_dict["trace_type"], regex_dict["trace_data"], ret_dict)
         else:
-            parse_res = parse_pocld_trace_data(regex_dict["trace_type"], regex_dict["trace_data"], ret_dict)
+            parsed_lines = parse_pocld_trace_data(regex_dict["trace_type"], regex_dict["trace_data"], ret_dict)
 
-        if parse_res:
-            return ret_dict
+        if parsed_lines:
+            return parsed_lines
         return None
     else:
         print("could not parse line, unknown format")
@@ -268,7 +396,6 @@ def parse_line(line):
 
 
 def main():
-
     # parse the command line arguments
     parser = argparse.ArgumentParser(description="Parse LTTng text trace files.")
     parser.add_argument("input_file", metavar="input_file", nargs="?",
@@ -290,12 +417,14 @@ def main():
         first_line = input_file.readline()
         result = parse_line(first_line)
         if result:
-            output_file.write(json.dumps(result) + "\n")
+            for res in result:
+                output_file.write(json.dumps(res) + "\n")
         parse_count = 1
         for line in input_file:
             result = parse_line(line)
             if result:
-                output_file.write("," + json.dumps(result) + "\n")
+                for res in result:
+                    output_file.write("," + json.dumps(res) + "\n")
                 parse_count += 1
 
         output_file.write("] \n")
