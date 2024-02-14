@@ -55,7 +55,9 @@ public:
                           pocl_mem_identifier *SrcMemId, size_t Size,
                           size_t Offset) override;
   cl_int allocateBuffer(pocl_mem_identifier *P, size_t Size) override;
+  cl_int allocatePipe(pocl_mem_identifier *P, size_t Size) override;
   void freeBuffer(pocl_mem_identifier *P) override;
+  void freePipe(pocl_mem_identifier *P) override;
   size_t pointerDeviceOffset(pocl_mem_identifier *P) override;
 
   virtual void programBIKernelFirmware(BuiltinKernelId BikID);
@@ -63,6 +65,7 @@ public:
 
   virtual std::vector<BuiltinKernelId> supportedBuiltinKernels();
   virtual void discoverDeviceParameters();
+  int pipeCount() override;
 
   bool isDBDevice() override { return true; }
 

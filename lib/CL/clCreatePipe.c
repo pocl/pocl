@@ -21,6 +21,7 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl_shared.h"
 #include "pocl_util.h"
 
 /*  Minimal OpenCL 3.0 conformant implemenation of clCreatePipe where only
@@ -72,14 +73,21 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreatePipe) (
       POCL_ERROR (CL_INVALID_VALUE);
     }
 
-  // This should not happend, but in case it does..
-  POCL_ABORT_UNIMPLEMENTED ("clCreatePipe has not been implemented");
+  cl_mem mem = NULL;
+  mem = pocl_create_memobject (context, flags, pipe_max_packets,
+                               CL_MEM_OBJECT_PIPE, NULL, NULL, 0, &errcode);
+  if (mem == NULL)
+    goto ERROR;
+
+  mem->pipe_packet_size = pipe_packet_size;
+  mem->pipe_max_packets = pipe_max_packets;
+  mem->num_properties = 0;
 
 ERROR:
   if (errcode_ret)
     {
       *errcode_ret = errcode;
     }
-  return NULL;
+  return mem;
 }
 POsym (clCreatePipe)

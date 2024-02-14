@@ -29,6 +29,7 @@
 #include "AlmaIFRegion.hh"
 
 #include "bufalloc.h"
+#include "pocl_cl.h"
 #include "pocl_types.h"
 
 #include <stdlib.h>
@@ -81,6 +82,11 @@ public:
   virtual void freeBuffer(pocl_mem_identifier *P);
   // Retuns the offset of the allocated buffer, to be used as a kernel argument
   virtual size_t pointerDeviceOffset(pocl_mem_identifier *P);
+  virtual cl_int allocatePipe(pocl_mem_identifier *P, size_t Size) {
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  }
+  virtual void freePipe(pocl_mem_identifier *P) {}
+  virtual int pipeCount() { return 0; }
 
 protected:
   uintptr_t ImemStart;

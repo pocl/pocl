@@ -118,6 +118,10 @@ void XilinxXrtDevice::init_xrtdevice(
     }
     free(tmp_params);
   }
+
+  PipeCount_ = 10;
+  AllocatedPipes_ = (int *)calloc(PipeCount_, sizeof(int));
+
   XilinxXrtDeviceInitDone_ = 1;
 }
 
@@ -230,6 +234,32 @@ cl_int XilinxXrtDevice::allocateBuffer(pocl_mem_identifier *P, size_t Size) {
   P->version = 0;
   return CL_SUCCESS;
 }
+
+cl_int XilinxXrtDevice::allocatePipe(pocl_mem_identifier *P, size_t Size) {
+
+  assert(P->mem_ptr == NULL);
+
+  P->version = 0;
+  int *PipeID = (int *)calloc(1, sizeof(int));
+  for (int i = 0; i < PipeCount_; i++) {
+    if (AllocatedPipes_[i] == 0) {
+      *PipeID = i;
+      AllocatedPipes_[i] = 1;
+      P->mem_ptr = PipeID;
+      POCL_MSG_PRINT_MEMORY("almaif: allocated pipe %i\n", i);
+      return CL_SUCCESS;
+    }
+  }
+  return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+}
+
+void XilinxXrtDevice::freePipe(pocl_mem_identifier *P) {
+  int PipeID = *((int *)P->mem_ptr);
+  POCL_MSG_PRINT_MEMORY("almaif: freed pipe %i\n", PipeID);
+  AllocatedPipes_[PipeID] = 0;
+}
+
+int XilinxXrtDevice::pipeCount() { return PipeCount_; }
 
 void XilinxXrtDevice::writeDataToDevice(pocl_mem_identifier *DstMemId,
                                         const char *__restrict__ const Src,

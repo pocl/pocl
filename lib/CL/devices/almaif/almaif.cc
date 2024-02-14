@@ -205,12 +205,19 @@ cl_int pocl_almaif_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
 
   AlmaifData *data = (AlmaifData *)device->data;
 
-  /* almaif driver doesn't preallocate */
-  if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
-    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  cl_int alloc_success = CL_SUCCESS;
+  if (mem_obj->type == CL_MEM_OBJECT_PIPE) {
+    pocl_mem_identifier *p = &mem_obj->device_ptrs[device->global_mem_id];
+    alloc_success = data->Dev->allocatePipe(p, mem_obj->size);
+  } else {
+    /* almaif driver doesn't preallocate */
+    if ((mem_obj->flags & CL_MEM_ALLOC_HOST_PTR) &&
+        (mem_obj->mem_host_ptr == NULL))
+      return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  pocl_mem_identifier *p = &mem_obj->device_ptrs[device->global_mem_id];
-  cl_int alloc_success = data->Dev->allocateBuffer(p, mem_obj->size);
+    pocl_mem_identifier *p = &mem_obj->device_ptrs[device->global_mem_id];
+    alloc_success = data->Dev->allocateBuffer(p, mem_obj->size);
+  }
 
   return alloc_success;
 }
@@ -221,7 +228,11 @@ void pocl_almaif_free(cl_device_id device, cl_mem mem) {
   pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
   AlmaifData *data = (AlmaifData *)device->data;
 
-  data->Dev->freeBuffer(p);
+  if (mem->type == CL_MEM_OBJECT_PIPE) {
+    data->Dev->freePipe(p);
+  } else {
+    data->Dev->freeBuffer(p);
+  }
 
   p->mem_ptr = NULL;
   p->version = 0;
@@ -407,7 +418,7 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
       if (kernelId == POCL_CDBI_JIT_COMPILER) {
         enable_compilation = true;
       } else if (!found) {
-        POCL_ABORT("almaif: Unknown Kernel ID (%lu) coming from database\n",
+        POCL_ABORT("almaif: Unknown Kernel ID (%i) coming from database\n",
                    kernelId);
       }
     }
@@ -445,6 +456,13 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
 
   free(scanParams);
 
+  if (D->Dev->pipeCount() > 0) {
+    dev->pipe_support = CL_TRUE;
+    dev->max_pipe_args = ALMAIF_MAX_PIPE_COUNT;
+    dev->max_pipe_active_res = 1;
+    dev->max_pipe_packet_size = 512;
+  }
+
   if (enable_compilation) {
 
     dev->compiler_available = CL_TRUE;
@@ -463,11 +481,11 @@ cl_int pocl_almaif_init(unsigned j, cl_device_id dev, const char *parameters) {
   chunk_info_t *chunk = NULL;
   chunk = pocl_alloc_buffer(D->Dev->AllocRegions, dev->printf_buffer_size);
   if (chunk == NULL) {
-    POCL_MSG_WARN("Almaif: Can't allocate %d bytes for printf buffer\n",
+    POCL_MSG_WARN("Almaif: Can't allocate %lu bytes for printf buffer\n",
                   dev->printf_buffer_size);
     dev->device_side_printf = 0;
   } else {
-    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %d from %d\n",
+    POCL_MSG_PRINT_ALMAIF("Allocated printf buffer of size %lu from %lu\n",
                           dev->printf_buffer_size, chunk->start_address);
     D->PrintfBuffer = chunk;
 
@@ -1168,6 +1186,8 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
   for (i = 0; i < meta->num_args; ++i) {
     if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER) {
       arg_size += D->Dev->PointerSize;
+    } else if (meta->arg_info[i].type == POCL_ARG_TYPE_PIPE) {
+      arg_size += 4;
     } else {
       al = &(cmd->command.run.arguments[i]);
       arg_size += al->size;
@@ -1214,6 +1234,14 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
       POCL_ABORT_UNIMPLEMENTED("almaif: image arguments");
     } else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER) {
       POCL_ABORT_UNIMPLEMENTED("almaif: sampler arguments");
+    } else if (meta->arg_info[i].type == POCL_ARG_TYPE_PIPE) {
+      cl_mem m = (*(cl_mem *)(al->value));
+      int *pipe_id_ptr =
+          (int *)(m->device_ptrs[cmd->device->global_mem_id].mem_ptr);
+      int pipe_id = *pipe_id_ptr;
+      *(int *)current_arg = pipe_id;
+      POCL_MSG_PRINT_ALMAIF("Setting pipe argument %d to id: %i\n", i, pipe_id);
+      current_arg += 4;
     } else {
       memcpy(current_arg, al->value, al->size);
       current_arg += al->size;
