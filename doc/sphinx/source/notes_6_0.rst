@@ -8,6 +8,12 @@ LLVM 14 to 17 are supported.
 Support for  `cl_khr_spir` (SPIR 1.x/2.0) has been removed.
 SPIR-V remains supported.
 
+Support for `cl_khr_priority_hints` and `cl_khr_throttle_hints` has been added.
+As the extension specification states that these hints provide no guarantees of
+any particular behavior (or lack thereof) they are treated as a no-op. However
+specifying them no longer causes `clCreateCommandQueueWithProperties` to return
+an error.
+
 ============================
 New device driver: cpu-tbb
 ============================

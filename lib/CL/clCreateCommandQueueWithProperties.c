@@ -34,6 +34,7 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
   cl_bool found = CL_FALSE;
   cl_command_queue_properties queue_props = 0;
   int queue_props_set = 0, queue_size_set = 0;
+  int queue_priority_set = 0, queue_throttle_set = 0;
   cl_uint queue_size = 0;
   const cl_command_queue_properties valid_prop_flags =
       (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
@@ -77,6 +78,34 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
             i += 2;
             break;
           }
+        case CL_QUEUE_PRIORITY_KHR:
+          {
+            cl_queue_properties value = properties[i + 1];
+            POCL_GOTO_ERROR_ON ((value != CL_QUEUE_PRIORITY_HIGH_KHR
+                                 && value != CL_QUEUE_PRIORITY_MED_KHR
+                                 && value != CL_QUEUE_PRIORITY_LOW_KHR),
+                                CL_INVALID_VALUE,
+                                "Invalid CL_QUEUE_PRIORITY_KHR value");
+            queue_priority_set = 1;
+            /* This is a hint that provides no behavior or minimum guarantees
+             * so it is always safe to bring it along (no action required) */
+            i += 2;
+            break;
+          }
+        case CL_QUEUE_THROTTLE_KHR:
+          {
+            cl_queue_properties value = properties[i + 1];
+            POCL_GOTO_ERROR_ON ((value != CL_QUEUE_THROTTLE_HIGH_KHR
+                                 && value != CL_QUEUE_THROTTLE_MED_KHR
+                                 && value != CL_QUEUE_THROTTLE_LOW_KHR),
+                                CL_INVALID_VALUE,
+                                "Invalid CL_QUEUE_THROTTLE_KHR value");
+            queue_throttle_set = 1;
+            /* This is a hint that provides no behavior or minimum guarantees
+             * so it is always safe to bring it along (no action required) */
+            i += 2;
+            break;
+          }
         default:
           POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE,
                               "Invalid values in properties: %lu\n",
@@ -92,6 +121,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
 
           POCL_GOTO_ERROR_COND((queue_size > device->dev_queue_max_size),
                                CL_INVALID_QUEUE_PROPERTIES);
+          POCL_GOTO_ERROR_COND((queue_priority_set), CL_INVALID_QUEUE_PROPERTIES);
+          POCL_GOTO_ERROR_COND((queue_throttle_set), CL_INVALID_QUEUE_PROPERTIES);
 
          // create a device side queue
          POCL_ABORT_UNIMPLEMENTED("Device side queue");
