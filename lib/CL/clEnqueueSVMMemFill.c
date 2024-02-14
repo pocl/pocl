@@ -44,11 +44,15 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
 
   unsigned i;
   cl_device_id device;
-  POCL_CHECK_DEV_IN_CMDQ;
   cl_int errcode;
 
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
-                          CL_INVALID_COMMAND_QUEUE);
+  /* command_queue can be NULL when pushing to a command buffer. */
+  if (command_queue != NULL)
+    {
+      POCL_CHECK_DEV_IN_CMDQ;
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                              CL_INVALID_COMMAND_QUEUE);
+    }
 
   cl_context context = command_queue->context;
 
@@ -88,7 +92,7 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
   size_t offset = svm_ptr - dst_svm_ptr->svm_ptr;
   if (command_buffer)
     errcode = POname (clCommandFillBufferKHR) (
-        command_buffer, command_queue, dst_svm_ptr->shadow_cl_mem, pattern,
+        command_buffer, NULL, dst_svm_ptr->shadow_cl_mem, pattern,
         pattern_size, offset, size, num_items_in_wait_list,
         sync_point_wait_list, sync_point, NULL);
   else
