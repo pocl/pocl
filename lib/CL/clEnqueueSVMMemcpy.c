@@ -78,14 +78,24 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     {
       /* A copy between SVM regions. Use the basic buffer copy using the shadow
          buffers. */
-      errcode = pocl_copy_buffer_common (
-          NULL, command_queue, src_svm_ptr->shadow_cl_mem,
-          dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
-          dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
-          event_wait_list, event, NULL, NULL, cmd);
+      if (command_buffer)
+        errcode = POname (clCommandCopyBufferKHR) (
+            command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
+            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
+            dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
+            sync_point_wait_list, sync_point, NULL);
+      else
+        errcode = POname (clEnqueueCopyBuffer) (
+            command_queue, src_svm_ptr->shadow_cl_mem,
+            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
+            dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
+            event_wait_list, event);
     }
   else if (dst_svm_ptr != NULL && src_svm_ptr == NULL)
     {
+      if (command_buffer)
+        POCL_ABORT_UNIMPLEMENTED (
+            "host to SVM buffer memcopy command buffering unimplemented");
       /* Read from a host address to the SVM region. */
       /* TODO: Command buffering. clEnqueueWriteBuffer is not supported by
          the command buffer specs. We should extend the spec to include it. */
@@ -96,6 +106,10 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     }
   else if (src_svm_ptr != NULL && dst_svm_ptr == NULL)
     {
+      if (command_buffer)
+        POCL_ABORT_UNIMPLEMENTED (
+            "SVM buffer to host memcopy command buffering unimplemented");
+
       /* Read from the SVM region to a host address. */
       /* TODO: Command buffering. clEnqueueReadBuffer is not supported by
          the command buffer specs. We should extend the spec to include it. */
@@ -106,6 +120,10 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
     }
   else
     {
+      if (command_buffer)
+        POCL_ABORT_UNIMPLEMENTED (
+            "host to host memcopy command buffering unimplemented");
+
       /* Copy between non-SVM allocated host pointers. Can be a system SVM
          or any region of memory (even if the device wouldn't support system
          SVM?). */

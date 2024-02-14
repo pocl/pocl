@@ -36,26 +36,12 @@ POname (clCommandSVMMemcpyKHR) (
     cl_mutable_command_khr *mutable_handle) CL_API_SUFFIX__VERSION_2_0
 {
   cl_int errcode;
-  _cl_command_node *cmd = NULL;
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_svm_memcpy_common (
-      command_buffer, command_queue, CL_COMMAND_SVM_MEMCPY, dst_ptr, src_ptr,
-      size, num_sync_points_in_wait_list, NULL, NULL, sync_point_wait_list,
-      sync_point, &cmd);
-
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  return CL_SUCCESS;
-
-ERROR:
-  pocl_mem_manager_free_command (cmd);
-  return errcode;
+  return pocl_svm_memcpy_common (command_buffer, command_queue,
+                                 CL_COMMAND_SVM_MEMCPY, dst_ptr, src_ptr, size,
+                                 num_sync_points_in_wait_list, NULL, NULL,
+                                 sync_point_wait_list, sync_point, NULL);
 }
 POsym (clCommandSVMMemcpyKHR)
