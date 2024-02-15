@@ -46,6 +46,10 @@ set(C_PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_cl_pocl_content_size test_cl_pocl_content_size_migration
   test_deviceside_enqueue test_command_buffer test_command_buffer_images)
 
+if(OPENCL_HEADER_VERSION GREATER 299)
+    list(APPEND C_PROGRAMS_TO_BUILD test_queue_creation_with_hints)
+endif()
+
 set(CXX_PROGRAMS_TO_BUILD test_pinned_buffers test_svm)
 
 add_compile_options(${OPENCL_CFLAGS})
@@ -137,6 +141,11 @@ add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_
 add_test(NAME "runtime/test_pinned_buffers" COMMAND "test_pinned_buffers")
 
 add_test(NAME "runtime/test_svm" COMMAND "test_svm")
+
+if(OPENCL_HEADER_VERSION GREATER 299)
+  add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
+  set(OCL_30_TESTS "runtime/test_queue_creation_with_hints")
+endif()
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
@@ -234,6 +243,12 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
   add_test(NAME "remote/test_svm"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
 
+if(OPENCL_HEADER_VERSION GREATER 299)
+  add_test(NAME "remote/test_queue_creation_with_hints"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_queue_creation_with_hints")
+  set(OCL_30_REMOTE_TESTS "remote/test_queue_creation_with_hints")
+endif()
+
   set_tests_properties(
     "remote/clCreateSubDevices"
     "remote/test_buffer_migration"
@@ -248,6 +263,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_command_buffer_images"
     "remote/test_pinned_buffers"
     "remote/test_svm"
+    ${OCL_30_REMOTE_TESTS}
     PROPERTIES SKIP_RETURN_CODE 77)
 
   set_tests_properties(
@@ -267,6 +283,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
     "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
     "remote/test_pinned_buffers" "remote/test_svm"
+    ${OCL_30_REMOTE_TESTS}
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"
       COST 2.0
@@ -328,11 +345,13 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_deviceside_enqueue"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "cuda")
 
 # Label tests that work with TCE backend
 set_property(TEST
   "runtime/test_fill-buffer"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "tce")
 
 
@@ -355,6 +374,7 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_deviceside_enqueue"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "hsa-native")
 
 set_property(TEST
@@ -369,6 +389,7 @@ set_property(TEST
   "runtime/test_event_free"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "proxy")
 
 # Label tests that work with Vulkan
@@ -378,12 +399,14 @@ set_property(TEST
   "runtime/test_event_free"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "vulkan")
 
 if (ENABLE_TCE)
     # Label tests that work with Almaif (with compiler) backend
     set_property(TEST
         "runtime/test_fill-buffer"
+        ${OCL_30_TESTS}
         APPEND PROPERTY LABELS "almaif")
 endif()
 
@@ -404,4 +427,5 @@ set_property(TEST
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer"
+  ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")
