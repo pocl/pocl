@@ -1074,9 +1074,10 @@ int SharedCLContext::freeQueue(uint32_t queue_id) {
   buf += len;                                                                  \
   assert((size_t)(buf - buffer) <= buffer_size);
 
+#if defined(CLANG) && defined(LLVM_SPIRV)
 /**
- * Creates a SPIRV with all global memory addresses adjusted by adding the
- * SVMOffset.
+ * Creates a SPIRV with all global memory addresses adjusted by adding
+ * the SVMOffset.
  *
  * Used to adjust to an SVM region offset difference between the device and the
  * host. SVMOffset is asumed to wrap around the addition at unsigned 64b for
@@ -1186,6 +1187,7 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
   // std::filesystem::remove_all(TempDir);
   return true;
 }
+#endif
 
 int SharedCLContext::buildOrLinkProgram(
     uint32_t program_id, std::vector<uint32_t> &DeviceList, char *src,
@@ -1270,10 +1272,14 @@ int SharedCLContext::buildOrLinkProgram(
     std::vector<char> SVMOffsettedSPIRV;
 
 
+#if defined(CLANG) && defined(LLVM_SPIRV)
     // Adjust the SVM region offset to the kernel code.
     bool SuccessfulOffsetting = createSPIRVWithSVMOffset(
         is_spirv ? &(*InputBinaries.begin()).second : nullptr, src, src_size,
         SVMRegionOffset, SVMOffsettedSPIRV, options);
+#else
+    bool SuccessfulOffsetting = false;
+#endif
 
     assert(SuccessfulOffsetting && SVMOffsettedSPIRV.size() > 0);
 
