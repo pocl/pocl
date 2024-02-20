@@ -51,11 +51,11 @@ POname (clReleaseCommandBufferKHR) (cl_command_buffer_khr command_buffer)
 
       unsigned num_freed = 0;
 
-      for (int i = 0; i < command_buffer->num_queues; ++i)
+      for (cl_uint i = 0; i < command_buffer->num_queues; ++i)
         {
           cl_command_queue q = command_buffer->queues[i];
           int is_freed = 0;
-          for (int j = 0; j < num_freed; ++j)
+          for (unsigned j = 0; j < num_freed; ++j)
             {
               if (freed_devs[j] == q->device)
                 is_freed = 1;
