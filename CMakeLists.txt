@@ -1310,8 +1310,8 @@ __opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space")
 # Host CPU device: extensions only enabled when conformance is OFF
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
-cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size \
-cl_ext_float_atomics")
+cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_subgroups_short \
+cl_ext_float_atomics cl_intel_required_subgroup_size")
   # read-write images are still partially broken
   set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()

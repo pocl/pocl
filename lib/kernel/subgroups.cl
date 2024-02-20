@@ -60,11 +60,40 @@ sub_group_all (int predicate)
   return sub_group_reduce_min ((unsigned)predicate);
 }
 
+#ifdef cl_intel_subgroups
+
+uint _CL_OVERLOADABLE
+intel_sub_group_shuffle_down (uint current, uint next, uint delta)
+{
+  int idx = get_sub_group_local_id () + delta;
+  uint cur_idx = (idx >= get_max_sub_group_size ()) ? 0 : idx;
+  uint other_cur = sub_group_shuffle (current, cur_idx);
+  int next_idx
+      = (idx > get_max_sub_group_size ()) ? idx - get_sub_group_size () : 0;
+  uint other_next = sub_group_shuffle (next, next_idx);
+  return idx >= get_sub_group_size () ? other_cur : other_next;
+}
+
+uint _CL_OVERLOADABLE
+intel_sub_group_block_read (const global uint *p)
+{
+  return p[get_sub_group_local_id ()];
+}
+
 uint2 _CL_OVERLOADABLE
 intel_sub_group_block_read2 (const global uint *p)
 {
   return (uint2)(p[get_sub_group_local_id ()],
                  p[get_sub_group_local_id () + get_max_sub_group_size ()]);
+}
+
+uint4 _CL_OVERLOADABLE
+intel_sub_group_block_read4 (const global uint *p)
+{
+  uint sglid = get_sub_group_local_id ();
+  uint sgsize = get_max_sub_group_size ();
+  return (uint4)(p[sglid], p[sglid + sgsize], p[sglid + 2 * sgsize],
+                 p[sglid + 3 * sgsize]);
 }
 
 uint8 _CL_OVERLOADABLE
@@ -78,7 +107,52 @@ intel_sub_group_block_read8 (const global uint *p)
                  p[sglid + 7 * sgsize]);
 }
 
-#ifdef cl_intel_subgroups
+void _CL_OVERLOADABLE
+intel_sub_group_block_write (global uint *p, uint data)
+{
+  uint sglid = get_sub_group_local_id ();
+  uint sgsize = get_max_sub_group_size ();
+  p[sglid] = data;
+}
+
+void _CL_OVERLOADABLE
+intel_sub_group_block_write2 (global uint *p, uint2 data)
+{
+  uint sglid = get_sub_group_local_id ();
+  uint sgsize = get_max_sub_group_size ();
+  p[sglid] = data.x;
+  p[sglid + sgsize] = data.y;
+}
+
+void _CL_OVERLOADABLE
+intel_sub_group_block_write4 (global uint *p, uint4 data)
+{
+  uint sglid = get_sub_group_local_id ();
+  uint sgsize = get_max_sub_group_size ();
+  p[sglid] = data.s0;
+  p[sglid + sgsize] = data.s1;
+  p[sglid + 2 * sgsize] = data.s2;
+  p[sglid + 3 * sgsize] = data.s3;
+}
+
+void _CL_OVERLOADABLE
+intel_sub_group_block_write8 (global uint *p, uint8 data)
+{
+  uint sglid = get_sub_group_local_id ();
+  uint sgsize = get_max_sub_group_size ();
+  p[sglid] = data.s0;
+  p[sglid + sgsize] = data.s1;
+  p[sglid + 2 * sgsize] = data.s2;
+  p[sglid + 3 * sgsize] = data.s3;
+  p[sglid + 4 * sgsize] = data.s4;
+  p[sglid + 5 * sgsize] = data.s5;
+  p[sglid + 6 * sgsize] = data.s6;
+  p[sglid + 7 * sgsize] = data.s7;
+}
+
+#endif
+
+#ifdef cl_intel_subgroups_short
 /* https://registry.khronos.org/OpenCL/extensions/intel/cl_intel_subgroups_short.html
  */
 ushort8 _CL_OVERLOADABLE
@@ -90,17 +164,5 @@ intel_sub_group_block_read_us8 (const global ushort *p)
                    p[sglid + 3 * sgsize], p[sglid + 4 * sgsize],
                    p[sglid + 5 * sgsize], p[sglid + 6 * sgsize],
                    p[sglid + 7 * sgsize]);
-}
-
-uint _CL_OVERLOADABLE
-intel_sub_group_shuffle_down (uint current, uint next, uint delta)
-{
-  int idx = get_sub_group_local_id () + delta;
-  uint cur_idx = (idx >= get_max_sub_group_size ()) ? 0 : idx;
-  uint other_cur = sub_group_shuffle (current, cur_idx);
-  int next_idx
-      = (idx > get_max_sub_group_size ()) ? idx - get_sub_group_size () : 0;
-  uint other_next = sub_group_shuffle (next, next_idx);
-  return idx >= get_sub_group_size () ? other_cur : other_next;
 }
 #endif
