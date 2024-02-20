@@ -1305,15 +1305,15 @@ cl_exp_pinned_buffers")
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
 __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
-__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
-__opencl_c_read_write_images")
+__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space")
 
 # Host CPU device: extensions only enabled when conformance is OFF
 if(NOT ENABLE_CONFORMANCE)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_subgroup_ballot \
 cl_khr_subgroup_shuffle cl_intel_subgroups cl_intel_required_subgroup_size \
 cl_ext_float_atomics")
-#  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
+  # read-write images are still partially broken
+  set( HOST_DEVICE_FEATURES_30  "${HOST_DEVICE_FEATURES_30} __opencl_c_read_write_images")
 endif()
 
 # Extensions that are considered feature-complete (preferably CTS-tested).
