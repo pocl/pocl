@@ -788,7 +788,12 @@ if(NOT CLANG_LINK_TEST)
        CompilerInstance CI;
        CompilerInvocation &pocl_build = CI.getInvocation();
 
+       #if (LLVM_MAJOR < 18)
        LangOptions *la = pocl_build.getLangOpts();
+       #else
+       LangOptions L = pocl_build.getLangOpts();
+       LangOptions *la = &L;
+       #endif
        PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
        po.Includes.push_back(\"/usr/include/test/path.h\");
 
@@ -835,7 +840,7 @@ if(NOT CLANG_LINK_TEST)
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
               CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
               LINK_LIBRARIES "${LLVM_LDFLAGS} ${CLANG_LIBS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
-              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -DLLVM_MAJOR=${LLVM_MAJOR}"
               OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
 
   if(CLANG_LINK_TEST)

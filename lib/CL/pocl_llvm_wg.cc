@@ -53,6 +53,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassRegistry.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/SourceMgr.h>
+#if LLVM_MAJOR >= 18
+#include <llvm/Support/CodeGen.h>
+#endif
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/Transforms/Utils/Cloning.h>
@@ -143,7 +146,12 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 
   TargetMachine *TM = TheTarget->createTargetMachine(
       DevTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
-      Reloc::PIC_, CodeModel::Small, CodeGenOpt::Aggressive);
+      Reloc::PIC_, CodeModel::Small,
+#if LLVM_MAJOR >= 18
+      CodeGenOptLevel::Aggressive);
+#else
+      CodeGenOpt::Aggressive);
+#endif
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
   if (device->ops->init_target_machine)
@@ -1330,8 +1338,12 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   bool cannotEmitFile;
 
   cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-                                  llvm::CGFT_ObjectFile);
-
+#if LLVM_MAJOR < 18
+                                               llvm::CGFT_ObjectFile);
+#else
+                                               llvm::CodeGenFileType::
+                                                   ObjectFile);
+#endif
   LLVMGeneratesObjectFiles = !cannotEmitFile;
 
   if (LLVMGeneratesObjectFiles) {
@@ -1362,12 +1374,14 @@ int pocl_llvm_codegen(cl_device_id Device, cl_program program, void *Modp,
   // to produce the binary.
 
   if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-                                  llvm::CGFT_AssemblyFile)) {
+#if LLVM_MAJOR < 18
+                                  llvm::CGFT_AssemblyFile)
+#else
+                                  llvm::CodeGenFileType::AssemblyFile)
+#endif
+  ) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }
-
-
-
 
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::TimePassesIsEnabled = true;
