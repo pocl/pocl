@@ -47,6 +47,12 @@ jobs:
             config: basic
           - llvm: 15
             config: basic
+          - llvm: 18
+            config: basic
+          - llvm: 18
+            config: cts_spirv
+          - llvm: 18
+            config: tier1
         exclude:
           - llvm: 16
             config: cts_spirv
