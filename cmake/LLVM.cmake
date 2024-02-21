@@ -712,33 +712,7 @@ if(NOT LLVM_LINK_TEST)
 
   message(STATUS "Running LLVM link test")
 
-  set(LLVM_LINK_TEST_SOURCE "
-    #include <stdio.h>
-    #include \"llvm/IR/LLVMContext.h\"
-    #include \"llvm/Support/SourceMgr.h\"
-    #include \"llvm/IR/Module.h\"
-    #include \"llvm/IRReader/IRReader.h\"
-
-    int main( int argc, char* argv[] )
-    {
-       if( argc < 2 )
-         exit(2);
-
-       llvm::LLVMContext context;
-       llvm::SMDiagnostic err;
-       std::unique_ptr<llvm::Module> module = llvm::parseIRFile( argv[1], err, context );
-
-       if( !module )
-         exit(1);
-       else
-         printf(\"DataLayout = %s\\n\", module->getDataLayoutStr().c_str());
-
-       return 0;
-    }")
-
-  string(RANDOM RNDNAME)
-  set(LLVM_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/llvm_link_test_${RNDNAME}.cc")
-  file(WRITE "${LLVM_LINK_TEST_FILENAME}" "${LLVM_LINK_TEST_SOURCE}")
+  set(LLVM_LINK_TEST_FILENAME "${CMAKE_SOURCE_DIR}/cmake/LinkTestLLVM.cc")
 
   try_compile(LLVM_LINK_TEST ${CMAKE_BINARY_DIR} "${LLVM_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
@@ -765,76 +739,7 @@ if(NOT CLANG_LINK_TEST)
 
   message(STATUS "Running Clang link test")
 
-  set(CLANG_LINK_TEST_SOURCE "
-    #include <stdio.h>
-    #include <clang/Lex/PreprocessorOptions.h>
-    #include <clang/Basic/Diagnostic.h>
-    #include <clang/Basic/LangOptions.h>
-    #include <clang/CodeGen/CodeGenAction.h>
-    #include <clang/Driver/Compilation.h>
-    #include <clang/Driver/Driver.h>
-    #include <clang/Frontend/CompilerInstance.h>
-    #include <clang/Frontend/CompilerInvocation.h>
-    #include <clang/Frontend/FrontendActions.h>
-
-    using namespace clang;
-    using namespace llvm;
-
-    int main( int argc, char* argv[] )
-    {
-       if( argc < 2 )
-         exit(2);
-
-       CompilerInstance CI;
-       CompilerInvocation &pocl_build = CI.getInvocation();
-
-       #if (LLVM_MAJOR < 18)
-       LangOptions *la = pocl_build.getLangOpts();
-       #else
-       LangOptions L = pocl_build.getLangOpts();
-       LangOptions *la = &L;
-       #endif
-       PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
-       po.Includes.push_back(\"/usr/include/test/path.h\");
-
-       la->OpenCLVersion = 300;
-       la->FakeAddressSpaceMap = false;
-       la->Blocks = true; //-fblocks
-       la->MathErrno = false; // -fno-math-errno
-       la->NoBuiltin = true;  // -fno-builtin
-       la->AsmBlocks = true;  // -fasm (?)
-
-       la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
-
-       la->PICLevel = PICLevel::BigPIC;
-       la->PIE = 0;
-
-       clang::TargetOptions &ta = pocl_build.getTargetOpts();
-       ta.Triple = \"x86_64-pc-linux-gnu\";
-       ta.CPU = \"haswell\";
-
-       FrontendOptions &fe = pocl_build.getFrontendOpts();
-       fe.Inputs.clear();
-
-       fe.Inputs.push_back(
-           FrontendInputFile(argv[1],
-                             clang::InputKind(clang::Language::OpenCL)));
-
-       CodeGenOptions &cg = pocl_build.getCodeGenOpts();
-       cg.EmitOpenCLArgMetadata = true;
-       cg.StackRealignment = true;
-       cg.VerifyModule = true;
-
-       bool success = true;
-       clang::PrintPreprocessedAction Preprocess;
-       success = CI.ExecuteAction(Preprocess);
-
-       return (success ? 0 : 11);
-    }")
-
-  string(RANDOM RNDNAME)
-  set(CLANG_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/clang_link_test_${RNDNAME}.cc")
-  file(WRITE "${CLANG_LINK_TEST_FILENAME}" "${CLANG_LINK_TEST_SOURCE}")
+  set(CLANG_LINK_TEST_FILENAME "${CMAKE_SOURCE_DIR}/cmake/LinkTestClang.cc")
 
   try_compile(CLANG_LINK_TEST ${CMAKE_BINARY_DIR} "${CLANG_LINK_TEST_FILENAME}"
               CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
