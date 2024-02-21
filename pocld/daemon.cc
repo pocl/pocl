@@ -247,7 +247,7 @@ static std::string find_default_ip_address() {
         continue;
 
       struct sockaddr *saddr = p->ifa_addr;
-      if (saddr->sa_family != AF_INET)
+      if (saddr == NULL || saddr->sa_family != AF_INET)
         continue;
 
       struct sockaddr_in *saddr_in = (struct sockaddr_in *)saddr;
