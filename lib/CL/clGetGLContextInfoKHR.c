@@ -24,6 +24,7 @@
 #include <assert.h>
 #include "pocl_util.h"
 #include "devices.h"
+#include "utlist_addon.h"
 
 CL_API_ENTRY cl_int CL_API_CALL POname (clGetGLContextInfoKHR) (
     const cl_context_properties *properties, cl_gl_context_info param_name,
@@ -37,20 +38,20 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clGetGLContextInfoKHR) (
 
     case CL_DEVICES_FOR_GL_CONTEXT_KHR:
       {
-        cl_device_id *dev_array
-            = alloca (sizeof (cl_device_id) * pocl_num_devices);
+        cl_device_id *dev_array = alloca (
+            sizeof (cl_device_id) * POCL_ATOMIC_LOAD (pocl_num_devices));
         unsigned j = 0;
-        for (cl_device_id device = pocl_devices; device != NULL;
-             device = device->next)
-          {
-            cl_device_id dev = device;
-            if (dev->ops->get_gl_context_assoc != NULL
-                && dev->ops->get_gl_context_assoc (
-                       dev, CL_DEVICES_FOR_GL_CONTEXT_KHR, properties)
-                       == CL_SUCCESS)
-              {
-                dev_array[j++] = dev;
-              }
+        cl_device_id device;
+        LL_FOREACH_ATOMIC (pocl_devices, device)
+        {
+          cl_device_id dev = device;
+          if (dev->ops->get_gl_context_assoc != NULL
+              && dev->ops->get_gl_context_assoc (
+                     dev, CL_DEVICES_FOR_GL_CONTEXT_KHR, properties)
+                     == CL_SUCCESS)
+            {
+              dev_array[j++] = dev;
+            }
           }
         if (j > 0)
           POCL_RETURN_GETINFO_ARRAY (cl_device_id, j, dev_array);
@@ -66,18 +67,18 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clGetGLContextInfoKHR) (
     case CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR:
       {
         cl_device_id found = NULL;
-        for (cl_device_id device = pocl_devices; device != NULL;
-             device = device->next)
-          {
-            cl_device_id dev = device;
-            if (dev->ops->get_gl_context_assoc != NULL
-                && dev->ops->get_gl_context_assoc (
-                       dev, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, properties)
-                       == CL_SUCCESS)
-              {
-                found = dev;
-                break;
-              }
+        cl_device_id device;
+        LL_FOREACH_ATOMIC (pocl_devices, device)
+        {
+          cl_device_id dev = device;
+          if (dev->ops->get_gl_context_assoc != NULL
+              && dev->ops->get_gl_context_assoc (
+                     dev, CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR, properties)
+                     == CL_SUCCESS)
+            {
+              found = dev;
+              break;
+            }
           }
         if (found)
           POCL_RETURN_GETINFO (cl_device_id, found);

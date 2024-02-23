@@ -119,7 +119,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->device_supports_this_image = device_image_support;
 
   mem->device_ptrs = (pocl_mem_identifier *)calloc (
-      pocl_num_devices, sizeof (pocl_mem_identifier));
+      POCL_ATOMIC_LOAD (pocl_num_devices), sizeof (pocl_mem_identifier));
   POCL_GOTO_ERROR_COND ((mem->device_ptrs == NULL), CL_OUT_OF_HOST_MEMORY);
 
   mem->size = size;

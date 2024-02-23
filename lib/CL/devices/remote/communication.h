@@ -30,6 +30,9 @@
 #include "messages.h"
 #include "pocl.h"
 
+#include "utlist_addon.h"
+#include "utlist.h"
+
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
 #include "uthash.h"
@@ -92,6 +95,7 @@ typedef struct async_t
 #define CREATE_ASYNC_NETCMD                                                   \
   network_command *netcmd = calloc (1, sizeof (network_command));             \
   netcmd->status = NETCMD_STARTED;                                            \
+  POCL_LOCK_OBJ (node->sync.event.event);                                     \
   netcmd->event_id = node->sync.event.event->id;                              \
   struct event_node *n;                                                       \
   LL_COMPUTE_LENGTH (node->sync.event.event->wait_list, n,                    \
@@ -106,6 +110,7 @@ typedef struct async_t
       *(dst++) = n->event->id;                                                \
     }                                                                         \
   }                                                                           \
+  POCL_UNLOCK_OBJ (node->sync.event.event);                                   \
   netcmd->receiver = data->inflight_queue;                                    \
   netcmd->synchronous = 0;                                                    \
   netcmd->data.async.cb = cb;                                                 \

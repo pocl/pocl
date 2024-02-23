@@ -67,7 +67,8 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->normalized_coords = normalized_coords;
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
-  sampler->device_data = (void **)calloc (pocl_num_devices, sizeof (void *));
+  sampler->device_data
+      = (void **)calloc (POCL_ATOMIC_LOAD (pocl_num_devices), sizeof (void *));
 
   TP_CREATE_SAMPLER (context->id, sampler->id);
 
