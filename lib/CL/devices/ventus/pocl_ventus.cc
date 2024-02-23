@@ -1,4 +1,4 @@
-/* ventus.c - a pocl device driver for ventus gpgpu 
+/* ventus.c - a pocl device driver for ventus gpgpu
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
                  2011-2021 Pekka Jääskeläinen
@@ -63,6 +63,8 @@
 #include "pocl_ventus.h"
 //#endif
 
+#define VENTUS_INSTALL_RPEFIX_DIR getenv("VENTUS_INSTALL_PREFIX")
+
   /* ENABLE_LLVM means to compile the kernel using pocl compiler,
  but for ventus(ventus has its own LLVM) it should be OFF. */
 
@@ -85,26 +87,36 @@
 
 // FIXME: Do not use hardcoded library search path!
 static const char *ventus_final_ld_flags[] = {
-  "-nodefaultlibs",
-  "-Wl," CLANG_RESOURCE_DIR"/../../crt0.o",
-  "-Wl," CLANG_RESOURCE_DIR"/../../riscv32clc.o",
-  "-Wl,--gc-sections",
-  "-L" CLANG_RESOURCE_DIR"/../../",
-  "-lworkitem",
+  "-nodefaultlibs ",
+  "-Wl,",
+  VENTUS_INSTALL_RPEFIX_DIR,
+  "/lib/crt0.o ",
+  "-Wl,",
+  VENTUS_INSTALL_RPEFIX_DIR,
+  "/lib/riscv32clc.o ",
+  "-Wl,--gc-sections ",
+  "-L",
+  VENTUS_INSTALL_RPEFIX_DIR,
+  "/lib ",
+  "-lworkitem ",
   NULL
 };
 
 static const char *ventus_other_compile_flags[] = {
-	"-I" CLANG_RESOURCE_DIR"/../../../../libclc/generic/include",
-	"-O1",
-	"-Wl,-T," CLANG_RESOURCE_DIR"/../../../../utils/ldscripts/ventus/elf32lriscv.ld",
-	NULL
+  "-I",
+  VENTUS_INSTALL_RPEFIX_DIR,
+  "include/clc ",
+  "-O1 ",
+  "-Wl,-T,",
+  VENTUS_INSTALL_RPEFIX_DIR,
+  "/lib/ldscripts/ventus/elf32lriscv.ld ",
+  NULL
 };
 
 static const char *ventus_objdump_flags[] = {
   "-d",
   "--mattr=+v",
-	NULL
+  NULL
 };
 
 void
@@ -125,7 +137,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->write = pocl_ventus_write;
   ops->write_rect = pocl_ventus_write_rect;
 
-  ops->run = pocl_ventus_run; 
+  ops->run = pocl_ventus_run;
   ops->run_native = NULL;
   /***********************No need to modify for now*************************/
 
@@ -156,7 +168,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->notify = pocl_ventus_notify;
   ops->flush = pocl_ventus_flush;
 
-  ops->build_hash = pocl_ventus_build_hash; 
+  ops->build_hash = pocl_ventus_build_hash;
   ops->compute_local_size = NULL;
 
   ops->get_device_info_ext = NULL;
@@ -221,7 +233,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
     free(d);
     return CL_DEVICE_NOT_FOUND;
   }
-  
+
   /*
   // add storage for position pointer
   uint32_t print_buf_dev_size = PRINT_BUFFER_SIZE + sizeof(uint32_t);
@@ -232,7 +244,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
     free(d);
     return CL_INVALID_DEVICE;
   }  */
-    
+
   d->vt_device   = vt_device;
 
   d->current_kernel = NULL;
@@ -266,7 +278,7 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->global_mem_size = 1024 * 1024 * 1024; // 1G ram
   dev->global_mem_cache_type = CL_READ_WRITE_CACHE;
   dev->global_mem_cacheline_size = 128; // 128 Bytes for 32 thread
-  dev->global_mem_cache_size = 64 * 128; 
+  dev->global_mem_cache_size = 64 * 128;
   dev->image_max_buffer_size = dev->max_mem_alloc_size / 16;
 
   dev->image2d_max_width = 1024; // TODO: Update
@@ -340,9 +352,9 @@ pocl_ventus_init (unsigned j, cl_device_id dev, const char* parameters)
 #define PRINT_CHISEL_TESTCODE
 #ifdef PRINT_CHISEL_TESTCODE
 void fp_write_file(FILE *fp,void *p,uint64_t size){
-  for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i) 
+  for (size_t i = 0; i < (size+sizeof(uint32_t)-1) / sizeof(uint32_t); ++i)
     fprintf(fp,"%08x\n",*((uint32_t*)p+i));
-} 
+}
 #endif
 
 void
@@ -411,7 +423,7 @@ step2 allocate kernel argument & arg buffer
       notice kernel arg buffer is offered by command.run.
 step3 prepare kernel metadata (pc(start_pc=8000) & kernel entrance(0x8000005c) & arg pointer )
 step4 prepare driver metadata
-step5 make a writefile for chisel      
+step5 make a writefile for chisel
 */
   assert(cmd->device->data != NULL);
   d = (struct vt_device_data_t *)cmd->device->data;
@@ -428,7 +440,7 @@ step5 make a writefile for chisel
   for (i = 0; i < meta->num_args; ++i)
     {
       pocl_argument* al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL(meta->arg_info[i]))   
+      if (ARG_IS_LOCAL(meta->arg_info[i]))
         {
           if (cmd->device->device_alloca_locals)
             {
@@ -546,7 +558,7 @@ step5 make a writefile for chisel
       /* Local buffers are allocated in the device side work-group
          launcher. Let's pass only the sizes of the local args in
          the arg buffer. */
-      for (i = 0; i < meta->num_locals; ++i) 
+      for (i = 0; i < meta->num_locals; ++i)
         {
           size_t s = meta->local_sizes[i]; //TODO: create local_buf at ddr, and map argument to this addr.
           size_t j = meta->num_args + i;
@@ -580,7 +592,7 @@ step5 make a writefile for chisel
    **********************************************************************************************************/
   uint64_t abuf_size = 0;
   for (i = 0; i < meta->num_args; ++i) {
-      pocl_argument* al = &(cmd->command.run.arguments[i]);  
+      pocl_argument* al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         abuf_size += 4;
       } else
@@ -592,12 +604,12 @@ step5 make a writefile for chisel
         abuf_size += al->size;
       }
     }
-  
+
   assert(abuf_size <= 0xffff);
   char* abuf_args_data = (char*)malloc(abuf_size);
   uint64_t abuf_args_p = 0;
-  for(i = 0; i < meta->num_args; ++i) {  
-      pocl_argument* al = &(cmd->command.run.arguments[i]);  
+  for(i = 0; i < meta->num_args; ++i) {
+      pocl_argument* al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL(meta->arg_info[i])&& cmd->device->device_alloca_locals) {
         memcpy(abuf_args_data+abuf_args_p,&local_arg[i],4);
         abuf_args_p+=4;
@@ -636,11 +648,11 @@ step5 make a writefile for chisel
   /**********************************************************************************************************/
 
   //after checking pocl_cache_binary, use the following to pass in.
-   /*if (NULL == d->current_kernel || d->current_kernel != kernel) {    
+   /*if (NULL == d->current_kernel || d->current_kernel != kernel) {
        d->current_kernel = kernel;
       char program_bin_path[POCL_FILENAME_LENGTH];
       pocl_cache_final_binary_path (program_bin_path, program, dev_i, kernel, NULL, 0);
-      err = vt_upload_kernel_file(d->vt_device, program_bin_path,0);      
+      err = vt_upload_kernel_file(d->vt_device, program_bin_path,0);
       assert(0 == err);
     }*/
 
@@ -685,8 +697,16 @@ step5 make a writefile for chisel
    ***********************************************************************************************************/
   #ifdef __linux__
 	  std::string assembler_path = CLANG;
-    assembler_path = assembler_path.substr(0,assembler_path.length()-6);
-	  assembler_path += "/../../assemble.sh";
+    if(pocl_exists(assembler_path.c_str())) {
+      assembler_path = assembler_path.substr(0,assembler_path.length()-6);
+	    assembler_path += "/../../assemble.sh";
+    }
+    else {
+      std::string ventus_assembler(VENTUS_INSTALL_RPEFIX_DIR);
+      ventus_assembler += "/lib/scripts/assemble.sh";
+      assembler_path = ventus_assembler;
+      assert(pocl_exists(ventus_assembler.c_str()));
+    }
   	system((std::string("chmod +x ") + assembler_path).c_str());
   	assembler_path += " object";
   	system(assembler_path.c_str());
@@ -729,8 +749,8 @@ step5 make a writefile for chisel
 	assert(c_num_buffer<=c_max_num_buffer);
   #endif
   /***********************************************************************************************************/
-  
-  
+
+
 //prepare privatemem
   uint64_t pds_src_size=pdssize*num_thread*num_warp*num_workgroup;
   uint64_t pds_dev_mem_addr;
@@ -831,7 +851,7 @@ step5 make a writefile for chisel
 
 
 
-//pass metadata to "run" 
+//pass metadata to "run"
   // quick off kernel execution
   err = vt_start(d->vt_device, &driver_meta,0);
   assert(0 == err);
@@ -840,7 +860,7 @@ step5 make a writefile for chisel
   err = vt_ready_wait(d->vt_device, 1000);
   assert(0 == err);
 
-  // move print buffer back or wait to read?     
+  // move print buffer back or wait to read?
 
     // rename log file from spike and add index for log
     const char* sp_logname = "object.riscv.log";
@@ -900,10 +920,10 @@ step5 make a writefile for chisel
   free(abuf_args_data);
   free(kernel_metadata);
 
-  
-  
+
+
   //pocl_release_dlhandle_cache(cmd);
- 
+
 }
 
 
@@ -912,14 +932,14 @@ pocl_ventus_uninit (unsigned j, cl_device_id device)
 {
   struct vt_device_data_t *d = (struct vt_device_data_t*)device->data;
   if (NULL == d)
-  return CL_SUCCESS;  
+  return CL_SUCCESS;
 
   vt_dev_close(d->vt_device);
-  
+
   POCL_DESTROY_LOCK(d->cq_lock);
   POCL_MEM_FREE(d);
   device->data = NULL;
-  
+
   return CL_SUCCESS;
 }
 
@@ -1026,11 +1046,11 @@ void pocl_ventus_free(cl_device_id device, cl_mem memobj) {
   vt_device_data_t* d = (vt_device_data_t *)device->data;
   uint64_t dev_mem_addr = *((uint64_t*)(memobj->device_ptrs[device->dev_id].mem_ptr));
 
-  /* The host program can provide the runtime with a pointer 
-  to a block of continuous memory to hold the memory object 
-  when the object is created (CL_MEM_USE_HOST_PTR). 
-  Alternatively, the physical memory can be managed 
-  by the OpenCL runtime and not be directly accessible 
+  /* The host program can provide the runtime with a pointer
+  to a block of continuous memory to hold the memory object
+  when the object is created (CL_MEM_USE_HOST_PTR).
+  Alternatively, the physical memory can be managed
+  by the OpenCL runtime and not be directly accessible
   to the host program.*/
   if (flags & CL_MEM_USE_HOST_PTR) {
 //    abort(); //TODO
@@ -1085,9 +1105,9 @@ void pocl_ventus_read(void *data,
                       void *__restrict__ host_ptr,
                       pocl_mem_identifier *src_mem_id,
                       cl_mem src_buf,
-                      size_t offset, 
+                      size_t offset,
                       size_t size) {
-  struct vt_device_data_t *d = (struct vt_device_data_t *)data;                      
+  struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   int err = vt_copy_from_dev(d->vt_device,*((uint64_t*)(src_mem_id->mem_ptr))+offset,host_ptr,size,0,0);
   assert(0 == err);
 }
@@ -1096,7 +1116,7 @@ void pocl_ventus_write(void *data,
                        const void *__restrict__ host_ptr,
                        pocl_mem_identifier *dst_mem_id,
                        cl_mem dst_buf,
-                       size_t offset, 
+                       size_t offset,
                        size_t size) {
   struct vt_device_data_t *d = (struct vt_device_data_t *)data;
   void *tmp_data = malloc(size);
@@ -1332,20 +1352,27 @@ int pocl_ventus_build_source (cl_program program, cl_uint device_i,
 }
 
 int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
-  const char* clang_path(CLANG);
-	if (!pocl_exists(clang_path)) {
-		POCL_MSG_ERR("$CLANG: '%s' doesn't exist\n", clang_path);
-		return -1;
+  std::string clang_path(CLANG);
+	if (!pocl_exists(clang_path.c_str())) {
+    // Using VENTUS_INSTALL_PREFIX enviroment to get other clang_path
+    std::string ventus_install_prefix(VENTUS_INSTALL_RPEFIX_DIR);
+    std::string clang_install_path = ventus_install_prefix + "/bin/clang";
+    clang_path = clang_install_path;
+    if(!pocl_exists(clang_install_path .c_str())) {
+      POCL_MSG_ERR("$CLANG: '%s' or '%s' doesn't exist\n", clang_path.c_str(),
+                                          clang_install_path.c_str() );
+      return -1;
+    }
 	}
   std::stringstream ss_cmd;
 	std::stringstream ss_out;
 
   char program_bc_path[POCL_FILENAME_LENGTH];
-    
+
 
   //pocl_cache_create_program_cachedir(program, device_i, program->source,
   //                                     strlen(program->source),
-  //                                     program_bc_path);  
+  //                                     program_bc_path);
   //TODO: move .cl and .riscv file into program_bc_path, and let spike read file from this path.
   std::ofstream outfile("object.cl");
   outfile << program->source;
@@ -1355,10 +1382,10 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
 
     ss_cmd << clang_path <<" -cl-std=CL2.0 " << "-target " << device->llvm_target_triplet << " -mcpu=" << device->llvm_cpu  << " object.cl " << " -o " << "object.riscv ";
 	for(int i = 0; ventus_final_ld_flags[i] != NULL; i++) {
-		ss_cmd << ventus_final_ld_flags[i] << " ";
+		ss_cmd << ventus_final_ld_flags[i];
 	}
 	for(int i = 0; ventus_other_compile_flags[i] != NULL; i++) {
-		ss_cmd << ventus_other_compile_flags[i] << " ";
+		ss_cmd << ventus_other_compile_flags[i];
 	}
   ss_cmd << "-Wl,--init=" << program->kernel_meta->name << " ";
 #ifdef POCL_DEBUG_FLAG_GENERAL
@@ -1397,7 +1424,7 @@ int pocl_ventus_post_build_program (cl_program program, cl_uint device_i) {
             #define PRINT_CHISEL_TESTCODE
             #endif
             printf("generate chisel testcode\n");
-        } 
+        }
     } */
 
 
