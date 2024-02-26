@@ -21,13 +21,12 @@
    THE SOFTWARE.
 */
 
-extern size_t _group_id_x;
-extern size_t _group_id_y;
-extern size_t _group_id_z;
+extern const size_t _group_id_x;
+extern const size_t _group_id_y;
+extern const size_t _group_id_z;
 
-__attribute__ ((noinline))
-size_t _CL_OVERLOADABLE
-get_group_id(unsigned int dimindx)
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_group_id (unsigned int dimindx)
 {
   switch(dimindx)
     {

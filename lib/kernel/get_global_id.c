@@ -21,37 +21,27 @@
    THE SOFTWARE.
 */
 
-extern size_t _local_size_x;
-extern size_t _local_size_y;
-extern size_t _local_size_z;
+extern const size_t _local_size_x;
+extern const size_t _local_size_y;
+extern const size_t _local_size_z;
 
-extern size_t _group_id_x;
-extern size_t _group_id_y;
-extern size_t _group_id_z;
+extern const size_t _group_id_x;
+extern const size_t _group_id_y;
+extern const size_t _group_id_z;
 
-extern size_t _local_id_x;
-extern size_t _local_id_y;
-extern size_t _local_id_z;
+extern const size_t _local_id_x;
+extern const size_t _local_id_y;
+extern const size_t _local_id_z;
 
-extern size_t _global_offset_x;
-extern size_t _global_offset_y;
-extern size_t _global_offset_z;
+extern const size_t _global_offset_x;
+extern const size_t _global_offset_y;
+extern const size_t _global_offset_z;
 
-size_t _CL_OVERLOADABLE
-get_local_id(unsigned int dimindx);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_local_id (unsigned int dimindx);
 
-/* attribute optnone disables all optimizations.
- * This was necessary, because running opt on kernel library
- * introduced global "switch tables" (@switch.table.XX)
- * which referenced the global variables like @_global_offset*,
- * and this was preventing these global vars from being optimized
- * out after privatizeContext() in Workgroup pass. Leading to
- * undefined references in final .so
- */
-
-__attribute__ ((optnone, noinline))
-size_t _CL_OVERLOADABLE
-get_global_id(unsigned int dimindx)
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_global_id (unsigned int dimindx)
 {
   switch(dimindx)
     {

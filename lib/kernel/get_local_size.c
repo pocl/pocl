@@ -21,13 +21,12 @@
    THE SOFTWARE.
 */
 
-extern size_t _local_size_x;
-extern size_t _local_size_y;
-extern size_t _local_size_z;
+extern const size_t _local_size_x;
+extern const size_t _local_size_y;
+extern const size_t _local_size_z;
 
-__attribute__ ((noinline))
-size_t _CL_OVERLOADABLE
-get_local_size(unsigned int dimindx)
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_local_size (unsigned int dimindx)
 {
   switch(dimindx)
     {
@@ -38,7 +37,7 @@ get_local_size(unsigned int dimindx)
     }
 }
 
-size_t _CL_OVERLOADABLE
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_enqueued_local_size (unsigned int dimindx)
 {
   return get_local_size (dimindx);
