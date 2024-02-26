@@ -449,6 +449,68 @@ bool isKernelToProcess(const llvm::Function &F) {
   return false;
 }
 
+//#define DEBUG_UNREACHABLE_SWITCH_REMOVAL
+
+void removeUnreachableSwitchCases(llvm::Function &F) {
+  std::vector<BasicBlock *> BBsToDel;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    BasicBlock *BB = &*FI;
+
+    if (BB->hasName() && BB->getName().startswith("default.unreachable")) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+      std::cerr << "##################################################\n";
+      std::cerr << "### converting unreachable block: " << (void *)BB << "\n";
+#endif
+      BBsToDel.push_back(BB);
+
+      std::set<SwitchInst *> SwUsers;
+      for (auto U : BB->users()) {
+        if (SwitchInst *SwI = dyn_cast<SwitchInst>(U)) {
+          SwUsers.insert(SwI);
+        } else {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          // we can ignore BBlocks with a single "br label default.unreachable"
+          if (!isa<BranchInst>(U)) {
+            std::cerr << "Unhandled unreachable user:\n";
+            U->dump();
+          }
+#endif
+        }
+      }
+
+      for (SwitchInst *SwI : SwUsers) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+        std::cerr << "Found a switch user, replacing the unr label:\n";
+        SwI->dump();
+#endif
+        if (SwI->getDefaultDest() == BB) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "... default switch user is the unr BB\n";
+#endif
+          // remove the last case, and make its BB as the default
+          auto FinalCaseIt = std::prev(SwI->case_end());
+          BasicBlock *FinalBB = FinalCaseIt->getCaseSuccessor();
+          SwI->removeCase(FinalCaseIt);
+          SwI->setDefaultDest(FinalBB);
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "Final fixed switch:\n";
+          SwI->dump();
+#endif
+        } else {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "Unhandled switch, the default branch is not unr:\n";
+          SwI->dump();
+#endif
+        }
+      }
+    }
+  }
+
+  for (auto BB : BBsToDel) {
+    BB->eraseFromParent();
+  }
+}
+
 // Returns true in case the given function is a kernel with work-group
 // barriers inside it.
 bool hasWorkgroupBarriers(const llvm::Function &F) {
