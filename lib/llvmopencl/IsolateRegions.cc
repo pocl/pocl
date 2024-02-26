@@ -135,7 +135,7 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 #ifdef DEBUG_ISOLATE_REGIONS
   Function *F = exit->getParent();
-  dumpCFG(*F, F->getName().str() + "_after_isolateregs.dot", nullptr, nullptr);
+  dumpCFG(*F, F->getName().str() + "_after_isolateregs.dot");
 #endif
 #endif
   return changed;
@@ -202,6 +202,9 @@ llvm::PreservedAnalyses IsolateRegions::run(llvm::Function &F,
   WorkitemHandlerType WIH = AM.getResult<WorkitemHandlerChooser>(F).WIH;
   RegionInfo &RI = AM.getResult<RegionInfoAnalysis>(F);
 
+  if (!isKernelToProcess(F))
+    return PreservedAnalyses::all();
+
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<WorkitemHandlerChooser>();
   PAChanged.preserve<VariableUniformityAnalysis>();
@@ -209,6 +212,11 @@ llvm::PreservedAnalyses IsolateRegions::run(llvm::Function &F,
 
   std::vector<Region *> Regions;
   findRegionsDepthFirst(RI.getTopLevelRegion(), Regions);
+
+#ifdef DEBUG_ISOLATE_REGIONS
+  dumpCFG(F, F.getName().str() + "_before_isolateregs.dot", &Regions);
+#endif
+
   unsigned NumRegions = Regions.size();
   for (unsigned i = 0; i < NumRegions; ++i) {
     bool ChangedCurrent = isolateRegions(*Regions[i], WIH);
@@ -222,7 +230,7 @@ llvm::PreservedAnalyses IsolateRegions::run(llvm::Function &F,
   }
 
 #ifdef DEBUG_ISOLATE_REGIONS
-  dumpCFG(F, F.getName().str() + "_after_isolateregs.dot", nullptr, nullptr);
+  dumpCFG(F, F.getName().str() + "_after_isolateregs.dot", &Regions);
 #endif
 
   return ChangedAny ? PAChanged : PreservedAnalyses::all();
