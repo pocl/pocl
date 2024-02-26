@@ -507,11 +507,12 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
   addPass(Passes, "optimize-wi-func-calls");
+
   addPass(Passes, "handle-samplers");
   addPass(Passes, "infer-address-spaces");
-  addAnalysis(Passes, "workitem-handler-chooser");
   addPass(Passes, "mem2reg");
   addAnalysis(Passes, "domtree");
+  addAnalysis(Passes, "workitem-handler-chooser");
   if (Dev->spmd != CL_FALSE) {
     addPass(Passes, "flatten-inline-all", PassType::Module);
     addPass(Passes, "always-inline", PassType::Module);
