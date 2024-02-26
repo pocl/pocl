@@ -504,7 +504,6 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   // don't forget to register it in registerPassBuilderPasses
   addPass(Passes, "fix-min-legal-vec-size", PassType::Module);
   addPass(Passes, "inline-kernels");
-  addPass(Passes, "remove-optnone");
   addPass(Passes, "optimize-wi-func-calls");
   addPass(Passes, "handle-samplers");
   addPass(Passes, "infer-address-spaces");

@@ -54,7 +54,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
 #include "RemoveBarrierCalls.h"
-#include "RemoveOptnoneFromWIFunc.h"
 #include "SubCFGFormation.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
@@ -518,7 +517,6 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   OptimizeWorkItemFuncCalls::registerWithPB(PB);
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
-  RemoveOptnoneFromWIFunc::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);
