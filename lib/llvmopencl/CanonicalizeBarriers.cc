@@ -48,6 +48,8 @@ POP_COMPILER_DIAGS
 #define PASS_CLASS pocl::CanonicalizeBarriers
 #define PASS_DESC "Barrier canonicalization pass"
 
+//#define DEBUG_CANON_BARRIERS
+
 namespace pocl {
 
 using namespace llvm;
@@ -62,8 +64,10 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
 
   BasicBlock *entry = &F.getEntryBlock();
   if (!Barrier::hasOnlyBarrier(entry)) {
-    BasicBlock *effective_entry = SplitBlock(entry, 
-                                             &(entry->front()));
+#ifdef DEBUG_CANON_BARRIERS
+    std::cerr << "CanonBar: hasOnlyBarrier(entry)\n";
+#endif
+    BasicBlock *effective_entry = SplitBlock(entry, &(entry->front()));
 
     effective_entry->takeName(entry);
     entry->setName("entry.barrier");
@@ -90,7 +94,10 @@ static bool canonicalizeBarriers(Function &F, WorkitemHandlerType Handler) {
          a) exit node is a barrier block 
          b) there are no empty parallel regions (which would be formed 
          between the explicit barrier and the added one). */
-      BasicBlock *exit; 
+#ifdef DEBUG_CANON_BARRIERS
+      std::cerr << "CanonBar: isExitNode & !hasOnlyBarrier\n";
+#endif
+      BasicBlock *exit;
       if (Barrier::endsWithBarrier(b))
         exit = SplitBlock(b, t->getPrevNode());
       else
