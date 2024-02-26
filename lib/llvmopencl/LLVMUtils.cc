@@ -470,7 +470,6 @@ bool hasWorkgroupBarriers(const llvm::Function &F) {
   return false;
 }
 
-constexpr unsigned NumWorkgroupVariables = 18;
 const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     "_local_id_y",
                                     "_local_id_z",
@@ -495,6 +494,20 @@ const std::vector<std::string>
     WorkgroupVariablesVector(WorkgroupVariablesArray,
                              WorkgroupVariablesArray+NumWorkgroupVariables);
 
+const char *WIFuncNameArray[NumWIFuncNames] = {"_Z13get_global_idj",
+                                               "_Z17get_global_offsetj",
+                                               "_Z15get_global_sizej",
+                                               "_Z12get_group_idj",
+                                               "_Z12get_local_idj",
+                                               "_Z14get_local_sizej",
+                                               "_Z23get_enqueued_local_sizej",
+                                               "_Z14get_num_groupsj",
+                                               "_Z20get_global_linear_idv",
+                                               "_Z19get_local_linear_idv",
+                                               "_Z12get_work_dimv"};
+
+const std::vector<std::string> WIFuncNameVec(WIFuncNameArray,
+                                             WIFuncNameArray + NumWIFuncNames);
 
 #if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 // register all PoCL analyses & passes with an LLVM PassBuilder instance,

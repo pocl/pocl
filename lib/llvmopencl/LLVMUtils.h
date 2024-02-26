@@ -55,8 +55,12 @@ namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
+constexpr unsigned NumWorkgroupVariables = 18;
 extern const char *WorkgroupVariablesArray[];
 extern const std::vector<std::string> WorkgroupVariablesVector;
+constexpr unsigned NumWIFuncNames = 11;
+extern const char *WIFuncNameArray[];
+extern const std::vector<std::string> WIFuncNameVec;
 
 void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
