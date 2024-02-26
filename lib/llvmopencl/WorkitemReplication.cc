@@ -127,10 +127,11 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
 
   parallel_regions[0] = *OriginalParallelRegions;
 
-  //pocl::dumpCFG(F, F.getName().str() + ".before_repl.dot", original_parallel_regions);
+#if 0
+  pocl::dumpCFG(F, F.getName().str() + ".before_repl.dot",
+                nullptr, OriginalParallelRegions);
 
   /* Enable to get region identification printouts */
-#if 0
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
@@ -287,7 +288,10 @@ bool WorkitemReplicationImpl::processFunction(Function &F) {
 
   delete [] reference_map;
 
-  //pocl::dumpCFG(F, F.getName().str() + ".after_repl.dot", original_parallel_regions);
+#if 0
+  pocl::dumpCFG(F, F.getName().str() + ".after_repl.dot",
+                OriginalParallelRegions);
+#endif
 
   for (size_t j = 0; j < parallel_regions.size(); ++j) {
     for (auto i = parallel_regions[j].begin(),

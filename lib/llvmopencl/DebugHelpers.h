@@ -31,6 +31,10 @@
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/Function.h>
 
+namespace llvm {
+class Region;
+}
+
 #include "ParallelRegion.h"
 
 #include <set>
@@ -38,15 +42,16 @@
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
-  void dumpCFG(llvm::Function& F, std::string fname="",
-               ParallelRegion::ParallelRegionVector* regions=NULL,
-               std::set<llvm::BasicBlock*> *highlights=NULL);
+void dumpCFG(llvm::Function &F, std::string fname = "",
+             const std::vector<llvm::Region *> *Regions = nullptr,
+             const ParallelRegion::ParallelRegionVector *ParRegions = nullptr,
+             const std::set<llvm::BasicBlock *> *highlights = nullptr);
 
-  // Split large basic blocks to smaller one so dot doesn't crash when
-  // calling viewCFG on it. This should be fixed in LLVM upstream.
-  //
-  // @return True in case the function was changed.
-  bool chopBBs(llvm::Function& F, llvm::Pass &P);
+// Split large basic blocks to smaller one so dot doesn't crash when
+// calling viewCFG on it. This should be fixed in LLVM upstream.
+//
+// @return True in case the function was changed.
+bool chopBBs (llvm::Function &F, llvm::Pass &P);
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
   class PoCLCFGPrinter : public llvm::ModulePass {

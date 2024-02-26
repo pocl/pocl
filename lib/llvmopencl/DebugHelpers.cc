@@ -30,10 +30,11 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
 
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <llvm/Analysis/RegionInfo.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "DebugHelpers.h"
 #include "Barrier.h"
@@ -131,10 +132,12 @@ static void printBasicBlock(
  * @param regions highlight these parallel regions in the graph
  * @param highlights highlight these basic blocks in the graph
  */
-void dumpCFG(
-  llvm::Function &F, std::string fname,
-  ParallelRegion::ParallelRegionVector *regions,
-  std::set<llvm::BasicBlock*> *highlights) {
+void dumpCFG(llvm::Function &F, std::string fname,
+             const std::vector<llvm::Region *> *Regions,
+             const ParallelRegion::ParallelRegionVector *ParRegions,
+             const std::set<llvm::BasicBlock *> *highlights) {
+
+  unsigned LastRegID = 0;
 
   if (fname == "")
     fname = std::string("pocl_cfg.") + F.getName().str() + ".dot";
@@ -154,39 +157,55 @@ void dumpCFG(
 
   std::set<BasicBlock*> regionBBs;
 
-  if (regions != NULL) {
-
-    for (ParallelRegion::ParallelRegionVector::iterator ri = regions->begin(),
-           re = regions->end(); ri != re; ++ri) {
-
-      ParallelRegion* pr = *ri;
-
-      s << "\tsubgraph cluster" << pr->GetID() << " {" << std::endl;
-
-      for (ParallelRegion::iterator i = pr->begin(), e = pr->end(); 
-           i != e; ++i) {
-        BasicBlock *b = *i;
+  if (Regions != nullptr && Regions->size()) {
+    for (const Region *R : *Regions) {
+      unsigned RegID = ++LastRegID;
+      s << "\tsubgraph cluster" << RegID << " {" << std::endl;
+      for (Region::const_block_iterator RI = R->block_begin(),
+                                        RE = R->block_end();
+           RI != RE; ++RI) {
+        BasicBlock *BB = *RI;
         printBasicBlock(
-          b, s, highlights != NULL && 
-          highlights->find(b) != highlights->end());
-        regionBBs.insert(b);
+            BB, s,
+            (highlights != NULL && highlights->find(BB) != highlights->end()));
+        regionBBs.insert(BB);
       }
-      s << "label=\"Parallel region #" << pr->GetID() << "\";" << std::endl;
+      s << "label=\"Parallel region #" << RegID << "\";" << std::endl;
       s << "}" << std::endl;
     }
   }
 
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    if (regionBBs.find(b) != regionBBs.end()) continue;
-    printBasicBlock
-      (b, s, highlights != NULL && highlights->find(b) != highlights->end());
+  if (ParRegions != nullptr) {
+    for (ParallelRegion::ParallelRegionVector::const_iterator
+             RI = ParRegions->begin(),
+             RE = ParRegions->end();
+         RI != RE; ++RI) {
+      ParallelRegion *PR = *RI;
+      s << "\tsubgraph cluster" << PR->GetID() << " {" << std::endl;
+      for (ParallelRegion::iterator It = PR->begin(), E = PR->end(); It != E;
+           ++It) {
+        BasicBlock *BB = *It;
+        printBasicBlock(
+            BB, s,
+            (highlights != NULL && highlights->find(BB) != highlights->end()));
+        regionBBs.insert(BB);
+      }
+      s << "label=\"Parallel region #" << PR->GetID() << "\";" << std::endl;
+      s << "}" << std::endl;
+    }
+  }
+  for (Function::iterator FI = F.begin(), e = F.end(); FI != e; ++FI) {
+    BasicBlock *BB = &*FI;
+    if (regionBBs.find(BB) != regionBBs.end())
+      continue;
+    printBasicBlock(
+        BB, s, highlights != NULL && highlights->find(BB) != highlights->end());
   }
 
-  for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    printBranches
-      (b, s, highlights != NULL && highlights->find(b) != highlights->end());
+  for (Function::iterator FI = F.begin(), e = F.end(); FI != e; ++FI) {
+    BasicBlock *BB = &*FI;
+    printBranches(
+        BB, s, highlights != NULL && highlights->find(BB) != highlights->end());
   }
 
   s << "}" << std::endl;
