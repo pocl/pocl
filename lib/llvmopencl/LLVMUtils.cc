@@ -51,6 +51,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "LoopBarriers.h"
 #include "MinLegalVecSize.hh"
 #include "OptimizeWorkItemFuncCalls.h"
+#include "OptimizeWorkItemGVars.h"
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
 #include "RemoveBarrierCalls.h"
@@ -515,6 +516,7 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   LoopBarriers::registerWithPB(PB);
   FixMinVecSize::registerWithPB(PB);
   OptimizeWorkItemFuncCalls::registerWithPB(PB);
+  OptimizeWorkItemGVars::registerWithPB(PB);
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);

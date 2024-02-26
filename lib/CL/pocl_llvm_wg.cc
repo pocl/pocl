@@ -498,6 +498,8 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
      result, as the final object ELF will contain a static variable, so the
      program will work with single-threaded execution, but multiple CPU
      threads will overwrite the static variable and produce garbage results.
+
+     -optimize-wi-gvars after flatten-globals & always-inline passes
   */
 
   // NOTE: if you add a new PoCL pass here,
@@ -523,6 +525,9 @@ static void addStage1PassesToPipeline(cl_device_id Dev,
   }
   // this must be done AFTER inlining, see note above
   addPass(Passes, "automatic-locals", PassType::Module);
+
+  // must come AFTER flatten-globals & always-inline
+  addPass(Passes, "optimize-wi-gvars");
 
   // It should be now safe to run -O3 over the single work-item kernel
   // as the barrier has the attributes preventing illegal motions and
