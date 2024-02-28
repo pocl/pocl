@@ -261,7 +261,7 @@ void ReplyQueueThread::writeThread() {
         } else {
           if (reply->event.get() != nullptr) {
             virtualContext->notifyEvent(reply->req->req.event_id, status);
-            Request peer_notice = {};
+            Request peer_notice{};
             peer_notice.req.msg_id = reply->rep.msg_id;
             peer_notice.req.event_id = reply->req->req.event_id;
             peer_notice.req.message_type = MessageType_NotifyEvent;

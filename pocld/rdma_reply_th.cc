@@ -141,7 +141,7 @@ void RdmaReplyThread::rdmaWriterThread() {
         netstat->txConfirmed(sizeof(ReplyMsg_t) + data_size);
 
       virtualContext->notifyEvent(reply->req->req.event_id, CL_COMPLETE);
-      Request peer_notice = {};
+      Request peer_notice{};
       peer_notice.req.msg_id = reply->rep.msg_id;
       peer_notice.req.event_id = reply->req->req.event_id;
       peer_notice.req.message_type = MessageType_NotifyEvent;
