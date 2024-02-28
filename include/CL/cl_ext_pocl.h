@@ -105,6 +105,8 @@ typedef struct _cl_mem_pinning
 * extensions
 ************************************/
 
+#ifdef cl_khr_command_buffer
+
 // SVM memory command-buffer functions (clCommandSVMMemcpyPOCL etc)
 #define cl_pocl_command_buffer_svm 1
 
@@ -496,7 +498,9 @@ clEnqueueSVMMemFillRectPOCL (cl_command_queue  command_queue,
                              cl_event *        event);
 
 
-#endif
+#endif // CL_NO_PROTOTYPES
+
+#endif // cl_khr_command_buffer
 
 #ifdef __cplusplus
 }
