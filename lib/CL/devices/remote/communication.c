@@ -55,6 +55,10 @@
 #include <rdma/rdma_cma.h>
 #endif
 
+#ifdef ENABLE_VSOCK
+#include <linux/vm_sockets.h>
+#endif
+
 // TODO mess
 #include "communication.h"
 
@@ -559,7 +563,7 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
 
   struct addrinfo *ai;
   struct sockaddr_storage server;
-  int err;
+  int err = 0;
   ai = pocl_resolve_address (data->address, port, &err);
   if (err)
     {
@@ -570,9 +574,31 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   memcpy (&server, ai->ai_addr, ai->ai_addrlen);
   addrlen = ai->ai_addrlen;
 
+#ifdef ENABLE_VSOCK
   POCL_RETURN_ERROR_ON (
-      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP)) == -1),
+      ((socket_fd = socket (ai->ai_family, ai->ai_socktype,
+                            ai->ai_family == AF_VSOCK ? 0 : IPPROTO_TCP))
+       == -1),
       CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
+  if (ai->ai_family == AF_VSOCK)
+    {
+      host_freeaddrinfo (ai);
+    }
+  else
+    {
+      freeaddrinfo (ai);
+    }
+  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
+                                               server.ss_family);
+  if (err)
+    return err;
+#else
+  POCL_RETURN_ERROR_ON (
+      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP))
+       == -1),
+      CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
   freeaddrinfo (ai);
 
   err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
@@ -580,7 +606,7 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   if (err)
     return err;
 #endif
-
+#endif
   POCL_RETURN_ERROR_ON (
       (connect (socket_fd, (struct sockaddr *)&server, addrlen) == -1),
       CL_INVALID_DEVICE, "connect() returned errno: %i\n", errno);

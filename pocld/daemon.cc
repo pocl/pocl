@@ -41,6 +41,12 @@
 #include "rdma.hh"
 #endif
 
+#ifdef ENABLE_VSOCK
+#include <limits.h>
+#include <linux/version.h>
+#include <linux/vm_sockets.h>
+#endif
+
 #include "daemon.hh"
 
 #ifndef POLLRDHUP
@@ -267,7 +273,8 @@ static std::string find_default_ip_address() {
   return std::string(listen_addr ? listen_addr : "127.0.0.1");
 }
 
-int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
+int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports,
+                       bool UseVsock) {
 #define PERROR_SKIP(cond, str)                                                 \
   do {                                                                         \
     if (cond) {                                                                \
@@ -282,8 +289,16 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
   int one = 1;
   int error = 0;
   std::string Address = ListenAddress;
-  if (Address.empty())
-    Address = find_default_ip_address();
+  if (Address.empty()) {
+    if (UseVsock)
+      /* Here we handle the simple case where no vsock CID is specified.
+       * Since Pocld runs on the host in most cases, we simply set the
+       * listening address to VMADDR_CID_ANY.
+       */
+      Address = "vsock:4294967295";
+    else
+      Address = find_default_ip_address();
+  }
   addrinfo *ResolvedAddress =
       pocl_resolve_address(Address.c_str(), ListenPorts.command, &error);
   if (error) {
@@ -293,11 +308,18 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
   addrinfo *ai = ResolvedAddress;
   NumListenFds = 0;
   for (addrinfo *ai = ResolvedAddress; ai; ai = ai->ai_next) {
-    if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6)
+    if (ai->ai_family != AF_INET && ai->ai_family != AF_INET6 &&
+        ai->ai_family != AF_VSOCK)
       continue;
     struct sockaddr *base_addr = ai->ai_addr;
     int base_addrlen = ai->ai_addrlen;
     std::string addr_string = describe_sockaddr(base_addr, base_addrlen);
+    if (UseVsock && ai->ai_family != AF_VSOCK) {
+      POCL_MSG_ERR("Using vsock requires using the correct address "
+                   "vsock:<cid>, instead of %s\n",
+                   addr_string.c_str());
+      break;
+    }
     int listen_command_fd = 0;
     int listen_stream_fd = 0;
     struct sockaddr_storage server_addr_command, server_addr_stream;
@@ -308,14 +330,19 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
     else if (server_addr_command.ss_family == AF_INET6)
       ((struct sockaddr_in6 *)&server_addr_command)->sin6_port =
           htons(ListenPorts.command);
+#ifdef ENABLE_VSOCK
+    else if (server_addr_command.ss_family == AF_VSOCK)
+      ((struct sockaddr_vm *)&server_addr_command)->svm_port =
+          ListenPorts.command;
+#endif
     else {
       POCL_MSG_ERR("SERVER: unsupported socket address family %d\n",
                    (int)server_addr_command.ss_family);
       goto SOCKET_ERROR;
     }
 
-    listen_command_fd =
-        socket(server_addr_command.ss_family, SOCK_STREAM, IPPROTO_TCP);
+    listen_command_fd = socket(server_addr_command.ss_family, SOCK_STREAM,
+                               UseVsock ? 0 : IPPROTO_TCP);
     PERROR_SKIP((listen_command_fd < 0), "command socket");
 
     std::memcpy(&server_addr_stream, base_addr, base_addrlen);
@@ -325,12 +352,17 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
     else if (server_addr_stream.ss_family == AF_INET6)
       ((struct sockaddr_in6 *)&server_addr_stream)->sin6_port =
           htons(ListenPorts.stream);
+#ifdef ENABLE_VSOCK
+    else if (server_addr_command.ss_family == AF_VSOCK)
+      ((struct sockaddr_vm *)&server_addr_command)->svm_port =
+          ListenPorts.stream;
+#endif
     else {
       POCL_MSG_ERR("SERVER: unsupported socket address family\n");
       goto SOCKET_ERROR;
     }
-    listen_stream_fd =
-        socket(server_addr_stream.ss_family, SOCK_STREAM, IPPROTO_TCP);
+    listen_stream_fd = socket(server_addr_stream.ss_family, SOCK_STREAM,
+                              UseVsock ? 0 : IPPROTO_TCP);
     PERROR_SKIP((listen_stream_fd < 0), "stream socket");
 
 #ifdef SO_REUSEADDR
@@ -392,7 +424,12 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
     if (listen_stream_fd)
       close(listen_stream_fd);
   }
-  freeaddrinfo(ResolvedAddress);
+#ifdef ENABLE_VSOCK
+  if (UseVsock)
+    host_freeaddrinfo(ResolvedAddress);
+  else
+#endif
+    freeaddrinfo(ResolvedAddress);
 
   if (NumListenFds == 0) {
     POCL_MSG_ERR("Could not bind any socket address for '%s'\n",
@@ -400,7 +437,8 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
     return -1;
   }
 
-  peer_listener_data.port = ListenPorts.peer;
+  if (!UseVsock) {
+    peer_listener_data.port = ListenPorts.peer;
 #ifdef ENABLE_RDMA
   peer_listener_data.peer_rdma_port = ListenPorts.peer_rdma;
   peer_listener_data.rdma_listener.reset(new RdmaListener);
@@ -412,9 +450,10 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
 #endif
   peer_listener_th =
       std::move(std::thread(listen_peers, (void *)&peer_listener_data));
+  }
 
-  ClientPoller =
-      std::move(std::thread(&PoclDaemon::readAllClientSocketsThread, this));
+  ClientPoller = std::move(
+      std::thread(std::bind(&PoclDaemon::readAllClientSocketsThread, this)));
 
   return 0;
 }

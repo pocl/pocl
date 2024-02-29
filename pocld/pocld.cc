@@ -84,9 +84,20 @@ int main(int argc, char *argv[]) {
 
   int error;
   PoclDaemon server;
+  bool UseVsock = false;
+  if (ai.vsock_flag == 1) {
+#ifdef ENABLE_VSOCK
+    UseVsock = true;
+#else
+    POCL_MSG_ERR("use -DENABLE_VSOCK=1 rebuild the source to use vsock\n");
+    return -1;
+#endif
+  } else {
+    UseVsock = false;
+  }
   if ((error = server.launch(
            std::move(std::string(ai.address_arg ? ai.address_arg : "")),
-           listen_ports)))
+           listen_ports, UseVsock)))
     return error;
 
   server.waitForExit();
