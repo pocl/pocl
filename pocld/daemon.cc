@@ -286,6 +286,10 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
     Address = find_default_ip_address();
   addrinfo *ResolvedAddress =
       pocl_resolve_address(Address.c_str(), ListenPorts.command, &error);
+  if (error) {
+    POCL_MSG_ERR("Error resolving address: %s\n", gai_strerror(error));
+    return -1;
+  }
   addrinfo *ai = ResolvedAddress;
   NumListenFds = 0;
   for (addrinfo *ai = ResolvedAddress; ai; ai = ai->ai_next) {

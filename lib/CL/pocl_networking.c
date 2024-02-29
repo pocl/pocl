@@ -66,7 +66,7 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
     hint.ai_flags = AI_PASSIVE;
   hint.ai_flags |= AI_NUMERICSERV;
 
-  struct addrinfo *info;
+  struct addrinfo *info = NULL;
   char portstr[6] = {};
   snprintf (portstr, 6, "%5d", port);
 
