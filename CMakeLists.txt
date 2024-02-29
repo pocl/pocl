@@ -249,6 +249,8 @@ option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defa
 
 option(ENABLE_PRINTF_IMMEDIATE_FLUSH "[currently only applies to CPU drivers] if enabled, printf is flushed immediately when encountered, instead of after all NDRange workgroups are finished" ON)
 
+option(ENABLE_VSOCK "Enable vsock transport in the remote driver" OFF)
+
 if (ENABLE_PROXY_DEVICE)
   set(VISIBILITY_HIDDEN_DEFAULT OFF)
 else()
@@ -730,6 +732,21 @@ if(UNIX)
   CHECK_SYMBOL_EXISTS("dladdr"
                       "dlfcn.h"
                       HAVE_DLADDR)
+  if(ENABLE_VSOCK)
+    find_file(
+      HAVE_LINUX_VSOCK_H
+      NAMES
+        linux/vm_sockets.h
+      PATHS
+        /usr/include
+    )
+
+    if(NOT HAVE_LINUX_VSOCK_H)
+      message(FATAL_ERROR "Could not find vsock header file. Please \
+        make sure that the kernel is configured with vsock support.
+    ")
+    endif()
+  endif()
 
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
