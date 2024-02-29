@@ -49,9 +49,11 @@ extern "C"
    * \param bufsize size of the desired driver-side send and receive buffers
    * \param is_fast whether this is the "fast" or "slow" socket of the
    * connection
+   * \param ai_family is the ai_family of fd
    */
   extern int pocl_remote_client_set_socket_options (int fd, int bufsize,
-                                                    int is_fast);
+                                                    int is_fast,
+                                                    int ai_family);
 
 #ifdef __cplusplus
 }

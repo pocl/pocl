@@ -575,7 +575,8 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
       CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
   freeaddrinfo (ai);
 
-  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast);
+  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
+                                               server.ss_family);
   if (err)
     return err;
 #endif

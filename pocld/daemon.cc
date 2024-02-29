@@ -346,15 +346,15 @@ int PoclDaemon::launch(std::string ListenAddress, struct ServerPorts &Ports) {
         (bind(listen_command_fd, (struct sockaddr *)&server_addr_command,
               base_addrlen) < 0),
         "command bind");
-    pocl_remote_client_set_socket_options(listen_command_fd,
-                                          COMMAND_SOCKET_BUFSIZE, 1);
+    pocl_remote_client_set_socket_options(
+        listen_command_fd, COMMAND_SOCKET_BUFSIZE, 1, ai->ai_family);
     PERROR_SKIP((listen(listen_command_fd, 10) < 0), "command listen");
 
     PERROR_SKIP((bind(listen_stream_fd, (struct sockaddr *)&server_addr_stream,
                       base_addrlen) < 0),
                 "stream bind");
-    pocl_remote_client_set_socket_options(listen_stream_fd,
-                                          STREAM_SOCKET_BUFSIZE, 0);
+    pocl_remote_client_set_socket_options(
+        listen_stream_fd, STREAM_SOCKET_BUFSIZE, 0, ai->ai_family);
     PERROR_SKIP((listen(listen_stream_fd, 10) < 0), "stream listen");
 
 #ifdef ENABLE_RDMA
@@ -578,8 +578,8 @@ void PoclDaemon::readAllClientSocketsThread() {
             IncompleteRequests.push_back(new Request());
             FdsChanged = true;
             /* XXX: Set these based on CreateOrAttachSession request instead? */
-            pocl_remote_client_set_socket_options(newfd, Params.BufSize,
-                                                  Params.IsFast);
+            pocl_remote_client_set_socket_options(
+                newfd, Params.BufSize, Params.IsFast, client_address.ss_family);
             std::string client_address_string = describe_sockaddr(
                 (struct sockaddr *)&client_address, client_address_length);
             POCL_MSG_PRINT_INFO("Accepted client %s connection from %s\n",

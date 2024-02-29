@@ -79,13 +79,15 @@ pocl_resolve_address (const char *address, uint16_t port, int *error)
 
 #define SECONDS_TO_MS 1000
 int
-pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast)
+pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast,
+                                       int ai_family)
 {
   const int one = 1;
-  const int zero = 0;
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof (one))),
-      -1, "setsockopt(TCP_NODELAY) returned errno: %i\n", errno);
+  unsigned int user_timeout = 10 * SECONDS_TO_MS;
+  struct timeval tv;
+  tv.tv_sec = user_timeout;
+  tv.tv_usec = 0;
+  int retries = 5;
 
 #ifdef SO_PRIORITY
   // 1- low priority, 7 - high priority (7 reserved for root)
@@ -103,13 +105,6 @@ pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast)
       -1, "setsockopt(SO_PRIORITY) returned errno: %i\n", errno);
 #endif
 
-  // disable delayed_ack on both
-#ifdef TCP_QUICKACK
-  POCL_RETURN_ERROR_ON (
-      (setsockopt (socket_fd, IPPROTO_TCP, TCP_QUICKACK, &one, sizeof (one))),
-      -1, "setsockopt(TCP_QUICKACK) returned errno: %i\n", errno);
-#endif
-
   POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_RCVBUF,
                                      &bufsize, sizeof (bufsize))),
                         -1, "setsockopt(SO_RCVBUF) returned errno: %i\n",
@@ -124,7 +119,32 @@ pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast)
       (setsockopt (socket_fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof (one))),
       -1, "setsockopt(SO_KEEPALIVE) returned errno: %i\n", errno);
 
-  unsigned int user_timeout = 10 * SECONDS_TO_MS;
+  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_RCVTIMEO,
+                                     (const char *)&tv, sizeof (tv))),
+                        -1, "setsockopt(SO_RCVTIMEO) returned errno: %i\n",
+                        errno);
+  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_SNDTIMEO,
+                                     (const char *)&tv, sizeof (tv))),
+                        -1, "setsockopt(SO_SNDTIMEO) returned errno: %i\n",
+                        errno);
+
+#ifdef ENABLE_VSOCK
+  if (ai_family == AF_VSOCK)
+    {
+      return 0;
+    }
+#endif
+  POCL_RETURN_ERROR_ON (
+      (setsockopt (socket_fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof (one))),
+      -1, "setsockopt(TCP_NODELAY) returned errno: %i\n", errno);
+
+  // disable delayed_ack on both
+#ifdef TCP_QUICKACK
+  POCL_RETURN_ERROR_ON (
+      (setsockopt (socket_fd, IPPROTO_TCP, TCP_QUICKACK, &one, sizeof (one))),
+      -1, "setsockopt(TCP_QUICKACK) returned errno: %i\n", errno);
+#endif
+
 #if defined(TCP_USER_TIMEOUT)
   POCL_RETURN_ERROR_ON (
       (setsockopt (socket_fd, IPPROTO_TCP, TCP_USER_TIMEOUT, &user_timeout,
@@ -136,19 +156,7 @@ pocl_remote_client_set_socket_options (int socket_fd, int bufsize, int is_fast)
                    &user_timeout, sizeof (user_timeout))),
       -1, "setsockopt(TCP_CONNECTIONTIMEOUT) returned errno: %i\n", errno);
 #endif
-  struct timeval tv;
-  tv.tv_sec = user_timeout;
-  tv.tv_usec = 0;
-  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_RCVTIMEO,
-                                     (const char *)&tv, sizeof (tv))),
-                        -1, "setsockopt(SO_RCVTIMEO) returned errno: %i\n",
-                        errno);
-  POCL_RETURN_ERROR_ON ((setsockopt (socket_fd, SOL_SOCKET, SO_SNDTIMEO,
-                                     (const char *)&tv, sizeof (tv))),
-                        -1, "setsockopt(SO_SNDTIMEO) returned errno: %i\n",
-                        errno);
 
-  int retries = 5;
 #ifdef TCP_SYNCNT
   POCL_RETURN_ERROR_ON (setsockopt (socket_fd, IPPROTO_TCP, TCP_SYNCNT,
                                     &retries, sizeof (retries)),
