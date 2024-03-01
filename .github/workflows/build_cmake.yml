@@ -35,28 +35,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16, 17]
+        llvm: [17, 18]
         # basic = simplest pthread build
         # devel = with devel options
         # cts_spirv = cts with SPIR-V
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
+        # chipstar 1.1 only supports LLVM up to 17
         config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chipstar]
         include:
           - llvm: 14
-            config: basic
+            config: OpenMP
           - llvm: 15
+            config: TBB
+          - llvm: 16
             config: basic
           - llvm: 18
-            config: basic
-          - llvm: 18
-            config: cts_spirv
-          - llvm: 18
-            config: tier1
+            config: static
         exclude:
-          - llvm: 16
+          - llvm: 18
             config: cts_spirv
-          - llvm: 16
+          - llvm: 18
             config: chipstar
 
     steps:
@@ -82,14 +81,14 @@ jobs:
             runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
+          elif [ "${{ matrix.config }}" == "TBB" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
           elif [ "${{ matrix.config }}" == "basic" ]; then
-            if [ "${{ matrix.llvm }}" == "14" ]; then
-              runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
-            elif [ "${{ matrix.llvm }}" == "15" ]; then
-              runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
-            else
-              runCMake -DENABLE_ICD=1
-            fi
+            runCMake -DENABLE_ICD=1
+          elif [ "${{ matrix.config }}" == "static" ]; then
+            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
           elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
@@ -133,7 +132,13 @@ jobs:
             runCTest -L "internal|tsan" -E "clCreateSubDevices"
           elif [ "${{ matrix.config }}" == "ubsan" ]; then
             runCTest -L "internal|ubsan"
+          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCTest -L internal
+          elif [ "${{ matrix.config }}" == "TBB" ]; then
+            runCTest -L internal
           elif [ "${{ matrix.config }}" == "basic" ]; then
+            runCTest -L internal
+          elif [ "${{ matrix.config }}" == "static" ]; then
             runCTest -L internal
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCTest -L internal
@@ -286,7 +291,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16, 17]
+        llvm: [17, 18]
         config: [cuda]
 
     steps:
@@ -328,7 +333,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # only 16 is enabled, but 15 should also work
+        # only 16 is enabled, but 15 & 17 should also work
         llvm: [16]
         config: [openasip]
 
@@ -414,7 +419,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16, 17]
+        llvm: [17, 18]
         config: [basic]
 
     steps:
@@ -467,11 +472,7 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            if [ ${{ matrix.llvm }} -lt 16 ]; then
-              LLVM_FLAGS="-DSTATIC_LLVM=0 -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config"
-            else
-              LLVM_FLAGS="-DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv"
-            fi
+            LLVM_FLAGS="-DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
             $LLVM_FLAGS "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
