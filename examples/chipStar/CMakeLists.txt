@@ -92,7 +92,7 @@ endif()
 if(CUSTOM_CHIP_GIT_TAG)
   set(CHIP_GIT_TAG "${CUSTOM_CHIP_GIT_TAG}")
 else()
-  set(CHIP_GIT_TAG "b44bf5827ab5016aa0ff330081a21bc8ddf8f519")
+  set(CHIP_GIT_TAG "ffebe4d310ea75c19cbbba28be1e0d95f750bf4a")
 endif()
 
 # set up env variables. Unfortunately this is necessary even just to build chipStar
@@ -142,7 +142,7 @@ ExternalProject_Add(
   UPDATE_COMMAND ${CMAKE_COMMAND} -E echo "update step disabled"
   PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_BASEDIR}/src/${TS_NAME}/PATCHED ] $<SEMICOLON> then ${PATCH_EXEC} -N -r- -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/HIP_tests_catch.patch $<SEMICOLON> ${CMAKE_COMMAND} -E touch ${TS_BASEDIR}/src/${TS_NAME}/PATCHED $<SEMICOLON> fi"
   BUILD_COMMAND ${CMAKE_COMMAND} ${CMAKE_CALL_ENV} --build . --parallel ${HOST_CPU_CORECOUNT} --target all build_tests
-  INSTALL_COMMAND ${CHIP_SPV_INSTALL_COMMAND}
+  INSTALL_COMMAND ${CMAKE_COMMAND} -E echo "install step disabled"
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
