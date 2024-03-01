@@ -241,6 +241,10 @@ if(STATIC_LLVM)
   if(LLVM_MAJOR GREATER 14)
      list(APPEND CLANG_LIBNAMES clangSupport)
   endif()
+  # must come after clangFrontend
+  if(LLVM_MAJOR GREATER 17)
+     list(INSERT CLANG_LIBNAMES 4 clangAPINotes)
+  endif()
 else()
   # For non-static builds, link against a single shared library
   # instead of multiple component shared libraries.
