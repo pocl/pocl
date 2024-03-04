@@ -119,19 +119,41 @@ class SharedCLContext final : public SharedContextBase {
   bool hasImageSupport;
   std::string name;
 
-  // The size of the memory pool.
-  size_t SVMPoolSize;
-  // If size of the memory pool is non zero, all allocations, including the
-  // cl_mem allocations will be allocated from a contiguous region starting
-  // from this address.
-  void *SVMPool;
+  struct SVMRegion {
+    // The size and start of the memory region.
+    size_t Size;
+    void *StartAddress;
 
-  // Bufalloc memory book keeping for allocations from the SVM pool.
-  memory_region_t SVMRegion;
+    // Bufalloc memory book keeping for allocations from the SVM pool.
+    memory_region_t *Allocations;
 
-  // The parent cl_mem wrapping the entire SVM region from which
-  // subbuffers are internally allocated for client buffer requests.
-  cl_mem SVMRegionBuffer;
+    // The parent cl_mem wrapping the entire SVM region from which
+    // subbuffers are internally allocated for client buffer requests.
+    cl_mem ShadowBuffer;
+  };
+
+  // All SVM regions from which we can allocate memory. We have
+  // multiple regions since clSVMAlloc() is limited by the max allocation
+  // size which is typically much less than the total allocatable SVM (global
+  // mem) on the device. If the size of the SVMRegions is non zero, all
+  // allocations, including the cl_mem allocations will be allocated from a
+  // contiguous region in one of the regions.
+  std::vector<SVMRegion> SVMRegions;
+  // The smallest starting address of an SVM region. This will be the "base" of
+  // the large "virtual" SVM region.
+  void *SVMRegionsStartAddress = nullptr;
+  // The first (nonallocatable) address after the virtual SVM region formed by
+  // multiple SVM allocations.
+  void *SVMRegionsEndAddress = nullptr;
+
+  // How much waste space is allowed between the regions. The waste space is
+  // caused by clSVMAlloc() not returning the regions right after each other,
+  // but potentially anywhere from VM, leaving unallocatable gaps between the
+  // regions. Annoyingly this allocation scheme might lead to different sized
+  // SVM regions for each run, depending how the device's driver allocates its
+  // SVM to the server VM. 16 GB of waste should be reasonable for 64b host
+  // system.
+  const size_t SVMMaxAllowedWasteSpace = (size_t)16 * 1024 * 1024 * 1024;
 
   int setKernelArgs(cl::Kernel *k, clKernelStruct *kernel, size_t arg_count,
                     uint64_t *args, unsigned char *is_svm_ptr, size_t pod_size,
@@ -573,22 +595,25 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
 #if !defined(CLANG) || !defined(LLVM_SPIRV)
   // We require CLANG and LLVM_SPIRV for manipulating the SPIRVs to adjust
   // mismatching client/host SVM pool offsets.
-  SVMPool = nullptr;
-  SVMPoolSize = 0;
+  SVMRegionsStartAddress = nullptr;
+  SVMRegionsEndAddress = nullptr;
+
 #warning Disabled PoCL-R SVM due to missing Clang or LLVM-SPIRV
   return;
 #else
   if (!pocl_get_bool_option("POCLD_COARSE_GRAIN_SVM", 0)) {
-    SVMPool = nullptr;
-    SVMPoolSize = 0;
+    SVMRegionsStartAddress = nullptr;
+    SVMRegionsEndAddress = nullptr;
     return;
   }
 #endif
 
   size_t MaxSVMAllocSize = SIZE_MAX;
+  size_t MaxTotalAllocatableSVM = SIZE_MAX;
   for (auto Dev : CLDevices) {
     std::string Extensions = CLDevices[0].getInfo<CL_DEVICE_EXTENSIONS>();
-    // Require SPIR-V to perform compiler-based SVM trickery.
+    // We require SPIR-V input to perform the compiler-based SVM offsetting
+    // trickery.
     if (Extensions.find("cl_khr_il_program") == std::string::npos)
       continue;
     if ((Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
@@ -598,13 +623,24 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
     size_t MaxMemAllocSize = Dev.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
     if (MaxMemAllocSize < MaxSVMAllocSize)
       MaxSVMAllocSize = MaxMemAllocSize;
+
+    MaxTotalAllocatableSVM = std::min(MaxTotalAllocatableSVM,
+                                      Dev.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>());
   }
 
-  if (CLDevicesWithSVMSupport.size() > 0) {
-    // Create a pinned contiguous region to map CG SVM allocations
-    // to. Communicate the start address and the size to the client
-    // so it can setup its own SVM region on its side.
+  if (CLDevicesWithSVMSupport.size() == 0)
+    return;
 
+  // Allocate the SVM regions by requesting the largest allocation size the
+  // device allows via clSVMAlloc() calls until it starts to return nullptr. It
+  // create a set of pinned contiguous regions to map CG SVM allocations to.
+  // We'll later communicate the smallest start address and the ending address
+  // of the region where the subregions are allocated from, so the client can
+  // setup its own virtual SVM region to the host process.
+
+  size_t RemainingAllowedAddrSpaceWaste = SVMMaxAllowedWasteSpace;
+  size_t TotalAllocatableSVM = 0;
+  do {
     // Do we need a separate context with the SVM devices only? clSVMAlloc()
     // should allocate only from SVM-capable devices, right? The specs is
     // not very clear here. It gets difficult if we have multiple CL contexts
@@ -613,42 +649,95 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
     // the SVM allocation.
     // ContextWithSVMDevices = cl::Context(CLDevicesWithSVMSupport, Properties);
 
-    SVMPool = clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE,
-                         MaxSVMAllocSize, 0);
-    if (SVMPool != nullptr) {
-      SVMPoolSize = MaxSVMAllocSize;
-      pocl_init_mem_region(&SVMRegion, (memory_address_t)SVMPool, SVMPoolSize);
-      // Always align to the maximum required alignment of clSVMAlloc().
-      SVMRegion.alignment = 128;
-      cl_int Err;
-      SVMRegionBuffer = clCreateBuffer(ContextWithAllDevices.get(),
-                                       CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
-                                       MaxSVMAllocSize, SVMPool, &Err);
-      if (Err != CL_SUCCESS) {
-        POCL_MSG_ERR(
-            "Unable to allocate a parent SVM cl_mem buffer with size %zu.\n",
-            SVMPoolSize);
-        SVMPoolSize = 0;
-        clSVMFree(ContextWithAllDevices.get(), SVMPool);
-        SVMPool = nullptr;
-      } else
-        POCL_MSG_PRINT_MEMORY(
-            "PoCL-D allocated an SVM pool of size %zu at %p.\n", SVMPoolSize,
-            SVMPool);
+    if (TotalAllocatableSVM + MaxSVMAllocSize > MaxTotalAllocatableSVM)
+      break;
+
+    void *NewSVMRegionAddr = clSVMAlloc(ContextWithAllDevices.get(),
+                                        CL_MEM_READ_WRITE, MaxSVMAllocSize, 0);
+
+    if (NewSVMRegionAddr == nullptr)
+      // We've likely allocated most of the SVM/global mem. We could try smaller
+      // allocations to fill it up, but let's leave it for the future.
+      break;
+
+    if (SVMRegionsStartAddress == nullptr) {
+      // The first allocated SVM region.
+      SVMRegionsStartAddress = NewSVMRegionAddr;
+      SVMRegionsEndAddress =
+          (void *)((size_t)NewSVMRegionAddr + MaxSVMAllocSize);
     } else {
-      SVMPoolSize = 0;
-      POCL_MSG_PRINT_REMOTE(
-          "Unable to allocate an SVM pool over the remote devices.\n");
+      // This is not the first allocated SVM region, compute the address space
+      // waste.
+      size_t AddedAddrSpaceWaste = 0;
+      if (NewSVMRegionAddr < SVMRegionsStartAddress) {
+        // The new region was allocatead before the previous head.
+        AddedAddrSpaceWaste = (size_t)SVMRegionsStartAddress -
+                              ((size_t)NewSVMRegionAddr + MaxSVMAllocSize);
+      } else if (NewSVMRegionAddr > SVMRegionsEndAddress) {
+        // Region after the tail.
+        AddedAddrSpaceWaste =
+            (size_t)NewSVMRegionAddr - (size_t)SVMRegionsEndAddress;
+      } else {
+        // Allocation "in the middle" of previous SVM regions, which is great
+        // as it reduces the AS waste between the regions it lands to with its
+        // size!
+        RemainingAllowedAddrSpaceWaste += MaxSVMAllocSize;
+      }
+      if (AddedAddrSpaceWaste > RemainingAllowedAddrSpaceWaste) {
+        POCL_MSG_PRINT_MEMORY(
+            "An allocation at %p would have caused too much AS waste.",
+            NewSVMRegionAddr);
+        clSVMFree(ContextWithAllDevices.get(), NewSVMRegionAddr);
+        break;
+      }
+      RemainingAllowedAddrSpaceWaste -= AddedAddrSpaceWaste;
+
+      SVMRegionsStartAddress =
+          std::min(SVMRegionsStartAddress, NewSVMRegionAddr);
+      SVMRegionsEndAddress =
+          (void *)std::max((size_t)SVMRegionsEndAddress,
+                           (size_t)NewSVMRegionAddr + MaxSVMAllocSize);
     }
-  }
+
+    SVMRegion NewRegion;
+    NewRegion.Allocations = new memory_region;
+
+    pocl_init_mem_region(NewRegion.Allocations,
+                         (memory_address_t)NewSVMRegionAddr, MaxSVMAllocSize);
+    // Always align to the maximum required alignment of clSVMAlloc().
+    NewRegion.Allocations->alignment = 128;
+    NewRegion.StartAddress = NewSVMRegionAddr;
+    NewRegion.Size = MaxSVMAllocSize;
+    cl_int Err;
+    NewRegion.ShadowBuffer = clCreateBuffer(
+        ContextWithAllDevices.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+        MaxSVMAllocSize, NewSVMRegionAddr, &Err);
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR(
+          "Unable to allocate a parent SVM cl_mem buffer with size %zu.\n",
+          MaxSVMAllocSize);
+      clSVMFree(ContextWithAllDevices.get(), NewSVMRegionAddr);
+      break;
+    } else {
+      TotalAllocatableSVM += MaxSVMAllocSize;
+      SVMRegions.push_back(NewRegion);
+      POCL_MSG_PRINT_MEMORY("PoCL-D allocated an SVM region of size %zu at %p. "
+                            "Total allocatable SVM now %zu MB.\n",
+                            MaxSVMAllocSize, NewSVMRegionAddr,
+                            TotalAllocatableSVM / (1024 * 1024));
+    }
+  } while (true);
 }
 
 SharedCLContext::~SharedCLContext() {
-  if (SVMPool != nullptr) {
-    POCL_MSG_PRINT_MEMORY("Freeing the SVMPool.\n");
-    clSVMFree(ContextWithAllDevices.get(), SVMPool);
-    clReleaseMemObject(SVMRegionBuffer);
+  for (auto &SVMRegion : SVMRegions) {
+    POCL_MSG_PRINT_MEMORY("Freeing an SVM region starting at %p.\n",
+                          SVMRegion.StartAddress);
+    clSVMFree(ContextWithAllDevices.get(), SVMRegion.StartAddress);
+    clReleaseMemObject(SVMRegion.ShadowBuffer);
+    delete SVMRegion.Allocations;
   }
+  SVMRegions.clear();
 }
 
 EventPair SharedCLContext::getEventPairForId(uint64_t event_id) {
@@ -884,10 +973,11 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       clientDevice.getInfo<CL_DEVICE_MAX_WRITE_IMAGE_ARGS>();
   i.max_samplers = clientDevice.getInfo<CL_DEVICE_MAX_SAMPLERS>();
 
-  if (SVMPool != nullptr) {
+  if (SVMRegions.size() > 0) {
     // For distributed coarse grain SVM.
-    i.svm_pool_start_address = (uint64_t)SVMPool;
-    i.svm_pool_size = SVMPoolSize;
+    i.svm_pool_start_address = (uint64_t)SVMRegionsStartAddress;
+    i.svm_pool_size =
+        (size_t)SVMRegionsEndAddress - (size_t)SVMRegionsStartAddress;
   } else {
     i.svm_pool_start_address = 0;
     i.svm_pool_size = 0;
@@ -1888,13 +1978,31 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
   // needn't as we implement the pinning with SVM allocations.
   Flags ^= CL_MEM_PINNED;
   bool SVMWrapper = false;
-  if (HostPtr != nullptr && ((size_t)HostPtr >= (size_t)SVMPool &&
-                             (size_t)HostPtr < (size_t)SVMPool + SVMPoolSize)) {
-    // This is a host-side pointer inside the SVM region, meaning an cl_mem
+  SVMRegion *TargetSVMRegion = nullptr;
+
+  // FIXME: The check doesn't account for the host-device SVM region offset.
+  // The HostPtr that comes in is always a client/host address.
+  if (HostPtr != nullptr &&
+      ((size_t)HostPtr >= (size_t)SVMRegionsStartAddress &&
+       (size_t)HostPtr < (size_t)SVMRegionsEndAddress)) {
+    // This is a host-side pointer inside the SVM region, meaning a cl_mem
     // wrapped SVM pointer request. No need to allocate a new SVM host_ptr for
     // the internal buffer, just use the one already SVM allocated and wrap it
     // to a subbuffer.
     SVMWrapper = true;
+
+    // Find the SVMRegion for it.
+    for (auto &SVMRegion : SVMRegions)
+      if (HostPtr >= SVMRegion.StartAddress &&
+          HostPtr < (void *)((size_t)SVMRegion.StartAddress + SVMRegion.Size))
+        TargetSVMRegion = &SVMRegion;
+
+    if (TargetSVMRegion == nullptr) {
+      POCL_MSG_ERR("Could not find the SVM region for given host ptr %p\n",
+                   HostPtr);
+      return CL_OUT_OF_RESOURCES;
+    }
+
   } else {
 #ifdef ENABLE_RDMA
     // TODO: What extra consideration we need for RDMA which uses SVM
@@ -1902,8 +2010,18 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
     POCL_ABORT_UNIMPLEMENTED("SVM mode not yet implemented for PoCL-R RDMA.");
 #endif
 
-    // Allocate everything from the SVM memory pool.
-    chunk_info_t *Chunk = pocl_alloc_buffer_from_region(&SVMRegion, Size);
+    // Allocate everything from the first SVM memory pool where it fits.
+    chunk_info_t *Chunk = nullptr;
+    for (auto &SVMRegion : SVMRegions) {
+      Chunk = pocl_alloc_buffer_from_region(SVMRegion.Allocations, Size);
+      if (Chunk != nullptr) {
+        TargetSVMRegion = &SVMRegion;
+        break;
+      } else {
+        POCL_MSG_PRINT_MEMORY("Didn't fit %zu to SVM region at %p...", Size,
+                              SVMRegion.StartAddress);
+      }
+    }
 
     HostPtr = Chunk == nullptr ? nullptr : (void *)Chunk->start_address;
 
@@ -1915,8 +2033,8 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
       return CL_OUT_OF_RESOURCES;
     }
     POCL_MSG_PRINT_MEMORY(
-        "Allocated a %zu byte chunk from the CG region at %p.\n", Size,
-        HostPtr);
+        "Allocated a %zu byte chunk from an SVM region (start %p) at %p.\n",
+        Size, TargetSVMRegion->StartAddress, HostPtr);
   }
 
   // Since the buffer data is initialized by clEnqueueWrite (because migration
@@ -1929,11 +2047,11 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
 
   cl_int Err;
   cl_buffer_region SubBufRegion;
-  SubBufRegion.origin = (size_t)HostPtr - (size_t)SVMPool;
+  SubBufRegion.origin = (size_t)HostPtr - (size_t)TargetSVMRegion->StartAddress;
   SubBufRegion.size = Size;
   cl_mem SubBuf =
-      clCreateSubBuffer(SVMRegionBuffer, Flags, CL_BUFFER_CREATE_TYPE_REGION,
-                        &SubBufRegion, &Err);
+      clCreateSubBuffer(TargetSVMRegion->ShadowBuffer, Flags,
+                        CL_BUFFER_CREATE_TYPE_REGION, &SubBufRegion, &Err);
   clBufferPtr Buf(new cl::Buffer(SubBuf));
   if (Err != CL_SUCCESS) {
     POCL_MSG_ERR(
@@ -1969,7 +2087,7 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
                                   cl_mem_flags Flags, void *HostPtr,
                                   void **DeviceAddr) {
 
-  if (SVMPool != nullptr)
+  if (SVMRegions.size() > 0)
     return createBufferFromSVMRegion(BufferID, Size, Flags, HostPtr,
                                      DeviceAddr);
 
@@ -2010,7 +2128,7 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
 int SharedCLContext::freeBuffer(BufferId_t BufferId, bool IsSVMFree) {
   std::unique_lock<std::mutex> Lock(BufferMapMutex);
 
-  if (SVMPool != nullptr) {
+  if (SVMRegions.size() > 0) {
 
     void *DeviceSVMAddrToFree = nullptr;
     void *BufHostPtr = nullptr;
@@ -2049,10 +2167,17 @@ int SharedCLContext::freeBuffer(BufferId_t BufferId, bool IsSVMFree) {
       // This is the SVM chunk "owner" (the initial SVM allocation).
 
       // TODO: apply host-device SVM offset adjustment
-      memory_region_t *Region =
-          pocl_free_buffer(&SVMRegion, (memory_address_t)DeviceSVMAddrToFree);
+      memory_region_t *Region = nullptr;
+      for (auto &SVMRegion : SVMRegions)
+        if (SVMRegion.StartAddress <= DeviceSVMAddrToFree &&
+            DeviceSVMAddrToFree <
+                (void *)((size_t)SVMRegion.StartAddress + SVMRegion.Size))
+          Region = SVMRegion.Allocations;
 
-      if (Region == nullptr || Region != &SVMRegion) {
+      memory_region_t *FoundRegion =
+          pocl_free_buffer(Region, (memory_address_t)DeviceSVMAddrToFree);
+
+      if (FoundRegion == nullptr || FoundRegion != Region) {
         POCL_MSG_ERR(
             "Did not find the SVM chunk to free at %p. A double free attempt?",
             DeviceSVMAddrToFree);
@@ -2572,8 +2697,14 @@ int SharedCLContext::runKernel(
   {
     std::unique_lock<std::mutex> Lock(BufferMapMutex);
     std::vector<void *> SVMPtrs;
-    if (SVMPool != nullptr)
+#if 0
+    // Do we need to pass the SVM regions here? It will kill the perf.
+    // as the regions are large.
+    // TODO: We should pass the indirect SVM
+    // pointers from the client-side, but they are not passed either.
+    if (SVMRegions.size() > 0)
       SVMPtrs.push_back(SVMPool);
+#endif
     for (auto &S : SVMBackingStoreMap)
       SVMPtrs.push_back(S.second);
     k->setSVMPointers(SVMPtrs);
