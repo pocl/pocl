@@ -127,7 +127,7 @@ int listen_peers(void *data) {
     // session
 #endif
 
-    Request R;
+    Request R{};
     bool ReadError;
     do {
       ReadError = !R.read(PeerFd);
