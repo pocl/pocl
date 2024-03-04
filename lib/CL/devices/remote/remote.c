@@ -216,6 +216,27 @@ pocl_remote_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
   return (void *)(pinning_info.address - ddata->svm_region_offset);
 }
 
+void *
+pocl_remote_usm_alloc (cl_device_id dev, unsigned alloc_type,
+                       cl_mem_alloc_flags_intel flags, size_t size,
+                       cl_int *err_code)
+{
+  *err_code = CL_SUCCESS;
+  /* Implement all non-system USM types as CG allocations. */
+  if (alloc_type == CL_MEM_TYPE_HOST_INTEL
+      || alloc_type == CL_MEM_TYPE_DEVICE_INTEL
+      || alloc_type == CL_MEM_TYPE_SHARED_INTEL)
+    return pocl_remote_svm_alloc (dev, CL_MEM_READ_WRITE, size);
+  else
+    return NULL;
+}
+
+void
+pocl_remote_usm_free (cl_device_id dev, void *usm_ptr)
+{
+  pocl_remote_svm_free (dev, usm_ptr);
+}
+
 /*****************************************************************************/
 /*****************************************************************************/
 /*****************************************************************************/
@@ -239,6 +260,10 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_remote_alloc_mem_obj;
   ops->svm_alloc = pocl_remote_svm_alloc;
   ops->svm_free = pocl_remote_svm_free;
+
+  ops->usm_alloc = pocl_remote_usm_alloc;
+  ops->usm_free = pocl_remote_usm_free;
+
   ops->free = pocl_remote_free;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
@@ -475,18 +500,19 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
       device->svm_allocation_priority = 10;
       device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
 
-      /* The CG SVM support can be used for "pinned buffers" as well. */
+      /* The CG SVM support can be used for "pinned buffers" as well and
+         USM. */
+      const char *bonus_extensions = CL_POCL_PINNED_BUFFERS_EXTENSION_NAME
+          " cl_intel_unified_shared_memory";
       unsigned exts_str_size
-          = strlen (device->extensions) + 1
-            + strlen (CL_POCL_PINNED_BUFFERS_EXTENSION_NAME);
+          = strlen (device->extensions) + 1 + strlen (bonus_extensions);
       char *exts_w_pinned = calloc (exts_str_size + 1, 1);
       strncpy (exts_w_pinned, device->extensions, strlen (device->extensions));
       exts_w_pinned[strlen (device->extensions)] = ' ';
       strncpy (exts_w_pinned + strlen (device->extensions) + 1,
-               CL_POCL_PINNED_BUFFERS_EXTENSION_NAME,
-               strlen (CL_POCL_PINNED_BUFFERS_EXTENSION_NAME));
-      // the const char * to void * cast is fine here since this value is
-      // set in pocl_network_setup_devinfo with a strdup.
+               bonus_extensions, strlen (bonus_extensions));
+      /* The const char * to void * cast is fine here since this value is
+         set in pocl_network_setup_devinfo with a strdup. */
       free ((void *)device->extensions);
       device->extensions = exts_w_pinned;
     }
