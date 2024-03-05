@@ -49,6 +49,8 @@
 
 #cmakedefine ENABLE_PRINTF_IMMEDIATE_FLUSH
 
+#cmakedefine ENABLE_VSOCK
+
 #cmakedefine ENABLE_RELOCATION
 
 #cmakedefine ENABLE_EGL_INTEROP

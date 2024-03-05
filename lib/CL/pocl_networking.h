@@ -49,10 +49,51 @@ extern "C"
    * \param bufsize size of the desired driver-side send and receive buffers
    * \param is_fast whether this is the "fast" or "slow" socket of the
    * connection
+   * \param ai_family is the ai_family of fd
    */
   extern int pocl_remote_client_set_socket_options (int fd, int bufsize,
-                                                    int is_fast);
+                                                    int is_fast,
+                                                    int ai_family);
+  /**
+   * host_freeaddrinfo - free addrinfo obtained from host_*() functions
+   * @ai: pointer to addrinfo to free
+   *
+   * The addrinfos returned by host_*() functions may not have been allocated
+   * by a call to getaddrinfo(3).  It is not safe to free them directly with
+   * freeaddrinfo(3).  Use this function instead.
+   */
+  extern void host_freeaddrinfo (struct addrinfo *ai);
 
+  /*
+   * vsock_hostname_addrinfo - Custom 'getaddrinfo' for vsock addresses
+   *
+   * This function resolves a vsock hostname to an addrinfo structure that can
+   * be used to create a socket and connect to a vsock service.
+   *
+   * The hostname should be in the following format:
+   *
+   *   vsock:[cid]
+   *
+   * Where:
+   *
+   *   * `cid` is the context ID of the target virtual machine.
+   *
+   * This function will allocate memory to store the addrinfo structure and the
+   * sockaddr_vm structure. The caller must free the addrinfo structure using
+   * the host_freeaddrinfo() function instead of freeaddrinfo(3).
+   *
+   * Parameters:
+   *
+   *   * `hostname`: Pointer to a string containing the vsock hostname.
+   *   * `port`: The port number of the vsock service.
+   *
+   * Returns:
+   *
+   *   * On success, returns a pointer to the addrinfo structure.
+   *   * On failure, returns NULL.
+   */
+  extern struct addrinfo *vsock_hostname_addrinfo (const char *hostname,
+                                                   uint16_t port);
 #ifdef __cplusplus
 }
 #endif

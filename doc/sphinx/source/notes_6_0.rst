@@ -45,6 +45,14 @@ client apps and libraries that require CG SVM as it seems to work
 often enough.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Vsock support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Adds support for vsock communication to PoCL-Remote. vsock is a
+high-performance, low-latency, secure, and scalable network communication
+protocol that accelerates guest-host communication in virtualized environments.
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 clCompileProgram() and clLinkProgram()
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

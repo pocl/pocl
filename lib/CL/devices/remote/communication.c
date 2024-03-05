@@ -55,6 +55,10 @@
 #include <rdma/rdma_cma.h>
 #endif
 
+#ifdef ENABLE_VSOCK
+#include <linux/vm_sockets.h>
+#endif
+
 // TODO mess
 #include "communication.h"
 
@@ -559,7 +563,7 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
 
   struct addrinfo *ai;
   struct sockaddr_storage server;
-  int err;
+  int err = 0;
   ai = pocl_resolve_address (data->address, port, &err);
   if (err)
     {
@@ -570,16 +574,39 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   memcpy (&server, ai->ai_addr, ai->ai_addrlen);
   addrlen = ai->ai_addrlen;
 
+#ifdef ENABLE_VSOCK
   POCL_RETURN_ERROR_ON (
-      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP)) == -1),
+      ((socket_fd = socket (ai->ai_family, ai->ai_socktype,
+                            ai->ai_family == AF_VSOCK ? 0 : IPPROTO_TCP))
+       == -1),
       CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
+  if (ai->ai_family == AF_VSOCK)
+    {
+      host_freeaddrinfo (ai);
+    }
+  else
+    {
+      freeaddrinfo (ai);
+    }
+  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
+                                               server.ss_family);
+  if (err)
+    return err;
+#else
+  POCL_RETURN_ERROR_ON (
+      ((socket_fd = socket (ai->ai_family, ai->ai_socktype, IPPROTO_TCP))
+       == -1),
+      CL_INVALID_DEVICE, "socket() returned errno: %i\n", errno);
+
   freeaddrinfo (ai);
 
-  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast);
+  err = pocl_remote_client_set_socket_options (socket_fd, bufsize, is_fast,
+                                               server.ss_family);
   if (err)
     return err;
 #endif
-
+#endif
   POCL_RETURN_ERROR_ON (
       (connect (socket_fd, (struct sockaddr *)&server, addrlen) == -1),
       CL_INVALID_DEVICE, "connect() returned errno: %i\n", errno);
@@ -1438,8 +1465,12 @@ find_or_create_server (const char *address_with_port, unsigned port,
   d->threads_awaiting_reconnect = 0;
 
   // pocl_network_init_device ensures address_with_port actually contains port
-  strncpy (d->address, address_with_port,
-           strchr (address_with_port, ':') - address_with_port);
+  if (strncmp (address_with_port, "vsock:", strlen ("vsock:")) == 0)
+    strncpy (d->address, address_with_port,
+             strrchr (address_with_port, ':') - address_with_port);
+  else
+    strncpy (d->address, address_with_port,
+             strchr (address_with_port, ':') - address_with_port);
   POCL_INIT_LOCK (d->setup_lock.mutex);
   POCL_INIT_COND (d->setup_lock.cond);
 
@@ -1735,26 +1766,43 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
   uint32_t did = (uint32_t)atoi (did_str);
   char address_with_guaranteed_port[MAX_ADDRESS_PORT_SIZE] = {};
 
-  char *address = strtok (tmp, ":");
+  char address[MAX_ADDRESS_SIZE];
+  unsigned port = DEFAULT_POCL_REMOTE_PORT;
 
-  unsigned port = 0;
-  if (address == NULL)
+  if (strncmp (tmp, "vsock:", strlen ("vsock:")) == 0)
     {
-      port = DEFAULT_POCL_REMOTE_PORT;
-      POCL_MSG_PRINT_REMOTE ("Port not specified, using default %u\n", port);
+      char *colon = strchr (tmp, ':');
+      char *second_colon = strchr (colon + 1, ':');
+      if (second_colon)
+        {
+          // vsock:vm:port
+          strncpy (address, tmp, second_colon - tmp);
+          port = (unsigned)atoi (strchr (colon + 1, ':') + 1);
+        }
+      else
+        {
+          // vsock:vm
+          strcpy (address, tmp);
+        }
     }
   else
     {
-      if (strlen (address) < awp_len)
+      char *last_colon = strrchr (tmp, ':');
+      if (last_colon)
         {
-          char *sport = tmp + strlen (address) + 1;
-          port = (unsigned)atoi (sport);
+          strncpy (address, tmp, last_colon - tmp);
+          address[last_colon - tmp] = '\0';
+          port = (unsigned)atoi (last_colon + 1);
         }
-      else if ((port == 0) || (port > UINT16_MAX))
+      else
         {
-          port = DEFAULT_POCL_REMOTE_PORT;
-          POCL_MSG_ERR ("Could not parse port, using default %u\n", port);
+          strcpy (address, tmp);
         }
+    }
+  if ((port == 0) || (port > UINT16_MAX))
+    {
+      port = DEFAULT_POCL_REMOTE_PORT;
+      POCL_MSG_ERR ("Could not parse port, using default %u\n", port);
     }
   snprintf (address_with_guaranteed_port, MAX_ADDRESS_PORT_SIZE, "%s:%d",
             address, port);

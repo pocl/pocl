@@ -73,7 +73,8 @@ public:
    * and finally launches the main I/O thread running
    * `readAllClientSocketsThread()`
    */
-  int launch(std::string ListenAddress, struct ServerPorts &ports);
+  int launch(std::string ListenAddress, struct ServerPorts &ports,
+             bool UseVsock = false);
 
   /**
    * Main function of the client I/O thread. Polls client sockets for new
