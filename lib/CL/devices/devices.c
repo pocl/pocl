@@ -22,7 +22,7 @@
    THE SOFTWARE.
 */
 
-#include "utlist.h"
+
 #define _GNU_SOURCE
 
 #include <string.h>
@@ -53,6 +53,8 @@
 #include "pocl_util.h"
 #include "pocl_export.h"
 #include "pocl_version.h"
+
+#include "utlist_addon.h"
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
@@ -121,6 +123,13 @@
 
 
 /* the enabled devices */
+/*
+  IMPORTANT: utlist_addon.h macros are used to atomically access
+  pocl_devices' next pointers. pocl_devices should only be accessed
+  through these macros. LL_DELETE shouldn't be used as a devices' address
+  must remain valid. LL_PREPEND shouldn't be used as well as it modifies the
+  head.
+*/
 /* Head for the pocl_devices linked list*/
 struct _cl_device_id *pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
@@ -135,13 +144,15 @@ const char *
 pocl_get_device_name (unsigned index)
 {
 
-  if (index < pocl_num_devices)
+  if (index < POCL_ATOMIC_LOAD (pocl_num_devices))
     {
-      cl_device_id device = pocl_devices;
-      for (unsigned i = 0; device != NULL; device = device->next, i++)
-        {
-          if (i == index)
-            return device->long_name;
+      cl_device_id device;
+      unsigned i = 0;
+      LL_FOREACH_ATOMIC (pocl_devices, device)
+      {
+        if (i == index)
+          return device->long_name;
+        i++;
         }
     }
   return NULL;
@@ -334,30 +345,30 @@ pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (device = pocl_devices; device != NULL; device = device->next)
-    {
-      if (!pocl_offline_compile && (*device->available == CL_FALSE))
-        continue;
+  LL_FOREACH_ATOMIC (pocl_devices, device)
+  {
+    if (!pocl_offline_compile && (*device->available == CL_FALSE))
+      continue;
 
-      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
-        {
-          devices[dev_added] = device;
-          ++dev_added;
-          break;
-        }
+    if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
+      {
+        devices[dev_added] = device;
+        ++dev_added;
+        break;
+      }
 
-      if (device->type & device_type_tmp)
-        {
-            if (dev_added < num_devices)
-              {
-                devices[dev_added] = device;
-                ++dev_added;
-              }
-            else
-              {
-                break;
-              }
-        }
+    if (device->type & device_type_tmp)
+      {
+        if (dev_added < num_devices)
+          {
+            devices[dev_added] = device;
+            ++dev_added;
+          }
+        else
+          {
+            break;
+          }
+      }
     }
   return dev_added;
 }
@@ -374,18 +385,18 @@ pocl_get_device_type_count(cl_device_type device_type)
       device_type_tmp = ~CL_DEVICE_TYPE_CUSTOM;
     }
 
-  for (device = pocl_devices; device != NULL; device = device->next)
-    {
-      if (!pocl_offline_compile && (*device->available == CL_FALSE))
-        continue;
+  LL_FOREACH_ATOMIC (pocl_devices, device)
+  {
+    if (!pocl_offline_compile && (*device->available == CL_FALSE))
+      continue;
 
-      if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
-        return 1;
+    if (device_type_tmp == CL_DEVICE_TYPE_DEFAULT)
+      return 1;
 
-      if (device->type & device_type_tmp)
-        {
-           ++count;
-        }
+    if (device->type & device_type_tmp)
+      {
+        ++count;
+      }
     }
 
   return count;
@@ -398,7 +409,7 @@ pocl_uninit_devices ()
   cl_int retval = CL_SUCCESS;
 
   POCL_LOCK (pocl_init_lock);
-  if ((!devices_active) || (pocl_num_devices == 0))
+  if ((!devices_active) || (POCL_ATOMIC_LOAD (pocl_num_devices) == 0))
     goto FINISH;
 
   POCL_MSG_PRINT_GENERAL ("UNINIT all devices\n");
@@ -412,25 +423,28 @@ pocl_uninit_devices ()
       if (pocl_devices_init_ops[i] == NULL)
         continue;
       assert (pocl_device_ops[i].init);
-      for (j = 0; device != NULL; device = device->next, j++)
-        {
-          d = device;
-          if (*(d->available) == CL_FALSE)
-              continue;
-          if (d->ops->reinit == NULL || d->ops->uninit == NULL)
-            continue;
-          cl_int ret = d->ops->uninit (j, d);
-          if (ret != CL_SUCCESS)
-            {
-              retval = ret;
-              goto FINISH;
-            }
+
+      j = 0;
+      LL_FOREACH_ATOMIC (device, device)
+      {
+        d = device;
+        if (*(d->available) == CL_FALSE)
+          continue;
+        if (d->ops->reinit == NULL || d->ops->uninit == NULL)
+          continue;
+        cl_int ret = d->ops->uninit (j, d);
+        if (ret != CL_SUCCESS)
+          {
+            retval = ret;
+            goto FINISH;
+          }
 #ifdef ENABLE_LOADABLE_DRIVERS
           if (pocl_device_handles[i] != NULL)
             {
               dlclose (pocl_device_handles[i]);
             }
 #endif
+          j++;
         }
     }
 
@@ -450,7 +464,7 @@ pocl_reinit_devices ()
   if (devices_active)
     return retval;
 
-  if (pocl_num_devices == 0)
+  if (POCL_ATOMIC_LOAD (pocl_num_devices) == 0)
     return CL_DEVICE_NOT_FOUND;
 
   POCL_MSG_WARN ("REINIT all devices\n");
@@ -466,20 +480,24 @@ pocl_reinit_devices ()
     {
       pocl_str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert (pocl_device_ops[i].init);
-      for (j = 0; device != NULL; device = device->next)
-        {
-          d = device;
-          if (*(d->available) == CL_FALSE)
-            continue;
-          if (d->ops->reinit == NULL || d->ops->uninit == NULL)
-            continue;
-          snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j);
-          cl_int ret = d->ops->reinit (j, d, getenv (env_name));
-          if (ret != CL_SUCCESS)
-            {
-              retval = ret;
-              goto FINISH;
-            }
+
+      j = 0;
+      LL_FOREACH_ATOMIC (device, device)
+      {
+        d = device;
+        if (*(d->available) == CL_FALSE)
+          continue;
+        if (d->ops->reinit == NULL || d->ops->uninit == NULL)
+          continue;
+        snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j);
+        cl_int ret = d->ops->reinit (j, d, getenv (env_name));
+        if (ret != CL_SUCCESS)
+          {
+            retval = ret;
+            goto FINISH;
+          }
+
+        j++;
         }
     }
 
@@ -668,10 +686,7 @@ pocl_init_devices ()
                               "Device %i / %s initialization failed!", j,
                               dev_name);
 
-          if (CL_SUCCESS == errcode)
-            {
-              LL_APPEND (pocl_devices, dev);
-            }
+          LL_APPEND_ATOMIC (pocl_devices, dev);
 
           ++dev_index;
         }
