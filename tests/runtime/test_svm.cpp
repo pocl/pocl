@@ -240,6 +240,98 @@ int TestCGSVM() {
     return EXIT_FAILURE;
 }
 
+int TestMultiDevice_CGSVM() {
+
+  unsigned Errors = 0;
+  bool AllOK = true;
+
+  try {
+    std::vector<cl::Platform> PlatformList;
+
+    cl::Platform::get(&PlatformList);
+
+    cl_context_properties cprops[] = {
+        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
+
+    std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
+
+    std::vector<cl::Device> SuitableDevices;
+
+    for (cl::Device &Dev : Devices) {
+      if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+          CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+        SuitableDevices.push_back(Dev);
+      } else {
+        std::cout << "Device '" << Dev.getInfo<CL_DEVICE_NAME>()
+                  << "' doesn't support CG SVM." << std::endl;
+      }
+    }
+
+    if (SuitableDevices.size() < 2) {
+      std::cout << "At least 2 devices with SVM coarse grain buffer "
+                   "capabilities needed."
+                << std::endl;
+      return 77;
+    }
+
+    // Test that an allocation has the same virtual address in each device and
+    // the host.
+
+    int *CGSVMBuf = (int *)::clSVMAlloc(Context.get(), CL_MEM_READ_WRITE,
+                                        sizeof(cl_int), 0);
+    if (CGSVMBuf == nullptr) {
+      std::cerr << "CG SVM allocation returned a nullptr." << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    cl::Program::Sources Sources({GetAddrSourceCode});
+    cl::Program Program(Context, Sources);
+
+    Program.build(SuitableDevices, SET_N_ELEMENTS(N_ELEMENTS));
+
+    cl::Kernel GetAddrKernel(Program, "get_addr");
+
+    for (cl::Device &Device : SuitableDevices) {
+      cl::CommandQueue Queue(Context, Device, 0);
+
+      cl_ulong AddrFromKernel = 1;
+
+      cl::Buffer AddrCLBuffer =
+          cl::Buffer(Context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong), nullptr);
+
+      ::clSetKernelArgSVMPointer(GetAddrKernel.get(), 0, CGSVMBuf);
+      GetAddrKernel.setArg(1, AddrCLBuffer);
+      Queue.enqueueNDRangeKernel(GetAddrKernel, cl::NullRange, cl::NDRange(1),
+                                 cl::NullRange);
+      Queue.enqueueReadBuffer(AddrCLBuffer,
+                              CL_TRUE, // block
+                              0, sizeof(cl_ulong), (void *)&AddrFromKernel);
+      Queue.finish();
+      Queue.enqueueMapSVM(CGSVMBuf, true, CL_MAP_READ, sizeof(cl_int));
+      if (CGSVMBuf != (void *)AddrFromKernel) {
+        std::cerr << "CG buffer's device address on kernel and host "
+                     "sides do not match. Host sees "
+                  << std::hex << CGSVMBuf
+                  << " while "
+                     "a device sees "
+                  << AddrFromKernel << std::endl;
+        AllOK = false;
+      }
+    }
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  if (AllOK) {
+    printf("PASSED\n");
+    return EXIT_SUCCESS;
+  } else
+    return EXIT_FAILURE;
+}
+
 static char SimpleKernelSourceCode[] = R"raw(
 
   __kernel void simple_kernel(__global int *Out,
@@ -784,8 +876,12 @@ int main() {
   if (TestSSVM() == EXIT_FAILURE)
     return EXIT_FAILURE;
 
+  std::cout << "TestMultiDevice_CGSVM: ";
+  if (TestMultiDevice_CGSVM() == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
   std::cout << "OK" << std::endl;
   CHECK_CL_ERROR(clUnloadCompiler());
- 
+
   return EXIT_SUCCESS;
 }

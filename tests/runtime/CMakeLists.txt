@@ -241,7 +241,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
   add_test(NAME "remote/test_pinned_buffers"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_pinned_buffers")
   add_test(NAME "remote/test_svm"
-           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
 
 if(OPENCL_HEADER_VERSION GREATER 299)
   add_test(NAME "remote/test_queue_creation_with_hints"
@@ -265,6 +265,9 @@ endif()
     "remote/test_svm"
     ${OCL_30_REMOTE_TESTS}
     PROPERTIES SKIP_RETURN_CODE 77)
+
+  set_property(TEST "remote/test_svm"
+    APPEND PROPERTY ENVIRONMENT "POCLD_COARSE_GRAIN_SVM=1 POCLD_COARSE_GRAIN_SVM_MAX_SIZE=10")
 
   set_tests_properties(
     "remote/clGetDeviceInfo" "remote/clEnqueueNativeKernel"
