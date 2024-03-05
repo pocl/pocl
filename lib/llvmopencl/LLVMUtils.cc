@@ -51,10 +51,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "LoopBarriers.h"
 #include "MinLegalVecSize.hh"
 #include "OptimizeWorkItemFuncCalls.h"
+#include "OptimizeWorkItemGVars.h"
 #include "PHIsToAllocas.h"
 #include "ParallelRegion.h"
 #include "RemoveBarrierCalls.h"
-#include "RemoveOptnoneFromWIFunc.h"
 #include "SubCFGFormation.h"
 #include "VariableUniformityAnalysis.h"
 #include "WorkItemAliasAnalysis.h"
@@ -449,6 +449,68 @@ bool isKernelToProcess(const llvm::Function &F) {
   return false;
 }
 
+//#define DEBUG_UNREACHABLE_SWITCH_REMOVAL
+
+void removeUnreachableSwitchCases(llvm::Function &F) {
+  std::vector<BasicBlock *> BBsToDel;
+  for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
+    BasicBlock *BB = &*FI;
+
+    if (BB->hasName() && BB->getName().startswith("default.unreachable")) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+      std::cerr << "##################################################\n";
+      std::cerr << "### converting unreachable block: " << (void *)BB << "\n";
+#endif
+      BBsToDel.push_back(BB);
+
+      std::set<SwitchInst *> SwUsers;
+      for (auto U : BB->users()) {
+        if (SwitchInst *SwI = dyn_cast<SwitchInst>(U)) {
+          SwUsers.insert(SwI);
+        } else {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          // we can ignore BBlocks with a single "br label default.unreachable"
+          if (!isa<BranchInst>(U)) {
+            std::cerr << "Unhandled unreachable user:\n";
+            U->dump();
+          }
+#endif
+        }
+      }
+
+      for (SwitchInst *SwI : SwUsers) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+        std::cerr << "Found a switch user, replacing the unr label:\n";
+        SwI->dump();
+#endif
+        if (SwI->getDefaultDest() == BB) {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "... default switch user is the unr BB\n";
+#endif
+          // remove the last case, and make its BB as the default
+          auto FinalCaseIt = std::prev(SwI->case_end());
+          BasicBlock *FinalBB = FinalCaseIt->getCaseSuccessor();
+          SwI->removeCase(FinalCaseIt);
+          SwI->setDefaultDest(FinalBB);
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "Final fixed switch:\n";
+          SwI->dump();
+#endif
+        } else {
+#ifdef DEBUG_UNREACHABLE_SWITCH_REMOVAL
+          std::cerr << "Unhandled switch, the default branch is not unr:\n";
+          SwI->dump();
+#endif
+        }
+      }
+    }
+  }
+
+  for (auto BB : BBsToDel) {
+    BB->eraseFromParent();
+  }
+}
+
 // Returns true in case the given function is a kernel with work-group
 // barriers inside it.
 bool hasWorkgroupBarriers(const llvm::Function &F) {
@@ -470,7 +532,6 @@ bool hasWorkgroupBarriers(const llvm::Function &F) {
   return false;
 }
 
-constexpr unsigned NumWorkgroupVariables = 18;
 const char *WorkgroupVariablesArray[NumWorkgroupVariables+1] = {"_local_id_x",
                                     "_local_id_y",
                                     "_local_id_z",
@@ -495,6 +556,20 @@ const std::vector<std::string>
     WorkgroupVariablesVector(WorkgroupVariablesArray,
                              WorkgroupVariablesArray+NumWorkgroupVariables);
 
+const char *WIFuncNameArray[NumWIFuncNames] = {"_Z13get_global_idj",
+                                               "_Z17get_global_offsetj",
+                                               "_Z15get_global_sizej",
+                                               "_Z12get_group_idj",
+                                               "_Z12get_local_idj",
+                                               "_Z14get_local_sizej",
+                                               "_Z23get_enqueued_local_sizej",
+                                               "_Z14get_num_groupsj",
+                                               "_Z20get_global_linear_idv",
+                                               "_Z19get_local_linear_idv",
+                                               "_Z12get_work_dimv"};
+
+const std::vector<std::string> WIFuncNameVec(WIFuncNameArray,
+                                             WIFuncNameArray + NumWIFuncNames);
 
 #if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 // register all PoCL analyses & passes with an LLVM PassBuilder instance,
@@ -516,9 +591,9 @@ void registerPassBuilderPasses(llvm::PassBuilder &PB) {
   LoopBarriers::registerWithPB(PB);
   FixMinVecSize::registerWithPB(PB);
   OptimizeWorkItemFuncCalls::registerWithPB(PB);
+  OptimizeWorkItemGVars::registerWithPB(PB);
   PHIsToAllocas::registerWithPB(PB);
   RemoveBarrierCalls::registerWithPB(PB);
-  RemoveOptnoneFromWIFunc::registerWithPB(PB);
   SubCFGFormation::registerWithPB(PB);
   Workgroup::registerWithPB(PB);
   WorkitemLoops::registerWithPB(PB);

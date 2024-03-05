@@ -21,11 +21,10 @@
    THE SOFTWARE.
 */
 
-extern unsigned int _work_dim;
+extern const unsigned int _work_dim;
 
-__attribute__ ((noinline))
-uint _CL_OVERLOADABLE
-get_work_dim(void)
+uint _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_work_dim (void)
 {
   return _work_dim;
 }

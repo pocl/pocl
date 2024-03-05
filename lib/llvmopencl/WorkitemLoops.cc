@@ -183,7 +183,7 @@ bool WorkitemLoopsImpl::runOnFunction(Function &F) {
   Changed |= handleLocalMemAllocas(cast<Kernel>(F));
 
 #ifdef DUMP_CFGS
-  dumpCFG(F, F.getName().str() + "_after_wiloops.dot",
+  dumpCFG(F, F.getName().str() + "_after_wiloops.dot", nullptr,
           &OriginalParallelRegions);
 #endif
 

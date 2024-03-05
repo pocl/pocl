@@ -70,7 +70,11 @@
 #else
 #  define _CL_CONVERGENT
 #endif
-
+#if __has_attribute(optnone)
+#define _CL_OPTNONE __attribute__ ((optnone))
+#else
+#define _CL_OPTNONE
+#endif
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
 typedef char char3  __attribute__((__ext_vector_type__(3)));

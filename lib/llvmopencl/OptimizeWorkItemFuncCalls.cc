@@ -65,19 +65,6 @@ static bool optimizeWorkItemFuncCalls(Function &F) {
   // entry to avoid confusing LLVM later with the 'pseudo loads' and to
   // reduce the inlining bloat.
 
-  typedef std::set<std::string> WIFuncNameVec;
-  const WIFuncNameVec WIFuncNames = {"_Z13get_global_idj",
-                                     "_Z17get_global_offsetj",
-                                     "_Z15get_global_sizej",
-                                     "_Z12get_group_idj",
-                                     "_Z12get_local_idj",
-                                     "_Z14get_local_sizej",
-                                     "_Z23get_enqueued_local_sizej",
-                                     "_Z14get_num_groupsj",
-                                     "_Z20get_global_linear_idv",
-                                     "_Z19get_local_linear_idv",
-                                     "_Z12get_work_dimv"};
-
   Function::iterator I = F.begin();
   Instruction *FirstInsnPt = &*(I++)->getFirstInsertionPt();
 
@@ -97,9 +84,10 @@ static bool optimizeWorkItemFuncCalls(Function &F) {
         // The callee can be null in case of asm snippets (TCE).
         continue;
       }
+      std::string FuncName = Call->getCalledFunction()->getName().str();
       auto FuncNameI =
-          WIFuncNames.find(Call->getCalledFunction()->getName().str());
-      if (FuncNameI == WIFuncNames.end())
+          std::find(WIFuncNameVec.begin(), WIFuncNameVec.end(), FuncName);
+      if (FuncNameI == WIFuncNameVec.end())
         continue;
 
       bool Unsupported = false;
@@ -113,7 +101,7 @@ static bool optimizeWorkItemFuncCalls(Function &F) {
           Unsupported = true;
       }
       if (Unsupported) continue;
-      Calls[*FuncNameI].push_back(Call);
+      Calls[FuncName].push_back(Call);
     }
   }
 

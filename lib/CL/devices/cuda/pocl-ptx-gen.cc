@@ -184,7 +184,13 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   llvm::raw_svector_ostream PTXStream(Data);
   if (Machine->addPassesToEmitFile(Passes, PTXStream,
                                    nullptr,
-                                   llvm::CGFT_AssemblyFile)) {
+#if LLVM_MAJOR < 18
+                                   llvm::CGFT_AssemblyFile))
+#else
+                                   llvm::CodeGenFileType::AssemblyFile))
+#endif
+  {
+
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return CL_BUILD_PROGRAM_FAILURE;
   }

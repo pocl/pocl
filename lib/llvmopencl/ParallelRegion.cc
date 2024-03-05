@@ -336,14 +336,14 @@ ParallelRegion::dumpNames()
 {
   for (iterator i = begin(), e = end(); i != e; ++i)
     {
-      std::cout << (*i)->getName().str();
-      if (entryBB() == (*i)) 
-        std::cout << "(EN)";
-      if (exitBB() == (*i))
-        std::cout << "(EX)";
-      std::cout << " ";
+    std::cerr << (*i)->getName().str();
+    if (entryBB() == (*i))
+      std::cerr << "(EN)";
+    if (exitBB() == (*i))
+      std::cerr << "(EX)";
+    std::cerr << " ";
     }
-  std::cout << std::endl;
+    std::cerr << std::endl;
 }
 
 ParallelRegion *
@@ -403,9 +403,9 @@ ParallelRegion::Verify()
           std::set<llvm::BasicBlock*> highlights;
           highlights.insert(entryBB());
           highlights.insert(*i);
-          pocl::dumpCFG(
-            *(*i)->getParent(), (*i)->getParent()->getName().str() + ".dot",
-            &prvec, &highlights);
+          pocl::dumpCFG(*(*i)->getParent(),
+                        (*i)->getParent()->getName().str() + ".dot", nullptr,
+                        &prvec, &highlights);
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         } else if (!Barrier::hasBarrier(*ii)) {

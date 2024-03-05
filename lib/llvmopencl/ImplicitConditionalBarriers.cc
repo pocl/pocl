@@ -77,6 +77,14 @@ static bool implicitConditionalBarriers(Function &F,
 
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex ConditionalBarriers;
+
+  // Required hack. See the docs of removeUnreachableSwitchCases
+  DT.reset();
+  PDT.reset();
+  removeUnreachableSwitchCases(F);
+  DT.recalculate(F);
+  PDT.recalculate(F);
+
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = &*FI;
     if (!Barrier::hasBarrier(BB)) continue;
@@ -86,15 +94,14 @@ static bool implicitConditionalBarriers(Function &F,
       continue;
 
 #ifdef DEBUG_COND_BARRIERS
-    std::cerr << "### found a conditional barrier";
+    std::cerr << "### found a conditional barrier:\n";
     BB->dump();
 #endif
     ConditionalBarriers.push_back(BB);
   }
 
-  if (ConditionalBarriers.size() == 0) return false;
-
-  bool Changed = false;
+  if (ConditionalBarriers.size() == 0)
+    return true;
 
   for (BarrierBlockIndex::const_iterator i = ConditionalBarriers.begin();
        i != ConditionalBarriers.end(); ++i) {
@@ -107,7 +114,8 @@ static bool implicitConditionalBarriers(Function &F,
     BasicBlock *Pos = BB;
     if (pred_begin(BB) == pred_end(BB)) {
 #ifdef DEBUG_COND_BARRIERS
-      b->dump();
+      std::cerr << "BB before which to inject the barrier:\n";
+      BB->dump();
 #endif
       assert (pred_begin(BB) == pred_end(BB));
     }
@@ -116,7 +124,7 @@ static bool implicitConditionalBarriers(Function &F,
     while (!Barrier::hasOnlyBarrier(Pred) && PDT.dominates(BB, Pred)) {
 
 #ifdef DEBUG_COND_BARRIERS
-      std::cerr << "### looking at BB " << pred->getName().str() << std::endl;
+      std::cerr << "### looking at BB " << Pred->getName().str() << std::endl;
 #endif
       Pos = Pred;
       // If our BB post dominates the given block, we know it is not the
@@ -137,16 +145,12 @@ static bool implicitConditionalBarriers(Function &F,
     Barrier::Create(Pos->getFirstNonPHI());
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### added an implicit barrier to the BB" << std::endl;
-    pos->dump();
+    Pos->dump();
 #endif
 
-    Changed = true;
   }
 
-//  F.dump();
-//  F.viewCFGOnly();
-
-  return Changed;
+  return true;
 }
 
 #if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
@@ -173,9 +177,7 @@ bool ImplicitConditionalBarriers::runOnFunction(Function &F) {
 
 void ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addPreserved<PostDominatorTreeWrapperPass>();
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<VariableUniformityAnalysis>();
   AU.addRequired<WorkitemHandlerChooser>();
   AU.addPreserved<WorkitemHandlerChooser>();
@@ -205,8 +207,6 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
   PAChanged.preserve<VariableUniformityAnalysis>();
   PAChanged.preserve<WorkitemHandlerChooser>();
-  PAChanged.preserve<PostDominatorTreeAnalysis>();
-  PAChanged.preserve<DominatorTreeAnalysis>();
 
   return implicitConditionalBarriers(F, PDT, DT) ? PAChanged
                                                  : PreservedAnalyses::all();

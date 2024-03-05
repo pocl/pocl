@@ -21,27 +21,30 @@
    IN THE SOFTWARE.
 */
 
-extern size_t _local_size_x;
-extern size_t _local_size_y;
-extern size_t _local_size_z;
+extern const size_t _local_size_x;
+extern const size_t _local_size_y;
+extern const size_t _local_size_z;
 
-extern size_t _group_id_x;
-extern size_t _group_id_y;
-extern size_t _group_id_z;
+extern const size_t _group_id_x;
+extern const size_t _group_id_y;
+extern const size_t _group_id_z;
 
-extern size_t _local_id_x;
-extern size_t _local_id_y;
-extern size_t _local_id_z;
+extern const size_t _local_id_x;
+extern const size_t _local_id_y;
+extern const size_t _local_id_z;
 
-extern size_t _global_offset_x;
-extern size_t _global_offset_y;
-extern size_t _global_offset_z;
+extern const size_t _global_offset_x;
+extern const size_t _global_offset_y;
+extern const size_t _global_offset_z;
 
-size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_local_id (unsigned int dimindx);
 
-size_t _CL_OVERLOADABLE get_global_size (unsigned int dimindx);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_global_size (unsigned int dimindx);
 
-size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
+get_local_size (unsigned int dimindx);
 
 /* attribute optnone disables all optimizations.
  * This was necessary, because running opt on kernel library
@@ -52,10 +55,10 @@ size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
  * undefined references in final .so
  */
 
-size_t _CL_OVERLOADABLE get_global_linear_id (void);
-size_t _CL_OVERLOADABLE get_local_linear_id (void);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_global_linear_id (void);
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE get_local_linear_id (void);
 
-__attribute__ ((optnone, noinline)) size_t _CL_OVERLOADABLE
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_global_linear_id (void)
 {
   return ((_local_size_z * _group_id_z + get_local_id (2))
@@ -67,7 +70,7 @@ get_global_linear_id (void)
          + (_local_size_x * _group_id_x + get_local_id (0));
 }
 
-__attribute__ ((optnone, noinline)) size_t _CL_OVERLOADABLE
+size_t _CL_OVERLOADABLE _CL_READNONE _CL_OPTNONE
 get_local_linear_id (void)
 {
   return (get_local_id (2) * get_local_size (1) * get_local_size (0))

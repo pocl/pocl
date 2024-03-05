@@ -905,9 +905,12 @@ endif()
 # constant addrspace variables, and stack protector likely slows
 # down the kernels, so it needs to be determined whether it's worth
 # the trouble.
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+#
+# no-jump-tables is to avoid LLVM optimization passes introducing switch tables,
+# which the variable uniformity analysis cannot analyze
+set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC -fno-jump-tables ${FLOATCONV_FLAG} ${OPAQUE_PTR_FLAGS}")
 
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")

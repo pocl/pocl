@@ -403,7 +403,10 @@ int pocl_llvm_build_program(cl_program program,
     ss << "-cl-ext=-all," << cl_ext;
   }
 
+  // do not use LLVM builtin functions, rely on PoCL bitcode library only
   ss << "-fno-builtin ";
+  // do not use jump/switch tables, these create a problem for VUA pass
+  ss << "-fno-jump-tables ";
 
   // This is required otherwise the initialization fails with
   // unknown triple ''
@@ -491,7 +494,12 @@ int pocl_llvm_build_program(cl_program program,
     return CL_INVALID_BUILD_OPTIONS;
   }
 
+#if LLVM_MAJOR < 18
   LangOptions *la = pocl_build.getLangOpts();
+#else
+  LangOptions L = pocl_build.getLangOpts();
+  LangOptions *la = &L;
+#endif
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
   llvm::Triple triple (device->llvm_target_triplet);
 
@@ -555,7 +563,7 @@ int pocl_llvm_build_program(cl_program program,
 #endif
   }
   if (ClangResourceDir.empty()) {
-    ClangResourceDir = driver::Driver::GetResourcesPath(CLANG);
+    ClangResourceDir = clang::driver::Driver::GetResourcesPath(CLANG);
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
@@ -1009,18 +1017,18 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
 
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
 
-  driver::Driver TheDriver(CLANG, Device->llvm_target_triplet, Diags);
+  clang::driver::Driver TheDriver(CLANG, Device->llvm_target_triplet, Diags);
 
   const char **ArgsEnd = Args;
   while (*ArgsEnd++ != nullptr) {}
 
   llvm::ArrayRef<const char*> ArgsArray(Args, ArgsEnd);
 
-  std::unique_ptr<driver::Compilation> C(
-    TheDriver.BuildCompilation(ArgsArray));
+  std::unique_ptr<clang::driver::Compilation> C(
+      TheDriver.BuildCompilation(ArgsArray));
 
   if (C && !C->containsError()) {
-    SmallVector<std::pair<int, const driver::Command *>, 4> FailingCommands;
+    SmallVector<std::pair<int, const clang::driver::Command *>, 4> FailingCommands;
     return TheDriver.ExecuteCompilation(*C, FailingCommands);
   } else {
     return -1;

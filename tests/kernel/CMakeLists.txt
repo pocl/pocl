@@ -321,11 +321,6 @@ set_property(TEST
   "kernel/test_as_type_loopvec"
   "kernel/test_sizeof_uint_loopvec"
   APPEND PROPERTY LABELS "cuda")
-
-if(LLVM_VERSION_MAJOR LESS 11)
-  set_property(TEST "kernel/test_rotate_loopvec"
-               APPEND PROPERTY LABELS "cuda")
-endif()
 endif()
 
 set(EXTRA_TEST_VARIANT ${EXTRA_TESTS})

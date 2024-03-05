@@ -55,8 +55,12 @@ namespace pocl {
 
 typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 
+constexpr unsigned NumWorkgroupVariables = 18;
 extern const char *WorkgroupVariablesArray[];
 extern const std::vector<std::string> WorkgroupVariablesVector;
+constexpr unsigned NumWIFuncNames = 11;
+extern const char *WIFuncNameArray[];
+extern const std::vector<std::string> WIFuncNameVec;
 
 void regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
@@ -91,6 +95,17 @@ POCL_EXPORT
 bool isKernelToProcess(const llvm::Function &F);
 
 llvm::Metadata *createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
+
+// Fixes switch statements that have a default case that is a simple
+// unreachable instruction. LLVM does this as "optimization", however it breaks
+// the (post) dominator-tree analysis, because the unreachable instruction
+// creates an additional function exit path. PoCL's ImplicitConditionalBarriers
+// pass then erroneously adds barriers because it thinks some basic blocks are
+// inside conditional blocks, when they're not.
+// TODO this is fragile, LLVM can introduce more optimizations that create
+// unreachable blocks. However I couldn't find any working way to make PDT
+// ignore blocks with an unreachable inst.
+void removeUnreachableSwitchCases(llvm::Function &F);
 
 /**
  * \brief Clones a DISubprogram with changed function name and scope.
