@@ -147,7 +147,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
 
   ops->memfill = NULL;
   ops->map_mem = pocl_ventus_map_mem;
-  ops->unmap_mem = pocl_driver_unmap_mem;
+  ops->unmap_mem = pocl_ventus_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = NULL;
 
@@ -1089,14 +1089,16 @@ pocl_ventus_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr) {
   // if the memory object has been allocated device memory pointer and
   // if the flags indicates that copy data from host ptr, then do the following operations.
   if ((flags & CL_MEM_COPY_HOST_PTR) && mem_obj->device_ptrs[device->dev_id].mem_ptr) {
-    err = vt_copy_to_dev(d->vt_device,*(uint64_t*)(mem_obj->device_ptrs[device->dev_id].mem_ptr),mem_obj->mem_host_ptr, mem_obj->size, 0,0);
-    if (err != 0) {
-      return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    if (mem_obj->mem_host_ptr) {
+      err = vt_copy_to_dev(d->vt_device,*(uint64_t*)(mem_obj->device_ptrs[device->dev_id].mem_ptr),mem_obj->mem_host_ptr, mem_obj->size, 0,0);
+      if (err != 0) {
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      }
     }
   }
 
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
-    abort(); // TODO
+//    abort(); // TODO
   }
 
   return CL_SUCCESS;
@@ -1324,6 +1326,29 @@ pocl_ventus_map_mem (void *data, pocl_mem_identifier *src_mem_id,
     return CL_SUCCESS;
 }
 
+cl_int
+pocl_ventus_unmap_mem (void *data, pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf, mem_mapping_t *map)
+{
+    struct vt_device_data_t *d = (struct vt_device_data_t *)data;
+    uint64_t dev_addr = (*((uint64_t *)(dst_mem_id->mem_ptr))) + map->offset;
+    char *__restrict__ dst_device_ptr = (char *)dst_mem_id->mem_ptr;
+    assert (map->host_ptr);
+
+    if (map->host_ptr == (dst_device_ptr + map->offset))
+        NULL;
+    else
+    {
+        if (map->map_flags != CL_MAP_READ) {
+            int err = vt_copy_to_dev(d->vt_device, dev_addr, map->host_ptr, map->size, 0, 0);
+            if (err) {
+                return CL_MAP_FAILURE;
+            }
+        }
+    }
+
+    return CL_SUCCESS;
+}
 
 int pocl_ventus_setup_metadata  (cl_device_id device, cl_program program,
                                  unsigned program_device_i)

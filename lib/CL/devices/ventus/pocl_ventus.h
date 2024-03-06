@@ -130,6 +130,9 @@ cl_int
 pocl_ventus_map_mem (void *data, pocl_mem_identifier *src_mem_id,
                      cl_mem src_buf, mem_mapping_t *map);
 
+cl_int
+pocl_ventus_unmap_mem (void *data, pocl_mem_identifier *dst_mem_id,
+                       cl_mem dst_buf, mem_mapping_t *map);
 
 #ifdef __cplusplus
 }
