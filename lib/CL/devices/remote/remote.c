@@ -46,7 +46,6 @@
 #include "utlist.h"
 #include <CL/cl.h>
 
-// TODO mess
 #include "communication.h"
 #include "messages.h"
 
@@ -55,11 +54,6 @@
   kernel arg info - arg types (currently working, but still a hack)
 */
 
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
-/******************************************************************************/
 
 int
 pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
@@ -396,8 +390,8 @@ setup_svm_memory_pool (cl_device_id device)
 
   void *requested_address = (void *)ddata->device_svm_region_start_addr;
 
-  POCL_MSG_PRINT_REMOTE (
-      "Attempting to mmap a local memory pool of size %zu MB at '%p'.\n",
+  POCL_MSG_PRINT_MEMORY (
+      "Attempting to map a host SVM region of size %zu MB at '%p'.\n",
       ddata->device_svm_region_size / (1024 * 1024), requested_address);
 
   void *addr
