@@ -69,6 +69,8 @@ typedef void (*network_command_callback) (void *arg, _cl_command_node *node,
 
 typedef struct network_command network_command;
 
+typedef struct remote_device_data_s remote_device_data_t;
+
 /** Lock used for synchronous commands */
 typedef struct sync_t
 {
@@ -277,54 +279,6 @@ typedef struct remote_queue_data_s
   pocl_cond_t cq_cond;
   char *printf_buffer;
 } remote_queue_data_t;
-
-typedef struct remote_device_data_s
-{
-  remote_server_data_t *server;
-  cl_image_format *supported_image_formats;
-  char *build_hash;
-  unsigned remote_device_index;
-  unsigned remote_platform_index;
-  unsigned local_did;
-
-  /* SVM support: The SVM memory pool regions in the remote device's
-     and host's memories. */
-  size_t device_svm_region_start_addr;
-  size_t device_svm_region_size;
-
-  /* A context to store device-wide data (currently only the pinned memory
-     buffer for the SVM allocations). */
-  cl_context device_context;
-  cl_mem pinned_device_allocation;
-
-  size_t host_svm_region_start_addr;
-  size_t host_svm_region_size;
-
-  /* The difference between host and device SVM region starting
-     addresses (device minus host start address). That is, this offset
-     must be added to host SVM addresses to end up with a device SVM
-     address and vice versa. The addition can wraparound, which is defined
-     behavior with unsigned values in C. Ideally, this offset would
-     be always zero to avoid address translation overheads, but
-     it's difficult to guarantee, so generally we must be ready for
-     a non-zero offset and deal with it. */
-  size_t svm_region_offset;
-
-  // migrated -> ready to launch queue
-  _cl_command_node *work_queue;
-  // finished queue
-  _cl_command_node *finished_list;
-
-  // driver wake + lock
-  ALIGN_CACHE (pocl_lock_t wq_lock);
-  ALIGN_CACHE (pocl_cond_t wakeup_cond);
-  ALIGN_CACHE (pocl_lock_t mem_lock);
-
-  /* device pthread */
-  pocl_thread_t driver_thread_id;
-  size_t driver_thread_exit_requested;
-
-} remote_device_data_t;
 
 typedef struct kernel_data_s
 {

@@ -46,6 +46,7 @@
 #include "pocl_networking.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "remote.h"
 #include "utlist.h"
 #include <CL/cl.h>
 

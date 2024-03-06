@@ -107,6 +107,12 @@ POname(clSVMAlloc)(cl_context context,
       return NULL;
     }
 
+  POCL_LOCK_OBJ (context);
+  item->svm_ptr = ptr;
+  item->size = size;
+  DL_APPEND (context->svm_ptrs, item);
+  POCL_UNLOCK_OBJ (context);
+
   /* Create a shadow cl_mem object for keeping track of the SVM
      allocation and to implement automated migrations, cl_pocl_content_size,
      etc. for CG SVM using the same code as with non-SVM cl_mems. */
@@ -124,12 +130,7 @@ POname(clSVMAlloc)(cl_context context,
       return NULL;
     }
 
-  POCL_LOCK_OBJ (context);
-  item->svm_ptr = ptr;
-  item->size = size;
   item->shadow_cl_mem = clmem_shadow;
-  DL_APPEND (context->svm_ptrs, item);
-  POCL_UNLOCK_OBJ (context);
 
   POname (clRetainContext) (context);
 

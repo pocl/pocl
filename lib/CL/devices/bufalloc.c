@@ -241,6 +241,22 @@ pocl_alloc_buffer_from_region (memory_region_t *region, size_t size)
 }
 
 /**
+ * Allocates a chunk of memory from the given memory region and returns its
+ * starting address.
+ *
+ * @return The address, or NULL if no space available in the region.
+ */
+void *
+pocl_bufalloc (memory_region_t *region, size_t size)
+{
+  chunk_info_t *chunk = pocl_alloc_buffer_from_region (region, size);
+  if (chunk == NULL)
+    return NULL;
+  else
+    return (void *)chunk->start_address;
+}
+
+/**
  * Allocates a chunk of memory from one of the given memory regions.
  *
  * The address ranges of the different regions must not overlap. Searches

@@ -54,7 +54,45 @@
   kernel arg info - arg types (currently working, but still a hack)
 */
 
+typedef struct remote_svm_management_data_s
+{
+  /* A context to store device-wide data (currently only the pinned memory
+     buffer for the SVM allocations). TODO: The same buffer should be allocated
+     from all devices in the context. */
+  cl_context device_context;
 
+  /* TODO: This should be allocated from clSVMAlloc, it should be the shadow
+     buffer. Who frees the shadow buffer and when? clSVMFree(). */
+  cl_mem pinned_device_allocation;
+
+  /* The starting address and size of the SVM region in the host side. */
+  size_t host_svm_region_start_addr;
+  size_t host_svm_region_size;
+
+  /* Bufalloc memory book keeping data for handing out SVM allocations. */
+  memory_region_t allocations;
+  /* TODO: We need to record the SVM region "gaps" from each device to the
+     region to not allow allocating them in the host side. */
+} remote_svm_management_data_t;
+
+/* One of the devices will take care of the SVM management, which is the
+   one that initializes this global. */
+remote_svm_management_data_t *svm_data = NULL;
+
+static int
+is_svm_ptr (void *ptr)
+{
+  if (svm_data == NULL)
+    return 0;
+  return (size_t)ptr >= svm_data->host_svm_region_start_addr
+         && (size_t)ptr < (svm_data->host_svm_region_start_addr
+                           + svm_data->host_svm_region_size);
+}
+
+/**
+ * See pocl_remote_svm_alloc()'s comment for info how the allocation works
+ * when SVM is enabled.
+ */
 int
 pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 {
@@ -69,24 +107,50 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
     goto ERROR;
 
   int r;
-  if (mem->is_image)
+  if (host_ptr == NULL
+      && (device->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER))
+    {
+      /* When SVM is enabled, allocate all buffers from the SVM region. */
+      mem->mem_host_ptr = pocl_bufalloc (&svm_data->allocations, mem->size);
+      if (mem->mem_host_ptr == NULL)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      /* Fix the remote buffer's host pointer to point to the remote's SVM
+         pool, so the remote buffer contains the remote's host pointer. */
+      mem->mem_host_ptr += d->svm_region_offset;
+      r = pocl_network_create_buffer (d, mem, &p->device_addr);
+
+      /* ...and back so the host side buffer points to the host side ptr. */
+      mem->mem_host_ptr -= d->svm_region_offset;
+    }
+  else if (mem->is_image)
     {
       r = pocl_network_create_image (d, mem);
     }
   else if ((mem->flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
     {
-      /* We use a preallocated host pointer.*/
-      /* Send the allocation to the server for updating its book keeping
-         structures. The SVM pointer should have been requested previously
+      /* We use a preallocated host pointer. It can be either an SVM pointer
+         or non-SVM host pointer. */
+      /* Send the allocation to the server for updating its internal cl_mem.
+         The SVM pointer should have been requested previously
          via svm_alloc. */
 
-      /* Fix the remote buffer's host pointer to point to the remote's SVM pool,
-         so the remote->device migrations work as intended. */
-      mem->mem_host_ptr = host_ptr + d->svm_region_offset;
+      /* Fix the remote buffer's host pointer to point to the remote's SVM
+         pool, so the remote buffer contains the remote's host pointer. */
+      int is_svm = is_svm_ptr (host_ptr);
+      if (is_svm)
+        {
+          POCL_MSG_PRINT_MEMORY (
+              "cl_mem with SVM ptr %p, offset adjusting with %zu to %p.\n",
+              host_ptr, d->svm_region_offset, host_ptr + d->svm_region_offset);
+          mem->mem_host_ptr = host_ptr + d->svm_region_offset;
+        }
       r = pocl_network_create_buffer (d, mem, &p->device_addr);
-      /* Set it back, since the client might inspect the host pointer, which
-         should now point again to the host region. */
-      mem->mem_host_ptr = host_ptr - d->svm_region_offset;
+
+      if (is_svm)
+        /* Set it back, since the client might inspect the host pointer, which
+           should now point again to the host region. */
+        mem->mem_host_ptr = host_ptr;
     }
   else
     {
@@ -96,6 +160,9 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   if (r != 0)
     goto ERROR;
 
+  /* The device-specific "address" is an id reference to the remote buffer,
+     which then contains the actual physical address of the controlled
+     device. */
   p->mem_ptr = (void *)mem->id;
   p->version = 0;
   POCL_UNLOCK (d->mem_lock);
@@ -105,6 +172,9 @@ pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   return CL_SUCCESS;
 
 ERROR:
+  POCL_MSG_PRINT_MEMORY (
+      "REMOTE DEVICE ALLOC HOST PTR %p SIZE %zu FAILED error %d\n", host_ptr,
+      mem->size, r);
   POCL_UNLOCK (d->mem_lock);
   return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 }
@@ -151,63 +221,50 @@ pocl_remote_free (cl_device_id device, cl_mem mem)
   POCL_MSG_PRINT_MEMORY ("REMOTE DEVICE FREE PTR %p SIZE %zu\n", p->mem_ptr,
                          mem->size);
 
+  if (mem->mem_host_ptr != NULL && !(mem->flags & CL_MEM_USE_HOST_PTR)
+      && (device->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER))
+    {
+      /* When SVM is enabled, we allocate all buffers from the SVM region
+         in the driver. Thus we should also free the SVM space. */
+      if (pocl_free_buffer (&svm_data->allocations, mem->mem_host_ptr) == NULL)
+        {
+          POCL_MSG_ERR ("Failed freeing internal SVM allocation %p.\n",
+                        mem->mem_host_ptr);
+        }
+      mem->mem_host_ptr = NULL;
+    }
+
   p->mem_ptr = NULL;
   p->version = 0;
   POCL_UNLOCK (d->mem_lock);
 }
 
+/** SVM allocation is done in two parts: First we return a host-side SVM
+   address from this function and then expect clSVMAlloc() to create the
+   cl_mem shadow buffer which is then actually allocated from the remote as
+   well.
+
+   When SVM is enabled, the remote will allocate all allocations from a
+   preallocated SVM memory pool as cl_mem sub buffers. This includes
+   both SVM allocations and cl_mem buffer allocations. Thus, we can use the
+   regular buffer allocation routine to preserve the SVM allocation from
+   the remote since we know it will be allocated from an SVM pool.
+   The remote allocations must be subbuffers of a larger cl_mem representing
+   the entire SVM region because OpenCL spec allows buffers to point only to
+   starts of SVM allocations.
+
+   The shadow cl_mems all have internally a host SVM pointer, which is
+   translated at the server side to the device side SVM regions thanks to the
+   device-side subbuffers holding device-side SVM region fixed addressess,
+   which is adjusted in pocl_remote_alloc_mem_obj(). See
+   setup_svm_memory_pool() for more info.
+
+*/
 void *
 pocl_remote_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
 
 {
-  remote_device_data_t *ddata = (remote_device_data_t *)dev->data;
-  assert (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER);
-  /* When SVM is enabled, the remote will allocate all allocations from a
-     preallocated SVM memory pool as cl_mem sub buffers. This includes
-     both SVM allocations and
-     cl_mem buffer allocations. Thus, we can use the regular buffer
-     allocation routine to preserve the SVM allocation from the remote
-     since we know it will be allocated from that SVM pool.
-
-     The pinned physical address will be the remote SVM address using
-     which we will map it to the local region based on the offset between
-     the client and remote SVM memory pools. */
-
-  cl_int err;
-  /* TODO: Free this allocation. */
-  cl_mem allocation = POname (clCreateBuffer) (
-      ddata->device_context, CL_MEM_READ_WRITE | CL_MEM_PINNED, size, NULL,
-      &err);
-
-  if (err != CL_SUCCESS)
-    {
-      POCL_MSG_WARN (
-          "Unable to allocate an SVM allocation from the remote.\n");
-      return NULL;
-    }
-
-  cl_mem_pinning pinning_info;
-  err = POname (clGetMemObjectInfo (allocation, CL_MEM_DEVICE_PTRS,
-                                    sizeof (cl_mem_pinning), &pinning_info,
-                                    NULL));
-
-  if (err != CL_SUCCESS || pinning_info.address == 0)
-    {
-      POCL_MSG_WARN ("Unable to fetch the device ptr on the remote SVM "
-                     "allocation.\n");
-      return NULL;
-    }
-
-  /* We trust the server does the right thing and allocates the
-     piece from the preallocated SVM pool. */
-  assert (ddata->device_svm_region_start_addr <= (size_t)pinning_info.address
-          && ddata->device_svm_region_start_addr
-                     + ddata->device_svm_region_size
-                 > (size_t)pinning_info.address);
-
-  /* TODO: Store the buffer handles so we can free them later. */
-  /* Convert the remote SVM pool address to the host SVM pool address. */
-  return (void *)(pinning_info.address - ddata->svm_region_offset);
+  return pocl_bufalloc (&svm_data->allocations, size);
 }
 
 void *
@@ -230,11 +287,6 @@ pocl_remote_usm_free (cl_device_id dev, void *usm_ptr)
 {
   pocl_remote_svm_free (dev, usm_ptr);
 }
-
-/*****************************************************************************/
-/*****************************************************************************/
-/*****************************************************************************/
-/*****************************************************************************/
 
 static const char remote_device_name[] = "remote";
 const char *remote_device_name_ptr = remote_device_name;
@@ -345,17 +397,17 @@ pocl_remote_update_event (cl_device_id device, cl_event event)
 }
 
 /**
- * \brief Allocates a memory region from the client and the remote device that
- * are used to map SVM allocations.
+ * \brief Allocates a memory region from the host process to map SVM
+ * allocations to and initializes SVM memory management.
  *
- * First allocates a pinned region from the remote. Then it tries to mmap() a
- * similar size region at the same starting address on the client. Since this
- * is done at best-effort without guaranteed success, we often end up with an
- * offset which needs to be added to all the memory accesses of kernels to
- * adjust to the difference between the starting addressess of the host and
- * device regions where the SVM allocations are mapped. This should be called
- * after a point where we have initialized enough of the device that we can use
- * it for buffer creation.
+ * The first remote device with SVM capabilities reported from the server
+ * side tries to mmap() a similar size region at the same starting address on
+ * the host. Since this is done at best-effort without guaranteed success, we
+ * often end up with an offset which needs to be added to all the memory
+ * accesses of kernels to adjust to the difference between the starting
+ * addressess of the host and device regions where the SVM allocations are
+ * mapped. The server-side can fix a non-zero host-device SVM offset by
+ * manipulating all of the kernels' address computations.
  *
  * \param [inout] device the device to update the pool info to.
  * \returns zero on a successful mapping.
@@ -364,8 +416,7 @@ pocl_remote_update_event (cl_device_id device, cl_event event)
 static int
 setup_svm_memory_pool (cl_device_id device)
 {
-  remote_device_data_t *ddata = device->data;
-
+  remote_device_data_t *ddata = (remote_device_data_t *)device->data;
   if (ddata->device_svm_region_start_addr == 0
       || ddata->device_svm_region_size == 0)
     {
@@ -373,20 +424,44 @@ setup_svm_memory_pool (cl_device_id device)
       return -1;
     }
 
-  /* The device context is a shadow context where we store the
-     SVM allocations, just for maintaining their lifetime.  */
-  /* TODO: where can we unallocate it? */
-  cl_int err;
-  ddata->device_context
-      = POname (clCreateContext) (NULL, 1, &device, NULL, NULL, &err);
-
-  if (err != CL_SUCCESS)
+  if (svm_data != NULL)
     {
-      POCL_MSG_PRINT_REMOTE ("Unable to create a device context.\n");
-      return -1;
+      /* Let the first remote device take care of the SVM allocation. */
+      device->svm_allocation_priority = 0;
+
+      ddata->svm_region_offset = ddata->device_svm_region_start_addr
+                                 - svm_data->host_svm_region_start_addr;
+      POCL_MSG_PRINT_REMOTE ("Host SVM region already allocated. "
+                             "SVM pool offset for this device: %zd.\n",
+                             ddata->svm_region_offset);
+
+      /* Shrink the host SVM region to the smallest remote SVM region size. */
+      if (svm_data->host_svm_region_size > ddata->device_svm_region_size)
+        {
+          POCL_MSG_PRINT_REMOTE (
+              "Remote SVM region smaller than the host region."
+              "Shrinking to %zu MB.\n",
+              ddata->device_svm_region_size / (1024 * 1024));
+          svm_data->allocations.last_chunk->size
+              = ddata->device_svm_region_size;
+          svm_data->host_svm_region_size = ddata->device_svm_region_size;
+          /* TODO: mremap() to free the unallocatable host VM space */
+        }
+
+      /* TODO: Add the remote SVM region gaps to the memory manager so they
+         won't get allocated. */
+      return 0;
     }
-  ddata->host_svm_region_start_addr = 0;
-  ddata->host_svm_region_size = 0;
+
+  /* This is the first SVM-capable remote device that should handle the
+     SVMAllocs. */
+  device->svm_allocation_priority = 10;
+  /* Initialize the driver-scope SVM management data. */
+  svm_data = (remote_svm_management_data_t *)malloc (
+      sizeof (remote_svm_management_data_t));
+
+  svm_data->host_svm_region_start_addr = 0;
+  svm_data->host_svm_region_size = 0;
 
   void *requested_address = (void *)ddata->device_svm_region_start_addr;
 
@@ -397,24 +472,40 @@ setup_svm_memory_pool (cl_device_id device)
   void *addr
       = mmap (requested_address, ddata->device_svm_region_size,
               PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-  /* TODO: Try mapping a smaller region than the device's in the host. */
   if (addr == MAP_FAILED)
     {
+      /* TODO: Try mapping a smaller region than the device's in the host side.
+       */
       perror ("mmap error");
       /* TODO: free the pinned buffer. */
       POCL_MSG_PRINT_REMOTE (
           "Unable to mmap() a local memory pool for remote CG SVM.\n");
+      free (svm_data);
+
+      /* Let the rest of the devices try. */
+      svm_data = NULL;
+      device->svm_allocation_priority = 0;
+
       return -2;
     }
 
-  ddata->host_svm_region_start_addr = (size_t)addr;
-  ddata->host_svm_region_size = ddata->device_svm_region_size;
+  svm_data->host_svm_region_start_addr = (size_t)addr;
+  svm_data->host_svm_region_size = ddata->device_svm_region_size;
   ddata->svm_region_offset = ddata->device_svm_region_start_addr
-                             - ddata->host_svm_region_start_addr;
+                             - svm_data->host_svm_region_start_addr;
 
-  POCL_MSG_PRINT_REMOTE (
-      "Client-side CG SVM region allocated at '%p'. SVM pool offset: %zd.\n",
-      addr, ddata->svm_region_offset);
+  pocl_init_mem_region (&svm_data->allocations, (memory_address_t)addr,
+                        ddata->device_svm_region_size);
+
+  /* We must ensure the allocation is aligned to the largest OpenCL datatype
+     since the remote will use a subbuffer to track the region and some targets
+     (most notable PoCL-CPU) will require the alignment for the offset.
+     Similarly, PoCL-D returns only SVM regions chunks that are max aligned. */
+  svm_data->allocations.alignment = sizeof (cl_long16);
+
+  POCL_MSG_PRINT_MEMORY (
+      "Host SVM region allocated at '%p'. SVM pool offset: %zd.\n", addr,
+      ddata->svm_region_offset);
 
   return 0;
 }
@@ -483,15 +574,6 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
      solution). */
   if (setup_svm_memory_pool (device) == 0)
     {
-      /* We currently need d->svm_region_offset == 0 since there are no
-         means implemented yet to cope with an offset. It means that we
-         sometimes get CG SVM and sometimes
-         won't, depending on the mmap() luck on the host side. */
-
-      /* We should ensure remote has the first priority as we need to
-         delegate the initial allocation down to the remote device driver
-         which dictates the position in VMem. */
-      device->svm_allocation_priority = 10;
       device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
 
       /* The CG SVM support can be used for "pinned buffers" as well and
@@ -2215,7 +2297,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
                 if (region[1] == 0)
                   region[1] = 1;
                 size_t origin[3] = { 0, 0, 0 };
-                // TODO: truncate region if it exceeds content size?
+                /* TODO: truncate region if it exceeds content size? */
                 r = pocl_remote_async_write_image_rect (
                     d, node, m, cmd->migrate.mem_id, m->mem_host_ptr, NULL,
                     origin, region, 0, 0, 0);

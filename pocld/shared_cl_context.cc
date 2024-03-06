@@ -652,8 +652,9 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
     if (TotalAllocatableSVM + MaxSVMAllocSize > MaxTotalAllocatableSVM)
       break;
 
-    void *NewSVMRegionAddr = clSVMAlloc(ContextWithAllDevices.get(),
-                                        CL_MEM_READ_WRITE, MaxSVMAllocSize, 0);
+    void *NewSVMRegionAddr =
+        clSVMAlloc(ContextWithAllDevices.get(), CL_MEM_READ_WRITE,
+                   MaxSVMAllocSize, sizeof(cl_uint16));
 
     if (NewSVMRegionAddr == nullptr)
       // We've likely allocated most of the SVM/global mem. We could try smaller
@@ -725,6 +726,12 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
                             "Total allocatable SVM now %zu MB.\n",
                             MaxSVMAllocSize, NewSVMRegionAddr,
                             TotalAllocatableSVM / (1024 * 1024));
+
+      break;
+
+      /* TODO: We need to record the SVM region "gaps" from each device to
+         the host side allocator to avoid allocating over them in the host
+         side. Disable the multiregion meanwhile. */
     }
   } while (true);
 }
@@ -1975,17 +1982,16 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
                                                void **DeviceAddr) {
 
   // The backing drivers might not recognize the pocl PoC extension and
-  // needn't as we implement the pinning with SVM allocations.
+  // they need not to as we implement the pinning with SVM allocations.
   Flags ^= CL_MEM_PINNED;
   bool SVMWrapper = false;
   SVMRegion *TargetSVMRegion = nullptr;
+  cl_buffer_region SubBufRegion;
 
-  // FIXME: The check doesn't account for the host-device SVM region offset.
-  // The HostPtr that comes in is always a client/host address.
   if (HostPtr != nullptr &&
       ((size_t)HostPtr >= (size_t)SVMRegionsStartAddress &&
        (size_t)HostPtr < (size_t)SVMRegionsEndAddress)) {
-    // This is a host-side pointer inside the SVM region, meaning a cl_mem
+    // This is a pointer inside the SVM region, meaning a cl_mem
     // wrapped SVM pointer request. No need to allocate a new SVM host_ptr for
     // the internal buffer, just use the one already SVM allocated and wrap it
     // to a subbuffer.
@@ -2002,7 +2008,8 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
                    HostPtr);
       return CL_OUT_OF_RESOURCES;
     }
-
+    SubBufRegion.origin =
+        (size_t)HostPtr - (size_t)TargetSVMRegion->StartAddress;
   } else {
 #ifdef ENABLE_RDMA
     // TODO: What extra consideration we need for RDMA which uses SVM
@@ -2010,6 +2017,9 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
     POCL_ABORT_UNIMPLEMENTED("SVM mode not yet implemented for PoCL-R RDMA.");
 #endif
 
+    POCL_MSG_PRINT_MEMORY("Trying to allocate with host ptr %p.\n", HostPtr);
+    assert(false && "Host should allocate everything from the SVM region!");
+#if 0
     // Allocate everything from the first SVM memory pool where it fits.
     chunk_info_t *Chunk = nullptr;
     for (auto &SVMRegion : SVMRegions) {
@@ -2022,7 +2032,6 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
                               SVMRegion.StartAddress);
       }
     }
-
     HostPtr = Chunk == nullptr ? nullptr : (void *)Chunk->start_address;
 
     assert(DeviceAddr != nullptr);
@@ -2035,6 +2044,7 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
     POCL_MSG_PRINT_MEMORY(
         "Allocated a %zu byte chunk from an SVM region (start %p) at %p.\n",
         Size, TargetSVMRegion->StartAddress, HostPtr);
+#endif
   }
 
   // Since the buffer data is initialized by clEnqueueWrite (because migration
@@ -2046,8 +2056,6 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
   // client-side allocation.
 
   cl_int Err;
-  cl_buffer_region SubBufRegion;
-  SubBufRegion.origin = (size_t)HostPtr - (size_t)TargetSVMRegion->StartAddress;
   SubBufRegion.size = Size;
   cl_mem SubBuf =
       clCreateSubBuffer(TargetSVMRegion->ShadowBuffer, Flags,
