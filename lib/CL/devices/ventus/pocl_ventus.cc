@@ -754,6 +754,14 @@ step5 make a writefile for chisel
 
 //prepare privatemem
   uint64_t pds_src_size=pdssize*num_thread*num_warp*num_workgroup;
+
+  // Now spike run workgroups one by one, to fix the over 4G issue
+  // Spike specified the pdssize to 0x10000000 for each workgroup now
+  if (pds_src_size > 0x10000000) {
+    pds_src_size = 0x10000000;
+    printf("pdssize setting to 0x%x\n", 0x10000000);
+  }
+
   uint64_t pds_dev_mem_addr;
     POCL_MSG_PRINT_VENTUS("Preparing private memory of ventus:\n");
   err = vt_buf_alloc(d->vt_device, pds_src_size, &pds_dev_mem_addr,0,0,0);
