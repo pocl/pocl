@@ -431,7 +431,8 @@ ParallelRegion::Verify()
       highlights.insert(exitBB());
       exitBB()->dump();
       dumpNames();
-      dumpCFG(*(*i)->getParent(), "broken.dot", &regions, &highlights);
+      dumpCFG(*(*i)->getParent(), "broken.dot", nullptr,
+              &regions, &highlights);
 #endif
 
       assert(0 && "Multiple outgoing edges from exit block!");

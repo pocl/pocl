@@ -42,19 +42,8 @@ jobs:
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
         # chipstar 1.1 only supports LLVM up to 17
-        config: [basic, devel, asan, tsan, ubsan, cts_spirv, tier1, chipstar]
-        include:
-          - llvm: 14
-            config: OpenMP
-          - llvm: 15
-            config: TBB
-          - llvm: 16
-            config: basic
-          - llvm: 18
-            config: static
+        config: [cts_spirv, tier1, chipstar]
         exclude:
-          - llvm: 18
-            config: cts_spirv
           - llvm: 18
             config: chipstar
 
@@ -75,23 +64,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          if [ "${{ matrix.config }}" == "asan" ]; then
-            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
-          elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
-          elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
-          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
-          elif [ "${{ matrix.config }}" == "TBB" ]; then
-            runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
-          elif [ "${{ matrix.config }}" == "basic" ]; then
-            runCMake -DENABLE_ICD=1
-          elif [ "${{ matrix.config }}" == "static" ]; then
-            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
-          elif [ "${{ matrix.config }}" == "devel" ]; then
-            runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
-          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
+          if [ "${{ matrix.config }}" == "cts_spirv" ]; then
             mkdir -p /home/github/examples/build_cts_spirv
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
@@ -126,6 +99,117 @@ jobs:
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
+          if [ "${{ matrix.config }}" == "cts_spirv" ]; then
+            runCTest -L conformance_suite_micro_spirv
+          elif [ "${{ matrix.config }}" == "tier1" ]; then
+            runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
+          elif [ "${{ matrix.config }}" == "chipstar" ]; then
+            runCTest -L chipStar
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+  github_test_matrix:
+    name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm: [17, 18]
+        # basic = simplest pthread build
+        # devel = with devel options
+        # cts_spirv = cts with SPIR-V
+        # tier1 = includes CTS without SPIR-V
+        # asan, tsan, ubsan = sanitizers
+        # chipstar 1.1 only supports LLVM up to 17
+        config: [basic, devel, asan, tsan, ubsan]
+        include:
+          - llvm: 14
+            config: OpenMP
+          - llvm: 15
+            config: TBB
+          - llvm: 16
+            config: basic
+          - llvm: 18
+            config: static
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install prerequisites and ocl-icd
+        run: >
+          sudo apt update -y &&
+          sudo apt install -y wget gpg python3-dev libpython3-dev build-essential ocl-icd-libopencl1 cmake make git pkg-config libhwloc-dev zlib1g-dev libtbb2-dev &&
+          wget -qO- "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xd1e4ec6482cdd1da8bf1566a593b02af628bafbf" | sudo gpg --dearmor -o /usr/share/keyrings/ocl-icd.gpg &&
+          echo "deb [signed-by=/usr/share/keyrings/ocl-icd.gpg] https://ppa.launchpadcontent.net/ocl-icd/ppa/ubuntu jammy main" >/tmp/ocl-icd.list &&
+          sudo mv /tmp/ocl-icd.list /etc/apt/sources.list.d/ &&
+          sudo apt update -y &&
+          sudo apt install -y ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev
+
+      - name: Install LLVM <16
+        if: ${{ matrix.llvm <= 15 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION}
+
+      - name: Install LLVM 16+
+        if: ${{ matrix.llvm > 15 }}
+        run: >
+          export LLVM_VERSION=${{ matrix.llvm }} &&
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg &&
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${LLVM_VERSION} main" >/tmp/llvm.list &&
+          sudo mv /tmp/llvm.list /etc/apt/sources.list.d/ &&
+          sudo apt update -y &&
+          sudo apt install -y libclang-cpp${LLVM_VERSION}-dev llvm-${LLVM_VERSION}-dev libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} libpolly-${LLVM_VERSION}-dev
+
+      - name: CMake
+        id: cmake
+        run: |
+          runCMake() {
+            BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
+            cmake -DDEVELOPER_MODE=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$BUILD_FLAGS" \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} \
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+          }
+
+          rm -rf ${{ github.workspace }}/build
+          mkdir ${{ github.workspace }}/build
+          if [ "${{ matrix.config }}" == "asan" ]; then
+            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
+          elif [ "${{ matrix.config }}" == "tsan" ]; then
+            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+          elif [ "${{ matrix.config }}" == "ubsan" ]; then
+            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
+          elif [ "${{ matrix.config }}" == "TBB" ]; then
+            runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
+          elif [ "${{ matrix.config }}" == "basic" ]; then
+            runCMake -DENABLE_ICD=1
+          elif [ "${{ matrix.config }}" == "static" ]; then
+            runCMake -DENABLE_ICD=1 -DSTATIC_LLVM=1
+          elif [ "${{ matrix.config }}" == "devel" ]; then
+            runCMake -DENABLE_RELOCATION=0 -DENABLE_VALGRIND=1 -DENABLE_EXTRA_VALIDITY_CHECKS=1
+          else
+            echo "Unknown configuration" && exit 1
+          fi
+
+      - name: Build PoCL
+        id: build_pocl
+        timeout-minutes: 20
+        run: |
+          cd ${{ github.workspace }}/build && make -j$(nproc)
+
+      - name: Run Tests
+        id: ctest
+        run: |
+          runCTest() {
+            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
+          }
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
           if [ "${{ matrix.config }}" == "asan" ]; then
             runCTest -L "runtime|asan"
           elif [ "${{ matrix.config }}" == "tsan" ]; then
@@ -142,12 +226,6 @@ jobs:
             runCTest -L internal
           elif [ "${{ matrix.config }}" == "devel" ]; then
             runCTest -L internal
-          elif [ "${{ matrix.config }}" == "cts_spirv" ]; then
-            runCTest -L conformance_suite_micro_spirv
-          elif [ "${{ matrix.config }}" == "tier1" ]; then
-            runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
-          elif [ "${{ matrix.config }}" == "chipstar" ]; then
-            runCTest -L chipStar
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -333,7 +411,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # only 16 is enabled, but 15 & 17 should also work
+        # 15 to 17 should work, however 17 currently fails two tests (fp16)
         llvm: [16]
         config: [openasip]
 
@@ -455,13 +533,14 @@ jobs:
           mkdir ${{ env.POCL_CACHE_DIR }}
           runCTest -L internal
 
+
   level_zero_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: [self-hosted, linux, level_zero]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16, 17]
+        llvm: [17, 18]
         config: [level_zero]
 
     steps:
@@ -472,15 +551,15 @@ jobs:
         run: |
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
-            LLVM_FLAGS="-DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            $LLVM_FLAGS "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
+            "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0
+          # -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }}"
+          runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
 
       - name: Run Build
         id: build

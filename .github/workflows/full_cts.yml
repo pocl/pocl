@@ -27,8 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # test with LLVM 15 & 16
-        llvm: [15, 16]
+        llvm: [17]
         config: [cts_full]
 
     steps:
@@ -44,7 +43,7 @@ jobs:
           cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
           -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
           -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
-          -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
+          -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON \
           -B ${{ github.workspace }}/build ${{ github.workspace }}
 
       - name: Run Build
