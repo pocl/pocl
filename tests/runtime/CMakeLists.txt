@@ -244,7 +244,7 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
   add_test(NAME "remote/test_command_buffer_images"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
   add_test(NAME "remote/test_command_buffer_multi_device"
-           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_multi_device")
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_multi_device")
   add_test(NAME "remote/test_pinned_buffers"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_pinned_buffers")
   add_test(NAME "remote/test_svm"

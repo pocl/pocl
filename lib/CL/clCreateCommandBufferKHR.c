@@ -58,7 +58,6 @@ POname (clCreateCommandBufferKHR) (
     }
 
   cl_uint num_properties = 0;
-  int universal_sync_enabled = 0;
   if (properties != NULL)
     {
       const cl_command_buffer_properties_khr *key = 0;
@@ -83,10 +82,6 @@ POname (clCreateCommandBufferKHR) (
           switch (*key)
             {
             case CL_COMMAND_BUFFER_FLAGS_KHR:
-              if ((tmp & CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR))
-                universal_sync_enabled = 1;
-              tmp &= ~CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR;
-
               /* Simultaneous use is always supported, no action needed */
               tmp &= ~CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR;
 
@@ -103,8 +98,6 @@ POname (clCreateCommandBufferKHR) (
             }
         }
     }
-
-  POCL_GOTO_ERROR_COND ((num_queues > 1 && !pocl_cmdbuf_can_queues_sync(num_queues, queues, universal_sync_enabled)), CL_INCOMPATIBLE_COMMAND_QUEUE_KHR);
 
   cmdbuf = calloc (1, sizeof (struct _cl_command_buffer_khr));
   if (cmdbuf == NULL)

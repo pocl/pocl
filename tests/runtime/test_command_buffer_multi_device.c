@@ -53,7 +53,8 @@ main (int _argc, char **_argv)
   cl_command_queue *queues = NULL;
   cl_uint i = 0, num_devices = 0;
 
-  int err = poclu_get_multiple_devices (&platform, &context, &num_devices, &devices, &queues);
+  int err = poclu_get_multiple_devices (&platform, &context, 0, &num_devices,
+                                        &devices, &queues, 0);
   CHECK_OPENCL_ERROR_IN ("poclu_get_multiple_devices");
 
   /* Remapping capability & automatic remapping capabilities must be present */
@@ -64,34 +65,35 @@ main (int _argc, char **_argv)
       printf ("ERROR: Command buffer remapping not supported\n");
       return 77;
     }
-
-  if (num_devices < 2)
+  if (!(platform_caps & CL_COMMAND_BUFFER_PLATFORM_AUTOMATIC_REMAP_KHR))
     {
-      printf ("ERROR: Need 2+ devices for multi device command buffer testing\n");
+      printf ("ERROR: Command buffer remapping not supported\n");
       return 77;
+    }
+  if (num_devices == 1)
+    {
+      printf ("NOTE: Only 1 device available, using two queues on the same "
+              "device\n");
+      cl_command_queue *old_queue = queues;
+      queues = malloc (sizeof (cl_command_queue) * 2);
+      queues[0] = old_queue[0];
+      free (old_queue);
+
+      queues[1] = clCreateCommandQueue (context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
+
+      cl_device_id *old_device = devices;
+      devices = malloc (sizeof (cl_device_id) * 2);
+      /* Duplicate the device since it is accessed later */
+      devices[0] = old_device[0];
+      devices[1] = old_device[0];
+      free (old_device);
+
+      num_devices = 2;
     }
 
   for (unsigned j = 0; j < num_devices; ++j)
     {
-      size_t extensions_size;
-      CHECK_CL_ERROR (clGetDeviceInfo(devices[j], CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, NULL, &extensions_size));
-      cl_name_version *extensions = (cl_name_version *) malloc (extensions_size);
-      CHECK_CL_ERROR (clGetDeviceInfo(devices[j], CL_DEVICE_EXTENSIONS_WITH_VERSION, extensions_size, extensions, NULL));
-      int extension_supported = 0;
-      for (unsigned i = 0; i < extensions_size / sizeof(cl_name_version); ++i)
-      {
-        cl_name_version *e = extensions+i;
-        if (strcmp(e->name, "cl_khr_command_buffer_multi_device") == 0)
-        {
-          extension_supported = 1;
-          break;
-        }
-      }
-      if (!extension_supported)
-        {
-          printf ("ERROR: cl_khr_command_buffer_multi_device extension is required");
-          return 77;
-        }
       cl_device_command_buffer_capabilities_khr device_caps;
       CHECK_CL_ERROR (clGetDeviceInfo(devices[j], CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR, sizeof (device_caps), &device_caps, NULL));
       if (!(device_caps & CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR))
@@ -186,18 +188,16 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (error);
 
   CHECK_CL_ERROR (
-      clSetKernelArg (kernel, 0, sizeof (buffer_tile1), &buffer_tile1));     
+      clSetKernelArg (kernel, 0, sizeof (buffer_tile1), &buffer_tile1));
   CHECK_CL_ERROR (
       clSetKernelArg (kernel, 1, sizeof (buffer_tile2), &buffer_tile2));
   CHECK_CL_ERROR (
       clSetKernelArg (kernel, 2, sizeof (buffer_res), &buffer_res));
 
   /* Adapted from test_command_buffer in order to cover a wide range of commands in the remap operation */
-  cl_command_buffer_properties_khr props[] =
-    {
-      CL_COMMAND_BUFFER_FLAGS_KHR, CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR | CL_COMMAND_BUFFER_UNIVERSAL_SYNC_KHR,
-      0
-    };
+  cl_command_buffer_properties_khr props[]
+      = { CL_COMMAND_BUFFER_FLAGS_KHR, CL_COMMAND_BUFFER_SIMULTANEOUS_USE_KHR,
+          0 };
   cl_command_buffer_khr command_buffer
       = ext.clCreateCommandBufferKHR (num_devices, queues, props, &error);
   CHECK_CL_ERROR (error);
