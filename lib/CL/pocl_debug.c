@@ -132,13 +132,21 @@ void pocl_debug_print_header(const char *func, unsigned line,
     filter_type_str =
         (pocl_stderr_is_a_tty ? POCL_COLOR_GREEN : " *** UNKNOWN *** ");
 
+#ifndef POCL_DEBUG_LOG_PREFIX
+#define POCL_DEBUG_LOG_PREFIX "PoCL"
+#endif
+
   if (pocl_stderr_is_a_tty)
     formatstring = POCL_COLOR_BLUE
-        "[%04i-%02i-%02i %02i:%02i:%02i.%09li]" POCL_COLOR_RESET
-        "POCL: in fn %s " POCL_COLOR_RESET "at line %u:\n %s | %9s | ";
+        "[%04i-%02i-%02i %02i:%02i:%02i.%09li] " POCL_COLOR_RESET
+        "" POCL_DEBUG_LOG_PREFIX ": in fn %s " POCL_COLOR_RESET
+        "at line %u:\n%s | %9s | ";
   else
-    formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] "
-                   "POCL: in fn %s at line %u:\n %s | %9s | ";
+    /* Print the log entries to a single line to enable merging of
+       PoCL-R and PoCL-D logs with 'sort client.log server.log'. */
+    formatstring
+        = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] " POCL_DEBUG_LOG_PREFIX
+          ": in fn %s at line %u: %s | %9s | ";
 
   log_printf(formatstring, year, mon, day, hour, min, sec, nanosec, func, line,
              filter_type_str, filter);
