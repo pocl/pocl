@@ -498,8 +498,7 @@ pocl_ndrange_kernel_common (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  errcode
-    = pocl_kernel_copy_args (kernel, src_arguments, &(*cmd)->command.run);
+  errcode = pocl_kernel_copy_args (kernel, src_arguments, &c->command.run);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

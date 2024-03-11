@@ -2344,6 +2344,7 @@ pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
                                            &dst_node->command.run);
       if (errcode != CL_SUCCESS)
         return CL_OUT_OF_HOST_MEMORY;
+      dst_node->program_device_i = src_node->program_device_i;
       break;
 
     case CL_COMMAND_FILL_BUFFER:

@@ -147,8 +147,8 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
           ulong *groups = cmd->command.run.pc.num_groups;
           size_t global_size[3]
             = { local_size[0] * groups[0],
-                work_dim > 1 ? (local_size[1] * groups[1]) : 0,
-                work_dim > 2 ? (local_size[2] * groups[2]) : 0 };
+                work_dim > 1 ? (local_size[1] * groups[1]) : 1,
+                work_dim > 2 ? (local_size[2] * groups[2]) : 1 };
 
           /* Re-record cmd using the original command's kernel arguments.
            *
