@@ -608,7 +608,10 @@ SharedCLContext::SharedCLContext(cl::Platform *p, unsigned pid,
   }
 #endif
 
-  size_t MaxSVMAllocSize = SIZE_MAX;
+  size_t CustomMaxSVMAllocSize =
+      pocl_get_int_option("POCLD_COARSE_GRAIN_SVM_MAX_SIZE", 0) * 1024 * 1024;
+  size_t MaxSVMAllocSize =
+      CustomMaxSVMAllocSize > 0 ? CustomMaxSVMAllocSize : SIZE_MAX;
   size_t MaxTotalAllocatableSVM = SIZE_MAX;
   for (auto Dev : CLDevices) {
     std::string Extensions = CLDevices[0].getInfo<CL_DEVICE_EXTENSIONS>();
