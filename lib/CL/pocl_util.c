@@ -1269,7 +1269,7 @@ pocl_create_recorded_command (_cl_command_node **cmd,
    * index again here */
   for (unsigned i = 0; i < command_buffer->num_queues; ++i)
   {
-    if (command_buffer->queues[i])
+    if (command_buffer->queues[i] == command_queue)
       (*cmd)->queue_idx = i;
   }
 
