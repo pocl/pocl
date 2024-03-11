@@ -1254,6 +1254,10 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  POCL_RETURN_ERROR_COND (
+    (can_run_command (command_queue->device, num_buffers, buffers) != CL_TRUE),
+    CL_OUT_OF_RESOURCES);
+
   *cmd = pocl_mem_manager_new_command ();
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
   (*cmd)->type = command_type;

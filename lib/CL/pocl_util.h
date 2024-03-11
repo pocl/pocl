@@ -332,7 +332,7 @@ void pocl_str_tolower (char *out, const char *in);
 #endif
 
 /* Common macro for cleaning up "*GetInfo" API call implementations.
- * All the *GetInfo functions have been specified to look alike, 
+ * All the *GetInfo functions have been specified to look alike,
  * and have been implemented to use the same variable names, so this
  * code can be shared.
  */

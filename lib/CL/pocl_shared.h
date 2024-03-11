@@ -84,13 +84,35 @@ cl_int pocl_kernel_copy_args (cl_kernel kernel,
                               _cl_command_run *command);
 
 cl_int pocl_ndrange_kernel_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    const cl_ndrange_kernel_command_properties_khr *properties,
-    cl_kernel kernel, cl_uint work_dim, const size_t *global_work_offset,
-    const size_t *global_work_size, const size_t *local_work_size,
-    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
-    cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point_p, _cl_command_node **cmd);
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_event *event_wait_list,
+  cl_event *event_p,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p,
+  _cl_command_node **cmd);
+
+cl_int pocl_record_ndrange_kernel (
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p);
 
 cl_int pocl_rect_copy (cl_command_buffer_khr command_buffer,
                        cl_command_queue command_queue,
