@@ -240,6 +240,169 @@ int TestCGSVM() {
     return EXIT_FAILURE;
 }
 
+int TestMultiDevice_CGSVM() {
+
+  unsigned Errors = 0;
+  bool AllOK = true;
+
+  try {
+    std::vector<cl::Platform> PlatformList;
+
+    cl::Platform::get(&PlatformList);
+
+    cl_context_properties cprops[] = {
+        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
+
+    std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
+
+    std::vector<cl::Device> SuitableDevices;
+
+    for (cl::Device &Dev : Devices) {
+      if (Dev.getInfo<CL_DEVICE_SVM_CAPABILITIES>() &
+          CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+        SuitableDevices.push_back(Dev);
+      } else {
+        std::cout << "Device '" << Dev.getInfo<CL_DEVICE_NAME>()
+                  << "' doesn't support CG SVM." << std::endl;
+        continue;
+      }
+    }
+
+    if (SuitableDevices.size() < 2) {
+      std::cout << "At least 2 devices with SVM coarse grain buffer "
+                   "capabilities needed."
+                << std::endl;
+      return 77;
+    }
+
+    // Test that an allocation has the same virtual address in each device and
+    // the host.
+    int *CGSVMBuf = (int *)::clSVMAlloc(Context.get(), CL_MEM_READ_WRITE,
+                                        sizeof(cl_int) * N_ELEMENTS, 0);
+    if (CGSVMBuf == nullptr) {
+      std::cerr << "CG SVM allocation returned a nullptr." << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    cl::Program::Sources Sources({GetAddrSourceCode});
+    cl::Program Program(Context, Sources);
+
+    Program.build(SuitableDevices, SET_N_ELEMENTS(N_ELEMENTS));
+
+    cl::Kernel GetAddrKernel(Program, "get_addr");
+
+    std::map<cl::Device *, cl::CommandQueue *> Queues;
+    for (cl::Device &Device : SuitableDevices) {
+      cl::CommandQueue *Q = new cl::CommandQueue(Context, Device, 0);
+      Queues[&Device] = Q;
+    }
+
+    // Check that the SVM addresses of the SVM buf are the same in
+    // the device side.
+    for (cl::Device &Device : SuitableDevices) {
+      cl::CommandQueue &Queue = *Queues[&Device];
+
+      cl_ulong AddrFromKernel = 1;
+
+      cl::Buffer AddrCLBuffer =
+          cl::Buffer(Context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong), nullptr);
+
+      ::clSetKernelArgSVMPointer(GetAddrKernel.get(), 0, CGSVMBuf);
+      // Now the runtime should automatically migrate the buffer to device 1
+      // input -> device 2 input etc. due to the SVM argument reference.
+
+      GetAddrKernel.setArg(1, AddrCLBuffer);
+      Queue.enqueueNDRangeKernel(GetAddrKernel, cl::NullRange, cl::NDRange(1),
+                                 cl::NullRange);
+      Queue.enqueueReadBuffer(AddrCLBuffer,
+                              CL_TRUE, // block
+                              0, sizeof(cl_ulong), (void *)&AddrFromKernel);
+      Queue.finish();
+      if (CGSVMBuf != (void *)AddrFromKernel) {
+        std::cerr << "SVM buffer's device address on kernel and host "
+                     "sides do not match. Host sees "
+                  << std::hex << CGSVMBuf << " while a device sees "
+                  << AddrFromKernel << std::endl;
+        AllOK = false;
+      }
+    }
+
+    // Check the buffer migration to and between devices with
+    // an event synch.
+    // The runtime should automatically migrate the buffer to device 1 input ->
+    // device 2 input etc. due to the SVM argument reference.
+    cl::Event PrevKernelExecutionEvent;
+
+    cl::CommandQueue &Q = *(*Queues.begin()).second;
+
+    // Initialize the SVM buf at the host side.
+    Q.enqueueMapSVM(CGSVMBuf, true, CL_MAP_WRITE, N_ELEMENTS * sizeof(cl_int));
+    for (int i = 0; i < N_ELEMENTS; ++i) {
+      CGSVMBuf[i] = i + 1;
+    }
+    Q.enqueueUnmapSVM(CGSVMBuf);
+
+    for (cl::Device &Device : SuitableDevices) {
+      cl::CommandQueue &Queue = *Queues[&Device];
+
+      cl_ulong AddrFromKernel = 1;
+
+      cl::Buffer AddrCLBuffer =
+          cl::Buffer(Context, CL_MEM_WRITE_ONLY, sizeof(cl_ulong), nullptr);
+
+      ::clSetKernelArgSVMPointer(GetAddrKernel.get(), 0, CGSVMBuf);
+
+      GetAddrKernel.setArg(1, AddrCLBuffer);
+
+      std::vector<cl::Event> WaitEvents;
+      if (&Device != &*(SuitableDevices.begin()))
+        WaitEvents.push_back(PrevKernelExecutionEvent);
+
+      Queue.enqueueNDRangeKernel(GetAddrKernel, cl::NullRange, cl::NDRange(1),
+                                 cl::NullRange, &WaitEvents,
+                                 &PrevKernelExecutionEvent);
+      Queue.enqueueReadBuffer(AddrCLBuffer,
+                              CL_TRUE, // block
+                              0, sizeof(cl_ulong), (void *)&AddrFromKernel);
+    }
+
+    cl::CommandQueue &LastQ = *Queues[&SuitableDevices.back()];
+    LastQ.finish();
+
+    // After all devices have finished execution, check the kernel check the
+    // result.
+    LastQ.enqueueMapSVM(CGSVMBuf, true, CL_MAP_READ,
+                        N_ELEMENTS * sizeof(cl_int));
+    for (int i = 0; i < N_ELEMENTS; ++i) {
+      int Expected = i + 1 + Devices.size();
+      if (CGSVMBuf[i] != Expected) {
+        std::cerr << "SVM buffer element " << i
+                  << " was not incremented by all devices "
+                     "as expected: got "
+                  << CGSVMBuf[i] << " expected " << Expected << std::endl;
+        AllOK = false;
+      }
+    }
+
+    for (cl::Device &Device : SuitableDevices) {
+      delete Queues[&Device];
+    }
+    // TODO: run with multiple devices in the PoCL suite
+
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << " (" << err.err() << ")"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  if (AllOK) {
+    printf("PASSED\n");
+    return EXIT_SUCCESS;
+  } else
+    return EXIT_FAILURE;
+}
+
 static char SimpleKernelSourceCode[] = R"raw(
 
   __kernel void simple_kernel(__global int *Out,
@@ -784,8 +947,12 @@ int main() {
   if (TestSSVM() == EXIT_FAILURE)
     return EXIT_FAILURE;
 
+  std::cout << "TestMultiDevice_CGSVM: ";
+  if (TestMultiDevice_CGSVM() == EXIT_FAILURE)
+    return EXIT_FAILURE;
+
   std::cout << "OK" << std::endl;
   CHECK_CL_ERROR(clUnloadCompiler());
- 
+
   return EXIT_SUCCESS;
 }

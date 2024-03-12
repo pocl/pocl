@@ -103,16 +103,22 @@ POname(clSVMAlloc)(cl_context context,
   if (ptr == NULL)
     {
       POCL_MEM_FREE (item);
-      POCL_MSG_ERR ("Device failed to allocate SVM memory");
+      POCL_MSG_ERR ("SVM manager device failed to allocate memory.\n");
       return NULL;
     }
 
+  POCL_LOCK_OBJ (context);
+  item->svm_ptr = ptr;
+  item->size = size;
+  DL_APPEND (context->svm_ptrs, item);
+  POCL_UNLOCK_OBJ (context);
+
   /* Create a shadow cl_mem object for keeping track of the SVM
      allocation and to implement automated migrations, cl_pocl_content_size,
-     etc. for CG SVM using the same code paths as with cl_mems. */
+     etc. for CG SVM using the same code as with non-SVM cl_mems. */
 
-  /* TODO: FOR REMOTE: This bounces down to the server again although we should
-     just return quickly with the ptr set. */
+  /* For remote devices using CL_MEM_PINNED actually allocates storage from
+     the remote as well. */
   cl_int errcode = CL_SUCCESS;
   cl_mem clmem_shadow = POname (clCreateBuffer) (
       context, CL_MEM_PINNED | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, size,
@@ -120,16 +126,11 @@ POname(clSVMAlloc)(cl_context context,
 
   if (errcode != CL_SUCCESS)
     {
-      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.");
+      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.\n");
       return NULL;
     }
 
-  POCL_LOCK_OBJ (context);
-  item->svm_ptr = ptr;
-  item->size = size;
   item->shadow_cl_mem = clmem_shadow;
-  DL_APPEND (context->svm_ptrs, item);
-  POCL_UNLOCK_OBJ (context);
 
   POname (clRetainContext) (context);
 

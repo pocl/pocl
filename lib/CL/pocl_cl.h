@@ -677,8 +677,8 @@ struct pocl_device_ops {
   int (*init_queue) (cl_device_id device, cl_command_queue queue);
   int (*free_queue) (cl_device_id device, cl_command_queue queue);
 
-  /* Optional. if the driver needs to use hardware resources
-   * for contexts, it should use these callbacks */
+  /* Optional. if the driver needs to use per-context resources,
+   * it should use these callbacks for management. */
   int (*init_context) (cl_device_id device, cl_context context);
   int (*free_context) (cl_device_id device, cl_context context);
 
@@ -1169,7 +1169,7 @@ struct _pocl_svm_ptr
   void *svm_ptr;
   size_t size;
   /* A CL_MEM_PINNED cl_mem with device and host ptr the same. This is for
-     internal book keeping and automated migration purposes. */
+     internal bookkeeping and automated buffer migration purposes. */
   cl_mem shadow_cl_mem;
   struct _pocl_svm_ptr *prev, *next;
 };
@@ -1213,7 +1213,7 @@ struct _cl_context {
 
   /* for enqueueing migration commands. Two reasons:
    * 1) since migration commands can execute in parallel
-   * to other commands, we can increase paralelism
+   * to other commands, we can increase parallelism
    * 2) in some cases (migration between 2 devices through
    * host memory), we need to put two commands in two queues,
    * and the clEnqueueX only gives us one (on the destination
@@ -1228,7 +1228,7 @@ struct _cl_context {
    */
   size_t min_buffer_alignment;
 
-  /* list of destructor callbacks */
+  /* List of destructor callbacks */
   context_destructor_callback_t *destructor_callbacks;
 
   /* list of SVM & USM allocations */

@@ -46,6 +46,7 @@
 #include "pocl_networking.h"
 #include "pocl_timing.h"
 #include "pocl_util.h"
+#include "remote.h"
 #include "utlist.h"
 #include <CL/cl.h>
 
@@ -1751,19 +1752,15 @@ pocl_network_init_device (cl_device_id device, remote_device_data_t *ddata,
 
   char *tmp = strdup (parameters);
 
-  char *address_with_port = strtok (tmp, "/");
-  if (address_with_port == NULL)
+  uint32_t did = 0;
+  if (strchr (tmp, '/') != NULL)
     {
-      // TODO: this check is insufficient
-      POCL_MEM_FREE (tmp);
-      POCL_MSG_ERR ("Remote device index not specified!\n");
-      return CL_INVALID_DEVICE;
+      /* determine device ID from parameters */
+      char *address_with_port = strtok (tmp, "/");
+      char *did_str = tmp + strlen (address_with_port) + 1;
+      did = (uint32_t)atoi (did_str);
     }
-  size_t awp_len = strlen (address_with_port);
 
-  // determine device ID
-  char *did_str = tmp + strlen (address_with_port) + 1;
-  uint32_t did = (uint32_t)atoi (did_str);
   char address_with_guaranteed_port[MAX_ADDRESS_PORT_SIZE] = {};
 
   char address[MAX_ADDRESS_SIZE];
