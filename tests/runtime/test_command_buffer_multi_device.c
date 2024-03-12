@@ -358,6 +358,7 @@ main (int _argc, char **_argv)
     {
       CHECK_CL_ERROR (clReleaseCommandQueue (queues[i]));
     }
+  free (queues);
 
   CHECK_CL_ERROR (clReleaseMemObject (buffer_src1));
   CHECK_CL_ERROR (clReleaseMemObject (buffer_src2));
@@ -373,6 +374,8 @@ main (int _argc, char **_argv)
   CHECK_CL_ERROR (clReleaseKernel (kernel));
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseContext (context));
+
+  free (devices);
 
   printf ("OK\n");
   return EXIT_SUCCESS;
