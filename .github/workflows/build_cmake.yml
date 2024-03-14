@@ -42,7 +42,7 @@ jobs:
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
         # chipstar 1.1 only supports LLVM up to 17
-        config: [cts_spirv, tier1, chipstar]
+        config: [cts_spirv, tier1, chipstar, asan, tsan, ubsan]
         exclude:
           - llvm: 18
             config: chipstar
@@ -73,6 +73,12 @@ jobs:
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             mkdir -p /home/github/examples/build_chipstar
             runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_chipstar
+          elif [ "${{ matrix.config }}" == "asan" ]; then
+            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
+          elif [ "${{ matrix.config }}" == "tsan" ]; then
+            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
+          elif [ "${{ matrix.config }}" == "ubsan" ]; then
+            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -105,6 +111,12 @@ jobs:
             runCTest -L "amdsdk_30|piglit|PyOpenCL|conformance_suite_micro_main|IntelSVM"
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             runCTest -L chipStar
+          elif [ "${{ matrix.config }}" == "asan" ]; then
+            runCTest -L "runtime|asan"
+          elif [ "${{ matrix.config }}" == "tsan" ]; then
+            runCTest -L "internal|tsan" -E "clCreateSubDevices"
+          elif [ "${{ matrix.config }}" == "ubsan" ]; then
+            runCTest -L "internal|ubsan"
           else
             echo "Unknown configuration" && exit 1
           fi
@@ -122,7 +134,7 @@ jobs:
         # tier1 = includes CTS without SPIR-V
         # asan, tsan, ubsan = sanitizers
         # chipstar 1.1 only supports LLVM up to 17
-        config: [basic, devel, asan, tsan, ubsan]
+        config: [basic, devel]
         include:
           - llvm: 14
             config: OpenMP
@@ -176,13 +188,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          if [ "${{ matrix.config }}" == "asan" ]; then
-            runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF
-          elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCMake -DENABLE_TSAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
-          elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCMake -DENABLE_UBSAN=1 -DENABLE_LATEST_CXX_STD=ON -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0
-          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+          if [ "${{ matrix.config }}" == "OpenMP" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_HOST_CPU_DEVICES_OPENMP=1
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCMake -DENABLE_ICD=1 -DENABLE_TBB_DEVICE=1
@@ -210,13 +216,7 @@ jobs:
           }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "asan" ]; then
-            runCTest -L "runtime|asan"
-          elif [ "${{ matrix.config }}" == "tsan" ]; then
-            runCTest -L "internal|tsan" -E "clCreateSubDevices"
-          elif [ "${{ matrix.config }}" == "ubsan" ]; then
-            runCTest -L "internal|ubsan"
-          elif [ "${{ matrix.config }}" == "OpenMP" ]; then
+          if [ "${{ matrix.config }}" == "OpenMP" ]; then
             runCTest -L internal
           elif [ "${{ matrix.config }}" == "TBB" ]; then
             runCTest -L internal
