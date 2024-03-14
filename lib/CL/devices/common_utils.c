@@ -105,9 +105,8 @@ align_ptr (char *p)
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
-/* initializes CPU-specific device info struct members, that cannot / should
+/* Initializes CPU-specific device info default, that cannot / should
    not be initialized in pocl_init_default_device_infos() */
-
 cl_int
 pocl_cpu_init_common (cl_device_id device)
 {

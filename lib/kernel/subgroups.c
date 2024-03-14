@@ -29,37 +29,11 @@
 
 #include <math.h>
 
-/**
- * \brief Internal pseudo function which allocates space from the work-group
- * thread's stack (basically local memory) for each work-item.
- *
- * It's expanded in WorkitemLoops.cc to an alloca().
- *
- * @param element_size The size of an element to allocate (for all WIs in the
- * WG).
- * @param align The alignment of the start of chunk.
- * @param extra_bytes extra bytes to add to the allocation, some functions need
- * extra space
- * @return pointer to the allocated stack space (freed at unwind).
- */
-void *__pocl_work_group_alloca (size_t element_size, size_t align,
-                                size_t extra_bytes);
-
-/**
- * \brief Internal pseudo function which allocates space from the work-group
- * thread's stack (basically local memory).
- *
- * It's expanded in WorkitemLoops.cc to an alloca().
- *
- * @param bytes The size of data to allocate in bytes.
- * @param align The alignment of the start of chunk.
- * @return pointer to the allocated stack space (freed at unwind).
- */
-void *__pocl_local_mem_alloca (size_t bytes, size_t align);
-
-size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
+#include "work_group_alloca.h"
 
 size_t _CL_OVERLOADABLE get_local_id (unsigned int dimindx);
+size_t _CL_OVERLOADABLE get_local_linear_id (void);
+size_t _CL_OVERLOADABLE get_local_size (unsigned int dimindx);
 
 /* Magic variable that is expanded in Workgroup.cc */
 extern uint _pocl_sub_group_size;
@@ -88,8 +62,6 @@ get_enqueued_num_sub_groups (void)
 {
   return 1;
 }
-
-size_t _CL_OVERLOADABLE get_local_linear_id (void);
 
 uint _CL_OVERLOADABLE
 get_sub_group_id (void)

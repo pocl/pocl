@@ -1984,7 +1984,7 @@ pocl_setup_ils_with_version (cl_device_id dev)
     }
 }
 
-static const cl_name_version OPENCL_FEATURES[] = {
+static const cl_name_version OPENCL_C_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_3d_image_writes" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_images" },
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_read_write_images" },
@@ -2013,15 +2013,15 @@ static const cl_name_version OPENCL_FEATURES[] = {
   { CL_MAKE_VERSION (3, 0, 0), "__opencl_c_ext_fp64_local_atomic_min_max" },
 };
 
-const size_t OPENCL_FEATURES_NUM
-    = sizeof (OPENCL_FEATURES) / sizeof (OPENCL_FEATURES[0]);
+const size_t OPENCL_C_FEATURES_NUM
+    = sizeof (OPENCL_C_FEATURES) / sizeof (OPENCL_C_FEATURES[0]);
 
 void
 pocl_setup_features_with_version (cl_device_id dev)
 {
   cl_name_version *tmp = NULL;
   unsigned ret = pocl_space_delim_string_to_cl_name_version_array (
-      &tmp, dev->features, OPENCL_FEATURES, OPENCL_FEATURES_NUM);
+      &tmp, dev->features, OPENCL_C_FEATURES, OPENCL_C_FEATURES_NUM);
 
   dev->num_opencl_features_with_version = ret;
   dev->opencl_features_with_version = tmp;

@@ -92,12 +92,11 @@ void pocl_cache_program_path(char*        path,
   program_device_dir (path, program, device_i, "");
 }
 
-// required in llvm API
 void pocl_cache_program_bc_path(char*        program_bc_path,
                                 cl_program   program,
                                 unsigned     device_i) {
-    program_device_dir(program_bc_path, program,
-                       device_i, POCL_PROGRAM_BC_FILENAME);
+  program_device_dir (program_bc_path, program,
+                      device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
 void

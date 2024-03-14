@@ -2,14 +2,6 @@
 Release Notes for PoCL 6.0
 **************************
 
-
-
-Minimal support for `cl_khr_priority_hints` and `cl_khr_throttle_hints` has been added.
-As the extension specification states that these hints provide no guarantees of
-any particular behavior (or lack thereof) they are treated as a no-op. However
-specifying them no longer causes `clCreateCommandQueueWithProperties` to return
-an error.
-
 ============================
 New device driver: cpu-tbb
 ============================
@@ -17,6 +9,16 @@ New device driver: cpu-tbb
 The cpu-tbb device driver uses the Intel oneAPI Threading Building Blocks (oneTBB)
 library for work-group and kernel-level task scheduling. Except for the
 task scheduler, the driver is identical to the original 'cpu' driver (pthread).
+
+=====================================
+Command queue priority/throttle hints
+=====================================
+
+Minimal support for `cl_khr_priority_hints` and `cl_khr_throttle_hints` has been added.
+As the extension specification states that these hints provide no guarantees of
+any particular behavior (or lack thereof) they are treated as a no-op. However
+specifying them no longer causes `clCreateCommandQueueWithProperties` to return
+an error.
 
 ===========================
 Driver-specific features
