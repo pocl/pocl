@@ -114,7 +114,7 @@ main ()
     printf ("binary size [%zd]: %zd\n", i, binsizes[i]);
 
   CHECK_CL_ERROR (clReleaseProgram (program));
-
+  CHECK_CL_ERROR (clReleaseCommandQueue (command_queue));
   CHECK_CL_ERROR (clReleaseContext (context));
 
   printf ("OK\n");
