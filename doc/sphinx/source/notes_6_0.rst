@@ -28,9 +28,12 @@ Driver-specific features
 CPU driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The 'cpu' driver gained support for using OpenMP for thread scheduling.
-Support is disabled by default, but can be enabled with CMake option. The
-'cpu-minimal' driver does not support OpenMP.
+ * Support for using OpenMP for task scheduling was added. It is disabled
+   by default, but can be enabled with CMake option. The 'cpu-minimal'
+   driver does not support OpenMP since it's supposed to be single-threaded.
+ * The CPU drivers can be now used for running SYCL programs compiled with
+   the oneAPI binary distributions of DPC++ by adding the following environment
+   settings: **POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000 POCL_CPU_VENDOR_ID_OVERRIDE=32902**.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote

@@ -160,6 +160,14 @@ pocl.
  'cpu' device driver. The default is to determine this from the number of
  hardware threads available in the CPU.
 
+- **POCL_CPU_VENDOR_ID_OVERRIDE**
+
+ Overrides the vendor id reported by PoCL for the CPU drivers.
+ For example, setting the vendor id to be 32902 (0x8086) and setting the driver
+ version using **POCL_DRIVER_VER_OVERRIDE** to "2023.16.7.0.21_160000" (or such) can
+ be used to convince binary-distributed DPC++ compilers to compile and run SYCL
+ programs on the PoCL-CPU driver.
+
 - **POCL_DEBUG**
 
  Enables debug messages to stderr. This will be mostly messages from error
@@ -221,6 +229,11 @@ pocl.
  the architecture description file of the tta to simulate as a parameter.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
+
+- **POCL_DRIVER_VERSION_OVERRIDE**
+
+  Can be used to override the driver version reported by PoCL.
+  See **POCL_CPU_VENDOR_ID_OVERRIDE** for an example use case.
 
 - **POCL_EXTRA_BUILD_FLAGS**
 
