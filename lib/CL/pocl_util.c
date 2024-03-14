@@ -1170,12 +1170,43 @@ pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
 }
 
 cl_int
+pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
+                                 const cl_command_queue *queues)
+{
+  POCL_RETURN_ERROR_COND ((num_queues == 0), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND ((queues == NULL), CL_INVALID_VALUE);
+
+  /* All queues must have the same OpenCL context */
+  cl_context ref_ctx = queues[0]->context;
+
+  for (unsigned i = 0; i < num_queues; ++i)
+    {
+      /* All queues must be valid Command queue objects */
+      POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (queues[i])),
+                            CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->device == NULL),
+                            CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->context == NULL),
+                            CL_INVALID_COMMAND_QUEUE);
+
+      POCL_RETURN_ERROR_COND ((queues[i]->context != ref_ctx),
+                            CL_INVALID_COMMAND_QUEUE);
+    }
+
+  return CL_SUCCESS;
+}
+
+cl_int
 pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
                                     cl_command_queue *command_queue)
 {
   assert (command_queue != NULL);
   cl_command_queue q = *command_queue;
-  POCL_RETURN_ERROR_COND ((q != NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND ((q == NULL && command_buffer->num_queues != 1),
+                          CL_INVALID_COMMAND_QUEUE);
 
   if (q)
     {
@@ -1197,6 +1228,18 @@ pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
   return CL_SUCCESS;
 }
 
+cl_command_buffer_properties_khr
+pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
+              cl_command_buffer_properties_khr name)
+{
+  for (unsigned i = 0; i < command_buffer->num_properties; ++i)
+    {
+      if (command_buffer->properties[2 * i] == name)
+        return command_buffer->properties[2 * i + 1];
+    }
+  return 0;
+}
+
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_buffer_khr command_buffer,
@@ -1211,10 +1254,24 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  POCL_RETURN_ERROR_COND (
+    (can_run_command (command_queue->device, num_buffers, buffers) != CL_TRUE),
+    CL_OUT_OF_RESOURCES);
+
   *cmd = pocl_mem_manager_new_command ();
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
   (*cmd)->type = command_type;
   (*cmd)->buffered = 1;
+
+  /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
+   * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
+   * but at that time *cmd was not allocated at that time, so find the queue
+   * index again here */
+  for (unsigned i = 0; i < command_buffer->num_queues; ++i)
+  {
+    if (command_buffer->queues[i] == command_queue)
+      (*cmd)->queue_idx = i;
+  }
 
   (*cmd)->sync.syncpoint.num_sync_points_in_wait_list = num_deps;
   if (num_deps > 0)
@@ -2287,6 +2344,7 @@ pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
                                            &dst_node->command.run);
       if (errcode != CL_SUCCESS)
         return CL_OUT_OF_HOST_MEMORY;
+      dst_node->program_device_i = src_node->program_device_i;
       break;
 
     case CL_COMMAND_FILL_BUFFER:

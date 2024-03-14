@@ -24,7 +24,6 @@
 #include <CL/cl_ext.h>
 
 #include "pocl_cl.h"
-#include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
