@@ -207,9 +207,9 @@ pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
 {
   int bytes_written;
   char tempstring[POCL_MAX_PATHNAME_LENGTH];
-  char file_name[POCL_MAX_DIRNAME_LENGTH + 1];
+  char file_name[POCL_MAX_FILENAME_LENGTH + 1];
 
-  pocl_hash_clipped_name (kernel_name, POCL_MAX_DIRNAME_LENGTH, &file_name[0]);
+  pocl_hash_clipped_name (kernel_name, POCL_MAX_FILENAME_LENGTH, &file_name[0]);
 
   bytes_written
       = snprintf (tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s", file_name);

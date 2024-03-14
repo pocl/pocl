@@ -686,7 +686,7 @@ setup_relevant_devices (cl_program program, cl_device_id device,
   remote_server_data_t *server
       = ((remote_device_data_t *)device->data)->server;
   unsigned num_relevant_devices = 0;
-  char program_bc_path[POCL_MAX_FILENAME_LENGTH];
+  char program_bc_path[POCL_MAX_PATHNAME_LENGTH];
   unsigned i, j;
 
   for (i = 0; i < program->num_devices; ++i)
