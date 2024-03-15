@@ -1260,9 +1260,12 @@ bool createSPIRVWithSVMOffset(const std::vector<unsigned char> *InputSPV,
     LibPoCLPath /=
         std::filesystem::path(BUILDDIR) / "lib" / "CL" / "libpocl.so";
 
+  // Without -strip-debug there might be crashes due to llvm-spirv
+  // not detecting its own produced debug output sometimes (to
+  // report).
   OptCmd << LLVM_OPT << " -load-pass-plugin=" << LibPoCLPath
-         << " -passes=svm-offset -svm-offset-value=" << SVMOffset << " "
-         << OrigBcFileName << " -o " << OffsettedBcFileName;
+         << " -strip-debug -passes=svm-offset -svm-offset-value=" << SVMOffset
+         << " " << OrigBcFileName << " -o " << OffsettedBcFileName;
 
   if (system(OptCmd.str().c_str()) != EXIT_SUCCESS)
     return false;

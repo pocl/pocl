@@ -128,16 +128,13 @@ CL_API_SUFFIX__VERSION_2_1
   POCL_GOTO_ERROR_COND ((length == 0), CL_INVALID_VALUE);
 
   int is_spirv = 0;
-#ifdef ENABLE_SPIRV
   int is_spirv_kernel
       = pocl_bitcode_is_spirv_execmodel_kernel ((const char *)il, length);
   is_spirv += is_spirv_kernel;
-#endif
-#ifdef ENABLE_VULKAN
+
   int is_spirv_shader
       = pocl_bitcode_is_spirv_execmodel_shader ((const char *)il, length);
   is_spirv += is_spirv_shader;
-#endif
 
   POCL_GOTO_ERROR_ON (
       (!is_spirv), CL_INVALID_VALUE,

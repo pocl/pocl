@@ -139,6 +139,7 @@ vload_store_half_f16c.c
 vstore.cl
 vstore_half.cl
 wait_group_events.cl
+work_group.c
 write_image.cl
 
 ###################################################################

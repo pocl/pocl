@@ -152,6 +152,9 @@ ERROR:
   if (context)
     clReleaseContext (context);
 
+  free (source);
+  free (devices);
+
   if (err == CL_SUCCESS)
     {
       printf ("OK\n");

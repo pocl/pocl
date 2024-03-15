@@ -47,9 +47,11 @@
 /* detects restrict, variadic macros etc */
 #include "pocl_compiler_features.h"
 
-/* The maximum file, directory and path name lengths. TODO: These should be
-   detected from the filesystem properties of the execution platform. */
-#define POCL_MAX_DIRNAME_LENGTH 255
+/* The maximum file, directory and path name lengths.
+   NOTE: GDB seems to fail to load symbols from .so files which have
+   longer pathnames than 511, thus the quite small dir/filename length
+   limiter. */
+#define POCL_MAX_DIRNAME_LENGTH 64
 #define POCL_MAX_FILENAME_LENGTH (POCL_MAX_DIRNAME_LENGTH)
 #define POCL_MAX_PATHNAME_LENGTH 4096
 

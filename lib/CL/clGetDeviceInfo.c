@@ -61,14 +61,14 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_IMAGE_SUPPORT:
     POCL_RETURN_GETINFO(cl_bool, device->image_support);
   case CL_DEVICE_TYPE:
-    POCL_RETURN_GETINFO(cl_device_type, device->type);   
+    POCL_RETURN_GETINFO (cl_device_type, device->type);
   case CL_DEVICE_VENDOR_ID:
     POCL_RETURN_GETINFO(cl_uint, device->vendor_id);
   case CL_DEVICE_MAX_COMPUTE_UNITS:
     POCL_RETURN_GETINFO(cl_uint, device->max_compute_units);
   case CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS          :
     POCL_RETURN_GETINFO(cl_uint, device->max_work_item_dimensions);
-  case CL_DEVICE_MAX_WORK_GROUP_SIZE               : 
+  case CL_DEVICE_MAX_WORK_GROUP_SIZE:
     {
       size_t max_wg_size = device->max_work_group_size;
       POCL_RETURN_GETINFO(size_t, max_wg_size);
@@ -342,7 +342,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:
     POCL_RETURN_GETINFO (cl_bool, device->non_uniform_work_group_support);
   case CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT:
-    POCL_RETURN_GETINFO (cl_bool, CL_FALSE);
+    POCL_RETURN_GETINFO (cl_bool, device->wg_collective_func_support);
   case CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT:
     POCL_RETURN_GETINFO (cl_bool, device->generic_as_support);
   case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:

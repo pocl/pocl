@@ -92,12 +92,11 @@ void pocl_cache_program_path(char*        path,
   program_device_dir (path, program, device_i, "");
 }
 
-// required in llvm API
 void pocl_cache_program_bc_path(char*        program_bc_path,
                                 cl_program   program,
                                 unsigned     device_i) {
-    program_device_dir(program_bc_path, program,
-                       device_i, POCL_PROGRAM_BC_FILENAME);
+  program_device_dir (program_bc_path, program,
+                      device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
 void
@@ -208,9 +207,9 @@ pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
 {
   int bytes_written;
   char tempstring[POCL_MAX_PATHNAME_LENGTH];
-  char file_name[POCL_MAX_DIRNAME_LENGTH + 1];
+  char file_name[POCL_MAX_FILENAME_LENGTH + 1];
 
-  pocl_hash_clipped_name (kernel_name, POCL_MAX_DIRNAME_LENGTH, &file_name[0]);
+  pocl_hash_clipped_name (kernel_name, POCL_MAX_FILENAME_LENGTH, &file_name[0]);
 
   bytes_written
       = snprintf (tempstring, POCL_MAX_PATHNAME_LENGTH, "/%s", file_name);

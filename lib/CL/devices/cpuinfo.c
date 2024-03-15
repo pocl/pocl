@@ -305,7 +305,8 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   /* default vendor and vendor_id, in case it cannot be found by other means */
   device->vendor = cpuvendor_default;
   if (device->vendor_id == 0)
-    device->vendor_id = CL_KHRONOS_VENDOR_ID_POCL;
+    device->vendor_id = pocl_get_int_option ("POCL_CPU_VENDOR_ID_OVERRIDE",
+                                             CL_KHRONOS_VENDOR_ID_POCL);
 
   /* read contents of /proc/cpuinfo */
   if (access (cpuinfo, R_OK) != 0)
@@ -313,7 +314,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 
   FILE *f = fopen (cpuinfo, "r");
   char contents[MAX_CPUINFO_SIZE];
-  int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
+  int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);
   fclose(f);
   contents[num_read]='\0';
 

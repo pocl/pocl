@@ -1325,7 +1325,8 @@ cl_exp_pinned_buffers")
 set(HOST_DEVICE_FEATURES_30 "__opencl_c_3d_image_writes  __opencl_c_images \
 __opencl_c_atomic_order_acq_rel __opencl_c_atomic_order_seq_cst \
 __opencl_c_atomic_scope_device __opencl_c_program_scope_global_variables \
-__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space")
+__opencl_c_atomic_scope_all_devices __opencl_c_generic_address_space \
+__opencl_c_work_group_collective_functions")
 
 # Host CPU device: extensions only enabled when conformance is OFF
 if(NOT ENABLE_CONFORMANCE)
