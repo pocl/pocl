@@ -23,12 +23,21 @@
 #
 #=============================================================================
 
-add_pocl_device_library(pocl-devices-level0
+set(SOURCES pocl-devices-level0
   pocl-level0.cc pocl-level0.h
   level0-compilation.cc level0-compilation.hh
   level0-driver.cc level0-driver.hh)
+if(ENABLE_NPU)
+  list(APPEND SOURCES npu_dbk_gemm.cc npu_dbk_matmul.cc)
+endif()
+
+add_pocl_device_library(${SOURCES})
 
 set_property(TARGET pocl-devices-level0 PROPERTY CXX_STANDARD 17)
+
+if(ENABLE_NPU)
+  target_include_directories(pocl-devices-level0 PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/npu/include")
+endif()
 
 if(ENABLE_LOADABLE_DRIVERS)
   target_link_libraries(pocl-devices-level0 PRIVATE ${LEVEL0_LIBRARIES} ${PTHREAD_LIBRARY})

@@ -111,10 +111,18 @@ void Level0Queue::runThread() {
     BatchType WorkBatch;
     ShouldExit = WorkHandler->getWorkOrWait(&Command, WorkBatch);
     if (Command != nullptr) {
-      assert(pocl_command_is_ready(Command->sync.event.event));
-      assert(Command->sync.event.event->status == CL_SUBMITTED);
-      execCommand(Command);
-      reset();
+      // for NPU, execute only the NDRangeKernel using L0 CMD Q
+      if (Device->prefersZeQueues() ||
+          Command->type == CL_COMMAND_NDRANGE_KERNEL) {
+        assert(pocl_command_is_ready(Command->sync.event.event));
+        assert(Command->sync.event.event->status == CL_SUBMITTED);
+        execCommand(Command);
+        reset();
+      } else if (Device->prefersHostQueues()) {
+        pocl_exec_command(Command);
+      } else {
+        POCL_ABORT_UNIMPLEMENTED("unknown device type\n");
+      }
     }
     if (!WorkBatch.empty()) {
       execCommandBatch(WorkBatch);
@@ -521,7 +529,6 @@ void Level0Queue::syncMemHostPtrs() {
 void Level0Queue::execCommand(_cl_command_node *Cmd) {
 
   cl_event event = Cmd->sync.event.event;
-  ze_result_t res;
 
   const char *Msg = nullptr;
   appendEventToList(Cmd, &Msg);
@@ -590,6 +597,7 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
   }
 
   POCL_MEASURE_FINISH(ZeListExec);
+
   for (auto E : Batch) {
     assert(!Msgs.empty());
     const char *Msg = Msgs.front();
@@ -666,6 +674,7 @@ void Level0Queue::read(void *__restrict__ HostPtr,
     POCL_MSG_PRINT_LEVEL0("Read skipped, HostPtr == DevPtr\n");
     return;
   }
+
   POCL_MSG_PRINT_LEVEL0("READ from: %p to: %p offs: %zu size: %zu \n",
                         DevPtr, HostPtr, Offset, Size);
   allocNextFreeEvent();
@@ -1558,6 +1567,100 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   cl_kernel Kernel = Cmd->command.run.kernel;
   cl_program Program = Kernel->program;
   unsigned DeviceI = Cmd->program_device_i;
+  if (Program->num_builtin_kernels > 0)
+    runBuiltinKernel(RunCmd, Dev, Event, Program, Kernel, DeviceI);
+  else
+    runNDRangeKernel(RunCmd, Dev, Event, Program, Kernel, DeviceI,
+                     Cmd->migr_infos);
+}
+
+void Level0Queue::runBuiltinKernel(_cl_command_run *RunCmd,
+                                   cl_device_id Dev,
+                                   cl_event Event,
+                                   cl_program Program,
+                                   cl_kernel Kernel,
+                                   unsigned DeviceI) {
+#ifdef ENABLE_NPU
+
+  assert(Program->data[DeviceI] != nullptr);
+  Level0BuiltinProgram *L0Program = (Level0BuiltinProgram *)Program->data[DeviceI];
+  assert(Kernel->data[DeviceI] != nullptr);
+  Level0BuiltinKernel *L0Kernel = (Level0BuiltinKernel *)Kernel->data[DeviceI];
+  ze_graph_handle_t GraphH = nullptr;
+  bool Res = Device->getBestBuiltinKernel(L0Program, L0Kernel, GraphH);
+  assert(Res == true);
+  assert(GraphH);
+
+  // TODO this lock should be moved not re-locked
+  // necessary to lock the kernel, since we're setting up kernel arguments
+  // setting WG sizes and so on; this lock is released after
+  // zeCommandListAppendKernel
+  // TODO this might be not enough: we might need to hold the lock until after
+  // zeQueueSubmit
+  std::lock_guard<std::mutex> KernelLockGuard(L0Kernel->getMutex());
+
+  graph_dditable_ext_t *Ext = Device->getDriver()->getGraphExt();
+  assert(Ext);
+  ze_result_t ZeRes = ZE_RESULT_SUCCESS;
+
+  struct pocl_argument *PoclArg = RunCmd->arguments;
+
+  assert(Kernel->meta->num_locals == 0);
+  unsigned i = 0;
+  unsigned graphArgIndex = 0;
+  for (i = 0; i < Kernel->meta->num_args; ++i) {
+    if (ARG_IS_LOCAL(Kernel->meta->arg_info[i])
+        || Kernel->meta->arg_info[i].type != POCL_ARG_TYPE_POINTER) {
+      POCL_MSG_ERR("NPU driver only supports pointer args");
+      LEVEL0_CHECK_ABORT(ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    }
+    // pointer
+    assert(PoclArg[i].size == sizeof(void *));
+    if (PoclArg[i].value == NULL) {
+      POCL_MSG_ERR("NPU driver only supports non-NULL pointer args");
+      LEVEL0_CHECK_ABORT(ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    }
+    // non-null ptr
+    void *MemPtr = nullptr;
+    assert(PoclArg[i].is_raw_ptr == 0);
+//    if (PoclArg[i].is_raw_ptr != 0) {
+//      MemPtr = *(void**)PoclArg[i].value;
+//    } else {
+
+      cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
+      pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
+//      MemPtr = memid->mem_ptr;
+      MemPtr = arg_buf->mem_host_ptr;
+//    }
+    POCL_MSG_PRINT_LEVEL0("NPU: setting argument %u to: %p\n", graphArgIndex, MemPtr);
+    LEVEL0_CHECK_ABORT(Ext->pfnSetArgumentValue(GraphH, graphArgIndex++, MemPtr));
+  }
+
+  POCL_MSG_PRINT_LEVEL0("NPU: append GraphInitialize\n");
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(Ext->pfnAppendGraphInitialize(CmdListH, GraphH,
+                                        CurrentEventH,
+                                        PreviousEventH ? 1 : 0,
+                                        PreviousEventH ? &PreviousEventH : nullptr));
+
+  POCL_MSG_PRINT_LEVEL0("NPU: append GraphExecute\n");
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(Ext->pfnAppendGraphExecute(CmdListH, GraphH, nullptr,
+                                     CurrentEventH, PreviousEventH ? 1 : 0,
+                                     PreviousEventH ? &PreviousEventH : nullptr));
+#else
+  POCL_MSG_ERR("Can't execute builtin kernels without VPU support");
+#endif
+}
+
+
+void Level0Queue::runNDRangeKernel(_cl_command_run *RunCmd,
+                                   cl_device_id Dev,
+                                   cl_event Event,
+                                   cl_program Program,
+                                   cl_kernel Kernel,
+                                   unsigned DeviceI,
+                                   pocl_buffer_migration_info *MigInfos) {
   struct pocl_context *PoclCtx = &RunCmd->pc;
 
   assert(Program->data[DeviceI] != nullptr);
@@ -1575,8 +1678,8 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   }
 
   bool Needs64bitPtrs = false;
-  pocl_buffer_migration_info *MI;
-  LL_FOREACH (Cmd->migr_infos, MI) {
+  pocl_buffer_migration_info *MI = nullptr;
+  LL_FOREACH (MigInfos, MI) {
     if (MI->buffer->size > UINT32_MAX) {
       Needs64bitPtrs = true;
       break;
@@ -1614,9 +1717,12 @@ void Level0Queue::run(_cl_command_node *Cmd) {
     void *Ptr = I.first;
     size_t Size = I.second;
     MemPtrsToMakeResident[Ptr] = Size;
+    if (Size > UINT32_MAX) {
+      Needs64bitPtrs = true;
+    }
   }
 
-  if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {
+  if (setupKernelArgs(ModuleH, KernelH, Dev, DeviceI, RunCmd)) {
     POCL_MSG_ERR("Level0: Failed to setup kernel arguments\n");
     return;
   }
@@ -2093,7 +2199,7 @@ bool Level0Device::setupComputeProperties() {
   ComputeProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_COMPUTE_PROPERTIES;
   ComputeProperties.pNext = nullptr;
   Res = zeDeviceGetComputeProperties(DeviceHandle, &ComputeProperties);
-  if (Res != ZE_RESULT_SUCCESS) {
+  if (Res != ZE_RESULT_SUCCESS || ComputeProperties.maxTotalGroupSize == 0) {
     POCL_MSG_PRINT_LEVEL0("%s: zeDeviceGetComputeProperties failed\n",
                           ClDev->short_name);
     // some defaults
@@ -2714,6 +2820,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                       " cl_khr_int64_extended_atomics");
   }
 
+  if (ClDev->type == CL_DEVICE_TYPE_CUSTOM) {
+    Extensions.append(" cl_exp_tensor"
+                      " cl_exp_defined_builtin_kernels");
+  }
+
   if (ClDev->half_fp_config != 0u) {
     Extensions.append(" cl_khr_fp16");
     OpenCL30Features.append(" __opencl_c_fp16");
@@ -2784,6 +2895,22 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     pocl_setup_ils_with_version(ClDev);
   }
 
+  if (ClDev->type == CL_DEVICE_TYPE_CUSTOM
+      || ClDev->type == CL_DEVICE_TYPE_ACCELERATOR) {
+    ClDev->extensions = Extensions.c_str();
+    ClDev->features = "";
+    POCL_MSG_WARN("@@@@ DEVICE EXTENSIONS:\n   %s\n", ClDev->extensions);
+    pocl_setup_extensions_with_version(ClDev);
+
+#ifdef ENABLE_NPU
+    pocl::getNpuGraphModelsList(BuiltinKernels, NumBuiltinKernels);
+    POCL_MSG_WARN("NPU Model list:\n %s\n", BuiltinKernels.c_str());
+    ClDev->builtin_kernel_list = BuiltinKernels.data();
+    ClDev->num_builtin_kernels = NumBuiltinKernels;
+
+    pocl_setup_builtin_kernels_with_version(ClDev);
+#endif
+  }
 
   // calculate KernelCacheHash
   //
@@ -2988,9 +3115,9 @@ void Level0Device::pushCommand(_cl_command_node *Command) {
 }
 
 void Level0Device::pushCommandBatch(BatchType Batch) {
-  if (UniversalQueues.available())
+  if (supportsCmdQBatching()) {
     UniversalQueues.pushCommandBatch(Batch);
-  else {
+  } else {
     POCL_ABORT_UNIMPLEMENTED("this code path should not be entered - BUG\n");
   }
 }
@@ -3375,7 +3502,7 @@ void Level0Device::freeSampler(ze_sampler_handle_t SamplerH) {
   LEVEL0_CHECK_ABORT_NO_EXIT(Res);
 }
 
-int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
+int Level0Device::createSpirvProgram(cl_program Program, cl_uint DeviceI) {
 
   int Res = pocl_bitcode_is_spirv_execmodel_kernel(Program->program_il,
                                                    Program->program_il_size);
@@ -3453,16 +3580,118 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
   return CL_SUCCESS;
 }
 
+int Level0Device::createBuiltinProgram(cl_program Program, cl_uint DeviceI) {
+#ifdef ENABLE_NPU
+
+  assert(Program->data[DeviceI] == nullptr);
+  char ProgramCacheDir[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
+  /* TODO: better input to Hash value calculation */
+  std::string Hash{Program->concated_builtin_names};
+  int errcode = pocl_cache_create_program_cachedir (
+          Program, DeviceI,
+          (char *)Hash.data(),
+          Hash.size(), ProgramBcPath);
+
+  pocl_cache_program_path(ProgramCacheDir, Program, DeviceI);
+
+  std::string BuildLog;
+  Level0BuiltinProgram *ProgramData = Driver->getJobSched().createBuiltinProgram(
+      ContextHandle, DeviceHandle, BuildLog,
+      Program->num_builtin_kernels, Program->builtin_kernel_names,
+      Program->builtin_kernel_ids, Program->builtin_kernel_attributes,
+      ProgramCacheDir, KernelCacheHash);
+
+  if (ProgramData == nullptr) {
+    if (!BuildLog.empty()) {
+      pocl_append_to_buildlog(Program, DeviceI,
+                       strdup(BuildLog.c_str()),
+                       BuildLog.size());
+      POCL_MSG_WARN("Build log: \n%s", BuildLog.c_str());
+    }
+    POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                         "Failed to compile program\n");
+  }
+
+  Program->data[DeviceI] = ProgramData;
+  return CL_SUCCESS;
+#else
+  std::string BuildLog("Builtin programs on non-NPU devices are not supported");
+  pocl_append_to_buildlog(Program, DeviceI,
+                   strdup(BuildLog.c_str()),
+                   BuildLog.size());
+  return CL_BUILD_PROGRAM_FAILURE;
+#endif
+}
+
+
 int Level0Device::freeProgram(cl_program Program, cl_uint DeviceI) {
+  /* module can be NULL if compilation fails */
   if (Program->data[DeviceI] == nullptr) {
     return CL_SUCCESS;
   }
 
-  Level0Program *ProgramData = (Level0Program *)Program->data[DeviceI];
-  Driver->getJobSched().releaseProgram(ProgramData);
-  Program->data[DeviceI] = nullptr;
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *ProgramData = (Level0BuiltinProgram *)Program->data[DeviceI];
+    Driver->getJobSched().releaseBuiltinProgram(ProgramData);
+    Program->data[DeviceI] = nullptr;
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *ProgramData = (Level0Program *)Program->data[DeviceI];
+    Driver->getJobSched().releaseProgram(ProgramData);
+    Program->data[DeviceI] = nullptr;
+  }
   return CL_SUCCESS;
 }
+
+
+
+int Level0Device::createKernel(cl_program Program,
+                               cl_kernel Kernel,
+                               unsigned ProgramDeviceI) {
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *L0Program = (Level0BuiltinProgram *)Program->data[ProgramDeviceI];
+    Level0BuiltinKernel *Ker = Driver->getJobSched().createBuiltinKernel(L0Program,
+                                                                         Kernel->name);
+    Kernel->data[ProgramDeviceI] = Ker;
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *L0Program = (Level0Program *)Program->data[ProgramDeviceI];
+    Level0Kernel *Ker = Driver->getJobSched().createKernel(L0Program,
+                                                           Kernel->name);
+    Kernel->data[ProgramDeviceI] = Ker;
+  }
+
+  return Kernel->data[ProgramDeviceI] == nullptr ? CL_OUT_OF_RESOURCES : CL_SUCCESS;
+}
+
+int Level0Device::freeKernel(cl_program Program,
+                             cl_kernel Kernel,
+                             unsigned ProgramDeviceI) {
+  bool Res;
+  if (Program->num_builtin_kernels > 0) {
+#ifdef ENABLE_NPU
+    Level0BuiltinProgram *L0Program = (Level0BuiltinProgram *)Program->data[ProgramDeviceI];
+    Level0BuiltinKernel *Ker = (Level0BuiltinKernel *)Kernel->data[ProgramDeviceI];
+    Res = Driver->getJobSched().releaseBuiltinKernel(L0Program, Ker);
+#else
+    return CL_OUT_OF_RESOURCES;
+#endif
+  } else {
+    Level0Program *L0Program = (Level0Program *)Program->data[ProgramDeviceI];
+    Level0Kernel *Ker = (Level0Kernel *)Kernel->data[ProgramDeviceI];
+    Res = Driver->getJobSched().releaseKernel(L0Program, Ker);
+  }
+
+  return Res == true ? CL_SUCCESS : CL_INVALID_KERNEL;
+}
+
 
 bool Level0Device::getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
                                  bool LargeOffset, unsigned LocalWGSize,
@@ -3472,6 +3701,14 @@ bool Level0Device::getBestKernel(Level0Program *Program, Level0Kernel *Kernel,
   return Driver->getJobSched().getBestKernel(Program, Kernel, LargeOffset,
                                              LocalWGSize, Mod, Ker);
 }
+
+#ifdef ENABLE_NPU
+bool Level0Device::getBestBuiltinKernel(Level0BuiltinProgram *Program,
+                                        Level0BuiltinKernel *Kernel,
+                                        ze_graph_handle_t &Graph) {
+  return Driver->getJobSched().getBestBuiltinKernel(Program, Kernel, Graph);
+}
+#endif
 
 bool Level0Device::getMemfillKernel(unsigned PatternSize,
                                     Level0Kernel **L0Kernel,
@@ -3665,25 +3902,11 @@ uint32_t Level0Device::getMaxWGSizeForKernel(Level0Kernel *Kernel) {
 #endif
 }
 
-static constexpr unsigned MaxLevel0Devices = 1024;
-
-Level0Driver::Level0Driver() {
-  ze_result_t Res = zeInit(ZE_INIT_FLAG_GPU_ONLY);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeInit FAILED\n");
-    return;
-  }
-  uint32_t DriverCount = 1;
-  Res = zeDriverGet(&DriverCount, &DriverH);
-  if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("zeDriverGet FAILED\n");
-    return;
-  }
-
+Level0Driver::Level0Driver(ze_driver_handle_t DrvHandle) : DriverH(DrvHandle) {
   ze_driver_properties_t DriverProperties = {};
   DriverProperties.stype = ZE_STRUCTURE_TYPE_DRIVER_PROPERTIES;
   DriverProperties.pNext = nullptr;
-  Res = zeDriverGetProperties(DriverH, &DriverProperties);
+  ze_result_t Res = zeDriverGetProperties(DriverH, &DriverProperties);
   if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDriverGetProperties FAILED\n");
     return;
@@ -3727,25 +3950,54 @@ Level0Driver::Level0Driver() {
   }
 
   uint32_t DeviceCount = 0;
-  ze_device_handle_t DeviceArray[MaxLevel0Devices];
   Res = zeDeviceGet(DriverH, &DeviceCount, nullptr);
-  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0
-          || DeviceCount > MaxLevel0Devices) {
+  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0) {
     POCL_MSG_ERR("zeDeviceGet 1 FAILED\n");
     return;
   }
 
-  Res = zeDeviceGet(DriverH, &DeviceCount, DeviceArray);
-  if (Res != ZE_RESULT_SUCCESS || DeviceCount == 0) {
+  if (DeviceCount == 0) {
+    POCL_MSG_ERR("zeDriver: zero devices available\n");
+    return;
+  }
+
+  std::vector<ze_device_handle_t> DeviceArray;
+  DeviceArray.resize(DeviceCount);
+  Devices.resize(DeviceCount);
+  DeviceHandles.resize(DeviceCount);
+
+  Res = zeDeviceGet(DriverH, &DeviceCount, DeviceArray.data());
+  if (Res != ZE_RESULT_SUCCESS) {
     POCL_MSG_ERR("zeDeviceGet 2 FAILED\n");
     return;
   }
 
-  Devices.resize(DeviceCount);
-  DeviceHandles.resize(DeviceCount);
   for (uint32_t i = 0; i < DeviceCount; ++i) {
     DeviceHandles[i] = DeviceArray[i];
   }
+  ze_device_properties_t DeviceProperties;
+  Res = zeDeviceGetProperties(DeviceHandles[0], &DeviceProperties);
+  if (Res != ZE_RESULT_SUCCESS) {
+    POCL_MSG_ERR("zeDeviceGetProperties FAILED\n");
+    return;
+  }
+
+#ifdef ENABLE_NPU
+  Res = zeDriverGetExtensionFunctionAddress(DriverH, GRAPH_EXT_NAME,
+                                 reinterpret_cast<void **>(&GraphDDITableExt));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphDDITableExt = nullptr;
+
+  Res = zeDriverGetExtensionFunctionAddress(DriverH, ZE_PROFILING_DATA_EXT_NAME,
+                reinterpret_cast<void **>(&GraphProfDDITableExt));
+  if (Res != ZE_RESULT_SUCCESS)
+    GraphProfDDITableExt = nullptr;
+
+  if (!GraphDDITableExt || !GraphProfDDITableExt) {
+    POCL_MSG_PRINT_LEVEL0("Failed to initialize LevelZero Graph Ext "
+                          "for driver %u\n", DriverProperties.driverVersion);
+  }
+#endif
 
   if (!JobSched.init(DriverH, DeviceHandles)) {
     Devices.clear();
@@ -3753,6 +4005,7 @@ Level0Driver::Level0Driver() {
     POCL_MSG_ERR("Failed to initialize compilation job scheduler\n");
     return;
   }
+  assert(Devices[0].get() == nullptr);
 }
 
 Level0Driver::~Level0Driver() {
@@ -3765,12 +4018,12 @@ Level0Driver::~Level0Driver() {
 
 Level0Device *Level0Driver::createDevice(unsigned Index, cl_device_id Dev,
                                          const char *Params) {
-  if (Index >= Devices.size()) {
-    return nullptr;
-  }
+  assert(Index < Devices.size());
   assert(Devices[Index].get() == nullptr);
   Devices[Index].reset(
       new Level0Device(this, DeviceHandles[Index], Dev, Params));
+  POCL_MSG_PRINT_LEVEL0("createDEVICE | Cl Dev %p | Dri %p | Dev %p \n",
+                        DriverH, Dev, Devices[Index].get());
   ++NumDevices;
   HandleToIDMap[DeviceHandles[Index]] = Dev;
   return Devices[Index].get();

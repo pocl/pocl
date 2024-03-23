@@ -103,7 +103,7 @@ int main(void)
   h_c3 = (int*)malloc(bytes);
   bb1 = (int*)malloc(bytes);
   bb2 = (int*)malloc(bytes);
-  static_wg_buf = (int*)malloc(bytes);
+  static_wg_buf = (int*)calloc(1, bytes);
 
   unsigned int i;
   for( i = 0; i < BUFFER_SIZE; i++ )
