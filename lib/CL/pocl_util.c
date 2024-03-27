@@ -907,8 +907,6 @@ FINISH_VER_SETUP:
         }
     }
 
-  POCL_UNLOCK_OBJ (mem);
-
   /*****************************************************************/
 
   /* enqueue a command for export.
@@ -1008,14 +1006,13 @@ FINISH_VER_SETUP:
        * which only read from buffers */
       if (readonly)
         {
-          POCL_LOCK_OBJ (mem);
           mem->last_event = last_migration_event;
-          POCL_UNLOCK_OBJ (mem);
           POname (clReleaseEvent) (final_event);
         }
       else /* because explicit event */
         POname (clReleaseEvent) (last_migration_event);
     }
+  POCL_UNLOCK_OBJ (mem);
 
   return CL_SUCCESS;
 }
