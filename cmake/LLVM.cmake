@@ -298,9 +298,27 @@ find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
 
 if(NOT DEFINED LLVM_SPIRV)
-  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv-${LLVM_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  if(LLVM_SPIRV)
+    execute_process(
+        COMMAND "${LLVM_SPIRV}" "--version"
+        OUTPUT_VARIABLE LLVM_SPIRV_VERSION_VALUE
+        RESULT_VARIABLE LLVM_SPIRV_VERSION_RETVAL
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(${LLVM_SPIRV_VERSION_RETVAL} EQUAL 0)
+        string(REGEX MATCH "LLVM version ([0-9]*)" LLVM_SPIRV_VERSION_MATCH ${LLVM_SPIRV_VERSION_VALUE})
+        if(NOT ${CMAKE_MATCH_1} EQUAL ${LLVM_MAJOR})
+          unset(LLVM_SPIRV)
+        endif()
+    else()
+      unset(LLVM_SPIRV)
+    endif()
+  endif()
   if(LLVM_SPIRV)
     message(STATUS "Found llvm-spirv: ${LLVM_SPIRV}")
+  else()
+    message(STATUS "Did NOT find llvm-spirv!")
   endif()
 endif()
 
@@ -308,6 +326,8 @@ if(NOT DEFINED SPIRV_LINK)
   find_program(SPIRV_LINK NAMES "spirv-link${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
   if(SPIRV_LINK)
     message(STATUS "Found spirv-link: ${SPIRV_LINK}")
+  else()
+    message(STATUS "Did NOT find spirv-link!")
   endif()
 endif()
 
