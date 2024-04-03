@@ -73,26 +73,15 @@ POname(clSetKernelExecInfo)(cl_kernel kernel,
         POCL_RETURN_ERROR_ON ((dev == NULL), CL_INVALID_OPERATION,
                               "no devices in the context associated with"
                               " kernel support USM\n");
-        cl_device_id realdev = pocl_real_dev (dev);
-        cl_uint program_device_i = CL_UINT_MAX;
-        for (unsigned i = 0; i < kernel->program->num_devices; ++i)
-          {
-            if (kernel->program->devices[i] == realdev)
-              {
-                program_device_i = i;
-                break;
-              }
-          }
-        POCL_RETURN_ERROR_ON ((program_device_i == CL_UINT_MAX),
-                              CL_INVALID_KERNEL,
-                              "Can't find the kernel for this device\n");
+        /* Inform the device responsible for USM allocations. Note:
+           the device might not have the kernel built, thus it might
+           not be found in the kernel's program's devices since it's
+           possible to build only for selected devices in the context. */
         POCL_RETURN_ERROR_ON (
-            (realdev->ops->set_kernel_exec_info_ext == NULL),
-            CL_INVALID_OPERATION,
-            "This device doesn't support clSetKernelExecInfo\n");
-        return realdev->ops->set_kernel_exec_info_ext (
-            realdev, program_device_i, kernel, param_name, param_value_size,
-            param_value);
+            (dev->ops->set_kernel_exec_info_ext == NULL), CL_INVALID_OPERATION,
+            "This USM allocator device doesn't support clSetKernelExecInfo\n");
+        return dev->ops->set_kernel_exec_info_ext (
+            dev, 0, kernel, param_name, param_value_size, param_value);
       }
 
     /* For the cl_ext_buffer_device_address extension. Just error checking
