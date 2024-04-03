@@ -21,6 +21,41 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+/* An LLVM pass to adjust LLVM IR's memory accessess with a fixed offset.
+
+   The adjustment is needed in case the host's SVM region's start address
+   differs from the device's.
+
+   Input: A non-adjusted kernel with all global pointers assumed to be
+   pre-adjusted by the runtime to point to the SVM region of the targeted
+   device.
+
+   The pass works as follows with the general principle that the pointer
+   addressess are adjusted to the correct offset at the point of a memory
+   access. Due to generic pointers it is not always possible to figure out
+   if the address space of a pointer is global or not, thus we must ensure
+   all pointers can be adjusted at their usage time, thus they have to be
+   negatively adjusted at the pointer creation or "import time".
+
+   This means that all pointers that are created by
+
+   - allocas,
+   - when taking an address of a global variable or are
+   - input to the kernel as arguments
+
+   are negatively adjusted so we can adjust them back when accessing the
+   memory. It leans heavily to compiler to remove the unnecessary
+   negative/positive adjustment pairs.
+
+   Pointer arguments to calls to defined functions are not adjusted, but
+   the functions itself are handled separately. Arguments to undefined
+   functions are assumed to be builtin functions which expect valid fixed
+   pointers, thus they are adjusted at the call site.
+
+   TODO: Indirect accesses? They are pointers loaded from another buffer
+   or such. The pointers are global SVM so they should be fixed as well.
+*/
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
@@ -55,7 +90,8 @@ namespace pocl {
 
 static cl::opt<uint64_t> SVMOffsetValue(
     "svm-offset-value", cl::init(0), cl::Hidden,
-    cl::desc("The unsigned SVM offset value to add (wraparound for negative offsets)."));
+    cl::desc("The unsigned SVM offset value to add (wraparound for negative "
+             "offsets)."));
 
 llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
                                        llvm::ModuleAnalysisManager &AM) {
@@ -63,7 +99,8 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
   PAChanged.preserve<WorkitemHandlerChooser>();
   bool Changed = false;
 
-  //M.dump();
+  // std::cerr << "SVMOffset adding region offset " << SVMOffsetValue << std::endl;
+  // M.dump();
 
   if (SVMOffsetValue == 0)
     return PreservedAnalyses::all();
@@ -71,18 +108,15 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
   for (llvm::Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI) {
 
     llvm::Function *F = &*MI;
-    const bool isKernel = isKernelToProcess(*F);
+    const bool isKernel = F->getCallingConv() == llvm::CallingConv::SPIR_KERNEL;
     if (isKernel) {
-      // Add a negative offset to the global buffers pointers since they will
+      // Add a negative offset to the arg pointers since they will
       // be adjusted (also) by the runtime at kernel argument setting. The
-      // rest of the adjustments will then reverse this offset, leaning to
-      // the standard compiler optimizations to remove unnecessary
-      // back-and-forth offsetting.
+      // runtime has to adjust them to make them valid SVM pointers for the
+      // Subbuffers.
       for (Function::arg_iterator Arg = F->arg_begin(), E = F->arg_end();
            Arg != E; ++Arg) {
-        if (!Arg->getType()->isPointerTy() ||
-            Arg->getType()->getPointerAddressSpace() !=
-                SPIR_ADDRESS_SPACE_GLOBAL)
+        if (!Arg->getType()->isPointerTy())
           continue;
         IRBuilder<> IRBuilder(F->getEntryBlock().getFirstNonPHI());
         Value *NegOffsettedPtr = IRBuilder.CreateGEP(
@@ -104,6 +138,66 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
         Instruction *Inst = dyn_cast<Instruction>(BI++);
         if (Inst == nullptr) continue;
 
+        // Negatively adjust created new pointers.
+        if ((isa<BitCastInst>(Inst) && dyn_cast<GlobalValue>(Inst->getOperand(0))) ||
+            (isa<GetElementPtrInst>(Inst) &&
+             dyn_cast<GlobalValue>(
+               cast<GetElementPtrInst>(Inst)->getPointerOperand())) ||
+            isa<AllocaInst>(Inst)) {
+
+          llvm::IRBuilder<> IRBuilder(dyn_cast<Instruction>(BI));
+          Value *NegOffsettedPtr = IRBuilder.CreateGEP(
+              IRBuilder.getInt8Ty(), Inst, IRBuilder.getInt64(-SVMOffsetValue));
+
+          // Replace all uses of the old non-offsetted alloc (except the
+          // offsetting instr itself) with the offsetted one.
+          Inst->replaceUsesWithIf(
+              NegOffsettedPtr, [NegOffsettedPtr](Use &U) -> bool {
+                if (Instruction *UseInst = dyn_cast<Instruction>(U.getUser()))
+                  return UseInst != NegOffsettedPtr;
+                return false;
+              });
+          Changed = true;
+          continue;
+        }
+
+        // Fix built-in calls: If the argument is a pointer, offset it.
+        if (CallInst *Call = dyn_cast<CallInst>(Inst)) {
+          std::vector<Value *> InstrsToFix;
+          // Fix only the args to non-visible (built-in) functions. The rest of
+          // the functions we will fix in their definition.
+          if (!Call->getCalledFunction()->isDeclaration())
+            continue;
+
+          // Treat __to_global as a special case. It's an address space cast;
+          // inputs a pointer and returns a pointer.
+          // Should we actually deoffset all ptr return values
+          // from builtins instead. Likely yes... are there more of
+          // such builtins?
+          if (Call->getCalledFunction()->getName().str() == "__to_global")
+            continue;
+
+          for (const auto &Arg : Call->args()) {
+            // There can be multiple uses of the same pointer in the arg list.
+            // Ensure we fix them only once.
+            if (std::find(InstrsToFix.begin(), InstrsToFix.end(), Arg.get()) ==
+                    InstrsToFix.end() &&
+                Arg.get()->getType()->isPointerTy())
+              InstrsToFix.push_back(Arg.get());
+          }
+          for (llvm::Value *VToFix : InstrsToFix) {
+            llvm::IRBuilder<> IRBuilder(Inst);
+            Value *OffsettedPtr =
+                IRBuilder.CreateGEP(IRBuilder.getInt8Ty(), VToFix,
+                                    IRBuilder.getInt64(SVMOffsetValue));
+            Call->replaceUsesOfWith(VToFix, OffsettedPtr);
+            Changed = true;
+          }
+          continue;
+        }
+
+        // TODO: Other memory operations such as atomics? Are they covered here,
+        // or can we assume all atomics are done via builtin functions?
         LoadInst *Load = dyn_cast<LoadInst>(Inst);
         StoreInst *Store = dyn_cast<StoreInst>(Inst);
 
@@ -111,9 +205,6 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
 
         unsigned AddressSpace =
           Load == nullptr ? Store->getPointerAddressSpace() : Load->getPointerAddressSpace();
-
-        if (AddressSpace != SPIR_ADDRESS_SPACE_GLOBAL)
-          continue;
 
         Value *PtrOperand =
           Load == nullptr ? Store->getPointerOperand() : Load->getPointerOperand();
@@ -128,7 +219,7 @@ llvm::PreservedAnalyses SVMOffset::run(llvm::Module &M,
     }
   }
 
-  //M.dump();
+  // M.dump();
   return Changed ? PAChanged : PreservedAnalyses::all();
 }
 
