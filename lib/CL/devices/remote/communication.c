@@ -2102,7 +2102,7 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
 
   SET_REMOTE_ID (buffer, mem->id);
 
-  if (mem->flags & CL_MEM_PINNED)
+  if (mem->flags & CL_MEM_DEVICE_ADDRESS_EXT)
     {
       assert (device_addr != NULL);
       *device_addr = (void *)netcmd->reply.m.create_buffer.device_addr;

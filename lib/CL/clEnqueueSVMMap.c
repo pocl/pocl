@@ -72,7 +72,8 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
         return CL_SUCCESS;
     }
 
-  pocl_svm_ptr *svm_ptr_pocl = pocl_find_svm_ptr_in_context (context, svm_ptr);
+  pocl_raw_ptr *svm_ptr_pocl
+      = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
 
   if (svm_ptr_pocl != NULL)
     {
@@ -80,7 +81,7 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
       assert (svm_ptr_pocl->shadow_cl_mem != NULL);
       POname (clEnqueueMapBuffer (
           command_queue, svm_ptr_pocl->shadow_cl_mem, CL_FALSE, 0 /* TODO */,
-          svm_ptr - svm_ptr_pocl->svm_ptr, size, num_events_in_wait_list,
+          svm_ptr - svm_ptr_pocl->vm_ptr, size, num_events_in_wait_list,
           event_wait_list, event, &errcode));
       if (errcode != CL_SUCCESS)
         return errcode;

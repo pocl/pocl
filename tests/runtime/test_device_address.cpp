@@ -1,6 +1,6 @@
-/* Test the pinned buffers extension.
+/* Test the cl_ext_buffer_device_address extension.
 
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -29,26 +29,55 @@
 #include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 
 #define BUF_SIZE 16
 
+// A kernel that gets the device-seen address of the buffer.
 static char GetAddrSourceCode[] = R"raw(
 
-  __kernel void get_addr (__global int *pinned_buffer,
+  __kernel void get_addr (__global int *buffer,
                           __global ulong* addr) {
     for (int i = 0; i < BUF_SIZE; ++i)
-      pinned_buffer[i] += 1;
-    *addr = (ulong)pinned_buffer;
+      buffer[i] += 1;
+    *addr = (ulong)buffer;
+  }
+)raw";
+
+// A kernel that accesses another buffer indirectly.
+static char IndirectAccess[] = R"raw(
+
+  __kernel void indirect_access (__global long* in_addr,
+                                 __global int* out) {
+    *out = **(int __global* __global*)in_addr;
+  }
+)raw";
+
+// A kernel that gets passed a pointer to a middle of a buffer,
+// with the data _before_ the passed pointer. Tests the property
+// of sub-buffers to synchronize the whole parent buffer when
+// using the CL_MEM_BUFFER_DEVICE_ADDRESS flag.
+static char PtrArith[] = R"raw(
+
+  __kernel void ptr_arith (__global int* in_addr,
+                           __global int* out) {
+    *out = *(in_addr - 1);
   }
 )raw";
 
 void *getDeviceAddressFromHost(cl::Buffer &Buf) {
-  cl_mem_pinning Pinning;
+  void *Addr;
+  cl_int Err = Buf.getInfo(CL_MEM_DEVICE_PTR_EXT, &Addr);
 
-  Buf.getInfo(CL_MEM_DEVICE_PTRS, &Pinning);
-  return Pinning.address;
+  if (Err != CL_SUCCESS) {
+    std::cerr << "Got error " << Err
+              << " when asking for CL_MEM_DEVICE_PTR_EXT\n";
+    return nullptr;
+  }
+
+  return Addr;
 }
 
 int main(void) {
@@ -61,8 +90,26 @@ int main(void) {
 
     cl::Platform::get(&PlatformList);
 
+    cl::Platform SelectedPlatform;
+    bool PlatformFound = false;
+    for (cl::Platform &Platform : PlatformList) {
+      if (Platform.getInfo<CL_PLATFORM_EXTENSIONS>().find(
+              "cl_ext_buffer_device_address") == std::string::npos)
+        continue;
+      SelectedPlatform = Platform;
+      PlatformFound = true;
+      break;
+    }
+
+    if (!PlatformFound) {
+      std::cerr << "No platforms with cl_ext_buffer_device_address found. Not "
+                   "testing PoCL?\n";
+      return EXIT_FAILURE;
+    }
+
     cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+        CL_CONTEXT_PLATFORM, (cl_context_properties)(SelectedPlatform)(), 0};
+
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -73,19 +120,15 @@ int main(void) {
       std::string Exts = Dev.getInfo<CL_DEVICE_EXTENSIONS>();
       std::cout << Dev.getInfo<CL_DEVICE_NAME>() << " "
                 << Dev.getInfo<CL_DEVICE_VERSION>() << ": ";
-      if (Exts.find(CL_POCL_PINNED_BUFFERS_EXTENSION_NAME) !=
-          std::string::npos) {
+      if (Exts.find("cl_ext_buffer_device_address") != std::string::npos) {
         std::cout << "suitable" << std::endl;
         SuitableDevices.push_back(Dev);
         break;
-      } else {
-        std::cout << CL_POCL_PINNED_BUFFERS_EXTENSION_NAME << " not supported"
-                  << std::endl;
       }
     }
 
     if (SuitableDevices.empty()) {
-      std::cout << "No suitable devices found.";
+      std::cout << "No devices with cl_ext_buffer_device_address found.\n";
       return 77;
     }
     int PinnedBufferHost[BUF_SIZE];
@@ -100,7 +143,7 @@ int main(void) {
 
     cl::CommandQueue Queue(Context, SuitableDevices[0], 0);
 
-    cl::Program::Sources Sources({GetAddrSourceCode});
+    cl::Program::Sources Sources({GetAddrSourceCode, IndirectAccess, PtrArith});
     cl::Program Program(Context, Sources);
 
 #define STRINGIFY(X, Y) X #Y
@@ -111,7 +154,9 @@ int main(void) {
     cl::Kernel GetAddrKernel(Program, "get_addr");
 
     cl::Buffer PinnedCLBuffer = cl::Buffer(
-        Context, (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_PINNED | CL_MEM_COPY_HOST_PTR),
+        Context,
+        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_ADDRESS_EXT |
+                       CL_MEM_COPY_HOST_PTR),
         (size_t)BUF_SIZE * sizeof(cl_int), (void *)&PinnedBufferHost[0]);
 
     if (getDeviceAddressFromHost(PinnedCLBuffer) == nullptr) {
@@ -150,15 +195,14 @@ int main(void) {
 
     if (getDeviceAddressFromHost(PinnedCLBuffer) !=
         (void *)DeviceAddrFromKernel) {
-      std::cerr << "Pinned buffer's device address on kernel side and host "
-                   "side do not match"
-                << std::endl;
+      std::cerr << "Pinned buffer's device address on the kernel side and "
+                << "the host side do not match" << std::endl;
       return EXIT_FAILURE;
     }
 
     // Test a buffer which doesn't have any hostptr associated with it.
-    cl::Buffer PinnedCLBufferNoHostCopy =
-        cl::Buffer(Context, CL_MEM_PINNED, BUF_SIZE * sizeof(cl_int), nullptr);
+    cl::Buffer PinnedCLBufferNoHostCopy = cl::Buffer(
+        Context, CL_MEM_DEVICE_ADDRESS_EXT, BUF_SIZE * sizeof(cl_int), nullptr);
 
     GetAddrKernel.setArg(0, PinnedCLBufferNoHostCopy);
 
@@ -192,6 +236,90 @@ int main(void) {
       std::cerr << "Pinned buffer's device address on kernel side and host "
                    "side do not match"
                 << std::endl;
+      return EXIT_FAILURE;
+    }
+
+    // Test a buffer which is passed to the kernel indirectly.
+    cl::Kernel IndirectAccessKernel(Program, "indirect_access");
+
+    int DataIn = 1234;
+    // A devaddr buffer with the payload data.
+    cl::Buffer DevAddrCLBuffer = cl::Buffer(
+        Context,
+        (cl_mem_flags)(CL_MEM_READ_WRITE | CL_MEM_DEVICE_ADDRESS_EXT |
+                       CL_MEM_COPY_HOST_PTR),
+        sizeof(int), (void *)&DataIn);
+
+    void *DevAddr = getDeviceAddressFromHost(DevAddrCLBuffer);
+
+    // A basic buffer used to pass the other buffer's address.
+    cl::Buffer NormalCLBufferIn = cl::Buffer(
+        Context, (cl_mem_flags)(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR),
+        sizeof(cl_long), (void *)&DevAddr);
+
+    cl::Buffer NormalCLBufferOut = cl::Buffer(
+        Context, (cl_mem_flags)(CL_MEM_WRITE_ONLY), sizeof(cl_int), nullptr);
+
+    IndirectAccessKernel.setArg(0, NormalCLBufferIn);
+    IndirectAccessKernel.setArg(1, NormalCLBufferOut);
+    if (::clSetKernelExecInfo(IndirectAccessKernel.get(),
+                              CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT,
+                              sizeof(void *), &DevAddr) != CL_SUCCESS) {
+      std::cerr << "Setting indirect access for device ptrs failed!\n";
+      return EXIT_FAILURE;
+    }
+
+    /// The Level 0 doesn't get the buffer initialized with
+    /// CL_MEM_COPY_HOST_PTR. This is a workaround until that is fixed.
+    Queue.enqueueWriteBuffer(DevAddrCLBuffer,
+                             CL_TRUE, // block
+                             0, sizeof(cl_int), (void *)&DataIn);
+
+    Queue.enqueueNDRangeKernel(IndirectAccessKernel, cl::NullRange,
+                               cl::NDRange(1), cl::NullRange);
+
+    int DataOut = -1;
+    Queue.enqueueReadBuffer(NormalCLBufferOut,
+                            CL_TRUE, // block
+                            0, sizeof(cl_int), (void *)&DataOut);
+
+    if (DataIn != DataOut) {
+      AllOK = false;
+      std::cerr << "Passing data via indirect buffers failed. Got: " << DataOut
+                << " expected: " << DataIn << "\n";
+      return EXIT_FAILURE;
+    }
+
+    // Test using clSetKernelArgDevicePointerEXT to pass pointers to
+    // inside a buffer.
+    cl::Kernel PtrArithKernel(Program, "ptr_arith");
+
+    clSetKernelArgDevicePointerEXT_fn clSetKernelArgDevicePointer =
+        (clSetKernelArgDevicePointerEXT_fn)
+            clGetExtensionFunctionAddressForPlatform(
+                SelectedPlatform(), "clSetKernelArgDevicePointerEXT");
+
+    assert(clSetKernelArgDevicePointer != nullptr);
+
+    clSetKernelArgDevicePointer(
+        PtrArithKernel.get(), 0,
+        (cl_uint *)getDeviceAddressFromHost(PinnedCLBuffer) + 2);
+    PtrArithKernel.setArg(1, NormalCLBufferOut);
+
+    DataOut = -1;
+
+    Queue.enqueueNDRangeKernel(PtrArithKernel, cl::NullRange, cl::NDRange(1),
+                               cl::NullRange);
+
+    Queue.enqueueReadBuffer(NormalCLBufferOut,
+                            CL_TRUE, // block
+                            0, sizeof(cl_int), (void *)&DataOut);
+
+    if (DataOut != PinnedBufferHost[1]) {
+      AllOK = false;
+      std::cerr << "Negative offsetting from passed in pointer failed: "
+                << "Expected: " << PinnedBufferHost[1] << " got: " << DataOut
+                << "\n";
       return EXIT_FAILURE;
     }
 

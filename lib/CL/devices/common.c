@@ -3,7 +3,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
                  2011-2021 Pekka Jääskeläinen
-                 2022-2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2022-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -641,12 +641,12 @@ pocl_exec_command (_cl_command_node *node)
           {
             void *ptr = cmd->svm_free.svm_pointers[i];
             POCL_LOCK_OBJ (event->context);
-            pocl_svm_ptr *tmp = NULL, *item = NULL;
-            DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+            pocl_raw_ptr *tmp = NULL, *item = NULL;
+            DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
             {
-              if (item->svm_ptr == ptr)
+              if (item->vm_ptr == ptr)
                 {
-                  DL_DELETE (event->context->svm_ptrs, item);
+                  DL_DELETE (event->context->raw_ptrs, item);
                   break;
                 }
             }
@@ -1889,7 +1889,7 @@ static const cl_name_version OPENCL_EXTENSIONS[]
 
         { CL_MAKE_VERSION (0, 9, 4), "cl_khr_command_buffer" },
         { CL_MAKE_VERSION (1, 0, 0), "cl_ext_float_atomics" },
-        { CL_MAKE_VERSION (0, 1, 0), CL_POCL_PINNED_BUFFERS_EXTENSION_NAME },
+        { CL_MAKE_VERSION (0, 1, 0), "cl_ext_buffer_device_address" },
         { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_svm_rect" },
         { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_svm" },
         { CL_MAKE_VERSION (0, 9, 0), "cl_pocl_command_buffer_host_buffer" },

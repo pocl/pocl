@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clGetDeviceInfo()
 
    Copyright (c) 2012 Erik Schnetter
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -58,8 +58,8 @@ POname (clGetMemObjectInfo) (
     POCL_RETURN_GETINFO (cl_mem, memobj->parent);
   case CL_MEM_USES_SVM_POINTER:
     {
-      pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (memobj->context,
-                                                         memobj->mem_host_ptr);
+      pocl_raw_ptr *item = pocl_find_raw_ptr_with_vm_ptr (
+          memobj->context, memobj->mem_host_ptr);
       POCL_RETURN_GETINFO (cl_bool, (item != NULL));
     }
   case CL_MEM_OFFSET:
@@ -70,20 +70,45 @@ POname (clGetMemObjectInfo) (
   case CL_MEM_PROPERTIES:
     POCL_RETURN_GETINFO_ARRAY (cl_mem_properties, memobj->num_properties,
                                memobj->properties);
-  case CL_MEM_DEVICE_PTRS:
+  case CL_MEM_DEVICE_PTRS_EXT:
     {
-      POCL_RETURN_ERROR_COND (!memobj->is_device_pinned,
+      POCL_RETURN_ERROR_COND (!memobj->has_device_address,
                               CL_INVALID_MEM_OBJECT);
-      POCL_RETURN_GETINFO_SIZE_CHECK (memobj->context->num_devices
-                                      * sizeof (cl_mem_pinning));
-      cl_mem_pinning *pinnings = (cl_mem_pinning *)param_value;
+      POCL_RETURN_GETINFO_SIZE_CHECK (
+          memobj->context->num_devices
+          * sizeof (cl_mem_device_address_pair_EXT));
+      cl_mem_device_address_pair_EXT *addresses
+          = (cl_mem_device_address_pair_EXT *)param_value;
       cl_context context = memobj->context;
       for (size_t i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
-          pinnings[i].device = dev;
-          pinnings[i].address = p->device_addr;
+          addresses[i].device = dev;
+          addresses[i].address = p->device_addr;
+        }
+      return CL_SUCCESS;
+    }
+  case CL_MEM_DEVICE_PTR_EXT:
+    {
+      POCL_RETURN_ERROR_COND (!memobj->has_device_address,
+                              CL_INVALID_MEM_OBJECT);
+
+      POCL_RETURN_GETINFO_SIZE_CHECK (memobj->context->num_devices
+                                      * sizeof (void *));
+      void **addr = (void **)param_value;
+      *addr = NULL;
+      cl_context context = memobj->context;
+      for (size_t i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
+          POCL_MSG_PRINT_MEMORY (
+              "Got dev ptr %p for device %d (gmem id %d).\n", p->device_addr,
+              i, dev->global_mem_id);
+          if (*addr != NULL && p->device_addr != *addr)
+            POCL_ABORT ("All devices do not have the same cl_mem address!");
+          *addr = p->device_addr;
         }
       return CL_SUCCESS;
     }

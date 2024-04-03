@@ -228,15 +228,22 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
               && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *)(al->value);
-          if (al->is_svm)
+          if (al->is_raw_ptr)
             {
               /* Find the shadow cl_mem wrapper which is used for tracking
                  migrations. */
               void *ptr = *(void **)(al->value);
-              pocl_svm_ptr *svm_ptr
-                  = pocl_find_svm_ptr_in_context (command_queue->context, ptr);
+              pocl_raw_ptr *raw_ptr = pocl_find_raw_ptr_with_vm_ptr (
+                  command_queue->context, ptr);
 
-              if (svm_ptr == NULL)
+              /* TODO: The case where some of the args are SVM-allocated VM
+                 pointers, some device pointers. These address spaces are
+                 allowed to overlap and we could have the SVM and dev buffer
+                 having the same addr in theory. */
+              if (raw_ptr == NULL)
+                raw_ptr = pocl_find_raw_ptr_with_dev_ptr (
+                    command_queue->context, ptr);
+              if (raw_ptr == NULL)
                 {
                   POCL_MSG_PRINT_MEMORY (
                       "Couldn't find the shadow cl_mem for an SVM ptr, "
@@ -244,7 +251,7 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
                   continue;
                 }
               else
-                buf = svm_ptr->shadow_cl_mem;
+                buf = raw_ptr->shadow_cl_mem;
             }
 
           if (buf == NULL) /* Likely USM. */
@@ -260,7 +267,8 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
 
               if (al->offset > 0)
                 POCL_RETURN_ERROR_ON (
-                    (al->offset % realdev->mem_base_addr_align != 0),
+                    (!buf->has_device_address
+                     && al->offset % realdev->mem_base_addr_align != 0),
                     CL_MISALIGNED_SUB_BUFFER_OFFSET,
                     "SubBuffer is not properly aligned for this device");
 
@@ -289,8 +297,8 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
   struct _pocl_ptr_list_node *n;
   DL_FOREACH (kernel->svm_ptrs, n)
   {
-    pocl_svm_ptr *svm_ptr
-        = pocl_find_svm_ptr_in_context (command_queue->context, n->ptr);
+    pocl_raw_ptr *svm_ptr
+        = pocl_find_raw_ptr_with_vm_ptr (command_queue->context, n->ptr);
 
     if (svm_ptr == NULL)
       {

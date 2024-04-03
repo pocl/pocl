@@ -1139,12 +1139,22 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
   }
 
+  // The cl_mems are allocated as shared USM by default to make clEnqueueMap()
+  // implementation simpler. TODO: measure the perf. impact of this on some
+  // relevant platform and use memcopies for map.
+
   void *Allocation = nullptr;
-  // special handling for clCreateBuffer called on SVM pointer
+  // special handling for clCreateBuffer called on SVM or USM pointer
   if (((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) &&
       (Mem->mem_host_ptr_is_svm != 0)) {
     P->mem_ptr = Mem->mem_host_ptr;
     P->version = Mem->mem_host_ptr_version;
+  } else if (Mem->flags & CL_MEM_DEVICE_ADDRESS_EXT) {
+    // Treat cl_ext_buffer_device_address identically as USM Device.
+    // If we passed an SVM/USM address, we can use it directly in the
+    // previous branch. That should be at least a USM Device allocation.
+    P->mem_ptr = Device->allocSharedMem(Mem->size, 0);
+    P->version = 0;
   } else {
     bool Compress = false;
     if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
@@ -1496,6 +1506,8 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
     L0Kernel->setIndirectAccess(Flag, (value != CL_FALSE));
     return CL_SUCCESS;
   }
+
+  case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
   case CL_KERNEL_EXEC_INFO_SVM_PTRS:
   case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
     std::map<void *, size_t> UsedPtrs;
@@ -1507,10 +1519,20 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
     // find the allocation sizes for the pointers. Needed for L0 API
     for (cl_uint i = 0; i < NumElem; ++i) {
       AllocationSize = 0;
-      int err =
-          pocl_svm_check_pointer(Kernel->context, Elems[i], 1, &AllocationSize);
-      POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
-                           "Invalid pointer given to the call\n");
+      // TODO: DEVICE ptrs do not have vm_ptr set, the check will fail.
+
+      if (param_name == CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT) {
+        pocl_raw_ptr *DevPtr =
+            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Elems[i]);
+        POCL_RETURN_ERROR_ON((DevPtr == nullptr), CL_INVALID_VALUE,
+                             "Invalid pointer given to the call\n");
+        AllocationSize = DevPtr->size;
+      } else {
+        int err = pocl_svm_check_pointer(Kernel->context, Elems[i], 1,
+                                         &AllocationSize);
+        POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
+                             "Invalid pointer given to the call\n");
+      }
       assert(AllocationSize > 0);
       UsedPtrs[Elems[i]] = AllocationSize;
     }

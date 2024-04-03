@@ -1213,7 +1213,7 @@ void submit_kernel_packet(AlmaifData *D, _cl_command_node *cmd) {
         *(size_t *)current_arg = 0;
       } else {
         // almaif doesn't support SVM pointers
-        assert(al->is_svm == 0);
+        assert(al->is_raw_ptr == 0);
         cl_mem m = (*(cl_mem *)(al->value));
         size_t buffer = D->Dev->pointerDeviceOffset(
             &(m->device_ptrs[cmd->device->global_mem_id]));

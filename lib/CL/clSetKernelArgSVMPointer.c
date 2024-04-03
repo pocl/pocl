@@ -26,6 +26,12 @@
 #include "pocl_util.h"
 #include "devices.h"
 
+/**
+ * Sets a raw pointer argument.
+ *
+ * Shared implementation helper between SVM, USM and the buffer device
+ * address extension.
+ */
 int
 pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
                              const void *arg_value)
@@ -64,7 +70,7 @@ pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
   p->offset = 0;
   p->is_set = 1;
   p->is_readonly = 0;
-  p->is_svm = 1;
+  p->is_raw_ptr = 1;
   p->size = sizeof (void *);
 
   return CL_SUCCESS;

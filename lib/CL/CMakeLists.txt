@@ -194,6 +194,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clCommandWriteImagePOCL.c"
                    "clEnqueueSVMMemcpyRectPOCL.c"
                    "clEnqueueSVMMemfillRectPOCL.c"
+                   "clSetKernelArgDevicePointer.c"
 )
 
 if(ANDROID)

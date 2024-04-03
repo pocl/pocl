@@ -211,6 +211,8 @@ POdeclsym(clCommandWriteImagePOCL)
 POdeclsym(clEnqueueSVMMemFillRectPOCL)
 POdeclsym(clEnqueueSVMMemcpyRectPOCL)
 
+/* cl_ext_buffer_device_address */
+POdeclsym (clSetKernelArgDevicePointerEXT);
 
 #ifdef __cplusplus
 }

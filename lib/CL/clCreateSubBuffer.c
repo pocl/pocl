@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clCreateSubBuffer()
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -51,8 +52,9 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 
   cl_buffer_region *info = (cl_buffer_region *)buffer_create_info;
 
-  POCL_GOTO_ERROR_ON((info->size == 0), CL_INVALID_BUFFER_SIZE,
-    "buffer_create_info->size == 0\n");
+  POCL_GOTO_ERROR_ON ((info->size == 0 && !buffer->has_device_address),
+                      CL_INVALID_BUFFER_SIZE,
+                      "buffer_create_info->size == 0\n");
 
   POCL_GOTO_ERROR_ON((info->size + info->origin > buffer->size), CL_INVALID_VALUE,
     "buffer_create_info->size+origin > buffer size\n");
@@ -88,11 +90,12 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        "(CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)\n");
 
   POCL_GOTO_ERROR_ON (
-      ((info->origin % buffer->context->min_buffer_alignment) != 0),
+      (!buffer->has_device_address
+       && (info->origin % buffer->context->min_buffer_alignment) != 0),
       CL_MISALIGNED_SUB_BUFFER_OFFSET,
       "no devices for which the origin value (%zu) is "
       "aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value (%zu)\n",
-              info->origin, buffer->context->min_buffer_alignment);
+      info->origin, buffer->context->min_buffer_alignment);
 
   mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
   POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);

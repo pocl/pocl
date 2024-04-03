@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueSVMMemcpy()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -65,8 +65,8 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
   /* Utilize shadow buffers internally to share code with cl_mem buffer
      copies. */
 
-  pocl_svm_ptr *src_svm_ptr = pocl_find_svm_ptr_in_context (context, src_ptr);
-  pocl_svm_ptr *dst_svm_ptr = pocl_find_svm_ptr_in_context (context, dst_ptr);
+  pocl_raw_ptr *src_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, src_ptr);
+  pocl_raw_ptr *dst_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, dst_ptr);
 
   /* TODO: Command buffering. */
   if (src_svm_ptr != NULL && dst_svm_ptr != NULL)
@@ -76,14 +76,14 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
       if (command_buffer)
         errcode = POname (clCommandCopyBufferKHR) (
             command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
-            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
-            dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
+            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->vm_ptr,
+            dst_ptr - dst_svm_ptr->vm_ptr, size, num_items_in_wait_list,
             sync_point_wait_list, sync_point, NULL);
       else
         errcode = POname (clEnqueueCopyBuffer) (
             command_queue, src_svm_ptr->shadow_cl_mem,
-            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->svm_ptr,
-            dst_ptr - dst_svm_ptr->svm_ptr, size, num_items_in_wait_list,
+            dst_svm_ptr->shadow_cl_mem, src_ptr - src_svm_ptr->vm_ptr,
+            dst_ptr - dst_svm_ptr->vm_ptr, size, num_items_in_wait_list,
             event_wait_list, event);
     }
   else if (dst_svm_ptr != NULL && src_svm_ptr == NULL)
@@ -93,14 +93,14 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
         {
           errcode = POname (clCommandWriteBufferPOCL) (
               command_buffer, NULL, dst_svm_ptr->shadow_cl_mem,
-              dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
+              dst_ptr - dst_svm_ptr->vm_ptr, size, src_ptr,
               num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
         }
       else
         {
           errcode = POname (clEnqueueWriteBuffer) (
               command_queue, dst_svm_ptr->shadow_cl_mem, CL_FALSE,
-              dst_ptr - dst_svm_ptr->svm_ptr, size, src_ptr,
+              dst_ptr - dst_svm_ptr->vm_ptr, size, src_ptr,
               num_items_in_wait_list, event_wait_list, event);
         }
     }
@@ -110,14 +110,14 @@ pocl_svm_memcpy_common (cl_command_buffer_khr command_buffer,
         {
           errcode = POname (clCommandReadBufferPOCL) (
               command_buffer, NULL, src_svm_ptr->shadow_cl_mem,
-              src_ptr - src_svm_ptr->svm_ptr, size, dst_ptr,
+              src_ptr - src_svm_ptr->vm_ptr, size, dst_ptr,
               num_items_in_wait_list, sync_point_wait_list, sync_point, NULL);
         }
       else
         {
           errcode = POname (clEnqueueReadBuffer) (
               command_queue, src_svm_ptr->shadow_cl_mem, CL_FALSE,
-              src_ptr - src_svm_ptr->svm_ptr, size, dst_ptr,
+              src_ptr - src_svm_ptr->vm_ptr, size, dst_ptr,
               num_items_in_wait_list, event_wait_list, event);
         }
     }

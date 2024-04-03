@@ -1800,7 +1800,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
                 sharedMemBytes += size;
               }
-            else if (arguments[i].is_svm == 1)
+            else if (arguments[i].is_raw_ptr == 1)
               {
                 params[i] = arguments[i].value;
               }
@@ -1808,7 +1808,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
                 assert (constant_mem_base);
-                assert (arguments[i].is_svm == 0);
+                assert (arguments[i].is_raw_ptr == 0);
 
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
@@ -1836,7 +1836,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
               }
             else
               {
-                assert (arguments[i].is_svm == 0);
+                assert (arguments[i].is_raw_ptr == 0);
                 if (arguments[i].value)
                   {
                     cl_mem mem = *(void **)arguments[i].value;
@@ -2158,12 +2158,12 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
             {
               void *ptr = cmd->svm_free.svm_pointers[i];
               POCL_LOCK_OBJ (event->context);
-              pocl_svm_ptr *tmp = NULL, *item = NULL;
-              DL_FOREACH_SAFE (event->context->svm_ptrs, item, tmp)
+              pocl_raw_ptr *tmp = NULL, *item = NULL;
+              DL_FOREACH_SAFE (event->context->raw_ptrs, item, tmp)
               {
-                if (item->svm_ptr == ptr)
+                if (item->vm_ptr == ptr)
                   {
-                    DL_DELETE (event->context->svm_ptrs, item);
+                    DL_DELETE (event->context->raw_ptrs, item);
                     break;
                   }
               }

@@ -930,7 +930,7 @@ int SharedCLContext::getDeviceInfo(uint32_t device_id, DeviceInfo_t &i,
       // device.getInfo<CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV>() etc.
       "cl_nv_device_attribute_query",
       // pinned buffers are supported only if CG SVM can be enabled
-      CL_POCL_PINNED_BUFFERS_EXTENSION_NAME,
+      "cl_ext_buffer_device_address",
   };
 
   while (getline(extsStream, extName, ' ')) {
@@ -1989,7 +1989,7 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
 
   // The backing drivers might not recognize the pocl PoC extension and
   // they need not to as we implement the pinning with SVM allocations.
-  Flags ^= CL_MEM_PINNED;
+  Flags ^= CL_MEM_DEVICE_ADDRESS_EXT;
   bool SVMWrapper = false;
   SVMRegion *TargetSVMRegion = nullptr;
   cl_buffer_region SubBufRegion;

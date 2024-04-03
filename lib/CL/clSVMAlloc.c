@@ -82,7 +82,7 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
-  pocl_svm_ptr *item = calloc (1, sizeof (pocl_svm_ptr));
+  pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
   POCL_RETURN_ERROR_ON ((item == NULL), NULL, "out of host memory\n");
 
   if (alignment == 0)
@@ -108,21 +108,24 @@ POname(clSVMAlloc)(cl_context context,
     }
 
   POCL_LOCK_OBJ (context);
-  item->svm_ptr = ptr;
+  /* Register the pointer as a SVM pointer so clCreateBuffer() detects it. */
+  item->vm_ptr = ptr;
   item->size = size;
-  DL_APPEND (context->svm_ptrs, item);
+  DL_APPEND (context->raw_ptrs, item);
   POCL_UNLOCK_OBJ (context);
 
   /* Create a shadow cl_mem object for keeping track of the SVM
      allocation and to implement automated migrations, cl_pocl_content_size,
      etc. for CG SVM using the same code as with non-SVM cl_mems. */
 
-  /* For remote devices using CL_MEM_PINNED actually allocates storage from
-     the remote as well. */
+  /* For remote devices using CL_MEM_DEVICE_ADDRESS actually allocates storage
+     from the remote as well. */
   cl_int errcode = CL_SUCCESS;
   cl_mem clmem_shadow = POname (clCreateBuffer) (
-      context, CL_MEM_PINNED | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, size,
-      ptr, &errcode);
+      context,
+      CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT
+          | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+      size, ptr, &errcode);
 
   if (errcode != CL_SUCCESS)
     {

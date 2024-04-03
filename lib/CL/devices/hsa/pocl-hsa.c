@@ -1006,7 +1006,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           else
             {
               uint64_t dev_ptr = 0;
-              if (al->is_svm)
+              if (al->is_raw_ptr)
                 dev_ptr = (uint64_t) (*(void **)al->value);
               else
                 {

@@ -1,25 +1,26 @@
 /* OpenCL runtime library: clCreateBuffer()
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
-                           Pekka Jääskeläinen / Tampere University of Technology
-   
+                           Pekka Jääskeläinen / Tampere University of Tech.
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "common.h"
@@ -48,8 +49,23 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
     flags = CL_MEM_READ_WRITE;
 
   /* validate flags */
-  if (flags & CL_MEM_PINNED)
-    stdflags = flags ^ CL_MEM_PINNED;
+  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
+    {
+      for (i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          POCL_GOTO_ERROR_ON (
+              strstr ("cl_ext_buffer_device_address", dev->extensions) != 0,
+              CL_INVALID_VALUE,
+              "Requested CL_MEM_DEVICE_ADDRESS allocation, but a device in "
+              "context doesn't support the 'cl_ext_buffer_device_address' "
+              "extension.");
+        }
+      stdflags = flags ^ CL_MEM_DEVICE_ADDRESS_EXT;
+    }
+
+  if (stdflags & CL_MEM_DEVICE_PRIVATE_EXT)
+    stdflags = stdflags ^ CL_MEM_DEVICE_PRIVATE_EXT;
 
   POCL_GOTO_ERROR_ON ((stdflags > (1 << 10) - 1), CL_INVALID_VALUE,
                       "There are only 10 non-SVM flags)\n");
@@ -129,9 +145,9 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
   mem->mem_host_ptr_version = 0;
   mem->latest_version = 0;
 
-  if (flags & CL_MEM_PINNED)
+  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
     {
-      mem->is_device_pinned = 1;
+      mem->has_device_address = 1;
     }
   /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
    *
@@ -191,25 +207,57 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
       mem->latest_version = 0;
     }
 
-  /* With CL_MEM_PINNED we must proactively allocate the device memory so it
-     gets the fixed address range assigned, even if the buffer was never used.
-     The address can be queried via clGetMemobjInfo() and used inside data
-     structures. */
-  if (flags & CL_MEM_PINNED)
+  /* With CL_MEM_DEVICE_ADDRESS_EXT we must proactively allocate the device
+     memory so it gets the fixed address range assigned, even if the buffer was
+     never used. The address can be queried via clGetMemobjInfo() and used
+     inside data structures. */
+  if (flags & CL_MEM_DEVICE_ADDRESS_EXT)
     {
-      POCL_MSG_PRINT_MEMORY ("Trying driver allocation for CL_MEM_PINNED\n");
+      POCL_MSG_PRINT_MEMORY (
+          "Trying driver allocation for CL_MEM_DEVICE_ADDRESS_EXT\n");
       unsigned i;
+      void *ptr = NULL;
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           assert (dev->ops->alloc_mem_obj != NULL);
-          // skip already allocated
-          if (mem->device_ptrs[dev->global_mem_id].mem_ptr != NULL)
-            continue;
-          int err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
+          int err = 0;
 
-          POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
-                              "Out of device memory?");
+          if (ptr != NULL && !(flags & CL_MEM_DEVICE_PRIVATE_EXT))
+            {
+              /* In the default case, we have the same ptr for all devices.
+                 TODO: check that the devices have access to each
+                 other's memories/address spaces. */
+              assert (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL);
+              mem->device_ptrs[dev->global_mem_id].mem_ptr = ptr;
+            }
+          else if (mem->device_ptrs[dev->global_mem_id].mem_ptr == NULL)
+            {
+              err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
+              ptr = mem->device_ptrs[dev->global_mem_id].mem_ptr;
+              POCL_GOTO_ERROR_ON (err != CL_SUCCESS, CL_OUT_OF_RESOURCES,
+                                  "Out of device memory?");
+
+              pocl_raw_ptr *item = calloc (1, sizeof (pocl_raw_ptr));
+              POCL_RETURN_ERROR_ON ((item == NULL), NULL,
+                                    "out of host memory\n");
+
+              POCL_LOCK_OBJ (context);
+              item->vm_ptr = NULL;
+              item->dev_ptr = ptr;
+              item->size = size;
+              item->shadow_cl_mem = mem;
+              DL_APPEND (context->raw_ptrs, item);
+              POCL_UNLOCK_OBJ (context);
+
+              POCL_MSG_PRINT_MEMORY ("Registered a CL_MEM_DEVICE_ADDRESS_EXT "
+                                     "allocation with address '%p'.\n",
+                                     ptr);
+              if (!(flags & CL_MEM_DEVICE_PRIVATE_EXT))
+                mem->device_ptrs[dev->global_mem_id].device_addr = ptr;
+              else
+                mem->device_ptrs[dev->global_mem_id].device_addr = NULL;
+            }
         }
     }
 
@@ -269,7 +317,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 
   if ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)
     {
-      pocl_svm_ptr *item = pocl_find_svm_ptr_in_context (context, host_ptr);
+      pocl_raw_ptr *item = pocl_find_raw_ptr_with_vm_ptr (context, host_ptr);
       if (item)
         {
           POCL_GOTO_ERROR_ON ((item->size < size), CL_INVALID_BUFFER_SIZE,
