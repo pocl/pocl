@@ -845,8 +845,8 @@ pocl_basic_usm_alloc (cl_device_id dev, unsigned alloc_type,
       DL_APPEND (usm_allocations, all);
       POCL_UNLOCK (usm_lock);
 
-      POCL_MSG_WARN ("ALLOCATED: ALL_PTR: %p ALL_SIZE: %zu\n", all->ptr,
-                     all->size);
+      POCL_MSG_PRINT_MEMORY ("USM ALLOCATED: PTR: %p SIZE: %zu\n", all->ptr,
+                             all->size);
     }
 
 ERROR:

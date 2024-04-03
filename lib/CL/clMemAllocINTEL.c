@@ -143,7 +143,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
 
   if (errcode != CL_SUCCESS)
     {
-      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.");
+      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem object.\n");
       return NULL;
     }
 
