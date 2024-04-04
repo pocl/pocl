@@ -77,5 +77,10 @@ int main() {
     
     clFinish(command_queue);
     ret |= clReleaseKernel(kernel);
+    ret |= clReleaseProgram (program);
+    ret |= clReleaseMemObject (faceCount_mem_obj);
+    ret |= clReleaseCommandQueue (command_queue);
+    ret |= clReleaseContext (context);
+    ret |= clUnloadCompiler ();
     return ret;
 }

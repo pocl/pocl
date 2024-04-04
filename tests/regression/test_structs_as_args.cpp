@@ -278,6 +278,7 @@ main(void)
             }
         }
 
+        queue.enqueueUnmapMemObject(cBuffer, (void *)output);
         queue.finish();
         platformList[0].unloadCompiler();
 

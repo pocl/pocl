@@ -108,6 +108,7 @@ int main ()
 
   program_binary = clCreateProgramWithBinary(context, 1, &device, &binary_size,
                                              (const unsigned char **)&binary, NULL, &err);
+  free (binary);
   CHECK_CL_ERROR (err);
   err = clBuildProgram(program_binary, 0, NULL, NULL, NULL, NULL);
   CHECK_CL_ERROR (err);

@@ -109,20 +109,20 @@ main(void)
             cl::NDRange(1),
             cl::NullRange);
 
-        int * res = (int *) queue.enqueueMapBuffer(
-            outBuffer,
-            CL_FALSE, 
-            CL_MAP_READ,
-            0,
-            2 * sizeof(int));
+        int *res = (int *)queue.enqueueMapBuffer(
+            outBuffer, CL_TRUE, CL_MAP_READ, 0, 2 * sizeof(int));
 
+        int status = EXIT_SUCCESS;
+        if (!(res[0] == 1 && res[1] == 2)) {
+            std::cerr << res[0] << res[1] << std::endl;
+            status = EXIT_FAILURE;
+        }
+
+        queue.enqueueUnmapMemObject(outBuffer, (void *)res);
         queue.finish();
         platformList[0].unloadCompiler();
 
-        if (!(res[0] == 1 && res[1] == 2)) {
-            std::cerr << res[0] << res[1] << std::endl;
-            return EXIT_FAILURE;
-        }
+        return status;
     } 
     catch (cl::Error &err) {
          std::cerr
