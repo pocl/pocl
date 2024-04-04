@@ -25,8 +25,8 @@
 #define _GNU_SOURCE
 #define __USE_GNU
 
+#include "builtin-kernels/metadata.h"
 #include <assert.h>
-#include <errno.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdlib.h>
@@ -46,6 +46,7 @@
 #include "pocl-pthread_scheduler.h"
 #include "pocl_mem_management.h"
 #include "pocl_util.h"
+#include "pocl_builtin_kernels.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -58,6 +59,9 @@ struct event_data {
   pthread_cond_t event_cond;
 };
 
+static pocl_lock_t pocl_dlhandle_lock;
+typedef void (*init_func_t) (void);
+typedef void (*free_func_t) (void);
 
 void
 pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
@@ -85,6 +89,9 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 
   ops->init_queue = pocl_pthread_init_queue;
   ops->free_queue = pocl_pthread_free_queue;
+
+  ops->post_build_program = pocl_pthread_add_host_builtins;
+  ops->free_program = pocl_pthread_free_program;
 }
 
 unsigned int
@@ -148,6 +155,9 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->partition_type = NULL;
 #endif
 
+  device->builtin_kernel_list = "pocl.add.i8";
+  device->num_builtin_kernels = 1;
+
   if (!scheduler_initialized)
     {
       ret = pthread_scheduler_init (device);
@@ -195,7 +205,7 @@ pocl_pthread_reinit (unsigned j, cl_device_id device, const char *parameters)
 void
 pocl_pthread_run (void *data, _cl_command_node *cmd)
 {
-  /* not used: this device will not be told when or what to run */
+  /* not used: this device won't be told when or what to run */
 }
 
 void
@@ -339,4 +349,109 @@ pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
   PTHREAD_CHECK (pthread_cond_destroy (cond));
   POCL_MEM_FREE (queue->data);
   return CL_SUCCESS;
+}
+
+int
+pocl_pthread_add_host_builtins (cl_program program, cl_uint device_i)
+{
+  // TODO: Is it possible to set these dynamically?
+  const ulong local_size[3] = { 1, 1, 1 };
+  const ulong global_offset[3] = { 0, 0, 0 };
+  const ulong num_groups[3] = { 1, 1, 1 };
+  const int retain = 1;
+  const int specialize = 1;
+
+  for (int i = 0; i < NUM_PTHREAD_BUILTIN_HOST_KERNELS; ++i)
+    {
+      char *kernel_name = kernel_names[i];
+      const char *dylib_name = dylib_names[i];
+      const char *init_fn_name = init_fn_names[i];
+
+      for (int j = 0; j < program->num_kernels; ++j)
+        {
+          const pocl_kernel_metadata_t *kernel_meta = &program->kernel_meta[j];
+
+          // Skip program kernels that aren't host builtin kernels
+          if (strcmp (kernel_names[i], kernel_meta->name) != 0)
+            {
+              continue;
+            }
+
+          // For each host builtin kernel call its init function
+          if (strlen (init_fn_name) > 0)
+            {
+              const init_func_t init_fn
+                = pocl_get_symbol (init_fn_name, dylib_name);
+              init_fn ();
+            }
+
+          const pocl_kernel_hash_t *hash = kernel_meta->build_hash;
+          char *kernel_meta_name = kernel_meta->name;
+
+          POCL_LOCK (pocl_dlhandle_lock);
+          pocl_dlhandle_cache_item *ci = fetch_dlhandle_cache_item (
+            (const void *)(hash), local_size, specialize, global_offset,
+            num_groups);
+
+          if (ci != NULL)
+            {
+              if (retain)
+                ++ci->ref_count;
+              POCL_UNLOCK (pocl_dlhandle_lock);
+              return 0;
+            }
+
+          char *identifier = strdup(kernel_name);
+          size_t len = strlen (identifier);
+          for (uint i = 0; i < len; ++i)
+            if (identifier[i] == '.')
+              identifier[i] = '_';
+
+          ci = pocl_add_cache_item (hash, local_size, retain, specialize,
+                                    global_offset, num_groups, dylib_name,
+                                    kernel_name);
+
+          POCL_UNLOCK (pocl_dlhandle_lock);
+          POCL_MEM_FREE(identifier);
+        }
+    }
+
+  return 0;
+}
+
+int
+pocl_pthread_free_program (cl_device_id device,
+                           cl_program program,
+                           unsigned dev_i)
+{
+
+  // For each host builtin kernel call its free function
+  for (int i = 0; i < NUM_PTHREAD_BUILTIN_HOST_KERNELS; ++i)
+    {
+      const char *dylib_name = dylib_names[i];
+      const char *free_fn_name = free_fn_names[i];
+
+      for (int j = 0; j < program->num_kernels; ++j)
+        {
+          const pocl_kernel_metadata_t *kernel_meta = &program->kernel_meta[j];
+
+          // Skip program kernels that aren't host builtin kernels
+          if (strcmp (kernel_names[i], kernel_meta->name) != 0)
+            {
+              continue;
+            }
+
+          if (strlen (free_fn_name) > 0)
+            {
+              const free_func_t free_fn
+                = pocl_get_symbol (free_fn_name, dylib_name);
+              free_fn ();
+            }
+        }
+    }
+
+#ifdef ENABLE_LLVM
+  pocl_llvm_free_llvm_irs (program, dev_i);
+#endif
+  return 0;
 }

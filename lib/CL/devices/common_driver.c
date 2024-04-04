@@ -31,11 +31,11 @@
 
 #include "pocl_cl.h"
 #include "pocl_timing.h"
-#include "utlist.h"
+#include "pocl_util.h"
 
 // for pocl_aligned_malloc
-#include "pocl_util.h"
 #include "pocl_file_util.h"
+
 // for SPIR-V handling
 #include "pocl_cache.h"
 
@@ -1077,7 +1077,6 @@ pocl_driver_build_poclbinary (cl_program program, cl_uint device_i)
 
   return CL_SUCCESS;
 }
-
 
 int
 pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i)
