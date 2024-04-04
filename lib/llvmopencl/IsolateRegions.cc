@@ -132,12 +132,11 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
     changed = true;
   }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 #ifdef DEBUG_ISOLATE_REGIONS
-  Function *F = exit->getParent();
+  Function *F = Exit->getParent();
   dumpCFG(*F, F->getName().str() + "_after_isolateregs.dot");
 #endif
-#endif
+
   return changed;
 }
 
