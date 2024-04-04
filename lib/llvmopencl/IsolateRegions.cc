@@ -164,6 +164,8 @@ static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
     if (R.contains(Pred))
       RegionPreds.push_back(Pred);
   }
+  if (RegionPreds.empty())
+    return;
   llvm::BasicBlock *NewExit =
       SplitBlockPredecessors(BB, RegionPreds, ".r_exit");
   R.replaceExit(NewExit);
