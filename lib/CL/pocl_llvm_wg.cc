@@ -607,8 +607,15 @@ static void addStage2PassesToPipeline(cl_device_id Dev,
   // verify & print the module
 #if 0
   addPass(Passes, "verify", PassType::Module);
+
+#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
+  addPass(Passes, "print-module", PassType::Module);
+#else
   addPass(Passes, "print", PassType::Module);
 #endif
+
+#endif
+
 
   // Add the work group launcher functions and privatize the pseudo variable
   // (local id) accesses. We have to do this late because we rely on aggressive
