@@ -47,6 +47,18 @@ The actual extension text is yet to write and the extension can
 change without notification as we get feedback and more experience from
 using it.
 
+============================
+Multi-device command buffers
+============================
+
+Initial support for `cl_khr_command_buffer_multi_device` has been added, i.e. it
+is now possible to create command buffers associated with multiple command queues
+that are not associated with the same device and to remap command buffers to new
+(sets of) command queues. This should be driver-agnostic but has not been tested
+with other drivers than CPU. There likely are no large performance gains from
+the current implementation either, as everything happens in the surface layers
+of the library.
+
 ===========================
 Driver-specific features
 ===========================
