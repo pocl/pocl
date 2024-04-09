@@ -226,7 +226,7 @@ pocl_remote_free (cl_device_id device, cl_mem mem)
     {
       /* When SVM is enabled, we allocate all buffers from the SVM region
          in the driver. Thus we should also free the SVM space. */
-      if (pocl_free_buffer (&svm_data->allocations, mem->mem_host_ptr) == NULL)
+      if (pocl_free_buffer (&svm_data->allocations, (memory_address_t) mem->mem_host_ptr) == NULL)
         {
           POCL_MSG_ERR ("Failed freeing internal SVM allocation %p.\n",
                         mem->mem_host_ptr);
