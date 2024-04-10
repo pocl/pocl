@@ -622,11 +622,11 @@ pocl_network_connect (remote_server_data_t *data, int *fd, unsigned port,
   memcpy (hs.authkey, data->authkey, AUTHKEY_LENGTH);
   ssize_t readb, writeb;
   uint32_t req_len = request_size (hs.message_type);
-  writeb = write_full (socket_fd, &req_len, sizeof (req_len), NULL);
+  writeb = write_full (socket_fd, &req_len, sizeof (req_len), data);
   assert ((size_t)(writeb) == 0);
-  writeb = write_full (socket_fd, &hs, req_len, NULL);
+  writeb = write_full (socket_fd, &hs, req_len, data);
   assert ((size_t)(writeb) == 0);
-  readb = read_full (socket_fd, &hsr, sizeof (hsr), NULL);
+  readb = read_full (socket_fd, &hsr, sizeof (hsr), data);
   assert ((size_t)(readb) == sizeof (hsr));
   if (reply_out)
     memcpy (reply_out, &hsr, sizeof (ReplyMsg_t));
