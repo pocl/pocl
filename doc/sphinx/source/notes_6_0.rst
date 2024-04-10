@@ -20,6 +20,33 @@ any particular behavior (or lack thereof) they are treated as a no-op. However
 specifying them no longer causes `clCreateCommandQueueWithProperties` to return
 an error.
 
+===================================================
+Experimental cl_ext_buffer_device_address prototype
+===================================================
+
+This new extension prototype enables allocating `cl_mem` buffers with client-accessible
+physical addresses which is guaranteed to be fixed for the lifetime of the buffer.
+The main difference to coarse-grain SVM allocations is that all
+SVM allocations require always the virtual address address to match the device address,
+thus mapping the buffer address range also to the vmem even though its contents
+are managed only via explicit memcopies by the application.
+
+Although it's a very simple incremental extension to the basic `clCreateBuffer()` API,
+it enables implementing `hipMalloc()` HIP/CUDA and `omp_target_alloc()` OpenMP
+allocation calls when the application doesn't require a unified address space.
+
+There is also a prototype implementation of the extension in `Rusticl/Mesa <https://gitlab.freedesktop.org/karolherbst/mesa/-/commit/fa5f51da728dcaf277b0919e90e0400859f290bb>`_.
+
+`chipStar <https://github.com/CHIP-SPV/chipStar>`_ can optionally
+use the extension, if neither Unified Shared Memory (Intel extension) nor
+OpenCL 2.0+ Coarse-Grain SVM is supported by the OpenCL device/platform,
+and the HIP/CUDA application doesn't require unified address space, but
+explicitly specifies the memory copy directions.
+
+The actual extension text is yet to write and the extension can
+change without notification as we get feedback and more experience from
+using it.
+
 ===========================
 Driver-specific features
 ===========================
