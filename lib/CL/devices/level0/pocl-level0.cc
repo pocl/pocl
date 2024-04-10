@@ -424,6 +424,40 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
   return CL_SUCCESS;
 }
 
+static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
+                            char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH],
+                            char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH],
+                            std::vector<std::string> &BcBinaryPaths,
+                            int CreateLibrary) {
+  std::vector<std::string> CompilationArgs;
+  std::vector<char *> CompilationArgs2;
+
+  CompilationArgs.push_back(LLVM_LINK);
+//  if (CreateLibrary != 0) {
+//    CompilationArgs.push_back("--create-library");
+//  }
+  CompilationArgs.push_back("-o");
+  CompilationArgs.push_back(ProgramBcPathTemp);
+  for (auto &Path : BcBinaryPaths) {
+    CompilationArgs.push_back(Path);
+  }
+  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  for (unsigned i = 0; i < CompilationArgs.size(); ++i)
+    CompilationArgs2[i] = (char *)CompilationArgs[i].data();
+  CompilationArgs2[CompilationArgs.size()] = nullptr;
+
+  int Err =
+      runAndAppendOutputToBuildLog(Program, DeviceI, CompilationArgs2.data());
+  POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
+                       "llvm-link exited with nonzero code\n");
+  POCL_RETURN_ERROR_ON(!pocl_exists(ProgramBcPathTemp),
+                       CL_LINK_PROGRAM_FAILURE, "llvm-link failed to "
+                                                "produce output file\n");
+
+  return compileProgramBcToSpv(Program, DeviceI, ProgramBcPathTemp,
+                              ProgramSpvPathTemp);
+}
+
 int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
                              cl_uint NumInputHeaders,
                              const cl_program *InputHeaders,
@@ -630,9 +664,11 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   assert(Program->binary_sizes[DeviceI] == 0);
 
   std::vector<std::string> SpvBinaryPaths;
+  std::vector<std::string> BcBinaryPaths;
   std::vector<char> SpvConcatBinary;
 
   cl_uint I;
+  cl_uint ProgsHaveProgramBC = 0;
   for (I = 0; I < NumInputPrograms; I++) {
     assert(Dev == InputPrograms[I]->devices[DeviceI]);
     POCL_LOCK_OBJ(InputPrograms[I]);
@@ -642,8 +678,14 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
     size_t Size = InputPrograms[I]->program_il_size;
     assert(Size);
     SpvConcatBinary.insert(SpvConcatBinary.end(), Spv, Spv + Size);
+    if (InputPrograms[I]->binary_sizes[DeviceI] > 0) {
+      ++ProgsHaveProgramBC;
+      pocl_cache_program_bc_path(ProgramBcPath, InputPrograms[I], DeviceI);
+      assert(pocl_exists(ProgramBcPath));
+      BcBinaryPaths.push_back(ProgramBcPath);
+    }
 
-    pocl_cache_program_spv_path(ProgramSpvPath, Program, DeviceI);
+    pocl_cache_program_spv_path(ProgramSpvPath, InputPrograms[I], DeviceI);
     assert(pocl_exists(ProgramSpvPath));
     SpvBinaryPaths.push_back(ProgramSpvPath);
 
@@ -653,20 +695,51 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
   pocl_cache_create_program_cachedir(Program, DeviceI, SpvConcatBinary.data(),
                                      SpvConcatBinary.size(), ProgramBcPath);
   convertProgramBcToSpv(ProgramBcPath, ProgramSpvPath);
+  if (pocl_exists(ProgramSpvPath) && pocl_exists(ProgramBcPath)) {
+    POCL_MSG_PRINT_LEVEL0("Found linked SPIR-V in cache\n");
+    goto CREATE_ZE_MODULE;
+  }
 
   char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
+  char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
 
-  int Err = linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp,
-                              SpvBinaryPaths, CreateLibrary);
-  if (Err != CL_SUCCESS) {
-    return Err;
-  }
+//  if (linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp,
+//              SpvBinaryPaths, CreateLibrary) != CL_SUCCESS) {
+    if (ProgsHaveProgramBC != NumInputPrograms) {
+      POCL_MSG_ERR("LevelZero: not all programs have program.bc\n");
+      return CL_LINK_PROGRAM_FAILURE;
+    }
+
+//    POCL_MSG_WARN("LevelZero : failed to link using spirv-link, trying"
+//                  "with llvm-link\n");
+    if (linkWithLLVMLink(Program, DeviceI, ProgramBcPathTemp,
+                         ProgramSpvPathTemp, BcBinaryPaths, 0) != CL_SUCCESS) {
+      POCL_MSG_ERR("LevelZero: failed to link "
+                   "with both spirv-link and llvm-link\n");
+      return CL_LINK_PROGRAM_FAILURE;
+    }
+//  }
 
   pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
+  pocl_rename(ProgramBcPathTemp, ProgramBcPath);
+
+CREATE_ZE_MODULE:
   readProgramSpv(Program, DeviceI, ProgramSpvPath);
   assert(Program->program_il != nullptr);
   assert(Program->program_il_size > 0);
+  if (Program->binary_sizes[DeviceI] == 0) {
+    char *OutputBinary = nullptr;
+    uint64_t OutputBinarySize = 0;
+    int Err = pocl_read_file(ProgramBcPath, &OutputBinary, &OutputBinarySize);
+    POCL_RETURN_ERROR_ON((Err != 0), CL_LINK_PROGRAM_FAILURE,
+                         "failed to read BC file from cache\n");
+    Program->binaries[DeviceI] = (unsigned char *)OutputBinary;
+    Program->binary_sizes[DeviceI] = OutputBinarySize;
+  }
+  assert(Program->binaries[DeviceI] != nullptr);
+  assert(Program->binary_sizes[DeviceI] > 0);
 
   if (CreateLibrary == 0) {
     return Device->createProgram(Program, DeviceI);
@@ -1066,12 +1139,22 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
   }
 
+  // The cl_mems are allocated as shared USM by default to make clEnqueueMap()
+  // implementation simpler. TODO: measure the perf. impact of this on some
+  // relevant platform and use memcopies for map.
+
   void *Allocation = nullptr;
-  // special handling for clCreateBuffer called on SVM pointer
+  // special handling for clCreateBuffer called on SVM or USM pointer
   if (((Mem->flags & CL_MEM_USE_HOST_PTR) != 0u) &&
       (Mem->mem_host_ptr_is_svm != 0)) {
     P->mem_ptr = Mem->mem_host_ptr;
     P->version = Mem->mem_host_ptr_version;
+  } else if (Mem->flags & CL_MEM_DEVICE_ADDRESS_EXT) {
+    // Treat cl_ext_buffer_device_address identically as USM Device.
+    // If we passed an SVM/USM address, we can use it directly in the
+    // previous branch. That should be at least a USM Device allocation.
+    P->mem_ptr = Device->allocSharedMem(Mem->size, 0);
+    P->version = 0;
   } else {
     bool Compress = false;
     if (pocl_get_bool_option("POCL_LEVEL0_COMPRESS", 0)) {
@@ -1423,6 +1506,8 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
     L0Kernel->setIndirectAccess(Flag, (value != CL_FALSE));
     return CL_SUCCESS;
   }
+
+  case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
   case CL_KERNEL_EXEC_INFO_SVM_PTRS:
   case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL: {
     std::map<void *, size_t> UsedPtrs;
@@ -1434,10 +1519,20 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
     // find the allocation sizes for the pointers. Needed for L0 API
     for (cl_uint i = 0; i < NumElem; ++i) {
       AllocationSize = 0;
-      int err =
-          pocl_svm_check_pointer(Kernel->context, Elems[i], 1, &AllocationSize);
-      POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
-                           "Invalid pointer given to the call\n");
+      // TODO: DEVICE ptrs do not have vm_ptr set, the check will fail.
+
+      if (param_name == CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT) {
+        pocl_raw_ptr *DevPtr =
+            pocl_find_raw_ptr_with_dev_ptr(Kernel->context, Elems[i]);
+        POCL_RETURN_ERROR_ON((DevPtr == nullptr), CL_INVALID_VALUE,
+                             "Invalid pointer given to the call\n");
+        AllocationSize = DevPtr->size;
+      } else {
+        int err = pocl_svm_check_pointer(Kernel->context, Elems[i], 1,
+                                         &AllocationSize);
+        POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
+                             "Invalid pointer given to the call\n");
+      }
       assert(AllocationSize > 0);
       UsedPtrs[Elems[i]] = AllocationSize;
     }

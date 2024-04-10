@@ -2,7 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -578,8 +578,8 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
 
       /* The CG SVM support can be used for "pinned buffers" as well and
          USM. */
-      const char *bonus_extensions = CL_POCL_PINNED_BUFFERS_EXTENSION_NAME
-          " cl_intel_unified_shared_memory";
+      const char *bonus_extensions = "cl_ext_buffer_device_address "
+                                     " cl_intel_unified_shared_memory";
       unsigned exts_str_size
           = strlen (device->extensions) + 1 + strlen (bonus_extensions);
       char *exts_w_pinned = calloc (exts_str_size + 1, 1);
@@ -1949,7 +1949,7 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
           requires_kernarg_update = 1;
           arg_array[i] = al->size;
         }
-      else if (al->is_svm)
+      else if (al->is_raw_ptr)
         {
           arg_array[i] = (uint64_t) * (void **)al->value;
           POCL_MSG_PRINT_MEMORY (

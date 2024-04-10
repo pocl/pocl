@@ -486,9 +486,9 @@ pocl_driver_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
   p->mem_ptr = mem->mem_host_ptr;
   p->device_addr = p->mem_ptr;
 
-  /* If requesting device pinned memory, mark the mem such so it won't
-     get migrated away before being freed. */
-  if (mem->is_device_pinned)
+  /* If requesting memory with a fixed device address, make them pinned
+     so it won't get migrated away before being freed. */
+  if (mem->has_device_address)
     p->is_pinned = 1;
 
   POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,

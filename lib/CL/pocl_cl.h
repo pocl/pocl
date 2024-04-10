@@ -324,8 +324,9 @@ typedef struct pocl_argument {
   /* 1 if the argument is read-only according to kernel metadata. So either
    * a buffer with "const" qualifier, or an image with read_only qualifier  */
   char is_readonly;
-  /* 1 if the argument pointer is SVM direct pointer, not a cl_mem */
-  char is_svm;
+  /* 1 if the argument pointer is a raw pointer (SVM, USM or device),
+     not a cl_mem handle */
+  char is_raw_ptr;
 } pocl_argument;
 
 typedef struct event_node event_node;
@@ -1164,15 +1165,18 @@ struct _context_destructor_callback
   context_destructor_callback_t *next;
 };
 
-typedef struct _pocl_svm_ptr pocl_svm_ptr;
-struct _pocl_svm_ptr
+typedef struct _pocl_raw_ptr pocl_raw_ptr;
+struct _pocl_raw_ptr
 {
-  void *svm_ptr;
+  /* The virtual address, if any.  NULL if there's none. */
+  void *vm_ptr;
+  /* The device address, if known. NULL if not. */
+  void *dev_ptr;
   size_t size;
-  /* A CL_MEM_PINNED cl_mem with device and host ptr the same. This is for
-     internal bookkeeping and automated buffer migration purposes. */
+  /* A CL_MEM_DEVICE_ADDRESS cl_mem with device and host ptr the same. This is
+     for internal bookkeeping and automated buffer migration purposes. */
   cl_mem shadow_cl_mem;
-  struct _pocl_svm_ptr *prev, *next;
+  struct _pocl_raw_ptr *prev, *next;
 };
 
 struct _cl_context {
@@ -1232,8 +1236,9 @@ struct _cl_context {
   /* List of destructor callbacks */
   context_destructor_callback_t *destructor_callbacks;
 
-  /* list of SVM & USM allocations */
-  pocl_svm_ptr *svm_ptrs;
+  /* List of allocations with raw host-side accessible pointers associated
+     with them (SVM, USM, DEV). */
+  pocl_raw_ptr *raw_ptrs;
 
   /* list of command queues created for the context.
    * required for clMemBlockingFreeINTEL */
@@ -1469,10 +1474,10 @@ struct _cl_mem {
    * we can make some assumptions and optimizations */
   cl_bool mem_host_ptr_is_permanent;
 
-  /* If the allocation was requested to be permanent on the device
-     global memory (until freed). This is set via CL_MEM_PINNED
-     flag of the cl_ext_pinned_buffers extension. */
-  cl_bool is_device_pinned;
+  /* If the allocation was requested to have a permanent device global memory
+     address (until freed). This is set via CL_MEM_DEVICE_ADDRESS flag of
+     the cl_ext_buffer_device_address extension. */
+  cl_bool has_device_address;
 
   /* Image flags */
   cl_bool                 is_image;

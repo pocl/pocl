@@ -172,7 +172,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
   p->value = NULL;
   p->is_set = 0;
   p->is_readonly = 0;
-  p->is_svm = 0;
+  p->is_raw_ptr = 0;
 
   /* Even if the buffer/image is read-write, the kernel might be using it as
    * read-only */

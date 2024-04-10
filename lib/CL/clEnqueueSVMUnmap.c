@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueSVMUnmap()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -62,7 +62,8 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
       && (num_events_in_wait_list == 0) && (event == NULL))
     return CL_SUCCESS;
 
-  pocl_svm_ptr *svm_ptr_pocl = pocl_find_svm_ptr_in_context (context, svm_ptr);
+  pocl_raw_ptr *svm_ptr_pocl
+      = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
 
   /* If it's nullptr, it must be a system allocation. */
   if (svm_ptr_pocl != NULL)

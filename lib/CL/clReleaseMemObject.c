@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clReleaseMemObject()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -158,6 +159,22 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           memobj->size_buffer->content_buffer = NULL;
           POCL_UNLOCK_OBJ (memobj->size_buffer);
           memobj->size_buffer = NULL;
+        }
+
+      if (memobj->has_device_address)
+        {
+          POCL_LOCK_OBJ (context);
+          pocl_raw_ptr *tmp = NULL, *item = NULL;
+          DL_FOREACH_SAFE (context->raw_ptrs, item, tmp)
+          {
+            if (item->shadow_cl_mem == memobj)
+              {
+                DL_DELETE (context->raw_ptrs, item);
+                free (item);
+                break;
+              }
+          }
+          POCL_UNLOCK_OBJ (context);
         }
 
       POCL_DESTROY_OBJECT (memobj);

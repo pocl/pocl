@@ -1,12 +1,13 @@
 /* OpenCL runtime library: clGetExtensionFunctionAddressForPlatform()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
@@ -192,6 +193,10 @@ CL_API_SUFFIX__VERSION_1_2
 
   if (strcmp (func_name, "clEnqueueSVMMemFillRectPOCL") == 0)
     return (void *)&POname (clEnqueueSVMMemFillRectPOCL);
+
+  /* cl_ext_buffer_device_address */
+  if (strcmp (func_name, "clSetKernelArgDevicePointerEXT") == 0)
+    return (void *)&POname (clSetKernelArgDevicePointerEXT);
 
   POCL_MSG_ERR ("unknown platform extension requested: %s\n", func_name);
   return NULL;

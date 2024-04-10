@@ -37,6 +37,7 @@
 
 #include <cstring>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 
 
@@ -326,11 +327,11 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
       for (i = 0; i < cmd->svm_free.num_svm_pointers; i++) {
         void *ptr = cmd->svm_free.svm_pointers[i];
         POCL_LOCK_OBJ(event->context);
-        pocl_svm_ptr *tmp = nullptr;
-        pocl_svm_ptr *item = nullptr;
-        DL_FOREACH_SAFE(event->context->svm_ptrs, item, tmp) {
-          if (item->svm_ptr == ptr) {
-            DL_DELETE(event->context->svm_ptrs, item);
+        pocl_raw_ptr *tmp = nullptr;
+        pocl_raw_ptr *item = nullptr;
+        DL_FOREACH_SAFE(event->context->raw_ptrs, item, tmp) {
+          if (item->vm_ptr == ptr) {
+            DL_DELETE(event->context->raw_ptrs, item);
             break;
           }
         }
@@ -986,7 +987,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
 
       if (PoclArg[i].value == NULL) {
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), nullptr);
-      } else if (PoclArg[i].is_svm != 0) {
+      } else if (PoclArg[i].is_raw_ptr != 0) {
         void *MemPtr = *(void**)PoclArg[i].value;
         if (MemPtr == nullptr)
           Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), nullptr);
@@ -1155,6 +1156,8 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   for (auto &I : AccessedPointers) {
     void *Ptr = I.first;
     size_t Size = I.second;
+    POCL_MSG_PRINT_MEMORY("Level0: Making %p (size %zu) resident.\n", Ptr,
+                          Size);
     ze_result_t Res = zeContextMakeMemoryResident(
         Device->getContextHandle(), Device->getDeviceHandle(), Ptr, Size);
     LEVEL0_CHECK_ABORT(Res);
@@ -1761,6 +1764,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
                          " cl_khr_local_int32_extended_atomics"
                          " cl_khr_il_program"
                          " cl_khr_3d_image_writes");
+
   std::string OpenCL30Features("__opencl_c_images"
                                " __opencl_c_read_write_images"
                                " __opencl_c_3d_image_writes"
@@ -1840,6 +1844,9 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   if (DeviceMemCaps & ZE_MEMORY_ACCESS_CAP_FLAG_RW) {
     Extensions.append(" cl_intel_unified_shared_memory");
   }
+
+  if (supportsDeviceUSM())
+    Extensions.append(" cl_ext_buffer_device_address");
 
   ClDev->extensions = strdup(Extensions.c_str());
   ClDev->features = strdup(OpenCL30Features.c_str());

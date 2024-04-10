@@ -2,7 +2,7 @@
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
                  2011-2021 Pekka Jääskeläinen
-                 2023 Pekka Jääskeläinen / Intel Finland Oy
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -280,7 +280,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           else
             {
               void *ptr = NULL;
-              if (al->is_svm)
+              if (al->is_raw_ptr)
                 {
                   ptr = *(void **)al->value;
                 }
@@ -1006,6 +1006,7 @@ pocl_basic_set_kernel_exec_info_ext (cl_device_id dev,
     case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
     case CL_KERNEL_EXEC_INFO_SVM_PTRS:
     case CL_KERNEL_EXEC_INFO_USM_PTRS_INTEL:
+    case CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:

@@ -49,12 +49,12 @@ POname(clSVMFree)(cl_context context,
     }
 
   POCL_LOCK_OBJ (context);
-  pocl_svm_ptr *tmp = NULL, *item = NULL;
-  DL_FOREACH_SAFE (context->svm_ptrs, item, tmp)
+  pocl_raw_ptr *tmp = NULL, *item = NULL;
+  DL_FOREACH_SAFE (context->raw_ptrs, item, tmp)
   {
-    if (item->svm_ptr == svm_pointer)
+    if (item->vm_ptr == svm_pointer)
       {
-        DL_DELETE (context->svm_ptrs, item);
+        DL_DELETE (context->raw_ptrs, item);
         break;
       }
   }

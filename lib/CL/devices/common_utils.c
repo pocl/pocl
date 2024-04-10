@@ -282,7 +282,7 @@ setup_kernel_arg_array (kernel_run_command *k)
           else
             {
               void *ptr = NULL;
-              if (al->is_svm)
+              if (al->is_raw_ptr)
                 {
                   ptr = *(void **)al->value;
                 }

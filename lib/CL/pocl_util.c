@@ -1,12 +1,13 @@
 /* OpenCL runtime library: pocl_util utility functions
 
    Copyright (c) 2012-2019 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include <errno.h>
@@ -1864,17 +1865,35 @@ pocl_setup_context (cl_context context)
   return CL_SUCCESS;
 }
 
-pocl_svm_ptr *
-pocl_find_svm_ptr_in_context (cl_context context, const void *host_ptr)
+pocl_raw_ptr *
+pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
 {
   POCL_LOCK_OBJ (context);
-  pocl_svm_ptr *item = NULL;
-  DL_FOREACH (context->svm_ptrs, item)
+  pocl_raw_ptr *item = NULL;
+  DL_FOREACH (context->raw_ptrs, item)
   {
-    if (item->svm_ptr <= host_ptr && item->svm_ptr + item->size > host_ptr)
+    if (item->vm_ptr == NULL)
+      continue;
+    if (item->vm_ptr <= host_ptr && item->vm_ptr + item->size > host_ptr)
       {
         break;
       }
+  }
+  POCL_UNLOCK_OBJ (context);
+  return item;
+}
+
+pocl_raw_ptr *
+pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
+{
+  POCL_LOCK_OBJ (context);
+  pocl_raw_ptr *item = NULL;
+  DL_FOREACH (context->raw_ptrs, item)
+  {
+    if (item->dev_ptr == NULL)
+      continue;
+    if (item->dev_ptr <= dev_ptr && item->dev_ptr + item->size > dev_ptr)
+      break;
   }
   POCL_UNLOCK_OBJ (context);
   return item;
@@ -2880,12 +2899,12 @@ pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size,
   /* TODO we need a better data structure than linked list,
    * right now it does a linear scan of all SVM allocations. */
   POCL_LOCK_OBJ (context);
-  pocl_svm_ptr *found = NULL, *item = NULL;
+  pocl_raw_ptr *found = NULL, *item = NULL;
   char *svm_alloc_end = NULL;
   char *svm_alloc_start = NULL;
-  DL_FOREACH (context->svm_ptrs, item)
+  DL_FOREACH (context->raw_ptrs, item)
   {
-    svm_alloc_start = (char *)item->svm_ptr;
+    svm_alloc_start = (char *)item->vm_ptr;
     svm_alloc_end = svm_alloc_start + item->size;
     if (((char *)svm_ptr >= svm_alloc_start)
         && ((char *)svm_ptr < svm_alloc_end))

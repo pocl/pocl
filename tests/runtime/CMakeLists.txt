@@ -50,7 +50,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
     list(APPEND C_PROGRAMS_TO_BUILD test_queue_creation_with_hints)
 endif()
 
-set(CXX_PROGRAMS_TO_BUILD test_pinned_buffers test_svm)
+set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -138,7 +138,7 @@ add_test(NAME "runtime/test_command_buffer" COMMAND "test_command_buffer")
 
 add_test(NAME "runtime/test_command_buffer_images" COMMAND "test_command_buffer_images")
 
-add_test(NAME "runtime/test_pinned_buffers" COMMAND "test_pinned_buffers")
+add_test(NAME "runtime/test_device_address" COMMAND "test_device_address")
 
 add_test(NAME "runtime/test_svm" COMMAND "test_svm")
 
@@ -162,7 +162,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
-  "runtime/test_pinned_buffers" "runtime/test_svm"
+  "runtime/test_device_address" "runtime/test_svm"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -179,7 +179,7 @@ set_tests_properties(
   "runtime/clEnqueueNativeKernel"
   "runtime/test_command_buffer"
   "runtime/test_command_buffer_images"
-  "runtime/test_pinned_buffers"
+  "runtime/test_device_address"
   "runtime/test_svm"
   PROPERTIES SKIP_RETURN_CODE 77)
 
@@ -238,8 +238,8 @@ if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer")
   add_test(NAME "remote/test_command_buffer_images"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_command_buffer_images")
-  add_test(NAME "remote/test_pinned_buffers"
-           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_pinned_buffers")
+  add_test(NAME "remote/test_device_address"
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_single.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_device_address")
   add_test(NAME "remote/test_svm"
            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/scripts/test_remote_runner_multi.sh" "${CMAKE_BINARY_DIR}" "tests/runtime/test_svm")
 
@@ -261,7 +261,7 @@ endif()
     "remote/clEnqueueNativeKernel"
     "remote/test_command_buffer"
     "remote/test_command_buffer_images"
-    "remote/test_pinned_buffers"
+    "remote/test_device_address"
     "remote/test_svm"
     ${OCL_30_REMOTE_TESTS}
     PROPERTIES SKIP_RETURN_CODE 77)
@@ -285,7 +285,7 @@ endif()
     "remote/test_cl_pocl_content_size_migration_remote_remote"
     "remote/test_deviceside_enqueue"
     "remote/test_command_buffer" "remote/test_command_buffer_images"
-    "remote/test_pinned_buffers" "remote/test_svm"
+    "remote/test_device_address" "remote/test_svm"
     ${OCL_30_REMOTE_TESTS}
     PROPERTIES
       PASS_REGULAR_EXPRESSION "OK"
@@ -430,5 +430,6 @@ set_property(TEST
   "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer"
+  "runtime/test_device_address"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")

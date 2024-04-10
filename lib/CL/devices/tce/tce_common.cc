@@ -670,7 +670,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           if (al->value == NULL)
             address = 0;
           else {
-            assert(al->is_svm == 0);
+            assert(al->is_raw_ptr == 0);
             cl_mem m = (*(cl_mem *)(al->value));
             chunk_info_t *p =
                 (chunk_info_t *)m->device_ptrs[d->parent->global_mem_id]

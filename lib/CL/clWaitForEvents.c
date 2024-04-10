@@ -55,10 +55,17 @@ POname(clWaitForEvents)(cl_uint              num_events ,
       dev = event_list[i]->queue->device;
       POCL_RETURN_ERROR_COND ((*(dev->available) == CL_FALSE),
                               CL_DEVICE_NOT_AVAILABLE);
+      /* this is necessary, man clFlush says:
+       * Any blocking commands .. perform an implicit flush of the cmd queue.
+       * To use event objects that refer to commands enqueued in a cmd queue
+       * as event objects to wait on by commands enqueued in a different
+       * command-queue, the application must call a clFlush or any blocking
+       * commands that perform an implicit flush */
+      POname(clFlush) (event_list[i]->queue);
       if (dev->ops->wait_event)
         dev->ops->wait_event (dev, event_list[i]);
       else
-        POname (clFinish) (event_list[i]->queue);
+        POname(clFinish) (event_list[i]->queue);
       if (event_list[i]->status < 0)
         ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }

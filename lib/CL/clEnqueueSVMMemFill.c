@@ -1,12 +1,13 @@
 /* OpenCL runtime library: clEnqueueSVMMemFill()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -16,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "pocl_cl.h"
@@ -86,12 +87,12 @@ pocl_svm_memfill_common (cl_command_buffer_khr command_buffer,
   /* Utilize the SVM shadow buffers to share code with cl_mem buffer fill
      code. */
 
-  pocl_svm_ptr *dst_svm_ptr = pocl_find_svm_ptr_in_context (context, svm_ptr);
+  pocl_raw_ptr *dst_svm_ptr = pocl_find_raw_ptr_with_vm_ptr (context, svm_ptr);
 
   void *cmd_pattern = pocl_aligned_malloc (pattern_size, pattern_size);
   POCL_RETURN_ERROR_COND ((cmd_pattern == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  size_t offset = svm_ptr - dst_svm_ptr->svm_ptr;
+  size_t offset = svm_ptr - dst_svm_ptr->vm_ptr;
   if (command_buffer)
     errcode = POname (clCommandFillBufferKHR) (
         command_buffer, NULL, dst_svm_ptr->shadow_cl_mem, pattern,
