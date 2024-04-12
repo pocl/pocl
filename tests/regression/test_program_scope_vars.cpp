@@ -337,7 +337,7 @@ main(void)
         cl::Kernel test5r(program3, "test5r");
 
         cl::Buffer outBuffer3 = cl::Buffer(
-            context, CL_MEM_READ_WRITE, 128, nullptr);
+            context, CL_MEM_READ_WRITE, 128);
 
         cl_char c = 42;
         cl_int i = 0x3838292;

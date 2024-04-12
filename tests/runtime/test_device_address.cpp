@@ -202,7 +202,7 @@ int main(void) {
 
     // Test a buffer which doesn't have any hostptr associated with it.
     cl::Buffer PinnedCLBufferNoHostCopy = cl::Buffer(
-        Context, CL_MEM_DEVICE_ADDRESS_EXT, BUF_SIZE * sizeof(cl_int), nullptr);
+        Context, CL_MEM_DEVICE_ADDRESS_EXT, BUF_SIZE * sizeof(cl_int));
 
     GetAddrKernel.setArg(0, PinnedCLBufferNoHostCopy);
 

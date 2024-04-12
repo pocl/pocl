@@ -39,11 +39,11 @@ else()
     NAMES
       "llvmtce-config"
       "llvm-config"
-      "llvm-config-mp-18.0" "llvm-config-18" "llvm-config180"
-      "llvm-config-mp-17.0" "llvm-config-17" "llvm-config170"
-      "llvm-config-mp-16.0" "llvm-config-16" "llvm-config160"
-      "llvm-config-mp-15.0" "llvm-config-15" "llvm-config150"
-      "llvm-config-mp-14.0" "llvm-config-14" "llvm-config140"
+      "llvm-config-mp-18.0" "llvm-config-mp-18" "llvm-config-18" "llvm-config180"
+      "llvm-config-mp-17.0" "llvm-config-mp-17" "llvm-config-17" "llvm-config170"
+      "llvm-config-mp-16.0" "llvm-config-mp-16" "llvm-config-16" "llvm-config160"
+      "llvm-config-mp-15.0" "llvm-config-mp-15" "llvm-config-15" "llvm-config150"
+      "llvm-config-mp-14.0" "llvm-config-mp-14" "llvm-config-14" "llvm-config140"
       "llvm-config"
     DOC "llvm-config executable")
 endif()

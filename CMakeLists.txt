@@ -1152,7 +1152,7 @@ else()
 endif()
 
 if (APPLE AND VISIBILITY_HIDDEN)
-  add_compile_definitions("-DCL_API_CALL=__attribute__ ((visibility (\"default\")))")
+  add_compile_definitions("CL_API_CALL=__attribute__ ((visibility (\"default\")))")
 endif()
 
 if(ENABLE_ICD OR ENABLE_PROXY_DEVICE OR ANDROID)
