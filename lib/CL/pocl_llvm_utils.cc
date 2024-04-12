@@ -629,6 +629,28 @@ void pocl_llvm_release_context(cl_context ctx) {
   }
 }
 
+void pocl_append_to_buildlog(cl_program Program, cl_uint DeviceI, char *Log,
+                             size_t LogSize) {
+  size_t ExistingLogSize = 0;
+  if (LogSize == 0) {
+    return;
+  }
+
+  if (Program->build_log[DeviceI] != nullptr) {
+    ExistingLogSize = strlen(Program->build_log[DeviceI]);
+    size_t TotalLogSize = LogSize + ExistingLogSize;
+    char *NewLog = (char *)malloc(TotalLogSize);
+    assert(NewLog);
+    memcpy(NewLog, Program->build_log[DeviceI], ExistingLogSize);
+    memcpy(NewLog + ExistingLogSize, Log, LogSize);
+    free(Log);
+    free(Program->build_log[DeviceI]);
+    Program->build_log[DeviceI] = NewLog;
+  } else {
+    Program->build_log[DeviceI] = Log;
+  }
+}
+
 #define POCL_METADATA_ROOT "pocl_meta"
 
 void setModuleIntMetadata(llvm::Module *mod, const char *key, unsigned long data) {

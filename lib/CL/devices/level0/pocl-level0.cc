@@ -151,27 +151,6 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
 }
 
-void appendToBuildLog(cl_program Program, cl_uint DeviceI, char *Log,
-                      size_t LogSize) {
-  size_t ExistingLogSize = 0;
-  if (LogSize == 0) {
-    return;
-  }
-
-  if (Program->build_log[DeviceI] != nullptr) {
-    ExistingLogSize = strlen(Program->build_log[DeviceI]);
-    size_t TotalLogSize = LogSize + ExistingLogSize;
-    char *NewLog = (char *)malloc(TotalLogSize);
-    assert(NewLog);
-    memcpy(NewLog, Program->build_log[DeviceI], ExistingLogSize);
-    memcpy(NewLog + ExistingLogSize, Log, LogSize);
-    free(Log);
-    free(Program->build_log[DeviceI]);
-    Program->build_log[DeviceI] = NewLog;
-  } else {
-    Program->build_log[DeviceI] = Log;
-  }
-}
 
 static int readProgramSpv(cl_program Program, cl_uint DeviceI,
                           const char *ProgramSpvPath) {
@@ -268,7 +247,8 @@ cl_int pocl_level0_reinit(unsigned J, cl_device_id ClDevice, const char *paramet
   return CL_SUCCESS;
 }
 
-static void convertProgramBcToSpv(char *ProgramBcPath, char *ProgramSpvPath) {
+static void convertProgramBcPathToSpv(char *ProgramBcPath,
+                                      char *ProgramSpvPath) {
   strncpy(ProgramSpvPath, ProgramBcPath, POCL_MAX_PATHNAME_LENGTH);
   size_t Len = strlen(ProgramBcPath);
   assert(Len > 3);
@@ -318,80 +298,10 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
     CapturedOutput[CaptureCapacity] = 0;
   }
 
-  appendToBuildLog(Program, DeviceI, SavedCapturedOutput,
-                   strlen(SavedCapturedOutput));
+  pocl_append_to_buildlog(Program, DeviceI, SavedCapturedOutput,
+                          strlen(SavedCapturedOutput));
 
   return Errcode;
-}
-
-static int compileProgramBcToSpv(cl_program Program, cl_uint DeviceI,
-                                 char *ProgramBcPathTemp,
-                                 char *ProgramSpvPathTemp) {
-  std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
-
-  // generate program.spv
-  CompilationArgs.clear();
-  CompilationArgs.push_back(LLVM_SPIRV);
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-  CompilationArgs.push_back("--opaque-pointers");
-#endif
-#endif
-  CompilationArgs.push_back("-o");
-  CompilationArgs.push_back(ProgramSpvPathTemp);
-  CompilationArgs.push_back(ProgramBcPathTemp);
-
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
-  for (unsigned i = 0; i < CompilationArgs.size(); ++i)
-    CompilationArgs2[i] = (char *)CompilationArgs[i].data();
-  CompilationArgs2[CompilationArgs.size()] = nullptr;
-
-  int Err =
-      runAndAppendOutputToBuildLog(Program, DeviceI, CompilationArgs2.data());
-  POCL_RETURN_ERROR_ON((Err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                       "LLVM-SPIRV exited with nonzero code\n");
-  POCL_RETURN_ERROR_ON(!pocl_exists(ProgramSpvPathTemp),
-                       CL_BUILD_PROGRAM_FAILURE,
-                       "LLVM-SPIRV produced no output\n");
-
-  return Err;
-}
-
-static int
-compileProgramSpvToBc(cl_program Program, cl_uint DeviceI,
-                      const char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH],
-                      const char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH]) {
-  std::vector<std::string> CompilationArgs;
-  std::vector<char *> CompilationArgs2;
-
-  // generate program.spv
-  CompilationArgs.clear();
-  CompilationArgs.push_back(LLVM_SPIRV);
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-  CompilationArgs.push_back("--opaque-pointers");
-#endif
-#endif
-  CompilationArgs.push_back("-r");
-  CompilationArgs.push_back("-o");
-  CompilationArgs.push_back(ProgramBcPathTemp);
-  CompilationArgs.push_back(ProgramSpvPathTemp);
-
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
-  for (unsigned i = 0; i < CompilationArgs.size(); ++i)
-    CompilationArgs2[i] = (char *)CompilationArgs[i].data();
-  CompilationArgs2[CompilationArgs.size()] = nullptr;
-
-  int Err =
-      runAndAppendOutputToBuildLog(Program, DeviceI, CompilationArgs2.data());
-  POCL_RETURN_ERROR_ON((Err != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
-                       "LLVM-SPIRV exited with nonzero code\n");
-  POCL_RETURN_ERROR_ON(!pocl_exists(ProgramBcPathTemp),
-                       CL_BUILD_PROGRAM_FAILURE,
-                       "LLVM-SPIRV produced no output\n");
-
-  return Err;
 }
 
 static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
@@ -454,8 +364,16 @@ static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
                        CL_LINK_PROGRAM_FAILURE, "llvm-link failed to "
                                                 "produce output file\n");
 
-  return compileProgramBcToSpv(Program, DeviceI, ProgramBcPathTemp,
-                              ProgramSpvPathTemp);
+  Err = pocl_convert_bitcode_to_spirv(ProgramBcPathTemp,
+                                      nullptr, 0,
+                                      Program, DeviceI,
+                                      1, // useIntelExt
+                                      ProgramSpvPathTemp,
+                                      nullptr, nullptr);
+
+  POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
+                       "llvm-spirv exited with nonzero code\n");
+  return CL_SUCCESS;
 }
 
 int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
@@ -476,13 +394,10 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
   cl_device_id Dev = Program->devices[DeviceI];
   Level0Device *Device = (Level0Device *)Dev->data;
 
-  char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
-  char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH] = {0};
   char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
   char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
 
-  pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
-  pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
   pocl_cache_program_bc_path(ProgramBcPath, Program, DeviceI);
   pocl_cache_program_spv_path(ProgramSpvPath, Program, DeviceI);
 
@@ -493,19 +408,30 @@ int pocl_level0_build_source(cl_program Program, cl_uint DeviceI,
 
   if (pocl_exists(ProgramSpvPath) != 0) {
     POCL_MSG_PRINT_LEVEL0("Found compiled SPIR-V in cache\n");
-    goto CREATE_ZE_MODULE;
+    readProgramSpv(Program, DeviceI, ProgramSpvPath);
+  } else {
+    char *OutputBinary = nullptr;
+    uint64_t OutputBinarySize = 0;
+    assert(Program->binaries[DeviceI] != nullptr);
+    assert(Program->binary_sizes[DeviceI] > 0);
+
+    Err = pocl_convert_bitcode_to_spirv(nullptr,
+                                        (char*)Program->binaries[DeviceI],
+                                        Program->binary_sizes[DeviceI],
+                                        Program, DeviceI,
+                                        1, // useIntelExt
+                                        ProgramSpvPathTemp,
+                                        &OutputBinary,
+                                        &OutputBinarySize);
+    POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
+                         "llvm-spirv exited with nonzero code\n");
+
+    Program->program_il = OutputBinary;
+    Program->program_il_size = OutputBinarySize;
+    pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
+    POCL_MSG_WARN("Final SPV written: %s\n", ProgramSpvPath);
   }
 
-  Err = compileProgramBcToSpv(Program, DeviceI, ProgramBcPath, // Temp
-                              ProgramSpvPathTemp);
-  if (Err != CL_SUCCESS) {
-    return Err;
-  }
-  pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
-  POCL_MSG_WARN("Final SPV written: %s\n", ProgramSpvPath);
-
-CREATE_ZE_MODULE:
-  readProgramSpv(Program, DeviceI, ProgramSpvPath);
   assert(Program->program_il != nullptr);
   assert(Program->program_il_size > 0);
   assert(Program->binaries[DeviceI] != nullptr);
@@ -551,7 +477,9 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
   char ProgramBcPath[POCL_MAX_PATHNAME_LENGTH];
   char ProgramSpvPath[POCL_MAX_PATHNAME_LENGTH];
   char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  ProgramSpvPathTemp[0] = 0;
   char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
+  ProgramBcPathTemp[0] = 0;
   int Err = 0;
 
   if (Program->pocl_binaries[DeviceI] != nullptr) {
@@ -565,6 +493,7 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
         ProgramSpvPath);
 
     // TODO is this really LLVM IR
+    // program.bc should be read by clCreateProgramWithBinary
     assert(Program->binaries[DeviceI] != nullptr);
     assert(Program->binary_sizes[DeviceI] != 0);
 
@@ -573,26 +502,21 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
     char *OutputBinary = nullptr;
     uint64_t OutputBinarySize = 0;
 
-    pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
-    pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
-
     if (Program->pocl_binaries[DeviceI] == nullptr &&
         Program->binaries[DeviceI] == nullptr) {
 
       /* we have only program_il, which is SPIR-V*/
       assert(Program->program_il != nullptr);
       assert(Program->program_il_size > 0);
-      Err = pocl_write_file(ProgramSpvPathTemp, Program->program_il,
-                            Program->program_il_size, 0, 0);
-      POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                           "failed to write SPV file into cache\n");
-      Err = compileProgramSpvToBc(Program, DeviceI, ProgramBcPathTemp,
-                                  ProgramSpvPathTemp);
+      Err = pocl_convert_spirv_to_bitcode(ProgramSpvPathTemp,
+                                          Program->program_il,
+                                          Program->program_il_size,
+                                          Program, DeviceI,
+                                          1, // useIntelExt
+                                          ProgramBcPathTemp,
+                                          &OutputBinary, &OutputBinarySize);
       POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
                            "failed to compile SPV -> BC\n");
-      Err = pocl_read_file(ProgramBcPathTemp, &OutputBinary, &OutputBinarySize);
-      POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                           "failed to read BC file from cache\n");
       Program->binaries[DeviceI] = (unsigned char *)OutputBinary;
       Program->binary_sizes[DeviceI] = OutputBinarySize;
     } else {
@@ -610,26 +534,22 @@ int pocl_level0_build_binary(cl_program Program, cl_uint DeviceI,
                            "the binary supplied to level0 driver is "
                            "not a recognized binary type\n");
 
-      Err =
-          pocl_write_file(ProgramBcPathTemp, (char *)Program->binaries[DeviceI],
-                          Program->binary_sizes[DeviceI], 0, 0);
-      POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                           "failed to write BC file into cache\n");
-      Err = compileProgramBcToSpv(Program, DeviceI, ProgramBcPathTemp,
-                                  ProgramSpvPathTemp);
+      Err = pocl_convert_bitcode_to_spirv(ProgramBcPathTemp,
+                                          (char *)Program->binaries[DeviceI],
+                                          Program->binary_sizes[DeviceI],
+                                          Program, DeviceI,
+                                          1, // useIntelExt
+                                          ProgramSpvPathTemp,
+                                          &OutputBinary, &OutputBinarySize);
       POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
                            "failed to compile BC -> SPV\n");
-      Err =
-          pocl_read_file(ProgramSpvPathTemp, &OutputBinary, &OutputBinarySize);
-      POCL_RETURN_ERROR_ON((Err != 0), CL_BUILD_PROGRAM_FAILURE,
-                           "failed to read SPV file from cache\n");
       Program->program_il = OutputBinary;
       Program->program_il_size = OutputBinarySize;
     }
 
     pocl_cache_create_program_cachedir(Program, DeviceI, Program->program_il,
                                        Program->program_il_size, ProgramBcPath);
-    convertProgramBcToSpv(ProgramBcPath, ProgramSpvPath);
+    convertProgramBcPathToSpv(ProgramBcPath, ProgramSpvPath);
     pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
     pocl_rename(ProgramBcPathTemp, ProgramBcPath);
   }
@@ -691,26 +611,26 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
 
     POCL_UNLOCK_OBJ(InputPrograms[I]);
   }
+  if (ProgsHaveProgramBC != NumInputPrograms) {
+    POCL_MSG_ERR("LevelZero: not all programs have program.bc\n");
+    return CL_LINK_PROGRAM_FAILURE;
+  }
 
   pocl_cache_create_program_cachedir(Program, DeviceI, SpvConcatBinary.data(),
                                      SpvConcatBinary.size(), ProgramBcPath);
-  convertProgramBcToSpv(ProgramBcPath, ProgramSpvPath);
+  convertProgramBcPathToSpv(ProgramBcPath, ProgramSpvPath);
+
   if (pocl_exists(ProgramSpvPath) && pocl_exists(ProgramBcPath)) {
     POCL_MSG_PRINT_LEVEL0("Found linked SPIR-V in cache\n");
-    goto CREATE_ZE_MODULE;
-  }
+  } else {
 
-  char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
-  pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
-  char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
-  pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
+    char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH];
+    pocl_cache_tempname(ProgramSpvPathTemp, ".spv", NULL);
+    char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH];
+    pocl_cache_tempname(ProgramBcPathTemp, ".bc", NULL);
 
 //  if (linkWithSpirvLink(Program, DeviceI, ProgramSpvPathTemp,
 //              SpvBinaryPaths, CreateLibrary) != CL_SUCCESS) {
-    if (ProgsHaveProgramBC != NumInputPrograms) {
-      POCL_MSG_ERR("LevelZero: not all programs have program.bc\n");
-      return CL_LINK_PROGRAM_FAILURE;
-    }
 
 //    POCL_MSG_WARN("LevelZero : failed to link using spirv-link, trying"
 //                  "with llvm-link\n");
@@ -722,10 +642,10 @@ int pocl_level0_link_program(cl_program Program, cl_uint DeviceI,
     }
 //  }
 
-  pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
-  pocl_rename(ProgramBcPathTemp, ProgramBcPath);
+    pocl_rename(ProgramSpvPathTemp, ProgramSpvPath);
+    pocl_rename(ProgramBcPathTemp, ProgramBcPath);
+  }
 
-CREATE_ZE_MODULE:
   readProgramSpv(Program, DeviceI, ProgramSpvPath);
   assert(Program->program_il != nullptr);
   assert(Program->program_il_size > 0);

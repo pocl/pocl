@@ -813,8 +813,7 @@ public:
     return true;
   }
 
-  bool getBitcodeForKernel(const char* KernelName,
-                           char* OutputPath,
+  bool getBitcodeForKernel(const char *KernelName, std::string &OutputBitcode,
                            std::string *BuildLog) {
     std::lock_guard<std::mutex> LockGuard(Lock);
 
@@ -838,34 +837,77 @@ public:
       }
     }
 
-    pocl_cache_tempname(OutputPath, ".bc", NULL);
-    int r = pocl_write_module(KernelBC.get(), OutputPath, 0);
-    if (r != 0) {
-      POCL_MSG_ERR("getBitcodeForKernel: failed to write module\n");
-      BuildLog->append("getBitcodeForKernel: failed to write module\n");
-      return false;
-    }
+    writeModuleIRtoString(KernelBC.get(), OutputBitcode);
     return true;
   }
 };
+} // namespace pocl
 
-static int convertBitcodeToSpv(char* TempBitcodePath,
-                               std::string *BuildLog,
-                               char **SpirvContent,
-                               uint64_t *SpirvSize) {
-
-  char TempSpirvPath[POCL_MAX_PATHNAME_LENGTH];
-
-// max bytes in output of 'llvm-spirv'
+// max captured bytes in output of 'llvm-spirv'
 #define MAX_OUTPUT_BYTES 65536
 
-//   --spirv-ext=<+SPV_extenstion1_name,-SPV_extension2_name>
+// shared code for calling llvm-spirv
+static int convertBCorSPV(char *InputPath,
+                          const char *InputContent,
+                          uint64_t InputSize,
+                          std::string *BuildLog,
+                          int useIntelExts,
+                          int reverse, // add "-r"
+                          char *OutputPath,
+                          char **OutContent,
+                          uint64_t *OutSize) {
+  char HiddenOutputPath[POCL_MAX_PATHNAME_LENGTH];
+  char HiddenInputPath[POCL_MAX_PATHNAME_LENGTH];
+
+  char CapturedOutput[MAX_OUTPUT_BYTES];
+  size_t CapturedBytes = MAX_OUTPUT_BYTES;
+  std::vector<std::string> CompilationArgs;
+  std::vector<char *> CompilationArgs2;
+
+  int r = -1;
+
+  bool keepOutputPath = false;
+  if (OutputPath) {
+    keepOutputPath = true;
+    if (OutputPath[0]) {
+      strncpy(HiddenOutputPath, OutputPath, POCL_MAX_PATHNAME_LENGTH);
+    } else {
+      pocl_cache_tempname(HiddenOutputPath, ".spv", NULL);
+      strncpy(OutputPath, HiddenOutputPath, POCL_MAX_PATHNAME_LENGTH);
+    }
+  } else {
+    assert(OutContent);
+    pocl_cache_tempname(HiddenOutputPath, ".spv", NULL);
+  }
+
+  bool keepInputPath = false;
+  if (InputPath) {
+    keepInputPath = true;
+    if (InputPath[0]) {
+      strncpy(HiddenInputPath, InputPath, POCL_MAX_PATHNAME_LENGTH);
+    } else {
+      pocl_cache_tempname(HiddenInputPath, ".bc", NULL);
+      strncpy(InputPath, HiddenInputPath, POCL_MAX_FILENAME_LENGTH);
+    }
+  } else {
+    assert(InputContent);
+    pocl_cache_tempname(HiddenInputPath, ".bc", NULL);
+  }
+
+  if (InputContent && InputSize) {
+    r = pocl_write_file(HiddenInputPath, InputContent, InputSize, 0, 0);
+    if (r != 0) {
+      BuildLog->append("failed to write input file for llvm-spirv\n");
+      goto FINISHED;
+    }
+  }
+
 //   Specify list of allowed/disallowed extensions
-#define ALLOW_EXTS                                                             \
+#define ALLOW_INTEL_EXTS                                                       \
   "--spirv-ext=+SPV_INTEL_subgroups,+SPV_INTEL_usm_storage_classes,+SPV_"      \
   "INTEL_arbitrary_precision_integers,+SPV_INTEL_arbitrary_precision_fixed_"   \
   "point,+SPV_INTEL_arbitrary_precision_floating_point,+SPV_INTEL_kernel_"     \
-  "attributes"
+  "attributes,+SPV_KHR_no_integer_wrap_decoration"
   /*
   possibly useful:
     "+SPV_INTEL_unstructured_loop_controls,"
@@ -905,60 +947,127 @@ static int convertBitcodeToSpv(char* TempBitcodePath,
     "+SPV_INTEL_debug_module,"
     "+SPV_INTEL_joint_matrix,"
   */
-  pocl_cache_tempname(TempSpirvPath, ".spirv", NULL);
-  char LLVMspirv[] = LLVM_SPIRV;
-  char AllowedExtOption[] = ALLOW_EXTS;
-  // TODO ze_device_module_properties_t.spirvVersionSupported
-  char MaxSPIRVOption[] = "--spirv-max-version=1.2";
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-  char OpaquePtrsOption[] = "--opaque-pointers";
-#endif
-#endif
-  char OutputOption[] = { '-', 'o', 0 };
-  char *CmdArgs[] = { LLVMspirv, AllowedExtOption,
-#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
-#ifdef LLVM_OPAQUE_POINTERS
-                      OpaquePtrsOption,
-#endif
-#endif
-                      MaxSPIRVOption, OutputOption,
-                      TempSpirvPath, TempBitcodePath, NULL };
-  char CapturedOutput[MAX_OUTPUT_BYTES];
-  size_t CapturedBytes = MAX_OUTPUT_BYTES;
 
-  int r =
-      pocl_run_command_capture_output(CapturedOutput, &CapturedBytes, CmdArgs);
+#define ALLOW_EXTS "--spirv-ext=+SPV_KHR_no_integer_wrap_decoration"
+
+  // generate program.spv
+  CompilationArgs.push_back(LLVM_SPIRV);
+#if (LLVM_MAJOR == 15) || (LLVM_MAJOR == 16)
+#ifdef LLVM_OPAQUE_POINTERS
+  CompilationArgs.push_back("--opaque-pointers");
+#endif
+#endif
+  if (useIntelExts)
+    CompilationArgs.push_back(ALLOW_INTEL_EXTS);
+  else
+    CompilationArgs.push_back(ALLOW_EXTS);
+  // TODO ze_device_module_properties_t.spirvVersionSupported
+  CompilationArgs.push_back("--spirv-max-version=1.4");
+  CompilationArgs.push_back("--spirv-target-env=CL2.0");
+  if (reverse)
+    CompilationArgs.push_back("-r");
+  CompilationArgs.push_back("-o");
+  CompilationArgs.push_back(HiddenOutputPath);
+  CompilationArgs.push_back(HiddenInputPath);
+  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  for (unsigned i = 0; i < CompilationArgs.size(); ++i)
+    CompilationArgs2[i] = (char *)CompilationArgs[i].data();
+  CompilationArgs2[CompilationArgs.size()] = nullptr;
+
+  r = pocl_run_command_capture_output(CapturedOutput, &CapturedBytes,
+                                      CompilationArgs2.data());
   if (r != 0) {
     BuildLog->append("llvm-spirv failed with output:\n");
-    std::string Captured(CapturedOutput, CapturedBytes);
-    BuildLog->append(Captured);
-    return -1;
+    BuildLog->append(CapturedOutput, CapturedBytes);
+    goto FINISHED;
   }
 
-  r = pocl_read_file(TempSpirvPath, SpirvContent, SpirvSize);
-  if (r != 0) {
-    BuildLog->append("failed to read output file from llvm-spirv\n");
-    return -1;
+  if (OutContent && OutSize) {
+    r = pocl_read_file(HiddenOutputPath, OutContent, OutSize);
+    if (r != 0) {
+      BuildLog->append("failed to read output file from llvm-spirv\n");
+      goto FINISHED;
+    }
   }
 
-  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
-    pocl_remove(TempBitcodePath);
-    pocl_remove(TempSpirvPath);
+  r = 0;
+
+FINISHED:
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) != 0) {
+    POCL_MSG_PRINT_LLVM("LLVM SPIR-V conversion tempfiles: %s -> %s",
+                        HiddenInputPath, HiddenOutputPath);
   } else {
-    POCL_MSG_PRINT_GENERAL("LLVM SPIR-V conversion tempfiles: %s -> %s",
-                           TempBitcodePath, TempSpirvPath);
+    if (!keepInputPath)
+      pocl_remove(HiddenInputPath);
+    if (!keepOutputPath)
+      pocl_remove(HiddenOutputPath);
   }
-  return 0;
+
+  return r;
 }
 
-} // namespace pocl
+int pocl_convert_bitcode_to_spirv(char *TempBitcodePath, const char *Bitcode,
+                                  uint64_t BitcodeSize, cl_program Program,
+                                  cl_uint DeviceI, int UseIntelExts,
+                                  char *TempSpirvPathOut, char **SpirvContent,
+                                  uint64_t *SpirvSize) {
 
-void *pocl_llvm_create_context_for_program(const char *ProgramBcBytes,
+  std::string BuildLog;
+  int R = convertBCorSPV(TempBitcodePath, Bitcode, BitcodeSize, &BuildLog,
+                         UseIntelExts,
+                         0, // reverse
+                         TempSpirvPathOut, SpirvContent, SpirvSize);
+
+  if (!BuildLog.empty())
+    pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
+                            BuildLog.size());
+  return R;
+}
+
+int pocl_convert_bitcode_to_spirv2(char *TempBitcodePath,
+                                   const char *Bitcode,
+                                   uint64_t BitcodeSize,
+                                   void *BuildLog,
+                                   int UseIntelExts,
+                                   char *TempSpirvPathOut,
+                                   char **SpirvContent,
+                                   uint64_t *SpirvSize) {
+
+  return convertBCorSPV(TempBitcodePath,
+                        Bitcode, BitcodeSize,
+                        (std::string *)BuildLog,
+                        UseIntelExts, 0, // reverse
+                        TempSpirvPathOut,
+                        SpirvContent, SpirvSize);
+}
+
+int pocl_convert_spirv_to_bitcode(char *TempSpirvPath,
+                                  const char *SpirvContent,
+                                  uint64_t SpirvSize,
+                                  cl_program Program, cl_uint DeviceI,
+                                  int UseIntelExts,
+                                  char *TempBitcodePathOut,
+                                  char **BitcodeContent,
+                                  uint64_t *BitcodeSize) {
+
+  std::string BuildLog;
+  int R = convertBCorSPV(TempSpirvPath,
+                         SpirvContent, SpirvSize,
+                         &BuildLog,
+                         UseIntelExts, 1, // reverse
+                         TempBitcodePathOut,
+                         BitcodeContent, BitcodeSize);
+  if (!BuildLog.empty())
+    pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
+                            BuildLog.size());
+  return R;
+}
+
+void *pocl_llvm_create_context_for_program(char *ProgramBcContent,
                                            size_t ProgramBcSize,
                                            char **LinkinSpirvContent,
                                            uint64_t *LinkinSpirvSize) {
-  assert(ProgramBcBytes);
+  assert(ProgramBcContent);
   assert(ProgramBcSize > 0);
 
   char TempBitcodePath[POCL_MAX_PATHNAME_LENGTH];
@@ -966,14 +1075,16 @@ void *pocl_llvm_create_context_for_program(const char *ProgramBcBytes,
   pocl::ProgramWithContext *P = new pocl::ProgramWithContext;
   // parse the program's bytes into a llvm::Module
   if (P == nullptr ||
-      !P->init(ProgramBcBytes, ProgramBcSize, TempBitcodePath)) {
+      !P->init(ProgramBcContent, ProgramBcSize, TempBitcodePath)) {
     POCL_MSG_ERR("failed to create program for context");
     return nullptr;
   }
 
   std::string BuildLog;
-  if (pocl::convertBitcodeToSpv(TempBitcodePath, &BuildLog,
-                                LinkinSpirvContent, LinkinSpirvSize) != 0) {
+  if (pocl_convert_bitcode_to_spirv2(
+          nullptr, ProgramBcContent, ProgramBcSize, &BuildLog,
+          1, // useIntelExt
+          nullptr, LinkinSpirvContent, LinkinSpirvSize) != 0) {
     POCL_MSG_ERR("failed to create program for context, log:%s\n",
                  BuildLog.c_str());
     return nullptr;
@@ -1000,14 +1111,18 @@ int pocl_llvm_extract_kernel_spirv(void* ProgCtx,
 
   std::string *BuildLog = (std::string *)BuildLogStr;
 
-  char TempBitcodePath[POCL_MAX_PATHNAME_LENGTH];
+  std::string OutputBitcode;
+
   pocl::ProgramWithContext *P = (pocl::ProgramWithContext *)ProgCtx;
-  if (!P->getBitcodeForKernel(KernelName, TempBitcodePath, BuildLog)) {
+  if (!P->getBitcodeForKernel(KernelName, OutputBitcode, BuildLog)) {
     return -1;
   }
 
-  int r = pocl::convertBitcodeToSpv(TempBitcodePath, BuildLog,
-                                    SpirvContent, SpirvSize);
+  int r = pocl_convert_bitcode_to_spirv2(nullptr, OutputBitcode.data(),
+                                         OutputBitcode.size(), &BuildLog,
+                                         1,       // useIntelExts
+                                         nullptr, // SpirvOutputPath
+                                         SpirvContent, SpirvSize);
 
   POCL_MEASURE_FINISH(extractKernel);
   return r;
