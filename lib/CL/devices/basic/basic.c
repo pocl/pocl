@@ -940,8 +940,8 @@ pocl_basic_get_mem_info_ext (cl_device_id dev, const void *ptr,
   pocl_basic_usm_allocation_t *item = NULL;
   DL_FOREACH (usm_allocations, item)
   {
-    POCL_MSG_WARN ("PTR: %p ITEM_PTR: %p SIZE: %zu\n", ptr, item->ptr,
-                   item->size);
+    POCL_MSG_PRINT_MEMORY ("PTR: %p ITEM_PTR: %p SIZE: %zu\n", ptr, item->ptr,
+                           item->size);
     if ((ptr >= item->ptr)
         && ((const char *)ptr < ((const char *)item->ptr + item->size)))
     {

@@ -80,11 +80,16 @@ add_dependencies(prepare_examples ${TS_NAME})
 #   3: Cannot find symbol _Z21work_group_reduce_addf in kernel library
 
 add_test(NAME oneapi_samples
-         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure -E oneapi_nbody
+         COMMAND "${CMAKE_CTEST_COMMAND}" -V --output-on-failure -E oneapi_nbody
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
+# We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
+# the setvars.sh before testing), but still ensure we use the system's libOpenCL.so
+# to use its ICD to direct the OpenCL to libpocl (otherwise setvars.sh overwrites
+# it with its own libOpenCL.so which is not ocl-icd). Also we have to fake the CPU device
+# to look like Intel OpenCL CPU to force the oneAPI DPC++ to target it.
 set_tests_properties(
   oneapi_samples
   PROPERTIES
-    ENVIRONMENT "LD_LIBRARY_PATH=${SYCL_LIBDIR};ONEAPI_DEVICE_SELECTOR=opencl:*"
+    ENVIRONMENT "LD_LIBRARY_PATH=${OPENCL_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH};ONEAPI_DEVICE_SELECTOR=opencl:*;POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000;POCL_CPU_VENDOR_ID_OVERRIDE=32902"
     LABELS "${TS_NAME};level0")

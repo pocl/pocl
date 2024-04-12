@@ -16,7 +16,7 @@ endif()
 
 set(SYCL_LIBRARIES ${OCL_LIB})
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsycl -fsycl-targets=spir64")
 
@@ -28,3 +28,7 @@ add_subdirectory(bitonic-sort)
 add_subdirectory(Nbody)
 add_subdirectory(simple-add)
 add_subdirectory(vector-add)
+
+# Note this case needs TBB due to C++20 parallel usage.
+add_subdirectory(jacobian-solver)
+
