@@ -138,7 +138,8 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
      etc. for USM using the same code paths as with cl_mems. */
   cl_mem clmem_shadow = POname (clCreateBuffer) (
       context,
-      CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+      CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT
+      | CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
       size, ptr, &errcode);
 
   if (errcode != CL_SUCCESS)
