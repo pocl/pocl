@@ -7,11 +7,15 @@ This is a driver that is used as proxy to another OpenCL implementation installe
 
 To build just the proxy driver::
 
-    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LLVM=0 -DHOST_DEVICE_BUILD_HASH=<a hash of your choosing> -DENABLE_PROXY_DEVICE=1 -DENABLE_ICD=0 <path-to-pocl-source-dir>
+    cmake -DENABLE_HOST_CPU_DEVICES=0 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_LLVM=0 -DHOST_DEVICE_BUILD_HASH=<a hash of your choosing> -DENABLE_PROXY_DEVICE=1 -DENABLE_ICD=0 <path-to-pocl-source-dir>
 
 The ``-DHOST_DEVICE_BUILD_HASH`` is required if not using llvm and can be anything, for example ``00000000`` is fine.
 ``-DENABLE_PROXY_DEVICE_INTEROP=1`` CMake option enables EGL interop on Android, and OpenGL interop otherwise
 (requires support from the proxyed implementation).
+
+It's also possible to build with both proxy and another device (for example cpu):
+
+    cmake -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LOADABLE_DRIVERS=0 -DENABLE_LLVM=1 -DWITH_LLVM_CONFIG=/path/to/llvm-config -DENABLE_PROXY_DEVICE=1 -DENABLE_ICD=0 <path-to-pocl-source-dir>
 
 Changes required to application that wants to use proxy driver:
 
