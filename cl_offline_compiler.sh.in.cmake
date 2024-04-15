@@ -3,7 +3,7 @@
 #=============================================================================
 #   cl_offline_compiler.sh script
 #
-#   Copyright (c) 2017 Michal Babej / Intel Finland Oy
+#   Copyright (c) 2022-2024 Michal Babej / Intel Finland Oy
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -85,6 +85,11 @@ fi
 if [ "$MODE" != "spir-v" ]; then
   echo "this script only compiles to SPIR-V"
   exit 1
+fi
+
+if [ -f "$OUTPUT" ]; then
+  echo "output already exists, skipping compilation"
+  exit 0.
 fi
 
 CL_IS_30=false
@@ -195,6 +200,11 @@ if [ -e "${CL_DEV_INFO}" ]; then
   fi
   BUILD_OPTIONS="$BUILD_OPTIONS -D__OPENCL_C_VERSION__=${DEV_C_VER}"
 
+  if [ "$DEV_C_VER" -ge "200" ]; then
+    SPIRV_ENV="--spirv-target-env=CL2.0"
+  else
+    SPIRV_ENV="--spirv-target-env=CL1.2"
+  fi
 
   for EXT in $CL_DEVICE_EXTENSIONS ; do
     CL_EXT_DEFS="${CL_EXT_DEFS} -D${EXT}"
@@ -224,6 +234,7 @@ fi
 
 SOURCE_BASE=$(basename ${SOURCE})
 TEMP_BC_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.XXXXXX.bc)
+TEMP_SPV_FILE=$(mktemp --tmpdir ${SOURCE_BASE}.XXXXXX.spv)
 
 if [ "$DEBUG" = "true" ]; then
   echo "SOURCE: ${SOURCE}"
@@ -233,7 +244,7 @@ fi
 
 ALL_OPTIONS="--target=${TARGET} -x cl ${CL_STD} ${BUILD_OPTIONS} -o ${TEMP_BC_FILE} -emit-llvm -c ${SOURCE}"
 
-LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md --spirv-max-version=1.2 -o ${OUTPUT} ${TEMP_BC_FILE}"
+LLVM_SPIRV_OPTIONS="--spirv-gen-kernel-arg-name-md ${SPIRV_ENV} --spirv-max-version=1.2 -o ${TEMP_SPV_FILE} ${TEMP_BC_FILE}"
 
 if [ "$DEBUG" = "true" ]; then
   echo "Running @CLANG@ ${ALL_OPTIONS}"
@@ -244,6 +255,8 @@ if [ "$DEBUG" = "true" ]; then
   echo "Running @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS}"
 fi
 @LLVM_SPIRV@ ${LLVM_SPIRV_OPTIONS} || exit 1
+
+mv ${TEMP_SPV_FILE} ${OUTPUT} || exit 1
 
 rm -f ${TEMP_BC_FILE}
 
