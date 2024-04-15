@@ -62,6 +62,7 @@ CPU driver
    the oneAPI binary distributions of DPC++ by adding the following environment
    settings: **POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000 POCL_CPU_VENDOR_ID_OVERRIDE=32902**.
  * Added support for the **__opencl_c_work_group_collective_functions** feature.
+ * improved SPIR-V support on architectures other than ARM/x86 (like RISC-V)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Remote
