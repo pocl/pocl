@@ -495,12 +495,12 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
     set(SPIR_WRAPPER_FILE "host/spir_wrapper32.ll")
   else()
-    if(X86 OR (ARM AND LLVM_VERSION_MAJOR GREATER 11))
+    if(X86 OR ARM)
       # for X86-64 & ARM, use the generated SPIR wrapper,
       # based on CPU's largest supported vector size
       set(SPIR_WRAPPER_FILE "")
     else()
-      # for older LLVMs or other CPUs, use a generic
+      # for other CPUs, use a generic
       # 64bit wrapper, this doesn't support vectors and misses
       # some functions, but otherwise should mostly work
       set(SPIR_WRAPPER_FILE "host/spir_wrapper64.ll")

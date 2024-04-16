@@ -47,8 +47,6 @@
 
 using namespace pocl;
 
-extern void appendToBuildLog(cl_program program, cl_uint device_i, char *Log,
-                             size_t LogSize);
 static void pocl_level0_abort_on_ze_error(ze_result_t status, unsigned line,
                                           const char *func, const char *code) {
   const char *str = code;
@@ -2547,8 +2545,8 @@ int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {
 
   if (ProgramData == nullptr) {
     if (!BuildLog.empty()) {
-      appendToBuildLog(Program, DeviceI, strdup(BuildLog.c_str()),
-                       BuildLog.size());
+      pocl_append_to_buildlog(Program, DeviceI, strdup(BuildLog.c_str()),
+                              BuildLog.size());
     }
     POCL_RETURN_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
                          "Failed to compile program\n");

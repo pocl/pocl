@@ -42,11 +42,63 @@ file(READ "${INPUT_FILE}" CONTENT)
   string(REPLACE "float addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
   string(REPLACE "double addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
 
+  string(REPLACE "%opencl.image1d_buffer_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_buffer_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_buffer_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_array_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_array_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_array_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_array_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_array_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_array_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image3d_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image3d_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image3d_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image2d_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image1d_rw_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_ro_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_wo_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.sampler_t addrspace(1)*" "ptr addrspace(1)" CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.event_t* addrspace(4)*" "ptr addrspace(4)" CONTENT "${CONTENT}")
+
   string(REPLACE "i8*" "ptr " CONTENT "${CONTENT}")
   string(REPLACE "i16*" "ptr " CONTENT "${CONTENT}")
   string(REPLACE "i32*" "ptr " CONTENT "${CONTENT}")
   string(REPLACE "i64*" "ptr " CONTENT "${CONTENT}")
   string(REPLACE "float*" "ptr " CONTENT "${CONTENT}")
   string(REPLACE "double*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.event_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.sampler_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image1d_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_rw_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image2d_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_rw_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image3d_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image3d_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image3d_rw_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image1d_buffer_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_buffer_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_buffer_rw_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image1d_array_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_array_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image1d_array_rw_t*" "ptr " CONTENT "${CONTENT}")
+
+  string(REPLACE "%opencl.image2d_array_wo_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_array_ro_t*" "ptr " CONTENT "${CONTENT}")
+  string(REPLACE "%opencl.image2d_array_rw_t*" "ptr " CONTENT "${CONTENT}")
 
 file(WRITE "${OUTPUT_FILE}" "${CONTENT}")

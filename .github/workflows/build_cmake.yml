@@ -66,12 +66,14 @@ jobs:
           mkdir ${{ github.workspace }}/build
           if [ "${{ matrix.config }}" == "cts_spirv" ]; then
             mkdir -p /home/github/examples/build_cts_spirv
+            mkdir -p /home/github/examples/source
             runCMake -DENABLE_TESTSUITES=conformance -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_cts_spirv
           elif [ "${{ matrix.config }}" == "tier1" ]; then
             mkdir -p /home/github/examples/build_tier1
             runCMake "-DENABLE_TESTSUITES=AMDSDK3.0;piglit;conformance;PyOpenCL;IntelSVM" -DENABLE_CONFORMANCE=ON -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_tier1
           elif [ "${{ matrix.config }}" == "chipstar" ]; then
             mkdir -p /home/github/examples/build_chipstar
+            mkdir -p /home/github/examples/source
             runCMake -DENABLE_TESTSUITES=chipStar -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_chipstar
           elif [ "${{ matrix.config }}" == "asan" ]; then
             runCMake -DENABLE_ASAN=1 -DENABLE_ICD=0 -DENABLE_LOADABLE_DRIVERS=0 -DDEVELOPER_MODE=OFF

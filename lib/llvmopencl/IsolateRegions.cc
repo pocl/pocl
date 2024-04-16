@@ -132,12 +132,11 @@ static bool isolateRegions(Region &R, WorkitemHandlerType WIH) {
     changed = true;
   }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 #ifdef DEBUG_ISOLATE_REGIONS
-  Function *F = exit->getParent();
+  Function *F = Exit->getParent();
   dumpCFG(*F, F->getName().str() + "_after_isolateregs.dot");
 #endif
-#endif
+
   return changed;
 }
 
@@ -165,6 +164,8 @@ static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
     if (R.contains(Pred))
       RegionPreds.push_back(Pred);
   }
+  if (RegionPreds.empty())
+    return;
   llvm::BasicBlock *NewExit =
       SplitBlockPredecessors(BB, RegionPreds, ".r_exit");
   R.replaceExit(NewExit);

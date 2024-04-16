@@ -48,7 +48,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_autolocals_in_constexprs test_issue_553 test_issue_577 test_issue_757
   test_flatten_barrier_subs test_alignment_with_dynamic_wg
   test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3
-  test_issue_893 test_builtin_args
+  test_issue_893 test_issue_1435 test_builtin_args
   test_workitem_func_outside_kernel
 )
 
@@ -82,6 +82,8 @@ add_test_pocl(NAME "regression/test_issue_553" COMMAND "test_issue_553")
 add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 
 add_test_pocl(NAME "regression/test_issue_757" COMMAND "test_issue_757")
+
+add_test_pocl(NAME "regression/test_issue_1435" COMMAND "test_issue_1435")
 
 add_test_pocl(NAME "regression/test_workitem_func_outside_kernel" COMMAND "test_workitem_func_outside_kernel")
 
@@ -231,7 +233,7 @@ foreach(VARIANT ${VARIANTS})
     "regression/test_issue_445_${VARIANT}" "regression/test_issue_553_${VARIANT}"
     "regression/test_issue_577_${VARIANT}" "regression/test_issue_757_${VARIANT}"
     "regression/test_llvm_segfault_issue_889_${VARIANT}"
-    "regression/test_issue_893_${VARIANT}"
+    "regression/test_issue_893_${VARIANT}" "regression/test_issue_1435_${VARIANT}"
     "regression/test_flatten_barrier_subs_${VARIANT}"
     "regression/test_workitem_func_outside_kernel_${VARIANT}"
     ${OCL_30_TESTS}

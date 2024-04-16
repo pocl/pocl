@@ -571,6 +571,11 @@ endif()
 
 if(ENABLE_LLVM)
 
+  # minimum LLVM version at which to enable new PM
+  if(NOT DEFINED MIN_LLVM_NEW_PASSMANAGER)
+    set(MIN_LLVM_NEW_PASSMANAGER 14)
+  endif()
+
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
     message(FATAL_ERROR "Could not load LLVM.cmake")
@@ -1556,11 +1561,17 @@ if(ENABLE_PROXY_DEVICE)
     message(FATAL_ERROR "RENAME_POCL and PROXY_USE_LIBOPENCL_STUB can not be used together")
   endif()
 
+  if(RENAME_POCL AND ENABLE_LOADABLE_DRIVERS)
+    message(FATAL_ERROR "Proxy driver cannot be used with ENABLE_LOADABLE_DRIVERS unless using PROXY_USE_LIBOPENCL_STUB")
+  endif()
+
   if(NOT PROXY_USE_LIBOPENCL_STUB)
     set(RENAME_POCL ON )
   else()
     set(RENAME_POCL OFF )
   endif()
+
+
 
   set(BUILD_PROXY 1)
 

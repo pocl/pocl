@@ -110,6 +110,12 @@ extern "C" {
   void pocl_llvm_create_context (cl_context ctx);
   void pocl_llvm_release_context (cl_context ctx);
 
+  /* note: Log is consumed or freed (it must be a strdup) */
+  POCL_EXPORT void pocl_append_to_buildlog (cl_program program,
+                                            cl_uint device_i,
+                                            char *Log,
+                                            size_t LogSize);
+
   /**
    * \brief Creates instance of a class that holds llvm::Module of input IR
    * (program.bc), plus its own LLVM contexts, so it can be safely used in
@@ -126,7 +132,7 @@ extern "C" {
    *
    */
   POCL_EXPORT
-  void *pocl_llvm_create_context_for_program (const char *ProgramBcBytes,
+  void *pocl_llvm_create_context_for_program (char *ProgramBcContent,
                                               size_t ProgramBcSize,
                                               char **LinkinSpirvContent,
                                               uint64_t *LinkinSpirvSize);
@@ -184,6 +190,67 @@ extern "C" {
                               int linking_into_new_cl_program);
 
   int pocl_invoke_clang (cl_device_id Device, const char **Args);
+
+  /**
+   * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
+   *
+   * For both Input and Output, either the Path or the Content&Size
+   * can be ommited, but not both. If the Path is non-null, the file
+   * in the Path is not deleted (even if a temporary file has to be created).
+   * If the Path is null, the Content&Size are written to a tempfile which is
+   * deleted.
+   *
+   * \param [in] TempBitcodePath path to input file. can be nullptr
+   * \param [in] Bitcode input bitcode as raw string. can be nullptr
+   * \param [out] Program, DeviceI any error messages will be attached to
+   *             the string in program->buildlog[DeviceI]
+   * \param [out] useIntelExts bool if true, add Intel specific spirv
+   * extensions \param [out] TempSpirvPathOut path to output file. can be
+   * nullptr \param [out] SpirvContent pointer where to store the raw output.
+   *              can be nullptr
+   * \param [out] SpirvSize size of data stored at SpirvContent
+   * \returns 0 on success
+   *
+   */
+  POCL_EXPORT int pocl_convert_bitcode_to_spirv (char *TempBitcodePath,
+                                                 const char *Bitcode,
+                                                 uint64_t BitcodeSize,
+                                                 cl_program Program,
+                                                 cl_uint DeviceI,
+                                                 int UseIntelExts,
+                                                 char *TempSpirvPathOut,
+                                                 char **SpirvContent,
+                                                 uint64_t *SpirvSize);
+
+  /**
+   * \brief converts LLVM IR with "spir64-unknown-unknown" triple to SPIR-V
+   *
+   * The same as pocl_convert_bitcode_to_spirv, but takes a std::string*
+   * cast to void* as buildLog argument
+   */
+  POCL_EXPORT int pocl_convert_bitcode_to_spirv2 (char *TempBitcodePath,
+                                                  const char *Bitcode,
+                                                  uint64_t BitcodeSize,
+                                                  void *BuildLog,
+                                                  int UseIntelExts,
+                                                  char *TempSpirvPathOut,
+                                                  char **SpirvContent,
+                                                  uint64_t *SpirvSize);
+
+  /**
+   * \brief converts SPIR-V to LLVM IR with "spir64-unknown-unknown" triple
+   *
+   * The same as pocl_convert_bitcode_to_spirv, but opposite direction
+   */
+  POCL_EXPORT int pocl_convert_spirv_to_bitcode (char *TempSpirvPath,
+                                                 const char *SpirvContent,
+                                                 uint64_t SpirvSize,
+                                                 cl_program Program,
+                                                 cl_uint DeviceI,
+                                                 int UseIntelExts,
+                                                 char *TempBitcodePathOut,
+                                                 char **BitcodeContent,
+                                                 uint64_t *BitcodeSize);
 
 #ifdef __cplusplus
 }
