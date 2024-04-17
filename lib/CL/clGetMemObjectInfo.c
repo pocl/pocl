@@ -85,7 +85,7 @@ POname (clGetMemObjectInfo) (
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
           addresses[i].device = dev;
-          addresses[i].address = p->device_addr;
+          addresses[i].address = (cl_mem_device_address_EXT)p->device_addr;
         }
       return CL_SUCCESS;
     }
@@ -95,20 +95,21 @@ POname (clGetMemObjectInfo) (
                               CL_INVALID_MEM_OBJECT);
 
       POCL_RETURN_GETINFO_SIZE_CHECK (memobj->context->num_devices
-                                      * sizeof (void *));
-      void **addr = (void **)param_value;
-      *addr = NULL;
+                                      * sizeof (cl_mem_device_address_EXT));
+      cl_mem_device_address_EXT *addr
+          = (cl_mem_device_address_EXT *)param_value;
+      *addr = 0;
       cl_context context = memobj->context;
       for (size_t i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
           pocl_mem_identifier *p = &memobj->device_ptrs[dev->global_mem_id];
           POCL_MSG_PRINT_MEMORY (
-              "Got dev ptr %p for device %d (gmem id %d).\n", p->device_addr,
+              "Got dev ptr %p for device %zu (gmem id %d).\n", p->device_addr,
               i, dev->global_mem_id);
-          if (*addr != NULL && p->device_addr != *addr)
+          if (*addr != 0 && (cl_mem_device_address_EXT)p->device_addr != *addr)
             POCL_ABORT ("All devices do not have the same cl_mem address!");
-          *addr = p->device_addr;
+          *addr = (cl_mem_device_address_EXT)p->device_addr;
         }
       return CL_SUCCESS;
     }

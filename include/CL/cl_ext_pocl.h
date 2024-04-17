@@ -109,24 +109,24 @@ typedef CL_API_ENTRY cl_int
 
 /* clGetMemObjectInfo(): A new cl_mem_info type CL_MEM_DEVICE_PTR_EXT:
 
-   Returns the device address (as a void*) for a buffer allocated with
+   Returns the device address for a buffer allocated with
    CL_MEM_DEVICE_ADDRESS_EXT. If the buffer was not created with the flag,
    returns CL_INVALID_MEM_OBJECT.
 */
 #define CL_MEM_DEVICE_PTR_EXT 0xff01
 
-typedef void *cl_mem_device_address_EXT;
+typedef cl_ulong cl_mem_device_address_EXT;
 
 /* Returns the device-address pairs for a buffer allocated with
    CL_MEM_DEVICE_ADDRESS_EXT | CL_MEM_DEVICE_PRIVATE_EXT.
 */
 #define CL_MEM_DEVICE_PTRS_EXT 0xff02
 
-  typedef struct _cl_mem_device_address_pair_EXT
-  {
-    cl_device_id device;
-    cl_mem_device_address_EXT *address;
-  } cl_mem_device_address_pair_EXT;
+typedef struct _cl_mem_device_address_pair_EXT
+{
+  cl_device_id device;
+  cl_mem_device_address_EXT address;
+} cl_mem_device_address_pair_EXT;
 
 /* clSetKernelExecInfo(): CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT:
 
@@ -136,11 +136,11 @@ typedef void *cl_mem_device_address_EXT;
 */
 #define CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT 0x11B8
 
-  /* A new function clSetKernelArgDevicePointerEXT() for setting raw device
-     pointers as kernel arguments. */
+/* A new function clSetKernelArgDevicePointerEXT() for setting raw device
+   pointers as kernel arguments. */
 
-  typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
-      cl_kernel kernel, cl_uint arg_index, const void *arg_value);
+typedef cl_int (CL_API_CALL *clSetKernelArgDevicePointerEXT_fn) (
+    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_EXT dev_addr);
 
 /* cl_ext_buffer_device_address (experimental stage) */
 #endif
@@ -545,7 +545,7 @@ clEnqueueSVMMemFillRectPOCL (cl_command_queue  command_queue,
                              cl_event *        event);
 
 extern CL_API_ENTRY cl_int CL_API_CALL clSetKernelArgDevicePointerEXT (
-    cl_kernel kernel, cl_uint arg_index, const void *arg_value);
+    cl_kernel kernel, cl_uint arg_index, cl_mem_device_address_EXT dev_addr);
 
 #endif // CL_NO_PROTOTYPES
 
