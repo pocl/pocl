@@ -1393,7 +1393,7 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
 
   assert(Kernel->data[ProgramDeviceI] != nullptr);
   Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[ProgramDeviceI];
-  assert(L0Kernel != NULL);
+  assert(L0Kernel != nullptr);
   switch (param_name) {
   case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
     if (Dev->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM)
