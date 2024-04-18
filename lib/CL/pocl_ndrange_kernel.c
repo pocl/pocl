@@ -1,6 +1,6 @@
 /* pocl_ndrange_kernel.c: helpers for NDRange Kernel commands
 
-   Copyright (c) 2022 Jan Solanti / Tampere University
+   Copyright (c) 2022-2024 Jan Solanti / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_local_size.h"
 #include "pocl_mem_management.h"
+#include "pocl_shared.h"
 #include "pocl_util.h"
 
 #include <assert.h>
@@ -209,8 +210,11 @@ SKIP_WG_SIZE_CALCULATION:
 }
 
 static cl_int
-pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
-                              cl_uint *memobj_count, cl_mem *memobj_list,
+pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
+                              cl_kernel kernel,
+                              struct pocl_argument *src_arguments,
+                              cl_uint *memobj_count,
+                              cl_mem *memobj_list,
                               char *readonly_flag_list)
 {
   cl_device_id realdev = pocl_real_dev (command_queue->device);
@@ -218,7 +222,7 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue, cl_kernel kernel,
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument_info *a = &kernel->meta->arg_info[i];
-      struct pocl_argument *al = &(kernel->dyn_arguments[i]);
+      struct pocl_argument *al = &(src_arguments[i]);
 
       POCL_RETURN_ERROR_ON ((!al->is_set), CL_INVALID_KERNEL_ARGS,
                             "The %i-th kernel argument is not set!\n", i);
@@ -353,14 +357,64 @@ pocl_kernel_copy_args (cl_kernel kernel,
 }
 
 cl_int
+pocl_record_ndrange_kernel (
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p)
+{
+  _cl_command_node *cmd = NULL;
+  int errcode = pocl_ndrange_kernel_common (
+    command_buffer, command_queue, properties, kernel, src_arguments, work_dim,
+    global_work_offset, global_work_size, local_work_size,
+    num_items_in_wait_list, NULL, NULL, sync_point_wait_list, sync_point_p,
+    &cmd);
+
+  for (unsigned i = 0; i < kernel->meta->num_args; ++i)
+    {
+      struct pocl_argument_info *ai
+        = &cmd->command.run.kernel->meta->arg_info[i];
+      struct pocl_argument *a = &cmd->command.run.kernel->dyn_arguments[i];
+      if (ai->type == POCL_ARG_TYPE_SAMPLER)
+        POname (clRetainSampler) (cmd->command.run.arguments[i].value);
+    }
+
+  errcode = pocl_command_record (command_buffer, cmd, sync_point_p);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_command (cmd);
+  return errcode;
+}
+
+cl_int
 pocl_ndrange_kernel_common (
-    cl_command_buffer_khr command_buffer, cl_command_queue command_queue,
-    const cl_ndrange_kernel_command_properties_khr *properties,
-    cl_kernel kernel, cl_uint work_dim, const size_t *global_work_offset,
-    const size_t *global_work_size, const size_t *local_work_size,
-    cl_uint num_items_in_wait_list, const cl_event *event_wait_list,
-    cl_event *event_p, const cl_sync_point_khr *sync_point_wait_list,
-    cl_sync_point_khr *sync_point_p, _cl_command_node **cmd)
+  cl_command_buffer_khr command_buffer,
+  cl_command_queue command_queue,
+  const cl_ndrange_kernel_command_properties_khr *properties,
+  cl_kernel kernel,
+  struct pocl_argument *src_arguments,
+  cl_uint work_dim,
+  const size_t *global_work_offset,
+  const size_t *global_work_size,
+  const size_t *local_work_size,
+  cl_uint num_items_in_wait_list,
+  const cl_event *event_wait_list,
+  cl_event *event_p,
+  const cl_sync_point_khr *sync_point_wait_list,
+  cl_sync_point_khr *sync_point_p,
+  _cl_command_node **cmd)
 {
   size_t offset[3] = { 0, 0, 0 };
   size_t num_groups[3] = { 0, 0, 0 };
@@ -407,8 +461,9 @@ pocl_ndrange_kernel_common (
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error calculating wg size\n");
 
-  errcode = pocl_kernel_collect_mem_objs (command_queue, kernel, &memobj_count,
-                                          memobj_list, readonly_flag_list);
+  errcode = pocl_kernel_collect_mem_objs (command_queue, kernel, src_arguments,
+                                          &memobj_count, memobj_list,
+                                          readonly_flag_list);
   POCL_RETURN_ERROR_ON (errcode != CL_SUCCESS, errcode,
                         "Error collecting mem objects for kernel arguments\n");
 
@@ -451,8 +506,8 @@ pocl_ndrange_kernel_common (
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  errcode = pocl_kernel_copy_args (kernel, kernel->dyn_arguments,
-                                   &(*cmd)->command.run);
+  errcode
+    = pocl_kernel_copy_args (kernel, src_arguments, &(*cmd)->command.run);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

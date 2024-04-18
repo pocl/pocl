@@ -130,13 +130,12 @@ main(void)
 
         // Map cBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.
-        queue.enqueueMapBuffer(
-            cBuffer,
-            CL_TRUE, // block 
-            CL_MAP_READ,
-            0,
-            WORK_ITEMS * sizeof(int));
+        void *res =
+            queue.enqueueMapBuffer(cBuffer,
+                                   CL_TRUE, // block
+                                   CL_MAP_READ, 0, WORK_ITEMS * sizeof(int));
 
+        queue.enqueueUnmapMemObject(cBuffer, res);
         queue.finish();
         platformList[0].unloadCompiler();
 

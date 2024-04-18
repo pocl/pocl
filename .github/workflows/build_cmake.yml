@@ -331,7 +331,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16]
+        llvm: [17]
 
     steps:
       - uses: actions/checkout@v4

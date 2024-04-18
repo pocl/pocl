@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clCommandNDRangeKernelKHR()
 
-   Copyright (c) 2022 Jan Solanti / Tampere University
+   Copyright (c) 2022-2024 Jan Solanti / Tampere University
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -42,29 +42,9 @@ POname (clCommandNDRangeKernelKHR) (
 
   CMDBUF_VALIDATE_COMMON_HANDLES;
 
-  errcode = pocl_ndrange_kernel_common (
-      command_buffer, command_queue, properties, kernel, work_dim,
-      global_work_offset, global_work_size, local_work_size,
-      num_sync_points_in_wait_list, NULL, NULL, sync_point_wait_list,
-      sync_point, &cmd);
-
-  for (unsigned i = 0; i < kernel->meta->num_args; ++i)
-    {
-      struct pocl_argument_info *ai
-          = &cmd->command.run.kernel->meta->arg_info[i];
-      struct pocl_argument *a = &cmd->command.run.kernel->dyn_arguments[i];
-      if (ai->type == POCL_ARG_TYPE_SAMPLER)
-        POname (clRetainSampler) (cmd->command.run.arguments[i].value);
-    }
-
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
-  return CL_SUCCESS;
-
-ERROR:
-  pocl_mem_manager_free_command (cmd);
-  return errcode;
+  return pocl_record_ndrange_kernel (
+    command_buffer, command_queue, properties, kernel, kernel->dyn_arguments,
+    work_dim, global_work_offset, global_work_size, local_work_size,
+    num_sync_points_in_wait_list, sync_point_wait_list, sync_point);
 }
 POsym (clCommandNDRangeKernelKHR)

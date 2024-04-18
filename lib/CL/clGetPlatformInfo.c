@@ -240,6 +240,13 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
     case CL_PLATFORM_HOST_TIMER_RESOLUTION:
       POCL_RETURN_GETINFO(cl_ulong, 0);
 
+    /* cl_khr_command_buffer_multi_device */
+    case CL_PLATFORM_COMMAND_BUFFER_CAPABILITIES_KHR:
+      POCL_RETURN_GETINFO (cl_platform_command_buffer_capabilities_khr,
+                           CL_COMMAND_BUFFER_PLATFORM_UNIVERSAL_SYNC_KHR
+                             | CL_COMMAND_BUFFER_PLATFORM_REMAP_QUEUES_KHR
+                             | CL_COMMAND_BUFFER_PLATFORM_AUTOMATIC_REMAP_KHR);
+
     default:
       return CL_INVALID_VALUE;
   }

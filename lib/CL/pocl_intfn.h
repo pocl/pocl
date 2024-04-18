@@ -176,6 +176,9 @@ POdeclsym(clCommandFillBufferKHR)
 POdeclsym(clCommandFillImageKHR)
 POdeclsym(clGetCommandBufferInfoKHR)
 
+/* cl_khr_command_buffer_multi_device */
+POdeclsym(clRemapCommandBufferKHR)
+
 /* cl_intel_unified_shared_memory */
 POdeclsym(clHostMemAllocINTEL)
 POdeclsym(clDeviceMemAllocINTEL)

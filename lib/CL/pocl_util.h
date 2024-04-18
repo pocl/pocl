@@ -1,6 +1,6 @@
 /* OpenCL runtime library: pocl_util utility functions
 
-   Copyright (c) 2012-2023 pocl developers
+   Copyright (c) 2012-2024 PoCL Developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -134,6 +134,13 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 cl_int
 pocl_cmdbuf_choose_recording_queue (cl_command_buffer_khr command_buffer,
                                     cl_command_queue *command_queue);
+
+cl_int pocl_cmdbuf_validate_queue_list (cl_uint num_queues,
+                                        const cl_command_queue *queues);
+
+cl_command_buffer_properties_khr
+pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
+                          cl_command_buffer_properties_khr name);
 
 POCL_EXPORT
 int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
@@ -335,7 +342,7 @@ void pocl_str_tolower (char *out, const char *in);
 #endif
 
 /* Common macro for cleaning up "*GetInfo" API call implementations.
- * All the *GetInfo functions have been specified to look alike, 
+ * All the *GetInfo functions have been specified to look alike,
  * and have been implemented to use the same variable names, so this
  * code can be shared.
  */
@@ -447,7 +454,15 @@ while (0)
     {                                                                         \
       POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_buffer)),         \
                               CL_INVALID_COMMAND_BUFFER_KHR);                 \
-      POCL_RETURN_ERROR_COND ((command_queue != NULL),                        \
+      POCL_RETURN_ERROR_COND (                                                \
+        (command_queue == NULL && command_buffer->num_queues > 1),            \
+        CL_INVALID_COMMAND_QUEUE);                                            \
+      int queue_in_buffer = 0;                                                \
+      for (int ii = 0; ii < command_buffer->num_queues; ++ii)                 \
+        {                                                                     \
+          queue_in_buffer |= (command_queue == command_buffer->queues[ii]);   \
+        }                                                                     \
+      POCL_RETURN_ERROR_COND ((command_queue != NULL && !queue_in_buffer),    \
                               CL_INVALID_COMMAND_QUEUE);                      \
       POCL_RETURN_ERROR_COND ((mutable_handle != NULL), CL_INVALID_VALUE);    \
       errcode = pocl_cmdbuf_choose_recording_queue (command_buffer,           \

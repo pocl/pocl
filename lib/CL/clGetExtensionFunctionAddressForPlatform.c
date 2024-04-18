@@ -114,6 +114,11 @@ CL_API_SUFFIX__VERSION_1_2
     return (void *)&POname (clGetCommandBufferInfoKHR);
   /* end of cl_khr_command_buffer */
 
+  /* cl_khr_command_buffer_multi_device */
+  if (strcmp (func_name, "clRemapCommandBufferKHR") == 0)
+    return (void *)&POname (clRemapCommandBufferKHR);
+  /* end of cl_khr_command_buffer_multi_device */
+
   /* cl_intel_unified_shared_memory */
   if (strcmp (func_name, "clHostMemAllocINTEL") == 0)
     return (void *)&POname (clHostMemAllocINTEL);

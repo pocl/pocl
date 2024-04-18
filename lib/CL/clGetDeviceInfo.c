@@ -385,14 +385,33 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 
   /** cl_khr_command_buffer queries **/
   case CL_DEVICE_COMMAND_BUFFER_CAPABILITIES_KHR:
-    POCL_RETURN_GETINFO (
-        cl_device_command_buffer_capabilities_khr,
-        CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
-            | CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
-            | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR);
+    POCL_RETURN_GETINFO (cl_device_command_buffer_capabilities_khr,
+                         CL_COMMAND_BUFFER_CAPABILITY_KERNEL_PRINTF_KHR
+                           | CL_COMMAND_BUFFER_CAPABILITY_SIMULTANEOUS_USE_KHR
+                           | CL_COMMAND_BUFFER_CAPABILITY_OUT_OF_ORDER_KHR
+                           | CL_COMMAND_BUFFER_CAPABILITY_MULTIPLE_QUEUE_KHR);
 
   case CL_DEVICE_COMMAND_BUFFER_REQUIRED_QUEUE_PROPERTIES_KHR:
     POCL_RETURN_GETINFO (cl_command_queue_properties, 0);
+
+  case CL_DEVICE_COMMAND_BUFFER_NUM_SYNC_DEVICES_KHR:
+    if (device->ops->get_device_info_ext != NULL
+        && device->ops->get_device_info_ext (device, param_name,
+                                             param_value_size, param_value,
+                                             param_value_size_ret)
+             == CL_SUCCESS)
+      return CL_SUCCESS;
+    /* If querying the actual device fails, it is probably safe to say there
+     * are no devices it can sync with on the device side */
+    POCL_RETURN_GETINFO (cl_uint, 0);
+
+  case CL_DEVICE_COMMAND_BUFFER_SYNC_DEVICES_KHR:
+    if (device->ops->get_device_info_ext != NULL)
+      /* Let devices fill in the list if supported, or no-op otherwise */
+      device->ops->get_device_info_ext (device, param_name, param_value_size,
+                                        param_value, param_value_size_ret);
+    return CL_SUCCESS; /* gracefully no-op in case the driver fails to handle
+                          the query */
   }
 
   if(device->ops->get_device_info_ext != NULL) {

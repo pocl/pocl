@@ -1,24 +1,24 @@
 /* trig - Trigonometric functions.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include <assert.h>
@@ -30,8 +30,8 @@
 
 #define N 8
 
-extern int exec_trig_kernel (const char *program_source, 
-                             int n, void *srcA, void *dst);
+extern int
+exec_trig_kernel (const char *program_source, int n, void *srcA, void *dst);
 
 int
 main (void)
@@ -43,9 +43,10 @@ main (void)
   cl_float4 *dst;
   cl_float *dstS;
   int i;
+  int error = 0;
 
   source_file = fopen("trig.cl", "r");
-  if (source_file == NULL) 
+  if (source_file == NULL)
     source_file = fopen (SRCDIR "/trig.cl", "r");
 
   assert(source_file != NULL && "trig.cl not found!");
@@ -84,7 +85,8 @@ main (void)
   if (exec_trig_kernel (source, N, srcA, dst) < 0)
     {
       printf("Failed to run the kernel.\n");
-      return -1;
+      error = -1;
+      goto CLEANUP;
     }
 
   for (i = 0; i < N; ++i)
@@ -93,23 +95,28 @@ main (void)
           fabsf(dst[i].s[1] - dstS[i]) > 1.0e-6f ||
           fabsf(dst[i].s[2] - dstS[i]) > 1.0e-6f ||
           fabsf(dst[i].s[3] - dstS[i]) > 1.0e-6f)
-  {
+        {
           printf ("input:    [%.7f, %.7f, %.7f, %.7f]\n"
                   "output:   [%.7f, %.7f, %.7f, %.7f]\n"
                   "expected: [%.7f, %.7f, %.7f, %.7f]\n",
                   srcA[i].s[0], srcA[i].s[1], srcA[i].s[2], srcA[i].s[3],
-                  dst[i].s[0], dst[i].s[1], dst[i].s[2], dst[i].s[3],
-                  dstS[i], dstS[i], dstS[i], dstS[i]);
-    printf ("FAIL\n");
-    return -1;
-  }
+                  dst[i].s[0], dst[i].s[1], dst[i].s[2], dst[i].s[3], dstS[i],
+                  dstS[i], dstS[i], dstS[i]);
+          error = -1;
+          goto CLEANUP;
+        }
     }
 
-  printf ("OK\n");
-
+CLEANUP:
   free (srcA);
   free (dst);
   free (dstS);
+  free (source);
 
-  return 0;
+  if (!error)
+    printf ("OK\n");
+  else
+    printf ("FAIL\n");
+
+  return error;
 }

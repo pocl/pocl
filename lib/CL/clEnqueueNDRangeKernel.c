@@ -2,6 +2,7 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
                  2012-2020 Pekka Jääskeläinen
+                 2020-2024 PoCL Developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,27 +23,19 @@
    IN THE SOFTWARE.
 */
 
-#include "config.h"
-#include "pocl_binary.h"
-#include "pocl_cache.h"
 #include "pocl_cl.h"
-#include "pocl_context.h"
 #include "pocl_cq_profiling.h"
 #include "pocl_llvm.h"
-#include "pocl_local_size.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
-#include "utlist.h"
 
 #ifndef _WIN32
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
 #endif
-#include <assert.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <string.h>
 
 //#define DEBUG_NDRANGE
@@ -65,9 +58,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND ((*(command_queue->device->available) == CL_FALSE),
                           CL_DEVICE_NOT_AVAILABLE);
   errcode = pocl_ndrange_kernel_common (
-      NULL, command_queue, NULL, kernel, work_dim, global_work_offset,
-      global_work_size, local_work_size, num_events_in_wait_list,
-      event_wait_list, event, NULL, NULL, &cmd);
+    NULL, command_queue, NULL, kernel, kernel->dyn_arguments, work_dim,
+    global_work_offset, global_work_size, local_work_size,
+    num_events_in_wait_list, event_wait_list, event, NULL, NULL, &cmd);
   POCL_RETURN_ERROR_COND (errcode != CL_SUCCESS, errcode);
 
   if (pocl_cq_profiling_enabled)
