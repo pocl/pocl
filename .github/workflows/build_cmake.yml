@@ -99,6 +99,18 @@ jobs:
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc) prepare_examples
 
+      - name: Get CMake version
+        id: cmake_version
+        run: echo "version=$(cmake --version | head -n 1)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Cache CTest timings
+        id: cache_ctest
+        uses: actions/cache@v3
+        with:
+          path: Testing/Temporary/CTestCostData.txt
+          restore-keys: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
+
       - name: Run Tests
         id: ctest
         run: |
