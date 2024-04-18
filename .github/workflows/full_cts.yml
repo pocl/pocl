@@ -4,8 +4,8 @@ name: Weekly full CTS run
 on:
   workflow_dispatch:
   schedule:
-# at 2:17 every saturday
-    - cron: '17 2 * * 6'
+# at 14:01 every friday
+    - cron: '14 01 * * 5'
 
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
