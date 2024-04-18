@@ -129,7 +129,7 @@ POname(clSVMAlloc)(cl_context context,
 
   if (errcode != CL_SUCCESS)
     {
-      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem.\n");
+      POCL_MSG_ERR ("Failed to allocate memory a shadow cl_mem object.\n");
       return NULL;
     }
 

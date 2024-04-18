@@ -279,8 +279,7 @@ process_options (const char *options, char *modded_options, char *link_options,
         }
       else if (strncmp (token, "-g", 2) == 0)
         {
-          token = "-debug-info-kind=limited " \
-          "-dwarf-version=4 -debugger-tuning=gdb";
+          APPEND_TOKEN ();
         }
       else if (strncmp (token, "-D", 2) == 0 || strncmp (token, "-I", 2) == 0)
         {

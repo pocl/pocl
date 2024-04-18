@@ -654,7 +654,7 @@ create_build_hash (cl_program program, cl_device_id device, unsigned device_i)
 
 /**
  * Move build logs into the program object according to the device list
- * specified for the progam.
+ * specified for the program.
  */
 static void
 setup_build_logs (cl_program program, unsigned num_relevant_devices,
@@ -1409,6 +1409,9 @@ pocl_remote_join (cl_device_id device, cl_command_queue cq)
         }
       else
         {
+          POCL_MSG_PRINT_EVENTS (
+              "remote: waiting for %d commands(s), last event id %zu\n",
+              cq->last_event.event->id);
           POCL_WAIT_COND (dd->cq_cond, cq->pocl_lock);
         }
     }
@@ -1435,13 +1438,24 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
     }
 
   if (!node->ready)
-    return;
+    {
+      POCL_MSG_PRINT_EVENTS (
+          "remote: command related to the notified event %lu not ready\n",
+          event->id);
+      return;
+    }
 
   if (pocl_command_is_ready (node->sync.event.event))
     {
       assert (event->status == CL_QUEUED);
       pocl_update_event_submitted (event);
       remote_push_command (node);
+    }
+  else
+    {
+      POCL_MSG_PRINT_EVENTS (
+          "remote: sync event %lu is not ready for the notified event %lu\n",
+          node->sync.event.event->id, event->id);
     }
 
   return;
@@ -1953,8 +1967,8 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
         {
           arg_array[i] = (uint64_t) * (void **)al->value;
           POCL_MSG_PRINT_MEMORY (
-              "Adding SVM pool offset to an SVM ptr arg %u (%p to %p)\n", i,
-              (void *)arg_array[i],
+              "Adding SVM pool offset %zu to an SVM ptr arg %u (%p to %p)\n",
+              i, ddata->svm_region_offset, (void *)arg_array[i],
               (char *)arg_array[i] + ddata->svm_region_offset);
           arg_array[i] = arg_array[i] + ddata->svm_region_offset;
           requires_kernarg_update = 1;
@@ -2567,6 +2581,7 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
                 = malloc (sizeof (struct _pocl_ptr_list_node));
             n->ptr = ((void **)param_value)[i];
             DL_APPEND (kernel->svm_ptrs, n);
+            POCL_MSG_PRINT_MEMORY ("Set a indirect SVM/USM ptr %p\n", n->ptr);
           }
         return CL_SUCCESS;
       }

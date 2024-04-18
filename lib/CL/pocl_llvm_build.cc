@@ -422,10 +422,10 @@ int pocl_llvm_build_program(cl_program program,
 
   char WSReplacementChar = 0;
 
-  char *TempOptions = (char *) malloc (ss.str().length() + 1);
+  char *TempOptions = (char *)malloc(AllBuildOpts.length() + 1);
 
-  memset (TempOptions, 0, ss.str().length() + 1);
-  strncpy (TempOptions, ss.str().c_str(), ss.str().length());
+  memset(TempOptions, 0, AllBuildOpts.length() + 1);
+  strncpy(TempOptions, AllBuildOpts.c_str(), AllBuildOpts.length());
 
   if (pocl_escape_quoted_whitespace (TempOptions, &WSReplacementChar) == -1)
   {
@@ -460,6 +460,14 @@ int pocl_llvm_build_program(cl_program program,
     // There can be space even without quotes in the user input.
     s = std::regex_replace(s, std::regex("-I(\\s+)"), "-I");
 
+    // Convert the -g to more specific debug options understood by CFE.
+    if (s == "-g") {
+      itemstrs.push_back("-debug-info-kind=limited");
+      itemstrs.push_back("-dwarf-version=4");
+      itemstrs.push_back("-debugger-tuning=gdb");
+      continue;
+    }
+
     itemstrs.push_back(s);
   }
 
@@ -472,8 +480,10 @@ int pocl_llvm_build_program(cl_program program,
   POCL_MEM_FREE (TempOptions);
 
 #ifdef DEBUG_POCL_LLVM_API
-  std::cerr << "### options: " << ss.str() << std::endl << std::endl
-            << "user_options: " << user_options << std::endl << std::endl
+  std::cerr << "### options: " << AllBuildOpts << std::endl
+            << std::endl
+            << "user_options: " << user_options << std::endl
+            << std::endl
             << "c_strs: ";
   for (auto cstr : itemcstrs) {
     std::cerr << cstr << " ";

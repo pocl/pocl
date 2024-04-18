@@ -1730,8 +1730,9 @@ struct _cl_event {
   /* list of callback functions */
   event_callback_item *callback_list;
 
-  /* list of devices needing completion notification for this event */
+  /* list of devices needing completion notification of this event */
   event_node *notify_list;
+  /* events this event is dependent on */
   event_node *wait_list;
 
   /* OoO doesn't use sync points -> put used buffers here */

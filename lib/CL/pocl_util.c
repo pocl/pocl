@@ -533,6 +533,24 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
 }
 
 static int
+check_for_circular_dep (cl_event waiting_event, cl_event notifier_event)
+{
+  event_node *wait_list_item = NULL;
+  LL_FOREACH (notifier_event->wait_list, wait_list_item)
+  {
+    if (wait_list_item->event == waiting_event)
+      {
+        POCL_MSG_ERR ("Circular event dependency detected!\n");
+        abort ();
+        return 1;
+      }
+    else if (check_for_circular_dep (waiting_event, wait_list_item->event))
+      return 1;
+  }
+  return 0;
+}
+
+static int
 pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
 {
   event_node *notify_target = NULL;
@@ -565,6 +583,8 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
     return CL_OUT_OF_HOST_MEMORY;
+
+  /* check_for_circular_dep (waiting_event, notifier_event); */
 
   notify_target->event = waiting_event;
   wait_list_item->event = notifier_event;
@@ -678,6 +698,10 @@ ERROR:
 }
 
 /**
+ * Creates the necessary implicit migration commands to ensure data is
+ * where it's supposed to be according to the semantics of the program
+ * defined using commands, buffers, command queues and events.
+ *
  * @param dev Destination device
  * @param ev_export_p Optional output parameter for the export event
  * @param migration_size Max number of bytes to migrate (caller has to read
