@@ -31,7 +31,7 @@ env:
 jobs:
   main_test_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
-    runs-on: [self-hosted, linux, x64, debian]
+    runs-on: [self-hosted, linux, x64, "${{ matrix.config }}" ]
     strategy:
       fail-fast: false
       matrix:
@@ -87,7 +87,7 @@ jobs:
 
       - name: Build PoCL
         id: build_pocl
-        timeout-minutes: 20
+        timeout-minutes: 30
         run: |
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
@@ -123,6 +123,11 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
+  # jobs run on Github-hosted runners.
+  # TODO: move more self-hosted to Github-hosted
+  # unfortunately sanitizers don't work on Github-hosted runners,
+  # probably some limitation of Virtual address space
+  # (sanitizer-built binaries require >=20 terabytes of Virt AS)
   github_test_matrix:
     name: LLVM ${{ matrix.llvm }} - ${{ matrix.config }}
     runs-on: ubuntu-latest
@@ -287,7 +292,7 @@ jobs:
 
   remote_matrix:
     name: LLVM ${{ matrix.llvm }} - remote
-    runs-on: [self-hosted, linux, x64, debian]
+    runs-on: [self-hosted, linux, x64, remote]
     strategy:
       fail-fast: false
       matrix:
