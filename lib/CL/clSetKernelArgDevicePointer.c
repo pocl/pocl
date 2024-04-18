@@ -33,7 +33,7 @@
  */
 CL_API_ENTRY cl_int CL_API_CALL
 POname (clSetKernelArgDevicePointerEXT) (cl_kernel kernel, cl_uint arg_index,
-                                         const void *arg_value)
+                                         cl_mem_device_address_EXT dev_addr)
     CL_API_SUFFIX__VERSION_1_2
 {
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
@@ -53,6 +53,7 @@ POname (clSetKernelArgDevicePointerEXT) (cl_kernel kernel, cl_uint arg_index,
       (!found_supported_dev), CL_INVALID_OPERATION,
       "None of the devices in this context supports 'cl_ext_buffer_device_address'\n");
 
-  return pocl_set_kernel_arg_pointer (kernel, arg_index, arg_value);
+  assert (sizeof (void *) == sizeof (dev_addr));
+  return pocl_set_kernel_arg_pointer (kernel, arg_index, (void *)dev_addr);
 }
 POsym(clSetKernelArgDevicePointerEXT)

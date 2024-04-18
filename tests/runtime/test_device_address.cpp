@@ -68,7 +68,7 @@ static char PtrArith[] = R"raw(
 )raw";
 
 void *getDeviceAddressFromHost(cl::Buffer &Buf) {
-  void *Addr;
+  cl_mem_device_address_EXT Addr;
   cl_int Err = Buf.getInfo(CL_MEM_DEVICE_PTR_EXT, &Addr);
 
   if (Err != CL_SUCCESS) {
@@ -77,7 +77,7 @@ void *getDeviceAddressFromHost(cl::Buffer &Buf) {
     return nullptr;
   }
 
-  return Addr;
+  return (void *)Addr;
 }
 
 int main(void) {
@@ -303,7 +303,9 @@ int main(void) {
 
     clSetKernelArgDevicePointer(
         PtrArithKernel.get(), 0,
-        (cl_uint *)getDeviceAddressFromHost(PinnedCLBuffer) + 2);
+        (cl_mem_device_address_EXT)((cl_uint *)getDeviceAddressFromHost(
+                                        PinnedCLBuffer) +
+                                    2));
     PtrArithKernel.setArg(1, NormalCLBufferOut);
 
     DataOut = -1;
