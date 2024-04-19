@@ -2392,7 +2392,7 @@ bool Level0Device::freeMemBlocking(void *Ptr) {
   return true;
 }
 
-static void conventOpenclToZeImgFormat(cl_channel_type ChType,
+static void convertOpenclToZeImgFormat(cl_channel_type ChType,
                                        cl_channel_order ChOrder,
                                        ze_image_format_t &ZeFormat) {
   ze_image_format_type_t ZeType = {};
@@ -2549,7 +2549,7 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
 
   // Specify single component FLOAT32 format
   ze_image_format_t ZeFormat{};
-  conventOpenclToZeImgFormat(ChType, ChOrder, ZeFormat);
+  convertOpenclToZeImgFormat(ChType, ChOrder, ZeFormat);
   ze_image_type_t ZeImgType;
   switch (ImgType) {
   case CL_MEM_OBJECT_IMAGE1D:
