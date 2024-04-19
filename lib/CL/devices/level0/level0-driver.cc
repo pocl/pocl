@@ -428,7 +428,6 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
 
-  uint64_t HostStartTS = pocl_gettimemono_ns();
   POCL_MEASURE_START(ZeListPrepare);
 
   CurrentEventH = nullptr;
@@ -470,39 +469,12 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
   LEVEL0_CHECK_ABORT(
       zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
 
-  uint64_t HostFinishTS = pocl_gettimemono_ns();
   POCL_MEASURE_FINISH(ZeListExec);
   for (auto E : Batch) {
     assert(!Msgs.empty());
     const char *Msg = Msgs.front();
     POCL_UPDATE_EVENT_COMPLETE_MSG(E, Msg);
     Msgs.pop_front();
-  }
-}
-
-void Level0Queue::calculateEventTimes(cl_event Event, uint64_t DeviceStart,
-                                      uint64_t DeviceFinish, uint64_t HostStart,
-                                      uint64_t HostFinish) const {
-  uint64_t HostTime = HostFinish - HostStart;
-  // depending on device's TSC bits and the kernel hangcheck timeout,
-  // the TSC can overflow more than once during command execution.
-  // IOW we cannot assume that (DeviceFinish < DeviceStart) means
-  // it wrapped only once. For now, a simple solution: if the
-  // elapsed host time is larger than the overflow limit, use
-  // the host timing values. This is less precise, but for long
-  // running kernels probably doesn't matter much.
-  if (HostTime > DeviceTimerWrapTimeNs) {
-    Event->time_start = HostStart;
-    Event->time_end = HostFinish;
-  } else {
-    uint64_t CommandTimeNs =
-        (DeviceFinish >= DeviceStart)
-            ? (uint64_t)((DeviceFinish - DeviceStart) * DeviceNsPerCycle)
-            : (uint64_t)(((DeviceMaxValidTimestamp - DeviceStart) +
-                          DeviceFinish + 1) *
-                         DeviceNsPerCycle);
-    Event->time_start = HostFinish - CommandTimeNs;
-    Event->time_end = HostFinish;
   }
 }
 
@@ -1309,16 +1281,13 @@ void Level0Queue::run(_cl_command_node *Cmd) {
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
                          ze_command_queue_handle_t Q,
                          ze_command_list_handle_t L, ze_event_pool_handle_t E,
-                         uint32_t EvPoolSize, Level0Device *D,
-                         uint64_t *TimestampBuffer) {
+                         uint32_t EvPoolSize, Level0Device *D) {
 
   WorkHandler = WH;
   QueueH = Q;
   CmdListH = L;
   Device = D;
   EvtPoolH = E;
-  EventStart = TimestampBuffer;
-  EventFinish = TimestampBuffer + 1;
 
   uint32_t TimeStampBits, KernelTimeStampBits;
   Device->getTimingInfo(TimeStampBits, KernelTimeStampBits, DeviceFrequency,
@@ -1382,7 +1351,7 @@ Level0Queue::~Level0Queue() {
 static constexpr unsigned CacheLineSize = 64;
 
 bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
-                            Level0Device *Device, uint64_t *Buffer) {
+                            Level0Device *Device) {
 
   ThreadExitRequested = false;
 
@@ -1456,10 +1425,7 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
 
   for (unsigned i = 0; i < Count; ++i) {
     Queues.emplace_back(new Level0Queue(
-        this, QHandles[i], LHandles[i], EHandles[i], EventPoolSize, Device,
-        // avoid having the timers of different queues stored in
-        // the same cacheline
-        &Buffer[i * CacheLineSize / sizeof(uint64_t)]));
+        this, QHandles[i], LHandles[i], EHandles[i], EventPoolSize, Device));
   }
 
   Available = true;
@@ -2101,21 +2067,14 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   // create specialized queues
   if (ComputeQueueOrd != UINT32_MAX && CopyQueueOrd != UINT32_MAX) {
-    void *Ptr = allocSharedMem(CacheLineSize * NumComputeQueues);
-    ComputeTimestamps = static_cast<uint64_t *>(Ptr);
-    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this,
-                       ComputeTimestamps);
-    Ptr = allocSharedMem(CacheLineSize * NumCopyQueues);
-    CopyTimestamps = static_cast<uint64_t *>(Ptr);
-    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this, CopyTimestamps);
+    ComputeQueues.init(ComputeQueueOrd, NumComputeQueues, this);
+    CopyQueues.init(CopyQueueOrd, NumCopyQueues, this);
   }
 
   // always create universal queues, if available
   if (UniversalQueueOrd != UINT32_MAX) {
     uint32_t num = std::max(1U, NumUniversalQueues);
-    void *Ptr = allocSharedMem(CacheLineSize * num);
-    UniversalTimestamps = static_cast<uint64_t *>(Ptr);
-    UniversalQueues.init(UniversalQueueOrd, num, this, UniversalTimestamps);
+    UniversalQueues.init(UniversalQueueOrd, num, this);
   }
 
   // calculate KernelCacheHash

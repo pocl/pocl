@@ -71,7 +71,7 @@ class Level0Queue {
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
               ze_command_list_handle_t L, ze_event_pool_handle_t E,
-              uint32_t EvPoolSize, Level0Device *D, uint64_t *TimestampBuffer);
+              uint32_t EvPoolSize, Level0Device *D);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -209,8 +209,6 @@ private:
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                          const size_t Origin[3], const size_t Region[3],
                          size_t RowPitch, size_t SlicePitch);
-  void calculateEventTimes(cl_event Event, uint64_t Start, uint64_t Finish,
-                           uint64_t HostStartTS, uint64_t HostFinishTS) const;
 };
 
 class Level0QueueGroup : public Level0WorkQueueInterface {
@@ -224,8 +222,7 @@ public:
   Level0QueueGroup(Level0QueueGroup const &&) = delete;
   Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
 
-  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device,
-            uint64_t *Buffer);
+  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device);
 
   void pushWork(_cl_command_node *Command) override;
   void pushCommandBatch(BatchType Batch) override;
