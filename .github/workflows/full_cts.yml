@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   schedule:
 # at 14:01 every friday
-    - cron: '14 01 * * 5'
+    - cron: '01 14 * * 5'
 
 env:
   POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
