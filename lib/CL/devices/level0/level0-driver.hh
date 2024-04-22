@@ -147,7 +147,7 @@ private:
   void mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
               mem_mapping_t *Map);
   void unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                mem_mapping_t *map);
+                mem_mapping_t *Map);
 
   void copyImageRect(cl_mem SrcImage, cl_mem DstImage,
                      pocl_mem_identifier *SrcMemId,

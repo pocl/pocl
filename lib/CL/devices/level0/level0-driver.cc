@@ -84,6 +84,7 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   cl_mem mem = nullptr;
   if (event->num_buffers > 0) {
     mem = event->mem_objs[0];
+    assert(mem);
   }
 
   switch (Cmd->type) {
@@ -270,8 +271,10 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   case CL_COMMAND_UNMAP_MEM_OBJECT:
     if (mem->is_image == CL_FALSE || IS_IMAGE1D_BUFFER(mem)) {
       unmapMem(cmd->unmap.mem_id, mem, cmd->unmap.mapping);
-      syncUseMemHostPtr(cmd->unmap.mem_id, mem, cmd->unmap.mapping->offset,
-                        cmd->unmap.mapping->size);
+      if (cmd->unmap.mapping->map_flags & CL_MAP_WRITE) {
+        syncUseMemHostPtr(cmd->unmap.mem_id, mem, cmd->unmap.mapping->offset,
+                          cmd->unmap.mapping->size);
+      }
     } else {
       unmapImage(cmd->unmap.mem_id, mem, cmd->unmap.mapping);
     }
@@ -486,12 +489,14 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
     return;
   }
 
-  if (Mem->mem_host_ptr == MemId->mem_ptr) {
+  char *DevPtr = static_cast<char *>(MemId->mem_ptr);
+  char *MemHostPtr = static_cast<char *>(Mem->mem_host_ptr);
+
+  // host visible mem = skip
+  if (MemHostPtr == DevPtr) {
     return;
   }
 
-  char *DevPtr = static_cast<char *>(MemId->mem_ptr);
-  char *MemHostPtr = static_cast<char *>(Mem->mem_host_ptr);
   allocNextFreeEvent();
   LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
       CmdListH, MemHostPtr + Offset, DevPtr + Offset, Size, CurrentEventH,
@@ -500,14 +505,37 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                                     const size_t Origin[3],
-                                    const size_t Region[3], size_t RowPitch,
+                                    const size_t Region[3],
+                                    size_t RowPitch,
                                     size_t SlicePitch) {
   assert(Mem);
 
-  size_t Start = Origin[2] * SlicePitch + Origin[1] * RowPitch + Origin[0];
-  size_t Size = Region[2] * SlicePitch + Region[1] * RowPitch + Region[0];
+  if ((Mem->flags & CL_MEM_USE_HOST_PTR) == 0) {
+    return;
+  }
 
-  syncUseMemHostPtr(MemId, Mem, Start, Size);
+  char *DevPtr = static_cast<char *>(MemId->mem_ptr);
+  char *MemHostPtr = static_cast<char *>(Mem->mem_host_ptr);
+
+  // host visible mem = skip
+  if (DevPtr == MemHostPtr) {
+    return;
+  }
+
+  ze_copy_region_t ZeRegion;
+  ZeRegion.originX = Origin[0];
+  ZeRegion.originY = Origin[1];
+  ZeRegion.originZ = Origin[2];
+  ZeRegion.width = Region[0];
+  ZeRegion.height = Region[1];
+  ZeRegion.depth = Region[2];
+
+  ze_result_t res = zeCommandListAppendMemoryCopyRegion(
+      CmdListH,
+      MemHostPtr, &ZeRegion, RowPitch, SlicePitch,
+      DevPtr, &ZeRegion, RowPitch, SlicePitch,
+      nullptr, 0, nullptr);
+  LEVEL0_CHECK_ABORT(res);
 }
 
 void Level0Queue::read(void *__restrict__ HostPtr,
@@ -720,8 +748,8 @@ void Level0Queue::memFill(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
 }
 
 
-void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
-                         mem_mapping_t *Map) {
+void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId,
+                         cl_mem SrcBuf, mem_mapping_t *Map) {
   char *SrcPtr = static_cast<char *>(SrcMemId->mem_ptr);
 
   POCL_MSG_PRINT_LEVEL0("MAP MEM: %p FLAGS %zu\n", SrcPtr, Map->map_flags);
@@ -730,7 +758,10 @@ void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
     return;
   }
 
-  if (Map->host_ptr == (SrcPtr + Map->offset)) {
+  assert(SrcBuf);
+  // host visible mem == skip
+  if (SrcBuf->mem_host_ptr == SrcMemId->mem_ptr) {
+    assert(Map->host_ptr == (SrcPtr + Map->offset));
     return;
   }
 
@@ -743,24 +774,27 @@ void Level0Queue::mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
 }
 
 void Level0Queue::unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                           mem_mapping_t *map) {
+                           mem_mapping_t *Map) {
   char *DstPtr = static_cast<char *>(DstMemId->mem_ptr);
 
-  POCL_MSG_PRINT_LEVEL0("UNMAP MEM: %p FLAGS %zu\n", DstPtr, map->map_flags);
+  POCL_MSG_PRINT_LEVEL0("UNMAP MEM: %p FLAGS %zu\n", DstPtr, Map->map_flags);
 
   // for read mappings, don't copy anything
-  if (map->map_flags == CL_MAP_READ) {
+  if (Map->map_flags == CL_MAP_READ) {
     return;
   }
 
-  if (map->host_ptr == (DstPtr + map->offset)) {
+  assert(DstBuf);
+  // host visible mem == skip
+  if (DstBuf->mem_host_ptr == DstMemId->mem_ptr) {
+    assert(Map->host_ptr == (DstPtr + Map->offset));
     return;
   }
 
   allocNextFreeEvent();
   // memcpy (dst_device_ptr + map->offset, map->HostPtr, map->size);
   ze_result_t res = zeCommandListAppendMemoryCopy(
-      CmdListH, DstPtr + map->offset, map->host_ptr, map->size, CurrentEventH,
+      CmdListH, DstPtr + Map->offset, Map->host_ptr, Map->size, CurrentEventH,
       PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
   LEVEL0_CHECK_ABORT(res);
 }
@@ -880,8 +914,8 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
   LEVEL0_CHECK_ABORT(Res);
 }
 
-void Level0Queue::mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
-                           mem_mapping_t *Map) {
+void Level0Queue::mapImage(pocl_mem_identifier *MemId,
+                           cl_mem SrcImage, mem_mapping_t *Map) {
 
   char *SrcImgPtr = static_cast<char *>(MemId->mem_ptr);
   POCL_MSG_PRINT_LEVEL0("MAP IMAGE: %p FLAGS %zu\n", SrcImgPtr, Map->map_flags);
@@ -896,8 +930,8 @@ void Level0Queue::mapImage(pocl_mem_identifier *MemId, cl_mem SrcImage,
                 Map->row_pitch, Map->slice_pitch, Map->offset);
 }
 
-void Level0Queue::unmapImage(pocl_mem_identifier *MemId, cl_mem DstImage,
-                             mem_mapping_t *Map) {
+void Level0Queue::unmapImage(pocl_mem_identifier *MemId,
+                             cl_mem DstImage, mem_mapping_t *Map) {
   char *DstImgPtr = static_cast<char *>(MemId->mem_ptr);
 
   POCL_MSG_PRINT_LEVEL0("UNMAP IMAGE: %p FLAGS %zu\n", DstImgPtr,
