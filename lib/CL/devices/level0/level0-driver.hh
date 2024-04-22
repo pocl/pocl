@@ -327,14 +327,16 @@ public:
   bool supportsUniversalQueues() { return UniversalQueues.available(); }
 
 private:
-  Level0Program *MemfillProgram;
-  Level0Program *ImagefillProgram;
-  std::map<std::string, Level0Kernel *> MemfillKernels;
-  std::map<std::string, Level0Kernel *> ImagefillKernels;
-
   Level0QueueGroup CopyQueues;
   Level0QueueGroup ComputeQueues;
   Level0QueueGroup UniversalQueues;
+
+  std::map<std::string, Level0Kernel *> MemfillKernels;
+  std::map<std::string, Level0Kernel *> ImagefillKernels;
+
+  Level0Program *MemfillProgram;
+  Level0Program *ImagefillProgram;
+
   // TODO check reliability
   ze_device_uuid_t UUID;
   // TODO: it seems libze just returs zeroes for KernelUUID
