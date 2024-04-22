@@ -774,7 +774,8 @@ compile_and_link_program(int compile_program,
     {
       cl_device_id device = program->devices[device_i];
 
-      if (cl_c_version && check_device_supports (device, cl_c_version))
+      if (!pocl_get_bool_option ("POCL_IGNORE_CL_STD", 0) && cl_c_version
+          && check_device_supports (device, cl_c_version))
         {
           APPEND_TO_BUILD_LOG_GOTO (
               build_error_code,
