@@ -350,6 +350,7 @@ private:
   bool Integrated = false;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
+  bool NeedsRelaxedLimits = false;
   bool HasGOffsets = false;
   bool HasCompression = false;
   uint32_t MaxCommandQueuePriority = 0;

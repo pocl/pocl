@@ -1238,7 +1238,7 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     ++Mem->mem_host_ptr_refcount;
   }
 
-  POCL_MSG_PRINT_MEMORY("level0 DEVICE ALLOC | MEM_HOST_PTR %p SIZE %zu | "
+  POCL_MSG_PRINT_MEMORY("level0 ALLOCATED | MEM_HOST_PTR %p SIZE %zu | "
                         "level0 DEV BUF %p | STA BUF %p | EXTRA_PTR %p \n",
                         Mem->mem_host_ptr, Mem->size, P->mem_ptr,
                         (void *)P->extra, P->extra_ptr);

@@ -1776,10 +1776,6 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 
   ClDev->max_clock_frequency = DeviceProperties.coreClockRate;
 
-  ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-      ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
-  Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
-
   MaxCommandQueuePriority = DeviceProperties.maxCommandQueuePriority;
 
   ClDev->max_compute_units = DeviceProperties.numSlices *
@@ -1980,8 +1976,19 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       GlobalMemOrd = i;
     }
   }
-  if (ClDev->global_mem_size > ClDev->max_mem_alloc_size * 4) {
-    ClDev->global_mem_size = ClDev->max_mem_alloc_size * 4;
+
+  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")) {
+    // allow allocating 85% of total memory in a single buffer
+    ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
+    // TODO: figure out if relaxed limits also apply to these
+    ClDev->max_constant_buffer_size = ClDev->global_var_pref_size =
+        DeviceProperties.maxMemAllocSize;
+    Supports64bitBuffers = true;
+    NeedsRelaxedLimits = true;
+  } else {
+    ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
+        ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
+    Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
   }
 
   // memAccessProperties
@@ -2333,6 +2340,13 @@ void *Level0Device::allocSharedMem(uint64_t Size, bool EnableCompression,
       ZE_MEMORY_COMPRESSION_HINTS_EXT_FLAG_COMPRESSED};
   if (EnableCompression && supportsCompression()) {
     MemAllocDesc.pNext = &MemCompHints;
+  }
+
+  ze_relaxed_allocation_limits_exp_desc_t RelaxedLimits = {
+    ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC, nullptr,
+    ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE};
+  if (NeedsRelaxedLimits && Size > UINT32_MAX) {
+    MemAllocDesc.pNext = &RelaxedLimits;
   }
 
   uint64_t NextPowerOf2 = pocl_size_ceil2_64(Size);
