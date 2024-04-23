@@ -541,9 +541,14 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
 void Level0Queue::read(void *__restrict__ HostPtr,
                        pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
                        size_t Offset, size_t Size) {
-  POCL_MSG_PRINT_LEVEL0("READ from %p OFF %zu SIZE %zu \n", HostPtr, Offset,
-                        Size);
   char *DevPtr = static_cast<char *>(SrcMemId->mem_ptr);
+  if ((DevPtr + Offset) == HostPtr) {
+    // this can happen when coming from CL_COMMAND_MIGRATE_MEM_OBJECTS
+    POCL_MSG_WARN("Read skipped, HostPtr == DevPtr\n");
+    return;
+  }
+  POCL_MSG_PRINT_LEVEL0("READ from %p OFF %zu SIZE %zu \n",
+                        HostPtr, Offset, Size);
   allocNextFreeEvent();
   LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
       CmdListH, HostPtr, DevPtr + Offset, Size, CurrentEventH,
@@ -553,13 +558,19 @@ void Level0Queue::read(void *__restrict__ HostPtr,
 void Level0Queue::write(const void *__restrict__ HostPtr,
                         pocl_mem_identifier *DstMemId, cl_mem DstBuf,
                         size_t Offset, size_t Size) {
-  POCL_MSG_PRINT_LEVEL0("WRITE to %p OFF %zu SIZE %zu\n", HostPtr, Offset,
-                        Size);
-  allocNextFreeEvent();
   char *DevPtr = static_cast<char *>(DstMemId->mem_ptr);
-  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
-      CmdListH, DevPtr + Offset, HostPtr, Size, CurrentEventH,
-      PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  if ((DevPtr + Offset) == HostPtr) {
+    // this can happen when coming from CL_COMMAND_MIGRATE_MEM_OBJECTS
+    POCL_MSG_WARN("Write skipped, HostPtr == DevPtr\n");
+    return;
+  }
+
+  POCL_MSG_PRINT_LEVEL0("WRITE to %p OFF %zu SIZE %zu\n",
+                        HostPtr, Offset, Size);
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(CmdListH, DevPtr + Offset,
+         HostPtr, Size, CurrentEventH, PreviousEventH ? 1 : 0,
+         PreviousEventH ? &PreviousEventH : nullptr));
 }
 
 void Level0Queue::copy(pocl_mem_identifier *DstMemDd, cl_mem DstBuf,
