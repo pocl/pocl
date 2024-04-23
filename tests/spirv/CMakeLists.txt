@@ -40,7 +40,7 @@ set_tests_properties( "spirv/printf"
     COST 4.0
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "OK"
-    LABELS "internal;spirv;level0"
+    LABELS "internal;spirv"
     DEPENDS "pocl_version_check")
 
 endif()
