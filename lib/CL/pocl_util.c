@@ -630,7 +630,7 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
       assert (dev->ops->alloc_mem_obj);
       errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
       if (errcode != CL_SUCCESS) {
-        POCL_MSG_ERR("Failed to allocate %zx bytes on device %s\n",
+        POCL_MSG_ERR("Failed to allocate %zu bytes on device %s\n",
                      objs[i]->size, dev->short_name);
       }
 

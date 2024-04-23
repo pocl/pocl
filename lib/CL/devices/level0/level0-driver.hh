@@ -36,7 +36,7 @@ namespace pocl {
     ze_result_t res = CODE;                                                    \
     if (res != ZE_RESULT_SUCCESS) {                                            \
       POCL_MSG_PRINT2(ERROR, __FUNCTION__, __LINE__,                           \
-                      "Error %i from Level0 Runtime call:\n", (int)res);       \
+                      "Error %0x from Level0 Runtime call:\n", (int)res);      \
       return RETVAL;                                                           \
     }                                                                          \
   } while (0)

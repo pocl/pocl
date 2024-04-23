@@ -92,7 +92,7 @@ static void pocl_level0_local_size_optimizer(cl_device_id Dev, cl_kernel Kernel,
                                    &SuggestedX, &SuggestedY, &SuggestedZ);
   }
   if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_WARN("zeKernelSuggestGroupSize FAILED: %u\n", (unsigned)Res);
+    POCL_MSG_WARN("zeKernelSuggestGroupSize FAILED: %0x\n", (unsigned)Res);
     pocl_default_local_size_optimizer(Dev, Kernel, DeviceI, GlobalX, GlobalY,
                                       GlobalZ, LocalX, LocalY, LocalZ);
   } else {
