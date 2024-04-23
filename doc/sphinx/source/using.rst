@@ -242,6 +242,12 @@ pocl.
  adding debug data all the built kernels to help debugging kernel issues
  with tools such as gdb or valgrind.
 
+- **POCL_IGNORE_CL_STD**
+
+ Ignores any ``--cl-std`` options passed to clBuildProgram(). This is useful
+ to force-run programs that set the version to 2.x although they do not need
+ all of its features which the targeted 3.x driver might not implement.
+
 - **POCL_KERNEL_CACHE**
 
  If this is set to 0 at runtime, kernel compilation files will be deleted at
