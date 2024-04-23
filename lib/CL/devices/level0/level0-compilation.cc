@@ -38,6 +38,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
+#include <functional>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -225,57 +226,50 @@ bool Level0Program::addFinishedBuild(Level0BuildUPtr Build) {
   }
 }
 
-static Level0Build *findBuild(bool MustUseLargeOffsets, bool CanBeSmallWG,
-                              std::list<Level0ProgramBuildUPtr> &List) {
-  for (auto &B : List) {
-    if (B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets) {
-      return B.get();
-    }
-  }
-  for (auto &B : List) {
-    if (!B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets) {
-      return B.get();
-    }
-  }
-  return nullptr;
-}
+template <class Build>
+static Build *findBuild(bool MustUseLargeOffsets, bool CanBeSmallWG,
+                        std::function<bool(Build *)> SkipMatchF,
+                        std::list<std::unique_ptr<Build>> &List) {
+  unsigned BestMatchProps = 0, CurrentMatchProps = 0;
+  Build *BestRet = nullptr;
+  Build *AnyRet = nullptr;
 
-static Level0JITProgramBuild *findBuild(bool MustUseLargeOffsets,
-                              bool CanBeSmallWG,
-                              std::list<Level0JITProgramBuildUPtr> &List) {
-  for (auto &B : List) {
-    if (B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets) {
-      return B.get();
-    }
-  }
-  for (auto &B : List) {
-    if (!B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets) {
-      return B.get();
-    }
-  }
-  return nullptr;
-}
+  // properties to match ordered by importance (most to least)
+  enum Props { Opt = 0x4, LargeOfs = 0x2, SmallWg = 0x1 };
 
-static Level0Build *findBuild(bool MustUseLargeOffsets, bool CanBeSmallWG,
-                              std::string KernelName,
-                              std::list<Level0KernelBuildUPtr> &List) {
   for (auto &B : List) {
-    if (B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets &&
-        B->getKernelName() == KernelName) {
 
-      if (!B->isSmallWG() || (B->isSmallWG() && CanBeSmallWG))
-        return B.get();
+    if (SkipMatchF(B.get()))
+      continue;
+
+    if (MustUseLargeOffsets && !B->isLargeOffset()) {
+      continue;
+    }
+    if (MustUseLargeOffsets == B->isLargeOffset()) {
+      CurrentMatchProps |= Props::LargeOfs;
+    }
+
+    if (B->isOptimized())
+      CurrentMatchProps |= Props::Opt;
+
+    if (B->isSmallWG() && !CanBeSmallWG) {
+      continue;
+    }
+    if (CanBeSmallWG == B->isSmallWG()) {
+      CurrentMatchProps |= Props::SmallWg;
+    }
+
+    AnyRet = B.get();
+    if (CurrentMatchProps > BestMatchProps) {
+      BestMatchProps = CurrentMatchProps;
+      BestRet = B.get();
     }
   }
-  for (auto &B : List) {
-    if (!B->isOptimized() && B->isLargeOffset() == MustUseLargeOffsets &&
-        B->getKernelName() == KernelName) {
 
-      if (!B->isSmallWG() || (B->isSmallWG() && CanBeSmallWG))
-        return B.get();
-    }
-  }
-  return nullptr;
+  if (BestRet)
+    return BestRet;
+  else
+    return AnyRet;
 }
 
 bool Level0Program::getBestKernel(Level0Kernel *Kernel,
@@ -285,11 +279,18 @@ bool Level0Program::getBestKernel(Level0Kernel *Kernel,
                                   ze_kernel_handle_t &Ker) {
   std::lock_guard<std::mutex> LockGuard(Mutex);
   Level0Build *Build = nullptr;
+  std::string KernelName = Kernel->getName();
   if (JITCompilation) {
-    Build = findBuild(MustUseLargeOffsets, CanBeSmallWG, Kernel->getName(),
-                      KernBuilds);
+    Build = findBuild<Level0KernelBuild>(
+        MustUseLargeOffsets, CanBeSmallWG,
+        [KernelName](Level0KernelBuild *B) {
+          return B->getKernelName() != KernelName;
+        },
+        KernBuilds);
   } else {
-    Build = findBuild(MustUseLargeOffsets, CanBeSmallWG, ProgBuilds);
+    Build = findBuild<Level0ProgramBuild>(
+        MustUseLargeOffsets, CanBeSmallWG,
+        [](Level0ProgramBuild *B) { return false; }, ProgBuilds);
   }
 
   if (Build == nullptr) {
@@ -318,7 +319,9 @@ Level0JITProgramBuild *Level0Program::getLinkinBuild(BuildSpecialization Spec) {
   POCL_MSG_WARN("GetLinkinBuild: exact match not found\n");
 
   // TODO is it OK to return non-exact match ?
-  return findBuild(Spec.LargeOffsets, Spec.SmallWGSize, JITProgBuilds);
+  return findBuild<Level0JITProgramBuild>(
+      Spec.LargeOffsets, Spec.SmallWGSize,
+      [](Level0JITProgramBuild *B) { return false; }, JITProgBuilds);
 }
 
 Level0Kernel *Level0Program::createKernel(const std::string Name) {
@@ -1162,7 +1165,7 @@ bool Level0CompilationJobScheduler::createProgramBuilds(Level0ProgramSPtr &Progr
 
   if (DeviceSupports64bitBuffers &&
       (!createProgramBuildFullOptions(Program, BuildLog,
-                                      false, // wait
+                                      true, // wait
                                       Optimize,
                                       true,    // LargeOffsets
                                       false,   // small WG
