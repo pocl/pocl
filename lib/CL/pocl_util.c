@@ -630,7 +630,7 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
       assert (dev->ops->alloc_mem_obj);
       errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
       if (errcode != CL_SUCCESS) {
-        POCL_MSG_ERR("Failed to allocate %zx bytes on device %s\n",
+        POCL_MSG_ERR("Failed to allocate %zu bytes on device %s\n",
                      objs[i]->size, dev->short_name);
       }
 
@@ -1366,6 +1366,8 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
   POCL_LOCK_OBJ (command_queue);
 
+  ++command_queue->command_count;
+
   /* in case of in-order queue, synchronize to previously enqueued command
      if available */
   if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
@@ -1377,24 +1379,12 @@ void pocl_command_enqueue (cl_command_queue command_queue,
                                   command_queue->last_event.event);
         }
     }
-
-  ++command_queue->command_count;
-  /* in case of in-order queue, synchronize to previously enqueued command
-     if available */
-  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
-    {
-      if (command_queue->last_event.event)
-        {
-          pocl_create_event_sync (node->sync.event.event,
-                                  command_queue->last_event.event);
-        }
-    }
-  /* Command queue is out-of-order queue. If command type is a barrier, then
-     synchronize to all previously enqueued commands to make sure they are
-     executed before the barrier. */
   else if ((node->type == CL_COMMAND_BARRIER
             || node->type == CL_COMMAND_MARKER)
            && node->command.barrier.has_wait_list == 0)
+    /* Command queue is out-of-order queue. If command type is a barrier, then
+       synchronize to all previously enqueued commands to make sure they are
+       executed before the barrier. */
     {
       POCL_MSG_PRINT_EVENTS ("Barrier; adding event syncs\n");
       DL_FOREACH (command_queue->events, event)

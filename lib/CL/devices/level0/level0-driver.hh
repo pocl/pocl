@@ -36,7 +36,7 @@ namespace pocl {
     ze_result_t res = CODE;                                                    \
     if (res != ZE_RESULT_SUCCESS) {                                            \
       POCL_MSG_PRINT2(ERROR, __FUNCTION__, __LINE__,                           \
-                      "Error %i from Level0 Runtime call:\n", (int)res);       \
+                      "Error %0x from Level0 Runtime call:\n", (int)res);      \
       return RETVAL;                                                           \
     }                                                                          \
   } while (0)
@@ -49,11 +49,18 @@ typedef struct
 } uint32_t_3;
 #endif
 
+using BatchType = std::deque<cl_event>;
+/// limit the Batch size to this number of commands
+constexpr unsigned BatchSizeLimit = 128;
+/// the number of events allocatable per single batch
+constexpr unsigned EventPoolSize = 16384;
+
 class Level0WorkQueueInterface {
 
 public:
   virtual void pushWork(_cl_command_node *Command) = 0;
-  virtual _cl_command_node *getWorkOrWait(bool &ShouldExit) = 0;
+  virtual void pushCommandBatch(BatchType Batch) = 0;
+  virtual bool getWorkOrWait(_cl_command_node **Node, BatchType &Batch) = 0;
   virtual ~Level0WorkQueueInterface() {};
 };
 
@@ -63,8 +70,8 @@ class Level0Queue {
 
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L, Level0Device *D,
-              uint64_t *TimestampBuffer);
+              ze_command_list_handle_t L, ze_event_pool_handle_t E,
+              uint32_t EvPoolSize, Level0Device *D);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -77,6 +84,14 @@ public:
 private:
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
+  ze_event_pool_handle_t EvtPoolH;
+  std::queue<ze_event_handle_t> AvailableDeviceEvents;
+  std::queue<ze_event_handle_t> DeviceEventsToReset;
+
+  ze_event_handle_t CurrentEventH;
+  ze_event_handle_t PreviousEventH;
+  bool isCommandListActive;
+
   Level0Device *Device;
   uint64_t *EventStart = nullptr;
   uint64_t *EventFinish = nullptr;
@@ -126,10 +141,13 @@ private:
                size_t Size, size_t Offset,
                const void *__restrict__ Pattern,
                size_t PatternSize);
+  void memfillImpl(Level0Device *Device, ze_command_list_handle_t CmdListH,
+                   const void *MemPtr, size_t Size, size_t Offset,
+                   const void *__restrict__ Pattern, size_t PatternSize);
   void mapMem(pocl_mem_identifier *SrcMemId, cl_mem SrcBuf,
               mem_mapping_t *Map);
   void unmapMem(pocl_mem_identifier *DstMemId, cl_mem DstBuf,
-                mem_mapping_t *map);
+                mem_mapping_t *Map);
 
   void copyImageRect(cl_mem SrcImage, cl_mem DstImage,
                      pocl_mem_identifier *SrcMemId,
@@ -179,15 +197,18 @@ private:
   void runWithOffsets(struct pocl_context *PoclCtx, ze_kernel_handle_t KernelH);
   void run(_cl_command_node *Cmd);
 
+  void appendEventToList(_cl_command_node *Cmd, const char **Msg);
   void execCommand(_cl_command_node *Cmd);
+  void execCommandBatch(BatchType &Batch);
+  // if isCommandListActive == true, this function is used to create a chain
+  // of dependent ZE events, otherwise it does nothing
+  void allocNextFreeEvent();
 
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                          size_t Offset, size_t Size);
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
                          const size_t Origin[3], const size_t Region[3],
                          size_t RowPitch, size_t SlicePitch);
-  void calculateEventTimes(cl_event Event, uint64_t Start, uint64_t Finish,
-                           uint64_t HostStartTS, uint64_t HostFinishTS) const;
 };
 
 class Level0QueueGroup : public Level0WorkQueueInterface {
@@ -201,23 +222,26 @@ public:
   Level0QueueGroup(Level0QueueGroup const &&) = delete;
   Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
 
-  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device,
-            uint64_t *Buffer);
+  bool init(unsigned Ordinal, unsigned Count, Level0Device *Device);
 
   void pushWork(_cl_command_node *Command) override;
-  _cl_command_node *getWorkOrWait(bool &ShouldExit) override;
+  void pushCommandBatch(BatchType Batch) override;
+
+  bool getWorkOrWait(_cl_command_node **Node, BatchType &Batch) override;
+  bool available() const { return Available; }
 
 private:
+  std::condition_variable Cond;
+  std::mutex Mutex;
+
+  std::queue<_cl_command_node *> WorkQueue;
+  std::queue<BatchType> BatchWorkQueue;
+
   std::vector<std::unique_ptr<Level0Queue>> Queues;
 
-  std::condition_variable Cond __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
-  std::mutex Mutex  __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
-
-  std::queue<_cl_command_node *> WorkQueue __attribute__((aligned(HOST_CPU_CACHELINE_SIZE)));
   bool ThreadExitRequested = false;
-  uint64_t *TimeStampBuffer = nullptr;
+  bool Available = false;
 };
-
 
 class Level0Driver;
 
@@ -234,6 +258,7 @@ public:
   Level0Device& operator=(Level0Device &&) = delete;
 
   void pushCommand(_cl_command_node *Command);
+  void pushCommandBatch(BatchType Batch);
 
   void *allocSharedMem(uint64_t Size, bool EnableCompression = false,
                        ze_device_mem_alloc_flags_t DevFlags =
@@ -299,15 +324,19 @@ public:
   bool supportsOndemandPaging() { return OndemandPaging; }
   bool supportsGlobalOffsets() { return HasGOffsets; }
   bool supportsCompression() { return HasCompression; }
+  bool supportsUniversalQueues() { return UniversalQueues.available(); }
 
 private:
-  Level0Program *MemfillProgram;
-  Level0Program *ImagefillProgram;
+  Level0QueueGroup CopyQueues;
+  Level0QueueGroup ComputeQueues;
+  Level0QueueGroup UniversalQueues;
+
   std::map<std::string, Level0Kernel *> MemfillKernels;
   std::map<std::string, Level0Kernel *> ImagefillKernels;
 
-  Level0QueueGroup CopyQueues;
-  Level0QueueGroup ComputeQueues;
+  Level0Program *MemfillProgram;
+  Level0Program *ImagefillProgram;
+
   // TODO check reliability
   ze_device_uuid_t UUID;
   // TODO: it seems libze just returs zeroes for KernelUUID
@@ -321,6 +350,7 @@ private:
   bool Integrated = false;
   bool OndemandPaging = false;
   bool Supports64bitBuffers = false;
+  bool NeedsRelaxedLimits = false;
   bool HasGOffsets = false;
   bool HasCompression = false;
   uint32_t MaxCommandQueuePriority = 0;
@@ -331,8 +361,6 @@ private:
   uint32_t MaxWGCount[3];
   uint32_t MaxMemoryFillPatternSize = 0;
   uint32_t GlobalMemOrd = UINT32_MAX;
-  uint64_t *CopyTimestamps = nullptr;
-  uint64_t *ComputeTimestamps = nullptr;
   std::vector<size_t> SupportedSubgroupSizes;
   cl_device_unified_shared_memory_capabilities_intel HostMemCaps = 0;
   cl_device_unified_shared_memory_capabilities_intel DeviceMemCaps = 0;

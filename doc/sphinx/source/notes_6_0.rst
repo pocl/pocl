@@ -108,6 +108,19 @@ execute_after_simple_compile_and_link_no_device_info and execute_after_two_file_
 test cases, as well as `chipStar <https://github.com/CHIP-SPV/chipStar>`_,
 which uses the API for enhanced SPIR-V portability.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Level Zero driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* optimized the host-device synchronization overhead, this should
+  be visible mainly with kernels that take <1ms to run
+
+* implemented support for ZE_experimental_relaxed_allocation_limits,
+  If the Level Zero driver supports it, PoCL-Level0 will set
+  CL_DEVICE_MAX_MEM_ALLOC_SIZE to 85% of the available Device memory.
+  PoCL will automatically compile kernels with both 32bit and 64bit
+  pointer offsets, and select the correct version before execution.
+
 ===================================
 Deprecation/feature removal notices
 ===================================

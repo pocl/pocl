@@ -51,7 +51,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
     list(APPEND C_PROGRAMS_TO_BUILD test_queue_creation_with_hints)
 endif()
 
-set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm)
+set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -145,6 +145,8 @@ add_test(NAME "runtime/test_device_address" COMMAND "test_device_address")
 
 add_test(NAME "runtime/test_svm" COMMAND "test_svm")
 
+add_test(NAME "runtime/test_large_buf" COMMAND "test_large_buf")
+
 if(OPENCL_HEADER_VERSION GREATER 299)
   add_test(NAME "runtime/test_queue_creation_with_hints" COMMAND "test_queue_creation_with_hints")
   set(OCL_30_TESTS "runtime/test_queue_creation_with_hints")
@@ -167,6 +169,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_command_buffer" "runtime/test_command_buffer_images"
   "runtime/test_command_buffer_multi_device"
   "runtime/test_device_address" "runtime/test_svm"
+  "runtime/test_device_address" "runtime/test_svm"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -186,6 +189,7 @@ set_tests_properties(
   "runtime/test_command_buffer_multi_device"
   "runtime/test_device_address"
   "runtime/test_svm"
+  "runtime/test_large_buf"
   PROPERTIES SKIP_RETURN_CODE 77)
 
 if(ENABLE_REMOTE_CLIENT AND ENABLE_REMOTE_SERVER AND ENABLE_HOST_CPU_DEVICES)
@@ -440,5 +444,6 @@ set_property(TEST
   "runtime/test_cl_pocl_content_size" "runtime/test_deviceside_enqueue"
   "runtime/test_command_buffer"
   "runtime/test_device_address"
+  "runtime/test_svm"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")
