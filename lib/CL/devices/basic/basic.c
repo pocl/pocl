@@ -538,8 +538,13 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
-    return;
+  if (node->ready != 1)
+    {
+      POCL_MSG_PRINT_EVENTS (
+          "basic: command related to the notified event %lu not ready\n",
+          event->id);
+      return;
+    }
 
   if (pocl_command_is_ready (event))
     {

@@ -516,6 +516,11 @@ struct _cl_command_node
   cl_device_id device;
   /* The index of the targeted device in the **program** device list. */
   unsigned program_device_i;
+  /*
+   * -1: command_failed
+   * 0: not ready
+   * 1: ready
+   */
   cl_int ready;
 
   /* fields needed by buffered commands only */
