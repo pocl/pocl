@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <map>
 
+#include "pocl_util.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_mem_management.h"
@@ -145,7 +146,7 @@ pocl_ventus_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_with_size = NULL;
   ops->copy_rect = pocl_ventus_copy_rect;
 
-  ops->memfill = NULL;
+  ops->memfill = pocl_ventus_memfill;
   ops->map_mem = pocl_ventus_map_mem;
   ops->unmap_mem = pocl_ventus_unmap_mem;
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
@@ -501,8 +502,6 @@ step5 make a writefile for chisel
               else
                 {
                   cl_mem m = (*(cl_mem *)(al->value));
-                  err=pocl_ventus_alloc_mem_obj(cmd->device, m, m->mem_host_ptr);
-                  assert(0 == CL_SUCCESS);
                   ptr = malloc(sizeof(uint64_t));
                   memcpy(ptr,m->device_ptrs[cmd->device->global_mem_id].mem_ptr,sizeof(uint64_t));
 
@@ -1310,6 +1309,20 @@ pocl_ventus_copy_rect (void *data, pocl_mem_identifier *dst_mem_id,
 
     free(src_buff);
     free(dst_buff);
+}
+
+void
+pocl_ventus_memfill (void *data, pocl_mem_identifier *dst_mem_id,
+                     cl_mem dst_buf, size_t size, size_t offset,
+                     const void *__restrict__ pattern, size_t pattern_size)
+{
+  struct vt_device_data_t *d = (struct vt_device_data_t *)data;
+  void *host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, size);
+  assert(host_ptr);
+  pocl_fill_aligned_buf_with_pattern (host_ptr, 0, size, pattern, pattern_size);
+  int err = vt_copy_to_dev(d->vt_device, *((uint64_t*)(dst_mem_id->mem_ptr)) + offset, host_ptr, size, 0, 0);
+  assert(0 == err);
+  POCL_MEM_FREE(host_ptr);
 }
 
 cl_int
