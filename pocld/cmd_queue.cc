@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "cmd_queue.hh"
+#include "common_cl.hh"
 #include "reply_th.hh"
 #include "shared_cl_context.hh"
 
@@ -133,6 +134,10 @@ void CommandQueue::RunCommand(Request *request) {
 
   case MessageType_RunKernel:
     RunKernel(queue_id, request, reply);
+    break;
+
+  case MessageType_RunCommandBuffer:
+    RunCommandBuffer(queue_id, request, reply);
     break;
 
     /*************************************************************************/
@@ -453,6 +458,22 @@ void CommandQueue::RunKernel(uint32_t queue_id, Request *req, Reply *rep) {
                     CL_FINISHED);
 
   replyOK(rep, evt_timing, MessageType_RunKernelReply);
+}
+
+void CommandQueue::RunCommandBuffer(uint32_t queue_id, Request *req,
+                                    Reply *rep) {
+  EventTiming_t evt_timing{};
+  uint32_t CmdbufId = req->Body.obj_id;
+
+  TP_NDRANGE_KERNEL(req->Body.msg_id, req->Body.client_did, queue_id, cmdbuf_id,
+                    CL_RUNNING);
+  RETURN_IF_ERR_CODE(backend->runCommandBuffer(
+      req->Body.event_id, evt_timing, CmdbufId, 1, &req->Body.cq_id,
+      req->Body.waitlist_size, req->Waitlist.data()));
+  TP_NDRANGE_KERNEL(req->Body.msg_id, req->Body.client_did, queue_id, cmdbuf_id,
+                    CL_FINISHED);
+
+  replyOK(rep, evt_timing, MessageType_RunCommandBufferReply);
 }
 
 /******************/

@@ -42,7 +42,6 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "common.h"
 #include "devices.h"
 #include "pocl_builtin_kernels.h"
 #include "pocl_cache.h"
@@ -50,7 +49,6 @@
 #include "pocl_dynlib.h"
 #include "pocl_export.h"
 #include "pocl_runtime_config.h"
-#include "pocl_shared.h"
 #include "pocl_tracing.h"
 #include "pocl_util.h"
 #include "pocl_version.h"

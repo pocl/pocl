@@ -31,10 +31,16 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unistd.h>
+#include <variant>
 
+#include "CL/cl_ext.h"
+#include "CL/cl_platform.h"
+#include "CL/opencl.hpp"
 #include "bufalloc.h"
 #include "cmd_queue.hh"
 #include "common.hh"
+#include "common_cl.hh"
 #include "config.h"
 #include "pocl_builtin_kernels.h"
 #include "pocl_runtime_config.h"
@@ -67,9 +73,31 @@
   err = code;                                                                  \
   EVENT_TIMING_POST(msg)
 
-/****************************************************************************************************************/
-/****************************************************************************************************************/
-/****************************************************************************************************************/
+/******************************************************************************/
+
+class CommandBuffer {
+public:
+  typedef struct {
+    std::vector<cl::CommandQueue> Queues;
+    std::vector<Request *> Cmds;
+  } Emulated;
+  std::variant<cl::CommandBufferKhr, Emulated> Buffer;
+
+  CommandBuffer(cl::CommandBufferKhr &&Cb) : Buffer(Cb) {}
+  CommandBuffer(const std::vector<cl::CommandQueue> &Queues,
+                const std::vector<Request *> &Cmds)
+      : Buffer{Emulated{Queues, Cmds}} {}
+  ~CommandBuffer() {
+    if (std::holds_alternative<Emulated>(Buffer)) {
+      for (auto R : std::get<Emulated>(Buffer).Cmds) {
+        delete R;
+      }
+    }
+  }
+};
+typedef std::unique_ptr<CommandBuffer> CommandBufferPtr;
+
+/******************************************************************************/
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -96,6 +124,7 @@ class SharedCLContext final : public SharedContextBase {
   std::unordered_map<uint32_t, clImagePtr> ImageIDmap;
   std::unordered_map<uint32_t, clProgramStructPtr> ProgramIDmap;
   std::unordered_map<uint32_t, clKernelStructPtr> KernelIDmap;
+  std::unordered_map<uint32_t, CommandBufferPtr> CommandBufferIDmap;
   std::unordered_map<uint32_t, clCommandQueuePtr> QueueIDMap;
 
   std::unordered_map<BufferId_t, clBufferPtr> BufferIDmap;
@@ -225,6 +254,13 @@ public:
 
   virtual int freeKernel(uint32_t kernel_id) override;
 
+  virtual int createCommandBuffer(uint32_t CmdBufId,
+                                  const std::vector<uint32_t> &DeviceList,
+                                  const std::vector<uint32_t> &QueueList,
+                                  const std::vector<Request *> &Cmds) override;
+
+  virtual int freeCommandBuffer(uint32_t cmdbuf_id) override;
+
   virtual int createQueue(uint32_t queue_id, uint32_t dev_id) override;
 
   virtual int freeQueue(uint32_t queue_id) override;
@@ -315,6 +351,11 @@ public:
                         const sizet_vec3 &global,
                         const sizet_vec3 *local = nullptr) override;
 
+  virtual int runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
+                               uint32_t CmdBufId, uint32_t NumQueues,
+                               uint32_t *QueueIds, uint32_t waitlist_size,
+                               uint64_t *waitlist) override;
+
   /**********************************************************************/
   /**********************************************************************/
   /**********************************************************************/
@@ -361,6 +402,7 @@ private:
   cl::Buffer *findBuffer(uint32_t id);
   cl::Image *findImage(uint32_t id);
   clKernelStruct *findKernel(uint32_t id);
+  CommandBuffer *findCommandBuffer(uint32_t id);
   cl::Sampler *findSampler(uint32_t id);
   cl::CommandQueue *findCommandQueue(uint32_t id);
   void updateKernelArgMDFromSPIRV(ArgumentInfo_t &MD,
@@ -391,6 +433,11 @@ cl::Image *SharedCLContext::findImage(uint32_t id) {
 clKernelStruct *SharedCLContext::findKernel(uint32_t id) {
   auto search = KernelIDmap.find(id);
   return (search == KernelIDmap.end() ? nullptr : search->second.get());
+}
+
+CommandBuffer *SharedCLContext::findCommandBuffer(uint32_t id) {
+  auto search = CommandBufferIDmap.find(id);
+  return (search == CommandBufferIDmap.end() ? nullptr : search->second.get());
 }
 
 cl::Sampler *SharedCLContext::findSampler(uint32_t id) {
@@ -525,6 +572,14 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
   if (prefix == nullptr) {                                                     \
     POCL_MSG_ERR("CAN't FIND IMAGE %" PRIu32 " \n", prefix##_image_id);        \
     return CL_INVALID_MEM_OBJECT;                                              \
+  }
+
+#define FIND_COMMAND_BUFFER                                                    \
+  Cb = findCommandBuffer(CmdBufId);                                            \
+  if (Cb == nullptr) {                                                         \
+    POCL_MSG_ERR("CAN'T FIND COMMAND BUFFER %" PRIu64 " \n",                   \
+                 (uint64_t)CmdBufId);                                          \
+    return CL_INVALID_COMMAND_BUFFER_KHR;                                      \
   }
 
 /**
@@ -1900,7 +1955,7 @@ int SharedCLContext::writeKernelMeta(uint32_t program_id, char *buffer,
   return 0;
 }
 
-/****************************************************************************************************************/
+/*****************************************************************************/
 
 int SharedCLContext::createKernel(uint32_t kernel_id, uint32_t program_id,
                                   const char *name) {
@@ -1973,6 +2028,300 @@ int SharedCLContext::freeKernel(uint32_t kernel_id) {
   POCL_MSG_PRINT_INFO("P %u Free Kernel %" PRIu32 "\n", plat_id, kernel_id);
   return 0;
 }
+
+/*****************************************************************************/
+
+int SharedCLContext::createCommandBuffer(
+    uint32_t CmdBufId, const std::vector<uint32_t> &DeviceList,
+    const std::vector<uint32_t> &QueueList,
+    const std::vector<Request *> &Cmds) {
+  CommandBufferPtr B;
+
+  bool AllDevicesSupport = true;
+  bool AllDevicesSupportMulti = true;
+  for (uint32_t Id : DeviceList) {
+    auto Extensions =
+        CLDevices.at(Id).getInfo<CL_DEVICE_EXTENSIONS_WITH_VERSION>();
+    bool DeviceSupports = false;
+    bool DeviceSupportsMulti = false;
+    for (cl_name_version Ext : Extensions) {
+      if (std::strcmp(Ext.name, "cl_khr_command_buffer") == 0) {
+        DeviceSupports = true;
+        break;
+      }
+      if (std::strcmp(Ext.name, "cl_khr_command_buffer_multi_device") == 0) {
+        DeviceSupportsMulti = true;
+        break;
+      }
+    }
+    AllDevicesSupport &= DeviceSupports;
+    AllDevicesSupportMulti &= DeviceSupportsMulti;
+  }
+
+  std::vector<cl::CommandQueue> Queues;
+  Queues.reserve(QueueList.size());
+  for (uint32_t Id : QueueList) {
+    Queues.push_back(*QueueIDMap.at(Id).get());
+  }
+
+  // Fall back to emulated command buffers if the needed configuration is not
+  // supported
+  if (!AllDevicesSupport ||
+      (!AllDevicesSupportMulti && DeviceList.size() > 1)) {
+    B.reset(new CommandBuffer{Queues, Cmds});
+  } else {
+    cl::CommandBufferKhr Cb(Queues);
+
+    // valid PoCL syncpoints start from 1, start the vector with an invalid one
+    // so we can use the PoCL syncpoint value to index into the array of native
+    // syncpoints.
+    std::vector<cl_sync_point_khr> syncpoints = {0};
+    std::vector<cl_sync_point_khr> dependencies;
+    for (Request *R : Cmds) {
+      cl_int err = CL_SUCCESS;
+      cl_sync_point_khr syncpoint = 0;
+      dependencies.clear();
+      if (dependencies.capacity() < R->Body.waitlist_size)
+        dependencies.reserve(R->Body.waitlist_size);
+      for (uint64_t idx : R->Waitlist) {
+        dependencies.push_back(syncpoints.at(idx));
+      }
+
+      switch (R->Body.message_type) {
+      case MessageType_FillBuffer: {
+        uint32_t buffer_id = R->Body.obj_id;
+        uint64_t offset = R->Body.m.fill_buffer.dst_offset;
+        void *pattern = R->ExtraData.data();
+        uint64_t size = R->Body.m.fill_buffer.size;
+        cl::Buffer *b = nullptr;
+        { FIND_BUFFER; }
+#define fillBCommand(type)                                                     \
+  {                                                                            \
+    type *patt = reinterpret_cast<type *>(pattern);                            \
+    err = Cb.commandFillBuffer(*b, *patt, offset, size, &dependencies,         \
+                               &syncpoint, nullptr, &Queues[R->Body.cq_id]);   \
+    break;                                                                     \
+  }
+        switch (R->Body.m.fill_buffer.pattern_size) {
+        case 1:
+          fillBCommand(cl_uchar);
+        case 2:
+          fillBCommand(cl_ushort);
+        case 3:
+          fillBCommand(cl_uchar3);
+        case 4:
+          fillBCommand(cl_uint);
+        case 6:
+          fillBCommand(cl_ushort3);
+        case 8:
+          fillBCommand(cl_ulong);
+        case 12:
+          fillBCommand(cl_uint3);
+        case 16:
+          fillBCommand(cl_ulong2);
+        case 24:
+          fillBCommand(cl_ulong3);
+        case 32:
+          fillBCommand(cl_ulong4);
+        case 64:
+          fillBCommand(cl_ulong8);
+        default:
+          err = CL_INVALID_ARG_VALUE;
+        }
+#undef fillBCommand
+      } break;
+      case MessageType_FillImageRect: {
+        uint32_t image_id = R->Body.obj_id;
+        cl_float4 fillColor = *(cl_float4 *)R->ExtraData.data();
+        const sizet_vec3 origin = {R->Body.m.fill_image.origin.x,
+                                   R->Body.m.fill_image.origin.y,
+                                   R->Body.m.fill_image.origin.z};
+        const sizet_vec3 region = {R->Body.m.fill_image.region.x,
+                                   R->Body.m.fill_image.region.y,
+                                   R->Body.m.fill_image.region.z};
+        cl::Image *img = nullptr;
+        { FIND_IMAGE; }
+        Cb.commandFillImage(*img, fillColor, origin, region, &dependencies,
+                            &syncpoint, nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_CopyBuffer: {
+        uint32_t src_buffer_id = R->Body.m.copy.src_buffer_id;
+        uint32_t dst_buffer_id = R->Body.m.copy.dst_buffer_id;
+        cl::Buffer *src = nullptr;
+        cl::Buffer *dst = nullptr;
+        {
+          FIND_BUFFER2(src);
+          FIND_BUFFER2(dst);
+        }
+        err = Cb.commandCopyBuffer(*src, *dst, R->Body.m.copy.src_offset,
+                                   R->Body.m.copy.dst_offset,
+                                   R->Body.m.copy.size, &dependencies,
+                                   &syncpoint, nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_CopyBufferRect: {
+        uint32_t src_buffer_id = R->Body.m.copy_rect.src_buffer_id;
+        uint32_t dst_buffer_id = R->Body.m.copy_rect.dst_buffer_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_rect.src_origin.x,
+                                       R->Body.m.copy_rect.src_origin.y,
+                                       R->Body.m.copy_rect.src_origin.z};
+        const sizet_vec3 dst_origin = {R->Body.m.copy_rect.dst_origin.x,
+                                       R->Body.m.copy_rect.dst_origin.y,
+                                       R->Body.m.copy_rect.dst_origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_rect.region.x,
+                                   R->Body.m.copy_rect.region.y,
+                                   R->Body.m.copy_rect.region.z};
+        cl::Buffer *src = nullptr;
+        cl::Buffer *dst = nullptr;
+        {
+          FIND_BUFFER2(src);
+          FIND_BUFFER2(dst);
+        }
+        err = Cb.commandCopyBufferRect(
+            *src, *dst, src_origin, dst_origin, region,
+            R->Body.m.copy_rect.src_row_pitch,
+            R->Body.m.copy_rect.src_slice_pitch,
+            R->Body.m.copy_rect.dst_row_pitch,
+            R->Body.m.copy_rect.dst_slice_pitch, &dependencies, &syncpoint,
+            nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_CopyBuffer2Image: {
+        uint32_t buffer_id = R->Body.m.copy_buf2img.src_buf_id;
+        uint32_t image_id = R->Body.obj_id;
+        const sizet_vec3 dst_origin = {R->Body.m.copy_buf2img.origin.x,
+                                       R->Body.m.copy_buf2img.origin.y,
+                                       R->Body.m.copy_buf2img.origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_buf2img.region.x,
+                                   R->Body.m.copy_buf2img.region.y,
+                                   R->Body.m.copy_buf2img.region.z};
+        cl::Buffer *b = nullptr;
+        cl::Image *img = nullptr;
+        {
+          FIND_BUFFER;
+          FIND_IMAGE;
+        }
+        err = Cb.commandCopyBufferToImage(
+            *b, *img, R->Body.m.copy_buf2img.src_offset, dst_origin, region,
+            &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_CopyImage2Buffer: {
+        uint32_t buffer_id = R->Body.m.copy_img2buf.dst_buf_id;
+        uint32_t image_id = R->Body.obj_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_img2buf.origin.x,
+                                       R->Body.m.copy_img2buf.origin.y,
+                                       R->Body.m.copy_img2buf.origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_img2buf.region.x,
+                                   R->Body.m.copy_img2buf.region.y,
+                                   R->Body.m.copy_img2buf.region.z};
+        cl::Buffer *b = nullptr;
+        cl::Image *img = nullptr;
+        {
+          FIND_BUFFER;
+          FIND_IMAGE;
+        }
+        err = Cb.commandCopyImageToBuffer(
+            *img, *b, src_origin, region, R->Body.m.copy_img2buf.dst_offset,
+            &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_CopyImage2Image: {
+        uint32_t src_image_id = R->Body.m.copy_img2img.src_image_id;
+        uint32_t dst_image_id = R->Body.m.copy_img2img.dst_image_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_img2img.src_origin.x,
+                                       R->Body.m.copy_img2img.src_origin.y,
+                                       R->Body.m.copy_img2img.src_origin.z};
+        const sizet_vec3 dst_origin = {R->Body.m.copy_img2img.dst_origin.x,
+                                       R->Body.m.copy_img2img.dst_origin.y,
+                                       R->Body.m.copy_img2img.dst_origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_img2img.region.x,
+                                   R->Body.m.copy_img2img.region.y,
+                                   R->Body.m.copy_img2img.region.z};
+        cl::Image *src = nullptr;
+        cl::Image *dst = nullptr;
+        {
+          FIND_IMAGE2(src);
+          FIND_IMAGE2(dst);
+        }
+        err = Cb.commandCopyImage(*src, *dst, src_origin, dst_origin, region,
+                                  &dependencies, &syncpoint, nullptr,
+                                  &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_RunKernel: {
+        cl::NDRange offset(R->Body.m.run_kernel.offset.x,
+                           R->Body.m.run_kernel.offset.y,
+                           R->Body.m.run_kernel.offset.z);
+        // required because work dimensions are determined from global_size.
+        cl::NDRange global1(R->Body.m.run_kernel.global.x);
+        cl::NDRange global2(R->Body.m.run_kernel.global.x,
+                            R->Body.m.run_kernel.global.y);
+        cl::NDRange global3(R->Body.m.run_kernel.global.x,
+                            R->Body.m.run_kernel.global.y,
+                            R->Body.m.run_kernel.global.z);
+        uint8_t dim = R->Body.m.run_kernel.dim;
+        uint32_t device_id = R->Body.did;
+        uint32_t kernel_id = R->Body.obj_id;
+        cl::Kernel *k = nullptr;
+        clKernelStruct *kernel = nullptr;
+        { FIND_KERNEL; }
+        if (R->Body.m.run_kernel.has_new_args)
+          err = setKernelArgs(
+              k, kernel, R->Body.m.run_kernel.args_num,
+              (uint64_t *)R->ExtraData.data(),
+              (unsigned char *)R->ExtraData.data() +
+                  R->Body.m.run_kernel.args_num * sizeof(uint64_t),
+              R->Body.m.run_kernel.pod_arg_size, (char *)R->ExtraData2.data());
+        if (err != CL_SUCCESS)
+          break;
+        err = Cb.commandNDRangeKernel(
+            {}, *k, offset,
+            (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
+            ((R->Body.m.run_kernel.has_local)
+                 ? cl::NullRange
+                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                               R->Body.m.run_kernel.local.y,
+                               R->Body.m.run_kernel.local.z)),
+            &dependencies, &syncpoint, nullptr, &Queues[R->Body.cq_id]);
+      } break;
+      case MessageType_Barrier: {
+        err = Cb.commandBarrierWithWaitList(&dependencies, &syncpoint, nullptr,
+                                            &Queues[R->Body.cq_id]);
+      } break;
+      // TODO: Read/Write and SVM commands (PoCL extensions)
+      default:
+        return CL_INVALID_COMMAND_BUFFER_KHR;
+      } /* end switch(R->req.message_type) */
+
+      // Abort if recording of any command failed
+      if (err != CL_SUCCESS)
+        return err;
+
+      if (syncpoint != 0)
+        syncpoints.push_back(syncpoint);
+    }
+
+    Cb.finalizeCommandBuffer();
+    B.reset(new CommandBuffer{std::move(Cb)});
+  }
+
+  {
+    std::unique_lock<std::mutex> lock(MainMutex);
+    CommandBufferIDmap.insert({CmdBufId, std::move(B)});
+  }
+  return 0;
+}
+
+int SharedCLContext::freeCommandBuffer(uint32_t CmdBufId) {
+  {
+    std::unique_lock<std::mutex> lock(MainMutex);
+    if (CommandBufferIDmap.erase(CmdBufId) == 0) {
+      POCL_MSG_ERR("P %u Free Command Buffer %" PRIu32 "\n", plat_id, CmdBufId);
+      return CL_INVALID_COMMAND_BUFFER_KHR;
+    }
+  }
+  POCL_MSG_PRINT_INFO("P %u Free Command Buffer %" PRIu32 "\n", plat_id,
+                      CmdBufId);
+  return 0;
+}
+
+/*****************************************************************************/
 
 int SharedCLContext::createSampler(uint32_t sampler_id, uint32_t normalized,
                                    uint32_t address, uint32_t filter) {
@@ -2272,8 +2621,8 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
       SVMBackingStoreMap[BufferID] = HostPtr;
   }
 
-  POCL_MSG_PRINT_MEMORY("P %u Created Buffer %lu host_ptr %p\n", plat_id,
-                        BufferID, HostPtr);
+  POCL_MSG_PRINT_MEMORY("P %u Created Buffer %lu host_ptr %p size %llu\n",
+                        plat_id, BufferID, HostPtr, (unsigned long long)Size);
   return 0;
 }
 
@@ -2427,6 +2776,8 @@ int SharedCLContext::readBuffer(uint64_t ev_id, uint32_t cq_id,
         size = content_bytes - offset;
     }
 
+    POCL_MSG_PRINT_GENERAL("READ BUFFER %" PRIu64 ",  %" PRIuS " BYTES\n",
+                           buffer_id, size);
     if (out_size)
       *out_size = size;
     EVENT_TIMING("readBuffer",
@@ -2896,9 +3247,251 @@ int SharedCLContext::runKernel(
 }
 
 /***************************************************************************/
-/***************************************************************************/
-/***************************************************************************/
-/***************************************************************************/
+
+int SharedCLContext::runCommandBuffer(uint64_t ev_id, EventTiming_t &evt,
+                                      uint32_t CmdBufId, uint32_t NumQueues,
+                                      uint32_t *QueueIds,
+                                      uint32_t waitlist_size,
+                                      uint64_t *waitlist) {
+  std::vector<cl::Event> Dependencies;
+  std::vector<cl::CommandQueue> Queues;
+  CommandBuffer *Cb = nullptr;
+  { FIND_COMMAND_BUFFER; }
+  Dependencies = remapWaitlist(waitlist_size, waitlist, ev_id);
+  Queues.reserve(NumQueues);
+  for (uint32_t i = 0; i < NumQueues; ++i) {
+    uint32_t cq_id = QueueIds[i];
+    cl::CommandQueue *cq = nullptr;
+    { FIND_QUEUE; }
+    Queues.push_back(*cq);
+  }
+  if (std::holds_alternative<cl::CommandBufferKhr>(Cb->Buffer)) {
+    cl::CommandBufferKhr CmdBuf = std::get<cl::CommandBufferKhr>(Cb->Buffer);
+    EVENT_TIMING("runCommandBuffer (native)",
+                 CmdBuf.enqueueCommandBuffer(Queues, &Dependencies, &event));
+    return err;
+  } else {
+    const CommandBuffer::Emulated *CmdBuf =
+        std::get_if<CommandBuffer::Emulated>(&Cb->Buffer);
+    std::vector<cl::Event> Syncpoints;
+    for (Request *R : CmdBuf->Cmds) {
+      EventTiming_t evt;
+      // Copy buffer-level dependencies to all commands
+      std::vector<cl::Event> Deps = Dependencies;
+      cl_int err = CL_SUCCESS;
+      cl::Event event;
+      // Append syncpoint events to dependencies
+      for (uint64_t DepId : R->Waitlist)
+        // valid syncpoints start from 1
+        Deps.push_back(Syncpoints.at(DepId - 1));
+
+      switch (R->Body.message_type) {
+      case MessageType_FillBuffer: {
+        uint32_t buffer_id = R->Body.obj_id;
+        uint64_t offset = R->Body.m.fill_buffer.dst_offset;
+        void *pattern = R->ExtraData.data();
+        uint64_t size = R->Body.m.fill_buffer.size;
+        cl::Buffer *b = nullptr;
+        { FIND_BUFFER; }
+        cl::CommandQueue *cq = &Queues[R->Body.cq_id];
+        std::vector<cl::Event> dependencies = std::move(Deps);
+        switch (R->Body.m.fill_buffer.pattern_size) {
+        case 1:
+          fillB(cl_uchar);
+        case 2:
+          fillB(cl_ushort);
+        case 3:
+          fillB(cl_uchar3);
+        case 4:
+          fillB(cl_uint);
+        case 6:
+          fillB(cl_ushort3);
+        case 8:
+          fillB(cl_ulong);
+        case 12:
+          fillB(cl_uint3);
+        case 16:
+          fillB(cl_ulong2);
+        case 24:
+          fillB(cl_ulong3);
+        case 32:
+          fillB(cl_ulong4);
+        case 64:
+          fillB(cl_ulong8);
+        default:
+          err = CL_INVALID_ARG_VALUE;
+        }
+      } break;
+      case MessageType_FillImageRect: {
+        uint32_t image_id = R->Body.obj_id;
+        cl_float4 fillColor = *(cl_float4 *)R->ExtraData.data();
+        const sizet_vec3 origin = {R->Body.m.fill_image.origin.x,
+                                   R->Body.m.fill_image.origin.y,
+                                   R->Body.m.fill_image.origin.z};
+        const sizet_vec3 region = {R->Body.m.fill_image.region.x,
+                                   R->Body.m.fill_image.region.y,
+                                   R->Body.m.fill_image.region.z};
+        cl::Image *img = nullptr;
+        { FIND_IMAGE; }
+        err = Queues[R->Body.cq_id].enqueueFillImage(*img, fillColor, origin,
+                                                     region, &Deps, &event);
+      } break;
+      case MessageType_CopyBuffer: {
+        uint32_t src_buffer_id = R->Body.m.copy.src_buffer_id;
+        uint32_t dst_buffer_id = R->Body.m.copy.dst_buffer_id;
+        cl::Buffer *src = nullptr;
+        cl::Buffer *dst = nullptr;
+        {
+          FIND_BUFFER2(src);
+          FIND_BUFFER2(dst);
+        }
+        err = Queues[R->Body.cq_id].enqueueCopyBuffer(
+            *src, *dst, R->Body.m.copy.src_offset, R->Body.m.copy.dst_offset,
+            R->Body.m.copy.size, &Deps, &event);
+      } break;
+      case MessageType_CopyBufferRect: {
+        uint32_t src_buffer_id = R->Body.m.copy_rect.src_buffer_id;
+        uint32_t dst_buffer_id = R->Body.m.copy_rect.dst_buffer_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_rect.src_origin.x,
+                                       R->Body.m.copy_rect.src_origin.y,
+                                       R->Body.m.copy_rect.src_origin.z};
+        const sizet_vec3 dst_origin = {R->Body.m.copy_rect.dst_origin.x,
+                                       R->Body.m.copy_rect.dst_origin.y,
+                                       R->Body.m.copy_rect.dst_origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_rect.region.x,
+                                   R->Body.m.copy_rect.region.y,
+                                   R->Body.m.copy_rect.region.z};
+        cl::Buffer *src = nullptr;
+        cl::Buffer *dst = nullptr;
+        {
+          FIND_BUFFER2(src);
+          FIND_BUFFER2(dst);
+        }
+        err = Queues[R->Body.cq_id].enqueueCopyBufferRect(
+            *src, *dst, src_origin, dst_origin, region,
+            R->Body.m.copy_rect.src_row_pitch,
+            R->Body.m.copy_rect.src_slice_pitch,
+            R->Body.m.copy_rect.dst_row_pitch,
+            R->Body.m.copy_rect.dst_slice_pitch, &Deps, &event);
+      } break;
+      case MessageType_CopyBuffer2Image: {
+        uint32_t buffer_id = R->Body.m.copy_buf2img.src_buf_id;
+        uint32_t image_id = R->Body.obj_id;
+        const sizet_vec3 dst_origin = {R->Body.m.copy_buf2img.origin.x,
+                                       R->Body.m.copy_buf2img.origin.y,
+                                       R->Body.m.copy_buf2img.origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_buf2img.region.x,
+                                   R->Body.m.copy_buf2img.region.y,
+                                   R->Body.m.copy_buf2img.region.z};
+        cl::Buffer *b = nullptr;
+        cl::Image *img = nullptr;
+        {
+          FIND_BUFFER;
+          FIND_IMAGE;
+        }
+        err = Queues[R->Body.cq_id].enqueueCopyBufferToImage(
+            *b, *img, R->Body.m.copy_buf2img.src_offset, dst_origin, region,
+            &Deps, &event);
+      } break;
+      case MessageType_CopyImage2Buffer: {
+        uint32_t buffer_id = R->Body.m.copy_img2buf.dst_buf_id;
+        uint32_t image_id = R->Body.obj_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_img2buf.origin.x,
+                                       R->Body.m.copy_img2buf.origin.y,
+                                       R->Body.m.copy_img2buf.origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_img2buf.region.x,
+                                   R->Body.m.copy_img2buf.region.y,
+                                   R->Body.m.copy_img2buf.region.z};
+        cl::Buffer *b = nullptr;
+        cl::Image *img = nullptr;
+        {
+          FIND_BUFFER;
+          FIND_IMAGE;
+        }
+        err = Queues[R->Body.cq_id].enqueueCopyImageToBuffer(
+            *img, *b, src_origin, region, R->Body.m.copy_img2buf.dst_offset,
+            &Deps, &event);
+      } break;
+      case MessageType_CopyImage2Image: {
+        uint32_t src_image_id = R->Body.m.copy_img2img.src_image_id;
+        uint32_t dst_image_id = R->Body.m.copy_img2img.dst_image_id;
+        const sizet_vec3 src_origin = {R->Body.m.copy_img2img.src_origin.x,
+                                       R->Body.m.copy_img2img.src_origin.y,
+                                       R->Body.m.copy_img2img.src_origin.z};
+        const sizet_vec3 dst_origin = {R->Body.m.copy_img2img.dst_origin.x,
+                                       R->Body.m.copy_img2img.dst_origin.y,
+                                       R->Body.m.copy_img2img.dst_origin.z};
+        const sizet_vec3 region = {R->Body.m.copy_img2img.region.x,
+                                   R->Body.m.copy_img2img.region.y,
+                                   R->Body.m.copy_img2img.region.z};
+        cl::Image *src = nullptr;
+        cl::Image *dst = nullptr;
+        {
+          FIND_IMAGE2(src);
+          FIND_IMAGE2(dst);
+        }
+        err = Queues[R->Body.cq_id].enqueueCopyImage(
+            *src, *dst, src_origin, dst_origin, region, &Deps, &event);
+      } break;
+      case MessageType_RunKernel: {
+        cl::NDRange offset(R->Body.m.run_kernel.offset.x,
+                           R->Body.m.run_kernel.offset.y,
+                           R->Body.m.run_kernel.offset.z);
+        // required because work dimensions are determined from global_size.
+        cl::NDRange global1(R->Body.m.run_kernel.global.x);
+        cl::NDRange global2(R->Body.m.run_kernel.global.x,
+                            R->Body.m.run_kernel.global.y);
+        cl::NDRange global3(R->Body.m.run_kernel.global.x,
+                            R->Body.m.run_kernel.global.y,
+                            R->Body.m.run_kernel.global.z);
+        uint8_t dim = R->Body.m.run_kernel.dim;
+        uint32_t device_id = R->Body.did;
+        uint32_t kernel_id = R->Body.obj_id;
+        cl::Kernel *k = nullptr;
+        clKernelStruct *kernel = nullptr;
+        { FIND_KERNEL; }
+        if (R->Body.m.run_kernel.has_new_args)
+          err = setKernelArgs(k, kernel, R->Body.m.run_kernel.args_num,
+                              (uint64_t *)R->ExtraData.data(),
+                              (unsigned char *)R->ExtraData.data() +
+                                  R->Body.m.run_kernel.args_num *
+                                      sizeof(uint64_t),
+                              R->ExtraData2Size, (char *)R->ExtraData2.data());
+        if (err != CL_SUCCESS)
+          break;
+        err = Queues[R->Body.cq_id].enqueueNDRangeKernel(
+            *k, offset, (dim == 2 ? global2 : (dim < 2 ? global1 : global3)),
+            ((R->Body.m.run_kernel.has_local)
+                 ? cl::NullRange
+                 : cl::NDRange(R->Body.m.run_kernel.local.x,
+                               R->Body.m.run_kernel.local.y,
+                               R->Body.m.run_kernel.local.z)),
+            &Deps, &event);
+      } break;
+      case MessageType_Barrier: {
+        Queues[R->Body.cq_id].enqueueBarrierWithWaitList(&Deps, &event);
+      } break;
+      // TODO: Read/Write and SVM commands (PoCL extensions)
+      default:
+        return CL_INVALID_COMMAND_BUFFER_KHR;
+      } /* end switch(R->req.message_type) */
+
+      // Abort if recording of any command failed
+      if (err != CL_SUCCESS)
+        return err;
+
+      Syncpoints.push_back(event);
+    }
+
+    Dependencies.insert(Dependencies.end(), Syncpoints.begin(),
+                        Syncpoints.end());
+    EVENT_TIMING("runCommandBuffer (emulated)",
+                 Queues[0].enqueueMarkerWithWaitList(&Dependencies, &event));
+    return err;
+  }
+  return CL_INVALID_COMMAND_BUFFER_KHR;
+}
+
 /***************************************************************************/
 
 int SharedCLContext::fillImage(uint64_t ev_id, uint32_t cq_id,

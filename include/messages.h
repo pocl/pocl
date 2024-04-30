@@ -121,9 +121,14 @@ extern "C"
     MessageType_LinkProgram,
     MessageType_FreeProgram,
 
+    MessageType_CreateCommandBuffer,
+    MessageType_FreeCommandBuffer,
+
     // ***********************************************
 
     MessageType_MigrateD2D,
+
+    MessageType_Barrier,
 
     MessageType_ReadBuffer,
     MessageType_WriteBuffer,
@@ -142,6 +147,7 @@ extern "C"
     MessageType_FillImageRect,
 
     MessageType_RunKernel,
+    MessageType_RunCommandBuffer,
 
     MessageType_NotifyEvent,
     MessageType_RdmaBufferRegistration,
@@ -179,6 +185,9 @@ extern "C"
     MessageType_BuildProgramReply,
     MessageType_FreeProgramReply,
 
+    MessageType_CreateCommandBufferReply,
+    MessageType_FreeCommandBufferReply,
+
     // ***********************************************
 
     MessageType_MigrateD2DReply,
@@ -196,6 +205,7 @@ extern "C"
     MessageType_FillImageRectReply,
 
     MessageType_RunKernelReply,
+    MessageType_RunCommandBufferReply,
 
     MessageType_Failure
   };
@@ -661,6 +671,15 @@ extern "C"
     cl_device_info id;
   } DeviceInfoMsg_t;
 
+  typedef struct __attribute__ ((packed, aligned (8))) CreateCommandBufferMsg_s
+  {
+    uint64_t num_queues;
+    uint64_t queues_offset;
+    uint64_t num_commands;
+    uint64_t commands_offset;
+    uint64_t commands_size;
+  } CreateCommandBufferMsg_t;
+
   /* ########################## */
 
   typedef struct __attribute__ ((packed)) PeerHandshake_s
@@ -723,6 +742,7 @@ extern "C"
       RunKernelMsg_t run_kernel;
 
       DeviceInfoMsg_t device_info;
+      CreateCommandBufferMsg_t create_cmdbuf;
     } m;
   } RequestMsg_t;
 
@@ -876,6 +896,10 @@ extern "C"
       case MessageType_BuildProgramWithDefinedBuiltins:
       case MessageType_LinkProgram:
         body = sizeof (BuildProgramMsg_t);
+        break;
+
+      case MessageType_CreateCommandBuffer:
+        body = sizeof (CreateCommandBufferMsg_t);
         break;
 
       case MessageType_MigrateD2D:

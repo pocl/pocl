@@ -205,6 +205,8 @@ POname (clCreateCommandBufferKHR) (
   for (unsigned i = 0; i < num_queues; ++i)
     {
       POname (clRetainCommandQueue) (queues[i]);
+      if (queues[i] != queues[0])
+        cmdbuf->is_multi_device = 1;
     }
 
   if (errcode_ret != NULL)

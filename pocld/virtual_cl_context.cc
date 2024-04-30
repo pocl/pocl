@@ -23,10 +23,14 @@
 */
 
 #include <cassert>
+#include <cstdint>
+#include <cstdio>
 #include <memory>
 #include <unordered_set>
 
+#include "CL/cl_ext.h"
 #include "common.hh"
+#include "request.hh"
 
 #ifdef ENABLE_RDMA
 #include "rdma_reply_th.hh"
@@ -132,6 +136,7 @@ class VirtualCLContext : public VirtualContextBase {
   std::unordered_set<uint32_t> QueueIDset;
   std::unordered_set<uint32_t> ProgramIDset;
   std::unordered_set<uint32_t> KernelIDset;
+  std::unordered_set<uint32_t> CommandBufferIDSet;
 
   std::unordered_map<uint32_t, ContextVector> ProgramPlatformBuildMap;
 
@@ -219,6 +224,10 @@ private:
   void CreateKernel(Request *req, Reply *rep);
 
   void FreeKernel(Request *req, Reply *rep);
+
+  void CreateCommandBuffer(Request *req, Reply *rep);
+
+  void FreeCommandBuffer(Request *req, Reply *rep);
 
   void CreateSampler(Request *req, Reply *rep);
 
@@ -505,6 +514,14 @@ int VirtualCLContext::run() {
 
       case MessageType_FreeKernel:
         FreeKernel(request, reply);
+        break;
+
+      case MessageType_CreateCommandBuffer:
+        CreateCommandBuffer(request, reply);
+        break;
+
+      case MessageType_FreeCommandBuffer:
+        FreeCommandBuffer(request, reply);
         break;
 
       case MessageType_CreateSampler:
@@ -935,7 +952,62 @@ void VirtualCLContext::FreeKernel(Request *req, Reply *rep) {
   replyOK(rep, MessageType_FreeKernelReply);
 }
 
-/****************************************************************************************************************/
+/******************************************************************************/
+
+void VirtualCLContext::CreateCommandBuffer(Request *req, Reply *rep) {
+  INIT_VARS;
+  CHECK_ID_NOT_EXISTS(CommandBufferIDSet, CL_INVALID_COMMAND_BUFFER_KHR);
+
+  CreateCommandBufferMsg_t &m = req->Body.m.create_cmdbuf;
+
+  std::vector<Request *> Commands;
+  std::vector<uint32_t> Devices;
+  std::vector<uint32_t> Queues;
+
+  Queues.reserve(m.num_queues);
+  for (size_t i = 0; i < m.num_queues; ++i) {
+    uint32_t QueueIndex;
+    ::memcpy(&QueueIndex,
+             req->ExtraData.data() + m.queues_offset + i * sizeof(uint32_t),
+             sizeof(uint32_t));
+    Queues.push_back(QueueIndex);
+  }
+
+  Devices.push_back(req->Body.did);
+
+  Commands.reserve(m.num_commands);
+  ByteReader Reader(req->ExtraData.data() + m.commands_offset, m.commands_size);
+  while (!Reader.eof()) {
+    Request *R = new Request{};
+    if (R->readFull(&Reader))
+      Commands.push_back(R);
+  }
+
+  assert(Commands.size() == m.num_commands);
+  TP_CREATE_COMMAND_BUFFER(req->Body.msg_id, req->Body.client_did, id);
+  err = SharedContextList[req->Body.pid]->createCommandBuffer(id, Devices,
+                                                              Queues, Commands);
+  TP_CREATE_COMMAND_BUFFER(req->Body.msg_id, req->Body.client_did, id);
+
+  RETURN_IF_ERR;
+  CommandBufferIDSet.insert(id);
+  replyID(rep, MessageType_CreateCommandBufferReply, id);
+}
+
+void VirtualCLContext::FreeCommandBuffer(Request *req, Reply *rep) {
+  INIT_VARS;
+  CHECK_ID_EXISTS(CommandBufferIDSet, CL_INVALID_COMMAND_BUFFER_KHR);
+
+  TP_FREE_COMMAND_BUFFER(req->Body.msg_id, req->Body.client_did, id);
+  err = SharedContextList[req->Body.pid]->freeCommandBuffer(id);
+  TP_FREE_COMMAND_BUFFER(req->Body.msg_id, req->Body.client_did, id);
+
+  RETURN_IF_ERR;
+  CommandBufferIDSet.erase(id);
+  replyOK(rep, MessageType_FreeCommandBufferReply);
+}
+
+/******************************************************************************/
 
 void VirtualCLContext::CreateImage(Request *req, Reply *rep) {
   INIT_VARS;
