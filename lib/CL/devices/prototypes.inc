@@ -128,6 +128,10 @@
   int pocl_##__DRV__##_supports_dbk (cl_device_id device,                     \
                                      cl_dbk_id_exp kernel_id,                 \
                                      const void *kernel_attributes);          \
+  int pocl_##__DRV__##_create_finalized_command_buffer(                       \
+      cl_device_id device, cl_command_buffer_khr cmdbuf);                     \
+  int pocl_##__DRV__##_free_command_buffer(cl_device_id device,               \
+                                           cl_command_buffer_khr cmdbuf);     \
   void pocl_##__DRV__##_memfill (void *data, pocl_mem_identifier *dst_mem_id, \
                                  cl_mem dst_buf, size_t size, size_t offset,  \
                                  const void *__restrict__ pattern,            \
