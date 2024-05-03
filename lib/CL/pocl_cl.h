@@ -1677,9 +1677,15 @@ struct _cl_kernel {
   char *dyn_argument_storage;
   void **dyn_argument_offsets;
 
-  /* The SVM allocations accessed by the kernel which were set explicitly
-     using clSetKernelExecInfo(). */
-  pocl_ptr_list *svm_ptrs;
+  /* The SVM, USM or device allocations accessed by the kernel which were set
+     explicitly using clSetKernelExecInfo(). */
+  pocl_ptr_list *indirect_raw_ptrs;
+
+  /* Set to true, in case the kernel might access any of the raw buffers
+     indirectly. All USM indirect access flags will set this currently.
+     We should ensure at enqueue time that all of the known raw buffers
+     will be synchronized to the device. */
+  char can_access_all_raw_buffers_indirectly;
 
   /* for program's linked list of kernels */
   struct _cl_kernel *next;

@@ -80,8 +80,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       kernel->meta = NULL;
 
       struct _pocl_ptr_list_node *n, *tmp;
-      DL_FOREACH_SAFE (kernel->svm_ptrs, n, tmp) { free (n); }
-      kernel->svm_ptrs = NULL;
+      DL_FOREACH_SAFE (kernel->indirect_raw_ptrs, n, tmp) { free (n); }
+      kernel->indirect_raw_ptrs = NULL;
 
       POCL_MEM_FREE (kernel->data);
       POCL_MEM_FREE (kernel->dyn_arguments);

@@ -127,7 +127,7 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
 
   POCL_LOCK_OBJ (context);
 
-  /* Register the pointer as a SVM pointer so clCreateBuffer() detects it. */
+  /* Register the pointer as an SVM pointer so clCreateBuffer() detects it. */
   item->vm_ptr = ptr;
   item->size = size;
   DL_APPEND (context->raw_ptrs, item);

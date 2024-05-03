@@ -297,23 +297,47 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
         }
     }
 
-  /* Migrate buffers related to SVM pointers set with clSetKernelExecInfo(). */
-  struct _pocl_ptr_list_node *n;
-  DL_FOREACH (kernel->svm_ptrs, n)
-  {
-    pocl_raw_ptr *svm_ptr
-        = pocl_find_raw_ptr_with_vm_ptr (command_queue->context, n->ptr);
-
-    if (svm_ptr == NULL)
+  /* If the kernel has a general indirect access set, we append the
+     currently-alive raw buffers to the indirect_raw_buffers set and ensure
+     their data gets synchronized to the device. */
+  if (kernel->can_access_all_raw_buffers_indirectly)
+    {
+      struct _pocl_raw_ptr *ptr;
+      DL_FOREACH (kernel->context->raw_ptrs, ptr)
       {
-        POCL_MSG_PRINT_MEMORY ("Couldn't find the shadow cl_mem for an "
-                               "clSetKernelExecInfo-set SVM ptr, "
-                               "assuming system SVM.\n");
-        continue;
+        int found = 0;
+        /* Ensure we do not add the argument buffers again. */
+        for (int i = 0; i < *memobj_count; ++i)
+          if (memobj_list[i] == ptr->shadow_cl_mem)
+            {
+              found = 1;
+              break;
+            }
+        if (found)
+          continue;
+        memobj_list[(*memobj_count)++] = ptr->shadow_cl_mem;
       }
-    memobj_list[(*memobj_count)++] = svm_ptr->shadow_cl_mem;
-  }
+    }
+  else
+    {
+      /* Otherwise, we only migrate buffers related to USM/SVM pointers
+         explicitly set with clSetKernelExecInfo(). */
+      struct _pocl_ptr_list_node *n;
+      DL_FOREACH (kernel->indirect_raw_ptrs, n)
+      {
+        pocl_raw_ptr *svm_ptr
+          = pocl_find_raw_ptr_with_vm_ptr (command_queue->context, n->ptr);
 
+        if (svm_ptr == NULL)
+          {
+            POCL_MSG_PRINT_MEMORY ("Couldn't find the shadow cl_mem for an "
+                                   "clSetKernelExecInfo-set SVM ptr, "
+                                   "assuming system SVM.\n");
+            continue;
+          }
+        memobj_list[(*memobj_count)++] = svm_ptr->shadow_cl_mem;
+      }
+    }
   return CL_SUCCESS;
 }
 
