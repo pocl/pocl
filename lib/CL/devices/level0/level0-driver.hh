@@ -90,7 +90,6 @@ private:
 
   ze_event_handle_t CurrentEventH;
   ze_event_handle_t PreviousEventH;
-  bool isCommandListActive;
 
   Level0Device *Device;
   uint64_t *EventStart = nullptr;
@@ -200,8 +199,6 @@ private:
   void appendEventToList(_cl_command_node *Cmd, const char **Msg);
   void execCommand(_cl_command_node *Cmd);
   void execCommandBatch(BatchType &Batch);
-  // if isCommandListActive == true, this function is used to create a chain
-  // of dependent ZE events, otherwise it does nothing
   void allocNextFreeEvent();
 
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,

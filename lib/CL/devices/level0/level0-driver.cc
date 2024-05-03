@@ -381,8 +381,6 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
 }
 
 void Level0Queue::allocNextFreeEvent() {
-  if (!isCommandListActive)
-    return;
   PreviousEventH = CurrentEventH;
 
   assert(!AvailableDeviceEvents.empty());
@@ -399,28 +397,25 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   const char *Msg = nullptr;
   pocl_update_event_running(event);
 
-#ifndef LEVEL0_IMMEDIATE_CMDLIST
   LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
-#endif
-  uint64_t HostStartTS = pocl_gettimemono_ns();
-
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
-  isCommandListActive = false;
   appendEventToList(Cmd, &Msg);
 
-#ifndef LEVEL0_IMMEDIATE_CMDLIST
   LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr));
+
+  while (!DeviceEventsToReset.empty()) {
+    ze_event_handle_t E = DeviceEventsToReset.front();
+    DeviceEventsToReset.pop();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendEventReset(CmdListH, E));
+    AvailableDeviceEvents.push(E);
+  }
+
   LEVEL0_CHECK_ABORT(zeCommandListClose(CmdListH));
   LEVEL0_CHECK_ABORT(
       zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr));
   LEVEL0_CHECK_ABORT(
       zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
-#endif
-
-  uint64_t HostFinishTS = pocl_gettimemono_ns();
-  event->time_start = HostStartTS;
-  event->time_end = HostFinishTS;
 
   POCL_UPDATE_EVENT_COMPLETE_MSG(event, Msg);
 }
@@ -435,7 +430,6 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
-  isCommandListActive = true;
   const char *Msg = nullptr;
   std::deque<const char *> Msgs;
   for (auto E : Batch) {
@@ -444,11 +438,10 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
     Msgs.push_back(Msg);
   }
 
-  res = zeCommandListAppendBarrier(CmdListH,
+  LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH,
                                    nullptr, // signal event
                                    CurrentEventH ? 1 : 0,
-                                   CurrentEventH ? &CurrentEventH : nullptr);
-  LEVEL0_CHECK_ABORT(res);
+                                   CurrentEventH ? &CurrentEventH : nullptr));
 
   while (!DeviceEventsToReset.empty()) {
     ze_event_handle_t E = DeviceEventsToReset.front();
@@ -1689,7 +1682,7 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
   // Fixed props
   ClDev->compiler_available = CL_TRUE;
   ClDev->linker_available = CL_TRUE;
-  ClDev->has_own_timer = CL_TRUE;
+  ClDev->has_own_timer = CL_FALSE;
   ClDev->use_only_clang_opencl_headers = CL_TRUE;
 
   ClDev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
