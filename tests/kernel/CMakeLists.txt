@@ -244,7 +244,8 @@ if (NOT ENABLE_POCL_FLOAT_CONVERSION)
   # pocl printf implementation (passing of variadic arguments containing OpenCL
   # vector types) and maybe also related bugs in llvm (issue #682, #1007)
   if(NOT (CMAKE_LIBRARY_ARCHITECTURE STREQUAL "aarch64-linux-gnu" OR
-          CMAKE_LIBRARY_ARCHITECTURE STREQUAL "s390x-linux-gnu"))
+          CMAKE_LIBRARY_ARCHITECTURE STREQUAL "s390x-linux-gnu" OR
+          (APPLE AND ARM64)))
     foreach(VARIANT ${VARIANTS})
       set_tests_properties("kernel/test_printf_vectors_${VARIANT}"
                           "kernel/test_printf_vectors_ulongn_${VARIANT}"
