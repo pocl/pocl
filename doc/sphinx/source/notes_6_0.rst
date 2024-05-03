@@ -108,6 +108,20 @@ execute_after_simple_compile_and_link_no_device_info and execute_after_two_file_
 test cases, as well as `chipStar <https://github.com/CHIP-SPV/chipStar>`_,
 which uses the API for enhanced SPIR-V portability.
 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+USM indirect access kernel exec info support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Minimal implementation of the general USM indirect access kernel
+execution info flag. It doesn't differentiate between the different
+types of USM, but always assumes all USM allocations must be
+synchronized when launching a kernel with the general indirect
+access flag set.
+
+The buffers-to-synchronize are recorded at enqueue time. That is,
+if new USM allocations are added after the enqueue they won't get
+synchronized.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Level Zero driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,6 +134,12 @@ Level Zero driver
   CL_DEVICE_MAX_MEM_ALLOC_SIZE to 85% of the available Device memory.
   PoCL will automatically compile kernels with both 32bit and 64bit
   pointer offsets, and select the correct version before execution.
+
+===================================
+Notable fixes
+===================================
+
+* Fixed a buffer overflow when the kernel had SVM/USM indirect pointers.
 
 ===================================
 Deprecation/feature removal notices
