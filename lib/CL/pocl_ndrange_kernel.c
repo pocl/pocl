@@ -422,10 +422,19 @@ pocl_ndrange_kernel_common (
 
   int errcode = 0;
 
-  /* no need for malloc, pocl_create_event will memcpy anyway.
-   * num_args is the absolute max needed */
   cl_uint memobj_count = 0;
-  cl_mem memobj_list[kernel->meta->num_args];
+
+  size_t raw_ptr_count = 0;
+
+  /* At the worst case, we need to synchronize all raw buffers. */
+  struct _pocl_raw_ptr *ptr;
+  DL_FOREACH (kernel->context->raw_ptrs, ptr)
+    {
+      ++raw_ptr_count;
+    }
+
+  /* The list of memobjects to implicitly synchronize at kernel exec. */
+  cl_mem memobj_list[kernel->meta->num_args + raw_ptr_count];
   char readonly_flag_list[kernel->meta->num_args];
 
   assert (command_buffer == NULL
