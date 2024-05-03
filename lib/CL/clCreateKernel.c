@@ -79,6 +79,7 @@ POname(clCreateKernel)(cl_program program,
   kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
+  kernel->can_access_all_raw_buffers_indirectly = 0;
 
   kernel->dyn_arguments = (pocl_argument *)calloc (
       (kernel->meta->num_args), sizeof (struct pocl_argument));

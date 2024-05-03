@@ -244,21 +244,17 @@ pocl_remote_free (cl_device_id device, cl_mem mem)
    cl_mem shadow buffer which is then actually allocated from the remote as
    well.
 
-   When SVM is enabled, the remote will allocate all allocations from a
-   preallocated SVM memory pool as cl_mem sub buffers. This includes
-   both SVM allocations and cl_mem buffer allocations. Thus, we can use the
-   regular buffer allocation routine to preserve the SVM allocation from
-   the remote since we know it will be allocated from an SVM pool.
-   The remote allocations must be subbuffers of a larger cl_mem representing
-   the entire SVM region because OpenCL spec allows buffers to point only to
-   starts of SVM allocations.
+   When SVM is enabled, the remote driver will allocate all allocations from a
+   preallocated SVM memory pool. This includes both SVM allocations and cl_mem
+   buffer allocations. The remote allocations must be subbuffers of a larger
+   cl_mem representing the entire SVM region because OpenCL spec allows buffers
+   to point only to starts of SVM allocations.
 
    The shadow cl_mems all have internally a host SVM pointer, which is
    translated at the server side to the device side SVM regions thanks to the
    device-side subbuffers holding device-side SVM region fixed addressess,
    which is adjusted in pocl_remote_alloc_mem_obj(). See
    setup_svm_memory_pool() for more info.
-
 */
 void *
 pocl_remote_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
@@ -1410,8 +1406,8 @@ pocl_remote_join (cl_device_id device, cl_command_queue cq)
       else
         {
           POCL_MSG_PRINT_EVENTS (
-              "remote: waiting for %d commands(s), last event id %zu\n",
-              cq->last_event.event->id);
+            "remote: waiting for commands(s), last event id %zu\n",
+            cq->last_event.event->id);
           POCL_WAIT_COND (dd->cq_cond, cq->pocl_lock);
         }
     }
@@ -1967,9 +1963,9 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
         {
           arg_array[i] = (uint64_t) * (void **)al->value;
           POCL_MSG_PRINT_MEMORY (
-              "Adding SVM pool offset %zu to an SVM ptr arg %u (%p to %p)\n",
-              i, ddata->svm_region_offset, (void *)arg_array[i],
-              (char *)arg_array[i] + ddata->svm_region_offset);
+            "Adding SVM pool offset %zu to an SVM ptr arg %u (%p to %p)\n",
+            ddata->svm_region_offset, i, (void *)arg_array[i],
+            (char *)arg_array[i] + ddata->svm_region_offset);
           arg_array[i] = arg_array[i] + ddata->svm_region_offset;
           requires_kernarg_update = 1;
           ptr_is_svm[i] = 1;
@@ -2580,9 +2576,16 @@ pocl_remote_set_kernel_exec_info_ext (cl_device_id dev,
             struct _pocl_ptr_list_node *n
                 = malloc (sizeof (struct _pocl_ptr_list_node));
             n->ptr = ((void **)param_value)[i];
-            DL_APPEND (kernel->svm_ptrs, n);
+            DL_APPEND (kernel->indirect_raw_ptrs, n);
             POCL_MSG_PRINT_MEMORY ("Set a indirect SVM/USM ptr %p\n", n->ptr);
           }
+        return CL_SUCCESS;
+      }
+    case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
+    case CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL:
+      {
+        kernel->can_access_all_raw_buffers_indirectly = 1;
         return CL_SUCCESS;
       }
     default:
