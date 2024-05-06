@@ -160,6 +160,7 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
 
   Ops->get_device_info_ext = pocl_level0_get_device_info_ext;
   Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
+  Ops->get_synchronized_timestamps = pocl_driver_get_synchronized_timestamps;
 }
 
 

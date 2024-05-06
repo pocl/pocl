@@ -219,6 +219,9 @@
                                       cl_uint param_name,  \
                                       size_t param_value_size,  \
                                       const void * param_value);  \
+  cl_int pocl_##__DRV__##_get_synchronized_timestamps (cl_device_id dev,     \
+                                         cl_ulong *dev_timestamp,            \
+                                         cl_ulong *host_timestamp);          \
   void pocl_##__DRV__##_usm_free (cl_device_id dev, \
                                   void *svm_ptr); \
   void pocl_##__DRV__##_usm_free_blocking (cl_device_id dev, \

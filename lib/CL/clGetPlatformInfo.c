@@ -238,7 +238,7 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR("POCL");
 
     case CL_PLATFORM_HOST_TIMER_RESOLUTION:
-      POCL_RETURN_GETINFO(cl_ulong, 0);
+      POCL_RETURN_GETINFO(cl_ulong, 1);
 
     /* cl_khr_command_buffer_multi_device */
     case CL_PLATFORM_COMMAND_BUFFER_CAPABILITIES_KHR:

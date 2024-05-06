@@ -805,6 +805,11 @@ struct pocl_device_ops {
                                       size_t param_value_size,
                                       const void *param_value);
 
+  /* optional. Returns synchronized Device & Host timestamps. */
+  cl_int (*get_synchronized_timestamps) (cl_device_id dev,
+                                         cl_ulong *dev_timestamp,
+                                         cl_ulong *host_timestamp);
+
   /* optional. Return CL_SUCCESS if the device can be, or is associated with
    * the GL context described in properties. */
   cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
