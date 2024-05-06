@@ -132,6 +132,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 
   ops->get_device_info_ext = pocl_basic_get_device_info_ext;
   ops->set_kernel_exec_info_ext = pocl_basic_set_kernel_exec_info_ext;
+  ops->get_synchronized_timestamps = pocl_driver_get_synchronized_timestamps;
 
   ops->svm_free = pocl_basic_svm_free;
   ops->svm_alloc = pocl_basic_svm_alloc;

@@ -27,7 +27,19 @@ CL_API_ENTRY cl_int CL_API_ENTRY POname (clGetDeviceAndHostTimer) (
     cl_device_id device, cl_ulong *device_timestamp,
     cl_ulong *host_timestamp) CL_API_SUFFIX__VERSION_2_1
 {
-  /* PoCL does not support device and host timer synchronization */
-  return CL_INVALID_OPERATION;
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
+
+  POCL_RETURN_ERROR_COND ((*(device->available) == CL_FALSE),
+                          CL_DEVICE_NOT_AVAILABLE);
+
+  POCL_RETURN_ERROR_COND (device_timestamp == NULL, CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND (host_timestamp == NULL, CL_INVALID_VALUE);
+
+  if (device->ops->get_synchronized_timestamps)
+    return device->ops->get_synchronized_timestamps (device, device_timestamp,
+                                                     host_timestamp);
+  POCL_RETURN_ERROR_ON(1, CL_INVALID_OPERATION, "Selected device "
+                       "does not support timestamp synchronization\n");
 }
 POsym(clGetDeviceAndHostTimer)

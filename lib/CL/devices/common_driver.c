@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include "pocl_cl.h"
+#include "pocl_timing.h"
 #include "utlist.h"
 
 // for pocl_aligned_malloc
@@ -1264,4 +1265,18 @@ pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
   gvar_init_wg ((uint8_t *)arguments, (uint8_t *)&fake_cmd->command.run.pc,
                 0, 0, 0);
 #endif
+}
+
+cl_int pocl_driver_get_synchronized_timestamps (cl_device_id dev,
+                                                cl_ulong *dev_timestamp,
+                                                cl_ulong *host_timestamp)
+{
+  uint64_t timestamp = pocl_gettimemono_ns();
+  if (dev_timestamp) {
+    *dev_timestamp = timestamp;
+  }
+  if (host_timestamp) {
+    *host_timestamp = timestamp;
+  }
+  return CL_SUCCESS;
 }

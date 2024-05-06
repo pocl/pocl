@@ -165,6 +165,11 @@ POCL_EXPORT
 void pocl_cpu_gvar_init_callback (cl_program program,
                                   cl_uint dev_i,
                                   _cl_command_node *fake_cmd);
+POCL_EXPORT
+cl_int pocl_driver_get_synchronized_timestamps (cl_device_id dev,
+                                                cl_ulong *dev_timestamp,
+                                                cl_ulong *host_timestamp);
+
 
 #ifdef __cplusplus
 }
