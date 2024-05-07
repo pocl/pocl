@@ -380,6 +380,22 @@ TRACEPOINT_EVENT (
     TP_FIELDS (ctf_integer_hex (uint64_t, msg_id, msg_id)
                    ctf_integer_hex (uint32_t, dev_id, dev_id)
                        ctf_integer_hex (uint32_t, kernel_id, kernel_id)))
+/**
+ *  Create / Free command buffer tracepoint
+ */
+TRACEPOINT_EVENT (
+    pocld_trace, create_cmdbuf,
+    TP_ARGS (uint64_t, msg_id, uint32_t, dev_id, size_t, cmdbuf_id),
+    TP_FIELDS (ctf_integer_hex (uint64_t, msg_id, msg_id)
+                   ctf_integer_hex (uint32_t, dev_id, dev_id)
+                       ctf_integer_hex (uint32_t, kernel_id, cmdbuf_id)))
+
+TRACEPOINT_EVENT (
+    pocld_trace, free_cmdbuf,
+    TP_ARGS (uint64_t, msg_id, uint32_t, dev_id, size_t, kernel_id),
+    TP_FIELDS (ctf_integer_hex (uint64_t, msg_id, msg_id)
+                   ctf_integer_hex (uint32_t, dev_id, dev_id)
+                       ctf_integer_hex (uint32_t, kernel_id, cmdbuf_id)))
 
 /**
  *  Create / Free image tracepoint
