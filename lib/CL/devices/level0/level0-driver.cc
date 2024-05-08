@@ -1146,76 +1146,6 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
   return false;
 }
 
-void Level0Queue::runWithOffsets(struct pocl_context *PoclCtx,
-                                 ze_kernel_handle_t KernelH) {
-  ze_result_t Res = ZE_RESULT_SUCCESS;
-  uint32_t StartOffsetX = PoclCtx->global_offset[0];
-  uint32_t StartOffsetY = PoclCtx->global_offset[1];
-  uint32_t StartOffsetZ = PoclCtx->global_offset[2];
-
-  uint32_t WGSizeX = PoclCtx->local_size[0];
-  uint32_t WGSizeY = PoclCtx->local_size[1];
-  uint32_t WGSizeZ = PoclCtx->local_size[2];
-
-  uint32_t TotalWGsX = PoclCtx->num_groups[0];
-  uint32_t TotalWGsY = PoclCtx->num_groups[1];
-  uint32_t TotalWGsZ = PoclCtx->num_groups[2];
-
-  uint32_t CurrentWGsX = 0;
-  uint32_t CurrentWGsY = 0;
-  uint32_t CurrentWGsZ = 0;
-  uint32_t CurrentOffsetX = 0;
-  uint32_t CurrentOffsetY = 0;
-  uint32_t CurrentOffsetZ = 0;
-
-  for (uint32_t OffsetZ = 0; OffsetZ < TotalWGsZ;
-       OffsetZ += DeviceMaxWGSizes.s[2]) {
-    CurrentWGsZ = std::min(DeviceMaxWGSizes.s[2], TotalWGsZ - OffsetZ);
-    CurrentOffsetZ = StartOffsetZ + OffsetZ * WGSizeZ;
-    {
-      for (uint32_t OffsetY = 0; OffsetY < TotalWGsY;
-           OffsetY += DeviceMaxWGSizes.s[1]) {
-        CurrentWGsY = std::min(DeviceMaxWGSizes.s[1], TotalWGsY - OffsetY);
-        CurrentOffsetY = StartOffsetY + OffsetY * WGSizeY;
-        {
-          for (uint32_t OffsetX = 0; OffsetX < TotalWGsX;
-               OffsetX += DeviceMaxWGSizes.s[0]) {
-            CurrentWGsX = std::min(DeviceMaxWGSizes.s[0], TotalWGsX - OffsetX);
-            CurrentOffsetX = StartOffsetX + OffsetX * WGSizeX;
-
-#if 0
-            // debug code
-            POCL_MSG_PRINT_LEVEL0(
-               "WGs X %u Y %u Z %u ||| OFFS X %u Y %u Z %u ||| LOCAL X %u Y "
-               "%u Z %u\n", TotalWGsX, TotalWGsY, TotalWGsZ, CurrentOffsetX,
-               CurrentOffsetY, CurrentOffsetZ, CurrentWGsX, CurrentWGsY,
-               CurrentWGsZ);
-#endif
-            Res = zeKernelSetGlobalOffsetExp(KernelH, CurrentOffsetX,
-                                             CurrentOffsetY, CurrentOffsetZ);
-            LEVEL0_CHECK_ABORT(Res);
-
-            ze_group_count_t LaunchFuncArgs = {CurrentWGsX, CurrentWGsY,
-                                               CurrentWGsZ};
-
-            // TODO this can actually be executed in parallel.
-            allocNextFreeEvent();
-            Res = zeCommandListAppendLaunchKernel(
-                CmdListH, KernelH, &LaunchFuncArgs, CurrentEventH,
-                PreviousEventH ? 1 : 0,
-                PreviousEventH ? &PreviousEventH : nullptr);
-
-            LEVEL0_CHECK_ABORT(Res);
-
-            // TODO find out if there is a limit on number of
-            // submitted commands in a single command list.
-          }
-        }
-      }
-    }
-  }
-}
-
 void Level0Queue::run(_cl_command_node *Cmd) {
   cl_event Event = Cmd->sync.event.event;
   _cl_command_run *RunCmd = &Cmd->command.run;
@@ -1248,6 +1178,8 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   assert(Res == true);
   assert(KernelH);
   assert(ModuleH);
+
+  // zeKernelSetCacheConfig();
 
   // TODO this lock should be moved not re-locked
   // necessary to lock the kernel, since we're setting up kernel arguments
@@ -1298,22 +1230,18 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   bool NeedsGlobalOffset = (StartOffsetX | StartOffsetY | StartOffsetZ) > 0;
 
   if (Device->supportsGlobalOffsets() && NeedsGlobalOffset) {
-    runWithOffsets(PoclCtx, KernelH);
+    LEVEL0_CHECK_ABORT(zeKernelSetGlobalOffsetExp(KernelH, StartOffsetX,
+                                                  StartOffsetY, StartOffsetZ));
   } else {
-    assert(!NeedsGlobalOffset &&
-           "command needs "
-           "global offsets, but device doesn't support them");
-    ze_group_count_t LaunchFuncArgs = {TotalWGsX, TotalWGsY, TotalWGsZ};
-    allocNextFreeEvent();
-    ze_result_t ZeRes = zeCommandListAppendLaunchKernel(
-        CmdListH, KernelH, &LaunchFuncArgs, CurrentEventH,
-        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr);
-
-    LEVEL0_CHECK_ABORT(ZeRes);
+    assert(!NeedsGlobalOffset && "command needs global offsets, "
+                                 "but device doesn't support them");
   }
+  ze_group_count_t LaunchFuncArgs = {TotalWGsX, TotalWGsY, TotalWGsZ};
+  allocNextFreeEvent();
+  LEVEL0_CHECK_ABORT(zeCommandListAppendLaunchKernel(CmdListH, KernelH,
+                     &LaunchFuncArgs, CurrentEventH, PreviousEventH ? 1 : 0,
+                     PreviousEventH ? &PreviousEventH : nullptr));
 
-  // zeKernelSetCacheConfig();
-  // zeKernelSetIndirectAccess()
 }
 
 Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
