@@ -33,6 +33,8 @@
 #include "pocl_threads.h"
 #include "pocl_util.h"
 
+#include "pocl_threads.h"
+#include "pocl_util.h"
 #include "utlist_addon.h"
 #include "utlist.h"
 
