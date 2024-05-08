@@ -112,19 +112,6 @@ POP_COMPILER_DIAGS
 
 using namespace llvm;
 
-/* FIXME: these options should come from the cl_device, and
- * cl_program's options. */
-static llvm::TargetOptions GetTargetOptions() {
-  llvm::TargetOptions Options;
-#ifdef HOST_FLOAT_SOFT_ABI
-  Options.FloatABIType = FloatABI::Soft;
-#else
-  Options.FloatABIType = FloatABI::Hard;
-#endif
-  return Options;
-}
-
-
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine *GetTargetMachine(cl_device_id device) {
 
@@ -135,17 +122,13 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 
   const Target *TheTarget = TargetRegistry::lookupTarget("", DevTriple, Error);
 
-  // In LLVM 3.4 and earlier, the target registry falls back to
-  // the cpp backend in case a proper match was not found. In
-  // that case simply do not use target info in the compilation
-  // because it can be an off-tree target not registered at
-  // this point (read: TCE).
-  if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
+  // OpenASIP targets are not in the registry
+  if (!TheTarget) {
     return nullptr;
   }
 
   TargetMachine *TM = TheTarget->createTargetMachine(
-      DevTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
+      DevTriple.getTriple(), MCPU, StringRef(""), TargetOptions(),
       Reloc::PIC_, CodeModel::Small,
 #if LLVM_MAJOR >= 18
       CodeGenOptLevel::Aggressive);
