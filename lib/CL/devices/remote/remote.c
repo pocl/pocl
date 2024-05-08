@@ -1571,8 +1571,8 @@ pocl_remote_join (cl_device_id device, cl_command_queue cq)
       else
         {
           POCL_MSG_PRINT_EVENTS (
-            "remote: waiting for commands(s), last event id %zu\n",
-            cq->last_event.event->id);
+            "remote: waiting for %lu commands(s), last event id %zu\n",
+            cq->command_count, cq->last_event.event->id);
           POCL_WAIT_COND (dd->cq_cond, cq->pocl_lock);
         }
     }
