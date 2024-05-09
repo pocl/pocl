@@ -852,8 +852,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
       TempModule = llvm::CloneModule(*Ptr);
     } else {
       llvm::Module *Ptr =
-          parseModuleIRMem((char *)cur_device_binaries[0],
-                           cur_device_binary_sizes[0], llvm_ctx->Context);
+          parseModuleIRMem((char *)cur_device_binaries[i],
+                           cur_device_binary_sizes[i], llvm_ctx->Context);
       POCL_RETURN_ERROR_ON((Ptr == nullptr), CL_LINK_PROGRAM_FAILURE,
                            "could not parse module\n");
       TempModule.reset(Ptr);
