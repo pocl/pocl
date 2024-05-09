@@ -56,7 +56,7 @@ is now possible to create command buffers associated with multiple command queue
 that are not associated with the same device and to remap command buffers to new
 (sets of) command queues. This should be driver-agnostic but has not been tested
 with other drivers than CPU. There likely are no large performance gains from
-the current implementation either, as everything happens in the surface layers
+the current implementation either, as everything happens in the runtime layer
 of the library.
 
 ===========================
@@ -75,9 +75,19 @@ CPU driver
    settings: **POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000 POCL_CPU_VENDOR_ID_OVERRIDE=32902**.
  * Added support for the **__opencl_c_work_group_collective_functions** feature.
  * improved SPIR-V support on architectures other than ARM/x86 (like RISC-V)
+ * additional intel_subgroup_shuffle functions (intel_subgroup_block_{read,write}*)
+ * implemented new experimental extensions: cl_pocl_svm_rect, cl_pocl_command_buffer_svm
+   and cl_pocl_command_buffer_host_buffer.
+   * cl_pocl_svm_rect contains clEnqueueSVMMemFillRectPOCL and clEnqueueSVMMemcpyRectPOCL,
+     these implement rectangular-region memcpy/memfill with SVM memory
+   * cl_pocl_command_buffer_svm contains additional SVM-related commands for use with command buffers,
+     such as clCommandSVMMemcpyRectPOCL and  clCommandSVMMemfillRect
+   * cl_pocl_command_buffer_host_buffer contains cl_mem & host-memory related commands
+     for use with command buffers, such as clCommandReadBuffer, clCommandReadBufferRect etc
+  * clGetDeviceAndHostTimer is correctly implemented
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Remote
+Remote driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -135,18 +145,54 @@ Level Zero driver
   PoCL will automatically compile kernels with both 32bit and 64bit
   pointer offsets, and select the correct version before execution.
 
+* clLinkProgram() will now use llvm-link instead of spirv-link from
+  spirv tools. This is unfortunately necessary, as spirv-link does
+  not work anymore with files which have different SPIR-V versions.
+  spirv-link is not required for building the driver anymore.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ALMAIF driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* added experimental OpenCL pipe support.
+
+* adds some built-in kernels: sobel, gaussian, phase, magnitude, nonmax suppression and Canny.
+
 ===================================
 Notable fixes
 ===================================
 
 * Fixed a buffer overflow when the kernel had SVM/USM indirect pointers.
 
+* libpocl.so is now linked with `--exclude-libs,ALL` linker flag, so
+  all imported Clang/LLVM symbols should be hidden if libpocl is linked
+  with static LLVM.
+
+* clGetDeviceInfo(CL_DEVICE_IL_VERSION) returns all supported SPIR-V
+  versions, not just the latest.
+
+* PoCL is no longer built automatically with LTTNG suppport, it
+  needs to be explicitly enabled by a CMake option
+
+* clWaitForEvents now calls clFlush before waiting on an event
+
+* non-versioned binaries of llvm-spirv can be now autodetected
+  (their version is checked to match LLVM version)
+
+* new env variable: POCL_IGNORE_CL_STD=1 will force remove
+  any -cl-std=XY option from build options of clCompileProgram/clBuildProgram.
+  this is useful to run user programs which supply -cl-std=CL2.0
+  but can in fact run with OpenCL 3.0 environment of PoCL
+
+* support for clCreateBufferWithPropertiesINTEL (alias for clCreateBufferWithProperties)
+
+
 ===================================
 Deprecation/feature removal notices
 ===================================
 
 Support for LLVM versions 10 to 13 inclusive has been removed.
-LLVM 14 to 17 are supported.
+LLVM 14 to 18 are supported.
 
 Support for `cl_khr_spir` (SPIR 1.x/2.0) has been removed.
 SPIR-V remains supported.

@@ -260,13 +260,11 @@ See the `maintenance-policy`_ for the current release criteria.
 
 A checklist and hints for testing and making a release successfully:
 
-* Check that CHANGES has the most interesting updates done during the release
-  cycle. Add missing notable changes from git log.
-
-* Update the release notes in *doc/notes-VERNUM.txt*.
+* Check that notes_<VERSION>.rst in `doc/sphinx/source` has the most interesting
+  updates done during the release cycle. Add missing changes from git log.
 
 * Create a single commit in master branch: change the version to the
-  release one (without -pre), in all relevant places (CHANGES, docs,
+  release one (without -pre), in all relevant places (doc/**/conf.py,
   CMakeLists.txt, etc); update the .so version (if required);
   check that supported LLVM versions in cmake/LLVM.cmake are correct.
   Create the release branch from this commit and push it to github.
