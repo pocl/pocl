@@ -34,17 +34,49 @@ POname (clGetMemAllocInfoINTEL) (
 
   POCL_RETURN_ERROR_COND ((ptr == NULL), CL_INVALID_MEM_OBJECT);
 
-  POCL_RETURN_ERROR_ON (
-      (!context->usm_allocdev), CL_INVALID_OPERATION,
-      "None of the devices in this context is USM-capable\n");
+  pocl_raw_ptr *item = pocl_find_raw_ptr_with_vm_ptr (context, ptr);
 
-  cl_device_id dev = context->usm_allocdev;
-
-  POCL_RETURN_ERROR_ON (
-      (dev->ops->get_mem_info_ext == NULL), CL_INVALID_OPERATION,
-      "None of the devices in this context is USM-capable\n");
-
-  return dev->ops->get_mem_info_ext (dev, ptr, param_name, param_value_size,
-                                     param_value, param_value_size_ret);
+  switch (param_name)
+    {
+    case CL_MEM_ALLOC_TYPE_INTEL:
+      {
+        if (item == NULL)
+          POCL_RETURN_GETINFO (cl_uint, CL_MEM_TYPE_UNKNOWN_INTEL);
+        else
+          POCL_RETURN_GETINFO (cl_uint, item->usm_properties.alloc_type);
+      }
+    case CL_MEM_ALLOC_BASE_PTR_INTEL:
+      {
+        if (item == NULL)
+          POCL_RETURN_GETINFO (void *, NULL);
+        else
+          POCL_RETURN_GETINFO (void *, item->vm_ptr);
+      }
+    case CL_MEM_ALLOC_SIZE_INTEL:
+      {
+        if (item == NULL)
+          POCL_RETURN_GETINFO (size_t, 0);
+        else
+          POCL_RETURN_GETINFO (size_t, item->size);
+      }
+    case CL_MEM_ALLOC_DEVICE_INTEL:
+      {
+        if (item == NULL)
+          POCL_RETURN_GETINFO (cl_device_id, NULL);
+        else
+          POCL_RETURN_GETINFO (cl_device_id, item->device);
+      }
+    case CL_MEM_ALLOC_FLAGS_INTEL:
+      {
+        if (item == NULL)
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel, 0);
+        else
+          POCL_RETURN_GETINFO (cl_mem_alloc_flags_intel,
+                               item->usm_properties.flags);
+      }
+    default:
+      return CL_INVALID_VALUE;
+    }
+  return CL_SUCCESS;
 }
 POsym (clGetMemAllocInfoINTEL)

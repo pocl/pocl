@@ -42,7 +42,8 @@ POname (clEnqueueMemFillINTEL) (cl_command_queue command_queue, void *dst_ptr,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
+  if (cmd != NULL)
+    pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

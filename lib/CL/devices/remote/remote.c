@@ -571,6 +571,9 @@ pocl_remote_init (unsigned j, cl_device_id device, const char *parameters)
   if (setup_svm_memory_pool (device) == 0)
     {
       device->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+      device->device_usm_capabs = device->host_usm_capabs
+        = device->single_shared_usm_capabs
+        = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL;
 
       /* The CG SVM support can be used for "pinned buffers" as well and
          USM. */
