@@ -23,29 +23,12 @@
 #ifndef POCL_PHIS_TO_ALLOCAS_H
 #define POCL_PHIS_TO_ALLOCAS_H
 
-#include "config.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class PHIsToAllocas : public llvm::FunctionPass
-{
-public:
-  static char ID;
-  PHIsToAllocas() : FunctionPass(ID) {};
-  virtual ~PHIsToAllocas() {};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class PHIsToAllocas : public llvm::PassInfoMixin<PHIsToAllocas> {
 public:
@@ -54,8 +37,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

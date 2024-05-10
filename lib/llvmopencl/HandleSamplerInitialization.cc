@@ -101,23 +101,6 @@ static bool handleSamplerInitialization(Function &F) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char HandleSamplerInitialization::ID = 0;
-
-bool HandleSamplerInitialization::runOnFunction(Function &F) {
-  return handleSamplerInitialization(F);
-}
-
-void
-HandleSamplerInitialization::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses
 HandleSamplerInitialization::run(llvm::Function &F,
                                  llvm::FunctionAnalysisManager &AM) {
@@ -128,7 +111,5 @@ HandleSamplerInitialization::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

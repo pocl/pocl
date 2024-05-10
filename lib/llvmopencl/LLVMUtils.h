@@ -120,11 +120,10 @@ llvm::DISubprogram *mimicDISubprogram(llvm::DISubprogram *Old,
                                       const llvm::StringRef &NewFuncName,
                                       llvm::DIScope *Scope = nullptr);
 
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 void registerPassBuilderPasses(llvm::PassBuilder &PB);
 
 void registerFunctionAnalyses(llvm::PassBuilder &PB);
-#endif
+
 } // namespace pocl
 
 template <typename VectorT>

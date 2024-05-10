@@ -26,18 +26,18 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/Argument.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
+#include <llvm/IR/Argument.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DataLayout.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/Function.h>
+#include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/ErrorHandling.h>
+#include <llvm/Transforms/Utils/Cloning.h>
 
 #include "AutomaticLocals.h"
 #include "LLVMUtils.h"
@@ -183,25 +183,6 @@ static bool automaticLocals(Module &M, FunctionVec &OldKernels) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char AutomaticLocals::ID = 0;
-
-bool AutomaticLocals::runOnModule(Module &M) {
-  FunctionVec OldKernels;
-  bool Ret = automaticLocals(M, OldKernels);
-  for (auto K : OldKernels)
-    K->eraseFromParent();
-  return Ret;
-}
-
-void AutomaticLocals::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.setPreservesCFG();
-}
-
-REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 // One thing to note when accessing inner level IR analyses is cached results
 // for deleted IR. If a function is deleted in a module pass, its address is
 // still used as the key for cached analyses. Take care in the pass to either
@@ -220,7 +201,5 @@ llvm::PreservedAnalyses AutomaticLocals::run(llvm::Module &M,
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

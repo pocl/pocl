@@ -40,26 +40,10 @@ struct WorkitemHandlerResult {
   WorkitemHandlerType WIH;
   WorkitemHandlerResult() : WIH(WorkitemHandlerType::LOOPS) {}
   WorkitemHandlerResult(WorkitemHandlerType A) : WIH(A) {}
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
   bool invalidate(llvm::Function &F, const llvm::PreservedAnalyses PA,
                   llvm::AnalysisManager<llvm::Function>::Invalidator &Inv);
-#endif
 };
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-class WorkitemHandlerChooser : public llvm::FunctionPass {
-  WorkitemHandlerResult chosenHandler_;
-
-public:
-  static char ID;
-  WorkitemHandlerChooser() : FunctionPass(ID) {}
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-
-  WorkitemHandlerType chosenHandler() { return chosenHandler_.WIH; }
-};
-#else
 class WorkitemHandlerChooser
     : public llvm::AnalysisInfoMixin<WorkitemHandlerChooser> {
 public:
@@ -70,7 +54,6 @@ public:
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-#endif
-}
+} // namespace pocl
 
 #endif

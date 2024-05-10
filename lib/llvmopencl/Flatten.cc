@@ -106,18 +106,6 @@ static bool flattenAll(Module &M) {
   return changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char FlattenAll::ID = 0;
-
-bool FlattenAll::runOnModule(Module &M) { return flattenAll(M); }
-
-void FlattenAll::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses FlattenAll::run(llvm::Module &M,
                                         llvm::ModuleAnalysisManager &AM) {
@@ -127,7 +115,5 @@ llvm::PreservedAnalyses FlattenAll::run(llvm::Module &M,
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

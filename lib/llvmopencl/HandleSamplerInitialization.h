@@ -36,20 +36,6 @@ namespace pocl {
 // They usually trivially map to the given constant i32. The pass can be extended for
 // per-target handling of samplers.
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class HandleSamplerInitialization : public llvm::FunctionPass {
-public:
-  static char ID;
-  HandleSamplerInitialization() : FunctionPass(ID){};
-  virtual ~HandleSamplerInitialization(){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class HandleSamplerInitialization
     : public llvm::PassInfoMixin<HandleSamplerInitialization> {
 public:
@@ -58,8 +44,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

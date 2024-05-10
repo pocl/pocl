@@ -34,27 +34,12 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class FlattenAll : public llvm::ModulePass {
-public:
-  static char ID;
-  FlattenAll() : ModulePass(ID){};
-
-  virtual bool runOnModule(llvm::Module &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class FlattenAll : public llvm::PassInfoMixin<FlattenAll> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

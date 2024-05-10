@@ -23,8 +23,6 @@
 #ifndef POCL_REMOVE_BARRIER_CALLS_H
 #define POCL_REMOVE_BARRIER_CALLS_H
 
-#include "config.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
@@ -36,20 +34,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class RemoveBarrierCalls : public llvm::FunctionPass {
-public:
-  static char ID;
-  RemoveBarrierCalls() : FunctionPass(ID) {};
-  virtual ~RemoveBarrierCalls () {};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class RemoveBarrierCalls : public llvm::PassInfoMixin<RemoveBarrierCalls> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
@@ -57,8 +41,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

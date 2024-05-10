@@ -33,22 +33,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class WorkitemLoops : public llvm::FunctionPass {
-public:
-  static char ID;
-  WorkitemLoops() : FunctionPass(ID) {}
-  virtual ~WorkitemLoops() {}
-  llvm::StringRef getPassName() const override {
-    return "PoCL Work-Item Loops pass";
-  }
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class WorkitemLoops : public llvm::PassInfoMixin<WorkitemLoops> {
 public:
@@ -58,7 +42,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
 
 } // namespace pocl
 

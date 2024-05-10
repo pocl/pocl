@@ -66,23 +66,6 @@ static bool removeBarrierCalls(Function &F) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char RemoveBarrierCalls::ID = 0;
-
-bool RemoveBarrierCalls::runOnFunction(Function &F) {
-  return removeBarrierCalls(F);
-}
-
-void
-RemoveBarrierCalls::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses
 RemoveBarrierCalls::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
@@ -92,7 +75,5 @@ RemoveBarrierCalls::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

@@ -33,20 +33,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class BarrierTailReplication : public llvm::FunctionPass {
-public:
-  static char ID;
-  BarrierTailReplication() : FunctionPass(ID){};
-  virtual ~BarrierTailReplication (){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class BarrierTailReplication
     : public llvm::PassInfoMixin<BarrierTailReplication> {
 public:
@@ -55,8 +41,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

@@ -28,10 +28,10 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Dominators.h"
+#include <llvm/IR/Dominators.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Barrier.h"
 #include "CanonicalizeBarriers.h"
@@ -212,26 +212,6 @@ static bool processFunction(Function &F, WorkitemHandlerType Handler) {
   return changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char CanonicalizeBarriers::ID = 0;
-
-void CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-bool CanonicalizeBarriers::runOnFunction(Function &F) {
-  if (!pocl::isKernelToProcess(F))
-    return false;
-  WorkitemHandlerType WIH =
-      getAnalysis<WorkitemHandlerChooser>().chosenHandler();
-  return canonicalizeBarriers(F, WIH);
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses
 CanonicalizeBarriers::run(llvm::Function &F,
@@ -246,7 +226,5 @@ CanonicalizeBarriers::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

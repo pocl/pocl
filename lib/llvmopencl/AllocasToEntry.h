@@ -33,21 +33,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class AllocasToEntry : public llvm::FunctionPass
-{
-public:
-  static char ID;
-  AllocasToEntry () : FunctionPass (ID){};
-  virtual ~AllocasToEntry(){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage (llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class AllocasToEntry : public llvm::PassInfoMixin<AllocasToEntry> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
@@ -56,7 +41,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
 
   } // namespace pocl
 

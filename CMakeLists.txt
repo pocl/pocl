@@ -571,11 +571,6 @@ endif()
 
 if(ENABLE_LLVM)
 
-  # minimum LLVM version at which to enable new PM
-  if(NOT DEFINED MIN_LLVM_NEW_PASSMANAGER)
-    set(MIN_LLVM_NEW_PASSMANAGER 14)
-  endif()
-
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
     message(FATAL_ERROR "Could not load LLVM.cmake")

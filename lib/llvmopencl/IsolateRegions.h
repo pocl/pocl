@@ -30,26 +30,9 @@
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-#include <llvm/Analysis/RegionPass.h>
-#endif
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class IsolateRegions : public llvm::RegionPass
-{
-public:
-  static char ID;
-  IsolateRegions() : RegionPass(ID) {};
-  virtual ~IsolateRegions() {};
-
-  virtual bool runOnRegion(llvm::Region *F, llvm::RGPassManager &RGM) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class IsolateRegions : public llvm::PassInfoMixin<IsolateRegions> {
 public:
@@ -58,8 +41,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

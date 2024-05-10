@@ -30,29 +30,11 @@
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-#include <llvm/Analysis/LoopPass.h>
-#else
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
-#endif
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class ImplicitLoopBarriers : public llvm::LoopPass
-{
-public:
-  static char ID;
-  ImplicitLoopBarriers() : LoopPass(ID){};
-  virtual ~ImplicitLoopBarriers (){};
-
-  virtual bool runOnLoop(llvm::Loop *L, llvm::LPPassManager &LPM) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class ImplicitLoopBarriers : public llvm::PassInfoMixin<ImplicitLoopBarriers> {
 public:
@@ -62,8 +44,6 @@ public:
                               llvm::LPMUpdater &U);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

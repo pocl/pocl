@@ -33,22 +33,7 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
 
-class WorkitemReplication : public llvm::FunctionPass {
-public:
-  static char ID;
-  WorkitemReplication() : FunctionPass(ID) {}
-  virtual ~WorkitemReplication() {}
-  llvm::StringRef getPassName() const override {
-    return "PoCL Work-Item Replication pass";
-  }
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 class WorkitemReplication : public llvm::PassInfoMixin<WorkitemReplication> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
@@ -56,7 +41,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-#endif
 
 } // namespace pocl
 

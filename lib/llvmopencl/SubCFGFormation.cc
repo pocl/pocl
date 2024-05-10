@@ -94,11 +94,7 @@ static const std::array<char, 3> DimName{'x', 'y', 'z'};
 
 llvm::Loop *updateDtAndLi(llvm::LoopInfo &LI, llvm::DominatorTree &DT,
                           const llvm::BasicBlock *B, llvm::Function &F) {
-#if LLVM_VERSION_MAJOR < 11
-  DT.releaseMemory();
-#else
   DT.reset();
-#endif
   DT.recalculate(F);
   LI.releaseMemory();
   LI.analyze(DT);
@@ -1543,9 +1539,6 @@ void addAccessGroupMD(llvm::Instruction *I, llvm::MDNode *MDAccessGroup) {
     I->setMetadata(llvm::LLVMContext::MD_access_group, MDAccessGroup);
 }
 
-#if LLVM_VERSION_MAJOR > 12 ||                                                 \
-    (LLVM_VERSION_MAJOR == 12 && LLVM_VERSION_MINOR == 0 &&                    \
-     LLVM_VERSION_PATCH == 1)
 void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
   // LLVM < 12.0.1 might miscompile if conditionals in "parallel" loop
   // (https://llvm.org/PR46666)
@@ -1564,57 +1557,6 @@ void markLoopParallel(llvm::Function &F, llvm::Loop *L) {
   // make the access group parallel w.r.t the WI loop
   createParallelAccessesMdOrAddAccessGroup(&F, L, MDAccessGroup);
 }
-#else
-void markLoopParallel(llvm::Function &, llvm::Loop *) {}
-#endif
-
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char SubCFGFormation::ID = 0;
-
-void SubCFGFormation::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<llvm::LoopInfoWrapperPass>();
-  AU.addRequiredTransitive<llvm::DominatorTreeWrapperPass>();
-  AU.addRequiredTransitive<llvm::PostDominatorTreeWrapperPass>();
-
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-bool SubCFGFormation::runOnFunction(llvm::Function &F) {
-  if (!isKernelToProcess(F))
-    return false;
-
-  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
-  if (WIH != WorkitemHandlerType::CBS)
-    return false;
-  if (!hasWorkgroupBarriers(F))
-    return false;
-
-#ifdef DEBUG_SUBCFG_FORMATION
-  llvm::errs() << "[SubCFG] Form SubCFGs in " << F.getName() << "\n";
-#endif
-
-  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
-  auto &PDT =
-      getAnalysis<llvm::PostDominatorTreeWrapperPass>().getPostDomTree();
-  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>().getResult();
-
-  formSubCfgs(F, LI, DT, PDT, VUA);
-
-  for (auto *SL : LI.getLoopsInPreorder())
-    if (llvm::findOptionMDForLoop(SL, PoclMDKind::WorkItemLoop))
-      markLoopParallel(F, SL);
-
-  return true;
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 // enable new pass manager infrastructure
 llvm::PreservedAnalyses
@@ -1648,7 +1590,5 @@ SubCFGFormation::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

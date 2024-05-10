@@ -32,21 +32,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class CanonicalizeBarriers : public llvm::FunctionPass
-{
-public:
-  static char ID;
-  CanonicalizeBarriers() : FunctionPass(ID){};
-  virtual ~CanonicalizeBarriers(){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class CanonicalizeBarriers : public llvm::PassInfoMixin<CanonicalizeBarriers> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
@@ -55,8 +40,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
-
-  } // namespace pocl
+} // namespace pocl
 
 #endif

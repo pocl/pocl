@@ -53,10 +53,8 @@ public:
   ~VariableUniformityAnalysisResult() { uniformityCache_.clear(); }
 
   // TODO this could be wrong
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
   bool invalidate(llvm::Function &F, const llvm::PreservedAnalyses PA,
                   llvm::AnalysisManager<llvm::Function>::Invalidator &Inv);
-#endif
 
 private:
   bool isUniformityAnalyzed(llvm::Function *F, llvm::Value *V) const;

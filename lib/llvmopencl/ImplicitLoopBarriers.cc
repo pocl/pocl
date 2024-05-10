@@ -26,17 +26,15 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Dominators.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
-#endif
 
 #include "Barrier.h"
 #include "ImplicitLoopBarriers.h"
@@ -168,44 +166,6 @@ static bool implicitLoopBarriers(Loop &L,
   return addInnerLoopBarrier(L, VUA);
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char ImplicitLoopBarriers::ID = 0;
-
-bool ImplicitLoopBarriers::runOnLoop(Loop *L, llvm::LPPassManager &LPM) {
-  Function *K = L->getHeader()->getParent();
-  if (!isKernelToProcess(*K))
-    return false;
-
-  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
-  if (WIH == WorkitemHandlerType::CBS)
-    return false;
-
-  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
-      !hasWorkgroupBarriers(*K)) {
-#ifdef DEBUG_ILOOP_BARRIERS
-    std::cerr
-        << "### ILB: The kernel has no barriers, let's not add implicit ones "
-        << "either to avoid WI context switch overheads" << std::endl;
-#endif
-    return false;
-  }
-
-  VariableUniformityAnalysisResult &VUA =
-      getAnalysis<VariableUniformityAnalysis>().getResult();
-
-  return implicitLoopBarriers(*L, VUA);
-}
-
-void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses
 ImplicitLoopBarriers::run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
@@ -251,7 +211,5 @@ ImplicitLoopBarriers::run(llvm::Loop &L, llvm::LoopAnalysisManager &AM,
 }
 
 REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

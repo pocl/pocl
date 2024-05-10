@@ -166,31 +166,6 @@ WorkItemAAResult::alias(const Location &LocA, const Location &LocB) {
     return WorkItemAAResult::alias(LocA, LocB);
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-char WorkItemAliasAnalysis::ID = 0;
-
-bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &F) {
-  auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
-  auto TLI = TLIWP.getTLI(F);
-  Result.reset(new WorkItemAAResult(TLI));
-  return false;
-}
-
-void WorkItemAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-  AU.addRequired<TargetLibraryInfoWrapperPass>();
-}
-
-WorkItemAliasAnalysis::WorkItemAliasAnalysis() : FunctionPass(ID), Result() {}
-WorkItemAliasAnalysis::~WorkItemAliasAnalysis() {}
-
-WorkItemAAResult &WorkItemAliasAnalysis::getResult() { return *Result; }
-
-REGISTER_OLD_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::AnalysisKey WorkItemAliasAnalysis::Key;
 
 WorkItemAliasAnalysis::Result
@@ -201,7 +176,5 @@ WorkItemAliasAnalysis::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

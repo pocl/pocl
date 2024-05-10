@@ -571,7 +571,6 @@ const char *WIFuncNameArray[NumWIFuncNames] = {"_Z13get_global_idj",
 const std::vector<std::string> WIFuncNameVec(WIFuncNameArray,
                                              WIFuncNameArray + NumWIFuncNames);
 
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 // register all PoCL analyses & passes with an LLVM PassBuilder instance,
 // so that it can parse them from string representation
 void registerPassBuilderPasses(llvm::PassBuilder &PB) {
@@ -606,6 +605,5 @@ void registerFunctionAnalyses(llvm::PassBuilder &PB) {
   WorkitemHandlerChooser::registerWithPB(PB);
   WorkItemAliasAnalysis::registerWithPB(PB);
 }
-#endif
 
 } // namespace pocl

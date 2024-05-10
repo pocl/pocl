@@ -161,21 +161,6 @@ static bool optimizeWorkItemFuncCalls(Function &F) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char OptimizeWorkItemFuncCalls::ID = 0;
-
-bool OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
-  return optimizeWorkItemFuncCalls(F);
-}
-
-void OptimizeWorkItemFuncCalls::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses
 OptimizeWorkItemFuncCalls::run(llvm::Function &F,
                                llvm::FunctionAnalysisManager &AM) {
@@ -186,7 +171,5 @@ OptimizeWorkItemFuncCalls::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

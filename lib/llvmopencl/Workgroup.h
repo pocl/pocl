@@ -34,28 +34,12 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class Workgroup : public llvm::ModulePass
-{
-public:
-  static char ID;
-  Workgroup () : ModulePass (ID) {};
-
-  virtual bool runOnModule(llvm::Module &M) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class Workgroup : public llvm::PassInfoMixin<Workgroup> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

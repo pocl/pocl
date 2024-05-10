@@ -153,39 +153,6 @@ static bool implicitConditionalBarriers(Function &F,
   return true;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char ImplicitConditionalBarriers::ID = 0;
-
-bool ImplicitConditionalBarriers::runOnFunction(Function &F) {
-  if (!pocl::isKernelToProcess(F))
-    return false;
-
-  if (!pocl::hasWorkgroupBarriers(F))
-    return false;
-
-  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
-  if (WIH == WorkitemHandlerType::CBS)
-    return false;
-
-  llvm::PostDominatorTree &PDT =
-      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
-  llvm::DominatorTree &DT =
-      getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
-  return implicitConditionalBarriers(F, PDT, DT);
-}
-
-void ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses
 ImplicitConditionalBarriers::run(llvm::Function &F,
@@ -214,6 +181,5 @@ ImplicitConditionalBarriers::run(llvm::Function &F,
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
-#endif
 
 } // namespace pocl

@@ -35,20 +35,6 @@
 //
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class BreakConstantGEPs : public llvm::FunctionPass {
-public:
-  static char ID;
-  BreakConstantGEPs() : FunctionPass(ID){};
-  virtual ~BreakConstantGEPs(){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class BreakConstantGEPs : public llvm::PassInfoMixin<BreakConstantGEPs> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
@@ -56,8 +42,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

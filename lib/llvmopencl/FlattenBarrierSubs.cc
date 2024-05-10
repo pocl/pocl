@@ -120,20 +120,6 @@ static bool flattenBarrierSubs(Module &M) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char FlattenBarrierSubs::ID = 0;
-
-bool FlattenBarrierSubs::runOnModule(Module &M) {
-  return flattenBarrierSubs(M);
-}
-
-void FlattenBarrierSubs::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses
 FlattenBarrierSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
@@ -144,6 +130,5 @@ FlattenBarrierSubs::run(llvm::Module &M, llvm::ModuleAnalysisManager &AM) {
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
-#endif
 
 } // namespace pocl

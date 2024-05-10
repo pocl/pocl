@@ -26,8 +26,8 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/Analysis/RegionInfo.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include <llvm/Analysis/RegionInfo.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
 #include "Barrier.h"
 #include "IsolateRegions.h"
@@ -171,25 +171,6 @@ static void addDummyBefore(llvm::Region &R, llvm::BasicBlock *BB) {
   R.replaceExit(NewExit);
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char IsolateRegions::ID = 0;
-
-bool IsolateRegions::runOnRegion(Region *R, RGPassManager &RGM) {
-  WorkitemHandlerType WIH =
-      getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
-  return isolateRegions(*R, WIH);
-}
-
-void IsolateRegions::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 static void findRegionsDepthFirst(Region *Reg, std::vector<Region *> &Regions) {
 
   for (Region::iterator I = Reg->begin(); I != Reg->end(); ++I) {
@@ -238,7 +219,5 @@ llvm::PreservedAnalyses IsolateRegions::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl
