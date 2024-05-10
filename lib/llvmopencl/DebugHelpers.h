@@ -53,20 +53,6 @@ void dumpCFG(llvm::Function &F, std::string fname = "",
 // @return True in case the function was changed.
 bool chopBBs (llvm::Function &F, llvm::Pass &P);
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-  class PoCLCFGPrinter : public llvm::ModulePass {
-  public:
-    static char ID;
-    PoCLCFGPrinter() : ModulePass(ID) {}
-
-    virtual bool runOnModule(llvm::Module &F) override;
-    virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-
-  private:
-    std::string Prefix;
-    void dumpModule(llvm::Module &M);
-  };
-#else
   class PoCLCFGPrinter : public llvm::PassInfoMixin<PoCLCFGPrinter> {
   public:
     explicit PoCLCFGPrinter(llvm::raw_ostream &OutS, llvm::StringRef Pref = "")
@@ -84,7 +70,6 @@ bool chopBBs (llvm::Function &F, llvm::Pass &P);
     llvm::raw_ostream &OS;
     void dumpModule(llvm::Module &M);
   };
-#endif
 };
 
 // Controls the debug output from Kernel.cc parallel region generation:

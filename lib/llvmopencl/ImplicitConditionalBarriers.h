@@ -65,21 +65,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class ImplicitConditionalBarriers : public llvm::FunctionPass
-{
-public:
-  static char ID;
-  ImplicitConditionalBarriers() : FunctionPass(ID){};
-  virtual ~ImplicitConditionalBarriers (){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class ImplicitConditionalBarriers
     : public llvm::PassInfoMixin<ImplicitConditionalBarriers> {
 public:
@@ -89,7 +74,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
 }
 
 #endif

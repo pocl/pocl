@@ -107,22 +107,6 @@ static WorkitemHandlerType runWorkitemHandlerChooser(Function &F) {
 
 /**********************************************************************/
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char WorkitemHandlerChooser::ID = 0;
-
-bool WorkitemHandlerChooser::runOnFunction(Function &F) {
-  chosenHandler_.WIH = runWorkitemHandlerChooser(F);
-  return false;
-}
-
-void WorkitemHandlerChooser::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::AnalysisKey WorkitemHandlerChooser::Key;
 
 WorkitemHandlerResult
@@ -141,7 +125,5 @@ bool WorkitemHandlerResult::invalidate(
 }
 
 REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

@@ -26,17 +26,15 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Analysis/LoopInfo.h"
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Dominators.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
 
-#if LLVM_MAJOR >= MIN_LLVM_NEW_PASSMANAGER
 #include <llvm/Analysis/LoopAnalysisManager.h>
 #include <llvm/Transforms/Scalar/LoopPassManager.h>
-#endif
 
 #include "Barrier.h"
 #include "LLVMUtils.h"
@@ -175,31 +173,6 @@ static bool processLoopBarriers(Loop &L, llvm::DominatorTree &DT) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char LoopBarriers::ID = 0;
-
-bool LoopBarriers::runOnLoop(Loop *L, llvm::LPPassManager &LPM) {
-  Function *K = L->getHeader()->getParent();
-  if (!isKernelToProcess(*K))
-    return false;
-
-  if (!hasWorkgroupBarriers(*K))
-    return false;
-
-  llvm::DominatorTree &DT =
-      getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
-  return processLoopBarriers(*L, DT);
-}
-
-void LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-}
-
-REGISTER_OLD_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
                                           llvm::LoopAnalysisManager &AM,
                                           llvm::LoopStandardAnalysisResults &AR,
@@ -219,7 +192,5 @@ llvm::PreservedAnalyses LoopBarriers::run(llvm::Loop &L,
 }
 
 REGISTER_NEW_LPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

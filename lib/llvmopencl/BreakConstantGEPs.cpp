@@ -21,13 +21,13 @@ IGNORE_COMPILER_WARNING("-Wmaybe-uninitialized")
 #include <llvm/ADT/Twine.h>
 POP_COMPILER_DIAGS
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instruction.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/IR/InstIterator.h"
+#include <llvm/ADT/Statistic.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/InstIterator.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instruction.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/LLVMContext.h>
 
 #include "BreakConstantGEPs.h"
 #include "LLVMUtils.h"
@@ -333,21 +333,6 @@ static bool breakConstantGEPs(Function &F) {
   return modified;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char BreakConstantGEPs::ID = 0;
-
-bool BreakConstantGEPs::runOnFunction(Function &F) {
-  return breakConstantGEPs(F);
-}
-
-void BreakConstantGEPs::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addPreserved<WorkitemHandlerChooser>();
-  AU.setPreservesCFG();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 llvm::PreservedAnalyses
 BreakConstantGEPs::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
   PreservedAnalyses PAChanged = PreservedAnalyses::none();
@@ -357,7 +342,5 @@ BreakConstantGEPs::run(llvm::Function &F, llvm::FunctionAnalysisManager &AM) {
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC)
-
-#endif
 
 } // namespace pocl

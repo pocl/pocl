@@ -23,27 +23,12 @@
 #ifndef POCL_INLINE_KERNELS_H
 #define POCL_INLINE_KERNELS_H
 
-#include "config.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class InlineKernels : public llvm::FunctionPass {
-public:
-  static char ID;
-  InlineKernels() : FunctionPass(ID){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class InlineKernels : public llvm::PassInfoMixin<InlineKernels> {
 public:
@@ -52,8 +37,6 @@ public:
                               llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

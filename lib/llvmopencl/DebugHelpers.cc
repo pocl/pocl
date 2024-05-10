@@ -255,22 +255,6 @@ void PoCLCFGPrinter::dumpModule(llvm::Module &M) {
   }
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char PoCLCFGPrinter::ID = 0;
-
-bool PoCLCFGPrinter::runOnModule(Module &M) {
-  dumpModule(M);
-  return false;
-}
-
-void PoCLCFGPrinter::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-}
-
-static llvm::RegisterPass<PoCLCFGPrinter>
-    X("print-pocl-cfg", "Print PoCL-style CFG of the Module");
-
-#else
 
 llvm::PreservedAnalyses PoCLCFGPrinter::run(llvm::Module &M,
                                             llvm::ModuleAnalysisManager &AM) {
@@ -296,7 +280,5 @@ void PoCLCFGPrinter::registerWithPB(llvm::PassBuilder &PB) {
         return false;
       });
 }
-
-#endif
 
 } // namespace pocl

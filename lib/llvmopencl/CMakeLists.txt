@@ -75,6 +75,8 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "ProgramScopeVariables.h"
                        "RemoveBarrierCalls.cc"
                        "RemoveBarrierCalls.h"
+                       "SVMOffset.cc"
+                       "SVMOffset.hh"
                        "SubCFGFormation.cc"
                        "SubCFGFormation.h"
                        "UnifyPrintf.cc"
@@ -92,12 +94,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemLoops.h"
                        "WorkitemReplication.cc"
                        "WorkitemReplication.h")
-
-if (LLVM_MAJOR GREATER_EQUAL MIN_LLVM_NEW_PASSMANAGER)
-list(APPEND LLVMPASSES_SOURCES
-  "SVMOffset.cc"
-  "SVMOffset.hh")
-endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")

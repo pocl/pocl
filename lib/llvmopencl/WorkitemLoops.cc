@@ -1409,47 +1409,6 @@ llvm::Instruction *WorkitemLoopsImpl::getWorkGroupSizeInstr(llvm::Function &F) {
   return WGSizeInstr;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-char WorkitemLoops::ID = 0;
-
-void WorkitemLoops::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addRequired<LoopInfoWrapperPass>();
-
-  AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
-
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-bool WorkitemLoops::runOnFunction(llvm::Function &F) {
-  if (!isKernelToProcess(F))
-    return false;
-
-  auto WIH = getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
-  if (WIH != WorkitemHandlerType::LOOPS &&
-      !(WIH == WorkitemHandlerType::CBS && !hasWorkgroupBarriers(F)))
-    return false;
-
-  auto &DT = getAnalysis<llvm::DominatorTreeWrapperPass>().getDomTree();
-  auto &PDT =
-      getAnalysis<llvm::PostDominatorTreeWrapperPass>().getPostDomTree();
-  auto &LI = getAnalysis<llvm::LoopInfoWrapperPass>().getLoopInfo();
-  auto &VUA = getAnalysis<pocl::VariableUniformityAnalysis>().getResult();
-
-  WorkitemLoopsImpl WIL(DT, LI, PDT, VUA);
-  return WIL.runOnFunction(F);
-}
-
-#undef DEBUG_TYPE
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 // enable new pass manager infrastructure
 llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &AM) {
@@ -1474,10 +1433,6 @@ llvm::PreservedAnalyses WorkitemLoops::run(llvm::Function &F,
   return WIL.runOnFunction(F) ? PAChanged : PreservedAnalyses::all();
 }
 
-#undef DEBUG_TYPE
-
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

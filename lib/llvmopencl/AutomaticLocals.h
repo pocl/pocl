@@ -32,29 +32,12 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class AutomaticLocals : public llvm::ModulePass {
-
-public:
-  static char ID;
-  AutomaticLocals() : ModulePass(ID) {}
-  virtual ~AutomaticLocals(){};
-
-  virtual bool runOnModule(llvm::Module &M) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class AutomaticLocals : public llvm::PassInfoMixin<AutomaticLocals> {
 public:
   static void registerWithPB(llvm::PassBuilder &B);
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

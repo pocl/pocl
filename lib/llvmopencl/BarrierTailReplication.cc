@@ -415,41 +415,6 @@ void BarrierTailReplicationImpl::UpdateReferences(
   }
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char BarrierTailReplication::ID = 0;
-
-bool BarrierTailReplication::runOnFunction(Function &F) {
-  if (!isKernelToProcess(F))
-    return false;
-  auto WIH = getAnalysis<WorkitemHandlerChooser>().chosenHandler();
-  if (WIH == WorkitemHandlerType::CBS)
-    return false;
-
-  auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  auto &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-
-  BarrierTailReplicationImpl BTRI(DT, LI);
-
-  return BTRI.runOnFunction(F);
-}
-
-void BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addPreserved<LoopInfoWrapperPass>();
-
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addRequired<WorkitemHandlerChooser>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-} // namespace pocl
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses
 BarrierTailReplication::run(llvm::Function &F,
                             llvm::FunctionAnalysisManager &FAM) {
@@ -477,5 +442,3 @@ BarrierTailReplication::run(llvm::Function &F,
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
 } // namespace pocl
-
-#endif

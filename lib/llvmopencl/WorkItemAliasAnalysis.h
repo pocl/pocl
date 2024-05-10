@@ -35,26 +35,6 @@ namespace pocl {
 
 class WorkItemAAResult;
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-/// Legacy wrapper pass to provide the (WorkItemAAWrapperPass) object.
-class WorkItemAliasAnalysis : public llvm::FunctionPass {
-  std::unique_ptr<WorkItemAAResult> Result;
-
-public:
-  static char ID;
-
-  WorkItemAliasAnalysis();
-  virtual ~WorkItemAliasAnalysis();
-
-  WorkItemAAResult &getResult();
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
-
 class WorkItemAliasAnalysis
     : public llvm::AnalysisInfoMixin<WorkItemAliasAnalysis> {
 public:
@@ -65,8 +45,6 @@ public:
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 

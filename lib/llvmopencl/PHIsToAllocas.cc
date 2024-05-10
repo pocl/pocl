@@ -162,33 +162,6 @@ breakPHIToAllocas(PHINode *Phi, VariableUniformityAnalysisResult &VUA) {
   return LoadedValue;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char PHIsToAllocas::ID = 0;
-
-bool PHIsToAllocas::runOnFunction(Function &F) {
-  WorkitemHandlerType WIH =
-      getAnalysis<pocl::WorkitemHandlerChooser>().chosenHandler();
-
-  if (!needsPHIsToAllocas(F, WIH))
-    return false;
-
-  VariableUniformityAnalysisResult &VUA =
-      getAnalysis<VariableUniformityAnalysis>().getResult();
-
-  return runPHIsToAllocas(F, VUA);
-}
-
-void PHIsToAllocas::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<pocl::WorkitemHandlerChooser>();
-  AU.addPreserved<pocl::WorkitemHandlerChooser>();
-
-  AU.addRequired<pocl::VariableUniformityAnalysis>();
-  AU.addPreserved<pocl::VariableUniformityAnalysis>();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
                                            llvm::FunctionAnalysisManager &AM) {
@@ -206,7 +179,5 @@ llvm::PreservedAnalyses PHIsToAllocas::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

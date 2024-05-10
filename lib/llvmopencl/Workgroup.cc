@@ -1643,27 +1643,6 @@ llvm::Value *WorkgroupImpl::getRequiredSubgroupSize(llvm::Function &F) {
   return nullptr;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char Workgroup::ID = 0;
-
-bool Workgroup::runOnModule(Module &M) {
-  WorkgroupImpl WGI;
-  FunctionVec OldKernels;
-  bool Ret = WGI.runOnModule(M, OldKernels);
-  for (auto K : OldKernels)
-    K->eraseFromParent();
-  return Ret;
-}
-
-void Workgroup::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addPreserved<VariableUniformityAnalysis>();
-  AU.addPreserved<WorkitemHandlerChooser>();
-}
-
-REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
                                        llvm::ModuleAnalysisManager &AM) {
   WorkgroupImpl WGI;
@@ -1720,7 +1699,5 @@ llvm::PreservedAnalyses Workgroup::run(llvm::Module &M,
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

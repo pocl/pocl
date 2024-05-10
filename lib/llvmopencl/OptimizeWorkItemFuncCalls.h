@@ -23,29 +23,12 @@
 #ifndef POCL_OPTIMIZE_WI_FUNC_CALLS_H
 #define POCL_OPTIMIZE_WI_FUNC_CALLS_H
 
-#include "config.h"
-
 #include <llvm/IR/PassManager.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/Function.h>
 #include <llvm/Pass.h>
 
 namespace pocl {
-
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class OptimizeWorkItemFuncCalls : public llvm::FunctionPass
-{
-public:
-  static char ID;
-  OptimizeWorkItemFuncCalls () : FunctionPass(ID) {};
-  virtual ~OptimizeWorkItemFuncCalls() {};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class OptimizeWorkItemFuncCalls
     : public llvm::PassInfoMixin<OptimizeWorkItemFuncCalls> {
@@ -56,8 +39,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
-
-  } // namespace pocl
+} // namespace pocl
 
 #endif

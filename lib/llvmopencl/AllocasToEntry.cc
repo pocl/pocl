@@ -63,20 +63,6 @@ static bool allocasToEntry(Function &F) {
   return Changed;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char AllocasToEntry::ID = 0;
-
-bool AllocasToEntry::runOnFunction(Function &F) { return allocasToEntry(F); }
-
-void AllocasToEntry::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  // TODO do we preserve all ?
-  AU.setPreservesAll();
-}
-
-REGISTER_OLD_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
-
 llvm::PreservedAnalyses AllocasToEntry::run(llvm::Function &F,
                                             llvm::FunctionAnalysisManager &AM) {
   allocasToEntry(F);
@@ -84,8 +70,6 @@ llvm::PreservedAnalyses AllocasToEntry::run(llvm::Function &F,
 }
 
 REGISTER_NEW_FPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl
 

@@ -255,18 +255,6 @@ static bool fixMinVecSize(Module &M) {
   return false;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char FixMinVecSize::ID = 0;
-
-bool FixMinVecSize::runOnModule(Module &M) { return fixMinVecSize(M); }
-
-void FixMinVecSize::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-  AU.setPreservesAll();
-}
-
-REGISTER_OLD_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::PreservedAnalyses FixMinVecSize::run(llvm::Module &M,
                                            llvm::ModuleAnalysisManager &AM) {
@@ -275,7 +263,5 @@ llvm::PreservedAnalyses FixMinVecSize::run(llvm::Module &M,
 }
 
 REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

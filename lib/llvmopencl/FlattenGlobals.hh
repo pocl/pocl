@@ -34,18 +34,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class FlattenGlobals : public llvm::ModulePass {
-public:
-  static char ID;
-  FlattenGlobals() : ModulePass(ID){};
-
-  virtual bool runOnModule(llvm::Module &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class FlattenGlobals : public llvm::PassInfoMixin<FlattenGlobals> {
 public:
@@ -54,7 +42,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
 
 } // namespace pocl
 

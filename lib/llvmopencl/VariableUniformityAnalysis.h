@@ -23,8 +23,6 @@
 #ifndef POCL_VARIABLE_UNIFORMITY_ANALYSIS_H
 #define POCL_VARIABLE_UNIFORMITY_ANALYSIS_H
 
-#include "config.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
@@ -54,20 +52,6 @@ namespace pocl {
 
 class VariableUniformityAnalysisResult;
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-class VariableUniformityAnalysis : public llvm::FunctionPass {
-  VariableUniformityAnalysisResult *pImpl = nullptr;
-
-public:
-  static char ID;
-  VariableUniformityAnalysis() : FunctionPass(ID) {};
-  bool runOnFunction(llvm::Function &F);
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-
-  VariableUniformityAnalysisResult &getResult() { return *pImpl; }
-  ~VariableUniformityAnalysis();
-};
-#else
 class VariableUniformityAnalysis
     : public llvm::AnalysisInfoMixin<VariableUniformityAnalysis> {
 public:
@@ -77,7 +61,6 @@ public:
   Result run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-#endif
 
 } // namespace pocl
 

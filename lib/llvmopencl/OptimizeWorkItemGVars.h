@@ -23,28 +23,12 @@
 #ifndef POCL_OPTIMIZE_WI_GVARS_H
 #define POCL_OPTIMIZE_WI_GVARS_H
 
-#include "config.h"
-
 #include <llvm/IR/Function.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Pass.h>
 #include <llvm/Passes/PassBuilder.h>
 
 namespace pocl {
-
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class OptimizeWorkItemGVars : public llvm::FunctionPass {
-public:
-  static char ID;
-  OptimizeWorkItemGVars() : FunctionPass(ID){};
-  virtual ~OptimizeWorkItemGVars(){};
-
-  virtual bool runOnFunction(llvm::Function &F) override;
-  void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class OptimizeWorkItemGVars
     : public llvm::PassInfoMixin<OptimizeWorkItemGVars> {
@@ -55,7 +39,6 @@ public:
   static bool isRequired() { return true; }
 };
 
-#endif
 
 } // namespace pocl
 

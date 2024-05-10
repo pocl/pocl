@@ -469,37 +469,6 @@ bool VariableUniformityAnalysisResult::doFinalization(llvm::Module & /*M*/) {
   return true;
 }
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-char VariableUniformityAnalysis::ID = 0;
-
-bool VariableUniformityAnalysis::runOnFunction(Function &F) {
-  pImpl = new VariableUniformityAnalysisResult;
-  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-  llvm::PostDominatorTree &PDT =
-      getAnalysis<PostDominatorTreeWrapperPass>().getPostDomTree();
-  return pImpl->runOnFunction(F, LI, PDT);
-}
-
-void VariableUniformityAnalysis::getAnalysisUsage(
-    llvm::AnalysisUsage &AU) const {
-  AU.addRequired<PostDominatorTreeWrapperPass>();
-  AU.addPreserved<PostDominatorTreeWrapperPass>();
-
-  AU.addRequired<LoopInfoWrapperPass>();
-  AU.addPreserved<LoopInfoWrapperPass>();
-  // required by LoopInfo:
-  AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-}
-
-VariableUniformityAnalysis::~VariableUniformityAnalysis() {
-  delete pImpl;
-  pImpl = nullptr;
-}
-
-REGISTER_OLD_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#else
 
 llvm::AnalysisKey VariableUniformityAnalysis::Key;
 
@@ -534,7 +503,5 @@ bool VariableUniformityAnalysisResult::invalidate(
 }
 
 REGISTER_NEW_FANALYSIS(PASS_NAME, PASS_CLASS, PASS_DESC);
-
-#endif
 
 } // namespace pocl

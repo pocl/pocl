@@ -33,18 +33,6 @@
 
 namespace pocl {
 
-#if LLVM_MAJOR < MIN_LLVM_NEW_PASSMANAGER
-
-class FlattenBarrierSubs : public llvm::ModulePass {
-public:
-  static char ID;
-  FlattenBarrierSubs() : ModulePass(ID) {}
-
-  virtual bool runOnModule(llvm::Module &F) override;
-  virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const override;
-};
-
-#else
 
 class FlattenBarrierSubs : public llvm::PassInfoMixin<FlattenBarrierSubs> {
 public:
@@ -52,8 +40,6 @@ public:
   llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-
-#endif
 
 } // namespace pocl
 
