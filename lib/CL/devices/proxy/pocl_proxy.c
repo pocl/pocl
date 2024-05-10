@@ -1506,7 +1506,7 @@ pocl_proxy_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_INIT_COND (e_d->event_cond);
   e->data = (void *)e_d;
 
-  node->ready = 1;
+  node->node_state = COMMAND_READY;
   if (pocl_command_is_ready (e))
     {
       pocl_update_event_submitted (e);
@@ -1562,7 +1562,7 @@ pocl_proxy_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (node->ready != 1)
+  if (node->node_state != COMMAND_READY)
     {
       POCL_MSG_PRINT_EVENTS (
           "proxy: command related to the notified event %lu not ready\n",

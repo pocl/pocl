@@ -494,7 +494,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (node, CL_TRUE, CL_TRUE);
 
-  node->ready = 1;
+  node->node_state = COMMAND_READY;
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
@@ -538,7 +538,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (node->ready != 1)
+  if (node->node_state != COMMAND_READY)
     {
       POCL_MSG_PRINT_EVENTS (
           "basic: command related to the notified event %lu not ready\n",

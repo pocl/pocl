@@ -483,10 +483,16 @@ typedef union
   _cl_command_svm_memadvise mem_advise;
 } _cl_command_t;
 
+typedef enum
+{
+  COMMAND_FAILED = -1,
+  COMMAND_NOT_READY = 0,
+  COMMAND_READY = 1,
+} command_node_state;
+
 // one item in the command queue or command buffer
 typedef struct _cl_command_node _cl_command_node;
-struct _cl_command_node
-{
+struct _cl_command_node {
   _cl_command_t command;
   cl_command_type type;
   _cl_command_node *next; // for linked-list storage
@@ -516,12 +522,7 @@ struct _cl_command_node
   cl_device_id device;
   /* The index of the targeted device in the **program** device list. */
   unsigned program_device_i;
-  /*
-   * -1: command_failed
-   * 0: not ready
-   * 1: ready
-   */
-  cl_int ready;
+  command_node_state node_state;
 
   /* fields needed by buffered commands only */
 

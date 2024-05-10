@@ -1370,7 +1370,7 @@ pocl_remote_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_INIT_COND (e_d->event_cond);
   e->data = (void *)e_d;
 
-  node->ready = 1;
+  node->node_state = COMMAND_READY;
   if (pocl_command_is_ready (node->sync.event.event))
     {
       pocl_update_event_submitted (node->sync.event.event);
@@ -1433,7 +1433,7 @@ pocl_remote_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (node->ready != 1)
+  if (node->node_state != COMMAND_READY)
     {
       POCL_MSG_PRINT_EVENTS (
           "remote: command related to the notified event %lu not ready\n",
@@ -2257,7 +2257,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
   cl_command_queue cq = node->sync.event.event->queue;
   if (*(cq->device->available) == CL_FALSE)
     {
-      node->ready = -1;
+      node->node_state = COMMAND_FAILED;
       goto EARLY_FINISH;
     }
   pocl_update_event_running (event);
@@ -2544,7 +2544,7 @@ pocl_remote_driver_pthread (void *cldev)
           char msg[128] = "Event ";
           strcat (msg, cstr);
 
-          if (finished->ready != 1)
+          if (finished->node_state != COMMAND_READY)
             {
               pocl_update_event_device_lost (event);
             }

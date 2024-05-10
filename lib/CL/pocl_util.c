@@ -675,6 +675,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
 
   (*cmd)->type = command_type;
+  (*cmd)->node_state = COMMAND_NOT_READY;
 
   event = &((*cmd)->sync.event.event);
   errcode = pocl_create_event (event, command_queue, command_type, num_buffers,
@@ -1307,6 +1308,7 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
   (*cmd)->type = command_type;
   (*cmd)->buffered = 1;
+  (*cmd)->node_state = COMMAND_NOT_READY;
 
   /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
    * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
