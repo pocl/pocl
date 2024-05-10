@@ -1368,8 +1368,8 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
   ++command_queue->command_count;
 
-  /* in case of in-order queue, synchronize to previously enqueued command
-     if available */
+  /* In case of in-order queue, synchronize to the previously enqueued command,
+     if available. */
   if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
     {
       POCL_MSG_PRINT_EVENTS ("In-order Q; adding event syncs\n");

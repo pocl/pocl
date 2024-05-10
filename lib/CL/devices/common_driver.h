@@ -127,35 +127,44 @@ int pocl_driver_build_source (cl_program program,
                               const char **header_include_names,
                               int link_program);
 POCL_EXPORT
-  int pocl_driver_build_binary (cl_program program, cl_uint device_i,
-                                int link_program, int spir_build);
+int pocl_driver_build_binary (cl_program program,
+                              cl_uint device_i,
+                              int link_program,
+                              int spir_build);
 POCL_EXPORT
-  int pocl_driver_link_program (cl_program program, cl_uint device_i,
-                                cl_uint num_input_programs,
-                                const cl_program *input_programs,
-                                int create_library);
+int pocl_driver_link_program (cl_program program,
+                              cl_uint device_i,
+                              cl_uint num_input_programs,
+                              const cl_program *input_programs,
+                              int create_library);
 POCL_EXPORT
-  int pocl_driver_free_program (cl_device_id device, cl_program program,
+int pocl_driver_free_program (cl_device_id device,
+                              cl_program program,
+                              unsigned program_device_i);
+POCL_EXPORT
+int pocl_driver_setup_metadata (cl_device_id device,
+                                cl_program program,
                                 unsigned program_device_i);
 POCL_EXPORT
-  int pocl_driver_setup_metadata (cl_device_id device, cl_program program,
-                                  unsigned program_device_i);
+int pocl_driver_supports_binary (cl_device_id device,
+                                 size_t length,
+                                 const char *binary);
 POCL_EXPORT
-  int pocl_driver_supports_binary (cl_device_id device, size_t length,
-                                   const char *binary);
-POCL_EXPORT
-  int pocl_driver_build_poclbinary (cl_program program, cl_uint device_i);
+int pocl_driver_build_poclbinary (cl_program program, cl_uint device_i);
 
 POCL_EXPORT
-  int pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i);
+int pocl_driver_build_opencl_builtins (cl_program program, cl_uint device_i);
 
 POCL_EXPORT
-  void pocl_driver_build_gvar_init_kernel (cl_program program, cl_uint dev_i,
-                             cl_device_id device, gvar_init_callback_t callback);
+void pocl_driver_build_gvar_init_kernel (cl_program program,
+                                         cl_uint dev_i,
+                                         cl_device_id device,
+                                         gvar_init_callback_t callback);
 
 POCL_EXPORT
-  void pocl_cpu_gvar_init_callback(cl_program program, cl_uint dev_i,
-                                   _cl_command_node *fake_cmd);
+void pocl_cpu_gvar_init_callback (cl_program program,
+                                  cl_uint dev_i,
+                                  _cl_command_node *fake_cmd);
 
 #ifdef __cplusplus
 }
