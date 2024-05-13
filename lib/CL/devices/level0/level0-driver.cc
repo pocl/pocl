@@ -74,6 +74,7 @@ void Level0Queue::runThread() {
     if (!WorkBatch.empty()) {
       execCommandBatch(WorkBatch);
     }
+    reset();
   } while (!ShouldExit);
 }
 
@@ -389,20 +390,18 @@ void Level0Queue::allocNextFreeEvent() {
   DeviceEventsToReset.push(CurrentEventH);
 }
 
-void Level0Queue::execCommand(_cl_command_node *Cmd) {
-
-  cl_event event = Cmd->sync.event.event;
-  ze_result_t res;
-
-  const char *Msg = nullptr;
-  pocl_update_event_running(event);
-
+void Level0Queue::reset() {
   LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
-  appendEventToList(Cmd, &Msg);
+  assert(DeviceEventsToReset.empty());
+}
 
-  LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH, nullptr, 0, nullptr));
+void Level0Queue::closeCmdList() {
+  LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH,
+                                   nullptr, // signal event
+                                   CurrentEventH ? 1 : 0,
+                                   CurrentEventH ? &CurrentEventH : nullptr));
 
   while (!DeviceEventsToReset.empty()) {
     ze_event_handle_t E = DeviceEventsToReset.front();
@@ -412,8 +411,51 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
   }
 
   LEVEL0_CHECK_ABORT(zeCommandListClose(CmdListH));
+}
+
+void Level0Queue::makeMemResident() {
+  for (auto &I : MemPtrsToMakeResident) {
+    void *Ptr = I.first;
+    size_t Size = I.second;
+    POCL_MSG_PRINT_LEVEL0("Level0: Making %p (size %zu) device resident.\n",
+                          Ptr, Size);
+    ze_result_t Res = zeContextMakeMemoryResident(
+        Device->getContextHandle(), Device->getDeviceHandle(), Ptr, Size);
+    LEVEL0_CHECK_ABORT(Res);
+  }
+  MemPtrsToMakeResident.clear();
+}
+
+void Level0Queue::syncMemHostPtrs() {
+  for (auto &I : UseMemHostPtrsToSync) {
+    char *MemHostPtr = I.first.first;
+    char *DevPtr = I.first.second;
+    size_t Size = I.second;
+    allocNextFreeEvent();
+    LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+        CmdListH, MemHostPtr, DevPtr, Size, CurrentEventH,
+        PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  }
+  UseMemHostPtrsToSync.clear();
+}
+
+void Level0Queue::execCommand(_cl_command_node *Cmd) {
+
+  cl_event event = Cmd->sync.event.event;
+  ze_result_t res;
+
+  const char *Msg = nullptr;
+  appendEventToList(Cmd, &Msg);
+
+  makeMemResident();
+  syncMemHostPtrs();
+  closeCmdList();
+
   LEVEL0_CHECK_ABORT(
       zeCommandQueueExecuteCommandLists(QueueH, 1, &CmdListH, nullptr));
+
+  pocl_update_event_running(event);
+
   LEVEL0_CHECK_ABORT(
       zeCommandQueueSynchronize(QueueH, std::numeric_limits<uint64_t>::max()));
 
@@ -428,8 +470,6 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   POCL_MEASURE_START(ZeListPrepare);
 
-  CurrentEventH = nullptr;
-  PreviousEventH = nullptr;
   const char *Msg = nullptr;
   std::deque<const char *> Msgs;
   for (auto E : Batch) {
@@ -438,18 +478,9 @@ void Level0Queue::execCommandBatch(BatchType &Batch) {
     Msgs.push_back(Msg);
   }
 
-  LEVEL0_CHECK_ABORT(zeCommandListAppendBarrier(CmdListH,
-                                   nullptr, // signal event
-                                   CurrentEventH ? 1 : 0,
-                                   CurrentEventH ? &CurrentEventH : nullptr));
-
-  while (!DeviceEventsToReset.empty()) {
-    ze_event_handle_t E = DeviceEventsToReset.front();
-    DeviceEventsToReset.pop();
-    LEVEL0_CHECK_ABORT(zeCommandListAppendEventReset(CmdListH, E));
-    AvailableDeviceEvents.push(E);
-  }
-  LEVEL0_CHECK_ABORT(zeCommandListClose(CmdListH));
+  makeMemResident();
+  syncMemHostPtrs();
+  closeCmdList();
 
   POCL_MEASURE_FINISH(ZeListPrepare);
   POCL_MEASURE_START(ZeListExec);
@@ -490,10 +521,12 @@ void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
     return;
   }
 
-  allocNextFreeEvent();
-  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
-      CmdListH, MemHostPtr + Offset, DevPtr + Offset, Size, CurrentEventH,
-      PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+//  allocNextFreeEvent();
+//  LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
+//      CmdListH, MemHostPtr + Offset, DevPtr + Offset, Size, CurrentEventH,
+//      PreviousEventH ? 1 : 0, PreviousEventH ? &PreviousEventH : nullptr));
+  auto Key = std::make_pair(MemHostPtr + Offset, DevPtr + Offset);
+  UseMemHostPtrsToSync.emplace(Key, Size);
 }
 
 void Level0Queue::syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
@@ -1199,11 +1232,7 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   for (auto &I : AccessedPointers) {
     void *Ptr = I.first;
     size_t Size = I.second;
-    POCL_MSG_PRINT_MEMORY("Level0: Making %p (size %zu) resident.\n", Ptr,
-                          Size);
-    ze_result_t Res = zeContextMakeMemoryResident(
-        Device->getContextHandle(), Device->getDeviceHandle(), Ptr, Size);
-    LEVEL0_CHECK_ABORT(Res);
+    MemPtrsToMakeResident[Ptr] = Size;
   }
 
   if (setupKernelArgs(ModuleH, KernelH, Dev, Cmd->program_device_i, RunCmd)) {

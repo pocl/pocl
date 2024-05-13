@@ -82,19 +82,19 @@ public:
   void runThread();
 
 private:
+  std::queue<ze_event_handle_t> AvailableDeviceEvents;
+  std::queue<ze_event_handle_t> DeviceEventsToReset;
+  std::map<void *, size_t> MemPtrsToMakeResident;
+  std::map<std::pair<char*, char*>, size_t> UseMemHostPtrsToSync;
+
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
   ze_event_pool_handle_t EvtPoolH;
-  std::queue<ze_event_handle_t> AvailableDeviceEvents;
-  std::queue<ze_event_handle_t> DeviceEventsToReset;
 
   ze_event_handle_t CurrentEventH;
   ze_event_handle_t PreviousEventH;
 
   Level0Device *Device;
-  uint64_t *EventStart = nullptr;
-  uint64_t *EventFinish = nullptr;
-
   std::thread Thread;
   Level0WorkQueueInterface *WorkHandler;
 
@@ -199,6 +199,10 @@ private:
   void appendEventToList(_cl_command_node *Cmd, const char **Msg);
   void execCommand(_cl_command_node *Cmd);
   void execCommandBatch(BatchType &Batch);
+  void reset();
+  void closeCmdList();
+  void makeMemResident();
+  void syncMemHostPtrs();
   void allocNextFreeEvent();
 
   void syncUseMemHostPtr(pocl_mem_identifier *MemId, cl_mem Mem,
