@@ -306,6 +306,10 @@ POCL_EXPORT
 int pocl_svm_check_pointer (cl_context context, const void *svm_ptr,
                             size_t size, size_t *buffer_size);
 
+POCL_EXPORT
+int pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr,
+                            size_t size, size_t *buffer_size, void **actual_ptr);
+
 /* returns !0 if binary is SPIR-V bitcode with OpCapability Kernel
  * OpenCL-style bitcode produced by e.g. llvm-spirv */
 POCL_EXPORT
