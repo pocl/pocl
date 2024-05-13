@@ -52,8 +52,8 @@ typedef struct
 using BatchType = std::deque<cl_event>;
 /// limit the Batch size to this number of commands
 constexpr unsigned BatchSizeLimit = 128;
-/// the number of events allocatable per single batch
-constexpr unsigned EventPoolSize = 16384;
+/// the number of events allocated for each Event Pool
+constexpr unsigned EventPoolSize = 2048;
 
 class Level0WorkQueueInterface {
 
@@ -70,8 +70,8 @@ class Level0Queue {
 
 public:
   Level0Queue(Level0WorkQueueInterface *WH, ze_command_queue_handle_t Q,
-              ze_command_list_handle_t L, ze_event_pool_handle_t E,
-              uint32_t EvPoolSize, Level0Device *D);
+              ze_command_list_handle_t L,
+              Level0Device *D);
   ~Level0Queue();
 
   Level0Queue(Level0Queue const &) = delete;
@@ -89,7 +89,6 @@ private:
 
   ze_command_queue_handle_t QueueH;
   ze_command_list_handle_t CmdListH;
-  ze_event_pool_handle_t EvtPoolH;
 
   ze_event_handle_t CurrentEventH;
   ze_event_handle_t PreviousEventH;
@@ -245,6 +244,19 @@ private:
 };
 
 class Level0Driver;
+class Level0Device;
+
+class Level0EventPool {
+public:
+  Level0EventPool(Level0Device *D, unsigned EvtPoolSize);
+  ~Level0EventPool();
+  bool isEmpty() const { return AvailableEvents.empty(); }
+  ze_event_handle_t getEvent();
+private:
+  std::queue<ze_event_handle_t> AvailableEvents;
+  ze_event_pool_handle_t EvtPoolH;
+  Level0Device *Dev;
+};
 
 class Level0Device {
 
@@ -311,6 +323,7 @@ public:
   cl_device_id getMemAssoc(const void *USMPtr);
   cl_mem_alloc_flags_intel getMemFlags(const void *USMPtr);
 
+  ze_event_handle_t getNewEvent();
   ze_device_handle_t getDeviceHandle() { return DeviceHandle; }
   ze_context_handle_t getContextHandle() { return ContextHandle; }
   void getTimingInfo(uint32_t &TS, uint32_t &KernelTS, double &TimerFreq,
@@ -331,6 +344,8 @@ private:
   Level0QueueGroup CopyQueues;
   Level0QueueGroup ComputeQueues;
   Level0QueueGroup UniversalQueues;
+  std::deque<Level0EventPool> EventPools;
+  std::mutex EventPoolLock;
 
   std::map<std::string, Level0Kernel *> MemfillKernels;
   std::map<std::string, Level0Kernel *> ImagefillKernels;
