@@ -1524,9 +1524,11 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
       return CL_INVALID_ARG_VALUE;
     void **Elems = (void **)param_value;
     size_t AllocationSize;
+    void *RawPtr;
     // find the allocation sizes for the pointers. Needed for L0 API
     for (cl_uint i = 0; i < NumElem; ++i) {
       AllocationSize = 0;
+      RawPtr = nullptr;
       // TODO: DEVICE ptrs do not have vm_ptr set, the check will fail.
 
       if (param_name == CL_KERNEL_EXEC_INFO_DEVICE_PTRS_EXT) {
@@ -1535,14 +1537,15 @@ cl_int pocl_level0_set_kernel_exec_info_ext(
         POCL_RETURN_ERROR_ON((DevPtr == nullptr), CL_INVALID_VALUE,
                              "Invalid pointer given to the call\n");
         AllocationSize = DevPtr->size;
+        RawPtr = DevPtr->dev_ptr;
       } else {
-        int err = pocl_svm_check_pointer(Kernel->context, Elems[i], 1,
-                                         &AllocationSize);
+        int err = pocl_svm_check_get_pointer(Kernel->context, Elems[i], 1,
+                                             &AllocationSize, &RawPtr);
         POCL_RETURN_ERROR_ON((err != CL_SUCCESS), CL_INVALID_VALUE,
                              "Invalid pointer given to the call\n");
       }
       assert(AllocationSize > 0);
-      UsedPtrs[Elems[i]] = AllocationSize;
+      UsedPtrs[RawPtr] = AllocationSize;
     }
     L0Kernel->setAccessedPointers(UsedPtrs);
     return CL_SUCCESS;

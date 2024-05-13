@@ -2985,8 +2985,8 @@ pocl_free_kernel_metadata (cl_program program, unsigned kernel_i)
 }
 
 int
-pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size,
-                        size_t *buffer_size)
+pocl_svm_check_get_pointer (cl_context context, const void *svm_ptr, size_t size,
+                            size_t *buffer_size, void** actual_ptr)
 {
 
   /* TODO we need a better data structure than linked list,
@@ -3010,24 +3010,35 @@ pocl_svm_check_pointer (cl_context context, const void *svm_ptr, size_t size,
 
   /* if the device does not support system allocation,
    * then the pointer must be found in the context's SVM alloc list */
-  if (found == NULL
-      && (context->svm_allocdev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
-             == 0)
+  if (found == NULL) {
+    if (context->svm_allocdev->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM)
     {
+      return CL_SUCCESS;
+    } else {
       POCL_MSG_ERR (
           "Can't find the pointer %p in list of allocated SVM pointers\n",
             svm_ptr);
       return CL_INVALID_OPERATION;
     }
-
-  if (found != NULL && (((char *)svm_ptr + size) > svm_alloc_end))
+  } else {
+    assert (found != NULL);
+    if (((char *)svm_ptr + size) > svm_alloc_end)
     {
       POCL_MSG_ERR ("The pointer+size exceeds the size of the allocation\n");
       return CL_INVALID_OPERATION;
     }
 
-  if (found != NULL && buffer_size != NULL)
-    *buffer_size = item->size;
+    if (buffer_size != NULL)
+      *buffer_size = found->size;
 
-  return CL_SUCCESS;
+    if (actual_ptr != NULL)
+      *actual_ptr = found->vm_ptr;
+    return CL_SUCCESS;
+  }
+}
+
+int pocl_svm_check_pointer (cl_context context, const void *svm_ptr,
+                            size_t size, size_t *buffer_size)
+{
+  return pocl_svm_check_get_pointer(context, svm_ptr, size, buffer_size, NULL);
 }
