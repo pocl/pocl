@@ -578,8 +578,8 @@ void Level0Queue::read(void *__restrict__ HostPtr,
     POCL_MSG_WARN("Read skipped, HostPtr == DevPtr\n");
     return;
   }
-  POCL_MSG_PRINT_LEVEL0("READ from %p OFF %zu SIZE %zu \n",
-                        HostPtr, Offset, Size);
+  POCL_MSG_PRINT_LEVEL0("READ from: %p to: %p offs: %zu size: %zu \n",
+                        DevPtr, HostPtr, Offset, Size);
   allocNextFreeEvent();
   LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(
       CmdListH, HostPtr, DevPtr + Offset, Size, CurrentEventH,
@@ -596,8 +596,8 @@ void Level0Queue::write(const void *__restrict__ HostPtr,
     return;
   }
 
-  POCL_MSG_PRINT_LEVEL0("WRITE to %p OFF %zu SIZE %zu\n",
-                        HostPtr, Offset, Size);
+  POCL_MSG_PRINT_LEVEL0("WRITE from: %p to: %p offs: %zu size: %zu\n",
+                        HostPtr, DevPtr, Offset, Size);
   allocNextFreeEvent();
   LEVEL0_CHECK_ABORT(zeCommandListAppendMemoryCopy(CmdListH, DevPtr + Offset,
          HostPtr, Size, CurrentEventH, PreviousEventH ? 1 : 0,
@@ -1287,6 +1287,7 @@ Level0Queue::Level0Queue(Level0WorkQueueInterface *WH,
   QueueH = Q;
   CmdListH = L;
   Device = D;
+  PreviousEventH = CurrentEventH = nullptr;
 
   uint32_t TimeStampBits, KernelTimeStampBits;
   Device->getTimingInfo(TimeStampBits, KernelTimeStampBits, DeviceFrequency,
