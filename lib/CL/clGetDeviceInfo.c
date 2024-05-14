@@ -24,6 +24,7 @@
 
 #include "pocl_util.h"
 
+#ifdef DEVELOPER_MODE
 /* A version for querying the info and in case the device returns 
    a zero, assume the device info query hasn't been implemented 
    for the device driver at hand. Warns about an incomplete 
@@ -43,6 +44,16 @@
     POCL_WARN_INCOMPLETE ();                                                  \
   POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
 
+#else
+
+#define POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(__TYPE__, __VALUE__)          \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
+#define POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK(__TYPE__, __VALUE__)           \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
+#define POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(__TYPE__, __VALUE__, __EXT__)  \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
+
+#endif
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
