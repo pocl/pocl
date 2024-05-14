@@ -316,6 +316,8 @@ static int runAndAppendOutputToBuildLog(cl_program Program, unsigned DeviceI,
   return Errcode;
 }
 
+// disabled for now, need to solve the problem of linking different version
+#if 0
 static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
                              char ProgramSpvPathTemp[POCL_MAX_PATHNAME_LENGTH],
                              std::vector<std::string> &SpvBinaryPaths,
@@ -345,6 +347,7 @@ static int linkWithSpirvLink(cl_program Program, cl_uint DeviceI,
                        CL_LINK_PROGRAM_FAILURE, "spirv-link failed\n");
   return CL_SUCCESS;
 }
+#endif
 
 static int linkWithLLVMLink(cl_program Program, cl_uint DeviceI,
                             char ProgramBcPathTemp[POCL_MAX_PATHNAME_LENGTH],

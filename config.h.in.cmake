@@ -172,8 +172,6 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-#define SPIRV_LINK "@SPIRV_LINK@"
-
 #endif
 
 
