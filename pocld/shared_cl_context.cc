@@ -101,7 +101,7 @@ class SharedCLContext final : public SharedContextBase {
   // chunks.
   std::unordered_map<void *, BufferId_t> SVMShadowBufferIDMap;
 
-  // A mutex guarding the access to the above two buffer maps.
+  // A mutex guarding the access to the above three buffer maps.
   // TODO: check that the more fine grained mutex suffices here.
   std::mutex BufferMapMutex;
 
@@ -371,7 +371,9 @@ private:
 
 /****************************************************************************************************************/
 
+// Finds a buffer with the given id. Locks the BufferMapMutex.
 cl::Buffer *SharedCLContext::findBuffer(uint32_t id) {
+  std::unique_lock<std::mutex> Lock(BufferMapMutex);
   auto search = BufferIDmap.find(id);
   return (search == BufferIDmap.end() ? nullptr : search->second.get());
 }
@@ -481,6 +483,7 @@ void SharedCLContext::updateKernelArgMDFromSPIRV(
     return CL_INVALID_COMMAND_QUEUE;                                           \
   }
 
+// Finds a buffer with buffer_id. findBuffer() locks the BufferMapMutex.
 #define FIND_BUFFER                                                            \
   b = findBuffer(buffer_id);                                                   \
   if (b == nullptr) {                                                          \
@@ -2140,8 +2143,6 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
 }
 
 int SharedCLContext::freeBuffer(BufferId_t BufferId, bool IsSVMFree) {
-  std::unique_lock<std::mutex> Lock(BufferMapMutex);
-
   if (SVMRegions.size() > 0) {
 
     void *DeviceSVMAddrToFree = nullptr;
