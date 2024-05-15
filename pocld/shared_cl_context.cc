@@ -2556,6 +2556,8 @@ int SharedCLContext::fillBuffer(uint64_t ev_id, uint32_t cq_id,
     fillB(cl_ulong4);
   case 64:
     fillB(cl_ulong8);
+  case 128:
+    fillB(cl_ulong16);
   default:
     err = CL_INVALID_ARG_VALUE;
   }
