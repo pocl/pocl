@@ -75,6 +75,12 @@ add_test(NAME all_dpcpp_book_samples-cpu
          -E "${SKIP_TEST_EXPR}"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
+# Skipped tests for LevelZero:
+#
+# fig_2_9_cpu_selector: We test with a GPU.
+add_test(NAME all_dpcpp_book_samples-l0
+  COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
+         -E "fig_2_9_cpu_selector"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
 # We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
@@ -88,3 +94,9 @@ set_tests_properties(
   PROPERTIES
     ENVIRONMENT "ONEAPI_DEVICE_SELECTOR=opencl:cpu;POCL_CPU_VENDOR_ID_OVERRIDE=32902;POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000;POCL_DEVICES=cpu;LD_LIBRARY_PATH=${OCL_ICD_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
     LABELS "${TS_NAME}")
+
+set_tests_properties(
+  all_dpcpp_book_samples-l0
+  PROPERTIES
+    ENVIRONMENT "POCL_DRIVER_VERSION_OVERRIDE=23.35.27191.9;ONEAPI_DEVICE_SELECTOR=opencl:gpu;POCL_DEVICES=level0;LD_LIBRARY_PATH=${OCL_ICD_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
+    LABELS "${TS_NAME};level0")
