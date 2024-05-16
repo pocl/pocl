@@ -412,12 +412,45 @@ POname(clGetDeviceInfo)(cl_device_id   device,
                                         param_value, param_value_size_ret);
     return CL_SUCCESS; /* gracefully no-op in case the driver fails to handle
                           the query */
+
+  /** cl_intel_unified_shared_memory queries **/
+  case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+  case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+    {
+      cl_bitfield caps;
+      switch (param_name)
+        {
+        case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:
+          caps = device->host_usm_capabs;
+          break;
+        case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:
+          caps = device->device_usm_capabs;
+          break;
+        case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+          caps = device->single_shared_usm_capabs;
+          break;
+        case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:
+          caps = device->cross_shared_usm_capabs;
+          break;
+        case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:
+          caps = device->system_shared_usm_capabs;
+          break;
+        default:
+          caps = 0;
+        }
+      POCL_RETURN_GETINFO (cl_bitfield, caps);
+    }
   }
 
-  if(device->ops->get_device_info_ext != NULL) {
-    return device->ops->get_device_info_ext(device, param_name, param_value_size,
-                                            param_value, param_value_size_ret);
-  }
+  if (device->ops->get_device_info_ext != NULL)
+    {
+      return device->ops->get_device_info_ext (device, param_name,
+                                               param_value_size, param_value,
+                                               param_value_size_ret);
+    }
 
   return CL_INVALID_VALUE;
 }

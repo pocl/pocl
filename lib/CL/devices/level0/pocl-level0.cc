@@ -159,7 +159,6 @@ void pocl_level0_init_device_ops(struct pocl_device_ops *Ops) {
   Ops->free_sampler = pocl_level0_free_sampler;
 
   Ops->get_device_info_ext = pocl_level0_get_device_info_ext;
-  Ops->get_mem_info_ext = pocl_level0_get_mem_info_ext;
   Ops->set_kernel_exec_info_ext = pocl_level0_set_kernel_exec_info_ext;
 }
 
@@ -1458,40 +1457,6 @@ typedef cl_uint cl_unified_shared_memory_type_intel;
 #define CL_MEM_TYPE_SHARED_INTEL        0x4199
 
 */
-
-cl_int pocl_level0_get_mem_info_ext(cl_device_id Dev,
-                                    const void *ptr,
-                                    cl_uint param_name,
-                                    size_t param_value_size,
-                                    void * param_value,
-                                    size_t * param_value_size_ret) {
-  Level0Device *Device = (Level0Device *)Dev->data;
-
-  switch (param_name) {
-  case CL_MEM_ALLOC_TYPE_INTEL: {
-    cl_unified_shared_memory_type_intel Type = Device->getMemType(ptr);
-    POCL_RETURN_GETINFO(cl_unified_shared_memory_type_intel, Type);
-  }
-  case CL_MEM_ALLOC_BASE_PTR_INTEL: {
-    void *Ptr = Device->getMemBasePtr(ptr);
-    POCL_RETURN_GETINFO(void *, Ptr);
-  }
-  case CL_MEM_ALLOC_SIZE_INTEL: {
-    size_t Size = Device->getMemSize(ptr);
-    POCL_RETURN_GETINFO(size_t, Size);
-  }
-  case CL_MEM_ALLOC_DEVICE_INTEL: {
-    cl_device_id DeviceID = Device->getMemAssoc(ptr);
-    POCL_RETURN_GETINFO(cl_device_id, DeviceID);
-  }
-  case CL_MEM_ALLOC_FLAGS_INTEL: {
-    cl_mem_alloc_flags_intel Flags = Device->getMemFlags(ptr);
-    POCL_RETURN_GETINFO(cl_mem_alloc_flags_intel, Flags);
-  }
-  default:
-    return CL_INVALID_VALUE;
-  }
-}
 
 /*
 

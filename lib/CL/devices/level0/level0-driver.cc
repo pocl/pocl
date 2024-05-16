@@ -2004,15 +2004,17 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
     POCL_MSG_PRINT_LEVEL0("SVM disabled for device\n");
   }
 
-  HostMemCaps = convertZeAllocCaps(MemAccessProperties.hostAllocCapabilities);
-  DeviceMemCaps =
+  ClDev->host_usm_capabs = HostMemCaps =
+      convertZeAllocCaps(MemAccessProperties.hostAllocCapabilities);
+  ClDev->device_usm_capabs = DeviceMemCaps =
       convertZeAllocCaps(MemAccessProperties.deviceAllocCapabilities);
-  SingleSharedCaps = convertZeAllocCaps(
+  ClDev->single_shared_usm_capabs = SingleSharedCaps = convertZeAllocCaps(
       MemAccessProperties.sharedSingleDeviceAllocCapabilities);
   CrossSharedCaps = convertZeAllocCaps(
       MemAccessProperties.sharedCrossDeviceAllocCapabilities);
   SystemSharedCaps =
       convertZeAllocCaps(MemAccessProperties.sharedSystemAllocCapabilities);
+
   // the minimum capability required for USM
   if (DeviceMemCaps & ZE_MEMORY_ACCESS_CAP_FLAG_RW) {
     Extensions.append(" cl_intel_unified_shared_memory");

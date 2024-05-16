@@ -73,6 +73,27 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
   else
     device = context->usm_allocdev;
 
+  switch (alloc_type)
+    {
+    case CL_MEM_TYPE_HOST_INTEL:
+      POCL_GOTO_ERROR_ON ((device->host_usm_capabs == 0), CL_INVALID_OPERATION,
+                          "Device does not support Host USM allocations\n");
+      break;
+    case CL_MEM_TYPE_DEVICE_INTEL:
+      POCL_GOTO_ERROR_ON ((device->device_usm_capabs == 0),
+                          CL_INVALID_OPERATION,
+                          "Device does not support Device USM allocations\n");
+      break;
+    case CL_MEM_TYPE_SHARED_INTEL:
+      POCL_GOTO_ERROR_ON ((device->single_shared_usm_capabs == 0),
+                          CL_INVALID_OPERATION,
+                          "Device does not support Shared USM allocations\n");
+      break;
+    default:
+      POCL_GOTO_ERROR_ON (1, CL_INVALID_PROPERTY,
+                          "Unknown USM AllocType requested\n");
+    }
+
   POCL_GOTO_ERROR_COND ((size == 0), CL_INVALID_BUFFER_SIZE);
 
   POCL_GOTO_ERROR_ON ((size > context->max_mem_alloc_size),
@@ -127,9 +148,17 @@ pocl_usm_alloc (unsigned alloc_type, cl_context context, cl_device_id device,
 
   POCL_LOCK_OBJ (context);
 
-  /* Register the pointer as an SVM pointer so clCreateBuffer() detects it. */
+  /* Register the pointer as an raw pointer so clCreateBuffer() detects it. */
   item->vm_ptr = ptr;
   item->size = size;
+  item->kind = POCL_RAW_PTR_INTEL_USM;
+  if (alloc_type == CL_MEM_TYPE_DEVICE_INTEL ||
+      alloc_type == CL_MEM_TYPE_SHARED_INTEL)
+    item->device = device;
+  else
+    item->device = NULL;
+  item->usm_properties.alloc_type = alloc_type;
+  item->usm_properties.flags = flags;
   DL_APPEND (context->raw_ptrs, item);
   POCL_UNLOCK_OBJ (context);
 

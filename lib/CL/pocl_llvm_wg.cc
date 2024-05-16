@@ -969,7 +969,7 @@ static int convertBCorSPV(char *InputPath,
   CompilationArgs.push_back("-o");
   CompilationArgs.push_back(HiddenOutputPath);
   CompilationArgs.push_back(HiddenInputPath);
-  CompilationArgs2.reserve(CompilationArgs.size() + 1);
+  CompilationArgs2.resize(CompilationArgs.size() + 1);
   for (unsigned i = 0; i < CompilationArgs.size(); ++i)
     CompilationArgs2[i] = (char *)CompilationArgs[i].data();
   CompilationArgs2[CompilationArgs.size()] = nullptr;

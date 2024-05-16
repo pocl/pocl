@@ -244,7 +244,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->notify_event_finished = pocl_cuda_notify_event_finished;
 
   ops->get_device_info_ext = pocl_cuda_get_device_info_ext;
-  ops->get_mem_info_ext = NULL; // pocl_cuda_get_mem_info_ext;
   ops->set_kernel_exec_info_ext = pocl_cuda_set_kernel_exec_info_ext;
 
   ops->build_source = pocl_driver_build_source;
