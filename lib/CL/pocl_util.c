@@ -3,6 +3,7 @@
    Copyright (c) 2012-2019 Pekka Jääskeläinen
                  2020-2024 PoCL Developers
                  2024 Pekka Jääskeläinen / Intel Finland Oy
+                 2024 Henry Linjamäki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -2850,6 +2851,23 @@ pocl_str_tolower(char *out, const char *in)
   for (i = 0; in[i] != '\0'; i++)
     out[i] = tolower(in[i]);
   out[i] = '\0';
+}
+
+const char *
+pocl_str_append (const char **dst, const char *src)
+{
+  assert (src);
+  assert (dst && *dst);
+  unsigned src_len = strlen (src);
+  unsigned dst_len = strlen (*dst);
+  char *new_dst = calloc (dst_len + src_len + 1, 1);
+  if (new_dst == NULL)
+    return NULL;
+  strncpy (new_dst, *dst, dst_len);
+  strncpy (new_dst + dst_len, src, src_len);
+  const char *old_dst = *dst;
+  *dst = new_dst;
+  return old_dst;
 }
 
 int

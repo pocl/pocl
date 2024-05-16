@@ -361,6 +361,7 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_deviceside_enqueue"
+  "runtime/test_device_address"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "cuda")
 
