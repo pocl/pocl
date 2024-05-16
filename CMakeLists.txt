@@ -2073,11 +2073,13 @@ file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
   set(ENV{POCL_BUILDING} \"1\")
 ")
 else()
+# Old OCL ICD Loaders may not recognize PoCL without the trailing '/' in the
+# OCL_ICD_VENDORS.
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
   ${SAN_EXTRA}
   set(ENV{POCL_ENABLE_UNINIT} \"1\")
   set(ENV{POCL_BUILDING} \"1\")
-  set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors\")
+  set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors/\")
 ")
 endif()
 

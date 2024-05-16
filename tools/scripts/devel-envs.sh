@@ -3,7 +3,8 @@ libs_subdir=.
 
 # source this while in the pocl build dir
 export POCL_BUILDING=1
-export OCL_ICD_VENDORS=$PWD/ocl-vendors
+# Old OCL ICD Loaders may not recognize PoCL without the trailing '/'.
+export OCL_ICD_VENDORS=$PWD/ocl-vendors/
 
 # AMDSDK supports the overriding via other env name.
 export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
