@@ -599,8 +599,19 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
         }
     }
 
-  if (notifier_event->status == CL_COMPLETE)
-    goto FINISH;
+    // If the notifier event is already complete (or failed),
+    // don't create an event sync. This is fine since if the wait
+    // event has no notifier events and gets submitted, it can start
+    // right away.
+    if (notifier_event->status <= CL_COMPLETE)
+      {
+        POCL_MSG_PRINT_EVENTS (
+          "notifier event %" PRIu64
+          " already complete, not creating sync with event %" PRIu64 "\n",
+          notifier_event->id, waiting_event->id);
+        goto FINISH;
+      }
+
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
