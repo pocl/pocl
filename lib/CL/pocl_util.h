@@ -1,6 +1,7 @@
 /* OpenCL runtime library: pocl_util utility functions
 
    Copyright (c) 2012-2024 PoCL Developers
+                 2024 Henry Linjamäki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -340,6 +341,14 @@ void pocl_str_toupper (char *out, const char *in);
 
 POCL_EXPORT
 void pocl_str_tolower (char *out, const char *in);
+
+/* Concatenates *dst and src strings into a new string and replaces
+ * the dst with it.
+ *
+ * The original *dst is returned with unchanged contents. On an error,
+ * NULL is returned and dst is unchanged. */
+POCL_EXPORT
+const char *pocl_str_append (const char **dst, const char *src);
 
 #ifdef __cplusplus
 }

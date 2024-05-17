@@ -1,6 +1,7 @@
 /* pocl-cuda.c - driver for CUDA devices
 
    Copyright (c) 2016-2017 James Price / University of Bristol
+                 2024 Henry Linjamäki / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -588,6 +589,19 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   // See e.g.
   // https://forums.developer.nvidia.com/t/max-size-of-cuda-arguments/50218
   dev->max_parameter_size = 4352;
+
+  // Since cSVM is supported, enable cl_ext_buffer_device_address
+  // (BDA) only if the unified addressing (UA; also known as unified
+  // virtual address space) is supported on the device. Without UA,
+  // SVM and BDA may not co-exist due to address aliasing.
+  int ua = 0;
+  cuDeviceGetAttribute (&ua, CU_DEVICE_ATTRIBUTE_UNIFIED_ADDRESSING,
+                        data->device);
+  if (ua)
+    {
+      // The returned pointer (original dev->extensions) is a literal string.
+      pocl_str_append (&dev->extensions, " cl_ext_buffer_device_address");
+    }
 
 #if (CUDA_DEVICE_CL_VERSION_MAJOR >= 3)
   dev->features = CUDA_DEVICE_FEATURES_30;
