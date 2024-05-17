@@ -1929,7 +1929,7 @@ pocl_remote_async_run (void *data, _cl_command_node *cmd)
   kernel_data_t *kd = (kernel_data_t *)(kernel->data[dev_i]);
   assert (kd != NULL);
 
-  // TODO this is unecessarily rerun if pod_total_size == 0
+  /* TODO this is unecessarily rerun if pod_total_size == 0. */
   if (kd->pod_arg_storage == NULL)
     {
       assert (kd->pod_total_size == 0);

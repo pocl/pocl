@@ -759,13 +759,14 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
    * then set the last_event pointer to the actual command's event
    * (final_event).
    *
-   * We'll need the "previous" event to properly chain events, but
+   * We'll need the "previous" event to properly chain commands, but
    * will release it after we've enqueued the required commands. */
   previous_last_event = mem->last_event;
   mem->last_event = final_event;
 
-  /* find device/gmem with latest memory version and fastest migration.
-   * ex_dev = device with latest memory _other than dev_
+  /* Find the device/gmem with the latest copy of the data and that has the
+   * fastest migration route.
+   * ex_dev = device with the latest copy _other than dev_
    * dev_cq = default command queue for destination dev */
   int highest_d2d_mig_priority = 0;
   for (i = 0; i < mem->context->num_devices; ++i)
@@ -939,7 +940,7 @@ FINISH_VER_SETUP:
 
   /*****************************************************************/
 
-  /* enqueue a command for export.
+  /* Enqueue a command for export.
    * Put the previous last event into its waitlist. */
   if (do_export)
     {
@@ -1059,6 +1060,12 @@ FINISH_VER_SETUP:
   return CL_SUCCESS;
 }
 
+/**
+ * Creates a command node and adds implicit data migrations.
+ *
+ * @param num_buffers Number of buffers the command depends on.
+ * @param buffers The buffers the command depends on.
+ */
 static cl_int
 pocl_create_command_full (_cl_command_node **cmd,
                           cl_command_queue command_queue,
@@ -1087,8 +1094,8 @@ pocl_create_command_full (_cl_command_node **cmd,
         return CL_OUT_OF_RESOURCES;
     }
 
-  /* waitlist here only contains the user-provided events.
-   * migration events are added to waitlist later */
+  /* Waitlist here only contains the user-provided events.
+   * migration events are added to waitlist later. */
   err = pocl_create_command_struct (cmd, command_queue, command_type, event_p,
                                     num_events, wait_list, num_buffers,
                                     buffers);
@@ -1096,7 +1103,7 @@ pocl_create_command_full (_cl_command_node **cmd,
     return err;
   cl_event final_event = (*cmd)->sync.event.event;
 
-  /* retain once for every buffer; this is because we set every buffer's
+  /* Retain once for every buffer. This is because we set every buffer's
    * "last event" to this, and then some next command enqueue
    * (or clReleaseMemObject) will release it.
    */
@@ -2372,17 +2379,22 @@ static void pocl_free_event_node (cl_event event)
   event->command = NULL;
 }
 
+/**
+ * Copies a command node (mostly) for command buffering purposes.
+ *
+ * Doesn't touch the next/prev pointers, for instance.
+ */
 int
 pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 {
   memcpy (&dst_node->command, &src_node->command, sizeof (_cl_command_t));
-  // Copy variables that are freed when the command finishes
+  /* Copy variables that are freed when the command finishes. */
   switch (src_node->type)
     {
     case CL_COMMAND_NDRANGE_KERNEL:
     case CL_COMMAND_TASK:
       POname (clRetainKernel) (src_node->command.run.kernel);
-      /* note: this must use the arguments stored in the src_node,
+      /* Note: this must use the arguments stored in the src_node,
        * NOT the ones in kernel->dyn_arguments; these might differ,
        * because the user could clSetKernelArg() right after
        * clCommandNDRangeKernelKHR(). */

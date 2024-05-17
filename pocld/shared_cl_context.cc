@@ -781,7 +781,7 @@ int SharedCLContext::waitAndDeleteEvent(uint64_t event_id) {
   } else {
     // this is used for the fake event in MigrateD2D so don't bother adding user
     // events here
-    POCL_MSG_ERR("WaitAndDeledeEvent: no CL event exists for event %" PRIu64
+    POCL_MSG_ERR("WaitAndDeleteEvent: no CL event exists for event %" PRIu64
                  "\n",
                  event_id);
     return CL_INVALID_EVENT;
