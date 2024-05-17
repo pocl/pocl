@@ -84,13 +84,16 @@ typedef struct mem_mapping
   size_t slice_pitch;
 } mem_mapping_t;
 
-/* memory identifier:  */
+/* A single buffer can and will be allocated in
+   multiple different devices which might or might not share the global memory.
+   This struct captures a single buffer to global memory allocation's
+   properties.
+*/
 typedef struct pocl_mem_identifier
 {
-  /* global-memory-specific pointer
-     to hardware resource that represents memory. This may be anything, but
-     must be non-NULL while the memory is actually allocated, and NULL when
-     it's not */
+  /* Global-memory-specific pointer to hardware resource that represents
+     memory. This may be anything, but must be non-NULL while the memory is
+     actually allocated, and NULL when it's not */
   void *mem_ptr;
 
   /* If mem_ptr represents an address in the device global memory which
@@ -103,27 +106,26 @@ typedef struct pocl_mem_identifier
 
   /* Content version tracking. Every write use (clEnqWriteBuffer,
    * clMapBuffer(CL_MAP_WRITE), write_only image, read/write buffers as kernel
-   * args etc) increases the version; read uses do not. At command enqueue
-   * time, the last version across all global mems AND mem_host_ptr
-   * is found and migrated to the destination device's global mem.
+   * args etc) increases the version; read uses do not. This version is used in
+   * implicit migrations to find the latest copy of the data.
    *
-   * In theory, a simple bool of "valid/invalid could be used;
-   * the only difference is that version saves history
-   * (so we could in future do semi-intelligent memory GC, as in "i see the
-   * buffer on this device hasn't been used for 100 versions, i can free it").
+   * In theory, a simple bool of "valid/invalid" could be used;
+   * the only difference is that a version numbering scheme saves history,
+   * which could be useful for LRU global memory garbage collection among other
+   * things in the future.
    */
   uint64_t version;
 
-  /* Extra pointer for drivers to use for anything
+  /* Extra pointer for drivers to use for anything.
    *
    * Currently CUDA uses it to track ALLOC_HOST_PTR allocations.
-   * Vulkan uses it to store host-mapped staging memory
+   * Vulkan uses it to store host-mapped staging memory.
    */
   void *extra_ptr;
 
-  /* Extra integer for drivers to use for anything
+  /* Extra integer for drivers to use for anything.
    *
-   * Currently Vulkan uses it to track vulkan memory requirements
+   * Currently Vulkan uses it to track vulkan memory requirements.
    */
   uint64_t extra;
 
@@ -151,7 +153,7 @@ struct _build_program_callback
 #define POCL_KERNEL_DIGEST_SIZE 20
 typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
 
-// clEnqueueNDRangeKernel
+/* For clEnqueueNDRangeKernel(). */
 typedef struct
 {
   void *hash;
@@ -168,13 +170,13 @@ typedef struct
   int force_large_grid_wg_func;
 } _cl_command_run;
 
-// clEnqueueCommandBufferKHR
+/* For clEnqueueCommandBufferKHR(). */
 typedef struct
 {
   cl_command_buffer_khr buffer;
 } _cl_command_replay;
 
-// clEnqueueNativeKernel
+/* For clEnqueueNativeKernel(). */
 typedef struct
 {
   void *args;
@@ -183,7 +185,7 @@ typedef struct
   void(CL_CALLBACK *user_func) (void *);
 } _cl_command_native;
 
-// clEnqueueReadBuffer
+/* For clEnqueueReadBuffer(). */
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
@@ -194,7 +196,7 @@ typedef struct
   size_t *content_size;
 } _cl_command_read;
 
-// clEnqueueWriteBuffer
+/* For clEnqueueWriteBuffer(). */
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
@@ -203,7 +205,7 @@ typedef struct
   size_t size;
 } _cl_command_write;
 
-// clEnqueueCopyBuffer
+/* For clEnqueueCopyBuffer(). */
 typedef struct
 {
   pocl_mem_identifier *src_mem_id;
@@ -217,7 +219,7 @@ typedef struct
   size_t size;
 } _cl_command_copy;
 
-// clEnqueueReadBufferRect
+/* For clEnqueueReadBufferRect(). */
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
@@ -231,7 +233,7 @@ typedef struct
   size_t host_slice_pitch;
 } _cl_command_read_rect;
 
-// clEnqueueWriteBufferRect
+/* For clEnqueueWriteBufferRect(). */
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
@@ -245,7 +247,7 @@ typedef struct
   size_t host_slice_pitch;
 } _cl_command_write_rect;
 
-// clEnqueueCopyBufferRect
+/* For clEnqueueCopyBufferRect(). */
 typedef struct
 {
   pocl_mem_identifier *src_mem_id;
@@ -261,21 +263,21 @@ typedef struct
   size_t dst_slice_pitch;
 } _cl_command_copy_rect;
 
-// clEnqueueMapBuffer
+/* For clEnqueueMapBuffer(). */
 typedef struct
 {
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_map;
 
-/* clEnqueueUnMapMemObject */
+/* For clEnqueueUnMapMemObject(). */
 typedef struct
 {
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_unmap;
 
-/* clEnqueueFillBuffer */
+/* For clEnqueueFillBuffer(). */
 typedef struct
 {
   pocl_mem_identifier *dst_mem_id;
@@ -285,7 +287,7 @@ typedef struct
   size_t pattern_size;
 } _cl_command_fill_mem;
 
-/* clEnqueue(Write/Read)Image */
+/* For clEnqueue(Write/Read)Image(). */
 typedef struct
 {
   pocl_mem_identifier *src_mem_id;
@@ -325,7 +327,7 @@ typedef struct
   size_t region[3];
 } _cl_command_copy_image;
 
-/* clEnqueueFillImage */
+/* For clEnqueueFillImage(). */
 typedef struct
 {
   pixel_t fill_pixel;
@@ -336,14 +338,14 @@ typedef struct
   size_t region[3];
 } _cl_command_fill_image;
 
-/* clEnqueueMarkerWithWaitlist */
+/* For clEnqueueMarkerWithWaitlist(). */
 typedef struct
 {
   void *data;
   int has_wait_list;
 } _cl_command_marker;
 
-/* clEnqueueBarrierWithWaitlist */
+/* For clEnqueueBarrierWithWaitlist(). */
 typedef _cl_command_marker _cl_command_barrier;
 
 typedef enum pocl_migration_type_e {
@@ -353,7 +355,7 @@ typedef enum pocl_migration_type_e {
   ENQUEUE_MIGRATE_TYPE_D2D
 } pocl_migration_type_t;
 
-/* clEnqueueMigrateMemObjects */
+/* For clEnqueueMigrateMemObjects(). */
 typedef struct
 {
   pocl_migration_type_t type;

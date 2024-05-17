@@ -207,10 +207,10 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   POCL_INIT_LOCK (d->cq_lock);
 
-  /* cpu-minimal driver represents only one "compute unit" as
-     it doesn't exploit multiple hardware threads. Multiple
+  /* The cpu-minimal (also known as 'basic') driver represents only one
+     "compute unit" as it doesn't exploit multiple hardware threads. Multiple
      basic devices can be still used for task level parallelism
-     using multiple OpenCL devices. */
+     using multiple OpenCL devices in multiple client threads. */
   device->max_compute_units = 1;
   device->max_sub_devices = 0;
   device->num_partition_properties = 0;

@@ -113,7 +113,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               memobj->device_ptrs[dev->global_mem_id].mem_ptr = NULL;
             }
 
-          /* Free host mem allocated by the runtime */
+          /* Free host mem allocated by the runtime. */
           if (memobj->mem_host_ptr != NULL)
             {
               if (memobj->flags & CL_MEM_USE_HOST_PTR)
@@ -129,8 +129,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
       assert (memobj->mem_host_ptr == NULL);
       assert (memobj->device_ptrs == NULL);
-
-      /* Fire any registered destructor callbacks */
+      /* Fire any registered destructor callbacks. */
       callback = memobj->destructor_callbacks;
       while (callback)
       {

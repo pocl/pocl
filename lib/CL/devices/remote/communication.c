@@ -2082,8 +2082,9 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
 
   nc.request.m.create_buffer.flags = mem->flags;
   nc.request.m.create_buffer.size = mem->size;
-  // see https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer_002dInteger-Conversion.html
-  // for reason behind the double cast
+  /* See
+     https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer_002dInteger-Conversion.html
+     for the reason behind the double cast. */
   nc.request.m.create_buffer.host_ptr = (uint64_t)(uintptr_t)mem->mem_host_ptr;
 
 #ifdef ENABLE_RDMA

@@ -2,6 +2,7 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
                  2011-2019 Pekka Jääskeläinen
+                 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -72,7 +73,7 @@
 #endif
 
 /*
- * a workaround for a detection problem in Valgrind, which causes
+ * A workaround for a detection problem in Valgrind, which causes
  * false positives. Valgrind manual states:
  *
  * Helgrind only partially correctly handles POSIX condition variables. This is
@@ -148,6 +149,7 @@
       assert ((__OBJ__)->pocl_refcount > 0);                                  \
     }                                                                         \
   while (0)
+
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
@@ -312,6 +314,7 @@ extern uint64_t last_object_id;
 
 #define POCL_GVAR_INIT_KERNEL_NAME "pocl.gvar.init"
 
+/* Stores kernel argument data defined by clSetKernelArg(). */
 typedef struct pocl_argument {
   uint64_t size;
   /* The "offset" is used to simplify subbuffer handling.
@@ -319,13 +322,13 @@ typedef struct pocl_argument {
    */
   uint64_t offset;
   void *value;
-  /* 1 if this argument has been set by clSetKernelArg */
+  /* 1 if this argument has been set by clSetKernelArg. */
   char is_set;
   /* 1 if the argument is read-only according to kernel metadata. So either
-   * a buffer with "const" qualifier, or an image with read_only qualifier  */
+   * a buffer with "const" qualifier, or an image with read_only qualifier.  */
   char is_readonly;
   /* 1 if the argument pointer is a raw pointer (SVM, USM or device),
-     not a cl_mem handle */
+     not a cl_mem handle. */
   char is_raw_ptr;
 } pocl_argument;
 
@@ -346,6 +349,7 @@ typedef enum
 #define ARG_IS_LOCAL(a) (a.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
 #define ARGP_IS_LOCAL(a) (a->address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
 
+/* Kernel argument metadata. */
 typedef struct pocl_argument_info {
   char* type_name;
   char* name;
@@ -356,53 +360,71 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
+/* The device driver layer operations. The device implementations override
+   these hooks for their device-specific functionality. */
 struct pocl_device_ops {
   const char *device_name;
 
-  /* New driver api extension for out-of-order execution and
-     asynchronous devices.
-     See this for reference: http://URN.fi/URN:NBN:fi:tty-201412051583
-     See basic and pthread driver for reference. */
+  /****** The API for the out-of-order execution API and asynchronous devices.
 
-  /* submit gives the command for the device. The command may be left in the cq
-     or stored to the device driver owning the cq. submit is called
-     with node->sync.event.event locked, and must return with it unlocked. */
+     See this master's thesis for reference documentation:
+     http://URN.fi/URN:NBN:fi:tty-201412051583
+     See basic and pthread drivers for reference implementations. */
+
+  /**
+   * Passes a command for the device.
+   *
+   * The command may be left in the cq or stored to the device driver owning
+   * the cq. submit is called with node->sync.event.event locked, and must
+   * return with it unlocked. */
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
-  /* join is called by clFinish and this function blocks until all the enqueued
-     commands are finished. Called by the user thread; see notify_cmdq_finished
-     for the driver thread counterpart. */
+  /**
+   * Called by clFinish and this function blocks until all the enqueued
+   * commands are finished.
+   *
+   * Called by the user thread; see notify_cmdq_finished
+   * for the driver thread counterpart. */
   void (*join) (cl_device_id device, cl_command_queue cq);
 
-  /* flush is called when clFlush is called. This function ensures that
-     commands will be eventually executed. It is up to the device what happens
-     here, if anything. See basic and pthread for reference.*/
+  /**
+   * Called when clFlush is called.
+   *
+   * This function ensures that
+   * commands will be eventually executed. It is up to the device what happens
+   * here, if anything. See basic and pthread for reference.*/
   void (*flush) (cl_device_id device, cl_command_queue cq);
 
-  /* notify is used to communicate to a device driver that an event, it has
-     been waiting, has been completed. Upon call, both events are locked, and
-     must be locked also on return.*/
+  /**
+   * Used to communicate to a device driver that an event, it has
+   * been waiting, has been completed.
+   *
+   * Upon call, both events are locked, and
+   * must be locked also on return. */
   void (*notify) (cl_device_id device, cl_event event, cl_event finished);
 
-  /* broadcast is(has to be) called by the device driver when a command is
-     completed.
-     It is used to broadcast notifications to device drivers waiting
-     this event to complete.
-     There is a default implementation for this. Use it if there is no need
-     to do anything special here.
-     The default implementation calls notify(event, target_event) for the
-     list of events waiting on 'event'. */
+  /**
+   * Must be called by the device driver when a command is completed.
+   *
+   * It is used to broadcast notifications to device drivers waiting
+   * this event to complete. There is a default implementation for this. Use it
+   * if there is no need to do anything special here. The default
+   * implementation calls notify (event, target_event) for the list of events
+   * waiting on 'event'. */
   void (*broadcast) (cl_event event);
 
-  /* wait_event is called by clWaitForEvents() and blocks the execution until
-   * the waited event is complete or failed. Called by user threads; see the
+  /**
+   * Called by clWaitForEvents() and blocks the execution until
+   * the waited event is complete or failed.
+   *
+   * Called by user threads; see the
    * notify_event_finished() callback for driver thread counterpart.
    * Called (and must return) with unlocked event. */
   void (*wait_event) (cl_device_id device, cl_event event);
 
-  /* update_event is an extra callback called during handling of event status
-   * changes, useful if something device specific needs to be done. May be
-   * NULL; no need to implement if not needed.
+  /**
+   * Optional: An extra callback called during handling of event status
+   * changes, useful if something device specific needs to be done.
    *
    * Called via pocl_update_event_* functions in pocl_util.c
    * All pocl_update_event_* (except COMPLETE) must be called (and return)
@@ -410,70 +432,114 @@ struct pocl_device_ops {
    */
   void (*update_event) (cl_device_id device, cl_event event);
 
-  /* free_event_data may be called when event is freed. Event data may only be
-     used by the device driver owning the corresponding command.
-     No need to implement this if the device does not need any event data. */
+  /**
+   * May be called when event is freed.
+   *
+   * Event data may only be
+   * used by the device driver owning the corresponding command.
+   * No need to implement this if the device does not need any event data. */
   void (*free_event_data) (cl_event event);
 
-  /* Called from driver threads to notify every user thread waiting on
-   * command queue finish. See join() for user counterpart.
-   * Driver may chose to not implement this, which will result in
+  /**
+   * Called from driver threads to notify every user thread waiting on
+   * command queue finish.
+   *
+   * See join() for user counterpart.
+   * The river may chose to not implement this, which will result in
    * undefined behaviour in multi-threaded user programs. */
   void (*notify_cmdq_finished) (cl_command_queue cq);
 
-  /* Called from driver threads to notify every user thread waiting on
-   * a specific event. See wait_event() for user counterpart.
+  /**
+   * Called from driver threads to notify every user thread waiting on
+   * a specific event.
+   *
+   * See wait_event() for user counterpart.
    * Driver may chose to not implement this, which will result in
    * undefined behaviour in multi-threaded user programs. */
   void (*notify_event_finished) (cl_event event);
 
-  /* /New driver api extension */
+  /****** Device init/uninit APIs. */
 
-  /* Detects & returns the number of available devices the driver finds on the system. */
+  /**
+   * Detects & returns the number of available devices the driver finds on the
+   * system. */
   unsigned int (*probe) (struct pocl_device_ops *ops);
-  /* Device initialization. Parameters:
-   *  j : progressive index for the devices of the same type
-   *  device : struct to initialize
-   *  parameters : optional environment with device-specific parameters
+
+  /**
+   * Device initialization.
+   *
+   * @param j progressive index for the devices of the same type
+   * @param device struct to initialize
+   * @param parameters optional environment with device-specific parameters
    */
   cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
-  /* Device type initialization after all devices have been initialized */
+
+  /**
+   * Device type initialization after all devices have been initialized
+   */
   cl_int (*post_init) (struct pocl_device_ops *ops);
-  /* uninitializes the driver for a particular device. May free hardware resources. */
+
+  /** Uninitializes the driver for a particular device.
+   *
+   * May free hardware resources. */
   cl_int (*uninit) (unsigned j, cl_device_id device);
-  /* reinitializes the driver for a particular device. Called after uninit;
-   * the first initialization is done by 'init'. May be NULL */
+
+  /**
+   * Reinitializes the driver for a particular device.
+   *
+   * Called after uninit; the first initialization is done by 'init'. May be
+   * NULL */
   cl_int (*reinit) (unsigned j, cl_device_id device, const char *parameters);
 
-  /* allocate a buffer in device memory */
+  /****** Memory management APIs. */
+
+  /** Allocate a buffer in the device's global memory. */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
-  /* free a device buffer */
+
+  /** Free a device buffer. */
   void (*free) (cl_device_id device, cl_mem mem_obj);
 
-  /* return >0 if driver can migrate directly between devices.
+  /** Optional: Allocate/register a sub-buffer in the device's global memory.
+   *
+   * If defined, this function should set the mem_ptr for the global mem of the
+   * device to the subbuffer position/id. The mem_ptr of the memory is
+   * pre-initialized to the parent buffer's starting address + the sub-buffer
+   * offset.
+   *
+   * @param sub_buf is initialized in clCreateSubBuffer(). */
+  cl_int (*alloc_subbuffer) (cl_device_id device, cl_mem sub_buf);
+
+  /** Optional: Free a sub-buffer in the device's global memory. */
+  void (*free_subbuffer) (cl_device_id device, cl_mem mem_obj);
+
+  /** Return >0 if the driver can migrate directly between devices.
+   *
    * Priority between devices signalled by larger numbers. */
   int (*can_migrate_d2d) (cl_device_id dest, cl_device_id source);
-  /* migrate buffer content directly between devices */
+
+  /** Migrate buffer content directly between devices. */
   int (*migrate_d2d) (cl_device_id src_dev,
                       cl_device_id dst_dev,
                       cl_mem mem,
                       pocl_mem_identifier *src_mem_id,
                       pocl_mem_identifier *dst_mem_id);
 
-  /* SVM Ops */
+  /** Shared Virtual Memory operations. */
+
   void (*svm_free) (cl_device_id dev, void *svm_ptr);
   void *(*svm_alloc) (cl_device_id dev, cl_svm_mem_flags flags, size_t size);
   void (*svm_map) (cl_device_id dev, void *svm_ptr);
   void (*svm_unmap) (cl_device_id dev, void *svm_ptr);
-  /* these are optional. If the driver needs to do anything to be able
+
+  /** These are optional. If the driver needs to do anything to be able
    * to use host memory, it should do it (and undo it) in these callbacks.
    * Currently used by HSA.
    * See pocl_driver_alloc_mem_obj and pocl_driver_free for details. */
   void (*svm_register) (cl_device_id dev, void *host_ptr, size_t size);
   void (*svm_unregister) (cl_device_id dev, void *host_ptr, size_t size);
 
-  /* we can use restrict here, because Spec says overlapping copy should return
-   * with CL_MEM_COPY_OVERLAP error. */
+  /** We can use restrict here, because Spec says overlapping copy should
+   * return with CL_MEM_COPY_OVERLAP error. */
   void (*svm_copy) (cl_device_id dev, void *__restrict__ dst,
                     const void *__restrict__ src, size_t size);
   void (*svm_fill) (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
@@ -483,7 +549,8 @@ struct pocl_device_ops {
                        size_t *__restrict__ sizes);
   void (*svm_advise) (cl_device_id dev, const void *svm_ptr, size_t size,
                       cl_mem_advice_intel advice);
-  /* required for PoCL's command buffer extensions */
+
+  /** Required for PoCL's command buffer extensions */
   void (*svm_copy_rect) (cl_device_id dev,
                          void *__restrict__ dst,
                          const void *__restrict__ src,
@@ -503,16 +570,17 @@ struct pocl_device_ops {
                          void *__restrict__ pattern,
                          size_t pattern_size);
 
-  /* USM Ops (Intel) */
+  /** Intel Unified Shared Memory operations. */
   void *(*usm_alloc) (cl_device_id dev, unsigned alloc_type,
                       cl_mem_alloc_flags_intel flags, size_t size, cl_int *errcode);
   void (*usm_free) (cl_device_id dev, void *svm_ptr);
-  /* this one is separate, because the device might choose to not support it in
-   * the driver. in that case, the runtime will create an event of usm_free
+
+  /* This one is separate, because the device might choose to not support it in
+   * the driver. In that case, the runtime will create an event of usm_free
    * type, which has a wait on all CQs in the context. */
   void (*usm_free_blocking) (cl_device_id dev, void *svm_ptr);
 
-  /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
+  /* The following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
 
   /* clEnqReadBuffer */
@@ -587,20 +655,25 @@ struct pocl_device_ops {
                    const void *__restrict__  pattern,
                    size_t pattern_size);
 
-  /* Maps 'size' bytes of device global memory at  + offset to
-     host-accessible memory. This might or might not involve copying
-     the block from the device. */
+  /**
+   * Maps 'size' bytes of device global memory at  + offset to
+   * host-accessible memory.
+   *
+   * This might or might not involve copying the block from the device. */
   cl_int (*map_mem) (void *data,
                      pocl_mem_identifier * src_mem_id,
                      cl_mem src_buf,
                      mem_mapping_t *map);
+
   cl_int (*unmap_mem) (void *data,
                        pocl_mem_identifier * dst_mem_id,
                        cl_mem dst_buf,
                        mem_mapping_t *map);
 
-  /* these don't actually do the mapping, only return a pointer
-   * where the driver will map in future. Separate API from map/unmap
+  /** These don't actually do the mapping, only return a pointer
+   * where the driver will map in future.
+   *
+   * Separate API from map/unmap
    * because 1) unlike other driver ops, this is called from the user thread,
    * so it can be called in parallel with map/unmap or any command executing
    * in the driver; 2) most drivers can share the code for these */
@@ -609,13 +682,16 @@ struct pocl_device_ops {
   cl_int (*free_mapping_ptr) (void *data, pocl_mem_identifier *mem_id,
                               cl_mem mem, mem_mapping_t *map);
 
-  /* if the driver needs to do something at kernel create/destroy time */
+  /****** Kernel build/management APIs. */
+
+  /** Optional: If the driver needs to do something at kernel create/destroy
+   * time. */
   int (*create_kernel) (cl_device_id device, cl_program program,
                         cl_kernel kernel, unsigned program_device_i);
   int (*free_kernel) (cl_device_id device, cl_program program,
                       cl_kernel kernel, unsigned program_device_i);
 
-  /* program building callbacks */
+  /** Program building callbacks. */
   int (*build_source) (
       cl_program program, cl_uint device_i,
 
@@ -632,7 +708,7 @@ struct pocl_device_ops {
       /* 1 = compile & link, 0 = compile only, linked later via clLinkProgram*/
       int link_program, int spir_build);
 
-  /* build a program with builtin kernels. */
+  /** Build a program with builtin kernels. */
   int (*build_builtin) (cl_program program, cl_uint device_i);
 
   int (*link_program) (cl_program program, cl_uint device_i,
@@ -643,68 +719,87 @@ struct pocl_device_ops {
                        /* 1 = create library, 0 = create executable*/
                        int create_library);
 
-  /* optional. called after build/link and after metadata setup. */
+  /** Optional: Called after build/link and after metadata setup. */
   int (*post_build_program) (cl_program program, cl_uint device_i);
-  /* optional. Ensures that everything is built for
-   * returning a poclbinary to the user. E.g. for CPU driver this means
-   * building a dynamic WG sized parallel.bc */
+
+  /** Optional: Ensures that everything is built for returning a poclbinary
+   * to the user.
+   *
+   * E.g. for CPU driver this means building a dynamic WG sized parallel.bc */
   int (*build_poclbinary) (cl_program program, cl_uint device_i);
 
-  /* Optional. If the driver uses the default build_poclbinary implementation
+  /** Optional: If the driver uses the default build_poclbinary implementation
    * from common_driver.c, that implementation calls this to compile a
    * "dynamic WG size" kernel. */
   void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize);
 
-  /* Optional. driver should free the content of "program->data" here,
+  /** Optional: The driver should free the content of "program->data" here,
    * if it fills it. */
   int (*free_program) (cl_device_id device, cl_program program,
                        unsigned program_device_i);
 
-  /* Driver should setup kernel metadata here, if it can, and return non-zero
-   * on success. This is called after compilation/build/link. E.g. CPU driver
-   * parses the LLVM metadata. */
+  /**
+   * The driver should setup kernel metadata here, if it can, and return
+   * non-zero on success.
+   *
+   * This is called after compilation/build/link. E.g. CPU
+   * driver parses the LLVM metadata. */
   int (*setup_metadata) (cl_device_id device, cl_program program,
                          unsigned program_device_i);
 
-  /* Driver should examine the binary and return non-zero if it can load it.
-   * Note that it's never called with pocl-binaries; those are automatically
-   * accepted if device-hash in the binary's header matches the device. */
+  /** The driver should examine the binary and return non-zero if it can load
+   * it.
+   *
+   * Note that it's never called with pocl-binaries; those are
+   * automatically accepted if device-hash in the binary's header matches the
+   * device. */
   int (*supports_binary) (cl_device_id device, const size_t length,
                           const char *binary);
 
-  /* Optional. if the driver needs to use hardware resources
+  /** Optional: If the driver needs to use hardware resources
    * for command queues, it should use these callbacks */
   int (*init_queue) (cl_device_id device, cl_command_queue queue);
   int (*free_queue) (cl_device_id device, cl_command_queue queue);
 
-  /* Optional. if the driver needs to use per-context resources,
+  /** Optional: If the driver needs to use per-context resources,
    * it should use these callbacks for management. */
   int (*init_context) (cl_device_id device, cl_context context);
   int (*free_context) (cl_device_id device, cl_context context);
 
   /* clEnqueueNDRangeKernel */
   void (*run) (void *data, _cl_command_node *cmd);
-  /* for clEnqueueNativeKernel. may be NULL */
+
+  /* For clEnqueueNativeKernel. May be NULL. */
   void (*run_native) (void *data, _cl_command_node *cmd);
 
-  /* Perform initialization steps and can return additional
-     build options that are required for the device. The caller
-     owns the returned string. may be NULL */
+  /** Perform initialization steps and can return additional
+   * build options that are required for the device.
+   *
+   * The caller owns the returned string. May be NULL. */
   char* (*init_build) (void *data);
 
-  /* may be NULL */
+  /**
+   * Optional: Called from the LLVM-based work-group function builder to
+   * initialize the LLVM TargetMachine, if needed. */
   void (*init_target_machine) (void *data, void *target_machine);
 
-  /* returns a hash string that should identify the device. This string
-   * is used when writing/loading pocl binaries to decide compatibility. */
+  /** Returns a hash string that should uniquely identify the device.
+   *
+   * This string is used when writing/loading pocl binaries to decide
+   * compatibility.
+   */
   char* (*build_hash) (cl_device_id device);
 
-  /* the following callbacks deal with images ONLY, with the exception of
+  /****** Image-related APIs (all optional). */
+
+  /* The following callbacks deal with images ONLY, with the exception of
    * IMAGE1D_BUFFER type (which is implemented as a buffer).
    * If the device does not support images, all of these may be NULL. */
 
-  /* creates a device-specific hardware resource for sampler. May be NULL */
+  /** Creates/frees a device-specific hardware resource for sampler. May be
+   * NULL
+   */
   int (*create_sampler) (cl_device_id device,
                          cl_sampler samp,
                          unsigned context_device_i);
@@ -712,7 +807,7 @@ struct pocl_device_ops {
                        cl_sampler samp,
                        unsigned context_device_i);
 
-  /* copies image to image, on the same device (or same global memory). */
+  /** Copies image to image, on the same device (or same global memory). */
   cl_int (*copy_image_rect) (void *data,
                              cl_mem src_image,
                              cl_mem dst_image,
@@ -722,7 +817,8 @@ struct pocl_device_ops {
                              const size_t *dst_origin,
                              const size_t *region);
 
-  /* copies a region from host OR device buffer to device image.
+  /** Copies a region from host OR device buffer to device image.
+   *
    * clEnqueueCopyBufferToImage: src_mem_id = buffer,
    *     src_host_ptr = NULL, src_row_pitch = src_slice_pitch = 0
    * clEnqueueWriteImage: src_mem_id = NULL,
@@ -739,7 +835,8 @@ struct pocl_device_ops {
                                size_t src_slice_pitch,
                                size_t src_offset);
 
-  /* copies a region from device image to host or device buffer
+  /** Copies a region from device image to host or device buffer
+   *
    * clEnqueueCopyImageToBuffer: dst_mem_id = buffer,
    *     dst_host_ptr = NULL, dst_row_pitch = dst_slice_pitch = 0
    * clEnqueueReadImage: dst_mem_id = NULL,
@@ -756,27 +853,28 @@ struct pocl_device_ops {
                              size_t dst_slice_pitch,
                              size_t dst_offset);
 
-  /* maps the entire image from device to host */
+  /** Maps the entire image from device to host. */
   cl_int (*map_image) (void *data,
                        pocl_mem_identifier *mem_id,
                        cl_mem src_image,
                        mem_mapping_t *map);
 
-  /* unmaps the entire image from host to device */
+  /** Unmaps the entire image from host to device. */
   cl_int (*unmap_image) (void *data,
                          pocl_mem_identifier *mem_id,
                          cl_mem dst_image,
                          mem_mapping_t *map);
 
-  /* fill image with pattern */
+  /** Fill image with pattern. */
   cl_int (*fill_image) (void *data, cl_mem image, pocl_mem_identifier *mem_id,
                         const size_t *origin, const size_t *region,
                         cl_uint4 orig_pixel, pixel_t fill_pixel,
                         size_t pixel_size);
 
-  /* custom device functionality */
+  /****** Custom device functionality APIs (all optional). */
 
-  /* The device can override this function to perform driver-specific
+  /**
+   * The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
    * is left to the runtime. */
   void (*compute_local_size) (cl_device_id dev, cl_kernel kernel,
@@ -785,6 +883,8 @@ struct pocl_device_ops {
                               size_t global_z, size_t *local_x,
                               size_t *local_y, size_t *local_z);
 
+  /** If the device implements an extension that introduces new
+   * clGetDeviceInfo() types, it can override this function. */
   cl_int (*get_device_info_ext) (cl_device_id dev,
                                  cl_device_info param_name,
                                  size_t param_value_size,
@@ -798,6 +898,8 @@ struct pocl_device_ops {
                               void *param_value,
                               size_t *param_value_size_ret);
 
+  /** If the device implements an extension to the clSetKernelExecInfo,
+   * it can override this function. */
   cl_int (*set_kernel_exec_info_ext) (cl_device_id dev,
                                       unsigned program_device_i,
                                       cl_kernel kernel,
@@ -805,17 +907,18 @@ struct pocl_device_ops {
                                       size_t param_value_size,
                                       const void *param_value);
 
-  /* optional. Returns synchronized Device & Host timestamps. */
+  /** Optional: Returns synchronized Device & Host timestamps. */
   cl_int (*get_synchronized_timestamps) (cl_device_id dev,
                                          cl_ulong *dev_timestamp,
                                          cl_ulong *host_timestamp);
 
-  /* optional. Return CL_SUCCESS if the device can be, or is associated with
+  /** Return CL_SUCCESS if the device can be, or is associated with
    * the GL context described in properties. */
   cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
                                   const cl_context_properties *properties);
 
-  /* cl_khr_command_buffer extension */
+  /****** cl_khr_command_buffer extension APIs (all optional). */
+
   cl_int (*create_finalized_command_buffer) (
       cl_device_id device, cl_command_buffer_khr command_buffer);
 
@@ -1299,9 +1402,15 @@ struct _cl_command_queue {
   cl_device_id device;
   cl_command_queue_properties properties;
   /* implementation */
-  cl_event events; /* events of the enqueued commands in enqueue order */
+
+  /* Events of the enqueued commands in enqueue order. */
+  cl_event events;
   struct _cl_event *barrier;
-  unsigned long command_count; /* counter for unfinished command enqueued */
+
+  /* Number of unfinished command enqueued. */
+  unsigned long command_count;
+
+  /* The event of the last command pushed to the queue. */
   pocl_data_sync_item last_event;
 
   cl_queue_properties queue_properties[10];
@@ -1443,17 +1552,22 @@ struct _cl_mem {
    * it marks the actual content size in bytes,
    * to avoid transferring garbage data when
    * migrating / reading buffers. */
+
+  /* cl_pocl_content_size: If set to nonzero, it defines the size of the
+     defined content in bytes, which can be used to avoid transferring
+     untouched data when migrating / reading buffers. */
   size_t content_size;
 
-  /* host backing memory for a buffer.
+  /** The host backing memory for a buffer.
    *
-   * This is either user provided host-ptr, or driver allocated,
-   * or temporary allocation by a migration command. Since it
+   * This is either a user-provided host pointer, a driver-allocated,
+   * or a temporary allocation by a migration command. Since it
    * can have multiple users, it's refcounted. */
   void *mem_host_ptr;
 
-  /* version of buffer content in mem_host_ptr */
+  /** The version of the buffer content in mem_host_ptr. */
   uint64_t mem_host_ptr_version;
+
   /* reference count; when it reaches 0,
    * the mem_host_ptr is automatically freed */
   uint mem_host_ptr_refcount;

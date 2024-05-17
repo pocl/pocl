@@ -107,12 +107,13 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->size = info->size;
   mem->origin = info->origin;
   pocl_cl_mem_inherit_flags (mem, buffer, flags);
-  /* all other struct members are NULL (not valid) */
+  /* All other struct members are NULL (not valid). */
 
   POCL_RETAIN_OBJECT(mem->parent);
   POCL_RETAIN_OBJECT(mem->context);
 
-  POCL_MSG_PRINT_INFO ("Created Subbuffer %p, parent %p\n", mem, mem->parent);
+  POCL_MSG_PRINT_MEMORY ("Created Subbuffer %p, parent %p\n", mem,
+                         mem->parent);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
