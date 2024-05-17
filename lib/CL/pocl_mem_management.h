@@ -64,7 +64,7 @@ cl_event pocl_mem_manager_new_event ();
         {                                                                     \
           POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);         \
         }                                                                     \
-      pocl_buf_implicit_migration_info *mi, *tmp;                             \
+      pocl_buffer_migration_info *mi, *tmp;                             \
       LL_FOREACH_SAFE ((cmd)->migr_infos, mi, tmp)                            \
       {                                                                       \
         POname (clReleaseMemObject (mi->buffer));                             \

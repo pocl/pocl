@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clEnqueueCopyImageToBuffer()
 
-   Copyright (c) 2011-2023 pocl developers
+   Copyright (c) 2011-2024 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -86,8 +86,6 @@ pocl_copy_image_to_buffer_common (
 
   if (errcode != CL_SUCCESS)
     return errcode;
-
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
 
   POCL_GOTO_ERROR_ON (
       (dst_buffer->size > command_queue->device->max_mem_alloc_size),

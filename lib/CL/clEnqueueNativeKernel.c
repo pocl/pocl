@@ -74,7 +74,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_buf_implicit_migration_info *migr_infos = NULL;
+  pocl_buffer_migration_info *migr_infos = NULL;
   char *rdonly = (char *)alloca (num_mem_objects);
   cl_mem *ml = (cl_mem *)alloca (num_mem_objects * sizeof (cl_mem));
   memcpy (ml, mem_list, num_mem_objects * sizeof (cl_mem));
@@ -115,7 +115,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
       arg_locs[i] = arg_loc;
     }
 
-  errcode = pocl_create_command_with_multiple_buffers (
+  errcode = pocl_create_command (
     &command_node, command_queue, CL_COMMAND_NATIVE_KERNEL, event,
     num_events_in_wait_list, event_wait_list, migr_infos);
 

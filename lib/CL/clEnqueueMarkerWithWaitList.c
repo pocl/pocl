@@ -49,7 +49,7 @@ CL_API_SUFFIX__VERSION_1_2
 
   errcode
     = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, event,
-                           num_events_in_wait_list, event_wait_list, NULL, 0);
+                           num_events_in_wait_list, event_wait_list, NULL);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

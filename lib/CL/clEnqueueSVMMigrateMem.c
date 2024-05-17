@@ -85,7 +85,7 @@ pocl_svm_migrate_mem_common (cl_command_type command_type,
   _cl_command_node *cmd = NULL;
   errcode
     = pocl_create_command (&cmd, command_queue, command_type, event,
-                           num_events_in_wait_list, event_wait_list, NULL, 0);
+                           num_events_in_wait_list, event_wait_list, NULL);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;

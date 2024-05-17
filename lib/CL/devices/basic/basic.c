@@ -289,7 +289,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
                   cl_mem m = (*(cl_mem *)(al->value));
                   ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
                 }
-              *(void **)arguments[i] = (char *)ptr + al->offset;
+              *(void **)arguments[i] = (char *)ptr;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -422,7 +422,7 @@ pocl_basic_run_native (void *data, _cl_command_node *cmd)
   cl_event ev = cmd->sync.event.event;
   cl_device_id dev = cmd->device;
   size_t i = 0;
-  pocl_buf_implicit_migration_info *mig = NULL;
+  pocl_buffer_migration_info *mig = NULL;
   LL_FOREACH (cmd->migr_infos, mig)
   {
     void *arg_loc = cmd->command.native.arg_locs[i];

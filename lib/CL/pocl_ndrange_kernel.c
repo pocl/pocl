@@ -210,15 +210,18 @@ SKIP_WG_SIZE_CALCULATION:
   return CL_SUCCESS;
 }
 
+/**
+ * Collect the kernel's buffer usage for implicit migration.
+ */
 static cl_int
 pocl_kernel_collect_mem_objs (
   cl_command_queue command_queue,
   cl_kernel kernel,
   struct pocl_argument *src_arguments,
-  pocl_buf_implicit_migration_info **dst_migr_infos)
+  pocl_buffer_migration_info **dst_migr_infos)
 {
   cl_device_id realdev = pocl_real_dev (command_queue->device);
-  pocl_buf_implicit_migration_info *migr_infos = NULL;
+  pocl_buffer_migration_info *migr_infos = NULL;
 
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {
@@ -267,15 +270,12 @@ pocl_kernel_collect_mem_objs (
             }
           else
             {
-              /* subbuffers are handled in clSetKernelArg */
-              assert (buf->parent == NULL);
-
-              if (al->offset > 0)
+              if (buf->origin > 0)
                 POCL_RETURN_ERROR_ON (
-                    (!buf->has_device_address
-                     && al->offset % realdev->mem_base_addr_align != 0),
-                    CL_MISALIGNED_SUB_BUFFER_OFFSET,
-                    "SubBuffer is not properly aligned for this device");
+                  (!buf->has_device_address
+                   && buf->origin % realdev->mem_base_addr_align != 0),
+                  CL_MISALIGNED_SUB_BUFFER_OFFSET,
+                  "SubBuffer is not properly aligned for this device");
 
               POCL_RETURN_ERROR_ON ((buf->size > realdev->max_mem_alloc_size),
                                     CL_OUT_OF_RESOURCES,
@@ -484,7 +484,7 @@ pocl_ndrange_kernel_common (
   size_t raw_ptr_count = 0;
 
   /* A linked list of memobjects implicit migration data. */
-  pocl_buf_implicit_migration_info *buf_migrations = NULL;
+  pocl_buffer_migration_info *buf_migrations = NULL;
 
   assert (command_buffer == NULL
           || (event_wait_list == NULL && event_p == NULL));
@@ -526,13 +526,13 @@ pocl_ndrange_kernel_common (
 
   if (command_buffer == NULL)
     {
-      errcode = pocl_create_command_with_multiple_buffers (
+      errcode = pocl_create_command (
         cmd, command_queue, CL_COMMAND_NDRANGE_KERNEL, event_p,
         num_items_in_wait_list, event_wait_list, buf_migrations);
     }
   else
     {
-      errcode = pocl_create_recorded_command_with_multiple_buffers (
+      errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, CL_COMMAND_NDRANGE_KERNEL,
         num_items_in_wait_list, sync_point_wait_list, buf_migrations);
     }

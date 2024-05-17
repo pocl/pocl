@@ -293,7 +293,7 @@ void Level0Queue::appendEventToList(_cl_command_node *Cmd, const char **Msg) {
   case CL_COMMAND_NDRANGE_KERNEL:
     run(Cmd);
     // synchronize content of writable USE_HOST_PTR buffers with the host
-    pocl_buf_implicit_migration_info *MI;
+    pocl_buffer_migration_info *MI;
     LL_FOREACH (Cmd->migr_infos, MI) {
       cl_mem MigratedBuf = MI->buffer;
       if ((MigratedBuf->flags & CL_MEM_READ_ONLY) != 0u) {
@@ -1153,7 +1153,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-        void *MemPtr = (char*)memid->mem_ptr + PoclArg[i].offset;
+        void *MemPtr = memid->mem_ptr;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
         LEVEL0_CHECK_ABORT(Res);
         // optimization for read-only buffers
@@ -1213,7 +1213,7 @@ void Level0Queue::run(_cl_command_node *Cmd) {
   Level0Kernel *L0Kernel = (Level0Kernel *)Kernel->data[DeviceI];
 
   bool Needs64bitPtrs = false;
-  pocl_buf_implicit_migration_info *MI;
+  pocl_buffer_migration_info *MI;
   LL_FOREACH (Cmd->migr_infos, MI) {
     if (MI->buffer->size > UINT32_MAX) {
       Needs64bitPtrs = true;

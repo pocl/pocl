@@ -2,7 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -68,8 +68,9 @@ public:
 
   /************************************************************************/
 
-  virtual int createBuffer(BufferId_t BufferID, size_t size, uint64_t flags,
-                           void *host_ptr, void **device_addr) = 0;
+  virtual int createBuffer(BufferId_t BufferID, size_t Size, uint64_t Flags,
+                           void *HostPtr, BufferId_t ParentID, size_t Origin,
+                           void **DeviceAddr) = 0;
 
   virtual int freeBuffer(BufferId_t BufferID, bool is_svm) = 0;
 

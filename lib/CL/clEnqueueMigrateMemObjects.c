@@ -56,7 +56,7 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_buf_implicit_migration_info *migr_infos = NULL;
+  pocl_buffer_migration_info *migr_infos = NULL;
 
   for (i = 0; i < num_mem_objects; ++i)
     {

@@ -68,7 +68,6 @@ pocl_set_kernel_arg_pointer (cl_kernel kernel, cl_uint arg_index,
     }
   memcpy (p->value, &arg_value, sizeof (void *));
 
-  p->offset = 0;
   p->is_set = 1;
   p->is_readonly = 0;
   p->is_raw_ptr = 1;

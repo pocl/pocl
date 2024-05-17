@@ -73,7 +73,7 @@ POname(clEnqueueSVMFree) (cl_command_queue command_queue,
 
   errcode
     = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_FREE, event,
-                           num_events_in_wait_list, event_wait_list, NULL, 0);
+                           num_events_in_wait_list, event_wait_list, NULL);
 
   if (errcode != CL_SUCCESS)
     {

@@ -166,9 +166,9 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           }
 
         _cl_command_node *node = NULL;
-        errcode = pocl_create_command_with_multiple_buffers (
-          &node, used_queues[cmd->queue_idx], cmd->type, &syncpoints[sync_id],
-          j, deps, cmd->migr_infos);
+        errcode = pocl_create_command (&node, used_queues[cmd->queue_idx],
+                                       cmd->type, &syncpoints[sync_id], j,
+                                       deps, cmd->migr_infos);
         ++sync_id;
 
         if (errcode != CL_SUCCESS)
@@ -200,7 +200,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       cl_event final_ev;
       errcode = pocl_create_command (
         &node, used_queues[0], CL_COMMAND_COMMAND_BUFFER_KHR, &final_ev,
-        command_buffer->num_syncpoints, syncpoints, NULL, 0);
+        command_buffer->num_syncpoints, syncpoints, NULL);
       if (errcode != CL_SUCCESS)
         {
           pocl_mem_manager_free_command (node);

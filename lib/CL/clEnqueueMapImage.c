@@ -178,14 +178,15 @@ CL_API_SUFFIX__VERSION_1_0
 
   char rdonly = (map_flags & CL_MAP_READ);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, image, rdonly);
+  errcode = pocl_create_command (
+    &cmd, command_queue, CL_COMMAND_MAP_IMAGE, event, num_events_in_wait_list,
+    event_wait_list, pocl_append_unique_migration_info (NULL, image, rdonly));
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
+  cmd->command.map.buffer = image;
 
   POCL_MSG_PRINT_MEMORY ("Image %p, Mapping: host_ptr %p offset %zu\n", image,
                          mapping_info->host_ptr, mapping_info->offset);

@@ -2036,8 +2036,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
                 CUdeviceptr src
-                    = (CUdeviceptr)mem->device_ptrs[device->global_mem_id].mem_ptr
-                      + arguments[i].offset;
+                  = (CUdeviceptr)mem->device_ptrs[device->global_mem_id]
+                      .mem_ptr;
 
                 size_t align = kdata->alignments[i];
                 assert (align && "Zero alignment for pointer argument!");
@@ -2063,8 +2063,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 if (arguments[i].value)
                   {
                     cl_mem mem = *(void **)arguments[i].value;
-                    params[i] = &mem->device_ptrs[device->global_mem_id].mem_ptr
-                                + arguments[i].offset;
+                    params[i]
+                      = &mem->device_ptrs[device->global_mem_id].mem_ptr;
 
                     /* On ARM with USE_HOST_PTR, perform explicit copy to
                      * device */
@@ -2286,15 +2286,14 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       }
     case CL_COMMAND_MAP_BUFFER:
       {
-        cl_mem buffer = event->mem_objs[0];
         pocl_cuda_submit_map_mem (
-            stream, buffer, cmd->map.mem_id, cmd->map.mapping->offset,
-            cmd->map.mapping->size, cmd->map.mapping->host_ptr);
+          stream, cmd->map.buffer, cmd->map.mem_id, cmd->map.mapping->offset,
+          cmd->map.mapping->size, cmd->map.mapping->host_ptr);
         break;
       }
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       {
-        cl_mem buffer = event->mem_objs[0];
+        cl_mem buffer = cmd->unmap.buffer;
         assert (buffer->is_image == CL_FALSE);
         pocl_cuda_submit_unmap_mem (
             stream,
@@ -2315,14 +2314,14 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         {
         case ENQUEUE_MIGRATE_TYPE_D2H:
           {
-            cl_mem mem = event->mem_objs[0];
+            cl_mem mem = node->migr_infos->buffer;
             pocl_cuda_submit_read (stream, mem->mem_host_ptr,
                                    cmd->migrate.mem_id->mem_ptr, 0, mem->size);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_H2D:
           {
-            cl_mem mem = event->mem_objs[0];
+            cl_mem mem = node->migr_infos->buffer;
             pocl_cuda_submit_write (stream, mem->mem_host_ptr,
                                     cmd->migrate.mem_id->mem_ptr, 0,
                                     mem->size);
@@ -2330,7 +2329,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
           }
         case ENQUEUE_MIGRATE_TYPE_D2D:
           {
-            cl_mem mem = event->mem_objs[0];
+            cl_mem mem = node->migr_infos->buffer;
             pocl_cuda_submit_copy_p2p (
                 stream, cmd->migrate.src_device, cmd->migrate.src_id->mem_ptr,
                 0, cq->device, cmd->migrate.dst_id->mem_ptr, 0, mem->size);

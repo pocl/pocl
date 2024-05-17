@@ -79,6 +79,8 @@
 
 #define WORKGROUP_STRING_LENGTH 1024
 
+/* Object ids are generated from this global. Note: 1 will be the first
+   valid object id, thus 0 can be used to mark a non-object/null. */
 uint64_t last_object_id = 0;
 
 unsigned long buffer_c;
@@ -311,6 +313,7 @@ pocl_exec_command (_cl_command_node *node)
   cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
+  cl_mem mem = NULL;
 
   switch (node->type)
     {
@@ -406,7 +409,6 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-      cl_mem mem = NULL;
       assert (cmd->migrate.num_buffers > 0);
       mem = node->migr_infos->buffer;
 

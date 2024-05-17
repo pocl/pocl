@@ -58,6 +58,7 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
+#include "utlist_addon.h"
 
 #ifdef ENABLE_RELOCATION
 #if defined(__APPLE__)
@@ -433,7 +434,7 @@ cl_int
 pocl_create_event (cl_event *event,
                    cl_command_queue command_queue,
                    cl_command_type command_type,
-                   pocl_buf_implicit_migration_info *migration_infos,
+                   pocl_buffer_migration_info *migration_infos,
                    cl_context context)
 {
   static uint64_t event_id_counter = 0;
@@ -467,7 +468,7 @@ pocl_create_event (cl_event *event,
   else
     POCL_ATOMIC_INC (event_c);
 
-  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) Command %s\n",
+  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) for Command %s\n",
                          (*event)->id, (*event),
                          pocl_command_to_str (command_type));
 
@@ -553,12 +554,12 @@ FINISH:
  * @return 0 If any of the allocations fails (can't run the command). */
 static int
 preallocate_buffers (cl_device_id dev,
-                     pocl_buf_implicit_migration_info *migration_infos)
+                     pocl_buffer_migration_info *migration_infos)
 {
   size_t i;
   int errcode;
 
-  pocl_buf_implicit_migration_info *migr_info = NULL;
+  pocl_buffer_migration_info *migr_info = NULL;
   LL_FOREACH (migration_infos, migr_info)
   {
     cl_mem obj = migr_info->buffer;
@@ -593,7 +594,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
                             cl_event *event_p,
                             cl_uint num_events,
                             const cl_event *wait_list,
-                            pocl_buf_implicit_migration_info *migration_infos)
+                            pocl_buffer_migration_info *migration_infos)
 {
   unsigned i;
   cl_event *event = NULL;
@@ -612,8 +613,8 @@ pocl_create_command_struct (_cl_command_node **cmd,
     goto ERROR;
   (*event)->command_type = command_type;
 
-  /* if host application wants this commands event
-     one reference for the host and one for the runtime/driver */
+  /* If host application wants this commands event
+     one reference for the host and one for the runtime/driver. */
   if (event_p)
     {
       POCL_MSG_PRINT_EVENTS ("event pointer provided\n");
@@ -630,7 +631,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
   (*cmd)->device = command_queue->device;
   (*cmd)->sync.event.event->command = (*cmd);
 
-  /* Form event synchronizations based on the given wait list */
+  /* Form event synchronizations based on the given wait list. */
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
@@ -648,19 +649,52 @@ ERROR:
 }
 
 /**
+ * Set the sub-buffers of the parent buffer after a parent buffer update.
+ *
+ * After the parent buffer has been updated, the sub-buffers are implicitly
+ * updated as well (we cannot know which parts of the parent was changed),
+ * which is marked by setting the sub-buffers to their largest versions.
+ *
+ * @param updated_buf The updated buffer with its latest_version updated.
+ */
+static void
+update_subbuffer_versioning_data (cl_mem updated_buf)
+{
+  if (updated_buf->sub_buffers == NULL)
+    return;
+
+  cl_mem_list_item_t *sub_buf;
+  LL_FOREACH (updated_buf->sub_buffers, sub_buf)
+    {
+      sub_buf->mem->latest_version++;
+    }
+}
+
+/**
  * Creates the necessary implicit migration commands to ensure data is
  * where it's supposed to be according to the semantics of the program
  * defined using commands, buffers, command queues and events.
  *
+ * Attempts to use direct copies from a device instead of a device-host-device
+ * hip in case there is an accessible peer device with a fresh copy available.
+ *
+ * @param ev_export_p Optional output parameter for the export event.
  * @param dev Destination device
- * @param ev_export_p Optional output parameter for the export event
+ * @param user_cmd The event that marks the command that uses the data of the
+ * buffer.
+ * @param mem The buffer to migrate.
+ * @param gmem Identifier of the global memory where the mem should be
+ * migrated.
  * @param migration_size Max number of bytes to migrate (caller has to read
- *                       content size from mem->size_buffer if applicable)
+ *                       content size from mem->size_buffer if applicable).
  */
 static int
-pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
-                                cl_event final_event, cl_mem mem,
-                                pocl_mem_identifier *p, const char readonly,
+pocl_create_migration_commands (cl_device_id dev,
+                                cl_event *ev_export_p,
+                                cl_event user_cmd,
+                                cl_mem mem,
+                                pocl_mem_identifier *gmem,
+                                const char readonly,
                                 cl_command_type command_type,
                                 cl_mem_migration_flags mig_flags,
                                 uint64_t migration_size)
@@ -675,6 +709,12 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
   int can_directly_mig = 0;
   size_t i;
 
+  POCL_MSG_PRINT_MEMORY ("Analyzing implicit migration of buf %zu %s(latest "
+                         "v%zu) to device %zu (has v%zu).\n",
+                         mem->id, mem->parent != NULL ? "(sub-buffer) " : "",
+                         mem->latest_version, dev->id,
+                         mem->device_ptrs[dev->global_mem_id].version);
+
   /* "export" means copy buffer content from source device to mem_host_ptr;
    *
    * "import" means copy mem_host_ptr content to destination device,
@@ -686,10 +726,10 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
 
   /*****************************************************************/
 
-  /* this part only:
-   *   sets up the buffer content versions according to requested migration type;
-   *   sets the buffer->last_event pointer to the final_event;
-   *   decides what needs to be actually done (import, export) but not do it;
+  /* This part only:
+   *   sets up the buffer content versions according to requested migration
+   * type; sets the buffer->last_updater pointer to the user; decides what
+   * needs to be actually done (import, export) but not do it;
    *
    * ... so that any following command sees a correct buffer state.
    * The actual migration commands are enqueued after. */
@@ -700,14 +740,14 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
   if (command_type != CL_COMMAND_UNMAP_MEM_OBJECT)
     POCL_RETAIN_OBJECT_UNLOCKED (mem);
 
-  /* save buffer's current last_event as previous last_event,
+  /* Save buffer's current last_event as previous last_event,
    * then set the last_event pointer to the actual command's event
-   * (final_event).
+   * (user_cmd).
    *
    * We'll need the "previous" event to properly chain commands, but
    * will release it after we've enqueued the required commands. */
-  previous_last_event = mem->last_event;
-  mem->last_event = final_event;
+  previous_last_event = mem->last_updater;
+  mem->last_updater = user_cmd;
 
   /* Find the device/gmem with the latest copy of the data and that has the
    * fastest migration route.
@@ -726,7 +766,8 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
           if (d->ops->can_migrate_d2d)
             cur_d2d_mig_priority = d->ops->can_migrate_d2d (dev, d);
 
-          // if we can directly migrate, and we found a better device, use it
+          /* If we can directly migrate, and we found a better device, use it.
+           */
           if (cur_d2d_mig_priority > highest_d2d_mig_priority)
             {
               ex_dev = d;
@@ -734,7 +775,8 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
               highest_d2d_mig_priority = cur_d2d_mig_priority;
             }
 
-          // if we can't migrate D2D, just use plain old through-host migration
+          /* If we can't migrate D2D, just use plain old through-host
+           * migration. */
           if (highest_d2d_mig_priority == 0)
             {
               ex_dev = d;
@@ -748,7 +790,7 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
   /* ex_dev can be NULL, or non-NULL != dev */
   assert (ex_dev != dev);
 
-  /* if mem_host_ptr_version < latest_version, one of devices must have it;
+  /* If mem_host_ptr_version < latest_version, one of devices must have it.
    *
    * could be latest_version == mem_host_ptr_version == some p->version
    * for some p, and so i < ndev; in that case,
@@ -757,18 +799,19 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
    * otherwise must be
    * mem_host_ptr_version == latest_version & > all p->version */
 
-  if ((mem->mem_host_ptr_version < mem->latest_version) && (p->version != mem->latest_version))
+  if ((mem->mem_host_ptr_version < mem->latest_version)
+      && (gmem->version != mem->latest_version))
     assert ((ex_dev != NULL) && (mem->device_ptrs[ex_dev->global_mem_id].version == mem->latest_version));
 
   /* if ex_dev is NULL, either we have the latest or it's in mem_host_ptr */
   if (ex_dev == NULL)
-    assert ((p->version == mem->latest_version) ||
-            (mem->mem_host_ptr_version == mem->latest_version));
+    assert ((gmem->version == mem->latest_version)
+            || (mem->mem_host_ptr_version == mem->latest_version));
 
   /*****************************************************************/
 
   /* buffer must be already allocated on this device's globalmem */
-  assert (p->mem_ptr != NULL);
+  assert (gmem->mem_ptr != NULL);
 
   /* we're migrating to host mem only: clEnqueueMigMemObjs() with HOST flag */
   if (mig_flags & CL_MIGRATE_MEM_OBJECT_HOST)
@@ -797,12 +840,12 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
       goto FINISH_VER_SETUP;
     }
 
-  /* otherwise, we're migrating to a device memory. */
-  /* check if we can migrate to the device associated with command_queue
+  /* Otherwise, we're migrating to a device memory. */
+  /* Check if we can migrate to the device associated with command_queue
    * without incurring the overhead of migrating their contents */
   if (mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED
       || migration_size == 0)
-    p->version = mem->latest_version;
+    gmem->version = mem->latest_version;
 
   can_directly_mig = highest_d2d_mig_priority > 0;
 
@@ -813,10 +856,12 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
     do_need_hostptr = 1;
 
   /* if we don't need to migrate, skip to end */
-  if (p->version >= mem->latest_version)
+  if (gmem->version >= mem->latest_version)
     {
       do_import = 0;
       do_export = 0;
+      POCL_MSG_PRINT_MEMORY ("The device has a fresh(er) version of the "
+                             "buffer, skipping migration.\n");
       goto FINISH_VER_SETUP;
     }
 
@@ -835,7 +880,7 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
       POCL_RETAIN_OBJECT_UNLOCKED (mem);
       POCL_RETAIN_OBJECT_UNLOCKED (mem);
       mem->mem_host_ptr_version = mem->latest_version;
-      p->version = mem->latest_version;
+      gmem->version = mem->latest_version;
     }
   /* otherwise either:
    * 1) mem_host_ptr is latest, and we need to migrate mem-host-ptr to device, or
@@ -849,15 +894,29 @@ pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
 
       /* because the corresponding migrate command will clRelease the buffer */
       POCL_RETAIN_OBJECT_UNLOCKED (mem);
-      p->version = mem->latest_version;
+      gmem->version = mem->latest_version;
     }
 
 FINISH_VER_SETUP:
-  /* if the command is a write-use, increase the version. */
+  /* If the command is a write-use, increase the version. */
   if (!readonly)
     {
-      ++p->version;
-      mem->latest_version = p->version;
+      ++gmem->version;
+      mem->latest_version = gmem->version;
+      if (mem->sub_buffers != NULL)
+        {
+          /* A parent buffer update implicitly updates the sub-buffers. Make
+             this visible in the gmem buffer versioning info. */
+          update_subbuffer_versioning_data (mem);
+          cl_mem_list_item_t *sub_buf;
+          LL_FOREACH (mem->sub_buffers, sub_buf)
+            {
+              /* Update the versioning data to the device holding the latest
+               * copy. */
+              sub_buf->mem->device_ptrs[dev->global_mem_id].version
+                = sub_buf->mem->latest_version;
+            }
+        }
     }
 
   if (do_need_hostptr)
@@ -876,7 +935,7 @@ FINISH_VER_SETUP:
         {
           size_t align = max (mem->context->min_buffer_alignment, 16);
           /* Always allocate mem_host_ptr for the full size of the buffer to
-           * guard against applications forgetting to check content size */
+           * guard against applications forgetting to check content size. */
           mem->mem_host_ptr = pocl_aligned_malloc (align, mem->size);
           assert ((mem->mem_host_ptr != NULL)
                   && "Cannot allocate backing memory for mem_host_ptr!\n");
@@ -904,6 +963,7 @@ FINISH_VER_SETUP:
       cmd_export->command.migrate.mem_id
           = &mem->device_ptrs[ex_dev->global_mem_id];
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
+      cmd_export->command.migrate.implicit = 1;
       cmd_export->command.migrate.migration_size = migration_size;
       cmd_export->command.migrate.num_buffers = 1;
       cmd_export->migr_infos
@@ -940,6 +1000,7 @@ FINISH_VER_SETUP:
       if (can_directly_mig)
         {
           cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2D;
+          cmd_import->command.migrate.implicit = 1;
           cmd_import->command.migrate.src_device = ex_dev;
           cmd_import->command.migrate.src_id
               = &mem->device_ptrs[ex_dev->global_mem_id];
@@ -952,6 +1013,7 @@ FINISH_VER_SETUP:
       else
         {
           cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_H2D;
+          cmd_import->command.migrate.implicit = 1;
           cmd_import->command.migrate.mem_id
               = &mem->device_ptrs[dev->global_mem_id];
           cmd_import->command.migrate.migration_size = migration_size;
@@ -974,16 +1036,16 @@ FINISH_VER_SETUP:
   /* the final event must depend on the export/import commands */
   if (last_migration_event)
     {
-      pocl_create_event_sync (final_event, last_migration_event);
+      pocl_create_event_sync (user_cmd, last_migration_event);
       /* if the event itself only reads from the buffer,
-       * set the last buffer event to last_mig_event,
+       * set the last buffer updating event to the last_mig_event,
        * instead of the actual command event;
        * this avoids unnecessary waits e.g on kernels
        * which only read from buffers */
       if (readonly)
         {
-          mem->last_event = last_migration_event;
-          POname (clReleaseEvent) (final_event);
+          mem->last_updater = last_migration_event;
+          POname (clReleaseEvent) (user_cmd);
         }
       else /* because explicit event */
         POname (clReleaseEvent) (last_migration_event);
@@ -1009,10 +1071,206 @@ FINISH_VER_SETUP:
   return CL_SUCCESS;
 }
 
+static cl_int
+add_unique_implicit_sub_buffer (cl_mem parent, size_t origin, size_t size)
+{
+  POCL_LOCK_OBJ (parent);
+  cl_mem_list_item_t *sb;
+  LL_FOREACH (parent->implicit_sub_buffers, sb)
+    {
+      if (sb->mem->origin == origin && sb->mem->size == size)
+        {
+          /* Found one already, nothing to do. */
+          POCL_UNLOCK_OBJ (parent);
+          return CL_SUCCESS;
+        }
+    }
+  POCL_UNLOCK_OBJ (parent);
+
+  /* TODO: There will be a lockup as we are holding the buffer lock, right?
+     We need to retain+unlock the parent or use a recursive lock here. */
+  cl_buffer_region Region = { .origin = origin, .size = size };
+  cl_int err;
+
+  cl_mem sub_buf = POname (clCreateSubBuffer) (
+    parent, 0, CL_BUFFER_CREATE_TYPE_REGION, &Region, &err);
+
+  if (err != CL_SUCCESS)
+    {
+      return err;
+    }
+
+  cl_mem_list_item_t *sb_item
+    = (cl_mem_list_item_t *)calloc (1, sizeof (cl_mem_list_item_t));
+
+  sb_item->mem = sub_buf;
+
+  POCL_LOCK_OBJ (parent);
+  LL_APPEND (parent->implicit_sub_buffers, sb_item);
+  POCL_UNLOCK_OBJ (parent);
+
+  POCL_MSG_PRINT_MEMORY ("Created an implicit sub-buffer %zu to cover %zu "
+                         "bytes from offset %zu\n",
+                         sub_buf->id, size, origin);
+}
+
 /**
- * Creates a command node and adds implicit data migrations.
+ * Generates "implicit" sub-buffers that cover the parts of the parent
+ * buffer that are not covered by user-created sub-buffers.
  *
- * @param migration_infos A linked list of buffer migration data.
+ * The implicit sub-buffers are used to implicitly synchronize the parent
+ * buffer's uncovered parts when accessing the parent buffer after modifying
+ * the sub-buffer. The implicit sub-buffers are just like user created
+ * sub-buffers (created with clCreateSubBuffers()) and are stored inside
+ * the parent cl_mem with lifetimes tied to it. There is currently no
+ * garbage collection on the implicit subbuffers, so if the parent buffer
+ * will be split in numerous ways by the client, it will just add new
+ * implicit sub-buffers to cover the new empty spots which are previously
+ * not covered.
+ */
+static cl_int
+generate_implicit_sub_buffers (cl_mem parent)
+{
+  struct buf_usage
+  {
+    size_t offset;
+    size_t size;
+    struct buf_usage *prev, *next;
+  };
+
+  if (parent->sub_buffers == NULL)
+    return CL_SUCCESS;
+
+  /* A list of sorted buffer address range usages. If there are overlapping
+     sub-buffers, they get merged to a single buf_usage. */
+  struct buf_usage *usage = NULL;
+  cl_mem_list_item_t *sub_buf;
+  LL_FOREACH (parent->sub_buffers, sub_buf)
+    {
+      /* Find if there's an overlapping buffer and if not, add a new one
+         before/after it, depeding on the position. If found, merge to an
+         overlapping existing buffer right away. */
+
+      /* Yeah, it's unoptimal. Hopefully there won't be zillions of
+       * sub-buffers. */
+      struct buf_usage *buf_usage = NULL, *spot_before = NULL;
+      int merged = 0;
+      LL_FOREACH (usage, buf_usage)
+        {
+          if (buf_usage->offset <= sub_buf->mem->origin
+              && buf_usage->offset + buf_usage->size >= sub_buf->mem->origin)
+            {
+              /* Expand the buffer usage with the overlapping part (if any).
+                 Otherwise there's full overlap, thus it gets absorbed to this
+                 usage. */
+              if (sub_buf->mem->origin + sub_buf->mem->size
+                  > buf_usage->offset + buf_usage->size)
+                {
+                  buf_usage->size += sub_buf->mem->origin + sub_buf->mem->size
+                                     - (buf_usage->offset + buf_usage->size);
+                }
+              merged = 1;
+              break;
+            }
+          else if (buf_usage->offset
+                   > sub_buf->mem->origin + sub_buf->mem->size)
+            {
+              /* This usage is already past the one we are inserting, prepend.
+               */
+              spot_before = buf_usage;
+              break;
+            }
+          /* Otherwise we will end up with NULL, which means we are adding a
+             new largest one. */
+        }
+      if (merged)
+        {
+          break;
+        }
+      struct buf_usage *new_usage = calloc (1, sizeof (struct buf_usage));
+      new_usage->size = sub_buf->mem->size;
+      new_usage->offset = sub_buf->mem->origin;
+      if (spot_before != NULL)
+        {
+          new_usage->next = spot_before;
+          new_usage->prev = spot_before->prev;
+          if (spot_before->prev == NULL)
+            usage = new_usage;
+          spot_before->prev = new_usage;
+        }
+      else
+        {
+          DL_APPEND (usage, new_usage);
+        }
+    }
+
+  /* Create/find the implicit sub-buffers for the empty spots. */
+  struct buf_usage *buf_usage = NULL;
+  size_t pos = 0;
+  LL_FOREACH (usage, buf_usage)
+    {
+      size_t chunk_offset = pos;
+      size_t chunk_size = buf_usage->offset - pos;
+      pos = buf_usage->offset + buf_usage->size;
+      if (chunk_size == 0)
+        /* End-to-start sub-buffer. No gap. */
+        continue;
+      add_unique_implicit_sub_buffer (parent, chunk_offset, chunk_size);
+    }
+  /* Check if there's uncovered space in the end of the buffer. */
+  size_t chunk_size = parent->size - pos;
+  if (chunk_size > 0)
+    add_unique_implicit_sub_buffer (parent, pos, chunk_size);
+}
+
+
+/* Splits migrations of parent buffers to sub-buffer migrations, if the buffer
+ * has sub-buffers, otherwise does nothing.
+ *
+ * Use implicitly generated sub-buffers to cover the synchronization of the
+ * uncovered parts of the parent buffer, if any.
+ *
+ * @param buffer_usage The original buffer usage. The sub-buffers migrations are appended
+ * to it and the original parent buffers freed.
+ **/
+static pocl_buffer_migration_info *
+convert_to_subbuffer_migrations (pocl_buffer_migration_info *buffer_usage)
+{
+  pocl_buffer_migration_info *extra_migrations = NULL;
+
+  pocl_buffer_migration_info *mi, *tmp = NULL;
+  LL_FOREACH_SAFE (buffer_usage, mi, tmp)
+    {
+      if (mi->buffer->sub_buffers == NULL)
+        continue;
+
+      if (generate_implicit_sub_buffers (mi->buffer) != CL_SUCCESS)
+        return NULL;
+
+      cl_mem_list_item_t *sub_buf;
+      LL_FOREACH (mi->buffer->sub_buffers, sub_buf)
+        {
+          /* TODO: We could here utilize the page fault notification info
+             and only migrate the sub-buffers that have been actually
+             changed after the previous migration was done. */
+          extra_migrations = pocl_append_unique_migration_info (
+            extra_migrations, sub_buf->mem, mi->read_only);
+        }
+      LL_DELETE (buffer_usage, mi);
+      free (mi);
+    }
+  LL_CONCAT (buffer_usage, extra_migrations);
+  /* We might replace all of the buffer usages, thus need to return the
+     new list head. */
+  return buffer_usage;
+}
+
+/**
+ * Creates a command node for immediate execution and adds implicit data
+ * migrations required by it.
+ *
+ * @param buffer_usage A linked list of buffer migration data for
+ *                     the buffers accessed by the command.
  */
 static cl_int
 pocl_create_command_full (_cl_command_node **cmd,
@@ -1021,7 +1279,7 @@ pocl_create_command_full (_cl_command_node **cmd,
                           cl_event *event_p,
                           cl_uint num_events,
                           const cl_event *wait_list,
-                          pocl_buf_implicit_migration_info *migration_infos,
+                          pocl_buffer_migration_info *buffer_usage,
                           cl_mem_migration_flags mig_flags)
 {
   cl_device_id dev = pocl_real_dev (command_queue->device);
@@ -1031,28 +1289,35 @@ pocl_create_command_full (_cl_command_node **cmd,
   POCL_RETURN_ERROR_ON ((*dev->available == CL_FALSE), CL_INVALID_DEVICE,
                         "device is not available\n");
 
-  if (migration_infos != NULL)
+  if (buffer_usage != NULL)
     {
       /* If the buffer is an image backed by buffer storage,
          replace with actual storage. */
-      pocl_buf_implicit_migration_info *migr_info = NULL;
-      LL_FOREACH (migration_infos, migr_info)
-      {
-        if (migr_info->buffer->buffer != NULL)
-          migr_info->buffer = migr_info->buffer->buffer;
-      }
+      pocl_buffer_migration_info *migr_info = NULL;
+      LL_FOREACH (buffer_usage, migr_info)
+        {
+          if (migr_info->buffer->buffer != NULL)
+            migr_info->buffer = migr_info->buffer->buffer;
+        }
 
-      if (!preallocate_buffers (dev, migration_infos))
+      if (!preallocate_buffers (dev, buffer_usage))
         return CL_OUT_OF_RESOURCES;
     }
 
   /* Waitlist here only contains the user-provided events.
-     migration events are added to waitlist later. */
+     Migration events are added to the waitlist later. */
   err = pocl_create_command_struct (cmd, command_queue, command_type, event_p,
-                                    num_events, wait_list, migration_infos);
+                                    num_events, wait_list, buffer_usage);
 
   if (err)
     return err;
+
+  buffer_usage = convert_to_subbuffer_migrations (buffer_usage);
+
+  (*cmd)->migr_infos = buffer_usage;
+
+  /* The event (command) that will be set as the destination to all the
+     migration commands' dependencies. */
   cl_event final_event = (*cmd)->sync.event.event;
 
   /* Retain once for every buffer. This is because we set every buffer's
@@ -1060,8 +1325,11 @@ pocl_create_command_full (_cl_command_node **cmd,
    * (or clReleaseMemObject) will release it.
    */
   size_t num_buffers = 0;
-  pocl_buf_implicit_migration_info *migr_info = NULL;
-  LL_FOREACH (migration_infos, migr_info) { ++num_buffers; }
+  pocl_buffer_migration_info *mi = NULL;
+  LL_FOREACH (buffer_usage, mi)
+    {
+      ++num_buffers;
+    }
 
   POCL_LOCK_OBJ (final_event);
   final_event->pocl_refcount += num_buffers;
@@ -1082,18 +1350,18 @@ pocl_create_command_full (_cl_command_node **cmd,
 
   i = 0;
   /* Always migrate content size buffers first, if they exist */
-  LL_FOREACH (migration_infos, migr_info)
+  LL_FOREACH (buffer_usage, mi)
     {
-      if (migr_info->buffer->size_buffer != NULL)
+      if (mi->buffer->size_buffer != NULL)
         {
           /* Bump "last event" refcount for content size buffers that weren't
-           * explicitly given as dependencies */
+           * explicitly given as dependencies. */
           int explicit = 0;
-          pocl_buf_implicit_migration_info *migr_info_j = NULL;
+          pocl_buffer_migration_info *mi_j = NULL;
           int j = 0;
-          LL_FOREACH (migration_infos, migr_info_j)
+          LL_FOREACH (buffer_usage, mi_j)
             {
-              if (migr_info_j->buffer == migr_info->buffer->size_buffer)
+              if (mi_j->buffer == mi->buffer->size_buffer)
                 {
                   already_migrated[j] = 1;
                   explicit = 1;
@@ -1106,20 +1374,19 @@ pocl_create_command_full (_cl_command_node **cmd,
               POname (clRetainEvent) (final_event);
             }
 
-          pocl_create_migration_commands (dev, &size_events[i], final_event,
-                                          migr_info->buffer->size_buffer,
-                                          &(migr_info->buffer->size_buffer)->
-                                          device_ptrs[dev->global_mem_id],
-                                          migr_info->read_only, command_type, mig_flags,
-                                          migr_info->buffer->size_buffer->size);
+          pocl_create_migration_commands (
+            dev, &size_events[i], final_event, mi->buffer->size_buffer,
+            &(mi->buffer->size_buffer)->device_ptrs[dev->global_mem_id],
+            mi->read_only, command_type, mig_flags,
+            mi->buffer->size_buffer->size);
         }
       ++i;
     }
 
     i = 0;
-    LL_FOREACH (migration_infos, migr_info)
+    LL_FOREACH (buffer_usage, mi)
       {
-        uint64_t migration_size = migr_info->buffer->size;
+        uint64_t migration_size = mi->buffer->size;
 
         /* If both a content buffer and its associated size buffer are
          * explicitly listed in buffers, the size buffer was already migrated
@@ -1130,7 +1397,7 @@ pocl_create_command_full (_cl_command_node **cmd,
             continue;
           }
 
-        if (migr_info->buffer->size_buffer != NULL)
+        if (mi->buffer->size_buffer != NULL)
           {
             /* BLOCK until size buffer has been imported to host mem! No event
              * exists if host import is not needed. */
@@ -1138,25 +1405,44 @@ pocl_create_command_full (_cl_command_node **cmd,
               {
                 cl_device_id d = size_events[i]->queue->device;
                 POname (clWaitForEvents) (1, &size_events[i]);
-                if (migr_info->buffer->size_buffer->mem_host_ptr != NULL)
+                if (mi->buffer->size_buffer->mem_host_ptr != NULL)
                   {
                     migration_size
-                      = *(uint64_t *)
-                           migr_info->buffer->size_buffer->mem_host_ptr;
+                      = *(uint64_t *)mi->buffer->size_buffer->mem_host_ptr;
                   }
-                pocl_release_mem_host_ptr (migr_info->buffer->size_buffer);
+                pocl_release_mem_host_ptr (mi->buffer->size_buffer);
                 POname (clReleaseEvent) (size_events[i]);
                 size_events[i] = NULL;
               }
           }
 
         pocl_create_migration_commands (
-          dev, NULL, final_event, migr_info->buffer,
-          &migr_info->buffer->device_ptrs[dev->global_mem_id],
-          migr_info->read_only, command_type, mig_flags, migration_size);
+          dev, NULL, final_event, mi->buffer,
+          &mi->buffer->device_ptrs[dev->global_mem_id], mi->read_only,
+          command_type, mig_flags, migration_size);
+
+        /* Hold the last updater events of the parent buffers so we can refer
+           to the event in the possible patch sub-buffers. These will point to
+           the potential new migration commands.  */
+        if (mi->buffer->parent != NULL)
+          POname (clRetainEvent) (mi->buffer->last_updater);
         ++i;
       }
-    (*cmd)->migr_infos = migration_infos;
+
+    LL_FOREACH (buffer_usage, mi)
+      {
+        /* The last events of the parent buffers can be now released as the
+           sub-buffer references to the events should hold them alive. */
+        if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL)
+          {
+            int new_ref;
+            POCL_RELEASE_OBJECT_UNLOCKED (mi->buffer->parent->last_updater,
+                                          new_ref);
+            if (new_ref == 0)
+              mi->buffer->parent->last_updater = NULL;
+          }
+      }
+
     return err;
 }
 
@@ -1167,7 +1453,7 @@ pocl_create_command_migrate (_cl_command_node **cmd,
                              cl_event *event_p,
                              cl_uint num_events,
                              const cl_event *wait_list,
-                             pocl_buf_implicit_migration_info *migration_infos)
+                             pocl_buffer_migration_info *migration_infos)
 
 {
   return pocl_create_command_full (
@@ -1182,42 +1468,14 @@ pocl_create_command_migrate (_cl_command_node **cmd,
  * due to the need to implicitly migrate them for another reason.
  */
 cl_int
-pocl_create_command_with_multiple_buffers (
-  _cl_command_node **cmd,
-  cl_command_queue command_queue,
-  cl_command_type command_type,
-  cl_event *event_p,
-  cl_uint num_events,
-  const cl_event *wait_list,
-  pocl_buf_implicit_migration_info *migration_infos)
-{
-  return pocl_create_command_full (cmd, command_queue, command_type, event_p,
-                                   num_events, wait_list, migration_infos, 0);
-}
-
-/**
- * Create a command node with a single buffer associated with it.
- *
- * A shortcut for the plentiful cases of commands that only refer to one
- * buffer.
- *
- * @param buffer The buffer, taken as an argument to the command.
- * @param buffer_is_read_only Set to true if the command won't write the
- * buffer.
- */
-cl_int
 pocl_create_command (_cl_command_node **cmd,
                      cl_command_queue command_queue,
                      cl_command_type command_type,
                      cl_event *event_p,
                      cl_uint num_events,
                      const cl_event *wait_list,
-                     cl_mem buffer,
-                     char buffer_is_read_only)
+                     pocl_buffer_migration_info *migration_infos)
 {
-  pocl_buf_implicit_migration_info *migration_infos = NULL;
-  migration_infos = pocl_append_unique_migration_info (migration_infos, buffer,
-                                                       buffer_is_read_only);
   return pocl_create_command_full (cmd, command_queue, command_type, event_p,
                                    num_events, wait_list, migration_infos, 0);
 }
@@ -1294,34 +1552,33 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
 }
 
 /**
- * Create a command buffered command node which as multiple buffers
+ * Create a command buffered command node which has multiple buffers
  * associated with it.
  */
 cl_int
-pocl_create_recorded_command_with_multiple_buffers (
-  _cl_command_node **cmd,
-  cl_command_buffer_khr command_buffer,
-  cl_command_queue command_queue,
-  cl_command_type command_type,
-  cl_uint num_sync_points_in_wait_list,
-  const cl_sync_point_khr *sync_point_wait_list,
-  pocl_buf_implicit_migration_info *migration_infos)
+pocl_create_recorded_command (_cl_command_node **cmd,
+                              cl_command_buffer_khr command_buffer,
+                              cl_command_queue command_queue,
+                              cl_command_type command_type,
+                              cl_uint num_sync_points_in_wait_list,
+                              const cl_sync_point_khr *sync_point_wait_list,
+                              pocl_buffer_migration_info *buffer_usage)
 {
   cl_int errcode = pocl_check_syncpoint_wait_list (
     command_buffer, num_sync_points_in_wait_list, sync_point_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  if (migration_infos != NULL)
+  if (buffer_usage != NULL)
     {
       /* If the buffer is an image backed by buffer storage,
          replace with actual storage. */
-      pocl_buf_implicit_migration_info *migr_info = NULL;
-      LL_FOREACH (migration_infos, migr_info)
-      if (migr_info->buffer->buffer)
-        migr_info->buffer = migr_info->buffer->buffer;
+      pocl_buffer_migration_info *migr_info = NULL;
+      LL_FOREACH (buffer_usage, migr_info)
+        if (migr_info->buffer->buffer)
+          migr_info->buffer = migr_info->buffer->buffer;
 
-      if (!preallocate_buffers (command_queue->device, migration_infos))
+      if (!preallocate_buffers (command_queue->device, buffer_usage))
         return CL_OUT_OF_RESOURCES;
     }
 
@@ -1356,33 +1613,16 @@ pocl_create_recorded_command_with_multiple_buffers (
       (*cmd)->sync.syncpoint.sync_point_wait_list = wait_list;
     }
 
-  (*cmd)->migr_infos = migration_infos;
+  (*cmd)->migr_infos = buffer_usage;
 
-  pocl_buf_implicit_migration_info *migr_info = NULL;
-  LL_FOREACH (migration_infos, migr_info)
-  POname (clRetainMemObject) (migr_info->buffer);
+  pocl_buffer_migration_info *migr_info = NULL;
+  LL_FOREACH (buffer_usage, migr_info)
+    POname (clRetainMemObject) (migr_info->buffer);
   return CL_SUCCESS;
 
 ERROR:
   pocl_mem_manager_free_command (*cmd);
   return errcode;
-}
-
-cl_int
-pocl_create_recorded_command (_cl_command_node **cmd,
-                              cl_command_buffer_khr command_buffer,
-                              cl_command_queue command_queue,
-                              cl_command_type command_type,
-                              cl_uint num_sync_points_in_wait_list,
-                              const cl_sync_point_khr *sync_point_wait_list,
-                              cl_mem buffer,
-                              char readonly)
-{
-  pocl_buf_implicit_migration_info *migration_infos
-    = pocl_append_unique_migration_info (NULL, buffer, readonly);
-  return pocl_create_recorded_command_with_multiple_buffers (
-    cmd, command_buffer, command_queue, command_type,
-    num_sync_points_in_wait_list, sync_point_wait_list, migration_infos);
 }
 
 cl_int
@@ -2298,7 +2538,6 @@ pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
     }
 }
 
-// event locked
 void
 pocl_update_event_queued (cl_event event)
 {
@@ -2469,26 +2708,6 @@ pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
   return CL_SUCCESS;
 }
 
-#if 0
-static void pocl_free_event_memobjs (cl_event event)
-{
-  size_t i;
-  pocl_buf_implicit_migration_info *mi, *tmp;
-  LL_FOREACH_SAFE (event->migrated_bufs, mi, tmp)
-  {
-    cl_mem mem = mi->buffer;
-    if (event->release_mem_host_ptr_after)
-      {
-        POCL_LOCK_OBJ (mem);
-        pocl_release_mem_host_ptr (mem);
-        POCL_UNLOCK_OBJ (mem);
-      }
-    POname (clReleaseMemObject) (mem);
-    }
-    POCL_MEM_FREE (event->migrated_bufs);
-}
-#endif
-
 /* Status can be complete or failed (<0). */
 void
 pocl_update_event_finished (cl_int status, const char *func, unsigned line,
@@ -2538,9 +2757,10 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   POCL_UNLOCK_OBJ (event);
   ops->broadcast (event);
 
-  /* With remote being asynchronous it is possible that an event is signaled as
-   * complete before some of its dependencies. Therefore this event has to be
-   * removed from the notify lists of any remaining events in the wait list.
+  /* With remote being asynchronous it is possible that an event completion
+   * signal is received before some of its dependencies. Therefore this event
+   * has to be removed from the notify lists of any remaining events in the
+   * wait list.
    *
    * Mind the acrobatics of trying to avoid races with pocl_broadcast and
    * pocl_create_event_sync. */
@@ -2963,29 +3183,36 @@ pocl_str_append (const char **dst, const char *src)
  * one with the given buffer.
  *
  * Creates the list if it's empty. If the buffer is NULL, doesn't modify
- * the list.
+ * the list. Upgrades an existing read-only buffer usage to a read-write, if
+ * the appended buffer writes to a buffer that is already in the lst.
  *
  * @return Returns a pointer to the beginning of the list, if was added,
  *         otherwise returns a pointer to the already found element.
  */
-pocl_buf_implicit_migration_info *
-pocl_append_unique_migration_info (pocl_buf_implicit_migration_info *list,
+pocl_buffer_migration_info *
+pocl_append_unique_migration_info (pocl_buffer_migration_info *list,
                                    cl_mem buffer,
                                    char read_only)
 {
   if (buffer == NULL)
     return list;
-  pocl_buf_implicit_migration_info *found_info = NULL;
+  pocl_buffer_migration_info *found_info = NULL;
   if (list != NULL)
-    LL_FOREACH (list, found_info)
     {
-      if (found_info->buffer == buffer)
-        return found_info;
+      LL_FOREACH (list, found_info)
+        {
+          if (found_info->buffer == buffer)
+            {
+              if (found_info->read_only && !read_only)
+                found_info->read_only = 0;
+              return found_info;
+            }
+        }
     }
 
-  pocl_buf_implicit_migration_info *migr_info
-    = (pocl_buf_implicit_migration_info *)calloc (
-      1, sizeof (pocl_buf_implicit_migration_info));
+  pocl_buffer_migration_info *migr_info
+    = (pocl_buffer_migration_info *)calloc (
+      1, sizeof (pocl_buffer_migration_info));
   migr_info->buffer = buffer;
   migr_info->read_only = read_only;
   DL_APPEND (list, migr_info);
@@ -2997,11 +3224,11 @@ pocl_append_unique_migration_info (pocl_buf_implicit_migration_info *list,
  *
  * Also retains the memobjects so they can be released per list reference.
  */
-pocl_buf_implicit_migration_info *
-pocl_deep_copy_migration_info_list (pocl_buf_implicit_migration_info *list)
+pocl_buffer_migration_info *
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list)
 {
-  pocl_buf_implicit_migration_info *new_list = NULL;
-  pocl_buf_implicit_migration_info *mi;
+  pocl_buffer_migration_info *new_list = NULL;
+  pocl_buffer_migration_info *mi;
   LL_FOREACH (list, mi)
   {
     POname (clRetainMemObject (mi->buffer));

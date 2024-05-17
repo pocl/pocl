@@ -100,7 +100,7 @@ void pocl_unlock_events_inorder (cl_event ev1, cl_event ev2);
 cl_int pocl_create_event (cl_event *event,
                           cl_command_queue command_queue,
                           cl_command_type command_type,
-                          pocl_buf_implicit_migration_info *migration_infos,
+                          pocl_buffer_migration_info *migration_infos,
                           cl_context context);
 
 cl_int pocl_create_command (_cl_command_node **cmd,
@@ -109,17 +109,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_event *event_p,
                             cl_uint num_events,
                             const cl_event *wait_list,
-                            cl_mem buffer,
-                            char buffer_is_read_only);
-
-cl_int pocl_create_command_with_multiple_buffers (
-  _cl_command_node **cmd,
-  cl_command_queue command_queue,
-  cl_command_type command_type,
-  cl_event *event_p,
-  cl_uint num_events,
-  const cl_event *wait_list,
-  pocl_buf_implicit_migration_info *migration_infos);
+                            pocl_buffer_migration_info *migration_infos);
 
 cl_int pocl_create_command_migrate (
   _cl_command_node **cmd,
@@ -128,7 +118,7 @@ cl_int pocl_create_command_migrate (
   cl_event *event_p,
   cl_uint num_events,
   const cl_event *wait_list,
-  pocl_buf_implicit_migration_info *migration_infos);
+  pocl_buffer_migration_info *migration_infos);
 
 cl_int pocl_command_record (cl_command_buffer_khr command_buffer,
                             _cl_command_node *cmd,
@@ -141,17 +131,7 @@ pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_type command_type,
                               cl_uint num_sync_points_in_wait_list,
                               const cl_sync_point_khr *sync_point_wait_list,
-                              cl_mem buffer,
-                              char readonly);
-
-cl_int pocl_create_recorded_command_with_multiple_buffers (
-  _cl_command_node **cmd,
-  cl_command_buffer_khr command_buffer,
-  cl_command_queue command_queue,
-  cl_command_type command_type,
-  cl_uint num_sync_points_in_wait_list,
-  const cl_sync_point_khr *sync_point_wait_list,
-  pocl_buf_implicit_migration_info *migration_infos);
+                              pocl_buffer_migration_info *migration_infos);
 
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
@@ -387,12 +367,12 @@ POCL_EXPORT
 const char *pocl_str_append (const char **dst, const char *src);
 
 POCL_EXPORT
-pocl_buf_implicit_migration_info *pocl_append_unique_migration_info (
-  pocl_buf_implicit_migration_info *list, cl_mem buffer, char read_only);
+pocl_buffer_migration_info *pocl_append_unique_migration_info (
+  pocl_buffer_migration_info *list, cl_mem buffer, char read_only);
 
 POCL_EXPORT
-pocl_buf_implicit_migration_info *
-pocl_deep_copy_migration_info_list (pocl_buf_implicit_migration_info *list);
+pocl_buffer_migration_info *
+pocl_deep_copy_migration_info_list (pocl_buffer_migration_info *list);
 
 #ifdef __cplusplus
 }

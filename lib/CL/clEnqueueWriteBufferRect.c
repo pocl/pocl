@@ -110,7 +110,6 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
     return errcode;
 
   size_t dst_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, dst_offset);
 
   POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
                         CL_OUT_OF_RESOURCES,
@@ -126,13 +125,15 @@ pocl_write_buffer_rect_common (cl_command_buffer_khr command_buffer,
         return errcode;
       errcode = pocl_create_command (
         cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT, event,
-        num_items_in_wait_list, event_wait_list, buffer, rdonly);
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
-        num_items_in_wait_list, sync_point_wait_list, buffer, rdonly);
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;

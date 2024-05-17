@@ -89,7 +89,6 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
   POCL_RETURN_ERROR_ON (
       (src_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -97,7 +96,7 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
                                size)
       != CL_SUCCESS)
     return CL_INVALID_VALUE;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
+
   POCL_RETURN_ERROR_ON (
       (dst_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -106,7 +105,7 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
       != CL_SUCCESS)
     return CL_MEM_COPY_OVERLAP;
 
-  pocl_buf_implicit_migration_info *migr_infos
+  pocl_buffer_migration_info *migr_infos
     = pocl_append_unique_migration_info (NULL, src_buffer, 1);
   pocl_append_unique_migration_info (migr_infos, dst_buffer, 0);
 
@@ -119,13 +118,13 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-      errcode = pocl_create_command_with_multiple_buffers (
+      errcode = pocl_create_command (
         cmd, command_queue, CL_COMMAND_COPY_BUFFER, event,
         num_items_in_wait_list, event_wait_list, migr_infos);
     }
   else
     {
-      errcode = pocl_create_recorded_command_with_multiple_buffers (
+      errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
         num_items_in_wait_list, sync_point_wait_list, migr_infos);
     }

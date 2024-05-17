@@ -88,8 +88,6 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
   POCL_RETURN_ERROR_ON (
       (buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES,
@@ -104,13 +102,15 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
         return errcode;
       errcode = pocl_create_command (
         cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
-        num_items_in_wait_list, event_wait_list, buffer, rdonly);
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
-        num_items_in_wait_list, sync_point_wait_list, buffer, rdonly);
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -221,15 +221,17 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-      errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_FILL_IMAGE,
-                                     event, num_items_in_wait_list,
-                                     event_wait_list, image, rdonly);
+      errcode = pocl_create_command (
+        cmd, command_queue, CL_COMMAND_FILL_IMAGE, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
-        num_items_in_wait_list, sync_point_wait_list, image, rdonly);
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;

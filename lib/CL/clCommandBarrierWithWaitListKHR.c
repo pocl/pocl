@@ -42,7 +42,7 @@ POname (clCommandBarrierWithWaitListKHR) (
 
   errcode = pocl_create_recorded_command (
     &cmd, command_buffer, command_queue, CL_COMMAND_BARRIER,
-    num_sync_points_in_wait_list, sync_point_wait_list, NULL, 0);
+    num_sync_points_in_wait_list, sync_point_wait_list, NULL);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

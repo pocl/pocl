@@ -280,13 +280,13 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      errcode = pocl_create_command_with_multiple_buffers (
-        cmd, command_queue, command_type, event, num_items_in_wait_list,
-        event_wait_list, migr_infos);
+      errcode = pocl_create_command (cmd, command_queue, command_type, event,
+                                     num_items_in_wait_list, event_wait_list,
+                                     migr_infos);
     }
   else
     {
-      errcode = pocl_create_recorded_command_with_multiple_buffers (
+      errcode = pocl_create_recorded_command (
         cmd, command_buffer, command_queue, command_type,
         num_items_in_wait_list, sync_point_wait_list, migr_infos);
     }

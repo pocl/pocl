@@ -51,9 +51,14 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   POCL_LOCK_OBJ (memobj);
   POCL_RELEASE_OBJECT_UNLOCKED (memobj, new_refcount);
 
-  POCL_MSG_PRINT_REFCOUNTS ("Release Memory Object %" PRId64
-                            " (%p), Refcount: %d\n",
-                            memobj->id, memobj, new_refcount);
+  if (memobj->parent != NULL)
+    POCL_MSG_PRINT_REFCOUNTS (
+      "Release subbuffer %" PRId64 " (%p), Refcount: %d, Parent %zu\n",
+      memobj->id, memobj, new_refcount, memobj->parent->id);
+  else
+    POCL_MSG_PRINT_REFCOUNTS ("Release memory object %" PRId64
+                              " (%p), Refcount: %d\n",
+                              memobj->id, memobj, new_refcount);
 
   /* OpenCL 1.2 Page 118:
 
@@ -69,7 +74,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       POCL_UNLOCK_OBJ (memobj);
       VG_REFC_ZERO (memobj);
 
-      cl_event last = memobj->last_event;
+      cl_event last = memobj->last_updater;
       if (memobj->is_image)
         {
           TP_FREE_IMAGE (context->id, memobj->id);
@@ -113,22 +118,63 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               memobj->device_ptrs[dev->global_mem_id].mem_ptr = NULL;
             }
 
+          /* Release the implicit sub-buffers. */
+          cl_mem_list_item_t *sb = NULL, *tmp;
+          LL_FOREACH_SAFE (memobj->implicit_sub_buffers, sb, tmp)
+            {
+              for (i = 0; i < context->num_devices; ++i)
+                {
+                  cl_device_id dev = context->devices[i];
+                  if (dev->ops->free_subbuffer != NULL)
+                    dev->ops->free_subbuffer (dev, sb->mem);
+                }
+              LL_DELETE (memobj->implicit_sub_buffers, sb);
+              POCL_MEM_FREE (sb->mem);
+              free (sb);
+            }
           /* Free host mem allocated by the runtime. */
           if (memobj->mem_host_ptr != NULL)
             {
               if (memobj->flags & CL_MEM_USE_HOST_PTR)
-                memobj->mem_host_ptr = NULL; /* user allocated, do not free */
+                /* User allocated, do not free. */
+                memobj->mem_host_ptr = NULL;
               else
                 {
                   POCL_MEM_FREE (memobj->mem_host_ptr);
                 }
             }
-
-          POCL_MEM_FREE (memobj->device_ptrs);
         }
+      else
+        {
+          /* It's a sub-buffer. Some devices might have resources associated to
+           * them. */
+          for (i = 0; i < context->num_devices; ++i)
+            {
+              cl_device_id dev = context->devices[i];
+              if (dev->ops->free_subbuffer != NULL)
+                dev->ops->free_subbuffer (dev, memobj);
+            }
+          /* Remove the sub-buffer record from the parent buffer. */
+          cl_mem_list_item_t *sub_buf;
 
-      assert (memobj->mem_host_ptr == NULL);
-      assert (memobj->device_ptrs == NULL);
+          assert (parent->sub_buffers != NULL);
+
+          POCL_LOCK_OBJ (parent);
+
+          LL_SEARCH_SCALAR (parent->sub_buffers, sub_buf, mem, memobj)
+            ;
+          assert (sub_buf != NULL);
+          assert (sub_buf->mem == memobj);
+
+          LL_DELETE (parent->sub_buffers, sub_buf);
+          free (sub_buf);
+
+          POCL_UNLOCK_OBJ (parent);
+          /* Let the parent buffer free the host pointer. */
+          memobj->mem_host_ptr = NULL;
+        }
+      POCL_MEM_FREE (memobj->device_ptrs);
+
       /* Fire any registered destructor callbacks. */
       callback = memobj->destructor_callbacks;
       while (callback)

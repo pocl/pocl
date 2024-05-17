@@ -45,6 +45,8 @@ static char VecAddSrc[] = R"raw(
 
 // Split a buffer to N subbuffers which are concurrently processed
 // by multiple kernel commands in different command queues.
+// Ideally the sub-buffers are processed in parallel since there are
+// no dependencies communicated by the client code to the runtime.
 int TestOutputDataDecomposition() {
 
   unsigned Errors = 0;
@@ -145,10 +147,7 @@ int TestOutputDataDecomposition() {
 
     std::vector<int> AfterSubBufCContents(NumData);
 
-    for (size_t i = 0; i < Queues.size(); ++i)
-      Queues[i].finish();
-
-    Queues[0].enqueueReadBuffer(CBuffer, CL_TRUE, 0, sizeof(cl_int) * NumData,
+    Queues[0].enqueueReadBuffer(CBuffer, CL_FALSE, 0, sizeof(cl_int) * NumData,
                                 AfterSubBufCContents.data(), &KernelEvents);
 
     // Push a kernel that reads and writes the whole buffer.
@@ -184,10 +183,6 @@ int TestOutputDataDecomposition() {
                                 FinalBufCContents.data());
 
     Queues[0].finish();
-
-    // This should not be needed due to the event dep from the other queues.
-    for (size_t i = 0; i < Queues.size(); ++i)
-      Queues[i].finish();
 
     // Check the data after the parallel sub-buffer launches.
     for (size_t i = 0; i < NumData; ++i) {
