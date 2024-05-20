@@ -133,7 +133,7 @@ pocl_cq_profiling_register_event (cl_event event)
 {
   POname(clRetainEvent) (event);
   if (event->meta_data == NULL)
-    event->meta_data = (pocl_event_md *)malloc (sizeof (pocl_event_md));
+    event->meta_data = (pocl_event_md *)calloc (1, sizeof (pocl_event_md));
 
   unsigned cq_events_pos = POCL_ATOMIC_INC (cq_events_collected) - 1;
   if (cq_events_pos >= POCL_CQ_PROFILING_MAX_EVENTS)
