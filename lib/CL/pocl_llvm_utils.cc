@@ -123,8 +123,11 @@ llvm::Module *parseModuleIRMem(const char *input_stream, size_t size,
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
 
   auto parsed_module = parseBitcodeFile(buffer->getMemBufferRef(), *c);
-  if (!parsed_module)
+  if (auto error = parsed_module.takeError()) {
+    POCL_MSG_ERR("parseBitcodeFile failed:\n%s\n",
+                 toString(std::move(error)).c_str());
     return nullptr;
+  }
   return parsed_module.get().release();
 }
 
