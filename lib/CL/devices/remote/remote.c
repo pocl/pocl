@@ -1511,7 +1511,7 @@ remote_finish_command (void *arg, _cl_command_node *node,
     case CL_COMMAND_READ_BUFFER:
       if (extra_rep_bytes < node->command.read.size)
         {
-          m = event->mem_objs[0];
+          m = node->command.read.src;
           POCL_LOCK_OBJ (m);
           m->content_size = extra_rep_bytes;
           if (node->command.read.content_size)
@@ -1523,7 +1523,7 @@ remote_finish_command (void *arg, _cl_command_node *node,
     case CL_COMMAND_MAP_BUFFER:
       if (extra_rep_bytes < node->command.map.mapping->size)
         {
-          m = event->mem_objs[0];
+          m = node->command.map.buffer;
           POCL_LOCK_OBJ (m);
           m->content_size = extra_rep_bytes;
           POCL_UNLOCK_OBJ (m);
@@ -2273,7 +2273,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
         case ENQUEUE_MIGRATE_TYPE_D2H:
           {
             int r;
-            cl_mem m = event->mem_objs[0];
+            cl_mem m = node->migr_infos->buffer;
             if (m->is_image)
 
               {
@@ -2300,7 +2300,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
         case ENQUEUE_MIGRATE_TYPE_H2D:
           {
             int r;
-            cl_mem m = event->mem_objs[0];
+            cl_mem m = node->migr_infos->buffer;
             if (m->is_image)
               {
                 size_t region[3]
@@ -2328,8 +2328,9 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
           {
             cl_device_id dev = cmd->migrate.src_device;
             assert (dev);
-            pocl_remote_async_migrate_d2d (
-                d, dev->data, node, event->mem_objs[0], cmd->migrate.src_id);
+            pocl_remote_async_migrate_d2d (d, dev->data, node,
+                                           node->migr_infos->buffer,
+                                           cmd->migrate.src_id);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:
@@ -2341,13 +2342,13 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_READ_BUFFER:
       pocl_remote_async_read (d, node, cmd->read.dst_host_ptr,
-                              cmd->read.src_mem_id, event->mem_objs[0],
+                              cmd->read.src_mem_id, cmd->read.src,
                               cmd->read.offset, cmd->read.size);
       return;
 
     case CL_COMMAND_WRITE_BUFFER:
       pocl_remote_async_write (d, node, cmd->write.src_host_ptr,
-                               cmd->write.dst_mem_id, event->mem_objs[0],
+                               cmd->write.dst_mem_id, cmd->write.dst,
                                cmd->write.offset, cmd->write.size);
       return;
 
@@ -2361,20 +2362,20 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_remote_async_read_rect (
-          d, node, cmd->read_rect.dst_host_ptr, cmd->read_rect.src_mem_id,
-          event->mem_objs[0], cmd->read_rect.buffer_origin,
-          cmd->read_rect.host_origin, cmd->read_rect.region,
-          cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
-          cmd->read_rect.host_row_pitch, cmd->read_rect.host_slice_pitch);
+        d, node, cmd->read_rect.dst_host_ptr, cmd->read_rect.src_mem_id,
+        cmd->read_rect.src, cmd->read_rect.buffer_origin,
+        cmd->read_rect.host_origin, cmd->read_rect.region,
+        cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
+        cmd->read_rect.host_row_pitch, cmd->read_rect.host_slice_pitch);
       return;
 
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_remote_async_write_rect (
-          d, node, cmd->write_rect.src_host_ptr, cmd->write_rect.dst_mem_id,
-          event->mem_objs[0], cmd->write_rect.buffer_origin,
-          cmd->write_rect.host_origin, cmd->write_rect.region,
-          cmd->write_rect.buffer_row_pitch, cmd->write_rect.buffer_slice_pitch,
-          cmd->write_rect.host_row_pitch, cmd->write_rect.host_slice_pitch);
+        d, node, cmd->write_rect.src_host_ptr, cmd->write_rect.dst_mem_id,
+        cmd->write_rect.dst, cmd->write_rect.buffer_origin,
+        cmd->write_rect.host_origin, cmd->write_rect.region,
+        cmd->write_rect.buffer_row_pitch, cmd->write_rect.buffer_slice_pitch,
+        cmd->write_rect.host_row_pitch, cmd->write_rect.host_slice_pitch);
       return;
 
     case CL_COMMAND_COPY_BUFFER_RECT:
@@ -2389,22 +2390,21 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
       return;
 
     case CL_COMMAND_FILL_BUFFER:
-      pocl_remote_async_memfill (d, node, cmd->memfill.dst_mem_id,
-                                 event->mem_objs[0], cmd->memfill.size,
-                                 cmd->memfill.offset, cmd->memfill.pattern,
-                                 cmd->memfill.pattern_size);
+      pocl_remote_async_memfill (
+        d, node, cmd->memfill.dst_mem_id, cmd->memfill.dst, cmd->memfill.size,
+        cmd->memfill.offset, cmd->memfill.pattern, cmd->memfill.pattern_size);
       return;
 
     case CL_COMMAND_MAP_BUFFER:
-      if (pocl_remote_async_map_mem (d, node, cmd->map.mem_id,
-                                     event->mem_objs[0], cmd->map.mapping))
+      if (pocl_remote_async_map_mem (d, node, cmd->map.mem_id, cmd->map.buffer,
+                                     cmd->map.mapping))
         goto EARLY_FINISH;
       return;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
 
-      if (event->mem_objs[0]->is_image == CL_FALSE
-          || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
+      if (cmd->unmap.buffer->is_image == CL_FALSE
+          || IS_IMAGE1D_BUFFER (cmd->unmap.buffer))
         {
           if (pocl_remote_async_unmap_mem (d, node, cmd->unmap.mem_id,
                                            cmd->unmap.mapping)
@@ -2414,7 +2414,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
       else
         {
           if (pocl_remote_async_unmap_image (d, node, cmd->unmap.mem_id,
-                                             event->mem_objs[0],
+                                             cmd->unmap.buffer,
                                              cmd->unmap.mapping)
               > 0)
             goto EARLY_FINISH;
@@ -2475,7 +2475,7 @@ remote_start_command (remote_device_data_t *d, _cl_command_node *node)
 
     case CL_COMMAND_MAP_IMAGE:
       if (pocl_remote_async_map_image (d, node, cmd->map.mem_id,
-                                       event->mem_objs[0], cmd->map.mapping))
+                                       cmd->map.buffer, cmd->map.mapping))
         goto EARLY_FINISH;
       return;
 

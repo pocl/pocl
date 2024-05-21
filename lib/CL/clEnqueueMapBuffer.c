@@ -130,13 +130,14 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER,
                                  event, num_events_in_wait_list,
-                                 event_wait_list, 1, &buffer, &rdonly);
+                                 event_wait_list, buffer, rdonly);
 
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
   cmd->command.map.mem_id = mem_id;
   cmd->command.map.mapping = mapping_info;
+  cmd->command.map.buffer = buffer;
 
   POCL_MSG_PRINT_MEMORY ("Buffer %p New Mapping: host_ptr %p offset %zu\n",
                          buffer, mapping_info->host_ptr, mapping_info->offset);

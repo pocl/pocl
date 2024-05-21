@@ -2,12 +2,13 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
                  2011-2019 Pekka Jääskeläinen
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,9 +18,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 /**
@@ -181,6 +182,7 @@ typedef struct
 {
   void *args;
   size_t cb_args;
+  /* The argument buffers are stored in _cl_command's migr_info list. */
   void **arg_locs;
   void(CL_CALLBACK *user_func) (void *);
 } _cl_command_native;
@@ -194,6 +196,7 @@ typedef struct
   size_t offset;
   size_t size;
   size_t *content_size;
+  cl_mem src;
 } _cl_command_read;
 
 /* For clEnqueueWriteBuffer(). */
@@ -203,6 +206,7 @@ typedef struct
   pocl_mem_identifier *dst_mem_id;
   size_t offset;
   size_t size;
+  cl_mem dst;
 } _cl_command_write;
 
 /* For clEnqueueCopyBuffer(). */
@@ -231,6 +235,7 @@ typedef struct
   size_t buffer_slice_pitch;
   size_t host_row_pitch;
   size_t host_slice_pitch;
+  cl_mem src;
 } _cl_command_read_rect;
 
 /* For clEnqueueWriteBufferRect(). */
@@ -245,6 +250,7 @@ typedef struct
   size_t buffer_slice_pitch;
   size_t host_row_pitch;
   size_t host_slice_pitch;
+  cl_mem dst;
 } _cl_command_write_rect;
 
 /* For clEnqueueCopyBufferRect(). */
@@ -268,6 +274,7 @@ typedef struct
 {
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
+  cl_mem buffer;
 } _cl_command_map;
 
 /* For clEnqueueUnMapMemObject(). */
@@ -275,6 +282,7 @@ typedef struct
 {
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
+  cl_mem buffer;
 } _cl_command_unmap;
 
 /* For clEnqueueFillBuffer(). */
@@ -285,6 +293,7 @@ typedef struct
   size_t offset;
   void *__restrict__ pattern;
   size_t pattern_size;
+  cl_mem dst;
 } _cl_command_fill_mem;
 
 /* For clEnqueue(Write/Read)Image(). */
@@ -336,6 +345,7 @@ typedef struct
   pocl_mem_identifier *mem_id;
   size_t origin[3];
   size_t region[3];
+  cl_mem dst;
 } _cl_command_fill_image;
 
 /* For clEnqueueMarkerWithWaitlist(). */
@@ -367,6 +377,9 @@ typedef struct
    * cl_pocl_content_size */
   uint64_t migration_size;
   pocl_mem_identifier *src_content_size_mem_id;
+  /* Number of buffers to migrate. The actual buffers are in migr_info in
+     the _cl_command_node. */
+  size_t num_buffers;
 } _cl_command_migrate;
 
 typedef struct
@@ -485,7 +498,10 @@ typedef union
   _cl_command_svm_memadvise mem_advise;
 } _cl_command_t;
 
-// one item in the command queue or command buffer
+typedef struct _pocl_buf_implicit_migration_info
+  pocl_buf_implicit_migration_info;
+
+/* One item in a command queue or a command buffer. */
 typedef struct _cl_command_node _cl_command_node;
 struct _cl_command_node
 {
@@ -520,15 +536,13 @@ struct _cl_command_node
   unsigned program_device_i;
   cl_int ready;
 
-  /* fields needed by buffered commands only */
+  /* Fields needed by buffered commands only: */
 
   /* Which of the command queues in the command buffer's queue list
    * this command was recorded for. */
   cl_uint queue_idx;
   /* List of buffers this command accesses, used for inserting migrations */
-  cl_uint memobj_count;
-  cl_mem *memobj_list;
-  char *readonly_flag_list;
+  pocl_buf_implicit_migration_info *migr_infos;
 };
 
 /**

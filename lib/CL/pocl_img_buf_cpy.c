@@ -237,7 +237,7 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
     {
       src = src->buffer;
       dst = dst->buffer;
-      // TODO handle command buffer
+      /* TODO handle command buffer. */
       return POname (clEnqueueCopyBuffer) (
         command_queue, src, dst, mod_src_origin[0], mod_dst_origin[0],
         mod_region[0], num_items_in_wait_list, event_wait_list, event);
@@ -246,7 +246,7 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
   if (IS_IMAGE1D_BUFFER (src))
     {
       src = src->buffer;
-      // TODO handle command buffer
+      /* TODO handle command buffer. */
       return POname (clEnqueueCopyBufferToImage) (
         command_queue, src, dst, mod_src_origin[0], dst_origin, region,
         num_items_in_wait_list, event_wait_list, event);
@@ -255,7 +255,7 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
   if (IS_IMAGE1D_BUFFER (dst))
     {
       dst = dst->buffer;
-      // TODO handle command buffer
+      /* TODO handle command buffer. */
       return POname (clEnqueueCopyImageToBuffer) (
         command_queue, src, dst, src_origin, region, mod_dst_origin[0],
         num_items_in_wait_list, event_wait_list, event);
@@ -264,10 +264,13 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
   cl_mem buffers[3] = { src, dst, NULL };
   char rdonly[] = { 1, 0, 1 };
   int n_bufs = 2;
+
+  pocl_buffer_migration_info *migr_infos
+    = pocl_append_unique_migration_info (NULL, src, 1);
+  pocl_append_unique_migration_info (migr_infos, dst, 0);
   if (src->size_buffer != NULL)
     {
-      n_bufs = 3;
-      buffers[2] = src->size_buffer;
+      pocl_append_unique_migration_info (migr_infos, src->size_buffer, 1);
     }
 
   if (command_buffer == NULL)
@@ -277,16 +280,15 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      errcode = pocl_create_command (cmd, command_queue, command_type, event,
-                                     num_items_in_wait_list, event_wait_list,
-                                     n_bufs, buffers, rdonly);
+      errcode = pocl_create_command_with_multiple_buffers (
+        cmd, command_queue, command_type, event, num_items_in_wait_list,
+        event_wait_list, migr_infos);
     }
   else
     {
-      errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, command_type,
-          num_items_in_wait_list, sync_point_wait_list, n_bufs, buffers,
-          rdonly);
+      errcode = pocl_create_recorded_command_with_multiple_buffers (
+        cmd, command_buffer, command_queue, command_type,
+        num_items_in_wait_list, sync_point_wait_list, migr_infos);
     }
 
   return errcode;

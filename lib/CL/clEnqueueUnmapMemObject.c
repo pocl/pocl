@@ -87,14 +87,15 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   char rdonly = (mapping->map_flags & CL_MAP_READ);
 
   errcode = pocl_create_command (
-      &cmd, command_queue, CL_COMMAND_UNMAP_MEM_OBJECT, event,
-      num_events_in_wait_list, event_wait_list, 1, &memobj, &rdonly);
+    &cmd, command_queue, CL_COMMAND_UNMAP_MEM_OBJECT, event,
+    num_events_in_wait_list, event_wait_list, memobj, rdonly);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   cmd->command.unmap.mapping = mapping;
   cmd->command.unmap.mem_id = &memobj->device_ptrs[device->global_mem_id];
+  cmd->command.unmap.buffer = memobj;
 
   pocl_command_enqueue(command_queue, cmd);
 

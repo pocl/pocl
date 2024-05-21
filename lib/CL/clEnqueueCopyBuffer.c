@@ -106,14 +106,12 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
       != CL_SUCCESS)
     return CL_MEM_COPY_OVERLAP;
 
-  cl_mem buffers[3] = { src_buffer, dst_buffer, NULL };
-  char rdonly[] = { 1, 0, 1 };
-  int n_bufs = 2;
+  pocl_buf_implicit_migration_info *migr_infos
+    = pocl_append_unique_migration_info (NULL, src_buffer, 1);
+  pocl_append_unique_migration_info (migr_infos, dst_buffer, 0);
+
   if (src_buffer->size_buffer != NULL)
-    {
-      n_bufs = 3;
-      buffers[2] = src_buffer->size_buffer;
-    }
+    pocl_append_unique_migration_info (migr_infos, src_buffer->size_buffer, 1);
 
   if (command_buffer == NULL)
     {
@@ -121,16 +119,15 @@ pocl_copy_buffer_common (cl_command_buffer_khr command_buffer,
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-      errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_COPY_BUFFER, event,
-          num_items_in_wait_list, event_wait_list, n_bufs, buffers, rdonly);
+      errcode = pocl_create_command_with_multiple_buffers (
+        cmd, command_queue, CL_COMMAND_COPY_BUFFER, event,
+        num_items_in_wait_list, event_wait_list, migr_infos);
     }
   else
     {
-      errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
-          num_items_in_wait_list, sync_point_wait_list, n_bufs, buffers,
-          rdonly);
+      errcode = pocl_create_recorded_command_with_multiple_buffers (
+        cmd, command_buffer, command_queue, CL_COMMAND_COPY_BUFFER,
+        num_items_in_wait_list, sync_point_wait_list, migr_infos);
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -184,7 +181,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

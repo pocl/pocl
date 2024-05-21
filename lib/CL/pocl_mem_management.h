@@ -55,6 +55,8 @@ cl_event pocl_mem_manager_new_event ();
 #define pocl_mem_manager_new_command() \
   (_cl_command_node*) calloc (1, sizeof (_cl_command_node))
 
+/* TODO: Should we free the migr_infos here or in the event? For user events
+   there are no commands. */
 #define pocl_mem_manager_free_command(cmd)                                    \
   if ((cmd))                                                                  \
     {                                                                         \
@@ -62,8 +64,12 @@ cl_event pocl_mem_manager_new_event ();
         {                                                                     \
           POCL_MEM_FREE ((cmd)->sync.syncpoint.sync_point_wait_list);         \
         }                                                                     \
-      POCL_MEM_FREE ((cmd)->memobj_list);                                     \
-      POCL_MEM_FREE ((cmd)->readonly_flag_list);                              \
+      pocl_buf_implicit_migration_info *mi, *tmp;                             \
+      LL_FOREACH_SAFE ((cmd)->migr_infos, mi, tmp)                            \
+      {                                                                       \
+        POname (clReleaseMemObject (mi->buffer));                             \
+        POCL_MEM_FREE (mi);                                                   \
+      }                                                                       \
     }                                                                         \
   POCL_MEM_FREE ((cmd));
 

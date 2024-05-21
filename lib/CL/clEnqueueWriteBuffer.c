@@ -104,14 +104,14 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_WRITE_BUFFER, event,
-          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+        cmd, command_queue, CL_COMMAND_WRITE_BUFFER, event,
+        num_items_in_wait_list, event_wait_list, buffer, rdonly);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
-          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
+        num_items_in_wait_list, sync_point_wait_list, buffer, rdonly);
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -122,6 +122,7 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
   c->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
   c->command.write.offset = offset;
   c->command.write.size = size;
+  c->command.write.dst = buffer;
 
   return CL_SUCCESS;
 }

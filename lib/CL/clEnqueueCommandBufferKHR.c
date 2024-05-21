@@ -166,24 +166,10 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
           }
 
         _cl_command_node *node = NULL;
-        char *readonly_flag_list = NULL;
-        cl_mem *memobj_list = NULL;
-        if (cmd->memobj_count != 0)
-          {
-            readonly_flag_list = malloc (cmd->memobj_count);
-            memcpy (readonly_flag_list, cmd->readonly_flag_list,
-                    cmd->memobj_count);
-            memobj_list = malloc (sizeof (cl_mem) * cmd->memobj_count);
-            memcpy (memobj_list, cmd->memobj_list,
-                    sizeof (cl_mem) * cmd->memobj_count);
-          }
-        errcode = pocl_create_command (
+        errcode = pocl_create_command_with_multiple_buffers (
           &node, used_queues[cmd->queue_idx], cmd->type, &syncpoints[sync_id],
-          j, deps, cmd->memobj_count, memobj_list, readonly_flag_list);
+          j, deps, cmd->migr_infos);
         ++sync_id;
-
-        POCL_MEM_FREE (readonly_flag_list);
-        POCL_MEM_FREE (memobj_list);
 
         if (errcode != CL_SUCCESS)
           {
@@ -193,7 +179,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
             return errcode;
           }
 
-        errcode = pocl_copy_event_node (node, cmd);
+        errcode = pocl_copy_command_node (node, cmd);
 
         if (errcode != CL_SUCCESS)
           {
@@ -214,7 +200,7 @@ POname (clEnqueueCommandBufferKHR) (cl_uint num_queues,
       cl_event final_ev;
       errcode = pocl_create_command (
         &node, used_queues[0], CL_COMMAND_COMMAND_BUFFER_KHR, &final_ev,
-        command_buffer->num_syncpoints, syncpoints, 0, NULL, NULL);
+        command_buffer->num_syncpoints, syncpoints, NULL, 0);
       if (errcode != CL_SUCCESS)
         {
           pocl_mem_manager_free_command (node);

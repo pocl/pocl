@@ -355,6 +355,21 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
+/* Struct for storing information of a cl_mem that should
+   be migrated to the device before executing a kernel. */
+typedef struct _pocl_buf_implicit_migration_info
+  pocl_buf_implicit_migration_info;
+struct _pocl_buf_implicit_migration_info
+{
+  /* The buffer to migrate (can be a sub-buffer). */
+  cl_mem buffer;
+  /* If the buffer is declared read-only at creation or in kernel argument
+   * list. */
+  char read_only;
+  /* For utlist.h linked lists. */
+  struct _pocl_buf_implicit_migration_info *prev, *next;
+};
+
 /* The device driver layer operations. The device implementations override
    these hooks for their device-specific functionality. */
 struct pocl_device_ops {
@@ -1886,8 +1901,16 @@ struct _cl_event {
   event_node *wait_list;
 
   /* OoO doesn't use sync points -> put used buffers here */
-  size_t num_buffers;
-  cl_mem *mem_objs;
+  size_t num_used_buffers;
+  /* Mem object arguments of the command the event is associated with. */
+  /* The code seemed to assume that the mem_objs that are passed as the command
+     arguments are the first ones in the list. This has not been the
+     ever since the list has been sorted by the mem object id. */
+  /* cl_mem mem_objs; */
+  /* The buffers that should be migrated when this event/command is launched.
+   */
+  /* Moved to the _cl_command struct */
+  /* pocl_buf_implicit_migration_info *migrated_bufs; */
 
   /* Profiling data: time stamps of the different phases of execution. */
   cl_ulong time_queue;  /* the enqueue time */

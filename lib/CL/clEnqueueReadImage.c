@@ -110,13 +110,13 @@ pocl_read_image_common (cl_command_buffer_khr command_buffer,
         return errcode;
       errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_READ_IMAGE,
                                      event, num_items_in_wait_list,
-                                     event_wait_list, 1, &image, &rdonly);
+                                     event_wait_list, image, rdonly);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_READ_IMAGE,
-          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_READ_IMAGE,
+        num_items_in_wait_list, sync_point_wait_list, image, rdonly);
     }
   if (errcode != CL_SUCCESS)
     return errcode;

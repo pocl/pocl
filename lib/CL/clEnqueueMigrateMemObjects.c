@@ -37,7 +37,6 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   unsigned i;
   int errcode;
   _cl_command_node *cmd = NULL;
-  cl_mem *new_mem_objects = NULL;
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
@@ -57,9 +56,7 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  new_mem_objects = (cl_mem *)calloc (sizeof (cl_mem), num_mem_objects);
-
-  char *rdonly = (char*)alloca (num_mem_objects);
+  pocl_buf_implicit_migration_info *migr_infos = NULL;
 
   for (i = 0; i < num_mem_objects; ++i)
     {
@@ -72,22 +69,15 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
       POCL_GOTO_ERROR_ON ((mem_objects[i]->is_gl_texture),
                           CL_INVALID_MEM_OBJECT, "mem_obj is a GL texture\n");
+      cl_mem buf = mem_objects[i];
+      IMAGE1D_TO_BUFFER (buf);
 
-      if (mem_objects[i]->parent == NULL)
-        new_mem_objects[i] = mem_objects[i];
-      else
-        new_mem_objects[i] = mem_objects[i]->parent;
-
-      IMAGE1D_TO_BUFFER (new_mem_objects[i]);
-
-      rdonly[i] = 1;
+      migr_infos = pocl_append_unique_migration_info (migr_infos, buf, 1);
     }
 
-  errcode = pocl_create_command_migrate (
-      &cmd, command_queue, flags, event, num_events_in_wait_list,
-      event_wait_list, num_mem_objects, new_mem_objects, rdonly);
-
-  POCL_MEM_FREE (new_mem_objects);
+  errcode = pocl_create_command_migrate (&cmd, command_queue, flags, event,
+                                         num_events_in_wait_list,
+                                         event_wait_list, migr_infos);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
@@ -95,13 +85,13 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   /* This is an empty command, because the actual migrations are created in
    * the pocl_create_command above, for each buffer separately. */
   cmd->command.migrate.type = ENQUEUE_MIGRATE_TYPE_NOP;
+  cmd->command.migrate.num_buffers = num_mem_objects;
 
   pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 
 ERROR:
-  POCL_MEM_FREE (new_mem_objects);
   return errcode;
 }
 POsym(clEnqueueMigrateMemObjects)

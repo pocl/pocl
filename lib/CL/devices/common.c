@@ -311,35 +311,23 @@ pocl_exec_command (_cl_command_node *node)
   cl_event event = node->sync.event.event;
   cl_device_id dev = node->device;
   _cl_command_t *cmd = &node->command;
-  cl_mem mem = NULL;
-  if (event->num_buffers > 0)
-    mem = event->mem_objs[0];
 
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->read);
-      dev->ops->read
-        (dev->data,
-         cmd->read.dst_host_ptr,
-         cmd->read.src_mem_id,
-         event->mem_objs[0],
-         cmd->read.offset,
-         cmd->read.size);
+      dev->ops->read (dev->data, cmd->read.dst_host_ptr, cmd->read.src_mem_id,
+                      cmd->read.src, cmd->read.offset, cmd->read.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Buffer           ");
       break;
 
     case CL_COMMAND_WRITE_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->write);
-      dev->ops->write
-        (dev->data,
-         cmd->write.src_host_ptr,
-         cmd->write.dst_mem_id,
-         event->mem_objs[0],
-         cmd->write.offset,
-         cmd->write.size);
+      dev->ops->write (dev->data, cmd->write.src_host_ptr,
+                       cmd->write.dst_mem_id, cmd->write.dst,
+                       cmd->write.offset, cmd->write.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Buffer          ");
       break;
 
@@ -374,32 +362,21 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_FILL_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->memfill);
-      dev->ops->memfill
-        (dev->data,
-         cmd->memfill.dst_mem_id,
-         event->mem_objs[0],
-         cmd->memfill.size,
-         cmd->memfill.offset,
-         cmd->memfill.pattern,
-         cmd->memfill.pattern_size);
+      dev->ops->memfill (dev->data, cmd->memfill.dst_mem_id, cmd->memfill.dst,
+                         cmd->memfill.size, cmd->memfill.offset,
+                         cmd->memfill.pattern, cmd->memfill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Buffer           ");
       break;
 
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_update_event_running (event);
       assert (dev->ops->read_rect);
-      dev->ops->read_rect
-        (dev->data,
-         cmd->read_rect.dst_host_ptr,
-         cmd->read_rect.src_mem_id,
-         event->mem_objs[0],
-         cmd->read_rect.buffer_origin,
-         cmd->read_rect.host_origin,
-         cmd->read_rect.region,
-         cmd->read_rect.buffer_row_pitch,
-         cmd->read_rect.buffer_slice_pitch,
-         cmd->read_rect.host_row_pitch,
-         cmd->read_rect.host_slice_pitch);
+      dev->ops->read_rect (
+        dev->data, cmd->read_rect.dst_host_ptr, cmd->read_rect.src_mem_id,
+        cmd->read_rect.src, cmd->read_rect.buffer_origin,
+        cmd->read_rect.host_origin, cmd->read_rect.region,
+        cmd->read_rect.buffer_row_pitch, cmd->read_rect.buffer_slice_pitch,
+        cmd->read_rect.host_row_pitch, cmd->read_rect.host_slice_pitch);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Buffer Rect      ");
       break;
 
@@ -419,22 +396,20 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_update_event_running (event);
       assert (dev->ops->write_rect);
-      dev->ops->write_rect
-        (dev->data,
-         cmd->write_rect.src_host_ptr,
-         cmd->write_rect.dst_mem_id,
-         event->mem_objs[0],
-         cmd->write_rect.buffer_origin,
-         cmd->write_rect.host_origin,
-         cmd->write_rect.region,
-         cmd->write_rect.buffer_row_pitch,
-         cmd->write_rect.buffer_slice_pitch,
-         cmd->write_rect.host_row_pitch,
-         cmd->write_rect.host_slice_pitch);
+      dev->ops->write_rect (
+        dev->data, cmd->write_rect.src_host_ptr, cmd->write_rect.dst_mem_id,
+        cmd->write_rect.dst, cmd->write_rect.buffer_origin,
+        cmd->write_rect.host_origin, cmd->write_rect.region,
+        cmd->write_rect.buffer_row_pitch, cmd->write_rect.buffer_slice_pitch,
+        cmd->write_rect.host_row_pitch, cmd->write_rect.host_slice_pitch);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Buffer Rect     ");
       break;
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      cl_mem mem = NULL;
+      assert (cmd->migrate.num_buffers > 0);
+      mem = node->migr_infos->buffer;
+
       pocl_update_event_running (event);
       switch (cmd->migrate.type)
         {
@@ -507,10 +482,8 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_MAP_BUFFER:
       pocl_update_event_running (event);
       assert (dev->ops->map_mem);
-        dev->ops->map_mem (dev->data,
-                           cmd->map.mem_id,
-                           event->mem_objs[0],
-                           cmd->map.mapping);
+      dev->ops->map_mem (dev->data, cmd->map.mem_id, cmd->map.buffer,
+                         cmd->map.mapping);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Buffer            ");
       break;
 
@@ -572,7 +545,7 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_FILL_IMAGE:
       pocl_update_event_running (event);
       assert (dev->ops->fill_image);
-      dev->ops->fill_image (dev->data, event->mem_objs[0],
+      dev->ops->fill_image (dev->data, cmd->fill_image.dst,
                             cmd->fill_image.mem_id, cmd->fill_image.origin,
                             cmd->fill_image.region, cmd->fill_image.orig_pixel,
                             cmd->fill_image.fill_pixel,
@@ -583,27 +556,27 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_MAP_IMAGE:
       pocl_update_event_running (event);
       assert (dev->ops->map_image != NULL);
-      dev->ops->map_image (dev->data,
-                           cmd->map.mem_id,
-                           event->mem_objs[0],
+      dev->ops->map_image (dev->data, cmd->map.mem_id, cmd->map.buffer,
                            cmd->map.mapping);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Image             ");
       break;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       pocl_update_event_running (event);
-      pocl_mem_identifier *mem_id = &mem->device_ptrs[dev->global_mem_id];
-      if (mem->is_image == CL_FALSE || IS_IMAGE1D_BUFFER (mem))
+      pocl_mem_identifier *mem_id
+        = &cmd->unmap.buffer->device_ptrs[dev->global_mem_id];
+      if (cmd->unmap.buffer->is_image == CL_FALSE
+          || IS_IMAGE1D_BUFFER (cmd->unmap.buffer))
         {
           assert (dev->ops->unmap_mem != NULL);
-          dev->ops->unmap_mem (dev->data, cmd->unmap.mem_id, mem,
+          dev->ops->unmap_mem (dev->data, cmd->unmap.mem_id, cmd->unmap.buffer,
                                cmd->unmap.mapping);
         }
       else
         {
           assert (dev->ops->unmap_image != NULL);
-          dev->ops->unmap_image (dev->data, cmd->unmap.mem_id, mem,
-                                 cmd->unmap.mapping);
+          dev->ops->unmap_image (dev->data, cmd->unmap.mem_id,
+                                 cmd->unmap.buffer, cmd->unmap.mapping);
         }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
       break;

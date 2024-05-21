@@ -132,14 +132,14 @@ pocl_read_buffer_rect_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT, event,
-          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+        cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT, event,
+        num_items_in_wait_list, event_wait_list, buffer, rdonly);
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_READ_BUFFER_RECT,
-          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_READ_BUFFER_RECT,
+        num_items_in_wait_list, sync_point_wait_list, buffer, rdonly);
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -162,6 +162,7 @@ pocl_read_buffer_rect_common (cl_command_buffer_khr command_buffer,
   c->command.read_rect.host_slice_pitch = host_slice_pitch;
   c->command.read_rect.buffer_row_pitch = buffer_row_pitch;
   c->command.read_rect.buffer_slice_pitch = buffer_slice_pitch;
+  c->command.read_rect.src = buffer;
 
   return CL_SUCCESS;
 }

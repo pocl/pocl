@@ -180,7 +180,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE,
                                  event, num_events_in_wait_list,
-                                 event_wait_list, 1, &image, &rdonly);
+                                 event_wait_list, image, rdonly);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 

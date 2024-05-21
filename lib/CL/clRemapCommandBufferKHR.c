@@ -123,18 +123,16 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
         break;
 
       case CL_COMMAND_FILL_BUFFER:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandFillBufferKHR) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0],
+          new_cmdbuf, new_queue, cmd->command.memfill.dst,
           cmd->command.memfill.pattern, cmd->command.memfill.pattern_size,
           cmd->command.memfill.offset, cmd->command.memfill.size,
           cmd->sync.syncpoint.num_sync_points_in_wait_list,
           cmd->sync.syncpoint.sync_point_wait_list, NULL, NULL);
         break;
       case CL_COMMAND_FILL_IMAGE:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandFillImageKHR) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0],
+          new_cmdbuf, new_queue, cmd->command.fill_image.dst,
           cmd->command.fill_image.fill_pixel, cmd->command.fill_image.origin,
           cmd->command.fill_image.region,
           cmd->sync.syncpoint.num_sync_points_in_wait_list,
@@ -164,17 +162,16 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
         break;
 
       case CL_COMMAND_READ_BUFFER:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandReadBufferPOCL) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0], cmd->command.read.offset,
-          cmd->command.read.size, cmd->command.read.dst_host_ptr,
+          new_cmdbuf, new_queue, cmd->command.read.src,
+          cmd->command.read.offset, cmd->command.read.size,
+          cmd->command.read.dst_host_ptr,
           cmd->sync.syncpoint.num_sync_points_in_wait_list,
           cmd->sync.syncpoint.sync_point_wait_list, NULL, NULL);
         break;
       case CL_COMMAND_READ_BUFFER_RECT:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandReadBufferRectPOCL) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0],
+          new_cmdbuf, new_queue, cmd->command.read_rect.src,
           cmd->command.read_rect.buffer_origin,
           cmd->command.read_rect.host_origin, cmd->command.read_rect.region,
           cmd->command.read_rect.buffer_row_pitch,
@@ -238,18 +235,16 @@ POname (clRemapCommandBufferKHR) (cl_command_buffer_khr command_buffer,
         break;
 
       case CL_COMMAND_WRITE_BUFFER:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandWriteBufferPOCL) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0],
+          new_cmdbuf, new_queue, cmd->command.write.dst,
           cmd->command.write.offset, cmd->command.write.size,
           cmd->command.write.src_host_ptr,
           cmd->sync.syncpoint.num_sync_points_in_wait_list,
           cmd->sync.syncpoint.sync_point_wait_list, NULL, NULL);
         break;
       case CL_COMMAND_WRITE_BUFFER_RECT:
-        assert (cmd->memobj_count != 0);
         errcode = POname (clCommandWriteBufferRectPOCL) (
-          new_cmdbuf, new_queue, cmd->memobj_list[0],
+          new_cmdbuf, new_queue, cmd->command.write_rect.dst,
           cmd->command.write_rect.buffer_origin,
           cmd->command.write_rect.host_origin, cmd->command.write_rect.region,
           cmd->command.write_rect.buffer_row_pitch,
