@@ -33,7 +33,8 @@
 #undef CL_TARGET_OPENCL_VERSION
 #define CL_TARGET_OPENCL_VERSION 300
 
-#include <CL/opencl.hpp>
+#include "CL/cl.h"
+#include "CL/opencl.hpp"
 
 #include "messages.h"
 

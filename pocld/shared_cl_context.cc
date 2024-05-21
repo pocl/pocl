@@ -35,6 +35,7 @@
 #include "cmd_queue.hh"
 #include "common.hh"
 #include "config.h"
+#include "pocl.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
 #include "shared_cl_context.hh"
@@ -200,7 +201,8 @@ public:
   /************************************************************************/
 
   virtual int createBuffer(BufferId_t BufferID, size_t Size, uint64_t Flags,
-                           void *HostPtr, void **DeviceAddr) override;
+                           void *HostPtr, BufferId_t ParentID, size_t Origin,
+                           void **DeviceAddr) override;
 
   virtual int freeBuffer(uint64_t buffer_id, bool is_svm) override;
 
@@ -2102,11 +2104,14 @@ int SharedCLContext::createBufferFromSVMRegion(BufferId_t BufferID, size_t Size,
 
 int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
                                   cl_mem_flags Flags, void *HostPtr,
+                                  BufferId_t ParentID, size_t Origin,
                                   void **DeviceAddr) {
 
-  if (SVMRegions.size() > 0)
+  if (SVMRegions.size() > 0) {
+    assert(ParentID == 0 && "Sub-buffers not yet implemented with remote-SVM.");
     return createBufferFromSVMRegion(BufferID, Size, Flags, HostPtr,
                                      DeviceAddr);
+  }
 
   // If there is a client-side host pointer in non-SVM mode, we should
   // not pass it to the server side buffer as it points to the client
@@ -2117,16 +2122,38 @@ int SharedCLContext::createBuffer(BufferId_t BufferID, size_t Size,
   // handling is done in the client side), we cannot use any HOST_* flags here.
   Flags = Flags & (cl_bitfield)(CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY |
                                 CL_MEM_READ_ONLY);
-  // when RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
-  Flags = Flags |
-          (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR : CL_MEM_ALLOC_HOST_PTR);
+
+  if (ParentID == 0) {
+    // When RDMA is used, VirtualClContext passes in a pointer from clSVMAlloc
+    Flags = Flags | (cl_bitfield)(HostPtr ? CL_MEM_USE_HOST_PTR
+                                          : CL_MEM_ALLOC_HOST_PTR);
+    // Note: Sub-buffer creation cannot have the HOST_PTR flags set.
+  }
 
   cl_int Err;
-  clBufferPtr Buf(
-      new cl::Buffer(ContextWithAllDevices, Flags, Size, HostPtr, &Err));
+  clBufferPtr Buf;
+
+  if (ParentID == 0) {
+    Buf = clBufferPtr(
+        new cl::Buffer(ContextWithAllDevices, Flags, Size, HostPtr, &Err));
+  } else {
+    std::unique_lock<std::mutex> Lock(BufferMapMutex);
+    clBufferPtr &Parent = BufferIDmap[ParentID];
+    cl_buffer_region Region{.origin = Origin, .size = Size};
+
+    cl_mem SubBuf = clCreateSubBuffer(
+        Parent->get(), Flags, CL_BUFFER_CREATE_TYPE_REGION, &Region, &Err);
+    Buf = clBufferPtr(new cl::Buffer(SubBuf));
+    if (Err != CL_SUCCESS) {
+      POCL_MSG_ERR("Sub-buffer creation failed (%d).\n", Err);
+      return Err;
+    }
+  }
+
   if (Err != CL_SUCCESS) {
-    POCL_MSG_ERR("P %u Create Buffer (size %zu, host ptr %p) failed %zu = %d\n",
-                 plat_id, Size, HostPtr, BufferID, Err);
+    POCL_MSG_ERR("P %u Create %s (size %zu, host ptr %p) failed %zu = %d\n",
+                 plat_id, ParentID == 0 ? "buffer" : "sub-buffer", Size,
+                 HostPtr, BufferID, Err);
     return Err;
   }
 

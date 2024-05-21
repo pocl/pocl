@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueWriteBuffer()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -22,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
@@ -85,8 +87,6 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
   if (command_queue)
     {
       POCL_RETURN_ERROR_ON (
@@ -104,14 +104,16 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_WRITE_BUFFER, event,
-          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+        cmd, command_queue, CL_COMMAND_WRITE_BUFFER, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
-          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_WRITE_BUFFER,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -119,9 +121,9 @@ pocl_write_buffer_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
 
   c->command.write.src_host_ptr = ptr;
-  c->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
   c->command.write.offset = offset;
   c->command.write.size = size;
+  c->command.write.dst = buffer;
 
   return CL_SUCCESS;
 }

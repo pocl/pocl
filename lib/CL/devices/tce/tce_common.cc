@@ -675,8 +675,8 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
             chunk_info_t *p =
                 (chunk_info_t *)m->device_ptrs[d->parent->global_mem_id]
                     .mem_ptr;
-            address = pocl_byteswap_uint32_t(p->start_address + al->offset,
-                                             d->needsByteSwap);
+            address =
+                pocl_byteswap_uint32_t(p->start_address, d->needsByteSwap);
           }
           POCL_MSG_PRINT_TCE("PTR ARG: %u WRITE POS: %p\n", address, write_pos);
           CHECK_AND_ALIGN_ARGBUFFER(4);

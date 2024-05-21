@@ -693,6 +693,13 @@ pocl_pthread_driver_thread (void *p)
   PTHREAD_CHECK2 (PTHREAD_BARRIER_SERIAL_THREAD,
                   pthread_barrier_wait (&scheduler.init_barrier));
 
+  /* See clFinish.c for the explanation. */
+  if (pocl_get_bool_option ("POCL_DUMP_TASK_GRAPHS", 0) == 1)
+    {
+      POCL_FAST_LOCK (pocl_tg_dump_lock);
+      pthread_cond_wait (&pocl_tg_dump_cond, &pocl_tg_dump_lock);
+    }
+
   while (1)
     {
       do_exit = pthread_scheduler_get_work (td);

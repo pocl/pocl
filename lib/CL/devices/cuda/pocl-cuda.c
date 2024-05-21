@@ -2036,8 +2036,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
                 CUdeviceptr src
-                    = (CUdeviceptr)mem->device_ptrs[device->global_mem_id].mem_ptr
-                      + arguments[i].offset;
+                  = (CUdeviceptr)mem->device_ptrs[device->global_mem_id]
+                      .mem_ptr;
 
                 size_t align = kdata->alignments[i];
                 assert (align && "Zero alignment for pointer argument!");
@@ -2063,8 +2063,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                 if (arguments[i].value)
                   {
                     cl_mem mem = *(void **)arguments[i].value;
-                    params[i] = &mem->device_ptrs[device->global_mem_id].mem_ptr
-                                + arguments[i].offset;
+                    params[i]
+                      = &mem->device_ptrs[device->global_mem_id].mem_ptr;
 
                     /* On ARM with USE_HOST_PTR, perform explicit copy to
                      * device */
@@ -2228,81 +2228,72 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     {
     case CL_COMMAND_READ_BUFFER:
       pocl_cuda_submit_read (
-          stream, cmd->read.dst_host_ptr, cmd->read.src_mem_id->mem_ptr,
-          node->command.read.offset, node->command.read.size);
+        stream, cmd->read.dst_host_ptr,
+        cmd->read.src->device_ptrs[dev->global_mem_id].mem_ptr,
+        node->command.read.offset, node->command.read.size);
       break;
     case CL_COMMAND_WRITE_BUFFER:
       pocl_cuda_submit_write (
-          stream, cmd->write.src_host_ptr, cmd->write.dst_mem_id->mem_ptr,
-          node->command.write.offset, node->command.write.size);
+        stream, cmd->write.src_host_ptr,
+        cmd->write.dst->device_ptrs[dev->global_mem_id].mem_ptr,
+        node->command.write.offset, node->command.write.size);
       break;
     case CL_COMMAND_COPY_BUFFER:
       {
         pocl_cuda_submit_copy (
-            stream, cmd->copy.src_mem_id->mem_ptr, cmd->copy.src_offset,
-            cmd->copy.dst_mem_id->mem_ptr, cmd->copy.dst_offset, cmd->copy.size);
+          stream, cmd->copy.src->device_ptrs[dev->global_mem_id].mem_ptr,
+          cmd->copy.src_offset,
+          cmd->copy.dst->device_ptrs[dev->global_mem_id].mem_ptr,
+          cmd->copy.dst_offset, cmd->copy.size);
         break;
       }
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_cuda_submit_read_rect (
-          stream,
-          cmd->read_rect.dst_host_ptr,
-          cmd->read_rect.src_mem_id->mem_ptr,
-          cmd->read_rect.buffer_origin,
-          cmd->read_rect.host_origin,
-          cmd->read_rect.region,
-          cmd->read_rect.buffer_row_pitch,
-          cmd->read_rect.buffer_slice_pitch,
-          cmd->read_rect.host_row_pitch,
-          cmd->read_rect.host_slice_pitch);
+        stream, cmd->read_rect.dst_host_ptr,
+        cmd->read_rect.src->device_ptrs[dev->global_mem_id].mem_ptr,
+        cmd->read_rect.buffer_origin, cmd->read_rect.host_origin,
+        cmd->read_rect.region, cmd->read_rect.buffer_row_pitch,
+        cmd->read_rect.buffer_slice_pitch, cmd->read_rect.host_row_pitch,
+        cmd->read_rect.host_slice_pitch);
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_cuda_submit_write_rect (
-          stream,
-          cmd->write_rect.src_host_ptr,
-          cmd->write_rect.dst_mem_id->mem_ptr,
-          cmd->write_rect.buffer_origin,
-          cmd->write_rect.host_origin,
-          cmd->write_rect.region,
-          cmd->read_rect.buffer_row_pitch,
-          cmd->read_rect.buffer_slice_pitch,
-          cmd->read_rect.host_row_pitch,
-          cmd->read_rect.host_slice_pitch);
+        stream, cmd->write_rect.src_host_ptr,
+        cmd->write_rect.dst->device_ptrs[dev->global_mem_id].mem_ptr,
+        cmd->write_rect.buffer_origin, cmd->write_rect.host_origin,
+        cmd->write_rect.region, cmd->write_rect.buffer_row_pitch,
+        cmd->write_rect.buffer_slice_pitch, cmd->write_rect.host_row_pitch,
+        cmd->write_rect.host_slice_pitch);
       break;
     case CL_COMMAND_COPY_BUFFER_RECT:
       {
         pocl_cuda_submit_copy_rect (
           stream, dev,
-          cmd->copy_rect.src_mem_id->mem_ptr,
-          cmd->copy_rect.dst_mem_id->mem_ptr,
-          cmd->copy_rect.src_origin,
-          cmd->copy_rect.dst_origin,
-          cmd->copy_rect.region,
-          cmd->copy_rect.src_row_pitch,
-          cmd->copy_rect.src_slice_pitch,
-          cmd->copy_rect.dst_row_pitch,
+          cmd->copy_rect.src->device_ptrs[dev->global_mem_id].mem_ptr,
+          cmd->copy_rect.dst->device_ptrs[dev->global_mem_id].mem_ptr,
+          cmd->copy_rect.src_origin, cmd->copy_rect.dst_origin,
+          cmd->copy_rect.region, cmd->copy_rect.src_row_pitch,
+          cmd->copy_rect.src_slice_pitch, cmd->copy_rect.dst_row_pitch,
           cmd->copy_rect.dst_slice_pitch);
         break;
       }
     case CL_COMMAND_MAP_BUFFER:
       {
-        cl_mem buffer = event->mem_objs[0];
         pocl_cuda_submit_map_mem (
-            stream, buffer, cmd->map.mem_id, cmd->map.mapping->offset,
-            cmd->map.mapping->size, cmd->map.mapping->host_ptr);
+          stream, cmd->map.buffer,
+          &cmd->map.buffer->device_ptrs[dev->global_mem_id],
+          cmd->map.mapping->offset, cmd->map.mapping->size,
+          cmd->map.mapping->host_ptr);
         break;
       }
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       {
-        cl_mem buffer = event->mem_objs[0];
+        cl_mem buffer = cmd->unmap.buffer;
         assert (buffer->is_image == CL_FALSE);
         pocl_cuda_submit_unmap_mem (
-            stream,
-            cmd->unmap.mem_id,
-            cmd->unmap.mapping->offset,
-            cmd->unmap.mapping->size,
-            cmd->unmap.mapping->host_ptr,
-            cmd->unmap.mapping->map_flags);
+          stream, &cmd->unmap.buffer->device_ptrs[dev->global_mem_id],
+          cmd->unmap.mapping->offset, cmd->unmap.mapping->size,
+          cmd->unmap.mapping->host_ptr, cmd->unmap.mapping->map_flags);
         break;
       }
     case CL_COMMAND_NDRANGE_KERNEL:
@@ -2315,25 +2306,28 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         {
         case ENQUEUE_MIGRATE_TYPE_D2H:
           {
-            cl_mem mem = event->mem_objs[0];
-            pocl_cuda_submit_read (stream, mem->mem_host_ptr,
-                                   cmd->migrate.mem_id->mem_ptr, 0, mem->size);
+            cl_mem mem = node->migr_infos->buffer;
+            pocl_cuda_submit_read (
+              stream, mem->mem_host_ptr,
+              mem->device_ptrs[dev->global_mem_id].mem_ptr, 0, mem->size);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_H2D:
           {
-            cl_mem mem = event->mem_objs[0];
-            pocl_cuda_submit_write (stream, mem->mem_host_ptr,
-                                    cmd->migrate.mem_id->mem_ptr, 0,
-                                    mem->size);
+            cl_mem mem = node->migr_infos->buffer;
+            pocl_cuda_submit_write (
+              stream, mem->mem_host_ptr,
+              mem->device_ptrs[dev->global_mem_id].mem_ptr, 0, mem->size);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_D2D:
           {
-            cl_mem mem = event->mem_objs[0];
+            cl_mem mem = node->migr_infos->buffer;
             pocl_cuda_submit_copy_p2p (
-                stream, cmd->migrate.src_device, cmd->migrate.src_id->mem_ptr,
-                0, cq->device, cmd->migrate.dst_id->mem_ptr, 0, mem->size);
+              stream, cmd->migrate.src_device,
+              mem->device_ptrs[cmd->migrate.src_device->global_mem_id].mem_ptr,
+              0, cq->device, &mem->device_ptrs[dev->global_mem_id].mem_ptr, 0,
+              mem->size);
             break;
           }
         case ENQUEUE_MIGRATE_TYPE_NOP:
@@ -2348,10 +2342,10 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-      pocl_cuda_submit_memfill (stream, cmd->memfill.dst_mem_id->mem_ptr,
-                                cmd->memfill.size, cmd->memfill.offset,
-                                cmd->memfill.pattern,
-                                cmd->memfill.pattern_size);
+      pocl_cuda_submit_memfill (
+        stream, cmd->memfill.dst->device_ptrs[dev->global_mem_id].mem_ptr,
+        cmd->memfill.size, cmd->memfill.offset, cmd->memfill.pattern,
+        cmd->memfill.pattern_size);
       break;
     case CL_COMMAND_SVM_MAP:
     case CL_COMMAND_SVM_UNMAP:

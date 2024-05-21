@@ -1,6 +1,7 @@
 /* OpenCL runtime library: PoCL debug functions
 
    Copyright (c) 2015-2023 PoCL developers
+                 2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -28,6 +29,9 @@
 #include "pocl_debug.h"
 #include "pocl_threads.h"
 #include "pocl_timing.h"
+#include "pocl_cl.h"
+
+#include "utlist.h"
 
 #ifdef POCL_DEBUG_MESSAGES
 
@@ -35,6 +39,9 @@ uint64_t pocl_debug_messages_filter; /* Bitfield */
 int pocl_stderr_is_a_tty;
 
 static pocl_lock_t console_mutex;
+
+pocl_lock_t pocl_tg_dump_lock = POCL_LOCK_INITIALIZER;
+pocl_cond_t pocl_tg_dump_cond;
 
 void pocl_debug_output_lock(void) { POCL_LOCK(console_mutex); }
 
@@ -211,6 +218,218 @@ void pocl_debug_measure_finish(uint64_t *start, uint64_t *finish,
                                unsigned line) {
   *finish = pocl_gettimemono_ns();
   pocl_debug_print_duration(func, line, msg, (*finish - *start));
+}
+
+static void
+dump_dot_command_queue (FILE *f,
+                        struct _cl_command_queue *q,
+                        size_t *sg_ids,
+                        const char *extra_str)
+{
+  fprintf (f, "\tsubgraph cluster%zu {\n", (*sg_ids)++);
+  fprintf (f, "\t\tlabel=\"CQ #%zu%s\";\n", q->id, extra_str);
+
+  struct _cl_event *e;
+  LL_FOREACH (q->events, e)
+    {
+      fprintf (f, "\t\tevent%zu [label=\"%zu: %s\\n", e->id, e->id,
+               pocl_command_type_to_str (e->command_type, 1));
+      if (e->command_type == CL_COMMAND_NDRANGE_KERNEL)
+        {
+          fprintf (f, "%s\\n", e->command->command.run.kernel->name);
+        }
+
+      pocl_buffer_migration_info *mi;
+      LL_FOREACH (e->command->migr_infos, mi)
+        {
+          if (mi->buffer->parent != NULL)
+            {
+              fprintf (f, "sbuf#%zu/#%zu", mi->buffer->id,
+                       mi->buffer->parent->id);
+              if (e->command_type == CL_COMMAND_MIGRATE_MEM_OBJECTS)
+                fprintf (f, "\\ns:%zu\\ne:%zu", mi->buffer->origin,
+                         mi->buffer->origin + mi->buffer->size);
+            }
+          else
+            fprintf (f, "buf#%zu", mi->buffer->id);
+          if (mi->read_only)
+            fprintf (f, " ro");
+
+          if (mi->next != NULL)
+            fprintf (f, "\\n");
+        }
+      fprintf (f, "\", color=");
+
+      if (e->command_type == CL_COMMAND_NDRANGE_KERNEL)
+        fprintf (f, "blue");
+      else if (e->command_type == CL_COMMAND_MIGRATE_MEM_OBJECTS
+               && e->command->command.migrate.implicit)
+        fprintf (f, "red,style=\"dotted\"");
+      else if (e->command_type == CL_COMMAND_READ_BUFFER)
+        fprintf (f, "green");
+      else if (e->command_type == CL_COMMAND_WRITE_BUFFER)
+        fprintf (f, "red");
+      else
+        fprintf (f, "black");
+
+      fprintf (f, "];\n");
+    }
+  fprintf (f, "\t}\n\n");
+}
+
+void
+pocl_dump_dot_task_graph (cl_context context, const char *file_name)
+{
+  FILE *f = fopen (file_name, "w+");
+  if (!f)
+    {
+      fprintf (stderr, "Unable to write to '%s'\n", file_name);
+      fclose (f);
+      return;
+    }
+
+  fprintf (f, "digraph {\n");
+  struct _cl_context *ctx = (struct _cl_context *)context;
+
+  size_t sg_ids = 0;
+  /* Dump subgraphs (devices, command queues) and their nodes
+   * (commands/events). */
+  for (int dev = 0; dev < ctx->num_devices; ++dev)
+    {
+      cl_device_id device = ctx->devices[dev];
+
+      fprintf (f, "subgraph cluster%zu {\n", sg_ids++);
+      fprintf (f, "\tlabel=\"Device %d: %s\";\n", dev, device->short_name);
+      struct _cl_command_queue *q;
+      LL_FOREACH (ctx->command_queues, q)
+        {
+          if (q->device != device)
+            continue;
+          dump_dot_command_queue (f, q, &sg_ids, "");
+        }
+      LL_FOREACH (ctx->default_queues[dev], q)
+        {
+          assert (q->device == device);
+          dump_dot_command_queue (f, q, &sg_ids, " (default)");
+        }
+      fprintf (f, "}\n");
+    }
+
+  /* Dump the event dependencies. */
+
+  struct _cl_command_queue *q;
+  LL_FOREACH (ctx->command_queues, q)
+    {
+      struct _cl_event *e;
+      LL_FOREACH (q->events, e)
+        {
+          event_node *evn;
+          LL_FOREACH (e->wait_list, evn)
+            {
+              fprintf (f,
+                       "\t\tevent%zu -> event%zu [labelfontsize=8.0, "
+                       "headlabel=\"%zu\"",
+                       evn->event->id, e->id, evn->event->id);
+
+              if (evn->event->command_type == CL_COMMAND_MIGRATE_MEM_OBJECTS
+                  && evn->event->command->command.migrate.implicit)
+                fprintf (f, ", color=\"red\", style=\"dotted\"");
+              fprintf (f, "];\n");
+            }
+        }
+    }
+  for (int dev = 0; dev < ctx->num_devices; ++dev)
+    {
+      LL_FOREACH (ctx->default_queues[dev], q)
+        {
+          struct _cl_event *e;
+          LL_FOREACH (q->events, e)
+            {
+              event_node *evn;
+              LL_FOREACH (e->wait_list, evn)
+                {
+                  fprintf (f, "\t\tevent%zu -> event%zu;\n", evn->event->id,
+                           e->id);
+                }
+            }
+        }
+    }
+
+  fprintf (f, "}\n");
+
+  fclose (f);
+}
+
+const char *
+pocl_command_type_to_str (cl_command_type cmd, int shortened)
+{
+  switch (cmd)
+    {
+    case CL_COMMAND_NDRANGE_KERNEL:
+      return shortened ? "nd" : "ndrange_kernel";
+    case CL_COMMAND_TASK:
+      return "task_kernel";
+    case CL_COMMAND_NATIVE_KERNEL:
+      return "native_kernel";
+    case CL_COMMAND_READ_BUFFER:
+      return shortened ? "read" : "read_buffer";
+    case CL_COMMAND_WRITE_BUFFER:
+      return shortened ? "write" : "write_buffer";
+    case CL_COMMAND_COPY_BUFFER:
+      return shortened ? "copy" : "copy_buffer";
+    case CL_COMMAND_READ_IMAGE:
+      return "read_image";
+    case CL_COMMAND_WRITE_IMAGE:
+      return "write_image";
+    case CL_COMMAND_COPY_IMAGE:
+      return "copy_image";
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+      return "copy_image_to_buffer";
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+      return "copy_buffer_to_image";
+    case CL_COMMAND_MAP_BUFFER:
+      return shortened ? "map" : "map_buffer";
+    case CL_COMMAND_MAP_IMAGE:
+      return "map_image";
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      return shortened ? "unmap" : "unmap_mem_object";
+    case CL_COMMAND_MARKER:
+      return "marker";
+    case CL_COMMAND_ACQUIRE_GL_OBJECTS:
+      return "acquire_gl_objects";
+    case CL_COMMAND_RELEASE_GL_OBJECTS:
+      return "release_gl_objects";
+    case CL_COMMAND_READ_BUFFER_RECT:
+      return "read_buffer_rect";
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      return "write_buffer_rect";
+    case CL_COMMAND_COPY_BUFFER_RECT:
+      return "copy_buffer_rect";
+    case CL_COMMAND_USER:
+      return "user";
+    case CL_COMMAND_BARRIER:
+      return "barrier";
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      return shortened ? "migrate" : "migrate_mem_objects";
+    case CL_COMMAND_FILL_BUFFER:
+      return "fill_buffer";
+    case CL_COMMAND_FILL_IMAGE:
+      return "fill_image";
+    case CL_COMMAND_SVM_FREE:
+      return "svm_free";
+    case CL_COMMAND_SVM_MEMCPY:
+      return "svm_memcpy";
+    case CL_COMMAND_SVM_MEMFILL:
+      return "svm_memfill";
+    case CL_COMMAND_SVM_MAP:
+      return "svm_map";
+    case CL_COMMAND_SVM_UNMAP:
+      return "svm_unmap";
+    case CL_COMMAND_COMMAND_BUFFER_KHR:
+      return "command_buffer_khr";
+    }
+
+  return "unknown";
 }
 
 #endif

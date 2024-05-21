@@ -375,7 +375,7 @@ public:
             cl_mem m = *(cl_mem *)(al->value);
             void *p = m->device_ptrs[parent->global_mem_id].mem_ptr;
             chunk_info_t *ci = (chunk_info_t *)p;
-            unsigned start_addr = ci->start_address + al->offset;
+            unsigned start_addr = ci->start_address;
             unsigned size = ci->size;
 
             out << "__global__ ALIGN4 char buffer_" << std::hex << start_addr

@@ -57,13 +57,11 @@ pocl_copy_buffer_rect_common (cl_command_buffer_khr command_buffer,
     return errcode;
 
   size_t src_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
   POCL_GOTO_ERROR_ON (
       (src_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   size_t dst_offset = 0;
-  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
   POCL_GOTO_ERROR_ON (
       (dst_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "dst is larger than device's MAX_MEM_ALLOC_SIZE\n");
@@ -71,11 +69,7 @@ pocl_copy_buffer_rect_common (cl_command_buffer_khr command_buffer,
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
 
-  c->command.copy_rect.src_mem_id
-      = &src_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.src = src_buffer;
-  c->command.copy_rect.dst_mem_id
-      = &dst_buffer->device_ptrs[dev->global_mem_id];
   c->command.copy_rect.dst = dst_buffer;
 
   c->command.copy_rect.src_origin[0] = src_offset + src_origin[0];

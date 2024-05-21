@@ -58,6 +58,7 @@
 #include "pocl_timing.h"
 #include "pocl_util.h"
 #include "utlist.h"
+#include "utlist_addon.h"
 
 #ifdef ENABLE_RELOCATION
 #if defined(__APPLE__)
@@ -426,72 +427,15 @@ pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
     }
 }
 
-/* This is required because e.g. NDRange commands could have the same buffer
- * multiple times as argument, or CopyBuffer could have src == dst buffer.
- *
- * If the buffer that appears multiple times in the list, is on another device,
- * we don't want to enqueue >1 migrations for the same buffer.
- */
-static void
-sort_and_uniq (cl_mem *objs, char *readonly_flags, size_t *num_objs)
-{
-  size_t i;
-  ssize_t j;
-  size_t n = *num_objs;
-  assert (n > 1);
-
-  /* if the buffer is an image backed by buffer storage,
-   * replace with actual storage */
-  for (i = 0; i < n; ++i)
-    if (objs[i]->buffer)
-      objs[i] = objs[i]->buffer;
-
-  /* sort by obj id */
-  for (i = 1; i < n; ++i)
-    {
-      cl_mem buf = objs[i];
-      char c = readonly_flags[i];
-      for (j = (i - 1); ((j >= 0) && (objs[j]->id > buf->id)); --j)
-        {
-          objs[j + 1] = objs[j];
-          readonly_flags[j + 1] = readonly_flags[j];
-        }
-      objs[j + 1] = buf;
-      readonly_flags[j + 1] = c;
-    }
-
-  /* skip the first i objects which are different */
-  for (i = 1; i < n; ++i)
-    if (objs[i - 1] == objs[i])
-      break;
-
-  /* uniq */
-  size_t k = i;
-  while (i < n)
-    {
-      if (objs[k] != objs[i])
-        {
-          objs[k] = objs[i];
-          readonly_flags[k] = readonly_flags[i];
-          ++k;
-        }
-      else
-        {
-          readonly_flags[k] = readonly_flags[k] & readonly_flags[i];
-        }
-      ++i;
-    }
-
-  *num_objs = k;
-}
-
 extern unsigned long event_c;
 extern unsigned long uevent_c;
 
 cl_int
-pocl_create_event (cl_event *event, cl_command_queue command_queue,
-                   cl_command_type command_type, size_t num_buffers,
-                   const cl_mem *buffers, cl_context context)
+pocl_create_event (cl_event *event,
+                   cl_command_queue command_queue,
+                   cl_command_type command_type,
+                   pocl_buffer_migration_info *migration_infos,
+                   cl_context context)
 {
   static uint64_t event_id_counter = 0;
 
@@ -517,12 +461,6 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
   (*event)->command_type = command_type;
   (*event)->id = POCL_ATOMIC_INC (event_id_counter);
-  (*event)->num_buffers = num_buffers;
-  if (num_buffers > 0)
-    {
-      (*event)->mem_objs = (cl_mem *)malloc (num_buffers * sizeof (cl_mem));
-      memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof (cl_mem));
-    }
   (*event)->status = CL_QUEUED;
 
   if (command_type == CL_COMMAND_USER)
@@ -530,7 +468,7 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
   else
     POCL_ATOMIC_INC (event_c);
 
-  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) Command %s\n",
+  POCL_MSG_PRINT_EVENTS ("Created event %" PRIu64 " (%p) for Command %s\n",
                          (*event)->id, (*event),
                          pocl_command_to_str (command_type));
 
@@ -555,7 +493,7 @@ check_for_circular_dep (cl_event waiting_event, cl_event notifier_event)
   return 0;
 }
 
-static int
+int
 pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
 {
   event_node *notify_target = NULL;
@@ -610,32 +548,38 @@ FINISH:
   return CL_SUCCESS;
 }
 
-/* preallocate the buffers on destination device.
- * if any allocation fails, we can't run this command. */
+/** Preallocate the buffers in the migration_infos lists on the destination
+ * device.
+ *
+ * @return 0 If any of the allocations fails (can't run the command). */
 static int
-can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
+preallocate_buffers (cl_device_id dev,
+                     pocl_buffer_migration_info *migration_infos)
 {
   size_t i;
   int errcode;
 
-  for (i = 0; i < num_objs; ++i)
-    {
-      POCL_LOCK_OBJ (objs[i]);
-      pocl_mem_identifier *p = &objs[i]->device_ptrs[dev->global_mem_id];
-      // skip already allocated
-      if (p->mem_ptr) {
-        POCL_UNLOCK_OBJ (objs[i]);
+  pocl_buffer_migration_info *migr_info = NULL;
+  LL_FOREACH (migration_infos, migr_info)
+  {
+    cl_mem obj = migr_info->buffer;
+    POCL_LOCK_OBJ (obj);
+    pocl_mem_identifier *p = &obj->device_ptrs[dev->global_mem_id];
+    /* Skip already allocated. */
+    if (p->mem_ptr != NULL)
+      {
+        POCL_UNLOCK_OBJ (obj);
         continue;
       }
 
       assert (dev->ops->alloc_mem_obj);
-      errcode = dev->ops->alloc_mem_obj (dev, objs[i], NULL);
+      errcode = dev->ops->alloc_mem_obj (dev, obj, NULL);
       if (errcode != CL_SUCCESS) {
-        POCL_MSG_ERR("Failed to allocate %zu bytes on device %s\n",
-                     objs[i]->size, dev->short_name);
+        POCL_MSG_ERR ("Failed to allocate %zu bytes on device %s\n", obj->size,
+                      dev->short_name);
       }
 
-      POCL_UNLOCK_OBJ (objs[i]);
+      POCL_UNLOCK_OBJ (obj);
       if (errcode != CL_SUCCESS)
         return CL_FALSE;
     }
@@ -643,12 +587,14 @@ can_run_command (cl_device_id dev, size_t num_objs, cl_mem *objs)
   return CL_TRUE;
 }
 
-static cl_int
+cl_int
 pocl_create_command_struct (_cl_command_node **cmd,
                             cl_command_queue command_queue,
-                            cl_command_type command_type, cl_event *event_p,
-                            cl_uint num_events, const cl_event *wait_list,
-                            size_t num_buffers, const cl_mem *buffers)
+                            cl_command_type command_type,
+                            cl_event *event_p,
+                            cl_uint num_events,
+                            const cl_event *wait_list,
+                            pocl_buffer_migration_info *migration_infos)
 {
   unsigned i;
   cl_event *event = NULL;
@@ -660,15 +606,15 @@ pocl_create_command_struct (_cl_command_node **cmd,
   (*cmd)->type = command_type;
 
   event = &((*cmd)->sync.event.event);
-  errcode = pocl_create_event (event, command_queue, command_type, num_buffers,
-                               buffers, command_queue->context);
+  errcode = pocl_create_event (event, command_queue, command_type,
+                               migration_infos, command_queue->context);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
   (*event)->command_type = command_type;
 
-  /* if host application wants this commands event
-     one reference for the host and one for the runtime/driver */
+  /* If host application wants this commands event
+     one reference for the host and one for the runtime/driver. */
   if (event_p)
     {
       POCL_MSG_PRINT_EVENTS ("event pointer provided\n");
@@ -685,7 +631,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
   (*cmd)->device = command_queue->device;
   (*cmd)->sync.event.event->command = (*cmd);
 
-  /* Form event synchronizations based on the given wait list */
+  /* Form event synchronizations based on the given wait list. */
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
@@ -703,376 +649,20 @@ ERROR:
 }
 
 /**
- * Creates the necessary implicit migration commands to ensure data is
- * where it's supposed to be according to the semantics of the program
- * defined using commands, buffers, command queues and events.
+ * Creates a command node for immediate execution and adds implicit data
+ * migrations required by it.
  *
- * @param dev Destination device
- * @param ev_export_p Optional output parameter for the export event
- * @param migration_size Max number of bytes to migrate (caller has to read
- *                       content size from mem->size_buffer if applicable)
- */
-static int
-pocl_create_migration_commands (cl_device_id dev, cl_event *ev_export_p,
-                                cl_event final_event, cl_mem mem,
-                                pocl_mem_identifier *p, const char readonly,
-                                cl_command_type command_type,
-                                cl_mem_migration_flags mig_flags,
-                                uint64_t migration_size)
-{
-  int errcode = CL_SUCCESS;
-
-  cl_event ev_export = NULL, ev_import = NULL, previous_last_event = NULL,
-           last_migration_event = NULL;
-  _cl_command_node *cmd_export = NULL, *cmd_import = NULL;
-  cl_device_id ex_dev = NULL;
-  cl_command_queue ex_cq = NULL, dev_cq = NULL;
-  int can_directly_mig = 0;
-  size_t i;
-
-  /* "export" means copy buffer content from source device to mem_host_ptr;
-   *
-   * "import" means copy mem_host_ptr content to destination device,
-   * or copy directly between devices
-   *
-   * "need_hostptr" if set, increase the mem_host_ptr_refcount,
-   * to keep the mem_host_ptr backing memory around */
-  int do_import = 0, do_export = 0, do_need_hostptr = 0;
-
-  /*****************************************************************/
-
-  /* this part only:
-   *   sets up the buffer content versions according to requested migration type;
-   *   sets the buffer->last_event pointer to the final_event;
-   *   decides what needs to be actually done (import, export) but not do it;
-   *
-   * ... so that any following command sees a correct buffer state.
-   * The actual migration commands are enqueued after. */
-  POCL_LOCK_OBJ (mem);
-
-  /* Retain the buffer for the duration of the command, except Unmaps,
-   * because corresponding Maps retain twice. */
-  if (command_type != CL_COMMAND_UNMAP_MEM_OBJECT)
-    POCL_RETAIN_OBJECT_UNLOCKED (mem);
-
-  /* save buffer's current last_event as previous last_event,
-   * then set the last_event pointer to the actual command's event
-   * (final_event).
-   *
-   * We'll need the "previous" event to properly chain commands, but
-   * will release it after we've enqueued the required commands. */
-  previous_last_event = mem->last_event;
-  mem->last_event = final_event;
-
-  /* Find the device/gmem with the latest copy of the data and that has the
-   * fastest migration route.
-   * ex_dev = device with the latest copy _other than dev_
-   * dev_cq = default command queue for destination dev */
-  int highest_d2d_mig_priority = 0;
-  for (i = 0; i < mem->context->num_devices; ++i)
-    {
-      cl_device_id d = mem->context->devices[i];
-      cl_command_queue cq = mem->context->default_queues[i];
-      if (d == dev)
-        dev_cq = cq;
-      else if (mem->device_ptrs[d->global_mem_id].version == mem->latest_version)
-        {
-          int cur_d2d_mig_priority = 0;
-          if (d->ops->can_migrate_d2d)
-            cur_d2d_mig_priority = d->ops->can_migrate_d2d (dev, d);
-
-          // if we can directly migrate, and we found a better device, use it
-          if (cur_d2d_mig_priority > highest_d2d_mig_priority)
-            {
-              ex_dev = d;
-              ex_cq = cq;
-              highest_d2d_mig_priority = cur_d2d_mig_priority;
-            }
-
-          // if we can't migrate D2D, just use plain old through-host migration
-          if (highest_d2d_mig_priority == 0)
-            {
-              ex_dev = d;
-              ex_cq = cq;
-            }
-        }
-    }
-
-  assert (dev);
-  assert (dev_cq);
-  /* ex_dev can be NULL, or non-NULL != dev */
-  assert (ex_dev != dev);
-
-  /* if mem_host_ptr_version < latest_version, one of devices must have it;
-   *
-   * could be latest_version == mem_host_ptr_version == some p->version
-   * for some p, and so i < ndev; in that case,
-   * we leave ex_dev set since D2D is preferred migration way;
-   *
-   * otherwise must be
-   * mem_host_ptr_version == latest_version & > all p->version */
-
-  if ((mem->mem_host_ptr_version < mem->latest_version) && (p->version != mem->latest_version))
-    assert ((ex_dev != NULL) && (mem->device_ptrs[ex_dev->global_mem_id].version == mem->latest_version));
-
-  /* if ex_dev is NULL, either we have the latest or it's in mem_host_ptr */
-  if (ex_dev == NULL)
-    assert ((p->version == mem->latest_version) ||
-            (mem->mem_host_ptr_version == mem->latest_version));
-
-  /*****************************************************************/
-
-  /* buffer must be already allocated on this device's globalmem */
-  assert (p->mem_ptr != NULL);
-
-  /* we're migrating to host mem only: clEnqueueMigMemObjs() with HOST flag */
-  if (mig_flags & CL_MIGRATE_MEM_OBJECT_HOST)
-    {
-      do_import = 0;
-      do_export = 0;
-      do_need_hostptr = 1;
-      if (mem->mem_host_ptr_version < mem->latest_version)
-        {
-          mem->mem_host_ptr_version = mem->latest_version;
-          /* migrate content only if needed */
-          if ((mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED) == 0
-              || migration_size == 0)
-            {
-              /* Could be that destination dev has the latest version,
-               * we still need to migrate to host mem */
-              if (ex_dev == NULL)
-                {
-                  ex_dev = dev; ex_cq = dev_cq;
-                }
-              do_export = 1;
-              POCL_RETAIN_OBJECT_UNLOCKED (mem);
-            }
-        }
-
-      goto FINISH_VER_SETUP;
-    }
-
-  /* otherwise, we're migrating to a device memory. */
-  /* check if we can migrate to the device associated with command_queue
-   * without incurring the overhead of migrating their contents */
-  if (mig_flags & CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED
-      || migration_size == 0)
-    p->version = mem->latest_version;
-
-  can_directly_mig = highest_d2d_mig_priority > 0;
-
-  /* Set the flag so the hostptr refcount gets incremented to keep the buffer
-   * alive until it has been read for the associated content buffer's
-   * migration. */
-  if ((mem->content_buffer != NULL) && !can_directly_mig)
-    do_need_hostptr = 1;
-
-  /* if we don't need to migrate, skip to end */
-  if (p->version >= mem->latest_version)
-    {
-      do_import = 0;
-      do_export = 0;
-      goto FINISH_VER_SETUP;
-    }
-
-  /* if mem_host_ptr is outdated AND the devices can't migrate
-   * between each other, we need an export command */
-  if ((mem->mem_host_ptr_version != mem->latest_version)
-      && (can_directly_mig == 0))
-    {
-      /* we need two migration commands; one on the "source" device's hidden
-       * queue, and one on the destination device. */
-      do_import = 1;
-      do_export = 1;
-      do_need_hostptr = 1;
-
-      /* because the two migrate commands will clRelease the buffer */
-      POCL_RETAIN_OBJECT_UNLOCKED (mem);
-      POCL_RETAIN_OBJECT_UNLOCKED (mem);
-      mem->mem_host_ptr_version = mem->latest_version;
-      p->version = mem->latest_version;
-    }
-  /* otherwise either:
-   * 1) mem_host_ptr is latest, and we need to migrate mem-host-ptr to device, or
-   * 2) mem_host_ptr is not latest, but devices can migrate directly between each other,
-   * For both cases we only need one migration command on the destination device. */
-  else
-    {
-      do_import = 1;
-      do_export = 0;
-      do_need_hostptr = 1;
-
-      /* because the corresponding migrate command will clRelease the buffer */
-      POCL_RETAIN_OBJECT_UNLOCKED (mem);
-      p->version = mem->latest_version;
-    }
-
-FINISH_VER_SETUP:
-  /* if the command is a write-use, increase the version. */
-  if (!readonly)
-    {
-      ++p->version;
-      mem->latest_version = p->version;
-    }
-
-  if (do_need_hostptr)
-    {
-      /* increase refcount for the two mig commands and for the caller
-       * if this is a size buffer needed for content size -aware migration */
-      if (do_export)
-        ++mem->mem_host_ptr_refcount;
-      if (do_import)
-        ++mem->mem_host_ptr_refcount;
-      if (ev_export_p)
-        ++mem->mem_host_ptr_refcount;
-
-      /* allocate mem_host_ptr here if needed... */
-      if (mem->mem_host_ptr == NULL)
-        {
-          size_t align = max (mem->context->min_buffer_alignment, 16);
-          /* Always allocate mem_host_ptr for the full size of the buffer to
-           * guard against applications forgetting to check content size */
-          mem->mem_host_ptr = pocl_aligned_malloc (align, mem->size);
-          assert ((mem->mem_host_ptr != NULL)
-                  && "Cannot allocate backing memory for mem_host_ptr!\n");
-        }
-    }
-
-  /*****************************************************************/
-
-  /* Enqueue a command for export.
-   * Put the previous last event into its waitlist. */
-  if (do_export)
-    {
-      assert (ex_cq);
-      assert (ex_dev);
-      errcode = pocl_create_command_struct (
-          &cmd_export, ex_cq, CL_COMMAND_MIGRATE_MEM_OBJECTS,
-          &ev_export, // event_p
-          (previous_last_event ? 1 : 0),
-          (previous_last_event ? &previous_last_event : NULL), // waitlist
-          1, &mem                                              // buffer list
-      );
-      assert (errcode == CL_SUCCESS);
-      if (do_need_hostptr)
-        ev_export->release_mem_host_ptr_after = 1;
-
-      cmd_export->command.migrate.mem_id
-          = &mem->device_ptrs[ex_dev->global_mem_id];
-      cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
-      cmd_export->command.migrate.migration_size = migration_size;
-
-      last_migration_event = ev_export;
-
-      if (ev_export_p)
-        {
-          POname (clRetainEvent) (ev_export);
-          *ev_export_p = ev_export;
-        }
-    }
-
-  /* enqueue a command for import.
-   * Put either the previous last event, or export ev, into its waitlist. */
-  if (do_import)
-    {
-      /* the import command must depend on (wait for) either the export
-       * command, or the buffer's previous last event. Can be NULL if there's
-       * no last event or export command */
-      cl_event import_wait_ev = (ev_export ? ev_export : previous_last_event);
-
-      errcode = pocl_create_command_struct (
-          &cmd_import, dev_cq, CL_COMMAND_MIGRATE_MEM_OBJECTS,
-          &ev_import, // event_p
-          (import_wait_ev ? 1 : 0),
-          (import_wait_ev ? &import_wait_ev : NULL), // waitlist
-          1, &mem                                    // buffer list
-      );
-      assert (errcode == CL_SUCCESS);
-      if (do_need_hostptr)
-        ev_import->release_mem_host_ptr_after = 1;
-
-      if (can_directly_mig)
-        {
-          cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2D;
-          cmd_import->command.migrate.src_device = ex_dev;
-          cmd_import->command.migrate.src_id
-              = &mem->device_ptrs[ex_dev->global_mem_id];
-          cmd_import->command.migrate.dst_id
-              = &mem->device_ptrs[dev->global_mem_id];
-          if (mem->size_buffer != NULL)
-            cmd_import->command.migrate.src_content_size_mem_id
-                = &mem->size_buffer->device_ptrs[ex_dev->global_mem_id];
-        }
-      else
-        {
-          cmd_import->command.migrate.type = ENQUEUE_MIGRATE_TYPE_H2D;
-          cmd_import->command.migrate.mem_id
-              = &mem->device_ptrs[dev->global_mem_id];
-          cmd_import->command.migrate.migration_size = migration_size;
-        }
-
-      /* because explicit event */
-      if (ev_export)
-        POname (clReleaseEvent) (ev_export);
-
-      last_migration_event = ev_import;
-    }
-
-  /* we don't need it anymore. */
-  if (previous_last_event)
-    POname (clReleaseEvent (previous_last_event));
-
-  /* the final event must depend on the export/import commands */
-  if (last_migration_event)
-    {
-      pocl_create_event_sync (final_event, last_migration_event);
-      /* if the event itself only reads from the buffer,
-       * set the last buffer event to last_mig_event,
-       * instead of the actual command event;
-       * this avoids unnecessary waits e.g on kernels
-       * which only read from buffers */
-      if (readonly)
-        {
-          mem->last_event = last_migration_event;
-          POname (clReleaseEvent) (final_event);
-        }
-      else /* because explicit event */
-        POname (clReleaseEvent) (last_migration_event);
-    }
-  POCL_UNLOCK_OBJ (mem);
-
-  if (do_export) {
-    POCL_MSG_PRINT_MEMORY (
-      "Queuing a %zu-byte device-to-host migration for buf %zu%s\n",
-      migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
-
-    pocl_command_enqueue (ex_cq, cmd_export);
-  }
-
-  if (do_import) {
-    POCL_MSG_PRINT_MEMORY (
-      "Queuing a %zu-byte host-to-device migration for buf %zu%s\n",
-      migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
-
-    pocl_command_enqueue (dev_cq, cmd_import);
-  }
-
-  return CL_SUCCESS;
-}
-
-/**
- * Creates a command node and adds implicit data migrations.
- *
- * @param num_buffers Number of buffers the command depends on.
- * @param buffers The buffers the command depends on.
+ * @param buffer_usage A linked list of buffer migration data for
+ *                     the buffers accessed by the command.
  */
 static cl_int
 pocl_create_command_full (_cl_command_node **cmd,
                           cl_command_queue command_queue,
-                          cl_command_type command_type, cl_event *event_p,
-                          cl_uint num_events, const cl_event *wait_list,
-                          size_t num_buffers, cl_mem *buffers,
-                          char *readonly_flags,
+                          cl_command_type command_type,
+                          cl_event *event_p,
+                          cl_uint num_events,
+                          const cl_event *wait_list,
+                          pocl_buffer_migration_info *buffer_usage,
                           cl_mem_migration_flags mig_flags)
 {
   cl_device_id dev = pocl_real_dev (command_queue->device);
@@ -1082,34 +672,59 @@ pocl_create_command_full (_cl_command_node **cmd,
   POCL_RETURN_ERROR_ON ((*dev->available == CL_FALSE), CL_INVALID_DEVICE,
                         "device is not available\n");
 
-  if (num_buffers >= 1)
+  if (buffer_usage != NULL)
     {
-      assert (buffers);
-      assert (readonly_flags);
+      /* If the buffer is an image backed by buffer storage,
+         replace with actual storage. */
+      pocl_buffer_migration_info *migr_info = NULL;
+      LL_FOREACH (buffer_usage, migr_info)
+        {
+          migr_info->buffer = POCL_MEM_BS (migr_info->buffer);
+        }
 
-      if (num_buffers > 1)
-        sort_and_uniq (buffers, readonly_flags, &num_buffers);
-
-      if (can_run_command (dev, num_buffers, buffers) == CL_FALSE)
+      if (!preallocate_buffers (dev, buffer_usage))
         return CL_OUT_OF_RESOURCES;
     }
 
   /* Waitlist here only contains the user-provided events.
-   * migration events are added to waitlist later. */
+     Migration events are added to the waitlist later. */
   err = pocl_create_command_struct (cmd, command_queue, command_type, event_p,
-                                    num_events, wait_list, num_buffers,
-                                    buffers);
+                                    num_events, wait_list, buffer_usage);
+
   if (err)
     return err;
+
+  buffer_usage = pocl_convert_to_subbuffer_migrations (buffer_usage, &err);
+
+  if (err)
+    return err;
+
+  (*cmd)->migr_infos = buffer_usage;
+
+  /* The event (command) that will be set as the destination to all the
+     migration commands' dependencies. */
   cl_event final_event = (*cmd)->sync.event.event;
 
   /* Retain once for every buffer. This is because we set every buffer's
-   * "last event" to this, and then some next command enqueue
-   * (or clReleaseMemObject) will release it.
+   * "last event" to this, and then a next command enqueue that changes
+   * the last event to something else or clReleaseMemObject will release it.
    */
-  POCL_LOCK_OBJ (final_event);
-  final_event->pocl_refcount += num_buffers;
-  POCL_UNLOCK_OBJ (final_event);
+  size_t num_buffers = 0;
+  pocl_buffer_migration_info *mi = NULL;
+  LL_FOREACH (buffer_usage, mi)
+    {
+      ++num_buffers;
+    }
+
+  if (num_buffers > 0)
+    {
+      POCL_LOCK_OBJ (final_event);
+      final_event->pocl_refcount += num_buffers;
+      POCL_MSG_PRINT_REFCOUNTS (
+        "Event %zu refcount now %d due to %zu buffer(s) referring to it.\n",
+        final_event->id, final_event->pocl_refcount, num_buffers);
+      POCL_UNLOCK_OBJ (final_event);
+    }
 
   cl_event *size_events = NULL;
   /* Temporary copy of the buffer list just for keeping track of which buffers
@@ -1124,22 +739,26 @@ pocl_create_command_full (_cl_command_node **cmd,
       memset (already_migrated, 0, sizeof (int) * num_buffers);
     }
 
+  i = 0;
   /* Always migrate content size buffers first, if they exist */
-  for (i = 0; i < num_buffers; ++i)
+  LL_FOREACH (buffer_usage, mi)
     {
-      if (buffers[i]->size_buffer != NULL)
+      if (mi->buffer->size_buffer != NULL)
         {
           /* Bump "last event" refcount for content size buffers that weren't
-           * explicitly given as dependencies */
+           * explicitly given as dependencies. */
           int explicit = 0;
-          for (size_t j = 0; j < num_buffers; ++j)
+          pocl_buffer_migration_info *mi_j = NULL;
+          int j = 0;
+          LL_FOREACH (buffer_usage, mi_j)
             {
-              if (buffers[j] == buffers[i]->size_buffer)
+              if (mi_j->buffer == mi->buffer->size_buffer)
                 {
                   already_migrated[j] = 1;
                   explicit = 1;
                   break;
                 }
+              ++j;
             }
           if (!explicit)
             {
@@ -1147,23 +766,31 @@ pocl_create_command_full (_cl_command_node **cmd,
             }
 
           pocl_create_migration_commands (
-              dev, &size_events[i], final_event, buffers[i]->size_buffer,
-              &(buffers[i]->size_buffer)->device_ptrs[dev->global_mem_id],
-              readonly_flags[i], command_type, mig_flags,
-              buffers[i]->size_buffer->size);
+            dev, &size_events[i], final_event, mi->buffer->size_buffer,
+            &(mi->buffer->size_buffer)->device_ptrs[dev->global_mem_id],
+            mi->read_only, command_type, mig_flags,
+            mi->buffer->size_buffer->size, NULL);
         }
+      ++i;
     }
 
-  for (i = 0; i < num_buffers; ++i)
+  cl_event prev_migr_event = NULL;
+
+  i = 0;
+  LL_FOREACH (buffer_usage, mi)
     {
-      uint64_t migration_size = buffers[i]->size;
+      uint64_t migration_size = mi->buffer->size;
 
-      /* If both a content buffer and its associated size buffer are explicitly
-       * listed in buffers, the size buffer was already migrated above. */
+      /* If both a content buffer and its associated size buffer are
+       * explicitly listed in buffers, the size buffer was already migrated
+       * above. */
       if (already_migrated[i])
-        continue;
+        {
+          ++i;
+          continue;
+        }
 
-      if (buffers[i]->size_buffer != NULL)
+      if (mi->buffer->size_buffer != NULL)
         {
           /* BLOCK until size buffer has been imported to host mem! No event
            * exists if host import is not needed. */
@@ -1171,48 +798,80 @@ pocl_create_command_full (_cl_command_node **cmd,
             {
               cl_device_id d = size_events[i]->queue->device;
               POname (clWaitForEvents) (1, &size_events[i]);
-              if (buffers[i]->size_buffer->mem_host_ptr != NULL)
+              if (mi->buffer->size_buffer->mem_host_ptr != NULL)
                 {
                   migration_size
-                      = *(uint64_t *)buffers[i]->size_buffer->mem_host_ptr;
+                    = *(uint64_t *)mi->buffer->size_buffer->mem_host_ptr;
                 }
-              pocl_release_mem_host_ptr (buffers[i]->size_buffer);
+              pocl_release_mem_host_ptr (mi->buffer->size_buffer);
               POname (clReleaseEvent) (size_events[i]);
               size_events[i] = NULL;
             }
         }
 
+      cl_int err;
+      /* Capture the last created migration command for chaining. */
       pocl_create_migration_commands (
-          dev, NULL, final_event, buffers[i],
-          &buffers[i]->device_ptrs[dev->global_mem_id], readonly_flags[i],
-          command_type, mig_flags, migration_size);
+        dev, NULL, final_event, mi->buffer,
+        &mi->buffer->device_ptrs[dev->global_mem_id], mi->read_only,
+        command_type, mig_flags, migration_size, &prev_migr_event);
+
+      /* Hold the last updater events of the parent buffers so we can refer
+         to the event in potential implicit sub-buffer migrations. */
+      if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
+          && mi->buffer->last_updater != NULL)
+        POname (clRetainEvent) (mi->buffer->last_updater);
+      ++i;
     }
 
-  return err;
+    LL_FOREACH (buffer_usage, mi)
+      {
+        /* The last events of the parent buffers can be now released as the
+           sub-buffer references to the events should hold them alive. */
+        if (mi->buffer->parent == NULL && mi->buffer->sub_buffers != NULL
+            && mi->buffer->parent->last_updater != NULL)
+          {
+            POname (clReleaseEvent) (mi->buffer->last_updater);
+            mi->buffer->last_updater = NULL;
+          }
+      }
+    if (prev_migr_event != NULL)
+      POname (clReleaseEvent) (prev_migr_event);
+    return err;
 }
 
 cl_int
 pocl_create_command_migrate (_cl_command_node **cmd,
                              cl_command_queue command_queue,
-                             cl_mem_migration_flags flags, cl_event *event_p,
-                             cl_uint num_events, const cl_event *wait_list,
-                             size_t num_buffers, cl_mem *buffers,
-                             char *readonly_flags)
+                             cl_mem_migration_flags flags,
+                             cl_event *event_p,
+                             cl_uint num_events,
+                             const cl_event *wait_list,
+                             pocl_buffer_migration_info *migration_infos)
+
 {
   return pocl_create_command_full (
-      cmd, command_queue, CL_COMMAND_MIGRATE_MEM_OBJECTS, event_p, num_events,
-      wait_list, num_buffers, buffers, readonly_flags, flags);
+    cmd, command_queue, CL_COMMAND_MIGRATE_MEM_OBJECTS, event_p, num_events,
+    wait_list, migration_infos, flags);
 }
 
+/**
+ * Create a command node which as multiple buffers associated with it.
+ *
+ * The buffers can be due to the command taking them as arguments or
+ * due to the need to implicitly migrate them for another reason.
+ */
 cl_int
-pocl_create_command (_cl_command_node **cmd, cl_command_queue command_queue,
-                     cl_command_type command_type, cl_event *event_p,
-                     cl_uint num_events, const cl_event *wait_list,
-                     size_t num_buffers, cl_mem *buffers, char *readonly_flags)
+pocl_create_command (_cl_command_node **cmd,
+                     cl_command_queue command_queue,
+                     cl_command_type command_type,
+                     cl_event *event_p,
+                     cl_uint num_events,
+                     const cl_event *wait_list,
+                     pocl_buffer_migration_info *migration_infos)
 {
   return pocl_create_command_full (cmd, command_queue, command_type, event_p,
-                                   num_events, wait_list, num_buffers, buffers,
-                                   readonly_flags, 0);
+                                   num_events, wait_list, migration_infos, 0);
 }
 
 cl_int
@@ -1286,23 +945,38 @@ pocl_cmdbuf_get_property (cl_command_buffer_khr command_buffer,
   return 0;
 }
 
+/**
+ * Create a command buffered command node.
+ *
+ * The node contains the minimum information to "clone" launchable
+ * commands in clEnqueueCommandBufferKHR.c.
+ */
 cl_int
 pocl_create_recorded_command (_cl_command_node **cmd,
                               cl_command_buffer_khr command_buffer,
                               cl_command_queue command_queue,
-                              cl_command_type command_type, cl_uint num_deps,
+                              cl_command_type command_type,
+                              cl_uint num_sync_points_in_wait_list,
                               const cl_sync_point_khr *sync_point_wait_list,
-                              size_t num_buffers, cl_mem *buffers,
-                              char *readonly_flags)
+                              pocl_buffer_migration_info *buffer_usage)
 {
-  cl_int errcode = pocl_check_syncpoint_wait_list (command_buffer, num_deps,
-                                                   sync_point_wait_list);
+  cl_int errcode = pocl_check_syncpoint_wait_list (
+    command_buffer, num_sync_points_in_wait_list, sync_point_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_RETURN_ERROR_COND (
-    (can_run_command (command_queue->device, num_buffers, buffers) != CL_TRUE),
-    CL_OUT_OF_RESOURCES);
+  if (buffer_usage != NULL)
+    {
+      /* If the buffer is an image backed by buffer storage,
+         replace with actual storage. */
+      pocl_buffer_migration_info *migr_info = NULL;
+      LL_FOREACH (buffer_usage, migr_info)
+        if (migr_info->buffer->buffer)
+          migr_info->buffer = migr_info->buffer->buffer;
+
+      if (!preallocate_buffers (command_queue->device, buffer_usage))
+        return CL_OUT_OF_RESOURCES;
+    }
 
   *cmd = pocl_mem_manager_new_command ();
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
@@ -1319,45 +993,34 @@ pocl_create_recorded_command (_cl_command_node **cmd,
         (*cmd)->queue_idx = i;
     }
 
-  (*cmd)->sync.syncpoint.num_sync_points_in_wait_list = num_deps;
-  if (num_deps > 0)
+  (*cmd)->sync.syncpoint.num_sync_points_in_wait_list
+    = num_sync_points_in_wait_list;
+  if (num_sync_points_in_wait_list > 0)
     {
       cl_sync_point_khr *wait_list
-          = malloc (sizeof (cl_sync_point_khr) * num_deps);
+        = malloc (sizeof (cl_sync_point_khr) * num_sync_points_in_wait_list);
       if (wait_list == NULL)
         {
           POCL_MEM_FREE (*cmd);
           return CL_OUT_OF_HOST_MEMORY;
         }
       memcpy (wait_list, sync_point_wait_list,
-              sizeof (cl_sync_point_khr) * num_deps);
+              sizeof (cl_sync_point_khr) * num_sync_points_in_wait_list);
       (*cmd)->sync.syncpoint.sync_point_wait_list = wait_list;
     }
 
-  (*cmd)->memobj_count = num_buffers;
-  if (num_buffers > 0)
-    {
-      cl_mem *memobjs = (cl_mem *)malloc (sizeof (cl_mem) * num_buffers);
-      (*cmd)->memobj_list = memobjs;
-      POCL_GOTO_ERROR_COND ((memobjs == NULL), CL_OUT_OF_HOST_MEMORY);
+  (*cmd)->migr_infos = buffer_usage;
+  pocl_buffer_migration_info *migr_info = NULL;
 
-      char *flags = (char *)malloc (sizeof (char) * num_buffers);
-      (*cmd)->readonly_flag_list = flags;
-      POCL_GOTO_ERROR_COND ((flags == NULL), CL_OUT_OF_HOST_MEMORY);
-
-      memcpy (memobjs, buffers, sizeof (cl_mem) * num_buffers);
-      memcpy (flags, readonly_flags, sizeof (char) * num_buffers);
-      for (unsigned i = 0; i < num_buffers; ++i)
-        {
-          POname (clRetainMemObject) (memobjs[i]);
-        }
-    }
+  /* We need to retain the buffers as we expect them to be executed
+     later. They are retained again for each executed instance in
+     pocl_create_migration_commands() and those references are freed
+     after the executed instance is freed.  This one is freed at
+     command buffer free time. */
+  LL_FOREACH (buffer_usage, migr_info)
+    POname (clRetainMemObject) (migr_info->buffer);
 
   return CL_SUCCESS;
-
-ERROR:
-  pocl_mem_manager_free_command (*cmd);
-  return errcode;
 }
 
 cl_int
@@ -1502,8 +1165,8 @@ pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
   cl_device_id dev = event->queue->device;
   pocl_mem_identifier *mem_id = NULL;
   cl_mem mem = NULL;
-  mem = event->mem_objs[0];
-  mem_id = &mem->device_ptrs[dev->global_mem_id];
+  mem = POCL_MEM_BS (cmd->unmap.buffer);
+  mem_id = &POCL_MEM_BS (mem)->device_ptrs[dev->global_mem_id];
 
   mem_mapping_t *map = cmd->unmap.mapping;
   POCL_LOCK_OBJ (mem);
@@ -1960,40 +1623,6 @@ pocl_setup_context (cl_context context)
   return CL_SUCCESS;
 }
 
-pocl_raw_ptr *
-pocl_find_raw_ptr_with_vm_ptr (cl_context context, const void *host_ptr)
-{
-  POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-  {
-    if (item->vm_ptr == NULL)
-      continue;
-    if (item->vm_ptr <= host_ptr && item->vm_ptr + item->size > host_ptr)
-      {
-        break;
-      }
-  }
-  POCL_UNLOCK_OBJ (context);
-  return item;
-}
-
-pocl_raw_ptr *
-pocl_find_raw_ptr_with_dev_ptr (cl_context context, const void *dev_ptr)
-{
-  POCL_LOCK_OBJ (context);
-  pocl_raw_ptr *item = NULL;
-  DL_FOREACH (context->raw_ptrs, item)
-  {
-    if (item->dev_ptr == NULL)
-      continue;
-    if (item->dev_ptr <= dev_ptr && item->dev_ptr + item->size > dev_ptr)
-      break;
-  }
-  POCL_UNLOCK_OBJ (context);
-  return item;
-}
-
 int
 pocl_check_event_wait_list (cl_command_queue command_queue,
                             cl_uint num_events_in_wait_list,
@@ -2273,7 +1902,6 @@ pocl_run_command_capture_output (char *capture_string, size_t *captured_bytes,
     }
 }
 
-// event locked
 void
 pocl_update_event_queued (cl_event event)
 {
@@ -2339,7 +1967,7 @@ pocl_update_event_running (cl_event event)
   POCL_UNLOCK_OBJ (event);
 }
 
-/* Note: this must be kept in sync with pocl_copy_event_node */
+/* Note: this must be kept in sync with pocl_copy_command_node */
 static void pocl_free_event_node (cl_event event)
 {
   _cl_command_node *node = event->command;
@@ -2380,15 +2008,20 @@ static void pocl_free_event_node (cl_event event)
 }
 
 /**
- * Copies a command node (mostly) for command buffering purposes.
+ * Copies relevant parts of a command node for command buffer execution
+ * purposes.
  *
- * Doesn't touch the next/prev pointers, for instance.
+ * The "relevant parts" include the information needed for execution and
+ * independent freeing of the command node resources after finishing. Doesn't
+ * touch the next/prev pointers, for instance. The command buffer (default)
+ * execution happens in clEnqueueCommandBufferKHR.
  */
 int
-pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
+pocl_copy_command_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 {
   memcpy (&dst_node->command, &src_node->command, sizeof (_cl_command_t));
   dst_node->program_device_i = src_node->program_device_i;
+
   /* Copy variables that are freed when the command finishes. */
   switch (src_node->type)
     {
@@ -2428,39 +2061,22 @@ pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
               src_node->command.svm_fill.pattern_size);
       break;
 
-#if 0
-    /* these cases are currently not handled in pocl_copy_event_node,
+    /* These cases are currently not handled in pocl_copy_event_node,
      * because there is no command buffer equivalent of these nodes. */
     case CL_COMMAND_NATIVE_KERNEL:
     case CL_COMMAND_UNMAP_MEM_OBJECT:
     case CL_COMMAND_SVM_MIGRATE_MEM:
     case CL_COMMAND_SVM_FREE:
-#endif
+      assert (0 && "Unimplemented.");
 
     default:
       break;
     }
+
   return CL_SUCCESS;
 }
 
-static void pocl_free_event_memobjs (cl_event event)
-{
-  size_t i;
-  for (i = 0; i < event->num_buffers; ++i)
-    {
-      cl_mem mem = event->mem_objs[i];
-      if (event->release_mem_host_ptr_after)
-        {
-          POCL_LOCK_OBJ (mem);
-          pocl_release_mem_host_ptr (mem);
-          POCL_UNLOCK_OBJ (mem);
-        }
-      POname (clReleaseMemObject) (mem);
-    }
-  POCL_MEM_FREE (event->mem_objs);
-}
-
-// status can be complete or failed (<0)
+/* Status can be complete or failed (<0). */
 void
 pocl_update_event_finished (cl_int status, const char *func, unsigned line,
                             cl_event event, const char *msg)
@@ -2509,9 +2125,10 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   POCL_UNLOCK_OBJ (event);
   ops->broadcast (event);
 
-  /* With remote being asynchronous it is possible that an event is signaled as
-   * complete before some of its dependencies. Therefore this event has to be
-   * removed from the notify lists of any remaining events in the wait list.
+  /* With remote being asynchronous it is possible that an event completion
+   * signal is received before some of its dependencies. Therefore this event
+   * has to be removed from the notify lists of any remaining events in the
+   * wait list.
    *
    * Mind the acrobatics of trying to avoid races with pocl_broadcast and
    * pocl_create_event_sync. */
@@ -2554,7 +2171,6 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
 #endif
 
   pocl_free_event_node (event);
-  pocl_free_event_memobjs (event);
 
   POCL_LOCK_OBJ (event);
   if (ops->notify_event_finished)
@@ -2929,6 +2545,7 @@ pocl_str_append (const char **dst, const char *src)
   *dst = new_dst;
   return old_dst;
 }
+
 
 int
 pocl_fill_aligned_buf_with_pattern (void *__restrict__ ptr, size_t offset,

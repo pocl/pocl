@@ -149,11 +149,25 @@
     }                                                                         \
   while (0)
 
+#define POCL_LOCK_OBJ_NO_CHECK(__OBJ__)                                       \
+  do                                                                          \
+    {                                                                         \
+      POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
+    }                                                                         \
+  while (0)
+
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
-      CHECK_VALIDITY_MARKERS(__OBJ__);                                        \
+      CHECK_VALIDITY_MARKERS (__OBJ__);                                       \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
+      POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
+    }                                                                         \
+  while (0)
+
+#define POCL_UNLOCK_OBJ_NO_CHECK(__OBJ__)                                     \
+  do                                                                          \
+    {                                                                         \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
   while (0)
@@ -187,8 +201,7 @@
     POCL_UNLOCK_OBJ (__OBJ__);                  \
   } while (0)
 
-
-extern uint64_t last_object_id;
+extern pocl_obj_id_t last_object_id;
 
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */
@@ -284,7 +297,6 @@ extern uint64_t last_object_id;
 
 #endif
 
-
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
@@ -358,6 +370,21 @@ typedef struct pocl_argument_info {
   pocl_argument_type type;
   unsigned type_size;
 } pocl_argument_info;
+
+/* Struct for storing information of a cl_mem that should
+   be migrated to the device before executing a kernel. */
+typedef struct _pocl_buffer_migration_info
+  pocl_buffer_migration_info;
+struct _pocl_buffer_migration_info
+{
+  /* The buffer to migrate (can be a sub-buffer). */
+  cl_mem buffer;
+  /* If the buffer is declared read-only at creation or in kernel argument
+   * list. */
+  char read_only;
+  /* For utlist.h linked lists. */
+  struct _pocl_buffer_migration_info *prev, *next;
+};
 
 /* The device driver layer operations. The device implementations override
    these hooks for their device-specific functionality. */
@@ -1377,6 +1404,10 @@ struct _cl_context {
    * required for clMemBlockingFreeINTEL */
   struct _cl_command_queue *command_queues;
 
+  /* The maximum of CL_DEVICE_MEM_BASE_ADDR_ALIGN across the devices in the
+   * context. */
+  cl_uint mem_base_addr_align;
+
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
 #endif
@@ -1478,13 +1509,6 @@ struct _cl_mutable_command_khr
 #define POCL_GOTO_ON_SUB_MISALIGN(mem, que)                                   \
   POCL_ON_SUB_MISALIGN(mem, que, POCL_GOTO_ERROR_ON)
 
-#define POCL_CONVERT_SUBBUFFER_OFFSET(mem, offset)                            \
-  if (mem->parent != NULL)                                                    \
-    {                                                                         \
-      offset += mem->origin;                                                  \
-      mem = mem->parent;                                                      \
-    }
-
 #define DEVICE_IMAGE_SIZE_SUPPORT 1
 #define DEVICE_IMAGE_FORMAT_SUPPORT 2
 #define DEVICE_IMAGE_INTEROP_SUPPORT 4
@@ -1531,7 +1555,7 @@ struct _cl_mutable_command_khr
 #define POCL_GOTO_ON_UNSUPPORTED_IMAGE(mem, dev)                              \
   POCL_ON_UNSUPPORTED_IMAGE(mem, dev, POCL_GOTO_ERROR_ON)
 
-
+typedef struct _cl_mem_list_item_t cl_mem_list_item_t;
 
 typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
@@ -1545,12 +1569,27 @@ struct _cl_mem {
   unsigned num_properties;
 
   size_t size;
-  /* for sub-buffers */
+
+  /* Sub-buffer related data: */
+
+  /* In case this is a sub-buffer, this points to the parent buffer. */
+  cl_mem_t *parent;
+  /* The starting offset to the parent buffer. */
   size_t origin;
-  /* this is an optimization. if set to nonzero,
-   * it marks the actual content size in bytes,
-   * to avoid transferring garbage data when
-   * migrating / reading buffers. */
+
+  /* For utlist.h linked lists. */
+  struct _cl_mem *prev, *next;
+
+  /* The sub-buffers of this buffer, if any. */
+  cl_mem_list_item_t *sub_buffers;
+
+  /* The implicit sub-buffers covering the empty region.  These will be added
+     on-demand when optimizing the migrations. */
+  cl_mem_list_item_t *implicit_sub_buffers;
+
+  /* Set to 1 for implicit sub-buffers, to differentiate from user-defined
+     sub-buffers. */
+  int implicit_sub_buffer;
 
   /* cl_pocl_content_size: If set to nonzero, it defines the size of the
      defined content in bytes, which can be used to avoid transferring
@@ -1577,24 +1616,25 @@ struct _cl_mem {
      the device's global_mem_id. */
   pocl_mem_identifier *device_ptrs;
 
-  /* for content tracking;
+  /* For content tracking:
    *
-   * this is the valid (highest) version of the buffer's content;
-   * if any device has lower version in device_ptrs[]->version,
-   * the buffer content on that device is invalid */
+   * This is the valid (highest) version of the buffer's content.
+   * If any device has a lower version in its device copy,
+   * the buffer content on that device is invalid and should be
+   * updated before used. Sub-buffers' latest_version follows the parent's:
+   * when the parent buffer is updated by a command, all its sub-buffers
+   * get their latest_version synchronized to the parent version. */
   uint64_t latest_version;
-  /* the event that last changed (written to) the buffer, this
-   * is used as a "from "dependency for any migration commands */
-  cl_event last_event;
+
+  /* The event (denotes a command here) that last wrote to the buffer,
+   * this is used as the dependency source for migration commands. */
+  cl_event last_updater;
 
   /* A linked list of regions of the buffer mapped to the
      host memory */
   mem_mapping_t *mappings;
   size_t map_count;
 
-  /* in case this is a sub buffer, this points to the parent
-     buffer */
-  cl_mem_t *parent;
   /* A linked list of destructor callbacks */
   mem_destructor_callback_t *destructor_callbacks;
 
@@ -1642,6 +1682,7 @@ struct _cl_mem {
   size_t                  image_channels;
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
+  /* This points to the backing storage cl_mem in case of images. */
   cl_mem                  buffer;
   cl_uint                 is_gl_acquired;
 
@@ -1649,6 +1690,16 @@ struct _cl_mem {
   cl_bool                 is_pipe;
   size_t                  pipe_packet_size;
   size_t                  pipe_max_packets;
+};
+
+/** Returns the backing store cl_mem for an image, otherwise the cl_mem
+    itself (for regular buffers). */
+#define POCL_MEM_BS(BUF) (BUF->buffer != NULL ? BUF->buffer : BUF)
+
+struct _cl_mem_list_item_t
+{
+  cl_mem mem;
+  cl_mem_list_item_t *prev, *next;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
@@ -1890,8 +1941,16 @@ struct _cl_event {
   event_node *wait_list;
 
   /* OoO doesn't use sync points -> put used buffers here */
-  size_t num_buffers;
-  cl_mem *mem_objs;
+  size_t num_used_buffers;
+  /* Mem object arguments of the command the event is associated with. */
+  /* The code seemed to assume that the mem_objs that are passed as the command
+     arguments are the first ones in the list. This has not been the
+     ever since the list has been sorted by the mem object id. */
+  /* cl_mem mem_objs; */
+  /* The buffers that should be migrated when this event/command is launched.
+   */
+  /* Moved to the _cl_command struct */
+  /* pocl_buffer_migration_info *migrated_bufs; */
 
   /* Profiling data: time stamps of the different phases of execution. */
   cl_ulong time_queue;  /* the enqueue time */

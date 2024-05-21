@@ -208,21 +208,18 @@ text_tracer_event_updated (cl_event event, int status)
           break;
 
         case CL_COMMAND_READ_BUFFER:
-          assert (event->num_buffers == 1);
           text_size = sprintf (
-              cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
-              event->mem_objs[0]->id, node->command.read.size,
-              node->command.read.dst_host_ptr);
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
+            node->command.read.src->id, node->command.read.size,
+            node->command.read.dst_host_ptr);
           break;
         case CL_COMMAND_WRITE_BUFFER:
-          assert (event->num_buffers == 1);
           text_size = sprintf (
-              cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
-              event->mem_objs[0]->id, node->command.write.size,
-              node->command.write.src_host_ptr);
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
+            node->command.write.dst->id, node->command.write.size,
+            node->command.write.src_host_ptr);
           break;
         case CL_COMMAND_COPY_BUFFER:
-          assert (event->num_buffers > 0);
           text_size
               = sprintf (cur_buf,
                          "MEM ID FROM %" PRIu64 " | MEM ID TO %" PRIu64
@@ -231,14 +228,12 @@ text_tracer_event_updated (cl_event event, int status)
                          node->command.copy.dst->id, node->command.copy.size);
           break;
         case CL_COMMAND_FILL_BUFFER:
-          assert (event->num_buffers == 1);
-          text_size
-              = sprintf (cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS "\n",
-                         event->mem_objs[0]->id, node->command.memfill.size);
+          text_size = sprintf (
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS "\n",
+            node->command.memfill.dst->id, node->command.memfill.size);
           break;
 
         case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-          assert (event->num_buffers > 0);
           switch (node->command.migrate.type)
             {
 
@@ -246,68 +241,64 @@ text_tracer_event_updated (cl_event event, int status)
               text_size = sprintf (cur_buf,
                                    " # MEMS %" PRIuS " | MEM 0 ID %" PRIu64
                                    " | FROM DEV HOST | TO DEV %" PRIu64 " |\n",
-                                   event->num_buffers, event->mem_objs[0]->id,
-                                   dev_id);
+                                   node->command.migrate.num_buffers,
+                                   node->migr_infos->buffer->id, dev_id);
               break;
 
             case ENQUEUE_MIGRATE_TYPE_D2H:
               text_size = sprintf (cur_buf,
                                    " # MEMS %" PRIuS " | MEM 0 ID %" PRIu64
                                    " | FROM DEV %" PRIu64 " | TO DEV HOST |\n",
-                                   event->num_buffers, event->mem_objs[0]->id,
-                                   dev_id);
+                                   node->command.migrate.num_buffers,
+                                   node->migr_infos->buffer->id, dev_id);
               break;
 
             case ENQUEUE_MIGRATE_TYPE_D2D:
-              text_size = sprintf (
-                  cur_buf,
-                  " # MEMS %" PRIuS " | MEM 0 ID %" PRIu64
-                  " | FROM DEV %" PRIu64 " | TO DEV %" PRIu64 " |\n",
-                  event->num_buffers, event->mem_objs[0]->id,
-                  node->command.migrate.src_device->id, dev_id);
+              text_size
+                = sprintf (cur_buf,
+                           " # MEMS %" PRIuS " | MEM 0 ID %" PRIu64
+                           " | FROM DEV %" PRIu64 " | TO DEV %" PRIu64 " |\n",
+                           node->command.migrate.num_buffers,
+                           node->migr_infos->buffer->id,
+                           node->command.migrate.src_device->id, dev_id);
               break;
 
             case ENQUEUE_MIGRATE_TYPE_NOP:
               text_size = sprintf (cur_buf,
                                    " # MEMS %" PRIuS " | MEM 0 ID %" PRIu64
                                    " | NOP MIGRATION DEV %" PRIu64 " |\n",
-                                   event->num_buffers, event->mem_objs[0]->id,
-                                   dev_id);
+                                   node->command.migrate.num_buffers,
+                                   node->migr_infos->buffer->id, dev_id);
               break;
             }
           break;
 
         case CL_COMMAND_MAP_BUFFER:
-          assert (event->num_buffers == 1);
           text_size = sprintf (
-              cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS "\n",
-              event->mem_objs[0]->id, node->command.map.mapping->size);
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS "\n",
+            node->command.map.buffer->id, node->command.map.mapping->size);
           break;
 
         case CL_COMMAND_UNMAP_MEM_OBJECT:
-          assert (event->num_buffers == 1);
           text_size = sprintf (cur_buf, "MEM ID %" PRIu64 "\n",
-                               event->mem_objs[0]->id);
+                               node->command.unmap.buffer->id);
           break;
 
         case CL_COMMAND_READ_BUFFER_RECT:
-          assert (event->num_buffers == 1);
           text_size = sprintf (
-              cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
-              event->mem_objs[0]->id, 0UL,
-              node->command.read_rect.dst_host_ptr);
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
+            node->command.read_rect.src->id, 0UL,
+            node->command.read_rect.dst_host_ptr);
           break;
 
         case CL_COMMAND_WRITE_BUFFER_RECT:
-          assert (event->num_buffers == 1);
           text_size = sprintf (
-              cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
-              event->mem_objs[0]->id, 0UL,
-              node->command.write_rect.src_host_ptr);
+            cur_buf, "MEM ID %" PRIu64 " | size=%" PRIuS " | host_ptr=%p\n",
+            node->command.write_rect.dst->id, 0UL,
+            node->command.write_rect.src_host_ptr);
           break;
 
         case CL_COMMAND_COPY_BUFFER_RECT:
-          assert (event->num_buffers > 0);
           text_size = sprintf (cur_buf,
                                "MEM ID FROM %" PRIu64 " | MEM ID TO %" PRIu64
                                " | size=%" PRIuS "\n",

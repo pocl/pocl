@@ -1,6 +1,6 @@
 /* OpenCL runtime library: clEnqueueCopyBufferToImage()
 
-   Copyright (c) 2011-2023 PoCL developers
+   Copyright (c) 2011-2024 PoCL developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -92,20 +92,14 @@ pocl_copy_buffer_to_image_common (
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
-
   POCL_GOTO_ERROR_ON (
       (src_buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
-  c->command.write_image.dst_mem_id
-      = &dst_image->device_ptrs[dev->global_mem_id];
   c->command.write_image.dst = dst_image;
   c->command.write_image.src_host_ptr = ((void *)0);
-  c->command.write_image.src_mem_id
-      = &src_buffer->device_ptrs[dev->global_mem_id];
   c->command.write_image.src = src_buffer;
   c->command.write_image.src_row_pitch = src_row_pitch;
   c->command.write_image.src_slice_pitch = src_slice_pitch;

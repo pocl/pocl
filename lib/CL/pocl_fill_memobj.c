@@ -23,8 +23,9 @@
 
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
-#include "pocl_util.h"
+#include "pocl_mem_management.h"
 #include "pocl_shared.h"
+#include "pocl_util.h"
 
 cl_int
 pocl_validate_fill_buffer (cl_command_queue command_queue, cl_mem buffer,
@@ -88,8 +89,6 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
-
   POCL_RETURN_ERROR_ON (
       (buffer->size > command_queue->device->max_mem_alloc_size),
       CL_OUT_OF_RESOURCES,
@@ -103,27 +102,28 @@ pocl_fill_buffer_common (cl_command_buffer_khr command_buffer,
       if (errcode != CL_SUCCESS)
         return errcode;
       errcode = pocl_create_command (
-          cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
-          num_items_in_wait_list, event_wait_list, 1, &buffer, &rdonly);
+        cmd, command_queue, CL_COMMAND_FILL_BUFFER, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
-          num_items_in_wait_list, sync_point_wait_list, 1, &buffer, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_FILL_BUFFER,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, buffer, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
 
   _cl_command_node *c = *cmd;
-  c->command.memfill.dst_mem_id
-      = &buffer->device_ptrs[command_queue->device->global_mem_id];
   c->command.memfill.size = size;
   c->command.memfill.offset = offset;
   void *p = pocl_aligned_malloc (pattern_size, pattern_size);
   memcpy (p, pattern, pattern_size);
   c->command.memfill.pattern = p;
   c->command.memfill.pattern_size = pattern_size;
+  c->command.memfill.dst = buffer;
 
   return CL_SUCCESS;
 }
@@ -220,15 +220,17 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
           command_queue, num_items_in_wait_list, event_wait_list);
       if (errcode != CL_SUCCESS)
         return errcode;
-      errcode = pocl_create_command (cmd, command_queue, CL_COMMAND_FILL_IMAGE,
-                                     event, num_items_in_wait_list,
-                                     event_wait_list, 1, &image, &rdonly);
+      errcode = pocl_create_command (
+        cmd, command_queue, CL_COMMAND_FILL_IMAGE, event,
+        num_items_in_wait_list, event_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   else
     {
       errcode = pocl_create_recorded_command (
-          cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
-          num_items_in_wait_list, sync_point_wait_list, 1, &image, &rdonly);
+        cmd, command_buffer, command_queue, CL_COMMAND_FILL_IMAGE,
+        num_items_in_wait_list, sync_point_wait_list,
+        pocl_append_unique_migration_info (NULL, image, rdonly));
     }
   if (errcode != CL_SUCCESS)
     return errcode;
@@ -237,14 +239,13 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
   memcpy (c->command.fill_image.fill_pixel, fill_pattern, 16);
   c->command.fill_image.orig_pixel = fill_color_vec;
   c->command.fill_image.pixel_size = px;
-  c->command.fill_image.mem_id
-      = &image->device_ptrs[command_queue->device->global_mem_id];
   c->command.fill_image.origin[0] = origin[0];
   c->command.fill_image.origin[1] = origin[1];
   c->command.fill_image.origin[2] = origin[2];
   c->command.fill_image.region[0] = region[0];
   c->command.fill_image.region[1] = region[1];
   c->command.fill_image.region[2] = region[2];
+  c->command.fill_image.dst = image;
 
   return CL_SUCCESS;
 }
