@@ -910,12 +910,14 @@ compile_and_link_program(int compile_program,
       setup_device_kernel_hashes (program);
     }
 
-  for (device_i = 0; device_i < program->num_devices; device_i++)
+  if (link_program)
     {
-      cl_device_id device = program->devices[device_i];
-
-      if (device->ops->post_build_program)
+      for (device_i = 0; device_i < program->num_devices; device_i++)
         {
+          cl_device_id device = program->devices[device_i];
+          if (!device->ops->post_build_program)
+            continue;
+
           errcode = device->ops->post_build_program (program, device_i);
           if (errcode != CL_SUCCESS)
             {
