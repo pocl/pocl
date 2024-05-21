@@ -68,16 +68,6 @@ if(NOT LIBVA_FOUND)
   return()
 endif()
 
-# handle ICD on/off
-if(ENABLE_ICD)
-  if(OPENCL_LIBRARIES AND (NOT OPENCL_LIBDIR))
-    get_filename_component(OPENCL_LIBDIR "${OPENCL_LIBRARIES}" DIRECTORY)
-  endif()
-  set(OPENCL_LIB_FLAG "-DOCL_ROOT=${OPENCL_LIBDIR}")
-else()
-  set(OPENCL_LIB_FLAG "-DOpenCL_LIBRARY=$<TARGET_FILE_NAME:${POCL_LIBRARY_NAME}>")
-endif()
-
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -86,11 +76,11 @@ ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/intel/compute-samples.git"
-  PATCH_COMMAND ${BASH} -c "${TS_SRCDIR}/scripts/install/install_googletest.sh && ${TS_SRCDIR}/scripts/install/download_mediadata.sh"
+  PATCH_COMMAND ${BASH} -c "if [ ! -e ${TS_SRCDIR}/mediadata/external/yuv/goal_1280x720.yuv ] $<SEMICOLON> then ${TS_SRCDIR}/scripts/install/install_googletest.sh && ${TS_SRCDIR}/scripts/install/download_mediadata.sh $<SEMICOLON> fi"
   CONFIGURE_COMMAND ${CMAKE_COMMAND}
     -DWITH_L0=OFF
     -DOpenCL_INCLUDE_DIR=${CMAKE_SOURCE_DIR}/include
-    ${OPENCL_LIB_FLAG}
+    -DOPENCL_ROOT=${OPENCL_LIBDIR}
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
     "${TS_BASEDIR}/src/${TS_NAME}"
 
@@ -102,11 +92,10 @@ set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
 set(SKIP_TEST_EXPR "subgroups_imagecopy_tests_hw|subgroups_visualization_tests_hw|vme_search_tests_hw|vme_hme_tests_hw|vme_intra_tests_hw|vme_wpp_tests_hw|vme_interlaced_tests_hw|vme_interop_tests_hw|ocl_utils_tests_hw|test_cl_unified_shared_memory_hw|test_cl_visa_injection_rt_basic_hw|test_cl_command_queue_families_hw")
+
 add_test(NAME all_intel_compute_tests
          COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
          -E "${SKIP_TEST_EXPR}"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-set_tests_properties(
-  all_intel_compute_tests
-  PROPERTIES LABELS "${TS_NAME};level0")
+set_tests_properties(all_intel_compute_tests PROPERTIES LABELS "${TS_NAME}")

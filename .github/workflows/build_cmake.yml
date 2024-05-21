@@ -113,6 +113,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           runCTest() {
             cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
@@ -229,6 +230,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           runCTest() {
             cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS "$@"
@@ -249,13 +251,13 @@ jobs:
             echo "Unknown configuration" && exit 1
           fi
 
-  sycl_matrix:
-    name: LLVM ${{ matrix.llvm }} - SYCL
-    runs-on: [self-hosted, linux, x64, sycl]
+  oneapi_matrix:
+    name: LLVM ${{ matrix.llvm }} - oneAPI
+    runs-on: [self-hosted, linux, x64, oneapi]
     strategy:
       fail-fast: false
       matrix:
-        llvm: [16]
+        llvm: [18]
 
     steps:
       - uses: actions/checkout@v4
@@ -266,17 +268,17 @@ jobs:
           runCMake() {
             BUILD_FLAGS="-O1 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable"
             cmake -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DDEVELOPER_MODE=ON \
-            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=0 -DENABLE_TESTSUITES=all \
+            -DENABLE_HOST_CPU_DEVICES=1 -DENABLE_LEVEL0=1 -DSTATIC_LLVM=ON \
             -DCMAKE_BUILD_TYPE=Release "-DCMAKE_C_FLAGS_RELEASE=$BUILD_FLAGS" "-DCMAKE_CXX_FLAGS_RELEASE=$BUILD_FLAGS" \
-            -DWITH_LLVM_CONFIG=/home/LLVM_${{ matrix.llvm }}/bin/llvm-config -DLLVM_SPIRV=/home/LLVM_${{ matrix.llvm }}/bin/llvm-spirv \
+            -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }} -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }} \
             "$@" -B ${{ github.workspace }}/build ${{ github.workspace }}
           }
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          mkdir -p /home/github/examples/build_sycl
+          mkdir -p /home/github/examples/build_oneapi
           mkdir -p /home/github/examples/source
-          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_sycl -DSYCL_CXX_COMPILER=/opt/sycl/bin/clang++ -DSYCL_LIBDIR=/opt/sycl/lib
+          runCMake "-DENABLE_TESTSUITES=dpcpp-book-samples;oneapi-samples;simple-sycl-samples;intel-compute-samples" -DTESTSUITE_SOURCE_BASEDIR=/home/github/examples/source -DTESTSUITE_BASEDIR=/home/github/examples/build_oneapi -DSYCL_CXX_COMPILER=/opt/intel/oneapi/compiler/latest/bin/icpx -DSYCL_LIBDIR=/opt/intel/oneapi/compiler/latest/lib
 
       - name: Build PoCL
         id: build_pocl
@@ -289,17 +291,26 @@ jobs:
         # occasionally git timeouts on git clone of the examples
         timeout-minutes: 120
         run: |
-          cd ${{ github.workspace }}/build && make -j4 prepare_examples
+          cd ${{ github.workspace }}/build/examples/dpcpp-book-samples && make -j4 dpcpp-book-samples
+          cd ${{ github.workspace }}/build/examples/oneapi-samples && make -j4 oneapi-samples
+          cd ${{ github.workspace }}/build/examples/simple-sycl-samples && make -j4 simple-sycl-samples
+          cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j4 intel-compute-samples
 
-      - name: Run Tests
-        id: ctest
+      - name: Run CPU Tests
+        id: ctest_cpu
+        timeout-minutes: 40
         run: |
-          runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j4 $CTEST_FLAGS "$@"
-          }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          runCTest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples"
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
+
+      - name: Run GPU Tests
+        id: ctest_gpu
+        timeout-minutes: 40
+        run: |
+          rm -rf ${{ env.POCL_CACHE_DIR }}
+          mkdir ${{ env.POCL_CACHE_DIR }}
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_gpu -j1 $CTEST_FLAGS
 
 
   remote_matrix:
@@ -337,6 +348,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -377,6 +389,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -416,6 +429,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -450,11 +464,7 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          if [ "${{ matrix.config }}" == "openasip" ]; then
-            runCMake -DENABLE_TCE=ON
-          else
-            echo "Unknown configuration" && exit 1
-          fi
+          runCMake -DENABLE_TCE=ON
 
       - name: Run Build
         id: build
@@ -463,14 +473,11 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          if [ "${{ matrix.config }}" == "openasip" ]; then
-            cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests $CTEST_FLAGS
-          else
-            echo "Unknown configuration" && exit 1
-          fi
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_tta_tests $CTEST_FLAGS
 
   # could be tried with multiple CLSPV versions
   vulkan_matrix:
@@ -501,6 +508,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         env:
           VK_ICD_FILENAMES: "/usr/share/vulkan/icd.d/intel_icd.x86_64.json"
         run: |
@@ -544,13 +552,11 @@ jobs:
 
       - name: Run Tests
         id: ctest
+        timeout-minutes: 120
         run: |
-          runCTest() {
-            cd ${{ github.workspace }}/build &&  ctest -j$(nproc) $CTEST_FLAGS -E 'test_shuffle_half_'
-          }
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          runCTest -L internal
+          cd ${{ github.workspace }}/build && ctest -j$(nproc) $CTEST_FLAGS -L internal -E 'test_shuffle_half_'
 
 
   level_zero_matrix:
@@ -587,9 +593,7 @@ jobs:
 
       - name: Run Tests
         id: ctest
-        env:
-          OverrideDefaultFP64Settings: "1"
-          IGC_EnableDPEmulation: "1"
+        timeout-minutes: 120
         run: |
           if [ ${{ matrix.llvm }} -lt 16 ]; then
             TEST_EXCLUDES='poclcc|clCreateKernel|clCreateProgramWithBinary|test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'

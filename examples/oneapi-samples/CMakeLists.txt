@@ -33,18 +33,6 @@ if((NOT SYCL_CXX_COMPILER) OR (NOT SYCL_LIBDIR))
   return()
 endif()
 
-# handle ICD on/off
-if(ENABLE_ICD)
-  if(OPENCL_LIBRARIES AND (NOT OPENCL_LIBDIR))
-    get_filename_component(OPENCL_LIBDIR "${OPENCL_LIBRARIES}" DIRECTORY)
-  endif()
-  set(ONEAPI_OPENCL_LIBDIR "-DCL_LIB_DIR=${OPENCL_LIBDIR}")
-  set(ONEAPI_OPENCL_LIBRARY "-DCL_LIB_NAME=${OPENCL_LIBRARIES}")
-else()
-  set(ONEAPI_OPENCL_LIBDIR "-DCL_LIB_DIR=$<TARGET_FILE_DIR:${POCL_LIBRARY_NAME}>")
-  set(ONEAPI_OPENCL_LIBRARY "-DCL_LIB_NAME=$<TARGET_FILE_NAME:${POCL_LIBRARY_NAME}>")
-endif()
-
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -64,7 +52,8 @@ ExternalProject_Add(
   BINARY_DIR "${TS_BUILDDIR}"
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}
-    ${ONEAPI_OPENCL_LIBDIR} ${ONEAPI_OPENCL_LIBRARY}
+    -DCL_LIB_DIR=${OPENCL_LIBDIR}
+    -DCL_LIB_NAME=${OPENCL_LIBNAME}
     -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
     "${TS_SRCDIR}"
 
@@ -79,17 +68,24 @@ add_dependencies(prepare_examples ${TS_NAME})
 #   3: Error(s) while linking:
 #   3: Cannot find symbol _Z21work_group_reduce_addf in kernel library
 
-add_test(NAME oneapi_samples
-         COMMAND "${CMAKE_CTEST_COMMAND}" -V --output-on-failure -E oneapi_nbody
+add_test(NAME oneapi-samples
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure -E "nbody|multidevice"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-# We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
-# the setvars.sh before testing), but still ensure we use the system's libOpenCL.so
-# to use its ICD to direct the OpenCL to libpocl (otherwise setvars.sh overwrites
-# it with its own libOpenCL.so which is not ocl-icd). Also we have to fake the CPU device
-# to look like Intel OpenCL CPU to force the oneAPI DPC++ to target it.
-set_tests_properties(
-  oneapi_samples
-  PROPERTIES
-    ENVIRONMENT "LD_LIBRARY_PATH=${OPENCL_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH};ONEAPI_DEVICE_SELECTOR=opencl:*;POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000;POCL_CPU_VENDOR_ID_OVERRIDE=32902"
-    LABELS "${TS_NAME};level0")
+add_test(NAME oneapi-multidev-local-samples
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure -L "multidevice_local"
+         WORKING_DIRECTORY "${TS_BUILDDIR}")
+
+add_test(NAME oneapi-multidev-remote-samples
+         COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure -L "multidevice_remote"
+         WORKING_DIRECTORY "${TS_BUILDDIR}")
+
+set_tests_properties(oneapi-samples
+  PROPERTIES LABELS "oneapi-samples")
+
+set_tests_properties(oneapi-multidev-local-samples
+  PROPERTIES LABELS "oneapi-multidev-local-samples")
+
+set_tests_properties(oneapi-multidev-remote-samples
+  PROPERTIES LABELS "oneapi-multidev-remote-samples")
+
