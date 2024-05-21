@@ -58,45 +58,19 @@ ExternalProject_Add(
     "-DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}"
     "-DCMAKE_EXE_LINKER_FLAGS=-L${SYCL_LIBDIR}"
     "${TS_BASEDIR}/src/${TS_NAME}"
+    -DNODPL=1 -DNODPCT=1 -DNOL0=1
   INSTALL_COMMAND /bin/true
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
-# Skipped tests for CPU:
-#
-# fig_2_10_gpu_selector: Fails as we test with a CPU driver.
-# fig_6_8_prefetch_memadvise, fig_14_26_local_unpack: Takes minutes with the CPU driver.
-
-set(SKIP_TEST_EXPR "fig_2_10_gpu_selector|fig_6_8_prefetch_memadvise|fig_14_26_local_unpack")
-add_test(NAME all_dpcpp_book_samples-cpu
+# fig_2_9_cpu_selector: only works with CPU
+# fig_2_10_gpu_selector: only works with GPU
+# fig_14_26_local_unpack: takes >15min with CPU
+add_test(NAME all_dpcpp_book_samples
          COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
-         -E "${SKIP_TEST_EXPR}"
+         -E "fig_2_10_gpu_selector|fig_2_9_cpu_selector|fig_14_26_local_unpack"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-# Skipped tests for LevelZero:
-#
-# fig_2_9_cpu_selector: We test with a GPU.
-add_test(NAME all_dpcpp_book_samples-l0
-  COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
-         -E "fig_2_9_cpu_selector"
-         WORKING_DIRECTORY "${TS_BUILDDIR}")
-
-# We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
-# the setvars.sh before testing), but still ensure we use the system's libOpenCL.so
-# to use its ICD to direct the OpenCL to libpocl (otherwise setvars.sh overwrites
-# it with its own libOpenCL.so which is not ocl-icd). Also we have to fake the CPU device
-# to look like Intel OpenCL CPU to force the oneAPI DPC++ to target it.
-
-set_tests_properties(
-  all_dpcpp_book_samples-cpu
-  PROPERTIES
-    ENVIRONMENT "ONEAPI_DEVICE_SELECTOR=opencl:cpu;POCL_CPU_VENDOR_ID_OVERRIDE=32902;POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000;POCL_DEVICES=cpu;LD_LIBRARY_PATH=${OCL_ICD_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
-    LABELS "${TS_NAME}")
-
-set_tests_properties(
-  all_dpcpp_book_samples-l0
-  PROPERTIES
-    ENVIRONMENT "POCL_DRIVER_VERSION_OVERRIDE=23.35.27191.9;ONEAPI_DEVICE_SELECTOR=opencl:gpu;POCL_DEVICES=level0;LD_LIBRARY_PATH=${OCL_ICD_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
-    LABELS "${TS_NAME};level0")
+set_tests_properties(all_dpcpp_book_samples PROPERTIES LABELS "${TS_NAME}")
