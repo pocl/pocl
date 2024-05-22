@@ -1459,6 +1459,8 @@ int
 pocl_cuda_free_program (cl_device_id device, cl_program program,
                         unsigned device_i)
 {
+  pocl_driver_free_program (device, program, device_i);
+
   CUresult result;
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
   if (program->data[device_i] == NULL)
@@ -1489,7 +1491,6 @@ pocl_cuda_free_program (cl_device_id device, cl_program program,
                                     pdata->align_map_offsets);
       pdata->align_map_offsets = NULL;
     }
-  pocl_driver_free_program (device, program, device_i);
   POCL_MEM_FREE (program->data[device_i]);
   return CL_SUCCESS;
 }
