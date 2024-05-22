@@ -79,13 +79,12 @@ if(CUSTOM_CTS_GIT_REPO)
 else()
   # Use PoCL's fork which has pending fixes.
   set(CTS_GIT_REPO "https://github.com/pocl/OpenCL-CTS")
-#  set(CTS_GIT_REPO "https://github.com/KhronosGroup/OpenCL-CTS")
 endif()
 if(CUSTOM_CTS_GIT_TAG)
   set(CTS_GIT_TAG "${CUSTOM_CTS_GIT_TAG}")
 else()
   # Use PoCL's fork which has pending fixes.
-  set(CTS_GIT_TAG "cl30")
+  set(CTS_GIT_TAG "v2024.05.23")
 endif()
 
 set(TS_BUILDDIR "${TS_BUILDDIR}/test_conformance")
@@ -758,7 +757,7 @@ add_test(NAME "${TS_NAME}${TS_SUFFIX}_vectors_micro"
 if(HAVE_SPIRV_TOOLS)
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_0"
-         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked  decorate_saturated_conversion_char   decorate_saturated_conversion_ushort  decorate_saturated_conversion_int  decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
+         COMMAND "${TS_BUILDDIR}/spirv_new/test_spirv_new" ${EXTRA_ARGS} decorate_restrict  decorate_aliased  decorate_alignment  decorate_constant  decorate_cpacked decorate_saturated_conversion_float_to_char decorate_saturated_conversion_float_to_short decorate_saturated_conversion_double_to_int decorate_fp_rounding_mode_rte_float_int  decorate_fp_rounding_mode_rtz_double_long get_program_il  linkage_export_function_compile  linkage_import_function_compile  linkage_import_function_link  op_atomic_inc_global  op_atomic_dec_global  op_label_simple  op_branch_simple  op_unreachable_simple  op_branch_conditional  op_branch_conditional_weighted  op_composite_construct_int4  op_composite_construct_struct
          WORKING_DIRECTORY "${TS_BUILDDIR}/spirv_new")
 
 add_test(NAME "${TS_NAME}${TS_SUFFIX}_spirv_new_micro_1"
