@@ -557,7 +557,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   size_t memfree = 0, memtotal = 0;
   if (ret != CL_INVALID_DEVICE)
     result = cuMemGetInfo (&memfree, &memtotal);
-  dev->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
+  dev->max_mem_alloc_size = max (memfree, 128 * 1024 * 1024);
   dev->global_mem_size = memtotal;
 
   dev->svm_allocation_priority = 2;
