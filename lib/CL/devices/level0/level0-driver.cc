@@ -1314,11 +1314,7 @@ Level0Queue::~Level0Queue() {
     Thread.join();
   }
   assert(DeviceEventsToReset.empty());
-  while (!AvailableDeviceEvents.empty()) {
-    ze_event_handle_t EvH = AvailableDeviceEvents.front();
-    AvailableDeviceEvents.pop();
-    zeEventDestroy(EvH);
-  }
+  // events are destroyed by the EventPool
   if (CmdListH != nullptr) {
     zeCommandListDestroy(CmdListH);
   }
@@ -1502,7 +1498,7 @@ convertZeAllocCaps(ze_memory_access_cap_flags_t Flags) {
 }
 
 Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
-  : Dev(D), EvtPoolH(nullptr) {
+    : EvtPoolH(nullptr), Dev(D), LastIdx(0) {
   ze_result_t Res = ZE_RESULT_SUCCESS;
 
   ze_event_pool_desc_t EvtPoolDesc = {
@@ -1512,11 +1508,11 @@ Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
   };
 
   ze_device_handle_t DevH = Dev->getDeviceHandle();
-  LEVEL0_CHECK_ABORT(zeEventPoolCreate(Dev->getContextHandle(),
-                          &EvtPoolDesc, 1, &DevH,
-                          &EvtPoolH));
+  LEVEL0_CHECK_ABORT(zeEventPoolCreate(Dev->getContextHandle(), &EvtPoolDesc, 1,
+                                       &DevH, &EvtPoolH));
 
   unsigned Idx = 0;
+  AvailableEvents.resize(EvtPoolSize);
   for (Idx = 0; Idx < EvtPoolSize; ++Idx) {
 
     ze_event_desc_t eventDesc = {
@@ -1530,23 +1526,23 @@ Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
 
     ze_event_handle_t EvH = nullptr;
     LEVEL0_CHECK_ABORT(zeEventCreate(EvtPoolH, &eventDesc, &EvH));
-    AvailableEvents.push(EvH);
+    AvailableEvents[Idx] = EvH;
   }
 }
 
 Level0EventPool::~Level0EventPool() {
+  for (ze_event_handle_t EvH : AvailableEvents) {
+    zeEventDestroy(EvH);
+  }
   if (EvtPoolH != nullptr) {
     zeEventPoolDestroy(EvtPoolH);
   }
 }
 
 ze_event_handle_t Level0EventPool::getEvent() {
-  if (AvailableEvents.empty())
+  if (LastIdx >= AvailableEvents.size())
     return nullptr;
-
-  auto Ret = AvailableEvents.front();
-  AvailableEvents.pop();
-  return Ret;
+  return AvailableEvents[LastIdx++];
 }
 
 Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,

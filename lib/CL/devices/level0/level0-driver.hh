@@ -250,12 +250,13 @@ class Level0EventPool {
 public:
   Level0EventPool(Level0Device *D, unsigned EvtPoolSize);
   ~Level0EventPool();
-  bool isEmpty() const { return AvailableEvents.empty(); }
+  bool isEmpty() const { return LastIdx >= AvailableEvents.size(); }
   ze_event_handle_t getEvent();
 private:
-  std::queue<ze_event_handle_t> AvailableEvents;
+  std::vector<ze_event_handle_t> AvailableEvents;
   ze_event_pool_handle_t EvtPoolH;
   Level0Device *Dev;
+  unsigned LastIdx;
 };
 
 class Level0Device {
@@ -341,11 +342,11 @@ public:
   bool supportsUniversalQueues() { return UniversalQueues.available(); }
 
 private:
+  std::deque<Level0EventPool> EventPools;
+  std::mutex EventPoolLock;
   Level0QueueGroup CopyQueues;
   Level0QueueGroup ComputeQueues;
   Level0QueueGroup UniversalQueues;
-  std::deque<Level0EventPool> EventPools;
-  std::mutex EventPoolLock;
 
   std::map<std::string, Level0Kernel *> MemfillKernels;
   std::map<std::string, Level0Kernel *> ImagefillKernels;
