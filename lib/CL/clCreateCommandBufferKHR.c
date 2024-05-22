@@ -63,18 +63,25 @@ POname (clCreateCommandBufferKHR) (
       const cl_command_buffer_properties_khr *key = 0;
       for (key = properties; *key != 0; key += 2)
         num_properties += 1;
+      POCL_GOTO_ERROR_ON (
+        num_properties == 0, CL_INVALID_VALUE,
+        "Properties != NULL, but zero properties in array\n");
 
       unsigned i = 0;
       cl_command_buffer_properties_khr seen_keys[num_properties];
       for (i = 0; i < num_properties; ++i)
         seen_keys[i] = 0;
 
+      i = 0;
       for (key = properties; *key != 0; key += 2, ++i)
         {
           /* Duplicate keys are not allowed */
           for (unsigned j = 0; j < i; ++j)
             {
-              POCL_GOTO_ERROR_COND ((*key == seen_keys[j]), CL_INVALID_VALUE);
+              POCL_GOTO_ERROR_ON (
+                (*key == seen_keys[j]), CL_INVALID_VALUE,
+                "Repeated key in cl_command_buffer_properties_khr "
+                "*properties\n");
             }
 
           const cl_command_buffer_properties_khr *val = key + 1;
@@ -90,7 +97,10 @@ POname (clCreateCommandBufferKHR) (
                * CL_INVALID_PROPERTY */
 
               /* Any flag bits not handled above are invalid */
-              POCL_GOTO_ERROR_COND ((tmp != 0), CL_INVALID_VALUE);
+              POCL_GOTO_ERROR_ON (
+                (tmp != 0), CL_INVALID_VALUE,
+                "Unknown flags in CL_COMMAND_BUFFER_FLAGS_KHR property\n");
+              seen_keys[i] = *key;
               break;
             default:
               errcode = CL_INVALID_VALUE;
