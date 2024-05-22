@@ -307,7 +307,7 @@ pocl_kernel_collect_mem_objs (cl_command_queue command_queue,
       {
         int found = 0;
         /* Ensure we do not add the argument buffers again. */
-        for (int i = 0; i < *memobj_count; ++i)
+        for (cl_uint i = 0; i < *memobj_count; ++i)
           if (memobj_list[i] == ptr->shadow_cl_mem)
             {
               found = 1;
@@ -380,6 +380,40 @@ pocl_kernel_copy_args (cl_kernel kernel,
   return CL_SUCCESS;
 }
 
+static int
+process_command_ndrange_properties (
+  const cl_ndrange_kernel_command_properties_khr *properties)
+{
+  if (properties == NULL)
+    return CL_SUCCESS;
+
+  cl_uint num_properties = 0;
+  const cl_ndrange_kernel_command_properties_khr *key = NULL;
+  for (key = properties; *key != 0; key += 2)
+    num_properties += 1;
+  POCL_RETURN_ERROR_ON ((num_properties == 0), CL_INVALID_VALUE,
+                        "Properties != NULL, but zero properties in array\n");
+  unsigned i = 0;
+  for (key = properties; *key != 0; key += 2, ++i)
+    {
+      switch (*key)
+        {
+        case CL_MUTABLE_DISPATCH_ASSERTS_KHR:
+        case CL_MUTABLE_DISPATCH_UPDATABLE_FIELDS_KHR:
+          POCL_RETURN_ERROR_ON (
+            1, CL_INVALID_VALUE,
+            "cl_khr_command_buffer_mutable_dispatch is not supported\n");
+          break;
+        default:
+          POCL_RETURN_ERROR_ON (1, CL_INVALID_VALUE,
+                                "Unknown property value in "
+                                "cl_ndrange_kernel_command_properties_khr\n");
+        }
+    }
+
+  return CL_SUCCESS;
+}
+
 cl_int
 pocl_record_ndrange_kernel (
   cl_command_buffer_khr command_buffer,
@@ -396,11 +430,18 @@ pocl_record_ndrange_kernel (
   cl_sync_point_khr *sync_point_p)
 {
   _cl_command_node *cmd = NULL;
-  int errcode = pocl_ndrange_kernel_common (
+
+  int errcode = process_command_ndrange_properties (properties);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  errcode = pocl_ndrange_kernel_common (
     command_buffer, command_queue, properties, kernel, src_arguments, work_dim,
     global_work_offset, global_work_size, local_work_size,
     num_items_in_wait_list, NULL, NULL, sync_point_wait_list, sync_point_p,
     &cmd);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   for (unsigned i = 0; i < kernel->meta->num_args; ++i)
     {

@@ -45,8 +45,8 @@ POname (clGetCommandBufferInfoKHR) (
   {                                                                           \
     if (param_value != NULL)                                                  \
       {                                                                       \
-        memcpy (param_value, val,                                             \
-                param_value_size < (size) ? param_value_size : (size));       \
+        POCL_RETURN_ERROR_COND ((param_value_size < size), CL_INVALID_VALUE); \
+        memcpy (param_value, val, size);                                      \
       }                                                                       \
   }
 
