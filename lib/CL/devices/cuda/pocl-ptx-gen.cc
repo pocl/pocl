@@ -1,6 +1,7 @@
 /* pocl-ptx-gen.cc - PTX code generation functions
 
     Copyright (c) 2016-2017 James Price / University of Bristol
+                  2024 Henry Linjamäki / Intel Finland Oy
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to
@@ -638,8 +639,9 @@ int linkLibDevice(llvm::Module *Module, const char *LibDevicePath) {
   // Load libdevice bitcode library.
   llvm::Expected<std::unique_ptr<llvm::Module>> LibDeviceModule =
       parseBitcodeFile(Buffer->get()->getMemBufferRef(), Module->getContext());
-  if (!LibDeviceModule) {
-    POCL_MSG_ERR("[CUDA] failed to load libdevice bitcode\n");
+  if (auto Error = LibDeviceModule.takeError()) {
+    POCL_MSG_ERR("[CUDA] failed to load libdevice bitcode:\n%s\n",
+                 toString(std::move(Error)).c_str());
     return -1;
   }
 
