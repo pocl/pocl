@@ -77,7 +77,7 @@ extern "C" {
 #ifdef __GNUC__
   #define CL_API_SUFFIX_DEPRECATED __attribute__((deprecated))
   #define CL_API_PREFIX_DEPRECATED
-#elif defined(_WIN32)
+#elif defined(_MSC_VER) && !defined(__clang__)
   #define CL_API_SUFFIX_DEPRECATED
   #define CL_API_PREFIX_DEPRECATED __declspec(deprecated)
 #else
