@@ -55,7 +55,9 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue(command_queue, cmd);
+  // cmd can be NULL if the image is 1D buffer, see pocl_fill_image_common
+  if (cmd)
+    pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

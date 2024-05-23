@@ -475,7 +475,7 @@ while (0)
         (command_queue == NULL && command_buffer->num_queues > 1),            \
         CL_INVALID_COMMAND_QUEUE);                                            \
       int queue_in_buffer = 0;                                                \
-      for (int ii = 0; ii < command_buffer->num_queues; ++ii)                 \
+      for (unsigned ii = 0; ii < command_buffer->num_queues; ++ii)            \
         {                                                                     \
           queue_in_buffer |= (command_queue == command_buffer->queues[ii]);   \
         }                                                                     \

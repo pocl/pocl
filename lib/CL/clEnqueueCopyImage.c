@@ -2,27 +2,6 @@
 #include "pocl_shared.h"
 #include "pocl_image_util.h"
 
-/* Validate parameters of cl*CopyImage* that do not get checked by
- * pocl_rect_copy */
-cl_int
-pocl_validate_copy_image (cl_mem src_image, cl_mem dst_image)
-{
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
-                          CL_INVALID_MEM_OBJECT);
-
-  /* src_image, dst_image: Can be 1D, 2D, 3D image or a 1D, 2D image array
-   * objects allowing us to perform the following actions */
-  POCL_RETURN_ERROR_ON (
-      (IS_IMAGE1D_BUFFER (src_image) || IS_IMAGE1D_BUFFER (dst_image)),
-      CL_INVALID_MEM_OBJECT,
-      "clEnqueueCopyImage cannot be called on image 1D buffers!\n");
-
-  return CL_SUCCESS;
-}
-
 cl_int
 pocl_copy_image_common (cl_command_buffer_khr command_buffer,
                         cl_command_queue command_queue,
@@ -41,9 +20,6 @@ pocl_copy_image_common (cl_command_buffer_khr command_buffer,
   cl_int errcode;
   size_t src_row_pitch = 0, src_slice_pitch = 0, dst_row_pitch = 0,
          dst_slice_pitch = 0;
-  errcode = pocl_validate_copy_image (src_image, dst_image);
-  if (errcode != CL_SUCCESS)
-    return errcode;
 
   errcode = pocl_rect_copy (
       command_buffer, command_queue, CL_COMMAND_COPY_IMAGE, src_image, CL_TRUE,
@@ -53,6 +29,9 @@ pocl_copy_image_common (cl_command_buffer_khr command_buffer,
       sync_point, cmd);
   if (errcode != CL_SUCCESS)
     return errcode;
+
+  if (*cmd == NULL)
+    return CL_SUCCESS;
 
   _cl_command_node *c = *cmd;
   cl_device_id dev = command_queue->device;
@@ -102,7 +81,8 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
+  if (cmd)
+    pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

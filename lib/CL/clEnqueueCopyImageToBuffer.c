@@ -122,7 +122,8 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  pocl_command_enqueue (command_queue, cmd);
+  if (cmd)
+    pocl_command_enqueue (command_queue, cmd);
 
   return CL_SUCCESS;
 }

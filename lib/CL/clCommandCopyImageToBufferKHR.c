@@ -48,7 +48,9 @@ POname (clCommandCopyImageToBufferKHR) (
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  errcode = pocl_command_record (command_buffer, cmd, sync_point);
+  if (cmd)
+    errcode = pocl_command_record (command_buffer, cmd, sync_point);
+
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
