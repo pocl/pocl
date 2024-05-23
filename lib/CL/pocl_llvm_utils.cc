@@ -105,15 +105,14 @@ void writeModuleIRtoString(const llvm::Module *mod, std::string& dest) {
   sos.str(); // flush
 }
 
-int pocl_write_module(void *module, const char *path, int dont_rewrite) {
+int pocl_write_module(void *module, const char *path) {
   assert(module);
   assert(path);
 
   std::string binary;
   writeModuleIRtoString((const Module *)module, binary);
 
-  return pocl_write_file(path, binary.data(), (uint64_t)binary.size(), 0,
-                         dont_rewrite);
+  return pocl_write_file(path, binary.data(), (uint64_t)binary.size(), 0);
 }
 
 llvm::Module *parseModuleIRMem(const char *input_stream, size_t size,

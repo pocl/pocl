@@ -1902,7 +1902,7 @@ pocl_vulkan_build_source (cl_program program, cl_uint device_i,
 
   char program_cl_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_cl_path_temp, ".cl", NULL);
-  pocl_write_file (program_cl_path_temp, program->source, source_len, 0, 0);
+  pocl_write_file (program_cl_path_temp, program->source, source_len, 0);
 
   char program_map_path_temp[POCL_MAX_PATHNAME_LENGTH];
   pocl_cache_tempname (program_map_path_temp, ".map", NULL);
@@ -2225,7 +2225,7 @@ pocl_vulkan_build_binary (cl_program program, cl_uint device_i,
       int err = CL_SUCCESS;
 
       pocl_write_file (program_spv_path_temp, program->binaries[device_i],
-                       program->binary_sizes[device_i], 0, 0);
+                       program->binary_sizes[device_i], 0);
       POCL_RETURN_ERROR_ON (
           !pocl_exists (program_spv_path_temp), CL_BUILD_PROGRAM_FAILURE,
           "failed to write SPIR-V file %s\n", program_spv_path_temp);

@@ -249,7 +249,7 @@ int pocl_llvm_build_program(cl_program program,
         std::string dir(path, 0, (tempdir.size() + 1 + last_slash));
         pocl_mkdir_p(dir.c_str());
       }
-      pocl_write_file(path.c_str(), input_header, input_header_size, 0, 1);
+      pocl_write_file(path.c_str(), input_header, input_header_size, 0);
     }
   }
   // Use CompilerInvocation::CreateFromArgs to initialize
@@ -756,7 +756,7 @@ int pocl_llvm_build_program(cl_program program,
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc */
-  error = pocl_write_module(mod, program_bc_path, 0);
+  error = pocl_write_module(mod, program_bc_path);
   if(error)
     return error;
 
@@ -923,7 +923,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc for metadata */
-  error = pocl_write_module(LinkedModule, program_bc_path, 0);
+  error = pocl_write_module(LinkedModule, program_bc_path);
   if (error)
     return error;
 

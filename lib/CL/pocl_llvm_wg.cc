@@ -777,7 +777,7 @@ public:
 
     pocl_cache_tempname(LinkinOutputBCPath, ".bc", NULL);
     int r = pocl_write_module(ProgramGVarsNonKernelsBC.get(),
-                              LinkinOutputBCPath, 0);
+                              LinkinOutputBCPath);
     if (r != 0) {
       POCL_MSG_ERR("ProgramWithContext->init: failed to write module\n");
       return false;
@@ -878,7 +878,7 @@ static int convertBCorSPV(char *InputPath,
   }
 
   if (InputContent && InputSize) {
-    r = pocl_write_file(HiddenInputPath, InputContent, InputSize, 0, 0);
+    r = pocl_write_file(HiddenInputPath, InputContent, InputSize, 0);
     if (r != 0) {
       BuildLog->append("failed to write input file for llvm-spirv\n");
       goto FINISHED;
@@ -1278,7 +1278,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
                          "Failed to create "
                          "temporary file %s\n",
                          TempParallelBCFileName);
-    Err = pocl_write_module((char *)ParallelBC, TempParallelBCFileName, 0);
+    Err = pocl_write_module((char *)ParallelBC, TempParallelBCFileName);
     POCL_RETURN_ERROR_ON((Err != 0), CL_FAILED,
                          "Failed to write bitcode "
                          "into temporary file %s\n",
