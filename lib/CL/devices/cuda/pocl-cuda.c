@@ -778,6 +778,17 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 
   if (flags & CL_MEM_USE_HOST_PTR)
     {
+      if (mem->mem_host_ptr_is_svm)
+        {
+          /* Already checked by pocl_cuda_svm_alloc(). */
+          assert(device->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER);
+
+          p->version = mem->mem_host_ptr_version;
+          p->mem_ptr = mem->mem_host_ptr;
+          p->device_addr = p->mem_ptr;
+          return CL_SUCCESS;
+        }
+
       if (!((pocl_cuda_device_data_t *)device->data)->supports_cu_mem_host_register)
         {
           /* cuMemHostRegister is not supported on some ARM devices like the Nano, but supported on Xavier.

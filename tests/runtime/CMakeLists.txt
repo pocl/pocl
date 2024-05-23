@@ -367,6 +367,7 @@ set_property(TEST
   "runtime/test_deviceside_enqueue"
   "runtime/test_device_address"
   "runtime/test_compile_n_link"
+  "runtime/test_svm"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "cuda")
 
