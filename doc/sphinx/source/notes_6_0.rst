@@ -158,6 +158,16 @@ ALMAIF driver
 
 * adds some built-in kernels: sobel, gaussian, phase, magnitude, nonmax suppression and Canny.
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CUDA driver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* fixed clLinkProgram and clCompileProgram to work correctly
+
+* fixed memory leaks in clReleaseProgram
+
+* CL_DEVICE_MAX_MEM_ALLOC_SIZE limit increased to free memory reported by cuMemGetInfo
+
 ===================================
 Notable fixes
 ===================================
