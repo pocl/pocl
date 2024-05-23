@@ -655,7 +655,7 @@ static bool compileSPIRVtoNativeZE(Level0Program *Program,
 
   pocl_mkdir_p(ProgNativeDir.c_str());
   pocl_write_file(ProgCachePath.c_str(), (char *)NativeBinary.data(),
-                  (uint64_t)NativeSize, 0, 1);
+                  (uint64_t)NativeSize, 0);
   Res = true;
 
 FINISH:

@@ -206,31 +206,13 @@ ERROR:
 /* Atomic write - with rename() */
 int
 pocl_write_file (const char *path, const char *content, uint64_t count,
-                 int append, int dont_rewrite)
+                 int append)
 {
   assert(path);
   assert(content);
   char path2[POCL_MAX_PATHNAME_LENGTH];
   int err, fd = -1;
 
-  if (pocl_exists(path)) 
-    {
-      if (dont_rewrite) 
-        {
-          if (!append)
-            return 0;
-        } 
-      else 
-        {
-          int res = pocl_remove(path);
-          if (res)
-            {
-              POCL_MSG_ERR ("pocl_remove(%s) failed\n", path);
-              return res;
-            }
-        }
-    }
-  
   if (append)
     {
       fd = open (path, O_RDWR | O_APPEND | O_CREAT, 0660);

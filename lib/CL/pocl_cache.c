@@ -370,7 +370,7 @@ pocl_cache_write_descriptor (_cl_command_node *command, cl_kernel kernel,
   if (pocl_mkdir_p (dirr))
     return -1;
 
-  return pocl_write_file (descriptor, content, size, 0, 1);
+  return pocl_write_file (descriptor, content, size, 0);
 }
 
 /******************************************************************************/
@@ -404,7 +404,7 @@ int pocl_cache_append_to_buildlog(cl_program  program,
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
-    return pocl_write_file(buildlog_path, content, size, 1, 1);
+    return pocl_write_file(buildlog_path, content, size, 1);
 }
 
 /******************************************************************************/
@@ -430,7 +430,7 @@ pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
   assert (strlen (kernel_parallel_path)
           < (POCL_MAX_PATHNAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
   strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
-  return pocl_write_module (bc, kernel_parallel_path, 0);
+  return pocl_write_module (bc, kernel_parallel_path);
 }
 #endif
 

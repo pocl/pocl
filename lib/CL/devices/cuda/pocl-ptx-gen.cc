@@ -203,7 +203,7 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   const char *Content = PTX.data();
   size_t ContentSize = PTX.size();
 
-  if (pocl_write_file(PTXFilename, Content, ContentSize, 0, 0)) {
+  if (pocl_write_file(PTXFilename, Content, ContentSize, 0)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to write final PTX into %s\n",
                  PTXFilename);
     return CL_BUILD_PROGRAM_FAILURE;

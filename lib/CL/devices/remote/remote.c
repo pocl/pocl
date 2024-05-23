@@ -1000,7 +1000,7 @@ pocl_remote_build_binary (cl_program program, cl_uint device_i,
           assert (program->program_il_size > 0);
 
           err = pocl_write_file (spirv_path, program->program_il,
-                                 program->program_il_size, 0, 0);
+                                 program->program_il_size, 0);
           POCL_RETURN_ERROR_ON (
               (err != 0), CL_BUILD_PROGRAM_FAILURE,
               "failed to write the SPIR-V file into cache\n");

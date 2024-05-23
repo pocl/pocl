@@ -557,7 +557,7 @@ deserialize_file (unsigned char* buffer,
   if (len == 0)
     pocl_touch_file (fullpath);
   else
-    pocl_write_file (fullpath, content, len, 0, 0);
+    pocl_write_file (fullpath, content, len, 0);
 
 RET:
   free (content);

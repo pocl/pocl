@@ -369,8 +369,7 @@ void pocl_almaif_openasip_compile(_cl_command_node *cmd, cl_kernel kernel,
         std::string md_path = std::string(cachedir) + "/kernel_address.txt";
         std::string content =
             "kernel address = " + std::to_string(kernel_address);
-        pocl_write_file(md_path.c_str(), content.c_str(), content.length(), 0,
-                        0);
+        pocl_write_file(md_path.c_str(), content.c_str(), content.length(), 0);
     } else {
         POCL_ABORT("Couldn't find wg_function procedure %s from the program\n",
                    wg_func_name);

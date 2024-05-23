@@ -55,7 +55,7 @@ int pocl_touch_file(const char* path);
 /* Writes or appends data to a file.  */
 POCL_EXPORT
 int pocl_write_file(const char* path, const char* content,
-                    uint64_t count, int append, int dont_rewrite);
+                    uint64_t count, int append);
 
 int pocl_write_tempfile (char *output_path, const char *prefix,
                          const char *suffix, const char *content,
@@ -66,7 +66,7 @@ int pocl_write_tempfile (char *output_path, const char *prefix,
 POCL_EXPORT
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
 
-int pocl_write_module(void *module, const char* path, int dont_rewrite);
+int pocl_write_module(void *module, const char* path);
 
 int pocl_mk_tempdir (char *output, const char *prefix);
 
