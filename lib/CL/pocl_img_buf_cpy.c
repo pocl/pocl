@@ -36,12 +36,21 @@
 
 cl_int
 pocl_validate_rect_copy (cl_command_queue command_queue,
-                         cl_command_type command_type, cl_mem src,
-                         cl_int src_is_image, cl_mem dst, cl_int dst_is_image,
-                         const size_t *src_origin, const size_t *dst_origin,
-                         const size_t *region, size_t *src_row_pitch,
-                         size_t *src_slice_pitch, size_t *dst_row_pitch,
-                         size_t *dst_slice_pitch)
+                         cl_command_type command_type,
+                         cl_mem src,
+                         cl_int src_is_image,
+                         cl_mem dst,
+                         cl_int dst_is_image,
+                         const size_t *src_origin,
+                         const size_t *dst_origin,
+                         const size_t *region,
+                         size_t *src_row_pitch,
+                         size_t *src_slice_pitch,
+                         size_t *dst_row_pitch,
+                         size_t *dst_slice_pitch,
+                         size_t mod_region[3],
+                         size_t mod_src_origin[3],
+                         size_t mod_dst_origin[3])
 {
   POCL_RETURN_ERROR_ON (
       ((command_queue->context != src->context)
@@ -62,8 +71,17 @@ pocl_validate_rect_copy (cl_command_queue command_queue,
       POCL_RETURN_ERROR_ON ((src->is_gl_texture), CL_INVALID_MEM_OBJECT,
                             "src is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (src, command_queue->device);
-      POCL_RETURN_ERROR_ON((src->type == CL_MEM_OBJECT_IMAGE2D && src_origin[2] != 0),
-        CL_INVALID_VALUE, "src_origin[2] must be 0 for 2D src_image\n");
+      POCL_RETURN_ERROR_ON (((src->type == CL_MEM_OBJECT_IMAGE2D
+                              || src->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+                             && src_origin[2] != 0),
+                            CL_INVALID_VALUE,
+                            "src_origin[2] must be 0 for 2D src_image\n");
+      POCL_RETURN_ERROR_ON (
+        ((src->type == CL_MEM_OBJECT_IMAGE1D
+          || src->type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+         && (src_origin[2] != 0 || src_origin[1] != 0)),
+        CL_INVALID_VALUE,
+        "src_origin[2] & src_origin[1] must be 0 for 1D src_image\n");
     }
   else
     {
@@ -82,8 +100,17 @@ pocl_validate_rect_copy (cl_command_queue command_queue,
       POCL_RETURN_ERROR_ON ((dst->is_gl_texture), CL_INVALID_MEM_OBJECT,
                             "dst is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (dst, command_queue->device);
-      POCL_RETURN_ERROR_ON((dst->type == CL_MEM_OBJECT_IMAGE2D && dst_origin[2] != 0),
-        CL_INVALID_VALUE, "dst_origin[2] must be 0 for 2D dst_image\n");
+      POCL_RETURN_ERROR_ON (((dst->type == CL_MEM_OBJECT_IMAGE2D
+                              || dst->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+                             && dst_origin[2] != 0),
+                            CL_INVALID_VALUE,
+                            "dst_origin[2] must be 0 for 2D dst_image\n");
+      POCL_RETURN_ERROR_ON (
+        ((dst->type == CL_MEM_OBJECT_IMAGE1D
+          || dst->type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+         && (dst_origin[2] != 0 || dst_origin[1] != 0)),
+        CL_INVALID_VALUE,
+        "dst_origin[2] & dst_origin[1] must be 0 for 1D dst_image\n");
     }
   else
     {
@@ -101,14 +128,20 @@ pocl_validate_rect_copy (cl_command_queue command_queue,
         CL_IMAGE_FORMAT_MISMATCH, "src and dst have different image channel order\n");
       POCL_RETURN_ERROR_ON((src->image_channel_data_type != dst->image_channel_data_type),
         CL_IMAGE_FORMAT_MISMATCH, "src and dst have different image channel data type\n");
-      POCL_RETURN_ERROR_ON((
-          (dst->type == CL_MEM_OBJECT_IMAGE2D || src->type == CL_MEM_OBJECT_IMAGE2D) &&
-          region[2] != 1),
-        CL_INVALID_VALUE, "for any 2D image copy, region[2] must be 1\n");
+      POCL_RETURN_ERROR_ON (((dst->type == CL_MEM_OBJECT_IMAGE2D
+                              || src->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+                             && region[2] != 1),
+                            CL_INVALID_VALUE,
+                            "for any 2D image copy, region[2] must be 1\n");
+      POCL_RETURN_ERROR_ON (
+        ((dst->type == CL_MEM_OBJECT_IMAGE1D
+          || src->type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+         && (region[2] != 1 || region[1] != 1)),
+        CL_INVALID_VALUE,
+        "for any 1D image copy, region[2] and region[1] must be 1\n");
    }
 
   /* Images need to recompute the regions in bytes for checking */
-  size_t mod_region[3], mod_src_origin[3], mod_dst_origin[3];
   memcpy(mod_region, region, 3*sizeof(size_t));
   memcpy(mod_src_origin, src_origin, 3*sizeof(size_t));
   memcpy(mod_dst_origin, dst_origin, 3*sizeof(size_t));
@@ -183,20 +216,50 @@ pocl_rect_copy (cl_command_buffer_khr command_buffer,
                 cl_sync_point_khr *sync_point, _cl_command_node **cmd)
 {
   cl_int errcode;
-
-  POCL_VALIDATE_WAIT_LIST_PARAMS;
-
   unsigned i;
   cl_device_id device;
+  *cmd = NULL;
+
+  POCL_VALIDATE_WAIT_LIST_PARAMS;
   POCL_CHECK_DEV_IN_CMDQ;
 
+  size_t mod_region[3], mod_src_origin[3], mod_dst_origin[3];
   errcode = pocl_validate_rect_copy (
-      command_queue, command_type, src, src_is_image, dst, dst_is_image,
-      src_origin, dst_origin, region, src_row_pitch, src_slice_pitch,
-      dst_row_pitch, dst_slice_pitch);
+    command_queue, command_type, src, src_is_image, dst, dst_is_image,
+    src_origin, dst_origin, region, src_row_pitch, src_slice_pitch,
+    dst_row_pitch, dst_slice_pitch, mod_region, mod_src_origin,
+    mod_dst_origin);
 
   if (errcode != CL_SUCCESS)
     return errcode;
+
+  if (IS_IMAGE1D_BUFFER (src) && IS_IMAGE1D_BUFFER (dst))
+    {
+      src = src->buffer;
+      dst = dst->buffer;
+      // TODO handle command buffer
+      return POname (clEnqueueCopyBuffer) (
+        command_queue, src, dst, mod_src_origin[0], mod_dst_origin[0],
+        mod_region[0], num_items_in_wait_list, event_wait_list, event);
+    }
+
+  if (IS_IMAGE1D_BUFFER (src))
+    {
+      src = src->buffer;
+      // TODO handle command buffer
+      return POname (clEnqueueCopyBufferToImage) (
+        command_queue, src, dst, mod_src_origin[0], dst_origin, region,
+        num_items_in_wait_list, event_wait_list, event);
+    }
+
+  if (IS_IMAGE1D_BUFFER (dst))
+    {
+      dst = dst->buffer;
+      // TODO handle command buffer
+      return POname (clEnqueueCopyImageToBuffer) (
+        command_queue, src, dst, src_origin, region, mod_dst_origin[0],
+        num_items_in_wait_list, event_wait_list, event);
+    }
 
   cl_mem buffers[3] = { src, dst, NULL };
   char rdonly[] = { 1, 0, 1 };
