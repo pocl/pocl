@@ -61,7 +61,7 @@ add_subdirectory("matadd")
 add_subdirectory("boxadd")
 add_subdirectory("EinsteinToolkit")
 
-set(GIT_OPTIONS GIT_SHALLOW ON)
+set(GIT_OPTIONS)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.18)
   list(APPEND GIT_OPTIONS GIT_REMOTE_UPDATE_STRATEGY CHECKOUT)
 endif()
