@@ -455,5 +455,6 @@ set_property(TEST
   "runtime/test_command_buffer"
   "runtime/test_device_address"
   "runtime/test_svm"
+  "runtime/test_subbuffers"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")

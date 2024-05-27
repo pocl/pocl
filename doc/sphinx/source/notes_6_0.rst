@@ -98,10 +98,10 @@ Basis for the coarse-grain SVM support
 
 The CG SVM support works best if the client manages to mmap() the
 device-side allocated SVM pool to the same address as in the
-server-side. If not, SPIR-V manipulation is done to address for the
-offset for kernel executions. This is a work-in-progress, but is usable
-for testing client apps and libraries that require CG SVM as it seems to
-work often enough.
+server-side. If not, SPIR-V manipulation is done to shift the
+offset of the memory accessess in the execution kernels. This is
+a work-in-progress, but is usable for testing client apps and
+libraries that require CG SVM as it seems to work often enough.
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Vsock support
@@ -154,6 +154,8 @@ Various improvements were made:
   spirv tools. This is unfortunately necessary because spirv-link does
   not work anymore with files which have different SPIR-V versions.
   spirv-link is not required for building the driver anymore.
+
+* Fix passing sub-buffers as kernel arguments.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CUDA driver

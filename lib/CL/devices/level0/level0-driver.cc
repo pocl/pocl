@@ -1140,7 +1140,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-        void *MemPtr = memid->mem_ptr;
+        void *MemPtr = memid->mem_ptr + PoclArg[i].offset;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
         LEVEL0_CHECK_ABORT(Res);
         // optimization for read-only buffers
