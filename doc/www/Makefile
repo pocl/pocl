@@ -27,6 +27,7 @@
 
 generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
 static_files=pocl-paper.bib img downloads
+WEB_REPOSITORY = $(HOME)/src/portablecl.github.io/
 
 all: $(generated_htmls)
 
@@ -34,7 +35,7 @@ all: $(generated_htmls)
 	./generate_html.py $< $@
 
 publish:
-	rsync -rR *.html *.css $(static_files) $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
+	rsync -rR *.html *.css $(static_files) $(WEB_REPOSITORY)/
 
 clean:
 	rm -f $(generated_htmls)
