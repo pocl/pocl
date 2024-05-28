@@ -51,8 +51,7 @@ static void pocl_level0_abort_on_ze_error(ze_result_t status, unsigned line,
   const char *str = code;
   if (status != ZE_RESULT_SUCCESS) {
     // TODO convert level0 errors to strings
-    POCL_MSG_ERR("Error %0x from LevelZero Runtime call:\n", (int)status);
-    POCL_ABORT("Code:\n%s\n", str);
+    POCL_ABORT("Error %0x from LevelZero API:\n%s\n", (unsigned)status, str);
   }
 }
 
@@ -70,11 +69,12 @@ void Level0Queue::runThread() {
       assert(pocl_command_is_ready(Command->sync.event.event));
       assert(Command->sync.event.event->status == CL_SUBMITTED);
       execCommand(Command);
+      reset();
     }
     if (!WorkBatch.empty()) {
       execCommandBatch(WorkBatch);
+      reset();
     }
-    reset();
   } while (!ShouldExit);
 }
 
@@ -394,6 +394,7 @@ void Level0Queue::allocNextFreeEvent() {
 }
 
 void Level0Queue::reset() {
+  assert(CmdListH);
   LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
@@ -470,8 +471,6 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   ze_result_t res;
-
-  LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
 
   POCL_MEASURE_START(ZeListPrepare);
 
@@ -1393,12 +1392,17 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   return true;
 }
 
-Level0QueueGroup::~Level0QueueGroup() {
+void Level0QueueGroup::uninit() {
   std::unique_lock<std::mutex> Lock(Mutex);
   ThreadExitRequested = true;
   Cond.notify_all();
   Lock.unlock();
   Queues.clear();
+}
+
+Level0QueueGroup::~Level0QueueGroup() {
+  if (!ThreadExitRequested)
+    uninit();
 }
 
 void Level0QueueGroup::pushWork(_cl_command_node *Command) {
@@ -2142,10 +2146,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 }
 
 Level0Device::~Level0Device() {
+  UniversalQueues.uninit();
+  ComputeQueues.uninit();
+  CopyQueues.uninit();
   destroyHelperKernels();
   EventPools.clear();
-  // ComputeQueues.wait()
-  // CopyQueues.wait()
 }
 
 static void calculateHash(uint8_t *BuildHash,

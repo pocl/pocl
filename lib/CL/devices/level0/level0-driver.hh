@@ -223,6 +223,7 @@ public:
   Level0QueueGroup& operator=(Level0QueueGroup &&) = delete;
 
   bool init(unsigned Ordinal, unsigned Count, Level0Device *Device);
+  void uninit();
 
   void pushWork(_cl_command_node *Command) override;
   void pushCommandBatch(BatchType Batch) override;
