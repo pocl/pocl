@@ -30,8 +30,9 @@
 #include "messages.h"
 #include "pocl.h"
 
-#include "utlist_addon.h"
+#include "pocl_threads.h"
 #include "utlist.h"
+#include "utlist_addon.h"
 
 #ifdef ENABLE_RDMA
 #include "pocl_rdma.h"
@@ -168,6 +169,21 @@ struct network_command
   } data;
 };
 
+typedef struct socket_data_s
+{
+  int fd;
+  int is_fast;
+  pocl_lock_t setup_mutex;
+  pocl_cond_t setup_cond;
+  unsigned reconnect_count;
+  pocl_lock_t *writer_mutex;
+  pocl_cond_t *writer_cond;
+  int notify_pipe_r;
+  int notify_pipe_w;
+} socket_data_t;
+
+#define NUM_THREADS_PER_SOCKET 2
+
 #define INITIAL_ARRAY_CAP 1024
 
 // in nanoseconds
@@ -191,16 +207,15 @@ typedef struct remote_server_data_s
   uint64_t session;
   uint8_t authkey[AUTHKEY_LENGTH];
   uint32_t available;
-  sync_t setup_lock;
   int threads_awaiting_reconnect;
-  int slow_socket_fd;
-  int fast_socket_fd;
 
   uint32_t num_platforms;
   uint32_t num_devices;
   uint32_t *platform_devices;
 
   // network handling threads / ids
+  socket_data_t slow_socket;
+  socket_data_t fast_socket;
   network_queue *slow_read_queue;
   network_queue *fast_read_queue;
   network_queue *inflight_queue;

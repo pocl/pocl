@@ -32,6 +32,7 @@
 #endif
 
 #include <pthread.h>
+#include <signal.h>
 
 typedef pthread_mutex_t pocl_lock_t;
 typedef pthread_cond_t pocl_cond_t;
@@ -138,6 +139,16 @@ extern "C"
 #define POCL_WAIT_COND(c, m) PTHREAD_CHECK (pthread_cond_wait (&c, &m))
 #define POCL_TIMEDWAIT_COND(c, m, t)                                          \
   PTHREAD_CHECK2 (ETIMEDOUT, pthread_cond_timedwait (&c, &m, &t))
+
+#define POCL_IGNORE_SIGNAL_IN_THREAD(s)                                       \
+  do                                                                          \
+    {                                                                         \
+      sigset_t signal_mask;                                                   \
+      sigemptyset (&signal_mask);                                             \
+      sigaddset (&signal_mask, SIGPIPE);                                      \
+      PTHREAD_CHECK (pthread_sigmask (SIG_BLOCK, &signal_mask, NULL));        \
+    }                                                                         \
+  while (0)
 
 #define POCL_CREATE_THREAD(thr, func, arg)                                    \
   PTHREAD_CHECK (pthread_create (&thr, NULL, func, arg))
