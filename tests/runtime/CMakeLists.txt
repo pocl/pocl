@@ -52,7 +52,7 @@ if(OPENCL_HEADER_VERSION GREATER 299)
 endif()
 
 set(CXX_PROGRAMS_TO_BUILD test_device_address test_svm test_large_buf
-  test_compile_n_link)
+  test_subbuffers test_compile_n_link)
 
 add_compile_options(${OPENCL_CFLAGS})
 
@@ -146,6 +146,8 @@ add_test(NAME "runtime/test_device_address" COMMAND "test_device_address")
 
 add_test(NAME "runtime/test_svm" COMMAND "test_svm")
 
+add_test(NAME "runtime/test_subbuffers" COMMAND "test_subbuffers")
+
 add_test(NAME "runtime/test_large_buf" COMMAND "test_large_buf")
 
 add_test(NAME "runtime/test_compile_n_link" COMMAND "test_compile_n_link")
@@ -174,6 +176,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_device_address" "runtime/test_svm"
   "runtime/test_compile_n_link"
+  "runtime/test_subbuffers"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
@@ -452,5 +455,6 @@ set_property(TEST
   "runtime/test_command_buffer"
   "runtime/test_device_address"
   "runtime/test_svm"
+  "runtime/test_subbuffers"
   ${OCL_30_TESTS}
   APPEND PROPERTY LABELS "level0")
