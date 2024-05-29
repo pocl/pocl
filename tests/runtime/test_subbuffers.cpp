@@ -35,8 +35,12 @@
 #include <map>
 #include <random>
 
-static char VecAddSrc[] = R"raw(
+#define DUMP_TASK_GRAPHS 0
+#if DUMP_TASK_GRAPHS == 1
+#include "poclu.h"
+#endif
 
+static char VecAddSrc[] = R"raw(
   __kernel void vecadd (__global int *A, __global int *B,
                         __global int *C) {
     C[get_global_id(0)] = A[get_global_id(0)] + B[get_global_id(0)];
@@ -108,6 +112,14 @@ int TestOutputDataDecomposition() {
     Program.build(Devices);
     cl::Kernel VecAddKernel(Program, "vecadd");
 
+    cl::vector<cl::Event> AnchorDep;
+#if DUMP_TASK_GRAPHS == 1
+    // Anchor event that prevents executing the commands before we have created
+    // the .dot snapshot of the whole task graph.
+    cl::UserEvent Anchor(Context);
+    AnchorDep.push_back(Anchor);
+#endif
+
     std::vector<cl::Buffer> SubBuffers;
     std::vector<cl::CommandQueue> Queues;
     std::vector<cl::Event> KernelEvents;
@@ -140,8 +152,8 @@ int TestOutputDataDecomposition() {
 
       cl::Event Ev;
       Queue.enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
-                                 cl::NDRange(WorkShare), cl::NullRange, nullptr,
-                                 &Ev);
+                                 cl::NDRange(WorkShare), cl::NullRange,
+                                 DUMP_TASK_GRAPHS ? &AnchorDep : nullptr, &Ev);
       KernelEvents.push_back(Ev);
     }
 
@@ -181,6 +193,11 @@ int TestOutputDataDecomposition() {
 
     Queues[0].enqueueReadBuffer(CBuffer, CL_FALSE, 0, sizeof(cl_int) * NumData,
                                 FinalBufCContents.data());
+
+#if DUMP_TASK_GRAPHS == 1
+    poclu_dump_dot_task_graph(Context.get(), "task_graph.dot");
+    Anchor.setStatus(CL_COMPLETE);
+#endif
 
     Queues[0].finish();
 

@@ -44,6 +44,7 @@
 
 #include "config.h"
 
+#include "CL/cl.h"
 #include "pocl_export.h"
 
 // size_t print spec
@@ -538,8 +539,29 @@ POCL_EXPORT
     }                                                                         \
   while (0)
 
+/**
+ * Converts a command type to a string.
+ *
+ * @param cmd The command.
+ * @param shortened Set to 1 for a shortened string.
+ */
+POCL_EXPORT
+const char *pocl_command_type_to_str (cl_command_type cmd, int shortened);
+
+/**
+ * Dumps all commands and events of the context as a graphviz dot file.
+ *
+ * Currently works only with PoCL contexts.
+ *
+ * @param context the OpenCL context to dump.
+ * @param file_name the target file name.
+ */
+POCL_EXPORT
+void pocl_dump_dot_task_graph (cl_context context, const char *file_name);
+
 #ifdef __cplusplus
 }
 #endif
+
 
 #endif
