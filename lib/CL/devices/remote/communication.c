@@ -41,6 +41,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
 #include "pocl_networking.h"
