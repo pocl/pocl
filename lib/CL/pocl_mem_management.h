@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "utlist.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

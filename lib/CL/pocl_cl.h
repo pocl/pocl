@@ -40,7 +40,6 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "common.h"
 #include "pocl.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
