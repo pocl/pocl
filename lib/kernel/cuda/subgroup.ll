@@ -37,17 +37,6 @@ declare void @llvm.nvvm.membar.cta() #2
 declare void @llvm.nvvm.membar.gl() #2
 
 ; Function Attrs: convergent mustprogress nounwind
-define noundef <4 x i32> @_Z16sub_group_balloti(i32 noundef %0) local_unnamed_addr #3 {
-  %2 = icmp ne i32 %0, 0
-  %3 = tail call i32 @llvm.nvvm.vote.ballot(i1 %2)
-  %4 = insertelement <4 x i32> <i32 poison, i32 0, i32 0, i32 0>, i32 %3, i64 0
-  ret <4 x i32> %4
-}
-
-; Function Attrs: convergent inaccessiblememonly nocallback nounwind
-declare i32 @llvm.nvvm.vote.ballot(i1) #4
-
-; Function Attrs: convergent mustprogress nounwind
 define noundef i32 @_Z22get_sub_group_local_idv() local_unnamed_addr #0 {
   %1 = tail call noundef i64 @_Z19get_local_linear_idv() #6
   %2 = trunc i64 %1 to i32
@@ -57,54 +46,6 @@ define noundef i32 @_Z22get_sub_group_local_idv() local_unnamed_addr #0 {
 
 ; Function Attrs: convergent nounwind
 declare noundef i64 @_Z19get_local_linear_idv() local_unnamed_addr #5
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef i32 @_Z23intel_sub_group_shufflejj(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call i32 @llvm.nvvm.shfl.idx.i32(i32 %0, i32 %1, i32 31)
-  ret i32 %3
-}
-
-; Function Attrs: convergent inaccessiblememonly nocallback nounwind
-declare i32 @llvm.nvvm.shfl.idx.i32(i32, i32, i32) #4
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef i32 @_Z23intel_sub_group_shuffleij(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call i32 @llvm.nvvm.shfl.idx.i32(i32 %0, i32 %1, i32 31)
-  ret i32 %3
-}
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef float @_Z23intel_sub_group_shufflefj(float noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call contract float @llvm.nvvm.shfl.idx.f32(float %0, i32 %1, i32 31)
-  ret float %3
-}
-
-; Function Attrs: convergent inaccessiblememonly nocallback nounwind
-declare float @llvm.nvvm.shfl.idx.f32(float, i32, i32) #4
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef i32 @_Z27intel_sub_group_shuffle_xorij(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call i32 @llvm.nvvm.shfl.bfly.i32(i32 %0, i32 %1, i32 31)
-  ret i32 %3
-}
-
-; Function Attrs: convergent inaccessiblememonly nocallback nounwind
-declare i32 @llvm.nvvm.shfl.bfly.i32(i32, i32, i32) #4
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef i32 @_Z27intel_sub_group_shuffle_xorjj(i32 noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call i32 @llvm.nvvm.shfl.bfly.i32(i32 %0, i32 %1, i32 31)
-  ret i32 %3
-}
-
-; Function Attrs: convergent mustprogress nounwind
-define noundef float @_Z27intel_sub_group_shuffle_xorfj(float noundef %0, i32 noundef %1) local_unnamed_addr #0 {
-  %3 = tail call contract float @llvm.nvvm.shfl.bfly.f32(float %0, i32 %1, i32 31)
-  ret float %3
-}
-
-; Function Attrs: convergent inaccessiblememonly nocallback nounwind
-declare float @llvm.nvvm.shfl.bfly.f32(float, i32, i32) #4
 
 attributes #0 = { convergent mustprogress nounwind "frame-pointer"="all" "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="sm_70" "target-features"="+ptx75,+sm_70" }
 attributes #1 = { convergent nocallback nounwind }

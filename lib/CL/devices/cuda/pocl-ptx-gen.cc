@@ -98,7 +98,7 @@ static bool verifyModule(llvm::Module *Module, const char *step) {
 }
 
 int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
-                 const char *LibDevicePath, int HasOffsets,
+                 unsigned PtxVersion, const char *LibDevicePath, int HasOffsets,
                  void **AlignmentMapPtr) {
 
   llvm::Module *Module = (llvm::Module *)llvm_module;
@@ -170,13 +170,13 @@ int pocl_ptx_gen(void *llvm_module, const char *PTXFilename, const char *Arch,
   // TODO: Set options?
   llvm::TargetOptions Options;
 
-  // TODO: CPU and features?
+  auto Features = std::string("+ptx") + std::to_string(PtxVersion);
 #ifdef LLVM_OLDER_THAN_16_0
   std::unique_ptr<llvm::TargetMachine> Machine(
-      Target->createTargetMachine(Triple, Arch, "+ptx40", Options, llvm::None));
+      Target->createTargetMachine(Triple, Arch, Features, Options, llvm::None));
 #else
-  std::unique_ptr<llvm::TargetMachine> Machine(
-      Target->createTargetMachine(Triple, Arch, "+ptx40", Options, std::nullopt));
+  std::unique_ptr<llvm::TargetMachine> Machine(Target->createTargetMachine(
+      Triple, Arch, Features, Options, std::nullopt));
 #endif
   llvm::legacy::PassManager Passes;
 

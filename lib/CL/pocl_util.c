@@ -2850,6 +2850,35 @@ pocl_str_toupper(char *out, const char *in)
   out[i] = '\0';
 }
 
+char *
+pocl_strcatdup_v (size_t num_strs, const char **strs)
+{
+  assert (strs || !num_strs && "strs is NULL while num_strs > 0!");
+  switch (num_strs)
+    {
+    default:
+      break;
+    case 0:
+      return NULL;
+    case 1:
+      return strdup (strs[0]);
+    }
+
+  size_t new_size = 1; /* Place for NULL. */
+  for (size_t i = 0; i < num_strs; i++)
+    {
+      assert (strs[i]);
+      new_size += strlen (strs[i]);
+    }
+
+  char *new_str = calloc (new_size, 1);
+  if (new_str == NULL)
+    return NULL;
+  for (size_t i = 0; i < num_strs; i++)
+    strcat (new_str, strs[i]);
+  return new_str;
+}
+
 void
 pocl_str_tolower(char *out, const char *in)
 {
