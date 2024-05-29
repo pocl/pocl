@@ -163,6 +163,13 @@ CUDA driver
 
 Various smaller fixes and enhancements, for example:
 
+* Added `sub_group_shuffle` and `sub_group_shuffle_xor` support for
+  the following data types: `char`, `uchar`, `short`, `ushort`, `int`,
+  `uint` and `float`. `cl_khr_subgroup_shuffle` device extension is
+  advertised when device is capable. Note: support for `long`, `ulong`
+  and `double` data types are missing.
+* Aixed kernel compilation for device programs with subgroup ballot
+  and shuffles for recent SM architectures (SM >= 8.0).
 * Fixed clLinkProgram and clCompileProgram to work correctly
 * Fixed memory leaks in clReleaseProgram
 * `CL_DEVICE_MAX_MEM_ALLOC_SIZE` limit increased to free memory reported by `cuMemGetInfo`

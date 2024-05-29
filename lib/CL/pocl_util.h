@@ -346,6 +346,14 @@ void pocl_str_toupper (char *out, const char *in);
 POCL_EXPORT
 void pocl_str_tolower (char *out, const char *in);
 
+/* Concatenates 'num_str' strings from 'strs' array together into a
+ * new string.
+ *
+ * @return NULL if num_strs == 0 or allocation failed. Otherwise, return the
+ * result. */
+POCL_EXPORT
+char *pocl_strcatdup_v (size_t num_strs, const char **strs);
+
 /* Concatenates *dst and src strings into a new string and replaces
  * the dst with it.
  *

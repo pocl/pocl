@@ -111,20 +111,56 @@ endif()
 separate_arguments(DEVICE_CL_FLAGS)
 
 
+# Kernel bitcodes generated:
+# * <triple>-sm30-ptx60lt
+#   * Includes subgroup shuffles.
+#   * Excludes subgroup ballot (see details in subgroup_ballot.cl).
+#   * Intended for targeting 3.0 <= SM <= 7.5.
+# * <triple>-sm30-ptx60-63:
+#   * Includes subgroup ballot and shuffles.
+#   * Targeted for PTX 6.0 - 6.3. This library uses intrinsics that work
+#     for both the LLVM and PTX assembler.
+#   * Intended for targeting 3.0 <= SM <= 7.5.
+# * <triple>-sm70-ptx64: Supports ballot and shfl
+#   * Excludes subgroup shuffles or ballot. The support would require
+#     use of .sync variants.
+#   * Inteded for targeting SM >=7.0.
 
-make_kernel_bc(KERNEL_BC "${LLVM_TARGET}" "BCs" 0 0 0 ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC_SM30_PTX60LT "${LLVM_TARGET}-sm30-ptx60lt"
+  "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
+  "cuda/subgroup_shuffle.cl")
+
+make_kernel_bc(KERNEL_BC_SM30_PTX60_63 "${LLVM_TARGET}-sm30-ptx60-63"
+  "sm30-ptx60-63-BCs" 0 0 0 ${KERNEL_SOURCES}
+  "cuda/subgroup_shuffle.cl"
+  "cuda/subgroup_ballot.cl")
+
+make_kernel_bc(KERNEL_BC_SM70_PTX64 "${LLVM_TARGET}-sm70-ptx64"
+ "sm70-ptx64-BCs" 0 0 0 ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC}")
+#message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC_SM30_PTX60_63}")
 
-list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC_SM30_PTX60LT}")
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC_SM30_PTX60_63}")
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC_SM70_PTX64}")
 set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 
 # a target is needed...
-add_custom_target("kernel_${LLVM_TARGET}" DEPENDS ${KERNEL_BC})
+add_custom_target("kernel_${LLVM_TARGET}_sm30_ptx60lt"
+  DEPENDS ${KERNEL_BC_SM30_PTX60LT})
+add_custom_target("kernel_${LLVM_TARGET}_sm30_ptx60_63"
+  DEPENDS ${KERNEL_BC_SM30_PTX60_63})
+add_custom_target("kernel_${LLVM_TARGET}_sm70_ptx64"
+  DEPENDS ${KERNEL_BC_SM70_PTX64})
 
-list(APPEND KERNEL_TARGET_LIST "kernel_${LLVM_TARGET}")
+list(APPEND KERNEL_TARGET_LIST "kernel_${LLVM_TARGET}_sm30_ptx60lt")
+list(APPEND KERNEL_TARGET_LIST "kernel_${LLVM_TARGET}_sm30_ptx60_63")
+list(APPEND KERNEL_TARGET_LIST "kernel_${LLVM_TARGET}_sm70_ptx64")
+
 set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 
-install(FILES "${KERNEL_BC}"
-        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}" COMPONENT "lib")
+install(FILES
+  "${KERNEL_BC_SM30_PTX60LT}" "${KERNEL_BC_SM30_PTX60_63}"
+  "${KERNEL_BC_SM70_PTX64}"
+  DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}" COMPONENT "lib")
