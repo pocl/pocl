@@ -74,8 +74,8 @@ main(void)
         R[i] = i;
     }
 
+    std::vector<cl::Platform> platformList;
     try {
-        std::vector<cl::Platform> platformList;
 
         // Pick platform
         cl::Platform::get(&platformList);
@@ -137,11 +137,6 @@ main(void)
 
         queue.enqueueUnmapMemObject(cBuffer, res);
         queue.finish();
-        platformList[0].unloadCompiler();
-
-        // If the kernel compiler succeeds, we are happy for now.
-        std::cout << "OK" << std::endl;
-        return EXIT_SUCCESS;
     } 
     catch (cl::Error &err) {
          std::cerr
@@ -151,7 +146,12 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
+         return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+
+    // If the kernel compiler succeeds, we are happy for now.
+    std::cout << "OK" << std::endl;
+    return EXIT_SUCCESS;
 }

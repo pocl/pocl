@@ -197,7 +197,7 @@ int main()
   CHECK_CL_ERROR (clReleaseMemObject (inputBufferC));
 
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platforms[0]));
 
   printf("\n");
   return EXIT_SUCCESS;

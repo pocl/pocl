@@ -82,15 +82,18 @@ void *getDeviceAddressFromHost(cl::Buffer &Buf) {
 
 int main(void) {
 
-  unsigned Errors = 0;
   bool AllOK = true;
 
+  std::vector<cl::Platform> PlatformList;
+  cl::Platform SelectedPlatform;
   try {
-    std::vector<cl::Platform> PlatformList;
 
     cl::Platform::get(&PlatformList);
+    if (!PlatformList.size()) {
+      std::cerr << "Error: no platforms found!\n";
+      return EXIT_FAILURE;
+    }
 
-    cl::Platform SelectedPlatform;
     bool PlatformFound = false;
     for (cl::Platform &Platform : PlatformList) {
       if (Platform.getInfo<CL_PLATFORM_EXTENSIONS>().find(
@@ -104,7 +107,7 @@ int main(void) {
     if (!PlatformFound) {
       std::cerr << "No platforms with cl_ext_buffer_device_address found. Not "
                    "testing PoCL?\n";
-      return EXIT_FAILURE;
+      return 77;
     }
 
     cl_context_properties cprops[] = {
@@ -328,14 +331,16 @@ int main(void) {
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
-    AllOK = false;
+    return EXIT_FAILURE;
   }
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  SelectedPlatform.unloadCompiler();
 
   if (AllOK) {
     std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
-  } else
+  } else {
+    std::cout << "FAIL" << std::endl;
     return EXIT_FAILURE;
+  }
 }

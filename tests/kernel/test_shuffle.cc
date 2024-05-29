@@ -21,10 +21,10 @@
 #include <cmath>
 #include <cstdlib>
 
-cl_context ctx;
-cl_device_id did;
-cl_platform_id pid;
-cl_command_queue queue;
+cl_context ctx = nullptr;
+cl_device_id did = nullptr;
+cl_platform_id pid = nullptr;
+cl_command_queue queue = nullptr;
 int supports_half = 0;
 int supports_double = 0;
 
@@ -338,7 +338,7 @@ int main( int argc, char *argv[])
 		exit(-1);
 	}
 
-	poclu_get_any_device( &ctx, &did, &queue);
+        poclu_get_any_device2(&ctx, &did, &queue, &pid);
         supports_half = poclu_supports_extension(did, "cl_khr_fp16");
         supports_double = poclu_supports_extension(did, "cl_khr_fp64");
 
@@ -422,7 +422,7 @@ int main( int argc, char *argv[])
 #endif
 	CHECK_CL_ERROR (clReleaseCommandQueue (queue));
 	CHECK_CL_ERROR (clReleaseContext (ctx));
-	CHECK_CL_ERROR (clUnloadCompiler());
+	CHECK_CL_ERROR (clUnloadPlatformCompiler(pid));
 
 	if( num_errors == 0)
 		std::cout << "OK" << std::endl;

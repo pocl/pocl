@@ -28,9 +28,9 @@ int main(void)
 	/* Check that the default platform we get from the ICD loader
 	 * matches the pocl version string this binary was built against. */
 	CHECK_CL_ERROR (poclu_get_any_device2 (&context, &did, &queue, &pid));
-        TEST_ASSERT( context );
-	TEST_ASSERT( did );
-	TEST_ASSERT( queue );
+        TEST_ASSERT (context);
+        TEST_ASSERT (did);
+        TEST_ASSERT (queue);
 
 	CHECK_CL_ERROR(clGetPlatformInfo( pid, CL_PLATFORM_VERSION,
 				sizeof(result), result, &rvs));
@@ -57,14 +57,12 @@ int main(void)
 	result[rvs]=0;
 	needle = strchr(result, '-');
 	if( needle != NULL ){
-		*needle=0;		
-	}
+            *needle = 0;
+        }
 	printf("%s\n", result);
 
         CHECK_CL_ERROR (clReleaseCommandQueue (queue));
         CHECK_CL_ERROR (clReleaseContext (context));
-        CHECK_CL_ERROR (clUnloadCompiler ());
-
+        CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
         return 0;
 }
-

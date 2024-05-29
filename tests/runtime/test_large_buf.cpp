@@ -53,8 +53,9 @@ __kernel void test_kernel2 (global const uchar    *in,
 )RAW";
 
 int main(void) {
+  std::vector<cl::Platform> PlatformList;
+  bool Ok = false;
   try {
-    std::vector<cl::Platform> PlatformList;
 
     // Pick platform
     cl::Platform::get(&PlatformList);
@@ -135,24 +136,24 @@ int main(void) {
                                            CL_TRUE, // block
                                            CL_MAP_READ, 0, OUTPUT_BUFFER_SIZE);
     // verify
-    bool Ok = (Output[0] == Sum);
+    Ok = (Output[0] == Sum);
 
     Queue.enqueueUnmapMemObject(OutBuffer, (void *)Output);
 
     Queue.finish();
-    PlatformList[0].unloadCompiler();
-
-    if (Ok) {
-      std::cout << "Compare OK" << std::endl;
-      return EXIT_SUCCESS;
-    } else {
-      std::cout << "FAIL: result mismatch" << std::endl;
-      return EXIT_FAILURE;
-    }
   } catch (cl::Error &err) {
     std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
               << std::endl;
+    return EXIT_FAILURE;
   }
 
-  return EXIT_FAILURE;
+  PlatformList[0].unloadCompiler();
+
+  if (Ok) {
+    std::cout << "Compare OK" << std::endl;
+    return EXIT_SUCCESS;
+  } else {
+    std::cout << "FAIL: result mismatch" << std::endl;
+    return EXIT_FAILURE;
+  }
 }

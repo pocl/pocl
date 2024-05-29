@@ -51,49 +51,56 @@ const char* kernel_src =
 "}\n";
 
 int main() {
-    int ret = 0;
-    cl_context context;
-    cl_device_id device;
-    cl_command_queue command_queue;
-    poclu_get_any_device(&context, &device, &command_queue);
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_command_queue command_queue = NULL;
+  int err
+    = poclu_get_any_device2 (&context, &device, &command_queue, &platform);
+  CHECK_OPENCL_ERROR_IN ("get any device");
 
-    cl_mem faceCount_mem_obj = 
-        clCreateBuffer(context, CL_MEM_READ_ONLY, 
-                       sizeof(int), NULL, &ret);
-    int faceCount = 968;
-    ret |= clEnqueueWriteBuffer(command_queue, faceCount_mem_obj, CL_TRUE, 0, 
-                               sizeof(int), &faceCount, 0, NULL, NULL);
+  cl_mem faceCount_mem_obj
+    = clCreateBuffer (context, CL_MEM_READ_ONLY, sizeof (int), NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateBuffer");
+  int faceCount = 968;
+  err = clEnqueueWriteBuffer (command_queue, faceCount_mem_obj, CL_TRUE, 0,
+                              sizeof (int), &faceCount, 0, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN ("write buffer");
 
-    cl_int err;
-    size_t length = strlen(kernel_src);
-    cl_program program = 
-        clCreateProgramWithSource(context, 1, &kernel_src, &length, &err);
+  size_t length = strlen (kernel_src);
+  cl_program program
+    = clCreateProgramWithSource (context, 1, &kernel_src, &length, &err);
 
-    ret |= err;
+  CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
 
-    clBuildProgram(program, 1, &device, "", NULL, NULL);
-    cl_kernel kernel = clCreateKernel(program, "draw", &ret);
+  clBuildProgram (program, 1, &device, "", NULL, NULL);
+  cl_kernel kernel = clCreateKernel (program, "draw", &err);
 
-    ret |= clSetKernelArg(kernel, 0, sizeof(cl_mem),(void*)&faceCount_mem_obj);
+  err
+    = clSetKernelArg (kernel, 0, sizeof (cl_mem), (void *)&faceCount_mem_obj);
+  CHECK_OPENCL_ERROR_IN ("clSetKernelArg");
 
-    size_t global_item_size = 110880;
-    size_t workGroupSize = 4;
-    ret |= clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, 
-                                 &global_item_size, &workGroupSize, 0, NULL, 
-                                 NULL);
-    
-    clFinish(command_queue);
-    ret |= clReleaseKernel(kernel);
-    ret |= clReleaseProgram (program);
-    ret |= clReleaseMemObject (faceCount_mem_obj);
-    ret |= clReleaseCommandQueue (command_queue);
-    ret |= clReleaseContext (context);
-    ret |= clUnloadCompiler ();
+  size_t global_item_size = 110880;
+  size_t workGroupSize = 4;
+  err = clEnqueueNDRangeKernel (command_queue, kernel, 1, NULL,
+                                &global_item_size, &workGroupSize, 0, NULL,
+                                NULL);
+  CHECK_OPENCL_ERROR_IN ("clEnqueueNDRangeKernel");
 
-    if (ret == 0)
-      {
-        printf ("OK\n");
-        return EXIT_SUCCESS;
-      }
+  err = clFinish (command_queue);
+  CHECK_OPENCL_ERROR_IN ("clFinish");
+
+  err |= clReleaseKernel (kernel);
+  err |= clReleaseProgram (program);
+  err |= clReleaseMemObject (faceCount_mem_obj);
+  err |= clReleaseCommandQueue (command_queue);
+  err |= clReleaseContext (context);
+  err |= clUnloadPlatformCompiler (platform);
+
+  if (err == 0)
+    {
+      printf ("OK\n");
+      return EXIT_SUCCESS;
+    }
     return EXIT_FAILURE;
 }

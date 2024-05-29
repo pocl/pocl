@@ -54,27 +54,34 @@ __kernel void pocltest(int xarg1, int xarg2) {
 
 int main(int argc, char *argv[])
 {
-  cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE, true);
+    cl::Platform platform = cl::Platform::getDefault();
+    cl::Device device = cl::Device::getDefault();
+    try {
+        cl::CommandQueue queue = cl::CommandQueue::getDefault();
+        cl::Program program(SOURCE, true);
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
-  auto kernel = cl::KernelFunctor<cl_int, cl_int>(program, "pocltest");
+        auto kernel = cl::KernelFunctor<cl_int, cl_int>(program, "pocltest");
 
-  cl::Buffer buffer;
-  kernel(cl::EnqueueArgs(queue, cl::NDRange(2), cl::NDRange(2)), 1, 2);
+        cl::Buffer buffer;
+        kernel(cl::EnqueueArgs(queue, cl::NDRange(2), cl::NDRange(2)), 1, 2);
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic pop
 #endif
 
-  queue.finish();
-  cl::Platform::getDefault().unloadCompiler();
+        queue.finish();
+    } catch (cl::Error &err) {
+        std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  std::cout << "OK" << std::endl;
-  return EXIT_SUCCESS;
+    platform.unloadCompiler();
+
+    std::cout << "OK" << std::endl;
+    return EXIT_SUCCESS;
 }

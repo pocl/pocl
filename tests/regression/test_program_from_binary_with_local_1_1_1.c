@@ -142,14 +142,13 @@ int main ()
         }
     }
 
-  clReleaseMemObject(buffer);
-  clReleaseKernel(kernel);
-  clReleaseProgram(program_source);
-  clReleaseProgram(program_binary);
-  clReleaseCommandQueue(queue);
-  clReleaseContext(context);
-  clReleaseDevice(device);
-  clUnloadPlatformCompiler(platform);
+  CHECK_CL_ERROR (clReleaseMemObject (buffer));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program_source));
+  CHECK_CL_ERROR (clReleaseProgram (program_binary));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

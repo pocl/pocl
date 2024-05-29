@@ -47,41 +47,45 @@ int main()
   // should return CL_PROFILING_INFO_NOT_AVAILABLE
   cl_ulong queued, submitted, started, endtime;
 
-  for (i = 0; i < ARRAY_SIZE(status); ++i) {
-	  cl_context context;
-	  cl_command_queue queue;
-	  cl_device_id device;
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_command_queue queue = NULL;
 
-          CHECK_CL_ERROR (poclu_get_any_device (&context, &device, &queue));
-          TEST_ASSERT( context );
-	  TEST_ASSERT( device );
-	  TEST_ASSERT( queue );
+  CHECK_CL_ERROR (
+    poclu_get_any_device2 (&context, &device, &queue, &platform));
+  TEST_ASSERT (context);
+  TEST_ASSERT (device);
+  TEST_ASSERT (queue);
 
-	  user_evt = clCreateUserEvent(context, &err);
-	  CHECK_OPENCL_ERROR_IN("clCreateUserEvent");
-	  TEST_ASSERT( user_evt );
+  for (i = 0; i < ARRAY_SIZE (status); ++i)
+    {
 
-	  CHECK_CL_ERROR(clSetUserEventStatus(user_evt, status[i]));
+      user_evt = clCreateUserEvent (context, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateUserEvent");
+      TEST_ASSERT (user_evt);
 
-	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_QUEUED,
-		  sizeof(queued), &queued, NULL);
-	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
-	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_SUBMIT,
-		  sizeof(submitted), &submitted, NULL);
-	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
-	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_START,
-		  sizeof(started), &started, NULL);
-	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
-	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_END,
-		  sizeof(endtime), &endtime, NULL);
-	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
+      CHECK_CL_ERROR (clSetUserEventStatus (user_evt, status[i]));
 
-          CHECK_CL_ERROR (clReleaseEvent (user_evt));
-          CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-          CHECK_CL_ERROR (clReleaseContext (context));
-  }
+      err = clGetEventProfilingInfo (user_evt, CL_PROFILING_COMMAND_QUEUED,
+                                     sizeof (queued), &queued, NULL);
+      TEST_ASSERT (err == CL_PROFILING_INFO_NOT_AVAILABLE);
+      err = clGetEventProfilingInfo (user_evt, CL_PROFILING_COMMAND_SUBMIT,
+                                     sizeof (submitted), &submitted, NULL);
+      TEST_ASSERT (err == CL_PROFILING_INFO_NOT_AVAILABLE);
+      err = clGetEventProfilingInfo (user_evt, CL_PROFILING_COMMAND_START,
+                                     sizeof (started), &started, NULL);
+      TEST_ASSERT (err == CL_PROFILING_INFO_NOT_AVAILABLE);
+      err = clGetEventProfilingInfo (user_evt, CL_PROFILING_COMMAND_END,
+                                     sizeof (endtime), &endtime, NULL);
+      TEST_ASSERT (err == CL_PROFILING_INFO_NOT_AVAILABLE);
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
+      CHECK_CL_ERROR (clReleaseEvent (user_evt));
+    }
+
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

@@ -45,10 +45,11 @@ const char* kernel_src =
 
 int main() {
     int ret = 0;
-    cl_context context;
-    cl_device_id device;
-    cl_command_queue command_queue;
-    poclu_get_any_device(&context, &device, &command_queue);
+    cl_platform_id platform = NULL;
+    cl_context context = NULL;
+    cl_device_id device = NULL;
+    cl_command_queue command_queue = NULL;
+    poclu_get_any_device2 (&context, &device, &command_queue, &platform);
 
     cl_mem faceCount_mem_obj = 
         clCreateBuffer(context, CL_MEM_READ_ONLY, 
@@ -81,6 +82,6 @@ int main() {
     ret |= clReleaseMemObject (faceCount_mem_obj);
     ret |= clReleaseCommandQueue (command_queue);
     ret |= clReleaseContext (context);
-    ret |= clUnloadCompiler ();
+    ret |= clUnloadPlatformCompiler (platform);
     return ret;
 }

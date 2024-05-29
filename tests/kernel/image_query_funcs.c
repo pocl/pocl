@@ -21,6 +21,7 @@ int main(int argc, char **argv)
   size_t srcdir_length, name_length, filename_size;
   char *filename = NULL;
   char *source = NULL;
+  cl_platform_id pid = NULL;
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
@@ -66,7 +67,7 @@ int main(int argc, char **argv)
   TEST_ASSERT (source != NULL && "Kernel .cl not found.");
 
   /* setup an OpenCL context and command queue using default device */
-  context = poclu_create_any_context();
+  context = poclu_create_any_context2 (&pid);
   TEST_ASSERT (context != NULL && "clCreateContextFromType call failed\n");
 
   cl_sampler external_sampler = clCreateSampler (
@@ -138,7 +139,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseSampler (external_sampler));
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   free (source);
   free (filename);

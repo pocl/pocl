@@ -15,8 +15,12 @@ int main(int argc, char **argv)
   cl_command_queue queue;
   cl_device_id did;
   cl_kernel kernel;
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_command_queue command_queue = NULL;
 
-  CHECK_CL_ERROR(poclu_get_any_device(&ctx, &did, &queue));
+  CHECK_CL_ERROR (poclu_get_any_device2 (&ctx, &did, &queue, &platform));
   TEST_ASSERT(ctx);
   TEST_ASSERT(did);
   TEST_ASSERT(queue);
@@ -40,7 +44,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseContext (ctx));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   free ((void *)krn_src);
 

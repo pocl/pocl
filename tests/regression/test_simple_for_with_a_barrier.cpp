@@ -69,8 +69,9 @@ main(void)
         R[i] = i;
     }
 
+    std::vector<cl::Platform> platformList;
+    bool ok = true;
     try {
-        std::vector<cl::Platform> platformList;
 
         // Pick platform
         cl::Platform::get(&platformList);
@@ -131,7 +132,7 @@ main(void)
             0,
             WORK_ITEMS * sizeof(int));
 
-        bool ok = true;
+        ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
 
             int n;
@@ -154,22 +155,20 @@ main(void)
             (void *) output);
 
         queue.finish();
-        platformList[0].unloadCompiler();
-
-        if (ok) {
-           std::cout << "OK" << std::endl;
-           return EXIT_SUCCESS;
-        }
     } 
     catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+                  << std::endl;
+        return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+
+    if (ok) {
+        std::cout << "OK" << std::endl;
+        return EXIT_SUCCESS;
+    } else {
+        std::cout << "FAIL\n";
+        return EXIT_FAILURE;
+    }
 }

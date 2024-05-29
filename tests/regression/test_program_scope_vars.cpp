@@ -166,8 +166,8 @@ main(void)
     std::mt19937 Mersenne{RandomDevice()};
     std::uniform_real_distribution<float> UniDist{100.0f, 200.0f};
 
+    std::vector<cl::Platform> platformList;
     try {
-        std::vector<cl::Platform> platformList;
 
         cl::Platform::get(&platformList);
 
@@ -448,23 +448,21 @@ main(void)
         std::cout << "TEST_GVAR_PTR matching res: " << matching_res << "\n";
         errors += (matching_res != 8 ? 1 : 0);
 
-        platformList[0].unloadCompiler();
-        if (errors) {
-          std::cout << "FAILED, errors: " << errors << "\n";
-          return EXIT_FAILURE;
-        } else {
-          std::cout << "PASSED" << std::endl;
-          return EXIT_SUCCESS;
-        }
     }
     catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    platformList[0].unloadCompiler();
+
+    if (errors) {
+        std::cout << "FAILED, errors: " << errors << "\n";
+        return EXIT_FAILURE;
+    } else {
+        std::cout << "PASSED" << std::endl;
+        return EXIT_SUCCESS;
     }
 
     return EXIT_FAILURE;
