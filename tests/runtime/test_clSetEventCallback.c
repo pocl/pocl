@@ -91,11 +91,13 @@ int main()
   cl_event an_event = NULL;
   int i;
 
-  cl_context context;
-  cl_command_queue queue;
-  cl_device_id device;
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_command_queue queue = NULL;
 
-  CHECK_CL_ERROR(poclu_get_any_device(&context, &device, &queue));
+  CHECK_CL_ERROR (
+    poclu_get_any_device2 (&context, &device, &queue, &platform));
   TEST_ASSERT( context );
   TEST_ASSERT( device );
   TEST_ASSERT( queue );
@@ -160,7 +162,7 @@ int main()
   CHECK_CL_ERROR (clReleaseProgram (program));
 
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

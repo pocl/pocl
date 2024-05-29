@@ -53,6 +53,7 @@ int
 main (int argc, char **argv)
 {
   char *source;
+  cl_platform_id pid = NULL;
   cl_context context = NULL;
   size_t cb = 0;
   cl_device_id *devices = NULL;
@@ -78,7 +79,7 @@ main (int argc, char **argv)
   global_work_size[1] = local_work_size[1];
   global_work_size[2] = local_work_size[2];
 
-  context = poclu_create_any_context();
+  context = poclu_create_any_context2 (&pid);
   TEST_ASSERT (context != NULL && "clCreateContextFromType call failed\n");
 
   err = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL, &cb);
@@ -142,15 +143,17 @@ main (int argc, char **argv)
 
 ERROR:
   if (outbuf)
-    clReleaseMemObject (outbuf);
+    CHECK_CL_ERROR (clReleaseMemObject (outbuf));
   if (kernel)
-    clReleaseKernel (kernel);
+    CHECK_CL_ERROR (clReleaseKernel (kernel));
   if (program)
-    clReleaseProgram (program);
+    CHECK_CL_ERROR (clReleaseProgram (program));
   if (cmd_queue)
-    clReleaseCommandQueue (cmd_queue);
+    CHECK_CL_ERROR (clReleaseCommandQueue (cmd_queue));
   if (context)
-    clReleaseContext (context);
+    CHECK_CL_ERROR (clReleaseContext (context));
+  if (pid)
+    CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   free (source);
   free (devices);

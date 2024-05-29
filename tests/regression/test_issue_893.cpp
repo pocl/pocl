@@ -39,6 +39,7 @@
 
 #include "pocl_opencl.h"
 
+#define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
@@ -69,20 +70,25 @@ __kernel void loopy_kernel(__global float *__restrict__ out, int const im_h, int
 
 int main() {
   int n = 8;
+  cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE, true);
-  cl::Buffer buffer(CL_MEM_WRITE_ONLY, sizeof(float) * 256);
-  cl::Kernel kernel(program, "loopy_kernel");
-  kernel.setArg(0, buffer);
-  kernel.setArg(1, n);
-  kernel.setArg(2, n);
-  queue.enqueueNDRangeKernel(
-    kernel,
-    cl::NullRange,
-    cl::NDRange(n),
-    cl::NDRange(n));
-  queue.finish();
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::Program program(SOURCE, true);
+    cl::Buffer buffer(CL_MEM_WRITE_ONLY, sizeof(float) * 256);
+    cl::Kernel kernel(program, "loopy_kernel");
+    kernel.setArg(0, buffer);
+    kernel.setArg(1, n);
+    kernel.setArg(2, n);
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(n),
+                               cl::NDRange(n));
+    queue.finish();
+  } catch (cl::Error &err) {
+    std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  platform.unloadCompiler();
 
   std::cout << "OK" << std::endl;
   return EXIT_SUCCESS;

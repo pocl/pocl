@@ -10,10 +10,8 @@ using namespace std;
 
 int main(int, char **)
 {
+  cl::Platform platform;
   try {
-    int N = 9;
-
-    cl::Platform platform;
     std::vector<cl::Device> devices;
 
     std::vector<cl::Platform> all_platforms;
@@ -65,11 +63,11 @@ int main(int, char **)
                   << addr_q << " | TYPE Q " << type_q << "\n";
     }
   }
-
   catch (cl::Error& err) {
     std::cout << "FAIL with OpenCL error = " << err.err() << " what: " << err.what() << std::endl;
-    return 11;
+    return EXIT_FAILURE;
   }
 
-  return 0;
+  platform.unloadCompiler();
+  return EXIT_SUCCESS;
 }

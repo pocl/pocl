@@ -95,8 +95,9 @@ int main() {
     float input[16];
     float output[16];
 
+    std::vector<cl::Platform> platformList;
+    bool ok = false;
     try {
-        std::vector<cl::Platform> platformList;
 
         // Pick platform
         cl::Platform::get(&platformList);
@@ -131,7 +132,7 @@ int main() {
         // Create command queue
         cl::CommandQueue queue(context, devices[0], 0);
 
-        bool ok = true;
+        ok = true;
         for (int k = 0; k < 5; ++k) {
             // Create kernel object
             cl::Kernel kernel(program, kernelName[k]);
@@ -169,22 +170,20 @@ int main() {
         }
 
         queue.finish();
-        platformList[0].unloadCompiler();
-
-        if (ok) {
-            std::cout << "OK" << std::endl;
-            return EXIT_SUCCESS;
-        }
     } 
     catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+                  << std::endl;
+        return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+
+    if (ok) {
+        std::cout << "OK" << std::endl;
+        return EXIT_SUCCESS;
+    } else {
+        std::cout << "FAIL\n";
+        return EXIT_FAILURE;
+    }
 }

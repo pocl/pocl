@@ -145,10 +145,10 @@ main(void)
       CHECK_CL_ERROR (clReleaseMemObject (buf1));
       CHECK_CL_ERROR (clReleaseCommandQueue (queue));
       CHECK_CL_ERROR (clReleaseContext (context));
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (platforms[i]));
     }
   }
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
 
   printf ("OK\n");
   return EXIT_SUCCESS;

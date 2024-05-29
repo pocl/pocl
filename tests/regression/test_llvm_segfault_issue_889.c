@@ -97,8 +97,9 @@ main ()
   cl_int err;
   cl_context context;
   cl_device_id device;
+  cl_platform_id pid;
   cl_command_queue command_queue;
-  poclu_get_any_device (&context, &device, &command_queue);
+  poclu_get_any_device2 (&context, &device, &command_queue, &pid);
 
   cl_program program
       = clCreateProgramWithSource (context, 1, &source, NULL, &err);
@@ -116,6 +117,7 @@ main ()
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (command_queue));
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

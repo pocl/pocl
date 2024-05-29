@@ -77,9 +77,10 @@ int main(void)
   cl_mem barrier_buffer2;
   cl_mem static_wg_buffer;
 
-  cl_device_id device_id;
-  cl_context context;
-  cl_command_queue queue;
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device_id = NULL;
+  cl_command_queue queue = NULL;
   cl_program program1, program2;
   cl_program b_program1, b_program2, static_wg_size_program,
     static_wg_size_bin_program;
@@ -121,7 +122,8 @@ int main(void)
 
   /* Initialize cl_programs.  */
 
-  CHECK_CL_ERROR(poclu_get_any_device(&context, &device_id, &queue));
+  CHECK_CL_ERROR (
+    poclu_get_any_device2 (&context, &device_id, &queue, &platform));
   TEST_ASSERT( context );
   TEST_ASSERT( device_id );
   TEST_ASSERT( queue );
@@ -422,7 +424,7 @@ int main(void)
 
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   free(bb1);
   free(bb2);

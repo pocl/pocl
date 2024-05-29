@@ -16,6 +16,7 @@ int main(int argc, char **argv)
   size_t srcdir_length, name_length, filename_size;
   char *filename = NULL;
   char *source = NULL;
+  cl_platform_id pid = NULL;
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
   TEST_ASSERT (source != NULL && "Kernel .cl not found.");
 
   /* setup an OpenCL context and command queue using default device */
-  context = poclu_create_any_context();
+  context = poclu_create_any_context2 (&pid);
   if (!context) 
     {
       puts("clCreateContextFromType call failed\n");
@@ -153,25 +154,25 @@ error:
 
   if (image)
     {
-      clReleaseMemObject (image);
+      CHECK_CL_ERROR (clReleaseMemObject (image));
     }
 
   if (kernel) 
     {
-      clReleaseKernel(kernel);
+      CHECK_CL_ERROR (clReleaseKernel (kernel));
     }
   if (program) 
     {
-      clReleaseProgram(program);
+      CHECK_CL_ERROR (clReleaseProgram (program));
     }
   if (queue) 
     {
-      clReleaseCommandQueue(queue);
+      CHECK_CL_ERROR (clReleaseCommandQueue (queue));
     }
   if (context) 
     {
-      clReleaseContext (context);
-      clUnloadCompiler ();
+      CHECK_CL_ERROR (clReleaseContext (context));
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
     }
   if (source) 
     {
@@ -186,8 +187,6 @@ error:
       free(imageData);
     }
   free (devices);
-
-  CHECK_CL_ERROR (clUnloadCompiler ());
 
   if (retval) 
     {

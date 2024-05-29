@@ -372,16 +372,17 @@ int main()
 {
   cl_int err;
 
-  cl_context ctx;
-  cl_device_id did;
-  cl_command_queue queue;
+  cl_platform_id pid = NULL;
+  cl_context ctx = NULL;
+  cl_device_id did = NULL;
+  cl_command_queue queue = NULL;
 
   size_t program_size;
   char* program_buffer;
 
   cl_program program = NULL;
 
-  poclu_get_any_device(&ctx, &did, &queue);
+  poclu_get_any_device2 (&ctx, &did, &queue, &pid);
   TEST_ASSERT(ctx);
   TEST_ASSERT(did);
   TEST_ASSERT(queue);
@@ -410,7 +411,7 @@ int main()
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   printf("\nOK\n");
   return EXIT_SUCCESS;

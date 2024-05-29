@@ -61,14 +61,13 @@ int
 main(void)
 {
     float A[BUFFER_SIZE];
-    unsigned errors = 0;
     std::random_device RandomDevice;
     std::mt19937 Mersenne{RandomDevice()};
     std::uniform_real_distribution<float> UniDist{100.0f, 200.0f};
 
+    std::vector<cl::Platform> platformList;
+    bool ok = false;
     try {
-        std::vector<cl::Platform> platformList;
-
         cl::Platform::get(&platformList);
 
         cl_context_properties cprops[] = {
@@ -104,25 +103,21 @@ main(void)
             cl::NullRange);
 
         queue.finish();
-        platformList[0].unloadCompiler();
-
-        if (errors) {
-          std::cout << "FAILED\n";
-          return EXIT_FAILURE;
-        } else {
-          std::cout << "OK" << std::endl;
-          return EXIT_SUCCESS;
-        }
+        ok = true;
     }
     catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+                  << std::endl;
+        return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+
+    if (ok) {
+        std::cout << "OK" << std::endl;
+        return EXIT_SUCCESS;
+    } else {
+        std::cout << "FAIL\n";
+        return EXIT_FAILURE;
+    }
 }

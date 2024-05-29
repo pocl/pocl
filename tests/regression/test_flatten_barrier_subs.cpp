@@ -23,6 +23,7 @@
 
 #include "pocl_opencl.h"
 
+#define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #include <CL/opencl.hpp>
@@ -105,25 +106,24 @@ void exclusive_scan_cl(const std::vector<int>& input, std::vector<int>& output)
     // Fails on POCL, works with AMDGPU-PRO
     cl::Platform p = get_platform(0);
     cl::Device d = get_device(p);
-    cl::Context ctx(d);
-    std::string src = read_text_file(SRCDIR "/test_flatten_barrier_subs.cl");
-    cl::Program::Sources sources;
-    sources.push_back({src.c_str(), src.length()});
-    cl::Program program(ctx, sources);
+    try {
+        cl::Context ctx(d);
+        std::string src =
+            read_text_file(SRCDIR "/test_flatten_barrier_subs.cl");
+        cl::Program::Sources sources;
+        sources.push_back({src.c_str(), src.length()});
+        cl::Program program(ctx, sources);
+        program.build({d});
 
-    if(program.build({d}) != CL_SUCCESS)
-    {
-        throw std::runtime_error(program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d));
-    }
+        cl::Buffer input_buf(ctx, CL_MEM_READ_WRITE,
+                             sizeof(int) * input.size());
+        cl::Buffer output_buf(ctx, CL_MEM_READ_WRITE,
+                              sizeof(int) * input.size());
+        cl::CommandQueue q(ctx, d);
+        q.enqueueWriteBuffer(input_buf, CL_TRUE, 0, sizeof(int) * input.size(),
+                             input.data());
 
-    cl::Buffer input_buf(ctx, CL_MEM_READ_WRITE, sizeof(int)*input.size());
-    cl::Buffer output_buf(ctx, CL_MEM_READ_WRITE, sizeof(int)*input.size());
-    cl::CommandQueue q(ctx, d);
-    q.enqueueWriteBuffer(
-        input_buf, CL_TRUE, 0, sizeof(int)*input.size(), input.data()
-    );
-
-    int numElems = input.size();
+        int numElems = input.size();
 #define WG_SIZE 64
     int GROUP_BLOCK_SIZE_SCAN = (WG_SIZE << 3);
     int GROUP_BLOCK_SIZE_DISTRIBUTE = (WG_SIZE << 2);
@@ -204,6 +204,14 @@ void exclusive_scan_cl(const std::vector<int>& input, std::vector<int>& output)
     q.enqueueReadBuffer(
         output_buf, CL_TRUE, 0, sizeof(int)*input.size(), output.data()
     );
+    q.finish();
+    } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    return;
+    }
+
+    p.unloadCompiler();
 }
 
 std::vector<int> generate_hits(unsigned n)
@@ -236,15 +244,12 @@ int main()
     std::vector<int> cl_indices;
     exclusive_scan_cl(hits, cl_indices);
 
-    if(indices == cl_indices)
-        std::cout << "CL gave correct results" << std::endl;
-    else
-    {
-        std::cout << "CL gave wrong results" << std::endl;
+    if (indices == cl_indices) {
+        std::cout << "OK: CL gave correct results" << std::endl;
+        return EXIT_SUCCESS;
+    } else {
+        std::cout << "ERROR: CL gave wrong results" << std::endl;
         print_vec(cl_indices);
         return EXIT_FAILURE;
     }
-
-    std::cout << "OK" << std::endl;
-    return EXIT_SUCCESS;
 }

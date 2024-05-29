@@ -148,7 +148,7 @@ main ()
     }
 
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platforms[0]));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

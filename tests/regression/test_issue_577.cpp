@@ -19,20 +19,26 @@ const char *SOURCE = R"RAW(
 )RAW";
 
 int main(int argc, char *argv[]) {
-  cl_int err;
+  cl::Platform platform = cl::Platform::getDefault();
+  cl::Device device = cl::Device::getDefault();
   unsigned error_count = 0;
-  cl::Program program(SOURCE, false, &err);
 
-  for (unsigned i = 0; i < 2; i++) {
-    try {
-      program.compile();
-    } catch (cl::BuildError &e) {
-      std::cout << "BUILD ERROR\n";
-      error_count++;
+  try {
+    cl::Program program(SOURCE, false);
+    for (unsigned i = 0; i < 2; i++) {
+      try {
+        program.compile();
+      } catch (cl::BuildError &e) {
+        std::cout << "BUILD ERROR\n";
+        error_count++;
+      }
     }
+  } catch (cl::Error &err) {
+    std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+    return EXIT_FAILURE;
   }
 
-  cl::Platform::getDefault().unloadCompiler();
+  platform.unloadCompiler();
 
   if (error_count == 2) {
     std::cout << "OK\n";

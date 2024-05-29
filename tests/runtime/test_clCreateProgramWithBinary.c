@@ -208,8 +208,8 @@ main(void){
     CHECK_CL_ERROR (clReleaseProgram (program_with_binary));
   if (context)
     CHECK_CL_ERROR (clReleaseContext (context));
-
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  if (platforms[0])
+    CHECK_CL_ERROR (clUnloadPlatformCompiler (platforms[0]));
 
   if (err == CL_SUCCESS)
     {

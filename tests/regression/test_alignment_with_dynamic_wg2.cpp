@@ -54,32 +54,41 @@ __kernel void evaluate(global const float *in, global float *out)
 #define ARRAY_SIZE 4
 
 int main(int argc, char *argv[]) {
+  cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE);
-  program.build("-cl-std=CL1.2");
-
   float in1[ARRAY_SIZE] = { 0.0f };
   float out[ARRAY_SIZE] = { 0.0f };
 
-  cl::Buffer inbuf((cl_mem_flags)(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR),
-                   (ARRAY_SIZE * sizeof(float)), in1);
-  cl::Buffer outbuf((cl_mem_flags)(CL_MEM_WRITE_ONLY),
-                    (ARRAY_SIZE * sizeof(float)), NULL);
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::Program program(SOURCE);
+    program.build("-cl-std=CL1.2");
 
-  // This triggers compilation of dynamic WG binaries.
-  cl::Program::Binaries binaries{};
-  int err = program.getInfo<>(CL_PROGRAM_BINARIES, &binaries);
-  assert(err == CL_SUCCESS);
+    cl::Buffer inbuf((cl_mem_flags)(CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR),
+                     (ARRAY_SIZE * sizeof(float)), in1);
+    cl::Buffer outbuf((cl_mem_flags)(CL_MEM_WRITE_ONLY),
+                      (ARRAY_SIZE * sizeof(float)), NULL);
 
-  auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer>(program, "evaluate");
+    // This triggers compilation of dynamic WG binaries.
+    cl::Program::Binaries binaries{};
+    int err = program.getInfo<>(CL_PROGRAM_BINARIES, &binaries);
+    assert(err == CL_SUCCESS);
 
-  kernel(cl::EnqueueArgs(queue, cl::NDRange(1, 2), cl::NDRange(1, 1)), inbuf,
-         outbuf);
+    auto kernel =
+        cl::KernelFunctor<cl::Buffer, cl::Buffer>(program, "evaluate");
 
-  queue.enqueueReadBuffer(outbuf, 1, 0, (ARRAY_SIZE * sizeof(float)), out);
+    kernel(cl::EnqueueArgs(queue, cl::NDRange(1, 2), cl::NDRange(1, 1)), inbuf,
+           outbuf);
 
-  queue.finish();
+    queue.enqueueReadBuffer(outbuf, 1, 0, (ARRAY_SIZE * sizeof(float)), out);
+
+    queue.finish();
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
+  platform.unloadCompiler();
 
   printf("Value: %le \n", out[0]);
   printf("Value: %le \n", out[1]);

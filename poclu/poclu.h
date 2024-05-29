@@ -174,8 +174,10 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_el
  * \brief Create a context in the first platform found.
  * \returns a cl_context.
  */
+POCLU_API cl_context POCLU_CALL poclu_create_any_context ();
+
 POCLU_API cl_context POCLU_CALL
-poclu_create_any_context();
+poclu_create_any_context2 (cl_platform_id *platform);
 
 /**
  * \brief Set up a context, device and queue for platform 0, device 0.
