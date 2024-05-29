@@ -2126,6 +2126,10 @@ if(ENABLE_TESTS)
     # make check & make check_tier1
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
     add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
+
+    add_custom_target(check-cuda COMMAND
+      "${CMAKE_SOURCE_DIR}/tools/scripts/run_cuda_tests"
+      "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)
