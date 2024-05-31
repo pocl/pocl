@@ -902,8 +902,10 @@ void Level0Queue::writeImageRect(cl_mem DstImage, pocl_mem_identifier *DstMemId,
 
   ze_image_handle_t DstImg =
       static_cast<ze_image_handle_t>(DstMemId->extra_ptr);
-  POCL_MSG_PRINT_LEVEL0("COPY IMAGE RECT | SRC PTR %p | DST IMG %p \n",
-                        (void *)SrcPtr, (void *)DstImg);
+  POCL_MSG_PRINT_LEVEL0("WRITE IMAGE RECT | SRC IMG %p | DST PTR %p | "
+                        "RowPitch %zu | SlicePitch %zu | DstOffset %zu \n",
+                        (void *)DstImg, (void *)SrcPtr, SrcRowPitch,
+                        SrcSlicePitch, SrcOffset);
 
   ze_image_region_t DstRegion;
   DstRegion.originX = Origin[0];
@@ -941,8 +943,10 @@ void Level0Queue::readImageRect(cl_mem SrcImage, pocl_mem_identifier *SrcMemId,
 
   ze_image_handle_t SrcImg =
       static_cast<ze_image_handle_t>(SrcMemId->extra_ptr);
-  POCL_MSG_PRINT_LEVEL0("COPY IMAGE RECT | SRC IMG %p | DST PTR %p \n",
-                        (void *)SrcImg, (void *)DstPtr);
+  POCL_MSG_PRINT_LEVEL0("READ IMAGE RECT | SRC IMG %p | DST PTR %p | "
+                        "RowPitch %zu | SlicePitch %zu | DstOffset %zu \n",
+                        (void *)SrcImg, (void *)DstPtr, DstRowPitch,
+                        DstSlicePitch, DstOffset);
 
   ze_image_region_t SrcRegion;
   SrcRegion.originX = Origin[0];
@@ -1006,14 +1010,16 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   char *MapPtr = static_cast<char *>(MemId->mem_ptr);
   ze_image_handle_t ImageH = (ze_image_handle_t)(MemId->extra_ptr);
   assert(Image);
-  //" SIZE %zu | PAT SIZE %zu\n",
-  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p |\n", MapPtr, ImageH);
+
+  POCL_MSG_PRINT_LEVEL0("IMAGEFILL | PTR %p | IMAGE %p | PIXEL %0x %0x %0x %0x"
+                        " | P SIZE %zu\n", MapPtr, ImageH, OrigPixel.s[0],
+                        OrigPixel.s[1], OrigPixel.s[2], OrigPixel.s[3], PixelSize);
 
   ze_kernel_handle_t KernelH = nullptr;
   ze_module_handle_t ModuleH = nullptr;
   Level0Kernel *Ker = nullptr;
-  bool Res = Device->getImagefillKernel(Image->image_channel_order,
-                                        Image->image_channel_data_type,
+  bool Res = Device->getImagefillKernel(Image->image_channel_data_type,
+                                        Image->image_channel_order,
                                         Image->type, &Ker, ModuleH, KernelH);
   assert(Res == true);
   assert(KernelH);
@@ -1029,7 +1035,7 @@ void Level0Queue::fillImage(cl_mem Image, pocl_mem_identifier *MemId,
   LEVEL0_CHECK_ABORT(ZeRes);
 
   // set kernel arg 1 = Pixel pattern (POD type)
-  ZeRes = zeKernelSetArgumentValue(KernelH, 1, sizeof(pixel_t), FillPixel);
+  ZeRes = zeKernelSetArgumentValue(KernelH, 1, sizeof(cl_uint4), &OrigPixel);
   LEVEL0_CHECK_ABORT(ZeRes);
 
   if (Origin[0] || Origin[1] || Origin[2]) {
@@ -1149,7 +1155,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-        void *MemPtr = memid->mem_ptr + PoclArg[i].offset;
+        void *MemPtr = (char*)memid->mem_ptr + PoclArg[i].offset;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
         LEVEL0_CHECK_ABORT(Res);
         // optimization for read-only buffers
@@ -2167,10 +2173,9 @@ static void calculateHash(uint8_t *BuildHash,
                           const uint8_t *Data,
                           const size_t Len) {
   SHA1_CTX HashCtx;
+  uint8_t TempDigest[SHA1_DIGEST_SIZE];
   pocl_SHA1_Init(&HashCtx);
   pocl_SHA1_Update(&HashCtx, Data, Len);
-  pocl_SHA1_Final(&HashCtx, BuildHash);
-  uint8_t TempDigest[SHA1_DIGEST_SIZE];
   pocl_SHA1_Final(&HashCtx, TempDigest);
 
   uint8_t *hashstr = BuildHash;
@@ -2186,6 +2191,7 @@ bool Level0Device::initHelperKernels() {
   std::vector<uint8_t> SpvData;
   std::vector<char> ProgramBCData;
   std::string BuildLog;
+  SHA1_digest_t BuildHash;
   Level0Kernel *K;
   char ProgramCacheDir[POCL_MAX_PATHNAME_LENGTH];
   assert(Driver);
@@ -2193,11 +2199,11 @@ bool Level0Device::initHelperKernels() {
   // fake program with BuildHash to get a cache path
   struct _cl_program FakeProgram;
   FakeProgram.num_devices = 1;
-  SHA1_digest_t BuildHash;
   FakeProgram.build_hash = &BuildHash;
 
   calculateHash(BuildHash, MemfillSpv, MemfillSpvLen);
   pocl_cache_program_path(ProgramCacheDir, &FakeProgram, 0);
+
   SpvData.clear();
   SpvData.insert(SpvData.end(), MemfillSpv, MemfillSpv + MemfillSpvLen);
   MemfillProgram = Driver->getJobSched().createProgram(
@@ -2232,6 +2238,7 @@ bool Level0Device::initHelperKernels() {
 
   calculateHash(BuildHash, ImagefillSpv, ImagefillSpvLen);
   pocl_cache_program_path(ProgramCacheDir, &FakeProgram, 0);
+
   SpvData.clear();
   SpvData.insert(SpvData.end(), ImagefillSpv, ImagefillSpv + ImagefillSpvLen);
   ImagefillProgram = Driver->getJobSched().createProgram(
@@ -2555,7 +2562,8 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
                                            cl_channel_order ChOrder,
                                            cl_mem_object_type ImgType,
                                            cl_mem_flags ImgFlags, size_t Width,
-                                           size_t Height, size_t Depth) {
+                                           size_t Height, size_t Depth,
+                                           size_t ArraySize) {
 
   // Specify single component FLOAT32 format
   ze_image_format_t ZeFormat{};
@@ -2599,7 +2607,7 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
       (uint32_t)Width,
       (uint32_t)Height,
       (uint32_t)Depth,
-      0, // array levels
+      (uint32_t)ArraySize, // array levels
       0  // mip levels
   };
   ze_image_handle_t ImageH = nullptr;

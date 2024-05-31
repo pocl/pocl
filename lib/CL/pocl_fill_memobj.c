@@ -172,7 +172,8 @@ pocl_fill_image_common (cl_command_buffer_khr command_buffer,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
+  cl_uint4 fill_color_vec;
+  memcpy(&fill_color_vec, fill_color, 16);
 
   size_t px = image->image_elem_size * image->image_channels;
   char fill_pattern[16];
