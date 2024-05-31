@@ -68,6 +68,13 @@ if(ENABLE_ICD)
   # -pthread makes gdb happier when debugging tests
   set(OPENCL_LIBS "${PTHREAD_LIBRARY};${OPENCL_LIBRARIES}")
 
+  if(OPENCL_LIBRARIES)
+    if (NOT OPENCL_LIBDIR)
+      get_filename_component(OPENCL_LIBDIR "${OPENCL_LIBRARIES}" DIRECTORY)
+    endif()
+    get_filename_component(OPENCL_LIBNAME "${OPENCL_LIBRARIES}" NAME)
+  endif()
+
 else()
 
   # when we link pocl directly as libOpenCL.so,
@@ -77,7 +84,11 @@ else()
   # otherwise linking fails.
   set(OPENCL_LIBS "${PTHREAD_LIBRARY};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS}")
 
+  set(OPENCL_LIBDIR "$<TARGET_FILE_DIR:${POCL_LIBRARY_NAME}>")
+  set(OPENCL_LIBNAME "$<TARGET_FILE_NAME:${POCL_LIBRARY_NAME}>")
+
 endif()
+
 
 if(SANITIZER_OPTIONS)
   list(INSERT OPENCL_LIBS 0 ${SANITIZER_LIBS})
@@ -91,5 +102,7 @@ separate_arguments(OPENCL_CFLAGS)
 set(OPENCL_LIBS "${OPENCL_LIBS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS_STR "${OPENCL_CFLAGS_STR}" PARENT_SCOPE)
+set(OPENCL_LIBDIR "${OPENCL_LIBDIR}" PARENT_SCOPE)
+set(OPENCL_LIBNAME "${OPENCL_LIBNAME}" PARENT_SCOPE)
 
 pass_through_cpack_vars()

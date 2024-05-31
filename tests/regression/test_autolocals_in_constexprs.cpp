@@ -54,8 +54,8 @@ main(void)
 {
   uint64_t A[3];
 
+  std::vector<cl::Platform> platformList;
   try {
-    std::vector<cl::Platform> platformList;
 
     // Pick platform
     cl::Platform::get(&platformList);
@@ -97,8 +97,6 @@ main(void)
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1));
     queue.finish();
 
-    platformList[0].unloadCompiler();
-
     // We don't actually care about the result.
   }
   catch (cl::Error &err) {
@@ -111,6 +109,8 @@ main(void)
       << std::endl;
     return EXIT_FAILURE;
   }
+
+  platformList[0].unloadCompiler();
 
   std::cout << "OK" << std::endl;
   return EXIT_SUCCESS;

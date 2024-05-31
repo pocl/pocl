@@ -12,13 +12,14 @@ int main(int argc, char **argv)
   cl_int err;
   const char *krn_src;
   cl_program empty, program;
-  cl_context ctx;
-  cl_device_id did;
-  cl_command_queue queue;
-  cl_uint num_krn;
+  cl_platform_id pid = NULL;
+  cl_context ctx = NULL;
+  cl_device_id did = NULL;
+  cl_command_queue queue = NULL;
+  cl_uint num_krn = 0;
   cl_kernel kernels[2];
 
-  err = poclu_get_any_device(&ctx, &did, &queue);
+  err = poclu_get_any_device2 (&ctx, &did, &queue, &pid);
   CHECK_OPENCL_ERROR_IN("poclu_get_any_device");
   TEST_ASSERT( ctx );
   TEST_ASSERT( did );
@@ -72,7 +73,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseProgram (empty));
   CHECK_CL_ERROR (clReleaseContext (ctx));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   free ((void *)krn_src);
 

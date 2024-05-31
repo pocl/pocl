@@ -32,11 +32,14 @@ private_local_array(__global int *__restrict__ out)
 
 int main(int, char **)
 {
+  cl::Platform platform = cl::Platform::getDefault();
+  cl::Device device = cl::Device::getDefault();
+
   bool success = true;
   try {
     int N = 9;
 
-    cl::CommandQueue queue((cl_command_queue_properties)0);
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
     cl::Program program(SOURCE, true);
 
     auto kernel = cl::KernelFunctor<cl::Buffer>
@@ -58,16 +61,19 @@ int main(int, char **)
     }
     queue.enqueueUnmapMemObject(buffer, output);
     queue.finish();
-    cl::Platform::getDefault().unloadCompiler();
   }
   catch (cl::Error& err) {
     std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
     return EXIT_FAILURE;
   }
 
+  platform.unloadCompiler();
+
   if (success) {
     std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
+  } else {
+    std::cout << "FAIL" << std::endl;
+    return EXIT_FAILURE;
   }
-  return EXIT_FAILURE;
 }

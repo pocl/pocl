@@ -224,7 +224,7 @@ main (int _argc, char **_argv)
 
   CHECK_CL_ERROR (clReleaseContext (context));
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

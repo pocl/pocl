@@ -46,18 +46,27 @@
 
 using namespace pocl;
 
-static void pocl_level0_abort_on_ze_error(ze_result_t status, unsigned line,
+static void pocl_level0_abort_on_ze_error(int permit_quiet_exit,
+                                          ze_result_t status, unsigned line,
                                           const char *func, const char *code) {
   const char *str = code;
   if (status != ZE_RESULT_SUCCESS) {
+    // this error code is returned when the main thread exits and the ZE driver
+    // is uninitialized by the exit handlers. Return quietly instead of abort
+    if (permit_quiet_exit && (status == ZE_RESULT_ERROR_UNINITIALIZED))
+      pthread_exit(NULL);
     // TODO convert level0 errors to strings
-    POCL_MSG_ERR("Error %0x from LevelZero Runtime call:\n", (int)status);
-    POCL_ABORT("Code:\n%s\n", str);
+    POCL_ABORT("Error %0x from LevelZero API:\n%s\n", (unsigned)status, str);
   }
 }
 
+// permits pthread_exit(). to be used only from the PoCL L0 driver thread
 #define LEVEL0_CHECK_ABORT(code)                                               \
-  pocl_level0_abort_on_ze_error(code, __LINE__, __FUNCTION__, #code)
+  pocl_level0_abort_on_ze_error(1, code, __LINE__, __FUNCTION__, #code)
+
+// to be used by ZE API calls made from main (user) thread
+#define LEVEL0_CHECK_ABORT_NO_EXIT(code)                                       \
+  pocl_level0_abort_on_ze_error(0, code, __LINE__, __FUNCTION__, #code)
 
 void Level0Queue::runThread() {
 
@@ -70,11 +79,12 @@ void Level0Queue::runThread() {
       assert(pocl_command_is_ready(Command->sync.event.event));
       assert(Command->sync.event.event->status == CL_SUBMITTED);
       execCommand(Command);
+      reset();
     }
     if (!WorkBatch.empty()) {
       execCommandBatch(WorkBatch);
+      reset();
     }
-    reset();
   } while (!ShouldExit);
 }
 
@@ -394,6 +404,7 @@ void Level0Queue::allocNextFreeEvent() {
 }
 
 void Level0Queue::reset() {
+  assert(CmdListH);
   LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
   CurrentEventH = nullptr;
   PreviousEventH = nullptr;
@@ -470,8 +481,6 @@ void Level0Queue::execCommand(_cl_command_node *Cmd) {
 void Level0Queue::execCommandBatch(BatchType &Batch) {
 
   ze_result_t res;
-
-  LEVEL0_CHECK_ABORT(zeCommandListReset(CmdListH));
 
   POCL_MEASURE_START(ZeListPrepare);
 
@@ -1140,7 +1149,7 @@ bool Level0Queue::setupKernelArgs(ze_module_handle_t ModuleH,
       } else {
         cl_mem arg_buf = (*(cl_mem *)(PoclArg[i].value));
         pocl_mem_identifier *memid = &arg_buf->device_ptrs[Dev->global_mem_id];
-        void *MemPtr = memid->mem_ptr;
+        void *MemPtr = memid->mem_ptr + PoclArg[i].offset;
         Res = zeKernelSetArgumentValue(KernelH, i, sizeof(void *), &MemPtr);
         LEVEL0_CHECK_ABORT(Res);
         // optimization for read-only buffers
@@ -1393,12 +1402,17 @@ bool Level0QueueGroup::init(unsigned Ordinal, unsigned Count,
   return true;
 }
 
-Level0QueueGroup::~Level0QueueGroup() {
+void Level0QueueGroup::uninit() {
   std::unique_lock<std::mutex> Lock(Mutex);
   ThreadExitRequested = true;
   Cond.notify_all();
   Lock.unlock();
   Queues.clear();
+}
+
+Level0QueueGroup::~Level0QueueGroup() {
+  if (!ThreadExitRequested)
+    uninit();
 }
 
 void Level0QueueGroup::pushWork(_cl_command_node *Command) {
@@ -1508,8 +1522,8 @@ Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
   };
 
   ze_device_handle_t DevH = Dev->getDeviceHandle();
-  LEVEL0_CHECK_ABORT(zeEventPoolCreate(Dev->getContextHandle(), &EvtPoolDesc, 1,
-                                       &DevH, &EvtPoolH));
+  LEVEL0_CHECK_ABORT_NO_EXIT(zeEventPoolCreate(
+      Dev->getContextHandle(), &EvtPoolDesc, 1, &DevH, &EvtPoolH));
 
   unsigned Idx = 0;
   AvailableEvents.resize(EvtPoolSize);
@@ -1525,7 +1539,7 @@ Level0EventPool::Level0EventPool(Level0Device *D, unsigned EvtPoolSize)
     };
 
     ze_event_handle_t EvH = nullptr;
-    LEVEL0_CHECK_ABORT(zeEventCreate(EvtPoolH, &eventDesc, &EvH));
+    LEVEL0_CHECK_ABORT_NO_EXIT(zeEventCreate(EvtPoolH, &eventDesc, &EvH));
     AvailableEvents[Idx] = EvH;
   }
 }
@@ -2142,10 +2156,11 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
 }
 
 Level0Device::~Level0Device() {
+  UniversalQueues.uninit();
+  ComputeQueues.uninit();
+  CopyQueues.uninit();
   destroyHelperKernels();
   EventPools.clear();
-  // ComputeQueues.wait()
-  // CopyQueues.wait()
 }
 
 static void calculateHash(uint8_t *BuildHash,
@@ -2369,7 +2384,7 @@ void Level0Device::freeMem(void *Ptr) {
   if (Ptr == nullptr)
     return;
   ze_result_t Res = zeMemFree(ContextHandle, Ptr);
-  LEVEL0_CHECK_ABORT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
 }
 
 bool Level0Device::freeMemBlocking(void *Ptr) {
@@ -2383,7 +2398,7 @@ bool Level0Device::freeMemBlocking(void *Ptr) {
       ZE_STRUCTURE_TYPE_MEMORY_FREE_EXT_DESC, nullptr,
       ZE_DRIVER_MEMORY_FREE_POLICY_EXT_FLAG_BLOCKING_FREE};
   ze_result_t Res = zeMemFreeExt(ContextHandle, &FreeExtDesc, Ptr);
-  LEVEL0_CHECK_ABORT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
   return true;
 }
 
@@ -2596,7 +2611,7 @@ ze_image_handle_t Level0Device::allocImage(cl_channel_type ChType,
 
 void Level0Device::freeImage(ze_image_handle_t ImageH) {
   ze_result_t Res = zeImageDestroy(ImageH);
-  LEVEL0_CHECK_ABORT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
 }
 
 ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
@@ -2643,7 +2658,7 @@ ze_sampler_handle_t Level0Device::allocSampler(cl_addressing_mode AddrMode,
 
 void Level0Device::freeSampler(ze_sampler_handle_t SamplerH) {
   ze_result_t Res = zeSamplerDestroy(SamplerH);
-  LEVEL0_CHECK_ABORT(Res);
+  LEVEL0_CHECK_ABORT_NO_EXIT(Res);
 }
 
 int Level0Device::createProgram(cl_program Program, cl_uint DeviceI) {

@@ -31,15 +31,18 @@ int main(int argc, char **argv)
 {
   cl_int err;
   const char *krn_src = "kernel void test () { }";
-  cl_program program;
-  cl_context ctx;
-  cl_command_queue queue;
-  cl_device_id did;
-  cl_kernel kernel;
-  cl_event kern_evt;
+
+  cl_platform_id pid = NULL;
+  cl_context ctx = NULL;
+  cl_device_id did = NULL;
+  cl_command_queue queue = NULL;
+
+  cl_program program = NULL;
+  cl_kernel kernel = NULL;
+  cl_event kern_evt = NULL;
   const size_t gws[] = { 1 };
 
-  CHECK_CL_ERROR (poclu_get_any_device (&ctx, &did, &queue));
+  CHECK_CL_ERROR (poclu_get_any_device2 (&ctx, &did, &queue, &pid));
   TEST_ASSERT (ctx);
   TEST_ASSERT (did);
   TEST_ASSERT (queue);
@@ -63,7 +66,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseKernel (kernel));
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseContext (ctx));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

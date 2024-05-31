@@ -2036,31 +2036,6 @@ if(ENABLE_ICD)
   set(CPACK_DEBIAN_ICD_PACKAGE_RECOMMENDS "poclcc")
 endif()
 
-if(ENABLE_ASAN OR ENABLE_LSAN)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc")
-  set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
-endif()
-
-# pointing OCL_ICD_VENDORS to pocl doesn't make sense with the proxy driver;
-# we want the driver to proxy to another OpenCL, so
-# we must let ocl-icd load it
-if(ENABLE_PROXY_DEVICE)
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
-  ${SAN_EXTRA}
-  set(ENV{POCL_ENABLE_UNINIT} \"1\")
-  set(ENV{POCL_BUILDING} \"1\")
-")
-else()
-# Old OCL ICD Loaders may not recognize PoCL without the trailing '/' in the
-# OCL_ICD_VENDORS.
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
-  ${SAN_EXTRA}
-  set(ENV{POCL_ENABLE_UNINIT} \"1\")
-  set(ENV{POCL_BUILDING} \"1\")
-  set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors/\")
-")
-endif()
-
 ##########################################################
 
 if(UNIX)
@@ -2086,6 +2061,49 @@ add_subdirectory("poclu")
 # these are set in lib/cmakelists.txt
 message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
+message(STATUS "OPENCL_LIBDIR: ${OPENCL_LIBDIR}")
+message(STATUS "OPENCL_LIBNAME: ${OPENCL_LIBNAME}")
+
+##########################################################
+## generate CTestCustom.cmake
+
+if(ENABLE_ASAN OR ENABLE_LSAN)
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc")
+  set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
+endif()
+
+# We need to use the oneAPI environment's LD_LIBRARY_PATH (need to source
+# the setvars.sh before testing), but still ensure we use the system's libOpenCL.so
+# (ideally ocl-icd) to pick up libpocl. This is ensured by prepending Opencl LIBDIR
+# before all paths in LD_LIBRARY_PATH. Otherwise libOpenCL.so will be found in /opt/intel/oneapi
+# which is not ocl-icd).
+if(SYCL_LIBDIR)
+  set(SYCL_EXTRA "set(ENV{LD_LIBRARY_PATH} \"${OPENCL_LIBDIR}:${SYCL_LIBDIR}:$ENV{LD_LIBRARY_PATH}\")")
+endif()
+
+# pointing OCL_ICD_VENDORS to pocl doesn't make sense with the proxy driver;
+# we want the driver to proxy to another OpenCL, so
+# we must let ocl-icd load it
+if(ENABLE_PROXY_DEVICE)
+
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
+  ${SAN_EXTRA}
+  set(ENV{POCL_ENABLE_UNINIT} \"1\")
+  set(ENV{POCL_BUILDING} \"1\")
+  ${SYCL_EXTRA}
+  ")
+else()
+
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
+  ${SAN_EXTRA}
+  set(ENV{POCL_ENABLE_UNINIT} \"1\")
+  set(ENV{POCL_BUILDING} \"1\")
+  set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors/\")
+  ${SYCL_EXTRA}
+  ")
+endif()
+
+##########################################################
 
 # for tests / examples
 set(POCLU_LINK_OPTIONS poclu ${OPENCL_LIBS} ${LIBMATH})
@@ -2096,7 +2114,6 @@ if(ENABLE_POCLCC)
     add_subdirectory("bin")
 endif()
 
-
 include(add_test_pocl)
 
 if(ENABLE_TESTS)
@@ -2105,6 +2122,10 @@ if(ENABLE_TESTS)
     # make check & make check_tier1
     add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
     add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|piglit|PyOpenCL|conformance_suite_micro|shoc|chipStar'" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
+
+    add_custom_target(check-cuda COMMAND
+      "${CMAKE_SOURCE_DIR}/tools/scripts/run_cuda_tests"
+      "--output-on-failure" -j ${HOST_CPU_CORECOUNT} ${COMMAND_USES_TERMINAL})
 endif()
 
 if(ENABLE_EXAMPLES)

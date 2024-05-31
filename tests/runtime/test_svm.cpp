@@ -53,18 +53,14 @@ static char GetAddrSourceCode[] = R"raw(
 #define STRINGIFY(X, Y) X #Y
 #define SET_N_ELEMENTS(NUM) STRINGIFY("-DN_ELEMENTS=", NUM)
 
-int TestCGSVM() {
+int TestCGSVM(cl::Platform Platform) {
 
   unsigned Errors = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -240,18 +236,14 @@ int TestCGSVM() {
     return EXIT_FAILURE;
 }
 
-int TestMultiDevice_CGSVM() {
+int TestMultiDevice_CGSVM(cl::Platform Platform) {
 
   unsigned Errors = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -412,17 +404,13 @@ static char SimpleKernelSourceCode[] = R"raw(
 )raw";
 
 // OpenCL version of simple_kernel.hip in the chipStar samples.
-int TestSimpleKernel_CGSVM() {
+int TestSimpleKernel_CGSVM(cl::Platform Platform) {
   unsigned Errors = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -499,17 +487,13 @@ int TestSimpleKernel_CGSVM() {
 }
 
 // Test for cl_mem-wrapped SVM pointers.
-int TestCLMem_SVM() {
+int TestCLMem_SVM(cl::Platform Platform) {
   cl_int Err = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -604,18 +588,14 @@ int TestCLMem_SVM() {
     return EXIT_FAILURE;
 }
 
-int TestFGSVM() {
+int TestFGSVM(cl::Platform Platform) {
 
   unsigned Errors = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -788,18 +768,14 @@ int TestFGSVM() {
     return EXIT_SUCCESS;
 }
 
-int TestSSVM() {
+int TestSSVM(cl::Platform Platform) {
 
   unsigned Errors = 0;
   bool AllOK = true;
 
   try {
-    std::vector<cl::Platform> PlatformList;
-
-    cl::Platform::get(&PlatformList);
-
-    cl_context_properties cprops[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties)(PlatformList[0])(), 0};
+    cl_context_properties cprops[] = {CL_CONTEXT_PLATFORM,
+                                      (cl_context_properties)Platform(), 0};
     cl::Context Context(CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_GPU, cprops);
 
     std::vector<cl::Device> Devices = Context.getInfo<CL_CONTEXT_DEVICES>();
@@ -927,32 +903,37 @@ int TestSSVM() {
 
 int main() {
 
+  std::vector<cl::Platform> PlatformList;
+
+  cl::Platform::get(&PlatformList);
+
   std::cout << "TestSimpleKernel_CGSVM: ";
-  if (TestSimpleKernel_CGSVM() == EXIT_FAILURE)
+  if (TestSimpleKernel_CGSVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestCLMem_SVM: ";
-  if (TestCLMem_SVM() == EXIT_FAILURE)
+  if (TestCLMem_SVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestCGSVM: ";
-  if (TestCGSVM() == EXIT_FAILURE)
+  if (TestCGSVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestFGSVM: ";
-  if (TestFGSVM() == EXIT_FAILURE)
+  if (TestFGSVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestSSVM: ";
-  if (TestSSVM() == EXIT_FAILURE)
+  if (TestSSVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
   std::cout << "TestMultiDevice_CGSVM: ";
-  if (TestMultiDevice_CGSVM() == EXIT_FAILURE)
+  if (TestMultiDevice_CGSVM(PlatformList[0]) == EXIT_FAILURE)
     return EXIT_FAILURE;
 
+  PlatformList[0].unloadCompiler();
+
   std::cout << "OK" << std::endl;
-  CHECK_CL_ERROR(clUnloadCompiler());
 
   return EXIT_SUCCESS;
 }

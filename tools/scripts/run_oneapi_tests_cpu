@@ -1,8 +1,7 @@
 #!/bin/bash
+# run_sycl_tests_cpu - Runs OneAPI/SYCL tests with CPU device
 #
-# run_level0_tests - Runs tests against LevelZero devices.
-#
-# Copyright (c) 2023 Michal Babej / Intel Finland Oy
+# Copyright (c) 2024 Michal Babej / Intel Finland Oy
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +21,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+set -e
+
 export POCL_BUILDING=1
-export POCL_DEVICES="level0"
-export IGC_EnableDPEmulation=1
-export OverrideDefaultFP64Settings=1
+export POCL_DEVICES=cpu
+# let PoCL pretend to be Intel OpenCL CPU runtime
+export POCL_DRIVER_VERSION_OVERRIDE=2023.16.7.0.21_160000
+export POCL_CPU_VENDOR_ID_OVERRIDE=32902
 
-if [ -z "$OCL_ICD_VENDORS" ]; then
-  export OCL_ICD_VENDORS=$PWD/ocl-vendors
-fi
-if [ ! -e "$OCL_ICD_VENDORS" ]; then
-  echo "Not using OCL_ICD_VENDORS ($OCL_ICD_VENDORS doesn't exist)"
-else
-  echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
-fi
+export ONEAPI_DEVICE_SELECTOR=opencl:cpu
 
-ctest -L level0 $@
+# set by oneAPI setvars
+unset OCL_ICD_FILENAMES
+
+# set in CTestCustom.cmake
+unset OCL_ICD_VENDORS
+
+# check that OCL-ICD still loads PoCL
+ctest --output-on-failure -R pocl_version_check
+
+ctest -L "dpcpp-book-samples|oneapi-samples|simple-sycl-samples|intel-compute-samples" $@
+
+# run multi-device tests (currently just jacobian solver)
+export POCL_DEVICES="cpu cpu cpu cpu"
+export POCL_CPU_MAX_CU_COUNT=1
+
+ctest -L oneapi-multidev-local-samples $@

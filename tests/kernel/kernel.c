@@ -17,6 +17,7 @@ int call_test(const char *name)
   size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
   size_t srcdir_length, name_length, filename_size;
   char *source = NULL;
+  cl_platform_id pid = NULL;
   cl_device_id device = NULL;
   cl_context context = NULL;
   cl_command_queue queue = NULL;
@@ -33,7 +34,7 @@ int call_test(const char *name)
   char Options[1024];
   snprintf (Options, 1024, "-I%s", SRCDIR);
 
-  int err = poclu_get_any_device (&context, &device, &queue);
+  int err = poclu_get_any_device2 (&context, &device, &queue, &pid);
   CHECK_OPENCL_ERROR_IN ("poclu_get_any_device");
 
   /* read source code */
@@ -62,17 +63,17 @@ int call_test(const char *name)
 error:
 
   if (kernel) {
-    clReleaseKernel(kernel);
+    CHECK_CL_ERROR (clReleaseKernel (kernel));
   }
   if (program) {
-    clReleaseProgram(program);
+    CHECK_CL_ERROR (clReleaseProgram (program));
   }
   if (queue) {
-    clReleaseCommandQueue(queue);
+    CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   }
   if (context) {
-    clReleaseContext (context);
-    clUnloadCompiler ();
+    CHECK_CL_ERROR (clReleaseContext (context));
+    CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
   }
   if (source) {
     free(source);
@@ -117,8 +118,6 @@ int main(int argc, char **argv)
     fflush(stdout);
     fflush(stderr);
   }
-
-  CHECK_CL_ERROR (clUnloadCompiler ());
 
   if (retval)
     printf("FAIL\n");

@@ -42,8 +42,8 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch);
 /* Generate a PTX file from an LLVM bitcode file. */
 /* Returns zero on success, non-zero on failure. */
 int pocl_ptx_gen (void *llvm_module, const char *PTXFilename, const char *Arch,
-                  const char *LibDevicePath, int HasOffsets,
-                  void **AlignmentMapPtr);
+                  unsigned PtxVersion, const char *LibDevicePath,
+                  int HasOffsets, void **AlignmentMapPtr);
 
 int pocl_cuda_create_alignments (void *llvm_module, void **AlignmentMapPtr);
 

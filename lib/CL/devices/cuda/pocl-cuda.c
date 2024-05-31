@@ -163,7 +163,9 @@ typedef struct pocl_cuda_device_data_s
   pocl_lock_t compile_lock;
   int supports_cu_mem_host_register;
   int supports_managed_memory;
-  int sm_maj, sm_min, warp_size;
+  unsigned sm;  /* Targeted SM version. Represented as MAJOR * 10 + MINOR. */
+  unsigned ptx; /* Targeted PTX version. Represented as MAJOR * 10 + MINOR. */
+  int warp_size;
   cl_bool available;
 
   pocl_cuda_kernel_data_t cuda_builtin_kernels_data[CUDA_BUILTIN_KERNELS];
@@ -216,6 +218,226 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 #define CUDA_CHECK_ERROR(result, api)                                         \
   pocl_cuda_error (result, __LINE__, __FUNCTION__, #result, api)
 
+/* Parses SM version string 'str' (expecting form sm_XX) to integer in
+ * form of 'MAJOR * 10 + MINOR'.  Returns 0 if parsing failed. */
+static unsigned
+parse_sm_version_string (const char *str)
+{
+  assert(str && "str must not be NULL!");
+  size_t str_len = strlen (str);
+  /* Expecting "sm_" prefix. */
+  if (strncmp (str, "sm_", 3))
+    return 0;
+
+  long parsed_num = strtol (str + 3, NULL, 10);
+  if (parsed_num == LONG_MAX || parsed_num == LONG_MIN
+      || parsed_num == LLONG_MAX || parsed_num == LLONG_MIN)
+    return 0;
+
+  /* TODO: Check the value is a known SM version? */
+  return parsed_num;
+}
+
+struct cuda_ptx_version_pair_s
+{
+  unsigned cuda_version;
+  unsigned ptx_version;
+};
+
+/* Maps CUDA driver version to PTX version the driver supports at most
+ * (there doesn't seem to be a way to query supported PTX versions). */
+const struct cuda_ptx_version_pair_s cuda_ptx_version_map[] = {
+  /* Based on [PTX ISA v8.5 - 12. Release Notes]. For simplicity,
+     minor CUDA versions are (mostly) skipped for now. */
+  { 12000, 80 }, { 11000, 70 }, { 10000, 63 }, { 9000, 60 }, { 8000, 50 },
+  { 7000, 42 },  { 6000, 40 },  { 5000, 31 },  { 4010, 30 }, { 4000, 23 },
+  { 3000, 20 },  { 2000, 12 },  { 1000, 10 },  { 0, 0 } /* Sentinel. */
+};
+
+/* Return a PTX version range that is supported by the CUDA driver for
+   the specified SM architecture. */
+static void
+get_valid_ptx_version_range (unsigned cuda_version, unsigned sm_version,
+                             unsigned *min_ptx_out, unsigned *max_ptx_out)
+{
+  assert (min_ptx_out && max_ptx_out);
+
+  /* SM version sets lower bound. PTX version needs to be high enough
+     target the given SM version. */
+  unsigned min_ptx = 0;
+
+  /* Based on [PTX ISA v8.5 - 12. Release Notes]. */
+  if (sm_version >= 89)
+    min_ptx = 78;
+  else if (sm_version >= 87)
+    min_ptx = 74;
+  else if (sm_version >= 86)
+    min_ptx = 71;
+  else if (sm_version >= 80)
+    min_ptx = 70;
+  else if (sm_version >= 75)
+    min_ptx = 63;
+  else if (sm_version >= 72)
+    min_ptx = 61;
+  else if (sm_version >= 70)
+    min_ptx = 60;
+  else if (sm_version >= 60)
+    min_ptx = 50;
+  else if (sm_version >= 53)
+    min_ptx = 42;
+  else if (sm_version >= 52)
+    min_ptx = 41;
+  else if (sm_version >= 50)
+    min_ptx = 40;
+  else if (sm_version >= 35)
+    min_ptx = 31;
+  else if (sm_version >= 30)
+    min_ptx = 30;
+  else if (sm_version >= 20)
+    min_ptx = 20;
+  else if (sm_version >= 13)
+    min_ptx = 12;
+  else if (sm_version >= 11)
+    min_ptx = 10;
+
+  /* CUDA runtime sets upper bound. PTX version may not be higher than
+     what the runtime recognizes. */
+
+  unsigned max_ptx = 0;
+  for (unsigned i = 0; cuda_ptx_version_map[i].cuda_version; i++)
+    if (cuda_version >= cuda_ptx_version_map[i].cuda_version)
+      {
+        max_ptx = cuda_ptx_version_map[i].ptx_version;
+        break;
+      }
+
+  assert (min_ptx && max_ptx
+          && "Failed to determine complete PTX version bounds!");
+  assert (min_ptx <= max_ptx && "Determined contradicting PTX version range!");
+
+  *min_ptx_out = min_ptx;
+  *max_ptx_out = max_ptx;
+}
+
+static void
+choose_sm_ptx_version_combo (unsigned cuda_version, cl_device_id dev,
+                             pocl_cuda_device_data_t *data)
+{
+  /* Choose SM version to target. */
+
+  unsigned selected_sm = 0;
+
+  const char *user_sm = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", NULL);
+  if (user_sm)
+    selected_sm = parse_sm_version_string (user_sm);
+
+  if (!selected_sm)
+    {
+      int sm_maj = 0, sm_min = 0;
+      cuDeviceGetAttribute (
+          &sm_maj, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, data->device);
+      cuDeviceGetAttribute (
+          &sm_min, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, data->device);
+
+      /* Existing CUDA architecture names suggest that minor versions
+         are limited to a single digit. */
+      assert (sm_min < 10 && "SM version overflow.");
+
+      selected_sm = sm_maj * 10 + sm_min;
+
+      /* No OpenCL feature requires features from SM >7.5 architecture
+         now. We want to cap the SM version so we can use non-sync
+         variant of warp operations. */
+      selected_sm = min (selected_sm, 75);
+    }
+
+  char *gpu_arch = calloc (16, sizeof (char));
+  snprintf (gpu_arch, 16, "sm_%d", selected_sm);
+  dev->llvm_cpu = gpu_arch;
+
+  /* Choose PTX version to target. */
+
+  unsigned min_ptx = 0, max_ptx = 0;
+  get_valid_ptx_version_range (cuda_version, selected_sm, &min_ptx, &max_ptx);
+  unsigned selected_ptx = max_ptx; // Default.
+
+  /* If we can emit PTX within version range [6.0, 6.3] for the
+     selected SM, do so. This allows us to emit support subgroup
+     ballot via 'vote.ballot.*' PTX instruction. See more details in
+     kernel/cuda/subgroup_ballot.cl. */
+  for (unsigned i = 60; i < 64; i++)
+    if (i >= min_ptx && i <= max_ptx)
+      {
+        selected_ptx = i;
+        break;
+      }
+
+  data->sm = selected_sm;
+  data->ptx = selected_ptx;
+}
+
+/* Setup kernel library for the set target and additional OpenCL
+   device extensions based on target capabilities. */
+static void
+setup_kernellib_and_additional_extensions (cl_device_id dev,
+                                           pocl_cuda_device_data_t *data)
+{
+  assert (data && "data must not be NULL!");
+  assert (data->sm && data->ptx && "CUDA target must be known!");
+
+  dev->kernellib_fallback_name = NULL;
+  dev->kernellib_subdir = "cuda";
+
+  int is_64bit_target = (sizeof (void *) == 8);
+
+  int has_unified_addressing = 0;
+  /* See kernel/cuda/subgroup.cl for requirements. */
+  int has_subgroup_ballot = 0;
+  int has_subgroup_shuffle = 0;
+
+  if (data->ptx >= 64 && data->sm >= 70)
+    {
+      /* No subgroup shuffle or ballot support - support for this
+         version combination and above requires special codegen
+         handling. choose_sm_ptx_version_combo() tries to avoid this
+         branch. */
+      dev->kernellib_name = is_64bit_target ? "kernel-nvptx64-sm70-ptx64"
+                                            : "kernel-nvptx-sm70-ptx64";
+    }
+  else if (data->ptx >= 60 && data->ptx < 64 && data->sm <= 75)
+    {
+      has_subgroup_ballot = has_subgroup_shuffle = 1;
+      dev->kernellib_name = is_64bit_target ? "kernel-nvptx64-sm30-ptx60-63"
+                                            : "kernel-nvptx-sm30-ptx60-63";
+    }
+  else if (data->ptx < 60 && data->sm <= 75)
+    {
+      has_subgroup_shuffle = 1;
+      dev->kernellib_name = is_64bit_target ? "kernel-nvptx64-sm30-ptx60lt"
+                                            : "kernel-nvptx-sm30-ptx60lt";
+    }
+
+  /* Since cSVM is supported, enable cl_ext_buffer_device_address
+     (BDA) only if the unified addressing (UA; also known as unified
+     virtual address space) is supported on the device. Without UA,
+     SVM and BDA may not co-exist due to address aliasing. */
+  cuDeviceGetAttribute (&has_unified_addressing,
+                        CU_DEVICE_ATTRIBUTE_UNIFIED_ADDRESSING, data->device);
+
+  const char *additional_exts[] = {
+    has_unified_addressing ? " cl_ext_buffer_device_address" : "",
+    has_subgroup_ballot ? " cl_khr_subgroup_ballot" : "",
+    has_subgroup_shuffle ? " cl_khr_subgroup_shuffle" : "",
+  };
+  const size_t num_strs = sizeof (additional_exts) / sizeof (void *);
+  char *temp = pocl_strcatdup_v (num_strs, additional_exts);
+
+  if (temp)
+    /* The returned pointer (original dev->extensions) is a literal string. */
+    pocl_str_append (&dev->extensions, temp);
+
+  free (temp);
+}
 
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
@@ -308,9 +530,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->address_bits = (sizeof (void *) * 8);
 
   dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
-  dev->kernellib_name = (sizeof (void *) == 8) ? "kernel-nvptx64" : "kernel-nvptx";
-  dev->kernellib_fallback_name = NULL;
-  dev->kernellib_subdir = "cuda";
   dev->llvm_fp_contract_mode = "fast";
 
   dev->spmd = CL_TRUE;
@@ -383,9 +602,9 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
 
+  int driver_version = 0;
   if (ret != CL_INVALID_DEVICE)
     {
-      int driver_version = 0;
       result = cuDriverGetVersion(&driver_version);
       if (CUDA_CHECK_ERROR (result, "cuDriverGetVersion"))
 	{
@@ -464,25 +683,17 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->supported_spir_v_versions = "";
 #endif
 
-  /* Get GPU architecture name */
-  int sm_maj = 0, sm_min = 0, warp_size = 32;
-  if (ret != CL_INVALID_DEVICE)
-    {
-      cuDeviceGetAttribute (&sm_maj, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
-                            data->device);
-      cuDeviceGetAttribute (&sm_min, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
-                            data->device);
-    }
+  int warp_size = 32;
   cuDeviceGetAttribute (&warp_size, CU_DEVICE_ATTRIBUTE_WARP_SIZE,
                         data->device);
 
-  char *gpu_arch = calloc (16, sizeof (char));
-  snprintf (gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
-  dev->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
-  POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", dev->llvm_cpu);
-  data->sm_maj = sm_maj;
-  data->sm_min = sm_min;
-  data->warp_size = warp_size;
+  if (ret != CL_INVALID_DEVICE)
+    choose_sm_ptx_version_combo (driver_version, dev, data);
+  POCL_MSG_PRINT_INFO ("[CUDA] codegen target: sm_%d, PTX v%d.%d\n", data->sm,
+                       data->ptx / 10, data->ptx % 10);
+
+  if (ret != CL_INVALID_DEVICE)
+    setup_kernellib_and_additional_extensions (dev, data);
 
   /* Find libdevice library */
   if (findLibDevice (data->libdevice, dev->llvm_cpu))
@@ -499,7 +710,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
     {
       dev->num_builtin_kernels = CUDA_BUILTIN_KERNELS;
       dev->builtins_sources_path = "builtins.cl";
-      if (sm_maj < 7)
+      if (data->sm < 70)
         {
           dev->num_builtin_kernels
               -= 2; // last two kernels require tensor cores
@@ -579,8 +790,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                                    | CL_DEVICE_ATOMIC_ORDER_ACQ_REL
                                    | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
 
-  dev->sub_group_independent_forward_progress =
-      (data->sm_maj >= 7) ? CL_TRUE : CL_FALSE;
+  dev->sub_group_independent_forward_progress
+      = (data->sm >= 70) ? CL_TRUE : CL_FALSE;
 
   /* Just an arbitrary number here based on assumption of SG size 32. */
   dev->max_num_sub_groups = dev->max_work_group_size / 32;
@@ -589,19 +800,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   // See e.g.
   // https://forums.developer.nvidia.com/t/max-size-of-cuda-arguments/50218
   dev->max_parameter_size = 4352;
-
-  // Since cSVM is supported, enable cl_ext_buffer_device_address
-  // (BDA) only if the unified addressing (UA; also known as unified
-  // virtual address space) is supported on the device. Without UA,
-  // SVM and BDA may not co-exist due to address aliasing.
-  int ua = 0;
-  cuDeviceGetAttribute (&ua, CU_DEVICE_ATTRIBUTE_UNIFIED_ADDRESSING,
-                        data->device);
-  if (ua)
-    {
-      // The returned pointer (original dev->extensions) is a literal string.
-      pocl_str_append (&dev->extensions, " cl_ext_buffer_device_address");
-    }
 
 #if (CUDA_DEVICE_CL_VERSION_MAJOR >= 3)
   dev->features = CUDA_DEVICE_FEATURES_30;
@@ -1214,7 +1412,7 @@ pocl_cuda_build_cuda_builtins (cl_program program, cl_uint device_i)
       return 0;
     }
 
-  int have_sm70 = (ddata->sm_maj >= 7);
+  int have_sm70 = (ddata->sm >= 70);
 
   uint64_t builtins_file_len = 0;
   char *builtins_file = NULL;
@@ -1350,7 +1548,7 @@ pocl_cuda_build_ptx (void *llvm_ir, char *out_ptx, CUmodule *out_module,
   /* Generate PTX from LLVM bitcode */
   if (!pocl_exists (out_ptx))
     {
-      int r = pocl_ptx_gen (llvm_ir, out_ptx, device->llvm_cpu,
+      int r = pocl_ptx_gen (llvm_ir, out_ptx, device->llvm_cpu, ddata->ptx,
                             ddata->libdevice, use_offsets, alignments);
       POCL_RETURN_ERROR_ON ((r != 0), CL_BUILD_PROGRAM_FAILURE,
                             "pocl-cuda: failed to generate PTX file %s\n",

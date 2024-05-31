@@ -112,6 +112,7 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
 
 int main(int argc, char **argv)
 {
+  cl_platform_id pid = NULL;
   cl_context ctx;
   cl_command_queue q;
   // root device, all devices
@@ -125,7 +126,7 @@ int main(int argc, char **argv)
   cl_uint max_cus, max_subs, split;
   cl_uint i, j;
 
-  cl_int err = poclu_get_any_device(&ctx, &rootdev, &q);
+  cl_int err = poclu_get_any_device2 (&ctx, &rootdev, &q, &pid);
   CHECK_OPENCL_ERROR_IN("poclu_get_any_device");
   TEST_ASSERT( ctx );
   TEST_ASSERT( rootdev );
@@ -144,7 +145,7 @@ int main(int argc, char **argv)
       CHECK_OPENCL_ERROR_IN("clReleaseCommandQueue");
       err = clReleaseContext(ctx);
       CHECK_OPENCL_ERROR_IN("clReleaseContext");
-      CHECK_CL_ERROR (clUnloadCompiler ());
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
       return 77;
     }
 
@@ -160,7 +161,7 @@ int main(int argc, char **argv)
       CHECK_OPENCL_ERROR_IN("clReleaseCommandQueue");
       err = clReleaseContext(ctx);
       CHECK_OPENCL_ERROR_IN("clReleaseContext");
-      CHECK_CL_ERROR (clUnloadCompiler ());
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
       return 77;
     }
 
@@ -415,7 +416,7 @@ int main(int argc, char **argv)
   for (i = 0; i < NUMDEVS; i++)
     clReleaseDevice (alldevs[i]);
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
   free (dev_pt);
 
   printf ("OK\n");

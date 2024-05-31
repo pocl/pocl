@@ -3,7 +3,7 @@ FROM amd64/ubuntu:22.04
 ARG GIT_COMMIT=main
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
-ARG LLVM_VERSION=13
+ARG LLVM_VERSION=15
 
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
 

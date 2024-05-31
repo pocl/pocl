@@ -88,10 +88,10 @@ main(void)
         }
 #endif
 
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (platforms[i]));
     }
   }
 
-  CHECK_CL_ERROR (clUnloadCompiler ());
 
   printf ("OK\n");
   return EXIT_SUCCESS;

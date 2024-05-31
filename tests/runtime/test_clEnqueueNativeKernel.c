@@ -61,11 +61,12 @@ int main(int argc, char **argv) {
   cl_mem d_a;
   cl_mem d_b;
   cl_mem d_c;
-  
-  cl_context ctx;
-  cl_device_id did;
-  cl_command_queue queue;
- 
+
+  cl_platform_id pid = NULL;
+  cl_context ctx = NULL;
+  cl_device_id did = NULL;
+  cl_command_queue queue = NULL;
+
   size_t bytes = n * sizeof(double);
  
   h_a = (double *) malloc(bytes);
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
 
   cl_int err;
 
-  CHECK_CL_ERROR(poclu_get_any_device(&ctx, &did, &queue));
+  CHECK_CL_ERROR (poclu_get_any_device2 (&ctx, &did, &queue, &pid));
   TEST_ASSERT( ctx );
   TEST_ASSERT( did );
   TEST_ASSERT( queue );
@@ -98,7 +99,7 @@ int main(int argc, char **argv) {
       free(h_c);
       CHECK_CL_ERROR (clReleaseCommandQueue (queue));
       CHECK_CL_ERROR (clReleaseContext (ctx));
-      CHECK_CL_ERROR (clUnloadCompiler ());
+      CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
       return 77;
     }
 
@@ -149,7 +150,7 @@ int main(int argc, char **argv) {
   CHECK_CL_ERROR (clReleaseMemObject (d_c));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
 
   free(h_a);
   free(h_b);

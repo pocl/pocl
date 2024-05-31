@@ -135,8 +135,8 @@ main(void)
     input.elementG = 7;
     input.elementH = 8;
 
+    std::vector<cl::Platform> platformList;
     try {
-        std::vector<cl::Platform> platformList;
 
         // Pick platform
         cl::Platform::get(&platformList);
@@ -280,22 +280,20 @@ main(void)
 
         queue.enqueueUnmapMemObject(cBuffer, (void *)output);
         queue.finish();
-        platformList[0].unloadCompiler();
-
-        if (ok) {
-            std::cout << "OK" << std::endl;
-            return EXIT_SUCCESS;
-        }
     } 
     catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+                  << std::endl;
+        return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+
+    if (ok) {
+        std::cout << "OK" << std::endl;
+        return EXIT_SUCCESS;
+    } else {
+        std::cout << "FAIL\n";
+        return EXIT_FAILURE;
+    }
 }

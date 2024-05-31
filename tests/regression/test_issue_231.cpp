@@ -80,30 +80,37 @@ void scan_scan_intervals_lev1(
 
 int main(int argc, char *argv[])
 {
-  cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE, true);
+    cl::Platform platform = cl::Platform::getDefault();
+    cl::Device device = cl::Device::getDefault();
+    try {
+        cl::CommandQueue queue = cl::CommandQueue::getDefault();
+        cl::Program program(SOURCE, true);
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wignored-attributes"
 #endif
 
-  auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
+        auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
 
-  cl_int i = 0;
-  cl::Buffer buffer(CL_MEM_READ_WRITE, 4096);
+        cl_int i = 0;
+        cl::Buffer buffer(CL_MEM_READ_WRITE, 4096);
 
-  kernel(cl::EnqueueArgs(queue, cl::NDRange(16), cl::NDRange(16)),
-         buffer, buffer, buffer, i, i, buffer);
+        kernel(cl::EnqueueArgs(queue, cl::NDRange(16), cl::NDRange(16)),
+            buffer, buffer, buffer, i, i, buffer);
 
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic pop
 #endif
 
-  queue.finish();
-  cl::Platform::getDefault().unloadCompiler();
+        queue.finish();
+    } catch (cl::Error &err) {
+        std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-  std::cout << "OK" << std::endl;
-  return EXIT_SUCCESS;
+    platform.unloadCompiler();
+
+    std::cout << "OK" << std::endl;
+    return EXIT_SUCCESS;
 }

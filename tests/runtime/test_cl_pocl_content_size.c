@@ -36,10 +36,10 @@ int
 main (void)
 {
   cl_int err;
-  cl_platform_id platform;
-  cl_device_id device;
-  cl_context context;
-  cl_command_queue queue;
+  cl_platform_id platform = NULL;
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_command_queue queue = NULL;
   cl_mem buf_content_src, buf_content_dst, buf_size;
   cl_int max_pattern_size = 4;
   char host_buf_src[1024];
@@ -124,7 +124,7 @@ main (void)
   CHECK_CL_ERROR (clReleaseMemObject (buf_size));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   printf ("OK\n");
   return EXIT_SUCCESS;

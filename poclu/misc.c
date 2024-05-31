@@ -36,19 +36,16 @@
 #include "pocl_opencl.h"
 
 cl_context
-poclu_create_any_context ()
+poclu_create_any_context2 (cl_platform_id *platform)
 {
   cl_uint i;
-  cl_platform_id platform;
 
-  clGetPlatformIDs (1, &platform, &i);
+  clGetPlatformIDs (1, platform, &i);
   if (i == 0)
     return (cl_context) 0;
 
-  cl_context_properties properties[] =
-    {CL_CONTEXT_PLATFORM,
-     (cl_context_properties)platform,
-     0};
+  cl_context_properties properties[]
+    = { CL_CONTEXT_PLATFORM, (cl_context_properties)(*platform), 0 };
 
   // create the OpenCL context on any available OCL device
   cl_context context = clCreateContextFromType (properties,
@@ -56,6 +53,13 @@ poclu_create_any_context ()
                                                 NULL, NULL, NULL);
 
   return context;
+}
+
+cl_context
+poclu_create_any_context ()
+{
+  cl_platform_id platform = NULL;
+  return poclu_create_any_context2 (&platform);
 }
 
 cl_int

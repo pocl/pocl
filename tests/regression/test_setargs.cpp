@@ -50,92 +50,82 @@ kernelSourceCode[] =
 int
 main(void)
 {
-    try {
-        std::vector<cl::Platform> platformList;
+  std::vector<cl::Platform> platformList;
+  bool ok = false;
+  try {
 
-        // Pick platform
-        cl::Platform::get(&platformList);
+    // Pick platform
+    cl::Platform::get(&platformList);
 
-        // Pick first platform
-        cl_context_properties cprops[] = {
-            CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
-        cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
+    // Pick first platform
+    cl_context_properties cprops[] = {
+        CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
+    cl::Context context(CL_DEVICE_TYPE_ALL, cprops);
 
-        // Query the set of devices attched to the context
-        std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    // Query the set of devices attched to the context
+    std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
-        // Create and program from source
-        cl::Program::Sources sources({kernelSourceCode});
-        cl::Program program(context, sources);
+    // Create and program from source
+    cl::Program::Sources sources({kernelSourceCode});
+    cl::Program program(context, sources);
 
-        // Build program
-        program.build(devices);
+    // Build program
+    program.build(devices);
 
-        int output[2];
-        // Create buffer for that uses the host ptr C
-        cl::Buffer outBuffer = cl::Buffer(
-            context, 
-            CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR, 
-            2 * sizeof(int), 
-            (void *) &output[0]);
+    int output[2];
+    // Create buffer for that uses the host ptr C
+    cl::Buffer outBuffer =
+        cl::Buffer(context, CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR,
+                   2 * sizeof(int), (void *)&output[0]);
 
-        // Create command queue
-        cl::CommandQueue queue(context, devices[0], 0);
+    // Create command queue
+    cl::CommandQueue queue(context, devices[0], 0);
 
-        // Create kernel object
-        cl::Kernel kernel(program, "echo");
+    // Create kernel object
+    cl::Kernel kernel(program, "echo");
 
-        int arg = 0;
-        // Set kernel args
-        kernel.setArg(0, sizeof(int), &arg);
-        kernel.setArg(1, outBuffer);
+    int arg = 0;
+    // Set kernel args
+    kernel.setArg(0, sizeof(int), &arg);
+    kernel.setArg(1, outBuffer);
 
-        // Queue the first launch cmd.
-        queue.enqueueNDRangeKernel(
-            kernel, 
-            cl::NullRange, 
-            cl::NDRange(1),
-            cl::NullRange);
+    // Queue the first launch cmd.
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1),
+                               cl::NullRange);
 
-        arg = 1;
-        // Now change the argument. It should not override the first one.
-        // On the other hand, the old 2nd arg should be remembered.
-        kernel.setArg(0, sizeof(int), &arg);
+    arg = 1;
+    // Now change the argument. It should not override the first one.
+    // On the other hand, the old 2nd arg should be remembered.
+    kernel.setArg(0, sizeof(int), &arg);
 
-       // Queue the 2nd launch cmd.
-        queue.enqueueNDRangeKernel(
-            kernel, 
-            cl::NullRange, 
-            cl::NDRange(1),
-            cl::NullRange);
+    // Queue the 2nd launch cmd.
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(1),
+                               cl::NullRange);
 
-        int *res = (int *)queue.enqueueMapBuffer(
-            outBuffer, CL_TRUE, CL_MAP_READ, 0, 2 * sizeof(int));
+    int *res = (int *)queue.enqueueMapBuffer(outBuffer, CL_TRUE, CL_MAP_READ, 0,
+                                             2 * sizeof(int));
 
-        int status = EXIT_SUCCESS;
-        if (!(res[0] == 1 && res[1] == 2)) {
-            std::cerr << res[0] << res[1] << std::endl;
-            status = EXIT_FAILURE;
-        }
-
-        queue.enqueueUnmapMemObject(outBuffer, (void *)res);
-        queue.finish();
-        platformList[0].unloadCompiler();
-
-        return status;
-    } 
-    catch (cl::Error &err) {
-         std::cerr
-             << "ERROR: "
-             << err.what()
-             << "("
-             << err.err()
-             << ")"
-             << std::endl;
-
-         return EXIT_FAILURE;
+    ok = true;
+    if (!(res[0] == 1 && res[1] == 2)) {
+      std::cerr << res[0] << res[1] << std::endl;
+      ok = false;
     }
 
+    queue.enqueueUnmapMemObject(outBuffer, (void *)res);
+    queue.finish();
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  platformList[0].unloadCompiler();
+
+  if (ok) {
     std::cout << "OK" << std::endl;
     return EXIT_SUCCESS;
+  } else {
+    std::cout << "FAIL\n";
+    return EXIT_FAILURE;
+  }
 }

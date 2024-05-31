@@ -107,13 +107,13 @@ bool test_invocation(unsigned x, unsigned y, unsigned z,
 }
 
 int main(int argc, char *argv[]) {
-  cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-
   if (argc < 4) {
     std::cout << "USAGE: $0 X Y Z\n";
     return EXIT_FAILURE;
   }
+
+  cl::Platform platform = cl::Platform::getDefault();
+  cl::Device device = cl::Device::getDefault();
 
   std::string arg_x(argv[1]);
   std::string arg_y(argv[2]);
@@ -123,14 +123,22 @@ int main(int argc, char *argv[]) {
   unsigned y = std::stoi(argv[2]);
   unsigned z = std::stoi(argv[3]);
 
-  if (!test_invocation(x, y, z, arg_x, arg_y, arg_z, queue))
-    return EXIT_FAILURE;
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    if (!test_invocation(x, y, z, arg_x, arg_y, arg_z, queue))
+      return EXIT_FAILURE;
 
-  if (!test_invocation(y, z, x, arg_y, arg_z, arg_x, queue))
-    return EXIT_FAILURE;
+    if (!test_invocation(y, z, x, arg_y, arg_z, arg_x, queue))
+      return EXIT_FAILURE;
 
-  if (!test_invocation(z, x, y, arg_z, arg_x, arg_y, queue))
+    if (!test_invocation(z, x, y, arg_z, arg_x, arg_y, queue))
+      return EXIT_FAILURE;
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
     return EXIT_FAILURE;
+  }
+  platform.unloadCompiler();
 
   return EXIT_SUCCESS;
 }

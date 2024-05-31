@@ -40,23 +40,31 @@ __kernel void test(__global float* buf){
 #define ARRAY_SIZE 16
 
 int main(int argc, char *argv[]) {
+  cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE);
-  program.build("-cl-std=CL1.2");
-
   float out[ARRAY_SIZE] = {0.0f};
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::Program program(SOURCE);
+    program.build("-cl-std=CL1.2");
 
-  cl::Buffer outbuf((cl_mem_flags)(CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR),
-                    (ARRAY_SIZE * sizeof(float)), out);
+    cl::Buffer outbuf((cl_mem_flags)(CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR),
+                      (ARRAY_SIZE * sizeof(float)), out);
 
-  auto kernel = cl::KernelFunctor<cl::Buffer>(program, "test");
+    auto kernel = cl::KernelFunctor<cl::Buffer>(program, "test");
 
-  kernel(cl::EnqueueArgs(queue, cl::NDRange(1, 4), cl::NDRange(1, 4)), outbuf);
+    kernel(cl::EnqueueArgs(queue, cl::NDRange(1, 4), cl::NDRange(1, 4)),
+           outbuf);
 
-  queue.enqueueReadBuffer(outbuf, 1, 0, (ARRAY_SIZE * sizeof(float)), out);
+    queue.enqueueReadBuffer(outbuf, 1, 0, (ARRAY_SIZE * sizeof(float)), out);
 
-  queue.finish();
+    queue.finish();
+  } catch (cl::Error &err) {
+    std::cerr << "ERROR: " << err.what() << "(" << err.err() << ")"
+              << std::endl;
+    return EXIT_FAILURE;
+  }
+  platform.unloadCompiler();
 
   if (out[0] == 1.0f) {
     printf("OK\n");

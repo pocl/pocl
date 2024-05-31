@@ -8,6 +8,7 @@
 
 #include "pocl_opencl.h"
 
+#define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
@@ -31,54 +32,70 @@ __kernel void __attribute__ ((reqd_work_group_size(128, 1, 1))) grudge_assign_0(
 
 int main(int argc, char *argv[]) {
   int n = 8;
+  unsigned successful = 0;
 
+  cl::Platform platform = cl::Platform::getDefault();
   cl::Device device = cl::Device::getDefault();
-  cl::CommandQueue queue = cl::CommandQueue::getDefault();
-  cl::Program program(SOURCE, true);
+  try {
+    cl::CommandQueue queue = cl::CommandQueue::getDefault();
+    cl::Program program(SOURCE, true);
 
-  if (poclu_supports_extension(device.get(), "cl_khr_fp64") == 0) {
-    std::cout << "this test requires cl_khr_fp64, test SKIPPED\n";
-    return 77;
-  }
-
-  // Create buffers on the device.
-  cl::Buffer buffer_A(CL_MEM_READ_WRITE, sizeof(double) * n);
-  cl::Buffer buffer_B(CL_MEM_READ_WRITE, sizeof(double) * n);
-
-  std::vector<double> A(n);
-  std::vector<double> B(n);
-  std::fill(B.begin(), B.end(), 1);
-
-  // Write arrays to the device.
-  queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, sizeof(double) * n, A.data());
-  queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, sizeof(double) * n, B.data());
-
-  // Run the kernel.
-  cl::Kernel knl(program, "grudge_assign_0");
-  int sz = 1;
-  knl.setArg(0, sz);
-  knl.setArg(1, buffer_A);
-  knl.setArg(2, 0);
-  knl.setArg(3, buffer_B);
-  knl.setArg(4, 0);
-  queue.enqueueNDRangeKernel(
-    knl,
-    cl::NullRange,
-    cl::NDRange(((sz+127)/128)*128),
-    cl::NDRange(128));
-  queue.finish();
-
-  // Read result A from the device.
-  queue.enqueueReadBuffer(buffer_A, CL_TRUE, 0, sizeof(double) * n, A.data());
-
-  for (int i = 0; i < n; ++i) {
-    if (i < sz) {
-      assert(A[i] == 1);
-    } else {
-      assert(A[i] == 0);
+    if (poclu_supports_extension(device.get(), "cl_khr_fp64") == 0) {
+      std::cout << "this test requires cl_khr_fp64, test SKIPPED\n";
+      return 77;
     }
+
+    // Create buffers on the device.
+    cl::Buffer buffer_A(CL_MEM_READ_WRITE, sizeof(double) * n);
+    cl::Buffer buffer_B(CL_MEM_READ_WRITE, sizeof(double) * n);
+
+    std::vector<double> A(n);
+    std::vector<double> B(n);
+    std::fill(B.begin(), B.end(), 1);
+
+    // Write arrays to the device.
+    queue.enqueueWriteBuffer(buffer_A, CL_TRUE, 0, sizeof(double) * n,
+                             A.data());
+    queue.enqueueWriteBuffer(buffer_B, CL_TRUE, 0, sizeof(double) * n,
+                             B.data());
+
+    // Run the kernel.
+    cl::Kernel knl(program, "grudge_assign_0");
+    int sz = 1;
+    knl.setArg(0, sz);
+    knl.setArg(1, buffer_A);
+    knl.setArg(2, 0);
+    knl.setArg(3, buffer_B);
+    knl.setArg(4, 0);
+    queue.enqueueNDRangeKernel(knl, cl::NullRange,
+                               cl::NDRange(((sz + 127) / 128) * 128),
+                               cl::NDRange(128));
+    queue.finish();
+
+    // Read result A from the device.
+    queue.enqueueReadBuffer(buffer_A, CL_TRUE, 0, sizeof(double) * n, A.data());
+
+    for (int i = 0; i < n; ++i) {
+      bool success = false;
+      if (i < sz) {
+        success = (A[i] == 1);
+      } else {
+        success = (A[i] == 0);
+      }
+      if (success)
+        ++successful;
+    }
+  } catch (cl::Error &err) {
+    std::cout << "FAIL with OpenCL error = " << err.err() << std::endl;
+    return EXIT_FAILURE;
   }
-  
-  std::cout << "OK" << std::endl;
-  return EXIT_SUCCESS;
+  platform.unloadCompiler();
+
+  if (successful == n) {
+    std::cout << "OK\n";
+    return EXIT_SUCCESS;
+  } else {
+    std::cout << "FAIL\n";
+    return EXIT_FAILURE;
+  }
 }

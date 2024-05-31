@@ -69,8 +69,4 @@ add_test(NAME all_simple_sycl_samples
          COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-set_tests_properties(
-  all_simple_sycl_samples
-  PROPERTIES
-  ENVIRONMENT "LD_LIBRARY_PATH=${SYCL_LIBDIR};ONEAPI_DEVICE_SELECTOR=opencl:*"
-    LABELS "${TS_NAME};level0")
+set_tests_properties(all_simple_sycl_samples PROPERTIES LABELS "${TS_NAME}")

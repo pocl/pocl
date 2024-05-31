@@ -71,8 +71,8 @@ main(void)
     input[0] = 1;
     input[1] = 2;
 
+    std::vector<cl::Platform> platformList;
     try {
-        std::vector<cl::Platform> platformList;
 
         // Pick platform
         cl::Platform::get(&platformList);
@@ -123,7 +123,6 @@ main(void)
             cl::NullRange);
 
         /* The call should return cleanly, the compiler should not crash. */
-
         std::cout << "OK" << std::endl;
 
         /* Force exit of the process regardless of the running kernel thread
@@ -138,7 +137,8 @@ main(void)
              << err.err()
              << ")"
              << std::endl;
+         return EXIT_FAILURE;
     }
-
-    return EXIT_FAILURE;
+    platformList[0].unloadCompiler();
+    return EXIT_SUCCESS;
 }

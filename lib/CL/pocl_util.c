@@ -961,6 +961,10 @@ FINISH_VER_SETUP:
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
       cmd_export->command.migrate.migration_size = migration_size;
 
+      POCL_MSG_PRINT_MEMORY (
+        "Queuing a %zu-byte device-to-host migration for buf %zu%s\n",
+        migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
+
       pocl_command_enqueue (ex_cq, cmd_export);
 
       last_migration_event = ev_export;
@@ -1012,6 +1016,9 @@ FINISH_VER_SETUP:
           cmd_import->command.migrate.migration_size = migration_size;
         }
 
+      POCL_MSG_PRINT_MEMORY (
+        "Queuing a %zu-byte host-to-device migration for buf %zu%s\n",
+        migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
       pocl_command_enqueue (dev_cq, cmd_import);
 
       /* because explicit event */
@@ -2841,6 +2848,35 @@ pocl_str_toupper(char *out, const char *in)
   for (i = 0; in[i] != '\0'; i++)
     out[i] = toupper(in[i]);
   out[i] = '\0';
+}
+
+char *
+pocl_strcatdup_v (size_t num_strs, const char **strs)
+{
+  assert (strs || !num_strs && "strs is NULL while num_strs > 0!");
+  switch (num_strs)
+    {
+    default:
+      break;
+    case 0:
+      return NULL;
+    case 1:
+      return strdup (strs[0]);
+    }
+
+  size_t new_size = 1; /* Place for NULL. */
+  for (size_t i = 0; i < num_strs; i++)
+    {
+      assert (strs[i]);
+      new_size += strlen (strs[i]);
+    }
+
+  char *new_str = calloc (new_size, 1);
+  if (new_str == NULL)
+    return NULL;
+  for (size_t i = 0; i < num_strs; i++)
+    strcat (new_str, strs[i]);
+  return new_str;
 }
 
 void

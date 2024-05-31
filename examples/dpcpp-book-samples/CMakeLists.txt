@@ -41,7 +41,7 @@ endif()
 if(EXAMPLES_USE_GIT_MASTER)
   set(REPO_TAG main)
 else()
-  set(REPO_TAG 31c9b335ac7ac71e7476c87dd9e240652dfe44c9)
+  set(REPO_TAG 6a2161df3794fea9e0d16)
 endif()
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
@@ -54,31 +54,23 @@ ExternalProject_Add(
   GIT_REPOSITORY "https://github.com/Apress/data-parallel-CPP.git"
   GIT_TAG ${REPO_TAG}
   ${GIT_OPTIONS}
-  PATCH_COMMAND ${PATCH_EXEC} -i "${CMAKE_CURRENT_SOURCE_DIR}/dpcpp.patch" -p1 --merge -d "${TS_SRCDIR}"
   CMAKE_ARGS
-    -DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}
+    "-DCMAKE_CXX_COMPILER=${SYCL_CXX_COMPILER}"
+    "-DCMAKE_EXE_LINKER_FLAGS=-L${SYCL_LIBDIR}"
     "${TS_BASEDIR}/src/${TS_NAME}"
-
+    -DNODPL=1 -DNODPCT=1 -DNOL0=1
   INSTALL_COMMAND /bin/true
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
 add_dependencies(prepare_examples ${TS_NAME})
 
-# fig_14_24_local_unpack takes forever on CPU
-# fig_14_17_nd_range_reduction and fig_14_8_one_reduction fail to build on CPU because:
-#   |     ERROR |  Error(s) while linking:
-#   Cannot find symbol _Z21work_group_reduce_addi in kernel library
-
-
-set(SKIP_TEST_EXPR "fig_2_9_host_selector|fig_2_10_cpu_selector|fig_3_10_in_order|fig_2_23_fallback|fig_10_3_optional_kernel_lambda_elements|fig_10_8_opencl_object_interop|fig_10_9_kernel_lambda_build_options|fig_14_8_one_reduction|fig_14_17_nd_range_reduction|fig_14_24_local_unpack")
+# fig_2_9_cpu_selector: only works with CPU
+# fig_2_10_gpu_selector: only works with GPU
+# fig_14_26_local_unpack: takes >15min with CPU
 add_test(NAME all_dpcpp_book_samples
          COMMAND "${CMAKE_CTEST_COMMAND}" --output-on-failure
-         -E "${SKIP_TEST_EXPR}"
+         -E "fig_2_10_gpu_selector|fig_2_9_cpu_selector|fig_14_26_local_unpack"
          WORKING_DIRECTORY "${TS_BUILDDIR}")
 
-set_tests_properties(
-  all_dpcpp_book_samples
-  PROPERTIES
-    ENVIRONMENT "LD_LIBRARY_PATH=${SYCL_LIBDIR};ONEAPI_DEVICE_SELECTOR=opencl:*"
-    LABELS "${TS_NAME};level0")
+set_tests_properties(all_dpcpp_book_samples PROPERTIES LABELS "${TS_NAME}")
