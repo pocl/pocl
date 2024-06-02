@@ -791,6 +791,7 @@ pocl_broadcast (cl_event brc_event)
       if (target != brc_event->notify_list)
         {
           pocl_unlock_events_inorder (brc_event, target_event);
+          POname (clReleaseEvent) (target_event);
           POCL_LOCK_OBJ (brc_event);
           continue;
         }

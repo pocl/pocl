@@ -488,12 +488,23 @@ sort_and_uniq (cl_mem *objs, char *readonly_flags, size_t *num_objs)
 extern unsigned long event_c;
 extern unsigned long uevent_c;
 
+/**
+ * Create a new event object.
+ * @param event pointer to event to be created.
+ * @param command_queue set to NULL for user events.
+ * @param command_type assigned to event.
+ * @param num_buffers can be zero.
+ * @param buffers needs to be non NULL if num_buffers is not zero.
+ * @param context assigned to event.
+ * @return CL_SUCCESS on success or an ocl error otherwise.
+ */
 cl_int
 pocl_create_event (cl_event *event, cl_command_queue command_queue,
                    cl_command_type command_type, size_t num_buffers,
                    const cl_mem *buffers, cl_context context)
 {
   static uint64_t event_id_counter = 0;
+  cl_int errcode = CL_SUCCESS;
 
   if (context == NULL)
     return CL_INVALID_CONTEXT;
@@ -511,9 +522,12 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
   /* user events have a NULL command queue, don't retain it */
   if (command_queue)
-    POname (clRetainCommandQueue) (command_queue);
+    errcode = POname (clRetainCommandQueue) (command_queue);
   else
-    POname (clRetainContext) (context);
+    errcode = POname (clRetainContext) (context);
+
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   (*event)->command_type = command_type;
   (*event)->id = POCL_ATOMIC_INC (event_id_counter);
@@ -535,6 +549,10 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
                          pocl_command_to_str (command_type));
 
   return CL_SUCCESS;
+
+ERROR:
+  pocl_mem_manager_free_event (*event);
+  return errcode;
 }
 
 static int
@@ -582,8 +600,19 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
         }
     }
 
-  if (notifier_event->status == CL_COMPLETE)
-    goto FINISH;
+    // If the notifier event is already complete (or failed),
+    // don't create an event sync. This is fine since if the wait
+    // event has no notifier events and gets submitted, it can start
+    // right away.
+    if (notifier_event->status <= CL_COMPLETE)
+      {
+        POCL_MSG_PRINT_EVENTS (
+          "notifier event %" PRIu64
+          " already complete, not creating sync with event %" PRIu64 "\n",
+          notifier_event->id, waiting_event->id);
+        goto FINISH;
+      }
+
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
@@ -658,6 +687,7 @@ pocl_create_command_struct (_cl_command_node **cmd,
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
 
   (*cmd)->type = command_type;
+  (*cmd)->node_state = COMMAND_NOT_READY;
 
   event = &((*cmd)->sync.event.event);
   errcode = pocl_create_event (event, command_queue, command_type, num_buffers,
@@ -1028,10 +1058,6 @@ FINISH_VER_SETUP:
       last_migration_event = ev_import;
     }
 
-  /* we don't need it anymore. */
-  if (previous_last_event)
-    POname (clReleaseEvent (previous_last_event));
-
   /* the final event must depend on the export/import commands */
   if (last_migration_event)
     {
@@ -1050,6 +1076,11 @@ FINISH_VER_SETUP:
         POname (clReleaseEvent) (last_migration_event);
     }
   POCL_UNLOCK_OBJ (mem);
+
+  // we don't need it anymore. Done after unlocking mem to avoid deadlocks
+  // with pocl_update_event_finished.
+  if (previous_last_event)
+    POname (clReleaseEvent (previous_last_event));
 
   return CL_SUCCESS;
 }
@@ -1296,6 +1327,7 @@ pocl_create_recorded_command (_cl_command_node **cmd,
   POCL_RETURN_ERROR_COND ((*cmd == NULL), CL_OUT_OF_HOST_MEMORY);
   (*cmd)->type = command_type;
   (*cmd)->buffered = 1;
+  (*cmd)->node_state = COMMAND_NOT_READY;
 
   /* pocl_cmdbuf_choose_recording_queue should have been called to ensure we
    * have a valid command queue, usually via CMDBUF_VALIDATE_COMMON_HANDLES
@@ -2442,18 +2474,32 @@ static void pocl_free_event_memobjs (cl_event event)
   POCL_MEM_FREE (event->mem_objs);
 }
 
-// status can be complete or failed (<0)
+/**
+ * Mark an event with the status and notify relevant objects of this change
+ * in status. Must be called with the event unlocked.
+ * @warning calls clReleaseEvent, therefore event can be freed.
+ * @param status can be complete or failed (<0)
+ * @param func used for debug messages
+ * @param line used for debug messages
+ * @param event to be updated
+ * @param msg used for debug messages
+ */
 void
-pocl_update_event_finished (cl_int status, const char *func, unsigned line,
-                            cl_event event, const char *msg)
+pocl_update_event_finished (cl_int status,
+                            const char *func,
+                            unsigned line,
+                            cl_event event,
+                            const char *msg)
 {
   assert (event != NULL);
   assert (event->queue != NULL);
-  assert (event->status > CL_COMPLETE);
 
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
   POCL_LOCK_OBJ (event);
+
+  assert (event->status > CL_COMPLETE);
+
   if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
       && (cq->device->has_own_timer == 0))
     event->time_end = pocl_gettimemono_ns ();
@@ -2486,42 +2532,6 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   POCL_UNLOCK_OBJ (event);
   ops->broadcast (event);
 
-  /* With remote being asynchronous it is possible that an event is signaled as
-   * complete before some of its dependencies. Therefore this event has to be
-   * removed from the notify lists of any remaining events in the wait list.
-   *
-   * Mind the acrobatics of trying to avoid races with pocl_broadcast and
-   * pocl_create_event_sync. */
-  event_node *tmp;
-  POCL_LOCK_OBJ (event);
-  while ((tmp = event->wait_list))
-    {
-      cl_event notifier = tmp->event;
-      POCL_UNLOCK_OBJ (event);
-      pocl_lock_events_inorder (notifier, event);
-      if (tmp != event->wait_list)
-        {
-          pocl_unlock_events_inorder (notifier, event);
-          POCL_LOCK_OBJ (event);
-          continue;
-        }
-      event_node *tmp2;
-      LL_FOREACH (notifier->notify_list, tmp2)
-      {
-        if (tmp2->event == event)
-          {
-            LL_DELETE (notifier->notify_list, tmp2);
-            pocl_mem_manager_free_event_node (tmp2);
-            break;
-          }
-      }
-      LL_DELETE (event->wait_list, tmp);
-      pocl_unlock_events_inorder (notifier, event);
-      pocl_mem_manager_free_event_node (tmp);
-      POCL_LOCK_OBJ (event);
-    }
-  POCL_UNLOCK_OBJ (event);
-
 #ifdef POCL_DEBUG_MESSAGES
   if (msg != NULL)
     {
@@ -2545,7 +2555,13 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   POname (clReleaseEvent) (event);
 }
 
-
+/**
+ * Mark the event as failed and notify all events waiting on this event.
+ * @warning Call with event locked.
+ * @param event to be marked as failed.
+ * @todo change this function to not require the event to be locked since
+ * clReleaseEvent is eventually called.
+ */
 void
 pocl_update_event_failed (cl_event event)
 {
@@ -2554,14 +2570,29 @@ pocl_update_event_failed (cl_event event)
   POCL_LOCK_OBJ (event);
 }
 
+/**
+ * Mark the event as device_lost and notify all events waiting on this event.
+ * @warning Call with event unlocked.
+ * @warning Eventually clReleaseEvent is called, so this function can end up
+ * freeing the event.
+ * @param event to mark as device lost.
+ */
 void
 pocl_update_event_device_lost (cl_event event)
 {
-  POCL_UNLOCK_OBJ (event);
   pocl_update_event_finished (CL_DEVICE_NOT_AVAILABLE, NULL, 0, event, NULL);
-  POCL_LOCK_OBJ (event);
 }
 
+ /**
+  * Mark the event as complete and notify all events waiting on this event.
+  * @warning Call with event unlocked.
+  * @warning Eventually clReleaseEvent is called, so this function can end up
+  * freeing the event.
+  * @param func used for debug messages.
+  * @param line used for debug messages.
+  * @param event to mark as complete.
+  * @param msg used for debug messages.
+  */
 void
 pocl_update_event_complete (const char *func, unsigned line,
                             cl_event event, const char *msg)

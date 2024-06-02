@@ -384,14 +384,17 @@ struct pocl_device_ops {
      must be locked also on return.*/
   void (*notify) (cl_device_id device, cl_event event, cl_event finished);
 
-  /* broadcast is(has to be) called by the device driver when a command is
-     completed.
-     It is used to broadcast notifications to device drivers waiting
-     this event to complete.
-     There is a default implementation for this. Use it if there is no need
-     to do anything special here.
-     The default implementation calls notify(event, target_event) for the
-     list of events waiting on 'event'. */
+  /**
+   * Broadcast is(has to be) called by the device driver when a command is
+   * completed.
+   * It is used to broadcast notifications to device drivers waiting
+   * this event to complete.
+   * There is a default implementation for this. Use it if there is no need
+   * to do anything special here.
+   * The default implementation calls notify(event, target_event) for the
+   * list of events waiting on 'event'.
+   * @warning Called with event (and its notify events) unlocked.
+   */
   void (*broadcast) (cl_event event);
 
   /* wait_event is called by clWaitForEvents() and blocks the execution until
