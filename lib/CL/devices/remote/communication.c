@@ -3,7 +3,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -2057,9 +2057,9 @@ pocl_network_free_device (cl_device_id device)
   return 0;
 }
 
-// ##################################################################################
-// ##################################################################################
-// ##################################################################################
+// ###########################################################################
+// ###########################################################################
+// ###########################################################################
 
 // SYNCHRONOUS
 
@@ -2087,6 +2087,10 @@ pocl_network_create_buffer (remote_device_data_t *ddata, cl_mem mem,
      https://www.gnu.org/software/c-intro-and-ref/manual/html_node/Pointer_002dInteger-Conversion.html
      for the reason behind the double cast. */
   nc.request.m.create_buffer.host_ptr = (uint64_t)(uintptr_t)mem->mem_host_ptr;
+
+  nc.request.m.create_buffer.origin = mem->origin;
+  nc.request.m.create_buffer.parent_id
+    = mem->parent != NULL ? mem->parent->id : 0;
 
 #ifdef ENABLE_RDMA
   CreateRdmaBufferReply_t info;

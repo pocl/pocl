@@ -93,7 +93,7 @@ is_svm_ptr (void *ptr)
  * See pocl_remote_svm_alloc()'s comment for info how the allocation works
  * when SVM is enabled.
  */
-int
+cl_int
 pocl_remote_alloc_mem_obj (cl_device_id device, cl_mem mem, void *host_ptr)
 {
   remote_device_data_t *d = (remote_device_data_t *)device->data;
@@ -177,6 +177,30 @@ ERROR:
       mem->size, r);
   POCL_UNLOCK (d->mem_lock);
   return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+}
+
+cl_int
+pocl_remote_alloc_subbuffer (cl_device_id device, cl_mem sub_buf)
+{
+  remote_device_data_t *d = (remote_device_data_t *)device->data;
+  pocl_mem_identifier *p = &sub_buf->device_ptrs[device->global_mem_id];
+
+  int r = pocl_network_create_buffer (d, sub_buf, &p->device_addr);
+
+  if (r != 0)
+    return CL_OUT_OF_RESOURCES;
+
+  /* The device-specific "address" is an id reference to the remote buffer,
+     which then contains the actual physical address of the controlled
+     device. */
+  p->mem_ptr = (void *)sub_buf->id;
+  p->version = 0;
+
+  POCL_MSG_PRINT_MEMORY (
+    "Remote device allocated a sub-buffer %p size %zu orig %zu\n", p->mem_ptr,
+    sub_buf->size, sub_buf->origin);
+
+  return CL_SUCCESS;
 }
 
 void
@@ -300,6 +324,7 @@ pocl_remote_init_device_ops (struct pocl_device_ops *ops)
   // ops->reinit = pocl_remote_reinit;
 
   ops->alloc_mem_obj = pocl_remote_alloc_mem_obj;
+  ops->alloc_subbuffer = pocl_remote_alloc_subbuffer;
   ops->svm_alloc = pocl_remote_svm_alloc;
   ops->svm_free = pocl_remote_svm_free;
 
@@ -2512,6 +2537,8 @@ pocl_remote_driver_pthread (void *cldev)
   _cl_command_node *cmd = NULL;
   _cl_command_node *finished = NULL;
 
+  /* Sleep so we have time to run the task graph dumper in main(). */
+  /* sleep (2); */
   POCL_FAST_LOCK (d->wq_lock);
 
   while (1)

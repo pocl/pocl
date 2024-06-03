@@ -2,7 +2,7 @@
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
    Copyright (c) 2019-2023 Jan Solanti / Tampere University
-   Copyright (c) 2023 Pekka Jääskeläinen / Intel Finland Oy
+   Copyright (c) 2023-2024 Pekka Jääskeläinen / Intel Finland Oy
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -23,6 +23,7 @@
    IN THE SOFTWARE.
 */
 
+#include "pocl.h"
 #include "pocl_remote.h"
 
 #ifndef POCL_REMOTE_MESSAGES_H
@@ -368,6 +369,10 @@ extern "C"
        backing store. Should set to CL_MEM_USES_SVM_POINTER to flags,
        if the former. */
     uint64_t host_ptr;
+    /* Parent buffer id, if this is a sub-buffer allocation request. */
+    pocl_obj_id_t parent_id;
+    /* The offset inside the parent buffer, if this is a sub-buffer. */
+    uint64_t origin;
   } CreateBufferMsg_t;
 
   typedef struct __attribute__ ((packed, aligned (8))) CreateBufferReply_s
@@ -396,7 +401,7 @@ extern "C"
     uint64_t src_offset;
     uint64_t size;
     uint64_t content_size;
-    uint32_t content_size_id;
+    pocl_obj_id_t content_size_id;
 #ifdef ENABLE_RDMA
     uint64_t client_vaddr;
     uint32_t client_rkey;

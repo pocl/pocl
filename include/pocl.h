@@ -34,6 +34,12 @@
 #ifndef POCL_H
 #define POCL_H
 
+#include <stdint.h>
+
+/* The running number used for identifying PoCL runtime allocated objects.
+   0 marks an invalid/undefined object. */
+typedef uint64_t pocl_obj_id_t;
+
 #ifndef CL_TARGET_OPENCL_VERSION
 #define CL_TARGET_OPENCL_VERSION 220
 #endif

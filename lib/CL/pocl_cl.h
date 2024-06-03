@@ -187,7 +187,7 @@
     POCL_UNLOCK_OBJ (__OBJ__);                  \
   } while (0)
 
-extern uint64_t last_object_id;
+extern pocl_obj_id_t last_object_id;
 
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */

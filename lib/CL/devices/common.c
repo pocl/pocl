@@ -81,7 +81,7 @@
 
 /* Object ids are generated from this global. Note: 1 will be the first
    valid object id, thus 0 can be used to mark a non-object/null. */
-uint64_t last_object_id = 0;
+pocl_obj_id_t last_object_id = 0;
 
 unsigned long buffer_c;
 unsigned long svm_buffer_c;
