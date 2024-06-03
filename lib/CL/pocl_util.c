@@ -961,10 +961,6 @@ FINISH_VER_SETUP:
       cmd_export->command.migrate.type = ENQUEUE_MIGRATE_TYPE_D2H;
       cmd_export->command.migrate.migration_size = migration_size;
 
-      POCL_MSG_PRINT_MEMORY (
-        "Queuing a %zu-byte device-to-host migration for buf %zu%s\n",
-        migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
-
       last_migration_event = ev_export;
 
       if (ev_export_p)
@@ -1014,10 +1010,6 @@ FINISH_VER_SETUP:
           cmd_import->command.migrate.migration_size = migration_size;
         }
 
-      POCL_MSG_PRINT_MEMORY (
-        "Queuing a %zu-byte host-to-device migration for buf %zu%s\n",
-        migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
-
       /* because explicit event */
       if (ev_export)
         POname (clReleaseEvent) (ev_export);
@@ -1048,11 +1040,21 @@ FINISH_VER_SETUP:
     }
   POCL_UNLOCK_OBJ (mem);
 
-  if (do_export)
-    pocl_command_enqueue (ex_cq, cmd_export);
+  if (do_export) {
+    POCL_MSG_PRINT_MEMORY (
+      "Queuing a %zu-byte device-to-host migration for buf %zu%s\n",
+      migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
 
-  if (do_import)
+    pocl_command_enqueue (ex_cq, cmd_export);
+  }
+
+  if (do_import) {
+    POCL_MSG_PRINT_MEMORY (
+      "Queuing a %zu-byte host-to-device migration for buf %zu%s\n",
+      migration_size, mem->id, mem->parent != NULL ? " (sub-buffer)" : "");
+
     pocl_command_enqueue (dev_cq, cmd_import);
+  }
 
   return CL_SUCCESS;
 }
