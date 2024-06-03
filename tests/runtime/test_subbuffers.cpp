@@ -29,6 +29,7 @@
 #include "../../include/CL/cl_ext_pocl.h"
 #include <CL/opencl.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -72,7 +73,7 @@ int TestOutputDataDecomposition() {
       return EXIT_FAILURE;
     }
 
-    const size_t NumParallelQueues = 8;
+    const size_t NumParallelQueues = std::max((size_t)2, Devices.size());
     const size_t WorkShare =
       (Devices[0].getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / sizeof(cl_int)) *
       4;
@@ -81,12 +82,16 @@ int TestOutputDataDecomposition() {
     const size_t NumData = (NumParallelQueues + 1) * WorkShare;
 
     std::cerr << "Number of devices: " << Devices.size() << std::endl;
-    std::cerr << "NumData == " << NumData << std::endl;
-    std::cerr << "WorkShare == " << WorkShare << std::endl;
-    std::cerr << "Processing data before " << NumParallelQueues * WorkShare
+    std::cerr << "Total data (bytes) == " << NumData * sizeof(cl_int)
               << std::endl;
-    std::cerr << "Last sub-buffer starts at "
-              << (NumParallelQueues - 1) * WorkShare << std::endl;
+    std::cerr << "WorkShare (bytes) == " << WorkShare * sizeof(cl_int)
+              << std::endl;
+    std::cerr << "Processing data before "
+              << NumParallelQueues * WorkShare * sizeof(cl_int) << " bytes "
+              << std::endl;
+    std::cerr << "Last sub-buffer starts at byte offset "
+              << (NumParallelQueues - 1) * WorkShare * sizeof(cl_int)
+              << std::endl;
 
     std::vector<int> HostBufA, HostBufB, HostBufC;
     for (size_t i = 0; i < NumData; ++i) {
@@ -111,14 +116,6 @@ int TestOutputDataDecomposition() {
     cl::Program Program(Context, Sources);
     Program.build(Devices);
     cl::Kernel VecAddKernel(Program, "vecadd");
-
-    cl::vector<cl::Event> AnchorDep;
-#if DUMP_TASK_GRAPHS == 1
-    // Anchor event that prevents executing the commands before we have created
-    // the .dot snapshot of the whole task graph.
-    cl::UserEvent Anchor(Context);
-    AnchorDep.push_back(Anchor);
-#endif
 
     std::vector<cl::Buffer> SubBuffers;
     std::vector<cl::CommandQueue> Queues;
@@ -152,8 +149,8 @@ int TestOutputDataDecomposition() {
 
       cl::Event Ev;
       Queue.enqueueNDRangeKernel(VecAddKernel, cl::NullRange,
-                                 cl::NDRange(WorkShare), cl::NullRange,
-                                 DUMP_TASK_GRAPHS ? &AnchorDep : nullptr, &Ev);
+                                 cl::NDRange(WorkShare), cl::NullRange, nullptr,
+                                 &Ev);
       KernelEvents.push_back(Ev);
     }
 
@@ -196,7 +193,6 @@ int TestOutputDataDecomposition() {
 
 #if DUMP_TASK_GRAPHS == 1
     poclu_dump_dot_task_graph(Context.get(), "task_graph.dot");
-    Anchor.setStatus(CL_COMPLETE);
 #endif
 
     Queues[0].finish();
