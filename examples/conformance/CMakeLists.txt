@@ -1014,3 +1014,74 @@ endif()
 
 #################################################################################
 
+set(CTS_LEVEL0_LIST
+  #conformance_main_api
+  conformance_main_commonfns
+  #conformance_main_computeinfo
+  conformance_main_contractions
+  #conformance_main_geometrics
+  #conformance_main_images_cl_copy_images
+  #conformance_main_images_cl_fill_images
+  #conformance_main_images_cl_read_write_images
+  conformance_main_images_cl_get_info
+  conformance_main_images_cl_get_info_min
+  conformance_main_images_cl_get_info_max
+  conformance_main_images_cl_get_info_random
+  #conformance_main_mem_host_flags
+  conformance_main_multiples
+  conformance_main_non_uniform_work_group
+  conformance_main_printf
+  conformance_main_profiling
+  conformance_main_cl_khr_command_buffer
+  conformance_main_cl_khr_command_buffer_mutable
+  #conformance_main_api_micro_ocl_30
+  #conformance_main_basic_micro_other_ocl_30
+  conformance_main_SVM_micro_1
+  #conformance_main_SVM_micro_2     ### SEGFAULT
+
+  #conformance_main_allocations_micro_buffer
+  conformance_main_allocations_micro_image
+
+  conformance_main_integer_ops_micro_ocl_30
+  #conformance_main_generic_AS_micro
+
+  conformance_main_basic_micro_math
+  #conformance_main_basic_micro_image
+  conformance_main_basic_micro_other
+  #conformance_main_basic_micro_memory
+
+  conformance_main_buffers_micro_read
+  conformance_main_buffers_micro_write
+
+  conformance_main_buffers_micro_fill
+  conformance_main_buffers_micro_var1
+  conformance_main_buffers_micro_var2
+
+  conformance_main_buffers_micro_map_read
+  conformance_main_buffers_micro_map_write
+  conformance_main_vectors_micro
+
+  #conformance_main_spirv_new_micro_0    ### SEGFAULT
+  conformance_main_spirv_new_micro_1
+  #conformance_main_spirv_new_micro_2    ### SEGFAULT
+
+  conformance_main_c11_atomics_micro_1
+  conformance_main_c11_atomics_micro_2
+  conformance_main_c11_atomics_micro_3
+  conformance_main_c11_atomics_micro_4
+)
+
+foreach(CTSTEST IN LISTS CTS_LEVEL0_LIST)
+  set_property(TEST ${CTSTEST}
+    APPEND PROPERTY
+    LABELS "level0")
+endforeach()
+
+# mark tests that take long, need to avoid them in CI
+foreach(CTSTEST IN ITEMS conformance_main_multiples conformance_main_c11_atomics_micro_1
+        conformance_main_c11_atomics_micro_2 conformance_main_c11_atomics_micro_3
+        conformance_main_c11_atomics_micro_4)
+  set_property(TEST ${CTSTEST}
+    APPEND PROPERTY
+    LABELS "long")
+endforeach()
