@@ -21,15 +21,16 @@ int main(int argc, char **argv)
   size_t srcdir_length, name_length, filename_size;
   char *filename = NULL;
   char *source = NULL;
-  cl_platform_id pid = NULL;
+  cl_platform_id platform = NULL;
   cl_context context = NULL;
+  cl_device_id device = NULL;
   cl_command_queue queue = NULL;
+
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   cl_int err;
 
   /* image parameters */
-  cl_uchar4 *imageData;
   cl_image_format image_format;
   cl_image_desc image2_desc, image3_desc;
 
@@ -48,10 +49,6 @@ int main(int argc, char **argv)
 
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
-  imageData = (cl_uchar4 *)malloc (PIXELS * sizeof (cl_uchar4));
-
-  TEST_ASSERT (imageData != NULL && "out of host memory\n");
-  memset (imageData, 1, PIXELS * sizeof (cl_uchar4));
 
   /* determine file name of kernel source to load */
   srcdir_length = strlen(SRCDIR);
@@ -67,42 +64,35 @@ int main(int argc, char **argv)
   TEST_ASSERT (source != NULL && "Kernel .cl not found.");
 
   /* setup an OpenCL context and command queue using default device */
-  context = poclu_create_any_context2 (&pid);
-  TEST_ASSERT (context != NULL && "clCreateContextFromType call failed\n");
+  CHECK_CL_ERROR (
+    poclu_get_any_device2 (&context, &device, &queue, &platform));
+  TEST_ASSERT( context );
+  TEST_ASSERT( device );
+  TEST_ASSERT( queue );
 
   cl_sampler external_sampler = clCreateSampler (
       context, CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateSampler");
 
-  size_t device_id_size = 0;
-  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL,
-                          &device_id_size);
-  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
-  cl_device_id *devices = malloc (device_id_size);
-  TEST_ASSERT (devices != NULL && "out of host memory\n");
-  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, device_id_size, devices,
-                          NULL);
-  CHECK_OPENCL_ERROR_IN ("clGetContextInfo");
-
-  queue = clCreateCommandQueue (context, devices[0], 0, &err);
-  CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
-
-  /* Create image */
+  /* Create images */
   cl_mem image2
-      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                       &image_format, &image2_desc, imageData, &err);
-  CHECK_OPENCL_ERROR_IN ("clCreateImage image2");
+      = clCreateImage (context, CL_MEM_READ_ONLY,
+                       &image_format, &image2_desc, NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateImage 2D image2");
 
   cl_mem image3
-      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                       &image_format, &image3_desc, imageData, &err);
-  CHECK_OPENCL_ERROR_IN ("clCreateImage image3");
+      = clCreateImage (context, CL_MEM_READ_ONLY,
+                       &image_format, &image3_desc, NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateImage 3D image3");
 
   unsigned color[4] = { 2, 9, 11, 7 };
   size_t orig[3] = { 0, 0, 0 };
   size_t reg[3] = { 2, 4, 1 };
   err = clEnqueueFillImage (queue, image2, color, orig, reg, 0, NULL, NULL);
   CHECK_OPENCL_ERROR_IN ("clCreateImage image3");
+
+  err = clFinish (queue);
+  CHECK_OPENCL_ERROR_IN ("clFinish");
 
   /* create and build program */
   program = clCreateProgramWithSource (context, 1, (const char **)&source,
@@ -139,12 +129,10 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseSampler (external_sampler));
   CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (pid));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   free (source);
   free (filename);
-  free (imageData);
-  free (devices);
 
   printf("OK\n");
   return EXIT_SUCCESS;
