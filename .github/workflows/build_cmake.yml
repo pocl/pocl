@@ -606,13 +606,20 @@ jobs:
 
           rm -rf ${{ github.workspace }}/build
           mkdir ${{ github.workspace }}/build
-          # -DLLVM_SPIRV=/usr/bin/llvm-spirv-${{ matrix.llvm }}"
-          runCMake -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
+          mkdir -p ${EXAMPLES_DIR}/build_level0
+          mkdir -p ${EXAMPLES_DIR}/source
+          runCMake -DENABLE_TESTSUITES=conformance -DTESTSUITE_SOURCE_BASEDIR=${EXAMPLES_DIR}/source -DTESTSUITE_BASEDIR=${EXAMPLES_DIR}/build_level0 -DENABLE_LEVEL0=1 -DENABLE_HOST_CPU_DEVICES=0 -DSTATIC_LLVM=1 -DWITH_LLVM_CONFIG=/usr/bin/llvm-config-${{ matrix.llvm }}
 
       - name: Run Build
         id: build
         run: |
           cd ${{ github.workspace }}/build && make -j4
+
+      - name: Build Examples
+        id: build_examples
+        timeout-minutes: 120
+        run: |
+          cd ${{ github.workspace }}/build/examples/conformance && make -j4 conformance
 
       - name: Run Tests
         env:
@@ -620,11 +627,7 @@ jobs:
         id: ctest
         timeout-minutes: 120
         run: |
-          if [ ${{ matrix.llvm }} -lt 16 ]; then
-            TEST_EXCLUDES='poclcc|clCreateKernel|clCreateProgramWithBinary|test_hadd_|sampler_address_clam|alignment_with_dynamic_wg_332|read-copy-write-buffer|buffer-image-copy|spirv/printf|convert_type_4'
-          else
-            TEST_EXCLUDES='poclcc|clCreateKernel|clCreateProgramWithBinary|test_hadd_|read-copy-write-buffer|buffer-image-copy|copy_signbit_loopvec|isnan_loopvec|sampler_address_clamp_loopvec|program_from_binary_with_local_1_1_1|spirv/printf|example0_spirv|example1_spirv|oneapi_samples|all_simple_sycl_samples|all_dpcpp_book_samples'
-          fi
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
-          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j1 $CTEST_FLAGS -E $TEST_EXCLUDES
+          # exclude long tests
+          cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_level0_tests -j2 $CTEST_FLAGS -LE long
