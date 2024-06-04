@@ -1307,6 +1307,10 @@ struct _cl_command_queue {
   cl_queue_properties queue_properties[10];
   unsigned num_queue_properties;
 
+  /* number of user threads (via clFinish) awaiting
+   * cmd-queue-finished notification (via ops->notify_cmdq_finished) */
+  unsigned notification_waiting_threads;
+
   /* device specific data */
   void *data;
 

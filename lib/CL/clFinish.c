@@ -38,7 +38,17 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   if (err != CL_SUCCESS)
     return err;
 
+  POCL_LOCK_OBJ (command_queue);
+  ++command_queue->notification_waiting_threads;
+  POCL_RETAIN_OBJECT_UNLOCKED (command_queue);
+  POCL_UNLOCK_OBJ (command_queue);
+
   command_queue->device->ops->join(command_queue->device, command_queue);
+
+  POCL_LOCK_OBJ (command_queue);
+  --command_queue->notification_waiting_threads;
+  POCL_UNLOCK_OBJ (command_queue);
+  POname (clReleaseCommandQueue) (command_queue);
 
   return CL_SUCCESS;
 }

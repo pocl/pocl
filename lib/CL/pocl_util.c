@@ -2450,6 +2450,7 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   assert (event != NULL);
   assert (event->queue != NULL);
   assert (event->status > CL_COMPLETE);
+  int notify_cmdq = CL_FALSE;
 
   cl_command_queue cq = event->queue;
   POCL_LOCK_OBJ (cq);
@@ -2477,6 +2478,10 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   if (cq->last_event.event == event)
     cq->last_event.event = NULL;
   DL_DELETE (cq->events, event);
+
+  if (ops->notify_cmdq_finished && (cq->command_count == 0) && cq->notification_waiting_threads) {
+    notify_cmdq = CL_TRUE;
+  }
 
   POCL_UNLOCK_OBJ (cq);
   /* note that we must unlock the CmqQ before calling pocl_event_updated,
@@ -2533,16 +2538,17 @@ pocl_update_event_finished (cl_int status, const char *func, unsigned line,
   pocl_free_event_node (event);
   pocl_free_event_memobjs (event);
 
-  POCL_LOCK_OBJ (cq);
-  if (ops->notify_cmdq_finished && (cq->command_count == 0))
-    ops->notify_cmdq_finished (cq);
-  POCL_UNLOCK_OBJ (cq);
   POCL_LOCK_OBJ (event);
   if (ops->notify_event_finished)
     ops->notify_event_finished (event);
   POCL_UNLOCK_OBJ (event);
-
   POname (clReleaseEvent) (event);
+
+  if (notify_cmdq) {
+    POCL_LOCK_OBJ (cq);
+    ops->notify_cmdq_finished (cq);
+    POCL_UNLOCK_OBJ (cq);
+  }
 }
 
 
