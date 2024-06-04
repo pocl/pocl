@@ -247,7 +247,7 @@ pocl_cpu_init_common (cl_device_id device)
 /* called from kernel setup code.
  * Sets up the actual arguments, except the local ones. */
 void
-setup_kernel_arg_array (kernel_run_command *k)
+pocl_setup_kernel_arg_array (kernel_run_command *k)
 {
   struct pocl_argument *al;
 
@@ -324,7 +324,7 @@ setup_kernel_arg_array (kernel_run_command *k)
  * they're set up by 1) memcpy from kernel_run_command, 2) all
  * local args are set to thread-local "local memory" storage. */
 void
-setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                     kernel_run_command *k, char *local_mem,
                                     size_t local_mem_size)
 {
@@ -404,7 +404,7 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
 /* called from kernel teardown code.
  * frees the actual arguments, except the local ones. */
 void
-free_kernel_arg_array (kernel_run_command *k)
+pocl_free_kernel_arg_array (kernel_run_command *k)
 {
   cl_uint i;
   pocl_kernel_metadata_t *meta = k->kernel->meta;
@@ -439,7 +439,7 @@ free_kernel_arg_array (kernel_run_command *k)
 /* called from each driver thread.
  * frees the local arguments. */
 void
-free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                    kernel_run_command *k)
 {
   pocl_kernel_metadata_t *meta = k->kernel->meta;

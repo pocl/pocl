@@ -83,19 +83,19 @@ POCL_EXPORT
 cl_int pocl_cpu_init_common (cl_device_id device);
 
 POCL_EXPORT
-void setup_kernel_arg_array (kernel_run_command *k);
+void pocl_setup_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT
-void setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+void pocl_setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                          kernel_run_command *k,
                                          char *local_mem,
                                          size_t local_mem_size);
 
 POCL_EXPORT
-void free_kernel_arg_array (kernel_run_command *k);
+void pocl_free_kernel_arg_array (kernel_run_command *k);
 
 POCL_EXPORT
-void free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+void pocl_free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                         kernel_run_command *k);
 
 #ifdef __cplusplus
