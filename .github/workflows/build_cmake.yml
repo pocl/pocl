@@ -17,7 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  POCL_CACHE_DIR: "/tmp/GH_POCL_CACHE"
   CTEST_FLAGS: "--output-on-failure --test-output-size-failed 128000 --test-output-size-passed 128000"
   POCL_KERNEL_CACHE: "0"
   POCL_MAX_WORK_GROUP_SIZE: "1024"
@@ -117,6 +116,8 @@ jobs:
           key: ctest-cache-${{ steps.cmake_version.outputs.version }}-${{ runner.name }}-${{ matrix.config }}
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -234,6 +235,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -302,6 +305,8 @@ jobs:
           cd ${{ github.workspace }}/build/examples/intel-compute-samples && make -j4 intel-compute-samples
 
       - name: Run CPU Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest_cpu
         timeout-minutes: 40
         run: |
@@ -310,6 +315,8 @@ jobs:
           cd ${{ github.workspace }}/build && ${{ github.workspace }}/tools/scripts/run_oneapi_tests_cpu -j4 $CTEST_FLAGS
 
       - name: Run GPU Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest_gpu
         timeout-minutes: 40
         run: |
@@ -352,6 +359,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -393,6 +402,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -433,6 +444,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -477,6 +490,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -512,10 +527,11 @@ jobs:
           cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
+          VK_ICD_FILENAMES: "/usr/share/vulkan/icd.d/intel_icd.x86_64.json"
         id: ctest
         timeout-minutes: 120
-        env:
-          VK_ICD_FILENAMES: "/usr/share/vulkan/icd.d/intel_icd.x86_64.json"
         run: |
           rm -rf ${{ env.POCL_CACHE_DIR }}
           mkdir ${{ env.POCL_CACHE_DIR }}
@@ -556,6 +572,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j$(nproc)
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
@@ -597,6 +615,8 @@ jobs:
           cd ${{ github.workspace }}/build && make -j4
 
       - name: Run Tests
+        env:
+          POCL_CACHE_DIR: "${{ runner.temp }}/GH_POCL_CACHE"
         id: ctest
         timeout-minutes: 120
         run: |
