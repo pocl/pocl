@@ -1960,18 +1960,23 @@ Level0Device::Level0Device(Level0Driver *Drv, ze_device_handle_t DeviceH,
       GlobalMemOrd = i;
     }
   }
+  if (int MemLimit = pocl_get_int_option("POCL_MEMORY_LIMIT", 0)) {
+    ClDev->global_mem_size = (size_t)MemLimit << 30;
+  }
 
-  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")) {
+  if (Driver->hasExtension("ZE_experimental_relaxed_allocation_limits")
+      && ClDev->global_mem_size > UINT32_MAX) {
     // allow allocating 85% of total memory in a single buffer
     ClDev->max_mem_alloc_size = ClDev->global_mem_size * 85 / 100;
     // TODO: figure out if relaxed limits also apply to these
     ClDev->max_constant_buffer_size = ClDev->global_var_pref_size =
-        DeviceProperties.maxMemAllocSize;
+        std::min (DeviceProperties.maxMemAllocSize, ClDev->max_mem_alloc_size);
     Supports64bitBuffers = true;
     NeedsRelaxedLimits = true;
   } else {
     ClDev->max_mem_alloc_size = ClDev->max_constant_buffer_size =
-        ClDev->global_var_pref_size = DeviceProperties.maxMemAllocSize;
+        ClDev->global_var_pref_size =
+        std::min (DeviceProperties.maxMemAllocSize, ClDev->global_mem_size);
     Supports64bitBuffers = (ClDev->max_mem_alloc_size > UINT32_MAX);
   }
 
