@@ -210,6 +210,7 @@ main (int _argc, char **_argv)
       }
     CHECK_CL_ERROR (clEnqueueUnmapMemObject (command_queue, buffer, buf_map, 0,
                                              NULL, NULL));
+    CHECK_CL_ERROR (clFinish (command_queue));
 
     CHECK_CL_ERROR (clReleaseEvent (write_src_event));
     CHECK_CL_ERROR (clReleaseEvent (command_buf_event));
