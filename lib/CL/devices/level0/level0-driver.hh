@@ -291,7 +291,7 @@ public:
                                cl_channel_order ChOrder,
                                cl_mem_object_type ImgType,
                                cl_mem_flags ImgFlags, size_t Width,
-                               size_t Height, size_t Depth);
+                               size_t Height, size_t Depth, size_t ArraySize);
   static void freeImage(ze_image_handle_t ImageH);
 
   ze_sampler_handle_t allocSampler(cl_addressing_mode AddrMode,

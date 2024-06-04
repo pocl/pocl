@@ -79,7 +79,7 @@ bool Level0Kernel::createForBuild(BuildSpecialization Spec,
   //  POCL_MSG_WARN("Using kernel name: %s, MODULE: %p\n", Name.c_str(), Mod);
   ze_result_t Res = zeKernelCreate(hModule, &KernelDesc, &hKernel);
   if (Res != ZE_RESULT_SUCCESS) {
-    POCL_MSG_ERR("Failed to create ZE kernel: %u\n", (unsigned)Res);
+    POCL_MSG_ERR("Failed to create ZE kernel: %x\n", (unsigned)Res);
     return false;
   }
 

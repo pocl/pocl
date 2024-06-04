@@ -256,7 +256,7 @@ const struct kernellib_features {
 const char *pocl_get_distro_kernellib_variant() {
   StringMap<bool> Features;
 
-#if defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
     return NULL;
@@ -294,7 +294,7 @@ const char *pocl_get_distro_kernellib_variant() {
 const char *pocl_get_distro_cpu_name(const char *kernellib_variant) {
   StringMap<bool> Features;
 
-#if defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
   if (!llvm::sys::getHostCPUFeatures(Features)) {
     POCL_MSG_WARN("LLVM can't get host CPU flags!\n");
     return NULL;

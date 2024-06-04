@@ -1220,7 +1220,8 @@ int pocl_level0_alloc_mem_obj(cl_device_id ClDevice, cl_mem Mem, void *HostPtr) 
     assert(Mem->image_channel_order != 0);
     ze_image_handle_t Image = Device->allocImage(
         Mem->image_channel_data_type, Mem->image_channel_order, Mem->type,
-        Mem->flags, Mem->image_width, Mem->image_height, Mem->image_depth);
+        Mem->flags, Mem->image_width, Mem->image_height, Mem->image_depth,
+        Mem->image_array_size);
     if (Image == nullptr) {
       if (Allocation != nullptr) {
         Device->freeMem(Allocation);
