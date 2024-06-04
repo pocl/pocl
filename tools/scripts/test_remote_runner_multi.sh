@@ -61,13 +61,13 @@ export POCL_DEVICES="cpu"
 export POCL_DEBUG=
 
 if [ -z "$POCLD_PORT" ]; then
-    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT1" -v error,warn,general &
+    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT1"  &
     POCLD_PID1=$!
     echo "Pocld running with PID: $POCLD_PID1"
 fi
 
 if [ -z "$POCLD_PORT2" ]; then
-    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT2" -v error,warn,general &
+    "$BUILD_DIR/pocld/pocld" -a "$PUBLIC_IP" -p "$PORT2"  &
     POCLD_PID2=$!
     echo "Pocld running with PID: $POCLD_PID2"
 fi
@@ -92,8 +92,7 @@ set +e
 
 RESULT=3
 WAIT=1
-while [ $WAIT -le 10 ]; do
-  echo "waiting for $BUILD_DIR/$TEST_BINARY.."
+while [ $WAIT -le 1000 ]; do
   if [ ! -e "/proc/$EXAMPLE_PID" ]; then
     echo "..finished"
     wait $EXAMPLE_PID
@@ -101,7 +100,7 @@ while [ $WAIT -le 10 ]; do
     break
   fi
   WAIT=$((WAIT + 1))
-  sleep 1
+  sleep 0.1
 done
 
 echo "DONE"
@@ -122,7 +121,7 @@ if [ -z "$POCLD_PORT2" ]; then
     fi
 fi
 
-sleep 2
+#sleep 2
 
 kill -9 $EXAMPLE_PID 1>/dev/null 2>&1
 
