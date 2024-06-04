@@ -230,7 +230,7 @@ REGISTER_NEW_MPASS(PASS_NAME, PASS_CLASS, PASS_DESC);
 
 
 extern "C" POCL_EXPORT ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
-llvmGetPassPluginInfo() {
+pocl_llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "pocl-passes", LLVM_VERSION_STRING,
           [](PassBuilder &PB) {
             PB.registerPipelineParsingCallback(
