@@ -279,7 +279,7 @@ work_group_scheduler (kernel_run_command *k,
 
   assert (end_index >= start_index);
 
-  setup_kernel_arg_array_with_locals (
+  pocl_setup_kernel_arg_array_with_locals (
       (void **)&arguments, (void **)&arguments2, k, thread_data->local_mem,
       scheduler.local_mem_size);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
@@ -337,7 +337,7 @@ work_group_scheduler (kernel_run_command *k,
       write (STDOUT_FILENO, pc.printf_buffer, position);
     }
 
-  free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
+  pocl_free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
                                      k);
 
   return 1;
@@ -360,7 +360,7 @@ work_group_scheduler (kernel_run_command *k,
     struct pocl_context pc;
     void *local_mem = malloc (scheduler.local_mem_size);
 
-    setup_kernel_arg_array_with_locals ((void **)&arguments,
+    pocl_setup_kernel_arg_array_with_locals ((void **)&arguments,
                                         (void **)&arguments2, k, local_mem,
                                         scheduler.local_mem_size);
     memcpy (&pc, &k->pc, sizeof (struct pocl_context));
@@ -402,7 +402,7 @@ work_group_scheduler (kernel_run_command *k,
       }
 #endif
 
-    free_kernel_arg_array_with_locals ((void **)&arguments,
+    pocl_free_kernel_arg_array_with_locals ((void **)&arguments,
                                        (void **)&arguments2, k);
 
     free (local_mem);
@@ -424,7 +424,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
   printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
 #endif
 
-  free_kernel_arg_array (k);
+  pocl_free_kernel_arg_array (k);
 
   pocl_release_dlhandle_cache (k->cmd);
 
@@ -483,7 +483,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   run_cmd->ref_count = 0;
   POCL_FAST_INIT (run_cmd->lock);
 
-  setup_kernel_arg_array (run_cmd);
+  pocl_setup_kernel_arg_array (run_cmd);
 
   pocl_update_event_running (cmd->sync.event.event);
 

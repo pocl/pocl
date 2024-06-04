@@ -106,9 +106,9 @@ public:
                           (SchedData->printf_buf_size * CurThreadID);
     struct pocl_context PC;
 
-    setup_kernel_arg_array_with_locals((void **)&Arguments,
-                                       (void **)&Arguments2, K, LocalMem,
-                                       SchedData->local_mem_size);
+    pocl_setup_kernel_arg_array_with_locals((void **)&Arguments,
+                                            (void **)&Arguments2, K, LocalMem,
+                                            SchedData->local_mem_size);
     memcpy(&PC, &K->pc, sizeof(struct pocl_context));
 
 #ifndef ENABLE_PRINTF_IMMEDIATE_FLUSH
@@ -146,15 +146,15 @@ public:
     }
 #endif
 
-    free_kernel_arg_array_with_locals((void **)&Arguments, (void **)&Arguments2,
-                                      K);
+    pocl_free_kernel_arg_array_with_locals((void **)&Arguments,
+                                           (void **)&Arguments2, K);
   }
   WorkGroupScheduler(kernel_run_command *K, const pocl_tbb_scheduler_data *D)
       : RunCmd(K), SchedData(D) {}
 };
 
 static void finalizeKernelCommand(kernel_run_command *RunCmd) {
-  free_kernel_arg_array(RunCmd);
+  pocl_free_kernel_arg_array(RunCmd);
 
   pocl_release_dlhandle_cache(RunCmd->cmd);
 
@@ -209,7 +209,7 @@ prepareKernelCommand(pocl_tbb_scheduler_data *SchedData,
   RunCmd->kernel_args = Cmd->command.run.arguments;
   RunCmd->next = NULL;
 
-  setup_kernel_arg_array(RunCmd);
+  pocl_setup_kernel_arg_array(RunCmd);
 
   pocl_update_event_running(Cmd->sync.event.event);
 
