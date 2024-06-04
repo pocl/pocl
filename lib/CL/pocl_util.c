@@ -2388,6 +2388,7 @@ int
 pocl_copy_event_node (_cl_command_node *dst_node, _cl_command_node *src_node)
 {
   memcpy (&dst_node->command, &src_node->command, sizeof (_cl_command_t));
+  dst_node->program_device_i = src_node->program_device_i;
   /* Copy variables that are freed when the command finishes. */
   switch (src_node->type)
     {
