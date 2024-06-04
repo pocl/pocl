@@ -1620,7 +1620,6 @@ pocl_create_recorded_command (_cl_command_node **cmd,
     POname (clRetainMemObject) (migr_info->buffer);
   return CL_SUCCESS;
 
-ERROR:
   pocl_mem_manager_free_command (*cmd);
   return errcode;
 }
