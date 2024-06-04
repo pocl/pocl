@@ -89,7 +89,7 @@ fi
 
 if [ -f "$OUTPUT" ]; then
   echo "output already exists, skipping compilation"
-  exit 0.
+  exit 0
 fi
 
 CL_IS_30=false
